@@ -87,6 +87,7 @@ ContentPage {
     Component.onCompleted: reconcileActiveSection()
 
     SettingsTaskNavigator {
+        showTabBar: !modulesPage.isAbyss
         icon: "extension"
         title: "Shell & interface"
         description: Translation.tr("Manage modules, terminals and interface behavior.")
@@ -100,70 +101,288 @@ ContentPage {
         ].filter(option => option.value !== "modules" || !modulesPage.isAbyss)
     }
 
-    SettingsCardSection {
-        settingsTaskSection: "panels"
-        visible: modulesPage.activeSection === "panels"
-        expanded: true
-        icon: "extension"
-        title: Translation.tr("Shell Modules")
+    GridLayout {
+        objectName: "modulesTwoColumnGrid"
+        Layout.fillWidth: true
+        columns: modulesPage.isAbyss && width >= 620 ? 2 : 1
+        columnSpacing: 14
+        rowSpacing: 14
+        visible: modulesPage.isAbyss || modulesPage.activeSection === "panels" || modulesPage.activeSection === "interface"
 
-        SettingsGroup {
-            StyledText {
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            spacing: 14
+            visible: modulesPage.isAbyss || modulesPage.activeSection === "panels" || modulesPage.activeSection === "interface"
+
+            SettingsCardSection {
                 Layout.fillWidth: true
-                text: Translation.tr("Enable or disable shell modules. Changes apply live.")
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                wrapMode: Text.WordWrap
+                Layout.alignment: Qt.AlignTop
+                settingsTaskSection: "panels"
+                visible: modulesPage.isAbyss || modulesPage.activeSection === "panels"
+                expanded: true
+                icon: "style"
+                title: Translation.tr("Panel Style")
+
+                SettingsGroup {
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.options?.panelFamily ?? "abyss"
+                        options: [
+                            { displayName: "Abyss", icon: "water", value: "abyss" },
+                            { displayName: "Waffle", icon: "window", value: "waffle" }
+                        ]
+                        onSelected: value => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),"panelFamily","set",value])
+                    }
+                }
             }
 
-            RowLayout {
+            SettingsCardSection {
                 Layout.fillWidth: true
-                spacing: 8
+                Layout.alignment: Qt.AlignTop
+                settingsTaskSection: "panels"
+                visible: modulesPage.isAbyss || modulesPage.activeSection === "panels"
+                expanded: true
+                icon: "extension"
+                title: Translation.tr("Shell Modules")
 
-                RippleButton {
-                    Layout.fillWidth: true
-                    implicitHeight: 36
-                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
-                    colBackground: Appearance.colors.colLayer1
-                    colBackgroundHover: Appearance.colors.colLayer1Hover
-                    colRipple: Appearance.colors.colLayer1Active
-
-                    RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 8
-                        MaterialSymbol {
-                            text: "restart_alt"
-                            iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colOnSurface
-                        }
-                        StyledText {
-                            text: Translation.tr("Reset to defaults")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                        }
+                SettingsGroup {
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Enable or disable shell modules. Changes apply live.")
+                        color: Appearance.colors.colSubtext
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        wrapMode: Text.WordWrap
                     }
 
-                    onClicked: modulesPage.resetToDefaults()
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        RippleButton {
+                            Layout.fillWidth: true
+                            implicitHeight: 36
+                            buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                            colBackground: Appearance.colors.colLayer1
+                            colBackgroundHover: Appearance.colors.colLayer1Hover
+                            colRipple: Appearance.colors.colLayer1Active
+
+                            RowLayout {
+                                anchors.centerIn: parent
+                                spacing: 8
+                                MaterialSymbol {
+                                    text: "restart_alt"
+                                    iconSize: Appearance.font.pixelSize.normal
+                                    color: Appearance.colors.colOnSurface
+                                }
+                                StyledText {
+                                    text: Translation.tr("Reset to defaults")
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                }
+                            }
+
+                            onClicked: modulesPage.resetToDefaults()
+                        }
+                    }
+                }
+            }
+
+            SettingsCardSection {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                settingsTaskSection: "interface"
+                visible: modulesPage.isAbyss || modulesPage.activeSection === "interface"
+                expanded: true
+                icon: "aspect_ratio"
+                title: Translation.tr("Display scaling")
+
+                SettingsGroup {
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Current UI scale: %1%").arg(
+                            Math.round((Config.options?.appearance?.typography?.sizeScale ?? 1.0) * 100))
+                        color: Appearance.colors.colOnSurfaceVariant
+                    }
+                }
+            }
+
+            SettingsCardSection {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                settingsTaskSection: "interface"
+                visible: modulesPage.isAbyss || modulesPage.activeSection === "interface"
+                expanded: true
+                icon: "wallpaper_slideshow"
+                title: Translation.tr("Wallpaper selector")
+
+                SettingsGroup {
+                    StyledText {
+                        Layout.fillWidth:true;wrapMode:Text.WordWrap
+                        text:"A centered wallpaper carousel with search, folders and animated previews."
+                    }
+
                 }
             }
         }
-    }
 
-    SettingsCardSection {
-        settingsTaskSection: "panels"
-        visible: modulesPage.activeSection === "panels"
-        expanded: true
-        icon: "style"
-        title: Translation.tr("Panel Style")
+        SettingsCardSection {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            settingsTaskSection: "interface"
+            visible: modulesPage.isAbyss || modulesPage.activeSection === "interface"
+            expanded: true
+            icon: "web_asset"
+            title: Translation.tr("Settings UI")
 
-        SettingsGroup {
-            ConfigSelectionArray {
-                Layout.fillWidth: true
-                currentValue: Config.options?.panelFamily ?? "abyss"
-                options: [
-                    { displayName: "Abyss", icon: "water", value: "abyss" },
-                    { displayName: "Waffle", icon: "window", value: "waffle" }
-                ]
-                onSelected: value => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),"panelFamily","set",value])
+            SettingsGroup {
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Overlay opens Settings above the shell for live previews.")
+                    color: Appearance.colors.colOnSurfaceVariant
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    wrapMode: Text.WordWrap
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "layers"
+                    text: Translation.tr("Overlay mode (live preview)")
+                    checked: Config.options?.settingsUi?.overlayMode ?? false
+                    onCheckedChanged: Config.setNestedValue("settingsUi.overlayMode", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Overlay replaces the separate Settings window. Restart required.")
+                    }
+                }
+
+                ContentSubsection {
+                    title: Translation.tr("Overlay layout")
+                    visible: Config.options?.settingsUi?.overlayMode ?? false
+
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.settingsUi?.overlayStyle ?? "rail"
+                        options: [
+                            { displayName: Translation.tr("Nav rail"), icon: "view_sidebar", value: "rail" },
+                            { displayName: Translation.tr("Focus"), icon: "grid_view", value: "focus" }
+                        ]
+                        onSelected: value => Config.setNestedValue("settingsUi.overlayStyle", value)
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
+                            ? Translation.tr("One page at a time: a grid of every settings page, then the page you pick, full width. Escape steps back.")
+                            : Translation.tr("A persistent flat tab rail beside the page you are editing.")
+                        color: Appearance.colors.colSubtext
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        wrapMode: Text.WordWrap
+                    }
+                }
+
+                ContentSubsection {
+                    title: Translation.tr("Overlay appearance")
+                    visible: Config.options?.settingsUi?.overlayMode ?? false
+
+                    ConfigSpinBox {
+                        icon: "blur_on"
+                        text: Translation.tr("Backdrop blur (%)")
+                        value: Config.options?.settingsUi?.overlayAppearance?.backdropBlur ?? 0
+                        from: 0
+                        to: 100
+                        stepSize: 10
+                        onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.backdropBlur", value)
+                        StyledToolTip {
+                            text: Translation.tr("Blur wallpaper behind Settings; 0 disables the effect.")
+                        }
+                    }
+
+                    ConfigSpinBox {
+                        icon: "water"
+                        text: Translation.tr("Background dim (%)")
+                        value: Config.options?.settingsUi?.overlayAppearance?.scrimDim ?? 35
+                        from: 0
+                        to: 80
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.scrimDim", value)
+                        StyledToolTip {
+                            text: Translation.tr("How dark the backdrop behind the Settings panel should be (0 = transparent, 80 = very dark)")
+                        }
+                    }
+
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: modeHintRow.implicitHeight + 16
+                    radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius : Appearance.rounding.small
+                    color: Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colSurfaceContainerLow
+                    border.width: Appearance.zzzEverywhere ? 0 : 1
+                    border.color: Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colLayer0Border
+                    Behavior on radius {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                    }
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                    }
+                    Behavior on border.width {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                    }
+                    Behavior on border.color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                    }
+
+                    ZzzPlate {
+                        anchors.fill: parent
+                        visible: Appearance.zzzEverywhere
+                        fillColor: Appearance.colors.colLayer1
+                        strokeColor: Appearance.zzz.hairline
+                        radius: Appearance.zzz.cardRadius
+                        chamfer: Appearance.zzz.cutCorner * 0.45
+                        chamferTopRight: !Appearance.zzz.round
+                    }
+
+                    RowLayout {
+                        id: modeHintRow
+                        anchors {
+                            fill: parent
+                            margins: 8
+                        }
+                        spacing: 8
+
+                        MaterialSymbol {
+                            text: (Config.options?.settingsUi?.overlayMode ?? false) ? "layers" : "open_in_new"
+                            iconSize: Appearance.font.pixelSize.huge
+                            color: Appearance.colors.colPrimary
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+                            StyledText {
+                                text: (Config.options?.settingsUi?.overlayMode ?? false)
+                                    ? Translation.tr("Overlay mode")
+                                    : Translation.tr("Window mode")
+                                font {
+                                    pixelSize: Appearance.font.pixelSize.small
+                                    weight: Font.Medium
+                                }
+                                color: Appearance.colors.colOnSurface
+                            }
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: (Config.options?.settingsUi?.overlayMode ?? false)
+                                    ? Translation.tr("Settings will open as a floating panel over the shell. Press Esc or click outside to close.")
+                                    : Translation.tr("Settings will open as a separate application window (current behavior).")
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                color: Appearance.colors.colSubtext
+                                wrapMode: Text.WordWrap
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -578,198 +797,6 @@ ContentPage {
                 checked: false
                 enabled: false
                 StyledToolTip { text: Translation.tr("Gaming crosshair overlay") }
-            }
-        }
-    }
-
-    SettingsCardSection {
-        settingsTaskSection: "interface"
-        visible: modulesPage.activeSection === "interface"
-        expanded: true
-        icon: "aspect_ratio"
-        title: Translation.tr("Display scaling")
-
-        SettingsGroup {
-            StyledText {
-                Layout.fillWidth: true
-                text: Translation.tr("Current UI scale: %1%").arg(
-                    Math.round((Config.options?.appearance?.typography?.sizeScale ?? 1.0) * 100))
-                color: Appearance.colors.colOnSurfaceVariant
-            }
-        }
-    }
-
-    SettingsCardSection {
-        settingsTaskSection: "interface"
-        visible: modulesPage.activeSection === "interface"
-        expanded: true
-        icon: "wallpaper_slideshow"
-        title: Translation.tr("Wallpaper selector")
-
-        SettingsGroup {
-            StyledText {
-                Layout.fillWidth:true;wrapMode:Text.WordWrap
-                text:"A centered wallpaper carousel with search, folders and animated previews."
-            }
-
-        }
-    }
-
-    SettingsCardSection {
-        settingsTaskSection: "interface"
-        visible: modulesPage.activeSection === "interface"
-        expanded: true
-        icon: "web_asset"
-        title: Translation.tr("Settings UI")
-
-        SettingsGroup {
-            StyledText {
-                Layout.fillWidth: true
-                text: Translation.tr("Overlay opens Settings above the shell for live previews.")
-                color: Appearance.colors.colOnSurfaceVariant
-                font.pixelSize: Appearance.font.pixelSize.small
-                wrapMode: Text.WordWrap
-            }
-
-            SettingsSwitch {
-                buttonIcon: "layers"
-                text: Translation.tr("Overlay mode (live preview)")
-                checked: Config.options?.settingsUi?.overlayMode ?? false
-                onCheckedChanged: Config.setNestedValue("settingsUi.overlayMode", checked)
-                StyledToolTip {
-                    text: Translation.tr("Overlay replaces the separate Settings window. Restart required.")
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Overlay layout")
-                visible: Config.options?.settingsUi?.overlayMode ?? false
-
-                ConfigSelectionArray {
-                    currentValue: Config.options?.settingsUi?.overlayStyle ?? "rail"
-                    options: [
-                        { displayName: Translation.tr("Nav rail"), icon: "view_sidebar", value: "rail" },
-                        { displayName: Translation.tr("Focus"), icon: "grid_view", value: "focus" }
-                    ]
-                    onSelected: value => Config.setNestedValue("settingsUi.overlayStyle", value)
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
-                        ? Translation.tr("One page at a time: a grid of every settings page, then the page you pick, full width. Escape steps back.")
-                        : Translation.tr("A persistent flat tab rail beside the page you are editing.")
-                    color: Appearance.colors.colSubtext
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    wrapMode: Text.WordWrap
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Overlay appearance")
-                visible: Config.options?.settingsUi?.overlayMode ?? false
-
-                ConfigSpinBox {
-                    icon: "blur_on"
-                    text: Translation.tr("Backdrop blur (%)")
-                    value: Config.options?.settingsUi?.overlayAppearance?.backdropBlur ?? 0
-                    from: 0
-                    to: 100
-                    stepSize: 10
-                    onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.backdropBlur", value)
-                    StyledToolTip {
-                        text: Translation.tr("Blur wallpaper behind Settings; 0 disables the effect.")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "water"
-                    text: Translation.tr("Background dim (%)")
-                    value: Config.options?.settingsUi?.overlayAppearance?.scrimDim ?? 35
-                    from: 0
-                    to: 80
-                    stepSize: 5
-                    onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.scrimDim", value)
-                    StyledToolTip {
-                        text: Translation.tr("How dark the backdrop behind the Settings panel should be (0 = transparent, 80 = very dark)")
-                    }
-                }
-
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: modeHintRow.implicitHeight + 16
-                radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius : Appearance.rounding.small
-                color: Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colSurfaceContainerLow
-                border.width: Appearance.zzzEverywhere ? 0 : 1
-                border.color: Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colLayer0Border
-                Behavior on radius {
-                    enabled: Appearance.animationsEnabled
-                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                }
-                Behavior on color {
-                    enabled: Appearance.animationsEnabled
-                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                }
-                Behavior on border.width {
-                    enabled: Appearance.animationsEnabled
-                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                }
-                Behavior on border.color {
-                    enabled: Appearance.animationsEnabled
-                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                }
-
-                ZzzPlate {
-                    anchors.fill: parent
-                    visible: Appearance.zzzEverywhere
-                    fillColor: Appearance.colors.colLayer1
-                    strokeColor: Appearance.zzz.hairline
-                    radius: Appearance.zzz.cardRadius
-                    chamfer: Appearance.zzz.cutCorner * 0.45
-                    chamferTopRight: !Appearance.zzz.round
-                }
-
-                RowLayout {
-                    id: modeHintRow
-                    anchors {
-                        fill: parent
-                        margins: 8
-                    }
-                    spacing: 8
-
-                    MaterialSymbol {
-                        text: (Config.options?.settingsUi?.overlayMode ?? false) ? "layers" : "open_in_new"
-                        iconSize: Appearance.font.pixelSize.huge
-                        color: Appearance.colors.colPrimary
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 2
-
-                        StyledText {
-                            text: (Config.options?.settingsUi?.overlayMode ?? false)
-                                ? Translation.tr("Overlay mode")
-                                : Translation.tr("Window mode")
-                            font {
-                                pixelSize: Appearance.font.pixelSize.small
-                                weight: Font.Medium
-                            }
-                            color: Appearance.colors.colOnSurface
-                        }
-                        StyledText {
-                            Layout.fillWidth: true
-                            text: (Config.options?.settingsUi?.overlayMode ?? false)
-                                ? Translation.tr("Settings will open as a floating panel over the shell. Press Esc or click outside to close.")
-                                : Translation.tr("Settings will open as a separate application window (current behavior).")
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            color: Appearance.colors.colSubtext
-                            wrapMode: Text.WordWrap
-                        }
-                    }
-                }
             }
         }
     }

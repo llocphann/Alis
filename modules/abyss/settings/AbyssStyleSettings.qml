@@ -16,6 +16,9 @@ ColumnLayout {
     property var sections: ["surface","performance"]
     readonly property bool twoColumnSurfacePerformance: root.sections.length === 2
         && root.sections.includes("surface") && root.sections.includes("performance")
+    readonly property bool twoColumnWavesSpectrum: root.sections.length === 3
+        && root.sections.includes("waves") && root.sections.includes("spectrum")
+        && root.sections.includes("interaction")
     readonly property var waveValues: Wave.parameters(Config.options?.abyss?.waves)
     function spectrumChange(key,value): void {
         const options=Config.options?.abyss?.spectrum
@@ -156,7 +159,7 @@ ColumnLayout {
         description:"Screen Edge appearance and behavior."
         currentValue:root.activeSection
         onSelected:value=>root.activeSection=value
-        visible:options.length > 2
+        visible:options.length > 2 && !root.twoColumnWavesSpectrum
         showIntro:false
         options:[
             {displayName:"Surface",value:"surface",icon:"opacity"},
@@ -171,36 +174,15 @@ ColumnLayout {
             {displayName:"Interaction",value:"interaction",icon:"touch_app"},
             {displayName:"Performance",value:"performance",icon:"speed"}].filter(option=>root.sections.includes(option.value))
     }
-    SettingsCardSection {
-        title:"Audio spectrum";icon:"graphic_eq";settingsTaskSection:"spectrum"
-        visible:root.activeSection==="spectrum"
-        SettingsGroup {
-            ConfigSwitch {
-                text:"Audio-driven Screen Edge wave";autoToggle:false
-                checked:(Config.options?.abyss?.spectrum?.configured ?? false) ? (Config.options?.abyss?.spectrum?.enabled ?? false) : (Config.options?.bar?.visualizer?.enable ?? false)
-                onToggledByUser:checked=>root.spectrumChange("enabled",checked)
-            }
-            Percent { text:"Audio wave strength";configKey:"abyss.spectrum.strength";fallback:.45;maximum:4 }
-            ConfigSelectionArray {
-                currentValue:Config.options?.abyss?.spectrum?.edge ?? "bar"
-                options:[{displayName:"Bar Edge",value:"bar"},{displayName:"All Edges",value:"all"},
-                    {displayName:"Top",value:"top"},{displayName:"Right",value:"right"},{displayName:"Bottom",value:"bottom"},{displayName:"Left",value:"left"}]
-                onSelected:value=>Config.setNestedValue("abyss.spectrum.edge",value)
-            }
-            ConfigSelectionArray {
-                currentValue:(Config.options?.abyss?.spectrum?.configured ?? false) ? Config.options?.abyss?.spectrum?.multiMonitorMode : Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary"
-                options:[{displayName:"Primary output",value:"primary"},{displayName:"All outputs",value:"all"}]
-                onSelected:value=>root.spectrumChange("multiMonitorMode",value)
-            }
-            SettingsNote { text:"Uses the shared audio analyzer; sleeps when paused, hidden or reduced motion is enabled." }
-        }
-    }
     GridLayout {
         Layout.fillWidth: true
-        columns: root.twoColumnSurfacePerformance && width >= 620 ? 2 : 1
+        columns: (root.twoColumnSurfacePerformance || root.twoColumnWavesSpectrum) && width >= 620 ? 2 : 1
         columnSpacing: 14
         rowSpacing: 14
-        visible: root.activeSection === "surface" || root.activeSection === "performance" || root.twoColumnSurfacePerformance
+        visible: root.activeSection === "surface" || root.activeSection === "performance"
+            || root.activeSection === "waves" || root.activeSection === "spectrum"
+            || root.activeSection === "interaction"
+            || root.twoColumnSurfacePerformance || root.twoColumnWavesSpectrum
 
         SettingsCardSection {
             Layout.fillWidth: true
@@ -285,6 +267,119 @@ ColumnLayout {
         SettingsCardSection {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
+            title:"Waves";icon:"waves";settingsTaskSection:"waves"
+            visible:root.activeSection==="waves" || root.twoColumnWavesSpectrum
+            SettingsGroup {
+                ConfigSwitch {
+                    text:"Enable waves";autoToggle:false
+                    checked:Config.options?.abyss?.waves?.enabled ?? false
+                    onToggledByUser:checked=>Config.setNestedValue("abyss.waves.enabled",checked)
+                }
+                ConfigSelectionArray {
+                    currentValue:Config.options?.abyss?.waves?.preset ?? "balanced"
+                    options:[{displayName:"Calm",value:"calm"},{displayName:"Balanced",value:"balanced"},
+                        {displayName:"Fluid",value:"fluid"},{displayName:"Deep",value:"deep"},{displayName:"Custom",value:"custom"}]
+                    onSelected:value=>{
+                        const updates={"abyss.waves.preset":value}
+                        if(Wave.presets[value]) Object.keys(Wave.presets[value]).forEach(k=>updates["abyss.waves."+k]=Wave.presets[value][k])
+                        Config.setNestedValues(updates)
+                    }
+                }
+                AbyssWavePreview {}
+                ConfigSwitch {
+                    text:"Traveling popup waves";autoToggle:false
+                    description:"Panel transitions send waves along Screen Edges."
+                    visible:(Config.options?.abyss?.waves?.preset ?? "balanced") === "custom"
+                    checked:Config.options?.abyss?.waves?.popupTravel ?? true
+                    onToggledByUser:checked=>Config.setNestedValue("abyss.waves.popupTravel",checked)
+                }
+                WindowDialogSlider {
+                    text:"Surface wave strength";Layout.fillWidth:true;from:0;to:4;stepSize:.01
+                    visible:(Config.options?.abyss?.waves?.preset ?? "balanced") === "custom"
+                    value:Wave.bodyStrength(Config.options?.abyss?.waves)
+                    valueText:Math.round(value*100)+" %"
+                    onMoved:Config.setNestedValue("abyss.waves.strength",value)
+                }
+                WindowDialogSlider {
+                    text:"Breaker / whitewater";Layout.fillWidth:true;from:0;to:1;stepSize:.01
+                    visible:(Config.options?.abyss?.waves?.preset ?? "balanced") === "custom"
+                    value:Config.options?.abyss?.waves?.whitewater ?? .65
+                    valueText:Math.round(value*100)+" %"
+                    onMoved:Config.setNestedValue("abyss.waves.whitewater",value)
+                }
+                SettingsNote { text:"Whitewater follows wave crests; unavailable with effects off or Performance quality." }
+                WaveControl { text:"Wave size";parameter:"amplitude" }
+                WaveControl { text:"Propagation distance";parameter:"propagation" }
+                WaveControl { text:"Wave speed";parameter:"speed" }
+                WaveControl { text:"Decay";parameter:"decay" }
+                WaveControl { text:"Surface tension";parameter:"tension" }
+                WaveControl { text:"Viscosity";parameter:"viscosity" }
+                WaveControl { text:"Secondary rebound";parameter:"rebound" }
+                WaveControl { text:"Corner propagation";parameter:"corner" }
+                ConfigSwitch {
+                    text:"Occasional idle ripple";autoToggle:false
+                    visible:(Config.options?.abyss?.waves?.preset ?? "balanced") === "custom"
+                    checked:Config.options?.abyss?.waves?.idle ?? false
+                    onToggledByUser:checked=>Config.setNestedValue("abyss.waves.idle",checked)
+                }
+                SettingsNote { text:"Idle ripples sleep between disturbances; reduced motion applies." }
+            }
+        }
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            spacing: 14
+            visible: root.activeSection === "spectrum" || root.activeSection === "interaction" || root.twoColumnWavesSpectrum
+
+            SettingsCardSection {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                title:"Audio spectrum";icon:"graphic_eq";settingsTaskSection:"spectrum"
+                visible:root.activeSection==="spectrum" || root.twoColumnWavesSpectrum
+                SettingsGroup {
+                    ConfigSwitch {
+                        text:"Audio-driven Screen Edge wave";autoToggle:false
+                        checked:(Config.options?.abyss?.spectrum?.configured ?? false) ? (Config.options?.abyss?.spectrum?.enabled ?? false) : (Config.options?.bar?.visualizer?.enable ?? false)
+                        onToggledByUser:checked=>root.spectrumChange("enabled",checked)
+                    }
+                    Percent { text:"Audio wave strength";configKey:"abyss.spectrum.strength";fallback:.45;maximum:4 }
+                    ConfigSelectionArray {
+                        currentValue:Config.options?.abyss?.spectrum?.edge ?? "bar"
+                        options:[{displayName:"Bar Edge",value:"bar"},{displayName:"All Edges",value:"all"},
+                            {displayName:"Top",value:"top"},{displayName:"Right",value:"right"},{displayName:"Bottom",value:"bottom"},{displayName:"Left",value:"left"}]
+                        onSelected:value=>Config.setNestedValue("abyss.spectrum.edge",value)
+                    }
+                    ConfigSelectionArray {
+                        currentValue:(Config.options?.abyss?.spectrum?.configured ?? false) ? Config.options?.abyss?.spectrum?.multiMonitorMode : Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary"
+                        options:[{displayName:"Primary output",value:"primary"},{displayName:"All outputs",value:"all"}]
+                        onSelected:value=>root.spectrumChange("multiMonitorMode",value)
+                    }
+                    SettingsNote { text:"Uses the shared audio analyzer; sleeps when paused, hidden or reduced motion is enabled." }
+                }
+            }
+            SettingsCardSection {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                title:"Interaction";icon:"touch_app";settingsTaskSection:"interaction"
+                visible:root.activeSection==="interaction" || root.twoColumnWavesSpectrum
+                SettingsGroup {
+                    Percent { text:"Hover response";configKey:"abyss.waves.hover";fallback:1 }
+                    Percent { text:"Press response";configKey:"abyss.waves.press";fallback:1 }
+                    Percent { text:"Opening response";configKey:"abyss.waves.open";fallback:1 }
+                    Percent { text:"Closing response";configKey:"abyss.waves.close";fallback:1 }
+                    Percent { text:"Drag response";configKey:"abyss.waves.drag";fallback:1 }
+                    Percent { text:"Motion intensity";configKey:"abyss.motion.intensity";fallback:.6 }
+                    ConfigSwitch {
+                        text:"Reduce animations (all families)";autoToggle:false
+                        checked:Config.options?.performance?.reduceAnimations ?? false
+                        onToggledByUser:checked=>Config.setNestedValue("performance.reduceAnimations",checked)
+                    }
+                }
+            }
+        }
+        SettingsCardSection {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
             title:"Performance";icon:"speed";settingsTaskSection:"performance"
             visible:root.activeSection==="performance" || root.twoColumnSurfacePerformance
             SettingsSwitch {
@@ -307,65 +402,6 @@ ColumnLayout {
                     onToggledByUser:checked=>Config.setNestedValue("abyss.perimeter.visibleInFullscreen",checked)
                 }
             }
-        }
-    }
-    SettingsCardSection {
-        title:"Waves";icon:"waves";settingsTaskSection:"waves"
-        visible:root.activeSection==="waves"
-        SettingsGroup {
-            ConfigSwitch {
-                text:"Enable waves";autoToggle:false
-                checked:Config.options?.abyss?.waves?.enabled ?? false
-                onToggledByUser:checked=>Config.setNestedValue("abyss.waves.enabled",checked)
-            }
-            ConfigSelectionArray {
-                currentValue:Config.options?.abyss?.waves?.preset ?? "balanced"
-                options:[{displayName:"Calm",value:"calm"},{displayName:"Balanced",value:"balanced"},
-                    {displayName:"Fluid",value:"fluid"},{displayName:"Deep",value:"deep"},{displayName:"Custom",value:"custom"}]
-                onSelected:value=>{
-                    const updates={"abyss.waves.preset":value}
-                    if(Wave.presets[value]) Object.keys(Wave.presets[value]).forEach(k=>updates["abyss.waves."+k]=Wave.presets[value][k])
-                    Config.setNestedValues(updates)
-                }
-            }
-            AbyssWavePreview {}
-            ConfigSwitch {
-                text:"Traveling popup waves";autoToggle:false
-                description:"Panel transitions send waves along Screen Edges."
-                visible:(Config.options?.abyss?.waves?.preset ?? "balanced") === "custom"
-                checked:Config.options?.abyss?.waves?.popupTravel ?? true
-                onToggledByUser:checked=>Config.setNestedValue("abyss.waves.popupTravel",checked)
-            }
-            WindowDialogSlider {
-                text:"Surface wave strength";Layout.fillWidth:true;from:0;to:4;stepSize:.01
-                visible:(Config.options?.abyss?.waves?.preset ?? "balanced") === "custom"
-                value:Wave.bodyStrength(Config.options?.abyss?.waves)
-                valueText:Math.round(value*100)+" %"
-                onMoved:Config.setNestedValue("abyss.waves.strength",value)
-            }
-            WindowDialogSlider {
-                text:"Breaker / whitewater";Layout.fillWidth:true;from:0;to:1;stepSize:.01
-                visible:(Config.options?.abyss?.waves?.preset ?? "balanced") === "custom"
-                value:Config.options?.abyss?.waves?.whitewater ?? .65
-                valueText:Math.round(value*100)+" %"
-                onMoved:Config.setNestedValue("abyss.waves.whitewater",value)
-            }
-            SettingsNote { text:"Whitewater follows wave crests; unavailable with effects off or Performance quality." }
-            WaveControl { text:"Wave size";parameter:"amplitude" }
-            WaveControl { text:"Propagation distance";parameter:"propagation" }
-            WaveControl { text:"Wave speed";parameter:"speed" }
-            WaveControl { text:"Decay";parameter:"decay" }
-            WaveControl { text:"Surface tension";parameter:"tension" }
-            WaveControl { text:"Viscosity";parameter:"viscosity" }
-            WaveControl { text:"Secondary rebound";parameter:"rebound" }
-            WaveControl { text:"Corner propagation";parameter:"corner" }
-            ConfigSwitch {
-                text:"Occasional idle ripple";autoToggle:false
-                visible:(Config.options?.abyss?.waves?.preset ?? "balanced") === "custom"
-                checked:Config.options?.abyss?.waves?.idle ?? false
-                onToggledByUser:checked=>Config.setNestedValue("abyss.waves.idle",checked)
-            }
-            SettingsNote { text:"Idle ripples sleep between disturbances; reduced motion applies." }
         }
     }
     SettingsCardSection {
@@ -407,44 +443,62 @@ ColumnLayout {
             SettingsNote {
                 text:"Popups follow their source Edge. Notes, Timers and Notifications share Edge placement."
             }
-            AbyssPositionSettings {}
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 620 ? 2 : 1
+                columnSpacing: 14
+                rowSpacing: 14
 
-            SettingsNote { text:"Quick Notes / Timers Edge Bar size" }
-            WindowDialogSlider {
-                text:"Quick Notes / Timers width";Layout.fillWidth:true
-                from:280;to:720;stepSize:10
-                value:Config.options?.quickNotes?.popupWidth ?? 420
-                valueText:Math.round(value)+" px"
-                onMoved:Config.setNestedValue("quickNotes.popupWidth",value)
-            }
-            WindowDialogSlider {
-                text:"Quick Notes / Timers height";Layout.fillWidth:true
-                from:300;to:640;stepSize:10
-                value:Config.options?.quickNotes?.popupHeight ?? 300
-                valueText:Math.round(value)+" px"
-                onMoved:Config.setNestedValue("quickNotes.popupHeight",value)
-            }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignTop
+                    spacing: 10
 
-            SettingsDivider {}
+                    AbyssPositionSettings {}
+                    AbyssOutputSelector { configPath:"sidebar.screenList";title:"Sidebar outputs" }
+                    AbyssOutputSelector { configPath:"notifications.screenList";title:"Notification outputs" }
+                }
 
-            SettingsNote { text:"Notifications / Activity Edge Bar size" }
-            WindowDialogSlider {
-                text:"Notifications / Activity width";Layout.fillWidth:true
-                from:320;to:760;stepSize:10
-                value:Config.options?.notificationCenter?.popupWidth ?? 420
-                valueText:Math.round(value)+" px"
-                onMoved:Config.setNestedValue("notificationCenter.popupWidth",value)
-            }
-            WindowDialogSlider {
-                text:"Notifications / Activity height";Layout.fillWidth:true
-                from:260;to:900;stepSize:10
-                value:Config.options?.notificationCenter?.popupHeight ?? 560
-                valueText:Math.round(value)+" px"
-                onMoved:Config.setNestedValue("notificationCenter.popupHeight",value)
-            }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignTop
+                    spacing: 10
 
-            AbyssOutputSelector { configPath:"sidebar.screenList";title:"Sidebar outputs" }
-            AbyssOutputSelector { configPath:"notifications.screenList";title:"Notification outputs" }
+                    SettingsNote { text:"Quick Notes / Timers Edge Bar size" }
+                    WindowDialogSlider {
+                        text:"Quick Notes / Timers width";Layout.fillWidth:true
+                        from:280;to:720;stepSize:10
+                        value:Config.options?.quickNotes?.popupWidth ?? 420
+                        valueText:Math.round(value)+" px"
+                        onMoved:Config.setNestedValue("quickNotes.popupWidth",value)
+                    }
+                    WindowDialogSlider {
+                        text:"Quick Notes / Timers height";Layout.fillWidth:true
+                        from:300;to:640;stepSize:10
+                        value:Config.options?.quickNotes?.popupHeight ?? 300
+                        valueText:Math.round(value)+" px"
+                        onMoved:Config.setNestedValue("quickNotes.popupHeight",value)
+                    }
+
+                    SettingsDivider {}
+
+                    SettingsNote { text:"Notifications / Activity Edge Bar size" }
+                    WindowDialogSlider {
+                        text:"Notifications / Activity width";Layout.fillWidth:true
+                        from:320;to:760;stepSize:10
+                        value:Config.options?.notificationCenter?.popupWidth ?? 420
+                        valueText:Math.round(value)+" px"
+                        onMoved:Config.setNestedValue("notificationCenter.popupWidth",value)
+                    }
+                    WindowDialogSlider {
+                        text:"Notifications / Activity height";Layout.fillWidth:true
+                        from:260;to:900;stepSize:10
+                        value:Config.options?.notificationCenter?.popupHeight ?? 560
+                        valueText:Math.round(value)+" px"
+                        onMoved:Config.setNestedValue("notificationCenter.popupHeight",value)
+                    }
+                }
+            }
         }
     }
     SettingsCardSection {
@@ -452,23 +506,6 @@ ColumnLayout {
         visible:root.activeSection==="editor"
         SettingsGroup {
             SettingsNote { text:"Done saves; Cancel restores. Choose a global or per-output layout." }
-        }
-    }
-    SettingsCardSection {
-        title:"Interaction";icon:"touch_app";settingsTaskSection:"interaction"
-        visible:root.activeSection==="interaction"
-        SettingsGroup {
-            Percent { text:"Hover response";configKey:"abyss.waves.hover";fallback:1 }
-            Percent { text:"Press response";configKey:"abyss.waves.press";fallback:1 }
-            Percent { text:"Opening response";configKey:"abyss.waves.open";fallback:1 }
-            Percent { text:"Closing response";configKey:"abyss.waves.close";fallback:1 }
-            Percent { text:"Drag response";configKey:"abyss.waves.drag";fallback:1 }
-            Percent { text:"Motion intensity";configKey:"abyss.motion.intensity";fallback:.6 }
-            ConfigSwitch {
-                text:"Reduce animations (all families)";autoToggle:false
-                checked:Config.options?.performance?.reduceAnimations ?? false
-                onToggledByUser:checked=>Config.setNestedValue("performance.reduceAnimations",checked)
-            }
         }
     }
 }

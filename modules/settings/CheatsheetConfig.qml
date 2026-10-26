@@ -29,6 +29,7 @@ ContentPage {
     property string _statusMsg: ""
     property string _statusType: ""   // "saved" | "removed" | "error"
     property bool _statusVisible: false
+    property var expandedCategories: ({ "Applications": true })
 
     Connections {
         target: NiriKeybinds
@@ -158,10 +159,18 @@ ContentPage {
                 required property var modelData
                 required property int index
                 Layout.fillWidth: true
-                expanded: false
 
                 readonly property string catName: modelData?.name ?? ""
                 readonly property var bindIndices: modelData?.binds ?? []
+
+                expanded: root.expandedCategories[catName] === true
+                onExpandedChanged: {
+                    if ((root.expandedCategories[catName] === true) !== expanded) {
+                        const next = Object.assign({}, root.expandedCategories)
+                        next[catName] = expanded
+                        root.expandedCategories = next
+                    }
+                }
 
                 icon: root.getCategoryIcon(catName)
                 title: catName
@@ -701,7 +710,7 @@ ContentPage {
                                             const combo = editKeyField.text.trim()
                                             const act = editActionField.text.trim()
                                             if (combo.length > 0 && act.length > 0) {
-                                                NiriKeybinds.setBind(combo, act, editOptionsField.text.trim())
+                                                NiriKeybinds.setBind(combo, act, editOptionsField.text.trim(), kbRow.keyCombo)
                                                 kbRow.editState = "display"
                                             }
                                         }

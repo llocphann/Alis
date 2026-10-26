@@ -178,6 +178,14 @@ Window {
    check(dayHeaders.every(item=>Math.abs(item.y-viewport.contentY)<.5)
      && Math.abs(headerCorner.y-viewport.contentY)<.5,
      "header failed to remain pinned during time-axis scrolling")
+   // Verify early-morning events (e.g. 06:15-08:00) are not hidden behind dayHeader after scrollWorkingHours()
+   const savedEarlyList=local.list.slice()
+   local.list=savedEarlyList.concat([{id:99,title:"Truy Bai",startDate:instant(6.25),endDate:instant(8)}])
+   wait(50);planner.scrollWorkingHours();wait(50)
+   const earlyCard=all(planner,"plannerTimedEvent").find(item=>item.modelData.event.id===99)
+   check(!!earlyCard && earlyCard.y>=viewport.contentY+planner.gridTop,
+     "early morning event (06:15-08:00) is covered by sticky dayHeader on load")
+   local.list=savedEarlyList;wait(50)
    const imported=all(planner,"plannerTimedEvent").find(item=>item.modelData.source==="external")
    const count=root.calls;mouseClick(imported,imported.width/2,imported.height/2);check(root.calls===count,"import opened a mutating editor")
    capture("import-read-only")

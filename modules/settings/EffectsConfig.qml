@@ -11,6 +11,7 @@ ContentPage {
     property string activeSection: "glass"
 
     SettingsTaskNavigator {
+        showTabBar: false
         icon: "blur_on"
         title: Translation.tr("Effects")
         description: Translation.tr("Set rendering policy, then adjust specific effects.")
@@ -38,88 +39,108 @@ ContentPage {
         { key: "widgets", icon: "widgets", label: Translation.tr("Desktop widgets") }
     ]
 
-    SettingsCardSection {
-        settingsTaskSection: "glass"
-        visible: root.activeSection === "glass"
-        expanded: true
-        icon: "blur_on"
-        title: Translation.tr("Blur and glass")
-        SettingsGroup {
-            RowLayout {
+    GridLayout {
+        objectName: "effectsTwoColumnGrid"
+        Layout.fillWidth: true
+        columns: width >= 620 ? 2 : 1
+        columnSpacing: 14
+        rowSpacing: 14
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            spacing: 14
+
+            SettingsCardSection {
                 Layout.fillWidth: true
-                spacing: Appearance.sizes.spacingMedium
-                MaterialSymbol { text: "auto_awesome"; iconSize: Appearance.font.pixelSize.larger }
-                StyledText { Layout.fillWidth: true; text: Translation.tr("Default blur backend") }
-                StyledComboBox {
-                    Layout.preferredWidth: 210
-                    model: root.backendOptions
-                    textRole: "displayName"
-                    currentIndex: Math.max(0, root.backendOptions.findIndex(o => o.value === (Config.options?.performance?.blurBackend ?? "auto")))
-                    onActivated: index => Config.setNestedValue("performance.blurBackend", root.backendOptions[index].value)
+                Layout.alignment: Qt.AlignTop
+                settingsTaskSection: "glass"
+                visible: true
+                expanded: true
+                icon: "blur_on"
+                title: Translation.tr("Blur and glass")
+                SettingsGroup {
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Appearance.sizes.spacingMedium
+                        MaterialSymbol { text: "auto_awesome"; iconSize: Appearance.font.pixelSize.larger }
+                        StyledText { Layout.fillWidth: true; text: Translation.tr("Default blur backend") }
+                        StyledComboBox {
+                            Layout.preferredWidth: 210
+                            model: root.backendOptions
+                            textRole: "displayName"
+                            currentIndex: Math.max(0, root.backendOptions.findIndex(o => o.value === (Config.options?.performance?.blurBackend ?? "auto")))
+                            onActivated: index => Config.setNestedValue("performance.blurBackend", root.backendOptions[index].value)
+                        }
+                    }
+                    SettingsSwitch {
+                        visible: Appearance.nativeBlurSupported
+                        buttonIcon: "blur_on"
+                        text: Translation.tr("Allow compositor blur")
+                        checked: Config.options?.performance?.compositorBlur ?? true
+                        onCheckedChanged: Config.setNestedValue("performance.compositorBlur", checked)
+                    }
                 }
             }
-            SettingsSwitch {
-                visible: Appearance.nativeBlurSupported
-                buttonIcon: "blur_on"
-                text: Translation.tr("Allow compositor blur")
-                checked: Config.options?.performance?.compositorBlur ?? true
-                onCheckedChanged: Config.setNestedValue("performance.compositorBlur", checked)
-            }
-        }
-    }
 
-    SettingsCardSection {
-        settingsTaskSection: "areas"
-        visible: root.activeSection === "areas"
-        expanded: true
-        icon: "tune"
-        title: Translation.tr("Per-area overrides")
-        SettingsGroup {
-            Repeater {
-                model: root.areaDescriptors
-                delegate: RowLayout {
-                    required property var modelData
-                    Layout.fillWidth: true
-                    spacing: Appearance.sizes.spacingMedium
-                    MaterialSymbol { text: modelData.icon; iconSize: Appearance.font.pixelSize.larger }
-                    StyledText { Layout.fillWidth: true; text: modelData.label }
-                    StyledComboBox {
-                        Layout.preferredWidth: 210
-                        readonly property var options: [{ displayName: Translation.tr("Inherit"), value: "inherit" }].concat(root.backendOptions)
-                        model: options
-                        textRole: "displayName"
-                        currentIndex: Math.max(0, options.findIndex(o => o.value === (Config.options?.performance?.blurAreas?.[modelData.key] ?? "inherit")))
-                        onActivated: index => Config.setNestedValue("performance.blurAreas." + modelData.key, options[index].value)
+            SettingsCardSection {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                settingsTaskSection: "motion"
+                visible: true
+                expanded: true
+                icon: "animation"
+                title: Translation.tr("Motion and power")
+                SettingsGroup {
+                    SettingsSwitch {
+                        buttonIcon: "animation"
+                        text: Translation.tr("Reduce animations")
+                        checked: Config.options?.performance?.reduceAnimations ?? false
+                        onCheckedChanged: Config.setNestedValue("performance.reduceAnimations", checked)
+                    }
+                    SettingsSwitch {
+                        buttonIcon: "energy_savings_leaf"
+                        text: Translation.tr("Low power effects")
+                        checked: Config.options?.performance?.lowPower ?? false
+                        onCheckedChanged: Config.setNestedValue("performance.lowPower", checked)
+                    }
+                    SettingsSwitch {
+                        buttonIcon: "memory"
+                        text: Translation.tr("Notify when a restart would free memory")
+                        checked: Config.options?.performance?.memoryWarningNotification ?? false
+                        onCheckedChanged: Config.setNestedValue("performance.memoryWarningNotification", checked)
                     }
                 }
             }
         }
-    }
 
-    SettingsCardSection {
-        settingsTaskSection: "motion"
-        visible: root.activeSection === "motion"
-        expanded: true
-        icon: "animation"
-        title: Translation.tr("Motion and power")
-        SettingsGroup {
-            SettingsSwitch {
-                buttonIcon: "animation"
-                text: Translation.tr("Reduce animations")
-                checked: Config.options?.performance?.reduceAnimations ?? false
-                onCheckedChanged: Config.setNestedValue("performance.reduceAnimations", checked)
-            }
-            SettingsSwitch {
-                buttonIcon: "energy_savings_leaf"
-                text: Translation.tr("Low power effects")
-                checked: Config.options?.performance?.lowPower ?? false
-                onCheckedChanged: Config.setNestedValue("performance.lowPower", checked)
-            }
-            SettingsSwitch {
-                buttonIcon: "memory"
-                text: Translation.tr("Notify when a restart would free memory")
-                checked: Config.options?.performance?.memoryWarningNotification ?? false
-                onCheckedChanged: Config.setNestedValue("performance.memoryWarningNotification", checked)
+        SettingsCardSection {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            settingsTaskSection: "areas"
+            visible: true
+            expanded: true
+            icon: "tune"
+            title: Translation.tr("Per-area overrides")
+            SettingsGroup {
+                Repeater {
+                    model: root.areaDescriptors
+                    delegate: RowLayout {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        spacing: Appearance.sizes.spacingMedium
+                        MaterialSymbol { text: modelData.icon; iconSize: Appearance.font.pixelSize.larger }
+                        StyledText { Layout.fillWidth: true; text: modelData.label }
+                        StyledComboBox {
+                            Layout.preferredWidth: 210
+                            readonly property var options: [{ displayName: Translation.tr("Inherit"), value: "inherit" }].concat(root.backendOptions)
+                            model: options
+                            textRole: "displayName"
+                            currentIndex: Math.max(0, options.findIndex(o => o.value === (Config.options?.performance?.blurAreas?.[modelData.key] ?? "inherit")))
+                            onActivated: index => Config.setNestedValue("performance.blurAreas." + modelData.key, options[index].value)
+                        }
+                    }
+                }
             }
         }
     }

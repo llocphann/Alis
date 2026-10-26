@@ -466,6 +466,25 @@ def test_discovery_matrix() -> None:
             "--new-window",
         ], browser_new
 
+        # 6. Installed launcher path outside scripts/ (e.g. ~/.local/bin/alis) resolves default_apps_helper.py via runtime dir
+        installed_bin = root / "local-bin"
+        installed_bin.mkdir(parents=True, exist_ok=True)
+        installed_alis = installed_bin / "alis"
+        installed_alis.write_text((ROOT / "scripts" / "alis").read_text(encoding="utf-8"), encoding="utf-8")
+        installed_alis.chmod(0o755)
+        env_installed = env_focus.copy()
+        env_installed["ALIS_RUNTIME_DIR"] = str(ROOT)
+        focus_log.write_text("", encoding="utf-8")
+        installed_browser_focus = json.loads(
+            subprocess.check_output(
+                ["bash", str(installed_alis), "browser"],
+                env=env_installed,
+                text=True,
+            )
+        )
+        assert installed_browser_focus["action"] == "focused" and installed_browser_focus["windowId"] == 22, installed_browser_focus
+        assert focus_log.read_text(encoding="utf-8").strip() == "22"
+
 
 def test_manual_xdg_sync() -> None:
     with tempfile.TemporaryDirectory(prefix="alis-set-f01-xdg-") as tmp:

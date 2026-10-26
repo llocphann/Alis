@@ -71,6 +71,7 @@ launcher_root="$(cd -- "$script_dir/.." 2>/dev/null && pwd || printf '%s' "$scri
 source_config_path_helper() {
     local helper_candidates=(
         "$script_dir/lib/config-path.sh"
+        "${config_dir:-}/scripts/lib/config-path.sh"
         "$launcher_root/share/quickshell/alis/scripts/lib/config-path.sh"
         "$user_config_dir/scripts/lib/config-path.sh"
         "$system_config_dir/scripts/lib/config-path.sh"
@@ -101,6 +102,7 @@ source_ipc_registry() {
 
     local registry_candidates=(
         "$script_dir/lib/ipc-registry.sh"
+        "${config_dir:-}/scripts/lib/ipc-registry.sh"
         "$launcher_root/share/quickshell/alis/scripts/lib/ipc-registry.sh"
         "$user_config_dir/scripts/lib/ipc-registry.sh"
         "$system_config_dir/scripts/lib/ipc-registry.sh"
@@ -3599,12 +3601,25 @@ launch_configured_slot() {
     local slot_id="$1"
     local description="$2"
     shift 2
+    resolve_config_dir 2>/dev/null || true
     local config_file
     config_file="$(alis_config_file)"
-    local helper_py
-    helper_py="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/default_apps_helper.py"
+    local helper_py=""
+    local candidate
+    for candidate in \
+        "$script_dir/default_apps_helper.py" \
+        "${config_dir:-}/scripts/default_apps_helper.py" \
+        "$user_config_dir/scripts/default_apps_helper.py" \
+        "$launcher_root/share/quickshell/alis/scripts/default_apps_helper.py" \
+        "$system_config_dir/scripts/default_apps_helper.py" \
+        "$fallback_system_config_dir/scripts/default_apps_helper.py"; do
+        if [[ -n "$candidate" && -f "$candidate" ]]; then
+            helper_py="$candidate"
+            break
+        fi
+    done
 
-    if [[ -f "$helper_py" ]] && command -v python3 >/dev/null 2>&1; then
+    if [[ -n "$helper_py" && -f "$helper_py" ]] && command -v python3 >/dev/null 2>&1; then
         local resolved_json
         resolved_json="$(python3 "$helper_py" focus-or-launch "$slot_id" "$config_file" -- "$@" 2>/dev/null || true)"
         if [[ -n "$resolved_json" ]]; then

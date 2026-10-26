@@ -44,6 +44,7 @@ Singleton {
     // Internal: pending key combos tracked for signal emission
     property string _pendingSetCombo: ""
     property string _pendingRemoveCombo: ""
+    property bool _reloadQueued: false
 
     // ── Public API ────────────────────────────────────────────────────────
 
@@ -115,11 +116,14 @@ Singleton {
     }
 
     function reload(): void {
-        if (!enrichedBindsLoader.running)
-            enrichedBindsLoader.running = true
+        if (enrichedBindsLoader.running) {
+            root._reloadQueued = true
+            return
+        }
+        enrichedBindsLoader.running = true
     }
 
-    function setBind(keyCombo: string, action: string, options: string): void {
+    function setBind(keyCombo: string, action: string, options: string, oldKeyCombo = ""): void {
         if (setBindProcess.running) {
             console.warn("[NiriKeybinds] setBind: process already running, ignoring")
             return
@@ -128,6 +132,8 @@ Singleton {
         const args = [root.nativeDispatchPath, "niri", "set-bind", keyCombo, action]
         if (options && options.length > 0)
             args.push("--options", options)
+        if (oldKeyCombo && oldKeyCombo.length > 0 && oldKeyCombo !== keyCombo)
+            args.push("--replace", oldKeyCombo)
         setBindProcess.command = args
         setBindProcess.running = true
     }
@@ -219,6 +225,13 @@ Singleton {
             } else if (exitCode !== 0) {
                 console.warn("[NiriKeybinds] get-binds failed (exit", exitCode + "), falling back to legacy parser")
                 root._runLegacyFallback()
+            }
+            if (root._reloadQueued) {
+                root._reloadQueued = false
+                Qt.callLater(() => {
+                    if (!enrichedBindsLoader.running)
+                        enrichedBindsLoader.running = true
+                })
             }
         }
     }

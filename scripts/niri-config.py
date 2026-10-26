@@ -2210,7 +2210,7 @@ def _set_window_rules(config_dir, key, value):
 # ─── Surgical helpers ─────────────────────────────────────────────────
 
 
-def _write_validated(filepath, content):
+def _write_validated(filepath, content, silent=False):
     """Write content to file, then validate. If invalid, restore original and report error."""
     backup = filepath.read_text() if filepath.exists() else None
     filepath.write_text(content)
@@ -2221,10 +2221,24 @@ def _write_validated(filepath, content):
             filepath.write_text(backup)
         else:
             filepath.unlink(missing_ok=True)
-        print(json.dumps({"success": False, "error": f"Validation failed: {err}"}))
+        if not silent:
+            print(json.dumps({"success": False, "error": f"Validation failed: {err}"}))
         return 1
 
-    print(json.dumps({"success": True, "file": str(filepath)}))
+    # Trigger Niri hot-reload when editing the active user config under ~/.config/niri
+    try:
+        default_niri_dir = (Path.home() / ".config" / "niri").resolve()
+        if (
+            os.environ.get("NIRI_SOCKET")
+            and not os.environ.get("ALIS_NIRI_SKIP_RELOAD")
+            and filepath.resolve().is_relative_to(default_niri_dir)
+        ):
+            run_niri("action", "load-config-file")
+    except Exception:
+        pass
+
+    if not silent:
+        print(json.dumps({"success": True, "file": str(filepath)}))
     return 0
 
 
@@ -2766,13 +2780,19 @@ def _kb_categorize(description: str, action: str) -> str:
     return "Other"
 
 
-def _kb_find_in_block(block_lines: list, key_combo: str, check_commented: bool = False):
+def _kb_find_in_block(
+    block_lines: list,
+    key_combo: str,
+    check_commented: bool = False,
+    match_normalized: bool = False,
+):
     """Locate a keybind in block_lines.
 
     Returns (start_idx, end_idx_exclusive) covering all lines of the bind
     (including any multi-line body), or None if not found.
     """
     escaped = re.escape(key_combo)
+    target_norm = _kb_normalize_combo(key_combo) if match_normalized else ""
     for i, raw_line in enumerate(block_lines):
         stripped = raw_line.strip()
         if check_commented:
@@ -2784,8 +2804,13 @@ def _kb_find_in_block(block_lines: list, key_combo: str, check_commented: bool =
                 continue
             candidate = stripped
 
-        if not re.match(rf"^{escaped}(?:\s|$|\{{)", candidate):
-            continue
+        if match_normalized:
+            m = re.match(r"^([A-Za-z0-9_][A-Za-z0-9+_]*)(?:\s|$|\{)", candidate)
+            if not m or _kb_normalize_combo(m.group(1)) != target_norm:
+                continue
+        else:
+            if not re.match(rf"^{escaped}(?:\s|$|\{{)", candidate):
+                continue
 
         # Single-line: { action; } on the same line
         if re.search(r"\{[^}]*\}", candidate):
@@ -2803,6 +2828,39 @@ def _kb_find_in_block(block_lines: list, key_combo: str, check_commented: bool =
         return (i, i + 1)
 
     return None
+
+
+def _kb_comment_out_span(block_lines: list, start_idx: int, end_idx: int) -> list:
+    commented_lines = []
+    for line in block_lines[start_idx:end_idx]:
+        if line.strip():
+            lead = re.match(r"^([ \t]*)", line).group(1)
+            commented_lines.append(f"{lead}// {line[len(lead) :]}")
+        else:
+            commented_lines.append(line)
+
+    prev_idx = start_idx - 1
+    while prev_idx >= 0 and not block_lines[prev_idx].strip():
+        prev_idx -= 1
+
+    if prev_idx >= 0:
+        prev_stripped = block_lines[prev_idx].strip()
+        is_desc_comment = (
+            prev_stripped.startswith("//")
+            and "\u2550" not in prev_stripped
+            and "═" not in prev_stripped
+        )
+        if is_desc_comment:
+            prev_line = block_lines[prev_idx]
+            lead = re.match(r"^([ \t]*)", prev_line).group(1)
+            extra_prefix = [f"{lead}// {prev_line[len(lead) :]}"]
+            return (
+                block_lines[:prev_idx]
+                + extra_prefix
+                + commented_lines
+                + block_lines[end_idx:]
+            )
+    return block_lines[:start_idx] + commented_lines + block_lines[end_idx:]
 
 
 # ─── Keybind commands ──────────────────────────────────────────────────
@@ -2992,20 +3050,34 @@ def cmd_get_binds():
     return 0
 
 
+def _kb_find_any_span(block_lines: list, combo: str, check_commented: bool = False):
+    span = _kb_find_in_block(
+        block_lines, combo, check_commented=check_commented, match_normalized=False
+    )
+    if span is None:
+        span = _kb_find_in_block(
+            block_lines, combo, check_commented=check_commented, match_normalized=True
+        )
+    return span
+
+
 def cmd_set_bind(args):
-    """Add or update a keybind in 70-binds.kdl (surgical edit).
+    """Add or update a keybind in 70-binds.kdl or 90-user-extra.kdl (surgical edit).
 
-    Usage: set-bind KEY_COMBO ACTION [--options OPTIONS_STRING]
+    Usage: set-bind KEY_COMBO ACTION [--options OPTIONS_STRING] [--replace OLD_KEY_COMBO]
 
-    If an active bind with KEY_COMBO exists it is replaced in-place.
-    If a commented bind with KEY_COMBO exists it is uncommented and updated.
-    Otherwise the new bind is appended before the closing } of the binds block.
+    If an active bind with OLD_KEY_COMBO or KEY_COMBO exists in 90-user-extra.kdl
+    or 70-binds.kdl it is replaced in-place.
+    If a commented bind exists it is uncommented and updated.
+    Otherwise the new bind is appended before the closing } of the binds block in 70-binds.kdl.
     The replacement is always written as single-line: KEY [options] { action; }
     """
     if len(args) < 2:
         print(
             json.dumps(
-                {"error": "Usage: set-bind KEY_COMBO ACTION [--options OPTIONS]"}
+                {
+                    "error": "Usage: set-bind KEY_COMBO ACTION [--options OPTIONS] [--replace OLD_KEY_COMBO]"
+                }
             )
         )
         return 1
@@ -3013,13 +3085,79 @@ def cmd_set_bind(args):
     key_combo = args[0]
     action = args[1]
     options = ""
+    replace_combo = ""
     idx = 2
     while idx < len(args):
         if args[idx] == "--options" and idx + 1 < len(args):
             options = args[idx + 1]
             idx += 2
+        elif args[idx] == "--replace" and idx + 1 < len(args):
+            replace_combo = args[idx + 1]
+            idx += 2
         else:
             idx += 1
+
+    target_combo = replace_combo if replace_combo else key_combo
+
+    # 1. If the target bind lives in config.d/90-user-extra.kdl, update it in place there
+    extra_file = get_niri_config_dir() / "config.d/90-user-extra.kdl"
+    if extra_file.is_file():
+        extra_content = extra_file.read_text()
+        extra_bounds = _find_block_bounds(extra_content, "binds", top_level=True)
+        if extra_bounds:
+            _, ex_start, ex_end, _ = extra_bounds
+            ex_lines = extra_content[ex_start:ex_end].split("\n")
+            ex_span = _kb_find_any_span(ex_lines, target_combo, check_commented=False)
+            if ex_span is None and target_combo != key_combo:
+                ex_span = _kb_find_any_span(ex_lines, key_combo, check_commented=False)
+            if ex_span is None:
+                ex_span = _kb_find_any_span(ex_lines, target_combo, check_commented=True)
+            if ex_span is not None:
+                s_idx, e_idx = ex_span
+                orig_indent = re.match(r"^([ \t]*)", ex_lines[s_idx]).group(1)
+                if options:
+                    rep = f"{orig_indent}{key_combo} {options} {{ {action}; }}"
+                else:
+                    rep = f"{orig_indent}{key_combo} {{ {action}; }}"
+                new_ex_lines = ex_lines[:s_idx] + [rep] + ex_lines[e_idx:]
+                # If key_combo already had another entry in 90-user-extra.kdl, remove the duplicate
+                if target_combo != key_combo:
+                    dup_span = _kb_find_in_block(
+                        new_ex_lines, key_combo, check_commented=False
+                    )
+                    if dup_span and dup_span[0] != s_idx:
+                        new_ex_lines = _kb_comment_out_span(
+                            new_ex_lines, dup_span[0], dup_span[1]
+                        )
+                new_ex_content = (
+                    extra_content[:ex_start]
+                    + "\n".join(new_ex_lines)
+                    + extra_content[ex_end:]
+                )
+                # Also if 70-binds.kdl had an exact active bind for target_combo (when rebinding to a new key),
+                # comment it out in 70-binds.kdl so the old key combo does not stay active.
+                if target_combo != key_combo:
+                    binds_file = resolve_niri_section_file("config.d/70-binds.kdl")
+                    if binds_file.exists() and binds_file != extra_file:
+                        b_content = binds_file.read_text()
+                        b_bounds = _find_block_bounds(b_content, "binds", top_level=True)
+                        if b_bounds:
+                            _, b_start, b_end, _ = b_bounds
+                            b_lines = b_content[b_start:b_end].split("\n")
+                            b_span = _kb_find_in_block(
+                                b_lines, target_combo, check_commented=False
+                            )
+                            if b_span is not None:
+                                new_b_lines = _kb_comment_out_span(
+                                    b_lines, b_span[0], b_span[1]
+                                )
+                                new_b_content = (
+                                    b_content[:b_start]
+                                    + "\n".join(new_b_lines)
+                                    + b_content[b_end:]
+                                )
+                                _write_validated(binds_file, new_b_content, silent=True)
+                return _write_validated(extra_file, new_ex_content)
 
     binds_file = resolve_niri_section_file("config.d/70-binds.kdl")
     binds_file.parent.mkdir(parents=True, exist_ok=True)
@@ -3038,9 +3176,13 @@ def cmd_set_bind(args):
     block_lines = block_content.split("\n")
 
     # Prefer active bind match; fall back to commented
-    span = _kb_find_in_block(block_lines, key_combo, check_commented=False)
+    span = _kb_find_any_span(block_lines, target_combo, check_commented=False)
+    if span is None and target_combo != key_combo:
+        span = _kb_find_any_span(block_lines, key_combo, check_commented=False)
     if span is None:
-        span = _kb_find_in_block(block_lines, key_combo, check_commented=True)
+        span = _kb_find_any_span(block_lines, target_combo, check_commented=True)
+    if span is None and target_combo != key_combo:
+        span = _kb_find_any_span(block_lines, key_combo, check_commented=True)
 
     if span is not None:
         start_idx, end_idx = span
@@ -3072,7 +3214,7 @@ def cmd_set_bind(args):
 
 
 def cmd_remove_bind(args):
-    """Comment out a keybind in 70-binds.kdl (surgical edit).
+    """Comment out a keybind in 90-user-extra.kdl and/or 70-binds.kdl (surgical edit).
 
     Usage: remove-bind KEY_COMBO
 
@@ -3090,9 +3232,41 @@ def cmd_remove_bind(args):
         print(json.dumps({"error": f"Binds file not found: {binds_file}"}))
         return 1
 
+    extra_file = get_niri_config_dir() / "config.d/90-user-extra.kdl"
+    removed_in_extra = False
+    if extra_file.is_file() and extra_file != binds_file:
+        ex_content = extra_file.read_text()
+        ex_bounds = _find_block_bounds(ex_content, "binds", top_level=True)
+        if ex_bounds:
+            _, ex_start, ex_end, _ = ex_bounds
+            ex_lines = ex_content[ex_start:ex_end].split("\n")
+            ex_span = _kb_find_any_span(ex_lines, key_combo, check_commented=False)
+            if ex_span is not None:
+                new_ex_lines = _kb_comment_out_span(ex_lines, ex_span[0], ex_span[1])
+                new_ex_content = (
+                    ex_content[:ex_start]
+                    + "\n".join(new_ex_lines)
+                    + ex_content[ex_end:]
+                )
+                rc = _write_validated(extra_file, new_ex_content, silent=True)
+                if rc != 0:
+                    print(
+                        json.dumps(
+                            {
+                                "success": False,
+                                "error": f"Validation failed updating {extra_file}",
+                            }
+                        )
+                    )
+                    return 1
+                removed_in_extra = True
+
     content = binds_file.read_text()
     bounds = _find_block_bounds(content, "binds", top_level=True)
     if not bounds:
+        if removed_in_extra:
+            print(json.dumps({"success": True, "file": str(extra_file)}))
+            return 0
         print(json.dumps({"error": "No binds { } block found in file"}))
         return 1
 
@@ -3101,56 +3275,17 @@ def cmd_remove_bind(args):
     block_lines = block_content.split("\n")
 
     span = _kb_find_in_block(block_lines, key_combo, check_commented=False)
+    if span is None and not removed_in_extra:
+        span = _kb_find_any_span(block_lines, key_combo, check_commented=False)
     if span is None:
+        if removed_in_extra:
+            print(json.dumps({"success": True, "file": str(extra_file)}))
+            return 0
         print(json.dumps({"error": f"Active bind not found: {key_combo}"}))
         return 1
 
     start_idx, end_idx = span
-
-    # Comment out every line in the bind span
-    commented_lines = []
-    for line in block_lines[start_idx:end_idx]:
-        if line.strip():
-            lead = re.match(r"^([ \t]*)", line).group(1)
-            commented_lines.append(f"{lead}// {line[len(lead) :]}")
-        else:
-            commented_lines.append(line)
-
-    # If the immediately preceding non-empty line is a plain description comment
-    # (not a section-header divider containing ═), comment it out too so the whole
-    # block looks like a commented-out entry.
-    prev_idx = start_idx - 1
-    while prev_idx >= 0 and not block_lines[prev_idx].strip():
-        prev_idx -= 1
-
-    extra_prefix = []
-    if prev_idx >= 0:
-        prev_stripped = block_lines[prev_idx].strip()
-        is_desc_comment = (
-            prev_stripped.startswith("//")
-            and "\u2550" not in prev_stripped  # ═ character used in section headers
-            and "═" not in prev_stripped
-        )
-        if is_desc_comment:
-            prev_line = block_lines[prev_idx]
-            lead = re.match(r"^([ \t]*)", prev_line).group(1)
-            extra_prefix = [f"{lead}// {prev_line[len(lead) :]}"]
-            # Replace the original description line with the double-commented version
-            new_block_lines = (
-                block_lines[:prev_idx]
-                + extra_prefix
-                + commented_lines
-                + block_lines[end_idx:]
-            )
-        else:
-            new_block_lines = (
-                block_lines[:start_idx] + commented_lines + block_lines[end_idx:]
-            )
-    else:
-        new_block_lines = (
-            block_lines[:start_idx] + commented_lines + block_lines[end_idx:]
-        )
-
+    new_block_lines = _kb_comment_out_span(block_lines, start_idx, end_idx)
     new_block_content = "\n".join(new_block_lines)
     new_content = content[:inner_start] + new_block_content + content[inner_end:]
     return _write_validated(binds_file, new_content)

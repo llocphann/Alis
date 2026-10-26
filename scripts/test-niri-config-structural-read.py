@@ -84,4 +84,20 @@ with tempfile.TemporaryDirectory(prefix="inir-niri-read-") as temporary:
         "Super+O": "Obsidian",
     }, app_binds
 
+    # Verify set-bind --replace updates bind in 90-user-extra.kdl in place without leaving old bind active
+    res_set = read(lambda: module.cmd_set_bind(["Super+Ctrl+E", 'spawn "thunar"', "--replace", "Super+Shift+E"]))
+    assert res_set["success"] is True, res_set
+    assert "90-user-extra.kdl" in res_set["file"], res_set
+    after_edit = read(module.cmd_get_binds)
+    after_combos = {b["key_combo"]: b["action"] for b in after_edit["binds"] if not b["commented"]}
+    assert "Super+Ctrl+E" in after_combos and after_combos["Super+Ctrl+E"] == 'spawn "thunar"', after_combos
+    assert "Super+Shift+E" not in after_combos, after_combos
+
+    # Verify remove-bind comments out active bind in 90-user-extra.kdl
+    res_rm = read(lambda: module.cmd_remove_bind(["Super+O"]))
+    assert res_rm["success"] is True, res_rm
+    after_rm = read(module.cmd_get_binds)
+    active_after_rm = {b["key_combo"] for b in after_rm["binds"] if not b["commented"]}
+    assert "Super+O" not in active_after_rm, active_after_rm
+
 print("PASS: Niri read-only getters ignore commented values and quoted braces")

@@ -65,387 +65,426 @@ ContentPage {
         columnSpacing: 14
         rowSpacing: 14
 
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.alignment: Qt.AlignTop
-        settingsTaskSection: "color"
-        visible: true
-        expanded: true
-        icon: "colors"
-        title: Translation.tr("Color generation")
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            spacing: 14
 
-        SettingsGroup {
-            SettingsSwitch {
-                buttonIcon: "hardware"
-                text: Translation.tr("Shell & utilities")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableAppsAndShell ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.enableAppsAndShell", checked);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Generate colors for GTK apps, fuzzel, and other utilities from wallpaper")
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "tv_options_input_settings"
-                text: Translation.tr("Qt apps")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableQtApps ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.enableQtApps", checked);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Generate colors for Qt/KDE apps (requires Shell & utilities)")
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "chat"
-                text: Translation.tr("Vesktop/Discord")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableVesktop ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.enableVesktop", checked);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Generate Discord theme from wallpaper colors (requires Vesktop with system24 theme)")
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "music_note"
-                text: Translation.tr("Spotify (Spicetify)")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
-                onCheckedChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.enableSpicetify", checked);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Generate and apply a Spicetify theme from wallpaper colors")
-                }
-            }
+            SettingsCardSection {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                settingsTaskSection: "color"
+                visible: true
+                expanded: true
+                icon: "colors"
+                title: Translation.tr("Color generation")
 
-            ContentSubsection {
-                visible: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
-                title: Translation.tr("Spotify theme")
-                tooltip: Translation.tr("Choose the Spicetify layout while keeping Alis wallpaper colors")
+                SettingsGroup {
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: width >= 360 ? 2 : 1
+                        columnSpacing: 10
+                        rowSpacing: 4
 
-                ConfigSelectionArray {
-                    currentValue: Config.options?.appearance?.wallpaperTheming?.spicetifyTheme ?? "Alis"
-                    onSelected: newValue => {
-                        Config.setNestedValue("appearance.wallpaperTheming.spicetifyTheme", newValue)
-                        colorRegenTimer.restart()
-                    }
-                    options: [
-                        { displayName: Translation.tr("Sleek"), value: "Alis" },
-                        { displayName: Translation.tr("Text (TUI)"), value: "AlisTUI" }
-                    ]
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "sports_esports"
-                text: Translation.tr("Steam (Millennium)")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableSteam ?? false
-                onCheckedChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.enableSteam", checked);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Apply Material You colors to Steam via Millennium Material-Theme")
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "music_note"
-                text: Translation.tr("Pear Desktop (YouTube Music)")
-                checked: Config.options?.appearance?.wallpaperTheming?.enablePearDesktop ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.enablePearDesktop", checked);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Apply Material You colors to YouTube Music Desktop App")
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "code"
-                text: Translation.tr("Zed editor")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableZed ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.enableZed", checked);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Generate Zed editor theme from wallpaper colors")
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "code"
-                text: Translation.tr("VSCode editors")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableVSCode ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.enableVSCode", checked);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Generate theme for VSCode and its forks from wallpaper colors")
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "language"
-                text: Translation.tr("Chrome / Chromium")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableChrome ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.enableChrome", checked);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Apply wallpaper-derived colors to Chrome and Chromium browser")
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "code"
-                text: Translation.tr("OpenCode")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableOpenCode ?? false
-                onCheckedChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.enableOpenCode", checked);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Apply wallpaper-derived theme to OpenCode AI editor")
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "code"
-                text: Translation.tr("Neovim / LazyVim")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableNeovim ?? false
-                onCheckedChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.enableNeovim", checked);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Generate Neovim/LazyVim theme at ~/.config/nvim/lua/plugins/neovim.lua.")
-                }
-            }
-            SettingsSwitch {
-                id: cavaSwitch
-                buttonIcon: "equalizer"
-                text: Translation.tr("Theme standalone Cava")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableCava ?? false
-                onCheckedChanged: root.setCavaValue(
-                    "appearance.wallpaperTheming.enableCava", checked, true)
-                StyledToolTip {
-                    text: Translation.tr("Manage ~/.config/cava/config; internal visualizers stay independent.")
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Cava & spectrum options")
-
-                ConfigSelectionArray {
-                    currentValue: Config.options?.appearance?.cava?.colorSource ?? "theme"
-                    onSelected: newValue => root.setCavaValue(
-                        "appearance.cava.colorSource", newValue, true)
-                    options: [
-                        { displayName: Translation.tr("Theme palette"), value: "theme" },
-                        { displayName: Translation.tr("Vibrant (saturated)"), value: "vibrant" },
-                        { displayName: Translation.tr("Album cover"), value: "cover" },
-                    ]
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 5
-
-                    Repeater {
-                        model: CavaTheme.visualizerColors
-
-                        Rectangle {
-                            required property var modelData
+                        SettingsSwitch {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 8
-                            radius: height / 2
-                            color: modelData
+                            buttonIcon: "hardware"
+                            text: Translation.tr("Shell & utilities")
+                            checked: Config.options?.appearance?.wallpaperTheming?.enableAppsAndShell ?? true
+                            onCheckedChanged: {
+                                Config.setNestedValue("appearance.wallpaperTheming.enableAppsAndShell", checked);
+                                colorRegenTimer.restart();
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Generate colors for GTK apps, fuzzel, and other utilities from wallpaper")
+                            }
+                        }
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            buttonIcon: "tv_options_input_settings"
+                            text: Translation.tr("Qt apps")
+                            checked: Config.options?.appearance?.wallpaperTheming?.enableQtApps ?? true
+                            onCheckedChanged: {
+                                Config.setNestedValue("appearance.wallpaperTheming.enableQtApps", checked);
+                                colorRegenTimer.restart();
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Generate colors for Qt/KDE apps (requires Shell & utilities)")
+                            }
+                        }
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            buttonIcon: "chat"
+                            text: Translation.tr("Vesktop/Discord")
+                            checked: Config.options?.appearance?.wallpaperTheming?.enableVesktop ?? true
+                            onCheckedChanged: {
+                                Config.setNestedValue("appearance.wallpaperTheming.enableVesktop", checked);
+                                colorRegenTimer.restart();
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Generate Discord theme from wallpaper colors (requires Vesktop with system24 theme)")
+                            }
+                        }
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            buttonIcon: "music_note"
+                            text: Translation.tr("Spotify (Spicetify)")
+                            checked: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
+                            onCheckedChanged: {
+                                Config.setNestedValue("appearance.wallpaperTheming.enableSpicetify", checked);
+                                colorRegenTimer.restart();
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Generate and apply a Spicetify theme from wallpaper colors")
+                            }
+                        }
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            buttonIcon: "sports_esports"
+                            text: Translation.tr("Steam (Millennium)")
+                            checked: Config.options?.appearance?.wallpaperTheming?.enableSteam ?? false
+                            onCheckedChanged: {
+                                Config.setNestedValue("appearance.wallpaperTheming.enableSteam", checked);
+                                colorRegenTimer.restart();
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Apply Material You colors to Steam via Millennium Material-Theme")
+                            }
+                        }
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            buttonIcon: "music_note"
+                            text: Translation.tr("Pear Desktop (YouTube Music)")
+                            checked: Config.options?.appearance?.wallpaperTheming?.enablePearDesktop ?? true
+                            onCheckedChanged: {
+                                Config.setNestedValue("appearance.wallpaperTheming.enablePearDesktop", checked);
+                                colorRegenTimer.restart();
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Apply Material You colors to YouTube Music Desktop App")
+                            }
+                        }
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            buttonIcon: "code"
+                            text: Translation.tr("Zed editor")
+                            checked: Config.options?.appearance?.wallpaperTheming?.enableZed ?? true
+                            onCheckedChanged: {
+                                Config.setNestedValue("appearance.wallpaperTheming.enableZed", checked);
+                                colorRegenTimer.restart();
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Generate Zed editor theme from wallpaper colors")
+                            }
+                        }
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            buttonIcon: "code"
+                            text: Translation.tr("VSCode editors")
+                            checked: Config.options?.appearance?.wallpaperTheming?.enableVSCode ?? true
+                            onCheckedChanged: {
+                                Config.setNestedValue("appearance.wallpaperTheming.enableVSCode", checked);
+                                colorRegenTimer.restart();
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Generate theme for VSCode and its forks from wallpaper colors")
+                            }
+                        }
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            buttonIcon: "language"
+                            text: Translation.tr("Chrome / Chromium")
+                            checked: Config.options?.appearance?.wallpaperTheming?.enableChrome ?? true
+                            onCheckedChanged: {
+                                Config.setNestedValue("appearance.wallpaperTheming.enableChrome", checked);
+                                colorRegenTimer.restart();
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Apply wallpaper-derived colors to Chrome and Chromium browser")
+                            }
+                        }
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            buttonIcon: "code"
+                            text: Translation.tr("OpenCode")
+                            checked: Config.options?.appearance?.wallpaperTheming?.enableOpenCode ?? false
+                            onCheckedChanged: {
+                                Config.setNestedValue("appearance.wallpaperTheming.enableOpenCode", checked);
+                                colorRegenTimer.restart();
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Apply wallpaper-derived theme to OpenCode AI editor")
+                            }
+                        }
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            buttonIcon: "code"
+                            text: Translation.tr("Neovim / LazyVim")
+                            checked: Config.options?.appearance?.wallpaperTheming?.enableNeovim ?? false
+                            onCheckedChanged: {
+                                Config.setNestedValue("appearance.wallpaperTheming.enableNeovim", checked);
+                                colorRegenTimer.restart();
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Generate Neovim/LazyVim theme at ~/.config/nvim/lua/plugins/neovim.lua.")
+                            }
+                        }
+                    }
+
+                    ContentSubsection {
+                        visible: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
+                        title: Translation.tr("Spotify theme")
+                        tooltip: Translation.tr("Choose the Spicetify layout while keeping Alis wallpaper colors")
+
+                        ConfigSelectionArray {
+                            currentValue: Config.options?.appearance?.wallpaperTheming?.spicetifyTheme ?? "Alis"
+                            onSelected: newValue => {
+                                Config.setNestedValue("appearance.wallpaperTheming.spicetifyTheme", newValue)
+                                colorRegenTimer.restart()
+                            }
+                            options: [
+                                { displayName: Translation.tr("Sleek"), value: "Alis" },
+                                { displayName: Translation.tr("Text (TUI)"), value: "AlisTUI" }
+                            ]
+                        }
+                    }
+
+                    ConfigRow {
+                        uniform: true
+                        SettingsSwitch {
+                            buttonIcon: "dark_mode"
+                            text: Translation.tr("Force dark mode in terminal")
+                            checked: Config.options?.appearance?.wallpaperTheming?.terminalGenerationProps?.forceDarkMode ?? false
+                            onCheckedChanged: {
+                                Config.setNestedValue("appearance.wallpaperTheming.terminalGenerationProps.forceDarkMode", checked);
+                                colorRegenTimer.restart();
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Always use dark background for terminal regardless of wallpaper")
+                            }
+                        }
+                    }
+
+                    ConfigSpinBox {
+                        icon: "gradient"
+                        text: Translation.tr("Terminal: Harmonize threshold")
+                        value: Config.options?.appearance?.wallpaperTheming?.terminalGenerationProps?.harmonizeThreshold ?? 100
+                        from: 0
+                        to: 100
+                        stepSize: 10
+                        onValueChanged: {
+                            Config.setNestedValue("appearance.wallpaperTheming.terminalGenerationProps.harmonizeThreshold", value);
+                            colorRegenTimer.restart();
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("Minimum color difference before harmonization is applied")
+                        }
+                    }
+                    ConfigSpinBox {
+                        icon: "format_color_text"
+                        text: Translation.tr("Terminal: Foreground boost (%)")
+                        value: Math.round((Config.options?.appearance?.wallpaperTheming?.terminalGenerationProps?.termFgBoost ?? 0) * 100)
+                        from: 0
+                        to: 100
+                        stepSize: 10
+                        onValueChanged: {
+                            Config.setNestedValue("appearance.wallpaperTheming.terminalGenerationProps.termFgBoost", value / 100);
+                            colorRegenTimer.restart();
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("Increase terminal ANSI foreground lightness/contrast (use moderate values to avoid washed colors)")
                         }
                     }
                 }
+            }
+        }
 
-                SettingsNote {
-                    icon: (Config.options?.appearance?.cava?.colorSource ?? "theme") === "cover"
-                        ? "album" : "palette"
-                    text: {
-                        const source = Config.options?.appearance?.cava?.colorSource ?? "theme"
-                        if (source === "vibrant")
-                            return Translation.tr("Internal visualizers use a higher-saturation palette with wider hue separation. Standalone cava is regenerated too.")
-                        if (source === "cover")
-                            return CavaTheme.coverPaletteAvailable
-                                ? Translation.tr("Using colors extracted live from the active album artwork.")
-                                : Translation.tr("Waiting for active album artwork; the theme palette is used as a safe fallback.")
-                        return Translation.tr("Internal visualizers use the current primary, secondary and tertiary theme colors.")
-                    }
-                }
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            spacing: 14
 
-                ConfigSpinBox {
-                    icon: "gradient"
-                    text: Translation.tr("Gradient colors")
-                    value: Config.options?.appearance?.cava?.gradientCount ?? 8
-                    from: 1
-                    to: 8
-                    onValueChanged: root.setCavaValue(
-                        "appearance.cava.gradientCount", value, true)
-                    StyledToolTip {
-                        text: Translation.tr("Use one color for a solid spectrum, or up to eight gradient stops")
-                    }
-                }
+            SettingsCardSection {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                settingsTaskSection: "color"
+                visible: true
+                expanded: true
+                icon: "equalizer"
+                title: Translation.tr("Cava & spectrum options")
 
-                ConfigSpinBox {
-                    icon: "hearing"
-                    text: Translation.tr("Sensitivity")
-                    value: Config.options?.appearance?.cava?.sensitivity ?? 100
-                    from: 1
-                    to: 500
-                    stepSize: 10
-                    onValueChanged: root.setCavaValue(
-                        "appearance.cava.sensitivity", value, true)
-                    StyledToolTip {
-                        text: Translation.tr("Audio sensitivity (higher = more reactive)")
+                SettingsGroup {
+                    SettingsSwitch {
+                        id: cavaSwitch
+                        buttonIcon: "equalizer"
+                        text: Translation.tr("Theme standalone Cava")
+                        checked: Config.options?.appearance?.wallpaperTheming?.enableCava ?? false
+                        onCheckedChanged: root.setCavaValue(
+                            "appearance.wallpaperTheming.enableCava", checked, true)
+                        StyledToolTip {
+                            text: Translation.tr("Manage ~/.config/cava/config; internal visualizers stay independent.")
+                        }
                     }
-                }
-                ConfigSpinBox {
-                    icon: "bar_chart"
-                    text: Translation.tr("Bars")
-                    value: Config.options?.appearance?.cava?.bars ?? 0
-                    from: 0
-                    to: 200
-                    stepSize: 8
-                    onValueChanged: root.setCavaValue(
-                        "appearance.cava.bars", value, true)
-                    StyledToolTip {
-                        text: Translation.tr("Number of frequency data points (0 = auto)")
-                    }
-                }
-                ConfigSpinBox {
-                    icon: "speed"
-                    text: Translation.tr("Framerate")
-                    value: Config.options?.appearance?.cava?.framerate ?? 30
-                    from: 30
-                    to: 165
-                    stepSize: 5
-                    onValueChanged: root.setCavaValue(
-                        "appearance.cava.framerate", value, true)
-                    StyledToolTip {
-                        text: Translation.tr("Target refresh rate for the visualizer")
-                    }
-                }
-                SettingsSwitch {
-                    buttonIcon: "headphones"
-                    text: Translation.tr("Stereo")
-                    checked: Config.options?.appearance?.cava?.stereo ?? true
-                    onCheckedChanged: root.setCavaValue(
-                        "appearance.cava.stereo", checked, true)
-                    StyledToolTip {
-                        text: Translation.tr("Split visualizer into left/right channels")
-                    }
-                }
-                ConfigSpinBox {
-                    icon: "opacity"
-                    text: Translation.tr("Wave opacity")
-                    value: Config.options?.appearance?.cava?.waveOpacity ?? 30
-                    from: 5
-                    to: 100
-                    stepSize: 5
-                    onValueChanged: root.setCavaValue(
-                        "appearance.cava.waveOpacity", value, false)
-                    StyledToolTip {
-                        text: Translation.tr("Shared wave fill opacity; bar spectrum has its own setting.")
-                    }
-                }
 
-                RippleButton {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 34
-                    buttonRadius: Appearance.rounding.small
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-                    onClicked: root.resetCavaDefaults()
-                    contentItem: RowLayout {
-                        anchors.centerIn: parent
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.appearance?.cava?.colorSource ?? "theme"
+                        onSelected: newValue => root.setCavaValue(
+                            "appearance.cava.colorSource", newValue, true)
+                        options: [
+                            { displayName: Translation.tr("Theme palette"), value: "theme" },
+                            { displayName: Translation.tr("Vibrant (saturated)"), value: "vibrant" },
+                            { displayName: Translation.tr("Album cover"), value: "cover" },
+                        ]
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
                         spacing: 5
-                        MaterialSymbol { text: "restart_alt"; iconSize: 15; color: Appearance.colors.colOnLayer1 }
-                        StyledText { text: Translation.tr("Reset to defaults"); font.pixelSize: Appearance.font.pixelSize.smaller; color: Appearance.colors.colOnLayer1 }
+
+                        Repeater {
+                            model: CavaTheme.visualizerColors
+
+                            Rectangle {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 8
+                                radius: height / 2
+                                color: modelData
+                            }
+                        }
+                    }
+
+                    SettingsNote {
+                        icon: (Config.options?.appearance?.cava?.colorSource ?? "theme") === "cover"
+                            ? "album" : "palette"
+                        text: {
+                            const source = Config.options?.appearance?.cava?.colorSource ?? "theme"
+                            if (source === "vibrant")
+                                return Translation.tr("Internal visualizers use a higher-saturation palette with wider hue separation. Standalone cava is regenerated too.")
+                            if (source === "cover")
+                                return CavaTheme.coverPaletteAvailable
+                                    ? Translation.tr("Using colors extracted live from the active album artwork.")
+                                    : Translation.tr("Waiting for active album artwork; the theme palette is used as a safe fallback.")
+                            return Translation.tr("Internal visualizers use the current primary, secondary and tertiary theme colors.")
+                        }
+                    }
+
+                    ConfigSpinBox {
+                        icon: "gradient"
+                        text: Translation.tr("Gradient colors")
+                        value: Config.options?.appearance?.cava?.gradientCount ?? 8
+                        from: 1
+                        to: 8
+                        onValueChanged: root.setCavaValue(
+                            "appearance.cava.gradientCount", value, true)
+                        StyledToolTip {
+                            text: Translation.tr("Use one color for a solid spectrum, or up to eight gradient stops")
+                        }
+                    }
+
+                    ConfigSpinBox {
+                        icon: "hearing"
+                        text: Translation.tr("Sensitivity")
+                        value: Config.options?.appearance?.cava?.sensitivity ?? 100
+                        from: 1
+                        to: 500
+                        stepSize: 10
+                        onValueChanged: root.setCavaValue(
+                            "appearance.cava.sensitivity", value, true)
+                        StyledToolTip {
+                            text: Translation.tr("Audio sensitivity (higher = more reactive)")
+                        }
+                    }
+                    ConfigSpinBox {
+                        icon: "bar_chart"
+                        text: Translation.tr("Bars")
+                        value: Config.options?.appearance?.cava?.bars ?? 0
+                        from: 0
+                        to: 200
+                        stepSize: 8
+                        onValueChanged: root.setCavaValue(
+                            "appearance.cava.bars", value, true)
+                        StyledToolTip {
+                            text: Translation.tr("Number of frequency data points (0 = auto)")
+                        }
+                    }
+                    ConfigSpinBox {
+                        icon: "speed"
+                        text: Translation.tr("Framerate")
+                        value: Config.options?.appearance?.cava?.framerate ?? 30
+                        from: 30
+                        to: 165
+                        stepSize: 5
+                        onValueChanged: root.setCavaValue(
+                            "appearance.cava.framerate", value, true)
+                        StyledToolTip {
+                            text: Translation.tr("Target refresh rate for the visualizer")
+                        }
+                    }
+                    SettingsSwitch {
+                        buttonIcon: "headphones"
+                        text: Translation.tr("Stereo")
+                        checked: Config.options?.appearance?.cava?.stereo ?? true
+                        onCheckedChanged: root.setCavaValue(
+                            "appearance.cava.stereo", checked, true)
+                        StyledToolTip {
+                            text: Translation.tr("Split visualizer into left/right channels")
+                        }
+                    }
+                    ConfigSpinBox {
+                        icon: "opacity"
+                        text: Translation.tr("Wave opacity")
+                        value: Config.options?.appearance?.cava?.waveOpacity ?? 30
+                        from: 5
+                        to: 100
+                        stepSize: 5
+                        onValueChanged: root.setCavaValue(
+                            "appearance.cava.waveOpacity", value, false)
+                        StyledToolTip {
+                            text: Translation.tr("Shared wave fill opacity; bar spectrum has its own setting.")
+                        }
+                    }
+
+                    RippleButton {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 34
+                        buttonRadius: Appearance.rounding.small
+                        colBackground: Appearance.colors.colLayer2
+                        colBackgroundHover: Appearance.colors.colLayer2Hover
+                        onClicked: root.resetCavaDefaults()
+                        contentItem: RowLayout {
+                            anchors.centerIn: parent
+                            spacing: 5
+                            MaterialSymbol { text: "restart_alt"; iconSize: 15; color: Appearance.colors.colOnLayer1 }
+                            StyledText { text: Translation.tr("Reset to defaults"); font.pixelSize: Appearance.font.pixelSize.smaller; color: Appearance.colors.colOnLayer1 }
+                        }
                     }
                 }
             }
 
-            ConfigRow {
-                uniform: true
-                SettingsSwitch {
-                    buttonIcon: "dark_mode"
-                    text: Translation.tr("Force dark mode in terminal")
-                    checked: Config.options?.appearance?.wallpaperTheming?.terminalGenerationProps?.forceDarkMode ?? false
-                    onCheckedChanged: {
-                        Config.setNestedValue("appearance.wallpaperTheming.terminalGenerationProps.forceDarkMode", checked);
-                        colorRegenTimer.restart();
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Always use dark background for terminal regardless of wallpaper")
-                    }
-                }
-            }
+            SettingsCardSection {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                settingsTaskSection: "resources"
+                visible: true
+                expanded: true
+                icon: "memory_alt"
+                title: Translation.tr("Resource Monitor")
 
-            ConfigSpinBox {
-                icon: "gradient"
-                text: Translation.tr("Terminal: Harmonize threshold")
-                value: Config.options?.appearance?.wallpaperTheming?.terminalGenerationProps?.harmonizeThreshold ?? 100
-                from: 0
-                to: 100
-                stepSize: 10
-                onValueChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.terminalGenerationProps.harmonizeThreshold", value);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Minimum color difference before harmonization is applied")
-                }
-            }
-            ConfigSpinBox {
-                icon: "format_color_text"
-                text: Translation.tr("Terminal: Foreground boost (%)")
-                value: Math.round((Config.options?.appearance?.wallpaperTheming?.terminalGenerationProps?.termFgBoost ?? 0) * 100)
-                from: 0
-                to: 100
-                stepSize: 10
-                onValueChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.terminalGenerationProps.termFgBoost", value / 100);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Increase terminal ANSI foreground lightness/contrast (use moderate values to avoid washed colors)")
+                SettingsGroup {
+                    SettingsSwitch {
+                        buttonIcon: "memory_alt"
+                        text: Translation.tr("GPU monitoring")
+                        checked: Config.options?.resources?.monitorGpu ?? true
+                        onCheckedChanged: {
+                            Config.setNestedValue("resources.monitorGpu", checked);
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("On hybrid laptops, GPU polling can wake the dGPU; disabling pins Qt to iGPU after restart.")
+                        }
+                    }
                 }
             }
         }
-    }
-
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.alignment: Qt.AlignTop
-        settingsTaskSection: "resources"
-        visible: true
-        expanded: true
-        icon: "memory_alt"
-        title: Translation.tr("Resource Monitor")
-
-        SettingsGroup {
-            SettingsSwitch {
-                buttonIcon: "memory_alt"
-                text: Translation.tr("GPU monitoring")
-                checked: Config.options?.resources?.monitorGpu ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("resources.monitorGpu", checked);
-                }
-                StyledToolTip {
-                    text: Translation.tr("On hybrid laptops, GPU polling can wake the dGPU; disabling pins Qt to iGPU after restart.")
-                }
-            }
-        }
-    }
     }
 }

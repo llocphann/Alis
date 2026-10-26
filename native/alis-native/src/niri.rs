@@ -81,6 +81,8 @@ pub enum NiriCommand {
         action: String,
         #[arg(long)]
         options: Option<String>,
+        #[arg(long)]
+        replace: Option<String>,
     },
     RemoveBind {
         key_combo: String,
@@ -130,7 +132,13 @@ pub fn run(command: NiriCommand) -> Result<Outcome> {
             key_combo,
             action,
             options,
-        } => set_bind(&key_combo, &action, options.as_deref().unwrap_or("")),
+            replace,
+        } => set_bind(
+            &key_combo,
+            &action,
+            options.as_deref().unwrap_or(""),
+            replace.as_deref().unwrap_or(""),
+        ),
         NiriCommand::RemoveBind { key_combo } => remove_bind(&key_combo),
     }
 }
@@ -539,6 +547,14 @@ fn write_validated(path: &Path, content: &str) -> Result<Outcome> {
             json!({"success": false, "error": format!("Validation failed: {error}")}),
             1,
         ));
+    }
+    if std::env::var_os("NIRI_SOCKET").is_some()
+        && std::env::var_os("ALIS_NIRI_SKIP_RELOAD").is_none()
+        && path.starts_with(home_dir().join(".config").join("niri"))
+    {
+        let _ = Command::new("niri")
+            .args(["msg", "action", "load-config-file"])
+            .output();
     }
     Ok(Outcome::ok(
         json!({"success": true, "file": path.to_string_lossy()}),
@@ -2409,7 +2425,17 @@ fn get_binds() -> Result<Outcome> {
     })))
 }
 
-fn find_bind_span(lines: &[String], key_combo: &str, commented: bool) -> Option<(usize, usize)> {
+fn find_bind_span(
+    lines: &[String],
+    key_combo: &str,
+    commented: bool,
+    match_normalized: bool,
+) -> Option<(usize, usize)> {
+    let target_norm = if match_normalized {
+        normalize_combo(key_combo)
+    } else {
+        String::new()
+    };
     for (index, raw) in lines.iter().enumerate() {
         let stripped = raw.trim();
         let candidate = if commented {
@@ -2427,7 +2453,11 @@ fn find_bind_span(lines: &[String], key_combo: &str, commented: bool) -> Option<
             .split('{')
             .next()
             .unwrap_or_default();
-        if first != key_combo {
+        if match_normalized {
+            if first.is_empty() || normalize_combo(first) != target_norm {
+                continue;
+            }
+        } else if first != key_combo {
             continue;
         }
         let mut depth =
@@ -2446,58 +2476,12 @@ fn find_bind_span(lines: &[String], key_combo: &str, commented: bool) -> Option<
     None
 }
 
-fn set_bind(key_combo: &str, action: &str, options: &str) -> Result<Outcome> {
-    let path = resolve_section_file("config.d/70-binds.kdl");
-    let content = fs::read_to_string(&path).context("binds file not found")?;
-    let (_, inner_start, inner_end, _) = find_block_bounds(&content, "binds", true)
-        .ok_or_else(|| anyhow!("binds_block_not_found"))?;
-    let block = &content[inner_start..inner_end];
-    // Python uses split("\n"), not splitlines()/str::lines(), so the trailing
-    // empty element before the closing brace is part of the surgical-edit
-    // contract and must be preserved.
-    let mut lines = block.split('\n').map(str::to_owned).collect::<Vec<_>>();
-    let span = find_bind_span(&lines, key_combo, false)
-        .or_else(|| find_bind_span(&lines, key_combo, true));
-    let rendered = if options.trim().is_empty() {
-        format!("{key_combo} {{ {action}; }}")
-    } else {
-        format!("{key_combo} {} {{ {action}; }}", options.trim())
-    };
-    if let Some((start, end)) = span {
-        let indent = lines[start]
-            .chars()
-            .take_while(|value| value.is_whitespace())
-            .collect::<String>();
-        lines.splice(start..end, [format!("{indent}{rendered}")]);
-    } else {
-        let insert = lines
-            .iter()
-            .rposition(|line| !line.trim().is_empty())
-            .map_or(0, |index| index + 1);
-        lines.insert(insert, format!("    {rendered}"));
-        // Match Python: a newly appended bind gets a blank separator before
-        // the original trailing blank lines / closing brace.
-        lines.insert(insert + 1, String::new());
-    }
-    let next = format!(
-        "{}{}{}",
-        &content[..inner_start],
-        lines.join("\n"),
-        &content[inner_end..]
-    );
-    write_validated(&path, &next)
+fn find_any_bind_span(lines: &[String], key_combo: &str, commented: bool) -> Option<(usize, usize)> {
+    find_bind_span(lines, key_combo, commented, false)
+        .or_else(|| find_bind_span(lines, key_combo, commented, true))
 }
 
-fn remove_bind(key_combo: &str) -> Result<Outcome> {
-    let path = resolve_section_file("config.d/70-binds.kdl");
-    let content = fs::read_to_string(&path).context("binds file not found")?;
-    let (_, inner_start, inner_end, _) = find_block_bounds(&content, "binds", true)
-        .ok_or_else(|| anyhow!("binds_block_not_found"))?;
-    let block = &content[inner_start..inner_end];
-    let mut lines = block.split('\n').map(str::to_owned).collect::<Vec<_>>();
-    let (start, end) = find_bind_span(&lines, key_combo, false)
-        .ok_or_else(|| anyhow!("active_bind_not_found:{key_combo}"))?;
-
+fn comment_out_bind_span(lines: &mut Vec<String>, start: usize, end: usize) {
     let commented = lines[start..end]
         .iter()
         .map(|line| {
@@ -2529,12 +2513,204 @@ fn remove_bind(key_combo: &str) -> Result<Outcome> {
                 .collect::<String>();
             let doubled = format!("{indent}// {}", &lines[index][indent.len()..]);
             lines.splice(index..end, std::iter::once(doubled).chain(commented));
-        } else {
-            lines.splice(start..end, commented);
+            return;
         }
-    } else {
-        lines.splice(start..end, commented);
     }
+    lines.splice(start..end, commented);
+}
+
+fn set_bind(key_combo: &str, action: &str, options: &str, replace_combo: &str) -> Result<Outcome> {
+    let target_combo = if !replace_combo.trim().is_empty() {
+        replace_combo.trim()
+    } else {
+        key_combo
+    };
+    let rendered = if options.trim().is_empty() {
+        format!("{key_combo} {{ {action}; }}")
+    } else {
+        format!("{key_combo} {} {{ {action}; }}", options.trim())
+    };
+
+    let extra_path = config_dir().join("config.d/90-user-extra.kdl");
+    if extra_path.is_file() {
+        if let Ok(extra_content) = fs::read_to_string(&extra_path) {
+            if let Some((_, ex_start, ex_end, _)) = find_block_bounds(&extra_content, "binds", true)
+            {
+                let mut ex_lines = extra_content[ex_start..ex_end]
+                    .split('\n')
+                    .map(str::to_owned)
+                    .collect::<Vec<_>>();
+                let ex_span = find_any_bind_span(&ex_lines, target_combo, false)
+                    .or_else(|| {
+                        if target_combo != key_combo {
+                            find_any_bind_span(&ex_lines, key_combo, false)
+                        } else {
+                            None
+                        }
+                    })
+                    .or_else(|| find_any_bind_span(&ex_lines, target_combo, true));
+                if let Some((s_idx, e_idx)) = ex_span {
+                    let indent = ex_lines[s_idx]
+                        .chars()
+                        .take_while(|value| value.is_whitespace())
+                        .collect::<String>();
+                    ex_lines.splice(s_idx..e_idx, [format!("{indent}{rendered}")]);
+                    if target_combo != key_combo {
+                        if let Some((dup_s, dup_e)) =
+                            find_bind_span(&ex_lines, key_combo, false, false)
+                        {
+                            if dup_s != s_idx {
+                                comment_out_bind_span(&mut ex_lines, dup_s, dup_e);
+                            }
+                        }
+                    }
+                    let next_extra = format!(
+                        "{}{}{}",
+                        &extra_content[..ex_start],
+                        ex_lines.join("\n"),
+                        &extra_content[ex_end..]
+                    );
+                    if target_combo != key_combo {
+                        let binds_path = resolve_section_file("config.d/70-binds.kdl");
+                        if binds_path.is_file() && binds_path != extra_path {
+                            if let Ok(b_content) = fs::read_to_string(&binds_path) {
+                                if let Some((_, b_start, b_end, _)) =
+                                    find_block_bounds(&b_content, "binds", true)
+                                {
+                                    let mut b_lines = b_content[b_start..b_end]
+                                        .split('\n')
+                                        .map(str::to_owned)
+                                        .collect::<Vec<_>>();
+                                    if let Some((bs, be)) =
+                                        find_bind_span(&b_lines, target_combo, false, false)
+                                    {
+                                        comment_out_bind_span(&mut b_lines, bs, be);
+                                        let next_b = format!(
+                                            "{}{}{}",
+                                            &b_content[..b_start],
+                                            b_lines.join("\n"),
+                                            &b_content[b_end..]
+                                        );
+                                        let _ = write_validated(&binds_path, &next_b);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return write_validated(&extra_path, &next_extra);
+                }
+            }
+        }
+    }
+
+    let path = resolve_section_file("config.d/70-binds.kdl");
+    let content = fs::read_to_string(&path).context("binds file not found")?;
+    let (_, inner_start, inner_end, _) = find_block_bounds(&content, "binds", true)
+        .ok_or_else(|| anyhow!("binds_block_not_found"))?;
+    let block = &content[inner_start..inner_end];
+    // Python uses split("\n"), not splitlines()/str::lines(), so the trailing
+    // empty element before the closing brace is part of the surgical-edit
+    // contract and must be preserved.
+    let mut lines = block.split('\n').map(str::to_owned).collect::<Vec<_>>();
+    let span = find_any_bind_span(&lines, target_combo, false)
+        .or_else(|| {
+            if target_combo != key_combo {
+                find_any_bind_span(&lines, key_combo, false)
+            } else {
+                None
+            }
+        })
+        .or_else(|| find_any_bind_span(&lines, target_combo, true))
+        .or_else(|| {
+            if target_combo != key_combo {
+                find_any_bind_span(&lines, key_combo, true)
+            } else {
+                None
+            }
+        });
+    if let Some((start, end)) = span {
+        let indent = lines[start]
+            .chars()
+            .take_while(|value| value.is_whitespace())
+            .collect::<String>();
+        lines.splice(start..end, [format!("{indent}{rendered}")]);
+    } else {
+        let insert = lines
+            .iter()
+            .rposition(|line| !line.trim().is_empty())
+            .map_or(0, |index| index + 1);
+        lines.insert(insert, format!("    {rendered}"));
+        // Match Python: a newly appended bind gets a blank separator before
+        // the original trailing blank lines / closing brace.
+        lines.insert(insert + 1, String::new());
+    }
+    let next = format!(
+        "{}{}{}",
+        &content[..inner_start],
+        lines.join("\n"),
+        &content[inner_end..]
+    );
+    write_validated(&path, &next)
+}
+
+fn remove_bind(key_combo: &str) -> Result<Outcome> {
+    let path = resolve_section_file("config.d/70-binds.kdl");
+    let extra_path = config_dir().join("config.d/90-user-extra.kdl");
+    let mut removed_in_extra = false;
+
+    if extra_path.is_file() && extra_path != path {
+        if let Ok(ex_content) = fs::read_to_string(&extra_path) {
+            if let Some((_, ex_start, ex_end, _)) = find_block_bounds(&ex_content, "binds", true) {
+                let mut ex_lines = ex_content[ex_start..ex_end]
+                    .split('\n')
+                    .map(str::to_owned)
+                    .collect::<Vec<_>>();
+                if let Some((s_idx, e_idx)) = find_any_bind_span(&ex_lines, key_combo, false) {
+                    comment_out_bind_span(&mut ex_lines, s_idx, e_idx);
+                    let next_extra = format!(
+                        "{}{}{}",
+                        &ex_content[..ex_start],
+                        ex_lines.join("\n"),
+                        &ex_content[ex_end..]
+                    );
+                    let outcome = write_validated(&extra_path, &next_extra)?;
+                    if outcome.code != 0 {
+                        return Ok(outcome);
+                    }
+                    removed_in_extra = true;
+                }
+            }
+        }
+    }
+
+    let content = fs::read_to_string(&path).context("binds file not found")?;
+    let Some((_, inner_start, inner_end, _)) = find_block_bounds(&content, "binds", true) else {
+        if removed_in_extra {
+            return Ok(Outcome::ok(
+                json!({"success": true, "file": extra_path.to_string_lossy()}),
+            ));
+        }
+        bail!("binds_block_not_found");
+    };
+    let block = &content[inner_start..inner_end];
+    let mut lines = block.split('\n').map(str::to_owned).collect::<Vec<_>>();
+    let span = find_bind_span(&lines, key_combo, false, false).or_else(|| {
+        if !removed_in_extra {
+            find_any_bind_span(&lines, key_combo, false)
+        } else {
+            None
+        }
+    });
+    let Some((start, end)) = span else {
+        if removed_in_extra {
+            return Ok(Outcome::ok(
+                json!({"success": true, "file": extra_path.to_string_lossy()}),
+            ));
+        }
+        bail!("active_bind_not_found:{key_combo}");
+    };
+
+    comment_out_bind_span(&mut lines, start, end);
 
     let next = format!(
         "{}{}{}",

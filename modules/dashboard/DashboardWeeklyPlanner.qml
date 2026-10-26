@@ -236,10 +236,18 @@ Item {
     property real hourHeight: 52 * Appearance.fontSizeScale
     property int _eventsRevision: 0
     readonly property int firstDay: Qt.locale().firstDayOfWeek % 7
+    property bool _initialAutoScrollPending: true
     readonly property var days: {
         const revision = root._eventsRevision
         return Planner.project(root.localBackend.list, root.externalBackend.events,
             root.selectedDate, root.firstDay, FutureSchedule)
+    }
+    onDaysChanged: {
+        if (root._initialized && root._initialAutoScrollPending
+                && (root.days || []).some(day => (day?.timed?.length ?? 0) > 0)) {
+            root._initialAutoScrollPending = false
+            Qt.callLater(root.scrollWorkingHours)
+        }
     }
     readonly property int maximumMinutes: Math.max.apply(null, days.map(day => day.minutes))
     readonly property int allDayRows: Math.min(expandAllDay ? 512 : 4, Math.max.apply(null, days.map(day => day.allDay.length)))
@@ -404,8 +412,22 @@ Item {
             _editOccurrenceIndex:row.occurrenceIndex
         }))
     }
+    function earliestWeekEventMinutes(): int {
+        let earliest = 480
+        for (const day of (root.days || [])) {
+            for (const item of (day?.timed || [])) {
+                const startMin = Number(item?.start ?? 480)
+                if (Number.isFinite(startMin) && startMin >= 0 && startMin < earliest)
+                    earliest = startMin
+            }
+        }
+        return earliest
+    }
     function scrollWorkingHours(): void {
-        viewport.contentY=Math.min(Math.max(0,viewport.contentHeight-viewport.height),hourHeight*8)
+        const earliestMin = root.earliestWeekEventMinutes()
+        const targetHour = Math.floor(earliestMin / 60)
+        const targetY = targetHour <= 0 ? 0 : Math.max(0, targetHour * root.hourHeight - 10)
+        viewport.contentY = Math.min(Math.max(0, viewport.contentHeight - viewport.height), targetY)
     }
     function panHorizontally(delta): bool {
         const before=viewport.contentX
@@ -582,6 +604,7 @@ Item {
                 contentHeight:root.gridTop+root.maximumMinutes/60*root.hourHeight
                 boundsBehavior:Flickable.StopAtBounds
                 flickableDirection:Flickable.HorizontalAndVerticalFlick
+                onMovementStarted:root._initialAutoScrollPending=false
                 ScrollBar.vertical: ScrollBar {policy:ScrollBar.AlwaysOff}
                 ScrollBar.horizontal: ScrollBar {policy:ScrollBar.AlwaysOff}
                 Rectangle {
@@ -597,7 +620,7 @@ Item {
                     model: Math.ceil(root.maximumMinutes/60)
                     delegate: StyledText {
                         required property int index
-                        y:root.gridTop+index*root.hourHeight-7;x:0;width:40
+                        y:root.gridTop+(index===0?2:index*root.hourHeight-7);x:0;width:40
                         text:String(index).padStart(2,"0")+":00"
                         color:root.mutedInk;font.pixelSize:Appearance.font.pixelSize.smallest
                     }
@@ -1124,6 +1147,8 @@ Item {
         _initialized=true
         refreshFollowingToday()
         storeBrowser()
+        if ((root.days || []).some(day => (day?.timed?.length ?? 0) > 0))
+            root._initialAutoScrollPending=false
         Qt.callLater(root.scrollWorkingHours)
     }
 }
