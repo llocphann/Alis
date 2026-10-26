@@ -1135,62 +1135,193 @@ Scope {
                                 ColumnLayout {
                                     id: navCol
                                     width: parent.width
-                                    spacing: SettingsMaterialPreset.navItemSpacing
+                                    spacing: 4
 
                                     Repeater {
                                         id: navRepeater
-                                        model: root.visibleNavItems
+                                        model: SettingsPageRegistry.categories
 
-                                        delegate: RippleButton {
-                                            id: navBtn
-                                objectName:"settingsNav_"+(modelData.groupKey || modelData.key || "back")
+                                        delegate: ColumnLayout {
+                                            id: navHeadingGroup
                                             required property int index
                                             required property var modelData
+                                            readonly property string headingTitle: String(navHeadingGroup.modelData?.label ?? "")
+                                            readonly property var groupPages: (navHeadingGroup.modelData?.pages ?? []).filter(
+                                                idx => root.overlayPages[idx] && SettingsPageRegistry.isPageApplicable(idx)).map(
+                                                idx => Object.assign({}, root.overlayPages[idx], { realIndex: idx }))
+                                            readonly property bool hasActivePage: navHeadingGroup.groupPages.some(item => item.realIndex === root.overlayCurrentPage)
+                                            property bool dropdownOpen: false
+                                            visible: navHeadingGroup.groupPages.length > 0
                                             Layout.fillWidth: true
-                                            implicitHeight: SettingsMaterialPreset.navItemHeight
-                                            rippleEnabled: true
-                                            buttonRadius: Math.min(width, height) / 2
-                                            readonly property int pageRealIndex: modelData.realIndex
-                                            toggled: Hierarchy.selected(modelData,root.overlayPages,root.overlayCurrentPage)
-                                            colBackground: "transparent"
-                                            colBackgroundToggled: Appearance.colors.colPrimaryContainer
-                                            colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
-                                            colBackgroundHover: Appearance.colors.colLayer1Hover
-                                            onClicked: root.activateNavigation(modelData)
+                                            spacing: 2
 
-                                            contentItem: RowLayout {
-                                                anchors.fill: parent
-                                                anchors.leftMargin: 10
-                                                anchors.rightMargin: 9
-                                                spacing: 9
+                                            HoverHandler {
+                                                id: groupHover
+                                                onHoveredChanged: {
+                                                    if (groupHover.hovered) {
+                                                        collapseDelayTimer.stop()
+                                                        navHeadingGroup.dropdownOpen = true
+                                                    } else {
+                                                        collapseDelayTimer.restart()
+                                                    }
+                                                }
+                                            }
 
-                                                MaterialSymbol {
-                                                    text: navBtn.modelData.icon || ""
-                                                    iconSize: 18
-                                                    color: SettingsMaterialPreset.navigationIconColor(
-                                                        navBtn.index, root.visibleNavItems.length, navBtn.toggled)
-                                                    rotation: navBtn.modelData.iconRotation || 0
-                                                    Behavior on color {
-                                                        enabled: Appearance.animationsEnabled
-                                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                            Timer {
+                                                id: collapseDelayTimer
+                                                interval: 110
+                                                repeat: false
+                                                onTriggered: {
+                                                    if (!groupHover.hovered)
+                                                        navHeadingGroup.dropdownOpen = false
+                                                }
+                                            }
+
+                                            Rectangle {
+                                                id: headingBar
+                                                Layout.fillWidth: true
+                                                implicitHeight: 36
+                                                radius: Appearance.rounding.small
+                                                color: navHeadingGroup.dropdownOpen
+                                                    ? Appearance.colors.colLayer1Hover
+                                                    : (navHeadingGroup.hasActivePage
+                                                        ? Qt.alpha(Appearance.colors.colPrimaryContainer, 0.48)
+                                                        : "transparent")
+
+                                                Behavior on color {
+                                                    enabled: Appearance.animationsEnabled
+                                                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                                }
+
+                                                RowLayout {
+                                                    anchors.fill: parent
+                                                    anchors.leftMargin: 10
+                                                    anchors.rightMargin: 8
+                                                    spacing: 8
+
+                                                    MaterialSymbol {
+                                                        text: navHeadingGroup.groupPages.length > 0
+                                                            ? SettingsPageRegistry.iconForPage(navHeadingGroup.groupPages[0].realIndex)
+                                                            : "folder"
+                                                        iconSize: 17
+                                                        color: SettingsMaterialPreset.navigationIconColor(
+                                                            navHeadingGroup.index,
+                                                            Math.max(1, SettingsPageRegistry.categories.length),
+                                                            navHeadingGroup.hasActivePage || navHeadingGroup.dropdownOpen)
+                                                    }
+
+                                                    StyledText {
+                                                        Layout.fillWidth: true
+                                                        text: navHeadingGroup.headingTitle
+                                                        font.pixelSize: Appearance.font.pixelSize.small
+                                                        font.weight: (navHeadingGroup.hasActivePage || navHeadingGroup.dropdownOpen)
+                                                            ? Font.DemiBold : Font.Medium
+                                                        color: navHeadingGroup.hasActivePage
+                                                            ? Appearance.colors.colOnPrimaryContainer
+                                                            : Appearance.colors.colOnLayer1
+                                                        elide: Text.ElideRight
+                                                    }
+
+                                                    MaterialSymbol {
+                                                        text: "expand_more"
+                                                        iconSize: 17
+                                                        rotation: navHeadingGroup.dropdownOpen ? 180 : 0
+                                                        color: Appearance.colors.colOnSurfaceVariant
+                                                        Behavior on rotation {
+                                                            enabled: Appearance.animationsEnabled
+                                                            NumberAnimation {
+                                                                duration: Appearance.animation.elementMoveFast.duration
+                                                                easing.type: Easing.OutCubic
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            Item {
+                                                Layout.fillWidth: true
+                                                implicitHeight: navHeadingGroup.dropdownOpen ? groupPagesCol.implicitHeight : 0
+                                                clip: true
+                                                enabled: navHeadingGroup.dropdownOpen
+
+                                                Behavior on implicitHeight {
+                                                    enabled: Appearance.animationsEnabled
+                                                    NumberAnimation {
+                                                        duration: 210
+                                                        easing.type: Easing.OutCubic
                                                     }
                                                 }
 
-                                                StyledText {
-                                                    Layout.fillWidth: true
-                                                    text: navBtn.modelData.name || ""
-                                                    font.pixelSize: Appearance.font.pixelSize.small
-                                                    font.weight: navBtn.toggled ? Font.DemiBold : Font.Normal
-                                                    color: navBtn.toggled
-                                                        ? Appearance.colors.colOnPrimaryContainer
-                                                        : Appearance.colors.colOnSurfaceVariant
-                                                    elide: Text.ElideRight
-                                                    Behavior on color {
+                                                ColumnLayout {
+                                                    id: groupPagesCol
+                                                    width: parent.width
+                                                    spacing: SettingsMaterialPreset.navItemSpacing
+                                                    opacity: navHeadingGroup.dropdownOpen ? 1 : 0
+
+                                                    Behavior on opacity {
                                                         enabled: Appearance.animationsEnabled
-                                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                                        NumberAnimation { duration: 160 }
+                                                    }
+
+                                                    Repeater {
+                                                        model: navHeadingGroup.groupPages
+
+                                                        delegate: RippleButton {
+                                                            id: navBtn
+                                                            required property int index
+                                                            required property var modelData
+                                                            objectName: "settingsNav_" + (modelData.groupKey || modelData.key || "back")
+                                                            Layout.fillWidth: true
+                                                            Layout.leftMargin: 8
+                                                            implicitHeight: SettingsMaterialPreset.navItemHeight
+                                                            rippleEnabled: true
+                                                            buttonRadius: Math.min(width, height) / 2
+                                                            readonly property int pageRealIndex: modelData.realIndex
+                                                            toggled: Hierarchy.selected(modelData, root.overlayPages, root.overlayCurrentPage)
+                                                            colBackground: "transparent"
+                                                            colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                                                            colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+                                                            colBackgroundHover: Appearance.colors.colLayer1Hover
+                                                            onClicked: root.activateNavigation(modelData)
+
+                                                            contentItem: RowLayout {
+                                                                anchors.fill: parent
+                                                                anchors.leftMargin: 10
+                                                                anchors.rightMargin: 9
+                                                                spacing: 9
+
+                                                                MaterialSymbol {
+                                                                    text: navBtn.modelData.icon || ""
+                                                                    iconSize: 18
+                                                                    color: SettingsMaterialPreset.navigationIconColor(
+                                                                        Math.max(0, root.navPageOrder.indexOf(navBtn.modelData.realIndex)),
+                                                                        Math.max(1, root.navPageOrder.length),
+                                                                        navBtn.toggled)
+                                                                    rotation: navBtn.modelData.iconRotation || 0
+                                                                    Behavior on color {
+                                                                        enabled: Appearance.animationsEnabled
+                                                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                                                    }
+                                                                }
+
+                                                                StyledText {
+                                                                    Layout.fillWidth: true
+                                                                    text: navBtn.modelData.name || ""
+                                                                    font.pixelSize: Appearance.font.pixelSize.small
+                                                                    font.weight: navBtn.toggled ? Font.DemiBold : Font.Normal
+                                                                    color: navBtn.toggled
+                                                                        ? Appearance.colors.colOnPrimaryContainer
+                                                                        : Appearance.colors.colOnSurfaceVariant
+                                                                    elide: Text.ElideRight
+                                                                    Behavior on color {
+                                                                        enabled: Appearance.animationsEnabled
+                                                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                 }
-                                                MaterialSymbol {visible:!!navBtn.modelData.groupKey;text:"chevron_right";iconSize:18;color:Appearance.colors.colOnSurfaceVariant}
                                             }
                                         }
                                     }

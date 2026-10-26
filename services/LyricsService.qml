@@ -187,12 +187,39 @@ Singleton {
         });
     }
 
+    function _isCreditOrHeaderLine(text: string): bool {
+        const cleaned = String(text ?? "").replace(/<[^>]+>|\[[^\]]+\]/g, " ").replace(/\s+/g, " ").trim();
+        if (!cleaned)
+            return false;
+        if (/^\s*\[(?:Verse|Chorus|Hook|Bridge|Intro|Outro|Pre-Chorus|Interlude|Instrumental|Solo|Guitar\s*Solo)[^\]]*\]\s*$/i.test(String(text ?? "").trim()))
+            return true;
+        const m = cleaned.match(/^([^:：]{1,28})\s*[:：]\s*(.+)$/);
+        if (!m)
+            return false;
+        const compactHead = m[1].replace(/\s+/g, "").trim();
+        if (!compactHead)
+            return false;
+        if (compactHead.length >= 1 && compactHead.length <= 12
+                && /^[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af/・·&]+$/.test(compactHead))
+            return true;
+        const lower = compactHead.toLowerCase();
+        return [
+            "lyricsby", "lyricist", "writtenby", "composedby", "composer", "musicby",
+            "producedby", "producer", "arrangedby", "arranger", "mixedby", "mixing",
+            "masteredby", "mastering", "recordedby", "vocalsby", "publishedby",
+            "copyright", "sángtác", "lời", "nhạc", "hoàâm", "hòaâm", "phốikhí",
+            "biêntập", "thựchiện"
+        ].includes(lower);
+    }
+
     function _publishSuccess(requestId: string, lines: var): void {
         Qt.callLater(() => {
             if (!root.active || requestId !== root._latestRequestId)
                 return;
 
-            root.lyricsLines = lines;
+            root.lyricsLines = Array.isArray(lines)
+                ? lines.filter(line => !root._isCreditOrHeaderLine(String(line?.text ?? "")))
+                : [];
             root.activeIndex = -1;
             root.slots = root.buildSlots(-1);
             root._lastReported = -1;

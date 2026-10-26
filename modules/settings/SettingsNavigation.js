@@ -25,5 +25,12 @@ function arrange(raw, defaults, pageCount, retired) {
         if (!target) { target={label:label,pages:[]};out.push(target); }
         target.pages.push(index);seen.add(index);
     }
-    return {groups:out,hidden:hidden};
+    var names={};
+    if (saved && saved.names && typeof saved.names === "object" && !Array.isArray(saved.names)) {
+        Object.keys(saved.names).forEach(function(k) {
+            var idx=Number(k),val=typeof saved.names[k] === "string" ? saved.names[k].trim() : "";
+            if (Number.isInteger(idx) && idx>=0 && idx<pageCount && val) names[String(idx)]=val;
+        });
+    }
+    return {groups:out,hidden:hidden,names:names};
 }

@@ -389,18 +389,34 @@ ContentPage {
             title: Translation.tr("Resources")
 
             SettingsGroup {
-                ConfigSpinBox {
-                    icon: "av_timer"
-                    text: Translation.tr("Polling interval (ms)")
-                    value: Config.options?.resources?.updateInterval ?? 3000
-                    from: 100
-                    to: 10000
-                    stepSize: 100
-                    onValueChanged: {
-                        Config.setNestedValue("resources.updateInterval", value)
+                ConfigRow {
+                    uniform: true
+
+                    ConfigSpinBox {
+                        icon: "av_timer"
+                        text: Translation.tr("Polling interval (ms)")
+                        value: Config.options?.resources?.updateInterval ?? 3000
+                        from: 100
+                        to: 10000
+                        stepSize: 100
+                        onValueChanged: {
+                            Config.setNestedValue("resources.updateInterval", value)
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("How often to update CPU, RAM, and disk usage stats")
+                        }
                     }
-                    StyledToolTip {
-                        text: Translation.tr("How often to update CPU, RAM, and disk usage stats")
+
+                    SettingsSwitch {
+                        buttonIcon: "memory_alt"
+                        text: Translation.tr("GPU monitoring")
+                        checked: Config.options?.resources?.monitorGpu ?? true
+                        onCheckedChanged: {
+                            Config.setNestedValue("resources.monitorGpu", checked)
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("On hybrid laptops, GPU polling can wake the dGPU; disabling pins Qt to iGPU after restart.")
+                        }
                     }
                 }
             }

@@ -68,6 +68,8 @@ ContentPage {
 
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: 1
             Layout.alignment: Qt.AlignTop
             spacing: 14
 
@@ -93,7 +95,6 @@ ContentPage {
                     }
                     ConfigSpinBox {
                         text: Translation.tr("Return to default tab after (minutes)")
-                        description: Translation.tr("Only on the next Dashboard open. Zero disables automatic tab return.")
                         value: Config.options?.dashboard?.inactiveMinutes ?? 0
                         from: 0
                         to: 240
@@ -102,7 +103,6 @@ ContentPage {
                     }
                     ConfigSpinBox {
                         text: Translation.tr("Panel width (% of screen)")
-                        description: Translation.tr("Shared width for the Dashboard and launcher Dashboard")
                         value: Math.round((Config.options?.dashboard?.widthRatio ?? 0.72) * 100)
                         from: 40
                         to: 90
@@ -111,7 +111,6 @@ ContentPage {
                     }
                     ConfigSpinBox {
                         text: Translation.tr("Panel height (% of screen)")
-                        description: Translation.tr("Maximum Dashboard height; widgets never add Dashboard scrolling")
                         value: Math.round((Config.options?.dashboard?.heightRatio ?? 0.72) * 100)
                         from: 45
                         to: 90
@@ -120,56 +119,35 @@ ContentPage {
                     }
                 }
 
-                ContentSubsection {
-                    title: Translation.tr("Welcome subtitle")
-                    MaterialTextField {
+                ConfigRow {
+                    uniform: true
+                    ContentSubsection {
                         Layout.fillWidth: true
-                        placeholderText: Translation.tr("Custom phrase under the greeting (optional)")
-                        text: Config.options?.dashboard?.subtitle ?? ""
-                        onTextChanged: {
-                            Qt.callLater(() => {
-                                Config.setNestedValue("dashboard.subtitle", text)
-                            });
-                        }
-                    }
-                }
-
-                ContentSubsection {
-                    title: Translation.tr("GitHub username")
-                    MaterialTextField {
-                        Layout.fillWidth: true
-                        placeholderText: Translation.tr("e.g. octocat")
-                        text: Config.options?.dashboard?.github?.username ?? ""
-                        onTextChanged: {
-                            Qt.callLater(() => {
-                                Config.setNestedValue("dashboard.github.username", text)
-                            });
-                        }
-                    }
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: Translation.tr("Powers the “GitHub activity” widget above. Leave empty to disable the contribution graph.")
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        wrapMode: Text.WordWrap
-                    }
-                }
-
-                SettingsGroup {
-                    RowLayout {
-                        spacing: 6
-                        Layout.fillWidth: true
-                        MaterialSymbol {
-                            text: "keyboard_command_key"
-                            iconSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colSubtext
-                        }
-                        StyledText {
+                        title: Translation.tr("Welcome subtitle")
+                        MaterialTextField {
                             Layout.fillWidth: true
-                            text: Translation.tr("Toggle with a keybinding running: %1").arg("alis ipc dashboard toggle")
-                            color: Appearance.colors.colSubtext
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            wrapMode: Text.WordWrap
+                            placeholderText: Translation.tr("Custom phrase (optional)")
+                            text: Config.options?.dashboard?.subtitle ?? ""
+                            onTextChanged: {
+                                Qt.callLater(() => {
+                                    Config.setNestedValue("dashboard.subtitle", text)
+                                });
+                            }
+                        }
+                    }
+
+                    ContentSubsection {
+                        Layout.fillWidth: true
+                        title: Translation.tr("GitHub username")
+                        MaterialTextField {
+                            Layout.fillWidth: true
+                            placeholderText: Translation.tr("e.g. octocat")
+                            text: Config.options?.dashboard?.github?.username ?? ""
+                            onTextChanged: {
+                                Qt.callLater(() => {
+                                    Config.setNestedValue("dashboard.github.username", text)
+                                });
+                            }
                         }
                     }
                 }
@@ -177,6 +155,7 @@ ContentPage {
 
             SettingsCardSection {
                 Layout.fillWidth: true
+                Layout.fillHeight: true
                 Layout.alignment: Qt.AlignTop
                 settingsTaskSection: "appearance"
                 visible: root.isIiActive
@@ -195,7 +174,6 @@ ContentPage {
                     }
                     ConfigSwitch {
                         text: Translation.tr("Show card titles")
-                        description: Translation.tr("Icon and name header on each widget card")
                         checked: Config.options?.dashboard?.appearance?.showCardTitles ?? true
                         onCheckedChanged: Config.setNestedValue("dashboard.appearance.showCardTitles", checked)
                     }
@@ -205,6 +183,8 @@ ContentPage {
 
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: 1
             Layout.alignment: Qt.AlignTop
             spacing: 14
 
@@ -218,34 +198,33 @@ ContentPage {
                 title: Translation.tr("Canvas & grid")
 
                 SettingsGroup {
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: Translation.tr("Dashboard → Edit widgets lets you move or resize modules; outside Edit mode, layout is locked.")
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        wrapMode: Text.WordWrap
-                    }
-
                     ConfigSwitch {
                         text: Translation.tr("Snap modules to grid")
-                        description: Translation.tr("Snap moved or resized modules to the grid on release.")
                         checked: Config.options?.dashboard?.canvas?.snap ?? true
                         onCheckedChanged:
                             Config.setNestedValue("dashboard.canvas.snap", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Snap moved or resized modules to the grid on release.")
+                        }
                     }
 
                     ConfigSwitch {
                         text: Translation.tr("Auto-adjust affected module sizes")
-                        description: Translation.tr("Resizing can adjust neighbors; moving modules never changes their sizes.")
                         checked:
                             Config.options?.dashboard?.canvas?.autoAdjustSize ?? true
                         onCheckedChanged:
                             Config.setNestedValue(
                         "dashboard.canvas.autoAdjustSize", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Resizing can adjust neighbors; moving modules never changes their sizes.")
+                        }
                     }
 
                     ContentSubsection {
                         title: Translation.tr("Grid style")
+                        StyledToolTip {
+                            text: Translation.tr("Dashboard → Edit widgets lets you move or resize modules; outside Edit mode, layout is locked.")
+                        }
                         ConfigSelectionArray {
                             currentValue:
                                 Config.options?.dashboard?.canvas?.gridStyle ?? "dots"
@@ -261,7 +240,6 @@ ContentPage {
 
                     ConfigSpinBox {
                         text: Translation.tr("Grid cell size (px)")
-                        description: Translation.tr("Smaller cells allow finer placement; larger cells produce stronger alignment")
                         value: Config.options?.dashboard?.canvas?.gridSize ?? 24
                         from: 8
                         to: 96
@@ -274,6 +252,7 @@ ContentPage {
 
             SettingsCardSection {
                 Layout.fillWidth: true
+                Layout.fillHeight: true
                 Layout.alignment: Qt.AlignTop
                 settingsTaskSection: "music"
                 visible: root.isIiActive

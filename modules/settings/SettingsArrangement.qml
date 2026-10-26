@@ -18,7 +18,8 @@ QtObject {
                 label: c.label,
                 pages: c.pages.slice()
             })),
-            hidden: SettingsPageRegistry.hiddenPages.slice()
+            hidden: SettingsPageRegistry.hiddenPages.slice(),
+            names: Object.assign({}, SettingsPageRegistry.customPageNames ?? ({}))
         })
     }
 
@@ -34,7 +35,8 @@ QtObject {
         Config.setNestedValue("settingsUi.categories", JSON.stringify({
             version: root.layoutSchemaVersion,
             groups: snapshot.groups,
-            hidden: hidden
+            hidden: hidden,
+            names: snapshot.names ?? ({})
         }))
     }
 
@@ -320,6 +322,55 @@ QtObject {
 
 
 
+
+    function renameCategory(categoryIndex: int, label: string): bool {
+        const nextLabel = String(label ?? "").trim()
+        if (!nextLabel)
+            return false
+        const state = root.snapshot()
+        if (categoryIndex < 0 || categoryIndex >= state.groups.length)
+            return false
+        if (state.groups[categoryIndex].label === nextLabel)
+            return false
+        state.groups[categoryIndex].label = nextLabel
+        root.save(state)
+        return true
+    }
+
+    function moveCategory(categoryIndex: int, direction: int): bool {
+        const state = root.snapshot()
+        const targetIndex = categoryIndex + direction
+        if (categoryIndex < 0 || categoryIndex >= state.groups.length
+                || targetIndex < 0 || targetIndex >= state.groups.length)
+            return false
+        const moved = state.groups.splice(categoryIndex, 1)[0]
+        state.groups.splice(targetIndex, 0, moved)
+        root.save(state)
+        return true
+    }
+
+    function renamePage(pageIdx: int, name: string): bool {
+        if (pageIdx < 0)
+            return false
+        const state = root.snapshot()
+        if (!state.names || typeof state.names !== "object")
+            state.names = ({})
+        const nextName = String(name ?? "").trim()
+        const page = SettingsPageRegistry.pages?.[pageIdx]
+        const defaultName = String(page?.defaultName ?? page?.name ?? "").trim()
+        const key = String(pageIdx)
+        if (!nextName || nextName === defaultName) {
+            if (!(key in state.names))
+                return false
+            delete state.names[key]
+        } else {
+            if (state.names[key] === nextName)
+                return false
+            state.names[key] = nextName
+        }
+        root.save(state)
+        return true
+    }
 
     function reset(): void {
         Config.setNestedValue("settingsUi.categories", "")

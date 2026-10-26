@@ -293,6 +293,37 @@ Singleton {
         }
     }
 
+    function _isCreditOrHeaderLine(text: string): bool {
+        const cleaned = String(text ?? "").replace(/<[^>]+>|\[[^\]]+\]/g, " ").replace(/\s+/g, " ").trim()
+        if (!cleaned)
+            return false
+        if (/^\s*\[(?:Verse|Chorus|Hook|Bridge|Intro|Outro|Pre-Chorus|Interlude|Instrumental|Solo|Guitar\s*Solo)[^\]]*\]\s*$/i.test(String(text ?? "").trim()))
+            return true
+        const m = cleaned.match(/^([^:：]{1,28})\s*[:：]\s*(.+)$/)
+        if (!m)
+            return false
+        const compactHead = m[1].replace(/\s+/g, "").trim()
+        if (!compactHead)
+            return false
+        if (compactHead.length >= 1 && compactHead.length <= 12
+                && /^[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af/・·&]+$/.test(compactHead))
+            return true
+        const lower = compactHead.toLowerCase()
+        return [
+            "lyricsby", "lyricist", "writtenby", "composedby", "composer", "musicby",
+            "producedby", "producer", "arrangedby", "arranger", "mixedby", "mixing",
+            "masteredby", "mastering", "recordedby", "vocalsby", "publishedby",
+            "copyright", "sángtác", "lời", "nhạc", "hoàâm", "hòaâm", "phốikhí",
+            "biêntập", "thựchiện"
+        ].includes(lower)
+    }
+
+    function _filterLyricsLines(lines): var {
+        if (!Array.isArray(lines))
+            return []
+        return lines.filter(line => !root._isCreditOrHeaderLine(String(line?.text ?? "")))
+    }
+
     function _clearLocalLyrics(status = "idle"): void {
         localLyricsLines = []
         localLyricsPath = ""
@@ -1080,7 +1111,7 @@ Singleton {
                         root.localLyricsStatus = String(payload.status ?? "not_found")
                         root.localLyricsPath = String(payload.path ?? "")
                         root.localLyricsSynced = payload.synced === true
-                        root.localLyricsLines = payload.lines ?? []
+                        root.localLyricsLines = root._filterLyricsLines(payload.lines ?? [])
                         const canFetchOnline = !requestedPath.includes("://")
                             && root.currentTitle.trim().length > 0
                             && (Quickshell.env("FIXTURE_PORT") ?? "").length === 0
@@ -1164,14 +1195,14 @@ Singleton {
                         root.localLyricsStatus = "ok"
                         root.localLyricsPath = String(payload.path ?? root.localLyricsPath)
                         root.localLyricsSynced = payload.synced === true
-                        root.localLyricsLines = payload.lines
+                        root.localLyricsLines = root._filterLyricsLines(payload.lines)
                     }
                     return
                 }
                 root.localLyricsStatus = String(payload.status ?? "not_found")
                 root.localLyricsPath = String(payload.path ?? "")
                 root.localLyricsSynced = payload.synced === true
-                root.localLyricsLines = payload.lines ?? []
+                root.localLyricsLines = root._filterLyricsLines(payload.lines ?? [])
             } catch (e) {
                 if (!_lyricsDownloadProc.upgradeOnly)
                     root._clearLocalLyrics("not_found")

@@ -13,6 +13,7 @@ ContentPage {
 
     property bool cavaControlsReady: false
     property string activeSection: "color"
+    readonly property string _legacyGpuMonitorHint: Translation.tr("On hybrid laptops, GPU polling can wake the dGPU; disabling pins Qt to iGPU after restart.")
     Component.onCompleted: Qt.callLater(() => root.cavaControlsReady = true)
 
     SettingsTaskNavigator {
@@ -20,12 +21,11 @@ ContentPage {
         icon: "construction"
         title: Translation.tr("Advanced")
         description: Translation.tr("Color-generation controls and runtime diagnostics.")
-        summary: Translation.tr("Color generation · resources")
+        summary: Translation.tr("Color generation · Cava & spectrum")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
-            { displayName: Translation.tr("Color"), icon: "colors", value: "color" },
-            { displayName: Translation.tr("Resources"), icon: "memory_alt", value: "resources" }
+            { displayName: Translation.tr("Color"), icon: "colors", value: "color" }
         ]
     }
 
@@ -67,11 +67,14 @@ ContentPage {
 
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: 1
             Layout.alignment: Qt.AlignTop
             spacing: 14
 
             SettingsCardSection {
                 Layout.fillWidth: true
+                Layout.fillHeight: true
                 Layout.alignment: Qt.AlignTop
                 settingsTaskSection: "color"
                 visible: true
@@ -301,11 +304,14 @@ ContentPage {
 
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: 1
             Layout.alignment: Qt.AlignTop
             spacing: 14
 
             SettingsCardSection {
                 Layout.fillWidth: true
+                Layout.fillHeight: true
                 Layout.alignment: Qt.AlignTop
                 settingsTaskSection: "color"
                 visible: true
@@ -369,79 +375,95 @@ ContentPage {
                         }
                     }
 
-                    ConfigSpinBox {
-                        icon: "gradient"
-                        text: Translation.tr("Gradient colors")
-                        value: Config.options?.appearance?.cava?.gradientCount ?? 8
-                        from: 1
-                        to: 8
-                        onValueChanged: root.setCavaValue(
-                            "appearance.cava.gradientCount", value, true)
-                        StyledToolTip {
-                            text: Translation.tr("Use one color for a solid spectrum, or up to eight gradient stops")
+                    ConfigRow {
+                        uniform: true
+
+                        ConfigSpinBox {
+                            icon: "gradient"
+                            text: Translation.tr("Gradient colors")
+                            value: Config.options?.appearance?.cava?.gradientCount ?? 8
+                            from: 1
+                            to: 8
+                            onValueChanged: root.setCavaValue(
+                                "appearance.cava.gradientCount", value, true)
+                            StyledToolTip {
+                                text: Translation.tr("Use one color for a solid spectrum, or up to eight gradient stops")
+                            }
+                        }
+
+                        ConfigSpinBox {
+                            icon: "hearing"
+                            text: Translation.tr("Sensitivity")
+                            value: Config.options?.appearance?.cava?.sensitivity ?? 100
+                            from: 1
+                            to: 500
+                            stepSize: 10
+                            onValueChanged: root.setCavaValue(
+                                "appearance.cava.sensitivity", value, true)
+                            StyledToolTip {
+                                text: Translation.tr("Audio sensitivity (higher = more reactive)")
+                            }
                         }
                     }
 
-                    ConfigSpinBox {
-                        icon: "hearing"
-                        text: Translation.tr("Sensitivity")
-                        value: Config.options?.appearance?.cava?.sensitivity ?? 100
-                        from: 1
-                        to: 500
-                        stepSize: 10
-                        onValueChanged: root.setCavaValue(
-                            "appearance.cava.sensitivity", value, true)
-                        StyledToolTip {
-                            text: Translation.tr("Audio sensitivity (higher = more reactive)")
+                    ConfigRow {
+                        uniform: true
+
+                        ConfigSpinBox {
+                            icon: "bar_chart"
+                            text: Translation.tr("Bars")
+                            value: Config.options?.appearance?.cava?.bars ?? 0
+                            from: 0
+                            to: 200
+                            stepSize: 8
+                            onValueChanged: root.setCavaValue(
+                                "appearance.cava.bars", value, true)
+                            StyledToolTip {
+                                text: Translation.tr("Number of frequency data points (0 = auto)")
+                            }
+                        }
+
+                        ConfigSpinBox {
+                            icon: "speed"
+                            text: Translation.tr("Framerate")
+                            value: Config.options?.appearance?.cava?.framerate ?? 30
+                            from: 30
+                            to: 165
+                            stepSize: 5
+                            onValueChanged: root.setCavaValue(
+                                "appearance.cava.framerate", value, true)
+                            StyledToolTip {
+                                text: Translation.tr("Target refresh rate for the visualizer")
+                            }
                         }
                     }
-                    ConfigSpinBox {
-                        icon: "bar_chart"
-                        text: Translation.tr("Bars")
-                        value: Config.options?.appearance?.cava?.bars ?? 0
-                        from: 0
-                        to: 200
-                        stepSize: 8
-                        onValueChanged: root.setCavaValue(
-                            "appearance.cava.bars", value, true)
-                        StyledToolTip {
-                            text: Translation.tr("Number of frequency data points (0 = auto)")
+
+                    ConfigRow {
+                        uniform: true
+
+                        SettingsSwitch {
+                            buttonIcon: "headphones"
+                            text: Translation.tr("Stereo")
+                            checked: Config.options?.appearance?.cava?.stereo ?? true
+                            onCheckedChanged: root.setCavaValue(
+                                "appearance.cava.stereo", checked, true)
+                            StyledToolTip {
+                                text: Translation.tr("Split visualizer into left/right channels")
+                            }
                         }
-                    }
-                    ConfigSpinBox {
-                        icon: "speed"
-                        text: Translation.tr("Framerate")
-                        value: Config.options?.appearance?.cava?.framerate ?? 30
-                        from: 30
-                        to: 165
-                        stepSize: 5
-                        onValueChanged: root.setCavaValue(
-                            "appearance.cava.framerate", value, true)
-                        StyledToolTip {
-                            text: Translation.tr("Target refresh rate for the visualizer")
-                        }
-                    }
-                    SettingsSwitch {
-                        buttonIcon: "headphones"
-                        text: Translation.tr("Stereo")
-                        checked: Config.options?.appearance?.cava?.stereo ?? true
-                        onCheckedChanged: root.setCavaValue(
-                            "appearance.cava.stereo", checked, true)
-                        StyledToolTip {
-                            text: Translation.tr("Split visualizer into left/right channels")
-                        }
-                    }
-                    ConfigSpinBox {
-                        icon: "opacity"
-                        text: Translation.tr("Wave opacity")
-                        value: Config.options?.appearance?.cava?.waveOpacity ?? 30
-                        from: 5
-                        to: 100
-                        stepSize: 5
-                        onValueChanged: root.setCavaValue(
-                            "appearance.cava.waveOpacity", value, false)
-                        StyledToolTip {
-                            text: Translation.tr("Shared wave fill opacity; bar spectrum has its own setting.")
+
+                        ConfigSpinBox {
+                            icon: "opacity"
+                            text: Translation.tr("Wave opacity")
+                            value: Config.options?.appearance?.cava?.waveOpacity ?? 30
+                            from: 5
+                            to: 100
+                            stepSize: 5
+                            onValueChanged: root.setCavaValue(
+                                "appearance.cava.waveOpacity", value, false)
+                            StyledToolTip {
+                                text: Translation.tr("Shared wave fill opacity; bar spectrum has its own setting.")
+                            }
                         }
                     }
 
@@ -457,30 +479,6 @@ ContentPage {
                             spacing: 5
                             MaterialSymbol { text: "restart_alt"; iconSize: 15; color: Appearance.colors.colOnLayer1 }
                             StyledText { text: Translation.tr("Reset to defaults"); font.pixelSize: Appearance.font.pixelSize.smaller; color: Appearance.colors.colOnLayer1 }
-                        }
-                    }
-                }
-            }
-
-            SettingsCardSection {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                settingsTaskSection: "resources"
-                visible: true
-                expanded: true
-                icon: "memory_alt"
-                title: Translation.tr("Resource Monitor")
-
-                SettingsGroup {
-                    SettingsSwitch {
-                        buttonIcon: "memory_alt"
-                        text: Translation.tr("GPU monitoring")
-                        checked: Config.options?.resources?.monitorGpu ?? true
-                        onCheckedChanged: {
-                            Config.setNestedValue("resources.monitorGpu", checked);
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("On hybrid laptops, GPU polling can wake the dGPU; disabling pins Qt to iGPU after restart.")
                         }
                     }
                 }

@@ -8,13 +8,11 @@ import qs.modules.common.widgets
 SettingsGroup {
     ConfigSwitch {
         text: Translation.tr("Music")
-        description: Translation.tr("Show the local music page in Dashboard")
         checked: Config.options?.dashboard?.music?.enable ?? true
         onCheckedChanged: Config.setNestedValue("dashboard.music.enable",checked)
     }
     ConfigSwitch {
         text: Translation.tr("Show Music scrollbars")
-        description: Translation.tr("Hide scrollbar tracks and thumbs without disabling Music list or touchpad scrolling")
         checked: Config.options?.dashboard?.music?.showScrollbars ?? true
         onCheckedChanged: Config.setNestedValue("dashboard.music.showScrollbars", checked)
     }

@@ -42,10 +42,17 @@ KLYRIC_LINE_RE = re.compile(r"^\[(\d+),(\d+)\](.+)$")
 KLYRIC_WORD_RE = re.compile(r"<(\d+),(\d+),\d+>([^<]*)")
 OFFSET_RE = re.compile(r"^\s*\[offset\s*:\s*([+-]?\d+)\s*\]\s*$", re.IGNORECASE)
 METADATA_RE = re.compile(r"^\s*\[[a-z]{2,8}\s*:.*\]\s*$", re.IGNORECASE)
-CREDIT_LINE_RE = re.compile(
-    r"^\s*(?:(?:作词|作曲|编曲|制作人|混音|母带|录音|统筹|出品|发行|监制|和声|吉他|贝斯|鼓|弦乐|词|曲|プロデューサー|作詞|作曲|編曲|Lyrics\s*by|Composed\s*by|Produced\s*by|Arranged\s*by)\s*[:：]|\[(?:Verse|Chorus|Hook|Bridge|Intro|Outro|Pre-Chorus|Interlude|Instrumental|Solo|Guitar\s*Solo)[^\]]*\]\s*$)",
+CREDIT_SECTION_HEADER_RE = re.compile(
+    r"^\s*\[(?:Verse|Chorus|Hook|Bridge|Intro|Outro|Pre-Chorus|Interlude|Instrumental|Solo|Guitar\s*Solo)[^\]]*\]\s*$",
     re.IGNORECASE,
 )
+LATIN_CREDIT_PREFIXES = {
+    "lyricsby", "lyricist", "writtenby", "composedby", "composer", "musicby",
+    "producedby", "producer", "arrangedby", "arranger", "mixedby", "mixing",
+    "masteredby", "mastering", "recordedby", "vocalsby", "publishedby",
+    "copyright", "sángtác", "lời", "nhạc", "hoàâm", "hòaâm", "phốikhí",
+    "biêntập", "thựchiện",
+}
 
 
 def _is_cjk_char(ch: str) -> bool:
@@ -60,6 +67,29 @@ def _is_cjk_char(ch: str) -> bool:
 
 def _has_cjk(text: str) -> bool:
     return any(_is_cjk_char(ch) for ch in text)
+
+
+def is_credit_or_header_line(text: str) -> bool:
+    cleaned = re.sub(r"<[^>]+>|\[[^\]]+\]", " ", text or "")
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    if not cleaned:
+        return False
+    if CREDIT_SECTION_HEADER_RE.match((text or "").strip()):
+        return True
+    m = re.match(r"^([^:：]{1,28})\s*[:：]\s*(.+)$", cleaned)
+    if not m:
+        return False
+    head = m.group(1)
+    compact_head = re.sub(r"\s+", "", head).strip()
+    if not compact_head:
+        return False
+    if 1 <= len(compact_head) <= 12 and all(
+        _is_cjk_char(ch) or ch in "/・·&" for ch in compact_head
+    ):
+        return True
+    if compact_head.lower() in LATIN_CREDIT_PREFIXES:
+        return True
+    return False
 
 NOISE_PATTERNS = [
     r"\(\s*(?:official|lyric|lyrics|music|audio|video|mv|visualizer|live|remaster(?:ed)?|hd|4k|hq)[^)]*\)",
@@ -208,7 +238,7 @@ def convert_netease_yrc_to_enhanced_lrc(yrc_text: str) -> str:
                 grouped.append((w_start, w_end, piece))
 
         full_line_text = " ".join(p.strip() for _, _, p in grouped if p.strip()).strip()
-        if not full_line_text or CREDIT_LINE_RE.match(full_line_text):
+        if not full_line_text or is_credit_or_header_line(full_line_text):
             continue
 
         parts: list[str] = [format_lrc_Time(line_start_ms / 1000.0, inline=False)]
@@ -254,6 +284,9 @@ def convert_netease_klyric_to_enhanced_lrc(klyric_text: str) -> str:
             w_start = (line_start_ms + rel_start_ms) / 1000.0
             w_end = w_start + w_dur_ms / 1000.0
             parsed_k.append((w_start, w_end, piece))
+        full_line_text = " ".join(p for _, _, p in parsed_k if p).strip()
+        if not full_line_text or is_credit_or_header_line(full_line_text):
+            continue
         for idx_k, (w_start, w_end, piece) in enumerate(parsed_k):
             next_ws = parsed_k[idx_k + 1][0] if idx_k + 1 < len(parsed_k) else w_end
             if idx_k + 1 < len(parsed_k) and (next_ws - w_end) > 0.025:
@@ -519,7 +552,7 @@ def parse_lrc(lrc: str, key_name: str = "t") -> list[dict]:
             continue
         raw_lyric = raw[stamps[-1].end():].strip()
         clean_lyric = re.sub(r"\s+", " ", INLINE_WORD_STAMP.sub(" ", raw_lyric)).strip()
-        if clean_lyric and CREDIT_LINE_RE.match(clean_lyric):
+        if clean_lyric and is_credit_or_header_line(clean_lyric):
             continue
         for stamp in stamps:
             minutes = int(stamp.group(1))
@@ -562,7 +595,7 @@ def parse_plain(plain: str, duration: float | None = None, key_name: str = "t") 
     raw_lines = [
         line.strip()
         for line in (plain or "").splitlines()
-        if line.strip() and not METADATA_RE.match(line)
+        if line.strip() and not METADATA_RE.match(line) and not is_credit_or_header_line(line)
     ]
     if not raw_lines:
         return []
@@ -856,12 +889,24 @@ def find_lyrics(title: str, artist: str, album: str, duration: float | None) -> 
     return parse_plain(raw_text, duration=duration, key_name="t")
 
 
+def strip_credit_lines_from_lrc(raw_text: str) -> str:
+    kept: list[str] = []
+    for raw in (raw_text or "").splitlines():
+        stamps = list(STAMP.finditer(raw))
+        lyric_part = raw[stamps[-1].end():].strip() if stamps else raw.strip()
+        if lyric_part and is_credit_or_header_line(lyric_part):
+            continue
+        kept.append(raw)
+    return "\n".join(kept)
+
+
 def save_lrc_for_local_track(audio_path: str, raw_text: str, is_synced: bool) -> str:
+    clean_raw = strip_credit_lines_from_lrc(raw_text)
     track = Path(os.path.expanduser(audio_path))
     suffix = ".lrc" if is_synced else ".txt"
     target = track.with_suffix(suffix)
     try:
-        target.write_text(raw_text.rstrip() + "\n", encoding="utf-8")
+        target.write_text(clean_raw.rstrip() + "\n", encoding="utf-8")
         return str(target)
     except OSError:
         fallback_dir = Path(
@@ -870,7 +915,7 @@ def save_lrc_for_local_track(audio_path: str, raw_text: str, is_synced: bool) ->
         fallback_dir.mkdir(parents=True, exist_ok=True)
         digest = hashlib.sha1(str(track).encode("utf-8", "replace")).hexdigest()[:12]
         fallback = fallback_dir / f"{track.stem}-{digest}{suffix}"
-        fallback.write_text(raw_text.rstrip() + "\n", encoding="utf-8")
+        fallback.write_text(clean_raw.rstrip() + "\n", encoding="utf-8")
         return str(fallback)
 
 

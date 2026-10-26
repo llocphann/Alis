@@ -251,6 +251,7 @@ Singleton {
         pages.length, legacyHiddenIndexes)
     readonly property var categories: _arrangement.groups
     readonly property var hiddenPages: _arrangement.hidden
+    readonly property var customPageNames: _arrangement.names ?? ({})
 
     function iconForPage(idx) {
         return (idx >= 0 && idx < pages.length) ? (pages[idx]?.icon ?? "settings") : "settings";

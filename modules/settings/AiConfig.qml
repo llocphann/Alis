@@ -17,7 +17,9 @@ ContentPage {
 
     function activateSettingsSearchSection(section: string): bool {
         const label = String(section ?? "").toLowerCase()
-        if (label.includes("privacy") || label.includes("polic") || label.includes("voice"))
+        if (label.includes("privacy") || label.includes("polic"))
+            root.activeSection = "privacy"
+        else if (label.includes("voice"))
             root.activeSection = "voice"
         else if (label.includes("provider") || label.includes("model"))
             root.activeSection = "providers"
@@ -1056,132 +1058,148 @@ ContentPage {
         }
     }
 
-    // ── Voice input ──────────────────────────────────────────────
-    SettingsCardSection {
+    // ── Voice input + Privacy & policy (stacked right column) ────
+    ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredWidth: 1
-        settingsTaskSection: "voice"
-        visible: true
-        expanded: true
-        icon: "mic"
-        title: Translation.tr("Voice input")
+        spacing: 14
 
-        SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("Transcription backend")
-                tooltip: Translation.tr("Auto prefers local Whisper, then connected online speech providers")
+        SettingsCardSection {
+            Layout.fillWidth: true
+            settingsTaskSection: "voice"
+            visible: true
+            expanded: true
+            icon: "mic"
+            title: Translation.tr("Voice input")
 
-                ConfigSelectionArray {
-                    enableSettingsSearch: false
-                    currentValue: Config.options?.voiceSearch?.provider ?? "auto"
-                    onSelected: newValue => Config.setNestedValue("voiceSearch.provider", newValue)
-                    options: [
-                        { displayName: Translation.tr("Auto"), icon: "auto_awesome", value: "auto" },
-                        { displayName: Translation.tr("Local Whisper"), icon: "shield_lock", value: "local" },
-                        { displayName: "Groq", icon: "bolt", value: "groq" },
-                        { displayName: "Gemini", icon: "auto_awesome", value: "gemini" },
-                        { displayName: "OpenAI", icon: "neurology", value: "openai" }
-                    ]
-                }
+            SettingsGroup {
+                ContentSubsection {
+                    title: Translation.tr("Transcription backend")
+                    tooltip: Translation.tr("Auto prefers local Whisper, then connected online speech providers")
 
-                SettingsNote {
-                    icon: VoiceSearch.hasBackend ? "check_circle" : "info"
-                    text: VoiceSearch.hasBackend
-                        ? Translation.tr("Active backend: %1").arg(VoiceSearch.backendLabel)
-                        : Translation.tr("No backend is ready. Connect Groq, Gemini or OpenAI above, or install whisper.cpp with a local model.")
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: VoiceSearch.localAvailable
-                            ? Translation.tr("Local Whisper detected")
-                            : Translation.tr("Local Whisper not detected")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colSubtext
+                    ConfigSelectionArray {
+                        enableSettingsSearch: false
+                        currentValue: Config.options?.voiceSearch?.provider ?? "auto"
+                        onSelected: newValue => Config.setNestedValue("voiceSearch.provider", newValue)
+                        options: [
+                            { displayName: Translation.tr("Auto"), icon: "auto_awesome", value: "auto" },
+                            { displayName: Translation.tr("Local Whisper"), icon: "shield_lock", value: "local" },
+                            { displayName: "Groq", icon: "bolt", value: "groq" },
+                            { displayName: "Gemini", icon: "auto_awesome", value: "gemini" },
+                            { displayName: "OpenAI", icon: "neurology", value: "openai" }
+                        ]
                     }
-                    RippleButton {
-                        implicitWidth: 32
-                        implicitHeight: 32
-                        buttonRadius: Appearance.rounding.full
-                        colBackground: Appearance.colors.colLayer2
-                        colBackgroundHover: Appearance.colors.colLayer2Hover
-                        onClicked: VoiceSearch.refreshBackends()
-                        contentItem: MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: "refresh"
-                            iconSize: 17
-                            color: Appearance.colors.colOnLayer2
+
+                    SettingsNote {
+                        icon: VoiceSearch.hasBackend ? "check_circle" : "info"
+                        text: VoiceSearch.hasBackend
+                            ? Translation.tr("Active backend: %1").arg(VoiceSearch.backendLabel)
+                            : Translation.tr("No backend is ready. Connect Groq, Gemini or OpenAI above, or install whisper.cpp with a local model.")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: VoiceSearch.localAvailable
+                                ? Translation.tr("Local Whisper detected")
+                                : Translation.tr("Local Whisper not detected")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colSubtext
+                        }
+                        RippleButton {
+                            implicitWidth: 32
+                            implicitHeight: 32
+                            buttonRadius: Appearance.rounding.full
+                            colBackground: Appearance.colors.colLayer2
+                            colBackgroundHover: Appearance.colors.colLayer2Hover
+                            onClicked: VoiceSearch.refreshBackends()
+                            contentItem: MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "refresh"
+                                iconSize: 17
+                                color: Appearance.colors.colOnLayer2
+                            }
                         }
                     }
                 }
-            }
 
-            ContentSubsection {
-                title: Translation.tr("Language")
-                ConfigSelectionArray {
-                    enableSettingsSearch: false
-                    currentValue: Config.options?.voiceSearch?.language ?? "auto"
-                    onSelected: newValue => Config.setNestedValue("voiceSearch.language", newValue)
-                    options: [
-                        { displayName: Translation.tr("Auto detect"), icon: "translate", value: "auto" },
-                        { displayName: Translation.tr("Spanish"), icon: "language", value: "es" },
-                        { displayName: Translation.tr("English"), icon: "language", value: "en" },
-                        { displayName: Translation.tr("Portuguese"), icon: "language", value: "pt" },
-                        { displayName: Translation.tr("French"), icon: "language", value: "fr" },
-                        { displayName: Translation.tr("German"), icon: "language", value: "de" },
-                        { displayName: Translation.tr("Japanese"), icon: "language", value: "ja" }
-                    ]
-                }
-            }
-
-            ConfigSpinBox {
-                id: voiceDurationSpin
-                // Without the guard the spin box writes its own default over the
-                // user's value while the page is still being created.
-                property bool _ready: false
-                Component.onCompleted: _ready = true
-
-                icon: "timer"
-                text: Translation.tr("Max recording length (seconds)")
-                value: Config.options?.voiceSearch?.duration ?? 5
-                from: 3
-                to: 60
-                stepSize: 1
-                onValueChanged: {
-                    if (voiceDurationSpin._ready)
-                        Config.setNestedValue("voiceSearch.duration", value)
-                }
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                Layout.leftMargin: 4
-                text: Translation.tr("The same backend is used for chat dictation and voice web search. Keys are passed through the process environment and are never written to commands or config files.")
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
-                wrapMode: Text.WordWrap
-            }
-
-            SettingsDivider {}
-
-            ContentSubsection {
-                title: Translation.tr("Allow AI features")
-                tooltip: Translation.tr("Local only: use on-device models (Ollama, LM Studio).")
-
-                ConfigSelectionArray {
-                    enableSettingsSearch: false
-                    currentValue: Config.options?.policies?.ai ?? 0
-                    onSelected: newValue => {
-                        Config.setNestedValue("policies.ai", newValue);
+                ContentSubsection {
+                    title: Translation.tr("Language")
+                    ConfigSelectionArray {
+                        enableSettingsSearch: false
+                        currentValue: Config.options?.voiceSearch?.language ?? "auto"
+                        onSelected: newValue => Config.setNestedValue("voiceSearch.language", newValue)
+                        options: [
+                            { displayName: Translation.tr("Auto detect"), icon: "translate", value: "auto" },
+                            { displayName: Translation.tr("Spanish"), icon: "language", value: "es" },
+                            { displayName: Translation.tr("English"), icon: "language", value: "en" },
+                            { displayName: Translation.tr("Portuguese"), icon: "language", value: "pt" },
+                            { displayName: Translation.tr("French"), icon: "language", value: "fr" },
+                            { displayName: Translation.tr("German"), icon: "language", value: "de" },
+                            { displayName: Translation.tr("Japanese"), icon: "language", value: "ja" }
+                        ]
                     }
-                    options: [
-                        { displayName: Translation.tr("No"), icon: "close", value: 0 },
-                        { displayName: Translation.tr("Yes"), icon: "check", value: 1 },
-                        { displayName: Translation.tr("Local only"), icon: "sync_saved_locally", value: 2 }
-                    ]
+                }
+
+                ConfigSpinBox {
+                    id: voiceDurationSpin
+                    // Without the guard the spin box writes its own default over the
+                    // user's value while the page is still being created.
+                    property bool _ready: false
+                    Component.onCompleted: _ready = true
+
+                    icon: "timer"
+                    text: Translation.tr("Max recording length (seconds)")
+                    value: Config.options?.voiceSearch?.duration ?? 5
+                    from: 3
+                    to: 60
+                    stepSize: 1
+                    onValueChanged: {
+                        if (voiceDurationSpin._ready)
+                            Config.setNestedValue("voiceSearch.duration", value)
+                    }
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 4
+                    text: Translation.tr("The same backend is used for chat dictation and voice web search. Keys are passed through the process environment and are never written to commands or config files.")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                    wrapMode: Text.WordWrap
+                }
+            }
+        }
+
+        // ── Privacy & policy (stacked below Voice input) ─────────
+        SettingsCardSection {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            settingsTaskSection: "privacy"
+            visible: true
+            expanded: true
+            icon: "policy"
+            title: Translation.tr("Privacy & policy")
+
+            SettingsGroup {
+                ContentSubsection {
+                    title: Translation.tr("Allow AI features")
+                    tooltip: Translation.tr("Local only: use on-device models (Ollama, LM Studio).")
+
+                    ConfigSelectionArray {
+                        enableSettingsSearch: false
+                        currentValue: Config.options?.policies?.ai ?? 0
+                        onSelected: newValue => {
+                            Config.setNestedValue("policies.ai", newValue);
+                        }
+                        options: [
+                            { displayName: Translation.tr("No"), icon: "close", value: 0 },
+                            { displayName: Translation.tr("Yes"), icon: "check", value: 1 },
+                            { displayName: Translation.tr("Local only"), icon: "sync_saved_locally", value: 2 }
+                        ]
+                    }
                 }
             }
         }

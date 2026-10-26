@@ -12,10 +12,50 @@ STAMP_RE = re.compile(r"\[(\d{1,3}):(\d{2})(?:[\.:](\d{1,3}))?\]")
 INLINE_WORD_STAMP_RE = re.compile(r"<(\d{1,3}):(\d{2})(?:[\.:](\d{1,3}))?>")
 OFFSET_RE = re.compile(r"^\[offset:([+-]?\d+)\]$", re.IGNORECASE)
 META_RE = re.compile(r"^\[(?:ar|al|ti|by|re|ve|length):", re.IGNORECASE)
-CREDIT_LINE_RE = re.compile(
-    r"^\s*(?:(?:作词|作曲|编曲|制作人|混音|母带|录音|统筹|出品|发行|监制|和声|吉他|贝斯|鼓|弦乐|词|曲|プロデューサー|作詞|作曲|編曲|Lyrics\s*by|Composed\s*by|Produced\s*by|Arranged\s*by)\s*[:：]|\[(?:Verse|Chorus|Hook|Bridge|Intro|Outro|Pre-Chorus|Interlude|Instrumental|Solo|Guitar\s*Solo)[^\]]*\]\s*$)",
+CREDIT_SECTION_HEADER_RE = re.compile(
+    r"^\s*\[(?:Verse|Chorus|Hook|Bridge|Intro|Outro|Pre-Chorus|Interlude|Instrumental|Solo|Guitar\s*Solo)[^\]]*\]\s*$",
     re.IGNORECASE,
 )
+LATIN_CREDIT_PREFIXES = {
+    "lyricsby", "lyricist", "writtenby", "composedby", "composer", "musicby",
+    "producedby", "producer", "arrangedby", "arranger", "mixedby", "mixing",
+    "masteredby", "mastering", "recordedby", "vocalsby", "publishedby",
+    "copyright", "sángtác", "lời", "nhạc", "hoàâm", "hòaâm", "phốikhí",
+    "biêntập", "thựchiện",
+}
+
+
+def _is_cjk_char(ch: str) -> bool:
+    code = ord(ch)
+    return (
+        0x4E00 <= code <= 0x9FFF
+        or 0x3400 <= code <= 0x4DBF
+        or 0x3040 <= code <= 0x30FF
+        or 0xAC00 <= code <= 0xD7AF
+    )
+
+
+def is_credit_or_header_line(text: str) -> bool:
+    cleaned = re.sub(r"<[^>]+>|\[[^\]]+\]", " ", text or "")
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    if not cleaned:
+        return False
+    if CREDIT_SECTION_HEADER_RE.match((text or "").strip()):
+        return True
+    m = re.match(r"^([^:：]{1,28})\s*[:：]\s*(.+)$", cleaned)
+    if not m:
+        return False
+    head = m.group(1)
+    compact_head = re.sub(r"\s+", "", head).strip()
+    if not compact_head:
+        return False
+    if 1 <= len(compact_head) <= 12 and all(
+        _is_cjk_char(ch) or ch in "/・·&" for ch in compact_head
+    ):
+        return True
+    if compact_head.lower() in LATIN_CREDIT_PREFIXES:
+        return True
+    return False
 
 REPEAT_VOWEL_RE = re.compile(
     r"([aăâeêioôơuưyáàảãạắằẳẵặấầẩẫậéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ])\1+",
@@ -312,7 +352,7 @@ def parse_lrc(text: str) -> tuple[list[dict[str, object]], bool]:
         stamps = list(STAMP_RE.finditer(line))
         raw_lyric = STAMP_RE.sub("", line).strip()
         clean_lyric = re.sub(r"\s+", " ", INLINE_WORD_STAMP_RE.sub(" ", raw_lyric)).strip()
-        if clean_lyric and CREDIT_LINE_RE.match(clean_lyric):
+        if clean_lyric and is_credit_or_header_line(clean_lyric):
             continue
         if stamps:
             for match in stamps:

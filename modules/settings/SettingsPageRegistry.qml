@@ -88,13 +88,19 @@ Singleton {
     property bool _legacySidebarSurfaceMigrationDone: false
     property bool _legacyScreenEdgeShadowMigrationDone: false
 
+    readonly property var customPageNames: SettingsPageRegistryData.customPageNames
+
     readonly property var pages: SettingsPageRegistryData.pages.map((page, index) => {
         if (!page)
             return null
-        if (root.abyssFamily && index === root.barPageIndex)
-            return Object.assign({},page,{key:"abyss",name:"Surface & Waves",icon:"water",
+        const base = (root.abyssFamily && index === root.barPageIndex)
+            ? Object.assign({},page,{key:"abyss",name:"Surface & Waves",icon:"water",
                 desc:"Screen Edge, waves and surface presentation",component:"modules/settings/AbyssConfig.qml"})
-        return page
+            : page
+        const customName = String((root.customPageNames ?? {})[String(index)] ?? "").trim()
+        if (customName.length > 0)
+            return Object.assign({}, base, { name: customName, defaultName: base.name })
+        return Object.assign({}, base, { defaultName: base.name })
     })
 
     function isHiddenLegacyIndex(index: int): bool {

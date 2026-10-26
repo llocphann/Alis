@@ -527,41 +527,65 @@ fn lrc_line(line: &str) -> (Vec<f64>, String, Vec<(f64, String)>) {
     (stamps, clean_lyric, inline_segments)
 }
 
+fn is_cjk_char(ch: char) -> bool {
+    let code = ch as u32;
+    (0x4E00..=0x9FFF).contains(&code)
+        || (0x3400..=0x4DBF).contains(&code)
+        || (0x3040..=0x30FF).contains(&code)
+        || (0xAC00..=0xD7AF).contains(&code)
+}
+
 fn is_non_lyric_credit_or_header(text: &str) -> bool {
     let trimmed = text.trim();
     if trimmed.is_empty() {
         return false;
     }
-    let lowered = trimmed.to_lowercase();
-    for prefix in [
-        "作词",
-        "作曲",
-        "编曲",
-        "制作人",
-        "混音",
-        "母带",
-        "录音",
-        "统筹",
-        "出品",
-        "发行",
-        "监制",
-        "和声",
-        "吉他",
-        "贝斯",
-        "鼓",
-        "弦乐",
-        "作詞",
-        "編曲",
-        "lyrics by",
-        "composed by",
-        "produced by",
-        "arranged by",
-    ] {
-        if let Some(rest) = lowered.strip_prefix(prefix) {
-            let rest_trimmed = rest.trim_start();
-            if rest_trimmed.starts_with(':') || rest_trimmed.starts_with('：') {
+    if let Some(colon_idx) = trimmed.find([':', '：']) {
+        let head = &trimmed[..colon_idx];
+        let after = trimmed[colon_idx..].trim_start_matches([':', '：']).trim();
+        let compact: String = head.chars().filter(|c| !c.is_whitespace()).collect();
+        let compact_count = compact.chars().count();
+        if !after.is_empty() && (1..=12).contains(&compact_count) {
+            if compact
+                .chars()
+                .all(|ch| is_cjk_char(ch) || matches!(ch, '/' | '・' | '·' | '&'))
+            {
                 return true;
             }
+        }
+        let compact_lower = compact.to_lowercase();
+        if !after.is_empty()
+            && [
+                "lyricsby",
+                "lyricist",
+                "writtenby",
+                "composedby",
+                "composer",
+                "musicby",
+                "producedby",
+                "producer",
+                "arrangedby",
+                "arranger",
+                "mixedby",
+                "mixing",
+                "masteredby",
+                "mastering",
+                "recordedby",
+                "vocalsby",
+                "publishedby",
+                "copyright",
+                "sángtác",
+                "lời",
+                "nhạc",
+                "hoàâm",
+                "hòaâm",
+                "phốikhí",
+                "biêntập",
+                "thựchiện",
+            ]
+            .contains(&compact_lower.as_str())
+        {
+            return true;
         }
     }
     if trimmed.starts_with('[') && trimmed.ends_with(']') {
