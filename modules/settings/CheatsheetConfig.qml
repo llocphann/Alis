@@ -29,7 +29,157 @@ ContentPage {
     property string _statusMsg: ""
     property string _statusType: ""   // "saved" | "removed" | "error"
     property bool _statusVisible: false
-    property var expandedCategories: ({})
+    property var expandedRows: ({})
+
+    function toggleRowExpanded(rowIndex: int, nextExpanded: bool): void {
+        if ((root.expandedRows[rowIndex] === true) === nextExpanded)
+            return
+        const next = Object.assign({}, root.expandedRows)
+        next[rowIndex] = nextExpanded
+        root.expandedRows = next
+    }
+
+    readonly property var balancedEnrichedCategories: {
+        const rawCats = root.hasEnrichedData ? (NiriKeybinds.enrichedCategories ?? []) : []
+        const allBinds = NiriKeybinds.allBinds ?? []
+        if (rawCats.length === 0)
+            return []
+
+        const byName = {}
+        const order = []
+        function ensureBucket(name) {
+            if (!byName[name]) {
+                byName[name] = []
+                order.push(name)
+            }
+            return byName[name]
+        }
+
+        for (let i = 0; i < rawCats.length; i++) {
+            const cat = rawCats[i]
+            const name = String(cat?.name ?? "Other")
+            const indices = Array.isArray(cat?.binds) ? cat.binds.slice() : []
+            if (name === "Window Switcher" || name === "System") {
+                ensureBucket("System & Session").push(...indices)
+            } else if (name === "Layout" || name === "Resize") {
+                ensureBucket("Layout & Resize").push(...indices)
+            } else if (name === "Media" || name === "Brightness" || name === "Other") {
+                ensureBucket("Media & Brightness").push(...indices)
+            } else if (name === "Screenshots" || name === "Region Tools") {
+                ensureBucket("Screenshots").push(...indices)
+            } else if (name === "Workspaces" && indices.length > 14) {
+                const numbered = []
+                const nav = []
+                for (let k = 0; k < indices.length; k++) {
+                    const idx = indices[k]
+                    const combo = String(allBinds[idx]?.key_combo ?? "")
+                    if (/(?:^|\+)[1-9]$/.test(combo))
+                        numbered.push(idx)
+                    else
+                        nav.push(idx)
+                }
+                if (numbered.length > 0 && nav.length > 0) {
+                    ensureBucket("Workspaces").push(...numbered)
+                    ensureBucket("Workspace Navigation").push(...nav)
+                } else {
+                    ensureBucket(name).push(...indices)
+                }
+            } else {
+                ensureBucket(name).push(...indices)
+            }
+        }
+
+        // Balance Alis Shell & System & Session when System & Session is short
+        const shellName = byName["Alis Shell"] ? "Alis Shell" : (byName["ii Shell"] ? "ii Shell" : "")
+        if (shellName && byName["System & Session"] && byName[shellName].length >= 10 && byName["System & Session"].length < 7) {
+            const shellKept = []
+            const sysBucket = byName["System & Session"]
+            for (let i = 0; i < byName[shellName].length; i++) {
+                const idx = byName[shellName][i]
+                const b = allBinds[idx] ?? {}
+                const combo = String(b.key_combo ?? "")
+                const desc = String(b.description ?? b.action ?? "").toLowerCase()
+                if ((desc.includes("lock") || desc.includes("session") || desc.includes("power") || combo === "Mod+Alt+L" || combo === "Mod+Shift+Q")
+                        && sysBucket.length < 8) {
+                    sysBucket.push(idx)
+                } else {
+                    shellKept.push(idx)
+                }
+            }
+            byName[shellName] = shellKept
+        }
+
+        let groups = order
+            .map(name => ({ name: name, binds: byName[name] }))
+            .filter(g => g.binds.length > 0)
+
+        // If odd number of groups, merge the two smallest groups so 2-column rows stay paired
+        if (groups.length > 2 && (groups.length % 2 === 1)) {
+            groups.sort((a, b) => a.binds.length - b.binds.length)
+            const first = groups.shift()
+            const second = groups.shift()
+            groups.push({
+                name: first.name + " · " + second.name,
+                binds: first.binds.concat(second.binds)
+            })
+        }
+
+        // Sort by item count so adjacent (Left, Right) pairs on each row have matching height
+        groups.sort((a, b) => b.binds.length - a.binds.length)
+        return groups
+    }
+
+    readonly property var balancedLegacyCategories: {
+        const rawCats = root.categories ?? []
+        if (rawCats.length === 0)
+            return []
+
+        const byName = {}
+        const order = []
+        function ensureBucket(name) {
+            if (!byName[name]) {
+                byName[name] = []
+                order.push(name)
+            }
+            return byName[name]
+        }
+
+        for (let i = 0; i < rawCats.length; i++) {
+            const cat = rawCats[i]
+            const name = String(cat?.name ?? "Other")
+            const items = cat?.children?.[0]?.keybinds ?? []
+            if (name === "Window Switcher" || name === "System") {
+                ensureBucket("System & Session").push(...items)
+            } else if (name === "Layout" || name === "Resize") {
+                ensureBucket("Layout & Resize").push(...items)
+            } else if (name === "Media" || name === "Brightness" || name === "Other") {
+                ensureBucket("Media & Brightness").push(...items)
+            } else if (name === "Screenshots" || name === "Region Tools") {
+                ensureBucket("Screenshots").push(...items)
+            } else if (name === "Monitors" || name === "Workspaces") {
+                ensureBucket("Workspaces & Monitors").push(...items)
+            } else {
+                ensureBucket(name).push(...items)
+            }
+        }
+
+        let groups = order
+            .map(name => ({ name: name, children: [{ keybinds: byName[name] }] }))
+            .filter(g => g.children[0].keybinds.length > 0)
+
+        if (groups.length > 2 && (groups.length % 2 === 1)) {
+            groups.sort((a, b) => a.children[0].keybinds.length - b.children[0].keybinds.length)
+            const first = groups.shift()
+            const second = groups.shift()
+            groups.push({
+                name: first.name + " · " + second.name,
+                children: [{ keybinds: first.children[0].keybinds.concat(second.children[0].keybinds) }]
+            })
+        }
+
+        groups.sort((a, b) => b.children[0].keybinds.length - a.children[0].keybinds.length)
+        return groups
+    }
 
     SettingsTaskNavigator {
         showTabBar: false
@@ -268,7 +418,7 @@ ContentPage {
         rowSpacing: 14
 
         Repeater {
-            model: root.hasEnrichedData ? NiriKeybinds.enrichedCategories : []
+            model: root.balancedEnrichedCategories
 
             delegate: SettingsCardSection {
                 required property var modelData
@@ -279,14 +429,11 @@ ContentPage {
 
                 readonly property string catName: modelData?.name ?? ""
                 readonly property var bindIndices: modelData?.binds ?? []
+                readonly property int rowIndex: Math.floor(index / 2)
 
-                expanded: root.expandedCategories[catName] === true
+                expanded: root.expandedRows[rowIndex] === true
                 onExpandedChanged: {
-                    if ((root.expandedCategories[catName] === true) !== expanded) {
-                        const next = Object.assign({}, root.expandedCategories)
-                        next[catName] = expanded
-                        root.expandedCategories = next
-                    }
+                    root.toggleRowExpanded(rowIndex, expanded)
                 }
 
                 icon: root.getCategoryIcon(catName)
@@ -334,7 +481,7 @@ ContentPage {
         rowSpacing: 14
 
         Repeater {
-            model: root.categories
+            model: root.balancedLegacyCategories
 
             delegate: SettingsCardSection {
                 required property var modelData
@@ -342,7 +489,11 @@ ContentPage {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredWidth: 1
-                expanded: false
+                readonly property int rowIndex: Math.floor(index / 2)
+                expanded: root.expandedRows[rowIndex] === true
+                onExpandedChanged: {
+                    root.toggleRowExpanded(rowIndex, expanded)
+                }
 
                 readonly property var categoryKeybinds: modelData.children?.[0]?.keybinds ?? []
 
@@ -384,6 +535,7 @@ ContentPage {
     function getCategoryIcon(name: string): string {
         const icons = {
             "System": "settings_power",
+            "System & Session": "settings_power",
             "ii Shell": "auto_awesome",
             "Alis Shell": "auto_awesome",
             "Window Switcher": "swap_horiz",
@@ -393,9 +545,13 @@ ContentPage {
             "Focus": "center_focus_strong",
             "Move Windows": "open_with",
             "Workspaces": "grid_view",
+            "Workspace Navigation": "swap_vert",
+            "Workspaces & Monitors": "grid_view",
             "Media": "volume_up",
+            "Media & Brightness": "volume_up",
             "Brightness": "light_mode",
             "Layout": "dashboard_customize",
+            "Layout & Resize": "dashboard_customize",
             "Resize": "photo_size_select_large",
             "Monitors": "monitor",
             "Region Tools": "screenshot_region",

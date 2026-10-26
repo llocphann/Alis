@@ -14,6 +14,7 @@ AbstractButton {
     property bool outlined: true
     property bool toolTipEnabled: true
     property string description: text
+    property int textAlignment: glyph.length > 0 ? Text.AlignLeft : Text.AlignHCenter
     readonly property color baseInk: Appearance.m3colors.darkmode
         ? AbyssStyle.textColor : "#000000"
     readonly property color activeInk: Appearance.m3colors.darkmode
@@ -67,6 +68,7 @@ AbstractButton {
                 text: root.text
                 color: root.hovered || root.checked ? root.activeInk : root.baseInk
                 font: root.font
+                horizontalAlignment: root.textAlignment
                 elide: Text.ElideRight
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter

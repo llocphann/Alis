@@ -39,17 +39,28 @@ Item {
         return Number.isFinite(t) && t >= 0 ? t : 0;
     }
 
+    function _estimatedLineVocalSpan(textStr: string): real {
+        const clean = String(textStr ?? "").trim();
+        if (!clean || clean === "♪")
+            return 1.2;
+        const words = clean.split(/\s+/).filter(t => t.length > 0);
+        const chars = clean.replace(/[^\p{L}\p{N}]+/gu, "").length;
+        return Math.max(0.95, Math.min(6.2, 0.28 + words.length * 0.24 + chars * 0.036));
+    }
+
     readonly property real lineEndTime: {
+        const estMax = root._estimatedLineVocalSpan(root.lineText) * 1.18;
         if (root.lineData && typeof root.lineData === "object") {
             const explicitEnd = Number(root.lineData.endTime ?? 0);
             if (Number.isFinite(explicitEnd) && explicitEnd > root.lineStartTime + 0.15)
-                return explicitEnd;
+                return Math.min(explicitEnd, root.lineStartTime + Math.max(estMax, 4.5));
         }
         if (root.nextLineTime > root.lineStartTime + 0.15) {
             const gap = root.nextLineTime - root.lineStartTime;
-            return root.lineStartTime + Math.min(Math.max(0.35, gap - 0.06), Math.max(1.4, Math.min(8.5, gap * 0.92)));
+            const window = Math.min(Math.max(0.35, gap - 0.06), Math.min(estMax, gap * 0.88));
+            return root.lineStartTime + window;
         }
-        return root.lineStartTime + 3.8;
+        return root.lineStartTime + root._estimatedLineVocalSpan(root.lineText);
     }
 
     // Smooth 60fps position clock active ONLY on the active line while playing
@@ -234,19 +245,52 @@ Item {
 
         if (preWords.length > 0) {
             const total = preWords.length;
+            const firstStart = Number(preWords[0]?.start ?? lStart);
+            const lastEnd = Number(preWords[total - 1]?.end ?? lEnd);
+            const rawSpan = Math.max(0.1, lastEnd - firstStart);
+            const estSpan = root._estimatedLineVocalSpan(text);
+            let isContiguousSynthesized = true;
+            for (let i = 0; i + 1 < total; i++) {
+                const curEnd = Number(preWords[i]?.end ?? 0);
+                const nxtStart = Number(preWords[i + 1]?.start ?? 0);
+                if (Math.abs(nxtStart - curEnd) > 0.03) {
+                    isContiguousSynthesized = false;
+                    break;
+                }
+            }
+            const scaleFactor = (isContiguousSynthesized && rawSpan > estSpan * 1.15)
+                ? (estSpan / rawSpan)
+                : 1.0;
+
             let sumDur = 0;
+            const adjusted = [];
             for (let i = 0; i < total; i++) {
-                const s = Number(preWords[i]?.start ?? lStart);
-                const e = Number(preWords[i]?.end ?? (s + 0.3));
+                const w = preWords[i];
+                const wTxt = String(w?.text ?? "");
+                let s = Number(w?.start ?? lStart);
+                let e = Math.max(s + 0.04, Number(w?.end ?? (s + 0.3)));
+                if (scaleFactor < 0.999) {
+                    s = firstStart + (s - firstStart) * scaleFactor;
+                    e = firstStart + (e - firstStart) * scaleFactor;
+                } else {
+                    const nxtStart = (i + 1 < total) ? Number(preWords[i + 1]?.start ?? e) : e;
+                    const touchesNext = Math.abs(nxtStart - e) <= 0.025;
+                    const charCount = Math.max(1, wTxt.replace(/[^\p{L}\p{N}]+/gu, "").length);
+                    const hasClausePause = /[,;:\.\?\!…]$/.test(wTxt);
+                    const maxNaturalDur = hasClausePause
+                        ? Math.max(0.32, 0.18 + charCount * 0.055)
+                        : Math.max(0.55, 0.28 + charCount * 0.075);
+                    if ((touchesNext || i === total - 1) && (e - s) > maxNaturalDur * 1.35)
+                        e = s + maxNaturalDur;
+                }
                 sumDur += Math.max(0.04, e - s);
+                adjusted.push({ raw: w, text: wTxt, start: s, end: e });
             }
             const avgDur = sumDur / Math.max(1, total);
             const enriched = [];
             for (let i = 0; i < total; i++) {
-                const w = preWords[i];
-                const s = Number(w?.start ?? lStart);
-                const e = Math.max(s + 0.04, Number(w?.end ?? (s + avgDur)));
-                enriched.push(root._analyzeWordProsody(String(w?.text ?? ""), s, e, i, total, avgDur, w));
+                const item = adjusted[i];
+                enriched.push(root._analyzeWordProsody(item.text, item.start, item.end, i, total, avgDur, item.raw));
             }
             return enriched;
         }
@@ -312,6 +356,8 @@ Item {
     }
 
     readonly property bool useWordFlow: root.active && root.synced && root.resolvedWords.length > 0
+    onUseWordFlowChanged: Qt.callLater(wordFlow.updateRowAlignment)
+    onHorizontalAlignmentChanged: Qt.callLater(wordFlow.updateRowAlignment)
 
     implicitWidth: 200
     implicitHeight: root.useWordFlow
@@ -387,6 +433,8 @@ Item {
 
         onPositioningComplete: wordFlow.updateRowAlignment()
         onWidthChanged: Qt.callLater(wordFlow.updateRowAlignment)
+        onImplicitHeightChanged: Qt.callLater(wordFlow.updateRowAlignment)
+        onChildrenRectChanged: wordFlow.updateRowAlignment()
 
         Repeater {
             id: wordRepeater

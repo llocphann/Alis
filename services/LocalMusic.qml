@@ -121,6 +121,10 @@ Singleton {
     readonly property real _baseLyricsPosition: {
         const mprisPosition = Number(mprisPlayer?.position)
         const mpdPosition = Math.max(0, currentPosition)
+        if (mpdConnected && mpdPosition > 0) {
+            if (!mprisAvailable || !Number.isFinite(mprisPosition) || Math.abs(mprisPosition - mpdPosition) <= 1.2)
+                return mpdPosition
+        }
         if (mprisAvailable && Number.isFinite(mprisPosition) && mprisPosition > 0) {
             if (mpdPosition <= 0 || Math.abs(mprisPosition - mpdPosition) <= 8)
                 return Math.max(0, mprisPosition)
@@ -128,16 +132,22 @@ Singleton {
         return mpdPosition
     }
 
-    function _reanchorLyricsPosition(pos: real): void {
+    function _reanchorLyricsPosition(pos: real, snap = true): void {
         const cleanPos = Math.max(0, Number(pos) || 0)
+        const now = Date.now()
+        if (!snap && root.playing && root._lyricsAnchorMs > 0) {
+            const predicted = root._lyricsAnchorPos + Math.max(0, (now - root._lyricsAnchorMs) / 1000)
+            if (Math.abs(cleanPos - predicted) <= 1.15)
+                return
+        }
         root._lyricsAnchorPos = cleanPos
-        root._lyricsAnchorMs = Date.now()
+        root._lyricsAnchorMs = now
         root._lyricsLivePos = cleanPos
     }
 
-    on_BaseLyricsPositionChanged: root._reanchorLyricsPosition(root._baseLyricsPosition)
-    onCurrentPositionChanged: root._reanchorLyricsPosition(root._baseLyricsPosition)
-    onPlayingChanged: root._reanchorLyricsPosition(root._baseLyricsPosition)
+    on_BaseLyricsPositionChanged: root._reanchorLyricsPosition(root._baseLyricsPosition, false)
+    onCurrentPositionChanged: root._reanchorLyricsPosition(root.currentPosition, true)
+    onPlayingChanged: root._reanchorLyricsPosition(root._baseLyricsPosition, true)
 
     readonly property real lyricsPosition: {
         if (root.playing && root._lyricsAnchorMs > 0) {
@@ -800,6 +810,7 @@ Singleton {
 
     function seek(seconds: real): void {
         const target = Math.max(0, Number(seconds) || 0)
+        root._reanchorLyricsPosition(target, true)
         const player = mprisPlayer
         if (!mpdMutationPending && player && (player.canSeek ?? false)
                 && (player.positionSupported ?? true)) {

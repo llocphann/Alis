@@ -436,7 +436,9 @@ Item {
                 Layout.fillWidth: true
                 text: parent.parent.title
                 color: root.ink
-                font.weight: Font.DemiBold
+                horizontalAlignment: Text.AlignHCenter
+                font.weight: Font.Bold
+                font.variableAxes: ({ "wght": 700 })
                 elide: Text.ElideRight
             }
             Item {
@@ -595,6 +597,9 @@ Item {
                             objectName: "musicGenreTab"
                             Layout.fillWidth: true
                             text: Translation.tr("Genre")
+                            textAlignment: Text.AlignHCenter
+                            font.weight: Font.DemiBold
+                            font.variableAxes: ({ "wght": 600 })
                             outlined: false
                             // Keep tab highlight declarative; a button click must
                             // not imperatively toggle away the bound checked state.
@@ -605,6 +610,9 @@ Item {
                             objectName: "musicFolderTab"
                             Layout.fillWidth: true
                             text: Translation.tr("Folders")
+                            textAlignment: Text.AlignHCenter
+                            font.weight: Font.DemiBold
+                            font.variableAxes: ({ "wght": 600 })
                             outlined: false
                             // Keep tab highlight declarative; a button click must
                             // not imperatively toggle away the bound checked state.
@@ -951,6 +959,7 @@ Item {
                         required property var modelData
                         required property int index
                         width: ListView.view.width
+                        horizontalAlignment: Text.AlignHCenter
                         lineData: modelData
                         nextLineTime: (index + 1 < root.effectiveLyricsLines.length)
                             ? Number(root.effectiveLyricsLines[index + 1]?.time ?? -1)

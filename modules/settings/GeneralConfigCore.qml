@@ -514,7 +514,7 @@ ContentPage {
                 SettingsGroup {
                     SettingsSwitch {
                         buttonIcon: "assignment"
-                        text: Translation.tr("Hide clipboard images copied from sussy sources")
+                        text: Translation.tr("Hide sussy clipboard images")
                         checked: Config.options?.workSafety?.enable?.clipboard ?? false
                         onCheckedChanged: {
                             Config.setNestedValue("workSafety.enable.clipboard", checked);
@@ -617,7 +617,7 @@ ContentPage {
                         uniform: true
                         SettingsSwitch {
                             buttonIcon: "settings_power"
-                            text: Translation.tr('Require password to power off/restart')
+                            text: Translation.tr('Password for power actions')
                             checked: Config.options?.lock?.security?.requirePasswordToPower ?? true
                             onCheckedChanged: {
                                 Config.setNestedValue("lock.security.requirePasswordToPower", checked);
@@ -646,7 +646,7 @@ ContentPage {
 
                     SettingsSwitch {
                         buttonIcon: "notifications"
-                        text: Translation.tr('Show notifications on lock screen')
+                        text: Translation.tr('Show notifications')
                         checked: Config.options?.lock?.notifications?.enable ?? false
                         onCheckedChanged: {
                             Config.setNestedValue("lock.notifications.enable", checked);
@@ -661,7 +661,7 @@ ContentPage {
                         visible: Config.options?.lock?.notifications?.enable ?? false
                         SettingsSwitch {
                             buttonIcon: "visibility"
-                            text: Translation.tr('Show notification body text')
+                            text: Translation.tr('Notification body')
                             checked: Config.options?.lock?.notifications?.showBody ?? true
                             onCheckedChanged: {
                                 Config.setNestedValue("lock.notifications.showBody", checked);
@@ -673,7 +673,7 @@ ContentPage {
 
                         ConfigSpinBox {
                             icon: "format_list_numbered"
-                            text: Translation.tr("Max notifications shown")
+                            text: Translation.tr("Max notifications")
                             value: Config.options?.lock?.notifications?.maxCount ?? 3
                             from: 1
                             to: 10
@@ -745,7 +745,7 @@ ContentPage {
                         uniform: true
                         SettingsSwitch {
                             buttonIcon: "info"
-                            text: Translation.tr('Show status indicators')
+                            text: Translation.tr('Status indicators')
                             checked: Config.options?.lock?.status?.enable ?? true
                             onCheckedChanged: {
                                 Config.setNestedValue("lock.status.enable", checked);
@@ -813,7 +813,7 @@ ContentPage {
                         uniform: true
                         SettingsSwitch {
                             buttonIcon: "shapes"
-                            text: Translation.tr('Use varying shapes for password characters')
+                            text: Translation.tr('Varying password shapes')
                             checked: Config.options?.lock?.materialShapeChars ?? false
                             onCheckedChanged: {
                                 Config.setNestedValue("lock.materialShapeChars", checked);
@@ -825,7 +825,7 @@ ContentPage {
 
                         SettingsSwitch {
                             buttonIcon: "play_circle"
-                            text: Translation.tr("Animate video/GIF wallpapers")
+                            text: Translation.tr("Animate video/GIF")
                             checked: Config.options?.lock?.enableAnimation ?? false
                             onCheckedChanged: Config.setNestedValue("lock.enableAnimation", checked)
                             StyledToolTip {
@@ -866,7 +866,7 @@ ContentPage {
 
                         SettingsSwitch {
                             buttonIcon: "touch_app"
-                            text: Translation.tr("Unlock hint text")
+                            text: Translation.tr("Unlock hint")
                             checked: Config.options?.lock?.widgets?.hintText ?? true
                             onCheckedChanged: Config.setNestedValue("lock.widgets.hintText", checked)
                         }
@@ -907,7 +907,7 @@ ContentPage {
 
                         ConfigSpinBox {
                             icon: "loupe"
-                            text: Translation.tr("Extra wallpaper zoom (%)")
+                            text: Translation.tr("Extra zoom (%)")
                             value: (Config.options?.lock?.blur?.extraZoom ?? 1.1) * 100
                             from: 1
                             to: 150

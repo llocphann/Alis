@@ -213,11 +213,13 @@ def convert_netease_yrc_to_enhanced_lrc(yrc_text: str) -> str:
 
         parts: list[str] = [format_lrc_Time(line_start_ms / 1000.0, inline=False)]
         last_end = (line_start_ms + line_dur_ms) / 1000.0
-        for w_start, w_end, piece in grouped:
-            clean_piece = piece.strip()
-            if not clean_piece:
-                continue
-            parts.append(f"{format_lrc_Time(w_start, inline=True)}{clean_piece} ")
+        clean_grouped = [(ws, we, p.strip()) for ws, we, p in grouped if p.strip()]
+        for idx_g, (w_start, w_end, clean_piece) in enumerate(clean_grouped):
+            next_ws = clean_grouped[idx_g + 1][0] if idx_g + 1 < len(clean_grouped) else w_end
+            if idx_g + 1 < len(clean_grouped) and (next_ws - w_end) > 0.025:
+                parts.append(f"{format_lrc_Time(w_start, inline=True)}{clean_piece}{format_lrc_Time(w_end, inline=True)} ")
+            else:
+                parts.append(f"{format_lrc_Time(w_start, inline=True)}{clean_piece} ")
             last_end = max(last_end, w_end)
         parts.append(format_lrc_Time(last_end, inline=True))
         out_lines.append("".join(parts).strip())
@@ -242,6 +244,7 @@ def convert_netease_klyric_to_enhanced_lrc(klyric_text: str) -> str:
             continue
         parts: list[str] = [format_lrc_Time(line_start_ms / 1000.0, inline=False)]
         last_end = (line_start_ms + line_dur_ms) / 1000.0
+        parsed_k: list[tuple[float, float, str]] = []
         for tok in tokens:
             rel_start_ms = int(tok.group(1))
             w_dur_ms = max(20, int(tok.group(2)))
@@ -250,7 +253,13 @@ def convert_netease_klyric_to_enhanced_lrc(klyric_text: str) -> str:
                 continue
             w_start = (line_start_ms + rel_start_ms) / 1000.0
             w_end = w_start + w_dur_ms / 1000.0
-            parts.append(f"{format_lrc_Time(w_start, inline=True)}{piece} ")
+            parsed_k.append((w_start, w_end, piece))
+        for idx_k, (w_start, w_end, piece) in enumerate(parsed_k):
+            next_ws = parsed_k[idx_k + 1][0] if idx_k + 1 < len(parsed_k) else w_end
+            if idx_k + 1 < len(parsed_k) and (next_ws - w_end) > 0.025:
+                parts.append(f"{format_lrc_Time(w_start, inline=True)}{piece}{format_lrc_Time(w_end, inline=True)} ")
+            else:
+                parts.append(f"{format_lrc_Time(w_start, inline=True)}{piece} ")
             last_end = max(last_end, w_end)
         parts.append(format_lrc_Time(last_end, inline=True))
         out_lines.append("".join(parts).strip())
@@ -419,12 +428,20 @@ def parse_inline_words(raw_lyric: str, line_start: float, line_end: float, offse
     for idx, (seg_t, seg_text) in enumerate(timed_segments):
         if not seg_text:
             continue
+        has_explicit_end = idx + 1 < len(timed_segments) and not timed_segments[idx + 1][1]
         next_t = timed_segments[idx + 1][0] if idx + 1 < len(timed_segments) else line_end
         if next_t <= seg_t:
             next_t = max(seg_t + 0.18, line_end if idx + 1 == len(timed_segments) else seg_t + 0.28)
         sub_words = seg_text.split()
         if len(sub_words) == 1:
-            raw_words.append((seg_t, next_t, sub_words[0]))
+            w_str = sub_words[0]
+            if not has_explicit_end:
+                char_count = max(1, len(re.sub(r"[^\w]+", "", w_str)))
+                clause_pause = w_str.endswith((",", ";", ":", ".", "?", "!", "…"))
+                max_natural = max(0.32, 0.18 + char_count * 0.055) if clause_pause else max(0.55, 0.28 + char_count * 0.075)
+                if (next_t - seg_t) > max_natural * 1.35:
+                    next_t = seg_t + max_natural
+            raw_words.append((seg_t, next_t, w_str))
         else:
             weights = [prosodic_word_weight(w, i, len(sub_words))[0] for i, w in enumerate(sub_words)]
             total_w = sum(weights) or 1.0
@@ -444,6 +461,14 @@ def parse_inline_words(raw_lyric: str, line_start: float, line_end: float, offse
         classify_word_expression(w_text, w_start, w_end, i, total, avg_dur)
         for i, (w_start, w_end, w_text) in enumerate(raw_words)
     ]
+
+
+def _estimated_line_vocal_span(clean_text: str) -> float:
+    tokens = [w for w in (clean_text or "").split() if w.strip()]
+    if not tokens or clean_text.strip() == "♪":
+        return 1.2
+    chars = len(re.sub(r"[^\w]+", "", clean_text))
+    return max(0.95, min(6.2, 0.28 + len(tokens) * 0.24 + chars * 0.036))
 
 
 def synthesize_prosodic_words(clean_text: str, line_start: float, line_end: float) -> list[dict]:
@@ -518,8 +543,8 @@ def parse_lrc(lrc: str, key_name: str = "t") -> list[dict]:
                 next_start = cand_next
                 break
         gap = max(0.35, next_start - line_start)
-        # Active singing window within the inter-line gap
-        vocal_window = min(max(0.35, gap - 0.06), max(1.4, min(8.5, gap * 0.92)))
+        est_max = _estimated_line_vocal_span(item["text"]) * 1.15
+        vocal_window = min(max(0.35, gap - 0.06), min(est_max, gap * 0.88))
         line_end = round(line_start + vocal_window, 3)
         raw_lyric = item.pop("_raw_lyric", "")
         words = parse_inline_words(raw_lyric, line_start, line_end, offset_seconds)

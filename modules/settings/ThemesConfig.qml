@@ -710,14 +710,6 @@ ContentPage {
         title: Translation.tr("Scheme Variant")
 
         SettingsGroup {
-            StyledText {
-                text: Translation.tr("Adjust the color generation algorithm. Applies to both wallpaper-based and static themes.")
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
-            }
-
             ConfigSelectionArray {
                 currentValue: Config.options?.appearance?.palette?.type ?? "auto"
                 onSelected: newValue => {
@@ -1157,17 +1149,18 @@ ContentPage {
             ContentSubsection {
                 title: Translation.tr("Quick Presets")
 
-                Flow {
+                RowLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: 6
 
                     Repeater {
                         model: StylePresets.presets
 
                         RippleButton {
                             required property var modelData
-                            width: 90
-                            height: 50
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            implicitHeight: 46
                             buttonRadius: Appearance.rounding.small
                             colBackground: Appearance.colors.colLayer1
                             colBackgroundHover: Appearance.colors.colLayer1Hover
@@ -1187,6 +1180,7 @@ ContentPage {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: modelData.name
                                     font.pixelSize: Appearance.font.pixelSize.smaller
+                                    elide: Text.ElideRight
                                 }
                             }
 
@@ -1418,12 +1412,16 @@ ContentPage {
     }
     }
 
-    // ==================== ROW 3 LEFT: TERMINAL COLORS ====================
-    SettingsCardSection {
-        id: terminalColorsSection
+    // ==================== ROW 3 LEFT: TERMINAL COLORS + GOWALL WALLPAPER EDITOR ====================
+    ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredWidth: 1
+        spacing: 14
+
+    SettingsCardSection {
+        id: terminalColorsSection
+        Layout.fillWidth: true
         settingsTaskSection: "advanced"
         visible: true
         expanded: true
@@ -1451,14 +1449,6 @@ ContentPage {
         }
 
         SettingsGroup {
-            StyledText {
-                Layout.fillWidth: true
-                text: Translation.tr("Adjust how terminal colors are generated from the current theme. Changes apply to all color themes.")
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                wrapMode: Text.WordWrap
-            }
-
             ConfigSwitch {
                 buttonIcon: "terminal"
                 text: Translation.tr("Enable terminal theming")
@@ -1469,7 +1459,7 @@ ContentPage {
             // Individual terminal toggles
             RowLayout {
                 Layout.fillWidth: true
-                Layout.topMargin: 12
+                Layout.topMargin: 8
                 spacing: 6
 
                 StyledText {
@@ -1730,196 +1720,179 @@ ContentPage {
                 onTriggered: ThemeService.regenerateAutoTheme()
             }
 
-            // Saturation slider
-            ConfigSpinBox {
-                id: saturationSpinBox
-                icon: "palette"
-                text: Translation.tr("Color Saturation") + " (%)"
-                value: Math.round((Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments?.saturation ?? 0.65) * 100)
-                from: 10
-                to: 80
-                stepSize: 5
-                property bool _ready: false
-                Component.onCompleted: _ready = true
-                onValueChanged: {
-                    if (!_ready) return;
-                    Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.saturation", value / 100);
-                    terminalColorDebounce.restart();
-                }
-            }
+            // Saturation & Brightness on 1 row
+            ConfigRow {
+                uniform: true
 
-            // Brightness slider
-            ConfigSpinBox {
-                id: brightnessSpinBox
-                icon: "brightness_6"
-                text: Translation.tr("Color Brightness") + " (%)"
-                value: Math.round((Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments?.brightness ?? 0.60) * 100)
-                from: 35
-                to: 75
-                stepSize: 5
-                property bool _ready: false
-                Component.onCompleted: _ready = true
-                onValueChanged: {
-                    if (!_ready) return;
-                    Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.brightness", value / 100);
-                    terminalColorDebounce.restart();
-                }
-            }
-
-            // Harmony slider
-            ConfigSpinBox {
-                id: harmonySpinBox
-                icon: "tune"
-                text: Translation.tr("Theme Harmony") + " (%)"
-                value: Math.round((Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments?.harmony ?? 0.40) * 100)
-                from: 0
-                to: 100
-                stepSize: 5
-                property bool _ready: false
-                Component.onCompleted: _ready = true
-                onValueChanged: {
-                    if (!_ready) return;
-                    Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.harmony", value / 100);
-                    terminalColorDebounce.restart();
-                }
-
-                StyledToolTip {
-                    text: Translation.tr("Shifts terminal color hues towards the theme's primary color. 0% = original colors, 100% = fully harmonized.")
-                }
-            }
-
-            // Background brightness slider
-            ConfigSpinBox {
-                id: bgBrightnessSpinBox
-                icon: "contrast"
-                text: Translation.tr("Background Brightness") + " (%)"
-                value: Math.round((Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments?.backgroundBrightness ?? 0.50) * 100)
-                from: 10
-                to: 90
-                stepSize: 5
-                property bool _ready: false
-                Component.onCompleted: _ready = true
-                onValueChanged: {
-                    if (!_ready) return;
-                    Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.backgroundBrightness", value / 100);
-                    terminalColorDebounce.restart();
-                }
-
-                StyledToolTip {
-                    text: Translation.tr("Controls terminal background darkness. Lower = darker, higher = lighter. Matches shell surfaces at 50%.")
-                }
-            }
-
-            // Reset button
-            RippleButton {
-                Layout.alignment: Qt.AlignRight
-                Layout.topMargin: 8
-                implicitWidth: resetRow.implicitWidth + 16
-                implicitHeight: 32
-                buttonRadius: Appearance.rounding.small
-                colBackground: Appearance.colors.colLayer1
-                colBackgroundHover: Appearance.colors.colLayer1Hover
-
-                contentItem: RowLayout {
-                    id: resetRow
-                    anchors.centerIn: parent
-                    spacing: 6
-
-                    MaterialSymbol {
-                        text: "restart_alt"
-                        iconSize: 14
-                        color: Appearance.colors.colOnLayer1
-                    }
-
-                    StyledText {
-                        text: Translation.tr("Reset to defaults")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
+                ConfigSpinBox {
+                    id: saturationSpinBox
+                    icon: "palette"
+                    text: Translation.tr("Saturation") + " (%)"
+                    value: Math.round((Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments?.saturation ?? 0.65) * 100)
+                    from: 10
+                    to: 80
+                    stepSize: 5
+                    property bool _ready: false
+                    Component.onCompleted: _ready = true
+                    onValueChanged: {
+                        if (!_ready) return;
+                        Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.saturation", value / 100);
+                        terminalColorDebounce.restart();
                     }
                 }
 
-                onClicked: {
-                    // Update spinbox values directly (this triggers onValueChanged which saves to config)
-                    saturationSpinBox.value = 65;  // 0.65 * 100
-                    brightnessSpinBox.value = 60;  // 0.60 * 100
-                    harmonySpinBox.value = 40;     // 0.40 * 100
-                    bgBrightnessSpinBox.value = 50; // 0.50 * 100
-                    // Note: ThemeService.regenerateAutoTheme() is called by onValueChanged
+                ConfigSpinBox {
+                    id: brightnessSpinBox
+                    icon: "brightness_6"
+                    text: Translation.tr("Brightness") + " (%)"
+                    value: Math.round((Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments?.brightness ?? 0.60) * 100)
+                    from: 35
+                    to: 75
+                    stepSize: 5
+                    property bool _ready: false
+                    Component.onCompleted: _ready = true
+                    onValueChanged: {
+                        if (!_ready) return;
+                        Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.brightness", value / 100);
+                        terminalColorDebounce.restart();
+                    }
                 }
             }
 
-            // Apply Now button - triggers terminal color application to all open terminals
-            RippleButton {
-                Layout.alignment: Qt.AlignRight
-                Layout.topMargin: 4
-                visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
-                implicitWidth: applyNowRow.implicitWidth + 20
-                implicitHeight: 36
-                buttonRadius: Appearance.rounding.small
-                colBackground: Appearance.colors.colPrimaryContainer
-                colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-                colRipple: Appearance.colors.colPrimaryContainerActive
+            // Harmony & Background brightness on 1 row
+            ConfigRow {
+                uniform: true
 
-                contentItem: RowLayout {
-                    id: applyNowRow
-                    anchors.centerIn: parent
-                    spacing: 8
-
-                    MaterialSymbol {
-                        text: "sync"
-                        iconSize: 16
-                        color: Appearance.colors.colOnPrimaryContainer
-                        Behavior on color {
-                            enabled: Appearance.animationsEnabled
-                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                        }
+                ConfigSpinBox {
+                    id: harmonySpinBox
+                    icon: "tune"
+                    text: Translation.tr("Harmony") + " (%)"
+                    value: Math.round((Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments?.harmony ?? 0.40) * 100)
+                    from: 0
+                    to: 100
+                    stepSize: 5
+                    property bool _ready: false
+                    Component.onCompleted: _ready = true
+                    onValueChanged: {
+                        if (!_ready) return;
+                        Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.harmony", value / 100);
+                        terminalColorDebounce.restart();
                     }
 
-                    StyledText {
-                        text: Translation.tr("Apply to open terminals")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnPrimaryContainer
-                        Behavior on color {
-                            enabled: Appearance.animationsEnabled
-                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                        }
+                    StyledToolTip {
+                        text: Translation.tr("Shifts terminal color hues towards the theme's primary color. 0% = original colors, 100% = fully harmonized.")
                     }
                 }
 
-                onClicked: applyTerminalColorsProcess.running = true
+                ConfigSpinBox {
+                    id: bgBrightnessSpinBox
+                    icon: "contrast"
+                    text: Translation.tr("Bg Brightness") + " (%)"
+                    value: Math.round((Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments?.backgroundBrightness ?? 0.50) * 100)
+                    from: 10
+                    to: 90
+                    stepSize: 5
+                    property bool _ready: false
+                    Component.onCompleted: _ready = true
+                    onValueChanged: {
+                        if (!_ready) return;
+                        Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.backgroundBrightness", value / 100);
+                        terminalColorDebounce.restart();
+                    }
 
-                StyledToolTip {
-                    text: Translation.tr("Apply current colors to all open terminal windows without restarting them")
-                }
-
-                Process {
-                    id: applyTerminalColorsProcess
-                    command: ["/usr/bin/bash", Directories.scriptsPath + "/colors/applycolor.sh"]
+                    StyledToolTip {
+                        text: Translation.tr("Controls terminal background darkness. Lower = darker, higher = lighter. Matches shell surfaces at 50%.")
+                    }
                 }
             }
-        }
-    }
 
-    // ==================== ROW 3 RIGHT: CUSTOM THEME EDITOR + GOWALL WALLPAPER EDITOR ====================
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        spacing: 14
-
-    SettingsCardSection {
-        id: customThemeEditorSection
-        Layout.fillWidth: true
-        settingsTaskSection: "advanced"
-        visible: true
-        expanded: true
-        icon: "edit"
-        title: Translation.tr("Custom Theme Editor")
-
-        SettingsGroup {
-            Loader {
+            RowLayout {
                 Layout.fillWidth: true
-                active: customThemeEditorSection.expanded
-                source: "CustomThemeEditor.qml"
+                Layout.topMargin: 6
+                spacing: 8
+
+                Item { Layout.fillWidth: true }
+
+                // Reset button
+                RippleButton {
+                    implicitWidth: resetRow.implicitWidth + 16
+                    implicitHeight: 34
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: Appearance.colors.colLayer1
+                    colBackgroundHover: Appearance.colors.colLayer1Hover
+
+                    contentItem: RowLayout {
+                        id: resetRow
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        MaterialSymbol {
+                            text: "restart_alt"
+                            iconSize: 14
+                            color: Appearance.colors.colOnLayer1
+                        }
+
+                        StyledText {
+                            text: Translation.tr("Reset to defaults")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                        }
+                    }
+
+                    onClicked: {
+                        saturationSpinBox.value = 65;  // 0.65 * 100
+                        brightnessSpinBox.value = 60;  // 0.60 * 100
+                        harmonySpinBox.value = 40;     // 0.40 * 100
+                        bgBrightnessSpinBox.value = 50; // 0.50 * 100
+                    }
+                }
+
+                // Apply Now button - triggers terminal color application to all open terminals
+                RippleButton {
+                    visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
+                    implicitWidth: applyNowRow.implicitWidth + 20
+                    implicitHeight: 34
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: Appearance.colors.colPrimaryContainer
+                    colBackgroundHover: Appearance.colors.colPrimaryContainerHover
+                    colRipple: Appearance.colors.colPrimaryContainerActive
+
+                    contentItem: RowLayout {
+                        id: applyNowRow
+                        anchors.centerIn: parent
+                        spacing: 8
+
+                        MaterialSymbol {
+                            text: "sync"
+                            iconSize: 16
+                            color: Appearance.colors.colOnPrimaryContainer
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
+                        }
+
+                        StyledText {
+                            text: Translation.tr("Apply to open terminals")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colOnPrimaryContainer
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
+                        }
+                    }
+
+                    onClicked: applyTerminalColorsProcess.running = true
+
+                    StyledToolTip {
+                        text: Translation.tr("Apply current colors to all open terminal windows without restarting them")
+                    }
+
+                    Process {
+                        id: applyTerminalColorsProcess
+                        command: ["/usr/bin/bash", Directories.scriptsPath + "/colors/applycolor.sh"]
+                    }
+                }
             }
         }
     }
@@ -1942,6 +1915,27 @@ ContentPage {
             }
         }
     }
+    }
+
+    // ==================== ROW 3 RIGHT: CUSTOM THEME EDITOR ====================
+    SettingsCardSection {
+        id: customThemeEditorSection
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        settingsTaskSection: "advanced"
+        visible: true
+        expanded: true
+        icon: "edit"
+        title: Translation.tr("Custom Theme Editor")
+
+        SettingsGroup {
+            Loader {
+                Layout.fillWidth: true
+                active: customThemeEditorSection.expanded
+                source: "CustomThemeEditor.qml"
+            }
+        }
     }
     }
 }

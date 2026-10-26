@@ -223,12 +223,20 @@ def parse_inline_words(raw_lyric: str, line_start: float, line_end: float, offse
     for idx, (seg_t, seg_text) in enumerate(timed_segments):
         if not seg_text:
             continue
+        has_explicit_end = idx + 1 < len(timed_segments) and not timed_segments[idx + 1][1]
         next_t = timed_segments[idx + 1][0] if idx + 1 < len(timed_segments) else line_end
         if next_t <= seg_t:
             next_t = max(seg_t + 0.18, line_end if idx + 1 == len(timed_segments) else seg_t + 0.28)
         sub_words = seg_text.split()
         if len(sub_words) == 1:
-            raw_words.append((seg_t, next_t, sub_words[0]))
+            w_str = sub_words[0]
+            if not has_explicit_end:
+                char_count = max(1, len(re.sub(r"[^\w]+", "", w_str)))
+                clause_pause = w_str.endswith((",", ";", ":", ".", "?", "!", "…"))
+                max_natural = max(0.32, 0.18 + char_count * 0.055) if clause_pause else max(0.55, 0.28 + char_count * 0.075)
+                if (next_t - seg_t) > max_natural * 1.35:
+                    next_t = seg_t + max_natural
+            raw_words.append((seg_t, next_t, w_str))
         else:
             weights = [prosodic_word_weight(w, i, len(sub_words))[0] for i, w in enumerate(sub_words)]
             total_w = sum(weights) or 1.0
@@ -248,6 +256,14 @@ def parse_inline_words(raw_lyric: str, line_start: float, line_end: float, offse
         classify_word_expression(w_text, w_start, w_end, i, total, avg_dur)
         for i, (w_start, w_end, w_text) in enumerate(raw_words)
     ]
+
+
+def _estimated_line_vocal_span(clean_text: str) -> float:
+    tokens = [w for w in (clean_text or "").split() if w.strip()]
+    if not tokens or clean_text.strip() == "♪":
+        return 1.2
+    chars = len(re.sub(r"[^\w]+", "", clean_text))
+    return max(0.95, min(6.2, 0.28 + len(tokens) * 0.24 + chars * 0.036))
 
 
 def synthesize_prosodic_words(clean_text: str, line_start: float, line_end: float) -> list[dict[str, object]]:
@@ -322,7 +338,8 @@ def parse_lrc(text: str) -> tuple[list[dict[str, object]], bool]:
                     next_start = cand_next
                     break
             gap = max(0.35, next_start - line_start)
-            vocal_window = min(max(0.35, gap - 0.06), max(1.4, min(8.5, gap * 0.92)))
+            est_max = _estimated_line_vocal_span(str(item["text"])) * 1.15
+            vocal_window = min(max(0.35, gap - 0.06), min(est_max, gap * 0.88))
             line_end = round(line_start + vocal_window, 3)
             raw_lyric = str(item.pop("_raw_lyric", ""))
             words = parse_inline_words(raw_lyric, line_start, line_end, offset)

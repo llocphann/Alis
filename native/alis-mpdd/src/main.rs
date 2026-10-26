@@ -660,7 +660,10 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool, bool) {
             }
         }
         let gap = (next_start - line_start).max(0.35);
-        let vocal_window = (gap - 0.06).max(0.35).min((gap * 0.92).clamp(1.4, 8.5));
+        let n_words = text.split_whitespace().filter(|t| !t.is_empty()).count();
+        let n_chars = text.chars().filter(|c| c.is_alphanumeric()).count();
+        let est_max = (0.28 + n_words as f64 * 0.24 + n_chars as f64 * 0.036).clamp(0.95, 6.2) * 1.15;
+        let vocal_window = (gap - 0.06).max(0.35).min(gap * 0.88).min(est_max);
         let mut line_end = line_start + vocal_window;
 
         if inline_segments.is_empty() {
@@ -717,7 +720,10 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool, bool) {
                 } else {
                     (*raw_t + offset).max(0.0)
                 };
-                let w_end = inline_segments
+                let has_explicit_end = inline_segments
+                    .get(seg_idx + 1)
+                    .is_some_and(|(_, nxt_txt)| nxt_txt.is_empty());
+                let mut w_end = inline_segments
                     .get(seg_idx + 1)
                     .map(|(nt, _)| (*nt + offset).max(w_start + 0.08))
                     .unwrap_or_else(|| line_end.max(w_start + 0.2));
@@ -727,6 +733,24 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool, bool) {
                 let sub_tokens: Vec<&str> = seg_text.split_whitespace().collect();
                 if sub_tokens.len() <= 1 {
                     for sub in sub_tokens {
+                        if !has_explicit_end {
+                            let char_count = sub.chars().filter(|c| c.is_alphanumeric()).count().max(1) as f64;
+                            let clause_pause = sub.ends_with(',')
+                                || sub.ends_with(';')
+                                || sub.ends_with(':')
+                                || sub.ends_with('.')
+                                || sub.ends_with('?')
+                                || sub.ends_with('!')
+                                || sub.ends_with('…');
+                            let max_natural = if clause_pause {
+                                (0.18 + char_count * 0.055).max(0.32)
+                            } else {
+                                (0.28 + char_count * 0.075).max(0.55)
+                            };
+                            if (w_end - w_start) > max_natural * 1.35 {
+                                w_end = w_start + max_natural;
+                            }
+                        }
                         words.push(json!({
                             "text": sub,
                             "start": (w_start * 1000.0).round() / 1000.0,
