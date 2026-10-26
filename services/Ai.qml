@@ -262,15 +262,16 @@ Singleton {
 
     // Dependencies can disappear in different orders during shell teardown.
     // Keep the intermediate evaluation nullable and the public prompt typed.
-    property string systemPrompt: root?._resolvedSystemPrompt ?? ""
+    property string systemPrompt: typeof _resolvedSystemPrompt === "string" ? _resolvedSystemPrompt : ""
     readonly property var _resolvedSystemPrompt: {
         let prompt = Config.options?.ai?.systemPrompt ?? "";
-        for (let key in root.promptSubstitutions) {
-            // prompt = prompt.replaceAll(key, root.promptSubstitutions[key]);
+        const subs = root ? (root.promptSubstitutions ?? {}) : {};
+        for (let key in subs) {
+            // prompt = prompt.replaceAll(key, subs[key]);
             // QML/JS doesn't support replaceAll, so use split/join
-            prompt = prompt.split(key).join(root.promptSubstitutions[key]);
+            prompt = prompt.split(key).join(subs[key] ?? "");
         }
-        return prompt;
+        return String(prompt ?? "");
     }
     // property var messages: []
     property var messageIDs: []

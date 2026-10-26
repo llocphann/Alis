@@ -8,6 +8,7 @@ function category(appId) {
     if (["foot","footclient","kitty","alacritty","wezterm","org.wezfurlong.wezterm",
             "org.kde.konsole","org.gnome.terminal","com.mitchellh.ghostty"].includes(id)) return "terminal"
     if (["code","code-oss","vscodium","codium","dev.zed.zed","org.gnome.builder",
-            "org.kde.kate","emacs","neovide"].includes(id)) return "editor"
+            "org.kde.kate","emacs","neovide","antigravity","google-antigravity",
+            "cursor","windsurf","zed","obsidian"].includes(id)) return "editor"
     return id.length ? "other" : "none"
 }

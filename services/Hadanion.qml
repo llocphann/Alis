@@ -60,6 +60,8 @@ Singleton {
         function onResponseFinished(): void {if(!Ai.waitingForApproval)contextFeed.finished()}
     }
     function chat(): void { if (session) session.chat() }
+    function pocket(): void { if (session?.pocket) session.pocket() }
+    function prop(kind): void { if (session?.previewProp) session.previewProp(kind) }
     function status(): string {
         if (session) return JSON.stringify(Object.assign(
             {available:available,version:version,sourceSha:sourceSha,diagnostic:diagnostic},
@@ -96,11 +98,17 @@ Singleton {
     IpcHandler {
         target: "wull"
         function chat(): void {root.chat()}
+        function pocket(): void {root.pocket()}
+        function prop(kind: string): void {root.prop(kind)}
+        function previewProp(kind: string): void {root.prop(kind)}
         function status(): string {return root.status()}
     }
     IpcHandler {
         target: "hadanion"
         function refresh(): void {root.refresh()}
+        function pocket(): void {root.pocket()}
+        function prop(kind: string): void {root.prop(kind)}
+        function previewProp(kind: string): void {root.prop(kind)}
         function status(): string {return root.status()}
     }
     Component.onCompleted: root.refresh()
