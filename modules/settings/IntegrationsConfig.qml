@@ -180,25 +180,29 @@ ContentPage {
                         : Translation.tr("Needs attention"))
                     + "\n" + Translation.tr("Manage system helpers with ./setup integrations.")
             }
-        }
-        Repeater {
-            model: root.catalog
-            delegate: SettingsCardSection {
-                id: catalogCard
-                required property var modelData
+            SettingsDivider {}
+            GridLayout {
                 Layout.fillWidth: true
-                title: modelData.name
-                icon: modelData.icon
-                expanded: true
-                SettingsSwitch {
-                    objectName: "integrationToggle_" + catalogCard.modelData.id
-                    text: Translation.tr("Enable")
-                    description: root.pluginState(catalogCard.modelData)
-                    autoToggle: false
-                    checked: Hadalird.options?.[catalogCard.modelData.id] === true
-                    enabled: Hadalird.available && !Hadalird.managerBusy
-                        && Hadalird.installedPlugins.some(plugin => plugin.id === catalogCard.modelData.id)
-                    onToggledByUser: value => Hadalird.setPluginEnabled(catalogCard.modelData.id, value)
+                columns: width >= 620 ? 3 : 1
+                uniformCellWidths: columns === 3
+                columnSpacing: 12
+                rowSpacing: 8
+                Repeater {
+                    model: root.catalog
+                    delegate: SettingsSwitch {
+                        id: catalogCard
+                        required property var modelData
+                        objectName: "integrationToggle_" + catalogCard.modelData.id
+                        Layout.preferredWidth: 1
+                        Layout.fillWidth: true
+                        buttonIcon: catalogCard.modelData.icon
+                        text: catalogCard.modelData.name
+                        autoToggle: false
+                        checked: Hadalird.options?.[catalogCard.modelData.id] === true
+                        enabled: Hadalird.available && !Hadalird.managerBusy
+                            && Hadalird.installedPlugins.some(plugin => plugin.id === catalogCard.modelData.id)
+                        onToggledByUser: value => Hadalird.setPluginEnabled(catalogCard.modelData.id, value)
+                    }
                 }
             }
         }
@@ -266,29 +270,45 @@ ContentPage {
         title: Translation.tr("Calendar Sync")
 
         SettingsGroup {
-            SettingsSwitch {
-                buttonIcon: "sync"
-                text: Translation.tr("Enable external calendar sync")
-                checked: Config.options?.calendar?.externalSync?.enable ?? false
-                onCheckedChanged: Config.setNestedValue("calendar.externalSync.enable", checked)
+            ConfigRow {
+                uniform: true
+                SettingsSwitch {
+                    buttonIcon: "sync"
+                    text: Translation.tr("Enable external calendar sync")
+                    checked: Config.options?.calendar?.externalSync?.enable ?? false
+                    onCheckedChanged: Config.setNestedValue("calendar.externalSync.enable", checked)
+                }
+
+                ConfigSpinBox {
+                    icon: "update"
+                    text: Translation.tr("Refresh interval (minutes)")
+                    value: Config.options?.calendar?.externalSync?.refreshMinutes ?? 15
+                    from: 5
+                    to: 120
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue("calendar.externalSync.refreshMinutes", value)
+                    enabled: Config.options?.calendar?.externalSync?.enable ?? false
+                }
             }
 
-            ConfigSpinBox {
-                icon: "update"
-                text: Translation.tr("Refresh interval (minutes)")
-                value: Config.options?.calendar?.externalSync?.refreshMinutes ?? 15
-                from: 5
-                to: 120
-                stepSize: 5
-                onValueChanged: Config.setNestedValue("calendar.externalSync.refreshMinutes", value)
-                enabled: Config.options?.calendar?.externalSync?.enable ?? false
-            }
+            ConfigRow {
+                uniform: true
+                SettingsSwitch {
+                    buttonIcon: "event"
+                    text: Translation.tr("Show upcoming events below calendar")
+                    checked: Config.options?.calendar?.showUpcoming ?? true
+                    onCheckedChanged: Config.setNestedValue("calendar.showUpcoming", checked)
+                }
 
-            SettingsSwitch {
-                buttonIcon: "event"
-                text: Translation.tr("Show upcoming events below calendar")
-                checked: Config.options?.calendar?.showUpcoming ?? true
-                onCheckedChanged: Config.setNestedValue("calendar.showUpcoming", checked)
+                ConfigSpinBox {
+                    icon: "date_range"
+                    text: Translation.tr("Upcoming days to show")
+                    value: Config.options?.calendar?.upcomingDays ?? 3
+                    from: 1
+                    to: 14
+                    stepSize: 1
+                    onValueChanged: Config.setNestedValue("calendar.upcomingDays", value)
+                }
             }
 
             ConfigSpinBox {
@@ -300,16 +320,6 @@ ContentPage {
                 to: 3
                 stepSize: 1
                 onValueChanged: Config.setNestedValue("calendar.maxEventDots", value)
-            }
-
-            ConfigSpinBox {
-                icon: "date_range"
-                text: Translation.tr("Upcoming days to show")
-                value: Config.options?.calendar?.upcomingDays ?? 3
-                from: 1
-                to: 14
-                stepSize: 1
-                onValueChanged: Config.setNestedValue("calendar.upcomingDays", value)
             }
         }
 

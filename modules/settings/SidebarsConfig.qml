@@ -52,7 +52,11 @@ ContentPage {
         ConfigSelectionArray {
             currentValue:sizing.state.sizeMode === "custom" ? "custom" : "fit"
             options:[{displayName:"Fit content",value:"fit"},{displayName:"Custom height",value:"custom"}]
-            onSelected:value=>ShellLayoutController.setProperty(sizing.role,"sizeMode",value,"")
+            onSelected:value=>{
+                ShellLayoutController.setProperty(sizing.role,"sizeMode",value,"")
+                if (sizing.role === "featureSidebar")
+                    Config.setNestedValue("sidebar.collapseWidgetsTab", value === "fit")
+            }
         }
         WindowDialogSlider {
             text:"Height";Layout.fillWidth:true;from:320;to:2160;stepSize:1
@@ -140,16 +144,6 @@ ContentPage {
                     }
 
                     SettingsSwitch {
-                        buttonIcon: "fit_screen"
-                        text: Translation.tr("Fit left sidebar to content")
-                        checked: Config.options.sidebar?.collapseWidgetsTab ?? false
-                        onCheckedChanged: Config.setNestedValue("sidebar.collapseWidgetsTab", checked)
-                        StyledToolTip {
-                            text: Translation.tr("Shrink the left sidebar to a tab's preferred content height when available")
-                        }
-                    }
-
-                    SettingsSwitch {
                         buttonIcon: "folder_open"
                         text: Translation.tr("Open folder after wallpaper download")
                         checked: Config.options.sidebar?.openFolderOnDownload ?? false
@@ -179,84 +173,6 @@ ContentPage {
 
             SettingsGroup {
                 SidebarSize { role:"systemSidebar";title:"Right Sidebar size" }
-
-                ContentSubsection {
-                    title: Translation.tr("Right sidebar header")
-                    tooltip: Translation.tr("Look of the system section at the top of the right sidebar")
-
-                    ConfigSelectionArray {
-                        Layout.fillWidth: false
-                        currentValue: Config.options?.sidebar?.right?.headerStyle ?? "profile"
-                        onSelected: newValue => {
-                            Config.setNestedValue("sidebar.right.headerStyle", newValue);
-                        }
-                        options: [
-                            { displayName: Translation.tr("Profile card"), icon: "account_box", value: "profile" },
-                            { displayName: Translation.tr("Classic"), icon: "view_agenda", value: "classic" }
-                        ]
-                    }
-
-                    ContentSubsectionLabel {
-                        visible: (Config.options?.sidebar?.right?.headerStyle ?? "profile") === "profile"
-                        text: Translation.tr("Banner")
-                    }
-
-                    ConfigSelectionArray {
-                        Layout.fillWidth: false
-                        visible: (Config.options?.sidebar?.right?.headerStyle ?? "profile") === "profile"
-                        currentValue: Config.options?.sidebar?.right?.headerBanner ?? "wallpaper"
-                        onSelected: newValue => {
-                            Config.setNestedValue("sidebar.right.headerBanner", newValue);
-                        }
-                        options: [
-                            { displayName: Translation.tr("Wallpaper"), icon: "wallpaper", value: "wallpaper" },
-                            { displayName: Translation.tr("Custom media"), icon: "perm_media", value: "custom" },
-                            { displayName: Translation.tr("Solid"), icon: "format_color_fill", value: "solid" },
-                            { displayName: Translation.tr("None"), icon: "block", value: "none" }
-                        ]
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-                        visible: (Config.options?.sidebar?.right?.headerStyle ?? "profile") === "profile"
-                            && (Config.options?.sidebar?.right?.headerBanner ?? "wallpaper") === "custom"
-
-                        StyledText {
-                            Layout.fillWidth: true
-                            text: (Config.options?.sidebar?.right?.headerBannerPath ?? "").length > 0
-                                ? Directories.shortHomePath(Config.options.sidebar.right.headerBannerPath)
-                                : Translation.tr("No media selected")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colSubtext
-                            elide: Text.ElideMiddle
-                            wrapMode: Text.NoWrap
-                        }
-
-                        RippleButtonWithIcon {
-                            materialIcon: "folder_open"
-                            mainText: Translation.tr("Choose")
-                            onClicked: bannerImageDialog.open()
-                        }
-                    }
-
-                    FileDialog {
-                        id: bannerImageDialog
-                        title: Translation.tr("Choose header media")
-                        fileMode: FileDialog.OpenFile
-                        nameFilters: [
-                            Translation.tr("Images and animations") + " (*.png *.jpg *.jpeg *.webp *.bmp *.avif *.gif *.mp4 *.webm *.mkv *.avi *.mov)",
-                            Translation.tr("All files") + " (*)"
-                        ]
-                        onAccepted: Config.setNestedValue("sidebar.right.headerBannerPath",
-                            FileUtils.trimFileProtocol(String(selectedFile)))
-                    }
-
-                    SettingsNativeDialogGuard {
-                        dialog: bannerImageDialog
-                        dialogKey: "sidebar-header-media"
-                    }
-                }
 
                 ContentSubsection {
                     id: rightSidebarWidgets
@@ -310,41 +226,6 @@ ContentPage {
                             Component.onCompleted: checked = rightSidebarWidgets.isEnabled("sysmon")
                             onClicked: {
                                 rightSidebarWidgets.setWidget("sysmon", checked)
-                            }
-                        }
-                    }
-                }
-
-                ContentSubsection {
-                    title: Translation.tr("Quick toggles")
-
-                    ConfigRow {
-                        uniform: true
-                        ConfigSelectionArray {
-                            Layout.fillWidth: false
-                            currentValue: Config.options.sidebar.quickToggles.style
-                            onSelected: newValue => {
-                                Config.setNestedValue("sidebar.quickToggles.style", newValue);
-                            }
-                            options: [
-                                { displayName: Translation.tr("Classic"), icon: "password_2", value: "classic" },
-                                { displayName: Translation.tr("Android"), icon: "action_key", value: "android" }
-                            ]
-                        }
-
-                        ConfigSpinBox {
-                            enabled: Config.options.sidebar.quickToggles.style === "android"
-                            icon: "splitscreen_left"
-                            text: Translation.tr("Columns")
-                            value: Config.options.sidebar.quickToggles.android.columns
-                            from: 1
-                            to: 8
-                            stepSize: 1
-                            onValueChanged: {
-                                Config.setNestedValue("sidebar.quickToggles.android.columns", value);
-                            }
-                            StyledToolTip {
-                                text: Translation.tr("Number of columns for the Android-style quick settings grid")
                             }
                         }
                     }

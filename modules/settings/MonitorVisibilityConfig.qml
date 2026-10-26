@@ -46,6 +46,7 @@ ContentPage {
     signal monitorPositionFinished(string outputName, bool success)
 
     SettingsTaskNavigator {
+        showTabBar: false
         visible: !root.embeddedArrangementOnly
         icon: "settings_input_component"
         title: Translation.tr("Monitors")
@@ -1173,47 +1174,56 @@ ContentPage {
                 }
             }
 
-            Repeater {
-                model: root.desktopWidgetDescriptors
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 520 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 12
+                rowSpacing: 4
 
-                RowLayout {
-                    id: widgetOutputRow
-                    required property var modelData
-                    Layout.fillWidth: true
-                    spacing: Appearance.sizes.spacingSmall
+                Repeater {
+                    model: root.desktopWidgetDescriptors
 
-                    SettingsSwitch {
+                    RowLayout {
+                        id: widgetOutputRow
+                        required property var modelData
                         Layout.fillWidth: true
-                        enabled: outputBlock.globallyVisible
-                        enableSettingsSearch: false
-                        autoToggle: false
-                        buttonIcon: widgetOutputRow.modelData.icon
-                        text: widgetOutputRow.modelData.title
-                        description: outputBlock.outputName
-                        checked: root.desktopWidgetEnabled(
-                            outputBlock.outputName, widgetOutputRow.modelData)
-                        onToggledByUser: checked => DesktopWidgetLayout.setEnabled(
-                            outputBlock.outputName, widgetOutputRow.modelData.key, checked)
-                    }
+                        Layout.preferredWidth: 1
+                        spacing: Appearance.sizes.spacingSmall
 
-                    RippleButton {
-                        visible: root.desktopWidgetHasOverrides(
-                            outputBlock.outputName, widgetOutputRow.modelData.key)
-                        implicitWidth: 36
-                        implicitHeight: 36
-                        buttonRadius: Appearance.rounding.full
-                        colBackground: "transparent"
-                        colBackgroundHover: Appearance.colors.colLayer2Hover
-                        colRipple: Appearance.colors.colLayer2Active
-                        onClicked: DesktopWidgetLayout.clearWidget(
-                            outputBlock.outputName, widgetOutputRow.modelData.key)
-                        contentItem: MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: "undo"
-                            iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colOnLayer1
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            enabled: outputBlock.globallyVisible
+                            enableSettingsSearch: false
+                            autoToggle: false
+                            buttonIcon: widgetOutputRow.modelData.icon
+                            text: widgetOutputRow.modelData.title
+                            description: outputBlock.outputName
+                            checked: root.desktopWidgetEnabled(
+                                outputBlock.outputName, widgetOutputRow.modelData)
+                            onToggledByUser: checked => DesktopWidgetLayout.setEnabled(
+                                outputBlock.outputName, widgetOutputRow.modelData.key, checked)
                         }
-                        StyledToolTip { text: Translation.tr("Reset") }
+
+                        RippleButton {
+                            visible: root.desktopWidgetHasOverrides(
+                                outputBlock.outputName, widgetOutputRow.modelData.key)
+                            implicitWidth: 36
+                            implicitHeight: 36
+                            buttonRadius: Appearance.rounding.full
+                            colBackground: "transparent"
+                            colBackgroundHover: Appearance.colors.colLayer2Hover
+                            colRipple: Appearance.colors.colLayer2Active
+                            onClicked: DesktopWidgetLayout.clearWidget(
+                                outputBlock.outputName, widgetOutputRow.modelData.key)
+                            contentItem: MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "undo"
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnLayer1
+                            }
+                            StyledToolTip { text: Translation.tr("Reset") }
+                        }
                     }
                 }
             }
@@ -1222,7 +1232,7 @@ ContentPage {
 
     SettingsCardSection {
         settingsTaskSection: "outputs"
-        visible: (root.embeddedArrangementOnly || root.activeSection === "outputs") && CompositorService.isNiri
+        visible: CompositorService.isNiri
         expanded: true
         collapsible: root.arrangementChromeVisible
         showHeader: root.arrangementChromeVisible
@@ -1521,9 +1531,20 @@ ContentPage {
         }
     }
 
+    GridLayout {
+        Layout.fillWidth: true
+        visible: !root.embeddedArrangementOnly
+        columns: width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
+        columnSpacing: 14
+        rowSpacing: 14
+
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "outputs"
-        visible: !root.embeddedArrangementOnly && root.activeSection === "outputs"
+        visible: !root.embeddedArrangementOnly
         expanded: true
         icon: "settings_input_component"
         title: Translation.tr("Shell visibility")
@@ -1567,8 +1588,11 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "outputs"
-        visible: !root.embeddedArrangementOnly && root.activeSection === "outputs"
+        visible: !root.embeddedArrangementOnly
         expanded: true
         icon: "preview"
         title: Translation.tr("Overview placement")
@@ -1587,8 +1611,11 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "surfaces"
-        visible: !root.embeddedArrangementOnly && root.activeSection === "surfaces"
+        visible: !root.embeddedArrangementOnly
         expanded: true
         icon: "web_asset"
         title: Translation.tr("Material shell surfaces")
@@ -1615,8 +1642,11 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "widgets"
-        visible: !root.embeddedArrangementOnly && root.activeSection === "widgets"
+        visible: !root.embeddedArrangementOnly
         expanded: true
         icon: "widgets"
         title: Translation.tr("Desktop widgets")
@@ -1644,8 +1674,10 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.columnSpan: parent.columns
         settingsTaskSection: "popups"
-        visible: !root.embeddedArrangementOnly && root.activeSection === "popups"
+        visible: !root.embeddedArrangementOnly
         expanded: true
         icon: "notifications"
         title: Translation.tr("Popups")
@@ -1669,5 +1701,6 @@ ContentPage {
                 }
             }
         }
+    }
     }
 }

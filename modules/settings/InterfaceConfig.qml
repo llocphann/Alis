@@ -23,6 +23,7 @@ ContentPage {
     property string activeSection: "control"
 
     SettingsTaskNavigator {
+        showTabBar: false
         icon: "bottom_app_bar"
         title: Translation.tr("Panels")
         description: Translation.tr("Panels, notifications, widgets and floating tools.")
@@ -46,9 +47,19 @@ ContentPage {
         GlobalStates.overlayOpen = true
     }
 
+    GridLayout {
+        Layout.fillWidth: true
+        columns: width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
+        columnSpacing: 14
+        rowSpacing: 14
+
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "tools"
-        visible: root.activeSection === "tools"
+        visible: true
         expanded: true
         icon: "dashboard_customize"
         title: Translation.tr("Floating tools (Super+G)")
@@ -153,8 +164,11 @@ ContentPage {
 
     // ── Shell Desaturation Effect ───────────────────────────────────────
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "tools"
-        visible: root.activeSection === "tools"
+        visible: true
         expanded: true
         icon: "filter_b_and_w"
         title: Translation.tr("Visual Effects")
@@ -290,8 +304,11 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "tools"
-        visible: root.activeSection === "tools" && root.isIiActive
+        visible: root.isIiActive
         expanded: true
         icon: "keyboard_tab"
         title: Translation.tr("Alt-Tab switcher (Material ii)")
@@ -473,7 +490,10 @@ ContentPage {
 
     SettingsCardSection {
         settingsTaskSection: "notifications"
-        visible: root.activeSection === "notifications" && root.isIiActive
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        visible: root.isIiActive
         expanded: true
         icon: "notifications"
         title: Translation.tr("Notifications")
@@ -777,73 +797,102 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "control"
-        visible: root.activeSection === "control" && root.isIiActive
+        visible: root.isIiActive
         expanded: true
         icon: "tune"
         title: Translation.tr("Control panel")
 
         SettingsGroup {
-            SettingsSwitch {
-                buttonIcon: "density_medium"
-                text: Translation.tr("Compact cards")
-                checked: Config.options?.controlPanel?.compactMode ?? true
-                onCheckedChanged: Config.setNestedValue("controlPanel.compactMode", checked)
-                StyledToolTip {
-                    text: Translation.tr("Use tighter spacing and shorter cards in the quick settings panel")
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    buttonIcon: "density_medium"
+                    text: Translation.tr("Compact cards")
+                    checked: Config.options?.controlPanel?.compactMode ?? true
+                    onCheckedChanged: Config.setNestedValue("controlPanel.compactMode", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Use tighter spacing and shorter cards in the quick settings panel")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "memory"
+                    text: Translation.tr("Keep control panel loaded")
+                    checked: Config.options?.controlPanel?.keepLoaded ?? false
+                    onCheckedChanged: Config.setNestedValue("controlPanel.keepLoaded", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Keep the quick settings panel in memory to reduce opening delay")
+                    }
                 }
             }
 
-            SettingsSwitch {
-                buttonIcon: "wallpaper"
-                text: Translation.tr("Show wallpaper card")
-                checked: Config.options?.controlPanel?.showWallpaperSection ?? true
-                onCheckedChanged: Config.setNestedValue("controlPanel.showWallpaperSection", checked)
-                StyledToolTip {
-                    text: Translation.tr("Show the wallpaper preview card in the quick settings panel")
-                }
-            }
+            ConfigRow {
+                uniform: true
 
-            SettingsSwitch {
-                buttonIcon: "palette"
-                text: Translation.tr("Show wallpaper scheme buttons")
-                enabled: Config.options?.controlPanel?.showWallpaperSection ?? true
-                checked: Config.options?.controlPanel?.showWallpaperSchemeChips ?? false
-                onCheckedChanged: Config.setNestedValue("controlPanel.showWallpaperSchemeChips", checked)
-                StyledToolTip {
-                    text: Translation.tr("Show the scheme variant buttons under the wallpaper preview")
+                SettingsSwitch {
+                    buttonIcon: "wallpaper"
+                    text: Translation.tr("Show wallpaper card")
+                    checked: Config.options?.controlPanel?.showWallpaperSection ?? true
+                    onCheckedChanged: Config.setNestedValue("controlPanel.showWallpaperSection", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Show the wallpaper preview card in the quick settings panel")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "palette"
+                    text: Translation.tr("Show wallpaper scheme buttons")
+                    enabled: Config.options?.controlPanel?.showWallpaperSection ?? true
+                    checked: Config.options?.controlPanel?.showWallpaperSchemeChips ?? false
+                    onCheckedChanged: Config.setNestedValue("controlPanel.showWallpaperSchemeChips", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Show the scheme variant buttons under the wallpaper preview")
+                    }
                 }
             }
 
             ContentSubsection {
                 title: Translation.tr("Visible sections")
 
-                SettingsSwitch {
-                    buttonIcon: "music_note"
-                    text: Translation.tr("Media")
-                    checked: Config.options?.controlPanel?.showMediaSection ?? true
-                    onCheckedChanged: Config.setNestedValue("controlPanel.showMediaSection", checked)
+                ConfigRow {
+                    uniform: true
+
+                    SettingsSwitch {
+                        buttonIcon: "music_note"
+                        text: Translation.tr("Media")
+                        checked: Config.options?.controlPanel?.showMediaSection ?? true
+                        onCheckedChanged: Config.setNestedValue("controlPanel.showMediaSection", checked)
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "partly_cloudy_day"
+                        text: Translation.tr("Weather")
+                        checked: Config.options?.controlPanel?.showWeatherSection ?? true
+                        onCheckedChanged: Config.setNestedValue("controlPanel.showWeatherSection", checked)
+                    }
                 }
 
-                SettingsSwitch {
-                    buttonIcon: "partly_cloudy_day"
-                    text: Translation.tr("Weather")
-                    checked: Config.options?.controlPanel?.showWeatherSection ?? true
-                    onCheckedChanged: Config.setNestedValue("controlPanel.showWeatherSection", checked)
-                }
+                ConfigRow {
+                    uniform: true
 
-                SettingsSwitch {
-                    buttonIcon: "monitoring"
-                    text: Translation.tr("System status")
-                    checked: Config.options?.controlPanel?.showSystemSection ?? true
-                    onCheckedChanged: Config.setNestedValue("controlPanel.showSystemSection", checked)
-                }
+                    SettingsSwitch {
+                        buttonIcon: "monitoring"
+                        text: Translation.tr("System status")
+                        checked: Config.options?.controlPanel?.showSystemSection ?? true
+                        onCheckedChanged: Config.setNestedValue("controlPanel.showSystemSection", checked)
+                    }
 
-                SettingsSwitch {
-                    buttonIcon: "tune"
-                    text: Translation.tr("Sliders")
-                    checked: Config.options?.controlPanel?.showSlidersSection ?? true
-                    onCheckedChanged: Config.setNestedValue("controlPanel.showSlidersSection", checked)
+                    SettingsSwitch {
+                        buttonIcon: "tune"
+                        text: Translation.tr("Sliders")
+                        checked: Config.options?.controlPanel?.showSlidersSection ?? true
+                        onCheckedChanged: Config.setNestedValue("controlPanel.showSlidersSection", checked)
+                    }
                 }
 
                 SettingsSwitch {
@@ -853,22 +902,15 @@ ContentPage {
                     onCheckedChanged: Config.setNestedValue("controlPanel.showQuickActionsSection", checked)
                 }
             }
-
-            SettingsSwitch {
-                buttonIcon: "memory"
-                text: Translation.tr("Keep control panel loaded")
-                checked: Config.options?.controlPanel?.keepLoaded ?? false
-                onCheckedChanged: Config.setNestedValue("controlPanel.keepLoaded", checked)
-                StyledToolTip {
-                    text: Translation.tr("Keep the quick settings panel in memory to reduce opening delay")
-                }
-            }
         }
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "widgets"
-        visible: root.activeSection === "widgets" && root.isIiActive
+        visible: root.isIiActive
         expanded: true
         icon: "widgets"
         title: Translation.tr("Widgets")
@@ -1467,7 +1509,7 @@ ContentPage {
                 Process {
                     id: sysTzProc
                     command: ["/usr/bin/readlink", "/etc/localtime"]
-                    running: root.activeSection === "widgets"
+                    running: worldClockSection.visible
                     stdout: StdioCollector {
                         onStreamFinished: {
                             const raw = text.trim()
@@ -1536,7 +1578,7 @@ ContentPage {
 
                 Timer {
                     interval: 20000
-                    running: root.activeSection === "widgets" && worldClockSection.visible
+                    running: worldClockSection.visible
                     repeat: true
                     triggeredOnStart: true
                     onTriggered: worldClockSection.refreshLiveTimes()
@@ -1545,7 +1587,7 @@ ContentPage {
                 Connections {
                     target: Config
                     function onConfigChanged() {
-                        if (root.activeSection === "widgets")
+                        if (worldClockSection.visible)
                             worldClockSection.refreshLiveTimes()
                     }
                 }
@@ -2002,32 +2044,40 @@ ContentPage {
                 title: Translation.tr("Status Rings")
                 tooltip: Translation.tr("Configure which system metrics to show")
 
-                SettingsSwitch {
-                    buttonIcon: "memory"
-                    text: Translation.tr("CPU usage")
-                    checked: Config.options?.sidebar?.widgets?.statusRings?.showCpu ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.statusRings.showCpu", checked)
+                ConfigRow {
+                    uniform: true
+
+                    SettingsSwitch {
+                        buttonIcon: "memory"
+                        text: Translation.tr("CPU usage")
+                        checked: Config.options?.sidebar?.widgets?.statusRings?.showCpu ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.statusRings.showCpu", checked)
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "memory_alt"
+                        text: Translation.tr("RAM usage")
+                        checked: Config.options?.sidebar?.widgets?.statusRings?.showRam ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.statusRings.showRam", checked)
+                    }
                 }
 
-                SettingsSwitch {
-                    buttonIcon: "memory_alt"
-                    text: Translation.tr("RAM usage")
-                    checked: Config.options?.sidebar?.widgets?.statusRings?.showRam ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.statusRings.showRam", checked)
-                }
+                ConfigRow {
+                    uniform: true
 
-                SettingsSwitch {
-                    buttonIcon: "hard_drive"
-                    text: Translation.tr("Disk usage")
-                    checked: Config.options?.sidebar?.widgets?.statusRings?.showDisk ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.statusRings.showDisk", checked)
-                }
+                    SettingsSwitch {
+                        buttonIcon: "hard_drive"
+                        text: Translation.tr("Disk usage")
+                        checked: Config.options?.sidebar?.widgets?.statusRings?.showDisk ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.statusRings.showDisk", checked)
+                    }
 
-                SettingsSwitch {
-                    buttonIcon: "thermostat"
-                    text: Translation.tr("Temperature")
-                    checked: Config.options?.sidebar?.widgets?.statusRings?.showTemp ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.statusRings.showTemp", checked)
+                    SettingsSwitch {
+                        buttonIcon: "thermostat"
+                        text: Translation.tr("Temperature")
+                        checked: Config.options?.sidebar?.widgets?.statusRings?.showTemp ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.statusRings.showTemp", checked)
+                    }
                 }
 
                 SettingsSwitch {
@@ -2044,65 +2094,82 @@ ContentPage {
 
                 ContentSubsectionLabel { text: Translation.tr("Toggles") }
 
-                SettingsSwitch {
-                    buttonIcon: "dark_mode"
-                    text: Translation.tr("Dark mode")
-                    checked: Config.options?.sidebar?.widgets?.controlsCard?.showDarkMode ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showDarkMode", checked)
+                ConfigRow {
+                    uniform: true
+
+                    SettingsSwitch {
+                        buttonIcon: "dark_mode"
+                        text: Translation.tr("Dark mode")
+                        checked: Config.options?.sidebar?.widgets?.controlsCard?.showDarkMode ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showDarkMode", checked)
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "do_not_disturb_on"
+                        text: Translation.tr("Do not disturb")
+                        checked: Config.options?.sidebar?.widgets?.controlsCard?.showDnd ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showDnd", checked)
+                    }
                 }
 
-                SettingsSwitch {
-                    buttonIcon: "do_not_disturb_on"
-                    text: Translation.tr("Do not disturb")
-                    checked: Config.options?.sidebar?.widgets?.controlsCard?.showDnd ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showDnd", checked)
-                }
+                ConfigRow {
+                    uniform: true
 
-                SettingsSwitch {
-                    buttonIcon: "nightlight"
-                    text: Translation.tr("Night light")
-                    checked: Config.options?.sidebar?.widgets?.controlsCard?.showNightLight ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showNightLight", checked)
-                }
+                    SettingsSwitch {
+                        buttonIcon: "nightlight"
+                        text: Translation.tr("Night light")
+                        checked: Config.options?.sidebar?.widgets?.controlsCard?.showNightLight ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showNightLight", checked)
+                    }
 
-                SettingsSwitch {
-                    buttonIcon: "sports_esports"
-                    text: Translation.tr("Game mode")
-                    checked: Config.options?.sidebar?.widgets?.controlsCard?.showGameMode ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showGameMode", checked)
+                    SettingsSwitch {
+                        buttonIcon: "sports_esports"
+                        text: Translation.tr("Game mode")
+                        checked: Config.options?.sidebar?.widgets?.controlsCard?.showGameMode ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showGameMode", checked)
+                    }
                 }
 
                 ContentSubsectionLabel { text: Translation.tr("Actions") }
 
-                SettingsSwitch {
-                    buttonIcon: "wifi"
-                    text: Translation.tr("Network")
-                    checked: Config.options?.sidebar?.widgets?.controlsCard?.showNetwork ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showNetwork", checked)
+                ConfigRow {
+                    uniform: true
+
+                    SettingsSwitch {
+                        buttonIcon: "wifi"
+                        text: Translation.tr("Network")
+                        checked: Config.options?.sidebar?.widgets?.controlsCard?.showNetwork ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showNetwork", checked)
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "bluetooth"
+                        text: Translation.tr("Bluetooth")
+                        checked: Config.options?.sidebar?.widgets?.controlsCard?.showBluetooth ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showBluetooth", checked)
+                    }
                 }
 
-                SettingsSwitch {
-                    buttonIcon: "bluetooth"
-                    text: Translation.tr("Bluetooth")
-                    checked: Config.options?.sidebar?.widgets?.controlsCard?.showBluetooth ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showBluetooth", checked)
-                }
+                ConfigRow {
+                    uniform: true
 
-                SettingsSwitch {
-                    buttonIcon: "settings"
-                    text: Translation.tr("Settings")
-                    checked: Config.options?.sidebar?.widgets?.controlsCard?.showSettings ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showSettings", checked)
-                }
+                    SettingsSwitch {
+                        buttonIcon: "settings"
+                        text: Translation.tr("Settings")
+                        checked: Config.options?.sidebar?.widgets?.controlsCard?.showSettings ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showSettings", checked)
+                    }
 
-                SettingsSwitch {
-                    buttonIcon: "lock"
-                    text: Translation.tr("Lock")
-                    checked: Config.options?.sidebar?.widgets?.controlsCard?.showLock ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showLock", checked)
+                    SettingsSwitch {
+                        buttonIcon: "lock"
+                        text: Translation.tr("Lock")
+                        checked: Config.options?.sidebar?.widgets?.controlsCard?.showLock ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.controlsCard.showLock", checked)
+                    }
                 }
             }
         }
+    }
     }
 
 }

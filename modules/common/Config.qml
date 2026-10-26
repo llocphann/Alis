@@ -2855,7 +2855,7 @@ Singleton {
                     property int regionWidth: 2
                 }
                 property JsonObject quickToggles: JsonObject {
-                    property string style: "android"
+                    property string style: "classic"
                     property JsonObject android: JsonObject {
                         property int columns: 4
                         property list<var> toggles: [
@@ -2879,7 +2879,7 @@ Singleton {
                     property list<string> enabledWidgets: ["calculator", "sysmon"]
                     property list<string> controlsSectionOrder: ["sliders", "toggles", "devices", "media", "quickActions"]
                     property list<string> sectionOrder: ["system", "sliders", "toggles", "widgets"]
-                    property string headerStyle: "profile"
+                    property string headerStyle: "classic"
                     property string headerBanner: "wallpaper"
                     property string headerBannerPath: ""
                     property JsonObject sectionWeights: JsonObject {

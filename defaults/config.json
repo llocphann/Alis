@@ -1571,7 +1571,7 @@
                     }
                 ]
             },
-            "style": "android"
+            "style": "classic"
         },
         "left": {
             "tabOrder": [
@@ -1594,7 +1594,7 @@
                 "toggles",
                 "widgets"
             ],
-            "headerStyle": "profile",
+            "headerStyle": "classic",
             "headerBanner": "wallpaper",
             "headerBannerPath": "",
             "controlsSectionOrder": [

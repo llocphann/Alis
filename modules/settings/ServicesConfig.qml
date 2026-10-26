@@ -34,6 +34,7 @@ ContentPage {
     }
 
     SettingsTaskNavigator {
+        showTabBar: false
         icon: "settings"
         title: Translation.tr("Services")
         description: Translation.tr("System, network, search, updates and data sources.")
@@ -49,9 +50,19 @@ ContentPage {
         ]
     }
 
+    GridLayout {
+        Layout.fillWidth: true
+        columns: width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
+        columnSpacing: 14
+        rowSpacing: 14
+
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "system"
-        visible: root.activeSection === "system"
+        visible: true
         expanded: true
         icon: "bedtime"
         title: Translation.tr("Idle & Sleep")
@@ -169,8 +180,11 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "network"
-        visible: root.activeSection === "network"
+        visible: true
         expanded: true
         icon: "cell_tower"
         title: Translation.tr("Networking")
@@ -189,8 +203,11 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "network"
-        visible: root.activeSection === "network"
+        visible: true
         expanded: true
         icon: "wifi_tethering"
         title: Translation.tr("Hotspot")
@@ -230,8 +247,11 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "system"
-        visible: root.activeSection === "system"
+        visible: true
         expanded: true
         icon: "memory"
         title: Translation.tr("Resources")
@@ -255,8 +275,11 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "search"
-        visible: root.activeSection === "search"
+        visible: true
         expanded: true
         icon: "search"
         title: Translation.tr("Search")
@@ -376,8 +399,11 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "updates"
-        visible: root.activeSection === "updates"
+        visible: true
         expanded: true
         icon: "system_update_alt"
         title: Translation.tr("Updates")
@@ -433,8 +459,11 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "updates"
-        visible: root.activeSection === "updates"
+        visible: true
         expanded: true
         icon: "deployed_code_update"
         title: Translation.tr("Alis Shell Updates")
@@ -894,8 +923,11 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "data"
-        visible: root.activeSection === "data"
+        visible: true
         expanded: true
         icon: "cloud"
         title: Translation.tr("Weather")
@@ -909,19 +941,23 @@ ContentPage {
                 wrapMode: Text.WordWrap
             }
 
-            SettingsSwitch {
-                buttonIcon: "toggle_on"
-                text: Translation.tr("Enable weather service")
-                checked: Config.options?.bar?.weather?.enable ?? false
-                onCheckedChanged: Config.setNestedValue("bar.weather.enable", checked)
-            }
+            ConfigRow {
+                uniform: true
 
-            SettingsSwitch {
-                buttonIcon: "visibility_off"
-                text: Translation.tr("Hide weather location")
-                checked: Config.options?.waffles?.widgetsPanel?.weatherHideLocation ?? false
-                onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.weatherHideLocation", checked)
-                enabled: Config.options?.bar?.weather?.enable ?? false
+                SettingsSwitch {
+                    buttonIcon: "toggle_on"
+                    text: Translation.tr("Enable weather service")
+                    checked: Config.options?.bar?.weather?.enable ?? false
+                    onCheckedChanged: Config.setNestedValue("bar.weather.enable", checked)
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "visibility_off"
+                    text: Translation.tr("Hide weather location")
+                    checked: Config.options?.waffles?.widgetsPanel?.weatherHideLocation ?? false
+                    onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.weatherHideLocation", checked)
+                    enabled: Config.options?.bar?.weather?.enable ?? false
+                }
             }
 
             // Manual location
@@ -1017,14 +1053,26 @@ ContentPage {
                 }
             }
 
-            SettingsSwitch {
-                buttonIcon: "my_location"
-                text: Translation.tr("Use GPS location (requires geoclue)")
-                checked: Config.options?.bar?.weather?.enableGPS ?? false
-                onCheckedChanged: Config.setNestedValue("bar.weather.enableGPS", checked)
-                enabled: Config.options?.bar?.weather?.enable ?? false
-                StyledToolTip {
-                    text: Translation.tr("Uses GPS when no manual location is set")
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    buttonIcon: "my_location"
+                    text: Translation.tr("Use GPS location (requires geoclue)")
+                    checked: Config.options?.bar?.weather?.enableGPS ?? false
+                    onCheckedChanged: Config.setNestedValue("bar.weather.enableGPS", checked)
+                    enabled: Config.options?.bar?.weather?.enable ?? false
+                    StyledToolTip {
+                        text: Translation.tr("Uses GPS when no manual location is set")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "thermometer"
+                    text: Translation.tr("Use Fahrenheit (°F)")
+                    checked: Config.options?.bar?.weather?.useUSCS ?? false
+                    onCheckedChanged: Config.setNestedValue("bar.weather.useUSCS", checked)
+                    enabled: Config.options?.bar?.weather?.enable ?? false
                 }
             }
 
@@ -1039,14 +1087,6 @@ ContentPage {
                 wrapMode: Text.WordWrap
             }
 
-            SettingsSwitch {
-                buttonIcon: "thermometer"
-                text: Translation.tr("Use Fahrenheit (°F)")
-                checked: Config.options?.bar?.weather?.useUSCS ?? false
-                onCheckedChanged: Config.setNestedValue("bar.weather.useUSCS", checked)
-                enabled: Config.options?.bar?.weather?.enable ?? false
-            }
-
             ConfigSpinBox {
                 icon: "update"
                 text: Translation.tr("Update interval (minutes)")
@@ -1058,6 +1098,7 @@ ContentPage {
                 enabled: Config.options?.bar?.weather?.enable ?? false
             }
         }
+    }
     }
 
 }

@@ -125,187 +125,173 @@ ContentPage {
             title: Translation.tr("Panel Style")
 
             SettingsGroup {
-                RowLayout {
+                ConfigSelectionArray {
+                    Layout.fillWidth: false
+                    Layout.alignment: Qt.AlignHCenter
+                    currentValue: Config.options?.panelFamily ?? "abyss"
+                    onSelected: newValue => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "panelFamily", "set", newValue])
+                    options: [
+                        {
+                            displayName: "Abyss",
+                            icon: "water",
+                            value: "abyss"
+                        },
+                        {
+                            displayName: "Waffle",
+                            icon: "window",
+                            value: "waffle"
+                        }
+                    ]
+                }
+
+                Rectangle {
+                    id: panelStylePreview
                     Layout.fillWidth: true
-                    spacing: 12
+                    Layout.fillHeight: true
+                    implicitHeight: 160
+                    radius: Appearance.rounding.normal
+                    clip: true
+                    color: Appearance.colors.colLayer2
+                    border.width: 1
+                    border.color: Appearance.colors.colOutlineVariant
 
-                    ColumnLayout {
-                        Layout.preferredWidth: Math.round(132 * Appearance.fontSizeScale)
-                        Layout.alignment: Qt.AlignVCenter
-                        spacing: 8
+                    property real wavePhase: 0.35
+                    property real pulseStrength: 0.65
 
-                        Repeater {
-                            model: [
-                                { displayName: "Abyss", icon: "water", value: "abyss" },
-                                { displayName: "Waffle", icon: "window", value: "waffle" }
-                            ]
+                    NumberAnimation on pulseStrength {
+                        id: previewPulseAnim
+                        from: 1.0
+                        to: 0.45
+                        duration: 750
+                        easing.type: Easing.OutCubic
+                    }
 
-                            SelectionGroupButton {
-                                required property var modelData
-                                Layout.fillWidth: true
-                                implicitHeight: 42
-                                leftmost: true
-                                rightmost: true
-                                buttonIcon: modelData.icon
-                                buttonText: modelData.displayName
-                                toggled: (Config.options?.panelFamily ?? "abyss") === modelData.value
-                                onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "panelFamily", "set", modelData.value])
+                    Canvas {
+                        id: styleCanvas
+                        anchors.fill: parent
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
+                        Connections {
+                            target: Config.options
+                            function onPanelFamilyChanged() { styleCanvas.requestPaint() }
+                        }
+                        Connections {
+                            target: panelStylePreview
+                            function onPulseStrengthChanged() { styleCanvas.requestPaint() }
+                            function onWavePhaseChanged() { styleCanvas.requestPaint() }
+                        }
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            const w = width
+                            const h = height
+                            ctx.clearRect(0, 0, w, h)
+                            if (w <= 0 || h <= 0) return
+
+                            const isWaffleMode = (Config.options?.panelFamily ?? "abyss") === "waffle"
+                            const primary = String(Appearance.colors.colPrimary)
+                            const surface = String(Appearance.colors.colLayer0)
+                            const outline = String(Appearance.colors.colOutlineVariant)
+
+                            if (!isWaffleMode) {
+                                // Abyss preview: liquid Screen Edge frame + top wave crest + connected dock
+                                const edge = 10
+                                const r = 18
+                                ctx.fillStyle = surface
+                                ctx.beginPath()
+                                ctx.rect(0, 0, w, h)
+                                ctx.moveTo(edge + r, edge + 14)
+                                ctx.arcTo(w - edge, edge + 14, w - edge, h - edge, r)
+                                ctx.arcTo(w - edge, h - edge, edge, h - edge, r)
+                                ctx.arcTo(edge, h - edge, edge, edge + 14, r)
+                                ctx.arcTo(edge, edge + 14, w - edge, edge + 14, r)
+                                ctx.fill("evenodd")
+
+                                // Top liquid wave crest along the upper Screen Edge
+                                ctx.beginPath()
+                                const baseTop = edge + 14
+                                const center = w * panelStylePreview.wavePhase
+                                ctx.moveTo(edge, baseTop)
+                                for (let x = edge; x <= w - edge; x += 3) {
+                                    const dist = (x - center) / Math.max(40, w * 0.22)
+                                    const env = Math.exp(-dist * dist)
+                                    const ripple = Math.cos(dist * 4.2) * env * 9 * panelStylePreview.pulseStrength
+                                    ctx.lineTo(x, baseTop + Math.max(-4, ripple))
+                                }
+                                ctx.strokeStyle = primary
+                                ctx.lineWidth = 2
+                                ctx.stroke()
+
+                                // Bottom connected dock pill
+                                const dockW = Math.min(130, w * 0.46)
+                                const dockH = 14
+                                const dockX = (w - dockW) / 2
+                                const dockY = h - edge - dockH + 2
+                                ctx.fillStyle = surface
+                                ctx.beginPath()
+                                ctx.roundedRect(dockX, dockY, dockW, dockH, 7, 7)
+                                ctx.fill()
+                                ctx.strokeStyle = primary
+                                ctx.lineWidth = 1.2
+                                ctx.stroke()
+                            } else {
+                                // Waffle preview: floating Start Menu card + bottom taskbar
+                                const barH = 24
+                                const startW = Math.min(120, w * 0.44)
+                                const startH = Math.min(68, h * 0.48)
+                                const startX = (w - startW) / 2
+                                const startY = h - barH - startH - 8
+
+                                ctx.fillStyle = surface
+                                ctx.beginPath()
+                                ctx.roundedRect(startX, startY, startW, startH, 8, 8)
+                                ctx.fill()
+                                ctx.strokeStyle = outline
+                                ctx.lineWidth = 1
+                                ctx.stroke()
+
+                                // Bottom taskbar
+                                ctx.fillStyle = surface
+                                ctx.fillRect(0, h - barH, w, barH)
+                                ctx.strokeStyle = primary
+                                ctx.lineWidth = 1.5
+                                ctx.beginPath()
+                                ctx.moveTo(0, h - barH)
+                                ctx.lineTo(w, h - barH)
+                                ctx.stroke()
+
+                                // Centered taskbar dots
+                                ctx.fillStyle = primary
+                                for (let i = -2; i <= 2; i++) {
+                                    ctx.beginPath()
+                                    ctx.roundedRect(w / 2 + i * 16 - 4, h - barH / 2 - 4, 8, 8, 2, 2)
+                                    ctx.fill()
+                                }
                             }
                         }
                     }
 
-                    Rectangle {
-                        id: panelStylePreview
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        implicitHeight: 148
-                        radius: Appearance.rounding.normal
-                        clip: true
-                        color: Appearance.colors.colLayer2
-                        border.width: 1
-                        border.color: Appearance.colors.colOutlineVariant
+                    StyledText {
+                        anchors.centerIn: parent
+                        text: (Config.options?.panelFamily ?? "abyss") === "waffle"
+                            ? "Waffle · Bottom taskbar & Start menu"
+                            : "Click to test a wave · Abyss"
+                        color: Appearance.colors.colOnLayer1
+                        font.pixelSize: Appearance.font.pixelSize.small
+                    }
 
-                        property real wavePhase: 0.35
-                        property real pulseStrength: 0.65
-
-                        NumberAnimation on pulseStrength {
-                            id: previewPulseAnim
-                            from: 1.0
-                            to: 0.45
-                            duration: 750
-                            easing.type: Easing.OutCubic
-                        }
-
-                        Canvas {
-                            id: styleCanvas
-                            anchors.fill: parent
-                            onWidthChanged: requestPaint()
-                            onHeightChanged: requestPaint()
-                            Connections {
-                                target: Config.options
-                                function onPanelFamilyChanged() { styleCanvas.requestPaint() }
-                            }
-                            Connections {
-                                target: panelStylePreview
-                                function onPulseStrengthChanged() { styleCanvas.requestPaint() }
-                                function onWavePhaseChanged() { styleCanvas.requestPaint() }
-                            }
-                            onPaint: {
-                                const ctx = getContext("2d")
-                                const w = width
-                                const h = height
-                                ctx.clearRect(0, 0, w, h)
-                                if (w <= 0 || h <= 0) return
-
-                                const isWaffleMode = (Config.options?.panelFamily ?? "abyss") === "waffle"
-                                const primary = String(Appearance.colors.colPrimary)
-                                const surface = String(Appearance.colors.colLayer0)
-                                const outline = String(Appearance.colors.colOutlineVariant)
-
-                                if (!isWaffleMode) {
-                                    // Abyss preview: liquid Screen Edge frame + top wave crest + connected dock
-                                    const edge = 10
-                                    const r = 18
-                                    ctx.fillStyle = surface
-                                    ctx.beginPath()
-                                    ctx.rect(0, 0, w, h)
-                                    ctx.moveTo(edge + r, edge + 14)
-                                    ctx.arcTo(w - edge, edge + 14, w - edge, h - edge, r)
-                                    ctx.arcTo(w - edge, h - edge, edge, h - edge, r)
-                                    ctx.arcTo(edge, h - edge, edge, edge + 14, r)
-                                    ctx.arcTo(edge, edge + 14, w - edge, edge + 14, r)
-                                    ctx.fill("evenodd")
-
-                                    // Top liquid wave crest along the upper Screen Edge
-                                    ctx.beginPath()
-                                    const baseTop = edge + 14
-                                    const center = w * panelStylePreview.wavePhase
-                                    ctx.moveTo(edge, baseTop)
-                                    for (let x = edge; x <= w - edge; x += 3) {
-                                        const dist = (x - center) / Math.max(40, w * 0.22)
-                                        const env = Math.exp(-dist * dist)
-                                        const ripple = Math.cos(dist * 4.2) * env * 9 * panelStylePreview.pulseStrength
-                                        ctx.lineTo(x, baseTop + Math.max(-4, ripple))
-                                    }
-                                    ctx.strokeStyle = primary
-                                    ctx.lineWidth = 2
-                                    ctx.stroke()
-
-                                    // Bottom connected dock pill
-                                    const dockW = Math.min(130, w * 0.46)
-                                    const dockH = 14
-                                    const dockX = (w - dockW) / 2
-                                    const dockY = h - edge - dockH + 2
-                                    ctx.fillStyle = surface
-                                    ctx.beginPath()
-                                    ctx.roundedRect(dockX, dockY, dockW, dockH, 7, 7)
-                                    ctx.fill()
-                                    ctx.strokeStyle = primary
-                                    ctx.lineWidth = 1.2
-                                    ctx.stroke()
-                                } else {
-                                    // Waffle preview: floating Start Menu card + bottom taskbar
-                                    const barH = 24
-                                    const startW = Math.min(120, w * 0.44)
-                                    const startH = Math.min(68, h * 0.48)
-                                    const startX = (w - startW) / 2
-                                    const startY = h - barH - startH - 8
-
-                                    ctx.fillStyle = surface
-                                    ctx.beginPath()
-                                    ctx.roundedRect(startX, startY, startW, startH, 8, 8)
-                                    ctx.fill()
-                                    ctx.strokeStyle = outline
-                                    ctx.lineWidth = 1
-                                    ctx.stroke()
-
-                                    // Bottom taskbar
-                                    ctx.fillStyle = surface
-                                    ctx.fillRect(0, h - barH, w, barH)
-                                    ctx.strokeStyle = primary
-                                    ctx.lineWidth = 1.5
-                                    ctx.beginPath()
-                                    ctx.moveTo(0, h - barH)
-                                    ctx.lineTo(w, h - barH)
-                                    ctx.stroke()
-
-                                    // Centered taskbar dots
-                                    ctx.fillStyle = primary
-                                    for (let i = -2; i <= 2; i++) {
-                                        ctx.beginPath()
-                                        ctx.roundedRect(w / 2 + i * 16 - 4, h - barH / 2 - 4, 8, 8, 2, 2)
-                                        ctx.fill()
-                                    }
-                                }
-                            }
-                        }
-
-                        StyledText {
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.leftMargin: 14
-                            anchors.topMargin: 26
-                            text: (Config.options?.panelFamily ?? "abyss") === "waffle"
-                                ? "Waffle · Bottom taskbar & Start menu"
-                                : "Abyss · Liquid Screen Edge & waves"
-                            color: Appearance.colors.colSubtext
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onPositionChanged: mouse => {
-                                if (pressed) {
-                                    panelStylePreview.wavePhase = Math.max(0.15, Math.min(0.85, mouse.x / Math.max(1, width)))
-                                    previewPulseAnim.restart()
-                                }
-                            }
-                            onPressed: mouse => {
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onPositionChanged: mouse => {
+                            if (pressed) {
                                 panelStylePreview.wavePhase = Math.max(0.15, Math.min(0.85, mouse.x / Math.max(1, width)))
                                 previewPulseAnim.restart()
                             }
+                        }
+                        onPressed: mouse => {
+                            panelStylePreview.wavePhase = Math.max(0.15, Math.min(0.85, mouse.x / Math.max(1, width)))
+                            previewPulseAnim.restart()
                         }
                     }
                 }

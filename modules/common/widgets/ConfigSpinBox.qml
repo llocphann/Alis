@@ -20,9 +20,9 @@ RowLayout {
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
 
-    spacing: 10
-    Layout.leftMargin: 8
-    Layout.rightMargin: 8
+    spacing: 8
+    Layout.leftMargin: 0
+    Layout.rightMargin: 0
 
     function _findSettingsContext() {
         var page = null;
@@ -88,9 +88,10 @@ RowLayout {
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 10
+        spacing: 8
         OptionalMaterialSymbol {
             icon: root.icon
+            iconSize: Appearance.font.pixelSize.large
             opacity: root.enabled ? 1 : 0.4
         }
         ColumnLayout {

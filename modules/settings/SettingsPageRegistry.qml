@@ -205,6 +205,10 @@ Singleton {
             Config.setNestedValue("sidebar.style", "panel")
         if (Config.options?.sidebar?.cardStyle ?? false)
             Config.setNestedValue("sidebar.cardStyle", false)
+        if ((Config.options?.sidebar?.right?.headerStyle ?? "classic") !== "classic")
+            Config.setNestedValue("sidebar.right.headerStyle", "classic")
+        if ((Config.options?.sidebar?.quickToggles?.style ?? "classic") !== "classic")
+            Config.setNestedValue("sidebar.quickToggles.style", "classic")
     }
 
     function _migrateLegacyScreenEdgeShadow(): void {

@@ -372,9 +372,7 @@ ContentPage {
     }
 
     function refreshInitial(): void {
-        loadValidation()
-        loadCustomizations()
-        refreshActiveSection()
+        refreshAll()
     }
 
     function getConfigValue(path, fallback) {
@@ -1149,6 +1147,7 @@ ContentPage {
     }
 
     SettingsTaskNavigator {
+        showTabBar: false
         icon: "monitor"
         title: Translation.tr("Compositor")
         description: Translation.tr("Tune displays, input, layout and rules; unconfirmed display previews revert.")
@@ -1280,12 +1279,22 @@ ContentPage {
         }
     }
 
+    GridLayout {
+        Layout.fillWidth: true
+        columns: width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
+        columnSpacing: 14
+        rowSpacing: 14
+
     // =====================
     // DISPLAYS SECTION
     // =====================
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "displays"
-        visible: root.activeSection === "displays"
+        visible: true
         expanded: true
         icon: "monitor"
         title: Translation.tr("Displays")
@@ -1511,8 +1520,11 @@ ContentPage {
     // LAYOUT SECTION
     // =====================
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "layout"
-        visible: root.activeSection === "layout"
+        visible: true
         expanded: true
         icon: "grid_view"
         title: Translation.tr("Layout")
@@ -1950,8 +1962,11 @@ ContentPage {
     // WINDOW RULES SECTION
     // =====================
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "rules"
-        visible: root.activeSection === "rules"
+        visible: true
         expanded: true
         icon: "rounded_corner"
         title: Translation.tr("Window Rules")
@@ -2044,8 +2059,11 @@ ContentPage {
     // KEYBOARD SECTION
     // =====================
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "input"
-        visible: root.activeSection === "input"
+        visible: true
         expanded: true
         icon: "keyboard"
         title: Translation.tr("Keyboard")
@@ -2201,98 +2219,117 @@ ContentPage {
     // TOUCHPAD SECTION
     // =====================
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "input"
-        visible: root.activeSection === "input"
+        visible: true
         expanded: true
         icon: "touch_app"
         title: Translation.tr("Touchpad")
 
         SettingsGroup {
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "touch_app"
-                text: Translation.tr("Tap to click")
-                checked: root.touchpadData?.tap ?? true
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "touchpad.tap", checked)
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "touch_app"
+                    text: Translation.tr("Tap to click")
+                    checked: root.touchpadData?.tap ?? true
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.tap", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "swipe"
+                    text: Translation.tr("Natural scroll")
+                    checked: root.touchpadData?.natural_scroll ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.natural-scroll", checked)
+                    }
                 }
             }
 
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "swipe"
-                text: Translation.tr("Natural scroll")
-                checked: root.touchpadData?.natural_scroll ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "touchpad.natural-scroll", checked)
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "block"
+                    text: Translation.tr("Disable while typing")
+                    checked: root.touchpadData?.dwt ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.dwt", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "joystick"
+                    text: Translation.tr("Disable while trackpointing")
+                    checked: root.touchpadData?.dwtp ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.dwtp", checked)
+                    }
                 }
             }
 
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "block"
-                text: Translation.tr("Disable while typing")
-                checked: root.touchpadData?.dwt ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "touchpad.dwt", checked)
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "mouse"
+                    text: Translation.tr("Disable with external mouse")
+                    checked: root.touchpadData?.disabled_on_external_mouse ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.disabled-on-external-mouse", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "left_click"
+                    text: Translation.tr("Left-handed")
+                    checked: root.touchpadData?.left_handed ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.left-handed", checked)
+                    }
                 }
             }
 
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "joystick"
-                text: Translation.tr("Disable while trackpointing")
-                checked: root.touchpadData?.dwtp ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "touchpad.dwtp", checked)
-                }
-            }
+            ConfigRow {
+                uniform: true
 
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "mouse"
-                text: Translation.tr("Disable with external mouse")
-                checked: root.touchpadData?.disabled_on_external_mouse ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "touchpad.disabled-on-external-mouse", checked)
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "ads_click"
+                    text: Translation.tr("Middle-click emulation")
+                    checked: root.touchpadData?.middle_emulation ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.middle-emulation", checked)
+                    }
                 }
-            }
 
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "left_click"
-                text: Translation.tr("Left-handed")
-                checked: root.touchpadData?.left_handed ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "touchpad.left-handed", checked)
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "ads_click"
-                text: Translation.tr("Middle-click emulation")
-                checked: root.touchpadData?.middle_emulation ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "touchpad.middle-emulation", checked)
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "pan_tool"
-                text: Translation.tr("Drag lock")
-                checked: root.touchpadData?.drag_lock ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "touchpad.drag-lock", checked)
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "pan_tool"
+                    text: Translation.tr("Drag lock")
+                    checked: root.touchpadData?.drag_lock ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.drag-lock", checked)
+                    }
                 }
             }
 
@@ -2398,32 +2435,39 @@ ContentPage {
     // MOUSE SECTION
     // =====================
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "input"
-        visible: root.activeSection === "input"
+        visible: true
         expanded: true
         icon: "mouse"
         title: Translation.tr("Mouse")
 
         SettingsGroup {
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "swipe"
-                text: Translation.tr("Natural scroll")
-                checked: root.mouseData?.natural_scroll ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "mouse.natural-scroll", checked)
-                }
-            }
+            ConfigRow {
+                uniform: true
 
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "left_click"
-                text: Translation.tr("Left-handed")
-                checked: root.mouseData?.left_handed ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "mouse.left-handed", checked)
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "swipe"
+                    text: Translation.tr("Natural scroll")
+                    checked: root.mouseData?.natural_scroll ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "mouse.natural-scroll", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "left_click"
+                    text: Translation.tr("Left-handed")
+                    checked: root.mouseData?.left_handed ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "mouse.left-handed", checked)
+                    }
                 }
             }
 
@@ -2516,32 +2560,39 @@ ContentPage {
     // TRACKPOINT SECTION
     // =====================
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "input"
-        visible: root.activeSection === "input"
+        visible: true
         expanded: true
         icon: "joystick"
         title: Translation.tr("Trackpoint")
 
         SettingsGroup {
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "swap_vert"
-                text: Translation.tr("Natural scroll")
-                checked: root.trackpointData?.natural_scroll ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "trackpoint.natural-scroll", checked)
-                }
-            }
+            ConfigRow {
+                uniform: true
 
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "left_click"
-                text: Translation.tr("Left-handed")
-                checked: root.trackpointData?.left_handed ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "trackpoint.left-handed", checked)
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "swap_vert"
+                    text: Translation.tr("Natural scroll")
+                    checked: root.trackpointData?.natural_scroll ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "trackpoint.natural-scroll", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "left_click"
+                    text: Translation.tr("Left-handed")
+                    checked: root.trackpointData?.left_handed ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "trackpoint.left-handed", checked)
+                    }
                 }
             }
 
@@ -2632,8 +2683,11 @@ ContentPage {
     // CURSOR SECTION
     // =====================
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "input"
-        visible: root.activeSection === "input"
+        visible: true
         expanded: true
         icon: "point_scan"
         title: Translation.tr("Cursor")
@@ -2702,8 +2756,11 @@ ContentPage {
     // GENERAL INPUT SECTION
     // =====================
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "input"
-        visible: root.activeSection === "input"
+        visible: true
         expanded: true
         icon: "settings_input_component"
         title: Translation.tr("General Input")
@@ -2798,8 +2855,11 @@ ContentPage {
     // ANIMATIONS SECTION
     // =====================
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "animations"
-        visible: root.activeSection === "animations"
+        visible: true
         expanded: true
         icon: "animation"
         title: Translation.tr("Animations")
@@ -2969,6 +3029,8 @@ ContentPage {
     // NIRI CONFIG STATUS
     // =====================
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.columnSpan: parent.columns
         visible: root.showCustomConfigStatusSection
         expanded: false
         icon: "rule_settings"
@@ -3173,6 +3235,7 @@ ContentPage {
                 }
             }
         }
+    }
     }
 
 }

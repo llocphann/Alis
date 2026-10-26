@@ -30,6 +30,7 @@ ContentPage {
     }
 
     SettingsTaskNavigator {
+        showTabBar: false
         icon: "neurology"
         title: Translation.tr("AI")
         description: Translation.tr("Choose a provider and opt in to voice or privacy-sensitive features.")
@@ -51,10 +52,20 @@ ContentPage {
         VoiceSearch.ensureInitialized()
     }
 
+    GridLayout {
+        Layout.fillWidth: true
+        columns: width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
+        columnSpacing: 14
+        rowSpacing: 14
+
     // ── Setup status ─────────────────────────────────────────────
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "setup"
-        visible: root.activeSection === "setup"
+        visible: true
         expanded: true
         icon: "rocket_launch"
         title: Translation.tr("Get started")
@@ -185,8 +196,11 @@ ContentPage {
 
     // ── Providers ────────────────────────────────────────────────
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "providers"
-        visible: root.activeSection === "providers"
+        visible: true
         expanded: true
         icon: "computer"
         title: Translation.tr("Downloaded models")
@@ -217,8 +231,10 @@ ContentPage {
         }
     }
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.columnSpan: parent.columns
         settingsTaskSection: "providers"
-        visible: root.activeSection === "providers"
+        visible: true
         expanded: true
         icon: "cloud"
         title: Translation.tr("Providers & models")
@@ -951,8 +967,11 @@ ContentPage {
 
     // ── Assistant behavior ───────────────────────────────────────
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "behavior"
-        visible: root.activeSection === "behavior"
+        visible: true
         expanded: true
         icon: "psychology"
         title: Translation.tr("Assistant behavior")
@@ -1039,39 +1058,13 @@ ContentPage {
         }
     }
 
-    // ── Privacy ──────────────────────────────────────────────────
-    SettingsCardSection {
-        settingsTaskSection: "privacy"
-        visible: root.activeSection === "privacy"
-        expanded: true
-        icon: "policy"
-        title: Translation.tr("Privacy & policy")
-
-        SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("Allow AI features")
-                tooltip: Translation.tr("Local only: use on-device models (Ollama, LM Studio).")
-
-                ConfigSelectionArray {
-                    enableSettingsSearch: false
-                    currentValue: Config.options?.policies?.ai ?? 0
-                    onSelected: newValue => {
-                        Config.setNestedValue("policies.ai", newValue);
-                    }
-                    options: [
-                        { displayName: Translation.tr("No"), icon: "close", value: 0 },
-                        { displayName: Translation.tr("Yes"), icon: "check", value: 1 },
-                        { displayName: Translation.tr("Local only"), icon: "sync_saved_locally", value: 2 }
-                    ]
-                }
-            }
-        }
-    }
-
     // ── Voice input ──────────────────────────────────────────────
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "voice"
-        visible: root.activeSection === "voice"
+        visible: true
         expanded: true
         icon: "mic"
         title: Translation.tr("Voice input")
@@ -1174,5 +1167,37 @@ ContentPage {
                 wrapMode: Text.WordWrap
             }
         }
+    }
+
+    // ── Privacy ──────────────────────────────────────────────────
+    SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.columnSpan: parent.columns
+        settingsTaskSection: "privacy"
+        visible: true
+        expanded: true
+        icon: "policy"
+        title: Translation.tr("Privacy & policy")
+
+        SettingsGroup {
+            ContentSubsection {
+                title: Translation.tr("Allow AI features")
+                tooltip: Translation.tr("Local only: use on-device models (Ollama, LM Studio).")
+
+                ConfigSelectionArray {
+                    enableSettingsSearch: false
+                    currentValue: Config.options?.policies?.ai ?? 0
+                    onSelected: newValue => {
+                        Config.setNestedValue("policies.ai", newValue);
+                    }
+                    options: [
+                        { displayName: Translation.tr("No"), icon: "close", value: 0 },
+                        { displayName: Translation.tr("Yes"), icon: "check", value: 1 },
+                        { displayName: Translation.tr("Local only"), icon: "sync_saved_locally", value: 2 }
+                    ]
+                }
+            }
+        }
+    }
     }
 }

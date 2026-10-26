@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
@@ -12,12 +13,23 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 8
 
-    readonly property bool leftFit: Config.options?.sidebar?.collapseWidgetsTab ?? false
+    readonly property var leftState: ShellLayoutController.currentState("featureSidebar", "")
+    readonly property var rightState: ShellLayoutController.currentState("systemSidebar", "")
+    readonly property real refScreenHeight: Math.max(720, Quickshell.screens?.[0]?.height ?? 1080)
+    readonly property bool leftCustom: (leftState?.sizeMode ?? "fit") === "custom"
+    readonly property bool rightCustom: (rightState?.sizeMode ?? "fit") === "custom"
+    readonly property bool leftFit: !leftCustom
     // The system sidebar is content-sized independently from notification history.
     // Keep the retired notification-fit compatibility key out of presentation state.
-    readonly property bool rightFit: true
-    readonly property real leftRatio: leftFit ? SidebarGeometry.leftFitPreferredRatio : 1
-    readonly property real rightRatio: rightFit ? SidebarGeometry.rightFitExpandedPreferredRatio : 1
+    readonly property bool rightFit: !rightCustom
+    readonly property real leftRatio: leftCustom
+        ? Math.max(0.22, Math.min(1, Number(leftState?.customHeight ?? 700) / refScreenHeight))
+        : SidebarGeometry.leftFitPreferredRatio
+    readonly property real rightRatio: rightCustom
+        ? Math.max(0.22, Math.min(1, Number(rightState?.customHeight ?? 700) / refScreenHeight))
+        : SidebarGeometry.rightFitExpandedPreferredRatio
+    readonly property int leftBarWidth: Math.round(34 + (Math.max(320, Math.min(900, Number(leftState?.width ?? 460))) - 320) / (900 - 320) * 20)
+    readonly property int rightBarWidth: Math.round(34 + (Math.max(320, Math.min(900, Number(rightState?.width ?? 460))) - 320) / (900 - 320) * 20)
 
     Rectangle {
         Layout.fillWidth: true
@@ -46,13 +58,21 @@ ColumnLayout {
                     anchors.left: parent.left
                     anchors.bottom: parent.bottom
                     anchors.margins: 7
-                    width: 42
+                    width: root.leftBarWidth
                     height: Math.max(22, (parent.height - 14) * root.leftRatio)
                     radius: Appearance.rounding.verysmall
                     color: Appearance.colors.colPrimaryContainer
                     border.width: 1
                     border.color: Appearance.colors.colPrimary
 
+                    Behavior on width {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation {
+                            duration: Appearance.animation.elementResize.duration
+                            easing.type: Appearance.animation.elementResize.type
+                            easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+                        }
+                    }
                     Behavior on height {
                         enabled: Appearance.animationsEnabled
                         NumberAnimation {
@@ -68,13 +88,21 @@ ColumnLayout {
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
                     anchors.margins: 7
-                    width: 42
+                    width: root.rightBarWidth
                     height: Math.max(22, (parent.height - 14) * root.rightRatio)
                     radius: Appearance.rounding.verysmall
                     color: Appearance.colors.colSecondaryContainer
                     border.width: 1
                     border.color: Appearance.colors.colSecondary
 
+                    Behavior on width {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation {
+                            duration: Appearance.animation.elementResize.duration
+                            easing.type: Appearance.animation.elementResize.type
+                            easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+                        }
+                    }
                     Behavior on height {
                         enabled: Appearance.animationsEnabled
                         NumberAnimation {
@@ -109,9 +137,9 @@ ColumnLayout {
         StyledText {
             Layout.fillWidth: true
             text: Translation.tr("Left sidebar") + " · "
-                + (root.leftFit
-                    ? Translation.tr("Fit") + " " + Math.round(SidebarGeometry.leftFitPreferredRatio * 100) + "%"
-                    : Translation.tr("Full"))
+                + (root.leftCustom
+                    ? Math.round(root.leftState?.width ?? 460) + "×" + Math.round(root.leftState?.customHeight ?? 700) + " px"
+                    : Translation.tr("Fit") + " " + Math.round(SidebarGeometry.leftFitPreferredRatio * 100) + "% (" + Math.round(root.leftState?.width ?? 460) + " px)")
             color: Appearance.colors.colOnLayer1
             font.pixelSize: Appearance.font.pixelSize.smaller
         }
@@ -120,10 +148,10 @@ ColumnLayout {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignRight
             text: Translation.tr("Right sidebar") + " · "
-                + (root.rightFit
-                    ? Translation.tr("Fit") + " " + Math.round(SidebarGeometry.rightFitExpandedPreferredRatio * 100) + "% / "
-                        + Translation.tr("Compact") + " " + Math.round(SidebarGeometry.rightFitCollapsedPreferredRatio * 100) + "%"
-                    : Translation.tr("Full"))
+                + (root.rightCustom
+                    ? Math.round(root.rightState?.width ?? 460) + "×" + Math.round(root.rightState?.customHeight ?? 700) + " px"
+                    : Translation.tr("Fit") + " " + Math.round(SidebarGeometry.rightFitExpandedPreferredRatio * 100) + "% / "
+                        + Translation.tr("Compact") + " " + Math.round(SidebarGeometry.rightFitCollapsedPreferredRatio * 100) + "% (" + Math.round(root.rightState?.width ?? 460) + " px)")
             color: Appearance.colors.colOnLayer1
             font.pixelSize: Appearance.font.pixelSize.smaller
         }
