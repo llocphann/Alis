@@ -173,6 +173,7 @@ WindowDialogSectionHeader 1.0 WindowDialogSectionHeader.qml
 WindowDialogSeparator 1.0 WindowDialogSeparator.qml
 WindowDialogSlider 1.0 WindowDialogSlider.qml
 WindowDialogTitle 1.0 WindowDialogTitle.qml
+WordSyncedLyricLine 1.0 WordSyncedLyricLine.qml
 WallpaperCrossfader 1.0 WallpaperCrossfader.qml
 VideoCrossfader 1.0 VideoCrossfader.qml
 ZzzBurst 1.0 ZzzBurst.qml

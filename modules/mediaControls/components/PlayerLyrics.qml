@@ -137,7 +137,7 @@ Item {
                 id: lyricRepeater
                 model: LyricsService.lyricsLines
 
-                delegate: StyledText {
+                delegate: WordSyncedLyricLine {
                     id: lyricLine
                     required property int index
                     required property var modelData
@@ -145,17 +145,23 @@ Item {
                     readonly property int distance: Math.abs(index - root.activeIndex)
                     readonly property bool isActive: index === root.activeIndex
 
-                    renderType: Text.QtRendering
                     width: lyricColumn.width
                     horizontalAlignment: root.textAlignment
-                    wrapMode: Text.WordWrap
-                    maximumLineCount: 3
-                    elide: Text.ElideRight
-                    text: (modelData.text && modelData.text.length > 0) ? modelData.text : "♪"
+                    lineData: modelData
+                    nextLineTime: (index + 1 < LyricsService.lyricsLines.length)
+                        ? Number(LyricsService.lyricsLines[index + 1]?.time ?? -1)
+                        : -1
+                    active: lyricLine.isActive
+                    playing: root.visible && LyricsService.isPlaying
+                    synced: true
+                    position: Number(LyricsService.activePlayer?.position ?? LyricsService.anchorPos ?? 0)
 
-                    font.pixelSize: root.baseSize
-                    font.weight: Font.Medium
-                    color: lyricLine.isActive ? root.activeColor : root.textColor
+                    fontPixelSize: root.baseSize
+                    activeFontWeight: Font.DemiBold
+                    inactiveFontWeight: Font.Medium
+                    activeColor: root.activeColor
+                    inactiveColor: root.textColor
+                    accentColor: Appearance.colors.colPrimary
 
                     opacity: {
                         if (lyricLine.distance === 0)
@@ -183,14 +189,6 @@ Item {
                             duration: Appearance.animation.elementMoveEnter.duration
                             easing.type: Appearance.animation.elementMoveEnter.type
                             easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
-                        }
-                    }
-                    Behavior on color {
-                        enabled: Appearance.animationsEnabled
-                        ColorAnimation {
-                            duration: Appearance.animation.elementMoveFast.duration
-                            easing.type: Appearance.animation.elementMoveFast.type
-                            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
                         }
                     }
                 }

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Multi-source synchronized lyrics fetcher (Dux 2.0 style) for Alis.
+"""Multi-source word-level & line-level synchronized lyrics fetcher (Dux 2.0 style) for Alis.
 
 Supports two modes:
 1. Online streaming mode (default, used by LyricsService.qml):
    lyrics.py <title> <artist> <album> <duration> [request_id]
    -> Fetches lyrics in memory only (does NOT save .lrc files to disk) and
-      emits {"status": "ok", "synced": bool, "lines": [{"t": float, "text": str}, ...]}.
+      emits {"status": "ok", "synced": bool, "wordSynced": bool, "lines": [{"t": float, "endTime": float, "text": str, "words": [...]}, ...]}.
 
 2. Local music download mode (--save-lrc, used by LocalMusic.qml):
    lyrics.py --save-lrc <audio_path> <title> <artist> [duration] [album]
    -> Fetches lyrics for a local track, saves <audio_stem>.lrc next to the
       local audio file (or ~/.local/share/alis/lyrics/ if read-only), and
-      emits {"status": "ok", "path": str, "synced": bool, "lines": [{"time": float, "text": str}, ...]}.
+      emits {"status": "ok", "path": str, "synced": bool, "wordSynced": bool, "lines": [{"time": float, "endTime": float, "text": str, "words": [...]}, ...]}.
 """
 
 from __future__ import annotations
@@ -35,6 +35,11 @@ REQUEST_DELAY = 0.2
 USER_AGENT = "Alis/2.30 (https://github.com/llocphann/Alis)"
 
 STAMP = re.compile(r"\[(\d{1,3}):(\d{2}(?:[.:]\d{1,3})?)\]")
+INLINE_WORD_STAMP = re.compile(r"<(\d{1,3}):(\d{2}(?:[.:]\d{1,3})?)>")
+YRC_LINE_RE = re.compile(r"^\[(\d+),(\d+)\](.+)$")
+YRC_WORD_RE = re.compile(r"\((\d+),(\d+),\d+\)([^\(]*)")
+KLYRIC_LINE_RE = re.compile(r"^\[(\d+),(\d+)\](.+)$")
+KLYRIC_WORD_RE = re.compile(r"<(\d+),(\d+),\d+>([^<]*)")
 OFFSET_RE = re.compile(r"^\s*\[offset\s*:\s*([+-]?\d+)\s*\]\s*$", re.IGNORECASE)
 METADATA_RE = re.compile(r"^\s*\[[a-z]{2,8}\s*:.*\]\s*$", re.IGNORECASE)
 
@@ -47,6 +52,42 @@ NOISE_PATTERNS = [
 ]
 ARTIST_NOISE_RE = re.compile(r"\s*-\s*topic$|\bvevo$", re.IGNORECASE)
 
+# Prosody / vocal expression patterns for living word animations
+REPEAT_VOWEL_RE = re.compile(
+    r"([aăâeêioôơuưyáàảãạắằẳẵặấầẩẫậéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ])\1+",
+    re.IGNORECASE,
+)
+REPEAT_SONORANT_RE = re.compile(r"([mnhlrw])\1{2,}", re.IGNORECASE)
+VIBRATO_VOCAL_SET = {
+    "oh", "ooh", "oooh", "ah", "aah", "aaah", "uh", "huh", "mmm", "mmmm",
+    "hm", "hmm", "hmmm", "la", "lala", "lalala", "na", "nana", "nanana",
+    "da", "dada", "whoa", "woah", "yeah", "yea", "yay", "ha", "hah", "hey",
+    "ơ", "hơ", "ư", "hư", "à", "ơi", "hơi", "ố", "á", "hà", "nà", "ờ",
+}
+LONG_DIPHTHONG_RE = re.compile(
+    r"(?:ươi|ươu|oai|oay|uôi|uây|iêu|yêu|uya|ai|ay|ao|au|âu|êu|iu|ui|ee|oo|ea|ou|ow|igh|ay|ey)",
+    re.IGNORECASE,
+)
+OPEN_TAIL_RE = re.compile(
+    r"[aăâeêioôơuưyáàảãạắằẳẵặấầẩẫậéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵmnhw~…]$",
+    re.IGNORECASE,
+)
+VI_RISING_CHARS = set("áắấéếíóốớúứýảẩểỉỏổởủửỷãẫễĩõỗỡũữỹ")
+VI_FALLING_CHARS = set("àằầèềìòồờùừỳạặậẹệịọộợụựỵ")
+RISE_KEYWORDS = {
+    "high", "sky", "fly", "cry", "why", "shine", "fire", "light", "rise",
+    "up", "love", "heart", "soul", "scream", "shout", "burn", "dream",
+    "free", "alive", "forever", "sun", "star", "heaven", "cao", "bay",
+    "sáng", "cháy", "yêu", "thương", "vời", "trời", "mơ", "say", "vang",
+    "lên", "bừng", "rực", "hát", "vươn",
+}
+FALL_KEYWORDS = {
+    "down", "fall", "fade", "slow", "low", "gone", "away", "sleep", "deep",
+    "night", "dark", "cold", "quiet", "whisper", "end", "alone", "shadow",
+    "rain", "tears", "buồn", "rơi", "tàn", "phai", "xa", "chìm", "đêm",
+    "lặng", "thầm", "sâu", "cuối", "thôi", "rồi", "xuống", "nhòa", "khóc",
+}
+
 
 def emit(payload: dict, request_id: str = "") -> None:
     if request_id:
@@ -55,19 +96,19 @@ def emit(payload: dict, request_id: str = "") -> None:
     sys.stdout.flush()
 
 
-def get_json(url: str, data: bytes | None = None, extra_headers: dict | None = None):
+def get_json(url: str, data: bytes | None = None, extra_headers: dict | None = None, timeout: float = TIMEOUT):
     headers = {"User-Agent": USER_AGENT}
     if extra_headers:
         headers.update(extra_headers)
     request = urllib.request.Request(url, data=data, headers=headers)
     try:
-        response = urllib.request.urlopen(request, timeout=TIMEOUT)
+        response = urllib.request.urlopen(request, timeout=timeout)
     except urllib.error.HTTPError as exc:
         if exc.code != 429:
             raise
         retry_after = float(exc.headers.get("Retry-After", "1"))
         time.sleep(max(0.0, min(retry_after, 3.0)))
-        response = urllib.request.urlopen(request, timeout=TIMEOUT)
+        response = urllib.request.urlopen(request, timeout=timeout)
     with response:
         return json.loads(response.read().decode("utf-8", "replace"))
 
@@ -101,6 +142,318 @@ def split_artist_title(title: str, artist: str) -> tuple[str, str]:
     return c_title, c_artist
 
 
+def format_lrc_Time(seconds: float, inline: bool = False) -> str:
+    sec = max(0.0, float(seconds))
+    minutes = int(sec // 60)
+    rem = sec - minutes * 60
+    if inline:
+        return f"<{minutes:02d}:{rem:06.3f}>"
+    return f"[{minutes:02d}:{rem:06.3f}]"
+
+
+def convert_netease_yrc_to_enhanced_lrc(yrc_text: str) -> str:
+    """Convert NetEase verbatim YRC format into Enhanced LRC with <mm:ss.xxx> word tags."""
+    out_lines: list[str] = []
+    for raw in (yrc_text or "").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("{"):
+            continue
+        m = YRC_LINE_RE.match(line)
+        if not m:
+            continue
+        line_start_ms = int(m.group(1))
+        line_dur_ms = int(m.group(2))
+        body = m.group(3)
+        tokens = list(YRC_WORD_RE.finditer(body))
+        if not tokens:
+            continue
+
+        grouped: list[tuple[float, float, str]] = []
+        for tok in tokens:
+            w_start = int(tok.group(1)) / 1000.0
+            w_dur = max(0.02, int(tok.group(2)) / 1000.0)
+            w_end = w_start + w_dur
+            piece = tok.group(3)
+            if not piece:
+                continue
+            # Merge sub-word pieces if previous piece didn't end with space and current doesn't start with space
+            if (
+                grouped
+                and not grouped[-1][2].endswith((" ", "\t"))
+                and not piece.startswith((" ", "\t"))
+                and grouped[-1][2].strip().isascii()
+                and piece.strip().isascii()
+            ):
+                prev_start, _prev_end, prev_text = grouped[-1]
+                grouped[-1] = (prev_start, w_end, prev_text + piece)
+            else:
+                grouped.append((w_start, w_end, piece))
+
+        parts: list[str] = [format_lrc_Time(line_start_ms / 1000.0, inline=False)]
+        last_end = (line_start_ms + line_dur_ms) / 1000.0
+        for w_start, w_end, piece in grouped:
+            clean_piece = piece.strip()
+            if not clean_piece:
+                continue
+            parts.append(f"{format_lrc_Time(w_start, inline=True)}{clean_piece} ")
+            last_end = max(last_end, w_end)
+        parts.append(format_lrc_Time(last_end, inline=True))
+        out_lines.append("".join(parts).strip())
+    return "\n".join(out_lines)
+
+
+def convert_netease_klyric_to_enhanced_lrc(klyric_text: str) -> str:
+    """Convert NetEase klyric format into Enhanced LRC with <mm:ss.xxx> word tags."""
+    out_lines: list[str] = []
+    for raw in (klyric_text or "").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("{"):
+            continue
+        m = KLYRIC_LINE_RE.match(line)
+        if not m:
+            continue
+        line_start_ms = int(m.group(1))
+        line_dur_ms = int(m.group(2))
+        body = m.group(3)
+        tokens = list(KLYRIC_WORD_RE.finditer(body))
+        if not tokens:
+            continue
+        parts: list[str] = [format_lrc_Time(line_start_ms / 1000.0, inline=False)]
+        last_end = (line_start_ms + line_dur_ms) / 1000.0
+        for tok in tokens:
+            rel_start_ms = int(tok.group(1))
+            w_dur_ms = max(20, int(tok.group(2)))
+            piece = tok.group(3).strip()
+            if not piece:
+                continue
+            w_start = (line_start_ms + rel_start_ms) / 1000.0
+            w_end = w_start + w_dur_ms / 1000.0
+            parts.append(f"{format_lrc_Time(w_start, inline=True)}{piece} ")
+            last_end = max(last_end, w_end)
+        parts.append(format_lrc_Time(last_end, inline=True))
+        out_lines.append("".join(parts).strip())
+    return "\n".join(out_lines)
+
+
+def prosodic_word_weight(word: str, index: int, total: int) -> tuple[float, float]:
+    """Return (vocal_weight, post_pause_seconds) for natural singing cadence."""
+    stripped = word.strip()
+    core = re.sub(r"^[^\w]+|[^\w]+$", "", stripped)
+    char_len = max(1, len(core))
+    weight = max(0.75, char_len ** 0.72)
+
+    # Short function words are sung faster
+    lower = core.lower()
+    if lower in {"a", "an", "the", "to", "in", "on", "of", "at", "is", "it", "và", "là", "của", "cho", "với", "như"}:
+        weight *= 0.72
+
+    # Elongated vowels / melisma / diphthongs
+    if REPEAT_VOWEL_RE.search(core) or REPEAT_SONORANT_RE.search(core) or "~" in stripped:
+        weight += 1.55
+    elif LONG_DIPHTHONG_RE.search(core):
+        weight += 0.42
+
+    if lower in VIBRATO_VOCAL_SET:
+        weight += 0.85
+
+    # Punctuation pauses & phrase-final sustain
+    post_pause = 0.0
+    if stripped.endswith(("...", "…", "~")):
+        weight += 0.75
+        post_pause = 0.16
+    elif stripped.endswith(("!", "?", ".")):
+        weight += 0.50
+        post_pause = 0.14
+    elif stripped.endswith((",", ";", ":", "—", "-")):
+        weight += 0.32
+        post_pause = 0.09
+
+    # Final word of a lyric line is naturally sustained by singers
+    if index == total - 1:
+        weight += 0.70
+        post_pause = 0.0
+
+    return weight, post_pause
+
+
+def classify_word_expression(
+    word_text: str,
+    start: float,
+    end: float,
+    index: int,
+    total: int,
+    avg_duration: float,
+) -> dict:
+    """Analyze a word's timing and phonetic structure for vocal expression effects:
+    - vibrato (ngân nga): wave oscillation / melisma / humming
+    - sustain (kéo dài): horizontal stretch + luminous sustain bar
+    - rise (lên giọng): upward pitch float + crescendo scale boost
+    - fall (xuống giọng): gentle downward pitch glide + soft decrescendo
+    """
+    duration = max(0.04, end - start)
+    stripped = word_text.strip()
+    core = re.sub(r"^[^\w]+|[^\w]+$", "", stripped)
+    lower = core.lower()
+    rel_dur = duration / max(0.16, avg_duration)
+
+    vibrato = 0.0
+    sustain = 0.0
+    rise = 0.0
+    fall = 0.0
+
+    # 1. Vibrato / Ngân nga detection
+    if "~" in stripped or "…" in stripped or ".." in stripped:
+        vibrato = 1.0
+    elif REPEAT_VOWEL_RE.search(core) or REPEAT_SONORANT_RE.search(core):
+        vibrato = 0.95
+    elif lower in VIBRATO_VOCAL_SET:
+        vibrato = 0.90
+    elif duration >= 0.72 and OPEN_TAIL_RE.search(core):
+        vibrato = min(0.88, 0.45 + (duration - 0.60) * 0.75)
+
+    # 2. Sustain / Kéo dài detection
+    if duration >= 0.48 or rel_dur >= 1.32:
+        sustain = min(1.0, max((duration - 0.34) / 0.80, (rel_dur - 1.10) / 1.05))
+    if index == total - 1 and duration >= 0.40:
+        sustain = max(sustain, min(0.95, duration / 0.82))
+    if LONG_DIPHTHONG_RE.search(core) and duration >= 0.36:
+        sustain = max(sustain, 0.58)
+
+    # 3. Rise / Lên giọng detection
+    if stripped.endswith(("!", "?", "?!", "!?")):
+        rise = 0.95
+    elif len(core) >= 2 and core.isupper():
+        rise = 0.90
+    if lower in RISE_KEYWORDS:
+        rise = max(rise, 0.82)
+    if any(ch in VI_RISING_CHARS for ch in lower):
+        rise = max(rise, 0.68 if rel_dur >= 1.0 else 0.50)
+    # Phrase climax position (middle-to-late emphatic word)
+    pos_ratio = (index + 0.5) / max(1, total)
+    if 0.40 <= pos_ratio <= 0.85 and rel_dur >= 1.18 and not any(ch in VI_FALLING_CHARS for ch in lower):
+        rise = max(rise, min(0.80, 0.45 + (rel_dur - 1.0) * 0.45))
+
+    # 4. Fall / Xuống giọng detection
+    if lower in FALL_KEYWORDS:
+        fall = 0.82
+    if any(ch in VI_FALLING_CHARS for ch in lower) and rise < 0.65:
+        fall = max(fall, 0.72 if index >= total - 2 else 0.52)
+    if index == total - 1 and stripped.endswith((".", ",", ";", "…", "..")) and not stripped.endswith(("!", "?")):
+        fall = max(fall, 0.68)
+    elif index == total - 1 and rise < 0.45 and vibrato < 0.55 and sustain < 0.65:
+        fall = max(fall, 0.54)
+
+    # Pick primary effect while preserving multi-dimensional expression weights
+    candidates = [
+        ("vibrato", vibrato),
+        ("rise", rise),
+        ("sustain", sustain),
+        ("fall", fall),
+    ]
+    best_effect, best_score = max(candidates, key=lambda item: item[1])
+    if best_score < 0.45:
+        best_effect = "normal"
+        intensity = min(0.75, max(0.30, rel_dur * 0.45))
+    else:
+        intensity = min(1.0, max(0.45, best_score))
+
+    return {
+        "text": stripped,
+        "start": round(start, 3),
+        "end": round(end, 3),
+        "duration": round(duration, 3),
+        "effect": best_effect,
+        "intensity": round(intensity, 2),
+        "sustain": round(sustain, 2),
+        "rise": round(rise, 2),
+        "fall": round(fall, 2),
+        "vibrato": round(vibrato, 2),
+    }
+
+
+def parse_inline_words(raw_lyric: str, line_start: float, line_end: float, offset_seconds: float) -> list[dict]:
+    """Parse Enhanced LRC inline <mm:ss.xx> word timestamps if present."""
+    matches = list(INLINE_WORD_STAMP.finditer(raw_lyric))
+    if not matches:
+        return []
+
+    timed_segments: list[tuple[float, str]] = []
+    # Check if there is text before the first inline stamp
+    prefix = raw_lyric[:matches[0].start()].strip()
+    if prefix:
+        timed_segments.append((line_start, prefix))
+
+    for idx, m in enumerate(matches):
+        minutes = int(m.group(1))
+        seconds = float(m.group(2).replace(":", "."))
+        stamp_t = max(0.0, round(minutes * 60 + seconds - offset_seconds, 3))
+        seg_start = m.end()
+        seg_end = matches[idx + 1].start() if idx + 1 < len(matches) else len(raw_lyric)
+        seg_text = raw_lyric[seg_start:seg_end].strip()
+        timed_segments.append((stamp_t, seg_text))
+
+    # Expand segments that contain multiple whitespace-separated words
+    raw_words: list[tuple[float, float, str]] = []
+    for idx, (seg_t, seg_text) in enumerate(timed_segments):
+        if not seg_text:
+            continue
+        next_t = timed_segments[idx + 1][0] if idx + 1 < len(timed_segments) else line_end
+        if next_t <= seg_t:
+            next_t = max(seg_t + 0.18, line_end if idx + 1 == len(timed_segments) else seg_t + 0.28)
+        sub_words = seg_text.split()
+        if len(sub_words) == 1:
+            raw_words.append((seg_t, next_t, sub_words[0]))
+        else:
+            weights = [prosodic_word_weight(w, i, len(sub_words))[0] for i, w in enumerate(sub_words)]
+            total_w = sum(weights) or 1.0
+            span = max(0.08 * len(sub_words), next_t - seg_t)
+            cursor = seg_t
+            for w_str, w_val in zip(sub_words, weights):
+                w_dur = span * (w_val / total_w)
+                raw_words.append((cursor, cursor + w_dur, w_str))
+                cursor += w_dur
+
+    if not raw_words:
+        return []
+
+    total = len(raw_words)
+    avg_dur = sum(max(0.04, e - s) for s, e, _ in raw_words) / max(1, total)
+    return [
+        classify_word_expression(w_text, w_start, w_end, i, total, avg_dur)
+        for i, (w_start, w_end, w_text) in enumerate(raw_words)
+    ]
+
+
+def synthesize_prosodic_words(clean_text: str, line_start: float, line_end: float) -> list[dict]:
+    """Synthesize natural singing word timestamps from line start/end and vocal prosody."""
+    tokens = [w for w in (clean_text or "").split() if w.strip()]
+    if not tokens or clean_text.strip() == "♪":
+        return []
+
+    total = len(tokens)
+    total_span = max(0.25, line_end - line_start)
+    weights_and_pauses = [prosodic_word_weight(w, i, total) for i, w in enumerate(tokens)]
+    total_weight = sum(w for w, _ in weights_and_pauses) or 1.0
+    raw_pauses = sum(p for _, p in weights_and_pauses)
+    pause_scale = min(1.0, (total_span * 0.22) / raw_pauses) if raw_pauses > 0 else 0.0
+    vocal_span = max(0.15, total_span - raw_pauses * pause_scale)
+
+    raw_words: list[tuple[float, float, str]] = []
+    cursor = line_start
+    for w_text, (w_val, p_val) in zip(tokens, weights_and_pauses):
+        w_dur = vocal_span * (w_val / total_weight)
+        w_start = cursor
+        w_end = cursor + w_dur
+        raw_words.append((w_start, w_end, w_text))
+        cursor = w_end + p_val * pause_scale
+
+    avg_dur = vocal_span / max(1, total)
+    return [
+        classify_word_expression(w_text, w_start, w_end, i, total, avg_dur)
+        for i, (w_start, w_end, w_text) in enumerate(raw_words)
+    ]
+
+
 def parse_lrc(lrc: str, key_name: str = "t") -> list[dict]:
     out: list[dict] = []
     offset_seconds = 0.0
@@ -112,16 +465,47 @@ def parse_lrc(lrc: str, key_name: str = "t") -> list[dict]:
             except ValueError:
                 offset_seconds = 0.0
             continue
+        if METADATA_RE.match(raw):
+            continue
         stamps = list(STAMP.finditer(raw))
         if not stamps:
             continue
-        text = raw[stamps[-1].end():].strip()
+        raw_lyric = raw[stamps[-1].end():].strip()
+        clean_lyric = re.sub(r"\s+", " ", INLINE_WORD_STAMP.sub(" ", raw_lyric)).strip()
         for stamp in stamps:
             minutes = int(stamp.group(1))
             seconds = float(stamp.group(2).replace(":", "."))
             timestamp = max(0.0, round(minutes * 60 + seconds - offset_seconds, 3))
-            out.append({key_name: timestamp, "text": text})
+            out.append({
+                key_name: timestamp,
+                "text": clean_lyric,
+                "_raw_lyric": raw_lyric,
+            })
     out.sort(key=lambda line: line[key_name])
+
+    # Enrich each line with endTime and word-level timing + vocal expression metadata
+    n_lines = len(out)
+    for i, item in enumerate(out):
+        line_start = float(item[key_name])
+        next_start = line_start + 4.2
+        for j in range(i + 1, n_lines):
+            cand_next = float(out[j][key_name])
+            if cand_next > line_start + 0.05:
+                next_start = cand_next
+                break
+        gap = max(0.35, next_start - line_start)
+        # Active singing window within the inter-line gap
+        vocal_window = min(max(0.35, gap - 0.06), max(1.4, min(8.5, gap * 0.92)))
+        line_end = round(line_start + vocal_window, 3)
+        raw_lyric = item.pop("_raw_lyric", "")
+        words = parse_inline_words(raw_lyric, line_start, line_end, offset_seconds)
+        if words:
+            line_end = round(max(line_end, words[-1]["end"]), 3)
+        else:
+            words = synthesize_prosodic_words(item["text"], line_start, line_end)
+        item["endTime"] = line_end
+        item["words"] = words
+
     return out
 
 
@@ -134,10 +518,23 @@ def parse_plain(plain: str, duration: float | None = None, key_name: str = "t") 
     if not raw_lines:
         return []
     step = (float(duration) / max(len(raw_lines), 1)) if (duration and duration > 0) else 0.0
-    return [
-        {key_name: round(i * step, 3) if step > 0 else None, "text": text}
-        for i, text in enumerate(raw_lines)
-    ]
+    out: list[dict] = []
+    for i, text in enumerate(raw_lines):
+        if step > 0:
+            line_start = round(i * step, 3)
+            line_end = round(line_start + max(0.5, step * 0.9), 3)
+            words = synthesize_prosodic_words(text, line_start, line_end)
+        else:
+            line_start = None
+            line_end = 0.0
+            words = []
+        out.append({
+            key_name: line_start,
+            "endTime": line_end,
+            "text": text,
+            "words": words,
+        })
+    return out
 
 
 def normalize(value: str) -> str:
@@ -191,8 +588,11 @@ def score_candidate(candidate: dict, title: str, artist: str, duration: float | 
         except (TypeError, ValueError):
             pass
 
-    if candidate.get("syncedLyrics"):
+    synced_text = str(candidate.get("syncedLyrics") or "")
+    if synced_text:
         score += 30.0
+        if INLINE_WORD_STAMP.search(synced_text):
+            score += 25.0
     elif candidate.get("plainLyrics"):
         score += 5.0
     else:
@@ -219,7 +619,6 @@ def fetch_from_lrclib(title: str, artist: str, album: str, duration: float | Non
         attempts.append(f"{LRCLIB_API}/search?q={q((c_title + ' ' + c_artist).strip())}")
     attempts.append(f"{LRCLIB_API}/search?q={q((title + ' ' + artist).strip())}")
 
-    # Deduplicate URLs while preserving order
     seen_urls: set[str] = set()
     unique_attempts = [u for u in attempts if not (u in seen_urls or seen_urls.add(u))]
 
@@ -272,12 +671,21 @@ def fetch_from_lrclib(title: str, artist: str, album: str, duration: float | Non
     return "", False
 
 
-def fetch_from_netease(title: str, artist: str, duration: float | None) -> tuple[str, bool]:
-    """Fallback LRC provider using NetEase Cloud Music public search/lyric API."""
+def fetch_from_netease(
+    title: str,
+    artist: str,
+    duration: float | None,
+    verbatim_only: bool = False,
+    timeout: float = TIMEOUT,
+) -> tuple[str, bool, bool]:
+    """Fetch lyrics from NetEase Cloud Music (supports YRC/klyric verbatim word sync + LRC).
+
+    Returns (raw_lrc_text, is_synced, is_word_synced).
+    """
     c_title, c_artist = split_artist_title(title, artist)
     query = f"{c_title} {c_artist}".strip()
     if not query:
-        return "", False
+        return "", False, False
 
     form = urllib.parse.urlencode({"s": query, "type": 1, "offset": 0, "limit": 6}).encode("utf-8")
     headers = {
@@ -285,13 +693,15 @@ def fetch_from_netease(title: str, artist: str, duration: float | None) -> tuple
         "Content-Type": "application/x-www-form-urlencoded",
     }
     try:
-        search_data = get_json(NETEASE_SEARCH_API, data=form, extra_headers=headers)
+        search_data = get_json(NETEASE_SEARCH_API, data=form, extra_headers=headers, timeout=timeout)
     except Exception:
-        return "", False
+        return "", False, False
 
     songs = ((search_data or {}).get("result") or {}).get("songs") or []
     if not isinstance(songs, list):
-        return "", False
+        return "", False, False
+
+    best_line_lrc = ""
 
     for song in songs:
         if not isinstance(song, dict):
@@ -315,29 +725,68 @@ def fetch_from_netease(title: str, artist: str, duration: float | None) -> tuple
                 pass
 
         try:
-            lyric_url = f"{NETEASE_LYRIC_API}?id={int(song_id)}&lv=1&kv=1&tv=-1"
-            lyric_data = get_json(lyric_url, extra_headers={"Referer": "https://music.163.com"})
+            lyric_url = f"{NETEASE_LYRIC_API}?id={int(song_id)}&yv=1&lv=1&kv=1&tv=-1"
+            lyric_data = get_json(
+                lyric_url,
+                extra_headers={"Referer": "https://music.163.com"},
+                timeout=timeout,
+            )
         except Exception:
             continue
 
-        lrc_text = (((lyric_data or {}).get("lrc") or {}).get("lyric") or "").strip()
-        if lrc_text and parse_lrc(lrc_text):
-            return lrc_text, True
+        # 1. Prefer NetEase YRC verbatim word-synced lyrics
+        yrc_raw = (((lyric_data or {}).get("yrc") or {}).get("lyric") or "").strip()
+        if yrc_raw:
+            enhanced = convert_netease_yrc_to_enhanced_lrc(yrc_raw)
+            if enhanced and parse_lrc(enhanced):
+                return enhanced, True, True
 
-    return "", False
+        # 2. Check NetEase klyric word-synced format
+        klyric_raw = (((lyric_data or {}).get("klyric") or {}).get("lyric") or "").strip()
+        if klyric_raw:
+            enhanced = convert_netease_klyric_to_enhanced_lrc(klyric_raw)
+            if enhanced and parse_lrc(enhanced):
+                return enhanced, True, True
+
+        if not verbatim_only and not best_line_lrc:
+            lrc_text = (((lyric_data or {}).get("lrc") or {}).get("lyric") or "").strip()
+            if lrc_text and parse_lrc(lrc_text):
+                best_line_lrc = lrc_text
+                break
+
+    if best_line_lrc:
+        return best_line_lrc, True, bool(INLINE_WORD_STAMP.search(best_line_lrc))
+
+    return "", False, False
 
 
 def find_lyrics_raw(title: str, artist: str, album: str, duration: float | None) -> tuple[str, bool]:
     last_error: Exception | None = None
     try:
         raw_text, is_synced = fetch_from_lrclib(title, artist, album, duration)
-        if raw_text and is_synced:
-            return raw_text, True
     except Exception as exc:
         last_error = exc
         raw_text, is_synced = "", False
 
-    synced_netease, netease_is_synced = fetch_from_netease(title, artist, duration)
+    # If LRCLIB already returned word-level Enhanced LRC (<mm:ss.xx>), use it immediately
+    if raw_text and is_synced and INLINE_WORD_STAMP.search(raw_text):
+        return raw_text, True
+
+    # Try NetEase to see if verbatim word-level (YRC/klyric) or fallback synced LRC is available
+    netease_timeout = 3.5 if (raw_text and is_synced) else TIMEOUT
+    synced_netease, netease_is_synced, netease_word_synced = fetch_from_netease(
+        title,
+        artist,
+        duration,
+        verbatim_only=bool(raw_text and is_synced),
+        timeout=netease_timeout,
+    )
+    if synced_netease and netease_word_synced:
+        return synced_netease, True
+
+    if raw_text and is_synced:
+        return raw_text, True
+
     if synced_netease and netease_is_synced:
         return synced_netease, True
 
@@ -405,7 +854,7 @@ def run_save_lrc_mode(args: list[str]) -> None:
     if is_synced:
         lines = parse_lrc(raw_text, key_name="time")
     else:
-        lines = parse_plain(raw_text, duration=None, key_name="time")
+        lines = parse_plain(raw_text, duration=duration, key_name="time")
 
     if not lines:
         emit({"status": "not_found", "path": "", "synced": False, "lines": []})
@@ -416,6 +865,7 @@ def run_save_lrc_mode(args: list[str]) -> None:
         "status": "ok",
         "path": saved_path,
         "synced": is_synced,
+        "wordSynced": bool(INLINE_WORD_STAMP.search(raw_text)),
         "lines": lines,
     })
 
@@ -456,7 +906,12 @@ def main() -> None:
         else parse_plain(raw_text, duration=duration or 180.0, key_name="t")
     )
     emit(
-        {"status": "ok", "synced": is_synced, "lines": lines}
+        {
+            "status": "ok",
+            "synced": is_synced,
+            "wordSynced": bool(INLINE_WORD_STAMP.search(raw_text)),
+            "lines": lines,
+        }
         if lines
         else {"status": "not_found"},
         request_id,

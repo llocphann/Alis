@@ -40,18 +40,26 @@ Item {
             required property int index
             width: lineView.width
             height: lineText.implicitHeight + 16
-            StyledText {
+            WordSyncedLyricLine {
                 id: lineText
                 anchors.centerIn: parent
                 width: parent.width - ITDimens.playerHorizontalPadding * 2
-                text: modelData.line
+                lineData: modelData
+                nextLineTime: (index + 1 < (root.synced?.length ?? 0))
+                    ? Number(root.synced[index + 1]?.t ?? -1)
+                    : -1
+                active: index === root.currentLine
+                playing: YtMusic.isPlaying
+                synced: true
+                position: YtMusic.currentPosition
                 horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
-                font.pixelSize: Appearance.font.pixelSize.larger
-                font.weight: Font.Bold
-                color: index === root.currentLine ? Appearance.colors.colPrimary : Appearance.colors.colSecondary
+                fontPixelSize: Appearance.font.pixelSize.larger
+                activeFontWeight: Font.Bold
+                inactiveFontWeight: Font.Bold
+                activeColor: Appearance.colors.colPrimary
+                inactiveColor: Appearance.colors.colSecondary
+                accentColor: Appearance.colors.colPrimary
                 opacity: index === root.currentLine ? 1.0 : 0.5
-                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration) } }
                 Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration) } }
             }
             MouseArea {

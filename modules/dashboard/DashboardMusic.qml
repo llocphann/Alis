@@ -72,6 +72,15 @@ Item {
     readonly property int effectiveLyricsActiveIndex: root._useOnlineLyrics
         ? (LyricsService.activeIndex ?? -1)
         : (backend.localLyricsActiveIndex ?? -1)
+    readonly property real effectiveLyricsPosition: root._useOnlineLyrics
+        ? Number(MprisController.activePlayer?.position ?? LyricsService.anchorPos ?? 0)
+        : Number(backend.lyricsPosition ?? 0)
+    readonly property bool effectiveLyricsPlaying: root._useOnlineLyrics
+        ? Boolean(MprisController.activePlayer?.isPlaying ?? false)
+        : Boolean(backend.playing ?? false)
+    readonly property bool effectiveLyricsSynced: root._useOnlineLyrics
+        ? true
+        : Boolean(backend.localLyricsSynced ?? true)
     readonly property bool hasLyrics: effectiveLyricsLines.some(line => String(line.text ?? "").trim().length > 0)
     readonly property var results: {
         if (sourceMode === "queue") {
@@ -921,14 +930,23 @@ Item {
                     highlightRangeMode: ListView.ApplyRange
                     preferredHighlightBegin: height * .35
                     preferredHighlightEnd: height * .65
-                    delegate: StyledText {
+                    delegate: WordSyncedLyricLine {
                         required property var modelData
                         required property int index
                         width: ListView.view.width
-                        text: String(modelData.text ?? "")
-                        wrapMode: Text.WordWrap
-                        color: index === ListView.view.currentIndex ? root.ink : root.mutedInk
-                        font.weight: index === ListView.view.currentIndex ? Font.DemiBold : Font.Normal
+                        lineData: modelData
+                        nextLineTime: (index + 1 < root.effectiveLyricsLines.length)
+                            ? Number(root.effectiveLyricsLines[index + 1]?.time ?? -1)
+                            : -1
+                        active: index === ListView.view.currentIndex
+                        playing: root.presentationActive && root.effectiveLyricsPlaying
+                        synced: root.effectiveLyricsSynced
+                        position: root.effectiveLyricsPosition
+                        activeColor: root.ink
+                        inactiveColor: root.mutedInk
+                        accentColor: root.accent
+                        activeFontWeight: Font.DemiBold
+                        inactiveFontWeight: Font.Normal
                     }
                 }
             }

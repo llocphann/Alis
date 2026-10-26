@@ -25,6 +25,12 @@ Singleton {
     readonly property int total: 7
     property var slots: ["", "", "", "", "", "", ""]
     readonly property string currentLine: root.slots[root.before] ?? ""
+    readonly property var currentLineObject: (root.activeIndex >= 0 && root.activeIndex < root.lyricsLines.length)
+        ? root.lyricsLines[root.activeIndex]
+        : null
+    readonly property real anchorPos: root._anchorPos
+    readonly property real anchorMs: root._anchorMs
+    readonly property bool isPlaying: root._playing
 
     property int _requestSerial: 0
     property string _latestRequestId: ""
@@ -346,7 +352,9 @@ Singleton {
                             continue;
                         lines.push({
                             time: time,
-                            text: line.text ?? ""
+                            endTime: typeof line.endTime === "number" ? line.endTime : 0,
+                            text: line.text ?? "",
+                            words: Array.isArray(line.words) ? line.words : []
                         });
                     }
                     lines.sort((a, b) => a.time - b.time);
@@ -355,7 +363,9 @@ Singleton {
                         .filter(line => typeof line.t === "number")
                         .map(line => ({
                             time: line.t,
-                            text: line.text ?? ""
+                            endTime: typeof line.endTime === "number" ? line.endTime : 0,
+                            text: line.text ?? "",
+                            words: Array.isArray(line.words) ? line.words : []
                         }))
                         .sort((a, b) => a.time - b.time);
                 }

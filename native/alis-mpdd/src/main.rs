@@ -454,7 +454,55 @@ fn lrc_stamp_seconds(token: &str) -> Option<f64> {
     Some(value)
 }
 
-fn lrc_line(line: &str) -> (Vec<f64>, String) {
+fn lrc_inline_words(raw_lyric: &str) -> (String, Vec<(f64, String)>) {
+    let mut clean = String::with_capacity(raw_lyric.len());
+    let mut inline_stamps: Vec<(f64, usize, usize)> = Vec::new();
+    let mut copied_until = 0usize;
+    let mut search_from = 0usize;
+
+    while let Some(relative_start) = raw_lyric[search_from..].find('<') {
+        let start = search_from + relative_start;
+        let Some(relative_end) = raw_lyric[start + 1..].find('>') else {
+            break;
+        };
+        let end = start + 1 + relative_end;
+        if let Some(seconds) = lrc_stamp_seconds(&raw_lyric[start + 1..end]) {
+            let chunk = &raw_lyric[copied_until..start];
+            if !clean.ends_with(' ') && !clean.is_empty() && !chunk.starts_with(' ') && !chunk.is_empty() {
+                clean.push(' ');
+            }
+            clean.push_str(chunk);
+            copied_until = end + 1;
+            inline_stamps.push((seconds, start, end + 1));
+        }
+        search_from = end + 1;
+    }
+    let tail = &raw_lyric[copied_until..];
+    if !clean.ends_with(' ') && !clean.is_empty() && !tail.starts_with(' ') && !tail.is_empty() {
+        clean.push(' ');
+    }
+    clean.push_str(tail);
+    let normalized = clean.split_whitespace().collect::<Vec<_>>().join(" ");
+
+    let mut segments = Vec::new();
+    if !inline_stamps.is_empty() {
+        let prefix = raw_lyric[..inline_stamps[0].1].trim();
+        if !prefix.is_empty() {
+            segments.push((-1.0, prefix.to_owned()));
+        }
+        for (idx, (sec, _start, after)) in inline_stamps.iter().enumerate() {
+            let seg_end = inline_stamps
+                .get(idx + 1)
+                .map(|item| item.1)
+                .unwrap_or(raw_lyric.len());
+            let seg_text = raw_lyric[*after..seg_end].trim();
+            segments.push((*sec, seg_text.to_owned()));
+        }
+    }
+    (normalized, segments)
+}
+
+fn lrc_line(line: &str) -> (Vec<f64>, String, Vec<(f64, String)>) {
     let mut stamps = Vec::new();
     let mut lyric = String::with_capacity(line.len());
     let mut copied_until = 0usize;
@@ -474,12 +522,14 @@ fn lrc_line(line: &str) -> (Vec<f64>, String) {
         search_from = end + 1;
     }
     lyric.push_str(&line[copied_until..]);
-    (stamps, lyric.trim().to_owned())
+    let raw_trimmed = lyric.trim();
+    let (clean_lyric, inline_segments) = lrc_inline_words(raw_trimmed);
+    (stamps, clean_lyric, inline_segments)
 }
 
 fn parse_lrc(text: &str) -> (Vec<Value>, bool) {
     let mut offset_ms = 0i64;
-    let mut timed: Vec<(f64, String)> = Vec::new();
+    let mut timed: Vec<(f64, String, Vec<(f64, String)>)> = Vec::new();
     let mut plain = Vec::new();
 
     for raw in text.lines() {
@@ -503,7 +553,7 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool) {
             continue;
         }
 
-        let (stamps, lyric) = lrc_line(line);
+        let (stamps, lyric, inline_segments) = lrc_line(line);
         if stamps.is_empty() {
             if !lyric.is_empty() {
                 plain.push(json!({"time": -1.0, "text": lyric}));
@@ -517,7 +567,7 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool) {
             lyric
         };
         for stamp in stamps {
-            timed.push((stamp, lyric.clone()));
+            timed.push((stamp, lyric.clone(), inline_segments.clone()));
         }
     }
 
@@ -527,13 +577,66 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool) {
 
     let offset = offset_ms as f64 / 1000.0;
     timed.sort_by(|left, right| left.0.total_cmp(&right.0));
-    (
-        timed
-            .into_iter()
-            .map(|(time, text)| json!({"time": (time + offset).max(0.0), "text": text}))
-            .collect(),
-        true,
-    )
+    let n_lines = timed.len();
+    let mut result = Vec::with_capacity(n_lines);
+    for idx in 0..n_lines {
+        let line_start = (timed[idx].0 + offset).max(0.0);
+        let text = timed[idx].1.clone();
+        let inline_segments = &timed[idx].2;
+        let mut next_start = line_start + 4.2;
+        for next_item in timed.iter().skip(idx + 1) {
+            let cand = (next_item.0 + offset).max(0.0);
+            if cand > line_start + 0.05 {
+                next_start = cand;
+                break;
+            }
+        }
+        let gap = (next_start - line_start).max(0.35);
+        let vocal_window = (gap - 0.06).max(0.35).min((gap * 0.92).clamp(1.4, 8.5));
+        let mut line_end = line_start + vocal_window;
+
+        if inline_segments.is_empty() {
+            result.push(json!({
+                "time": line_start,
+                "endTime": (line_end * 1000.0).round() / 1000.0,
+                "text": text
+            }));
+        } else {
+            let mut words = Vec::new();
+            for (seg_idx, (raw_t, seg_text)) in inline_segments.iter().enumerate() {
+                if seg_text.is_empty() {
+                    continue;
+                }
+                let w_start = if *raw_t < 0.0 {
+                    line_start
+                } else {
+                    (*raw_t + offset).max(0.0)
+                };
+                let w_end = inline_segments
+                    .get(seg_idx + 1)
+                    .map(|(nt, _)| (*nt + offset).max(w_start + 0.08))
+                    .unwrap_or_else(|| line_end.max(w_start + 0.2));
+                if w_end > line_end {
+                    line_end = w_end;
+                }
+                for sub in seg_text.split_whitespace() {
+                    words.push(json!({
+                        "text": sub,
+                        "start": (w_start * 1000.0).round() / 1000.0,
+                        "end": (w_end * 1000.0).round() / 1000.0,
+                        "duration": ((w_end - w_start).max(0.04) * 1000.0).round() / 1000.0
+                    }));
+                }
+            }
+            result.push(json!({
+                "time": line_start,
+                "endTime": (line_end * 1000.0).round() / 1000.0,
+                "text": text,
+                "words": words
+            }));
+        }
+    }
+    (result, true)
 }
 
 fn local_lyrics(track_text: &str) -> Value {

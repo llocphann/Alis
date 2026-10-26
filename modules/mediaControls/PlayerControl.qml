@@ -438,17 +438,24 @@ Item {
                 }
 
                 // Online synced lyric line (for streaming players without saving local .lrc)
-                StyledText {
+                WordSyncedLyricLine {
                     Layout.fillWidth: true
-                    text: root.effectiveOnlineLyricLine
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    font.italic: true
-                    color: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
-                    elide: Text.ElideRight
-                    visible: text !== ""
-                    animateChange: true
-                    animationDistanceX: 0
-                    animationDistanceY: 4
+                    visible: root.effectiveOnlineLyricLine !== ""
+                    lineData: LyricsService.currentLineObject ?? ({ text: root.effectiveOnlineLyricLine, time: 0 })
+                    nextLineTime: (LyricsService.activeIndex >= 0 && (LyricsService.activeIndex + 1) < LyricsService.lyricsLines.length)
+                        ? Number(LyricsService.lyricsLines[LyricsService.activeIndex + 1]?.time ?? -1)
+                        : -1
+                    active: visible
+                    playing: root.presentationActive && root.effectiveIsPlaying
+                    synced: true
+                    position: root.effectivePosition
+                    fontPixelSize: Appearance.font.pixelSize.smallest
+                    fontItalic: true
+                    activeFontWeight: Font.Medium
+                    inactiveFontWeight: Font.Normal
+                    activeColor: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
+                    inactiveColor: blendedColors?.colSubtext ?? Appearance.colors.colSubtext
+                    accentColor: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
                 }
 
                 Item { Layout.fillHeight: true }

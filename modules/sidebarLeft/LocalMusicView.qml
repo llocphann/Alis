@@ -1189,24 +1189,30 @@ Item {
                             color: index === LocalMusic.localLyricsActiveIndex
                                 ? Appearance.colors.colSecondaryContainer : "transparent"
 
-                            StyledText {
+                            WordSyncedLyricLine {
                                 id: lyricText
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.leftMargin: 10
                                 anchors.rightMargin: 10
-                                text: String(lyricRow.modelData?.text ?? "")
-                                wrapMode: Text.WordWrap
+                                lineData: lyricRow.modelData
+                                nextLineTime: (lyricRow.index + 1 < LocalMusic.localLyricsLines.length)
+                                    ? Number(LocalMusic.localLyricsLines[lyricRow.index + 1]?.time ?? -1)
+                                    : -1
+                                active: lyricRow.index === LocalMusic.localLyricsActiveIndex
+                                playing: LocalMusic.playing
+                                synced: LocalMusic.localLyricsSynced
+                                position: LocalMusic.lyricsPosition
                                 horizontalAlignment: Text.AlignHCenter
-                                font.pixelSize: index === LocalMusic.localLyricsActiveIndex
+                                fontPixelSize: lyricRow.index === LocalMusic.localLyricsActiveIndex
                                     ? Appearance.font.pixelSize.normal
                                     : Appearance.font.pixelSize.small
-                                font.weight: index === LocalMusic.localLyricsActiveIndex
-                                    ? Font.Medium : Font.Normal
-                                color: index === LocalMusic.localLyricsActiveIndex
-                                    ? Appearance.colors.colOnSecondaryContainer
-                                    : Appearance.colors.colOnLayer1
+                                activeFontWeight: Font.Medium
+                                inactiveFontWeight: Font.Normal
+                                activeColor: Appearance.colors.colOnSecondaryContainer
+                                inactiveColor: Appearance.colors.colOnLayer1
+                                accentColor: Appearance.colors.colPrimary
                             }
                         }
                     }

@@ -112,12 +112,37 @@ Singleton {
     property string localLyricsPath: ""
     property bool localLyricsSynced: false
     property string _pendingLyricsPath: ""
+    property real _lyricsAnchorPos: 0
+    property real _lyricsAnchorMs: 0
+    property real _lyricsLivePos: 0
+    property real _lastMprisNudgeMs: 0
 
-    readonly property real lyricsPosition: {
+    readonly property real _baseLyricsPosition: {
         const mprisPosition = Number(mprisPlayer?.position)
-        if (mprisAvailable && Number.isFinite(mprisPosition))
+        if (mprisAvailable && Number.isFinite(mprisPosition) && mprisPosition > 0)
             return Math.max(0, mprisPosition)
         return Math.max(0, currentPosition)
+    }
+
+    function _reanchorLyricsPosition(pos: real): void {
+        const cleanPos = Math.max(0, Number(pos) || 0)
+        root._lyricsAnchorPos = cleanPos
+        root._lyricsAnchorMs = Date.now()
+        root._lyricsLivePos = cleanPos
+    }
+
+    on_BaseLyricsPositionChanged: root._reanchorLyricsPosition(root._baseLyricsPosition)
+    onCurrentPositionChanged: root._reanchorLyricsPosition(root._baseLyricsPosition)
+    onPlayingChanged: root._reanchorLyricsPosition(root._baseLyricsPosition)
+
+    readonly property real lyricsPosition: {
+        if (root.playing && root._lyricsAnchorMs > 0) {
+            const dur = root.currentDuration
+            return dur > 0
+                ? Math.min(dur, Math.max(0, root._lyricsLivePos))
+                : Math.max(0, root._lyricsLivePos)
+        }
+        return root._baseLyricsPosition
     }
     readonly property bool hasLocalLyrics: localLyricsLines.length > 0
     readonly property int localLyricsActiveIndex: {
@@ -930,6 +955,29 @@ Singleton {
         repeat: true
         running: root.enabled && !root._mpdSubscriptionActive
         onTriggered: root.refreshStatus()
+    }
+
+    Timer {
+        id: lyricsLiveTimer
+        interval: 45
+        repeat: true
+        running: root.enabled && root.playing
+        onTriggered: {
+            const now = Date.now()
+            if (root.mprisAvailable && (now - root._lastMprisNudgeMs) >= 480) {
+                root._lastMprisNudgeMs = now
+                root.mprisPlayer?.positionChanged()
+            }
+            if (root._lyricsAnchorMs <= 0) {
+                root._reanchorLyricsPosition(root._baseLyricsPosition)
+                return
+            }
+            const elapsed = Math.max(0, (now - root._lyricsAnchorMs) / 1000)
+            const nextPos = root._lyricsAnchorPos + elapsed
+            root._lyricsLivePos = root.currentDuration > 0
+                ? Math.min(root.currentDuration, nextPos)
+                : nextPos
+        }
     }
 
     Timer {
