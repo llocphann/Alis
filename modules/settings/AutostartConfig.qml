@@ -102,12 +102,17 @@ ContentPage {
     }
 
     GridLayout {
+        id: autostartTwoColumnGrid
         objectName: "autostartTwoColumnGrid"
         Layout.fillWidth: true
         columns: width >= 620 ? 2 : 1
         columnSpacing: 14
         rowSpacing: 14
         visible: Autostart.isNiri
+
+        readonly property real collapsedPairBodyHeight: columns === 2
+            ? Math.max(appsCard.collapsedBodyHeight, commandsCard.naturalBodyHeight)
+            : 0
 
         // ── Applications ─────────────────────────────────────────────────────
 
@@ -125,16 +130,23 @@ ContentPage {
             readonly property bool appListExpanded: appsCardHover.hovered
                 || appSearchField.activeFocus
                 || appSearchField.text.length > 0
+            readonly property real collapsedBodyHeight: appsDescText.implicitHeight
+                + 8 + Math.max(appSearchField.implicitHeight, 36)
 
             HoverHandler {
                 id: appsCardHover
             }
 
             ColumnLayout {
+                id: appsContentCol
                 Layout.fillWidth: true
+                Layout.minimumHeight: appsCard.appListExpanded
+                    ? 0
+                    : autostartTwoColumnGrid.collapsedPairBodyHeight
                 spacing: 8
 
                 StyledText {
+                    id: appsDescText
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
                     text: Translation.tr("Toggle niri login apps. External entries must be edited in the startup file below.")
@@ -145,6 +157,8 @@ ContentPage {
                 MaterialTextField {
                     id: appSearchField
                     Layout.fillWidth: true
+                    Layout.preferredHeight: 36
+                    Layout.alignment: Qt.AlignBottom
                     placeholderText: Translation.tr("Search applications...")
                     font.pixelSize: Appearance.font.pixelSize.small
                 }
@@ -320,6 +334,7 @@ ContentPage {
         // ── Custom Commands ──────────────────────────────────────────────────
 
         SettingsCardSection {
+            id: commandsCard
             Layout.fillWidth: true
             Layout.preferredWidth: 1
             Layout.alignment: Qt.AlignTop
@@ -329,11 +344,18 @@ ContentPage {
             settingsTaskSection: "commands"
             visible: Autostart.isNiri
 
+            readonly property real naturalBodyHeight: commandsDescText.implicitHeight
+                + 8 + commandInputRow.implicitHeight
+                + (commandListView.visible ? 8 + commandListView.implicitHeight : 0)
+
             ColumnLayout {
+                id: commandsContentCol
                 Layout.fillWidth: true
+                Layout.minimumHeight: autostartTwoColumnGrid.collapsedPairBodyHeight
                 spacing: 8
 
                 StyledText {
+                    id: commandsDescText
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
                     text: Translation.tr("Niri shell commands support pipes, environment variables and &&.")
@@ -342,12 +364,15 @@ ContentPage {
                 }
 
                 RowLayout {
+                    id: commandInputRow
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignBottom
                     spacing: 8
 
                     MaterialTextField {
                         id: commandInput
                         Layout.fillWidth: true
+                        Layout.preferredHeight: 36
                         placeholderText: Translation.tr("e.g. telegram-desktop --start-minimized")
                         font.pixelSize: Appearance.font.pixelSize.small
                         onAccepted: {
@@ -382,6 +407,7 @@ ContentPage {
                     id: commandListView
                     Layout.fillWidth: true
                     implicitHeight: Math.min(240, commandListView.contentHeight)
+                    visible: commandListView.count > 0
                     clip: true
                     model: root.getCommandEntries()
                     boundsBehavior: Flickable.StopAtBounds

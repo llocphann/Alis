@@ -2259,36 +2259,42 @@ ContentPage {
 
             SettingsDivider {}
 
-            ContentSubsection {
-                title: Translation.tr("Key repeat delay")
-                tooltip: Translation.tr("Milliseconds before a held key starts repeating")
+            ConfigRow {
+                uniform: true
 
-                ConfigSpinBox {
-                    text: Translation.tr("Delay (ms)")
-                    value: root.keyboardData?.repeat_delay ?? 250
-                    from: 100
-                    to: 1000
-                    stepSize: 50
-                    onValueChanged: {
-                        if (!root.inputReady) return
-                        root.setConfig("input", "keyboard.repeat-delay", value)
+                ContentSubsection {
+                    Layout.fillWidth: true
+                    title: Translation.tr("Key repeat delay")
+                    tooltip: Translation.tr("Milliseconds before a held key starts repeating")
+
+                    ConfigSpinBox {
+                        text: Translation.tr("Delay (ms)")
+                        value: root.keyboardData?.repeat_delay ?? 250
+                        from: 100
+                        to: 1000
+                        stepSize: 50
+                        onValueChanged: {
+                            if (!root.inputReady) return
+                            root.setConfig("input", "keyboard.repeat-delay", value)
+                        }
                     }
                 }
-            }
 
-            ContentSubsection {
-                title: Translation.tr("Key repeat rate")
-                tooltip: Translation.tr("Characters per second when a key held")
+                ContentSubsection {
+                    Layout.fillWidth: true
+                    title: Translation.tr("Key repeat rate")
+                    tooltip: Translation.tr("Characters per second when a key held")
 
-                ConfigSpinBox {
-                    text: Translation.tr("Rate (chars/s)")
-                    value: root.keyboardData?.repeat_rate ?? 50
-                    from: 10
-                    to: 100
-                    stepSize: 5
-                    onValueChanged: {
-                        if (!root.inputReady) return
-                        root.setConfig("input", "keyboard.repeat-rate", value)
+                    ConfigSpinBox {
+                        text: Translation.tr("Rate (chars/s)")
+                        value: root.keyboardData?.repeat_rate ?? 50
+                        from: 10
+                        to: 100
+                        stepSize: 5
+                        onValueChanged: {
+                            if (!root.inputReady) return
+                            root.setConfig("input", "keyboard.repeat-rate", value)
+                        }
                     }
                 }
             }
@@ -2379,6 +2385,127 @@ ContentPage {
                     onValueChanged: {
                         if (!root.inputReady) return
                         root.setFocusFollowsMouse(true, value)
+                    }
+                }
+            }
+
+            SettingsDivider {}
+
+            ContentSubsection {
+                title: Translation.tr("Mouse")
+            }
+
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "swipe"
+                    text: Translation.tr("Natural scroll")
+                    checked: root.mouseData?.natural_scroll ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "mouse.natural-scroll", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "left_click"
+                    text: Translation.tr("Left-handed")
+                    checked: root.mouseData?.left_handed ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "mouse.left-handed", checked)
+                    }
+                }
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "ads_click"
+                text: Translation.tr("Middle-click emulation")
+                checked: root.mouseData?.middle_emulation ?? false
+                onCheckedChanged: {
+                    if (!root.inputReady) return
+                    root.setBooleanConfig("input", "mouse.middle-emulation", checked)
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+
+                ContentSubsection {
+                    Layout.fillWidth: true
+                    title: Translation.tr("Mouse acceleration")
+
+                    ConfigSelectionArray {
+                        currentValue: root.mouseData?.accel_profile ?? "flat"
+                        options: [
+                            { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
+                            { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
+                        ]
+                        onSelected: newValue => {
+                            root.setConfig("input", "mouse.accel-profile", newValue)
+                        }
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignBottom
+                    buttonIcon: "lock"
+                    text: Translation.tr("Scroll button lock")
+                    checked: root.mouseData?.scroll_button_lock ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "mouse.scroll-button-lock", checked)
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Mouse scrolling")
+
+                StyledComboBox {
+                    Layout.fillWidth: true
+                    model: root.pointerScrollMethodOptions
+                    textRole: "displayName"
+                    currentIndex: root.choiceIndex(model, root.mouseData?.scroll_method ?? "no-scroll")
+                    onActivated: root.setConfig("input", "mouse.scroll-method", model[currentIndex].value)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Mouse speed")
+                tooltip: Translation.tr("Acceleration speed. Negative = slower, positive = faster.")
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    StyledSlider {
+                        id: mouseSpeedSlider
+                        Layout.fillWidth: true
+                        from: -100
+                        to: 100
+                        value: Math.round((root.mouseData?.accel_speed ?? 0) * 100)
+                        stepSize: 5
+                        configuration: StyledSlider.Configuration.S
+
+                        onMoved: {
+                            if (pressed) return
+                            root.setConfig("input", "mouse.accel-speed", (value / 100.0).toFixed(2))
+                        }
+                    }
+
+                    StyledText {
+                        text: (mouseSpeedSlider.value / 100.0).toFixed(2)
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.family: Appearance.font.family.monospace
+                        color: Appearance.colors.colSubtext
+                        Layout.preferredWidth: 40
+                        horizontalAlignment: Text.AlignRight
                     }
                 }
             }
@@ -2481,7 +2608,7 @@ ContentPage {
                     SettingsSwitch {
                         Layout.fillWidth: true
                         buttonIcon: "animation"
-                        text: Translation.tr("Enable this animation")
+                        text: Translation.tr("Enable")
                         checked: root.animationIsEnabled(animDelegate.springData)
                         onCheckedChanged: {
                             if (!root.animationsReady) return
@@ -2695,17 +2822,34 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Touchpad acceleration")
+            ConfigRow {
+                uniform: true
 
-                ConfigSelectionArray {
-                    currentValue: root.touchpadData?.accel_profile ?? "adaptive"
-                    options: [
-                        { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
-                        { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
-                    ]
-                    onSelected: newValue => {
-                        root.setConfig("input", "touchpad.accel-profile", newValue)
+                ContentSubsection {
+                    Layout.fillWidth: true
+                    title: Translation.tr("Touchpad acceleration")
+
+                    ConfigSelectionArray {
+                        currentValue: root.touchpadData?.accel_profile ?? "adaptive"
+                        options: [
+                            { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
+                            { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
+                        ]
+                        onSelected: newValue => {
+                            root.setConfig("input", "touchpad.accel-profile", newValue)
+                        }
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignBottom
+                    buttonIcon: "lock"
+                    text: Translation.tr("Scroll button lock")
+                    checked: root.touchpadData?.scroll_button_lock ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.scroll-button-lock", checked)
                     }
                 }
             }
@@ -2722,38 +2866,35 @@ ContentPage {
                 }
             }
 
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "lock"
-                text: Translation.tr("Scroll button lock")
-                checked: root.touchpadData?.scroll_button_lock ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "touchpad.scroll-button-lock", checked)
-                }
-            }
+            ConfigRow {
+                uniform: true
 
-            ContentSubsection {
-                title: Translation.tr("Tap button map")
-
-                StyledComboBox {
+                ContentSubsection {
                     Layout.fillWidth: true
-                    model: root.tapButtonMapOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.touchpadData?.tap_button_map ?? "left-right-middle")
-                    onActivated: root.setConfig("input", "touchpad.tap-button-map", model[currentIndex].value)
+                    title: Translation.tr("Tap button map")
+
+                    StyledComboBox {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        model: root.tapButtonMapOptions
+                        textRole: "displayName"
+                        currentIndex: root.choiceIndex(model, root.touchpadData?.tap_button_map ?? "left-right-middle")
+                        onActivated: root.setConfig("input", "touchpad.tap-button-map", model[currentIndex].value)
+                    }
                 }
-            }
 
-            ContentSubsection {
-                title: Translation.tr("Click method")
-
-                StyledComboBox {
+                ContentSubsection {
                     Layout.fillWidth: true
-                    model: root.clickMethodOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.touchpadData?.click_method ?? "button-areas")
-                    onActivated: root.setConfig("input", "touchpad.click-method", model[currentIndex].value)
+                    title: Translation.tr("Click method")
+
+                    StyledComboBox {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        model: root.clickMethodOptions
+                        textRole: "displayName"
+                        currentIndex: root.choiceIndex(model, root.touchpadData?.click_method ?? "button-areas")
+                        onActivated: root.setConfig("input", "touchpad.click-method", model[currentIndex].value)
+                    }
                 }
             }
 
@@ -2793,141 +2934,13 @@ ContentPage {
         }
     }
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        spacing: 14
-
-    // =====================
-    // MOUSE SECTION
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        settingsTaskSection: "input"
-        visible: true
-        expanded: true
-        icon: "mouse"
-        title: Translation.tr("Mouse")
-
-        SettingsGroup {
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "swipe"
-                    text: Translation.tr("Natural scroll")
-                    checked: root.mouseData?.natural_scroll ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "mouse.natural-scroll", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "left_click"
-                    text: Translation.tr("Left-handed")
-                    checked: root.mouseData?.left_handed ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "mouse.left-handed", checked)
-                    }
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "ads_click"
-                text: Translation.tr("Middle-click emulation")
-                checked: root.mouseData?.middle_emulation ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "mouse.middle-emulation", checked)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Mouse acceleration")
-
-                ConfigSelectionArray {
-                    currentValue: root.mouseData?.accel_profile ?? "flat"
-                    options: [
-                        { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
-                        { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
-                    ]
-                    onSelected: newValue => {
-                        root.setConfig("input", "mouse.accel-profile", newValue)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Mouse scrolling")
-
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.pointerScrollMethodOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.mouseData?.scroll_method ?? "no-scroll")
-                    onActivated: root.setConfig("input", "mouse.scroll-method", model[currentIndex].value)
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "lock"
-                text: Translation.tr("Scroll button lock")
-                checked: root.mouseData?.scroll_button_lock ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "mouse.scroll-button-lock", checked)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Mouse speed")
-                tooltip: Translation.tr("Acceleration speed. Negative = slower, positive = faster.")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    StyledSlider {
-                        id: mouseSpeedSlider
-                        Layout.fillWidth: true
-                        from: -100
-                        to: 100
-                        value: Math.round((root.mouseData?.accel_speed ?? 0) * 100)
-                        stepSize: 5
-                        configuration: StyledSlider.Configuration.S
-
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("input", "mouse.accel-speed", (value / 100.0).toFixed(2))
-                        }
-                    }
-
-                    StyledText {
-                        text: (mouseSpeedSlider.value / 100.0).toFixed(2)
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 40
-                        horizontalAlignment: Text.AlignRight
-                    }
-                }
-            }
-        }
-    }
-
     // =====================
     // TRACKPOINT SECTION
     // =====================
     SettingsCardSection {
         Layout.fillWidth: true
         Layout.fillHeight: true
+        Layout.preferredWidth: 1
         settingsTaskSection: "input"
         visible: true
         expanded: true
@@ -2972,16 +2985,33 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Trackpoint acceleration")
+            ConfigRow {
+                uniform: true
 
-                ConfigSelectionArray {
-                    currentValue: root.trackpointData?.accel_profile ?? "flat"
-                    options: [
-                        { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
-                        { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
-                    ]
-                    onSelected: newValue => root.setConfig("input", "trackpoint.accel-profile", newValue)
+                ContentSubsection {
+                    Layout.fillWidth: true
+                    title: Translation.tr("Trackpoint acceleration")
+
+                    ConfigSelectionArray {
+                        currentValue: root.trackpointData?.accel_profile ?? "flat"
+                        options: [
+                            { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
+                            { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
+                        ]
+                        onSelected: newValue => root.setConfig("input", "trackpoint.accel-profile", newValue)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignBottom
+                    buttonIcon: "lock"
+                    text: Translation.tr("Scroll button lock")
+                    checked: root.trackpointData?.scroll_button_lock ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "trackpoint.scroll-button-lock", checked)
+                    }
                 }
             }
 
@@ -2994,17 +3024,6 @@ ContentPage {
                     textRole: "displayName"
                     currentIndex: root.choiceIndex(model, root.trackpointData?.scroll_method ?? "on-button-down")
                     onActivated: root.setConfig("input", "trackpoint.scroll-method", model[currentIndex].value)
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "lock"
-                text: Translation.tr("Scroll button lock")
-                checked: root.trackpointData?.scroll_button_lock ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "trackpoint.scroll-button-lock", checked)
                 }
             }
 
@@ -3042,8 +3061,6 @@ ContentPage {
                 }
             }
         }
-    }
-
     }
 
     // Default applications are owned by Settings -> Default Applications (SET-F01).

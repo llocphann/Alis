@@ -24,7 +24,8 @@ ContentPage {
             "system tray":"bar", "workspaces":"bar", "resources":"bar",
             "bar module layout":"editor", "shell layout":"editor",
             "left sidebar":"sidebars", "right sidebar":"sidebars", "opening":"sidebars", "sidebar":"sidebars", "general":"sidebars", "left":"sidebars",
-            "right":"sidebars", "open":"sidebars", "media & content":"sidebars"}
+            "right":"sidebars", "open":"sidebars", "media & content":"sidebars",
+            "notifications":"popups", "notification center":"popups"}
         const value = aliases[label] ?? label
         if (["surface","waves","spectrum","modules","bar","dock","sidebars","popups","editor","interaction","performance"].includes(value)) {
             root.barSection = ["behavior","module behavior","behavior & clock","clock","auto hide"].includes(label) ? "behavior" : "modules"
@@ -103,5 +104,18 @@ ContentPage {
         active: controls.activeSection === "sidebars"
         source: "SidebarsConfig.qml"
         onLoaded: { item.embedded = true; item.activeSection = root.sidebarSection }
+    }
+    Loader {
+        id: popupNotificationSettings
+        Layout.fillWidth: true
+        Layout.preferredHeight: item?.implicitHeight ?? 0
+        visible: active
+        active: controls.activeSection === "popups"
+        source: "InterfaceConfig.qml"
+        onLoaded: {
+            item.embedded = true
+            item.settingsPageIndex = root.settingsPageIndex
+            item.activeSection = "notifications"
+        }
     }
 }
