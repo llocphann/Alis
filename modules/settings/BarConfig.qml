@@ -14,6 +14,9 @@ ContentPage {
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
     readonly property bool abyssContent: root.embedded && Config.options?.panelFamily === "abyss"
     property string activeSection: "appearance"
+    property string abyssCardFilter: ""
+    property real modulesCardMinHeight: 0
+    readonly property real modulesCardImplicitHeight: barModulesCard.implicitHeight
     property bool spectrumControlsReady: false
 
     Component.onCompleted: Qt.callLater(() => root.spectrumControlsReady = true)
@@ -413,7 +416,8 @@ ContentPage {
 
     SettingsCardSection {
         settingsTaskSection: "behavior"
-        visible: root.isIiActive && (root.activeSection === "behavior" || root.abyssContent)
+        visible: root.isIiActive && (root.abyssCardFilter === "behavior"
+            || (root.abyssCardFilter === "" && (root.activeSection === "behavior" || root.abyssContent)))
         expanded: true
         icon: "visibility"
         title: Translation.tr("Behavior & clock")
@@ -530,8 +534,11 @@ ContentPage {
     }
 
     SettingsCardSection {
+        id: barModulesCard
+        Layout.minimumHeight: root.modulesCardMinHeight
         settingsTaskSection: "modules"
-        visible: root.isIiActive && (root.activeSection === "modules" || root.abyssContent)
+        visible: root.isIiActive && (root.abyssCardFilter === "modules"
+            || (root.abyssCardFilter === "" && (root.activeSection === "modules" || root.abyssContent)))
         expanded: true
         icon: "widgets"
         title: Translation.tr("Modules")
@@ -680,7 +687,7 @@ ContentPage {
                     }
                 }
                 SettingsNote {
-                    text: Translation.tr("On: use the visible module icon only. Off: remove this module's live hover area and restore its original Screen Corner Edgebar hover. Saved module placement remains available.")
+                    text: Translation.tr("On: module icon only. Off: remove this module hover and use Corner Edgebar.")
                 }
             }
 

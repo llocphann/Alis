@@ -5,13 +5,16 @@ import qs.modules.common.widgets
 import qs.modules.abyss.settings
 ContentPage {
     id: root
-    property var sections: ["surface","performance"]
+    property var sections: ["surface","interaction","performance","spectrum","waves"]
     property string barSection: "modules"
     property string sidebarSection: "general"
     settingsPageIndex: 2
-    settingsPageName: "Abyss"
+    settingsPageName: "Surface & Waves"
     readonly property bool twoColumnModulesBar: root.sections.length === 2
         && root.sections.includes("modules") && root.sections.includes("bar")
+    readonly property real sharedModulesHeight: twoColumnGrid.columns === 2
+        ? Math.max(controls.modulesCardImplicitHeight, moduleSettings.item?.modulesCardImplicitHeight ?? 0)
+        : 0
     property alias activeSection: controls.activeSection
     function activateSettingsSearchSection(section: string): void {
         const label = String(section).toLowerCase().split(/[·›]/).pop().trim()
@@ -34,27 +37,54 @@ ContentPage {
         }
     }
     GridLayout {
+        id: twoColumnGrid
         Layout.fillWidth: true
         columns: root.twoColumnModulesBar && width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
         columnSpacing: 14
         rowSpacing: 14
 
         AbyssStyleSettings {
             id: controls
+            Layout.preferredWidth: 1
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
+            modulesCardMinHeight: root.sharedModulesHeight
             sections: root.sections
             activeSection: root.sections[0]
         }
         Loader {
             id: moduleSettings
+            Layout.preferredWidth: 1
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
             Layout.preferredHeight: item?.implicitHeight ?? 0
             visible: active
             active: controls.activeSection === "bar" || root.twoColumnModulesBar
             source: "BarConfig.qml"
-            onLoaded: { item.embedded = true; item.settingsPageIndex = root.settingsPageIndex; item.activeSection = root.barSection }
+            onLoaded: {
+                item.embedded = true
+                item.settingsPageIndex = root.settingsPageIndex
+                item.activeSection = root.twoColumnModulesBar ? "modules" : root.barSection
+                item.abyssCardFilter = root.twoColumnModulesBar ? "modules" : ""
+                item.modulesCardMinHeight = Qt.binding(() => root.sharedModulesHeight)
+            }
+        }
+        Loader {
+            id: behaviorSettings
+            Layout.columnSpan: twoColumnGrid.columns
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            Layout.preferredHeight: item?.implicitHeight ?? 0
+            visible: active
+            active: root.twoColumnModulesBar
+            source: "BarConfig.qml"
+            onLoaded: {
+                item.embedded = true
+                item.settingsPageIndex = root.settingsPageIndex
+                item.activeSection = "behavior"
+                item.abyssCardFilter = "behavior"
+            }
         }
     }
     Loader {

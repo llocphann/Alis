@@ -20,7 +20,7 @@ assert.equal(new Set(abyssPanels).size, abyssPanels.length);
 for (const index of [16,17,22,23,29]) {
     assert.deepEqual(settingsRoute('abyss',index,''),{pageIndex:index,section:''},'mature stable page indices keep their meaning');
 }
-for (const [section,pageIndex] of [['waves',32],['spectrum',32],['popups',33],['bar',34],['dock',22],['sidebars',23]]) {
+for (const [section,pageIndex] of [['waves',2],['spectrum',2],['popups',33],['bar',34],['dock',22],['sidebars',23]]) {
     assert.deepEqual(settingsRoute('abyss',2,section),{pageIndex,section});
     assert.deepEqual(settingsRoute('waffle',2,section),{pageIndex:2,section});
 }
@@ -64,9 +64,9 @@ applicability = registry.split("function isPageApplicable(index: int): bool {", 
 subprocess.run(["node", "-e", """
 const assert = require('node:assert/strict');
 const pages = Array(38).fill({});
-for (const i of [18,19,20,21,27,28,30,31,35,36]) pages[i] = null;
+for (const i of [18,19,20,21,27,28,30,31,32,35,36]) pages[i] = null;
 const root = {pages, barPageIndex: 2, abyssFamily: false, waffleFamily: false,
-    isHiddenLegacyIndex: i => [18,19,21,27,28,30,31,36].includes(i)};
+    isHiddenLegacyIndex: i => [18,19,21,27,28,30,31,32,36].includes(i)};
 function applicable(index) {""" + applicability + """}
 for (const family of ['ii','waffle','abyss']) {
     root.abyssFamily = family === 'abyss'; root.waffleFamily = family === 'waffle';
@@ -76,7 +76,7 @@ for (const family of ['ii','waffle','abyss']) {
     assert.equal(applicable(11), family === 'waffle');
     assert.equal(applicable(16), family !== 'waffle');
     assert.equal(applicable(29), family !== 'waffle');
-    assert.equal(applicable(32), family === 'abyss');
+    assert.equal(applicable(33), family === 'abyss');
 }
 """], check=True)
 

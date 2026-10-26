@@ -48,8 +48,8 @@ function ensure(family, base, enabled, known, visited) {
 function settingsRoute(family, index, section) {
     var value = String(section || "");
     if (family !== "abyss") return {pageIndex:index,section:value};
-    if (index === 26) return {pageIndex:2,section:"surface"};
-    var tabs={waves:32,spectrum:32,interaction:32,modules:34,bar:34,dock:22,sidebars:23,popups:33};
+    if (index === 26 || index === 32) return {pageIndex:2,section:value || "surface"};
+    var tabs={waves:2,spectrum:2,interaction:2,performance:2,modules:34,bar:34,dock:22,sidebars:23,popups:33};
     if (index === 2 && tabs[value.toLowerCase()])
         return {pageIndex:tabs[value.toLowerCase()],section:value};
     if (index === 10 && ["modules", "bar modules"].includes(value.toLowerCase().trim()))

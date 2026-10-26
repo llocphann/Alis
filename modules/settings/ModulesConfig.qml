@@ -102,132 +102,223 @@ ContentPage {
     }
 
     GridLayout {
+        id: modulesTwoColumnGrid
         objectName: "modulesTwoColumnGrid"
         Layout.fillWidth: true
-        columns: modulesPage.isAbyss && width >= 620 ? 2 : 1
+        columns: (modulesPage.isAbyss || modulesPage.activeSection === "panels" || modulesPage.activeSection === "interface") && width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
         columnSpacing: 14
         rowSpacing: 14
         visible: modulesPage.isAbyss || modulesPage.activeSection === "panels" || modulesPage.activeSection === "interface"
 
-        ColumnLayout {
+        SettingsCardSection {
+            id: panelStyleCard
+            Layout.preferredWidth: 1
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
-            spacing: 14
-            visible: modulesPage.isAbyss || modulesPage.activeSection === "panels" || modulesPage.activeSection === "interface"
+            Layout.fillHeight: true
+            Layout.minimumHeight: modulesTwoColumnGrid.columns === 2
+                ? Math.max(panelStyleCard.implicitHeight, settingsUiCard.implicitHeight) : 0
+            settingsTaskSection: "panels"
+            visible: modulesPage.isAbyss || modulesPage.activeSection === "panels"
+            expanded: true
+            icon: "style"
+            title: Translation.tr("Panel Style")
 
-            SettingsCardSection {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                settingsTaskSection: "panels"
-                visible: modulesPage.isAbyss || modulesPage.activeSection === "panels"
-                expanded: true
-                icon: "style"
-                title: Translation.tr("Panel Style")
+            SettingsGroup {
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 12
 
-                SettingsGroup {
-                    ConfigSelectionArray {
-                        Layout.fillWidth: true
-                        currentValue: Config.options?.panelFamily ?? "abyss"
-                        options: [
-                            { displayName: "Abyss", icon: "water", value: "abyss" },
-                            { displayName: "Waffle", icon: "window", value: "waffle" }
-                        ]
-                        onSelected: value => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),"panelFamily","set",value])
-                    }
-                }
-            }
-
-            SettingsCardSection {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                settingsTaskSection: "panels"
-                visible: modulesPage.isAbyss || modulesPage.activeSection === "panels"
-                expanded: true
-                icon: "extension"
-                title: Translation.tr("Shell Modules")
-
-                SettingsGroup {
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: Translation.tr("Enable or disable shell modules. Changes apply live.")
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        wrapMode: Text.WordWrap
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
+                    ColumnLayout {
+                        Layout.preferredWidth: Math.round(132 * Appearance.fontSizeScale)
+                        Layout.alignment: Qt.AlignVCenter
                         spacing: 8
 
-                        RippleButton {
-                            Layout.fillWidth: true
-                            implicitHeight: 36
-                            buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
-                            colBackground: Appearance.colors.colLayer1
-                            colBackgroundHover: Appearance.colors.colLayer1Hover
-                            colRipple: Appearance.colors.colLayer1Active
+                        Repeater {
+                            model: [
+                                { displayName: "Abyss", icon: "water", value: "abyss" },
+                                { displayName: "Waffle", icon: "window", value: "waffle" }
+                            ]
 
-                            RowLayout {
-                                anchors.centerIn: parent
-                                spacing: 8
-                                MaterialSymbol {
-                                    text: "restart_alt"
-                                    iconSize: Appearance.font.pixelSize.normal
-                                    color: Appearance.colors.colOnSurface
-                                }
-                                StyledText {
-                                    text: Translation.tr("Reset to defaults")
-                                    font.pixelSize: Appearance.font.pixelSize.small
-                                }
+                            SelectionGroupButton {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                implicitHeight: 42
+                                leftmost: true
+                                rightmost: true
+                                buttonIcon: modelData.icon
+                                buttonText: modelData.displayName
+                                toggled: (Config.options?.panelFamily ?? "abyss") === modelData.value
+                                onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "panelFamily", "set", modelData.value])
                             }
-
-                            onClicked: modulesPage.resetToDefaults()
                         }
                     }
-                }
-            }
 
-            SettingsCardSection {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                settingsTaskSection: "interface"
-                visible: modulesPage.isAbyss || modulesPage.activeSection === "interface"
-                expanded: true
-                icon: "aspect_ratio"
-                title: Translation.tr("Display scaling")
-
-                SettingsGroup {
-                    StyledText {
+                    Rectangle {
+                        id: panelStylePreview
                         Layout.fillWidth: true
-                        text: Translation.tr("Current UI scale: %1%").arg(
-                            Math.round((Config.options?.appearance?.typography?.sizeScale ?? 1.0) * 100))
-                        color: Appearance.colors.colOnSurfaceVariant
+                        Layout.fillHeight: true
+                        implicitHeight: 148
+                        radius: Appearance.rounding.normal
+                        clip: true
+                        color: Appearance.colors.colLayer2
+                        border.width: 1
+                        border.color: Appearance.colors.colOutlineVariant
+
+                        property real wavePhase: 0.35
+                        property real pulseStrength: 0.65
+
+                        NumberAnimation on pulseStrength {
+                            id: previewPulseAnim
+                            from: 1.0
+                            to: 0.45
+                            duration: 750
+                            easing.type: Easing.OutCubic
+                        }
+
+                        Canvas {
+                            id: styleCanvas
+                            anchors.fill: parent
+                            onWidthChanged: requestPaint()
+                            onHeightChanged: requestPaint()
+                            Connections {
+                                target: Config.options
+                                function onPanelFamilyChanged() { styleCanvas.requestPaint() }
+                            }
+                            Connections {
+                                target: panelStylePreview
+                                function onPulseStrengthChanged() { styleCanvas.requestPaint() }
+                                function onWavePhaseChanged() { styleCanvas.requestPaint() }
+                            }
+                            onPaint: {
+                                const ctx = getContext("2d")
+                                const w = width
+                                const h = height
+                                ctx.clearRect(0, 0, w, h)
+                                if (w <= 0 || h <= 0) return
+
+                                const isWaffleMode = (Config.options?.panelFamily ?? "abyss") === "waffle"
+                                const primary = String(Appearance.colors.colPrimary)
+                                const surface = String(Appearance.colors.colLayer0)
+                                const outline = String(Appearance.colors.colOutlineVariant)
+
+                                if (!isWaffleMode) {
+                                    // Abyss preview: liquid Screen Edge frame + top wave crest + connected dock
+                                    const edge = 10
+                                    const r = 18
+                                    ctx.fillStyle = surface
+                                    ctx.beginPath()
+                                    ctx.rect(0, 0, w, h)
+                                    ctx.moveTo(edge + r, edge + 14)
+                                    ctx.arcTo(w - edge, edge + 14, w - edge, h - edge, r)
+                                    ctx.arcTo(w - edge, h - edge, edge, h - edge, r)
+                                    ctx.arcTo(edge, h - edge, edge, edge + 14, r)
+                                    ctx.arcTo(edge, edge + 14, w - edge, edge + 14, r)
+                                    ctx.fill("evenodd")
+
+                                    // Top liquid wave crest along the upper Screen Edge
+                                    ctx.beginPath()
+                                    const baseTop = edge + 14
+                                    const center = w * panelStylePreview.wavePhase
+                                    ctx.moveTo(edge, baseTop)
+                                    for (let x = edge; x <= w - edge; x += 3) {
+                                        const dist = (x - center) / Math.max(40, w * 0.22)
+                                        const env = Math.exp(-dist * dist)
+                                        const ripple = Math.cos(dist * 4.2) * env * 9 * panelStylePreview.pulseStrength
+                                        ctx.lineTo(x, baseTop + Math.max(-4, ripple))
+                                    }
+                                    ctx.strokeStyle = primary
+                                    ctx.lineWidth = 2
+                                    ctx.stroke()
+
+                                    // Bottom connected dock pill
+                                    const dockW = Math.min(130, w * 0.46)
+                                    const dockH = 14
+                                    const dockX = (w - dockW) / 2
+                                    const dockY = h - edge - dockH + 2
+                                    ctx.fillStyle = surface
+                                    ctx.beginPath()
+                                    ctx.roundedRect(dockX, dockY, dockW, dockH, 7, 7)
+                                    ctx.fill()
+                                    ctx.strokeStyle = primary
+                                    ctx.lineWidth = 1.2
+                                    ctx.stroke()
+                                } else {
+                                    // Waffle preview: floating Start Menu card + bottom taskbar
+                                    const barH = 24
+                                    const startW = Math.min(120, w * 0.44)
+                                    const startH = Math.min(68, h * 0.48)
+                                    const startX = (w - startW) / 2
+                                    const startY = h - barH - startH - 8
+
+                                    ctx.fillStyle = surface
+                                    ctx.beginPath()
+                                    ctx.roundedRect(startX, startY, startW, startH, 8, 8)
+                                    ctx.fill()
+                                    ctx.strokeStyle = outline
+                                    ctx.lineWidth = 1
+                                    ctx.stroke()
+
+                                    // Bottom taskbar
+                                    ctx.fillStyle = surface
+                                    ctx.fillRect(0, h - barH, w, barH)
+                                    ctx.strokeStyle = primary
+                                    ctx.lineWidth = 1.5
+                                    ctx.beginPath()
+                                    ctx.moveTo(0, h - barH)
+                                    ctx.lineTo(w, h - barH)
+                                    ctx.stroke()
+
+                                    // Centered taskbar dots
+                                    ctx.fillStyle = primary
+                                    for (let i = -2; i <= 2; i++) {
+                                        ctx.beginPath()
+                                        ctx.roundedRect(w / 2 + i * 16 - 4, h - barH / 2 - 4, 8, 8, 2, 2)
+                                        ctx.fill()
+                                    }
+                                }
+                            }
+                        }
+
+                        StyledText {
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.leftMargin: 14
+                            anchors.topMargin: 26
+                            text: (Config.options?.panelFamily ?? "abyss") === "waffle"
+                                ? "Waffle · Bottom taskbar & Start menu"
+                                : "Abyss · Liquid Screen Edge & waves"
+                            color: Appearance.colors.colSubtext
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onPositionChanged: mouse => {
+                                if (pressed) {
+                                    panelStylePreview.wavePhase = Math.max(0.15, Math.min(0.85, mouse.x / Math.max(1, width)))
+                                    previewPulseAnim.restart()
+                                }
+                            }
+                            onPressed: mouse => {
+                                panelStylePreview.wavePhase = Math.max(0.15, Math.min(0.85, mouse.x / Math.max(1, width)))
+                                previewPulseAnim.restart()
+                            }
+                        }
                     }
-                }
-            }
-
-            SettingsCardSection {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                settingsTaskSection: "interface"
-                visible: modulesPage.isAbyss || modulesPage.activeSection === "interface"
-                expanded: true
-                icon: "wallpaper_slideshow"
-                title: Translation.tr("Wallpaper selector")
-
-                SettingsGroup {
-                    StyledText {
-                        Layout.fillWidth:true;wrapMode:Text.WordWrap
-                        text:"A centered wallpaper carousel with search, folders and animated previews."
-                    }
-
                 }
             }
         }
 
         SettingsCardSection {
+            id: settingsUiCard
+            Layout.preferredWidth: 1
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
+            Layout.fillHeight: true
+            Layout.minimumHeight: modulesTwoColumnGrid.columns === 2
+                ? Math.max(panelStyleCard.implicitHeight, settingsUiCard.implicitHeight) : 0
             settingsTaskSection: "interface"
             visible: modulesPage.isAbyss || modulesPage.activeSection === "interface"
             expanded: true

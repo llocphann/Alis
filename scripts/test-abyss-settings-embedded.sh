@@ -85,7 +85,7 @@ ShellRoot {
                 GlobalStates.openSettingsSection(2,"waves")
             }
             if(root.step===7) {
-                if(!root.check(GlobalStates.settingsOverlayCurrentPage===32,"dedicated Abyss controls receive deep links")) return
+                if(!root.check(GlobalStates.settingsOverlayCurrentPage===2,"dedicated Abyss controls receive deep links")) return
                 if(!root.check(body.contentItem.item.currentPage?.activeSection==="waves","deep link selects the visible Waves tab")) return
                 GlobalStates.openSettingsSection(2,"popups")
             }

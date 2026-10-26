@@ -19,7 +19,7 @@ import qs.modules.common
 Singleton {
     id: root
 
-    readonly property var legacyHiddenIndexes: [18, 19, 20, 21, 27, 28, 30, 31, 35, 36]
+    readonly property var legacyHiddenIndexes: [18, 19, 20, 21, 27, 28, 30, 31, 32, 35, 36]
 
     readonly property var pages: [
         {
@@ -223,7 +223,7 @@ Singleton {
         },
                 null,
                 null,
-        {key:"abyss-waves",name:"Waves & Audio",icon:"waves",desc:"Waves, spectrum and interaction",component:"modules/settings/AbyssWavesConfig.qml"},
+        null, // Index 32: merged into Surface & Waves (index 2).
         {key:"abyss-popups",name:"Popups",icon:"chat_bubble",desc:"Popup and indicator placement",component:"modules/settings/AbyssPopupsConfig.qml"},
         {key:"abyss-modules",name:"Bar modules",icon:"widgets",desc:"Edge modules and behavior",component:"modules/settings/AbyssModulesConfig.qml"},
         null, // Index 35: retired Automation. Keep persisted route compatibility.
@@ -238,7 +238,7 @@ Singleton {
     // stable for saved routes, search results and existing deep links.
     readonly property var defaultCategories: [
         { label: Translation.tr("Home"), pages: [0] },
-        { label: "Abyss", pages: Config.options?.panelFamily === "abyss" ? [2,32,34,33,37,22,23,16] : [] },
+        { label: "Abyss", pages: Config.options?.panelFamily === "abyss" ? [2,34,33,37,22,23,16] : [] },
         { label: Translation.tr("Appearance"), pages: [4, 3, 25, 8] },
         { label: Translation.tr("Desktop & Layout"), pages: Config.options?.panelFamily === "abyss" ? [15,5,14,29,10,11] : [15,26,2,22,23,5,16,14,29,10,11] },
         { label: Translation.tr("System"), pages: [1, 12, 17] },

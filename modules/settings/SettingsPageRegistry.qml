@@ -30,7 +30,7 @@ Singleton {
                 || root.isHiddenLegacyIndex(index) || !root.pages[index]) return false
         if (index === 38 || index === 39) return true
         if (root.abyssFamily)
-            return ![11,26].includes(index)
+            return ![11,26,32].includes(index)
         if (root.waffleFamily)
             return index !== root.barPageIndex && index !== 16 && index !== 29 && index < 32
         return index !== 11 && index < 32
@@ -39,6 +39,8 @@ Singleton {
     // Retired, missing and out-of-range persisted page IDs must not reach a
     // Loader. Use the same live Panels page as the legacy-index migration.
     function safePageIndex(index: int): int {
+        if (root.abyssFamily && (index === 26 || index === 32))
+            return root.barPageIndex
         if (root.isPageApplicable(index)) return index
         return root.isPageApplicable(root.panelsPageIndex) ? root.panelsPageIndex : 0
     }
@@ -90,14 +92,14 @@ Singleton {
         if (!page)
             return null
         if (root.abyssFamily && index === root.barPageIndex)
-            return Object.assign({},page,{key:"abyss",name:"Surface",icon:"water",
+            return Object.assign({},page,{key:"abyss",name:"Surface & Waves",icon:"water",
                 desc:"Screen Edge, waves and surface presentation",component:"modules/settings/AbyssConfig.qml"})
         return page
     })
 
     function isHiddenLegacyIndex(index: int): bool {
         return SettingsPageRegistryData.legacyHiddenIndexes.includes(index)
-            || (root.abyssFamily && index === 26)
+            || (root.abyssFamily && (index === 26 || index === 32))
     }
 
     readonly property var defaultCategories: SettingsPageRegistryData.defaultCategories.map(category => ({
@@ -136,7 +138,7 @@ Singleton {
             return
 
         const current = Number(Persistent.states.settings.iiPage ?? -1)
-        if (root.abyssFamily && current === 26) {
+        if (root.abyssFamily && (current === 26 || current === 32)) {
             Persistent.states.settings.iiPage = root.barPageIndex
             return
         }

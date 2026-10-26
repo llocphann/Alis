@@ -13,7 +13,11 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 16
     property string activeSection: "surface"
-    property var sections: ["surface","performance"]
+    property var sections: ["surface","interaction","performance","spectrum","waves"]
+    property real modulesCardMinHeight: 0
+    readonly property real modulesCardImplicitHeight: modulesCard.implicitHeight
+    readonly property bool unifiedSurfaceWaves: root.sections.includes("surface")
+        && root.sections.includes("waves")
     readonly property bool twoColumnSurfacePerformance: root.sections.length === 2
         && root.sections.includes("surface") && root.sections.includes("performance")
     readonly property bool twoColumnWavesSpectrum: root.sections.length === 3
@@ -159,7 +163,7 @@ ColumnLayout {
         description:"Screen Edge appearance and behavior."
         currentValue:root.activeSection
         onSelected:value=>root.activeSection=value
-        visible:options.length > 2 && !root.twoColumnWavesSpectrum
+        visible:options.length > 2 && !root.twoColumnWavesSpectrum && !root.unifiedSurfaceWaves
         showIntro:false
         options:[
             {displayName:"Surface",value:"surface",icon:"opacity"},
@@ -175,20 +179,28 @@ ColumnLayout {
             {displayName:"Performance",value:"performance",icon:"speed"}].filter(option=>root.sections.includes(option.value))
     }
     GridLayout {
+        id: surfaceWavesGrid
         Layout.fillWidth: true
-        columns: (root.twoColumnSurfacePerformance || root.twoColumnWavesSpectrum) && width >= 620 ? 2 : 1
+        columns: (root.twoColumnSurfacePerformance || root.twoColumnWavesSpectrum || root.unifiedSurfaceWaves) && width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
         columnSpacing: 14
         rowSpacing: 14
         visible: root.activeSection === "surface" || root.activeSection === "performance"
             || root.activeSection === "waves" || root.activeSection === "spectrum"
             || root.activeSection === "interaction"
-            || root.twoColumnSurfacePerformance || root.twoColumnWavesSpectrum
+            || root.twoColumnSurfacePerformance || root.twoColumnWavesSpectrum || root.unifiedSurfaceWaves
 
         SettingsCardSection {
+            id: surfaceCard
+            Layout.row: 0
+            Layout.column: 0
+            Layout.preferredWidth: 1
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
+            Layout.fillHeight: true
+            Layout.minimumHeight: surfaceWavesGrid.columns === 2 && surfaceCard.visible && interactionCard.visible
+                ? Math.max(surfaceCard.implicitHeight, interactionCard.implicitHeight) : 0
             title:"Surface";icon:"opacity";settingsTaskSection:"surface"
-            visible:root.activeSection==="surface" || root.twoColumnSurfacePerformance
+            visible:root.activeSection==="surface" || root.twoColumnSurfacePerformance || root.unifiedSurfaceWaves
             SettingsGroup {
                 // Icon toggles share the row of the value they control. Empty
                 // icon slots keep all titles/sliders aligned when a row has no toggle.
@@ -265,10 +277,14 @@ ColumnLayout {
             }
         }
         SettingsCardSection {
+            id: wavesCard
+            Layout.row: surfaceWavesGrid.columns === 2 ? 2 : 4
+            Layout.column: 0
+            Layout.columnSpan: surfaceWavesGrid.columns
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
             title:"Waves";icon:"waves";settingsTaskSection:"waves"
-            visible:root.activeSection==="waves" || root.twoColumnWavesSpectrum
+            visible:root.activeSection==="waves" || root.twoColumnWavesSpectrum || root.unifiedSurfaceWaves
             SettingsGroup {
                 ConfigSwitch {
                     text:"Enable waves";autoToggle:false
@@ -325,66 +341,44 @@ ColumnLayout {
                 SettingsNote { text:"Idle ripples sleep between disturbances; reduced motion applies." }
             }
         }
-        ColumnLayout {
+        SettingsCardSection {
+            id: interactionCard
+            Layout.row: surfaceWavesGrid.columns === 2 ? 0 : 1
+            Layout.column: surfaceWavesGrid.columns === 2 ? 1 : 0
+            Layout.preferredWidth: 1
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
-            spacing: 14
-            visible: root.activeSection === "spectrum" || root.activeSection === "interaction" || root.twoColumnWavesSpectrum
-
-            SettingsCardSection {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                title:"Audio spectrum";icon:"graphic_eq";settingsTaskSection:"spectrum"
-                visible:root.activeSection==="spectrum" || root.twoColumnWavesSpectrum
-                SettingsGroup {
-                    ConfigSwitch {
-                        text:"Audio-driven Screen Edge wave";autoToggle:false
-                        checked:(Config.options?.abyss?.spectrum?.configured ?? false) ? (Config.options?.abyss?.spectrum?.enabled ?? false) : (Config.options?.bar?.visualizer?.enable ?? false)
-                        onToggledByUser:checked=>root.spectrumChange("enabled",checked)
-                    }
-                    Percent { text:"Audio wave strength";configKey:"abyss.spectrum.strength";fallback:.45;maximum:4 }
-                    ConfigSelectionArray {
-                        currentValue:Config.options?.abyss?.spectrum?.edge ?? "bar"
-                        options:[{displayName:"Bar Edge",value:"bar"},{displayName:"All Edges",value:"all"},
-                            {displayName:"Top",value:"top"},{displayName:"Right",value:"right"},{displayName:"Bottom",value:"bottom"},{displayName:"Left",value:"left"}]
-                        onSelected:value=>Config.setNestedValue("abyss.spectrum.edge",value)
-                    }
-                    ConfigSelectionArray {
-                        currentValue:(Config.options?.abyss?.spectrum?.configured ?? false) ? Config.options?.abyss?.spectrum?.multiMonitorMode : Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary"
-                        options:[{displayName:"Primary output",value:"primary"},{displayName:"All outputs",value:"all"}]
-                        onSelected:value=>root.spectrumChange("multiMonitorMode",value)
-                    }
-                    SettingsNote { text:"Uses the shared audio analyzer; sleeps when paused, hidden or reduced motion is enabled." }
-                }
-            }
-            SettingsCardSection {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                title:"Interaction";icon:"touch_app";settingsTaskSection:"interaction"
-                visible:root.activeSection==="interaction" || root.twoColumnWavesSpectrum
-                SettingsGroup {
-                    Percent { text:"Hover response";configKey:"abyss.waves.hover";fallback:1 }
-                    Percent { text:"Press response";configKey:"abyss.waves.press";fallback:1 }
-                    Percent { text:"Opening response";configKey:"abyss.waves.open";fallback:1 }
-                    Percent { text:"Closing response";configKey:"abyss.waves.close";fallback:1 }
-                    Percent { text:"Drag response";configKey:"abyss.waves.drag";fallback:1 }
-                    Percent { text:"Motion intensity";configKey:"abyss.motion.intensity";fallback:.6 }
-                    ConfigSwitch {
-                        text:"Reduce animations (all families)";autoToggle:false
-                        checked:Config.options?.performance?.reduceAnimations ?? false
-                        onToggledByUser:checked=>Config.setNestedValue("performance.reduceAnimations",checked)
-                    }
+            Layout.fillHeight: true
+            Layout.minimumHeight: surfaceWavesGrid.columns === 2 && surfaceCard.visible && interactionCard.visible
+                ? Math.max(surfaceCard.implicitHeight, interactionCard.implicitHeight) : 0
+            title:"Interaction";icon:"touch_app";settingsTaskSection:"interaction"
+            visible:root.activeSection==="interaction" || root.twoColumnWavesSpectrum || root.unifiedSurfaceWaves
+            SettingsGroup {
+                Percent { text:"Hover response";configKey:"abyss.waves.hover";fallback:1 }
+                Percent { text:"Press response";configKey:"abyss.waves.press";fallback:1 }
+                Percent { text:"Opening response";configKey:"abyss.waves.open";fallback:1 }
+                Percent { text:"Closing response";configKey:"abyss.waves.close";fallback:1 }
+                Percent { text:"Drag response";configKey:"abyss.waves.drag";fallback:1 }
+                Percent { text:"Motion intensity";configKey:"abyss.motion.intensity";fallback:.6 }
+                ConfigSwitch {
+                    text:"Reduce animations (all families)";autoToggle:false
+                    checked:Config.options?.performance?.reduceAnimations ?? false
+                    onToggledByUser:checked=>Config.setNestedValue("performance.reduceAnimations",checked)
                 }
             }
         }
         SettingsCardSection {
+            id: performanceCard
+            Layout.row: surfaceWavesGrid.columns === 2 ? 1 : 2
+            Layout.column: 0
+            Layout.preferredWidth: 1
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
+            Layout.fillHeight: true
+            Layout.minimumHeight: surfaceWavesGrid.columns === 2 && performanceCard.visible && spectrumCard.visible
+                ? Math.max(performanceCard.implicitHeight, spectrumCard.implicitHeight) : 0
             title:"Performance";icon:"speed";settingsTaskSection:"performance"
-            visible:root.activeSection==="performance" || root.twoColumnSurfacePerformance
+            visible:root.activeSection==="performance" || root.twoColumnSurfacePerformance || root.unifiedSurfaceWaves
             SettingsSwitch {
                 text:"Follow power profile"
-                description:"Match Abyss quality to the power profile."
                 autoToggle:false;checked:Config.options?.abyss?.autoQuality ?? false
                 onToggledByUser:checked=>Config.setNestedValue("abyss.autoQuality",checked)
             }
@@ -395,7 +389,7 @@ ColumnLayout {
                     options:[{displayName:"Performance",value:"performance"},{displayName:"Balanced",value:"balanced"},{displayName:"Quality",value:"quality"}]
                     onSelected:value=>Config.setNestedValue("abyss.quality",value)
                 }
-                SettingsNote { text:"Wave samples: 128 Performance, 256 Balanced/Quality. Glass uses wallpaper, not window capture." }
+                SettingsNote { text:"Glass uses wallpaper, not window capture." }
                 ConfigSwitch {
                     text:"Visible during fullscreen";autoToggle:false
                     checked:Config.options?.abyss?.perimeter?.visibleInFullscreen ?? false
@@ -403,8 +397,41 @@ ColumnLayout {
                 }
             }
         }
+        SettingsCardSection {
+            id: spectrumCard
+            Layout.row: surfaceWavesGrid.columns === 2 ? 1 : 3
+            Layout.column: surfaceWavesGrid.columns === 2 ? 1 : 0
+            Layout.preferredWidth: 1
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumHeight: surfaceWavesGrid.columns === 2 && performanceCard.visible && spectrumCard.visible
+                ? Math.max(performanceCard.implicitHeight, spectrumCard.implicitHeight) : 0
+            title:"Audio spectrum";icon:"graphic_eq";settingsTaskSection:"spectrum"
+            visible:root.activeSection==="spectrum" || root.twoColumnWavesSpectrum || root.unifiedSurfaceWaves
+            SettingsGroup {
+                ConfigSwitch {
+                    text:"Audio-driven Screen Edge wave";autoToggle:false
+                    checked:(Config.options?.abyss?.spectrum?.configured ?? false) ? (Config.options?.abyss?.spectrum?.enabled ?? false) : (Config.options?.bar?.visualizer?.enable ?? false)
+                    onToggledByUser:checked=>root.spectrumChange("enabled",checked)
+                }
+                Percent { text:"Audio wave strength";configKey:"abyss.spectrum.strength";fallback:.45;maximum:4 }
+                ConfigSelectionArray {
+                    currentValue:Config.options?.abyss?.spectrum?.edge ?? "bar"
+                    options:[{displayName:"Bar Edge",value:"bar"},{displayName:"All Edges",value:"all"},
+                        {displayName:"Top",value:"top"},{displayName:"Right",value:"right"},{displayName:"Bottom",value:"bottom"},{displayName:"Left",value:"left"}]
+                    onSelected:value=>Config.setNestedValue("abyss.spectrum.edge",value)
+                }
+                ConfigSelectionArray {
+                    currentValue:(Config.options?.abyss?.spectrum?.configured ?? false) ? Config.options?.abyss?.spectrum?.multiMonitorMode : Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary"
+                    options:[{displayName:"Primary output",value:"primary"},{displayName:"All outputs",value:"all"}]
+                    onSelected:value=>root.spectrumChange("multiMonitorMode",value)
+                }
+            }
+        }
     }
     SettingsCardSection {
+        id: modulesCard
+        Layout.minimumHeight: root.modulesCardMinHeight
         title:"Modules";icon:"widgets";settingsTaskSection:"modules"
         visible:root.activeSection==="modules"
         SettingsGroup {

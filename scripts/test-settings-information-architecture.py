@@ -40,14 +40,14 @@ def main() -> None:
         page_indices = [index for group in groups for index in group["pages"]]
         assert len(page_indices) == len(set(page_indices)), "duplicate default page"
         if family == "abyss":
-            excluded = {18, 19, 20, 21, 26, 27, 28, 30, 31, 35, 36}
+            excluded = {18, 19, 20, 21, 26, 27, 28, 30, 31, 32, 35, 36}
             expected = set(range(40)) - excluded
         else:
             excluded = {18, 19, 20, 21, 27, 28}
             expected = (set(range(30)) - excluded) | {38, 39}
         assert set(page_indices) == expected
         if family == "abyss":
-            assert next(group for group in groups if group["label"] == "Abyss")["pages"] == [2,32,34,33,37,22,23,16]
+            assert next(group for group in groups if group["label"] == "Abyss")["pages"] == [2,34,33,37,22,23,16]
 
     require(arrangement, "layoutSchemaVersion: 11", "navigation migration")
     require(arrangement, "const untouchedStock =", "navigation migration")
