@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Stop Steam notification toasts from stealing focus.
-# https://github.com/snowarch/Alis/issues/223
+# https://github.com/snowarch/iNiR/issues/223
 
 MIGRATION_ID="036-steam-toast-no-focus"
 MIGRATION_TITLE="Stop Steam notification toasts from stealing focus"
@@ -26,7 +26,7 @@ migration_preview() {
 migration_apply() {
     [[ -f "$_steam_rules_file" ]] || return 1
 
-    local tmp_file="${_steam_rules_file}.alis-steam.$$"
+    local tmp_file="${_steam_rules_file}.inir-steam.$$"
     awk '
         BEGIN { in_steam = 0; done = 0 }
         !done && /notificationtoasts_/ { in_steam = 1 }

@@ -18,15 +18,15 @@ docs = {
 
 forbidden = {
     "ARCHITECTURE.md": (
-        "| Global styles | material, cards, aurora, alis, angel, zzz, cookie |",
-        "Style dispatch priority is **cookie > zzz > angel > alis > aurora > material**",
+        "| Global styles | material, cards, aurora, inir, angel, zzz, cookie |",
+        "Style dispatch priority is **cookie > zzz > angel > inir > aurora > material**",
     ),
     "ARCHITECTURE_OVERVIEW.md": ("active material, cards, aurora",),
     "PANEL_FAMILIES.md": ("six style variants", "Style dispatch priority"),
     "OPTIMIZATION.md": (
         "each global style's intended material",
         "selected global style",
-        "global ZZZ, Aurora, Angel or Alis chrome",
+        "global ZZZ, Aurora, Angel or iNiR chrome",
     ),
     "WALLPAPER.md": ("Aurora and Angel styles use frosted glass effects",),
     "SHELL_SURFACE_CONTRACTS.md": (
@@ -53,7 +53,7 @@ for token in (
         raise AssertionError(f"PANEL_FAMILIES.md missing Material-only contract: {token!r}")
 
 legacy_sequence = re.compile(
-    r"material.{0,16}cards.{0,16}aurora.{0,16}alis.{0,16}angel",
+    r"material.{0,16}cards.{0,16}aurora.{0,16}inir.{0,16}angel",
     re.IGNORECASE,
 )
 for path in sorted((ROOT / "docs" / "readme").glob("README.*.md")):

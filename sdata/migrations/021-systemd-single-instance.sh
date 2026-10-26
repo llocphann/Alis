@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
 
 MIGRATION_ID="021-systemd-single-instance"
-MIGRATION_TITLE="Move Alis shell startup to a single systemd owner"
-MIGRATION_DESCRIPTION="Removes compositor startup of alis, installs/enables the user alis.service, and keeps shell startup owned by a single systemd user unit."
-MIGRATION_TARGET_FILE="~/.config/systemd/user/alis.service + ~/.config/niri/config.d/50-startup.kdl"
+MIGRATION_TITLE="Move iNiR shell startup to a single systemd owner"
+MIGRATION_DESCRIPTION="Removes compositor startup of inir, installs/enables the user inir.service, and keeps shell startup owned by a single systemd user unit."
+MIGRATION_TARGET_FILE="~/.config/systemd/user/inir.service + ~/.config/niri/config.d/50-startup.kdl"
 MIGRATION_REQUIRED=true
 
 migration_check() {
   local xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
   # BRAND-R01: a masked original unit and canonical user service mean the
-  # handoff is complete. Historic Alis migrations are ALREADY superseded;
+  # handoff is complete. Historic iNiR migrations are ALREADY superseded;
   # never suggest re-enabling the retired owner or rewriting Alis Niri paths.
-  if [[ -L "$xdg_config_home/systemd/user/alis.service" &&
-        "$(readlink -- "$xdg_config_home/systemd/user/alis.service")" == /dev/null &&
+  if [[ -L "$xdg_config_home/systemd/user/inir.service" &&
+        "$(readlink -- "$xdg_config_home/systemd/user/inir.service")" == /dev/null &&
         -f "$xdg_config_home/systemd/user/alis.service" ]]; then
     return 1
   fi
   local startup_cfg="${xdg_config_home}/niri/config.d/50-startup.kdl"
   local monolithic_cfg="${xdg_config_home}/niri/config.kdl"
-  local service_file="${xdg_config_home}/systemd/user/alis.service"
-  local startup_pattern='spawn-at-startup.*([^[:alnum:]_-]alis([^[:alnum:]_/-]|$)|\.local/bin/alis([^[:alnum:]_/-]|$)|config/quickshell/alis/scripts/alis([^[:alnum:]_/-]|$))'
+  local service_file="${xdg_config_home}/systemd/user/inir.service"
+  local startup_pattern='spawn-at-startup.*([^[:alnum:]_-]inir([^[:alnum:]_/-]|$)|\.local/bin/inir([^[:alnum:]_/-]|$)|config/quickshell/inir/scripts/inir([^[:alnum:]_/-]|$))'
 
   if [[ ! -f "$service_file" ]]; then
     return 0
@@ -34,7 +34,7 @@ migration_check() {
   fi
 
   if command -v systemctl >/dev/null 2>&1; then
-    if ! systemctl --user is-enabled --quiet alis.service >/dev/null 2>&1; then
+    if ! systemctl --user is-enabled --quiet inir.service >/dev/null 2>&1; then
       return 0
     fi
   fi
@@ -43,30 +43,30 @@ migration_check() {
 }
 
 migration_preview() {
-  echo -e "${STY_RED}- spawn-at-startup \"alis\" \"start\"${STY_RST}"
-  echo -e "${STY_GREEN}+ systemd user service owns Alis startup${STY_RST}"
-  echo -e "${STY_GREEN}+ ~/.config/systemd/user/alis.service enabled${STY_RST}"
+  echo -e "${STY_RED}- spawn-at-startup \"inir\" \"start\"${STY_RST}"
+  echo -e "${STY_GREEN}+ systemd user service owns iNiR startup${STY_RST}"
+  echo -e "${STY_GREEN}+ ~/.config/systemd/user/inir.service enabled${STY_RST}"
 }
 
 migration_apply() {
   local xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
   # A directly invoked historical apply must be harmless after the Alis
   # singleton handoff, even when the original unit archive is unavailable.
-  if [[ -L "$xdg_config_home/systemd/user/alis.service" &&
-        "$(readlink -- "$xdg_config_home/systemd/user/alis.service")" == /dev/null &&
+  if [[ -L "$xdg_config_home/systemd/user/inir.service" &&
+        "$(readlink -- "$xdg_config_home/systemd/user/inir.service")" == /dev/null &&
         -f "$xdg_config_home/systemd/user/alis.service" ]]; then
     printf 'SKIP: retired 021 original service startup migration; Alis owns the session.\n'
     return 0
   fi
   local startup_cfg="${xdg_config_home}/niri/config.d/50-startup.kdl"
   local monolithic_cfg="${xdg_config_home}/niri/config.kdl"
-  local service_file="${xdg_config_home}/systemd/user/alis.service"
-  local launcher_path="${XDG_BIN_HOME:-$HOME/.local/bin}/alis"
+  local service_file="${xdg_config_home}/systemd/user/inir.service"
+  local launcher_path="${XDG_BIN_HOME:-$HOME/.local/bin}/inir"
   local systemd_user_dir="${xdg_config_home}/systemd/user"
   local service_asset
   local tmp_file
 
-  _remove_alis_startup_lines() {
+  _remove_inir_startup_lines() {
     local file="$1"
     [[ -f "$file" ]] || return 0
 
@@ -77,7 +77,7 @@ import sys
 
 path = Path(sys.argv[1])
 text = path.read_text()
-pattern = re.compile(r'^(?![ \t]*//).*spawn-at-startup.*(?:[^A-Za-z0-9_-]alis(?![A-Za-z0-9_/-])|\.local/bin/alis(?![A-Za-z0-9_/-])|config/quickshell/alis/scripts/alis(?![A-Za-z0-9_/-])).*\n?', re.MULTILINE)
+pattern = re.compile(r'^(?![ \t]*//).*spawn-at-startup.*(?:[^A-Za-z0-9_-]inir(?![A-Za-z0-9_/-])|\.local/bin/inir(?![A-Za-z0-9_/-])|config/quickshell/inir/scripts/inir(?![A-Za-z0-9_/-])).*\n?', re.MULTILINE)
 new_text = pattern.sub('', text)
 if new_text != text:
     path.write_text(new_text)
@@ -85,11 +85,11 @@ PY
   }
 
   if [[ ! -f "$service_file" ]]; then
-    service_asset="${REPO_ROOT}/assets/systemd/alis.service"
+    service_asset="${REPO_ROOT}/assets/systemd/inir.service"
     if [[ -f "$service_asset" ]]; then
       mkdir -p "$systemd_user_dir" || return 1
       mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}" || return 1
-      tmp_file="${XDG_CACHE_HOME:-$HOME/.cache}/alis.service.migration.$$"
+      tmp_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.migration.$$"
       sed "s|^ExecStart=.*|ExecStart=${launcher_path//&/\\&} run --session|" "$service_asset" > "$tmp_file" \
         || { rm -f "$tmp_file"; return 1; }
       cp -f "$tmp_file" "$service_file" || { rm -f "$tmp_file"; return 1; }
@@ -100,16 +100,16 @@ PY
   fi
 
   if [[ -f "$startup_cfg" ]]; then
-    _remove_alis_startup_lines "$startup_cfg" || return 1
+    _remove_inir_startup_lines "$startup_cfg" || return 1
   fi
 
   if [[ -f "$monolithic_cfg" ]]; then
-    _remove_alis_startup_lines "$monolithic_cfg" || return 1
+    _remove_inir_startup_lines "$monolithic_cfg" || return 1
   fi
 
   if command -v systemctl >/dev/null 2>&1 && [[ -f "$service_file" ]]; then
     systemctl --user daemon-reload >/dev/null 2>&1 || return 1
-    if ! systemctl --user is-enabled --quiet alis.service >/dev/null 2>&1; then
+    if ! systemctl --user is-enabled --quiet inir.service >/dev/null 2>&1; then
       # Unit has no [Install] section: ownership is a compositor wants link.
       local compositor_unit=""
       if systemctl --user cat niri.service >/dev/null 2>&1; then
@@ -119,13 +119,13 @@ PY
       fi
       [[ -n "$compositor_unit" ]] || return 1
       mkdir -p "$systemd_user_dir/${compositor_unit}.wants" || return 1
-      ln -sf "$service_file" "$systemd_user_dir/${compositor_unit}.wants/alis.service" || return 1
+      ln -sf "$service_file" "$systemd_user_dir/${compositor_unit}.wants/inir.service" || return 1
       systemctl --user daemon-reload >/dev/null 2>&1 || return 1
-      systemctl --user is-enabled --quiet alis.service >/dev/null 2>&1 || return 1
+      systemctl --user is-enabled --quiet inir.service >/dev/null 2>&1 || return 1
     fi
     if [[ -n "${NIRI_SOCKET:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
-      systemctl --user reset-failed alis.service >/dev/null 2>&1 || return 1
-      systemctl --user start alis.service >/dev/null 2>&1 || return 1
+      systemctl --user reset-failed inir.service >/dev/null 2>&1 || return 1
+      systemctl --user start inir.service >/dev/null 2>&1 || return 1
     fi
   fi
 

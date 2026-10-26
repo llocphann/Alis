@@ -36,7 +36,7 @@ extras_install_sddm_theme() {
   fi
 }
 
-# Install Alis-Walls image assets into user's wallpapers directory.
+# Install iNiR-Walls image assets into user's wallpapers directory.
 # Behavior:
 # - clones repo to temp dir (not persisted)
 # - copies only image files into destination
@@ -44,17 +44,17 @@ extras_install_sddm_theme() {
 # Output contract:
 # - sets global EXTRAS_ALIS_WALLS_FIRST_IMAGE to first copied/available image path (or empty)
 extras_install_alis_walls() {
-  local walls_repo_url="https://github.com/snowarch/Alis-Walls.git"
+  local walls_repo_url="https://github.com/snowarch/iNiR-Walls.git"
   local walls_estimated_count=148
   local walls_estimated_bytes=663709943
   local walls_estimated_mib
   walls_estimated_mib=$(awk "BEGIN { printf \"%.1f\", ${walls_estimated_bytes}/1024/1024 }")
 
-  tui_info "Optional wallpapers: Alis-Walls (~${walls_estimated_count} images, ~${walls_estimated_mib} MiB download)."
+  tui_info "Optional wallpapers: iNiR-Walls (~${walls_estimated_count} images, ~${walls_estimated_mib} MiB download)."
   tui_dim "Downloads to temp dir, copies image files only, then removes temp clone."
 
   if ! command -v git >/dev/null 2>&1; then
-    log_warning "Git is required to install Alis-Walls, skipping"
+    log_warning "Git is required to install iNiR-Walls, skipping"
     return 0
   fi
 
@@ -64,11 +64,11 @@ extras_install_alis_walls() {
 
   local walls_tmp
   walls_tmp="$(mktemp -d)"
-  local walls_repo_dir="${walls_tmp}/Alis-Walls"
+  local walls_repo_dir="${walls_tmp}/iNiR-Walls"
   local first_image=""
   EXTRAS_ALIS_WALLS_FIRST_IMAGE=""
 
-  tui_info "Downloading Alis-Walls repository (git progress below)..."
+  tui_info "Downloading iNiR-Walls repository (git progress below)..."
   if git clone --depth 1 --progress "$walls_repo_url" "$walls_repo_dir"; then
     local walls_scanned=0
     local walls_copied=0
@@ -76,7 +76,7 @@ extras_install_alis_walls() {
     shopt -s nullglob globstar
     for wall in "${walls_repo_dir}"/**/*.{jpg,jpeg,png,webp,avif}; do
       [[ -f "$wall" ]] || continue
-      # Alis-Walls generates a 640px WebP per wallpaper under images/thumbs/ for
+      # iNiR-Walls generates a 640px WebP per wallpaper under images/thumbs/ for
       # its gallery page. globstar swept those in as if they were wallpapers.
       # They also share the exact basename of the image they preview, so the
       # only thing keeping a thumbnail from landing on a real wallpaper here is
@@ -97,12 +97,12 @@ extras_install_alis_walls() {
     shopt -u nullglob globstar
 
     if [[ "$walls_scanned" -gt 0 ]]; then
-      log_success "Alis-Walls synced (${walls_scanned} images scanned, ${walls_copied} new copied)"
+      log_success "iNiR-Walls synced (${walls_scanned} images scanned, ${walls_copied} new copied)"
     else
-      log_warning "No wallpapers found in Alis-Walls repository"
+      log_warning "No wallpapers found in iNiR-Walls repository"
     fi
   else
-    log_warning "Failed to download Alis-Walls, continuing"
+    log_warning "Failed to download iNiR-Walls, continuing"
   fi
 
   rm -rf "$walls_tmp"

@@ -1,6 +1,6 @@
 # IPC Reference
 
-Alis exposes IPC targets you can call from Niri keybinds, scripts, or your terminal. The public command and session identity are `alis`; the retired `alis` command is unavailable.
+Alis exposes IPC targets you can call from Niri keybinds, scripts, or your terminal. The public command and session identity are `alis`; the retired `inir` command is unavailable.
 
 > **Quick discovery:** `alis help` lists all targets, `alis <target> --help` shows available functions.
 > Shell completions: `eval "$(alis completions bash)"` (also zsh, fish).
@@ -877,6 +877,9 @@ sends and Escape closes it.
 | Function | Description |
 |----------|-------------|
 | `chat` | Toggle the Companion chat editor (Super+Alt+Comma) |
+| `pocket` | Toggle the Companion pocket state |
+| `prop(kind)` | Trigger a Companion prop animation or interaction |
+| `previewProp(kind)` | Preview a Companion prop animation |
 | `status` | Return bounded JSON explaining Companion visibility and placement on each output |
 
 ```bash
@@ -892,6 +895,9 @@ Manage discovery of the separately installed [Alis-Companion](https://github.com
 | Function | Description |
 |----------|-------------|
 | `refresh` | Recheck the optional package after installation, update or removal |
+| `pocket` | Toggle the Companion pocket state |
+| `prop(kind)` | Trigger a Companion prop animation or interaction |
+| `previewProp(kind)` | Preview a Companion prop animation |
 | `status` | Report optional installation and Companion runtime status |
 
 ```bash

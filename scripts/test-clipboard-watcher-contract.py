@@ -15,8 +15,8 @@ MIGRATION_SINGLE = ROOT / "sdata/migrations/051-cliphist-single-watchers.sh"
 MIGRATION_NEWLINE = ROOT / "sdata/migrations/054-cliphist-no-synthetic-newline.sh"
 
 TEXT_LINE = 'spawn-at-startup "bash" "-c" "exec wl-paste --no-newline --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store"'
-LEGACY_CANONICAL_TEXT_LINE = TEXT_LINE.replace("/quickshell/alis/", "/quickshell/alis/")
-LEGACY_TEXT_LINE = 'spawn-at-startup "bash" "-c" "exec wl-paste --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store"'
+LEGACY_CANONICAL_TEXT_LINE = TEXT_LINE.replace("/quickshell/alis/", "/quickshell/inir/")
+LEGACY_TEXT_LINE = 'spawn-at-startup "bash" "-c" "exec wl-paste --type text --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store"'
 IMAGE_LINE = 'spawn-at-startup "bash" "-c" "exec wl-paste --type image --watch cliphist store"'
 WATCHER_RE = re.compile(
     r'^(?![ \t]*//)[ \t]*(?:spawn-at-startup|spawn-sh-at-startup)\b'
@@ -75,8 +75,8 @@ def check_duplicate_repair() -> None:
 
         startup.write_text(
             "// existing startup\n"
-            'spawn-at-startup "bash" "-c" "wl-paste --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store &"\n'
-            'spawn-at-startup "bash" "-c" "wl-paste --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store &"\n'
+            'spawn-at-startup "bash" "-c" "wl-paste --type text --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store &"\n'
+            'spawn-at-startup "bash" "-c" "wl-paste --type text --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store &"\n'
             'spawn-at-startup "bash" "-c" "wl-paste --type image --watch cliphist store &"\n',
             encoding="utf-8",
         )

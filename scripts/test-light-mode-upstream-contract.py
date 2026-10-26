@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Guard shared light-mode semantics adapted from snowarch/Alis."""
+"""Guard shared light-mode semantics adapted from snowarch/iNiR."""
 
 from pathlib import Path
 import re

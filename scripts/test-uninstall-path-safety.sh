@@ -52,7 +52,7 @@ set -e
 [[ ! -e "$sentinel" ]] \
     || fail 'uninstall executed shell syntax embedded in an XDG path'
 [[ ! -e "$XDG_CONFIG_HOME/quickshell/alis" ]] \
-    || fail 'uninstall did not remove the literal Alis runtime path'
+    || fail 'uninstall did not remove the literal iNiR runtime path'
 
 printf '%s\n' '1..1'
 printf '%s\n' 'ok 1 - uninstall treats expanded XDG/HOME paths as literal data'

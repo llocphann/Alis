@@ -17,7 +17,7 @@ MIGRATION_REQUIRED=true
 
 _cliphist_startup_file="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.d/50-startup.kdl"
 _cliphist_monolithic_file="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
-_text_watcher='spawn-at-startup "bash" "-c" "wl-paste --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store \&"'
+_text_watcher='spawn-at-startup "bash" "-c" "wl-paste --type text --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store \&"'
 
 # Migrations 051/054 normalize startup to "wl-paste --no-newline --type
 # text". Matching only "wl-paste --type text" causes a false pending 034
@@ -49,7 +49,7 @@ migration_check() {
 }
 
 migration_preview() {
-    echo -e "${STY_GREEN}+ wl-paste --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store${STY_RST}"
+    echo -e "${STY_GREEN}+ wl-paste --type text --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store${STY_RST}"
     echo "  wl-paste --type image --watch cliphist store"
     echo ""
     echo "Only the image watcher is spawned, so copied text never reaches the"

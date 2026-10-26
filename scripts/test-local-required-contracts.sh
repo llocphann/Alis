@@ -45,8 +45,8 @@ for pkg in \
     distro/arch/alis-meta/PKGBUILD; do
     require_contains "url='https://github.com/llocphann/Alis'" "$pkg" \
         "$pkg no longer identifies the Alis repository"
-    if grep -Fqi 'github.com/snowarch/alis' "$pkg"; then
-        fail "$pkg still sources the upstream Alis repository"
+    if grep -Fqi 'github.com/snowarch/inir' "$pkg"; then
+        fail "$pkg still sources the upstream iNiR repository"
     fi
 done
 require_contains 'github.com/llocphann/Alis/archive/${_source_ref}.tar.gz' distro/arch/alis-shell/PKGBUILD \
@@ -64,8 +64,8 @@ for info in \
     distro/arch/alis-meta/.SRCINFO; do
     require_contains 'url = https://github.com/llocphann/Alis' "$info" \
         "$info no longer identifies the Alis repository"
-    if grep -Fqi 'github.com/snowarch/alis' "$info"; then
-        fail "$info still advertises the upstream Alis repository"
+    if grep -Fqi 'github.com/snowarch/inir' "$info"; then
+        fail "$info still advertises the upstream iNiR repository"
     fi
 done
 require_contains 'install = alis-shell.install' distro/arch/alis-shell/.SRCINFO \
@@ -114,7 +114,7 @@ done
 # starting Alis; the distributed payload must not carry a second shell service.
 require_contains 'ExecStart=/usr/bin/alis run --session' assets/systemd/alis.service \
     'canonical systemd session owner drifted'
-[[ ! -e assets/systemd/alis.service ]] \
+[[ ! -e assets/systemd/inir.service ]] \
     || fail 'a second legacy unit would risk spawning two shell sessions'
 
 release_script=scripts/release.sh
@@ -127,8 +127,8 @@ require_contains 'https://github.com/llocphann/Alis/blob/stable/CHANGELOG.md' "$
     'release helper changelog URL drifted'
 require_contains 'wiki_url="https://github.com/llocphann/Alis.wiki.git"' "$wiki_script" \
     'Wiki publication target drifted'
-if grep -Fqi 'github.com/snowarch/alis' "$release_script" "$wiki_script"; then
-    fail 'release tooling still targets the upstream Alis repository'
+if grep -Fqi 'github.com/snowarch/inir' "$release_script" "$wiki_script"; then
+    fail 'release tooling still targets the upstream iNiR repository'
 fi
 
 printf '== non-Nix package documentation payload ==\n'

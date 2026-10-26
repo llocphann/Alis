@@ -20,9 +20,9 @@ import gguf_runtime
 FAKE='''#!/usr/bin/python3
 import http.server,json,os,socket,socketserver,subprocess,sys,time
 from pathlib import Path
-record=Path(os.environ['ALIS_TEST_GGUF_RECORD'])
+record=Path(os.environ['INIR_TEST_GGUF_RECORD'])
 record.write_text(json.dumps({'pid':os.getpid(),'argv':sys.argv[1:]}))
-if os.environ.get('ALIS_TEST_GGUF_CHILD')=='1':
+if os.environ.get('INIR_TEST_GGUF_CHILD')=='1':
  child=subprocess.Popen([sys.executable,'-c','import time;time.sleep(60)'])
  record.with_suffix('.child').write_text(str(child.pid))
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -32,8 +32,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
  def do_POST(self):
   payload=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
   record.with_suffix('.payload').write_text(json.dumps(payload))
-  if os.environ.get('ALIS_TEST_GGUF_CRASH')=='1':os._exit(17)
-  time.sleep(float(os.environ.get('ALIS_TEST_GGUF_DELAY','0')))
+  if os.environ.get('INIR_TEST_GGUF_CRASH')=='1':os._exit(17)
+  time.sleep(float(os.environ.get('INIR_TEST_GGUF_DELAY','0')))
   content=json.dumps({'text':'Splish!','expression':'happy'}) if 'response_format' in payload else 'Tiny fixture reply.'
   self.send_response(200);self.end_headers();self.wfile.write(json.dumps({'choices':[{'message':{'content':content},'finish_reason':'stop'}],'usage':{'completion_tokens':8}}).encode())
 class Server(socketserver.UnixStreamServer):
@@ -49,7 +49,7 @@ class Tests(unittest.TestCase):
         with self.model.open('wb') as f:f.write(struct.pack('<4sIQQ',b'GGUF',3,1,1));f.truncate(21*1024*1024)
         self.server=self.root/'llama-server';self.server.write_text(FAKE);self.server.chmod(0o700)
         self.record=self.root/'record.json'
-        self.env=patch.dict(os.environ,{'XDG_RUNTIME_DIR':str(self.root),'ALIS_TEST_GGUF_RECORD':str(self.record),'ALIS_GGUF_ROOTS':json.dumps([str(self.root)])})
+        self.env=patch.dict(os.environ,{'XDG_RUNTIME_DIR':str(self.root),'INIR_TEST_GGUF_RECORD':str(self.record),'INIR_GGUF_ROOTS':json.dumps([str(self.root)])})
         self.env.start()
     def tearDown(self):self.env.stop();self.temp.cleanup()
     def assertPidStopped(self,pid):
@@ -97,7 +97,7 @@ class Tests(unittest.TestCase):
                 server_path=str(self.server),thinking_effort='extreme')
 
     def test_helper_cancel_reaps_model_and_releases_lease(self):
-        env=dict(os.environ,ALIS_TEST_GGUF_DELAY='10')
+        env=dict(os.environ,INIR_TEST_GGUF_DELAY='10')
         helper=subprocess.Popen([sys.executable,str(ROOT/'scripts/ai/gguf_runtime.py')],stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True,env=env)
         try:
             helper.stdin.write(json.dumps({'modelPath':str(self.model),'runtimePath':str(self.server),'messages':[{'role':'user','content':'hello'}]})+'\n');helper.stdin.flush()
@@ -111,7 +111,7 @@ class Tests(unittest.TestCase):
         finally:
             if helper.poll() is None:helper.kill();helper.wait(timeout=3)
     def test_crashed_server_leader_reaps_surviving_process_group(self):
-        with patch.dict(os.environ,{'ALIS_TEST_GGUF_CHILD':'1','ALIS_TEST_GGUF_CRASH':'1'}):
+        with patch.dict(os.environ,{'INIR_TEST_GGUF_CHILD':'1','INIR_TEST_GGUF_CRASH':'1'}):
             with self.assertRaises(gguf_runtime.RuntimeErrorLocal):
                 gguf_runtime.complete(str(self.model),[{'role':'user','content':'crash'}],server_path=str(self.server))
         child=int(self.record.with_suffix('.child').read_text())

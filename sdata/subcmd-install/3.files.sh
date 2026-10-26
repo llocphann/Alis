@@ -427,7 +427,7 @@ case "${SKIP_NIRI}" in
 esac
 
 # Fresh installs need the same override repair as upgrades. Otherwise
-# 75-alis-launcher-binds.kdl is loaded after 70 and still calls blocked alis.
+# 75-inir-launcher-binds.kdl is loaded after 70 and still calls blocked inir.
 if [[ -f "${XDG_CONFIG_HOME}/niri/config.kdl" ]]; then
   if ! bash "${REPO_ROOT}/scripts/repair-niri-alis-keybinds.sh"; then
     log_error "Niri hotkey launcher repair failed; original files are backed up"
@@ -990,13 +990,13 @@ fi
 # Optional extra wallpapers (fresh install interactive only)
 ALIS_WALLS_DEFAULT_OVERRIDE=""
 if [[ "${INSTALL_FIRSTRUN}" == true && "${ask}" == "true" ]]; then
-  if tui_confirm "Download and install Alis-Walls wallpapers?" "no"; then
+  if tui_confirm "Download and install iNiR-Walls wallpapers?" "no"; then
     EXTRAS_ALIS_WALLS_FIRST_IMAGE=""
     extras_install_alis_walls
     ALIS_WALLS_FIRST="${EXTRAS_ALIS_WALLS_FIRST_IMAGE}"
-    if [[ -n "$ALIS_WALLS_FIRST" ]] && tui_confirm "Replace Alis default wallpaper selection with an Alis-Walls wallpaper?" "yes"; then
+    if [[ -n "$ALIS_WALLS_FIRST" ]] && tui_confirm "Replace Alis default wallpaper selection with an iNiR-Walls wallpaper?" "yes"; then
       ALIS_WALLS_DEFAULT_OVERRIDE="$ALIS_WALLS_FIRST"
-      log_success "Default wallpaper source switched to Alis-Walls"
+      log_success "Default wallpaper source switched to iNiR-Walls"
     fi
   fi
 fi

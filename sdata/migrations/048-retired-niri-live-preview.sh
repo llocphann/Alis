@@ -8,17 +8,17 @@
 MIGRATION_ID="048-retired-niri-live-preview"
 MIGRATION_TITLE="Remove retired Niri live preview"
 MIGRATION_DESCRIPTION="Removes the experimental Niri native preview plugin and stale adaptive-preview configuration."
-MIGRATION_TARGET_FILE="/usr/share/alis/niri-preview-plugin"
+MIGRATION_TARGET_FILE="/usr/share/inir/niri-preview-plugin"
 MIGRATION_REQUIRED=true
 
 _retired_niri_preview_config_path() {
-  if declare -F resolve_alis_config_dir >/dev/null 2>&1; then
-    printf '%s/config.json\n' "$(resolve_alis_config_dir)"
+  if declare -F resolve_inir_config_dir >/dev/null 2>&1; then
+    printf '%s/config.json\n' "$(resolve_inir_config_dir)"
     return
   fi
 
   local xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
-  local config_new="${xdg_config_home}/alis/config.json"
+  local config_new="${xdg_config_home}/inir/config.json"
   local config_legacy="${xdg_config_home}/illogical-impulse/config.json"
   if [[ -f "$config_new" ]]; then
     printf '%s\n' "$config_new"
@@ -58,11 +58,11 @@ _retired_niri_preview_config_present() {
 }
 
 _retired_niri_preview_plugin_present() {
-  if command -v pacman >/dev/null 2>&1 && pacman -Q alis-niri-preview >/dev/null 2>&1; then
+  if command -v pacman >/dev/null 2>&1 && pacman -Q inir-niri-preview >/dev/null 2>&1; then
     return 0
   fi
-  [[ -e /usr/share/alis/niri-preview-plugin
-      || -e /usr/lib/qt6/qml/Alis/NiriPreview ]]
+  [[ -e /usr/share/inir/niri-preview-plugin
+      || -e /usr/lib/qt6/qml/Hadalis/NiriPreview ]]
 }
 
 migration_check() {
@@ -73,7 +73,7 @@ migration_check() {
 
 migration_preview() {
   echo "Return Niri Overview to the cached PNG snapshot backend."
-  echo -e "  ${STY_RED}- alis-niri-preview package / QML plugin${STY_RST}"
+  echo -e "  ${STY_RED}- inir-niri-preview package / QML plugin${STY_RST}"
   echo -e "  ${STY_RED}- retired Overview adaptive/live-preview settings${STY_RST}"
   echo "Existing snapshot cache settings and unrelated Overview options are preserved."
 }
@@ -134,18 +134,18 @@ migration_apply() {
     echo "Removed retired adaptive-preview config"
   fi
 
-  if command -v pacman >/dev/null 2>&1 && pacman -Q alis-niri-preview >/dev/null 2>&1; then
-    pkg_sudo pacman -R --noconfirm alis-niri-preview || {
-      echo "Could not uninstall retired alis-niri-preview package." >&2
+  if command -v pacman >/dev/null 2>&1 && pacman -Q inir-niri-preview >/dev/null 2>&1; then
+    pkg_sudo pacman -R --noconfirm inir-niri-preview || {
+      echo "Could not uninstall retired inir-niri-preview package." >&2
       return 1
     }
   fi
 
-  if [[ -e /usr/share/alis/niri-preview-plugin
-        || -e /usr/lib/qt6/qml/Alis/NiriPreview ]]; then
+  if [[ -e /usr/share/inir/niri-preview-plugin
+        || -e /usr/lib/qt6/qml/Hadalis/NiriPreview ]]; then
     pkg_sudo rm -rf \
-      /usr/share/alis/niri-preview-plugin \
-      /usr/lib/qt6/qml/Alis/NiriPreview || {
+      /usr/share/inir/niri-preview-plugin \
+      /usr/lib/qt6/qml/Hadalis/NiriPreview || {
         echo "Could not remove retired Niri preview plugin files." >&2
         return 1
       }

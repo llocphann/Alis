@@ -21,7 +21,7 @@ escaped="${escaped//|/\\|}"
 # Historical CLI is only an input to migration; emitted commands use Alis.
 legacy_cli='in''ir'
 files=("$root")
-for filename in 70-binds.kdl 75-alis-launcher-binds.kdl 75-alis-launcher-binds.kdl 50-startup.kdl 90-user-extra.kdl; do
+for filename in 70-binds.kdl 75-inir-launcher-binds.kdl 75-alis-launcher-binds.kdl 50-startup.kdl 90-user-extra.kdl; do
     if grep -Fq "include \"config.d/$filename\"" "$root"; then
         files+=("$cfg/config.d/$filename")
     fi
@@ -38,10 +38,10 @@ for file in "${files[@]}"; do
     # obsolete executable paths, preserving command arguments and user hotkeys.
     tmp="$(mktemp "${file}.alis-XXXXXX")"
     sed \
-        -e "s|spawn \"alis\" |spawn \"${escaped}\" |g" \
-        -e "s|spawn-at-startup \"alis\" |spawn-at-startup \"${escaped}\" |g" \
+        -e "s|spawn \"inir\" |spawn \"${escaped}\" |g" \
+        -e "s|spawn-at-startup \"inir\" |spawn-at-startup \"${escaped}\" |g" \
         -e "s|exec ${legacy_cli} |exec alis |g" \
-        -e 's|"alis-keybind"|"alis-keybind"|g' \
+        -e 's|"inir-keybind"|"alis-keybind"|g' \
         -e "s|/bin/${legacy_cli}\"|/bin/alis\"|g" \
         "$file" > "$tmp" || { rm -f "$tmp"; exit 1; }
     if cmp -s "$tmp" "$file"; then

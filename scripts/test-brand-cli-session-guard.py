@@ -12,7 +12,7 @@ if [[ "$*" == *' -n '* || "$*" == '-n '* || "$*" == *' -d '* ]]; then touch "$LA
 exit 0
 ''');qs.chmod(0o755)
  ctl=bin/'systemctl';ctl.write_text('''#!/bin/bash
-if [[ "$*" == *'is-active'* && "$*" == *'alis.service'* ]]; then exit 0; fi
+if [[ "$*" == *'is-active'* && "$*" == *'inir.service'* ]]; then exit 0; fi
 if [[ "$*" == *start* || "$*" == *restart* || "$*" == *enable* ]]; then touch "$LAUNCHED"; fi
 exit 3
 ''');ctl.chmod(0o755)

@@ -4,10 +4,10 @@ MIGRATION_TITLE="Move local Music to Dashboard"
 MIGRATION_DESCRIPTION="Moves local Music navigation to Dashboard while retaining the existing MPD connection, library folder and enabled preference."
 MIGRATION_REQUIRED=true
 _dashboard_music_config_path() {
-    if declare -F resolve_alis_config_dir >/dev/null 2>&1; then
-        printf '%s/config.json' "$(resolve_alis_config_dir)"
-    elif [[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/alis/config.json" ]]; then
-        printf '%s/alis/config.json' "${XDG_CONFIG_HOME:-$HOME/.config}"
+    if declare -F resolve_inir_config_dir >/dev/null 2>&1; then
+        printf '%s/config.json' "$(resolve_inir_config_dir)"
+    elif [[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/inir/config.json" ]]; then
+        printf '%s/inir/config.json' "${XDG_CONFIG_HOME:-$HOME/.config}"
     else
         printf '%s/illogical-impulse/config.json' "${XDG_CONFIG_HOME:-$HOME/.config}"
     fi

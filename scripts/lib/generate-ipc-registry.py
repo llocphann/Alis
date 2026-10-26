@@ -260,7 +260,7 @@ def parse_ipc_md() -> dict[str, IpcMdEntry]:
             continue
 
         # New h3 target heading
-        m = re.match(r"^###\s+(\w+)\s*$", stripped)
+        m = re.match(r"^###\s+([\w-]+)\s*$", stripped)
         if m:
             # Save previous description
             if current and collecting_desc:

@@ -9,10 +9,10 @@ MIGRATION_REQUIRED=true
 migration_check() {
   local xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
   # BRAND-R01: a masked original unit and canonical user service mean the
-  # handoff is complete. Historic Alis migrations are ALREADY superseded;
+  # handoff is complete. Historic iNiR migrations are ALREADY superseded;
   # never suggest re-enabling the retired owner or rewriting Alis Niri paths.
-  if [[ -L "$xdg_config_home/systemd/user/alis.service" &&
-        "$(readlink -- "$xdg_config_home/systemd/user/alis.service")" == /dev/null &&
+  if [[ -L "$xdg_config_home/systemd/user/inir.service" &&
+        "$(readlink -- "$xdg_config_home/systemd/user/inir.service")" == /dev/null &&
         -f "$xdg_config_home/systemd/user/alis.service" ]]; then
     return 1
   fi
@@ -26,7 +26,7 @@ import sys
 
 startup = Path(sys.argv[1])
 monolithic = Path(sys.argv[2])
-text_line = 'spawn-at-startup "bash" "-c" "exec wl-paste --no-newline --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store"'
+text_line = 'spawn-at-startup "bash" "-c" "exec wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store"'
 image_line = 'spawn-at-startup "bash" "-c" "exec wl-paste --type image --watch cliphist store"'
 watcher = re.compile(
     r'^(?![ \t]*//)[ \t]*(?:spawn-at-startup|spawn-sh-at-startup)\b'
@@ -75,8 +75,8 @@ migration_apply() {
   local xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
   # A directly invoked historical apply must be harmless after the Alis
   # singleton handoff, even when the original unit archive is unavailable.
-  if [[ -L "$xdg_config_home/systemd/user/alis.service" &&
-        "$(readlink -- "$xdg_config_home/systemd/user/alis.service")" == /dev/null &&
+  if [[ -L "$xdg_config_home/systemd/user/inir.service" &&
+        "$(readlink -- "$xdg_config_home/systemd/user/inir.service")" == /dev/null &&
         -f "$xdg_config_home/systemd/user/alis.service" ]]; then
     printf 'SKIP: retired 051 historical clipboard writer migration; Alis owns the session.\n'
     return 0
@@ -91,7 +91,7 @@ import sys
 
 startup = Path(sys.argv[1])
 monolithic = Path(sys.argv[2])
-text_line = 'spawn-at-startup "bash" "-c" "exec wl-paste --no-newline --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store"'
+text_line = 'spawn-at-startup "bash" "-c" "exec wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store"'
 image_line = 'spawn-at-startup "bash" "-c" "exec wl-paste --type image --watch cliphist store"'
 watcher = re.compile(
     r'^(?![ \t]*//)[ \t]*(?:spawn-at-startup|spawn-sh-at-startup)\b'

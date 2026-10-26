@@ -5,7 +5,7 @@
 
 MIGRATION_ID="042-mpd-mpris-bridge"
 MIGRATION_TITLE="Install MPD MPRIS bridge"
-MIGRATION_DESCRIPTION="Installs mpd-mpris on repo-managed Arch systems so MPD/rmpc playback is visible to Alis Media controls."
+MIGRATION_DESCRIPTION="Installs mpd-mpris on repo-managed Arch systems so MPD/rmpc playback is visible to Hadalis Media controls."
 MIGRATION_TARGET_FILE="system package: mpd-mpris"
 MIGRATION_REQUIRED=true
 
@@ -26,7 +26,7 @@ migration_check() {
 
 migration_preview() {
   echo -e "${STY_GREEN}+ install mpd-mpris${STY_RST}"
-  echo "  MPD and rmpc remain unchanged; this only adds the MPRIS bridge used by Alis Media."
+  echo "  MPD and rmpc remain unchanged; this only adds the MPRIS bridge used by Hadalis Media."
 }
 
 migration_diff() {
@@ -60,5 +60,5 @@ migration_apply() {
 
   # Do not start MPD or change its configuration here. MprisController starts
   # mpd-mpris.service only when a local MPD session actually exists.
-  echo "mpd-mpris installed; Alis will start the user bridge when MPD is active."
+  echo "mpd-mpris installed; Hadalis will start the user bridge when MPD is active."
 }

@@ -13,7 +13,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GENERATOR_PATH = REPO_ROOT / "scripts" / "lib" / "generate-ipc-registry.py"
 
-spec = importlib.util.spec_from_file_location("alis_ipc_registry_generator", GENERATOR_PATH)
+spec = importlib.util.spec_from_file_location("inir_ipc_registry_generator", GENERATOR_PATH)
 if spec is None or spec.loader is None:
     raise SystemExit(f"FAIL: unable to load {GENERATOR_PATH}")
 module = importlib.util.module_from_spec(spec)
@@ -89,7 +89,7 @@ if missing_descriptions:
 # The documentation is generator input for installed CLI help. Every copied
 # keybind must call the available public command, rather than a retired CLI.
 for target in merged_targets:
-    if re.search(r'\bspawn\s+"alis"', target.keybind_example):
+    if re.search(r'\bspawn\s+"inir"', target.keybind_example):
         raise SystemExit(f"FAIL: {target.name} advertises a disabled public launcher")
 generated = module.generate_bash(merged_targets, module.generate_aliases(merged_targets))
 if generated != module.OUTPUT.read_text():
@@ -104,7 +104,7 @@ for target, expected_text in (
         ["bash", str(REPO_ROOT / "scripts/alis"), target, "--help"],
         capture_output=True, text=True, check=True,
     )
-    if expected_text not in help_result.stdout or re.search(r"\balis\b", help_result.stdout):
+    if expected_text not in help_result.stdout or re.search(r"\binir\b", help_result.stdout):
         raise SystemExit(f"FAIL: {target} installed CLI help still advertises a retired command")
 
 print(

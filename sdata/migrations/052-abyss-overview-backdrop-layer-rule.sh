@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Migration: ensure Niri can render Alis wallpaper inside its built-in
+# Migration: ensure Niri can render Hadalis wallpaper inside its built-in
 # Overview backdrop. The original optional migration could be skipped, while
 # Abyss now deliberately reuses the stable quickshell:iiBackdrop namespace.
 
 MIGRATION_ID="052-abyss-overview-backdrop-layer-rule"
 MIGRATION_TITLE="Restore wallpaper in Niri Overview"
-MIGRATION_DESCRIPTION="Ensures Alis backdrop wallpaper surfaces are placed inside Niri's built-in Overview backdrop, including hot-corner activation."
+MIGRATION_DESCRIPTION="Ensures Hadalis backdrop wallpaper surfaces are placed inside Niri's built-in Overview backdrop, including hot-corner activation."
 MIGRATION_REQUIRED=true
 
 _overview_backdrop_niri_dir() {
@@ -115,7 +115,7 @@ migration_apply() {
 
   mkdir -p "$(dirname "$target")"
   {
-    printf '\n// Alis wallpaper surfaces inside Niri Overview/hot-corner backdrop.\n'
+    printf '\n// Hadalis wallpaper surfaces inside Niri Overview/hot-corner backdrop.\n'
     if [[ "$need_ii" == true ]]; then
       cat <<'RULE'
 

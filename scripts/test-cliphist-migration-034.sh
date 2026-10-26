@@ -11,7 +11,7 @@ monolithic="$XDG_CONFIG_HOME/niri/config.kdl"
 mkdir -p -- "$(dirname "$startup")"
 source "$repo/sdata/migrations/034-cliphist-text-watcher.sh"
 fail() { printf 'FAIL: 034 clipboard migration: %s\n' "$*" >&2; exit 1; }
-text_line='spawn-at-startup "bash" "-c" "exec wl-paste --no-newline --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store"'
+text_line='spawn-at-startup "bash" "-c" "exec wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store"'
 image_line='spawn-at-startup "bash" "-c" "exec wl-paste --type image --watch cliphist store"'
 printf '%s\n%s\n' "$text_line" "$image_line" > "$startup"
 baseline="$(sha256sum "$startup" | cut -d' ' -f1)"

@@ -23,12 +23,12 @@ REQUIRED = {
     "settings": "modules/settings/CompanionConfig.qml",
     "binary": "native/bin/alis-companiond",
 }
-# The pinned Companion source still builds/publishes alis-companiond and
+# The pinned Companion source still builds/publishes inir-companiond and
 # declares that exact name in its signed release manifest. Both are explicit,
 # fixed paths; never accept a path supplied by an arbitrary manifest.
 COMPATIBLE_BINARIES = frozenset((
     REQUIRED["binary"],
-    "native/bin/alis-companiond",
+    "native/bin/inir-companiond",
 ))
 
 

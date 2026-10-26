@@ -93,11 +93,11 @@ systemctl() {
     [[ "${1:-}" == --user ]] || return 2
     shift
     case "${1:-}" in
-        cat) [[ "${2:-}" == alis.service && "$OLD_UNIT" == 1 ]] ;;
+        cat) [[ "${2:-}" == inir.service && "$OLD_UNIT" == 1 ]] ;;
         is-active)
             [[ "${2:-}" == --quiet ]] || return 2
             case "${3:-}" in
-                alis.service) [[ "$OLD_ACTIVE" == 1 ]] ;;
+                inir.service) [[ "$OLD_ACTIVE" == 1 ]] ;;
                 alis.service) [[ "$NEW_ACTIVE" == 1 ]] ;;
                 *) return 1 ;;
             esac ;;
@@ -127,7 +127,7 @@ run_recovery_stage() {
 # must return before payload copying or native compilation; safe post-cutover
 # ownership must survive the same stage that previously rejected all old units.
 mkdir -p "$XDG_CONFIG_HOME/systemd/user"
-printf '%s\n' 'retained rollback unit' > "$XDG_CONFIG_HOME/systemd/user/alis.service"
+printf '%s\n' 'retained rollback unit' > "$XDG_CONFIG_HOME/systemd/user/inir.service"
 printf '%s\n' '//@ pragma ShellId alis' > "$runtime/shell.qml"
 OLD_UNIT=1
 blocked_stage() {
@@ -143,9 +143,9 @@ NEW_ACTIVE=1; blocked_stage 'two active owners'
 OLD_ACTIVE=0; OLD_ENABLED=enabled; blocked_stage 'legacy autostart still enabled'
 OLD_ENABLED=disabled
 mkdir -p "$XDG_CONFIG_HOME/systemd/user/niri.service.wants"
-ln -s ../alis.service "$XDG_CONFIG_HOME/systemd/user/niri.service.wants/alis.service"
+ln -s ../inir.service "$XDG_CONFIG_HOME/systemd/user/niri.service.wants/inir.service"
 blocked_stage 'lingering legacy wants link'
-unlink "$XDG_CONFIG_HOME/systemd/user/niri.service.wants/alis.service"
+unlink "$XDG_CONFIG_HOME/systemd/user/niri.service.wants/inir.service"
 
 # Bash errexit is suppressed for functions invoked as an || operand. A build
 # failure must still stop this sourced stage explicitly, without publishing a
@@ -162,7 +162,7 @@ unset FAIL_NATIVE_BUILD
     cd "$repo_root"
     run_recovery_stage
 ) || fail 'recovery install-stage execution failed'
-grep -Fxq 'retained rollback unit' "$XDG_CONFIG_HOME/systemd/user/alis.service" ||
+grep -Fxq 'retained rollback unit' "$XDG_CONFIG_HOME/systemd/user/inir.service" ||
     fail 'safe retained legacy unit was modified'
 for binary in alis-inputd alis-mpdd alis-native alis-theme; do
     [[ -x "$runtime/native/bin/$binary" ]] || fail "successful install lacks native runtime: $binary"

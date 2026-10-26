@@ -381,7 +381,7 @@ fi
 
 echo ""
 echo -e "${STY_CYAN}For more help, see:${STY_RST}"
-echo "  - https://github.com/snowarch/alis/wiki/Manual-Installation"
+echo "  - https://github.com/snowarch/inir/wiki/Manual-Installation"
 echo "  - https://quickshell.outfoxxed.me/docs"
 echo "  - https://github.com/YaLTeR/niri/wiki"
 echo ""

@@ -77,7 +77,7 @@ def main() -> None:
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.alisEverywhere",
+        "Appearance.inirEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.cookieEverywhere",
     ):
@@ -124,7 +124,7 @@ def main() -> None:
         forbid(global_actions, token, "GlobalActions.qml")
 
     for token in (
-        "Appearance.alisEverywhere",
+        "Appearance.inirEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.angelEverywhere",
         "Appearance.regaliaEverywhere",

@@ -16,8 +16,8 @@ git show "$ref:assets/systemd/alis.service" |
     grep -Fq 'ExecStart=/usr/bin/alis run --session' ||
     fail 'pinned archive lacks canonical Alis user service'
 git cat-file -e "$ref:scripts/alis" || fail 'pinned archive lacks canonical CLI'
-if git cat-file -e "$ref:scripts/alis" 2>/dev/null; then
-    fail 'pinned archive still carries retired public alis CLI'
+if git cat-file -e "$ref:scripts/inir" 2>/dev/null; then
+    fail 'pinned archive still carries retired public inir CLI'
 fi
 for binary in alis-inputd alis-mpdd alis-native alis-theme; do
     git show "$ref:native/scripts/install-runtime.sh" |

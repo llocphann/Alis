@@ -23,7 +23,7 @@ def read(command):
     return json.loads(output.getvalue())
 
 
-with tempfile.TemporaryDirectory(prefix="alis-niri-read-") as temporary:
+with tempfile.TemporaryDirectory(prefix="inir-niri-read-") as temporary:
     os.environ["XDG_CONFIG_HOME"] = temporary
     config = Path(temporary) / "niri"
     (config / "config.d").mkdir(parents=True)

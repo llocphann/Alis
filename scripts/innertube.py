@@ -689,7 +689,7 @@ def _lrclib_synced(title, artist, duration):
     import urllib.request, urllib.parse
     q = urllib.parse.urlencode({"track_name": title, "artist_name": artist})
     req = urllib.request.Request("https://lrclib.net/api/search?" + q,
-                                 headers={"User-Agent": "Alis (https://github.com/snowarch/alis)"})
+                                 headers={"User-Agent": "Alis (https://github.com/snowarch/inir)"})
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             tracks = json.loads(resp.read())

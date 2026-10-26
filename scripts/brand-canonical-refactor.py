@@ -35,7 +35,7 @@ EXCLUDED_PREFIXES = (
     "defaults/plugins/", "assets/icons/fluent/",
     # Upstream names in About are attribution, never canonicalized to Alis.
     "modules/settings/About.qml", "modules/waffle/settings/pages/WAboutPage.qml",
-    # Package post-upgrade notices must recognize retiring Alis services.
+    # Package post-upgrade notices must recognize retiring iNiR services.
     "distro/arch/alis-shell/alis-shell.install",
     "distro/arch/alis-shell-git/alis-shell-git.install",
 )
@@ -45,16 +45,16 @@ BINARY_EXTENSIONS = {
     ".lockb",
 }
 SOURCE_HOLD = {
-    "snowarch/Alis": "@@UPSTREAM_SOURCE_I@@",
-    "snowarch/alis": "@@UPSTREAM_SOURCE_L@@",
-    "Alis-Walls": "@@UPSTREAM_WALLPACK@@",
-    "ALIS-Walls": "@@UPSTREAM_WALLPACK2@@",
+    "snowarch/iNiR": "@@UPSTREAM_SOURCE_I@@",
+    "snowarch/inir": "@@UPSTREAM_SOURCE_L@@",
+    "iNiR-Walls": "@@UPSTREAM_WALLPACK@@",
+    "INIR-Walls": "@@UPSTREAM_WALLPACK2@@",
 }
 DIRS_TO_RENAME = (
-    "distro/arch/alis-", "sdata/dist-arch/alis-",
-    "scripts/completions/alis.", "assets/helpers/alis-",
-    "assets/polkit/org.alis.", "defaults/niri/config.d/75-alis-",
-    "dots/.config/vesktop/themes/alis-",
+    "distro/arch/inir-", "sdata/dist-arch/inir-",
+    "scripts/completions/inir.", "assets/helpers/inir-",
+    "assets/polkit/org.inir.", "defaults/niri/config.d/75-inir-",
+    "dots/.config/vesktop/themes/inir-",
 )
 
 
@@ -68,10 +68,10 @@ def included(path: str) -> bool:
 def rename_text(text: str) -> str:
     for old, temporary in SOURCE_HOLD.items():
         text = text.replace(old, temporary)
-    text = (text.replace("ALIS", "ALIS")
-                .replace("Alis", "Alis")
-                .replace("alis", "alis")
-                .replace("Alis", "Alis"))
+    text = (text.replace("INIR", "ALIS")
+                .replace("Inir", "Alis")
+                .replace("inir", "alis")
+                .replace("iNiR", "Alis"))
     for old, temporary in SOURCE_HOLD.items():
         text = text.replace(temporary, old)
     return text
@@ -79,7 +79,7 @@ def rename_text(text: str) -> str:
 
 def rename_path(path: str) -> str:
     if any(path.startswith(prefix) for prefix in DIRS_TO_RENAME):
-        return path.replace("ALIS", "ALIS").replace("alis", "alis")
+        return path.replace("INIR", "ALIS").replace("inir", "alis")
     return path
 
 
@@ -116,7 +116,7 @@ def main() -> int:
         target_text = rename_text(text)
         if relative == "CODE_OF_CONDUCT.md":
             target_text = target_text.replace(
-                "https://github.com/snowarch/alis/issues",
+                "https://github.com/snowarch/inir/issues",
                 "https://github.com/llocphann/Alis/issues",
             )
         if text != target_text or new_path != old_path:
@@ -129,7 +129,7 @@ def main() -> int:
     ]
     # Old public completion sources already have managed Alis equivalents.
     completions = [(o,n,s) for o,n,s in changes
-                   if "/scripts/completions/alis." in str(o)
+                   if "/scripts/completions/inir." in str(o)
                    and n.exists()]
     if completions:
         for o,n,s in completions:

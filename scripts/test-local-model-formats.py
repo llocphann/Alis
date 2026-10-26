@@ -161,7 +161,7 @@ with tempfile.TemporaryDirectory(prefix='local-model-formats-') as temporary:
     options=json.loads((ROOT/'defaults/config.json').read_text())
     options['abyss']['companion']['enabled']=False
     options['ai']['localModelFolder']=str(source)
-    env=dict(os.environ,ALIS_GGUF_ROOTS='[]',FORMAT_FOLDER=str(source),FORMAT_BAD_FOLDER=str(broken),PYTHONDONTWRITEBYTECODE='1')
+    env=dict(os.environ,INIR_GGUF_ROOTS='[]',FORMAT_FOLDER=str(source),FORMAT_BAD_FOLDER=str(broken),PYTHONDONTWRITEBYTECODE='1')
     for name in ('CONFIG','DATA','CACHE','STATE'):
         directory=private/name.lower();directory.mkdir(exist_ok=True)
         env['XDG_'+name+'_HOME']=str(directory)

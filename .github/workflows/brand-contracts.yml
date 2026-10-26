@@ -67,8 +67,8 @@ jobs:
           bash -n scripts/alis scripts/brand-recovery-cli.sh scripts/test-brand-legacy-cli.sh scripts/repair-niri-alis-keybinds.sh scripts/test-brand-niri-hotkeys.sh scripts/brand-owner-audit.sh scripts/test-brand-entrypoints.sh scripts/test-alis-namespace-alias.sh scripts/test-alis-desktop-update.sh sdata/lib/sync-alis-desktop.sh scripts/test-brand-single-owner.sh scripts/test-brand-upgrade-rollback.sh scripts/test-brand-owner-audit.sh scripts/test-setup-sync-atomic.sh sdata/lib/safe-setup-sync.sh
           bash -n scripts/brand-namespace-rollback.sh scripts/test-brand-namespace-rollback.sh scripts/test-brand-uninstall.sh
           bash -n sdata/migrations/061-alis-namespace-alias.sh sdata/migrations/034-cliphist-text-watcher.sh scripts/test-cliphist-migration-034.sh sdata/subcmd-install/3.files.sh setup
-          test ! -e scripts/alis
-          test ! -e assets/systemd/alis.service
+          test ! -e scripts/inir
+          test ! -e assets/systemd/inir.service
           test -f assets/systemd/alis.service
           grep -Fxq '//@ pragma ShellId alis' shell.qml
           grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' assets/systemd/alis.service
@@ -90,7 +90,7 @@ jobs:
       - name: Legacy public CLI disabled, Alis/internal engine preserved
         shell: bash
         run: bash scripts/test-brand-legacy-cli.sh
-      - name: Repair Niri Mod+Q and Mod+Return after public alis removal
+      - name: Repair Niri Mod+Q and Mod+Return after public inir removal
         shell: bash
         run: bash scripts/test-brand-niri-hotkeys.sh
       - name: Public app IDs on repo-copy upgrade

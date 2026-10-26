@@ -43,7 +43,7 @@ _alis_ensure_utf8_locale
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 for _alis_compat_helper in \
     "$script_dir/lib/brand-env-compat.sh" \
-    "${ALIS_RUNTIME_DIR:-${ALIS_RUNTIME_DIR:-}}/scripts/lib/brand-env-compat.sh" \
+    "${ALIS_RUNTIME_DIR:-${INIR_RUNTIME_DIR:-}}/scripts/lib/brand-env-compat.sh" \
     "$script_dir/../share/quickshell/alis/scripts/lib/brand-env-compat.sh" \
     "${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis/scripts/lib/brand-env-compat.sh" \
     /usr/local/share/quickshell/alis/scripts/lib/brand-env-compat.sh \

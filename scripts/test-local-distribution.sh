@@ -3,7 +3,7 @@ set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 runtime_root="$(cd -- "$script_dir/.." && pwd)"
-launcher="${ALIS_LAUNCHER_PATH:-${ALIS_LAUNCHER_PATH:-$runtime_root/scripts/alis}}"
+launcher="${ALIS_LAUNCHER_PATH:-${INIR_LAUNCHER_PATH:-$runtime_root/scripts/alis}}"
 
 run_runtime=false
 if [[ "${1:-}" == "--with-runtime" ]]; then
@@ -139,7 +139,7 @@ if failed:
 binds = (root / "defaults/niri/config.d/70-binds.kdl").read_text(encoding="utf-8")
 if 'Alt+Tab { next-window; }' not in binds or 'Alt+Shift+Tab { previous-window; }' not in binds:
     raise SystemExit("FAIL: native Niri Alt+Tab bindings are missing")
-if any(f'spawn "{launcher}" "altSwitcher"' in binds for launcher in ("alis", "alis")):
+if any(f'spawn "{launcher}" "altSwitcher"' in binds for launcher in ("alis", "inir")):
     raise SystemExit("FAIL: fresh-install Alt+Tab invokes the shell switcher")
 PY
 

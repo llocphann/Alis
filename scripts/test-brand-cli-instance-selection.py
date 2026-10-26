@@ -51,7 +51,7 @@ else:sys.exit(83)
                OTHER_DISPLAY_ALIAS=str(other_display), REAL_CONFIG=str(current),
                ALIS_SYSTEM_RUNTIME_DIR=str(base/"absent-system"),
                ALIS_FALLBACK_SYSTEM_RUNTIME_DIR=str(base/"absent-fallback"))
-    for key in ["ALIS_RUNTIME_DIR","ALIS_RUNTIME_DIR","ALIS_RUNTIME_DIR","QS_CONFIG_NAME","QS_CONFIG_PATH","QS_MANIFEST"]:
+    for key in ["ALIS_RUNTIME_DIR","INIR_RUNTIME_DIR","HADALIS_RUNTIME_DIR","QS_CONFIG_NAME","QS_CONFIG_PATH","QS_MANIFEST"]:
         env.pop(key,None)
     for text_only in [False, True]:
         p = subprocess.run(["bash",str(cli),"logs","--full"],env={**env,"TEXT_ONLY":str(int(text_only))},

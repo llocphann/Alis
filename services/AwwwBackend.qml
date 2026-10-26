@@ -14,7 +14,7 @@ Singleton {
 
     readonly property string provider: "awww"
     // The internal renderer owns both rest and transition frames in liquid mode.
-    readonly property bool enabled: transitionType !== "alisMelt" && transitionType !== "alisMelt"
+    readonly property bool enabled: transitionType !== "alisMelt" && transitionType !== "inirMelt"
     readonly property int transitionFps: Config.options?.background?.backend?.awww?.transitionFps ?? 60
     readonly property int simpleStep: Config.options?.background?.backend?.awww?.simpleStep ?? 5
     readonly property int spatialStep: Config.options?.background?.backend?.awww?.spatialStep ?? 30
@@ -193,7 +193,7 @@ Singleton {
         // Both Liquid aliases use the internal renderer; this mapping only
         // informs duration controls and fallback handling.
         case "alisMelt":
-        case "alisMelt":
+        case "inirMelt":
         case "crossfade":
         case "fadeThrough":
         case "blurFade":

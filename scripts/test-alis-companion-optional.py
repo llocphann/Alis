@@ -117,7 +117,7 @@ ShellRoot {
     env.update(QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software", QT_QUICK_CONTROLS_STYLE="Basic",
                XDG_CONFIG_HOME=str(private / "config"), XDG_DATA_HOME=str(data), XDG_RUNTIME_DIR=str(runtime),
                XDG_STATE_HOME=str(private / "state"), XDG_CACHE_HOME=str(private / "cache"),
-               ALIS_COMPANIOND=str(fake), ALIS_GGUF_ROOTS="[]", QT_QPA_PLATFORMTHEME="generic")
+               INIR_COMPANIOND=str(fake), INIR_GGUF_ROOTS="[]", QT_QPA_PLATFORMTHEME="generic")
     process = subprocess.Popen(["dbus-run-session", "--", qs, "--path", str(shell / "shell.qml")],
                                env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, start_new_session=True)
     try:

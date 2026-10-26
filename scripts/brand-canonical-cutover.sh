@@ -21,7 +21,7 @@ command -v alis >/dev/null || { echo 'Canonical alis executable missing' >&2; ex
 repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cfg="${XDG_CONFIG_HOME:-$HOME/.config}"
 user_units="$cfg/systemd/user"
-old_unit="$user_units/alis.service"
+old_unit="$user_units/inir.service"
 new_unit="$user_units/alis.service"
 template="$repo/assets/systemd/alis.service"
 launcher="$(command -v alis)"
@@ -53,19 +53,19 @@ fi
 # Stopping a Type=dbus service does not release its unit's BusName allocation.
 # Archive the old unit OUTSIDE the systemd search path, mask the old name,
 # and daemon-reload before loading the new owner. A mask prevents a system
-# package's lower-priority alis.service from taking over the retired name.
+# package's lower-priority inir.service from taking over the retired name.
 retire_root="${XDG_STATE_HOME:-$HOME/.local/state}/alis-cutover-backups"
-retired_unit="$retire_root/retired-alis.service"
+retired_unit="$retire_root/retired-inir.service"
 [[ ! -e "$retired_unit" && ! -L "$retired_unit" ]] ||
   { echo "Existing retired service archive requires review: $retired_unit" >&2; exit 2; }
 [[ -f "$old_unit" && ! -L "$old_unit" ]] ||
   { echo "Legacy unit is not an ordinary file: $old_unit" >&2; exit 2; }
-old_active="$(systemctl --user is-active alis.service 2>/dev/null || true)"
+old_active="$(systemctl --user is-active inir.service 2>/dev/null || true)"
 new_active="$(systemctl --user is-active alis.service 2>/dev/null || true)"
 [[ "$new_active" != active ]] || { echo 'Alis already active; refusing cutover' >&2; exit 2; }
-[[ -f "$old_unit" ]] || { echo 'No existing alis.service; fresh installs use normal setup' >&2; exit 2; }
+[[ -f "$old_unit" ]] || { echo 'No existing inir.service; fresh installs use normal setup' >&2; exit 2; }
 # Preflight *effective* Niri includes. Previously, owner's 90-user-extra.kdl
-# still spawned alis and shadowed 70-binds. Refuse to cut over while any
+# still spawned inir and shadowed 70-binds. Refuse to cut over while any
 # active keybind/startup still depends on the retired executable.
 niri_root="$cfg/niri/config.kdl"
 # Resolve EVERY active include rather than guessing the names of a few KDL
@@ -88,18 +88,18 @@ if [[ -f "$niri_root" ]]; then
     # The actual command may be the first argument to spawn, or be inside
     # a shell -c override. A retired executable cannot survive the handoff.
     if grep -Ev '^[[:space:]]*(//|#)' "$path" |
-       grep -Eq 'spawn "([^"]*/)?alis"([[:space:]]|;)|exec ([^[:space:]]*/)?alis([[:space:]]|\\")|spawn "(sh|bash|/bin/sh|/bin/bash)" "[^"]*-c" "[^"]*alis([[:space:]]|\\")'; then
-      echo "Active Niri shortcut still invokes disabled alis: $path" >&2
+       grep -Eq 'spawn "([^"]*/)?inir"([[:space:]]|;)|exec ([^[:space:]]*/)?inir([[:space:]]|\\")|spawn "(sh|bash|/bin/sh|/bin/bash)" "[^"]*-c" "[^"]*inir([[:space:]]|\\")'; then
+      echo "Active Niri shortcut still invokes disabled inir: $path" >&2
       echo "Repair the bound command to alis, then rerun --dry-run." >&2
       exit 2
     fi
     if grep -Ev '^[[:space:]]*(//|#)' "$path" |
-       grep -Eq '^[[:space:]]*spawn[^[:space:]]*[[:space:]].*/quickshell/alis/scripts/(native-dispatch|clipboard-image-store\.sh)'; then
+       grep -Eq '^[[:space:]]*spawn[^[:space:]]*[[:space:]].*/quickshell/inir/scripts/(native-dispatch|clipboard-image-store\.sh)'; then
       echo "Active Niri helper still points at the previous runtime: $path" >&2
       echo 'Run brand-niri-runtime-paths.py --dry-run and review its scoped repair.' >&2
       exit 2
     fi
-    if grep -Eq '^[[:space:]]*// (>>>|<<<) alis-managed-autostart' "$path"; then
+    if grep -Eq '^[[:space:]]*// (>>>|<<<) inir-managed-autostart' "$path"; then
       echo "Previous Niri Autostart delimiters require repair: $path" >&2; exit 2
     fi
     declared_includes="$(grep -Ec '^[[:space:]]*include[[:space:]]+' "$path" || true)"
@@ -135,9 +135,9 @@ if [[ -f "$niri_root" ]]; then
   done
 fi
 # Package ownership may be recorded under any historical config root.
-# Checking only /alis can incorrectly treat an Arch/Nix installation as a
+# Checking only /inir can incorrectly treat an Arch/Nix installation as a
 # mutable repo-copy install; inspect all previously supported namespaces.
-for version in "$cfg/alis/version.json" "$cfg/illogical-impulse/version.json" "$cfg/alis/version.json"; do
+for version in "$cfg/inir/version.json" "$cfg/illogical-impulse/version.json" "$cfg/alis/version.json"; do
   if [[ -f "$version" ]] && grep -Eq '"(update_strategy|updateStrategy|package_manager|packageManager)"[[:space:]]*:[[:space:]]*"(package-manager|nix|pacman|aur|arch)"' "$version"; then
     echo "Package-managed installation metadata detected: $version" >&2
     echo 'Upgrade declaratively using Arch/Nix; no mutable user-unit edits.' >&2
@@ -150,16 +150,16 @@ sources=(); destinations=(); aliases=()
 for root_index in "${!roots[@]}"; do
   root="${roots[root_index]}"
   # The original upstream config was illogical-impulse; later compatibility
-  # installs used alis. Both remain untouched, even after successful cutover.
+  # installs used inir. Both remain untouched, even after successful cutover.
   # Prefer the actual upstream config.json, but refuse divergent config.json
   # copies instead of guessing which user's edits should win.
-  old="$root/alis"
+  old="$root/inir"
   upstream="$root/illogical-impulse"
   new="$root/alis"
   if [[ "$root" == "$cfg" && -f "$upstream/config.json" && ! -L "$upstream" ]]; then
     if [[ -f "$old/config.json" ]] &&
        ! cmp -s -- "$upstream/config.json" "$old/config.json"; then
-      echo "Conflicting Alis/illogical-impulse configs; review before cutover: $upstream and $old" >&2
+      echo "Conflicting iNiR/illogical-impulse configs; review before cutover: $upstream and $old" >&2
       exit 2
     fi
     old="$upstream"
@@ -191,7 +191,7 @@ source "$repo/scripts/brand-recovery-cli.sh"
 brand_verify_recovery_cli "$old_unit" "$cfg"
 old_wants=(); new_wants=()
 while IFS= read -r -d '' dir; do
-  p="$dir/alis.service"
+  p="$dir/inir.service"
   [[ -L "$p" ]] || continue
   [[ "$(readlink -f -- "$p")" == "$(readlink -f -- "$old_unit")" ]] ||
     { echo "Foreign service link: $p" >&2; exit 2; }
@@ -207,11 +207,11 @@ if [[ "$mode" == dry-run ]]; then
   exit 0
 fi
 # Backups must NOT create XDG_STATE_HOME/alis before the canonical state
-# directory is copied; otherwise cp -a nests alis *inside* alis.
+# directory is copied; otherwise cp -a nests inir *inside* alis.
 backup="$retire_root/cutover-backup-$(date +%Y%m%d%H%M%S)-${BASHPID}"
 mkdir -p "$backup"
-cp -p -- "$old_unit" "$backup/alis.service"
-cmp -s -- "$old_unit" "$backup/alis.service" ||
+cp -p -- "$old_unit" "$backup/inir.service"
+cmp -s -- "$old_unit" "$backup/inir.service" ||
   { echo 'Original service backup verification failed' >&2; exit 2; }
 copied=(); moved_aliases=(); new_links=(); unit_created=false; stopped=false
 old_parked=false; old_masked=false; success=false
@@ -242,7 +242,7 @@ rollback() {
     if [[ "$old_parked" == true ]]; then
       if [[ ! -e "$old_unit" && ! -L "$old_unit" &&
             -f "$retired_unit" && ! -L "$retired_unit" ]] &&
-         cmp -s -- "$retired_unit" "$backup/alis.service"; then
+         cmp -s -- "$retired_unit" "$backup/inir.service"; then
         mv -- "$retired_unit" "$old_unit" ||
           echo 'BLOCKER: manual original service restore required' >&2
       else
@@ -251,7 +251,7 @@ rollback() {
     fi
     systemctl --user daemon-reload >/dev/null 2>&1 || true
     if [[ "$stopped" == true && "$old_active" == active ]]; then
-      systemctl --user start alis.service >/dev/null 2>&1 ||
+      systemctl --user start inir.service >/dev/null 2>&1 ||
         echo 'WARNING: old service restart failed; owner recovery needed' >&2
     fi
     echo "Cutover failed (exit $rc). New user data copies retained at original destinations." >&2
@@ -262,8 +262,8 @@ rollback() {
 trap rollback EXIT
 # Quiesce the owner before copying: final shutdown writes must survive.
 stopped=true
-systemctl --user stop alis.service
-[[ "$(systemctl --user is-active alis.service 2>/dev/null || true)" != active ]] ||
+systemctl --user stop inir.service
+[[ "$(systemctl --user is-active inir.service 2>/dev/null || true)" != active ]] ||
   { echo 'Legacy process owner did not stop' >&2; exit 1; }
 for i in "${!sources[@]}"; do
   dst="${destinations[i]}"
@@ -284,7 +284,7 @@ grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' "$new_unit" ||
   { echo 'Generated canonical unit lacks tray singleton BusName' >&2; exit 1; }
 mv -- "$old_unit" "$retired_unit"
 old_parked=true
-cmp -s -- "$retired_unit" "$backup/alis.service" ||
+cmp -s -- "$retired_unit" "$backup/inir.service" ||
   { echo 'Retired service changed during move' >&2; exit 1; }
 ln -s /dev/null "$old_unit"
 old_masked=true
@@ -294,14 +294,14 @@ for i in "${!old_wants[@]}"; do
   new_links+=("${new_wants[i]}")
 done
 systemctl --user daemon-reload
-old_load="$(systemctl --user show alis.service -p LoadState --value --no-pager 2>/dev/null || true)"
+old_load="$(systemctl --user show inir.service -p LoadState --value --no-pager 2>/dev/null || true)"
 new_load="$(systemctl --user show alis.service -p LoadState --value --no-pager 2>/dev/null || true)"
 [[ "$old_load" == masked && "$new_load" == loaded ]] ||
   { echo "D-Bus ownership not isolated (legacy=$old_load Alis=$new_load)" >&2; exit 1; }
 systemctl --user start alis.service
 [[ "$(systemctl --user is-active alis.service 2>/dev/null || true)" == active ]] ||
   { echo 'New Alis service did not start successfully' >&2; exit 1; }
-[[ "$(systemctl --user is-active alis.service 2>/dev/null || true)" != active ]] ||
+[[ "$(systemctl --user is-active inir.service 2>/dev/null || true)" != active ]] ||
   { echo 'Legacy owner reactivated unexpectedly' >&2; exit 1; }
 success=true
 echo 'SUCCESS: alis.service is the sole active systemd shell owner.'

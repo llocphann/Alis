@@ -29,7 +29,7 @@ Window {
   id:wall;anchors.fill:parent;source:root.prefix+'a.png';enableTransitions:false;transitionBaseDuration:180
   onTransitionStarted:if(root.pauseNext){root.pauseNext=false;Qt.callLater(()=>{test.animation().pause();root.paused=true})}
  }
- Component{id:detachedWall;WallpaperCrossfader{width:320;height:180;transitionType:'alisMelt';transitionBaseDuration:180}}
+ Component{id:detachedWall;WallpaperCrossfader{width:320;height:180;transitionType:'inirMelt';transitionBaseDuration:180}}
  TestCase {
   id:test;when:false;optional:true
   function check(value,message){root.checks++;if(!value)throw new Error(message+' '+JSON.stringify(wall.renderState()))}
@@ -65,7 +65,7 @@ Window {
    const detached=detachedWall.createObject(null,{source:root.prefix+'a.png'})
    settled(detached,root.prefix+'a.png');detached.source=root.prefix+'c.png';settled(detached,root.prefix+'c.png')
    detached.parent=root.contentItem;wait(80);capture(detached,'detached');detached.destroy()
-   wall.transitionType='alisMelt'
+   wall.transitionType='inirMelt'
    // Force a real unsupported QSB in the private ShaderEffect, leaving
    // production shader binaries unchanged. Software must bypass it too.
    const shader=wall.children.find(item=>item.samplerFromIndex!==undefined)
@@ -98,7 +98,7 @@ Window {
   data['background']['transition']['type']='crossfade';data['performance']['reduceAnimations']=False
   for backend in ['opengl','software']:
    cfg.write_text(json.dumps(data))
-   env.update(RECOVERY_PREFIX=str(folder),RECOVERY_CAPTURE=str(folder),QSG_RHI_BACKEND='opengl',ALIS_EXPERIMENTAL_MELT='1')
+   env.update(RECOVERY_PREFIX=str(folder),RECOVERY_CAPTURE=str(folder),QSG_RHI_BACKEND='opengl',INIR_EXPERIMENTAL_MELT='1')
    if backend=='software':env['QT_QUICK_BACKEND']='software'
    else:env.pop('QT_QUICK_BACKEND',None)
    result=run_qs(folder,env,timeout=65)

@@ -11,9 +11,9 @@ export XDG_STATE_HOME="$tmp/home/.local/state"
 mkdir -p "$XDG_CONFIG_HOME/systemd/user" "$XDG_CONFIG_HOME/niri/config.d" \
   "$XDG_CONFIG_HOME/alis" "$XDG_CONFIG_HOME/illogical-impulse" \
   "$XDG_STATE_HOME/alis-cutover-backups"
-unit="$XDG_CONFIG_HOME/systemd/user/alis.service"
+unit="$XDG_CONFIG_HOME/systemd/user/inir.service"
 new_unit="$XDG_CONFIG_HOME/systemd/user/alis.service"
-retired="$XDG_STATE_HOME/alis-cutover-backups/retired-alis.service"
+retired="$XDG_STATE_HOME/alis-cutover-backups/retired-inir.service"
 startup="$XDG_CONFIG_HOME/niri/config.d/50-startup.kdl"
 printf '[Service]\nType=dbus\nBusName=org.kde.StatusNotifierWatcher\n' > "$retired"
 printf '[Service]\nType=dbus\nBusName=org.kde.StatusNotifierWatcher\n' > "$new_unit"

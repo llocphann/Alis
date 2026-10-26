@@ -12,12 +12,12 @@ ENTRYPOINTS = {
     "settings": "modules/settings/CompanionConfig.qml",
     "binary": "native/bin/alis-companiond",
 }
-# The source-pinned external package still exports alis-companiond. Both
+# The source-pinned external package still exports inir-companiond. Both
 # values are fixed known paths; arbitrary manifest-provided paths remain
 # rejected, including for the optional local package.
 COMPATIBLE_BINARIES = frozenset((
     ENTRYPOINTS["binary"],
-    "native/bin/alis-companiond",
+    "native/bin/inir-companiond",
 ))
 
 

@@ -45,7 +45,7 @@ migration_apply() {
     return 0
   fi
 
-  echo "Installing MPD for Alis local Music..."
+  echo "Installing MPD for Hadalis local Music..."
   pkg_sudo pacman -S --needed --noconfirm mpd || {
     echo -e "${STY_YELLOW}Could not auto-install mpd.${STY_RST}"
     echo -e "${STY_YELLOW}Install it manually and configure your MPD music_directory.${STY_RST}"

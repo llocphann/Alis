@@ -69,14 +69,14 @@ expected_files=(
 # A fresh canonical package has one public CLI, runtime, service and desktop
 # identity. Compatibility is handled by cutover, never by a second shell owner.
 retired_files=(
-  "$stage$prefix/bin/alis"
-  "$stage$prefix/share/quickshell/alis"
-  "$stage$systemd_user_dir/alis.service"
-  "$stage$prefix/share/applications/alis.desktop"
-  "$stage$prefix/share/applications/alis-settings.desktop"
-  "$stage$prefix/share/icons/hicolor/scalable/apps/alis.svg"
-  "$stage$prefix/share/doc/alis-shell"
-  "$stage$prefix/share/licenses/alis-shell"
+  "$stage$prefix/bin/inir"
+  "$stage$prefix/share/quickshell/inir"
+  "$stage$systemd_user_dir/inir.service"
+  "$stage$prefix/share/applications/inir.desktop"
+  "$stage$prefix/share/applications/inir-settings.desktop"
+  "$stage$prefix/share/icons/hicolor/scalable/apps/inir.svg"
+  "$stage$prefix/share/doc/inir-shell"
+  "$stage$prefix/share/licenses/inir-shell"
 )
 for path in "${retired_files[@]}"; do
   [[ ! -e "$path" && ! -L "$path" ]] || {
@@ -92,15 +92,15 @@ optional_files=(
   "$stage$polkit_actions_dir/org.alis.thinkfan.policy"
   "$stage$tlp_confdir/99-alis-battery-charge-limit.conf"
   "$stage$tlp_confdir/99-alis-tlp-settings.conf"
-  "$stage$libexecdir/alis-battery-charge-limit"
-  "$stage$libexecdir/alis-thinkfan"
-  "$stage$polkit_actions_dir/org.alis.battery-charge-limit.policy"
-  "$stage$polkit_actions_dir/org.alis.thinkfan.policy"
+  "$stage$libexecdir/inir-battery-charge-limit"
+  "$stage$libexecdir/inir-thinkfan"
+  "$stage$polkit_actions_dir/org.inir.battery-charge-limit.policy"
+  "$stage$polkit_actions_dir/org.inir.thinkfan.policy"
   "$stage$system_share/tlp-settings-schema.json"
-  "$stage$tlp_confdir/99-alis-battery-charge-limit.conf"
-  "$stage$tlp_confdir/99-alis-tlp-settings.conf"
+  "$stage$tlp_confdir/99-inir-battery-charge-limit.conf"
+  "$stage$tlp_confdir/99-inir-tlp-settings.conf"
   "$stage$prefix/share/alis-intergration/current/manifest.json"
-  "$stage$prefix/share/alis-intergration/current/manifest.json"
+  "$stage$prefix/share/hadalird/current/manifest.json"
 )
 for path in "${optional_files[@]}"; do
   [[ ! -e "$path" ]] || { printf 'FAIL: core installed optional integration %s\n' "$path" >&2; exit 1; }
@@ -122,10 +122,10 @@ retired_integrations=(
   assets/helpers/alis-thinkfan
   assets/polkit/org.alis.battery-charge-limit.policy
   assets/polkit/org.alis.thinkfan.policy
-  assets/helpers/alis-battery-charge-limit
-  assets/helpers/alis-thinkfan
-  assets/polkit/org.alis.battery-charge-limit.policy
-  assets/polkit/org.alis.thinkfan.policy
+  assets/helpers/inir-battery-charge-limit
+  assets/helpers/inir-thinkfan
+  assets/polkit/org.inir.battery-charge-limit.policy
+  assets/polkit/org.inir.thinkfan.policy
   assets/tlp/tlp-settings-schema.json
   scripts/integrations/obsidian_theme.py
   scripts/notes/zettelkasten.py
@@ -181,7 +181,7 @@ for action in install-battery-helper install-thinkfan-helper uninstall-battery-h
     printf 'FAIL: retired core helper target succeeded: %s\n' "$action" >&2
     exit 1
   fi
-  grep -Eq 'optional (Alis-Intergration|Alis-Intergration)' "$stage/retired-helper.log" || { cat "$stage/retired-helper.log"; exit 1; }
+  grep -Eq 'optional (Alis-Intergration|Hadalird)' "$stage/retired-helper.log" || { cat "$stage/retired-helper.log"; exit 1; }
 done
 rm -f "$stage/retired-helper.log"
 [[ "$(sha256sum "${optional_files[@]}")" == "$optional_before" ]] || {
