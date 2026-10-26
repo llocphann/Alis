@@ -706,11 +706,11 @@ Singleton {
                     property bool contextEnabled: false
                     property bool contextFocusEnabled: false
                     property bool contextAiEnabled: false
-                    property bool ambientEnabled: false
+                    property bool ambientEnabled: true
                     property bool ambientFocusEnabled: false
-                    property bool ambientBatteryEnabled: false
-                    property bool ambientMediaEnabled: false
-                    property bool pocketEnabled: false
+                    property bool ambientBatteryEnabled: true
+                    property bool ambientMediaEnabled: true
+                    property bool pocketEnabled: true
                     property string character: "aqua"
                     property bool alternateCompanions: false
                     property string output: ""

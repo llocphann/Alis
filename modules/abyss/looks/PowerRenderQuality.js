@@ -9,10 +9,9 @@ function abyss(manual, automatic, profile) {
 }
 
 function aqua(manual, automatic, profile, shellQuality) {
-    if (shellQuality === "performance") return "performance";
-    if (automatic) return profile === "power-saver" ? "performance" : "quality";
-    // Keep all existing settings and automatic profiles at their current
-    // cost. The higher Companion tier requires an explicit new selection.
+    if (automatic)
+        return profile === "power-saver" ? "performance"
+            : profile === "performance" ? "detailed" : "quality";
     return manual === "performance" ? "performance"
         : manual === "detailed" ? "detailed" : "quality";
 }
