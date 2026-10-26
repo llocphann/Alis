@@ -1,4 +1,4 @@
-# Abyss widget editing, Settings, Waves and lossless Wull — 2026-10-04
+# Abyss widget editing, Settings, Waves and lossless Aqua — 2026-10-04
 
 > **ARCHIVED IMPLEMENTATION JOURNAL — 2026-10-07.** The scoped repair/lossless work recorded here is historical. Any still-open product acceptance/work is routed through current `to-do/` state and retained evidence, not this document.
 
@@ -63,14 +63,14 @@ explicit Custom inputs rather than weakening their workloads.
 
 ## Strict lossless reduction
 
-Wull's swept-segment obstacle check replaces its private lower/upper bound
+Aqua's swept-segment obstacle check replaces its private lower/upper bound
 arrays with scalar values. All four geometry reads still occur before either
 axis test. Arithmetic, tolerances, early exits, thrown-read behavior, path
 results and Qt dependency/NOTIFY behavior remain equivalent.
 
 | Scope | Temporary arrays before → after | Scoped reduction |
 | --- | --- | ---: |
-| Wull segment check, per visited obstacle | 2 → 0 | 100% |
+| Aqua segment check, per visited obstacle | 2 → 0 | 100% |
 | Previously implemented Abyss Sidebar obstacle publication | 3 → 1 | 66.7% |
 | Previously implemented Abyss Dock combination, maximum | 4 → 2 | 50% |
 
@@ -78,7 +78,7 @@ These percentages count specific temporary array objects. Whole-application
 CPU, GPU, RAM, FPS and latency savings have not been measured. They must not be
 inferred by adding the percentages or treating allocation counts as timings.
 
-The Wull native QV4 oracle covers 3,821 result/error/read-order cases including
+The Aqua native QV4 oracle covers 3,821 result/error/read-order cases including
 120 path comparisons, plus 13 reactive Qt steps. The general scene regression
 covers 3,345 cases and 14 paths. Earlier Abyss allocation parity evidence is
 retained; a new canonical run verifies the integrated source independently.
@@ -87,7 +87,7 @@ retained; a new canonical run verifies the integrated source independently.
 
 Original frozen source: `901e98864157211dd8a857e320efc5c1ac041d20` —
 372 PASS, 40 FAIL, 2 SKIP. The
-[original summary](../../wull-visual/abyss-water-20261004/canonical-summary.txt)
+[original summary](../../aqua-visual/abyss-water-20261004/canonical-summary.txt)
 and its evidence remain unchanged.
 
 | Original failures | Disposition |
@@ -119,7 +119,7 @@ and [validation record](../../evidence/abyss-product/20261004-151e86a5b/canonica
 
 A fresh clean canonical run at
 `e6d6f9083be1e251c958e7c9fa6228fcd60bc9c7` includes the brightness fixture
-repair, both notification repairs and concurrent Wull development.
+repair, both notification repairs and concurrent Aqua development.
 It completed with **415 PASS, 0 FAIL, 11 SKIP**, including strict Qt 6.11.2
 parsing PASS. The exact result is retained in the
 [summary](../../evidence/abyss-product/20261004-e6d6f9083/canonical-summary.txt),
@@ -128,7 +128,7 @@ and [complete log](../../evidence/abyss-product/20261004-e6d6f9083/canonical-run
 The [forty-failure reconciliation](../../evidence/abyss-product/20261004-e6d6f9083/original-failure-reconciliation.json)
 records every active PASS and every explicit phase/manual exclusion.
 Nix remains deferred/non-blocking. This PASS applies to the printed source;
-later concurrent Wull changes and subsequent product requests require their
+later concurrent Aqua changes and subsequent product requests require their
 own qualification.
 
 The notification regressions use private D-Bus/XDG fixtures and real native
@@ -151,7 +151,7 @@ Full owner-session acceptance for multi-output, hotplug,
 suspend, scaling, fullscreen and input/focus remains **HOLD / NOT_COMPLETE**.
 
 No automation files, jobs, state, profiles or services were changed or controlled.
-Concurrent Wull work and unrelated MEGA evidence were preserved. The active
+Concurrent Aqua work and unrelated MEGA evidence were preserved. The active
 entry point remains [to-do/cloud-bot/OPTIMIZATION.md](../../../to-do/cloud-bot/OPTIMIZATION.md).
 
 

@@ -20,7 +20,7 @@ if os.environ.get("COMPANION_FIXTURE_FAIL") == "1":
 source = Path(__file__).resolve().parents[1]
 sha = subprocess.check_output(["git","rev-parse","HEAD"],cwd=source,text=True).strip()
 home = Path(os.environ["XDG_DATA_HOME"])
-data = home / "hadanion"
+data = home / "alis-companion"
 release = data / "releases" / sha
 release.mkdir(parents=True,exist_ok=True)
 info = json.loads((source / "manifest.json").read_text())
@@ -60,7 +60,7 @@ with tempfile.TemporaryDirectory(prefix="alis-companion-managed-") as td:
     (source / "scripts/stub_install.py").write_text(STUB)
     (source / "Makefile").write_text("install:\n\tpython3 scripts/stub_install.py\n")
     (source / "manifest.json").write_text(json.dumps({
-        "id":"hadanion", "hostApi":1, "version":"fixture",
+        "id":"alis-companion", "hostApi":1, "version":"fixture",
         "session":"HadalisSession.qml", "output":"HadalisOutput.qml",
         "settings":"modules/settings/CompanionConfig.qml",
         "binary":"native/bin/inir-companiond"
@@ -81,7 +81,7 @@ with tempfile.TemporaryDirectory(prefix="alis-companion-managed-") as td:
         return cmd(*base,"--revision",sha,env={**env,**(extra or {})},ok=ok)
     assert cmd(sys.executable,str(MANAGER),"status","--revision",first,env=env).returncode==0
     sync(first)
-    current = root/"data/hadanion/current"
+    current = root/"data/alis-companion/current"
     assert current.is_symlink() and current.resolve().name==first
     # A healthy pinned installation is idempotent without contacting Git.
     checkout=root/"cache/alis/companion/source"
@@ -139,9 +139,9 @@ with tempfile.TemporaryDirectory(prefix="alis-companion-managed-") as td:
     assert current.resolve()==source.resolve()
     current.unlink()
     current.symlink_to(Path("releases")/second)
-    assert (root/"data/hadanion/.alis-owned.json").exists()
+    assert (root/"data/alis-companion/.alis-owned.json").exists()
     cmd(*detach,env=env)
     assert not current.exists() and not current.is_symlink()
-    assert (root/"data/hadanion/releases"/first).exists()
-    assert (root/"data/hadanion/releases"/second).exists()
+    assert (root/"data/alis-companion/releases"/first).exists()
+    assert (root/"data/alis-companion/releases"/second).exists()
 print("PASS: pinned legacy daemon, future canonical daemon, unknown entrypoint refusal, pin, idempotence, remote guard, failure rollback, repair and managed-only uninstall")

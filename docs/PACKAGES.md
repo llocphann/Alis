@@ -2,7 +2,7 @@
 
 ## Native Rust runtime
 
-Current-source install/package paths build the committed `native/Cargo.lock` workspace and ship the qualified helpers under `share/quickshell/inir/native/bin/`, including the opt-in Wull backend `inir-companiond`. The rolling Arch package and Nix build current source; the pinned non-VCS Arch package gains newer helpers when its source snapshot advances. Python remains only for explicitly retained fallback paths.
+Current-source install/package paths build the committed `native/Cargo.lock` workspace and ship the qualified helpers under `share/quickshell/inir/native/bin/`, including the opt-in Aqua backend `inir-companiond`. The rolling Arch package and Nix build current source; the pinned non-VCS Arch package gains newer helpers when its source snapshot advances. Python remains only for explicitly retained fallback paths.
 
 
 This page documents the Arch-based source install dependency model used by `./setup install`, plus the separate Arch package recipes that distribute the Alis runtime (with iNiR compatibility) itself.

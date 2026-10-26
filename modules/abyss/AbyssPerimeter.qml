@@ -1015,7 +1015,7 @@ Scope {
                         window.transientPopupHoverKind = ""
                 }
             }
-            HadanionSurface {
+            AlisCompanionSurface {
                 id: companionExtension
                 anchors.fill: parent
                 host: window

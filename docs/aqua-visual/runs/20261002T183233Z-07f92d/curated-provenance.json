@@ -1,0 +1,48 @@
+{
+  "dimensions": [
+    512,
+    512
+  ],
+  "field_shader": "modules/abyss/looks/AbyssField.frag.qsb",
+  "host_output_invariant": "checked by source worker; no host capture",
+  "image_sha256": "9b619aa4670294e10925212e5de6cdb72b7c19cd6bdd25b21649ebcab7452114",
+  "input_popup_native_interaction": "NOT_TESTED",
+  "kind": "CURATED_SYNTHETIC_REAL_ABYSS_FIELD_QSB_NESTED_NIRI",
+  "metadata_policy": "new IHDR/IDAT/IEND only",
+  "original_references": "UNVERIFIED",
+  "pixel_policy": "only four owned synthetic field+Aqua cells; outside RGBA zero",
+  "private_original_published": false,
+  "production_live_panel_weld": "NOT_TESTED",
+  "retained_four_rois": [
+    [
+      8,
+      8,
+      232,
+      232
+    ],
+    [
+      280,
+      8,
+      504,
+      232
+    ],
+    [
+      8,
+      280,
+      232,
+      504
+    ],
+    [
+      280,
+      280,
+      504,
+      504
+    ]
+  ],
+  "source_evidence_id": "JOB-AQUA-CRADLE-CAPTURE-P1E0042-20261003-33:4",
+  "source_fixture": "scripts/aqua-fixtures/real-field-canary/shell.qml",
+  "source_has_host_screenshot": false,
+  "source_job": "JOB-AQUA-CRADLE-CAPTURE-P1E0042-20261003-33",
+  "source_sha": "07f92d1182265fd32eb82e065a92ef500b0f7a59",
+  "visual_review": "NOT_REVIEWED"
+}

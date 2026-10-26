@@ -1,0 +1,21 @@
+{
+  "kind": "aqua_retrospective_top_private_pointer_drift",
+  "source_sha": "5164395aea401bcfcd79fa8e74622d34fe5fceb5",
+  "original_source_sha": "1518db798d1012592cdbceb29115cceb72cffd9b",
+  "original_sanitized_report": "docs/aqua-mask-candidate-20261001T170950Z-105fd7a8-1518db798d10.json",
+  "status": "categorized_from_private_prior_log",
+  "diagnostic": {
+    "offset_bucket": "ninety_six_or_more",
+    "offset_axes": "both",
+    "horizontal_direction": "negative",
+    "vertical_direction": "positive",
+    "candidate_near_previous_disabled_center": false
+  },
+  "injection_backend_at_original_run": "forced_wlr_protocols_wdotool",
+  "raw_log_coordinates": "private_local_only",
+  "new_pointer_input": false,
+  "real_native_retest": "not_run",
+  "production_mask_changed": false,
+  "host_user_config_changed": false,
+  "publication_parent_sha": "5164395aea401bcfcd79fa8e74622d34fe5fceb5"
+}

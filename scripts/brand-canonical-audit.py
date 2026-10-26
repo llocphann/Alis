@@ -115,7 +115,7 @@ def main() -> int:
                     continue
                 if (
                     kind == "launcher"
-                    and label in {"scripts/companion-manager.py", "scripts/hadanion-status.py"}
+                    and label in {"scripts/companion-manager.py", "scripts/alis-companion-status.py"}
                     and source_line.strip() == '"native/bin/inir-companiond",'
                 ):
                     # Source-pinned external Alis-Companion binary compatibility name.

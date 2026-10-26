@@ -98,14 +98,14 @@ Singleton {
                 property string promptName: ""
             }
 
-            property JsonObject wullCheckIn: JsonObject {
+            property JsonObject aquaCheckIn: JsonObject {
                 property string date: ""
                 property string mood: ""
                 property string energy: ""
             }
 
             // No task titles or note content. Updated only after a consented offer.
-            property JsonObject wullProactive: JsonObject {
+            property JsonObject aquaProactive: JsonObject {
                 property string day: ""
                 property int dailyCount: 0
                 property int reminder: 0

@@ -4,7 +4,7 @@
 
 ## 2026-10-06 — Maintainer-scoped Screen Edge analytic renderer
 
-The maintainer explicitly prioritized Screen Edges before Wull and authorized
+The maintainer explicitly prioritized Screen Edges before Aqua and authorized
 implementation in two classes: strict-lossless changes, and very small visual
 deviation only when it buys a large rendering reduction. This checkpoint is
 separate from the generic research-only optimization program.
@@ -70,7 +70,7 @@ the repository-wide CI invocation of the canonical validator reported:
 - documentation contracts: PASS.
 
 The same canonical run completed **417 PASS / 11 FAIL / 12 SKIP**. None of the
-11 failures were Screen Edge failures; they were existing Abyss/Wull and
+11 failures were Screen Edge failures; they were existing Abyss/Aqua and
 MegaQML checks outside this scoped task. Do not present that run as a repository
 canonical PASS.
 
@@ -176,7 +176,7 @@ passed, including:
 - `test-perimeter-compatibility-placement-contract.sh`;
 - packaging/make contracts and source-tree cleanliness.
 
-The remaining 11 failures are existing Abyss/Wull and MegaQML checks outside
+The remaining 11 failures are existing Abyss/Aqua and MegaQML checks outside
 this scoped Screen Edge task. Therefore this is a **scoped Screen Edge
 validation checkpoint**, not a repository-wide canonical PASS. The CI host also
 lacked `qmlformat`, so the strict parser pass remains unclaimed on this exact

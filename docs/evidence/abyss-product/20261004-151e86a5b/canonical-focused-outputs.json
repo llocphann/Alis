@@ -59,9 +59,9 @@
     },
     {
       "check": 282,
-      "label": "Python regression: scripts/test-wull-segment-allocations.py",
+      "label": "Python regression: scripts/test-aqua-segment-allocations.py",
       "result": "PASS",
-      "output": "test-wull-segment-allocations.log",
+      "output": "test-aqua-segment-allocations.log",
       "sha256": "ed303efafd85504cbf8691215858eb0676f9ae751f806770cd5cbac77fe0f912"
     }
   ]

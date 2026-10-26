@@ -2061,13 +2061,13 @@ Command: python3 scripts/test-hadalird-system-provision.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [187]: Python regression: scripts/test-hadanion-layer-shell.py ----
-Command: python3 scripts/test-hadanion-layer-shell.py
+---- CHECK [187]: Python regression: scripts/test-alis-companion-layer-shell.py ----
+Command: python3 scripts/test-alis-companion-layer-shell.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [188]: Python regression: scripts/test-hadanion-optional.py ----
-Command: python3 scripts/test-hadanion-optional.py
+---- CHECK [188]: Python regression: scripts/test-alis-companion-optional.py ----
+Command: python3 scripts/test-alis-companion-optional.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 

@@ -21,8 +21,8 @@ HISTORICAL_PREFIXES = ("docs/", "to-do/", "agent/")
 RETAINED_RECEIPTS = {
     "automation/queue/pending/JOB-AUDIO-I01-BASELINE-20261015-01.json",
     "automation/results/JOB-AUTO-F01-SMOKE-20261015-01.json",
-    "automation/results/JOB-C2F353CC-WULLRENDER-R57-20261006.json",
-    "automation/results/JOB-C2F353CC-WULLUNIFORMS-R56-20261006.json",
+    "automation/results/JOB-C2F353CC-AQUARENDER-R57-20261006.json",
+    "automation/results/JOB-C2F353CC-AQUAUNIFORMS-R56-20261006.json",
 }
 RETIREMENT_FILES = {
     "scripts/test-retired-settings-routes.py",

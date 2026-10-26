@@ -25,7 +25,7 @@ Previously pushed Music transport `8b2ed6f0a` and Recording presentation
 `fafb4687b` retain their documented focused evidence and owner gates. Hadalird
 optional extraction and Notes image export are source/package-qualified at
 `b0c975a7f40bdf531012be326bc728f5c014b696` (0.2.1); this continuation made no
-Hadalird or Hadanion changes. Their remaining delivery/host gates stay in the
+Hadalird or Alis-Companion changes. Their remaining delivery/host gates stay in the
 active lists and owning repositories; do not reimplement completed extraction.
 
 ## Unfinished hover candidate

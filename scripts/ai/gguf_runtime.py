@@ -47,11 +47,11 @@ def request(path,route,payload=None,timeout=2):
 
 def private_dir():
     base=Path(os.environ.get('XDG_RUNTIME_DIR',tempfile.gettempdir()))
-    folder=base/('alis-wull-'+str(os.getuid()))
+    folder=base/('alis-aqua-'+str(os.getuid()))
     folder.mkdir(mode=0o700,exist_ok=True)
     st=folder.lstat()
     if folder.is_symlink() or st.st_uid!=os.getuid() or st.st_mode&0o077:
-        raise RuntimeErrorLocal('Wull runtime directory is not private')
+        raise RuntimeErrorLocal('Aqua runtime directory is not private')
     return folder
 
 def group_alive(pgid):
@@ -115,7 +115,7 @@ def complete(model_path,messages,reply_format=None,server_path=None,thinking_eff
             try:
                 env={k:v for k,v in os.environ.items() if not k.startswith('LLAMA_ARG_')}
                 command=[str(executable),'-m',str(model), '--host',str(sock),'--no-webui','--no-webui-mcp-proxy',
-                    '--alias','wull-local','-c','2048','-np','1','-t',str(min(4,os.cpu_count() or 1)),
+                    '--alias','aqua-local','-c','2048','-np','1','-t',str(min(4,os.cpu_count() or 1)),
                     '-ngl','0','--reasoning','auto','--poll','0','--jinja']
                 process=subprocess.Popen(command,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,start_new_session=True,preexec_fn=child_setup,env=env)
@@ -129,7 +129,7 @@ def complete(model_path,messages,reply_format=None,server_path=None,thinking_eff
                         except (OSError,ValueError,RuntimeErrorLocal):pass
                     time.sleep(.15)
                 else:raise RuntimeErrorLocal('Local model startup timed out')
-                payload={'model':'wull-local','messages':bounded,'stream':False,
+                payload={'model':'aqua-local','messages':bounded,'stream':False,
                     'max_tokens':effort_profile['max_tokens'],'temperature':.7,
                     'thinking_budget_tokens':effort_profile['budget'],
                     'chat_template_kwargs':{'enable_thinking':effort!='off'}}

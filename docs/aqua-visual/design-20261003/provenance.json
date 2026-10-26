@@ -1,0 +1,214 @@
+{
+  "schema_version": 2,
+  "source_sha": "a1156722159c7840eda93ad37ad5e9dfb1e229b8",
+  "branch": "dev",
+  "captured_utc": "2026-10-03T08:06:52.544258+00:00",
+  "status": "MANUAL_VALIDATED_SOURCE_RENDER_ONLY",
+  "source_blobs": {
+    "modules/abyss/companion/WaterDropletBody.qml": "68faa59912be3f3af900e724ef8484abd5e36f87",
+    "modules/abyss/companion/WaterDropletFace.qml": "43ac49d95ff63f4e718e243c01df7dca91cf936d",
+    "modules/abyss/companion/WaterDropletMaterial.frag": "3c228272e95548d14ad3672efd0bb1c84c35b1d4",
+    "modules/abyss/companion/WaterDropletMaterial.frag.qsb": "cd1424bee1e9071739fbada2c8fadf0b113b4def",
+    "modules/abyss/companion/WaterDropletContact.frag": "d924a4b01b19890cf430d6ca685eb8ccb599739f",
+    "modules/abyss/companion/WaterDropletContact.frag.qsb": "0765e2a70bd8f15414797cfab60ccce3dfb89504",
+    "modules/abyss/companion/AquaExpressions.js": "eabef6d3992907f53473d414422238ad5c91847c",
+    "modules/abyss/companion/AbyssCompanion.qml": "f01d418a8a33ad421cc696360c4e25796b17e85d",
+    "modules/abyss/companion/CompanionBridge.qml": "7e7e2d96bacbc5b1f79897f1971be4b5e0825717",
+    "modules/abyss/looks/AbyssStyle.qml": "4cc05dbaf547a3eff366647cb388abe8c31af5d5",
+    "modules/common/Appearance.qml": "55480307855a511518206c8dbea5e5eb20d76c33",
+    "modules/common/functions/ColorUtils.qml": "320c9460074a31120377518ae4608f7c2b0cb0d5",
+    "native/inir-companiond/src/lib.rs": "381adaf62555fe2c507b99a369bb5cf20ce6dbd4",
+    "native/inir-companiond/src/main.rs": "8d7eb33391d301aa15dd4937206254c6a256815d",
+    "scripts/aqua-fixtures/design-gallery/AquaDesignGallery.qml": "dffafe5313e035dce4e1e78d1432d0245a8d95a9",
+    "scripts/aqua-render-design.py": "6f8ab4c19be318d312a223eafe810612403905a6",
+    "aquaDesign.qml": "e4bb5ed8aebe1fbac06fde72df9a38b403c3e562",
+    "docs/aqua-visual/design-20261003/reference-closeup.png": "e31541fdc070c20ed278ea7e3b2c314f3b2b3d36"
+  },
+  "artifacts": {
+    "gallery.png": {
+      "sha256": "516e3d966a05e6b02e23b0f7e5316625053b4a69befda075709e442599d42284",
+      "bytes": 652353,
+      "size": [
+        1440,
+        1230
+      ]
+    },
+    "software-fallback.png": {
+      "sha256": "98919f5db0ea436805ec09a37ae313798d70efdb49a9a3db05b15018d7ac1ef0",
+      "bytes": 424447,
+      "size": [
+        1440,
+        1230
+      ]
+    },
+    "motion.mp4": {
+      "sha256": "0e84d53fa2546e4eef8080977862421ac59358e571f8249bbefbc62e5f08dd85",
+      "bytes": 2425185
+    },
+    "live-panel-blue.png": {
+      "sha256": "2a8bcede4779d192ed3e6fab42910aee8a735d96ab99001533fea72f0ac2f759",
+      "bytes": 14090,
+      "size": [
+        160,
+        160
+      ]
+    },
+    "live-panel-amber.png": {
+      "sha256": "3e59c1fc0dbfb754ebe9a1bdcec862be77bc75ad7f7107f2f9174bf02f0de821",
+      "bytes": 13988,
+      "size": [
+        160,
+        160
+      ]
+    },
+    "live-panel-purple.png": {
+      "sha256": "40be476e7f1c9190f030fd14995e639b07f7eaf02f1a05744192a4563a31eaba",
+      "bytes": 13972,
+      "size": [
+        160,
+        160
+      ]
+    },
+    "live-panel-green.png": {
+      "sha256": "1130cf6fbe8f8843a0035080d44973f3b435b3175bcc8a14866b1748aa0335b9",
+      "bytes": 14056,
+      "size": [
+        160,
+        160
+      ]
+    },
+    "canonical-qt6-summary.txt": {
+      "sha256": "7fb0b1f7d0fbf32e4267f1bd38b7d977bdf80ba7860108eed6ae79ea854cc1c1",
+      "bytes": 4065
+    },
+    "live-panel-binding.txt": {
+      "sha256": "52463d0981c1758910ed02f3330ee61faa719bbd5b24ba03024e4a9483f5ac79",
+      "bytes": 237
+    }
+  },
+  "original_references": [
+    {
+      "file": "assets/Water Droplet Companion Animation Plus.png",
+      "sha256": "8ce3d8d851840bee569278fd459ef194176dd0f5050fa87eae763be78b27492a",
+      "supplied_original_unchanged": true
+    },
+    {
+      "file": "assets/Water Droplet Companion Animation.png",
+      "sha256": "262185b124dc854c4f8073154e5fcf4bf1a75f986e6b7039c78585f65c7076ab",
+      "supplied_original_unchanged": true
+    },
+    {
+      "file": "assets/Water Droplet Companion Expression.png",
+      "sha256": "f5c3f4a77b0101dff49e609cd0948e8eae4ef8731f043d1d9a9ab547db472d01",
+      "supplied_original_unchanged": true
+    },
+    {
+      "file": "assets/Water Droplet Companion.png",
+      "sha256": "d7b24b7ab0908990c81a67b6cfbabc18fdfa0e97e678038e54a2fe28bf18b21e",
+      "supplied_original_unchanged": true
+    },
+    {
+      "file": "docs/aqua-visual/design-20261003/reference-closeup.png",
+      "sha256": "92d80a1c2066a4cbef103cdea6fb0b49790a69205b528df829c37fdf49245df8",
+      "supplied_original_unchanged": true
+    }
+  ],
+  "motion": {
+    "real_qml_frames": 180,
+    "unique_frame_sha256": 180,
+    "encoded_seconds": 9,
+    "encoding_fps": 20,
+    "size": [
+      1440,
+      1230
+    ],
+    "runtime_frame_pacing_measured": false,
+    "includes": [
+      "nine_expressions",
+      "bob_sway_surface_light_motion",
+      "shine_and_ripple",
+      "position_interpolation",
+      "camera_yaw",
+      "palette_interpolation",
+      "fade_out",
+      "water_feet_projection_and_reflection"
+    ]
+  },
+  "checks": {
+    "gpu_real_qml_capture": "PASS",
+    "software_real_qml_capture": "PASS",
+    "paired_body_and_contact_qsb_rebuild": "PASS",
+    "expression_and_bridge_behavior": "PASS",
+    "qt6_qml_parse": "PASS",
+    "native_ndjson_nine_intents_restore_waiting_task_quiet_hide": "PASS",
+    "rust_engine_tests": 12,
+    "clippy_all_targets_deny_warnings": "PASS",
+    "rust_engine_source_sha": "0a639e67498ebf484f2f7854bf21f2ab0e5ba3e6",
+    "rust_engine_blob_unchanged_from_verified_source": true,
+    "four_original_assets_identical_to_maintainer_downloads": true,
+    "panel_style_live_role_binding": "PASS",
+    "production_procedural_single_backend_default_off": "PASS"
+  },
+  "live_panel_palette": {
+    "procedure": "One isolated QML process; unoverridden WaterDropletBody.accentColor. Change only process-local Appearance.colors.colPrimary; wait 800 ms with motion enabled; assert actual body accent equals AbyssStyle.accent and the panel lightness role. Capture only a fixed 160x160 component board, including feet and floor reflection. No user config persisted.",
+    "observations": [
+      {
+        "primary": "#478dff",
+        "live_abyss_accent": "#5c9aff",
+        "reflection_color": "#b3d0ff"
+      },
+      {
+        "primary": "#ffa94c",
+        "live_abyss_accent": "#ffb15c",
+        "reflection_color": "#ffdab3"
+      },
+      {
+        "primary": "#aa72ff",
+        "live_abyss_accent": "#9d5cff",
+        "reflection_color": "#d1b3ff"
+      },
+      {
+        "primary": "#09daba",
+        "live_abyss_accent": "#62f9e2",
+        "reflection_color": "#b5fcf1"
+      }
+    ]
+  },
+  "canonical_validation": {
+    "recorded_sha": "a1156722159c7840eda93ad37ad5e9dfb1e229b8",
+    "status": "FAIL",
+    "passed": 369,
+    "failed": 39,
+    "skipped": 2,
+    "aqua_python_passed": 75,
+    "qml_parser": "PASS (qmlformat on Qt 6.11.2; parser pass runs inside qml-check)",
+    "failed_check_identities_match_initial_run": false,
+    "details": "validation.json",
+    "summary": "canonical-qt6-summary.txt",
+    "final_evidence_commit_validation": "CAPTURE_AND_DOCUMENTATION_ONLY_AFTER_TESTED_SOURCE",
+    "failed_checks_shared_with_initial_run": 38,
+    "additional_failed_checks": [
+      "shell regression: scripts/test-anti-flashbang-brightness.sh"
+    ]
+  },
+  "visual_comparison": {
+    "unmodified_supplied_reference_beside_actual_renderer": true,
+    "apex": "centered_evenly_pointed_per_maintainer_correction",
+    "uniform_radius_at_rest": true,
+    "reference_similarity_percent": null,
+    "status": "PENDING_MAINTAINER_VISUAL_ACCEPTANCE",
+    "remaining_differences": [
+      "environment_lighting",
+      "internal_light_pattern",
+      "contact_caustic_detail"
+    ],
+    "feet": "two_pairs_of_small_3d_water_pods; camera-facing_pair_visible_with_rear_occlusion",
+    "floor_reflection": "own_body_feet_face_mirrored_at_contact_plane; perspective_compression_distance_fade_and_localized_foot_catches"
+  },
+  "maintainer_visual_acceptance": "PENDING",
+  "native_production_desktop_acceptance": "PENDING",
+  "cpu_pss_qualification": "NOT_RUN",
+  "production_default_enabled": false,
+  "ci_verified": false,
+  "recorded_utc": "2026-10-03T08:26:01.581589+00:00"
+}

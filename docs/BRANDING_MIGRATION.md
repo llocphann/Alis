@@ -20,7 +20,7 @@ This is an implementation inventory, not a declaration of completion. The public
 | Install/update packaging | `setup`, `sdata/subcmd-install/3.files.sh`, Arch PKGBUILD/.SRCINFO, `nix/package.nix`, `Makefile` | Public installer with legacy package IDs | Ship public Alis CLI, desktop IDs and icon; hide legacy desktop launchers, retain `inir-shell` package and `inir.service` until coordinated ownership migration |
 | Update URLs and docs | `sdata/lib/versioning.sh`, `scripts/release.sh`, `scripts/wiki-sync.sh`, `docs/INSTALL.md`, `docs/SETUP.md` | Public identity | Follow `llocphann/Alis`; keep historical commit SHA references |
 | Optional Integration product | Alis-Intergration; API 1 `hadalird`, existing QML/data/helper/Polkit identities | Public name with retained compatibility contracts | [INT-R05 inventory](https://github.com/llocphann/Alis-Intergration/issues/7); display names change without moving installed data or security payloads |
-| Third-party or historical names | Hadanion repository, Waffle/Aqua/iRiS, prior commits, archived investigations | External / historical | Do not rename without explicit authorization; do not falsify historical evidence |
+| Third-party or historical names | Alis-Companion repository, Waffle/Aqua/iRiS, prior commits, archived investigations | External / historical | Do not rename without explicit authorization; do not falsify historical evidence |
 
 ## Safe rollout sequence
 

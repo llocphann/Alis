@@ -84,8 +84,8 @@ const KB_IPC_MAP: &[((&str, &str), &str)] = &[
     (("session", "toggle"), "Session dialog"),
     (("sidebarLeft", "toggle"), "Left sidebar"),
     (("sidebarRight", "toggle"), "Right sidebar"),
-    (("ipc", "wull"), "Companion chat"),
-    (("wull", "chat"), "Companion chat"),
+    (("ipc", "aqua"), "Companion chat"),
+    (("aqua", "chat"), "Companion chat"),
     (("browser", "open"), "Browser"),
     (("browser", "new"), "Browser (new window)"),
     (("audio", "volumeUp"), "Volume up"),
@@ -345,7 +345,7 @@ pub(super) fn action_category(description: &str, action: &str) -> &'static str {
             "session",
             "sidebarLeft",
             "sidebarRight",
-            "wull",
+            "aqua",
             "ipc",
         ]
         .contains(&target.as_str())

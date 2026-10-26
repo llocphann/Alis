@@ -145,8 +145,8 @@ Log: /tmp/alis-canonical-6mjbolct/canonical.log
 [143] Python regression: scripts/test-hadalird-preferences-migration.py PASS
 [144] Python regression: scripts/test-hadalird-settings-flow.py  PASS
 [145] Python regression: scripts/test-hadalird-system-provision.py PASS
-[146] Python regression: scripts/test-hadanion-layer-shell.py    PASS
-[147] Python regression: scripts/test-hadanion-optional.py       PASS
+[146] Python regression: scripts/test-alis-companion-layer-shell.py    PASS
+[147] Python regression: scripts/test-alis-companion-optional.py       PASS
 [148] Python regression: scripts/test-inir-process-cleanup.py    PASS
 [149] Python regression: scripts/test-internal-todo-persistence-runtime.py PASS
 [150] Python regression: scripts/test-ipc-registry-generator.py  PASS

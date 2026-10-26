@@ -1,0 +1,53 @@
+{
+  "run_id": "20261002T182524Z-42e677",
+  "kind": "synthetic_real_AbyssField_qsb_and_Aqua_Niri_in_Niri",
+  "exact_source_sha": "42e67777f7e67c9dc58895d006efef2a2c272e5f",
+  "captured_utc": "2026-10-02T18:25:24.000Z",
+  "profile_id": "profile-1e0042aca8e24db2",
+  "worker_job": "JOB-AQUA-NESTED-FIELD-P1E0042-20261003-30",
+  "evidence_ids": [
+    "JOB-AQUA-NESTED-FIELD-P1E0042-20261003-30:0",
+    "JOB-AQUA-NESTED-FIELD-P1E0042-20261003-30:1",
+    "JOB-AQUA-NESTED-FIELD-P1E0042-20261003-30:2"
+  ],
+  "capture_evidence_id": "JOB-AQUA-NESTED-FIELD-P1E0042-20261003-30:2",
+  "receipt_path": "automation/results/JOB-AQUA-NESTED-FIELD-P1E0042-20261003-30.json",
+  "source_fixture": "scripts/aqua-fixtures/real-field-canary/shell.qml",
+  "source_runner": "scripts/aqua-manual-nested-field-capture.py",
+  "field_component": "modules/abyss/looks/AbyssField.qml",
+  "field_compiled_shader": "modules/abyss/looks/AbyssField.frag.qsb",
+  "aqua_component": "modules/abyss/companion/AbyssCompanion.qml",
+  "cases": [
+    {
+      "edge": "top",
+      "expression": "idle"
+    },
+    {
+      "edge": "right",
+      "expression": "idle"
+    },
+    {
+      "edge": "bottom",
+      "expression": "happy"
+    },
+    {
+      "edge": "left",
+      "expression": "idle"
+    }
+  ],
+  "synthetic_insets": "66px active edge, 14px remaining edges per 224x224 cell",
+  "capture": "owned 512x512 QML Item.grabToImage in distinct Niri-in-Niri Wayland socket; NO host desktop screenshot",
+  "shipped_config_override": "isolated Abyss quality=performance; theme shipped local config",
+  "pixel_scope": "original retained owner-private; only four 224x224 synthetic cells may be curated",
+  "checks": {
+    "fake_only": "exit0",
+    "static_preflight": "exit0",
+    "owned_nested_gpu_capture": "exit0",
+    "host_outputs_unchanged": true,
+    "painted_core_and_shader_corners": true
+  },
+  "image_publication": "NOT_PUBLISHED_PRIVATE_AT_MANIFEST_CREATION",
+  "original_maintainer_references": "UNVERIFIED",
+  "visual_acceptance": "NOT_REVIEWED",
+  "live_panel_modules_popup_and_pointer": "NOT_TESTED"
+}

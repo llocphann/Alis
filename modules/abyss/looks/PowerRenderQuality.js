@@ -8,7 +8,7 @@ function abyss(manual, automatic, profile) {
         ? manual : "balanced";
 }
 
-function wull(manual, automatic, profile, shellQuality) {
+function aqua(manual, automatic, profile, shellQuality) {
     if (shellQuality === "performance") return "performance";
     if (automatic) return profile === "power-saver" ? "performance" : "quality";
     // Keep all existing settings and automatic profiles at their current
@@ -17,7 +17,7 @@ function wull(manual, automatic, profile, shellQuality) {
         : manual === "detailed" ? "detailed" : "quality";
 }
 
-function wullLabel(quality) {
+function aquaLabel(quality) {
     return quality === "performance" ? "Performance"
         : quality === "detailed" ? "Quality" : "Balanced";
 }

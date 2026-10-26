@@ -13,13 +13,13 @@ on:
       - scripts/test-brand-post-cutover-migration-guards.sh
       - scripts/test-brand-native-installer-invocation.sh
       - scripts/companion-manager.py
-      - scripts/hadanion-status.py
+      - scripts/alis-companion-status.py
       - scripts/test-companion-managed-install.py
       - scripts/test-companion-entrypoint-discovery.py
       - scripts/test-companion-pinned-source-contract.py
       - scripts/test-companion-output-loader-lifecycle.py
-      - modules/abyss/HadanionSurface.qml
-      - services/Hadanion.qml
+      - modules/abyss/AlisCompanionSurface.qml
+      - services/AlisCompanion.qml
       - sdata/companion-revision.txt
       - native/scripts/install-runtime.sh
       - sdata/migrations/021-systemd-single-instance.sh

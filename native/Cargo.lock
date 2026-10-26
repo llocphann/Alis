@@ -36,6 +36,67 @@ dependencies = [
 ]
 
 [[package]]
+name = "alis-inputd"
+version = "0.1.0"
+dependencies = [
+ "alis-protocol",
+ "anyhow",
+ "clap",
+ "evdev",
+ "libc",
+ "serde_json",
+]
+
+[[package]]
+name = "alis-mpdd"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "libc",
+ "oxixml-unicode",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
+name = "alis-native"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "html-escape",
+ "kdl 6.7.1",
+ "libc",
+ "regex",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "alis-protocol"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "alis-theme"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "image",
+ "material-color-utils",
+ "regex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "toml",
+]
+
+[[package]]
 name = "anstream"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -665,67 +726,6 @@ checksum = "cc4e190f5d26ca7051642629da2c52fc03bde85a03197c99408dcd291734c855"
 dependencies = [
  "equivalent",
  "hashbrown",
-]
-
-[[package]]
-name = "alis-inputd"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "evdev",
- "alis-protocol",
- "libc",
- "serde_json",
-]
-
-[[package]]
-name = "alis-mpdd"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "libc",
- "oxixml-unicode",
- "serde",
- "serde_json",
- "sha2",
-]
-
-[[package]]
-name = "alis-native"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "html-escape",
- "kdl 6.7.1",
- "libc",
- "regex",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "alis-protocol"
-version = "0.1.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "alis-theme"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "image",
- "material-color-utils",
- "regex",
- "serde",
- "serde_json",
- "sha2",
- "toml",
 ]
 
 [[package]]

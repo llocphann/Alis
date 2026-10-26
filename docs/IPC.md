@@ -866,9 +866,9 @@ alis abyssHoverProbe remapWindow
 
 ---
 
-### wull
+### aqua
 
-Optional Hadanion Companion chat and diagnostics. The compatibility target remains available when the package is absent. `chat`
+Optional Alis-Companion Companion chat and diagnostics. The compatibility target remains available when the package is absent. `chat`
 toggles the speech editor and requests keyboard focus on the permitted output.
 `status` reports bounded visibility, bridge, field/scene and placement state
 without changing preferences. Super + Alt + Comma opens or closes chat; Enter
@@ -880,14 +880,14 @@ sends and Escape closes it.
 | `status` | Return bounded JSON explaining Companion visibility and placement on each output |
 
 ```bash
-alis wull status
+alis aqua status
 ```
 
 ---
 
-### hadanion
+### alisCompanion
 
-Manage discovery of the separately installed [Hadanion](https://github.com/llocphann/Hadanion) package. Refresh unloads the current Companion session, rechecks the compatible local package and reloads it only if enabled. It never installs a package, changes preferences or loads a model.
+Manage discovery of the separately installed [Alis-Companion](https://github.com/llocphann/Alis-Companion) package. Refresh unloads the current Companion session, rechecks the compatible local package and reloads it only if enabled. It never installs a package, changes preferences or loads a model.
 
 | Function | Description |
 |----------|-------------|
@@ -895,8 +895,8 @@ Manage discovery of the separately installed [Hadanion](https://github.com/llocp
 | `status` | Report optional installation and Companion runtime status |
 
 ```bash
-alis ipc hadanion refresh
-alis ipc hadanion status
+alis ipc alis-companion refresh
+alis ipc alis-companion status
 ```
 
 ---

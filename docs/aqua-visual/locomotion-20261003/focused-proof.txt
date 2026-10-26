@@ -1,0 +1,17 @@
+Runtime source: 99cd39d2cfad20fab3ce9abc0a7dcac9ab44a459
+Test repair: bea5a3b3880e03b5d081fca3a4df5630bb11aa71 (runtime bytes unchanged)
+18 native Rust tests: PASS
+All-target native clippy with warnings denied: PASS
+Changed QML parser: 9/9 PASS
+Aqua procedural visual/shader pairing: PASS
+Aqua settings preferences/defaults/English routing: PASS
+Safe complete travel paths and Blender curve tests: PASS
+Saved Blender scene anatomy and every exported key: PASS
+Actual GPU material tiers, two feet/two hands, theme binding and global ceiling: PASS
+Actual host capture: 180 frames, 53 walking, 65 emerging; moving front/back bubbles: PASS
+Hidden actual gait/bob/sway/shimmer/orbit clocks frozen: PASS
+Actual release daemon wander + bounded target + quiet hide + zero CPU-tick delta: PASS (short isolated scope)
+Actual GPU comparison gallery and software fallback: PASS
+Strict GPU pixel parity: INCONCLUSIVE (identical-source control differs; no tolerance)
+Initial canonical source 99cd39d2c: four stale Aqua mask/orientation assertions found; repair focused checks PASS
+Final canonical source bea5a3b3880e03b5d081fca3a4df5630bb11aa71: FAIL overall, 370 PASS / 39 FAIL / 2 SKIP; all 76 Aqua Python regressions PASS; Qt 6 parser PASS

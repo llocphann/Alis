@@ -1,0 +1,38 @@
+{
+  "run_id": "20261002T165800Z-608cc6",
+  "kind": "synthetic_real_qml_offscreen_four_pose",
+  "exact_source_sha": "608cc6b5f95b5df7701e3f23ed29d2a44a2be54f",
+  "captured_utc": "2026-10-02T16:58:00Z",
+  "profile_id": "profile-1e0042aca8e24db2",
+  "worker_job": "JOB-AQUA-VISUAL-FACE-P1E0042-20261002-13",
+  "capture_evidence_id": "JOB-AQUA-VISUAL-FACE-P1E0042-20261002-13:4",
+  "evidence_ids": [
+    "JOB-AQUA-VISUAL-FACE-P1E0042-20261002-13:0",
+    "JOB-AQUA-VISUAL-FACE-P1E0042-20261002-13:1",
+    "JOB-AQUA-VISUAL-FACE-P1E0042-20261002-13:2",
+    "JOB-AQUA-VISUAL-FACE-P1E0042-20261002-13:3",
+    "JOB-AQUA-VISUAL-FACE-P1E0042-20261002-13:4"
+  ],
+  "source_fixture": "scripts/aqua-fixtures/visual-matrix/shell.qml",
+  "source_runner": "scripts/aqua-manual-visual-matrix.py",
+  "renderer": "actual production AbyssCompanion/WaterDropletBody with six-curve body and counter-rotated face",
+  "poses": [
+    "top/idle",
+    "bottom/happy",
+    "left/curious",
+    "right/sleepy"
+  ],
+  "scale": 1.25,
+  "theme": "isolated shipped default config",
+  "capture_type": "512x512 Qt offscreen owned synthetic Item, not host desktop",
+  "checks": {
+    "source_and_production_contracts": "exit 0 x3",
+    "fake_capture_safety": "exit 0",
+    "private_real_QML_capture": "exit 0"
+  },
+  "image_publication": "NOT_PUBLISHED - original remains 0600 private",
+  "visual_quality": "NOT_REVIEWED",
+  "reference_comparison": "BLOCKED - authentic four-reference manifest absent",
+  "actual_panel_connection": "NOT_TESTED",
+  "pointer_popup": "NOT_TESTED"
+}

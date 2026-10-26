@@ -8,7 +8,7 @@
 
 | Service | What it does |
 |---------|-------------|
-| **Hadanion** | Discovers the separately installed Companion package and loads its session only when enabled. IPC target: `hadanion`. Compatibility IPC target: `wull`. Missing packages keep keyboard/input ownership empty. |
+| **Alis-Companion** | Discovers the separately installed Companion package and loads its session only when enabled. IPC target: `alis-companion`. Compatibility IPC target: `aqua`. Missing packages keep keyboard/input ownership empty. |
 | **Alis-Intergration** | Validates the separately installed TLP, Thinkfan and Obsidian package and loads only selected integrations. IPC target: `integrations` (legacy alias: `hadalird`). Missing or disabled packages keep their workers unloaded; Core installation and removal preserve optional payloads and user profiles. |
 
 ## Compositor

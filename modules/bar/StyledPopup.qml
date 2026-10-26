@@ -112,7 +112,7 @@ LazyLoader {
     // Preserve dismissal while the user-requested slide is still running.
     property bool _gracefulDismissal: false
     property bool _liquidSemanticHold: false
-    // Wull borrows this exact mature popup. Hover/focus takes the same content
+    // Aqua borrows this exact mature popup. Hover/focus takes the same content
     // over, and revokes the lease so its later departure cannot close user UI.
     property var companionLease: null
     property var _companionAnchor: null

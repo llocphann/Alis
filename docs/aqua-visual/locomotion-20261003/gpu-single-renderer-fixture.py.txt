@@ -1,0 +1,82 @@
+import os,runpy,shutil,signal,subprocess,tempfile,json,hashlib
+from pathlib import Path
+from PIL import Image,ImageChops
+ROOT=Path('/home/llocphann/Hadalis')
+core=runpy.run_path(str(ROOT/'scripts/aqua-manual-visual-matrix.py'))
+cases=[]
+for quality in ('performance','balanced','quality'):
+ for yaw,expression in ((0,'idle'),(35,'excited'),(90,'working'),(180,'sleepy')):
+  cases.append(dict(quality=quality,yaw=yaw,expression=expression,translucency=.16,shimmer=.41,shine=.5,gaze=.3,walk=-1))
+for phase in (0,.125,.25,.375,.5,.625,.75,.875):
+ cases.append(dict(quality='quality',yaw=32,expression='idle',translucency=.28,shimmer=.73,shine=0,gaze=0,walk=phase))
+QML='''//@ pragma UseQApplication
+//@ pragma Env INIR_STANDALONE_WINDOW=1
+import QtQuick
+import QtQuick.Window
+import Quickshell
+import "specimen"
+Window {
+ id: root
+ width: 420; height: 220; visible: true; color: "transparent"
+ property int index: 0
+ property int waiting: 0
+ property bool busy: false
+ property var cases: CASES
+ WaterDropletBody { id: actor; x:60; y:50; enabled:false; motionEnabled:false }
+ function find(item) {
+  if(item.objectName==="aquaLocomotion") return item
+  for(const child of item.children) { const found=find(child); if(found) return found }
+  return null
+ }
+ function apply() {
+  const c=cases[index]
+  actor.expression=c.expression; actor.viewYaw=c.yaw; actor.renderQuality=c.quality
+  actor.translucency=c.translucency; actor.shimmer=c.shimmer; actor.shine=c.shine
+  actor.gazeX=c.gaze; actor.walking=c.walk>=0
+  const gait=find(actor); gait.phase=Math.max(0,c.walk); gait.weight=c.walk>=0?1:0
+ }
+ Component.onCompleted: apply()
+ Timer {
+  interval:70; repeat:true; running:true
+  onTriggered: {
+   if(root.busy || !actor.materialReady || root.waiting++<3) return
+   root.busy=true
+   actor.grabToImage(function(image) {
+    if(!image.saveToFile(Quickshell.env("AQUA_PIXEL_FOLDER")+"/"+root.index+".png")) { Qt.exit(1); return }
+    root.index++
+    if(root.index===root.cases.length) { console.log("AQUA_SINGLE_SCENE=PASS"); Qt.quit(); return }
+    root.apply(); root.waiting=0; root.busy=false
+   },Qt.size(304,368))
+  }
+ }
+}'''.replace('CASES',json.dumps(cases))
+folder=Path('/tmp/aqua-single-scene-no-input-control-20261003'); folder.mkdir()
+body=(ROOT/'modules/abyss/companion/WaterDropletBody.qml').read_bytes()
+for kind in ('before','after'):
+ output=folder/kind; output.mkdir()
+ with tempfile.TemporaryDirectory(prefix='aqua-one-scene-') as tmp:
+  shell,xdg=core['staged'](Path(tmp))
+  specimen=shell/'specimen'; specimen.mkdir()
+  (specimen/'WaterDropletBody.qml').write_bytes(body)
+  for name in ('AquaExpressions.js','AquaPreferences.js','AquaMotion.qml','AquaMotionData.js','WaterDropletFace.qml','WaterDropletMaterial.frag.qsb','WaterDropletContact.frag.qsb'):
+   shutil.copyfile(ROOT/'modules/abyss/companion'/name,specimen/name)
+  (shell/'shell.qml').write_text(QML)
+  env=core['private_env'](xdg,output); env.pop('AQUA_VISUAL_MATRIX_PRIVATE_FILE',None)
+  env.update(QT_QPA_PLATFORM='wayland',QSG_RHI_BACKEND='opengl',QT_QUICK_BACKEND='rhi',XDG_RUNTIME_DIR=os.environ['XDG_RUNTIME_DIR'],WAYLAND_DISPLAY=os.environ['WAYLAND_DISPLAY'],AQUA_PIXEL_FOLDER=str(output))
+  with (output/'capture.log').open('w') as log:
+   proc=subprocess.Popen(['dbus-run-session','--','qs','--path',str(shell/'shell.qml')],env=env,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,stdin=subprocess.DEVNULL,start_new_session=True)
+   try: code=proc.wait(timeout=25)
+   finally:
+    if proc.poll() is None: os.killpg(proc.pid,signal.SIGTERM); proc.wait(timeout=3)
+  log=(output/'capture.log').read_text()
+  assert code==0 and 'AQUA_SINGLE_SCENE=PASS' in log,log[-3000:]
+  assert not any(x in log for x in ('ReferenceError:','TypeError:','Unable to assign','SyntaxError:'))
+results=[]
+for i,c in enumerate(cases):
+ before=Image.open(folder/'before'/f'{i}.png').convert('RGBA')
+ after=Image.open(folder/'after'/f'{i}.png').convert('RGBA')
+ d=ImageChops.difference(before,after)
+ results.append(dict(case=c,changed_pixels=sum(any(p) for p in d.get_flattened_data()),maximum_channel_error=max(x[1] for x in d.getextrema())))
+report=dict(scope='one renderer instance per isolated process; pointer handlers disabled; byte-identical body self-control',body_sha256=hashlib.sha256(body).hexdigest(),cases=results,all_pixels_identical=all(r['changed_pixels']==0 for r in results))
+(folder/'result.json').write_text(json.dumps(report,indent=2)+'\n')
+print(json.dumps({'all_pixels_identical':report['all_pixels_identical'],'changed_per_case':[r['changed_pixels'] for r in results]}))

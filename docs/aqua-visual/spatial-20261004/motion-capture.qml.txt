@@ -1,0 +1,72 @@
+import QtQuick
+import Quickshell
+import qs.modules.common
+import qs.modules.abyss.companion
+import qs.modules.abyss.looks
+import "modules/abyss/companion/AquaMotionData.js" as Curves
+
+// Owned GPU comparison board. Runtime poses use the exact exported Blender
+// curves and the shipped liquid shader; capture never reads the desktop.
+Window {
+    id:root
+    width:1580;height:820;visible:true;color:"#071521"
+    property int frame:0
+    property bool busy:false
+    readonly property real elapsed:Math.max(0,frame-1)*100
+    readonly property string directory:Quickshell.env("AQUA_ACTIONS_DIRECTORY") ?? ""
+    Rectangle {
+        id:board;width:1580;height:820;color:"#071521"
+        Text {x:28;y:18;text:"Aqua · living water";color:"#bcf4ff";font.pixelSize:26;font.bold:true}
+        Text {x:28;y:56;text:"Higher jumps, seated falls and slower quicksand · Blender curves and runtime liquid shader";color:"#83b6ce";font.pixelSize:15}
+        Repeater {
+            model:["emerge","riseJump","launch","buttplant","stuckLaunch","sink","fallVanish","ice"]
+            Rectangle {
+                id:cell
+                required property string modelData
+                required property int index
+                x:20+(index%4)*390;y:92+Math.floor(index/4)*352
+                width:378;height:338;radius:16;color:"#091b2b";border.color:"#235470";clip:true
+                readonly property real phase:["walk","fly"].includes(modelData)
+                    ? (root.elapsed%Curves.clips[modelData].duration)/Curves.clips[modelData].duration
+                    : Math.min(1,root.elapsed/Curves.clips[modelData].duration)
+                readonly property real normal:Curves.sample(modelData,"normal",phase)
+                Text {x:16;y:12;z:10;text:({emerge:"Ordinary rise",riseJump:"Higher jump",launch:"Water launch",stuckLaunch:"Stuck → push",buttplant:"Backside landing",fallVanish:"Fall → vanish",faceplant:"Faceplant",diveJump:"Dive back",sink:"Quicksand",ice:"Icy landing",balance:"Keep balance",startle:"Startled",delight:"Delighted",walk:"Slow walk",fly:"Propelled flight"})[cell.modelData];color:"#94eaff";font.pixelSize:18}
+                AbyssField {
+                    anchors.fill:parent;z:0;edgeInsets:({left:8,top:8,right:8,bottom:18})
+                    waterLink:QtObject {
+                        readonly property vector4d contact:Qt.vector4d(cell.width/2,cell.height-18,1,Math.sin(Math.PI*cell.phase))
+                        readonly property vector4d contactNormal:Qt.vector4d(0,-1,cell.modelData==="sink" ? 1 : 0,cell.phase)
+                        readonly property vector4d ripple:Qt.vector4d(cell.width/2,cell.height-18,cell.phase,cell.phase<1 ? .85 : 0)
+                        readonly property vector4d rippleNormal:Qt.vector4d(0,-1,1,0)
+                    }
+                }
+                WaterDropletBody {
+                    id:body;z:1
+                    x:151;y:213+cell.normal*98*1.2;width:76;height:92;scale:1.2
+                    motionEnabled:true;effectsEnabled:true;renderQuality:"quality";translucency:.22
+                    motionAction:cell.modelData;motionProgress:cell.phase
+                    grounded:cell.normal>=-.015 && cell.modelData!=="fly"
+                    expression:["sink","fallVanish","buttplant","ice"].includes(cell.modelData) ? "panicked" : ["launch","stuckLaunch","ice","startle","balance"].includes(cell.modelData) ? "surprised" : "happy"
+                    eyeOpen:Curves.clips[cell.modelData].tracks.eyeOpen ? Curves.sample(cell.modelData,"eyeOpen",cell.phase) : 1
+                }
+            }
+        }
+    }
+    Timer {interval:1200;running:true;onTriggered:{Appearance.colors.colPrimary="#478dff";root.frame=1;frames.start()}}
+    Timer {
+        id:frames;interval:100;repeat:true
+        onTriggered:{
+            if(root.busy)return
+            root.busy=true
+            const number=root.frame
+            board.grabToImage(result=>{
+                if(!result.saveToFile(root.directory+"/frame-"+String(number).padStart(3,"0")+".png")) {
+                    console.error("AQUA_ACTIONS_CAPTURE=FAIL");Qt.quit();return
+                }
+                root.busy=false;root.frame++
+                if(root.frame>61){frames.stop();console.log("AQUA_ACTIONS_CAPTURE=PASS");shutdown.start()}
+            })
+        }
+    }
+    Timer {id:shutdown;interval:150;onTriggered:Qt.quit()}
+}

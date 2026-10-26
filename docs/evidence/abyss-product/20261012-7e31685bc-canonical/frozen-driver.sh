@@ -331,7 +331,7 @@ while IFS= read -r -d '' test_file; do
         # Requires an active, clean dev checkout and publishes a report.
         # Canonical validation runs in a detached clean clone: never dispatch
         # this manual workflow as a regression test.
-        scripts/test-wull-manual-perimeter.py)
+        scripts/test-aqua-manual-perimeter.py)
             record_skip "MANUAL-DEFERRED: $test_file"
             continue ;;
     esac

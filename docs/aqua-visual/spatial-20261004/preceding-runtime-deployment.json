@@ -1,0 +1,152 @@
+{
+  "baseSha": "6bd6cbdcfe79637c87d0e4577753a53566abadaa",
+  "sourceSha": "fa84b0e20db145c5f302a358f9a8fed8281467b6",
+  "files": [
+    {
+      "file": "assets/aqua/AquaMotion.blend",
+      "before": "a7f03e8891eff9d834070d19501946dba1282b74e31bc38cc5c92ad2dc58da4d",
+      "after": "cea2d374a21c43920215818a8c959e40e1563f88dbe63f4afbccf1cef3c01440",
+      "mode": 420
+    },
+    {
+      "file": "modules/abyss/companion/AquaMotionData.js",
+      "before": "36a15a4815f724ef2faffcbc7f64b8bff39186472a352d50073ebaebf0b75d41",
+      "after": "43c469327d3e3fe0e3f4c982b752c94aa07e0eecb261bc1cb9ea9623b22d0268",
+      "mode": 420
+    },
+    {
+      "file": "modules/abyss/companion/AquaPresence.qml",
+      "before": "43c5db511c75645135128e86edd0c3b5bb16f9b89277946abc2fdbc1115c25cd",
+      "after": "5265348662e748e81347ae876f59d33baf0b555d2d02e1060aedc2ef80da2afd",
+      "mode": 420
+    },
+    {
+      "file": "modules/abyss/companion/AquaAbyssLink.qml",
+      "before": "b600835f1704212048d80fae3c5a12ed2ef7d59aee87adaf54577fd2d377e195",
+      "after": "b28fa0724bddade2d24b3b9e05f8d225b1c39f0a41a89bed4d3fda99b4243fc7",
+      "mode": 420
+    },
+    {
+      "file": "modules/abyss/looks/AbyssField.frag",
+      "before": "8db423a9ca06cc87277a5419fb714c3383d5f3c8afc804d4e0e665b251cc594f",
+      "after": "daac6fab427edc7506cadb993ed5b18e61ea2d35947cd6fd975db9609a18b46c",
+      "mode": 420
+    },
+    {
+      "file": "modules/abyss/looks/AbyssField.frag.qsb",
+      "before": "e579c3d4d50ddb915f97bfb57a8afee697153ae69b156573c21087b8552eddd6",
+      "after": "e465f22b161d4d59a7fd1a1a9567fcc43adf57a9f112f7248eda4a4c46f24ffb",
+      "mode": 420
+    },
+    {
+      "file": "modules/abyss/AbyssPerimeter.qml",
+      "before": "3ab8da1daddaf450c2d11ab9a0c142198b54bf8b2cd3b457445db3ae35cd2aba",
+      "after": "5b36148a2b4e82e76ad26921558b1a0f2747f9cf17cc7022b5c18788d46b9e46",
+      "mode": 420
+    },
+    {
+      "file": "modules/abyss/companion/AquaTalkCloud.qml",
+      "before": "736b4e6748de8e3fcd76d382773ed61779fb4e5d0bc715dc80cdf438f48b61a3",
+      "after": "b2e4eb32e61257dc63f82bbe851eec2146ec6ab489054fd83dd3f6926a841fde",
+      "mode": 420
+    },
+    {
+      "file": "modules/settings/AiConfig.qml",
+      "before": "21207c4a5625e221c505be3587819b8387f409540de0e3ac975b70b5afa5a950",
+      "after": "7d9252c241cf314b596c954bf0c9d06e4ef083fc2ff5b97bc14872de9ab7c8ed",
+      "mode": 420
+    },
+    {
+      "file": "modules/settings/CompanionConfig.qml",
+      "before": "0e168edd8159ebd26be90dd8c5a3a4d14a8225ebfce370735b3a678a42bdba89",
+      "after": "319491a6fe94da17742ff340a4739438d1bde73626928db921a8a55fce758d03",
+      "mode": 420
+    },
+    {
+      "file": "scripts/lib/ipc-registry.sh",
+      "before": "c60300029b6bab5960b7c4ed0b57542530bf817021ea988a0c1db3b828e81216",
+      "after": "0bd26310af6f70b7796118379af05225b6d23de4e7c2604ca8ba3796d0e225b4",
+      "mode": 493
+    },
+    {
+      "file": "scripts/aqua/local_mind.py",
+      "before": "ebd557d42b1cb0a3e2f18f4bb1cce1a8748a8d03ae9a41635b3925defbaa4c96",
+      "after": "7e85254b613c8f45c1b4b2716a5e13a7022d6d26cd8167cc88aca402099e17e0",
+      "mode": 493
+    },
+    {
+      "file": "scripts/aqua/gguf_runtime.py",
+      "before": null,
+      "after": "a85fed728c8c17b3f0f45d13ea19a7ad65013052c23f98767dba124b68a05abd",
+      "mode": 420
+    },
+    {
+      "file": "scripts/aqua/local_models.py",
+      "before": null,
+      "after": "3413f812e6beb99dacb3e59d2bc72f4de93647ae6564f80980f75046a883534d",
+      "mode": 420
+    },
+    {
+      "file": "services/Ai.qml",
+      "before": "c26675292da7f1fdb4581a97a49e2ccee0b95486ad02b46e7d07716a57d9960c",
+      "after": "d7659e42810fde8703c2a8a69c156b00c05f3e0b88e2fe00ce824eba5eaa1521",
+      "mode": 420
+    },
+    {
+      "file": "services/AquaMind.qml",
+      "before": "51cad087bda8e9531c40b1a19c1c590101aa229030c2c27d1cbc3c2a08fc73d2",
+      "after": "c4b09f5758214c9210225a2af6ce58443379f90895bd589cf0bd731cf95b6e1a",
+      "mode": 420
+    },
+    {
+      "file": "services/LocalModels.qml",
+      "before": null,
+      "after": "7ab0059fb072f2172e51a6e7a1ad3788849a697852a1a9b76e64c8c9cdad53d5",
+      "mode": 420
+    },
+    {
+      "file": "services/ai/AiModel.qml",
+      "before": "0823cdeb63bb7911b58cb784f70d170620b26aa289695b984d7ee452a95cb3b4",
+      "after": "a8871485948592b7ace1931c779af90334f8f8f12650be983787cae7258edda8",
+      "mode": 420
+    },
+    {
+      "file": "services/qmldir",
+      "before": "0b4efaac4d11cca268b3befd667b324dcbc430cafe0904be13fe0e5125e4b0ab",
+      "after": "ec99d20c6603190910a6a5968b6adf836ff61abd86335146c91b42c85f305ebf",
+      "mode": 420
+    },
+    {
+      "file": "translations/en_US.json",
+      "before": "41c0e98c4027da084d936dd6cabb6c3c455e8568528ee512cfc1a9c90a98f9da",
+      "after": "25aaae3444c8b311fb8d313477a0cbced03121b94dc673b7dae82ab07915f72b",
+      "mode": 420
+    },
+    {
+      "file": "defaults/niri/config.d/70-binds.kdl",
+      "before": "1905d2fe6bce0d44ab117c8457fc628c3e5d31f0759a5f97df5e6d9462f9d977",
+      "after": "9831c3850e9cb2292037d727fba358dc67338fa6a691fb64620c543638131f5b",
+      "mode": 420
+    },
+    {
+      "file": "defaults/niri/config.d/75-inir-launcher-binds.kdl",
+      "before": "1358169bc8a33787c9279add00d88199089e2bf368e873541964431b69b5f1d4",
+      "after": "a28df50874ffd6ec6122db1048151b275fdc3ad4dfca8f0e2d31e9e5a74b7119",
+      "mode": 420
+    },
+    {
+      "file": "scripts/aqua-author-motion.py",
+      "before": "a3b9cd3fe3ef04e0c2390422d95b181670913b2a05c8b8f6229ce262296e2092",
+      "after": "2a28c5d667e70c5bc0928994a9937f64ae407c4d903e87b11928c83d2ad08b20",
+      "mode": 493
+    }
+  ],
+  "configBeforeSha256": "6941c5a26bd2b31b574fa390d840200f58cbe1c31556c846032caa6b1941df6e",
+  "niriBeforeSha256": "017fb2cb4be0ae581ddddc192d830b7105e1e1545c3cb53578fa0edb6c824ac0",
+  "niriAfterSha256": "3cb148eb354d1230bd66a3e29d4efd8c11bbb81d9d10c64d0b6b4b7dff086dbb",
+  "stagedNiriValidation": "PASS",
+  "qualifiedBeforeWrite": true,
+  "ownedFilesVerified": 23,
+  "configTouchedByInstaller": false,
+  "niriShortcutInstalled": true
+}

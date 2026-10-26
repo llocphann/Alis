@@ -1,0 +1,58 @@
+//@ pragma UseQApplication
+//@ pragma Env QS_NO_RELOAD_POPUP=1
+//@ pragma Env INIR_STANDALONE_WINDOW=1
+import QtQuick
+import QtQuick.Controls
+import Quickshell
+import qs.modules.common
+import qs.modules.common.functions
+import qs.modules.abyss.looks
+import qs.modules.abyss.companion
+ApplicationWindow {
+    id: root
+    width: 160; height: 160; visible: true; color: "#03101c"
+    property int phase: -1
+    property int ticks: 0
+    readonly property var names: ["blue", "amber", "purple", "green"]
+    readonly property var colors: ["#478dff", "#ffa94c", "#aa72ff", "#09daba"]
+    Rectangle {
+        id: board
+        width: 160; height: 160; color: "#03101c"
+        WaterDropletBody {
+            id: body
+            x: 42; y: 25; width: 76; height: 92; scale: 1.4
+            transformOrigin: Item.Center
+            motionEnabled: false; enabled: false; renderQuality: "quality"
+        }
+    }
+    Timer {
+        interval: 650; running: true; repeat: true
+        onTriggered: {
+            if (!Config.ready || !body.materialReady) {
+                if (++root.ticks > 12) { console.error("AQUA_PALETTE_FAIL startup"); Qt.exit(1) }
+                return
+            }
+            if (root.phase < 0) {
+                root.phase = 0
+                Appearance.colors.colPrimary = root.colors[0]
+                return
+            }
+            if (body.accentColor.toString() !== AbyssStyle.accent.toString()
+                || body.accentColor.toString() !== ColorUtils.colorWithLightness(Appearance.colors.colPrimary, 0.68).toString()
+                || body.reflectionColor.toString() !== AbyssStyle.specular.toString()) {
+                console.error("AQUA_PALETTE_FAIL live binding"); Qt.exit(1); return
+            }
+            console.log("AQUA_PALETTE_READBACK " + JSON.stringify({name: root.names[root.phase],
+                primary: Appearance.colors.colPrimary.toString(), accent: body.accentColor.toString(),
+                panel_accent: AbyssStyle.accent.toString(), specular: body.reflectionColor.toString()}))
+            board.grabToImage(result => {
+                if (!result.saveToFile(Quickshell.env("AQUA_PALETTE_DEST") + "/live-panel-" + root.names[root.phase] + ".png")) {
+                    console.error("AQUA_PALETTE_FAIL capture"); Qt.exit(1); return
+                }
+                root.phase += 1
+                if (root.phase === root.names.length) { console.log("AQUA_PALETTE_PASS"); Qt.quit() }
+                else Appearance.colors.colPrimary = root.colors[root.phase]
+            })
+        }
+    }
+}

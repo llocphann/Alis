@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "tested_sha": "99cd39d2cfad20fab3ce9abc0a7dcac9ab44a459",
+  "canonical_status": "FAIL",
+  "mode": "current-repo",
+  "checks": 409,
+  "pass": 366,
+  "fail": 43,
+  "skip": 2,
+  "aqua_python_checks": 76,
+  "aqua_python_pass": 72,
+  "aqua_python_fail": 4,
+  "log_sha256": "7bf4402ab33c7f98dcc6ad81c075f507ad428219865830c72e4272b48e90d4a1",
+  "private_log_path": "/tmp/hadalis-maintainer-validation-20261003-230017.log",
+  "failed_checks": [
+    {
+      "check": "Python regression: scripts/test-abyss-dock-menu-axis-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-dock-resident-content-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-launcher-dock-menu-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-launcher-status-mark-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-pyramid-v2-neighborhood.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-pyramid-v2-transactions.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-settings-compact-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-vacancy-borrowing.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-clipboard-image-classification-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-dashboard-content-aware-add-all-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-dashboard-freeform-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-dock-abyss-hover-orientation-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-material-only-global-style-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-megaqml-host-ui-fixture.py",
+      "exit": 64
+    },
+    {
+      "check": "Python regression: scripts/test-megaqml-phase2p-history-guard.py",
+      "exit": 78
+    },
+    {
+      "check": "Python regression: scripts/test-megaqml-qt-diagnostic.py",
+      "exit": 64
+    },
+    {
+      "check": "Python regression: scripts/test-megaqml-quickshell-classify.py",
+      "exit": 64
+    },
+    {
+      "check": "Python regression: scripts/test-megaqml-ui-fixture.py",
+      "exit": 64
+    },
+    {
+      "check": "Python regression: scripts/test-notification-center-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-owner-ui-regressions-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-quick-action-drag-visibility-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-quick-action-icon-order-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-runtime-unblock-abyss-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-shell-surface-contracts.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-aqua-pointer-underlay-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-aqua-private-mask-candidate-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-aqua-production-contract.py",
+      "exit": 1
+    },
+    {
+      "check": "Python regression: scripts/test-aqua-real-field-canary-fake-only.py",
+      "exit": 1
+    },
+    {
+      "check": "documentation contracts",
+      "exit": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-app-hover-menu.sh",
+      "exit": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-corner-content.sh",
+      "exit": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-dashboard-editing.sh",
+      "exit": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-dock-reveal.sh",
+      "exit": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-editor-runtime.sh",
+      "exit": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-network-popups.sh",
+      "exit": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-osd-content.sh",
+      "exit": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-utilities-popup.sh",
+      "exit": 1
+    },
+    {
+      "check": "shell regression: scripts/test-hadalis-desktop-repair.sh",
+      "exit": 2
+    },
+    {
+      "check": "shell regression: scripts/test-megaqml-phase2-local.sh",
+      "exit": 64
+    },
+    {
+      "check": "shell regression: scripts/test-megaqml-quickshell-smoke.sh",
+      "exit": 64
+    },
+    {
+      "check": "shell regression: scripts/test-megaqml-ui-loader-local.sh",
+      "exit": 64
+    },
+    {
+      "check": "shell regression: scripts/test-performance-lifecycle.sh",
+      "exit": 1
+    },
+    {
+      "check": "shell regression: scripts/test-window-preview-consumer-identity.sh",
+      "exit": 1
+    }
+  ],
+  "repair_sha": "bea5a3b3880e03b5d081fca3a4df5630bb11aa71",
+  "scope": "initial exact-source canonical result before correcting four stale current-input/orientation checks; next run must qualify repair"
+}

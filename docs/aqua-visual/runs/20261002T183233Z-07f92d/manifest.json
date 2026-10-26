@@ -1,0 +1,45 @@
+{
+  "run_id": "20261002T183233Z-07f92d",
+  "kind": "synthetic_real_AbyssField_qsb_and_Aqua_Niri_in_Niri_inward_cradle_revision",
+  "exact_source_sha": "07f92d1182265fd32eb82e065a92ef500b0f7a59",
+  "captured_utc": "2026-10-02T18:32:33.000Z",
+  "profile_id": "profile-1e0042aca8e24db2",
+  "worker_job": "JOB-AQUA-CRADLE-CAPTURE-P1E0042-20261003-33",
+  "evidence_ids": [
+    "JOB-AQUA-CRADLE-CAPTURE-P1E0042-20261003-33:0",
+    "JOB-AQUA-CRADLE-CAPTURE-P1E0042-20261003-33:1",
+    "JOB-AQUA-CRADLE-CAPTURE-P1E0042-20261003-33:2",
+    "JOB-AQUA-CRADLE-CAPTURE-P1E0042-20261003-33:3",
+    "JOB-AQUA-CRADLE-CAPTURE-P1E0042-20261003-33:4"
+  ],
+  "capture_evidence_id": "JOB-AQUA-CRADLE-CAPTURE-P1E0042-20261003-33:4",
+  "receipt_path": "automation/results/JOB-AQUA-CRADLE-CAPTURE-P1E0042-20261003-33.json",
+  "source_fixture": "scripts/aqua-fixtures/real-field-canary/shell.qml",
+  "source_runner": "scripts/aqua-manual-nested-field-capture.py",
+  "field_component": "modules/abyss/looks/AbyssField.qml",
+  "field_compiled_shader": "modules/abyss/looks/AbyssField.frag.qsb",
+  "aqua_component": "modules/abyss/companion/AbyssCompanion.qml",
+  "source_geometry_change": "cradle anchored to the inward body base rather than outward tip edge",
+  "poses": [
+    "top/idle",
+    "right/idle",
+    "bottom/happy",
+    "left/idle"
+  ],
+  "synthetic_insets": "66px active edge; 14px other edges, each case 224x224",
+  "baseline": "docs/aqua-visual/runs/20261002T182524Z-42e677/curated-nested-field-four-edge.png",
+  "capture": "owned 512x512 QML Item.grabToImage in distinct Niri-in-Niri Wayland socket; no host desktop screenshot",
+  "checks": {
+    "source_safety": "exit0",
+    "production_surface_integration": "exit0",
+    "production_contract": "exit0",
+    "private_capture_safety": "exit0",
+    "owned_nested_gpu_capture": "exit0",
+    "host_outputs_unchanged": true,
+    "shader_core_and_corner_alpha": true
+  },
+  "image_publication": "NOT_PUBLISHED_PRIVATE_AT_MANIFEST_CREATION",
+  "original_maintainer_references": "UNVERIFIED",
+  "visual_acceptance": "NOT_REVIEWED",
+  "live_module_real_panel_and_popup": "NOT_TESTED"
+}

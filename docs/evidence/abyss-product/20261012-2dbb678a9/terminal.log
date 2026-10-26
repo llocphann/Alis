@@ -130,8 +130,8 @@ Log: /tmp/alis-canonical-hx_pf2sz/canonical.log
 [128] Python regression: scripts/test-hadalird-preferences-migration.py PASS
 [129] Python regression: scripts/test-hadalird-settings-flow.py  PASS
 [130] Python regression: scripts/test-hadalird-system-provision.py PASS
-[131] Python regression: scripts/test-hadanion-layer-shell.py    PASS
-[132] Python regression: scripts/test-hadanion-optional.py       PASS
+[131] Python regression: scripts/test-alis-companion-layer-shell.py    PASS
+[132] Python regression: scripts/test-alis-companion-optional.py       PASS
 [133] Python regression: scripts/test-inir-process-cleanup.py    PASS
 [134] Python regression: scripts/test-ipc-registry-generator.py  PASS
 [135] Python regression: scripts/test-iris-corner-poc-contract.py PASS

@@ -1,0 +1,39 @@
+{
+  "run_id": "20261002T160958Z-8325d22",
+  "kind": "synthetic_real_qml_offscreen_four_pose",
+  "exact_source_sha": "8325d22cd7f37d92d36239e015902a52ed6ee986",
+  "captured_utc": "2026-10-02T16:09:58Z",
+  "profile_id": "profile-1e0042aca8e24db2",
+  "worker_job": "JOB-AQUA-VM-P1E0042-20261002-03",
+  "evidence_ids": [
+    "JOB-AQUA-VM-P1E0042-20261002-03:0",
+    "JOB-AQUA-VM-P1E0042-20261002-03:1",
+    "JOB-AQUA-VM-P1E0042-20261002-03:2"
+  ],
+  "receipt_path": "automation/results/JOB-AQUA-VM-P1E0042-20261002-03.json",
+  "source_fixture": "scripts/aqua-fixtures/visual-matrix/shell.qml",
+  "source_runner": "scripts/aqua-manual-visual-matrix.py",
+  "renderer": "actual AbyssCompanion and WaterDropletBody",
+  "poses": [
+    "top/idle",
+    "bottom/happy",
+    "left/curious",
+    "right/sleepy"
+  ],
+  "scale": 1.25,
+  "theme": "isolated shipped default config; appearance colors may depend on QML singleton state",
+  "capture_type": "Qt offscreen grabToImage of owned synthetic 512x512 Item only",
+  "checks": {
+    "fake_only": "exit_0",
+    "offscreen_preflight": "exit_0",
+    "capture": "exit_0",
+    "all_four_cells_alpha_observed": true,
+    "png_bounded_rgba8_crc_checked": true
+  },
+  "image_publication": "NOT_PUBLISHED - raw contact sheet remains owner-private on worker host",
+  "visual_quality": "NOT_REVIEWED",
+  "reference_comparison": "BLOCKED - four authentic originals and reference manifest unverified",
+  "actual_panel_connection": "NOT_TESTED",
+  "pointer_popup": "NOT_TESTED",
+  "notes": "Worker Git receipt carries bounded metadata only. Successful capture or synthetic alpha coverage cannot certify expression distinction, attractive appearance, real panel seam, or maintainer visual acceptance."
+}

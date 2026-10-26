@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "source_sha": "2af514d9415dda3a73914ccff8195cf73f2da60f",
+  "branch": "dev",
+  "recorded_at_utc": "2026-10-03T14:02:57.258872+00:00",
+  "status": "MANUAL_VALIDATED_SOURCE_RENDER_AND_SETTINGS_ONLY",
+  "source_blobs": {
+    "modules/abyss/companion/WaterDropletBody.qml": "3b17b3e1a8feeefbb8ebb226eedf17591d46f816",
+    "modules/abyss/companion/WaterDropletFace.qml": "72fe79df30f3cadc860f845d62d2618065b0727a",
+    "modules/abyss/companion/WaterDropletMaterial.frag": "2e46f7b8456052386feea69781f6728f66d88c9b",
+    "modules/abyss/companion/WaterDropletMaterial.frag.qsb": "1b1482ddae1734d904b0c2e218fd79c079ba9fe8",
+    "modules/abyss/companion/WaterDropletContact.frag": "548a10fbeb5cbb411d8fa17c4d134bb1d5f33769",
+    "modules/abyss/companion/WaterDropletContact.frag.qsb": "e128051afa907840142d79d11f8142e0876ee4e5",
+    "modules/abyss/companion/AquaExpressions.js": "eabef6d3992907f53473d414422238ad5c91847c",
+    "modules/abyss/companion/AquaPreferences.js": "6ce704ed23d278dd9a4c88b5b58af05bce7005dd",
+    "modules/abyss/companion/AbyssCompanion.qml": "7e45b63073bc92907d5ee40c678596224ca4ca4f",
+    "modules/abyss/companion/CompanionBridge.qml": "4d561eda075796625bab4542f3b80393744bc481",
+    "modules/abyss/companion/qmldir": "fe07388af1ac54d06b1dbc6c941fb075c8665115",
+    "modules/abyss/AbyssPerimeter.qml": "f52e0427ee36f2501fa25c3e51f5807b112375c0",
+    "modules/abyss/looks/AbyssStyle.qml": "4cc05dbaf547a3eff366647cb388abe8c31af5d5",
+    "modules/common/Config.qml": "39361d5bec6ab167ebc08a24725cae8469290d43",
+    "modules/common/Appearance.qml": "55480307855a511518206c8dbea5e5eb20d76c33",
+    "modules/common/functions/ColorUtils.qml": "320c9460074a31120377518ae4608f7c2b0cb0d5",
+    "modules/settings/CompanionConfig.qml": "9dd7a8ede5263ca3de8091e02cb4c08749a074ea",
+    "modules/settings/SettingsPageRegistryData.qml": "f17d155f22ef9bff717bd0aef7e1587efd304de2",
+    "modules/settings/qmldir": "dcad4257c21e02648f091e591ad31b4cd1c34a79",
+    "defaults/config.json": "73e836b8cbe621c2d855496a43ab8d08db4c1759",
+    "translations/en_US.json": "cb923c7030f97e74adc972582436ee10b59dc77e",
+    "native/inir-companiond/src/lib.rs": "23c1fb16cbeb5c3f8c21dbacc825940c5071f094",
+    "native/inir-companiond/src/main.rs": "8d7eb33391d301aa15dd4937206254c6a256815d",
+    "docs/AQUA_COMPANION_PROTOCOL_V1.md": "5fe9d634cf5cca8b28b588605e705e8f59bf4a58",
+    "scripts/aqua-fixtures/design-gallery/AquaDesignGallery.qml": "dffafe5313e035dce4e1e78d1432d0245a8d95a9",
+    "aquaDesign.qml": "e4bb5ed8aebe1fbac06fde72df9a38b403c3e562",
+    "scripts/aqua-render-design.py": "6f8ab4c19be318d312a223eafe810612403905a6",
+    "docs/aqua-visual/design-20261003/reference-closeup.png": "e31541fdc070c20ed278ea7e3b2c314f3b2b3d36",
+    "scripts/aqua-fixtures/settings/MaterialQualityPreview.qml": "ed07d232f22f177f2d86eca1599425b32cff8dac",
+    "scripts/aqua-fixtures/settings/PreferencesBridgeProof.qml": "8da64ef8e8f45a88d880c85323709ed6cd7a0a71",
+    "scripts/aqua-fixtures/settings/CompanionSettingsPreview.qml": "1f6907195292109aa72932a1677cca61424bf1bc",
+    "scripts/aqua-preview-material.py": "9ee23fcb11dda1e0f4565ef54d6e0db587125a03",
+    "scripts/aqua-preview-settings.py": "35066f50e05ef1833b639ef1400da3c859accccc",
+    "scripts/aqua-check-settings-bridge.py": "2654fac613b8a74ea568152c58e41af22748dacb",
+    "scripts/aqua-check-presence.py": "7f2df1fb8d9dacae6ce4c860315a982212ce222f",
+    "scripts/test-aqua-preferences.cjs": "a0c133b75d1de44129e27f00bd762d769e520e4b",
+    "scripts/test-aqua-companion-settings.py": "3b5fb4cf186882a9730ce0e1c90cc5e9b775121f"
+  },
+  "artifacts": {
+    "alpha-samples.json": {
+      "sha256": "3ba5ba1525d6d12595c3f4a013f866a3ce411dcf97b0f9e0f8cb50c105920031",
+      "bytes": 438
+    },
+    "canonical-initial-summary.txt": {
+      "sha256": "1e0d60f18f860b51050b9bac5eb9dbe68b9e4c1fefc472f42379070077c70f62",
+      "bytes": 4075
+    },
+    "canonical-qt6-summary.txt": {
+      "sha256": "21c02365c18fc1ce17c08be6cedbc9fc441f025a90d4ef00f22cea3ff00fb90b",
+      "bytes": 3992
+    },
+    "focused-proof.txt": {
+      "sha256": "59ece4204aec63e077910c544637fbeb9c969520167a35a8c2ba061d2ced8d2e",
+      "bytes": 714
+    },
+    "gallery.png": {
+      "sha256": "efdcadc008dad16f091491f00f6328a0444b33546ecd19fc5a3ef02ef4e59ef5",
+      "bytes": 643230,
+      "size": [
+        1440,
+        1230
+      ],
+      "mode": "RGBA"
+    },
+    "live-panel-amber.png": {
+      "sha256": "f7e50edccfac257c95a273c458fffe064e43e38f5c473f54017449c7eb7969d5",
+      "bytes": 22317,
+      "size": [
+        160,
+        160
+      ],
+      "mode": "RGBA"
+    },
+    "live-panel-binding.json": {
+      "sha256": "a151842bbc37ccf44fa4a5b79c75ff61b648bb40cbeb646d6e9da6f85562e6c5",
+      "bytes": 555
+    },
+    "live-panel-blue.png": {
+      "sha256": "50a014b06a713f9dc375e71b38a1b9ab50dc1d298eb0f98b6344c64316fcdce4",
+      "bytes": 22555,
+      "size": [
+        160,
+        160
+      ],
+      "mode": "RGBA"
+    },
+    "live-panel-green.png": {
+      "sha256": "01faf9cd8040347b25e3be9bb6f938ddfd45810b777ba3eff3372592ec7af89c",
+      "bytes": 22272,
+      "size": [
+        160,
+        160
+      ],
+      "mode": "RGBA"
+    },
+    "live-panel-purple.png": {
+      "sha256": "2810282f566e6d93981a1c9ae228642949e14c9d75b84963d745a0f4807e5a79",
+      "bytes": 22412,
+      "size": [
+        160,
+        160
+      ],
+      "mode": "RGBA"
+    },
+    "material-comparison.png": {
+      "sha256": "76c69e39e8bbbe99d73b3c82bc823d0626eee098515ec2bac3dbe60c51488898",
+      "bytes": 495245,
+      "size": [
+        1200,
+        830
+      ],
+      "mode": "RGBA"
+    },
+    "motion-frame-hashes.json": {
+      "sha256": "de273e7295def97da02537bd10f74a57d57b653ddefbe3a03c87e0420b16dbbd",
+      "bytes": 21603
+    },
+    "motion.mp4": {
+      "sha256": "11577938d7f37241466fc45874e439e8340245033b147b75ab0cfe551dee55a5",
+      "bytes": 2073087
+    },
+    "native-presence.json": {
+      "sha256": "4731d7082b1443f7b1cdef945c66aeaed2b696536c8ecf682f65058841298d32",
+      "bytes": 10058
+    },
+    "palette-fixture.qml.txt": {
+      "sha256": "fb1578b8a5bb51b71110aeda690cf4dc600efecae296c59e3a3aa9770121bc56",
+      "bytes": 2558
+    },
+    "settings-behavior.png": {
+      "sha256": "566f522537e82201001c9d7205732ad6b2af2b336eaa60caeb052c6f97cb75f8",
+      "bytes": 111064,
+      "size": [
+        1040,
+        960
+      ],
+      "mode": "RGBA"
+    },
+    "settings-narrow.png": {
+      "sha256": "028ac0d8f5937987a93d95112e591700b85d27564b7fd209b560f5fbd4a20e82",
+      "bytes": 114068,
+      "size": [
+        560,
+        1200
+      ],
+      "mode": "RGBA"
+    },
+    "settings-rendering.png": {
+      "sha256": "40ca4c947178f840b125201c6fb87f8124a241f0587d23202f132e7513698a92",
+      "bytes": 114568,
+      "size": [
+        1040,
+        960
+      ],
+      "mode": "RGBA"
+    },
+    "software-fallback.png": {
+      "sha256": "c996ada41e6b6d030177f3c8b04741b45993eab1e3babdcf17b832462f5c171d",
+      "bytes": 420157,
+      "size": [
+        1440,
+        1230
+      ],
+      "mode": "RGBA"
+    },
+    "translucency-0.png": {
+      "sha256": "c9146ce8a26a4177107b85fd19b98d4048c29160e5187d7e739ccd0d365df6fe",
+      "bytes": 76847,
+      "size": [
+        228,
+        276
+      ],
+      "mode": "RGBA"
+    },
+    "translucency-1.png": {
+      "sha256": "f0637c6c452c4bdc8e38a3a3f02f92aaf1372eabd30a18624d273fe787ebae56",
+      "bytes": 78167,
+      "size": [
+        228,
+        276
+      ],
+      "mode": "RGBA"
+    },
+    "translucency-2.png": {
+      "sha256": "f6480a4a4ac14b7a61b4a49f8bcd8f58dcc727b9465d37ebfb7cbc76221b396c",
+      "bytes": 78992,
+      "size": [
+        228,
+        276
+      ],
+      "mode": "RGBA"
+    },
+    "validation.json": {
+      "sha256": "667e0e6fb411d3e5dd932098f98c56590412cd21f6973077e0f7d0d7cac9aa4c",
+      "bytes": 13818
+    }
+  },
+  "reference": {
+    "path": "../design-20261003/reference-closeup.png",
+    "sha256": "92d80a1c2066a4cbef103cdea6fb0b49790a69205b528df829c37fdf49245df8",
+    "retained_reference_bytes_unchanged": true,
+    "prior_original_verification": "../design-20261003/provenance.json",
+    "clipboard_original_currently_available": false
+  },
+  "original_boards": [
+    {
+      "path": "assets/Water Droplet Companion Animation Plus.png",
+      "sha256": "8ce3d8d851840bee569278fd459ef194176dd0f5050fa87eae763be78b27492a",
+      "current_download_bytes_match": true
+    },
+    {
+      "path": "assets/Water Droplet Companion Animation.png",
+      "sha256": "262185b124dc854c4f8073154e5fcf4bf1a75f986e6b7039c78585f65c7076ab",
+      "current_download_bytes_match": true
+    },
+    {
+      "path": "assets/Water Droplet Companion Expression.png",
+      "sha256": "f5c3f4a77b0101dff49e609cd0948e8eae4ef8731f043d1d9a9ab547db472d01",
+      "current_download_bytes_match": true
+    },
+    {
+      "path": "assets/Water Droplet Companion.png",
+      "sha256": "d7b24b7ab0908990c81a67b6cfbabc18fdfa0e97e678038e54a2fe28bf18b21e",
+      "current_download_bytes_match": true
+    }
+  ],
+  "motion": {
+    "frames": 180,
+    "distinct_frames": 180,
+    "presentation_fps": 20,
+    "duration_s": 9,
+    "dimensions": [
+      1440,
+      1230
+    ],
+    "runtime_frame_pacing_measured": false
+  },
+  "native_proof": {
+    "tested_source_sha": "037d096ea2e604f601c2cda417bdd1adc2499f93",
+    "lib_blob": "23c1fb16cbeb5c3f8c21dbacc825940c5071f094",
+    "same_lib_blob_as_source": true,
+    "rust_tests": 17,
+    "clippy": "PASS - all targets, warnings denied",
+    "binary_sha256": "e59f49a77ba89a54a9179fe215cad033a9d536cfcdc7ed7c4d9dca8ad67a8e43",
+    "visit_duration_s": 20.0008,
+    "appearance_period_s": 60.0009,
+    "proof": "native-presence.json",
+    "installed_binary_qualified": false,
+    "qml_preferences_bridge": "PASS: preference-before-show ordering, live profile changes, Always respects hide and hidden state is quiet; fixture/source blobs retained."
+  },
+  "scope": {
+    "user_configuration_changed": false,
+    "desktop_screenshot": false,
+    "native_desktop_input_acceptance": false,
+    "cpu_pss_fps_qualified": false,
+    "reference_resemblance_100_percent": false,
+    "default_enabled": false
+  },
+  "runtime_blobs_unchanged_at_revision": "bf7da25c17cb0d20d4a545888394200999c0ade7",
+  "historical_test_repair": {
+    "source_sha": "bf7da25c17cb0d20d4a545888394200999c0ade7",
+    "runtime_changed": false,
+    "historical_defaults_blob": "e10d98c0f26d3e47c51cb8452bcd0d2cea735501",
+    "live_nested_trial_replayed": false
+  },
+  "canonical_validation": {
+    "sha": "bf7da25c17cb0d20d4a545888394200999c0ade7",
+    "status": "FAIL",
+    "passed": 371,
+    "failed": 38,
+    "skipped": 2,
+    "aqua_python_passed": 76,
+    "qml_parser": "PASS (qmlformat on Qt 6.11.2; parser pass runs inside qml-check)",
+    "summary": "canonical-qt6-summary.txt",
+    "details": "validation.json",
+    "runtime_blobs_identical_to_render_revision": true,
+    "evidence_commit_scope": "CAPTURES_AND_DOCUMENTATION_ONLY_AFTER_TESTED_SOURCE"
+  }
+}

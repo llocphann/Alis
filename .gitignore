@@ -198,5 +198,5 @@ assets/images/mascot/inir-mascot-*.gif
 /scripts/iris-corner-poc/captures/
 /scripts/iris-corner-poc/g2/captures/
 
-# Optional Hadanion install, owned and updated by its own repository.
+# Optional Alis-Companion install, owned and updated by its own repository.
 /optional/

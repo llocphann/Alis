@@ -17,15 +17,15 @@ Item {
     Loader {
         id: settingsLoader
         anchors.fill: parent
-        active: Hadanion.available
-        source: Hadanion.settingsSource
+        active: AlisCompanion.available
+        source: AlisCompanion.settingsSource
         Binding { target: settingsLoader.item; property: "embedded"; value: root.embedded; when: !!settingsLoader.item }
         Binding { target: settingsLoader.item; property: "activeSection"; value: root.activeSection; when: !!settingsLoader.item }
     }
 
     ColumnLayout {
         id: missing
-        visible: !Hadanion.available
+        visible: !AlisCompanion.available
         anchors { top: parent.top; left: parent.left; right: parent.right; margins: 24 }
         spacing: 16
         StyledText {
@@ -35,7 +35,7 @@ Item {
         }
         DialogButton {
             buttonText: Translation.tr("Recheck Companion")
-            onClicked: Hadanion.refresh()
+            onClicked: AlisCompanion.refresh()
         }
     }
 }

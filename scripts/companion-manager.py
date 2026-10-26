@@ -43,7 +43,7 @@ def run(*command, cwd=None, capture=False):
 
 
 def installed_revision(data_home):
-    data_root = data_home / "hadanion"
+    data_root = data_home / "alis-companion"
     current = data_root / "current"
     if not current.is_symlink():
         return ""
@@ -55,7 +55,7 @@ def installed_revision(data_home):
         if manifest.stat().st_size > 16384:
             return ""
         info = json.loads(manifest.read_text())
-        if info.get("id") != "hadanion" or type(info.get("hostApi")) is not int or info["hostApi"] != 1:
+        if info.get("id") != "alis-companion" or type(info.get("hostApi")) is not int or info["hostApi"] != 1:
             return ""
         if any(info.get(key) != rel or not (release / rel).is_file()
                for key, rel in REQUIRED.items() if key != "binary"):
@@ -98,7 +98,7 @@ def source_checkout(cache, remote, revision):
     if run("git", "status", "--porcelain", "--untracked-files=all", cwd=checkout, capture=True):
         raise CompanionInstallError("Managed Companion source must remain clean")
     info = json.loads((checkout / "manifest.json").read_text())
-    if info.get("id") != "hadanion" or info.get("hostApi") != 1:
+    if info.get("id") != "alis-companion" or info.get("hostApi") != 1:
         raise CompanionInstallError("Incompatible Alis-Companion host API")
     for key, rel in REQUIRED.items():
         if (info.get(key) not in COMPATIBLE_BINARIES if key == "binary"
@@ -109,7 +109,7 @@ def source_checkout(cache, remote, revision):
 
 
 def owner_file(data_home):
-    return data_home / "hadanion/.alis-owned.json"
+    return data_home / "alis-companion/.alis-owned.json"
 
 
 def record_owner(data_home, revision):
@@ -145,7 +145,7 @@ def uninstall_owned(data_home):
     revision = info.get("sourceSha", "")
     if info.get("owner") != "Alis" or not isinstance(revision, str) or not re.fullmatch(r"[0-9a-f]{40}", revision):
         raise CompanionInstallError("Untrusted Companion ownership marker")
-    current = data_home / "hadanion/current"
+    current = data_home / "alis-companion/current"
     if not current.exists() and not current.is_symlink():
         marker.unlink()
         return
@@ -186,7 +186,7 @@ def sync(remote, revision, data_home, cache):
     launcher = shutil.which("alis")
     if launcher:
         try:
-            subprocess.run([launcher, "ipc", "hadanion", "refresh"], timeout=5,
+            subprocess.run([launcher, "ipc", "alis-companion", "refresh"], timeout=5,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
         except (OSError, subprocess.TimeoutExpired):
             pass

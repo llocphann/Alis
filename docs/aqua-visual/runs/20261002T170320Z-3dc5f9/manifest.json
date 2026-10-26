@@ -1,0 +1,37 @@
+{
+  "run_id": "20261002T170320Z-3dc5f9",
+  "kind": "synthetic_real_qml_offscreen_four_pose",
+  "exact_source_sha": "3dc5f9691164fb8929ba11003fa1b61483dc561b",
+  "captured_utc": "2026-10-02T17:03:20Z",
+  "profile_id": "profile-1e0042aca8e24db2",
+  "worker_job": "JOB-AQUA-SMOOTH-DOME-P1E0042-20261002-16",
+  "capture_evidence_id": "JOB-AQUA-SMOOTH-DOME-P1E0042-20261002-16:2",
+  "evidence_ids": [
+    "JOB-AQUA-SMOOTH-DOME-P1E0042-20261002-16:0",
+    "JOB-AQUA-SMOOTH-DOME-P1E0042-20261002-16:1",
+    "JOB-AQUA-SMOOTH-DOME-P1E0042-20261002-16:2"
+  ],
+  "source_fixture": "scripts/aqua-fixtures/visual-matrix/shell.qml",
+  "source_runner": "scripts/aqua-manual-visual-matrix.py",
+  "renderer": "current six-curve rounded-smoothed dome, counter-rotated upright face, and side cradle",
+  "poses": [
+    "top/idle",
+    "bottom/happy",
+    "left/curious",
+    "right/sleepy"
+  ],
+  "scale": 1.25,
+  "theme": "isolated shipped default config",
+  "capture_type": "512x512 Qt offscreen owned synthetic Item, not host desktop",
+  "baseline": "docs/aqua-visual/runs/20261002T165800Z-608cc6/curated-four-pose.png",
+  "checks": {
+    "source_contract": "exit0",
+    "production_surface_integration": "exit0",
+    "current_Qt_capture": "exit0"
+  },
+  "image_publication": "NOT_PUBLISHED - original remains owner private",
+  "visual_quality": "NOT_REVIEWED",
+  "original_reference_comparison": "BLOCKED - original four-reference manifest absent",
+  "real_panel_connection": "NOT_TESTED",
+  "pointer_popup": "NOT_TESTED"
+}

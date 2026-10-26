@@ -1044,408 +1044,408 @@ Command: python3 scripts/test-weather-popup-layout-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [205]: Python regression: scripts/test-wull-abyss-water.py ----
-Command: python3 scripts/test-wull-abyss-water.py
+---- CHECK [205]: Python regression: scripts/test-aqua-abyss-water.py ----
+Command: python3 scripts/test-aqua-abyss-water.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [206]: Python regression: scripts/test-wull-canonical-private-diagnostics-fake-only.py ----
-Command: python3 scripts/test-wull-canonical-private-diagnostics-fake-only.py
+---- CHECK [206]: Python regression: scripts/test-aqua-canonical-private-diagnostics-fake-only.py ----
+Command: python3 scripts/test-aqua-canonical-private-diagnostics-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [207]: Python regression: scripts/test-wull-canonical-private-diagnostics-v2-fake-only.py ----
-Command: python3 scripts/test-wull-canonical-private-diagnostics-v2-fake-only.py
+---- CHECK [207]: Python regression: scripts/test-aqua-canonical-private-diagnostics-v2-fake-only.py ----
+Command: python3 scripts/test-aqua-canonical-private-diagnostics-v2-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [208]: Python regression: scripts/test-wull-canonical-private-diagnostics-v3-fake-only.py ----
-Command: python3 scripts/test-wull-canonical-private-diagnostics-v3-fake-only.py
+---- CHECK [208]: Python regression: scripts/test-aqua-canonical-private-diagnostics-v3-fake-only.py ----
+Command: python3 scripts/test-aqua-canonical-private-diagnostics-v3-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [209]: Python regression: scripts/test-wull-centered-prototype-contract.py ----
-Command: python3 scripts/test-wull-centered-prototype-contract.py
+---- CHECK [209]: Python regression: scripts/test-aqua-centered-prototype-contract.py ----
+Command: python3 scripts/test-aqua-centered-prototype-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [210]: Python regression: scripts/test-wull-classify-inspection-receipt.py ----
-Command: python3 scripts/test-wull-classify-inspection-receipt.py
+---- CHECK [210]: Python regression: scripts/test-aqua-classify-inspection-receipt.py ----
+Command: python3 scripts/test-aqua-classify-inspection-receipt.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [211]: Python regression: scripts/test-wull-collapsed-bar.py ----
-Command: python3 scripts/test-wull-collapsed-bar.py
+---- CHECK [211]: Python regression: scripts/test-aqua-collapsed-bar.py ----
+Command: python3 scripts/test-aqua-collapsed-bar.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [212]: Python regression: scripts/test-wull-companion-settings.py ----
-Command: python3 scripts/test-wull-companion-settings.py
+---- CHECK [212]: Python regression: scripts/test-aqua-companion-settings.py ----
+Command: python3 scripts/test-aqua-companion-settings.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [213]: Python regression: scripts/test-wull-curated-matrix-export-fake-only.py ----
-Command: python3 scripts/test-wull-curated-matrix-export-fake-only.py
+---- CHECK [213]: Python regression: scripts/test-aqua-curated-matrix-export-fake-only.py ----
+Command: python3 scripts/test-aqua-curated-matrix-export-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [214]: Python regression: scripts/test-wull-curated-matrix-export-v2-fake-only.py ----
-Command: python3 scripts/test-wull-curated-matrix-export-v2-fake-only.py
+---- CHECK [214]: Python regression: scripts/test-aqua-curated-matrix-export-v2-fake-only.py ----
+Command: python3 scripts/test-aqua-curated-matrix-export-v2-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [215]: Python regression: scripts/test-wull-curated-matrix-export-v3-fake-only.py ----
-Command: python3 scripts/test-wull-curated-matrix-export-v3-fake-only.py
+---- CHECK [215]: Python regression: scripts/test-aqua-curated-matrix-export-v3-fake-only.py ----
+Command: python3 scripts/test-aqua-curated-matrix-export-v3-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [216]: Python regression: scripts/test-wull-curated-nested-field-export-fake-only.py ----
-Command: python3 scripts/test-wull-curated-nested-field-export-fake-only.py
+---- CHECK [216]: Python regression: scripts/test-aqua-curated-nested-field-export-fake-only.py ----
+Command: python3 scripts/test-aqua-curated-nested-field-export-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [217]: Python regression: scripts/test-wull-curated-nested-field-export-v2-fake-only.py ----
-Command: python3 scripts/test-wull-curated-nested-field-export-v2-fake-only.py
+---- CHECK [217]: Python regression: scripts/test-aqua-curated-nested-field-export-v2-fake-only.py ----
+Command: python3 scripts/test-aqua-curated-nested-field-export-v2-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [218]: Python regression: scripts/test-wull-curated-nested-field-export-v3-fake-only.py ----
-Command: python3 scripts/test-wull-curated-nested-field-export-v3-fake-only.py
+---- CHECK [218]: Python regression: scripts/test-aqua-curated-nested-field-export-v3-fake-only.py ----
+Command: python3 scripts/test-aqua-curated-nested-field-export-v3-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [219]: Python regression: scripts/test-wull-curated-real-bar-fake-only.py ----
-Command: python3 scripts/test-wull-curated-real-bar-fake-only.py
+---- CHECK [219]: Python regression: scripts/test-aqua-curated-real-bar-fake-only.py ----
+Command: python3 scripts/test-aqua-curated-real-bar-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [220]: Python regression: scripts/test-wull-curated-real-bar-v2-fake-only.py ----
-Command: python3 scripts/test-wull-curated-real-bar-v2-fake-only.py
+---- CHECK [220]: Python regression: scripts/test-aqua-curated-real-bar-v2-fake-only.py ----
+Command: python3 scripts/test-aqua-curated-real-bar-v2-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [221]: Python regression: scripts/test-wull-existing-layer-contract.py ----
-Command: python3 scripts/test-wull-existing-layer-contract.py
+---- CHECK [221]: Python regression: scripts/test-aqua-existing-layer-contract.py ----
+Command: python3 scripts/test-aqua-existing-layer-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [222]: Python regression: scripts/test-wull-existing-matrix-evidence.py ----
-Command: python3 scripts/test-wull-existing-matrix-evidence.py
+---- CHECK [222]: Python regression: scripts/test-aqua-existing-matrix-evidence.py ----
+Command: python3 scripts/test-aqua-existing-matrix-evidence.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [223]: Python regression: scripts/test-wull-footprint-contract.py ----
-Command: python3 scripts/test-wull-footprint-contract.py
+---- CHECK [223]: Python regression: scripts/test-aqua-footprint-contract.py ----
+Command: python3 scripts/test-aqua-footprint-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [224]: Python regression: scripts/test-wull-host-policy.py ----
-Command: python3 scripts/test-wull-host-policy.py
+---- CHECK [224]: Python regression: scripts/test-aqua-host-policy.py ----
+Command: python3 scripts/test-aqua-host-policy.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [225]: Python regression: scripts/test-wull-idle-resource-contract.py ----
-Command: python3 scripts/test-wull-idle-resource-contract.py
+---- CHECK [225]: Python regression: scripts/test-aqua-idle-resource-contract.py ----
+Command: python3 scripts/test-aqua-idle-resource-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [226]: Python regression: scripts/test-wull-motion-footprint-feasibility.py ----
-Command: python3 scripts/test-wull-motion-footprint-feasibility.py
+---- CHECK [226]: Python regression: scripts/test-aqua-motion-footprint-feasibility.py ----
+Command: python3 scripts/test-aqua-motion-footprint-feasibility.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [227]: Python regression: scripts/test-wull-motion-inert-publish-contract.py ----
-Command: python3 scripts/test-wull-motion-inert-publish-contract.py
+---- CHECK [227]: Python regression: scripts/test-aqua-motion-inert-publish-contract.py ----
+Command: python3 scripts/test-aqua-motion-inert-publish-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [228]: Python regression: scripts/test-wull-nested-field-capture-fake-only.py ----
-Command: python3 scripts/test-wull-nested-field-capture-fake-only.py
+---- CHECK [228]: Python regression: scripts/test-aqua-nested-field-capture-fake-only.py ----
+Command: python3 scripts/test-aqua-nested-field-capture-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [229]: Python regression: scripts/test-wull-nested-isolation-smoke-fake-only.py ----
-Command: python3 scripts/test-wull-nested-isolation-smoke-fake-only.py
+---- CHECK [229]: Python regression: scripts/test-aqua-nested-isolation-smoke-fake-only.py ----
+Command: python3 scripts/test-aqua-nested-isolation-smoke-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [230]: Python regression: scripts/test-wull-nested-niri-contract.py ----
-Command: python3 scripts/test-wull-nested-niri-contract.py
+---- CHECK [230]: Python regression: scripts/test-aqua-nested-niri-contract.py ----
+Command: python3 scripts/test-aqua-nested-niri-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [231]: Python regression: scripts/test-wull-nested-pointer-contract.py ----
-Command: python3 scripts/test-wull-nested-pointer-contract.py
+---- CHECK [231]: Python regression: scripts/test-aqua-nested-pointer-contract.py ----
+Command: python3 scripts/test-aqua-nested-pointer-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [232]: Python regression: scripts/test-wull-nested-production-bar-fake-only.py ----
-Command: python3 scripts/test-wull-nested-production-bar-fake-only.py
+---- CHECK [232]: Python regression: scripts/test-aqua-nested-production-bar-fake-only.py ----
+Command: python3 scripts/test-aqua-nested-production-bar-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [233]: Python regression: scripts/test-wull-nested-render-capability-fake-only.py ----
-Command: python3 scripts/test-wull-nested-render-capability-fake-only.py
+---- CHECK [233]: Python regression: scripts/test-aqua-nested-render-capability-fake-only.py ----
+Command: python3 scripts/test-aqua-nested-render-capability-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [234]: Python regression: scripts/test-wull-offscreen-dynamic-geometry-contract.py ----
-Command: python3 scripts/test-wull-offscreen-dynamic-geometry-contract.py
+---- CHECK [234]: Python regression: scripts/test-aqua-offscreen-dynamic-geometry-contract.py ----
+Command: python3 scripts/test-aqua-offscreen-dynamic-geometry-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [235]: Python regression: scripts/test-wull-offscreen-motion-geometry-contract.py ----
-Command: python3 scripts/test-wull-offscreen-motion-geometry-contract.py
+---- CHECK [235]: Python regression: scripts/test-aqua-offscreen-motion-geometry-contract.py ----
+Command: python3 scripts/test-aqua-offscreen-motion-geometry-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [236]: Python regression: scripts/test-wull-original-reference-assets.py ----
-Command: python3 scripts/test-wull-original-reference-assets.py
+---- CHECK [236]: Python regression: scripts/test-aqua-original-reference-assets.py ----
+Command: python3 scripts/test-aqua-original-reference-assets.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [237]: Python regression: scripts/test-wull-pointer-underlay-contract.py ----
-Command: python3 scripts/test-wull-pointer-underlay-contract.py
+---- CHECK [237]: Python regression: scripts/test-aqua-pointer-underlay-contract.py ----
+Command: python3 scripts/test-aqua-pointer-underlay-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [238]: Python regression: scripts/test-wull-presence-interaction.py ----
-Command: python3 scripts/test-wull-presence-interaction.py
+---- CHECK [238]: Python regression: scripts/test-aqua-presence-interaction.py ----
+Command: python3 scripts/test-aqua-presence-interaction.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [239]: Python regression: scripts/test-wull-private-bottom-edge-band-contract.py ----
-Command: python3 scripts/test-wull-private-bottom-edge-band-contract.py
+---- CHECK [239]: Python regression: scripts/test-aqua-private-bottom-edge-band-contract.py ----
+Command: python3 scripts/test-aqua-private-bottom-edge-band-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [240]: Python regression: scripts/test-wull-private-bottom-fractional-band-contract.py ----
-Command: python3 scripts/test-wull-private-bottom-fractional-band-contract.py
+---- CHECK [240]: Python regression: scripts/test-aqua-private-bottom-fractional-band-contract.py ----
+Command: python3 scripts/test-aqua-private-bottom-fractional-band-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [241]: Python regression: scripts/test-wull-private-bottom-inset-contract.py ----
-Command: python3 scripts/test-wull-private-bottom-inset-contract.py
+---- CHECK [241]: Python regression: scripts/test-aqua-private-bottom-inset-contract.py ----
+Command: python3 scripts/test-aqua-private-bottom-inset-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [242]: Python regression: scripts/test-wull-private-bottom-static-source-contract.py ----
-Command: python3 scripts/test-wull-private-bottom-static-source-contract.py
+---- CHECK [242]: Python regression: scripts/test-aqua-private-bottom-static-source-contract.py ----
+Command: python3 scripts/test-aqua-private-bottom-static-source-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [243]: Python regression: scripts/test-wull-private-dynamic-core-contract.py ----
-Command: python3 scripts/test-wull-private-dynamic-core-contract.py
+---- CHECK [243]: Python regression: scripts/test-aqua-private-dynamic-core-contract.py ----
+Command: python3 scripts/test-aqua-private-dynamic-core-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [244]: Python regression: scripts/test-wull-private-dynamic-paint-observed-contract.py ----
-Command: python3 scripts/test-wull-private-dynamic-paint-observed-contract.py
+---- CHECK [244]: Python regression: scripts/test-aqua-private-dynamic-paint-observed-contract.py ----
+Command: python3 scripts/test-aqua-private-dynamic-paint-observed-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [245]: Python regression: scripts/test-wull-private-dynamic-paint-pilot-contract.py ----
-Command: python3 scripts/test-wull-private-dynamic-paint-pilot-contract.py
+---- CHECK [245]: Python regression: scripts/test-aqua-private-dynamic-paint-pilot-contract.py ----
+Command: python3 scripts/test-aqua-private-dynamic-paint-pilot-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [246]: Python regression: scripts/test-wull-private-dynamic-parser-postmortem.py ----
-Command: python3 scripts/test-wull-private-dynamic-parser-postmortem.py
+---- CHECK [246]: Python regression: scripts/test-aqua-private-dynamic-parser-postmortem.py ----
+Command: python3 scripts/test-aqua-private-dynamic-parser-postmortem.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [247]: Python regression: scripts/test-wull-private-dynamic-pilot-diagnostic-contract.py ----
-Command: python3 scripts/test-wull-private-dynamic-pilot-diagnostic-contract.py
+---- CHECK [247]: Python regression: scripts/test-aqua-private-dynamic-pilot-diagnostic-contract.py ----
+Command: python3 scripts/test-aqua-private-dynamic-pilot-diagnostic-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [248]: Python regression: scripts/test-wull-private-field-rim-attachment.py ----
-Command: python3 scripts/test-wull-private-field-rim-attachment.py
+---- CHECK [248]: Python regression: scripts/test-aqua-private-field-rim-attachment.py ----
+Command: python3 scripts/test-aqua-private-field-rim-attachment.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [249]: Python regression: scripts/test-wull-private-field-rim-visual.py ----
-Command: python3 scripts/test-wull-private-field-rim-visual.py
+---- CHECK [249]: Python regression: scripts/test-aqua-private-field-rim-visual.py ----
+Command: python3 scripts/test-aqua-private-field-rim-visual.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [250]: Python regression: scripts/test-wull-private-left-margin-diagnostic.py ----
-Command: python3 scripts/test-wull-private-left-margin-diagnostic.py
+---- CHECK [250]: Python regression: scripts/test-aqua-private-left-margin-diagnostic.py ----
+Command: python3 scripts/test-aqua-private-left-margin-diagnostic.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [251]: Python regression: scripts/test-wull-private-left-margin-publish-contract.py ----
-Command: python3 scripts/test-wull-private-left-margin-publish-contract.py
+---- CHECK [251]: Python regression: scripts/test-aqua-private-left-margin-publish-contract.py ----
+Command: python3 scripts/test-aqua-private-left-margin-publish-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [252]: Python regression: scripts/test-wull-private-mask-candidate-contract.py ----
-Command: python3 scripts/test-wull-private-mask-candidate-contract.py
+---- CHECK [252]: Python regression: scripts/test-aqua-private-mask-candidate-contract.py ----
+Command: python3 scripts/test-aqua-private-mask-candidate-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [253]: Python regression: scripts/test-wull-private-minimal-boot-log-review.py ----
-Command: python3 scripts/test-wull-private-minimal-boot-log-review.py
+---- CHECK [253]: Python regression: scripts/test-aqua-private-minimal-boot-log-review.py ----
+Command: python3 scripts/test-aqua-private-minimal-boot-log-review.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [254]: Python regression: scripts/test-wull-private-minimal-qs-bootstrap.py ----
-Command: python3 scripts/test-wull-private-minimal-qs-bootstrap.py
+---- CHECK [254]: Python regression: scripts/test-aqua-private-minimal-qs-bootstrap.py ----
+Command: python3 scripts/test-aqua-private-minimal-qs-bootstrap.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [255]: Python regression: scripts/test-wull-private-moving-bottom-inset-contract.py ----
-Command: python3 scripts/test-wull-private-moving-bottom-inset-contract.py
+---- CHECK [255]: Python regression: scripts/test-aqua-private-moving-bottom-inset-contract.py ----
+Command: python3 scripts/test-aqua-private-moving-bottom-inset-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [256]: Python regression: scripts/test-wull-private-moving-bottom-quarter-band-contract.py ----
-Command: python3 scripts/test-wull-private-moving-bottom-quarter-band-contract.py
+---- CHECK [256]: Python regression: scripts/test-aqua-private-moving-bottom-quarter-band-contract.py ----
+Command: python3 scripts/test-aqua-private-moving-bottom-quarter-band-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [257]: Python regression: scripts/test-wull-private-nested-quarter-visual.py ----
-Command: python3 scripts/test-wull-private-nested-quarter-visual.py
+---- CHECK [257]: Python regression: scripts/test-aqua-private-nested-quarter-visual.py ----
+Command: python3 scripts/test-aqua-private-nested-quarter-visual.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [258]: Python regression: scripts/test-wull-private-offscreen-boot-controls.py ----
-Command: python3 scripts/test-wull-private-offscreen-boot-controls.py
+---- CHECK [258]: Python regression: scripts/test-aqua-private-offscreen-boot-controls.py ----
+Command: python3 scripts/test-aqua-private-offscreen-boot-controls.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [259]: Python regression: scripts/test-wull-private-offscreen-boot-fingerprint.py ----
-Command: python3 scripts/test-wull-private-offscreen-boot-fingerprint.py
+---- CHECK [259]: Python regression: scripts/test-aqua-private-offscreen-boot-fingerprint.py ----
+Command: python3 scripts/test-aqua-private-offscreen-boot-fingerprint.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [260]: Python regression: scripts/test-wull-private-paint-canary-contract.py ----
-Command: python3 scripts/test-wull-private-paint-canary-contract.py
+---- CHECK [260]: Python regression: scripts/test-aqua-private-paint-canary-contract.py ----
+Command: python3 scripts/test-aqua-private-paint-canary-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [261]: Python regression: scripts/test-wull-private-paint-core-contract.py ----
-Command: python3 scripts/test-wull-private-paint-core-contract.py
+---- CHECK [261]: Python regression: scripts/test-aqua-private-paint-core-contract.py ----
+Command: python3 scripts/test-aqua-private-paint-core-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [262]: Python regression: scripts/test-wull-private-paint-paired-contract.py ----
-Command: python3 scripts/test-wull-private-paint-paired-contract.py
+---- CHECK [262]: Python regression: scripts/test-aqua-private-paint-paired-contract.py ----
+Command: python3 scripts/test-aqua-private-paint-paired-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [263]: Python regression: scripts/test-wull-private-paint-shadow-contract.py ----
-Command: python3 scripts/test-wull-private-paint-shadow-contract.py
+---- CHECK [263]: Python regression: scripts/test-aqua-private-paint-shadow-contract.py ----
+Command: python3 scripts/test-aqua-private-paint-shadow-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [264]: Python regression: scripts/test-wull-private-painted-alpha-model.py ----
-Command: python3 scripts/test-wull-private-painted-alpha-model.py
+---- CHECK [264]: Python regression: scripts/test-aqua-private-painted-alpha-model.py ----
+Command: python3 scripts/test-aqua-private-painted-alpha-model.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [265]: Python regression: scripts/test-wull-private-paired-static-matrix-contract.py ----
-Command: python3 scripts/test-wull-private-paired-static-matrix-contract.py
+---- CHECK [265]: Python regression: scripts/test-aqua-private-paired-static-matrix-contract.py ----
+Command: python3 scripts/test-aqua-private-paired-static-matrix-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [266]: Python regression: scripts/test-wull-private-panel-quarter-shadow.py ----
-Command: python3 scripts/test-wull-private-panel-quarter-shadow.py
+---- CHECK [266]: Python regression: scripts/test-aqua-private-panel-quarter-shadow.py ----
+Command: python3 scripts/test-aqua-private-panel-quarter-shadow.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [267]: Python regression: scripts/test-wull-private-pointer-drift-diagnostic.py ----
-Command: python3 scripts/test-wull-private-pointer-drift-diagnostic.py
+---- CHECK [267]: Python regression: scripts/test-aqua-private-pointer-drift-diagnostic.py ----
+Command: python3 scripts/test-aqua-private-pointer-drift-diagnostic.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [268]: Python regression: scripts/test-wull-private-pointer-drift-publish-contract.py ----
-Command: python3 scripts/test-wull-private-pointer-drift-publish-contract.py
+---- CHECK [268]: Python regression: scripts/test-aqua-private-pointer-drift-publish-contract.py ----
+Command: python3 scripts/test-aqua-private-pointer-drift-publish-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [269]: Python regression: scripts/test-wull-private-qs-signal-gate.py ----
-Command: python3 scripts/test-wull-private-qs-signal-gate.py
+---- CHECK [269]: Python regression: scripts/test-aqua-private-qs-signal-gate.py ----
+Command: python3 scripts/test-aqua-private-qs-signal-gate.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [270]: Python regression: scripts/test-wull-private-qslog-postmortem.py ----
-Command: python3 scripts/test-wull-private-qslog-postmortem.py
+---- CHECK [270]: Python regression: scripts/test-aqua-private-qslog-postmortem.py ----
+Command: python3 scripts/test-aqua-private-qslog-postmortem.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [271]: Python regression: scripts/test-wull-private-relay-contract.py ----
-Command: python3 scripts/test-wull-private-relay-contract.py
+---- CHECK [271]: Python regression: scripts/test-aqua-private-relay-contract.py ----
+Command: python3 scripts/test-aqua-private-relay-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [272]: Python regression: scripts/test-wull-private-static-matrix-runner-contract.py ----
-Command: python3 scripts/test-wull-private-static-matrix-runner-contract.py
+---- CHECK [272]: Python regression: scripts/test-aqua-private-static-matrix-runner-contract.py ----
+Command: python3 scripts/test-aqua-private-static-matrix-runner-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [273]: Python regression: scripts/test-wull-procedural-visual-contract.py ----
-Command: python3 scripts/test-wull-procedural-visual-contract.py
+---- CHECK [273]: Python regression: scripts/test-aqua-procedural-visual-contract.py ----
+Command: python3 scripts/test-aqua-procedural-visual-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [274]: Python regression: scripts/test-wull-production-contract.py ----
-Command: python3 scripts/test-wull-production-contract.py
+---- CHECK [274]: Python regression: scripts/test-aqua-production-contract.py ----
+Command: python3 scripts/test-aqua-production-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [275]: Python regression: scripts/test-wull-production-geometry-contract.py ----
-Command: python3 scripts/test-wull-production-geometry-contract.py
+---- CHECK [275]: Python regression: scripts/test-aqua-production-geometry-contract.py ----
+Command: python3 scripts/test-aqua-production-geometry-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [276]: Python regression: scripts/test-wull-production-layer-contract.py ----
-Command: python3 scripts/test-wull-production-layer-contract.py
+---- CHECK [276]: Python regression: scripts/test-aqua-production-layer-contract.py ----
+Command: python3 scripts/test-aqua-production-layer-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [277]: Python regression: scripts/test-wull-production-surface-integration.py ----
-Command: python3 scripts/test-wull-production-surface-integration.py
+---- CHECK [277]: Python regression: scripts/test-aqua-production-surface-integration.py ----
+Command: python3 scripts/test-aqua-production-surface-integration.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [278]: Python regression: scripts/test-wull-qt-backend-matrix-fake-only.py ----
-Command: python3 scripts/test-wull-qt-backend-matrix-fake-only.py
+---- CHECK [278]: Python regression: scripts/test-aqua-qt-backend-matrix-fake-only.py ----
+Command: python3 scripts/test-aqua-qt-backend-matrix-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [279]: Python regression: scripts/test-wull-real-field-canary-fake-only.py ----
-Command: python3 scripts/test-wull-real-field-canary-fake-only.py
+---- CHECK [279]: Python regression: scripts/test-aqua-real-field-canary-fake-only.py ----
+Command: python3 scripts/test-aqua-real-field-canary-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [280]: Python regression: scripts/test-wull-reference-preview-fake-only.py ----
-Command: python3 scripts/test-wull-reference-preview-fake-only.py
+---- CHECK [280]: Python regression: scripts/test-aqua-reference-preview-fake-only.py ----
+Command: python3 scripts/test-aqua-reference-preview-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [281]: Python regression: scripts/test-wull-retained-dynamic-receipt-contract.py ----
-Command: python3 scripts/test-wull-retained-dynamic-receipt-contract.py
+---- CHECK [281]: Python regression: scripts/test-aqua-retained-dynamic-receipt-contract.py ----
+Command: python3 scripts/test-aqua-retained-dynamic-receipt-contract.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [282]: Python regression: scripts/test-wull-segment-allocations.py ----
-Command: python3 scripts/test-wull-segment-allocations.py
+---- CHECK [282]: Python regression: scripts/test-aqua-segment-allocations.py ----
+Command: python3 scripts/test-aqua-segment-allocations.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [283]: Python regression: scripts/test-wull-shared-input.py ----
-Command: python3 scripts/test-wull-shared-input.py
+---- CHECK [283]: Python regression: scripts/test-aqua-shared-input.py ----
+Command: python3 scripts/test-aqua-shared-input.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [284]: Python regression: scripts/test-wull-silhouette-band-prototype.py ----
-Command: python3 scripts/test-wull-silhouette-band-prototype.py
+---- CHECK [284]: Python regression: scripts/test-aqua-silhouette-band-prototype.py ----
+Command: python3 scripts/test-aqua-silhouette-band-prototype.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
----- CHECK [285]: Python regression: scripts/test-wull-visual-matrix-fake-only.py ----
-Command: python3 scripts/test-wull-visual-matrix-fake-only.py
+---- CHECK [285]: Python regression: scripts/test-aqua-visual-matrix-fake-only.py ----
+Command: python3 scripts/test-aqua-visual-matrix-fake-only.py
 Working directory: /tmp/hadalis-validation.yHuWiA/Hadalis
 Result: PASS
 
@@ -2101,7 +2101,7 @@ Skipped checks:
   - PHASE-RUNNER-HELPER: scripts/test-megaqml-qt-diagnostic.py (requires fixture/log arguments)
   - PHASE-RUNNER-HELPER: scripts/test-megaqml-quickshell-classify.py (requires fixture/log arguments)
   - PHASE-RUNNER-HELPER: scripts/test-megaqml-ui-fixture.py (requires fixture/log arguments)
-  - MANUAL-DEFERRED: scripts/test-wull-manual-perimeter.py
+  - MANUAL-DEFERRED: scripts/test-aqua-manual-perimeter.py
   - MANUAL-DESKTOP-ACCEPTANCE: scripts/test-hadalis-desktop-repair.sh (live installed automation/session contract)
   - MANUAL-PHASE-RUNNER: scripts/test-megaqml-phase2-local.sh (requires explicit SHA/output and can publish evidence)
   - MANUAL-PHASE-RUNNER: scripts/test-megaqml-quickshell-smoke.sh (requires explicit SHA/output and can publish evidence)

@@ -1,0 +1,163 @@
+{
+  "validator_result": "failed",
+  "validator_source_sha": "6d7eb8d2a83143b5437c4e1d0a2a0570f7048870",
+  "checks_run": 293,
+  "checks_passed": 257,
+  "checks_failed": 35,
+  "checks_skipped": 2,
+  "failed_checks": [
+    {
+      "check": "Python regression: scripts/test-abyss-dock-menu-axis-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-dock-resident-content-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-launcher-dock-menu-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-launcher-status-mark-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-pyramid-v2-neighborhood.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-pyramid-v2-transactions.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-settings-compact-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-abyss-vacancy-borrowing.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-clipboard-image-classification-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-dashboard-content-aware-add-all-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-dashboard-freeform-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-dock-abyss-hover-orientation-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-material-only-global-style-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-megaqml-qt-diagnostic.py",
+      "exit_code": 64
+    },
+    {
+      "check": "Python regression: scripts/test-megaqml-quickshell-classify.py",
+      "exit_code": 64
+    },
+    {
+      "check": "Python regression: scripts/test-notification-center-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-owner-ui-regressions-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-quick-action-drag-visibility-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-quick-action-icon-order-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-runtime-unblock-abyss-contract.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-shell-surface-contracts.py",
+      "exit_code": 1
+    },
+    {
+      "check": "Python regression: scripts/test-aqua-manual-perimeter.py",
+      "exit_code": 1
+    },
+    {
+      "check": "documentation contracts",
+      "exit_code": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-app-hover-menu.sh",
+      "exit_code": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-corner-content.sh",
+      "exit_code": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-dashboard-editing.sh",
+      "exit_code": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-dock-reveal.sh",
+      "exit_code": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-editor-runtime.sh",
+      "exit_code": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-network-popups.sh",
+      "exit_code": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-osd-content.sh",
+      "exit_code": 1
+    },
+    {
+      "check": "shell regression: scripts/test-abyss-utilities-popup.sh",
+      "exit_code": 1
+    },
+    {
+      "check": "shell regression: scripts/test-megaqml-phase2-local.sh",
+      "exit_code": 64
+    },
+    {
+      "check": "shell regression: scripts/test-megaqml-quickshell-smoke.sh",
+      "exit_code": 64
+    },
+    {
+      "check": "shell regression: scripts/test-performance-lifecycle.sh",
+      "exit_code": 1
+    },
+    {
+      "check": "shell regression: scripts/test-window-preview-consumer-identity.sh",
+      "exit_code": 1
+    }
+  ],
+  "redacted_failed_check_count": 0,
+  "failure_groups": [
+    "other regression contracts",
+    "QML / module resolution / Connected Perimeter",
+    "translations / documentation drift",
+    "service lifecycle / timeout / recovery"
+  ],
+  "kind": "aqua_prior_canonical_failure_classification",
+  "original_receipt": "docs/aqua-manual-qualification-20261001T115741Z-f9da4543-6d7eb8d2a831.json",
+  "diagnostic_method": "allowlisted_previous_validator_summary_only",
+  "runtime_lifecycle_fix_not_revalidated": true,
+  "private_logs": "retained_locally",
+  "created_utc": "2026-10-01T12:12:27+00:00"
+}

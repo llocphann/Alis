@@ -12,8 +12,8 @@ override the maintainer's newest instruction.
 | [Chatbot checkpoints](chatbot/2026-10-10/README.md) | Former ABYSS, OPTIMIZATION and RELEASE ledgers consolidated into the three current categories on 2026-10-10. |
 | [Surface history](surfaces/) | Completed iRiS migration notes, superseded unified-surface research/handoff and the early Abyss foundation. Current surface contracts remain outside the archive. |
 | [Integration history](integrations/TODO_OBSIDIAN_INTEGRATION.md) | Former in-core Obsidian plan; optional implementation now belongs to [Hadalird](https://github.com/llocphann/Hadalird). |
-| [Archived WULL JSON receipts](companion/receipts/2026-10-01/README.md) | 45 historical 2026-10-01 WULL test/diagnostic JSON receipts moved from the root of `docs/`; original evidence bytes retained. |
-| [Companion history](companion/) | Hadalis-era Wull designs and plans; current implementation/tasks belong to [Hadanion](https://github.com/llocphann/Hadanion). |
+| [Archived AQUA JSON receipts](companion/receipts/2026-10-01/README.md) | 45 historical 2026-10-01 AQUA test/diagnostic JSON receipts moved from the root of `docs/`; original evidence bytes retained. |
+| [Companion history](companion/) | Hadalis-era Aqua designs and plans; current implementation/tasks belong to [Alis-Companion](https://github.com/llocphann/Alis-Companion). |
 | [Retired README translations](readme/) | Historical translations. Current shipped documentation/localization is English-only. |
 | [Optimization history](optimization/) | Previously archived research and handoffs. The [current research index](../optimization/README.md) identifies the active audit and still-open scoped work. |
 
@@ -26,5 +26,5 @@ Retired plans may still contain unchecked boxes or old instructions. Remaining
 requirements were carried into current categories or routed to the owning repo;
 the old boxes are historical state, not a second active backlog. Original FAIL,
 STOPPED, HOLD and inconclusive results remain unchanged. Evidence under
-`docs/evidence/` and `docs/wull-visual/` stays at its original path; consumed
+`docs/evidence/` and `docs/aqua-visual/` stays at its original path; consumed
 benchmark/capture lineages must not be replayed merely because a document moved.

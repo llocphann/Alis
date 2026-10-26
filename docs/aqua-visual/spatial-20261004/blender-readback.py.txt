@@ -1,0 +1,61 @@
+import bpy
+import hashlib
+import json
+from pathlib import Path
+
+root=Path('/home/llocphann/Hadalis')
+blend=root/'assets/aqua/AquaMotion.blend'
+raw=(root/'modules/abyss/companion/AquaMotionData.js').read_text()
+clips=json.loads(raw.split('var clips = ',1)[1].split(';\n',1)[0])
+bpy.ops.wm.open_mainfile(filepath=str(blend))
+clip_names={name.lower():name for name in clips}
+actions={clip_names[a.name.split(' — ',1)[1].lower()]:a for a in bpy.data.actions if a.name.startswith('Aqua — ')}
+assert set(actions)==set(clips)
+exported_keys=0
+for name,clip in clips.items():
+    curves={c.data_path[2:-2]:c for c in actions[name].fcurves}
+    frames=clip['duration']*60/1000
+    for channel,keys in clip['tracks'].items():
+        stored=[[float(k.co.x-1)/frames,float(k.co.y)] for k in curves[channel].keyframe_points]
+        assert stored==keys,(name,channel)
+        assert all(k.interpolation=='LINEAR' for k in curves[channel].keyframe_points)
+        exported_keys+=len(keys)
+    for channel,curve in curves.items():
+        if channel not in clip['tracks']:
+            default=1 if channel.startswith('scale') or channel=='eyeOpen' else 0
+            assert all(k.co.y==default for k in curve.keyframe_points)
+names=[o.name for o in bpy.data.objects]
+feet=sum(n.endswith(' water foot') for n in names)
+hands=sum(n.endswith(' water arm') for n in names)
+bubbles=sum(n.startswith('Orbital bubble ') for n in names)
+assert (feet,hands,bubbles)==(2,2,8)
+from mathutils import Matrix
+import math
+rig=bpy.data.objects['Aqua Motion Controls'];body=bpy.data.objects['Liquid body']
+assert body.rotation_mode=='XZY'
+assert all(o.parent==body for o in bpy.data.objects if o.name.endswith((' water arm',' water foot')))
+convert=Matrix(((1,0,0),(0,0,1),(0,-1,0)))
+max_matrix_error=0;max_volume_error=0
+for name,clip in clips.items():
+    rig.animation_data.action=actions[name]
+    for phase in (0,.25,.5,.6,.75,1):
+        frame=1+phase*clip['duration']*60/1000
+        bpy.context.scene.frame_set(int(frame),subframe=frame-int(frame))
+        evaluated=body.evaluated_get(bpy.context.evaluated_depsgraph_get())
+        actual=convert @ evaluated.matrix_basis.to_3x3() @ convert.transposed()
+        y,p,r=[math.radians(float(rig[k])) for k in ('yaw','pitch','roll')]
+        cy,sy,cp,sp,cr,sr=math.cos(y),math.sin(y),math.cos(p),math.sin(p),math.cos(r),math.sin(r)
+        expected=Matrix(((cr*cy,cr*sy*sp-sr*cp,cr*sy*cp+sr*sp),
+            (sr*cy,sr*sy*sp+cr*cp,sr*sy*cp-cr*sp),(-sy,cy*sp,cy*cp)))
+        expected=expected @ Matrix.Diagonal((float(rig['scaleX']),float(rig['scaleY']),1/(float(rig['scaleX'])*float(rig['scaleY']))))
+        max_matrix_error=max(max_matrix_error,max(abs(actual[i][j]-expected[i][j]) for i in range(3) for j in range(3)))
+        max_volume_error=max(max_volume_error,abs(actual.determinant()-1))
+assert max_matrix_error<.000002 and max_volume_error<.000002,(max_matrix_error,max_volume_error)
+result={'blender_version':bpy.app.version_string,'water_feet':feet,'water_hands':hands,
+    'orbital_bubbles':bubbles,'clips':sorted(clips),'exported_key_count':exported_keys,
+    'every_exported_key_matches_saved_blend':True,'unused_constants_are_exact_defaults':True,
+    'blend_sha256':hashlib.sha256(blend.read_bytes()).hexdigest(),
+    'curve_sha256':hashlib.sha256((root/'modules/abyss/companion/AquaMotionData.js').read_bytes()).hexdigest(),
+    'spatial_pose_samples':len(clips)*6,'max_spatial_matrix_error':max_matrix_error,'max_volume_error':max_volume_error,'all_limbs_share_3d_body_parent':True,'status':'PASS'}
+Path('/tmp/aqua-spatial-blender-readback-20261004.json').write_text(json.dumps(result,indent=2)+'\n')
+print('AQUA_SAVED_BLENDER_ANATOMY_ALL_KEYS_PASS',json.dumps(result))

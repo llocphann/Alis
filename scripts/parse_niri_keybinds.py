@@ -192,8 +192,8 @@ IPC_MAP = {
     ('session', 'toggle'): 'Session dialog',
     ('sidebarLeft', 'toggle'): 'Left sidebar',
     ('sidebarRight', 'toggle'): 'Right sidebar',
-    ('ipc', 'wull'): 'Companion chat',
-    ('wull', 'chat'): 'Companion chat',
+    ('ipc', 'aqua'): 'Companion chat',
+    ('aqua', 'chat'): 'Companion chat',
     ('browser', 'open'): 'Browser',
     ('browser', 'new'): 'Browser (new window)',
     ('audio', 'volumeUp'): 'Volume up',
@@ -364,7 +364,7 @@ def categorize_keybind(kb: dict) -> str:
     alis_action = parse_alis_action(action)
     if alis_action:
         target, func = alis_action
-        if target in ('overlay', 'overview', 'clipboard', 'lock', 'wallpaperSelector', 'settings', 'cheatsheet', 'panelFamily', 'session', 'sidebarLeft', 'sidebarRight', 'wull', 'ipc'):
+        if target in ('overlay', 'overview', 'clipboard', 'lock', 'wallpaperSelector', 'settings', 'cheatsheet', 'panelFamily', 'session', 'sidebarLeft', 'sidebarRight', 'aqua', 'ipc'):
             return 'Alis Shell'
         if target == 'region':
             return 'Screenshots'

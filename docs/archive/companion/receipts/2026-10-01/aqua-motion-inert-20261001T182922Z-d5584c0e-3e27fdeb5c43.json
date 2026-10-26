@@ -1,0 +1,31 @@
+{
+  "kind": "aqua_static_bezier_and_nominal_motion_inert_contract",
+  "source_sha": "3e27fdeb5c43b0a0cbad6c09f02c979bcaa4da07",
+  "status": "pass",
+  "scope": "exact_source_static_formula_only_no_desktop_or_pointer",
+  "contracts": {
+    "static_bezier": "pass",
+    "nominal_motion": "pass"
+  },
+  "static_interior_area_pixels": 3006,
+  "static_body_bbox_pixels": 6992,
+  "static_rectangles_each_edge": 43,
+  "nominal_stretch_tip_host_y": -0.4,
+  "nominal_stretch_tip_outside_static_body_bbox": true,
+  "scale_1_5_nominal_top_body_bbox": [
+    114,
+    138
+  ],
+  "scale_1_5_nominal_side_body_bbox": [
+    138,
+    114
+  ],
+  "spring_and_qt_composition": "unqualified",
+  "actual_animated_rust_frame": "not_run",
+  "quickshell_compositor_pointer_hover": "not_run",
+  "canonical_validation": "not_run",
+  "production_mask_changed": false,
+  "host_user_config_changed": false,
+  "raw_coordinates_or_screenshots": "never_collected",
+  "publication_parent_sha": "3e27fdeb5c43b0a0cbad6c09f02c979bcaa4da07"
+}

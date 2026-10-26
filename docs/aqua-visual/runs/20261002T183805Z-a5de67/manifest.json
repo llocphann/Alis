@@ -1,0 +1,44 @@
+{
+  "run_id": "20261002T183805Z-a5de67",
+  "kind": "synthetic_real_AbyssField_shader_with_compact_theme_matched_Aqua_necks_in_owned_Niri",
+  "exact_source_sha": "a5de67680dae51b9dd688e4913af79f77a10d616",
+  "captured_utc": "2026-10-02T18:38:05.000Z",
+  "profile_id": "profile-1e0042aca8e24db2",
+  "worker_job": "JOB-AQUA-CRADLE-MATERIAL-P1E0042-20261003-36",
+  "evidence_ids": [
+    "JOB-AQUA-CRADLE-MATERIAL-P1E0042-20261003-36:0",
+    "JOB-AQUA-CRADLE-MATERIAL-P1E0042-20261003-36:1",
+    "JOB-AQUA-CRADLE-MATERIAL-P1E0042-20261003-36:2",
+    "JOB-AQUA-CRADLE-MATERIAL-P1E0042-20261003-36:3",
+    "JOB-AQUA-CRADLE-MATERIAL-P1E0042-20261003-36:4"
+  ],
+  "capture_evidence_id": "JOB-AQUA-CRADLE-MATERIAL-P1E0042-20261003-36:4",
+  "receipt_path": "automation/results/JOB-AQUA-CRADLE-MATERIAL-P1E0042-20261003-36.json",
+  "source_fixture": "scripts/aqua-fixtures/real-field-canary/shell.qml",
+  "source_runner": "scripts/aqua-manual-nested-field-capture.py",
+  "field_component": "modules/abyss/looks/AbyssField.qml",
+  "compiled_shader": "modules/abyss/looks/AbyssField.frag.qsb",
+  "aqua_host": "modules/abyss/companion/AbyssCompanion.qml",
+  "source_geometry_change": "compact 28px cradle, AbyssStyle.surface fill, dimmed border; left/right returned to rim-facing anchors, bottom at top",
+  "cases": [
+    "top/idle",
+    "right/idle",
+    "bottom/happy",
+    "left/idle"
+  ],
+  "synthetic_insets": "active edge66px, other edges14px, 4x 224x224",
+  "baseline_negative_result": "docs/aqua-visual/runs/20261002T183233Z-07f92d/curated-nested-field-four-edge.png",
+  "baseline_first": "docs/aqua-visual/runs/20261002T182524Z-42e677/curated-nested-field-four-edge.png",
+  "capture_type": "strictly owned 512x512 QML Item in distinct nested Niri socket; no host screenshot",
+  "checks": {
+    "production_and_source_contracts": "exit0 x3",
+    "inert_capture_safety": "exit0",
+    "owned_gpu_nested_real_shader_capture": "exit0",
+    "host_outputs_invariant": true,
+    "field_corner_and_body_alpha": true
+  },
+  "image_publication": "NOT_PUBLISHED_PRIVATE_AT_MANIFEST_CREATION",
+  "visual_acceptance": "NOT_REVIEWED",
+  "original_reference_manifest": "NOT_FOUND",
+  "live_panel_native_pointer_popup": "NOT_TESTED"
+}

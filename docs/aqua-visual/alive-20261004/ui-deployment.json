@@ -1,0 +1,59 @@
+{
+  "install": {
+    "baseSha": "6921fc9943c9412e44936461136753173e1133c5",
+    "sourceSha": "29e88b9b02e2d5a90fd69eb12461bd2c3f93118a",
+    "files": [
+      {
+        "file": "modules/abyss/AbyssPerimeter.qml",
+        "before": "6ae966f5ca197ba76c5ed52af8f4d565d40c78d1cf12d5a9a2c804ebdd120c59",
+        "after": "7266eb91da2231ae31ce25973e055b528c6e5b5220f1cb040246045b08940a9c",
+        "mode": 420
+      },
+      {
+        "file": "modules/abyss/companion/AquaTalkCloud.qml",
+        "before": "1aca4739015877099499204fe4817cc4e351b2fb7a90d084649cfaded3644379",
+        "after": "d6ecdad01bdf83d52eff4f02de3c78f38db6aeeccd10232c4e7f82fe834287b7",
+        "mode": 420
+      },
+      {
+        "file": "modules/settings/CompanionConfig.qml",
+        "before": "2f6c29b398bc85a15bff9937e80ddcf312049679fb50a0f47a9653c37c5b5bbc",
+        "after": "0e168edd8159ebd26be90dd8c5a3a4d14a8225ebfce370735b3a678a42bdba89",
+        "mode": 420
+      },
+      {
+        "file": "services/AquaMind.qml",
+        "before": "3caf6ee960ee2f36e5ad37b93ad241431a8b22e1a042a4ea8edd4e12a7a11063",
+        "after": "51cad087bda8e9531c40b1a19c1c590101aa229030c2c27d1cbc3c2a08fc73d2",
+        "mode": 420
+      },
+      {
+        "file": "translations/en_US.json",
+        "before": "2e7a8ac4abb915fa078e93f9ff81aa72ac2c7f4a829b3678e064635ae22866cb",
+        "after": "41c0e98c4027da084d936dd6cabb6c3c455e8568528ee512cfc1a9c90a98f9da",
+        "mode": 420
+      }
+    ],
+    "configTouched": false,
+    "applied": true
+  },
+  "liveReadback": {
+    "sourceSha": "29e88b9b02e2d5a90fd69eb12461bd2c3f93118a",
+    "installedFilesVerified": 5,
+    "enabled": true,
+    "exploreFeatures": true,
+    "talkEnabled": true,
+    "proactive": "occasional",
+    "obsidianEnabled": true,
+    "aiEnabled": false,
+    "modelConfigured": false,
+    "nativeCompanionProcesses": 1,
+    "aquaStartupErrorCount": 0,
+    "backendReady": true,
+    "visibleOutputs": [
+      "eDP-1"
+    ],
+    "validScenes": true,
+    "nativePhysicalInputQualified": false
+  }
+}

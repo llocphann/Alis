@@ -19,7 +19,7 @@ def load(name, path):
 
 
 manager = load("companion_manager_fixture", ROOT / "scripts/companion-manager.py")
-discovery = load("hadanion_status_fixture", ROOT / "scripts/hadanion-status.py")
+discovery = load("alis_companion_status_fixture", ROOT / "scripts/alis-companion-status.py")
 CANONICAL = "native/bin/alis-companiond"
 PINNED_LEGACY = "native/bin/inir-companiond"
 assert manager.COMPATIBLE_BINARIES == discovery.COMPATIBLE_BINARIES == {
@@ -30,7 +30,7 @@ assert manager.COMPATIBLE_BINARIES == discovery.COMPATIBLE_BINARIES == {
 def write_package(release, daemon):
     release.mkdir(parents=True, exist_ok=True)
     manifest = {
-        "id": "hadanion", "hostApi": 1, "version": "0.1.0",
+        "id": "alis-companion", "hostApi": 1, "version": "0.1.0",
         "session": "HadalisSession.qml",
         "output": "HadalisOutput.qml",
         "settings": "modules/settings/CompanionConfig.qml",
@@ -53,9 +53,9 @@ with tempfile.TemporaryDirectory(prefix="alis-companion-entrypoint-") as temp:
     shell = root / "shell"
     shell.mkdir()
     data = root / "data"
-    current = data / "hadanion/current"
+    current = data / "alis-companion/current"
     for name in (PINNED_LEGACY, CANONICAL):
-        release = data / "hadanion/releases" / ("a" * 40)
+        release = data / "alis-companion/releases" / ("a" * 40)
         if release.exists():
             import shutil
             shutil.rmtree(release)

@@ -20,8 +20,8 @@
       "test-hadalird-arch-package.py",
       "test-hadalird-manager.py",
       "test-hadalird-optional.py",
-      "test-hadanion-optional.py",
-      "test-hadanion-layer-shell.py (isolated Wayland, not skipped)"
+      "test-alis-companion-optional.py",
+      "test-alis-companion-layer-shell.py (isolated Wayland, not skipped)"
     ]
   },
   "unresolved_source_boundary": {

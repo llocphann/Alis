@@ -2078,18 +2078,18 @@ Traceback (most recent call last):
 FileNotFoundError: [Errno 2] No such file or directory: '/tmp/alis-validation.Je8iOH/Alis/assets/helpers/inir-hadalird-system-provision'
 END FAILURE: Python regression: scripts/test-hadalird-system-provision.py
 
----- CHECK [195]: Python regression: scripts/test-hadanion-layer-shell.py ----
-Command: python3 scripts/test-hadanion-layer-shell.py
+---- CHECK [195]: Python regression: scripts/test-alis-companion-layer-shell.py ----
+Command: python3 scripts/test-alis-companion-layer-shell.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: FAIL (exit 1)
-BEGIN FAILURE: Python regression: scripts/test-hadanion-layer-shell.py
-Command: python3 scripts/test-hadanion-layer-shell.py
+BEGIN FAILURE: Python regression: scripts/test-alis-companion-layer-shell.py
+Command: python3 scripts/test-alis-companion-layer-shell.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
 Traceback (most recent call last):
-  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-hadanion-layer-shell.py", line 55, in <module>
-    assert result.returncode == 0 and "HADANION_CORE_LAYER_PASS" in result.stdout and not any(e in result.stdout for e in errors), result.stdout[-18000:]
+  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-alis-companion-layer-shell.py", line 55, in <module>
+    assert result.returncode == 0 and "ALIS_COMPANION_CORE_LAYER_PASS" in result.stdout and not any(e in result.stdout for e in errors), result.stdout[-18000:]
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 AssertionError:   INFO: Launching config: "/tmp/hadalis-without-companion-mdjzwluc/shell.qml"
   INFO: Shell ID: "c4f4f4d55c6ee235cdade888ba066596" Path ID "c4f4f4d55c6ee235cdade888ba066596"
@@ -2114,43 +2114,43 @@ AssertionError:   INFO: Launching config: "/tmp/hadalis-without-companion-mdjzwl
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f49f5fa7fc0)
   WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-without-companion-mdjzwluc/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
-  INFO qml: HADANION_CORE_LAYER_FAIL
+  INFO qml: ALIS_COMPANION_CORE_LAYER_FAIL
 
-END FAILURE: Python regression: scripts/test-hadanion-layer-shell.py
+END FAILURE: Python regression: scripts/test-alis-companion-layer-shell.py
 
----- CHECK [196]: Python regression: scripts/test-hadanion-optional.py ----
-Command: python3 scripts/test-hadanion-optional.py
+---- CHECK [196]: Python regression: scripts/test-alis-companion-optional.py ----
+Command: python3 scripts/test-alis-companion-optional.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: FAIL (exit 1)
-BEGIN FAILURE: Python regression: scripts/test-hadanion-optional.py
-Command: python3 scripts/test-hadanion-optional.py
+BEGIN FAILURE: Python regression: scripts/test-alis-companion-optional.py
+Command: python3 scripts/test-alis-companion-optional.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
 Traceback (most recent call last):
-  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-hadanion-optional.py", line 133, in <module>
-    assert process.returncode == 0 and "HADANION_ABSENT=PASS" in output and not any(e in output for e in errors), output[-12000:]
+  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-alis-companion-optional.py", line 133, in <module>
+    assert process.returncode == 0 and "ALIS_COMPANION_ABSENT=PASS" in output and not any(e in output for e in errors), output[-12000:]
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError:   INFO: Launching config: "/tmp/hadanion-absent-2vmgr0tf/shell/shell.qml"
+AssertionError:   INFO: Launching config: "/tmp/alis-companion-absent-2vmgr0tf/shell/shell.qml"
   INFO: Shell ID: "14785277530f9a7a4c6298f251f22409" Path ID "14785277530f9a7a4c6298f251f22409"
-  INFO: Saving logs to "/tmp/hadanion-absent-2vmgr0tf/runtime/quickshell/by-id/e2m3lchwmt/log.qslog"
+  INFO: Saving logs to "/tmp/alis-companion-absent-2vmgr0tf/runtime/quickshell/by-id/e2m3lchwmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   WARN : Failed to create wl_display (No such file or directory)
-dbus-daemon[168564]: [session uid=1000 pid=168564 pidfd=5] Activating service name='org.freedesktop.portal.Desktop' requested by ':1.1' (uid=1000 pid=168566 comm="/usr/bin/qs --path /tmp/hadanion-absent-2vmgr0tf/s")
+dbus-daemon[168564]: [session uid=1000 pid=168564 pidfd=5] Activating service name='org.freedesktop.portal.Desktop' requested by ':1.1' (uid=1000 pid=168566 comm="/usr/bin/qs --path /tmp/alis-companion-absent-2vmgr0tf/s")
 dbus-daemon[168564]: [session uid=1000 pid=168564 pidfd=5] Activating service name='org.freedesktop.impl.portal.PermissionStore' requested by ':1.2' (uid=1000 pid=168588 comm="/usr/lib/xdg-desktop-portal")
 dbus-daemon[168564]: [session uid=1000 pid=168564 pidfd=5] Successfully activated service 'org.freedesktop.impl.portal.PermissionStore'
 dbus-daemon[168564]: [session uid=1000 pid=168564 pidfd=5] Activating service name='org.freedesktop.portal.Documents' requested by ':1.2' (uid=1000 pid=168588 comm="/usr/lib/xdg-desktop-portal")
 dbus-daemon[168564]: [session uid=1000 pid=168564 pidfd=5] Successfully activated service 'org.freedesktop.portal.Documents'
 dbus-daemon[168564]: [session uid=1000 pid=168564 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gnome' requested by ':1.2' (uid=1000 pid=168588 comm="/usr/lib/xdg-desktop-portal")
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/hadanion-absent-2vmgr0tf/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/alis-companion-absent-2vmgr0tf/config/alis/config.json failed: File does not exist.
  DEBUG qml: [Config] File not found, creating new file.
 
 ** (xdg-desktop-portal-gnome:168612): WARNING **: 20:55:34.663: GDK backend forced via env var, portal dialogs will not work properly.
 Non-compatible display server, exposing settings only.
-  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/hadanion-absent-2vmgr0tf/config/alis/config.json failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadanion-absent-2vmgr0tf/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadanion-absent-2vmgr0tf/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/alis-companion-absent-2vmgr0tf/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-companion-absent-2vmgr0tf/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-companion-absent-2vmgr0tf/state/quickshell/user/gamemode_active failed: File does not exist.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fdbf138b000)
 dbus-daemon[168564]: [session uid=1000 pid=168564 pidfd=5] Activating service name='org.gtk.vfs.Daemon' requested by ':1.5' (uid=1000 pid=168612 comm="/usr/lib/xdg-desktop-portal-gnome")
 dbus-daemon[168564]: [session uid=1000 pid=168564 pidfd=5] Successfully activated service 'org.gtk.vfs.Daemon'
@@ -2200,15 +2200,15 @@ dbus-daemon[168564]: [session uid=1000 pid=168564 pidfd=5] Activated service 'or
 
 (/usr/lib/xdg-desktop-portal:168588): xdg-desktop-portal-WARNING **: 20:55:34.796: Failed to create email proxy: Error calling StartServiceByName for org.freedesktop.impl.portal.desktop.gtk: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
 dbus-daemon[168564]: [session uid=1000 pid=168564 pidfd=5] Activating service name='org.freedesktop.secrets' requested by ':1.2' (uid=1000 pid=168588 comm="/usr/lib/xdg-desktop-portal")
-** Message: 20:55:34.801: couldn't access control socket: /tmp/hadanion-absent-2vmgr0tf/runtime/keyring/control: No such file or directory
+** Message: 20:55:34.801: couldn't access control socket: /tmp/alis-companion-absent-2vmgr0tf/runtime/keyring/control: No such file or directory
 discover_other_daemon: 0dbus-daemon[168564]: [session uid=1000 pid=168564 pidfd=5] Successfully activated service 'org.freedesktop.secrets'
 dbus-daemon[168564]: [session uid=1000 pid=168564 pidfd=5] Successfully activated service 'org.freedesktop.portal.Desktop'
   WARN qt.qpa.services: Failed to register with host portal QDBusError("org.freedesktop.portal.Error.Failed", "Could not register app ID: Connection already associated with an application ID")
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadanion-absent-2vmgr0tf/state/quickshell/user/gamemode_active failed: File does not exist.
- DEBUG qml: HADANION_ABSENT=FAIL
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-companion-absent-2vmgr0tf/state/quickshell/user/gamemode_active failed: File does not exist.
+ DEBUG qml: ALIS_COMPANION_ABSENT=FAIL
 A connection to the bus can't be made
 
-END FAILURE: Python regression: scripts/test-hadanion-optional.py
+END FAILURE: Python regression: scripts/test-alis-companion-optional.py
 
 ---- CHECK [197]: Python regression: scripts/test-inir-process-cleanup.py ----
 Command: python3 scripts/test-inir-process-cleanup.py
@@ -4331,8 +4331,8 @@ Failed checks:
   - Python regression: scripts/test-hadalird-manager.py (exit 1)
   - Python regression: scripts/test-hadalird-optional.py (exit 1)
   - Python regression: scripts/test-hadalird-system-provision.py (exit 1)
-  - Python regression: scripts/test-hadanion-layer-shell.py (exit 1)
-  - Python regression: scripts/test-hadanion-optional.py (exit 1)
+  - Python regression: scripts/test-alis-companion-layer-shell.py (exit 1)
+  - Python regression: scripts/test-alis-companion-optional.py (exit 1)
   - Python regression: scripts/test-local-ai-gguf-runtime.py (exit 1)
   - Python regression: scripts/test-local-model-folder.py (exit 1)
   - Python regression: scripts/test-local-music-lean-snapshot.py (exit 1)

@@ -1,4 +1,4 @@
-name: Apply Wull Shader Optimization
+name: Apply Aqua Shader Optimization
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
           ref: dev
           fetch-depth: 0
 
-      - name: Apply and validate strict-lossless Wull candidate
+      - name: Apply and validate strict-lossless Aqua candidate
         run: |
           set -euo pipefail
           git config user.name "Hadalis Shader Baker"
@@ -39,22 +39,22 @@ jobs:
           "$QSB" --qt6 -o /tmp/WaterDropletMaterial.baseline.qsb modules/abyss/companion/WaterDropletMaterial.frag
           cmp /tmp/WaterDropletMaterial.baseline.qsb modules/abyss/companion/WaterDropletMaterial.frag.qsb
 
-          python3 scripts/build-wull-material-candidate.py /tmp/WaterDropletMaterial.frag
+          python3 scripts/build-aqua-material-candidate.py /tmp/WaterDropletMaterial.frag
           cp /tmp/WaterDropletMaterial.frag modules/abyss/companion/WaterDropletMaterial.frag
           "$QSB" --qt6 -o modules/abyss/companion/WaterDropletMaterial.frag.qsb modules/abyss/companion/WaterDropletMaterial.frag
           "$QSB" --dump modules/abyss/companion/WaterDropletMaterial.frag.qsb >/dev/null
 
-          python3 scripts/test-wull-procedural-visual-contract.py
-          python3 scripts/test-wull-idle-resource-contract.py
+          python3 scripts/test-aqua-procedural-visual-contract.py
+          python3 scripts/test-aqua-idle-resource-contract.py
 
           git add modules/abyss/companion/WaterDropletMaterial.frag modules/abyss/companion/WaterDropletMaterial.frag.qsb
-          git commit -m "perf(wull): skip inactive bubble ray work"
+          git commit -m "perf(aqua): skip inactive bubble ray work"
 
           git fetch origin dev
           git rebase origin/dev
 
-          python3 scripts/test-wull-procedural-visual-contract.py
-          python3 scripts/test-wull-idle-resource-contract.py
+          python3 scripts/test-aqua-procedural-visual-contract.py
+          python3 scripts/test-aqua-idle-resource-contract.py
           bash scripts/validate-maintainer-local.sh --current-repo
 
           git fetch origin dev

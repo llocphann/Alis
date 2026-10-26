@@ -57,7 +57,7 @@ binds {
     // Wallpaper picker, settings, cheatsheet, panel family switch.
     Ctrl+Alt+T { spawn "alis" "wallpaperSelector" "toggle"; }
     Mod+Comma { spawn "alis" "settings"; }
-    Mod+Alt+Comma repeat=false { spawn "alis" "ipc" "wull" "chat"; }
+    Mod+Alt+Comma repeat=false { spawn "alis" "ipc" "aqua" "chat"; }
     Mod+Slash { spawn "alis" "cheatsheet" "toggle"; }
     Mod+Alt+W { spawn "alis" "panelFamily" "cycle"; }
 

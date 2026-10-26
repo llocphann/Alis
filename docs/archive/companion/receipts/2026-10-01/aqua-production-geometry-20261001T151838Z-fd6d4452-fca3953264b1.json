@@ -1,0 +1,68 @@
+{
+  "kind": "aqua_manual_postchange_production_geometry",
+  "source_sha": "fca3953264b1fa7a7d6e58ed6ff5300c96f8433b",
+  "status": "pass",
+  "measurement": {
+    "status": "pass",
+    "reason": null,
+    "scope": "offscreen_centered_production_AbyssCompanion_four_edges",
+    "four_edges_observed": true,
+    "edge_geometry": [
+      {
+        "edge": "top",
+        "host_area": 10976,
+        "mapped_body_bbox_area": 6992,
+        "bbox_to_host_ratio": 0.637,
+        "body_stays_within_host": true,
+        "mapped_body_x": 18,
+        "mapped_body_y": 3,
+        "mapped_body_width": 76,
+        "mapped_body_height": 92
+      },
+      {
+        "edge": "right",
+        "host_area": 10976,
+        "mapped_body_bbox_area": 6992,
+        "bbox_to_host_ratio": 0.637,
+        "body_stays_within_host": true,
+        "mapped_body_x": 3,
+        "mapped_body_y": 18,
+        "mapped_body_width": 92,
+        "mapped_body_height": 76
+      },
+      {
+        "edge": "bottom",
+        "host_area": 10976,
+        "mapped_body_bbox_area": 6992,
+        "bbox_to_host_ratio": 0.637,
+        "body_stays_within_host": true,
+        "mapped_body_x": 18,
+        "mapped_body_y": 3,
+        "mapped_body_width": 76,
+        "mapped_body_height": 92
+      },
+      {
+        "edge": "left",
+        "host_area": 10976,
+        "mapped_body_bbox_area": 6992,
+        "bbox_to_host_ratio": 0.637,
+        "body_stays_within_host": true,
+        "mapped_body_x": 3,
+        "mapped_body_y": 18,
+        "mapped_body_width": 92,
+        "mapped_body_height": 76
+      }
+    ],
+    "edges_protruding_past_host": [],
+    "compositor_pointer_passthrough": "not_tested",
+    "visual_appearance": "not_tested",
+    "production_mask_modified": false
+  },
+  "physical_pointer_mask": "not_tested",
+  "current_production_mask": "whole_companion_host",
+  "production_source_geometry": "center_anchor_center_rotation",
+  "production_mask_modified_by_test": false,
+  "canonical_validation": "not_run",
+  "private_logs": "local_only",
+  "publication_parent_sha": "fca3953264b1fa7a7d6e58ed6ff5300c96f8433b"
+}

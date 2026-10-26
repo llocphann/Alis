@@ -64,7 +64,7 @@ there is no background job-dispatch path.
 
 ## Maintainer product repair and optimization — 2026-10-04
 
-One active context handles the four requested outcomes. Concurrent Wull
+One active context handles the four requested outcomes. Concurrent Aqua
 development and unrelated historical evidence are preserved.
 
 - [x] Rehost the desktop Edit Widget toolbar in the existing Abyss body/field,
@@ -72,13 +72,13 @@ development and unrelated historical evidence are preserved.
   controls and output ownership. Native four-edge/narrow-output callbacks,
   input release and lifecycle passed; owner-session acceptance remains separate.
 - [x] Reconcile all forty failures in the current canonical report at
-  `docs/wull-visual/abyss-water-20261004/canonical-summary.txt`. Fix real runtime
+  `docs/aqua-visual/abyss-water-20261004/canonical-summary.txt`. Fix real runtime
   defects and replace stale implementation assertions with current behavior
   coverage; 31 active checks passed at `151e86a5b`, nine explicit phase/manual
   exclusions remain visible. The original failed evidence is unchanged.
 - [x] Consolidate duplicate Settings destinations/sections without shifting
   persisted page slots, losing search/deep links or removing Waffle support.
-- [x] Continue proven lossless Abyss/Wull reductions. Wull segment arrays
+- [x] Continue proven lossless Abyss/Aqua reductions. Aqua segment arrays
   2 → 0 per visited obstacle; native parity: 3,821 cases and 13 reactive steps.
   Integrated Abyss allocation oracles passed. These are scoped allocation
   reductions, not whole-application CPU/RAM/FPS measurements.
@@ -90,7 +90,7 @@ development and unrelated historical evidence are preserved.
   strict Qt 6.11.2 parsing PASS. Retain log, all forty failure dispositions,
   native parity output and four-edge isolated toolbar images. This qualifies
   the integrated earlier allocation reductions at this descendant, not the
-  consumed worker evidence or later concurrent Wull commits.
+  consumed worker evidence or later concurrent Aqua commits.
 - [x] Repair notification lifetime: pause remaining time on hover, resume on
   final-output leave/delegate retirement, and cover late arrivals and history.
   Native regression and source milestone: `f480a9de0`.

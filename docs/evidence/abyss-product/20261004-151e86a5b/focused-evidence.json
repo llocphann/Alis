@@ -26,9 +26,9 @@
     }
   ],
   "interaction_log": "hadalis-widget-editor-final-20261004.log",
-  "wull_proposal_log": "hadalis-wull-segment-proposal-20261004.log",
-  "wull_proposal_source_sha": "9a0146f03a92fdf3abe888e933b69f007785e83b",
-  "wull_proposal_scope": "Pre-edit scalar-bound proposal; integrated production evidence is test-wull-segment-allocations.log in canonical-focused-outputs.json",
+  "aqua_proposal_log": "hadalis-aqua-segment-proposal-20261004.log",
+  "aqua_proposal_source_sha": "9a0146f03a92fdf3abe888e933b69f007785e83b",
+  "aqua_proposal_scope": "Pre-edit scalar-bound proposal; integrated production evidence is test-aqua-segment-allocations.log in canonical-focused-outputs.json",
   "owner_session_acceptance": "HOLD / NOT_COMPLETE",
   "automation_controlled": false
 }

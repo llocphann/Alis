@@ -644,13 +644,13 @@ Command: python3 scripts/test-hadalird-system-provision.py
 Working directory: /tmp/hadalis-validation.nonaDC/Hadalis
 Result: PASS
 
----- CHECK [125]: Python regression: scripts/test-hadanion-layer-shell.py ----
-Command: python3 scripts/test-hadanion-layer-shell.py
+---- CHECK [125]: Python regression: scripts/test-alis-companion-layer-shell.py ----
+Command: python3 scripts/test-alis-companion-layer-shell.py
 Working directory: /tmp/hadalis-validation.nonaDC/Hadalis
 Result: PASS
 
----- CHECK [126]: Python regression: scripts/test-hadanion-optional.py ----
-Command: python3 scripts/test-hadanion-optional.py
+---- CHECK [126]: Python regression: scripts/test-alis-companion-optional.py ----
+Command: python3 scripts/test-alis-companion-optional.py
 Working directory: /tmp/hadalis-validation.nonaDC/Hadalis
 Result: PASS
 

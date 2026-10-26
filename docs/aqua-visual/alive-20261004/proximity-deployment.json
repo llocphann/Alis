@@ -1,0 +1,60 @@
+{
+  "baseSha": "77dbd3ad0f21cb6177225989d4cd7e3128c32e15",
+  "sourceSha": "6bd6cbdcfe79637c87d0e4577753a53566abadaa",
+  "files": [
+    {
+      "file": "modules/abyss/AbyssPerimeter.qml",
+      "before": "9656bd7ebba74fb203122dea615f9a0d973bf7c7ac3740197c9ef23698b43c78",
+      "after": "3ab8da1daddaf450c2d11ab9a0c142198b54bf8b2cd3b457445db3ae35cd2aba",
+      "mode": 420
+    },
+    {
+      "file": "modules/abyss/AbyssGenericPopupPresenter.qml",
+      "before": "05bb591add85cd4a6b8dfaaebed71377d508f7aa4541c44847fe099639ac4755",
+      "after": "56ebb29e53989123c4920f8c44a80568511ca6009864dd3e5bae80083fe5fd8b",
+      "mode": 420
+    },
+    {
+      "file": "modules/abyss/companion/AquaPresence.qml",
+      "before": "c31c0ae1ef0833e3e6cd2a8da4a59496f88008557eef8b9dd41d998a9d7e8d64",
+      "after": "43c5db511c75645135128e86edd0c3b5bb16f9b89277946abc2fdbc1115c25cd",
+      "mode": 420
+    },
+    {
+      "file": "modules/abyss/companion/AquaCuriosity.qml",
+      "before": "42aa4d0dddca78631e58446775c84cf19b215073f10d2f1c03bc11a5478a7cb1",
+      "after": "30a26621c7a4deeece0cd088884b38de77606ed96823af662e88e6e8beea9812",
+      "mode": 420
+    }
+  ],
+  "configTouched": false,
+  "qualifiedBeforeWrite": true,
+  "applied": true,
+  "appliedFiles": [
+    "modules/abyss/AbyssPerimeter.qml",
+    "modules/abyss/AbyssGenericPopupPresenter.qml",
+    "modules/abyss/companion/AquaPresence.qml",
+    "modules/abyss/companion/AquaCuriosity.qml"
+  ],
+  "configPreserved": true,
+  "liveReadback": {
+    "sourceSha": "6bd6cbdcfe79637c87d0e4577753a53566abadaa",
+    "ownedFilesVerified": 4,
+    "serviceActive": true,
+    "backendReady": true,
+    "nativeDaemonCount": 1,
+    "companionEnabled": true,
+    "visibleOutputs": [
+      "eDP-1"
+    ],
+    "validScenes": true,
+    "explorationEnabled": true,
+    "proactive": "occasional",
+    "aiEnabled": true,
+    "configuredModel": false,
+    "nativePhysicalInputQualified": false,
+    "globalPointerAcrossApplications": false,
+    "userConfigPreserved": true,
+    "aquaAbyssStartupErrors": 0
+  }
+}

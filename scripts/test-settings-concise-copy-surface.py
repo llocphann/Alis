@@ -330,9 +330,9 @@ for page, hints in OPTIONAL_SETTINGS_HELP.items():
         assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
         assert EN_US.get(hint) == hint, (page, hint)
 companion_source = (ROOT / "modules/settings/CompanionConfig.qml").read_text(encoding="utf-8")
-assert "active: Hadanion.available" in companion_source
-assert "source: Hadanion.settingsSource" in companion_source
-assert "onClicked: Hadanion.refresh()" in companion_source
+assert "active: AlisCompanion.available" in companion_source
+assert "source: AlisCompanion.settingsSource" in companion_source
+assert "onClicked: AlisCompanion.refresh()" in companion_source
 for name, dynamic_source in (
     ("ThinkfanSettings.qml", 'Hadalird.settingsSource("thinkfan")'),
     ("ObsidianThemeSettings.qml", 'Hadalird.settingsSource("obsidian")'),

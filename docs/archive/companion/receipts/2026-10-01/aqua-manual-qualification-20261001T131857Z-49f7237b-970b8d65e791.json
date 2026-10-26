@@ -1,0 +1,71 @@
+{
+  "kind": "aqua_manual_native_canonical_qualification",
+  "qualification_scope": "targeted_postfix",
+  "canonical_validation": "not_run",
+  "source_sha": "970b8d65e791e4b9c7a90b0f8d39851a29b2ef34",
+  "started_utc": "2026-10-01T13:18:57+00:00",
+  "finished_utc": "2026-10-01T13:19:10+00:00",
+  "status": "pass",
+  "existing_perimeter_receipt_sha": "642c676c2ce03ad5635c7fbbe3f278a1ce5da206",
+  "checks": [
+    {
+      "check": "aqua-production",
+      "exit_code": 0,
+      "status": "pass",
+      "duration_seconds": 0.03,
+      "private_log_truncated": false
+    },
+    {
+      "check": "aqua-host-policy",
+      "exit_code": 0,
+      "status": "pass",
+      "duration_seconds": 0.06,
+      "private_log_truncated": false
+    },
+    {
+      "check": "perimeter-regressions",
+      "exit_code": 0,
+      "status": "pass",
+      "duration_seconds": 0.97,
+      "private_log_truncated": false
+    },
+    {
+      "check": "rust-unit",
+      "exit_code": 0,
+      "status": "pass",
+      "duration_seconds": 4.03,
+      "private_log_truncated": false
+    },
+    {
+      "check": "rust-release",
+      "exit_code": 0,
+      "status": "pass",
+      "duration_seconds": 7.47,
+      "private_log_truncated": false
+    },
+    {
+      "check": "dispatcher-version",
+      "exit_code": 0,
+      "status": "pass",
+      "duration_seconds": 0.01,
+      "private_log_truncated": false
+    },
+    {
+      "check": "native-production-contract",
+      "exit_code": 0,
+      "status": "pass",
+      "duration_seconds": 0.02,
+      "private_log_truncated": false
+    },
+    {
+      "check": "package-metadata",
+      "exit_code": 0,
+      "status": "pass",
+      "duration_seconds": 0.01,
+      "private_log_truncated": false
+    }
+  ],
+  "live_host_acceptance": "not_run",
+  "raw_logs": "private_local_only",
+  "publication_parent_sha": "ac19b6b337d378f87b9559779f37fa7cb6c896c6"
+}

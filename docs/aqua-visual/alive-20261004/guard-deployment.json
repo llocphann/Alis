@@ -1,0 +1,31 @@
+{
+  "install": {
+    "baseSha": "29e88b9b02e2d5a90fd69eb12461bd2c3f93118a",
+    "sourceSha": "77dbd3ad0f21cb6177225989d4cd7e3128c32e15",
+    "files": [
+      {
+        "file": "modules/abyss/AbyssPerimeter.qml",
+        "before": "7266eb91da2231ae31ce25973e055b528c6e5b5220f1cb040246045b08940a9c",
+        "after": "9656bd7ebba74fb203122dea615f9a0d973bf7c7ac3740197c9ef23698b43c78",
+        "mode": 420
+      },
+      {
+        "file": "modules/abyss/companion/AquaTalkCloud.qml",
+        "before": "d6ecdad01bdf83d52eff4f02de3c78f38db6aeeccd10232c4e7f82fe834287b7",
+        "after": "736b4e6748de8e3fcd76d382773ed61779fb4e5d0bc715dc80cdf438f48b61a3",
+        "mode": 420
+      }
+    ],
+    "configTouched": false,
+    "applied": true
+  },
+  "liveReadback": {
+    "sourceSha": "77dbd3ad0f21cb6177225989d4cd7e3128c32e15",
+    "guardFilesVerified": 2,
+    "backendReady": true,
+    "visibleOutputs": [
+      "eDP-1"
+    ],
+    "nativePhysicalInputQualified": false
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "kind": "aqua_actual_offscreen_qt_stretch_geometry",
+  "source_sha": "72ac0580b12e08c88e74f69ac919e30a93f481f4",
+  "status": "pass",
+  "reason": null,
+  "scope": "unmodified_actual_qml_private_offscreen_four_edges_three_scales_two_frozen_poses",
+  "observed_pose_count": 24,
+  "qt_parent_scale_mapping_consistent": true,
+  "all_neutral_static_bbox_inside_host": true,
+  "stretch_target_observations": {
+    "0.65": {
+      "stretched_tip_outside_source_static_edges": [
+        "top"
+      ],
+      "stretched_bbox_outside_source_static_edges": [
+        "top",
+        "right",
+        "bottom",
+        "left"
+      ],
+      "stretched_tip_outside_host_edges": [
+        "top"
+      ],
+      "stretched_bbox_outside_host_edges": [
+        "top",
+        "bottom"
+      ]
+    },
+    "1.0": {
+      "stretched_tip_outside_source_static_edges": [
+        "top"
+      ],
+      "stretched_bbox_outside_source_static_edges": [
+        "top",
+        "right",
+        "bottom",
+        "left"
+      ],
+      "stretched_tip_outside_host_edges": [
+        "top"
+      ],
+      "stretched_bbox_outside_host_edges": [
+        "top",
+        "bottom"
+      ]
+    },
+    "1.5": {
+      "stretched_tip_outside_source_static_edges": [
+        "top"
+      ],
+      "stretched_bbox_outside_source_static_edges": [
+        "top",
+        "right",
+        "bottom",
+        "left"
+      ],
+      "stretched_tip_outside_host_edges": [
+        "top"
+      ],
+      "stretched_bbox_outside_host_edges": [
+        "top",
+        "bottom"
+      ]
+    }
+  },
+  "local_quickshell_version": "0.3.1",
+  "local_qt_version": "not_recorded",
+  "source_arithmetic_not_frame_replayed": true,
+  "real_backend_animation": "not_run",
+  "wayland_region_pointer_hover": "not_run",
+  "virtual_pointer_backend": "not_run",
+  "canonical_validation": "not_run",
+  "production_mask_changed": false,
+  "host_user_config_changed": false,
+  "raw_local_qt_coordinates_logs": "private_local_only",
+  "publication_parent_sha": "72ac0580b12e08c88e74f69ac919e30a93f481f4"
+}

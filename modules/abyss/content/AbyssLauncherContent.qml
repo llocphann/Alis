@@ -31,7 +31,7 @@ Item {
         RowLayout {
             AbyssLabel { text: "Applications & workspaces"; font.bold: true; Layout.fillWidth: true }
             AbyssLabel {
-                text: "Wull · "+AbyssRenderPolicy.wullQualityLabel
+                text: "Aqua · "+AbyssRenderPolicy.aquaQualityLabel
                 color: Appearance.colors.colSubtext
             }
             AbyssButton { glyph: "close"; description: "Close launcher"; onClicked: root.closeRequested() }

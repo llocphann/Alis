@@ -101,32 +101,32 @@ above remain open.
    folders, format previews, output targeting and existing wallpaper backend.
 2. [x] Use the current iNiR liquid wallpaper transition and its presented-frame
    priming/ownership guarantees; compare pinned upstream sources.
-3. [x] Use the AI tab's providers/catalog/auth/request path for Wull chat. The
-   Wull page adds only model selection and thinking effort for its AI controls.
+3. [x] Use the AI tab's providers/catalog/auth/request path for Aqua chat. The
+   Aqua page adds only model selection and thinking effort for its AI controls.
 4. [x] Configure physical Screen Edge width independently for top/right/bottom/
    left. Each Edge chooses thickness-only or inherited Edge/module sizing;
    preserve per-output editor drafts, explicit custom sizes and Cancel/Done.
 5. [x] Present Abyss Panel Style before Waffle Style in Settings.
-6. [x] Offer automatic Abyss and Wull render quality following power profile;
+6. [x] Offer automatic Abyss and Aqua render quality following power profile;
    retain an explicit manual mode and react to profile changes without reload.
-7. [x] Wull has two render levels: Performance and Quality. Quality uses the
+7. [x] Aqua has two render levels: Performance and Quality. Quality uses the
    former Balanced rendering; migrate old Balanced/Quality safely.
-8. [x] Never automatically open Wull chat input. Hover offers two cloud actions:
+8. [x] Never automatically open Aqua chat input. Hover offers two cloud actions:
    Obsidian (energy/mood/schedule/etc.) and AI (chatbox). Daily mood/energy is
    chosen once; later bubbles show contextual read-only phrases. Schedule/todo
    reminders use appropriate popup notifications.
 9. [x] Fix Clipboard History copied-image rendering, decoding and delegate
    lifecycle; exercise native binary ingress and actual image display.
-10. [x] Wull uses water portals for long-distance travel, with destination
+10. [x] Aqua uses water portals for long-distance travel, with destination
     clearance, cancellation and bounded visual lifetime.
 11. [x] Add rolling locomotion alongside existing walk/run behavior.
-12. [x] Fix the clipped Wull/quicksand boundary during Dock disappearance;
+12. [x] Fix the clipped Aqua/quicksand boundary during Dock disappearance;
     exercise the real paint/input bounds and opening/closing frames.
 13. [x] Rework Settings into compact grouped navigation with subsidiary pages,
     inspired by iOS; retain stable keys, migration, search and deep links.
 14. [x] Traveling Abyss waves attenuate crest height continuously with distance,
     while preserving stability, interaction and idle sleep.
-15. [x] Show Wull's effective render quality in the Launcher popup.
+15. [x] Show Aqua's effective render quality in the Launcher popup.
 16. [x] Rework the Onscreen Keyboard popup into Abyss connected presentation,
     preserving typing, dragging/pin and keyboard focus behavior.
 17. [x] Add Obsidian auto-theming with vault/application and configuration path
@@ -213,7 +213,7 @@ Both runs used the default remote clean-clone mode of
   386 PASS / 0 FAIL / 3 SKIP. The validated source tree remained clean.
   Local log: `/tmp/hadalis-maintainer-validation-redesign-rerun-20261007.log`.
   SHA-256: `f2a5af0f23988882978b84673fb57679436ce79d65b7e05259fca5f3734df57d`.
-- **Skipped/deferred:** the manual Wull perimeter test, the QML parser pass
+- **Skipped/deferred:** the manual Aqua perimeter test, the QML parser pass
   because the installed qmlformat Qt version could not be determined, and the
   dedicated Nix contract. Native Qt behavior tests did run; Nix remains in-tree
   and non-blocking.
@@ -395,8 +395,8 @@ Earlier completed source groups do not close the new requirements below.
   removed in `e17c7edc0`. Remaining app-specific settings moved in `8ca68efe4`;
   source/package/update qualification is complete below. Owner hardware and
   actual installed desktop acceptance remain separate.
-- [ ] Complete current Hadanion requirements using its own canonical task files.
-  Companion source belongs to Hadanion, not Hadalis. Refetch `main` before work;
+- [ ] Complete current Alis-Companion requirements using its own canonical task files.
+  Companion source belongs to Alis-Companion, not Hadalis. Refetch `main` before work;
   concurrent source changes exist. Offline guards are bounded evidence only.
 - [x] Source and focused validation: Local Music moves from Sidebar Left into a
   lazy Dashboard page (`6abf56328350b5871f1c626b2752d5e25d658539`). Centered round
@@ -439,7 +439,7 @@ TLP/helper/Obsidian implementation tests and runtime payload exclusions. Move
 their implementation oracles to Hadalird; preserve generic host and shared
 policy contracts. Inspect native Todo ownership before removing any backend.
 Register the new host/migration/lifecycle checks in the canonical acceptance
-path, then continue Hadanion's current task files from fresh `main`.
+path, then continue Alis-Companion's current task files from fresh `main`.
 
 These checks are not a canonical PASS or post-update owner-session acceptance.
 The canonical `4e3dcde86878fc1cad4957ca08434e0f837fb925` result remains historical:
@@ -450,7 +450,7 @@ result is inferred for later source. Music and newer product changes have not
 been deployed to the owner's desktop. Unrelated working-tree changes and
 `docs/evidence/megaqml/` are preserved.
 
-**NOT_COMPLETE:** optional Hadalird extraction, remaining Hadanion requirements,
+**NOT_COMPLETE:** optional Hadalird extraction, remaining Alis-Companion requirements,
 final exact-source canonical validation, owner-session acceptance and comparable
 whole-shell CPU/RAM/GPU/latency measurements. No resource percentages are claimed.
 
@@ -825,7 +825,7 @@ new source. No CPU/RAM/GPU/FPS percentage or visual parity claim is justified.
    focused repairs. Keep owner cold boot, normal/edit/family switches,
    click-through/focus, multi-output and fractional scaling acceptance open.
 3. Finish package qualification/source pin/update only after source qualifies.
-   Continue Hadanion canonical TODOs while preserving concurrent
+   Continue Alis-Companion canonical TODOs while preserving concurrent
    `scripts/companion-export-cowork-native.py` edits. G0 dc4d5ecfe118 remains
    INCONCLUSIVE_CAPTURE_VARIANCE: offline receipt/PNG analysis only, no replay
    and no relaxed RGBA. Five varying states' changed pixels are translucent;
@@ -1044,7 +1044,7 @@ hover-loss 700ms later. Unlike preview menus, the desktop menu is
 
 The maintainer prioritized completing Hadalird before other product work.
 **This extraction milestone is complete at source/package scope; the broader
-Hadalis/Hadanion task remains NOT_COMPLETE.**
+Hadalis/Alis-Companion task remains NOT_COMPLETE.**
 
 - [x] Hadalird `642ba4e`, `1e4496e`, `4186832` own the remaining Classic and
   Waffle TLP row/editor implementations, Obsidian Todo/Quick Notes settings,
@@ -1099,7 +1099,7 @@ workload and a 360px-high logical host pass; the prior source fails the full
 control clipping oracle. Canonical `53af215df` separately passed 323 checks.
 Owner layout/normal-hover/multi-output/focus acceptance remains separate.
 
-Next: continue Hadanion canonical TODOs and strict-lossless work. Keep owner
+Next: continue Alis-Companion canonical TODOs and strict-lossless work. Keep owner
 Companion disabled, preserve concurrent work and unrelated
 `docs/evidence/megaqml/`, and keep G0 `dc4d5ecfe118` offline-only:
 INCONCLUSIVE_CAPTURE_VARIANCE, no replay or weaker RGBA. Only five-hour
@@ -1197,7 +1197,7 @@ or audio-output acceptance.**
 Fresh sync preserved concurrent Hadalird package-management source `4737960f5`
 and merged it with these fixes as `9ebaa5e0c6e959850ecf1cf2989983251708a714`,
 then pushed `dev`. Its offline manager fixture passed; actual optional UI
-qualification is tracked separately. Hadanion `main` documentation commit
+qualification is tracked separately. Alis-Companion `main` documentation commit
 `732136ef65bb3c84d9339207210c955759a85b76` was reviewed and pushed without
 staging its concurrent native-authoring edits. Hadalird source/package extraction
 remains qualified at `418683285d28c5b2a673ffc387f96047aca4306b`; do not redo it.
@@ -1239,13 +1239,13 @@ Remaining owner requirements, in this same active list:
   lifecycle and exact final Core SHA; do not infer its native acceptance from
   offline manager PASS or from be8902259's canonical run.
 
-Continue Hadanion's two canonical TODOs and strict-lossless work after these
-owner defects. Preserve `docs/evidence/megaqml/` and Hadanion's concurrent files;
+Continue Alis-Companion's two canonical TODOs and strict-lossless work after these
+owner defects. Preserve `docs/evidence/megaqml/` and Alis-Companion's concurrent files;
 Companion stays disabled, G0 `dc4d5ecfe118` remains offline-only. Only the
 five-hour window remaining **below** 3% triggers checkpoint/push and a one-shot
 resume at that window's reset +3 minutes; weekly usage never triggers it.
 
-### Remaining Hadalis-only acceptance (no Hadanion work)
+### Remaining Hadalis-only acceptance (no Alis-Companion work)
 
 - [x] Focused GitHub Actions offline qualification for exact
   `a570d13f993cfd07d5fff68d528598e6c034963d`: the standalone
@@ -1270,7 +1270,7 @@ resume at that window's reset +3 minutes; weekly usage never triggers it.
   distributions rather than using `sudo` on a user-owned checkout. No
   cross-distro support claim before packaging/Polkit checks.
 - [ ] Continue unrelated outstanding Hadalis `dev` fixes and strict-lossless
-  parity/measurement gates separately; leave Hadanion and `stable` untouched.
+  parity/measurement gates separately; leave Alis-Companion and `stable` untouched.
 
 
 ## 2026-10-10 — Owner Hadalird installed: Obsidian wrapper width and CPU probes
@@ -1380,7 +1380,7 @@ Owner confirms Hadalird 0.2.0 and the system helpers are ready but the
 Settings card is text-heavy, privileged reinstallation is confusing, and
 the Polkit dialog can be hidden behind the Abyss Settings surface.
 
-Hadalis `dev` repair scope only (Hadanion and stable untouched):
+Hadalis `dev` repair scope only (Alis-Companion and stable untouched):
 - Keep only short Gateway/Helpers status and primary `Install helpers`
   or `Reinstall helpers` (same explicit, integrity-checked, idempotent
   helper install), plus Update/Refresh. Move destructive package/helper
@@ -1461,7 +1461,7 @@ connected, even when MPD `status.error` reported a decoder failure.
 The maintainer explicitly resumed all Hadalis work. The earlier local resume
 automation was deleted on the stop request; it was not restarted on resumption.
 The established five-hour-only below-3% checkpoint policy still applies to a
-future budget exhaustion. Keep Hadanion and unrelated native-authoring files
+future budget exhaustion. Keep Alis-Companion and unrelated native-authoring files
 untouched while completing the current Hadalis requirements.
 
 - **Weather qualification:** `test-weather-popup-handoff-runtime.py` exercises

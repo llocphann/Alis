@@ -1,0 +1,85 @@
+{
+  "kind": "aqua_manual_nested_private_candidate_mask_comparison",
+  "source_sha": "8efa0b7d73418af9fc52b117199e2a691e0158ac",
+  "status": "pass",
+  "preflight_reason": null,
+  "scope": "owned_single_output_nested_niri_top_candidate_mask_A_B",
+  "observation": {
+    "nested_started": true,
+    "distinct_nested_endpoints": true,
+    "nested_one_output": true,
+    "nested_empty_before_test": true,
+    "child_exit_code": 0,
+    "child_result": "pass",
+    "child_reason": null,
+    "child_checks": [
+      {
+        "case": "disabled_center_underlay_control",
+        "status": "pass",
+        "target_alignment": "matched"
+      },
+      {
+        "case": "enabled_exterior_underlay_control",
+        "status": "pass",
+        "target_alignment": "matched"
+      },
+      {
+        "case": "enabled_body_actual_bridge_and_rust",
+        "status": "pass",
+        "underlay_target_alignment": "no_click",
+        "underlay_not_clicked": true,
+        "real_bridge_clicked": true,
+        "real_rust_reacted": true
+      },
+      {
+        "case": "whole_host_empty_margin_observation",
+        "status": "observed",
+        "underlay_received": false,
+        "unexpected_body_click": false
+      },
+      {
+        "case": "after_baseline_unmap_exterior_underlay_control",
+        "status": "pass",
+        "target_alignment": "matched"
+      },
+      {
+        "case": "candidate_exterior_underlay_control",
+        "status": "pass",
+        "target_alignment": "matched"
+      },
+      {
+        "case": "candidate_body_real_bridge_and_rust",
+        "status": "pass",
+        "underlay_target_alignment": "no_click",
+        "real_bridge_clicked": true,
+        "real_rust_reacted": true
+      },
+      {
+        "case": "candidate_empty_margin_pass_through",
+        "status": "pass",
+        "target_alignment": "matched",
+        "unexpected_body_click": false
+      }
+    ],
+    "nested_stopped": true,
+    "host_outputs_unchanged": true,
+    "owned_private_strays": false,
+    "forced_private_cleanup": false,
+    "nested_verified": true,
+    "underlay_unmapped": true,
+    "production_unmapped": true,
+    "private_daemon_stopped": true,
+    "real_rust_binary_built": true,
+    "whole_host_mask_changed": false,
+    "injection_backend": "forced_wlr_protocols_wdotool",
+    "private_candidate_mask_tested": true
+  },
+  "native_pointer_backend": "forced_wlr_protocols_wdotool",
+  "host_user_config_changed": false,
+  "production_mask_changed": false,
+  "private_source_shadow_only": true,
+  "visual_and_multioutput_acceptance": "not_run",
+  "canonical_validation": "not_run",
+  "raw_coordinates_screenshots_logs": "private_local_only",
+  "publication_parent_sha": "e477e070e0b71afeb65a6d6f8fd84a9032f4eca6"
+}

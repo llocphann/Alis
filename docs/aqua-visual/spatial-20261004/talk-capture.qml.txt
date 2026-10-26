@@ -1,0 +1,45 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtTest
+import Quickshell
+import qs.services
+import qs.modules.common
+import qs.modules.abyss.companion
+Window {
+ id:root;visible:true;width:640;height:600;color:"#07131a"
+ property int step:0
+ function named(item,name) {
+  if(item.objectName===name)return item
+  for(const child of item.data ?? item.children ?? []){const found=named(child,name);if(found)return found}
+  return null
+ }
+ Rectangle {
+  id:board;width:640;height:600;color:"#07131a"
+  AbyssCompanion {id:actor;x:264;y:442;reveal:1;scale:1.5;motionEnabled:false;effectsEnabled:true;renderQuality:"quality";translucency:.2;upright:true}
+  AquaTalkCloud {id:cloud;actor:actor;outputWidth:board.width;outputHeight:board.height;allowed:true}
+ }
+ TestCase {id:input;when:false;optional:true}
+ Component.onCompleted:Quickshell.watchFiles=false
+ Timer {interval:100;repeat:true;running:root.step===0;onTriggered:if(Config.ready && actor.materialReady){
+  Appearance.colors.colPrimary="#478dff"
+  input.mouseMove(board,20,580)
+  AquaMind.askCheckIn("mood")
+  root.step=1;capture.start()
+ }}
+ Timer {id:capture;interval:400;onTriggered:board.grabToImage(result=>{
+  const suffix=root.step===1 ? ".mood.png" : root.step===2 ? ".energy.png" : ".chat.png"
+  if(!result.saveToFile(Quickshell.env("AQUA_REFINED_TALK_CAPTURE")+suffix)) {console.error("AQUA_REFINED_TALK_CAPTURE=FAIL save");shutdown.start();return}
+  if(root.step===1){root.step=2;AquaMind.askCheckIn("energy");capture.restart()}
+  else if(root.step===2){
+   const field=root.named(cloud,"aquaChatInput")
+   if(!cloud.controlsVisible || field.visible || field.activeFocus){console.error("AQUA_REFINED_TALK_CAPTURE=FAIL checkInInput");shutdown.start();return}
+   AquaMind.openChat()
+   field.text="A little tired today."
+   root.step=3;capture.restart()
+  } else {
+   console.log("AQUA_REFINED_TALK_CAPTURE=PASS sequentialQuestions noCheckInInput noExtraButtons explicitEditor noInference")
+   shutdown.start()
+  }
+ })}
+ Timer {id:shutdown;interval:150;onTriggered:Qt.quit()}
+}

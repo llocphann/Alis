@@ -174,8 +174,8 @@ Log: /tmp/alis-round0-canonical-4848d5ae462846db623a49e502b9515fe468a557.log
 [172] Python regression: scripts/test-hadalird-preferences-migration.py PASS
 [173] Python regression: scripts/test-hadalird-settings-flow.py  PASS
 [174] Python regression: scripts/test-hadalird-system-provision.py PASS
-[175] Python regression: scripts/test-hadanion-layer-shell.py    PASS
-[176] Python regression: scripts/test-hadanion-optional.py       PASS
+[175] Python regression: scripts/test-alis-companion-layer-shell.py    PASS
+[176] Python regression: scripts/test-alis-companion-optional.py       PASS
 [177] Python regression: scripts/test-inir-process-cleanup.py    PASS
 [178] Python regression: scripts/test-internal-todo-persistence-runtime.py PASS
 [179] Python regression: scripts/test-ipc-registry-generator.py  PASS

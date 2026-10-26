@@ -11,7 +11,7 @@ RETIRED = ("fc" + "itx", "uni" + "key")
 # are not executed or shipped as active Alis-owned integration.
 HISTORICAL_PREFIXES = (
     "docs/archive/", "docs/evidence/", "docs/abyss/validation/",
-    "docs/wull-visual/",
+    "docs/aqua-visual/",
     "docs/optimization/STRICT_LOSSLESS_GPU_RAM_CPU_AUDIT.md",
 )
 TEXT_EXT = {".qml", ".js", ".mjs", ".cjs", ".py", ".sh", ".fish", ".kdl",

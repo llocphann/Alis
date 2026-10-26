@@ -1,0 +1,85 @@
+{
+  "kind": "aqua_manual_perimeter_component_diagnostics",
+  "source_sha": "f3a1faaf3c2ea955818759a1cb777dc92272872a",
+  "started_utc": "2026-10-01T11:13:18+00:00",
+  "finished_utc": "2026-10-01T11:13:19+00:00",
+  "status": "failed",
+  "scope": "diagnostics_only",
+  "canonical_validation": "not_run",
+  "live_visual_acceptance": "not_run",
+  "checks": [
+    {
+      "check": "iris-production",
+      "exit_code": 0,
+      "duration_seconds": 0.04,
+      "status": "pass",
+      "local_log_exceeds_1mib": false
+    },
+    {
+      "check": "connected-input",
+      "exit_code": 0,
+      "duration_seconds": 0.03,
+      "status": "pass",
+      "local_log_exceeds_1mib": false
+    },
+    {
+      "check": "quick-notes",
+      "exit_code": 0,
+      "duration_seconds": 0.04,
+      "status": "pass",
+      "local_log_exceeds_1mib": false
+    },
+    {
+      "check": "aqua-production",
+      "exit_code": 0,
+      "duration_seconds": 0.03,
+      "status": "pass",
+      "local_log_exceeds_1mib": false
+    },
+    {
+      "check": "perimeter-placement",
+      "exit_code": 0,
+      "duration_seconds": 0.03,
+      "status": "pass",
+      "local_log_exceeds_1mib": false
+    },
+    {
+      "check": "perimeter-family",
+      "exit_code": 0,
+      "duration_seconds": 0.44,
+      "status": "pass",
+      "local_log_exceeds_1mib": false
+    },
+    {
+      "check": "perimeter-routes",
+      "exit_code": 0,
+      "duration_seconds": 0.03,
+      "status": "pass",
+      "local_log_exceeds_1mib": false
+    },
+    {
+      "check": "perimeter-settings",
+      "exit_code": 0,
+      "duration_seconds": 0.03,
+      "status": "pass",
+      "local_log_exceeds_1mib": false
+    },
+    {
+      "check": "perimeter-shared-and-source",
+      "exit_code": 1,
+      "duration_seconds": 0.21,
+      "status": "failed",
+      "local_log_exceeds_1mib": false,
+      "failure_component": "source"
+    },
+    {
+      "check": "perimeter-retirement",
+      "exit_code": 0,
+      "duration_seconds": 0.05,
+      "status": "pass",
+      "local_log_exceeds_1mib": false
+    }
+  ],
+  "raw_logs": "private_local_only",
+  "publication_parent_sha": "f3a1faaf3c2ea955818759a1cb777dc92272872a"
+}

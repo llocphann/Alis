@@ -1,0 +1,70 @@
+{
+  "kind": "aqua_manual_offscreen_clickable_body_geometry",
+  "source_sha": "34b14b3d8f6e4d1986dd528d7c8b51e9856b0004",
+  "status": "pass",
+  "measurement": {
+    "status": "pass",
+    "reason": null,
+    "scope": "offscreen_actual_AbyssCompanion_geometry_only",
+    "four_edges_observed": true,
+    "edge_geometry": [
+      {
+        "edge": "top",
+        "host_area": 10976,
+        "mapped_body_bbox_area": 6992,
+        "bbox_to_host_ratio": 0.637,
+        "body_stays_within_host": true,
+        "mapped_body_x": 18,
+        "mapped_body_y": 6,
+        "mapped_body_width": 76,
+        "mapped_body_height": 92
+      },
+      {
+        "edge": "right",
+        "host_area": 10976,
+        "mapped_body_bbox_area": 6992,
+        "bbox_to_host_ratio": 0.637,
+        "body_stays_within_host": false,
+        "mapped_body_x": -43,
+        "mapped_body_y": 74,
+        "mapped_body_width": 92,
+        "mapped_body_height": 76
+      },
+      {
+        "edge": "bottom",
+        "host_area": 10976,
+        "mapped_body_bbox_area": 6992,
+        "bbox_to_host_ratio": 0.637,
+        "body_stays_within_host": false,
+        "mapped_body_x": 18,
+        "mapped_body_y": 98,
+        "mapped_body_width": 76,
+        "mapped_body_height": 92
+      },
+      {
+        "edge": "left",
+        "host_area": 10976,
+        "mapped_body_bbox_area": 6992,
+        "bbox_to_host_ratio": 0.637,
+        "body_stays_within_host": false,
+        "mapped_body_x": 49,
+        "mapped_body_y": 74,
+        "mapped_body_width": 92,
+        "mapped_body_height": 76
+      }
+    ],
+    "edges_protruding_past_host": [
+      "right",
+      "bottom",
+      "left"
+    ],
+    "compositor_pointer_passthrough": "not_tested",
+    "visual_appearance": "not_tested",
+    "production_mask_modified": false
+  },
+  "physical_pointer_mask": "not_tested",
+  "current_production_mask": "whole_companion_host",
+  "canonical_validation": "not_run",
+  "private_logs": "local_only",
+  "publication_parent_sha": "34b14b3d8f6e4d1986dd528d7c8b51e9856b0004"
+}

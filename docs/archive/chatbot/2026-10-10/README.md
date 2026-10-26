@@ -15,7 +15,7 @@ Repeated requests and checks were consolidated by required outcome:
 | Waves, Screen Edges, existing UI/layout, Settings, Music/Recording presentation and strict-lossless qualification | [Rework/optimization](../../../../to-do/cloud-bot/REWORK_OPTIMIZATION.md) |
 | Quick Notes images, Utilities, power-profile render quality and supported non-Arch helper provisioning | [New features](../../../../to-do/cloud-bot/NEW_FEATURES.md) |
 | TLP, Thinkfan and Obsidian implementation | [Hadalird](https://github.com/llocphann/Hadalird); Hadalis retains host/state/authorization acceptance in Issues. |
-| Companion design, animation and local AI | [Hadanion](https://github.com/llocphann/Hadanion); Hadalis retains optional host/shared API contracts. |
+| Companion design, animation and local AI | [Alis-Companion](https://github.com/llocphann/Alis-Companion); Hadalis retains optional host/shared API contracts. |
 | Optimization findings, proofs and research rounds | [Canonical research audit](../../../optimization/STRICT_LOSSLESS_GPU_RAM_CPU_AUDIT.md) |
 
 The 21-feature redesign and supplemental image/video/log requests remain in

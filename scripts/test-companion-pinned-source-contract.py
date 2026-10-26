@@ -22,7 +22,7 @@ assert re.fullmatch(r"[0-9a-f]{40}", PIN), "Companion pin must be an exact sourc
 spec = importlib.util.spec_from_file_location("managed_companion", ROOT / "scripts/companion-manager.py")
 manager = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(manager)
-spec = importlib.util.spec_from_file_location("host_companion", ROOT / "scripts/hadanion-status.py")
+spec = importlib.util.spec_from_file_location("host_companion", ROOT / "scripts/alis-companion-status.py")
 host = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(host)
 assert manager.COMPATIBLE_BINARIES == host.COMPATIBLE_BINARIES
@@ -39,8 +39,8 @@ with tempfile.TemporaryDirectory(prefix="alis-external-companion-pin-") as temp:
     assert (checkout / "scripts/install.py").is_file(), "Missing immutable release installer"
     assert (checkout / "scripts/test-package-lifecycle.py").is_file(), "Missing package lifecycle test"
     env = os.environ.copy()
-    env["HADANION_SOURCE"] = str(checkout)
-    env["HADANION_TEST_HOST"] = str(ROOT)
+    env["ALIS_COMPANION_SOURCE"] = str(checkout)
+    env["ALIS_COMPANION_TEST_HOST"] = str(ROOT)
     env["XDG_DATA_HOME"] = str(root / "owned-data")
     env["XDG_CONFIG_HOME"] = str(root / "owned-config")
     env["XDG_CACHE_HOME"] = str(root / "owned-cache")

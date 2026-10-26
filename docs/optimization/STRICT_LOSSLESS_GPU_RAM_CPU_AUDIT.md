@@ -196,8 +196,8 @@ Earlier `NO ACTION`, `ALREADY OPTIMIZED`, `MEASURE FIRST`, `SUPERSEDED`, and `NO
 | `services/ShellUpdates.qml` + `setup` | **HIGH-CONFIDENCE update-time process candidate — keep the current 2 s progress cadence but stop spawning `cat` for every status read.** While an update is active, `updateProgressPoller` launches `updateProgressReader` every 2000 ms; that Process is only `cat update-status`. The watchdog owns a second one-shot `cat` reader. The service already owns a blocking `FileView` for the same status file. Reuse a FileView reload/text path and a shared parser while retaining the 2 s timer and 120 s watchdog. Do **not** replace this first with pure `watchChanges`: `setup` writes markers with shell redirection (`printf > file`), so a watcher may observe the truncate/write intermediate state. | Low. Preserve exact progress/failure parsing, two-second presentation cadence, watchdog extension/stuck detection, shell-restart resume and missing-file behavior. Keep the boot-staleness Bash probe because it also compares mtime with boot epoch. | None. | Low transient process-memory/CPU reduction during updates; removes one child process every 2 s plus watchdog `cat` reads. | 0%. |
 | `modules/waffle/taskview/WaffleTaskViewContent.qml` | **HIGH-CONFIDENCE interactive CPU/allocation candidate — group windows by workspace once per cache refresh and retain a private per-slot projection.** `refreshCache()` currently filters the complete `NiriService.windows` array once for every visible workspace, then sorts each subset. `previewCounts` independently filters the full flattened cache once per workspace on drag updates, and keyboard helpers filter the flat cache again per navigation call. Build a workspace-id→slot map, distribute windows in one pass, keep each slot's exact existing column sort, and publish both the existing flat cache and an internal per-slot view/count snapshot. | Low–Medium. Preserve current-output exclusion, missing-position fallback to column 0, stable equal-column order, flat result order/fields, drag exclusion/+1 target semantics and fresh-array behavior where callers may mutate results. | None. | Low–Medium transient array/CPU reduction while Task View is open; changes repeated O(W×N) scans into O(W+N) grouping plus the same per-workspace sorts. | 0%. |
 | `services/NiriService.qml` + published-window ID consumers | **HIGH-CONFIDENCE CPU candidate — derive a first-match window-id index from the published `windows` snapshot.** Several consumers repeatedly call `NiriService.windows.find(w => w.id === id)`; Waffle `TaskAppButton` does that inside a loop over an app's toplevels, and `MinimizedWindows` performs ID finds in restore/visibility paths. Maintain a small id→window lookup whenever public `windows` changes, preserving Array.find's **first duplicate wins** behavior, and let only consumers of the published snapshot use it. | Low–Medium. Duplicate/missing IDs and exact object identity are contracts. NiriService handlers that intentionally operate on `_pendingWindows` / the freshest unpublished list must keep their current scans or own a separate proven index. | None. | Tiny bounded Map/object RAM cost in exchange for lower repeated lookup CPU; no RAM-saving claim. | 0%. |
-| `services/WullMind.qml` | **HIGH-CONFIDENCE micro-candidate — select the next eligible proactive reminder in one stable pass instead of materializing and sorting all reminder rows every minute.** `offerAutomatic()` calls `reminderRows()`, which copies journal schedule rows, appends bounded Todo/calendar rows, sorts the whole array by start minute, then immediately `find()`s the first unreminded item in the ±10-minute window. For the automatic path only, scan sources in today's existing source order and retain the earliest eligible item; on equal start minute keep the first encountered row to match stable-sort + find semantics. Keep `reminderRows()` itself for any direct callers/tests. | Low. Source ordering, invalid-time rejection, Todo/calendar bounds, reminder-key construction, stable equal-time tie behavior and the existing Obsidian context-refresh-before-reminder ordering must remain exact. | None. | Low transient JS allocation/CPU reduction on the one-minute proactive cadence; intentionally low priority. | 0%. |
-| `modules/abyss/companion/OctoTentacles.qml` + `WaterDropletBody.qml` + `WullPresence.qml` | **MEASURE FIRST — new companion render/state-machine paths are not source-only optimization candidates yet.** Octo now owns one liquid ShaderEffect per tentacle. Aqua's floor reflection is already a bounded 76×82 `ShaderEffectSource`, only live while visible, grounded and detailed effects are enabled. Presence timers inspected in this pass are bounded one-shot deadlines, not recurring idle polls. Profile GPU/frame cost and capture current Aqua/Octo A/B fixtures before changing shader fidelity, tentacle count, reflection behavior or state timing. | High if optimized by assumption. These are highly visible character/motion contracts and were concurrently changed in the current dev sequence. | Unknown until measured. | Low/unknown. | No promoted visual substitution; any later renderer candidate needs a deterministic <1% A/B oracle. |
+| `services/AquaMind.qml` | **HIGH-CONFIDENCE micro-candidate — select the next eligible proactive reminder in one stable pass instead of materializing and sorting all reminder rows every minute.** `offerAutomatic()` calls `reminderRows()`, which copies journal schedule rows, appends bounded Todo/calendar rows, sorts the whole array by start minute, then immediately `find()`s the first unreminded item in the ±10-minute window. For the automatic path only, scan sources in today's existing source order and retain the earliest eligible item; on equal start minute keep the first encountered row to match stable-sort + find semantics. Keep `reminderRows()` itself for any direct callers/tests. | Low. Source ordering, invalid-time rejection, Todo/calendar bounds, reminder-key construction, stable equal-time tie behavior and the existing Obsidian context-refresh-before-reminder ordering must remain exact. | None. | Low transient JS allocation/CPU reduction on the one-minute proactive cadence; intentionally low priority. | 0%. |
+| `modules/abyss/companion/OctoTentacles.qml` + `WaterDropletBody.qml` + `AquaPresence.qml` | **MEASURE FIRST — new companion render/state-machine paths are not source-only optimization candidates yet.** Octo now owns one liquid ShaderEffect per tentacle. Aqua's floor reflection is already a bounded 76×82 `ShaderEffectSource`, only live while visible, grounded and detailed effects are enabled. Presence timers inspected in this pass are bounded one-shot deadlines, not recurring idle polls. Profile GPU/frame cost and capture current Aqua/Octo A/B fixtures before changing shader fidelity, tentacle count, reflection behavior or state timing. | High if optimized by assumption. These are highly visible character/motion contracts and were concurrently changed in the current dev sequence. | Unknown until measured. | Low/unknown. | No promoted visual substitution; any later renderer candidate needs a deterministic <1% A/B oracle. |
 
 | `services/TaskbarApps.qml` | **HIGH-CONFIDENCE CPU/allocation candidate — compile ignored-app regexes only when the ignored pattern list changes.** `computeApps()` runs behind a 16 ms coalescing timer and is retriggered by compositor/toplevel/AppSearch/config events, yet every run rebuilds the fixed system-pattern array, copies user patterns and constructs every `RegExp` again. Keep the compiled list resident and rebuild it on initial demand plus the existing `ignoredAppRegexesChanged`/config-replacement boundary. | Low. Preserve `_stringArray()` normalization, user-before-system pattern order, case-insensitive flags and the current `_compileRegexes()` behavior that logs/skips invalid regexes. Config reload/object replacement must not leave stale patterns. | None. | Low transient JS allocation/CPU reduction multiplied by every Waffle taskbar rebuild; persistent RAM is the same small compiled array already alive during each computation. | 0%. |
 | `modules/overview/OverviewNiriWidget.qml` + `modules/overview/Overview.qml` + `services/NiriService.qml` | **HIGH-CONFIDENCE CPU/allocation candidate — remove redundant per-output workspace sorts from Overview.** Every current assignment to `NiriService.allWorkspaces` already publishes the array sorted ascending by `idx`. JavaScript `filter()` preserves source order, but OverviewNiriWidget and both classic Overview Left/Right key paths filter that array by output and sort it by the same comparator again. Remove only those second sorts and retain the filter/find/index logic unchanged. | Very low. The source-order invariant must be regression-covered at every `allWorkspaces` publication site, including equal-`idx` stable ordering, activation and urgency updates. | None. | Low transient array/sort CPU reduction: O(W log W) follow-up sorts become O(W) filters on Overview recomputation/navigation. | 0%. |
@@ -352,7 +352,7 @@ Earlier `NO ACTION`, `ALREADY OPTIMIZED`, `MEASURE FIRST`, `SUPERSEDED`, and `NO
 80. **ShellUpdates FileView status reads** — retain the exact 2 s progress cadence and watchdog semantics while removing repeated `cat` child processes.
 81. **Waffle Task View one-pass workspace projection** — group windows once per refresh and reuse per-slot arrays/counts for drag/navigation.
 82. **Niri published-window ID index** — O(1) first-match lookups for consumers of the committed `windows` snapshot; never substitute it for pending-window logic.
-83. **Wull proactive reminder one-pass selection** — low-priority stable minimum selection that avoids minute-cadence array construction/sort.
+83. **Aqua proactive reminder one-pass selection** — low-priority stable minimum selection that avoids minute-cadence array construction/sort.
 
 84. **TaskbarApps ignored-regex signal cache** — stop recompiling unchanged user/system regexes on every Waffle taskbar computation while preserving invalid-pattern skip/log behavior.
 85. **Overview redundant workspace-sort removal** — rely on the verified sorted `NiriService.allWorkspaces` publication invariant and keep output filtering/order exact.
@@ -1691,7 +1691,7 @@ one render-primitive substitution first, then audit host reachability separately
   found the old-looking ungated mask, but current Sidebar composition does not
   establish that file as a live owner. Do not claim a saving until reachability
   is proven rather than inferred from a filename.
-- **Abyss/Wull automatic render-quality policy:** intentionally changes visual
+- **Abyss/Aqua automatic render-quality policy:** intentionally changes visual
   fidelity according to user/power policy. It is a product-controlled quality
   tradeoff, not a strict-lossless optimization and must not be credited here.
 
@@ -5038,7 +5038,7 @@ This round was reconciled against five concurrent companion commits that landed
 after round 31. The new HEAD changes Aqua/Octo companion code but does not modify
 the canonical optimization ledger or the ShellUpdates, Waffle Task View,
 NiriService, MinimizedWindows and Waffle TaskAppButton sources underlying the
-three larger findings below. WullMind was re-read from the new HEAD before its
+three larger findings below. AquaMind was re-read from the new HEAD before its
 micro-candidate was retained.
 
 Current source identities:
@@ -5055,13 +5055,13 @@ Current source identities:
   `ced7e049ef5942dea1ca5f3395eb9b614e9ecaf6`;
 - `modules/waffle/bar/tasks/TaskAppButton.qml`:
   `500c22e179e8ab88988e0bfc40f97b9d4e67fe81`;
-- `services/WullMind.qml`:
+- `services/AquaMind.qml`:
   `8f237b0fe8225ae0d15d112d75419928b383ba60`;
 - `modules/abyss/companion/OctoTentacles.qml`:
   `eb5754f499d9dd7cf24c7e1d44f3f30f6dc55b63`;
 - `modules/abyss/companion/WaterDropletBody.qml`:
   `d8d248b692c8b693204a1b17852adf6a3d0cbaa3`;
-- `modules/abyss/companion/WullPresence.qml`:
+- `modules/abyss/companion/AquaPresence.qml`:
   `d579b5d9cfca7b314e4185f23091d9e7e76abc4e`.
 
 ### R32.1 — ShellUpdates spawns a process every two seconds only to read one file
@@ -5233,9 +5233,9 @@ Required oracle:
 This trades a bounded O(N) lookup structure for lower repeated O(N) scans; it is
 a CPU candidate, not a RAM-saving claim.
 
-### R32.4 — Wull's one-minute reminder path sorts more data than it consumes
+### R32.4 — Aqua's one-minute reminder path sorts more data than it consumes
 
-On the current concurrent HEAD, `WullMind.reminderRows()` still:
+On the current concurrent HEAD, `AquaMind.reminderRows()` still:
 
 1. clones the optional journal schedule;
 2. appends up to 128 eligible Todo rows for today;
@@ -5290,7 +5290,7 @@ The existing Aqua reflection is already strongly bounded:
 - live only while the body is visible, grounded and detailed effects are active;
 - source is detached when software/error/fidelity conditions reject it.
 
-The WullPresence timers inspected after the concurrent changes are state-machine
+The AquaPresence timers inspected after the concurrent changes are state-machine
 deadlines (full-visit, reaction, pointer notice, recovery, peek and surface
 deadline), not a set of recurring idle polling loops.
 
@@ -6176,7 +6176,7 @@ No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 Baseline: `dev` at `998239aaca31a33d270af278bc2a705679ff3aee`.
 
 Round 36 deliberately moved away from the Hyprland/Todo cluster used in round 35.
-Five concurrent Wull/Abyss commits landed after that round and a final Abyss
+Five concurrent Aqua/Abyss commits landed after that round and a final Abyss
 documentation commit moved `dev` to the baseline above. Those commits do not
 modify the LauncherSearch, YtMusic, Config, Emojis or Bar UtilButtons sources
 used below.
@@ -9551,7 +9551,7 @@ Real acceptance requires a native Quickshell/QV4 fixture with 0/1/many players a
 
 ## Research continuation — round 58
 
-Baseline: `dev` at `412822dc38f38109f10f07d0f638e63d242f7077`, whose newest canonical entry was R57. The current recursive tree was inventoried (3,142 blobs, 3,526 entries, not truncated). I selected and read representative current service and UI code and searched the entire canonical optimization ledger for the exact methods/paths. This is a repository-wide *inventory and targeted source audit*, **not** a claim that all binary and source contents or all supported desktop configurations were executed. Compared with R57's `0122584b4eb859b52a03ae2430ef2838f6aa599e`, this baseline includes **eight intervening product/test/packaging commits** touching `defaults/config.json`, `modules/abyss/AbyssCorners.qml`, `modules/abyss/companion/WullPresence.qml`, `modules/common/widgets/WallpaperCrossfader.qml`, two wallpaper regression tests, `scripts/test-wull-portal-runtime.py` and `sdata/dist-arch/install-deps.sh`. These files were outside the focused R58 candidates; the pinned GlobalActions, ActionModeView, Events and EventsWidget source blobs remained unchanged. This round makes **no claims** about optimization impact of the intervening wallpaper/companion changes. The sole active technical ledger stays here.
+Baseline: `dev` at `412822dc38f38109f10f07d0f638e63d242f7077`, whose newest canonical entry was R57. The current recursive tree was inventoried (3,142 blobs, 3,526 entries, not truncated). I selected and read representative current service and UI code and searched the entire canonical optimization ledger for the exact methods/paths. This is a repository-wide *inventory and targeted source audit*, **not** a claim that all binary and source contents or all supported desktop configurations were executed. Compared with R57's `0122584b4eb859b52a03ae2430ef2838f6aa599e`, this baseline includes **eight intervening product/test/packaging commits** touching `defaults/config.json`, `modules/abyss/AbyssCorners.qml`, `modules/abyss/companion/AquaPresence.qml`, `modules/common/widgets/WallpaperCrossfader.qml`, two wallpaper regression tests, `scripts/test-aqua-portal-runtime.py` and `sdata/dist-arch/install-deps.sh`. These files were outside the focused R58 candidates; the pinned GlobalActions, ActionModeView, Events and EventsWidget source blobs remained unchanged. This round makes **no claims** about optimization impact of the intervening wallpaper/companion changes. The sole active technical ledger stays here.
 
 Pinned source blobs:
 

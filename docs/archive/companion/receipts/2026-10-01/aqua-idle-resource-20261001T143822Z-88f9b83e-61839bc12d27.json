@@ -1,0 +1,29 @@
+{
+  "kind": "aqua_manual_private_rust_hidden_idle_resource",
+  "source_sha": "61839bc12d27a605d277aadccea3fc1cfdf5d64b",
+  "status": "pass",
+  "measurement": {
+    "status": "pass",
+    "reason": null,
+    "initial_hidden": true,
+    "accepted_show": true,
+    "accepted_hide": true,
+    "hidden_observation_seconds": 60,
+    "sample_count": 13,
+    "peak_rss_kib": 2680,
+    "rss_growth_kib": 0,
+    "idle_cpu_seconds": 0.0,
+    "unrequested_hidden_stdout_reads": 0,
+    "single_owned_daemon": true,
+    "owned_daemon_stopped": true,
+    "rss_budget_kib": 32768,
+    "max_rss_growth_kib": 4096,
+    "max_idle_cpu_seconds": 0.5
+  },
+  "scope": "standalone_private_rust_daemon_60s_hidden_idle",
+  "production_qml_cpu_memory": "not_measured",
+  "live_visual_and_input_acceptance": "not_run",
+  "canonical_validation": "not_run",
+  "private_logs": "local_only",
+  "publication_parent_sha": "05a397c28ac607f72dd2ebc80bcfb3c0cededdcd"
+}

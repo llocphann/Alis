@@ -1,0 +1,23 @@
+from pathlib import Path
+import os,runpy,subprocess,tempfile,signal,hashlib,json,sys
+root=Path('/home/llocphann/Hadalis');fixture=Path('/tmp/aqua-own-refinement-motion-20261004.qml')
+output=Path(sys.argv[1])
+assert not output.exists();output.mkdir(mode=0o700)
+core=runpy.run_path(str(root/'scripts/aqua-manual-visual-matrix.py'))
+with tempfile.TemporaryDirectory(prefix='aqua-refined-talk-') as temporary:
+ private=Path(temporary);shell,xdg=core['staged'](private)
+ (shell/'shell.qml').write_text(fixture.read_text())
+ config=xdg/'config/illogical-impulse/config.json';options=json.loads(config.read_text());options['panelFamily']='abyss';config.write_text(json.dumps(options))
+ env=core['private_env'](xdg,private/'result.json')
+ env.update(QT_QPA_PLATFORM='wayland',QSG_RHI_BACKEND='opengl',QT_QUICK_BACKEND='rhi',QT_QUICK_CONTROLS_STYLE='Basic',QT_QPA_PLATFORMTHEME='generic',QT_NO_XDG_DESKTOP_PORTAL='1',WAYLAND_DISPLAY=os.environ['WAYLAND_DISPLAY'],XDG_RUNTIME_DIR=os.environ['XDG_RUNTIME_DIR'],AQUA_ACTIONS_DIRECTORY=str(output))
+ log=Path(str(output)+'.log')
+ with log.open('w') as dest:
+  process=subprocess.Popen(['dbus-run-session','--','qs','--path',str(shell/'shell.qml')],cwd=root,env=env,stdout=dest,stderr=subprocess.STDOUT,start_new_session=True)
+  try:code=process.wait(timeout=15)
+  finally:
+   if process.poll() is None:os.killpg(process.pid,signal.SIGTERM);process.wait(timeout=3)
+ content=log.read_text();bad=['AQUA_ACTIONS_CAPTURE=FAIL','ReferenceError:','TypeError:','Unable to assign','Binding loop','Failed to load configuration']
+ if code or 'AQUA_ACTIONS_CAPTURE=PASS' not in content or any(x in content for x in bad):
+  print(content[-5000:]);raise SystemExit('refined talk GPU capture failed')
+print("frames="+str(len(list(output.glob("frame-*.png")))))
+print('AQUA_REFINEMENT_MOTION_OWNED_GPU_PASS')

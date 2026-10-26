@@ -1,0 +1,48 @@
+{
+  "actual_bar_module": "one real clock per private 512 output (not in curated area)",
+  "curated_sha256": "370f454edfe253c40fb94d3db84e1e91b5101282e6010c030b546a067645c2b8",
+  "dimensions": [
+    512,
+    512
+  ],
+  "full_AbyssPerimeter_and_native_input": "NOT_TESTED",
+  "host_screen_published": false,
+  "kind": "CURATED_SYNTHETIC_REAL_BAR_CLOCK_FIELD_AQUA_NESTED_NIRI",
+  "metadata_policy": "new IHDR/IDAT/IEND only",
+  "pixel_policy": "Aqua/field rim lower side patches only",
+  "raw_images_published": false,
+  "redaction": "entire upper output + center + all nonallowlisted pixels zeroed",
+  "reference_images": "UNVERIFIED",
+  "retained_four_subrectangles": [
+    [
+      0,
+      300,
+      160,
+      389
+    ],
+    [
+      0,
+      389,
+      160,
+      477
+    ],
+    [
+      352,
+      300,
+      512,
+      389
+    ],
+    [
+      352,
+      389,
+      512,
+      477
+    ]
+  ],
+  "source_evidence_id": "JOB-AQUA-REAL-BAR-NOBORDER-P1E0042-20261003-44:4",
+  "source_fixture": "scripts/aqua-fixtures/production-bar-field/shell.qml",
+  "source_job": "JOB-AQUA-REAL-BAR-NOBORDER-P1E0042-20261003-44",
+  "source_private_images": 2,
+  "source_sha": "b04003e95dcecc53113aa56996bff6db636a8fb1",
+  "visual_review": "NOT_REVIEWED"
+}

@@ -23,7 +23,7 @@ historical candidate is not active merely because it appears there: revalidate
 it against current `dev` and promote it into the canonical audit first.
 
 Raw screenshots, hashes, fixture data and validator outputs under
-`docs/evidence/` and `docs/wull-visual/` remain with their owning features;
+`docs/evidence/` and `docs/aqua-visual/` remain with their owning features;
 they are evidence artifacts, not competing optimization ledgers.
 
 ## Rules

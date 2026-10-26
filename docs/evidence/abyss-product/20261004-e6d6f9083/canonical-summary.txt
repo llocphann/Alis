@@ -16,7 +16,7 @@ Skipped checks:
   - PHASE-RUNNER-HELPER: scripts/test-megaqml-qt-diagnostic.py (requires fixture/log arguments)
   - PHASE-RUNNER-HELPER: scripts/test-megaqml-quickshell-classify.py (requires fixture/log arguments)
   - PHASE-RUNNER-HELPER: scripts/test-megaqml-ui-fixture.py (requires fixture/log arguments)
-  - MANUAL-DEFERRED: scripts/test-wull-manual-perimeter.py
+  - MANUAL-DEFERRED: scripts/test-aqua-manual-perimeter.py
   - MANUAL-DESKTOP-ACCEPTANCE: scripts/test-hadalis-desktop-repair.sh (live installed automation/session contract)
   - MANUAL-PHASE-RUNNER: scripts/test-megaqml-phase2-local.sh (requires explicit SHA/output and can publish evidence)
   - MANUAL-PHASE-RUNNER: scripts/test-megaqml-quickshell-smoke.sh (requires explicit SHA/output and can publish evidence)

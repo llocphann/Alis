@@ -41,7 +41,7 @@ assert "AbyssButton" not in content
 assert "import qs.services" in content
 
 # Run the actual QML method bodies with a recorded Config boundary. Manual
-# quality must leave Wull's policy alone and turn off automatic Abyss quality;
+# quality must leave Aqua's policy alone and turn off automatic Abyss quality;
 # wave selection must persist every preset value without changing enablement.
 methods={}
 for method in ['applyQuality','applyWavePreset']:

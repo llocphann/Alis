@@ -1,0 +1,36 @@
+{
+  "kind": "aqua_manual_isolated_bridge_lifecycle",
+  "scope": "offscreen_fake_backend_only",
+  "source_sha": "8e4288351a784e5bb3e2591ee8ea8a01fde6a03c",
+  "result": "pass",
+  "canonical_validation": "not_run",
+  "live_niri_host_acceptance": "not_run",
+  "tests": [
+    {
+      "check": "disabled",
+      "status": "pass",
+      "exit_code": 0,
+      "duration_seconds": 0.46,
+      "fake_backend_start_count": 0,
+      "private_log_truncated": false
+    },
+    {
+      "check": "disabled-override",
+      "status": "pass",
+      "exit_code": 0,
+      "duration_seconds": 0.45,
+      "fake_backend_start_count": 0,
+      "private_log_truncated": false
+    },
+    {
+      "check": "exit-restart",
+      "status": "pass",
+      "exit_code": 0,
+      "duration_seconds": 0.46,
+      "fake_backend_start_count": 2,
+      "private_log_truncated": false
+    }
+  ],
+  "private_logs": "local_only",
+  "publication_parent_sha": "8e4288351a784e5bb3e2591ee8ea8a01fde6a03c"
+}

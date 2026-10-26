@@ -116,8 +116,8 @@ Log: /tmp/hadalis-canonical-10311cd96-20261010.log
 [114] Python regression: scripts/test-hadalird-preferences-migration.py PASS
 [115] Python regression: scripts/test-hadalird-settings-flow.py  PASS
 [116] Python regression: scripts/test-hadalird-system-provision.py PASS
-[117] Python regression: scripts/test-hadanion-layer-shell.py    PASS
-[118] Python regression: scripts/test-hadanion-optional.py       PASS
+[117] Python regression: scripts/test-alis-companion-layer-shell.py    PASS
+[118] Python regression: scripts/test-alis-companion-optional.py       PASS
 [119] Python regression: scripts/test-inir-process-cleanup.py    PASS
 [120] Python regression: scripts/test-ipc-registry-generator.py  PASS
 [121] Python regression: scripts/test-iris-corner-poc-contract.py PASS

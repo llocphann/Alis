@@ -1,0 +1,55 @@
+{
+  "assets": [
+    {
+      "bit_depth": 8,
+      "bytes": 2109568,
+      "color_type": 2,
+      "file": "assets/Water Droplet Companion.png",
+      "git_blob": "d232af73adeb2e9d4673ced04269f73a5d84a06d",
+      "height": 941,
+      "sha256": "d7b24b7ab0908990c81a67b6cfbabc18fdfa0e97e678038e54a2fe28bf18b21e",
+      "width": 1672
+    },
+    {
+      "bit_depth": 8,
+      "bytes": 2179910,
+      "color_type": 2,
+      "file": "assets/Water Droplet Companion Expression.png",
+      "git_blob": "f11033572cd43634be1c5a6451f5d172989c17a8",
+      "height": 941,
+      "sha256": "f5c3f4a77b0101dff49e609cd0948e8eae4ef8731f043d1d9a9ab547db472d01",
+      "width": 1672
+    },
+    {
+      "bit_depth": 8,
+      "bytes": 1896556,
+      "color_type": 2,
+      "file": "assets/Water Droplet Companion Animation.png",
+      "git_blob": "dbeabf0c00b58f5ef1e32a5f86016fbd1e71881a",
+      "height": 1024,
+      "sha256": "262185b124dc854c4f8073154e5fcf4bf1a75f986e6b7039c78585f65c7076ab",
+      "width": 1536
+    },
+    {
+      "bit_depth": 8,
+      "bytes": 1930250,
+      "color_type": 2,
+      "file": "assets/Water Droplet Companion Animation Plus.png",
+      "git_blob": "01d76718c365fe675359b3bfc9e5b303bbacaff6",
+      "height": 1024,
+      "sha256": "8ce3d8d851840bee569278fd459ef194176dd0f5050fa87eae763be78b27492a",
+      "width": 1536
+    }
+  ],
+  "identity_status": "FOUR_SOURCE_BYTES_SHA256_IHDR_VERIFIED",
+  "kind": "AUTHENTIC_TRACKED_AQUA_REFERENCE_SOURCE_METADATA",
+  "observed_at_unix": 1790984126,
+  "original_assets_unchanged": true,
+  "reference_version": "authentic-assets-sha256-936258b4e5cffbb1",
+  "schema": 1,
+  "source_evidence_id": "JOB-AQUA-ORIGINAL-PNG-METADATA-P1E0042-20261003-52:0",
+  "source_job": "JOB-AQUA-ORIGINAL-PNG-METADATA-P1E0042-20261003-52",
+  "source_job_sha": "d1f1231790bd8d683cced6bd52bcc966cc95b75b",
+  "stdout_digest_verified": "af9900523d6c780db27a749b02f8518fa4acb1c1c018eee89f85273c88a83df6",
+  "visual_review": "ORIGINAL_PIXELS_NOT_YET_VIEWED"
+}

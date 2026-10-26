@@ -68,7 +68,7 @@ ShellRoot {
     }
     // Tier 4: T+1500ms (background features - updates, sync, IPC services)
     property var _shellUpdatesService
-    property var _hadanionHostService
+    property var _alisCompanionHostService
     property var _autostartService
     property var _calendarSyncService
     property var _fontSyncService
@@ -217,7 +217,7 @@ ShellRoot {
         repeat: false
         onTriggered: {
             root._log("[Boot] T+" + (Date.now() - root._bootCompletedAt) + "ms: Tier 4 (background features)");
-            root._hadanionHostService = Hadanion;
+            root._alisCompanionHostService = AlisCompanion;
             root._shellUpdatesService = ShellUpdates;
             root._autostartService = Autostart;
             root._lateFeaturesReady = true;

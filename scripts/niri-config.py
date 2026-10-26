@@ -2492,8 +2492,8 @@ _KB_IPC_MAP = {
     ("session", "toggle"): "Session dialog",
     ("sidebarLeft", "toggle"): "Left sidebar",
     ("sidebarRight", "toggle"): "Right sidebar",
-    ("ipc", "wull"): "Companion chat",
-    ("wull", "chat"): "Companion chat",
+    ("ipc", "aqua"): "Companion chat",
+    ("aqua", "chat"): "Companion chat",
     ("browser", "open"): "Browser",
     ("browser", "new"): "Browser (new window)",
     ("audio", "volumeUp"): "Volume up",
@@ -2671,7 +2671,7 @@ def _kb_categorize(description: str, action: str) -> str:
             "session",
             "sidebarLeft",
             "sidebarRight",
-            "wull",
+            "aqua",
             "ipc",
         ):
             return "Alis Shell"
