@@ -6,7 +6,7 @@ import Quickshell
 
 Singleton {
     id: root
-    readonly property var implementation: Hadalird.session?.obsidianTheme ?? (null)
+    readonly property var implementation: AlisIntergration.session?.obsidianTheme ?? (null)
     property string missingOperationError: ""
     readonly property var options: root.implementation?.options ?? (null)
     readonly property bool enabled: root.implementation?.enabled ?? (false)
@@ -22,22 +22,22 @@ Singleton {
     readonly property var current: root.implementation?.current ?? (null)
     function request(action): void {
         if (root.implementation) return root.implementation.request(action)
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
     }
     function runNext(): void {
         if (root.implementation) return root.implementation.runNext()
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
     }
     function inspect(): void {
         if (root.implementation) return root.implementation.inspect()
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
     }
     function apply(): void {
         if (root.implementation) return root.implementation.apply()
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
     }
     function restore(): void {
         if (root.implementation) return root.implementation.restore()
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
     }
 }

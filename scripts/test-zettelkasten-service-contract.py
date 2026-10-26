@@ -36,7 +36,7 @@ for token in (
 ):
     assert token in widget, f"Notepad Zettelkasten UI contract lost: {token}"
 
-for token in ("pragma Singleton", "Hadalird.session?.zettelkasten", "function capture(title, body): bool", "signal captured(var payload)"):
+for token in ("pragma Singleton", "AlisIntergration.session?.zettelkasten", "function capture(title, body): bool", "signal captured(var payload)"):
     assert token in service, "Zettelkasten facade lost contract: "+token
 assert "Process {" not in service and "Timer {" not in service
 
@@ -96,7 +96,7 @@ assert 'GlobalStates.openSettingsSection(7, "To-do & Quick Notes")' in quick_not
 
 # The optional package owns the shared Obsidian path editor. Core owns only
 # navigation metadata and a selected/disposable settings loader.
-assert 'active: Hadalird.obsidianEnabled' in obsidian_settings
-assert 'source: Hadalird.settingsSource("obsidian")' in obsidian_settings
+assert 'active: AlisIntergration.obsidianEnabled' in obsidian_settings
+assert 'source: AlisIntergration.settingsSource("obsidian")' in obsidian_settings
 assert 'property string settingsTaskSection:' in obsidian_settings
 assert 'id: todoObsidianVaultPath' not in settings

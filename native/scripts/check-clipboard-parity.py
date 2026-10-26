@@ -21,7 +21,7 @@ CASES: list[tuple[str, bytes]] = [
     (
         "firefox-blocks",
         b'<meta http-equiv="content-type" content="text/html; charset=utf-8">'
-        b"<div>Hello&nbsp;Hadalis</div><div>Rust<br>Next</div>",
+        b"<div>Hello&nbsp;Alis</div><div>Rust<br>Next</div>",
     ),
     (
         "chromium-fragment",
@@ -56,13 +56,13 @@ CASES.extend(
     [
         (
             "large-plain-unicode",
-            ("Hadalis clipboard 🙂 世界 — line\n" * 16384).encode(),
+            ("Alis clipboard 🙂 世界 — line\n" * 16384).encode(),
         ),
         (
             "large-browser-html",
             (
                 '<meta http-equiv="content-type" content="text/html; charset=utf-8">'
-                + "<div>Hadalis&nbsp;🙂 &amp; 世界<br>Rust</div>" * 4096
+                + "<div>Alis&nbsp;🙂 &amp; 世界<br>Rust</div>" * 4096
             ).encode(),
         ),
     ]

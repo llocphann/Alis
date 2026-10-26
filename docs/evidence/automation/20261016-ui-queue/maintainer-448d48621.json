@@ -147,13 +147,13 @@
     },
     {
       "number": 215,
-      "name": "Python regression: scripts/test-hadalird-gateway-bootstrap.py",
+      "name": "Python regression: scripts/test-alis-intergration-gateway-bootstrap.py",
       "status": "FAIL",
       "actual_exit": 1
     },
     {
       "number": 223,
-      "name": "Python regression: scripts/test-hadalird-system-provision.py",
+      "name": "Python regression: scripts/test-alis-intergration-system-provision.py",
       "status": "FAIL",
       "actual_exit": 1
     },

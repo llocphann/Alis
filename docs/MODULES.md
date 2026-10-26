@@ -134,7 +134,7 @@ Visible surfaces:
 - `modules/notificationCenter/NotificationCenterPopup.qml` — fixed, non-scrollable Activity summary beside Notifications
 - `modules/waffle/actionCenter/screenTime/ScreenTimePage.qml`
 
-The right Sidebar no longer mounts Screen Time as its own tab. The service still stores local daily JSON under the iNiR state directory with daily totals, app totals, hourly buckets, and per-app hourly drill-down.
+The right Sidebar no longer mounts Screen Time as its own tab. The service still stores local daily JSON under the Alis state directory with daily totals, app totals, hourly buckets, and per-app hourly drill-down.
 
 ### World Clock
 

@@ -6,8 +6,8 @@ import shutil
 import subprocess
 import tempfile
 
-if os.environ.get("HADALIS_SCREEN_EDGE_PERCEPTUAL") != "1":
-    print("SKIP: Screen Edge perceptual A/B requires HADALIS_SCREEN_EDGE_PERCEPTUAL=1")
+if os.environ.get("ALIS_SCREEN_EDGE_PERCEPTUAL") != "1":
+    print("SKIP: Screen Edge perceptual A/B requires ALIS_SCREEN_EDGE_PERCEPTUAL=1")
     raise SystemExit(0)
 if not shutil.which("qs"):
     raise SystemExit("qs is required for Screen Edge perceptual A/B")
@@ -119,7 +119,7 @@ ShellRoot {
 }
 '''
 
-with tempfile.TemporaryDirectory(prefix="hadalis-edge-perceptual-") as tmp:
+with tempfile.TemporaryDirectory(prefix="alis-edge-perceptual-") as tmp:
     root = Path(tmp)
     qml = root / "shell.qml"
     qml.write_text(QML, encoding="utf-8")

@@ -11,7 +11,7 @@
     "skip": 2,
     "qml_parser": "PASS (qmlformat on Qt 6.11.2; parser pass runs inside qml-check)",
     "log_sha256": "96da10654076a9bc6d7a5e5e53abcb9a9d5e885a60bf849489d0a1aa17a261ae",
-    "log_path": "/tmp/hadalis-aqua-bf7da25c1-maintainer-qt6.log",
+    "log_path": "/tmp/alis-aqua-bf7da25c1-maintainer-qt6.log",
     "failures": [
       {
         "check": "Python regression: scripts/test-abyss-dock-menu-axis-contract.py",
@@ -178,7 +178,7 @@
     "skip": 2,
     "qml_parser": "PASS (qmlformat on Qt 6.11.2; parser pass runs inside qml-check)",
     "log_sha256": "2e51471b06ffb868b7c6056e178cef3b89f99d5423f4a6335c64b21c9af11e01",
-    "log_path": "/tmp/hadalis-aqua-2af514d94-maintainer-qt6.log",
+    "log_path": "/tmp/alis-aqua-2af514d94-maintainer-qt6.log",
     "failures": [
       {
         "check": "Python regression: scripts/test-abyss-dock-menu-axis-contract.py",

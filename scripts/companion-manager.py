@@ -18,17 +18,17 @@ import tempfile
 ALIS_ROOT = Path(__file__).resolve().parents[1]
 CANONICAL_REMOTE = "https://github.com/llocphann/Alis-Companion.git"
 REQUIRED = {
-    "session": "HadalisSession.qml",
-    "output": "HadalisOutput.qml",
+    "session": "AlisSession.qml",
+    "output": "AlisOutput.qml",
     "settings": "modules/settings/CompanionConfig.qml",
     "binary": "native/bin/alis-companiond",
 }
-# The pinned Companion source still builds/publishes inir-companiond and
+# The pinned Companion source still builds/publishes alis-companiond and
 # declares that exact name in its signed release manifest. Both are explicit,
 # fixed paths; never accept a path supplied by an arbitrary manifest.
 COMPATIBLE_BINARIES = frozenset((
     REQUIRED["binary"],
-    "native/bin/inir-companiond",
+    "native/bin/alis-companiond",
 ))
 
 

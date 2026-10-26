@@ -39,7 +39,7 @@ find "${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user" -maxdepth 2 \
 systemctl --user daemon-reload
 ```
 
-Do not run that cleanup as root for every home directory. Run it as the user whose Alis service was configured. A retained masked `inir.service` and the original unit archive in `alis-cutover-backups` belong to the separate [canonical cutover recovery protocol](BRAND_R01_CANONICAL_CUTOVER.md); preserve them until the owner no longer needs rollback.
+Do not run that cleanup as root for every home directory. Run it as the user whose Alis service was configured. A retained masked `alis.service` and the original unit archive in `alis-cutover-backups` belong to the separate [canonical cutover recovery protocol](BRAND_R01_CANONICAL_CUTOVER.md); preserve them until the owner no longer needs rollback.
 
 ## Arch packages (`alis-shell` / `alis-shell-git`)
 
@@ -57,7 +57,7 @@ alis service disable
 
 Then remove the package with pacman or the AUR helper that owns it. The packaged `alis service uninstall` command intentionally refuses to delete package-owned service state; pacman owns the unit itself.
 
-During upgrades, a per-user `alis.service` copy is removed automatically only when it is byte-identical to the packaged unit. A different user unit is treated as an intentional override and is never silently deleted. An earlier iNiR installation still requires the separately qualified one-owner handoff; a package transaction does not migrate arbitrary user data or retire its service automatically.
+During upgrades, a per-user `alis.service` copy is removed automatically only when it is byte-identical to the packaged unit. A different user unit is treated as an intentional override and is never silently deleted. An earlier Alis installation still requires the separately qualified one-owner handoff; a package transaction does not migrate arbitrary user data or retire its service automatically.
 
 If a package was removed before `alis service disable`, remove the affected user's dangling `*.wants/alis.service` link and run `systemctl --user daemon-reload`.
 
@@ -74,18 +74,18 @@ alis service disable
 
 with a Nix-managed installation. The packaged launcher rejects those ownership-changing commands so a mutable XDG user unit cannot shadow the generated Nix unit.
 
-Disable or remove the module in configuration and rebuild. Operational commands such as `systemctl --user stop alis.service`, `alis service start`, `alis service restart`, `alis service status`, and log viewing can still act on an already provisioned unit. Public `programs.inir` remains an alias for existing declarative configurations.
+Disable or remove the module in configuration and rebuild. Operational commands such as `systemctl --user stop alis.service`, `alis service start`, `alis service restart`, `alis service status`, and log viewing can still act on an already provisioned unit. Public `programs.alis` remains an alias for existing declarative configurations.
 
 ## User data
 
 Removing a package-style system payload is intentionally separate from deleting user preferences and state. Depending on the install history, user data may remain under locations such as:
 
 - `${XDG_CONFIG_HOME:-~/.config}/alis/`
-- `${XDG_CONFIG_HOME:-~/.config}/inir/` and `illogical-impulse/` from earlier installations
+- `${XDG_CONFIG_HOME:-~/.config}/alis/` and `illogical-impulse/` from earlier installations
 - `${XDG_CONFIG_HOME:-~/.config}/quickshell/alis/`
-- `${XDG_CONFIG_HOME:-~/.config}/quickshell/inir/`
+- `${XDG_CONFIG_HOME:-~/.config}/quickshell/alis/`
 - `${XDG_STATE_HOME:-~/.local/state}/quickshell/`
 - `${XDG_CACHE_HOME:-~/.cache}/quickshell/`
-- Alis config/cache/data/state copies and their original iNiR trees retained by cutover
+- Alis config/cache/data/state copies and their original Alis trees retained by cutover
 
 Use `./setup uninstall` when the installation is repo-managed and you want the interactive backup/preservation workflow. For externally managed installations, remove user data separately only when you are certain it is no longer needed.

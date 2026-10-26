@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to iNiR will be documented in this file.
+All notable changes to Alis will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -16,8 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 A polish release for Pill controls and surfaces, settings navigation, TUI app themes, and several runtime fixes including privileged graphical apps and audio feedback stability.
 
 ### Added
-- **TUI app themes**: Discord/Vesktop gains an iNiR TUI flavor on top of System24, and Spotify gains an `InirTUI` Spicetify flavor based on the upstream `text` theme. Settings can switch Spotify between Sleek and TUI while preserving wallpaper-driven iNiR colors; Text receives semantic iNiR accent/border/header/highlight roles and readable playback-control contrast without forking its layout.
-- **Pill controls and app mixer**: battery display can use icon, percentage or both; Now Playing gets a wide hover-row capsule with wheel volume control instead of relying on the tiny side bud; monitor-aware sizing plus roomier calendar/weather, launcher, tray, workspace and shared search controls improve 1080p+ usability; Super+Space can open either iNiR Overview or the Pill launcher; a Ricelin settings index links directly into iNiR settings pages; and Mixer uses Ricelin-style vertical output/app faders with resolved desktop-entry names/icons, wheel volume, mute controls, a horizontally scrollable app rail, and a separate System view.
+- **TUI app themes**: Discord/Vesktop gains an Alis TUI flavor on top of System24, and Spotify gains an `AlisTUI` Spicetify flavor based on the upstream `text` theme. Settings can switch Spotify between Sleek and TUI while preserving wallpaper-driven Alis colors; Text receives semantic Alis accent/border/header/highlight roles and readable playback-control contrast without forking its layout.
+- **Pill controls and app mixer**: battery display can use icon, percentage or both; Now Playing gets a wide hover-row capsule with wheel volume control instead of relying on the tiny side bud; monitor-aware sizing plus roomier calendar/weather, launcher, tray, workspace and shared search controls improve 1080p+ usability; Super+Space can open either Alis Overview or the Pill launcher; a Ricelin settings index links directly into Alis settings pages; and Mixer uses Ricelin-style vertical output/app faders with resolved desktop-entry names/icons, wheel volume, mute controls, a horizontally scrollable app rail, and a separate System view.
 - **Floating Pill**: Pill can remain visible and hover-expand above normal windows without reserving the top edge. Fullscreen still hides and unmaps the overlay to preserve game performance.
 
 ### Changed
@@ -62,18 +62,18 @@ A focused polish release for Regalia, wallpapers, startup reliability, bar behav
 A smaller release focused on making the desktop editor easier to trust, fixing a few rough runtime edges, and closing the reports that surfaced after 2.29.0.
 
 ### Added
-- **Workspace indicator colors**: the active workspace can now use an automatic theme color or a custom color from Bar Settings. Foreground contrast stays readable automatically. Fixes [#215](https://github.com/snowarch/iNiR/issues/215).
-- **Reusable Nix expressions**: the package, NixOS module, and Home Manager module can now be imported without flakes; the flake remains a thin entrypoint. The Nix wrapper also carries Material Symbols so shell icons work without a separate host font install. Fixes [#216](https://github.com/snowarch/iNiR/issues/216).
+- **Workspace indicator colors**: the active workspace can now use an automatic theme color or a custom color from Bar Settings. Foreground contrast stays readable automatically. Fixes [#215](https://github.com/snowarch/Alis/issues/215).
+- **Reusable Nix expressions**: the package, NixOS module, and Home Manager module can now be imported without flakes; the flake remains a thin entrypoint. The Nix wrapper also carries Material Symbols so shell icons work without a separate host font install. Fixes [#216](https://github.com/snowarch/Alis/issues/216).
 - **Desktop widget palette presets**: Quick Controls and Widgets Settings share the same Default/Primary/Secondary/Tertiary presets, with detailed role overrides available when needed.
 
 ### Changed
 - **Desktop widget editing**: dragging, resizing, grid snapping, manager navigation, filters, and locked-widget handling now use the same panel-aware layout rules. Widget selection no longer shifts the layout.
 - **Widget colors**: System Monitor and other desktop widgets now use the shell's existing semantic roles instead of inventing local wallpaper colors. This keeps accent identity and warning states consistent across themes.
 - **Cava controls**: shell visualizers and terminal Cava now share stereo/channel state and expose the same spectrum, palette, response, smoothing, geometry, and opacity controls.
-- **Fingerprint authentication**: lock-screen fingerprint polling now follows Quickshell's real PAM lifecycle, starts after late device discovery, survives locked-state resets, and retries without duplicate sessions. Hardware acceptance remains tracked in [#211](https://github.com/snowarch/iNiR/issues/211).
+- **Fingerprint authentication**: lock-screen fingerprint polling now follows Quickshell's real PAM lifecycle, starts after late device discovery, survives locked-state resets, and retries without duplicate sessions. Hardware acceptance remains tracked in [#211](https://github.com/snowarch/Alis/issues/211).
 
 ### Fixed
-- **XWayland app launches**: apps such as Steam, Wine, and Warp recover the live `DISPLAY` instead of inheriting a stale shell environment. Fixes [#217](https://github.com/snowarch/iNiR/issues/217).
+- **XWayland app launches**: apps such as Steam, Wine, and Warp recover the live `DISPLAY` instead of inheriting a stale shell environment. Fixes [#217](https://github.com/snowarch/Alis/issues/217).
 - **Notification hot reload**: notification wrappers, actions, urgency, text, and animations survive QML reloads without transient type/null warnings.
 - **Blurry dialogs**: shared dialogs keep text and icons on fixed pixel-aligned geometry while their background animates, fixing soft text in Close Confirm, Audio, Wi-Fi, Bluetooth, Hotspot, Night Light, Events, and Polkit.
 - **Audio device dialogs**: device menus close with their parent sidebar, and mixer rows tolerate PipeWire nodes disappearing during teardown instead of leaving a popup or QML warning behind.
@@ -83,12 +83,12 @@ A smaller release focused on making the desktop editor easier to trust, fixing a
 - **Session/runtime cleanup**: XEmbed tray supervision, screenshot clipboard ownership, SDDM avatar lookup, and legacy GTK4 dark-preference handling are more reliable.
 
 ### Issues / PRs
-- Fixed [#215](https://github.com/snowarch/iNiR/issues/215), [#216](https://github.com/snowarch/iNiR/issues/216), and [#217](https://github.com/snowarch/iNiR/issues/217).
-- Continued work on [#211](https://github.com/snowarch/iNiR/issues/211); end-to-end fingerprint acceptance still needs enrolled hardware.
+- Fixed [#215](https://github.com/snowarch/Alis/issues/215), [#216](https://github.com/snowarch/Alis/issues/216), and [#217](https://github.com/snowarch/Alis/issues/217).
+- Continued work on [#211](https://github.com/snowarch/Alis/issues/211); end-to-end fingerprint acceptance still needs enrolled hardware.
 
 ### Contributors
-- [@MacaylaMarvelous81](https://github.com/MacaylaMarvelous81) caught the missing Material Symbols font while working on [#218](https://github.com/snowarch/iNiR/pull/218).
-- [@TildeEthDoUsPart](https://github.com/TildeEthDoUsPart) corrected the Dashboard IPC hint in [#212](https://github.com/snowarch/iNiR/pull/212).
+- [@MacaylaMarvelous81](https://github.com/MacaylaMarvelous81) caught the missing Material Symbols font while working on [#218](https://github.com/snowarch/Alis/pull/218).
+- [@TildeEthDoUsPart](https://github.com/TildeEthDoUsPart) corrected the Dashboard IPC hint in [#212](https://github.com/snowarch/Alis/pull/212).
 
 ## [2.29.0] - 2026-08-06
 
@@ -141,8 +141,8 @@ finishes the startup, media and visual fixes that were already in flight.
   symlink, and invalid GTK settings files are backed up and rebuilt safely.
 
 ### Issues / PRs
-- Fixed [#185](https://github.com/snowarch/iNiR/issues/185), [#187](https://github.com/snowarch/iNiR/issues/187), [#188](https://github.com/snowarch/iNiR/issues/188), [#209](https://github.com/snowarch/iNiR/issues/209), [#210](https://github.com/snowarch/iNiR/issues/210), [#213](https://github.com/snowarch/iNiR/issues/213), and [#214](https://github.com/snowarch/iNiR/issues/214).
-- Closed already-shipped reports [#172](https://github.com/snowarch/iNiR/issues/172), [#190](https://github.com/snowarch/iNiR/issues/190), [#195](https://github.com/snowarch/iNiR/issues/195), and [#202](https://github.com/snowarch/iNiR/issues/202).
+- Fixed [#185](https://github.com/snowarch/Alis/issues/185), [#187](https://github.com/snowarch/Alis/issues/187), [#188](https://github.com/snowarch/Alis/issues/188), [#209](https://github.com/snowarch/Alis/issues/209), [#210](https://github.com/snowarch/Alis/issues/210), [#213](https://github.com/snowarch/Alis/issues/213), and [#214](https://github.com/snowarch/Alis/issues/214).
+- Closed already-shipped reports [#172](https://github.com/snowarch/Alis/issues/172), [#190](https://github.com/snowarch/Alis/issues/190), [#195](https://github.com/snowarch/Alis/issues/195), and [#202](https://github.com/snowarch/Alis/issues/202).
 
 ### Contributors
 Reports from [@developercrocodiles](https://github.com/developercrocodiles), [@tflori](https://github.com/tflori), [@Vanbayt](https://github.com/Vanbayt), [@InterstellarOne](https://github.com/InterstellarOne), and [@polska4au](https://github.com/polska4au) shaped the keyboard, tray, brightness, spectrum, gallery and multi-monitor fixes.
@@ -176,13 +176,13 @@ of things got fixed by people with better eyes than ours. That work ships as
 - Video wallpapers now crossfade instead of cutting to black. Switching between
   two videos keeps the outgoing clip playing until the incoming one has decoded
   a frame, both when previewing and when applying.
-- Meet Kira, the iNiR mascot: a retro pixel-art cat girl who can live across
+- Meet Kira, the Alis mascot: a retro pixel-art cat girl who can live across
   the shell or stay completely out of your way. Everything about her is
   opt-in and off by default; her art pack is a separate ~32 MiB download
   under `./setup` › Extras. What she actually does when you let her loose is
   best discovered in Settings › Mascot.
-- Chaos mode exists. It's off by default. `inir mascot romp` if you're
-  brave, `inir mascot tidy` when you regret it.
+- Chaos mode exists. It's off by default. `alis mascot romp` if you're
+  brave, `alis mascot tidy` when you regret it.
 - A Mascot settings page in both families: every behavior, reaction and
   placement is configurable, 17 placement groups share a curated collection
   (GIFs included), and custom images and phrases are yours to add. The 354-pose
@@ -201,12 +201,12 @@ of things got fixed by people with better eyes than ours. That work ships as
 - A live Shell Layout editor: drag the bar, dock, sidebars or Waffle taskbar
   to another screen edge and drop it there; dropping on an occupied edge
   swaps both surfaces. Sidebars and the dock resize live. Settings › Shell
-  Layout drives the same controller, `inir shellLayout` scripts it.
+  Layout drives the same controller, `alis shellLayout` scripts it.
 - Bar corner clicks now open whatever panel actually sits on that edge after
   a sidebar swap.
 - Desktop-widget editing got smarter: movable panels step aside while you
   edit (their zones follow them back), stacked widgets resolve from a Layers
-  button, resize handles preview live. `inir background setEditMode` for
+  button, resize handles preview live. `alis background setEditMode` for
   scripts.
 - AI providers expose live model catalogs instead of hardcoded lists:
   health, modalities, free/local state, and a picker that filters
@@ -214,7 +214,7 @@ of things got fixed by people with better eyes than ours. That work ships as
   model IDs.
 - Voice input is provider-neutral: local whisper.cpp first, then whatever
   transcription backend you have connected. Keys stay in the keyring.
-- `inir dev list/open/close/current` navigates shell surfaces and settings
+- `alis dev list/open/close/current` navigates shell surfaces and settings
   pages by name.
 - Every shell sound is swappable in Settings › General › Sounds, with
   preview, per-event files, a master volume and an `audio playEvent` IPC.
@@ -301,7 +301,7 @@ of things got fixed by people with better eyes than ours. That work ships as
   provider-backed integrations or overlapping desktop widgets. Workspace Strip
   remains an explicit preview opt-in instead of a default module.
 - Alt-Tab now uses Niri's native Recent Windows surface with tuned preview
-  timing, highlight padding and corner radius. The iNiR switcher stays available
+  timing, highlight padding and corner radius. The Alis switcher stays available
   as an opt-in module and no longer owns the distributed Alt-Tab keys.
 - Welcome fits the screen it opens on. Every step scrolls, the card is sized
   from the display instead of a fixed percentage, and the stepper thins out on
@@ -335,7 +335,7 @@ of things got fixed by people with better eyes than ours. That work ships as
 - Closed sidebars keep their lightweight Wayland hosts ready for a clean Niri
   entrance, then release their content trees after five idle minutes. Quick
   reopen keeps its state; leaving one closed all afternoon no longer does.
-- `inir doctor --perf` now reports the observed Qt Quick renderer, render loop,
+- `alis doctor --perf` now reports the observed Qt Quick renderer, render loop,
   DRM nodes, VA-API and Qt Multimedia state, open media files, and mapped Niri
   layers instead of stopping at process memory.
 - The Bar layout-presets grid is gone; each click rewrote five keys and
@@ -349,11 +349,11 @@ of things got fixed by people with better eyes than ours. That work ships as
   Material containers, so GTK, Qt, terminals, editors and the rest were left
   on a palette the shell had stopped using. Switching styles re-themes them
   in place without re-extracting colours from the wallpaper.
-- iNiR is now GPL-3.0, not MIT. It started as a fork of end-4's
+- Alis is now GPL-3.0, not MIT. It started as a fork of end-4's
   illogical-impulse, which is GPL-3.0, and that license carries into every
   derivative. The README states the copyright and the upstream terms, and the
   Arch and Nix packages declare GPL-3.0 as well. Nothing changes for you as a
-  user: iNiR was free software before and stays free software.
+  user: Alis was free software before and stays free software.
 - Public documentation now lives in the GitHub Wiki as plain Markdown. The
   repository keeps the source pages and a local sync helper instead of a
   second MkDocs and GitHub Pages build pipeline.
@@ -364,7 +364,7 @@ of things got fixed by people with better eyes than ours. That work ships as
   focus snapshot that could target another window.
 - GTK file choosers and other long-lived portal dialogs now reload generated
   colours when the palette changes. Font synchronization also reconciles GTK,
-  KDE and XSettings at startup, and `inir doctor` reports missing configured
+  KDE and XSettings at startup, and `alis doctor` reports missing configured
   families instead of allowing silent fallback.
 - App theming ran four times per action instead of once. Three code paths
   each spawned their own pass over every target, so a single wallpaper or
@@ -374,7 +374,7 @@ of things got fixed by people with better eyes than ours. That work ships as
 - Picking a global style from Waffle settings applies the same bar corner
   style as ii instead of leaving whatever was set. Cookie Shapes reached the
   command palette and stopped inheriting Material's corner style.
-- `inir ipc globalActions` answered "Target not found" until the command
+- `alis ipc globalActions` answered "Target not found" until the command
   palette had been opened at least once in that session.
 - Backspace inside a settings field no longer navigates away and discards
   what you typed. Panel opacity keeps the panel readable at its lowest value.
@@ -443,7 +443,7 @@ of things got fixed by people with better eyes than ours. That work ships as
   downscaled sprites use smooth mipmapped filtering instead of serrated edges.
 - Applications launched through `ShellExec` now run as detached transient
   services. The shell no longer retains one waiting Bash wrapper per app, so
-  app lifetime and memory accounting stay outside `inir.service`.
+  app lifetime and memory accounting stay outside `alis.service`.
 - Bar rebuilds log clean, and orientation changes no longer install two
   animations on the same corner radius.
 - Sidebars survive rapid close/reopen cycles, can stay open together, honor
@@ -494,7 +494,7 @@ of things got fixed by people with better eyes than ours. That work ships as
   (#200), and the Super-tap daemon survives keyboards coming and going
   (#200).
 - The high-memory warning could never fire: wrong process, nonexistent
-  function. `inir memory stats` reports real numbers now (#199, #203).
+  function. `alis memory stats` reports real numbers now (#199, #203).
 - Fresh installs create the notes and notification stores; AI wallpaper
   categorization handles quoted filenames; thumbnail logs moved out of
   `/tmp` (#199, #200).
@@ -502,7 +502,7 @@ of things got fixed by people with better eyes than ours. That work ships as
   it also embedded unescaped filenames in an executable script (#201).
 - KDE's paused browser bridge no longer duplicates the desktop media card
   while a browser is publishing the real track.
-- `inir doctor` trusts niri's validator exit status instead of grepping for
+- `alis doctor` trusts niri's validator exit status instead of grepping for
   a word current releases stopped printing.
 - Bar SIGSEGV when a new PipeWire stream appeared (#190): binding loop
   replaced with imperative recomputation.
@@ -523,13 +523,13 @@ of things got fixed by people with better eyes than ours. That work ships as
   last unwashed corners.
 
 ### Issues / PRs
-- Fixed [#174](https://github.com/snowarch/iNiR/issues/174), [#178](https://github.com/snowarch/iNiR/issues/178), [#179](https://github.com/snowarch/iNiR/issues/179), [#181](https://github.com/snowarch/iNiR/issues/181), [#190](https://github.com/snowarch/iNiR/issues/190), [#202](https://github.com/snowarch/iNiR/issues/202).
-- Included contributions from [#176](https://github.com/snowarch/iNiR/pull/176), [#186](https://github.com/snowarch/iNiR/pull/186), [#199](https://github.com/snowarch/iNiR/pull/199), [#200](https://github.com/snowarch/iNiR/pull/200), [#201](https://github.com/snowarch/iNiR/pull/201), [#203](https://github.com/snowarch/iNiR/pull/203).
+- Fixed [#174](https://github.com/snowarch/Alis/issues/174), [#178](https://github.com/snowarch/Alis/issues/178), [#179](https://github.com/snowarch/Alis/issues/179), [#181](https://github.com/snowarch/Alis/issues/181), [#190](https://github.com/snowarch/Alis/issues/190), [#202](https://github.com/snowarch/Alis/issues/202).
+- Included contributions from [#176](https://github.com/snowarch/Alis/pull/176), [#186](https://github.com/snowarch/Alis/pull/186), [#199](https://github.com/snowarch/Alis/pull/199), [#200](https://github.com/snowarch/Alis/pull/200), [#201](https://github.com/snowarch/Alis/pull/201), [#203](https://github.com/snowarch/Alis/pull/203).
 
 ### Contributors
-Thanks to [@owarizz](https://github.com/owarizz) for a long run of correctness and resilience fixes: thumbnail hashing, the qalc spawn loop, multi-monitor workspace switching, the mic binding, the wifi retry prompt, the brightness monitor leak, the Super-tap daemon, the memfd counter, and the removal of the dead mpvpaper restore-script machinery ([#199](https://github.com/snowarch/iNiR/pull/199), [#200](https://github.com/snowarch/iNiR/pull/200), [#201](https://github.com/snowarch/iNiR/pull/201), [#203](https://github.com/snowarch/iNiR/pull/203)); [@xdvi](https://github.com/xdvi) for the lock screen crash guard and `lock.useHyprlock` handling ([#176](https://github.com/snowarch/iNiR/pull/176)); and [@Pigbuy](https://github.com/Pigbuy) for repairing the NixOS and Home Manager payload in `flake.nix` ([#186](https://github.com/snowarch/iNiR/pull/186)).
+Thanks to [@owarizz](https://github.com/owarizz) for a long run of correctness and resilience fixes: thumbnail hashing, the qalc spawn loop, multi-monitor workspace switching, the mic binding, the wifi retry prompt, the brightness monitor leak, the Super-tap daemon, the memfd counter, and the removal of the dead mpvpaper restore-script machinery ([#199](https://github.com/snowarch/Alis/pull/199), [#200](https://github.com/snowarch/Alis/pull/200), [#201](https://github.com/snowarch/Alis/pull/201), [#203](https://github.com/snowarch/Alis/pull/203)); [@xdvi](https://github.com/xdvi) for the lock screen crash guard and `lock.useHyprlock` handling ([#176](https://github.com/snowarch/Alis/pull/176)); and [@Pigbuy](https://github.com/Pigbuy) for repairing the NixOS and Home Manager payload in `flake.nix` ([#186](https://github.com/snowarch/Alis/pull/186)).
 
-Thanks also to [@Gergish001](https://github.com/Gergish001) for the flexible spacer request ([#174](https://github.com/snowarch/iNiR/issues/174)), [@dvytvs](https://github.com/dvytvs) for the VRR flickering report that turned the switch into a three-way choice ([#202](https://github.com/snowarch/iNiR/issues/202)), and [@tvvano16-dotcom](https://github.com/tvvano16-dotcom) ([#178](https://github.com/snowarch/iNiR/issues/178)), [@KiriVaelorn](https://github.com/KiriVaelorn) ([#179](https://github.com/snowarch/iNiR/issues/179)), [@vkleshnin](https://github.com/vkleshnin) ([#181](https://github.com/snowarch/iNiR/issues/181)) and [@Haretsu-Kimagure](https://github.com/Haretsu-Kimagure) ([#190](https://github.com/snowarch/iNiR/issues/190)) for the reports behind the dark-mode, overview search, recording acceleration and PipeWire crash fixes.
+Thanks also to [@Gergish001](https://github.com/Gergish001) for the flexible spacer request ([#174](https://github.com/snowarch/Alis/issues/174)), [@dvytvs](https://github.com/dvytvs) for the VRR flickering report that turned the switch into a three-way choice ([#202](https://github.com/snowarch/Alis/issues/202)), and [@tvvano16-dotcom](https://github.com/tvvano16-dotcom) ([#178](https://github.com/snowarch/Alis/issues/178)), [@KiriVaelorn](https://github.com/KiriVaelorn) ([#179](https://github.com/snowarch/Alis/issues/179)), [@vkleshnin](https://github.com/vkleshnin) ([#181](https://github.com/snowarch/Alis/issues/181)) and [@Haretsu-Kimagure](https://github.com/Haretsu-Kimagure) ([#190](https://github.com/snowarch/Alis/issues/190)) for the reports behind the dark-mode, overview search, recording acceleration and PipeWire crash fixes.
 
 ## [2.27.0] - 2026-06-11
 
@@ -575,7 +575,7 @@ Release with the new bar layout, Screen Time, World Clock, the settings polish p
 - **World Clock widget**: sidebar-left widget with live IANA timezones, local highlighting, seconds/date toggles, and Settings UI for add/remove/reorder.
 - **Bar media marquee**: long track titles scroll smoothly, pause on hover, and resume when the cursor leaves.
 - **Wallpaper shuffle controls**: Settings can enable automatic wallpaper shuffle, interval, optional folder, and whether colors regenerate on each shuffle.
-- **`inir logs --debug`** and better `inir logs --full` handling for when normal logs are being shy.
+- **`alis logs --debug`** and better `alis logs --full` handling for when normal logs are being shy.
 - **Settings navigation IPC**: `settingsNav` can jump to a page, report current page, or return page count.
 - **Local doc/code verifier**: `scripts/verify-docs.sh` checks public docs against IPC/service/config facts so the wiki stops drifting into folklore.
 - **Filled speaker icons** for volume states.
@@ -617,12 +617,12 @@ Release with the new bar layout, Screen Time, World Clock, the settings polish p
 - Fixed libopus codec label in the recorder/settings checks.
 
 ### Notes
-- Screen Time is opt-in. It stores local JSON under the iNiR state path and does not send anything anywhere. Revolutionary concept, apparently.
+- Screen Time is opt-in. It stores local JSON under the Alis state path and does not send anything anywhere. Revolutionary concept, apparently.
 - `quickshell` from official repos is still the intended package path; the AUR compile treadmill can rest.
 
 ## [2.25.2] - 2026-05-27
 
-Performance and polish release. Boot time dropped ~31% (QML parsing 2.83s → 1.95s) by splitting `qs.services` into core + deferred modules and deferring 17 singletons past the first frame. The shell now auto-dims when power saving kicks in, launched apps stop showing up as "inir" in task managers, and most UI transitions got the organic morphing treatment — nothing pops in or out anymore.
+Performance and polish release. Boot time dropped ~31% (QML parsing 2.83s → 1.95s) by splitting `qs.services` into core + deferred modules and deferring 17 singletons past the first frame. The shell now auto-dims when power saving kicks in, launched apps stop showing up as "alis" in task managers, and most UI transitions got the organic morphing treatment — nothing pops in or out anymore.
 
 ### Added
 - **MemoryPressureService** *(#164)*: self-healing garbage collection for the JSGC heap leak. Monitors RSS at 5-minute intervals, triggers a `gc()` sweep when growth exceeds 40 MB between samples, and notifies the user instead of auto-restarting — they decide when to restart. IPC target `memory` for external integration.
@@ -630,10 +630,10 @@ Performance and polish release. Boot time dropped ~31% (QML parsing 2.83s → 1.
 - **Widget power management**: desktop widgets now pause expensive operations (blur, cava, animations) when compositor windows overlap them. New Settings → Power Saving section in both families lets users control the behavior. WidgetSurface blur layer is gated on visibility to skip offscreen FBO passes entirely.
 - **Boot greeting screen**: a short branded splash on first frame while deferred services load in the background. Fades out once Tier 2 services are ready.
 - **Shared CavaService** *(#160)*: single cava process shared across all visualizer widgets instead of spawning one per widget. Gated on playback state — process only runs when music is actually playing. Drops expensive bitmap fonts from the cava config.
-- **App process scoping** *(#167)*: all apps launched from the shell (`ShellExec`, `AppLauncher`, setup recipes, overlay actions) now run inside their own `systemd-run --user --scope` unit. Mission Center, `systemd-cgls`, and other process inspectors correctly attribute them instead of lumping everything under `inir.service`.
+- **App process scoping** *(#167)*: all apps launched from the shell (`ShellExec`, `AppLauncher`, setup recipes, overlay actions) now run inside their own `systemd-run --user --scope` unit. Mission Center, `systemd-cgls`, and other process inspectors correctly attribute them instead of lumping everything under `alis.service`.
 - **Centralized monitor visibility** *(#154)*: Settings → Modules now has a unified panel for enabling/disabling shell surfaces per monitor. Replaces the scattered per-panel visibility toggles.
 - **Niri xdg-activation focus-stealing fix**: migration 027 adds `debug { honor-xdg-activation-with-invalid-serial }` to the niri config, fixing focus not transferring to newly launched apps. Also baked into defaults for fresh installs.
-- **Split desktop entries**: `inir.desktop` split into separate entries for the shell session and the standalone settings window, so app launchers show both options.
+- **Split desktop entries**: `alis.desktop` split into separate entries for the shell session and the standalone settings window, so app launchers show both options.
 
 ### Changed
 - **Boot pipeline**: services split into `qs.services` (61 core singletons — loaded immediately) and `qs.services.deferred` (17 singletons — loaded after first frame). Panel loading uses `source:` + `activeAsync:` instead of blocking `active:`, and four tiers (T0 core, T+0 panels, T+500ms deferred, T+1500ms late) replace the old two-phase boot. Net: QML parsing from 2.83s to ~1.95s, total boot from ~3.2s to ~2.77s.
@@ -642,7 +642,7 @@ Performance and polish release. Boot time dropped ~31% (QML parsing 2.83s → 1.
 - **Wallpaper blur gating**: blur layer is now disabled entirely when the wallpaper is hidden behind fullscreen windows, and the QML blur pass is skipped when the compositor already provides equivalent blurring. Saves ~30 MB VRAM on average.
 - **VRAM reductions**: blur downsampling factor increased, unused FBO passes eliminated, WidgetSurface blur layer only allocates when both visible and enabled.
 - **ABI mismatch handling**: in service mode, the shell now attempts a noninteractive rebuild before failing, and shows manual instructions when sudo isn't available. Conflicting packages are removed before quickshell-git installs. Doctor shows full build progress during interactive ABI rebuilds.
-- **Distribution**: Fedora 44+ and Debian package lists updated. Arch `awww` package name corrected. `millennium-bin` moved to optdepends on the dist path too (already done for inir-shell in 2.25.1).
+- **Distribution**: Fedora 44+ and Debian package lists updated. Arch `awww` package name corrected. `millennium-bin` moved to optdepends on the dist path too (already done for alis-shell in 2.25.1).
 
 ### Fixed
 - **GTK4 theme parser warnings** *(#170)*: CSS generation now uses `@define-color` custom properties instead of inline color functions. Removed `!important` declarations and `alpha()` calls that GTK4's parser doesn't support — no more `Broken CSS` warnings in the journal.
@@ -653,16 +653,16 @@ Performance and polish release. Boot time dropped ~31% (QML parsing 2.83s → 1.
 - **Image search broken**: migrated from defunct SauceNAO endpoints to Bing visual search, fixed curl quoting for URLs with special characters, added upload endpoint rotation for reliability.
 - **Lock screen memory** *(#163)*: waffle lock surface images now set `cache: false`, preventing Qt from accumulating texture copies across lock/unlock cycles.
 - **JSGC pressure**: reduced garbage generation in lock screen, clipboard history, and settings overlay by avoiding unnecessary property re-evaluations and gating timers.
-- **Orphaned helper processes**: `inir stop` and service restarts now send SIGTERM to child processes (cava, awww, etc.) that outlived their parent scope. `inir doctor --perf` extended with orphan detection.
+- **Orphaned helper processes**: `alis stop` and service restarts now send SIGTERM to child processes (cava, awww, etc.) that outlived their parent scope. `alis doctor --perf` extended with orphan detection.
 - **awww daemon lifecycle**: health check switched from socket probe to a lightweight query, daemon started per-display in its own systemd scope instead of a single shared instance.
 - **Persistent storage first-run**: `mkdir` for the persistent state directory now uses `Process.execDetached()` instead of blocking the shell on first launch.
 - **Duplicate Mod+Shift+L keybind** *(#151)*: lock and layout-cycle were both bound to the same combo. Layout-cycle moved to a non-conflicting keybind.
 - **GTK CSS `!important` and `alpha()`**: removed invalid CSS constructs from the generated GTK3/4 stylesheets that triggered parser warnings in GTK4 apps.
 
 ### Issues
-- Fixes [#166](https://github.com/snowarch/iNiR/issues/166), [#170](https://github.com/snowarch/iNiR/issues/170).
-- Addresses [#160](https://github.com/snowarch/iNiR/issues/160), [#163](https://github.com/snowarch/iNiR/issues/163), [#164](https://github.com/snowarch/iNiR/issues/164), [#167](https://github.com/snowarch/iNiR/issues/167).
-- Resolves [#151](https://github.com/snowarch/iNiR/issues/151), [#154](https://github.com/snowarch/iNiR/issues/154).
+- Fixes [#166](https://github.com/snowarch/Alis/issues/166), [#170](https://github.com/snowarch/Alis/issues/170).
+- Addresses [#160](https://github.com/snowarch/Alis/issues/160), [#163](https://github.com/snowarch/Alis/issues/163), [#164](https://github.com/snowarch/Alis/issues/164), [#167](https://github.com/snowarch/Alis/issues/167).
+- Resolves [#151](https://github.com/snowarch/Alis/issues/151), [#154](https://github.com/snowarch/Alis/issues/154).
 
 ## [2.25.1] - 2026-05-20
 
@@ -686,8 +686,8 @@ Quickshell 0.3 + Qt 6.11.1 compatibility release. Fixes the #1 regression (setti
 
 ### Added
 - **Flatpak app launcher fallback** *(#149)*: `AppLauncher.launch()` now tries `DesktopEntries.heuristicLookup()` for single-word commands. Flatpak apps with `.desktop` files launch correctly even when the binary isn't in PATH.
-- **ShellId pragma for QS 0.3**: pinned `pragma ShellId inir` so symlinked configs don't get different shell IDs after QS stopped canonicalizing paths.
-- **`inir logs --full`**: new flag reads the binary qslog directly, bypassing `QT_LOGGING_RULES` filtering. Essential for debugging since journalctl hides real errors.
+- **ShellId pragma for QS 0.3**: pinned `pragma ShellId alis` so symlinked configs don't get different shell IDs after QS stopped canonicalizing paths.
+- **`alis logs --full`**: new flag reads the binary qslog directly, bypassing `QT_LOGGING_RULES` filtering. Essential for debugging since journalctl hides real errors.
 - **Sidebar date format**: GlanceHeader now respects `Config.options.time.dateFormat` when configured, falling back to style-appropriate defaults.
 
 ## [2.25.0] - 2026-05-16
@@ -733,7 +733,7 @@ Quickshell 0.3 + Qt 6.11.1 compatibility release. Fixes the #1 regression (setti
 ### Fixed
 - **Dock stale toplevel ghost entries**: NiriService window matching could produce false matches on zero-score entries, and `sortedToplevels` could contain stale compositor entries not present in live ToplevelManager. Both now guarded.
 - **Preset theme colors not propagating to external apps** *(#144)*: `FileView.setText()` dropped async writes when `applyPreset()` fired 2-3x rapidly on startup. Replaced 6 FileView instances with a single debounced bash script that writes all generated files atomically. Also added `kde-cli-tools` as a dependency and doctor check — required for Dolphin's "Open With" dialog when `QT_QPA_PLATFORMTHEME=kde`.
-- **VSCode theme pipeline**: switched to local extension with `_watch:true` for hot reload — no more toggle hack, no `settings.json` injection on every wallpaper change. Cursor / Windsurf / Antigravity / VSCodium now actually load the theme: forks only register extensions listed in their `extensions.json`, not just present on disk. Strip restores the user's previous theme and removes the registry entry. Legacy `inir.inir-theme-1.0.0` directories cleaned up.
+- **VSCode theme pipeline**: switched to local extension with `_watch:true` for hot reload — no more toggle hack, no `settings.json` injection on every wallpaper change. Cursor / Windsurf / Antigravity / VSCodium now actually load the theme: forks only register extensions listed in their `extensions.json`, not just present on disk. Strip restores the user's previous theme and removes the registry entry. Legacy `alis.alis-theme-1.0.0` directories cleaned up.
 - **Wallhaven panel completely broken**: missing `import Quickshell` in the service. Every code path that called `_log()` aborted with `ReferenceError: Quickshell is not defined` — searches, tag suggestions, tag counts, detail fetches. Same bug found and fixed in `controlPanel/WallpaperSection.qml` (scheme variant chip), then a codebase-wide audit verified no other QML files use the `Quickshell` global without importing the module.
 - **Desktop widgets growing off-screen**: media widget gaining an extra MPRIS player (and any other dynamic-height widget) used to push past the screen edge in `free` placement, forcing the user to reposition by hand. Position is now re-clamped automatically when (pos + size) > screen size, without overwriting the saved config — the widget snaps back to its original spot once the content shrinks again.
 - **App grids not reflowing on resize**: waffle start menu's pinned + all-apps grids had hard-coded `columns: 6` plus fixed-width buttons, so resizing the menu either clipped buttons (too narrow) or left empty space on the right (too wide). Replaced with `Flow` inside a centered wrapper — columns adapt to width, row stays centered.
@@ -761,15 +761,15 @@ Quickshell 0.3 + Qt 6.11.1 compatibility release. Fixes the #1 regression (setti
 - **Spicetify setup recipe failing on existing installs** *(#138)*: stale backup deadlock (version mismatch preventing both restore and backup), wrong `spotify_path` pointing to spotify-launcher expanded dir instead of `/opt/spotify` (AUR). Recipe now auto-detects the correct path and does progressive recovery (backup → restore backup → nuke stale state → retry).
 - **Setup recipes not executable via CLI**: `globalActions run` IPC handler required 2 arguments but CLI passed 1. Split into `run(actionId)` and `runWithArgs(actionId, args)`.
 - **SDDM Qt VirtualKeyboard hijacking input**: Qt6 greeter loads `qtvirtualkeyboard` by default, stealing all keyboard events from the theme's own input handling and "press any key" transition. Set `InputMethod=` (empty) in the SDDM drop-in config to disable it — our custom `VirtualKeyboard.qml` handles on-screen input.
-- **SDDM config not updating on `inir update`**: the installer's `elevate tee` for `/etc/sddm.conf.d/inir-theme.conf` could fail silently during updates, swallowing sudo errors as "non-fatal". Reworked to compare desired vs existing config (skip write if identical), always update settings when ii-pixel is already the active theme, and surface failures with a manual fix command instead of hiding them.
+- **SDDM config not updating on `alis update`**: the installer's `elevate tee` for `/etc/sddm.conf.d/alis-theme.conf` could fail silently during updates, swallowing sudo errors as "non-fatal". Reworked to compare desired vs existing config (skip write if identical), always update settings when ii-pixel is already the active theme, and surface failures with a manual fix command instead of hiding them.
 - **Update indicator popup overflowing the bar panel**: monospace commit hashes and branch names pushed the popup past the panel edge. Capped popup content width at 280px with an `Item` wrapper that reports constrained `implicitWidth` to `StyledPopup`, and added `elide` to branch/progress text fields.
 
 ### Issues / PRs
-- Fixed [#140](https://github.com/snowarch/iNiR/issues/140), [#144](https://github.com/snowarch/iNiR/issues/144).
-- Included contributions from [#134](https://github.com/snowarch/iNiR/pull/134), [#137](https://github.com/snowarch/iNiR/pull/137), [#138](https://github.com/snowarch/iNiR/pull/138).
+- Fixed [#140](https://github.com/snowarch/Alis/issues/140), [#144](https://github.com/snowarch/Alis/issues/144).
+- Included contributions from [#134](https://github.com/snowarch/Alis/pull/134), [#137](https://github.com/snowarch/Alis/pull/137), [#138](https://github.com/snowarch/Alis/pull/138).
 
 ### Contributors
-Thanks to [@EldoDvae](https://github.com/EldoDvae) for the SDDM Qt6 migration ([#137](https://github.com/snowarch/iNiR/pull/137)), [@Aurorainic](https://github.com/Aurorainic) for custom AI provider support ([#134](https://github.com/snowarch/iNiR/pull/134)), and [@yukazakiri](https://github.com/yukazakiri) for the setup recipes framework and Spicetify fix ([#138](https://github.com/snowarch/iNiR/pull/138)).
+Thanks to [@EldoDvae](https://github.com/EldoDvae) for the SDDM Qt6 migration ([#137](https://github.com/snowarch/Alis/pull/137)), [@Aurorainic](https://github.com/Aurorainic) for custom AI provider support ([#134](https://github.com/snowarch/Alis/pull/134)), and [@yukazakiri](https://github.com/yukazakiri) for the setup recipes framework and Spicetify fix ([#138](https://github.com/snowarch/Alis/pull/138)).
 
 ## [2.24.0] - 2026-04-30
 
@@ -777,15 +777,15 @@ Thanks to [@EldoDvae](https://github.com/EldoDvae) for the SDDM Qt6 migration ([
 
 ### Added
 - **Settings UI Easy Mode**: optional curated mode that hides 7 advanced pages from the nav rail (Background, Tools, Services, Advanced, Modules, Waffle Style, Compositor) and trims expert-only sections inside the remaining pages. New `settingsUi.easyMode` config key, opt-in via the title-bar toggle (school/tune icon) in both overlay and window settings, also surfaced in Modules → Settings UI. Search results filter to essentials too. Fresh users pick Easy or Advanced on the welcome wizard. Default Advanced — nobody's existing layout shifts on update.
-- **Welcome wizard refresh**: 5 steps got a polish pass. Step 1 gains a "What you'll dial in" preview card (Theme & wallpaper / Layout / Features / Tips) so users see value before they decide to skip. Skip button moved to a top-right ghost link with a tooltip pointing at `inir welcome` so it's recoverable. Step indicator gets per-circle labels and a "Step X of N" counter, past circles are clickable to jump back. Features step expanded with weather widget, bar auto-hide, time-format selector (system/24h/12h) and show-seconds toggle. Ready step replaces the CLI tip card with a "Try it now" action card (pick wallpaper, test notification, show shortcuts cheatsheet, open quick settings — all one-click via existing IPC), and the troubleshooting callout is now a clickable card linking to the wiki guide. Wizard surface uses `colLayer1Base` so Material/Cards styles stay solid even with content transparency on.
-- **`inir welcome` CLI**: re-runs the welcome wizard. For users who skipped on first run and now want to flip Easy/Advanced or replay the Try-it-now actions. Reuses the same launch lock pattern as `inir settings-window`.
-- **Terminal-visible shell updates**: clicking Update on the iNiR update overlay now launches `setup` in the user's configured terminal (resolved via `AppLauncher.commandFor("terminal")`, falls back to kitty) so the full TUI is visible — progress lines, success/warn/error banners, the snapshot ID, dependency checks, the lot. Output is also tee'd to `update.log` for the diagnostics flow. Auto-closes on success, pauses with "Press Enter to close" on failure so the error doesn't disappear in a flash. Toggle in Settings → Services → "Open terminal during update" or `shellUpdates.openTerminalOnUpdate` in config.json. Default on, off restores the previous silent-background behavior.
+- **Welcome wizard refresh**: 5 steps got a polish pass. Step 1 gains a "What you'll dial in" preview card (Theme & wallpaper / Layout / Features / Tips) so users see value before they decide to skip. Skip button moved to a top-right ghost link with a tooltip pointing at `alis welcome` so it's recoverable. Step indicator gets per-circle labels and a "Step X of N" counter, past circles are clickable to jump back. Features step expanded with weather widget, bar auto-hide, time-format selector (system/24h/12h) and show-seconds toggle. Ready step replaces the CLI tip card with a "Try it now" action card (pick wallpaper, test notification, show shortcuts cheatsheet, open quick settings — all one-click via existing IPC), and the troubleshooting callout is now a clickable card linking to the wiki guide. Wizard surface uses `colLayer1Base` so Material/Cards styles stay solid even with content transparency on.
+- **`alis welcome` CLI**: re-runs the welcome wizard. For users who skipped on first run and now want to flip Easy/Advanced or replay the Try-it-now actions. Reuses the same launch lock pattern as `alis settings-window`.
+- **Terminal-visible shell updates**: clicking Update on the Alis update overlay now launches `setup` in the user's configured terminal (resolved via `AppLauncher.commandFor("terminal")`, falls back to kitty) so the full TUI is visible — progress lines, success/warn/error banners, the snapshot ID, dependency checks, the lot. Output is also tee'd to `update.log` for the diagnostics flow. Auto-closes on success, pauses with "Press Enter to close" on failure so the error doesn't disappear in a flash. Toggle in Settings → Services → "Open terminal during update" or `shellUpdates.openTerminalOnUpdate` in config.json. Default on, off restores the previous silent-background behavior.
 - **Animated update phase indicator**: every step in `setup update` now shows a dot row (●●●◉○○○), the step counter `[N/7]`, and either a braille spinner (atomic ops like the git pull, migrations, and shell restart) or a clean header followed by the existing verbose output (file sync, dependency check, python venv). Each spinner step ends with `✓ msg (Xs)` so the elapsed time is visible. Falls back to plain static lines when the output isn't a TTY (e.g. piped to a log file). New helpers `tui_step_start` / `tui_step_done` / `tui_step_fail` / `tui_step_warn` / `tui_step_skip` in `sdata/lib/tui.sh` and `_step_phase_start` / `_step_phase_done` / `_step_phase_header` wrappers in `setup` that write the same `update-status` markers as before.
 - **`setup update --simulate`**: walks the seven update phases with the new TUI visuals, sleeps in place of the real ops, writes the same status markers as the real flow. No git pull, no rsync, no migrations, no shell restart — useful for previewing the visuals or exercising the resume-from-status-file logic without touching the install. Shows a "Simulation mode" banner and a final elapsed-time summary. Aliased as `--dry-run`.
 - **OSK keep-on-top toggle** *(#135)*: new toolbar button on the on-screen keyboard. When enabled, the OSK re-stacks above launcher / sidebars / overview / settings / etc. as those overlays open, via a brief wlr-layer-shell remap. Default off. Requested by ImDarkos.
 - **Bluetooth device-aware icons**: bar, verticalBar and sidebar quick toggles now show a Material Symbol that matches the connected device — headphones, keyboard, mouse, smartphone, watch, gamepad, printer, and friends. Falls back to the generic glyph for unknown devices. Same treatment in the waffle family via the existing `bluetoothDeviceIcon` helper.
 - **YAMIS monochrome iconset as an extra**: dirn-typo's `yet-another-monochrome-icon-set` (GPL-3, ~23 MiB). Cloned in user scope, never overrides the active icon theme — pick it from Settings → Appearance → Icon theme. Default-on for fresh installs (auto on `-y`), available via `./setup extras` for existing users, ff-pulled on update if already installed.
-- **`inir colorpicker` CLI**: top-level command for the wallpaper color picker, documented alongside the rest of the CLI.
+- **`alis colorpicker` CLI**: top-level command for the wallpaper color picker, documented alongside the rest of the CLI.
 - **Keyboard status indicators across ii and waffle**: Caps Lock, Num Lock, and layout changes now have native shell popups plus compact bar/taskbar indicators, backed by the shared layout service and kernel LED state instead of compositor-specific hacks. Settings live in Settings → General → Time and Waffle Settings → General → Time & Language. Num Lock is available but defaults off now, because keyboards love lying about it on startup.
 - **Date format controls finally exposed in settings**: long and short date formats are now editable in both settings families, so clocks can use locale-friendly patterns like `dddd, MMMM dd` without hand-editing config files. The vertical bar keeps its compact numeric day/month display instead of exploding on free-form short-date formats.
 - **Screen recording presets and encoder controls**: Settings → Tools → Screen recording and Waffle Settings → Interface → Screen recording now expose quality presets, acceleration mode, fallback behavior, codec, FPS, bitrate, CRF, encoder speed, pixel format, audio codec/source/backend/sample rate, and detected encoder capability. The recorder probes `ffmpeg`, audio sources, render devices, VAAPI/NVENC availability, and picks safer defaults instead of assuming one GPU path fits every machine. Bold strategy avoided.
@@ -793,12 +793,12 @@ Thanks to [@EldoDvae](https://github.com/EldoDvae) for the SDDM Qt6 migration ([
 
 ### Changed
 - **Audio mic via PipeWire native**: removed the 2s `wpctl` polling for mic state and now reads/writes through QS PipeWire bindings directly. Sink-side `wpctl` paths kept as a defensive fallback for USB / device-route edge cases.
-- **Standalone-window environment isolation**: settings, waffleSettings, welcome and killDialog now use `INIR_STANDALONE_WINDOW=1` instead of piggybacking on `QS_NO_RELOAD_POPUP`. Fixes the main shell being incorrectly identified as a settings process — which suppressed reload toasts and skipped external theme application. Standalone windows also disable file watching now (single-shot UI doesn't need hot-reload).
+- **Standalone-window environment isolation**: settings, waffleSettings, welcome and killDialog now use `ALIS_STANDALONE_WINDOW=1` instead of piggybacking on `QS_NO_RELOAD_POPUP`. Fixes the main shell being incorrectly identified as a settings process — which suppressed reload toasts and skipped external theme application. Standalone windows also disable file watching now (single-shot UI doesn't need hot-reload).
 - **Keyboard layout handling on Niri**: layout availability now comes from `niri msg -j keyboard-layouts`, so the switcher and panel indicator only show when there is actually more than one layout. The bar spacing also collapses when no keyboard indicators are visible.
 
 ### Fixed
 - **Media artwork updates across all players**: the shared resolver now drives ii, waffle, overview, sidebars, lock screens, OSDs, control panel, and media popup presets. It keys cache files by artwork URL plus title/artist/album, keeps the current art visible while the next image resolves, cache-busts local `file://` display sources so Qt actually reloads them, and refuses empty cache files. Yes, Qt still needed convincing that the same path can contain new pixels.
-- **Plasma Browser Integration / YouTube artwork flashing**: browser-provided temp art like `/tmp/plasma-browser-integration_artwork_*.jpg` is copied into iNiR's cover-art cache before being shown. When Plasma deletes the temp file, the player no longer flashes back to the fallback icon like it got jump-scared.
+- **Plasma Browser Integration / YouTube artwork flashing**: browser-provided temp art like `/tmp/plasma-browser-integration_artwork_*.jpg` is copied into Alis's cover-art cache before being shown. When Plasma deletes the temp file, the player no longer flashes back to the fallback icon like it got jump-scared.
 - **Media controls using one real control path**: bar clicks, vertical bar clicks, sidebars, overview, control panel, lock media, waffle widgets, waffle action center, waffle lock, OSDs, and media popup presets now route previous/next/toggle through `MprisController`. That gives normal MPRIS, YtMusic, and filtered active-player selection the same behavior everywhere, instead of each widget inventing its own tiny chaos engine.
 - **YouTube previous/next when Plasma says "nah"**: on Niri, browser YouTube players can fall back to focusing the matching browser window, sending YouTube's Shift+P / Shift+N shortcuts through `wtype`, then restoring focus. It is guarded behind Niri, `wtype`, a matching browser window, and an unlocked session; lock screens won't start steering random browser windows because that would be unhinged.
 - **Manual media player selection in the compact sidebar**: selecting another player now survives playback-state churn until that player disappears. The player switcher also uses the default context-menu delegate again, so switching does not depend on a broken `type: "item"` model entry.
@@ -807,29 +807,29 @@ Thanks to [@EldoDvae](https://github.com/EldoDvae) for the SDDM Qt6 migration ([
 - **Non-waffle media players picking the wrong browser/MPRIS duplicate for cover art**: sidebar, media popup presets, control panel, overview, lock screen, and volume mixer now follow the same deduped active-player selection as the bar popup, so they use the art-capable entry instead of the empty sibling.
 - **Shared media cover art flashing back to the fallback icon during track changes**: ii/shared players now keep valid art visible while rechecking/downloading, skip empty-path retries, and ignore aborted checker/downloader exits.
 - **Bar resources stuck at "100% memory, 0% rest" until the sidebar opened**: `ResourceUsage.qml` defaulted `memoryTotal=1` with no zero-guard, so the percentage binding evaluated to 100% before the first poll. The poll waited a full `updateInterval` (3s) and `FileView.text()` returned empty on that first call anyway. Now `ensureRunning()` primes `_pollSensors()` synchronously and initial totals start at `0` with a percentage guard.
-- **Quickshell grabbing the NVIDIA dGPU on hybrid laptops** *(#136, [discussion #133](https://github.com/snowarch/iNiR/discussions/133))*: even with `resources.monitorGpu=false` skipping the polling (#106), the Vulkan loader still `dlopen`'d `libnvidia-*` during device enumeration, opening the `/dev/nvidia*` fds visible in the issue's lsof. New `apply_gpu_policy()` in the launcher detects hybrid via DRM `boot_vga` and, when the toggle is off, sets `VK_LOADER_DRIVERS_DISABLE=*nvidia*`, `MESA_VK_DEVICE_SELECT=pci-<iGPU>`, `__GLX_VENDOR_LIBRARY_NAME=mesa`, `__VK_LAYER_NV_optimus=non_NVIDIA_only`, `VDPAU_DRIVER=none`, and a few related vars before `QGuiApplication` initialises. One Settings toggle controls both halves. Hard opt-out: `INIR_GPU_FORCE_DEFAULT=1`.
+- **Quickshell grabbing the NVIDIA dGPU on hybrid laptops** *(#136, [discussion #133](https://github.com/snowarch/Alis/discussions/133))*: even with `resources.monitorGpu=false` skipping the polling (#106), the Vulkan loader still `dlopen`'d `libnvidia-*` during device enumeration, opening the `/dev/nvidia*` fds visible in the issue's lsof. New `apply_gpu_policy()` in the launcher detects hybrid via DRM `boot_vga` and, when the toggle is off, sets `VK_LOADER_DRIVERS_DISABLE=*nvidia*`, `MESA_VK_DEVICE_SELECT=pci-<iGPU>`, `__GLX_VENDOR_LIBRARY_NAME=mesa`, `__VK_LAYER_NV_optimus=non_NVIDIA_only`, `VDPAU_DRIVER=none`, and a few related vars before `QGuiApplication` initialises. One Settings toggle controls both halves. Hard opt-out: `ALIS_GPU_FORCE_DEFAULT=1`.
 - **Hot-reload SIGSEGV**: shipped Quickshell upstream patch (`patches/quickshell/fix-extension-uaf.patch`) moves extension deletion in `EngineGeneration::destroy()` to after root destruction, fixing the use-after-free in `IpcHandlerRegistry`. Also added `QS_DISABLE_CRASH_HANDLER=1` to the systemd unit so failed reloads stop dumping ~1 MB crash reports into `~/.cache/quickshell/crashes/` on every iteration.
 - **Duplicate settings / welcome instances on rapid keypress**: `flock` guard in `open_detached_qml_window()`.
 - **Token compliance across settings UI**: hardcoded white / black / orange replaced with the matching token (`colOnLayer0`, `Looks.colors.fg`, `colWarning`). Spinbox schedule never saving (wrong signal name) and disabled toggles rendering as checked are also fixed in the same pass.
 - **Material lock screen red-screen artifact on Niri**: material lock kept three legacy `FastBlur` paths (Image, AnimatedImage, Video) alive in the QML tree even when the safe `MultiEffect` pipeline was the actual renderer. Some GPU drivers fail to compile the FastBlur shader and leak a red buffer through, even on invisible items. Switched material lock to the same source → `MultiEffect` shape waffle already used, then gated `source` and `layer.enabled` of the FastBlur paths on `!useSafeBlurPipeline` so they go fully inert on Niri. Hyprland behavior unchanged.
-- **Session sleep crashing the shell**: the lock-before-sleep flow had a broken sleep path that took down `inir.service` whenever the system tried to suspend with the lockscreen on. Suspend requests now go through the shared `Session` flow; hibernate visibility kept honest.
+- **Session sleep crashing the shell**: the lock-before-sleep flow had a broken sleep path that took down `alis.service` whenever the system tried to suspend with the lockscreen on. Suspend requests now go through the shared `Session` flow; hibernate visibility kept honest.
 - **Color generation firing 2-3× per action, apps coming out washed**: three overlapping bugs. `ThemeService.onReadyChanged` reset the live-regen signature on every Quickshell instance — including the standalone settings window — firing a phantom `regenerateAutoTheme()` on open. Explicit `regenerateAutoTheme()` calls left the debounce primed to fire again ~700 ms later because the signature wasn't synced. And `switchwall.sh` ran `applycolor.sh` internally while the shell's `MaterialThemeLoader` watcher ran it again on the same `colors.json` change — two parallel module waves racing each other through GTK / chromium / spicetify / pear-desktop. Now the signature primes up front, `setAutoRegenTimer` routes through `regenerateAutoTheme`, and the script-side `applycolor.sh` is gone — `theming_modules.log` shows one run per user action instead of 8-12+ per second.
-- **Settings overlay → window mode toggle was a no-op**: clicking "Window" in the material settings overlay flipped `overlayMode` then started a 500 ms timer to launch `inir settings-window`. The `LazyLoader` in `shell.qml` unloads the overlay component the instant `overlayMode` flips — including that timer. Spawn never fired. Now mirrors the window→overlay shape: spawn first (process survives the QML scope), then close.
+- **Settings overlay → window mode toggle was a no-op**: clicking "Window" in the material settings overlay flipped `overlayMode` then started a 500 ms timer to launch `alis settings-window`. The `LazyLoader` in `shell.qml` unloads the overlay component the instant `overlayMode` flips — including that timer. Spawn never fired. Now mirrors the window→overlay shape: spawn first (process survives the QML scope), then close.
 - **Updater treating diverged branches like routine pulls**: prerelease VMs and local-dev checkouts could be reset to the remote without warning. The flow now classifies behind / up-to-date / ahead / diverged separately and refuses destructive recovery on diverged branches.
 - **`setup` and `doctor` reporting vague maintenance guesses**: both commands and the launcher now show the actual repo checkout, launcher path, and service state. The repair help path stops dumping users into generic usage text.
 - **`screen-off` respecting idle inhibitors**: any app keeping the session awake (browsers playing audio, mpv, video calls) prevented the timeout from firing. Screen-off now keys off user input only; lock and suspend keep the inhibitor-respecting default. Power on/off routes through `CompositorService` IPC for free Hyprland support and surfaced failures.
 - **Duplicate `hideWhenFullscreen` key in waffles.background defaults**: copy-paste leak after the backdrop block. Both occurrences were `true` so behavior was unchanged, but JSON parsers warned and any future divergence would have silently lost one assignment.
-- **Update progress display vanishing after the shell restart mid-update**: clicking the bar's update indicator opened the overlay, clicking Update kicked off `setup update` detached, and once the script reached step 7 (`systemctl --user restart inir.service`) the new shell instance came up with `isUpdating=false`. The bar X/7 indicator stopped, the overlay didn't reopen, and the user was left wondering whether the update was running or wedged. `ShellUpdates.qml` now reads `update-status` 1s after init: in-flight `progress:N:M:msg` markers (N < M) restore `isUpdating`, step/total/message and resume the existing poller + watchdog so the bar pill resumes counting; final-step markers (N >= M) are treated as completed and cleared; `success` is cleared as stale state; `failed:N` surfaces `lastError` and clears so it doesn't replay every restart.
+- **Update progress display vanishing after the shell restart mid-update**: clicking the bar's update indicator opened the overlay, clicking Update kicked off `setup update` detached, and once the script reached step 7 (`systemctl --user restart alis.service`) the new shell instance came up with `isUpdating=false`. The bar X/7 indicator stopped, the overlay didn't reopen, and the user was left wondering whether the update was running or wedged. `ShellUpdates.qml` now reads `update-status` 1s after init: in-flight `progress:N:M:msg` markers (N < M) restore `isUpdating`, step/total/message and resume the existing poller + watchdog so the bar pill resumes counting; final-step markers (N >= M) are treated as completed and cleared; `success` is cleared as stale state; `failed:N` surfaces `lastError` and clears so it doesn't replay every restart.
 - **Bar update popup content looking shifted/off-center**: `ShellUpdateIndicator` had the popup `ColumnLayout` attached directly as `StyledPopup` content but not centered in the popup background, so rows hugged the top-left and looked offset relative to the card. It now uses the same `anchors.centerIn: parent` pattern as the other bar popups (battery/resources), so content lands where it's supposed to.
 - **Settings Easy/Advanced mode tooltip being both too wide and backwards**: the title-bar mode toggle tooltip near the top-right controls could spill off-screen, and the later copy tweak still described the current state instead of the action, which was just rude. The tooltip now opens to the left and says what the click actually does: switch to Easy mode or switch to Advanced mode. Also removed the redundant Easy pill badge from the overlay header since the top-right toggle already does the job.
 - **Update terminal closing immediately on success**: the terminal launched for `setup update` would vanish the instant the update finished, giving nobody a chance to read what happened. Now stays open with a short summary and waits for the user to close it manually.
 - **Dock hover-reveal trigger grabbing the whole screen edge**: when the dock was hidden in hover-reveal mode, the reveal `MouseArea` could stretch into a giant invisible edge strip instead of matching the dock footprint. The hitbox now uses the real dock width/height and only the anchors needed for the current edge, so reveal tracks the dock area instead of some random side of the monitor.
 
 ### Issues / PRs
-- Fixed [#135](https://github.com/snowarch/iNiR/issues/135), [#136](https://github.com/snowarch/iNiR/issues/136).
+- Fixed [#135](https://github.com/snowarch/Alis/issues/135), [#136](https://github.com/snowarch/Alis/issues/136).
 
 ### Contributors
-Thanks to **ImDarkos** ([#135](https://github.com/snowarch/iNiR/issues/135)), **ST-SARAVANAPRIYAN** ([#136](https://github.com/snowarch/iNiR/issues/136)) and **standwlkdljea** ([#106](https://github.com/snowarch/iNiR/issues/106)).
+Thanks to **ImDarkos** ([#135](https://github.com/snowarch/Alis/issues/135)), **ST-SARAVANAPRIYAN** ([#136](https://github.com/snowarch/Alis/issues/136)) and **standwlkdljea** ([#106](https://github.com/snowarch/Alis/issues/106)).
 
 ## [2.23.0] - 2026-04-25
 
@@ -854,26 +854,26 @@ Calendar sync landed, the wiki got a proper bulk update, YT Music stopped being 
 - **Release helper script**: added `scripts/release.sh` to extract notes from `CHANGELOG.md` and drive the tag/release step without hand-copying markdown every time.
 
 ### Contributors
-Thanks to [@neotesk](https://github.com/neotesk) for the Qt 6 / SDDM compatibility fix in [#127](https://github.com/snowarch/iNiR/pull/127).
+Thanks to [@neotesk](https://github.com/neotesk) for the Qt 6 / SDDM compatibility fix in [#127](https://github.com/snowarch/Alis/pull/127).
 
 ### Issues / PRs
-- Fixed [#128](https://github.com/snowarch/iNiR/issues/128), [#129](https://github.com/snowarch/iNiR/issues/129), and [#131](https://github.com/snowarch/iNiR/issues/131).
-- Included contribution from [#127](https://github.com/snowarch/iNiR/pull/127).
+- Fixed [#128](https://github.com/snowarch/Alis/issues/128), [#129](https://github.com/snowarch/Alis/issues/129), and [#131](https://github.com/snowarch/Alis/issues/131).
+- Included contribution from [#127](https://github.com/snowarch/Alis/pull/127).
 
 ## [2.22.1] - 2026-04-22
 
 Hotfix round. Half the install pipeline was quietly broken and nobody noticed because existing users don't re-install. Fresh CachyOS users noticed though — loudly.
 
 ### Added
-- **Branch awareness**: non-main branches now visually stand out everywhere — bar update indicator, settings about page, update overlay, `inir version` CLI, and `setup update`. Tertiary-colored hints, no blocking, just so people know they're off the release track.
+- **Branch awareness**: non-main branches now visually stand out everywhere — bar update indicator, settings about page, update overlay, `alis version` CLI, and `setup update`. Tertiary-colored hints, no blocking, just so people know they're off the release track.
 - **Conflicting shell detection**: install and doctor now detect all known Quickshell-based shells (noctalia, DankMaterialShell, caelestia, bms) and handle removal in the correct order — meta-package first, then shell, then runtime. CachyOS users who picked Niri from the installer no longer have to manually fight package conflicts.
 
 ### Fixed
 - **20-60 second gray screen on fresh boot**: two `systemctl --user show-environment` D-Bus calls ran sequentially at startup, each blocking 10-30s when the user manager wasn't warm yet. Now cached with a single 3s-timeout call. Worst case dropped from a full minute of staring at nothing to ~3 seconds.
-- **Shell never auto-starting on boot**: fresh installs never created the systemd service file. `sync_user_inir_service_from_repo_if_present()` only updates existing files and bails on missing ones. Added a fresh-install code path that creates the service from template.
+- **Shell never auto-starting on boot**: fresh installs never created the systemd service file. `sync_user_alis_service_from_repo_if_present()` only updates existing files and bails on missing ones. Added a fresh-install code path that creates the service from template.
 - **Shell starting on KDE/GNOME** *(again)*: `detect_compositor_service()` still fell back to `graphical-session.target` in several code paths even after 2.22.0's [Install] section removal. KDE activates that target too. Nuked every remaining fallback — if we can't detect your compositor, we refuse to wire the service.
 - **Install silently dying at phase 3**: migration 023 had top-level `set -euo pipefail` and `exit 0`. The migration system loads via `source`, so those killed the parent setup process. Everything after migrations never ran. Rewrote to use the standard function pattern.
-- **ExecStopPost path wrong on repo-sync installs**: service sync only rewrote `ExecStart`, leaving `ExecStopPost` pointing to `/usr/bin/inir`. Cleanup-orphans failed silently on every shutdown.
+- **ExecStopPost path wrong on repo-sync installs**: service sync only rewrote `ExecStart`, leaving `ExecStopPost` pointing to `/usr/bin/alis`. Cleanup-orphans failed silently on every shutdown.
 - **SDDM theme skipped with `-y`**: non-interactive installs explicitly skipped the SDDM theme. Now installs automatically.
 - **Bar resources freezing after 15s**: ResourceUsage auto-stops polling after 15s. The bar never renewed its subscription, so CPU/RAM/temp went stale until you opened a sidebar. Persistent panels now use `keepAlive()`/`releaseKeepAlive()`.
 - **Doctor launching duplicate shell**: symlink path vs resolved path mismatch in `qs -p` calls. Now resolves symlinks first.
@@ -894,13 +894,13 @@ The "community contributions edition". Turns out people actually use this thing 
 - **Recording notification toggle**: suppress start/stop notifications independently from the OSD in settings.
 
 ### Fixed
-- **Shell starting on KDE/GNOME**: removed `[Install]` section from systemd unit. inir now wires via compositor-specific `.wants/` symlinks instead of `WantedBy=graphical-session.target`. Migration 022 moves existing users.
+- **Shell starting on KDE/GNOME**: removed `[Install]` section from systemd unit. alis now wires via compositor-specific `.wants/` symlinks instead of `WantedBy=graphical-session.target`. Migration 022 moves existing users.
 - **Cursor theme inconsistency across apps**: niri config, gsettings, and `environment.d` could all hold different cursor themes. Changing cursor in settings now syncs all three sources so Electron/XWayland apps match.
 - **Animation token misapplication**: 21 animations across 16 files were using `elementMoveEnter` (400ms) instead of `elementMoveFast` (200ms) for fast feedback like popup opacity, hover states, and dock previews. Also fixed a timer interval incorrectly gated by `animationsEnabled`.
 - **Systray overflow behavior**: overflow popup was auto-closing while a right-click context menu was still open, orphaning it. Now suppresses auto-close when a menu is active. Also increased the base close timeout from 700ms to 1500ms and the context menu hover grace period to 450ms.
 - **Time format not following user preference**: lock screens and sidebar clock now use `DateTime.time` instead of hardcoded `Qt.formatTime`.
 - **Qt font clobbered on wallpaper change**: kdeglobals now reads the current gsettings font before writing, preserving user font choice.
-- **`inir status` false negative**: setup script wasn't resolving symlinks before passing paths to `qs -p`, so dev setups always reported "not running".
+- **`alis status` false negative**: setup script wasn't resolving symlinks before passing paths to `qs -p`, so dev setups always reported "not running".
 - **Recording notification config ignored**: jq `//` operator treats `false` as falsy, so `false // true` returned `true`. Boolean config reads now use explicit null checks.
 - **Notify-send always firing**: bash `&&` binds tighter than `&`, so the is_truthy guard was being backgrounded unconditionally. Switched to if/then/fi.
 - **Clipboard duplicates from browsers**: copying from a browser stored both the HTML and plain text versions as separate entries. Switched to type-specific wl-paste watchers (`--type text` and `--type image`) per cliphist upstream recommendation. Migration 023 patches existing users.
@@ -908,7 +908,7 @@ The "community contributions edition". Turns out people actually use this thing 
 
 ### Changed
 - **Animation tokens**: migrated hardcoded animation durations and easing curves across ~30 files to use Appearance design tokens, gated by `animationsEnabled`.
-- **Neovim theming**: replaced inline lua generation with external `inir.nvim` plugin via `neovim_themegen.sh`.
+- **Neovim theming**: replaced inline lua generation with external `alis.nvim` plugin via `neovim_themegen.sh`.
 - **Systemd hardening**: coredumps disabled (LimitCORE=0), DISPLAY exported to systemd env on start.
 - **SDDM service**: enabled during install phase.
 - **Audio fallback**: wpctl now falls back to next available sink when USB audio disconnects.
@@ -994,7 +994,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 - **Waffle font selector widget**: New `WSettingsFontSelector` component — searchable popup over all installed system fonts with featured fonts pinned at top. Used for desktop clock font selection, replacing the previous hardcoded 5-option choice group.
 
 ### Changed
-- **Dock indicator dots redesign**: Focused dot is now wider (pill shape) with accent color per visual style (angel/inir/aurora/material). Unfocused dots are narrow and dimmed. Fallback dim dot shown for inactive apps when `showAllWindowDots` is off. Config properties hoisted to root for reuse. Vertical-mode anchor overrides removed (unused in current dock modes).
+- **Dock indicator dots redesign**: Focused dot is now wider (pill shape) with accent color per visual style (angel/alis/aurora/material). Unfocused dots are narrow and dimmed. Fallback dim dot shown for inactive apps when `showAllWindowDots` is off. Config properties hoisted to root for reuse. Vertical-mode anchor overrides removed (unused in current dock modes).
 - **Module list sync**: iiShellUpdate added to ii family, iiTilingOverlay moved from waffle shared to ii-only, iiControlPanel removed from waffle shared. Module lists in ModulesConfig.qml synced with shell.qml. DockAppButton pear-desktop app ID updated. `enablePearDesktop` enabled by default.
 - **Pear Desktop package detection**: Auto-detect whether `youtube-music` (CachyOS) or `pear-desktop` (AUR) is installed instead of hardcoding one name. CDP port changed from 9222 to 9223 to avoid spicetify conflict.
 - **Fresh install defaults**: Material settings UI defaults to overlay mode. Waffle activation watermark enabled by default. Waffle widgets panel slimmed to DateTime + Weather + Media (System, QuickActions, ColorScheme disabled). Wallpaper transition type defaults to random instead of crossfade. Waffle desktop clock font defaults to Roboto Flex.
@@ -1019,7 +1019,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 ## [2.18.0] - 2026-04-09
 
 ### Added
-- **Systemd shell startup**: Shell startup migrated from niri `spawn-at-startup` to a systemd user service (`inir.service`). Migration 021 handles the transition — removes compositor startup lines, installs and enables the service. `KillMode=process` prevents systemd from terminating child apps on shell restart.
+- **Systemd shell startup**: Shell startup migrated from niri `spawn-at-startup` to a systemd user service (`alis.service`). Migration 021 handles the transition — removes compositor startup lines, installs and enables the service. `KillMode=process` prevents systemd from terminating child apps on shell restart.
 - **CLI discoverability overhaul**: Rich `--help` with dynamic IPC target listing by panel family, per-target `--help`, typo suggestions, function validation. New shell completions for bash, zsh, and fish. IPC registry generated from source with `generate-ipc-registry.py`.
 - **Waffle settings redesign**: Complete Fluent-styled redesign of Quick Settings, Background, Themes, Interface, Modules, Bar, Shortcuts, and Waffle Style pages. New shared components: `WSettingsSection`, `WSettingsSlider`, `WSettingsInfoBar`, `WSettingsChoiceGroup`.
 - **Gowall wallpaper editor**: New gowall page in waffle settings with theme browser, preview, and apply. Apply routes by active panel family. Shim dir prevents gowall from spawning image viewers after processing.
@@ -1036,7 +1036,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 - **Parallax defaults**: Disabled by default for fresh installs. Zoom values normalized to 1.0 — headroom is now applied internally by the parallax engine.
 - **ThemeService family awareness**: Detects `panelFamily` change and re-runs full color pipeline even for manual themes. Waffle wallpaper apply now triggers color regeneration.
 - **Terminal color generation**: WCAG contrast-aware tone search prevents low-contrast terminal output. Tone capping prevents whitewash on bright colors. Force-dark terminal mode generates isolated `terminal.json`.
-- **Discord theme rename**: Vesktop/midnight themes renamed from `ii-midnight` to `inir-midnight`. Subtler hover/active states, refined mention gradients, softer borders. Legacy CSS auto-cleaned on next color generation.
+- **Discord theme rename**: Vesktop/midnight themes renamed from `ii-midnight` to `alis-midnight`. Subtler hover/active states, refined mention gradients, softer borders. Legacy CSS auto-cleaned on next color generation.
 - **Compact sidebar media**: Redesigned media player and controls cards layout.
 - **Bar/dock stale monitor guard**: Screen filter fallback prevents stale monitor names (e.g. after VRR re-enumeration) from hiding all panels.
 - **Steam/Pear reload safety**: Removed `pkill` fallbacks for steamwebhelper and youtube-music. Apps are never force-killed — CSS deploys to disk and applies on next app restart.
@@ -1056,7 +1056,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 - **Niri output key rejection**: Compositor settings backend now rejects unsupported output keys.
 - **Volume controls after output switch**: Fixed, with easyeffects crash avoidance.
 - **Alacritty migration**: Hoisted misplaced `live_config_reload` key.
-- **Duplicate inir instances**: Guard on `inir run`, kill foreground wrappers on stop, loop `qs kill` for multi-instance cleanup.
+- **Duplicate alis instances**: Guard on `alis run`, kill foreground wrappers on stop, loop `qs kill` for multi-instance cleanup.
 - **Foot terminal colors**: Switched to `[colors-dark]` section to drop deprecation spam.
 - **Keyboard layout save key**: Fixed save path, stopped language fallback to `en_US`.
 - **Theme regen consistency**: Aligned regeneration across settings, family switch, and external targets.
@@ -1094,21 +1094,21 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 ## [2.17.2] - 2026-04-04
 
 ### Added
-- **Arch dependency tracker meta-package**: New `inir-deps` package registered during setup so pacman orphan cleanup does not remove iNiR runtime dependencies.
-- **Post-install extras flow**: `./setup extras` now exposes optional installs for iNiR-Walls and ii-pixel-sddm after initial setup.
+- **Arch dependency tracker meta-package**: New `alis-deps` package registered during setup so pacman orphan cleanup does not remove Alis runtime dependencies.
+- **Post-install extras flow**: `./setup extras` now exposes optional installs for Alis-Walls and ii-pixel-sddm after initial setup.
 - **Curated software catalog sidebar tab**: Added software discovery surface with bundled catalog data and AppCatalog service wiring.
 - **Material background clock controls**: Added full clock customization for the ii background widget (schema/defaults/settings + widget surfaces).
 
 ### Changed
-- **Arch install hardening**: Dependency install flow now handles known Noctalia package conflicts before iNiR package resolution.
+- **Arch install hardening**: Dependency install flow now handles known Noctalia package conflicts before Alis package resolution.
 - **Path model normalization**: Runtime/services/settings/welcome surfaces now consume centralized XDG-derived paths from `Directories.qml` instead of scattered literals.
-- **Setup UX flow**: Fresh install keeps optional content opt-in (SDDM/iNiR-Walls), update path handling and theme actions were hardened, and the setup TUI received the new Ink visual refactor.
+- **Setup UX flow**: Fresh install keeps optional content opt-in (SDDM/Alis-Walls), update path handling and theme actions were hardened, and the setup TUI received the new Ink visual refactor.
 - **README localization refresh**: Main README and localized docs/readme pages were rewritten/synced for current project messaging.
 - **Technical docs sync**: IPC, theming, package, and project-map docs were aligned with real runtime/distribution behavior.
 
 ### Fixed
 - **Wallpaper status resolution**: Setup now reads `theme-meta.json` via `.wallpaper` with `.source_path` fallback so active wallpaper no longer shows as `none` when metadata uses source-path shape.
-- **iNiR-Walls feedback**: Extras flow now shows visible clone/download progress and no longer suppresses user-facing install logs.
+- **Alis-Walls feedback**: Extras flow now shows visible clone/download progress and no longer suppresses user-facing install logs.
 - **Theming target wiring**: Spicetify target config key corrected to `appearance.wallpaperTheming.enableSpicetify`, and terminal theming applies with safer terminal ancestry detection.
 - **Runtime interaction edge cases**: Cheatsheet key handling and wallpaper coverflow monitor targeting/cleanup were corrected for more reliable focus and close behavior.
 - **YTMusic playback/state reliability**: Fixed media source switching sync and autoplay recovery when mpv hangs at EOF.
@@ -1120,7 +1120,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 
 ### Added
 - **SDDM session popup selector**: Session switcher on the login screen now opens a popup list instead of blindly cycling through entries.
-- **CLI command forwarding**: `inir config`, `inir info`, `inir backup`, and `inir logs` forwarded through the launcher to the setup TUI.
+- **CLI command forwarding**: `alis config`, `alis info`, `alis backup`, and `alis logs` forwarded through the launcher to the setup TUI.
 - **TUI library expansion**: Rich chooser menus, task progress tracker, key-value detail views, and section helpers for setup subcommands.
 
 ### Fixed
@@ -1140,11 +1140,11 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 
 ### Added
 - **Shell entry animation**: Panels slide in on startup with a 400ms delay, and hide during wallpaper coverflow transitions for a cleaner visual flow.
-- **Family transition overlay**: Snapshotted color preservation during panel family switches, native iNiR logo, and cleaner Material Design text styling.
+- **Family transition overlay**: Snapshotted color preservation during panel family switches, native Alis logo, and cleaner Material Design text styling.
 - **Steam theming rewrite**: Template-based pipeline with CDP (Chrome DevTools Protocol) live injection replaces the old Adwaita for Steam approach. Includes visual quality overhaul and real-time color updates.
 - **Python-only color pipeline**: Unified Material You color generation using pure Python, removing the external `matugen` binary dependency entirely.
 - **MaterialPlaceholderMessage widget**: New M3-style empty-state component replaces `PagePlaceholder` across 17 modules for consistent placeholder messaging.
-- **Version divergence warning**: `inir` CLI warns when installed code version doesn't match the running runtime, preventing stale-code confusion after updates.
+- **Version divergence warning**: `alis` CLI warns when installed code version doesn't match the running runtime, preventing stale-code confusion after updates.
 - **Config directory compatibility layer**: Transparent bridge for the legacy config path, easing future migration without breaking existing setups.
 - **v1→v2 manifest upgrade protection**: `setup update` detects and preserves user modifications to runtime files when upgrading manifest versions.
 - **Wallpaper selector rewrite**: Skew view rebuilt with blur backdrop overlay, refined exit animation, and shell panel hiding during selection.
@@ -1156,7 +1156,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 - **CI, code of conduct, and security policy**: GitHub Actions workflow, community standards, and vulnerability reporting process.
 
 ### Changed
-- **INIR_VENV rename**: Environment variable `ILLOGICAL_IMPULSE_VIRTUAL_ENV` renamed to `INIR_VENV` across all scripts and services (migration 020).
+- **ALIS_VENV rename**: Environment variable `ILLOGICAL_IMPULSE_VIRTUAL_ENV` renamed to `ALIS_VENV` across all scripts and services (migration 020).
 - **Auto scheme detection tuning**: Expressive and Rainbow scheme variants are now much rarer in automatic selection, favoring more predictable palettes.
 - **Spotify behavior**: Minimize to tray instead of close; moves to workspace 99 on shell exit to preserve session.
 - **Dual-path PopupToolTip**: Tooltip system refactored for both inline and popup rendering paths with migrations across consumers.
@@ -1175,7 +1175,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 - **kde-material-you-colors wrapper**: Proper process detachment prevents blocking the color pipeline.
 - **Spicetify color mapping**: Improved token mapping and prevented Spotify from auto-opening during theme application.
 - **YouTube Music OAuth**: Restructured OAuth section out of advanced popup to fix layout overflow.
-- **Qt session env preservation**: `inir` CLI no longer unsets Qt environment variables inherited from the session.
+- **Qt session env preservation**: `alis` CLI no longer unsets Qt environment variables inherited from the session.
 - **Theme race conditions**: Serialized shell script writes to `config.json` with `flock`; theme switching sequences properly gated.
 - **GTK CSS symlink safety**: Color pipeline breaks symlinks before writing GTK4 CSS files to prevent cross-contamination.
 - **Update version persistence**: Handles empty `version.json` gracefully in update tracking.
@@ -1201,7 +1201,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 ## [2.16.0] - 2026-03-26
 
 ### Added
-- **AUR-ready Arch packaging**: Complete PKGBUILD ecosystem (`inir-shell-git`, `inir-shell`, `inir-meta`) with 51 dependencies and 37 optional dependencies, `.SRCINFO` generation, and AUR publish workflow. Installs runtime to `/usr/share/quickshell/inir/` with package-managed metadata.
+- **AUR-ready Arch packaging**: Complete PKGBUILD ecosystem (`alis-shell-git`, `alis-shell`, `alis-meta`) with 51 dependencies and 37 optional dependencies, `.SRCINFO` generation, and AUR publish workflow. Installs runtime to `/usr/share/quickshell/alis/` with package-managed metadata.
 - **Compositor/Niri settings page**: New settings page with scrollable tiling presets, gaps, window rules, decoration, and animation controls.
 - **Target-driven palette generation**: Theming pipeline supports target-driven Material You palette extraction for more precise color matching.
 - **Font verification in doctor**: `setup doctor` now checks for critical fonts (Material Symbols, Roboto Flex, JetBrains Mono NF, Oxanium) and offers automatic installation.
@@ -1240,14 +1240,14 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 - **Waffle system button**: Battery percentage text shown next to icon; network icon filled.
 - **Waffle Looks.qml**: Danger/warning colors derived from Material tokens instead of hardcoded values.
 - **Color pipeline improvements**: GTK theme application, terminal config generation, material color generation, and Kvantum theming all refined.
-- **Launcher restart flow**: `start_background()` uses nohup for proper process detachment; restart via `inir start` instead of direct `qs` exec.
+- **Launcher restart flow**: `start_background()` uses nohup for proper process detachment; restart via `alis start` instead of direct `qs` exec.
 
 ### Fixed
 - **Settings direct mutations**: Converted legacy `Config.options` property assignments to `Config.setNestedValue()` in InterfaceConfig (overlay, crosshair, dock settings) and Translator (language persistence).
 - **ThumbnailImage path resolution**: Fixed non-absolute path handling and improved URI encoding compliance for thumbnail cache lookup.
 - **Scheme variant on manual themes**: Settings pages now use `MaterialThemeLoader.applySchemeVariant()` with seed color for non-auto themes instead of only running `switchwall.sh`.
 - **Distribution scripts**: `robust-update.sh`, `snapshots.sh`, and `uninstall.sh` use path-based `qs -p` targeting consistent with the launcher.
-- **Super overview daemon**: PID detection matches both legacy `qs -c inir` and path-based `qs -p <path>` process forms.
+- **Super overview daemon**: PID detection matches both legacy `qs -c alis` and path-based `qs -p <path>` process forms.
 
 ### Removed
 - **OpenCode theme preset**: Removed from ThemePresets (opt-in only via `enableOpenCode` config).
@@ -1255,19 +1255,19 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 ## [2.14.0] - 2026-03-20
 
 ### Added
-- **`inir` launcher CLI**: Unified daily-use command (`inir run`, `inir restart`, `inir settings`, `inir overview toggle`, etc.) replacing direct `qs` invocation. Supports direct IPC shorthand, maintenance delegation, systemd service management, and version inspection.
+- **`alis` launcher CLI**: Unified daily-use command (`alis run`, `alis restart`, `alis settings`, `alis overview toggle`, etc.) replacing direct `qs` invocation. Supports direct IPC shorthand, maintenance delegation, systemd service management, and version inspection.
 - **Per-monitor workspaces (Niri)**: Each bar can show workspaces for its own monitor (`bar.workspaces.perMonitor`).
 - **Waffle quick action switches**: Individual toggles for Files/Terminal/Settings/Wallpaper/Screenshot/Screen Record/Session in the Widgets panel.
 - **Waffle background clock widget**: Configurable clock overlay on the desktop background with font, position, and style settings.
 - **Waffle Interface settings page**: New dedicated page for waffle-specific UI customization.
 - **Configurable browser action**: `apps.browser` config key for the global "open browser" action.
 - **Colors-only wallpaper mode**: Extract Material You colors from a wallpaper without displaying it (`appearance.wallpaperTheming.colorsOnlyMode`).
-- **Systemd service asset**: `inir.service` for managed startup via `inir service install/enable`.
-- **Desktop entry**: `inir.desktop` for XDG application launchers.
+- **Systemd service asset**: `alis.service` for managed startup via `alis service install/enable`.
+- **Desktop entry**: `alis.desktop` for XDG application launchers.
 - **DMS-style install surface**: Root `Makefile` with `make install`/`make uninstall` for system-level deployment.
-- **Arch Linux packaging**: First-class PKGBUILDs for `inir-shell`, `inir-shell-git`, and `inir-meta` under `distro/arch/`.
+- **Arch Linux packaging**: First-class PKGBUILDs for `alis-shell`, `alis-shell-git`, and `alis-meta` under `distro/arch/`.
 - **Modular Niri config**: Default Niri configuration split into `config.d/` fragments (input, layout, window-rules, environment, startup, animations, binds, layer-rules, user-extra).
-- **Migration 016**: Converts legacy `qs`/`ii`-era Niri keybindings to the `inir` launcher.
+- **Migration 016**: Converts legacy `qs`/`ii`-era Niri keybindings to the `alis` launcher.
 - **Migration 017**: Deduplicates hardware keybinds (brightness/media) that accumulated from prior migration bugs.
 - **Migration 018**: Automatically splits monolithic Niri configs into the modular `config.d/` layout.
 - **Install/update metadata model**: Runtime metadata now records `installMode`, `updateStrategy`, `repoPath`, `source` for package-aware lifecycle management.
@@ -1277,9 +1277,9 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 - **Dark mode toggles**: Routed through `MaterialThemeLoader` to ensure a reliable `colors.json` reload after switching.
 - **Style selection**: No longer forces `appearance.transparency.enable` when selecting styles.
 - **Color system modularized**: `applycolor.sh` rewritten from monolithic script to modular dispatcher with individual modules (terminals, GTK, Qt, Spicetify, SDDM) and shared runtime library.
-- **Shell RC namespace**: Setup-managed shell integration files moved from `~/.config/ii/` to `~/.config/inir/`; existing RC includes are migrated in place.
+- **Shell RC namespace**: Setup-managed shell integration files moved from `~/.config/ii/` to `~/.config/alis/`; existing RC includes are migrated in place.
 - **Setup behavior for packaged installs**: `setup status`, `setup update`, `setup rollback`, and `setup uninstall` now detect externally-managed installs and provide appropriate guidance instead of assuming repo-based updates.
-- **Shell lifecycle commands**: Internal kill/restart/IPC flows use path-based `qs -p <path>` targeting instead of config-name-based `qs -c inir`.
+- **Shell lifecycle commands**: Internal kill/restart/IPC flows use path-based `qs -p <path>` targeting instead of config-name-based `qs -c alis`.
 - **Alt-Switcher refactor**: Major refactoring of both ii and waffle alt-switcher components with expanded configuration options.
 - **Niri keybinds documentation**: Complete rewrite of `docs/KEYBINDS.md`.
 
@@ -1296,7 +1296,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 - **Waffle "Colors only" preview**: Persists and previews correctly; clears stale preview state when disabled.
 - **Migration target file creation**: Required migrations that create their own target file are no longer skipped.
 - **WaffleConfig direct mutation**: Legacy settings writes converted from direct `Config.options` mutation to `Config.setNestedValue()`.
-- **Stale `qs -c inir` references**: Setup scripts (robust-update, snapshots, uninstall) and daemon now use path-based targeting consistent with the launcher.
+- **Stale `qs -c alis` references**: Setup scripts (robust-update, snapshots, uninstall) and daemon now use path-based targeting consistent with the launcher.
 - **Sandbox leak in uninstall**: `Darkly.colors` paths now use `XDG_DATA_HOME` instead of hardcoded `$HOME/.local/share`.
 
 ## [2.13.2] - 2026-03-13
@@ -1323,14 +1323,14 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 
 ### Changed
 - **Wallpaper selector split**: "Change Wallpaper" action now explicitly labeled as Grid or Coverflow, each closing the other before opening.
-- **AUR badge theming**: Replaced hardcoded `#1793d1` color with `Appearance.colors.colPrimary` / `Appearance.inir.colPrimary` tokens for proper style-aware rendering.
+- **AUR badge theming**: Replaced hardcoded `#1793d1` color with `Appearance.colors.colPrimary` / `Appearance.alis.colPrimary` tokens for proper style-aware rendering.
 - **System update action**: Now auto-detects yay/paru/pacman instead of using a hardcoded command.
 - **Package install action**: Uses runtime AUR helper detection (`yay > paru > sudo pacman`) instead of hardcoded `yay`.
 - **Tab bar spacing**: Added horizontal margins (12px) and increased indicator padding (12px) for proper visual separation between category tabs.
 - **Package action refactor**: Deduplicated package install/remove logic into `_executePackageActionStatic` with value capture before component destruction.
 
 ### Fixed
-- **iNiR style icon**: Replaced invalid "spark" Material Symbol with "terminal" for the Style: iNiR action.
+- **Alis style icon**: Replaced invalid "spark" Material Symbol with "terminal" for the Style: Alis action.
 - **Left/Right arrows in search input**: Removed Left/Right arrow key interception from SearchBar to prevent conflict with text cursor movement. Category cycling from search now uses Tab/Shift+Tab only; Left/Right remain available from the action list delegates where there is no text cursor conflict.
 - **Up arrow on first item**: Pressing Up on the first action list item now returns focus to the search input via `returnToSearch` signal.
 - **Escape key**: Pressing Escape from within the action list now closes the overview.
@@ -1382,7 +1382,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 ## [2.13.0] - 2026-03-08
 
 ### Added
-- **Wallpaper Coverflow selector**: Browse wallpapers with 3D perspective cards, folder navigation, skew view with momentum physics, and hero crossfade transitions. Full aurora/inir/angel style support.
+- **Wallpaper Coverflow selector**: Browse wallpapers with 3D perspective cards, folder navigation, skew view with momentum physics, and hero crossfade transitions. Full aurora/alis/angel style support.
 - **Wallpaper transitions**: Multi-type transitions between wallpapers — crossfade, slide, zoom, and blur-fade — with configurable duration and per-type settings.
 - **Bar Taskbar**: Dock apps integrated directly into the horizontal and vertical bar as a taskbar with live window previews, pin/unpin, and window management actions.
 - **Fluid Ripple shader**: New pixel-art inspired ripple effect for interactive elements with configurable visual parameters (PR #55).
@@ -1391,7 +1391,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 - **Primary monitor selection**: Choose which monitor is primary for bar, dock, and panel targeting in Display settings.
 - **Bar scroll customization**: Configure left/right scroll actions on the bar, including workspace scroll direction inversion (PR #53).
 - **Overview center launcher**: Option to center the app launcher in the overview dashboard with refined glass surfaces.
-- **AwwwBackend service**: External wallpaper rendering via the awww daemon with automatic sync from iNiR's wallpaper config and seamless internal fallback.
+- **AwwwBackend service**: External wallpaper rendering via the awww daemon with automatic sync from Alis's wallpaper config and seamless internal fallback.
 - **OpenCode theme generator**: Material You color integration for OpenCode editor via matugen pipeline.
 - **Oh-my-posh theme generator**: Material You prompt theme with wallpaper-synced colors.
 - **YT Music OAuth**: OAuth setup flow and song rating support for YouTube Music integration.
@@ -1400,8 +1400,8 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 
 ### Changed
 - **CompactMediaPlayer redesign**: Cleaner blur, centered controls, unified glass surfaces in compact sidebar mode.
-- **Settings theming**: Complete aurora/inir/angel style support across all settings pages — cards, overlays, material presets, and section backgrounds.
-- **StyledComboBox rewrite**: Full shell theming with proper aurora/inir/angel style dispatch, replacing the stock Qt combo box.
+- **Settings theming**: Complete aurora/alis/angel style support across all settings pages — cards, overlays, material presets, and section backgrounds.
+- **StyledComboBox rewrite**: Full shell theming with proper aurora/alis/angel style dispatch, replacing the stock Qt combo box.
 - **Dock performance**: Optimized rebuild logic and reduced binding churn for smoother animations with many windows.
 - **MprisController debounce**: Rapid signal bursts from media players are now debounced to prevent UI stutter.
 - **Network service debounce**: WiFi scan results debounced to reduce unnecessary UI rebuilds.
@@ -1423,7 +1423,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 - **Close animations & keyboard focus**: Improved panel close transitions and focus handling (PR #63).
 - **Fish autosuggestion contrast**: Fixed low-contrast autosuggestion colors in fish shell (PR #69).
 - **Chrome variant theming**: Corrected Material You color mapping for Chrome theme generation (PR #70).
-- **Settings overlay background**: Solid background for material/cards/inir styles instead of transparent.
+- **Settings overlay background**: Solid background for material/cards/alis styles instead of transparent.
 - **Compact sidebar warnings**: Suppressed spurious Connections warnings in compact mode.
 - **Screen recording UI**: Simplified layout and fixed style issues in recording settings.
 - **Various setup fixes**: Extracted WebEngine build helper, fixed wayland-protocols makedep, SDDM local variable bug, and CRASH_HANDLER build flag.
@@ -1508,7 +1508,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 - **Pomodoro timer**: Timer editing no longer requires double-tap
 - **Settings search**: Improved result relevance — dynamic registry results scored higher, section delimiter parsing unified
 - **Capture windows**: No longer trashes clipboard during screenshot
-- **Foot colors**: Switched to `inir-colors.ini`, removed stale `colors.ini` include
+- **Foot colors**: Switched to `alis-colors.ini`, removed stale `colors.ini` include
 - **Matugen config**: Use user config at `~/.config/matugen/`, not non-existent defaults path
 - **Config safety audit**: 34 fixes — unsafe writes→`setNestedValue()`, unsafe reads→safe defaults
 - **Waffle video backdrop**: Show frozen first frame when animated wallpapers disabled (was showing nothing)
@@ -1519,7 +1519,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 ### Added
 - **Desktop right-click context menu**: Right-click on the desktop background opens a context menu with Mission Center, Overview/Task View, Settings, Wallpaper Selector, Terminal, Media Controls, Lock Screen, and Power Menu
 - **Bar right-click context menu (ii family)**: Right-click on the horizontal or vertical bar opens a context menu with Mission Center and Settings
-- **DesktopShellContextMenu component**: Reusable context menu widget for desktop backgrounds, respects all three global styles (Material, Aurora, iNiR)
+- **DesktopShellContextMenu component**: Reusable context menu widget for desktop backgrounds, respects all three global styles (Material, Aurora, Alis)
 
 ### Changed
 - **Bar context menu positioning**: Vertical bar popup opens toward screen center (right when bar is left, left when bar is right) following the dock pattern; horizontal bar popup opens above when bar is at bottom, below when at top

@@ -1,4 +1,4 @@
-Hadalis maintainer local validation
+Alis maintainer local validation
 Started: 2026-10-11T22:57:21+07:00
 Mode: current-repo
 Repository: https://github.com/llocphann/Alis
@@ -26,1160 +26,1160 @@ Nix lane: deferred/non-blocking; dedicated Nix validation is intentionally skipp
 
 ---- CHECK [1]: host tool preflight ----
 Command: require_host_tools
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [2]: build and baseline shell syntax ----
 Command: make build
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [3]: tracked shell/package syntax ----
 Command: tracked_shell_syntax
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [4]: tracked Python syntax ----
 Command: tracked_python_syntax
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [5]: tracked JSON syntax ----
 Command: tracked_json_syntax
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [6]: tracked JavaScript syntax ----
 Command: tracked_js_syntax
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [7]: tracked Fish syntax ----
 Command: tracked_fish_syntax
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [8]: Niri selected-fullscreen workspace regression ----
 Command: node scripts/test-niri-fullscreen-selection.mjs
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [9]: NotificationCenter anchor hover lease regression ----
 Command: node scripts/test-notification-center-hover-lease.mjs
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [10]: Abyss notification popup geometry transition regression ----
 Command: node scripts/test-abyss-notification-transition.mjs
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [11]: Abyss hover scene geometry diagnostic regression ----
 Command: node scripts/test-abyss-hover-geometry-probe.mjs
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [12]: Abyss frame activity diagnostic regression ----
 Command: node scripts/test-abyss-frame-activity-probe.mjs
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [13]: Dashboard horizontal gesture and stable page order regression ----
 Command: node scripts/test-dashboard-page-policy.mjs
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [14]: translation catalog structure ----
 Command: python3 translations/tools/l10n.py audit-all
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [15]: translation source parity ----
 Command: python3 translations/tools/source-parity.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [16]: Python regression: scripts/test-abyss-bar-popup-autohide-contract.py ----
 Command: python3 scripts/test-abyss-bar-popup-autohide-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [17]: Python regression: scripts/test-abyss-body-placement.py ----
 Command: python3 scripts/test-abyss-body-placement.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [18]: Python regression: scripts/test-abyss-compact-osd-contract.py ----
 Command: python3 scripts/test-abyss-compact-osd-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [19]: Python regression: scripts/test-abyss-critical-host-ipc-import.py ----
 Command: python3 scripts/test-abyss-critical-host-ipc-import.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [20]: Python regression: scripts/test-abyss-display-mode.py ----
 Command: python3 scripts/test-abyss-display-mode.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [21]: Python regression: scripts/test-abyss-dock-attached-menu-contract.py ----
 Command: python3 scripts/test-abyss-dock-attached-menu-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [22]: Python regression: scripts/test-abyss-dock-menu-axis-contract.py ----
 Command: python3 scripts/test-abyss-dock-menu-axis-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [23]: Python regression: scripts/test-abyss-dock-resident-content-contract.py ----
 Command: python3 scripts/test-abyss-dock-resident-content-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [24]: Python regression: scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py ----
 Command: python3 scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [25]: Python regression: scripts/test-abyss-edge-editor-compact-actions-contract.py ----
 Command: python3 scripts/test-abyss-edge-editor-compact-actions-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [26]: Python regression: scripts/test-abyss-edge-editor-compact-side-contract.py ----
 Command: python3 scripts/test-abyss-edge-editor-compact-side-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [27]: Python regression: scripts/test-abyss-edge-editor-toolbar-contract.py ----
 Command: python3 scripts/test-abyss-edge-editor-toolbar-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [28]: Python regression: scripts/test-abyss-edgebar-popup-sizing-contract.py ----
 Command: python3 scripts/test-abyss-edgebar-popup-sizing-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [29]: Python regression: scripts/test-abyss-family-contract.py ----
 Command: python3 scripts/test-abyss-family-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [30]: Python regression: scripts/test-abyss-fullscreen-osd-runtime.py ----
 Command: python3 scripts/test-abyss-fullscreen-osd-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [31]: Python regression: scripts/test-abyss-generic-popup-presenter-contract.py ----
 Command: python3 scripts/test-abyss-generic-popup-presenter-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [32]: Python regression: scripts/test-abyss-geometry-contract.py ----
 Command: python3 scripts/test-abyss-geometry-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [33]: Python regression: scripts/test-abyss-input-region-contract.py ----
 Command: python3 scripts/test-abyss-input-region-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [34]: Python regression: scripts/test-abyss-keyboard-runtime.py ----
 Command: python3 scripts/test-abyss-keyboard-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [35]: Python regression: scripts/test-abyss-launcher-dock-menu-contract.py ----
 Command: python3 scripts/test-abyss-launcher-dock-menu-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [36]: Python regression: scripts/test-abyss-launcher-hover-owner-contract.py ----
 Command: python3 scripts/test-abyss-launcher-hover-owner-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [37]: Python regression: scripts/test-abyss-launcher-live-editor-contract.py ----
 Command: python3 scripts/test-abyss-launcher-live-editor-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [38]: Python regression: scripts/test-abyss-launcher-preset-popup-contract.py ----
 Command: python3 scripts/test-abyss-launcher-preset-popup-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [39]: Python regression: scripts/test-abyss-launcher-status-mark-contract.py ----
 Command: python3 scripts/test-abyss-launcher-status-mark-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [40]: Python regression: scripts/test-abyss-lossless-allocations.py ----
 Command: python3 scripts/test-abyss-lossless-allocations.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [41]: Python regression: scripts/test-abyss-module-field-runtime.py ----
 Command: python3 scripts/test-abyss-module-field-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [42]: Python regression: scripts/test-abyss-module-layout.py ----
 Command: python3 scripts/test-abyss-module-layout.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [43]: Python regression: scripts/test-abyss-niri-hover-layer-contract.py ----
 Command: python3 scripts/test-abyss-niri-hover-layer-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [44]: Python regression: scripts/test-abyss-obstacle-allocations.py ----
 Command: python3 scripts/test-abyss-obstacle-allocations.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [45]: Python regression: scripts/test-abyss-panel-material-pixels-runtime.py ----
 Command: python3 scripts/test-abyss-panel-material-pixels-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [46]: Python regression: scripts/test-abyss-panel-material-settings-runtime.py ----
 Command: python3 scripts/test-abyss-panel-material-settings-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [47]: Python regression: scripts/test-abyss-popup-media-flash-contract.py ----
 Command: python3 scripts/test-abyss-popup-media-flash-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [48]: Python regression: scripts/test-abyss-popup-ownership-contract.py ----
 Command: python3 scripts/test-abyss-popup-ownership-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [49]: Python regression: scripts/test-abyss-presentation.py ----
 Command: python3 scripts/test-abyss-presentation.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [50]: Python regression: scripts/test-abyss-pyramid-v2-concurrent-reflow.py ----
 Command: python3 scripts/test-abyss-pyramid-v2-concurrent-reflow.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [51]: Python regression: scripts/test-abyss-pyramid-v2-foundation-contract.py ----
 Command: python3 scripts/test-abyss-pyramid-v2-foundation-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [52]: Python regression: scripts/test-abyss-pyramid-v2-geometry.py ----
 Command: python3 scripts/test-abyss-pyramid-v2-geometry.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [53]: Python regression: scripts/test-abyss-pyramid-v2-motion-contract.py ----
 Command: python3 scripts/test-abyss-pyramid-v2-motion-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [54]: Python regression: scripts/test-abyss-pyramid-v2-neighborhood.py ----
 Command: python3 scripts/test-abyss-pyramid-v2-neighborhood.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [55]: Python regression: scripts/test-abyss-pyramid-v2-transactions.py ----
 Command: python3 scripts/test-abyss-pyramid-v2-transactions.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [56]: Python regression: scripts/test-abyss-pyramid-v2-zero-motion-close.py ----
 Command: python3 scripts/test-abyss-pyramid-v2-zero-motion-close.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [57]: Python regression: scripts/test-abyss-settings-compact-contract.py ----
 Command: python3 scripts/test-abyss-settings-compact-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [58]: Python regression: scripts/test-abyss-toast-dock-overlap-contract.py ----
 Command: python3 scripts/test-abyss-toast-dock-overlap-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [59]: Python regression: scripts/test-abyss-utility-closing-kind.py ----
 Command: python3 scripts/test-abyss-utility-closing-kind.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [60]: Python regression: scripts/test-abyss-vacancy-borrowing.py ----
 Command: python3 scripts/test-abyss-vacancy-borrowing.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [61]: Python regression: scripts/test-abyss-wave-presets.py ----
 Command: python3 scripts/test-abyss-wave-presets.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [62]: Python regression: scripts/test-abyss-wave-solver.py ----
 Command: python3 scripts/test-abyss-wave-solver.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [63]: Python regression: scripts/test-anti-flashbang-policy.py ----
 Command: python3 scripts/test-anti-flashbang-policy.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [64]: Python regression: scripts/test-audio-output-routing.py ----
 Command: python3 scripts/test-audio-output-routing.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [65]: Python regression: scripts/test-audio-tracked-nodes-parity.py ----
 Command: python3 scripts/test-audio-tracked-nodes-parity.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [66]: Python regression: scripts/test-bar-active-window-width-contract.py ----
 Command: python3 scripts/test-bar-active-window-width-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [67]: Python regression: scripts/test-bar-adaptive-packing.py ----
 Command: python3 scripts/test-bar-adaptive-packing.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [68]: Python regression: scripts/test-bar-auxiliary-indicator-runtime.py ----
 Command: python3 scripts/test-bar-auxiliary-indicator-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [69]: Python regression: scripts/test-bar-media-popup-layout-contract.py ----
 Command: python3 scripts/test-bar-media-popup-layout-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [70]: Python regression: scripts/test-bar-media-width-contract.py ----
 Command: python3 scripts/test-bar-media-width-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [71]: Python regression: scripts/test-bar-module-scaling.py ----
 Command: python3 scripts/test-bar-module-scaling.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [72]: Python regression: scripts/test-bar-orientation-module-sync.py ----
 Command: python3 scripts/test-bar-orientation-module-sync.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [73]: Python regression: scripts/test-bar-taskbar-overflow-parity.py ----
 Command: python3 scripts/test-bar-taskbar-overflow-parity.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [74]: Python regression: scripts/test-calendar-editor-layout-runtime.py ----
 Command: python3 scripts/test-calendar-editor-layout-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [75]: Python regression: scripts/test-calendar-weather-composition-contract.py ----
 Command: python3 scripts/test-calendar-weather-composition-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [76]: Python regression: scripts/test-cava-warm-spectrum-runtime.py ----
 Command: python3 scripts/test-cava-warm-spectrum-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [77]: Python regression: scripts/test-cheatsheet-focus-close-contract.py ----
 Command: python3 scripts/test-cheatsheet-focus-close-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [78]: Python regression: scripts/test-clipboard-image-classification-contract.py ----
 Command: python3 scripts/test-clipboard-image-classification-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [79]: Python regression: scripts/test-clipboard-image-mime-contract.py ----
 Command: python3 scripts/test-clipboard-image-mime-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [80]: Python regression: scripts/test-clipboard-image-runtime.py ----
 Command: python3 scripts/test-clipboard-image-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [81]: Python regression: scripts/test-clipboard-image-thumbnail-contract.py ----
 Command: python3 scripts/test-clipboard-image-thumbnail-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [82]: Python regression: scripts/test-clipboard-owner-image-metadata-contract.py ----
 Command: python3 scripts/test-clipboard-owner-image-metadata-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [83]: Python regression: scripts/test-clipboard-watcher-contract.py ----
 Command: python3 scripts/test-clipboard-watcher-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [84]: Python regression: scripts/test-config-inflight-mutation-runtime.py ----
 Command: python3 scripts/test-config-inflight-mutation-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [85]: Python regression: scripts/test-connected-input-lifecycle.py ----
 Command: python3 scripts/test-connected-input-lifecycle.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [86]: Python regression: scripts/test-connected-route-lifecycle.py ----
 Command: python3 scripts/test-connected-route-lifecycle.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [87]: Python regression: scripts/test-custom-theme-quick-adjustments-parity.py ----
 Command: python3 scripts/test-custom-theme-quick-adjustments-parity.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [88]: Python regression: scripts/test-dashboard-collision-behavior.py ----
 Command: python3 scripts/test-dashboard-collision-behavior.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [89]: Python regression: scripts/test-dashboard-content-aware-add-all-contract.py ----
 Command: python3 scripts/test-dashboard-content-aware-add-all-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [90]: Python regression: scripts/test-dashboard-edit-transaction-contract.py ----
 Command: python3 scripts/test-dashboard-edit-transaction-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [91]: Python regression: scripts/test-dashboard-editor-field-runtime.py ----
 Command: python3 scripts/test-dashboard-editor-field-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [92]: Python regression: scripts/test-dashboard-freeform-contract.py ----
 Command: python3 scripts/test-dashboard-freeform-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [93]: Python regression: scripts/test-dashboard-github-visual-hierarchy.py ----
 Command: python3 scripts/test-dashboard-github-visual-hierarchy.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [94]: Python regression: scripts/test-dashboard-media-shared-player-contract.py ----
 Command: python3 scripts/test-dashboard-media-shared-player-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [95]: Python regression: scripts/test-dashboard-music-browser-navigation-contract.py ----
 Command: python3 scripts/test-dashboard-music-browser-navigation-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [96]: Python regression: scripts/test-dashboard-music-migration.py ----
 Command: python3 scripts/test-dashboard-music-migration.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [97]: Python regression: scripts/test-dashboard-music-runtime.py ----
 Command: python3 scripts/test-dashboard-music-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [98]: Python regression: scripts/test-dashboard-music-scroll-runtime.py ----
 Command: python3 scripts/test-dashboard-music-scroll-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [99]: Python regression: scripts/test-dashboard-presentation-motion-contract.py ----
 Command: python3 scripts/test-dashboard-presentation-motion-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [100]: Python regression: scripts/test-dashboard-prioritized-add-all-contract.py ----
 Command: python3 scripts/test-dashboard-prioritized-add-all-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [101]: Python regression: scripts/test-dashboard-responsive-overlap-parity.py ----
 Command: python3 scripts/test-dashboard-responsive-overlap-parity.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [102]: Python regression: scripts/test-dashboard-search-system-refinement-contract.py ----
 Command: python3 scripts/test-dashboard-search-system-refinement-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [103]: Python regression: scripts/test-dashboard-smart-layout-contract.py ----
 Command: python3 scripts/test-dashboard-smart-layout-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [104]: Python regression: scripts/test-dashboard-todo-concept-contract.py ----
 Command: python3 scripts/test-dashboard-todo-concept-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [105]: Python regression: scripts/test-dashboard-todo-layout-contract.py ----
 Command: python3 scripts/test-dashboard-todo-layout-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [106]: Python regression: scripts/test-dashboard-warm-readiness.py ----
 Command: python3 scripts/test-dashboard-warm-readiness.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [107]: Python regression: scripts/test-dashboard-workspace.py ----
 Command: python3 scripts/test-dashboard-workspace.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [108]: Python regression: scripts/test-deferred-service-materialization-contract.py ----
 Command: python3 scripts/test-deferred-service-materialization-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [109]: Python regression: scripts/test-desktop-context-menu-hover-contract.py ----
 Command: python3 scripts/test-desktop-context-menu-hover-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [110]: Python regression: scripts/test-desktop-widget-editor-coordinates.py ----
 Command: python3 scripts/test-desktop-widget-editor-coordinates.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [111]: Python regression: scripts/test-desktop-widget-editor-placement.py ----
 Command: python3 scripts/test-desktop-widget-editor-placement.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [112]: Python regression: scripts/test-desktop-widget-editor-runtime.py ----
 Command: python3 scripts/test-desktop-widget-editor-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [113]: Python regression: scripts/test-dock-abyss-hover-orientation-contract.py ----
 Command: python3 scripts/test-dock-abyss-hover-orientation-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [114]: Python regression: scripts/test-equalizer-presentation-runtime.py ----
 Command: python3 scripts/test-equalizer-presentation-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [115]: Python regression: scripts/test-fcitx5-session-integration.py ----
 Command: python3 scripts/test-fcitx5-session-integration.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [116]: Python regression: scripts/test-fcitx5-settings-integration.py ----
 Command: python3 scripts/test-fcitx5-settings-integration.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [117]: Python regression: scripts/test-global-actions-query-parity.py ----
 Command: python3 scripts/test-global-actions-query-parity.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [118]: Python regression: scripts/test-hadalird-arch-package.py ----
-Command: python3 scripts/test-hadalird-arch-package.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [118]: Python regression: scripts/test-alis-intergration-arch-package.py ----
+Command: python3 scripts/test-alis-intergration-arch-package.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [119]: Python regression: scripts/test-hadalird-gateway-bootstrap.py ----
-Command: python3 scripts/test-hadalird-gateway-bootstrap.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [119]: Python regression: scripts/test-alis-intergration-gateway-bootstrap.py ----
+Command: python3 scripts/test-alis-intergration-gateway-bootstrap.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [120]: Python regression: scripts/test-hadalird-install-lifecycle.py ----
-Command: python3 scripts/test-hadalird-install-lifecycle.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [120]: Python regression: scripts/test-alis-intergration-install-lifecycle.py ----
+Command: python3 scripts/test-alis-intergration-install-lifecycle.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [121]: Python regression: scripts/test-hadalird-manager.py ----
-Command: python3 scripts/test-hadalird-manager.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [121]: Python regression: scripts/test-alis-intergration-manager.py ----
+Command: python3 scripts/test-alis-intergration-manager.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [122]: Python regression: scripts/test-hadalird-obsidian-wrapper.py ----
-Command: python3 scripts/test-hadalird-obsidian-wrapper.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [122]: Python regression: scripts/test-alis-intergration-obsidian-wrapper.py ----
+Command: python3 scripts/test-alis-intergration-obsidian-wrapper.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [123]: Python regression: scripts/test-hadalird-optional.py ----
-Command: python3 scripts/test-hadalird-optional.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [123]: Python regression: scripts/test-alis-intergration-optional.py ----
+Command: python3 scripts/test-alis-intergration-optional.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [124]: Python regression: scripts/test-hadalird-polkit-visibility.py ----
-Command: python3 scripts/test-hadalird-polkit-visibility.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [124]: Python regression: scripts/test-alis-intergration-polkit-visibility.py ----
+Command: python3 scripts/test-alis-intergration-polkit-visibility.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [125]: Python regression: scripts/test-hadalird-preferences-migration.py ----
-Command: python3 scripts/test-hadalird-preferences-migration.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [125]: Python regression: scripts/test-alis-intergration-preferences-migration.py ----
+Command: python3 scripts/test-alis-intergration-preferences-migration.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [126]: Python regression: scripts/test-hadalird-settings-flow.py ----
-Command: python3 scripts/test-hadalird-settings-flow.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [126]: Python regression: scripts/test-alis-intergration-settings-flow.py ----
+Command: python3 scripts/test-alis-intergration-settings-flow.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [127]: Python regression: scripts/test-hadalird-system-provision.py ----
-Command: python3 scripts/test-hadalird-system-provision.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [127]: Python regression: scripts/test-alis-intergration-system-provision.py ----
+Command: python3 scripts/test-alis-intergration-system-provision.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [128]: Python regression: scripts/test-alis-companion-layer-shell.py ----
 Command: python3 scripts/test-alis-companion-layer-shell.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [129]: Python regression: scripts/test-alis-companion-optional.py ----
 Command: python3 scripts/test-alis-companion-optional.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [130]: Python regression: scripts/test-inir-process-cleanup.py ----
-Command: python3 scripts/test-inir-process-cleanup.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [130]: Python regression: scripts/test-alis-process-cleanup.py ----
+Command: python3 scripts/test-alis-process-cleanup.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [131]: Python regression: scripts/test-ipc-registry-generator.py ----
 Command: python3 scripts/test-ipc-registry-generator.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [132]: Python regression: scripts/test-iris-corner-poc-contract.py ----
-Command: python3 scripts/test-iris-corner-poc-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [132]: Python regression: scripts/test-abyss-corner-poc-contract.py ----
+Command: python3 scripts/test-abyss-corner-poc-contract.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [133]: Python regression: scripts/test-iris-g2-contract.py ----
-Command: python3 scripts/test-iris-g2-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [133]: Python regression: scripts/test-abyss-g2-contract.py ----
+Command: python3 scripts/test-abyss-g2-contract.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [134]: Python regression: scripts/test-iris-production-surface-contract.py ----
-Command: python3 scripts/test-iris-production-surface-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [134]: Python regression: scripts/test-abyss-production-surface-contract.py ----
+Command: python3 scripts/test-abyss-production-surface-contract.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [135]: Python regression: scripts/test-light-mode-upstream-contract.py ----
 Command: python3 scripts/test-light-mode-upstream-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [136]: Python regression: scripts/test-loading-presentation-contract.py ----
 Command: python3 scripts/test-loading-presentation-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [137]: Python regression: scripts/test-local-ai-gguf-runtime.py ----
 Command: python3 scripts/test-local-ai-gguf-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [138]: Python regression: scripts/test-local-model-folder.py ----
 Command: python3 scripts/test-local-model-folder.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [139]: Python regression: scripts/test-local-model-formats.py ----
 Command: python3 scripts/test-local-model-formats.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [140]: Python regression: scripts/test-local-music-contract.py ----
 Command: python3 scripts/test-local-music-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [141]: Python regression: scripts/test-local-music-demand-runtime.py ----
 Command: python3 scripts/test-local-music-demand-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [142]: Python regression: scripts/test-local-music-folder-release.py ----
 Command: python3 scripts/test-local-music-folder-release.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [143]: Python regression: scripts/test-local-music-mpd-playback-runtime.py ----
 Command: python3 scripts/test-local-music-mpd-playback-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [144]: Python regression: scripts/test-local-music-mutation-runtime.py ----
 Command: python3 scripts/test-local-music-mutation-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [145]: Python regression: scripts/test-material-only-docs-contract.py ----
 Command: python3 scripts/test-material-only-docs-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [146]: Python regression: scripts/test-material-only-global-style-contract.py ----
 Command: python3 scripts/test-material-only-global-style-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [147]: Python regression: scripts/test-material-only-settings-contract.py ----
 Command: python3 scripts/test-material-only-settings-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [148]: Python regression: scripts/test-material-presentation-model-contract.py ----
 Command: python3 scripts/test-material-presentation-model-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [149]: Python regression: scripts/test-media-popup-tabs-contract.py ----
 Command: python3 scripts/test-media-popup-tabs-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [150]: Python regression: scripts/test-media-surface-controls-contract.py ----
 Command: python3 scripts/test-media-surface-controls-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [151]: Python regression: scripts/test-media-visualizer-lifecycle-contract.py ----
 Command: python3 scripts/test-media-visualizer-lifecycle-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [152]: Python regression: scripts/test-native-debug-first-frame.py ----
 Command: python3 scripts/test-native-debug-first-frame.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [153]: Python regression: scripts/test-niri-config-structural-read.py ----
 Command: python3 scripts/test-niri-config-structural-read.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [154]: Python regression: scripts/test-notification-center-bottom-right-contract.py ----
 Command: python3 scripts/test-notification-center-bottom-right-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [155]: Python regression: scripts/test-notification-center-card-layout-contract.py ----
 Command: python3 scripts/test-notification-center-card-layout-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [156]: Python regression: scripts/test-notification-center-contract.py ----
 Command: python3 scripts/test-notification-center-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [157]: Python regression: scripts/test-notification-settings-runtime.py ----
 Command: python3 scripts/test-notification-settings-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [158]: Python regression: scripts/test-notification-timeout-runtime.py ----
 Command: python3 scripts/test-notification-timeout-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [159]: Python regression: scripts/test-osd-connected-surface-contract.py ----
 Command: python3 scripts/test-osd-connected-surface-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [160]: Python regression: scripts/test-overview-hover-contract.py ----
 Command: python3 scripts/test-overview-hover-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [161]: Python regression: scripts/test-overview-niri-drag-contract.py ----
 Command: python3 scripts/test-overview-niri-drag-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [162]: Python regression: scripts/test-owner-ui-regressions-contract.py ----
 Command: python3 scripts/test-owner-ui-regressions-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [163]: Python regression: scripts/test-p0-settings-navigation-contract.py ----
 Command: python3 scripts/test-p0-settings-navigation-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [164]: Python regression: scripts/test-panel-style-migration.py ----
 Command: python3 scripts/test-panel-style-migration.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [165]: Python regression: scripts/test-popup-anchor-hover-runtime.py ----
 Command: python3 scripts/test-popup-anchor-hover-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [166]: Python regression: scripts/test-popup-cold-start-lifecycle-runtime.py ----
 Command: python3 scripts/test-popup-cold-start-lifecycle-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [167]: Python regression: scripts/test-popup-cold-start-source-contract.py ----
 Command: python3 scripts/test-popup-cold-start-source-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [168]: Python regression: scripts/test-popup-tooltip-hover-contract.py ----
 Command: python3 scripts/test-popup-tooltip-hover-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [169]: Python regression: scripts/test-qml-syntax-check.py ----
 Command: python3 scripts/test-qml-syntax-check.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [170]: Python regression: scripts/test-quick-action-drag-visibility-contract.py ----
 Command: python3 scripts/test-quick-action-drag-visibility-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [171]: Python regression: scripts/test-quick-action-icon-order-contract.py ----
 Command: python3 scripts/test-quick-action-icon-order-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [172]: Python regression: scripts/test-quick-action-settings-titles-contract.py ----
 Command: python3 scripts/test-quick-action-settings-titles-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [173]: Python regression: scripts/test-quick-notes-attachments.py ----
 Command: python3 scripts/test-quick-notes-attachments.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [174]: Python regression: scripts/test-quick-notes-corner-contract.py ----
 Command: python3 scripts/test-quick-notes-corner-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [175]: Python regression: scripts/test-quick-notes-image-runtime.py ----
 Command: python3 scripts/test-quick-notes-image-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [176]: Python regression: scripts/test-quick-notes-pin-runtime.py ----
 Command: python3 scripts/test-quick-notes-pin-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [177]: Python regression: scripts/test-quick-notes-popup-pin-contract.py ----
 Command: python3 scripts/test-quick-notes-popup-pin-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [178]: Python regression: scripts/test-recording-abyss-runtime.py ----
 Command: python3 scripts/test-recording-abyss-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [179]: Python regression: scripts/test-reload-notification-runtime.py ----
 Command: python3 scripts/test-reload-notification-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [180]: Python regression: scripts/test-reload-toast-contract.py ----
 Command: python3 scripts/test-reload-toast-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [181]: Python regression: scripts/test-remove-pyramid-close-animation-contract.py ----
 Command: python3 scripts/test-remove-pyramid-close-animation-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [182]: Python regression: scripts/test-runtime-integration-dependencies.py ----
 Command: python3 scripts/test-runtime-integration-dependencies.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [183]: Python regression: scripts/test-runtime-unblock-abyss-contract.py ----
 Command: python3 scripts/test-runtime-unblock-abyss-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [184]: Python regression: scripts/test-screen-edge-analytic-field-contract.py ----
 Command: python3 scripts/test-screen-edge-analytic-field-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [185]: Python regression: scripts/test-screen-edge-analytic-perceptual.py ----
 Command: python3 scripts/test-screen-edge-analytic-perceptual.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [186]: Python regression: scripts/test-screen-edge-banded-perceptual.py ----
 Command: python3 scripts/test-screen-edge-banded-perceptual.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [187]: Python regression: scripts/test-screen-edge-output-targeting.py ----
 Command: python3 scripts/test-screen-edge-output-targeting.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [188]: Python regression: scripts/test-screen-edge-shadow-padding-parity.py ----
 Command: python3 scripts/test-screen-edge-shadow-padding-parity.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [189]: Python regression: scripts/test-screen-edge-shadow-raster-perceptual.py ----
 Command: python3 scripts/test-screen-edge-shadow-raster-perceptual.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [190]: Python regression: scripts/test-screenshot-pointer-runtime.py ----
 Command: python3 scripts/test-screenshot-pointer-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [191]: Python regression: scripts/test-settings-concise-copy-surface.py ----
 Command: python3 scripts/test-settings-concise-copy-surface.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [192]: Python regression: scripts/test-settings-flat-navigation.py ----
 Command: python3 scripts/test-settings-flat-navigation.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [193]: Python regression: scripts/test-settings-hierarchy-runtime.py ----
 Command: python3 scripts/test-settings-hierarchy-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [194]: Python regression: scripts/test-settings-information-architecture.py ----
 Command: python3 scripts/test-settings-information-architecture.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
----- CHECK [195]: Python regression: scripts/test-settings-inir-task-tabs-contract.py ----
-Command: python3 scripts/test-settings-inir-task-tabs-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+---- CHECK [195]: Python regression: scripts/test-settings-alis-task-tabs-contract.py ----
+Command: python3 scripts/test-settings-alis-task-tabs-contract.py
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [196]: Python regression: scripts/test-settings-inline-search-layout.py ----
 Command: python3 scripts/test-settings-inline-search-layout.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [197]: Python regression: scripts/test-settings-navigation-behavior.py ----
 Command: python3 scripts/test-settings-navigation-behavior.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [198]: Python regression: scripts/test-settings-ownership-cleanup.py ----
 Command: python3 scripts/test-settings-ownership-cleanup.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [199]: Python regression: scripts/test-shell-critical-qml-module-manifests.py ----
 Command: python3 scripts/test-shell-critical-qml-module-manifests.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [200]: Python regression: scripts/test-shell-elevation-shadow-contract.py ----
 Command: python3 scripts/test-shell-elevation-shadow-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [201]: Python regression: scripts/test-shell-surface-contracts.py ----
 Command: python3 scripts/test-shell-surface-contracts.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [202]: Python regression: scripts/test-startup-qml-surface-regression.py ----
 Command: python3 scripts/test-startup-qml-surface-regression.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [203]: Python regression: scripts/test-styled-popup-content-contract.py ----
 Command: python3 scripts/test-styled-popup-content-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [204]: Python regression: scripts/test-surface-motion-contract.py ----
 Command: python3 scripts/test-surface-motion-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [205]: Python regression: scripts/test-taskbar-app-model-contract.py ----
 Command: python3 scripts/test-taskbar-app-model-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [206]: Python regression: scripts/test-thinkfan-system-monitor-contract.py ----
 Command: python3 scripts/test-thinkfan-system-monitor-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [207]: Python regression: scripts/test-timer-presentation-contract.py ----
 Command: python3 scripts/test-timer-presentation-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [208]: Python regression: scripts/test-todo-backend-contract.py ----
 Command: python3 scripts/test-todo-backend-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [209]: Python regression: scripts/test-todo-config-schema.py ----
 Command: python3 scripts/test-todo-config-schema.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [210]: Python regression: scripts/test-todo-obsidian-daily-backend-contract.py ----
 Command: python3 scripts/test-todo-obsidian-daily-backend-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [211]: Python regression: scripts/test-todo-obsidian-read-backend-contract.py ----
 Command: python3 scripts/test-todo-obsidian-read-backend-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [212]: Python regression: scripts/test-todo-obsidian-settings-deeplink.py ----
 Command: python3 scripts/test-todo-obsidian-settings-deeplink.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [213]: Python regression: scripts/test-todo-obsidian-settings-ui.py ----
 Command: python3 scripts/test-todo-obsidian-settings-ui.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [214]: Python regression: scripts/test-todo-ui-backend-routing.py ----
 Command: python3 scripts/test-todo-ui-backend-routing.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [215]: Python regression: scripts/test-todo-widget-backend-feedback.py ----
 Command: python3 scripts/test-todo-widget-backend-feedback.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [216]: Python regression: scripts/test-tray-focus-contract.py ----
 Command: python3 scripts/test-tray-focus-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [217]: Python regression: scripts/test-utf8-launcher-osd-model-contract.py ----
 Command: python3 scripts/test-utf8-launcher-osd-model-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [218]: Python regression: scripts/test-wallpaper-background-apply-runtime.py ----
 Command: python3 scripts/test-wallpaper-background-apply-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [219]: Python regression: scripts/test-wallpaper-carousel-runtime.py ----
 Command: python3 scripts/test-wallpaper-carousel-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [220]: Python regression: scripts/test-wallpaper-color-preview-runtime.py ----
 Command: python3 scripts/test-wallpaper-color-preview-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [221]: Python regression: scripts/test-wallpaper-mode.py ----
 Command: python3 scripts/test-wallpaper-mode.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [222]: Python regression: scripts/test-wallpaper-preview-palette-cache.py ----
 Command: python3 scripts/test-wallpaper-preview-palette-cache.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [223]: Python regression: scripts/test-wallpaper-search-state.py ----
 Command: python3 scripts/test-wallpaper-search-state.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [224]: Python regression: scripts/test-wallpaper-selector-migration.py ----
 Command: python3 scripts/test-wallpaper-selector-migration.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [225]: Python regression: scripts/test-wallpaper-transition-recovery-runtime.py ----
 Command: python3 scripts/test-wallpaper-transition-recovery-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [226]: Python regression: scripts/test-wave-visualizer-lifecycle-runtime.py ----
 Command: python3 scripts/test-wave-visualizer-lifecycle-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [227]: Python regression: scripts/test-weather-hourly-light-runtime.py ----
 Command: python3 scripts/test-weather-hourly-light-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [228]: Python regression: scripts/test-weather-liquid-orbital-contract.py ----
 Command: python3 scripts/test-weather-liquid-orbital-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [229]: Python regression: scripts/test-weather-orbit-table-parity.py ----
 Command: python3 scripts/test-weather-orbit-table-parity.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [230]: Python regression: scripts/test-weather-popup-handoff-runtime.py ----
 Command: python3 scripts/test-weather-popup-handoff-runtime.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [231]: Python regression: scripts/test-weather-popup-layout-contract.py ----
 Command: python3 scripts/test-weather-popup-layout-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS
 
 ---- CHECK [232]: Python regression: scripts/test-zettelkasten-service-contract.py ----
 Command: python3 scripts/test-zettelkasten-service-contract.py
-Working directory: /tmp/hadalis-validation.ytCdm3/Hadalis
+Working directory: /tmp/alis-validation.ytCdm3/Alis
 Result: PASS

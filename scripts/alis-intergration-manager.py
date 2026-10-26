@@ -27,13 +27,13 @@ spec.loader.exec_module(discovery)
 
 API = "https://api.github.com/repos/llocphann/Alis-Intergration/commits/main"
 ARCHIVE = "https://api.github.com/repos/llocphann/Alis-Intergration/tarball/"
-PAYLOAD = ("HadalisSession.qml", "services/", "modules/", "assets/",
+PAYLOAD = ("AlisSession.qml", "services/", "modules/", "assets/",
            "scripts/integrations/", "scripts/todo/", "scripts/notes/", "LICENSE")
 MAX_ARCHIVE = 8 * 1024 * 1024
 MAX_PAYLOAD = 24 * 1024 * 1024
 MAX_FILES = 512
 MAX_MEMBERS = 4096
-SYSTEM_PROVISIONER = "/usr/libexec/alis-hadalird-system-provision"
+SYSTEM_PROVISIONER = "/usr/libexec/alis-intergration-system-provision"
 _LEGACY_SYSTEM_PROVISIONER = SYSTEM_PROVISIONER.replace("alis-", "in" + "ir-")
 EXECUTABLE = {"assets/helpers/alis-battery-charge-limit", "assets/helpers/alis-thinkfan"}
 # The separately released Alis-Intergration payload retains its original helper names.
@@ -75,7 +75,7 @@ def latest_sha():
 
 
 def allowed(path):
-    return path in ("HadalisSession.qml", "LICENSE") or any(
+    return path in ("AlisSession.qml", "LICENSE") or any(
         path.startswith(prefix) for prefix in PAYLOAD if prefix.endswith("/"))
 
 
@@ -127,7 +127,7 @@ def assemble(files, revision, target):
     if "manifest.json" not in files:
         raise ValueError("Missing package manifest")
     manifest = json.loads(files["manifest.json"])
-    if not isinstance(manifest, dict) or manifest.get("id") != "hadalird" or (
+    if not isinstance(manifest, dict) or manifest.get("id") != "alis-intergration" or (
             type(manifest.get("hostApi")) is not int or manifest["hostApi"] != 1):
         raise ValueError("Unsupported Alis-Intergration package or host API")
     if not isinstance(manifest.get("version"), str) or not manifest["version"] or len(manifest["version"]) > 64:
@@ -460,7 +460,7 @@ def main():
     args = parser.parse_args()
     try:
         canonical = args.data_home / "alis-intergration"
-        legacy = args.data_home / "hadalird"
+        legacy = args.data_home / "alis-intergration"
         if args.action in ("install", "remove", "rollback"):
             if legacy.is_dir() and not legacy.is_symlink() and not canonical.exists():
                 os.replace(legacy, canonical)

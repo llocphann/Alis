@@ -14,7 +14,7 @@ required_qml = [
     "property JsonObject obsidian: JsonObject {",
     'property string vaultPath: ""',
     'property string sourceMode: "markdown-note"',
-    'property string notePath: "Hadalis/Todo.md"',
+    'property string notePath: "Alis/Todo.md"',
     'property string scope: "managed-section"',
     "property JsonObject dailyNote: JsonObject {",
     'property string folder: "00_Capture/01_Journal"',
@@ -33,7 +33,7 @@ expected = {
     "obsidian": {
         "vaultPath": "",
         "sourceMode": "markdown-note",
-        "notePath": "Hadalis/Todo.md",
+        "notePath": "Alis/Todo.md",
         "scope": "managed-section",
         "dailyNote": {
             "folder": "00_Capture/01_Journal",

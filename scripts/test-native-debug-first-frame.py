@@ -7,7 +7,7 @@ from native_test_session import private_wayland,run_qs
 ROOT=Path(__file__).resolve().parents[1]
 # Native and Quickshell window declarations from the repaired active fixtures.
 samples=[('Window','scripts/test-wave-visualizer-lifecycle-runtime.py'),('FloatingWindow','scripts/test-notification-settings-runtime.py')]
-with tempfile.TemporaryDirectory(prefix='hadalis-debug-first-frame-') as name:
+with tempfile.TemporaryDirectory(prefix='alis-debug-first-frame-') as name:
  folder=Path(name)
  capture_script=folder/'capture-frame.py'
  capture_script.write_text("""
@@ -55,7 +55,7 @@ ShellRoot {
    result=run_qs(folder,dict(env,SHOT=str(screenshot),CAPTURE_SCRIPT=str(capture_script)),timeout=12)
    assert result.returncode==0 and 'DEBUG_FIRST_FRAME_PASS' in result.stdout and 'DEBUG_FIRST_FRAME_FAIL' not in result.stdout,result.stdout
    assert screenshot.is_file(),'first presented frame was not captured'
-   evidence=os.environ.get('HADALIS_DEBUG_FRAME_EVIDENCE')
+   evidence=os.environ.get('ALIS_DEBUG_FRAME_EVIDENCE')
    if evidence:
     destination=Path(evidence);destination.mkdir(parents=True,exist_ok=True)
     shutil.copy2(screenshot,destination/screenshot.name)

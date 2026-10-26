@@ -156,7 +156,7 @@
       "scope": "Two private native text watchers; 12 copies keep one item, byte-distinct trailing newline and long-prefix payloads retained. No actual writer defect attributed."
     }
   },
-  "watcher_oracle_repair": "Current Alis defaults checked separately from retired inir migration output; migration guards and all original canonical/legacy normalization assertions retained.",
+  "watcher_oracle_repair": "Current Alis defaults checked separately from retired alis migration output; migration guards and all original canonical/legacy normalization assertions retained.",
   "remaining_gates": {
     "canonical_exact_source": "RUNNING separately; no whole-suite PASS claim",
     "installed_desktop": "UNRUN; no automatic update/restart/cutover",

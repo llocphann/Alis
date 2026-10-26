@@ -1,8 +1,8 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
 
-> Companion implementation and remaining product tasks belong to [Alis-Companion](https://github.com/llocphann/Alis-Companion). Original Hadalis receipts keep their original scope.
+> Companion implementation and remaining product tasks belong to [Alis-Companion](https://github.com/llocphann/Alis-Companion). Original Alis receipts keep their original scope.
 
-<!-- hadalis-doc-kind: research -->
+<!-- alis-doc-kind: research -->
 
 # Aqua nested actual-panel visual A/B: private quarter-margin preparation
 
@@ -170,7 +170,7 @@ Runner only accepts
 \`aqua-paint-canary.*/repo\` disposable current-\`dev\` clone, all reviewed
 source blobs and exact HTTPS origin. It checks the host sockets/output
 inventory and private tool prerequisites; builds ONE real exact checked-out
-\`inir-companiond\` Rust release binary inside a random owner0700 directory
+\`alis-companiond\` Rust release binary inside a random owner0700 directory
 external to the checkout, then starts one owned Niri-in-Niri on the host as
 a disposable normal window with isolated config/XDG. Reuses source-pinned
 Niri startup parser and independently verifies a distinct guest Wayland

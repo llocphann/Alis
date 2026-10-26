@@ -6,7 +6,7 @@ from PIL import Image, ImageChops
 from native_test_session import private_wayland, run_qs
 
 ROOT = Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix="hadalis-background-apply-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-background-apply-") as name:
     folder = Path(name)
     for entry in ["modules", "services", "GlobalStates.qml", "qmldir", "assets", "defaults", "translations"]:
         (folder / entry).symlink_to(ROOT / entry)
@@ -162,7 +162,7 @@ ShellRoot {
         data["panelFamily"] = "abyss"
         data["background"]["wallpaperPath"] = str(folder / "wallpapers/a.png")
         # Exercise an existing user config: legacy melt must remain usable without shader priming.
-        data["background"]["transition"]["type"] = "inirMelt"
+        data["background"]["transition"]["type"] = "alisMelt"
         data["background"]["parallax"]["enable"] = False
         data["background"]["parallax"]["enableWorkspace"] = True
         data["background"]["parallax"]["enableSidebar"] = True

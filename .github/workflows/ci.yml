@@ -131,9 +131,9 @@ jobs:
       - name: Run canonical local validator
         shell: bash
         run: |
-          log="$RUNNER_TEMP/hadalis-maintainer-validation.log"
+          log="$RUNNER_TEMP/alis-maintainer-validation.log"
           set +e
-          HADALIS_VALIDATION_LOG="$log" bash scripts/validate-maintainer-local.sh --current-repo
+          ALIS_VALIDATION_LOG="$log" bash scripts/validate-maintainer-local.sh --current-repo
           rc=$?
           set -e
           if [[ -f "$log" ]]; then

@@ -293,7 +293,7 @@ AssertionError [ERR_ASSERTION]: The input did not match the regular expression /
   '        : (root.compactEditor ? 4 : 16)\n' +
   '    embeddedBackgroundColor: Appearance.angelEverywhere\n' +
   '        ? Appearance.angel.colGlassPopup\n' +
-  '        : Appearance.inirEverywhere ? Appearance.inir.colLayer1\n' +
+  '        : Appearance.alisEverywhere ? Appearance.alis.colLayer1\n' +
   '        : Appearance.auroraEverywhere ? Appearance.aurora.colDialogSurface\n' +
   '        : Appearance.colors.colSurfaceContainerHigh\n' +
   '\n' +
@@ -533,7 +533,7 @@ AssertionError [ERR_ASSERTION]: The input did not match the regular expression /
     '        : (root.compactEditor ? 4 : 16)\n' +
     '    embeddedBackgroundColor: Appearance.angelEverywhere\n' +
     '        ? Appearance.angel.colGlassPopup\n' +
-    '        : Appearance.inirEverywhere ? Appearance.inir.colLayer1\n' +
+    '        : Appearance.alisEverywhere ? Appearance.alis.colLayer1\n' +
     '        : Appearance.auroraEverywhere ? Appearance.aurora.colDialogSurface\n' +
     '        : Appearance.colors.colSurfaceContainerHigh\n' +
     '\n' +
@@ -1089,23 +1089,23 @@ Command: python3 scripts/test-abyss-keyboard-runtime.py
 Exit code: 1
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalis-abyss-keyboard-x6m_ds_a/shell.qml"
+  INFO: Launching config: "/tmp/alis-abyss-keyboard-x6m_ds_a/shell.qml"
   INFO: Shell ID: "83f70e5b1eb2476825da0d3f4ed71dde" Path ID "83f70e5b1eb2476825da0d3f4ed71dde"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/yemwpe5vmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.1522009.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-abyss-keyboard-x6m_ds_a/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-abyss-keyboard-x6m_ds_a/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/hadalis-abyss-keyboard-x6m_ds_a/state/quickshell/user/notifications.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-abyss-keyboard-x6m_ds_a/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-abyss-keyboard-x6m_ds_a/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-abyss-keyboard-x6m_ds_a/state/quickshell/user/notifications.json failed: File does not exist.
  DEBUG qml: [Notifications] File not found, creating new file.
-  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/hadalis-abyss-keyboard-x6m_ds_a/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-abyss-keyboard-x6m_ds_a/state/quickshell/user/events.json failed: File does not exist.
  DEBUG qml: [Events] File not found, creating new file.
-  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/hadalis-abyss-keyboard-x6m_ds_a/state/quickshell/states.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-abyss-keyboard-x6m_ds_a/state/quickshell/states.json failed: File does not exist.
  DEBUG qml: Failed to load persistent states file: 2
  DEBUG qml: [Persistent] File not found, creating new file.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7faef5a3f1e0)
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-abyss-keyboard-x6m_ds_a/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-abyss-keyboard-x6m_ds_a/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
  ERROR qml: ABYSS_KEYBOARD_FAIL keyboard body kept unused vertical space check@qs:@/qs/shell.qml:14
 runChecks@qs:@/qs/shell.qml:35
@@ -1668,28 +1668,28 @@ Exit code: 1
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Output:
 Dashboard native process exit: 0
-  INFO: Launching config: "/tmp/hadalis-dashboard-editor-field-jp5rnq6_/shell.qml"
+  INFO: Launching config: "/tmp/alis-dashboard-editor-field-jp5rnq6_/shell.qml"
   INFO: Shell ID: "1c644ec3dd5f75baeb50bbfab585f4f8" Path ID "1c644ec3dd5f75baeb50bbfab585f4f8"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/qltwxu5vmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.1531338.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: CHECKS_START
   INFO qml: CONFIG_READY
   INFO qml: CASE_START [[1280,900],"Dashboard","top"]
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/hadalis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/notifications.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/notifications.json failed: File does not exist.
  DEBUG qml: [Notifications] File not found, creating new file.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/hadalis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/todo.txt failed: File does not exist.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/hadalis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/todo.json failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/alis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/alis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/todo.json failed: File does not exist.
  DEBUG qml: [Todo] JSON not found, creating new file.
-  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/hadalis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/events.json failed: File does not exist.
  DEBUG qml: [Events] File not found, creating new file.
-  WARN scene: QML FileView at @services/Notepad.qml[217:5]: Read of /tmp/hadalis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/notepad-tabs.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Notepad.qml[217:5]: Read of /tmp/alis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/notepad-tabs.json failed: File does not exist.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fd4bd9c07c0)
-  WARN scene: QML FileView at @services/Notepad.qml[267:5]: Read of /tmp/hadalis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/notepad.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/Notepad.qml[267:5]: Read of /tmp/alis-dashboard-editor-field-jp5rnq6_/state/quickshell/user/notepad.txt failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
   INFO qml: [Weather] Getting location from IP...
   INFO qml: [Weather] Location: [redacted]
@@ -1778,23 +1778,23 @@ Command: python3 scripts/test-dashboard-music-runtime.py
 Exit code: 1
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalis-dashboard-music-9bl9u1nk/shell.qml"
+  INFO: Launching config: "/tmp/alis-dashboard-music-9bl9u1nk/shell.qml"
   INFO: Shell ID: "0405bf880f8da6a75d485098c517869f" Path ID "0405bf880f8da6a75d485098c517869f"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/i7uwdw5vmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.1532087.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-music-9bl9u1nk/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-9bl9u1nk/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/hadalis-dashboard-music-9bl9u1nk/state/quickshell/user/notifications.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dashboard-music-9bl9u1nk/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-music-9bl9u1nk/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-dashboard-music-9bl9u1nk/state/quickshell/user/notifications.json failed: File does not exist.
  DEBUG qml: [Notifications] File not found, creating new file.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/hadalis-dashboard-music-9bl9u1nk/state/quickshell/user/todo.txt failed: File does not exist.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/hadalis-dashboard-music-9bl9u1nk/state/quickshell/user/todo.json failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/alis-dashboard-music-9bl9u1nk/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/alis-dashboard-music-9bl9u1nk/state/quickshell/user/todo.json failed: File does not exist.
  DEBUG qml: [Todo] JSON not found, creating new file.
-  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/hadalis-dashboard-music-9bl9u1nk/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-dashboard-music-9bl9u1nk/state/quickshell/user/events.json failed: File does not exist.
  DEBUG qml: [Events] File not found, creating new file.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fca7e1eb560)
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-9bl9u1nk/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-music-9bl9u1nk/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: [Weather] Getting location from IP...
   INFO qml: NiriService: Loaded 1 outputs
   INFO qml: [Weather] Location: [redacted]
@@ -1907,23 +1907,23 @@ Command: python3 scripts/test-dashboard-warm-readiness.py
 Exit code: 1
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalis-dashboard-warm-ypu30nt0/shell.qml"
+  INFO: Launching config: "/tmp/alis-dashboard-warm-ypu30nt0/shell.qml"
   INFO: Shell ID: "4b8c843823e9996e68e7eaa0e229e223" Path ID "4b8c843823e9996e68e7eaa0e229e223"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/byvwdz5vmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.1534370.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-warm-ypu30nt0/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-warm-ypu30nt0/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/hadalis-dashboard-warm-ypu30nt0/state/quickshell/user/notifications.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dashboard-warm-ypu30nt0/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-warm-ypu30nt0/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-dashboard-warm-ypu30nt0/state/quickshell/user/notifications.json failed: File does not exist.
  DEBUG qml: [Notifications] File not found, creating new file.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/hadalis-dashboard-warm-ypu30nt0/state/quickshell/user/todo.txt failed: File does not exist.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/hadalis-dashboard-warm-ypu30nt0/state/quickshell/user/todo.json failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/alis-dashboard-warm-ypu30nt0/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/alis-dashboard-warm-ypu30nt0/state/quickshell/user/todo.json failed: File does not exist.
  DEBUG qml: [Todo] JSON not found, creating new file.
-  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/hadalis-dashboard-warm-ypu30nt0/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-dashboard-warm-ypu30nt0/state/quickshell/user/events.json failed: File does not exist.
  DEBUG qml: [Events] File not found, creating new file.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fb056a216c0)
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-warm-ypu30nt0/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-warm-ypu30nt0/state/quickshell/user/gamemode_active failed: File does not exist.
  ERROR qml: DASHBOARD_WARM_FAIL fixture missed active cards Dashboard weather=null visible=undefined media=DashMedia_QMLTYPE_1055(0x7fb049039420) active=true body=1 visibleIds=["system","media"] dimensions=757x858 check@qs:@/qs/shell.qml:27
 runChecks@qs:@/qs/shell.qml:40
 expression for onTriggered@qs:@/qs/shell.qml:59
@@ -1984,7 +1984,7 @@ Command: python3 scripts/test-fcitx5-session-integration.py
 Exit code: 1
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Output:
-Hadalis: install fcitx5-unikey to enable Telex
+Alis: install fcitx5-unikey to enable Telex
 test_initial_install_and_existing_profile: PASS
 test_other_ime_and_uninstalled_engine: PASS
 Traceback (most recent call last):
@@ -1992,7 +1992,7 @@ Traceback (most recent call last):
     test()
     ~~~~^^
   File "/tmp/alis-validation.fEfxud/Alis/scripts/test-fcitx5-session-integration.py", line 136, in test_preserved_niri_config_migration
-    check(lines.count('spawn-at-startup "/opt/test/inir" "input-method" "start"') == 1,
+    check(lines.count('spawn-at-startup "/opt/test/alis" "input-method" "start"') == 1,
     ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
           "migration must add exactly one path-safe startup entry")
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2011,53 +2011,53 @@ Command: python3 scripts/test-global-actions-query-parity.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [177]: Python regression: scripts/test-hadalird-arch-package.py ----
-Command: python3 scripts/test-hadalird-arch-package.py
+---- CHECK [177]: Python regression: scripts/test-alis-intergration-arch-package.py ----
+Command: python3 scripts/test-alis-intergration-arch-package.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [178]: Python regression: scripts/test-hadalird-gateway-bootstrap.py ----
-Command: python3 scripts/test-hadalird-gateway-bootstrap.py
+---- CHECK [178]: Python regression: scripts/test-alis-intergration-gateway-bootstrap.py ----
+Command: python3 scripts/test-alis-intergration-gateway-bootstrap.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [179]: Python regression: scripts/test-hadalird-install-lifecycle.py ----
-Command: python3 scripts/test-hadalird-install-lifecycle.py
+---- CHECK [179]: Python regression: scripts/test-alis-intergration-install-lifecycle.py ----
+Command: python3 scripts/test-alis-intergration-install-lifecycle.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [180]: Python regression: scripts/test-hadalird-manager.py ----
-Command: python3 scripts/test-hadalird-manager.py
+---- CHECK [180]: Python regression: scripts/test-alis-intergration-manager.py ----
+Command: python3 scripts/test-alis-intergration-manager.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [181]: Python regression: scripts/test-hadalird-obsidian-wrapper.py ----
-Command: python3 scripts/test-hadalird-obsidian-wrapper.py
+---- CHECK [181]: Python regression: scripts/test-alis-intergration-obsidian-wrapper.py ----
+Command: python3 scripts/test-alis-intergration-obsidian-wrapper.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [182]: Python regression: scripts/test-hadalird-optional.py ----
-Command: python3 scripts/test-hadalird-optional.py
+---- CHECK [182]: Python regression: scripts/test-alis-intergration-optional.py ----
+Command: python3 scripts/test-alis-intergration-optional.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [183]: Python regression: scripts/test-hadalird-polkit-visibility.py ----
-Command: python3 scripts/test-hadalird-polkit-visibility.py
+---- CHECK [183]: Python regression: scripts/test-alis-intergration-polkit-visibility.py ----
+Command: python3 scripts/test-alis-intergration-polkit-visibility.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [184]: Python regression: scripts/test-hadalird-preferences-migration.py ----
-Command: python3 scripts/test-hadalird-preferences-migration.py
+---- CHECK [184]: Python regression: scripts/test-alis-intergration-preferences-migration.py ----
+Command: python3 scripts/test-alis-intergration-preferences-migration.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [185]: Python regression: scripts/test-hadalird-settings-flow.py ----
-Command: python3 scripts/test-hadalird-settings-flow.py
+---- CHECK [185]: Python regression: scripts/test-alis-intergration-settings-flow.py ----
+Command: python3 scripts/test-alis-intergration-settings-flow.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [186]: Python regression: scripts/test-hadalird-system-provision.py ----
-Command: python3 scripts/test-hadalird-system-provision.py
+---- CHECK [186]: Python regression: scripts/test-alis-intergration-system-provision.py ----
+Command: python3 scripts/test-alis-intergration-system-provision.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
@@ -2071,8 +2071,8 @@ Command: python3 scripts/test-alis-companion-optional.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [189]: Python regression: scripts/test-inir-process-cleanup.py ----
-Command: python3 scripts/test-inir-process-cleanup.py
+---- CHECK [189]: Python regression: scripts/test-alis-process-cleanup.py ----
+Command: python3 scripts/test-alis-process-cleanup.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
@@ -2086,18 +2086,18 @@ Command: python3 scripts/test-ipc-registry-generator.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [192]: Python regression: scripts/test-iris-corner-poc-contract.py ----
-Command: python3 scripts/test-iris-corner-poc-contract.py
+---- CHECK [192]: Python regression: scripts/test-abyss-corner-poc-contract.py ----
+Command: python3 scripts/test-abyss-corner-poc-contract.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [193]: Python regression: scripts/test-iris-g2-contract.py ----
-Command: python3 scripts/test-iris-g2-contract.py
+---- CHECK [193]: Python regression: scripts/test-abyss-g2-contract.py ----
+Command: python3 scripts/test-abyss-g2-contract.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [194]: Python regression: scripts/test-iris-production-surface-contract.py ----
-Command: python3 scripts/test-iris-production-surface-contract.py
+---- CHECK [194]: Python regression: scripts/test-abyss-production-surface-contract.py ----
+Command: python3 scripts/test-abyss-production-surface-contract.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
@@ -2283,15 +2283,15 @@ Command: python3 scripts/test-popup-anchor-hover-runtime.py
 Exit code: 1
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalis-popup-hover-l_fkd28s/shell.qml"
+  INFO: Launching config: "/tmp/alis-popup-hover-l_fkd28s/shell.qml"
   INFO: Shell ID: "0635169263c6f7daba6e1386da2d749c" Path ID "0635169263c6f7daba6e1386da2d749c"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/f1zw836vmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.1538380.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-popup-hover-l_fkd28s/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-popup-hover-l_fkd28s/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-popup-hover-l_fkd28s/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-popup-hover-l_fkd28s/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-popup-hover-l_fkd28s/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-popup-hover-l_fkd28s/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
  ERROR qml: POPUP_ANCHOR_HOVER_TRACE [{"stage":"edge-start","edge":"bottom","point":null,"scene":[429,1038],"content":{"x":150,"y":998,"width":180,"height":0},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":false,"body":false,"anchor":false,"progress":0,"contains":false},{"stage":"padding-before","edge":"bottom","point":[143,934],"scene":[429,1038],"content":{"x":150,"y":884,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"bottom","point":[143,934],"scene":[429,1038],"content":{"x":150,"y":884,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"bottom","point":[337,934],"scene":[429,1038],"content":{"x":150,"y":884,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"bottom","point":[337,934],"scene":[429,1038],"content":{"x":150,"y":884,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"bottom","point":[240,877],"scene":[429,1038],"content":{"x":150,"y":884,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"bottom","point":[240,877],"scene":[429,1038],"content":{"x":150,"y":884,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"bottom","point":[240,991],"scene":[429,1038],"content":{"x":150,"y":884,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"bottom","point":[240,991],"scene":[429,1038],"content":{"x":150,"y":884,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"bottom","point":[131,1027],"scene":[429,1038],"content":{"x":150,"y":884,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"bottom","point":[131,1027],"scene":[429,1038],"content":{"x":150,"y":884,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"bottom","point":[349,1027],"scene":[429,1038],"content":{"x":150,"y":884,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"bottom","point":[349,1027],"scene":[429,1038],"content":{"x":150,"y":884,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"edge-start","edge":"bottom","point":null,"scene":[429,1038],"content":{"x":150,"y":998,"width":180,"height":0},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":998,"width":80,"height":32,"left":160,"right":240,"top":998,"bottom":1030}],"requested":false,"body":false,"anchor":false,"progress":0,"contains":false},{"stage":"padding-before","edge":"top","point":[143,104],"scene":[429,1038],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"top","point":[143,104],"scene":[429,1038],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"top","point":[337,104],"scene":[429,1038],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"top","point":[337,104],"scene":[429,1038],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"top","point":[240,47],"scene":[429,1038],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"top","point":[240,47],"scene":[429,1038],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"top","point":[240,161],"scene":[429,1038],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"top","point":[240,161],"scene":[429,1038],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"top","point":[131,11],"scene":[429,1038],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"top","point":[131,11],"scene":[429,1038],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"top","point":[349,11],"scene":[429,1038],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"top","point":[349,11],"scene":[429,1038],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"edge-start","edge":"top","point":null,"scene":[429,1038],"content":{"x":150,"y":40,"width":180,"height":0},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":false,"body":false,"anchor":false,"progress":0,"contains":false},{"stage":"padding-before","edge":"left","point":[47,200],"scene":[429,1038],"content":{"x":54,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"left","point":[47,200],"scene":[429,1038],"content":{"x":54,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"left","point":[193.01999999999998,200],"scene":[429,1038],"content":{"x":54,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"left","point":[193.01999999999998,200],"scene":[429,1038],"content":{"x":54,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"left","point":[120.00999999999999,143],"scene":[429,1038],"content":{"x":54,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"left","point":[120.00999999999999,143],"scene":[429,1038],"content":{"x":54,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"left","point":[120.00999999999999,257],"scene":[429,1038],"content":{"x":54,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"left","point":[120.00999999999999,257],"scene":[429,1038],"content":{"x":54,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"left","point":[11,131],"scene":[429,1038],"content":{"x":54,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"left","point":[11,131],"scene":[429,1038],"content":{"x":54,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"left","point":[11,269],"scene":[429,1038],"content":{"x":54,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"left","point":[11,269],"scene":[429,1038],"content":{"x":54,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"edge-start","edge":"left","point":null,"scene":[429,1038],"content":{"x":40,"y":150,"width":0,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":false,"body":false,"anchor":false,"progress":0,"contains":false},{"stage":"padding-before","edge":"right","point":[235.98000000000002,200],"scene":[429,1038],"content":{"x":242.98000000000002,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":389,"y":160,"width":32,"height":80,"left":389,"right":421,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"right","point":[235.98000000000002,200],"scene":[429,1038],"content":{"x":242.98000000000002,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":389,"y":160,"width":32,"height":80,"left":389,"right":421,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"right","point":[382,200],"scene":[429,1038],"content":{"x":242.98000000000002,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":389,"y":160,"width":32,"height":80,"left":389,"right":421,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"right","point":[382,200],"scene":[429,1038],"content":{"x":242.98000000000002,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":389,"y":160,"width":32,"height":80,"left":389,"right":421,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"right","point":[308.99,143],"scene":[429,1038],"content":{"x":242.98000000000002,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":389,"y":160,"width":32,"height":80,"left":389,"right":421,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"right","point":[308.99,143],"scene":[429,1038],"content":{"x":242.98000000000002,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":389,"y":160,"width":32,"height":80,"left":389,"right":421,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"right","point":[308.99,257],"scene":[429,1038],"content":{"x":242.98000000000002,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":389,"y":160,"width":32,"height":80,"left":389,"right":421,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"right","point":[308.99,257],"scene":[429,1038],"content":{"x":242.98000000000002,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":389,"y":160,"width":32,"height":80,"left":389,"right":421,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"right","point":[418,131],"scene":[429,1038],"content":{"x":242.98000000000002,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":389,"y":160,"width":32,"height":80,"left":389,"right":421,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"right","point":[418,131],"scene":[429,1038],"content":{"x":242.98000000000002,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":389,"y":160,"width":32,"height":80,"left":389,"right":421,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"right","point":[418,269],"scene":[429,1038],"content":{"x":242.98000000000002,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":389,"y":160,"width":32,"height":80,"left":389,"right":421,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"right","point":[418,269],"scene":[429,1038],"content":{"x":242.98000000000002,"y":150,"width":132.01999999999998,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":389,"y":160,"width":32,"height":80,"left":389,"right":421,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true}]
  ERROR qml: POPUP_ANCHOR_HOVER_FAIL generic body/bridge/padding idle timer closed a hovered popup on bottom: [214.5,1024] check@qs:@/qs/shell.qml:108
@@ -2393,15 +2393,15 @@ Command: python3 scripts/test-recording-abyss-runtime.py
 Exit code: 1
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalis-recording-field-7to7qcvj/shell.qml"
+  INFO: Launching config: "/tmp/alis-recording-field-7to7qcvj/shell.qml"
   INFO: Shell ID: "33ebb6a911201c09ac31d767270c2b8e" Path ID "33ebb6a911201c09ac31d767270c2b8e"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/q10xg66vmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.1539676.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-recording-field-7to7qcvj/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-recording-field-7to7qcvj/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-recording-field-7to7qcvj/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-recording-field-7to7qcvj/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-recording-field-7to7qcvj/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-recording-field-7to7qcvj/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
 
 FAIL: native connected Recording controls
@@ -2482,7 +2482,7 @@ qs_exit 124
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fafa3268e00)
   WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-host-capture-fpk6bbui/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: CAPTURE_PHASE cancel
-  WARN scene: QML FileView at @services/IconThemeService.qml[39:5]: Read of /tmp/alis-host-capture-fpk6bbui/state/inir/native-backend failed: File does not exist.
+  WARN scene: QML FileView at @services/IconThemeService.qml[39:5]: Read of /tmp/alis-host-capture-fpk6bbui/state/alis/native-backend failed: File does not exist.
   INFO qml: CAPTURE_PHASE copy
   WARN qt.svg: Invalid path data; path truncated.
   WARN qt.svg: Invalid path data; path truncated.
@@ -2521,8 +2521,8 @@ Command: python3 scripts/test-settings-information-architecture.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
----- CHECK [257]: Python regression: scripts/test-settings-inir-task-tabs-contract.py ----
-Command: python3 scripts/test-settings-inir-task-tabs-contract.py
+---- CHECK [257]: Python regression: scripts/test-settings-alis-task-tabs-contract.py ----
+Command: python3 scripts/test-settings-alis-task-tabs-contract.py
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
@@ -2750,17 +2750,17 @@ Command: python3 scripts/test-weather-popup-handoff-runtime.py
 Exit code: 1
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalis-weather-handoff-ka5br8sr/shell.qml"
+  INFO: Launching config: "/tmp/alis-weather-handoff-ka5br8sr/shell.qml"
   INFO: Shell ID: "3d1fa84db9e1cdc779ed23e0c6c6f33e" Path ID "3d1fa84db9e1cdc779ed23e0c6c6f33e"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/jq6xlk6vmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.1548354.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-weather-handoff-ka5br8sr/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-weather-handoff-ka5br8sr/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/hadalis-weather-handoff-ka5br8sr/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-weather-handoff-ka5br8sr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-weather-handoff-ka5br8sr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-weather-handoff-ka5br8sr/state/quickshell/user/events.json failed: File does not exist.
  DEBUG qml: [Events] File not found, creating new file.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-weather-handoff-ka5br8sr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-weather-handoff-ka5br8sr/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
  ERROR qml: WEATHER_HANDOFF_FAIL Weather exit stranded a popup slot {"edge":"top","request":true,"content":true,"anchor":false,"hold":false,"linger":true,"offset":0} check@qs:@/qs/shell.qml:86
 runChecks@qs:@/qs/shell.qml:133
@@ -2864,7 +2864,7 @@ Output:
   INFO: Configuration Loaded
   WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/tmp.BBezrENw5V/state/quickshell/user/gamemode_active failed: File does not exist.
   WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/tmp.BBezrENw5V/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/IconThemeService.qml[39:5]: Read of /tmp/tmp.BBezrENw5V/state/inir/native-backend failed: File does not exist.
+  WARN scene: QML FileView at @services/IconThemeService.qml[39:5]: Read of /tmp/tmp.BBezrENw5V/state/alis/native-backend failed: File does not exist.
   WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/tmp.BBezrENw5V/state/quickshell/user/notifications.json failed: File does not exist.
  DEBUG qml: [Notifications] File not found, creating new file.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fa8c8c6bf40)
@@ -2917,28 +2917,28 @@ Working directory: /tmp/alis-validation.fEfxud/Alis
 Output:
 PASS: both Abyss Dashboard hosts preserve workspace sizes with controls above the canvas and empty-layout restore
 Dashboard native process exit: 0
-  INFO: Launching config: "/tmp/hadalis-dashboard-editor-field-cusgeb9c/shell.qml"
+  INFO: Launching config: "/tmp/alis-dashboard-editor-field-cusgeb9c/shell.qml"
   INFO: Shell ID: "b031fbd75694a9a9bee9b0f9ba35c805" Path ID "b031fbd75694a9a9bee9b0f9ba35c805"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/mxcx6o6vmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.1556385.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-editor-field-cusgeb9c/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-cusgeb9c/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dashboard-editor-field-cusgeb9c/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-editor-field-cusgeb9c/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: CHECKS_START
   INFO qml: CONFIG_READY
   INFO qml: CASE_START [[1280,900],"Dashboard","top"]
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-cusgeb9c/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/hadalis-dashboard-editor-field-cusgeb9c/state/quickshell/user/notifications.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-editor-field-cusgeb9c/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-dashboard-editor-field-cusgeb9c/state/quickshell/user/notifications.json failed: File does not exist.
  DEBUG qml: [Notifications] File not found, creating new file.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/hadalis-dashboard-editor-field-cusgeb9c/state/quickshell/user/todo.txt failed: File does not exist.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/hadalis-dashboard-editor-field-cusgeb9c/state/quickshell/user/todo.json failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/alis-dashboard-editor-field-cusgeb9c/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/alis-dashboard-editor-field-cusgeb9c/state/quickshell/user/todo.json failed: File does not exist.
  DEBUG qml: [Todo] JSON not found, creating new file.
-  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/hadalis-dashboard-editor-field-cusgeb9c/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-dashboard-editor-field-cusgeb9c/state/quickshell/user/events.json failed: File does not exist.
  DEBUG qml: [Events] File not found, creating new file.
-  WARN scene: QML FileView at @services/Notepad.qml[217:5]: Read of /tmp/hadalis-dashboard-editor-field-cusgeb9c/state/quickshell/user/notepad-tabs.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Notepad.qml[217:5]: Read of /tmp/alis-dashboard-editor-field-cusgeb9c/state/quickshell/user/notepad-tabs.json failed: File does not exist.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fb39bfa24a0)
-  WARN scene: QML FileView at @services/Notepad.qml[267:5]: Read of /tmp/hadalis-dashboard-editor-field-cusgeb9c/state/quickshell/user/notepad.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/Notepad.qml[267:5]: Read of /tmp/alis-dashboard-editor-field-cusgeb9c/state/quickshell/user/notepad.txt failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
   INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","top"] open-partial 0
   INFO qml: [Weather] Getting location from IP...
@@ -3110,7 +3110,7 @@ Exit code: 1
 Working directory: /tmp/alis-validation.fEfxud/Alis
 Output:
   INFO: Launching config: "/tmp/tmp.5Te4YA2zgY/shell.qml"
-  INFO: Shell ID: "hadalis-abyss-shared-content-test" Path ID "b507356db3c1cbef2a43e747a0dbc171"
+  INFO: Shell ID: "alis-abyss-shared-content-test" Path ID "b507356db3c1cbef2a43e747a0dbc171"
 dbus-daemon[1560002]: [session uid=1000 pid=1560002 pidfd=5] Activating service name='org.freedesktop.portal.Desktop' requested by ':1.0' (uid=1000 pid=1560004 comm="qs -p /tmp/tmp.5Te4YA2zgY --no-color")
 dbus-daemon[1560002]: [session uid=1000 pid=1560002 pidfd=5] Activating service name='org.freedesktop.impl.portal.PermissionStore' requested by ':1.1' (uid=1000 pid=1560007 comm="/usr/lib/xdg-desktop-portal")
 dbus-daemon[1560002]: [session uid=1000 pid=1560002 pidfd=5] Successfully activated service 'org.freedesktop.impl.portal.PermissionStore'
@@ -3677,7 +3677,7 @@ Working directory: /tmp/alis-validation.fEfxud/Alis
 Result: PASS
 
 ========================================
-HADALIS VALIDATION SUMMARY
+ALIS VALIDATION SUMMARY
 Exact SHA: 47e1316ed399219f69b76583667a3bd0e54f2a52
 Result: FAIL
 Checks run: 432

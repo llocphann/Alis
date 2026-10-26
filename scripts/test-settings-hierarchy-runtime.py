@@ -4,7 +4,7 @@ import json,tempfile
 from pathlib import Path
 from native_test_session import private_wayland,run_qs
 ROOT=Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix='hadalis-settings-hierarchy-') as name:
+with tempfile.TemporaryDirectory(prefix='alis-settings-hierarchy-') as name:
  folder=Path(name)
  for entry in ['modules','services','GlobalStates.qml','qmldir','assets','scripts','defaults','translations','settings.qml','waffleSettings.qml']:(folder/entry).symlink_to(ROOT/entry)
  vault=folder/'vault/.obsidian';vault.mkdir(parents=True)
@@ -72,9 +72,9 @@ Window {
    overlay.pageHost.currentItem.activateSettingsSearchSection("To-do & Quick Notes")
    check(overlay.pageHost.currentItem.activePlugin==="management","legacy data search lost its destination")
    Config.setNestedValues({"todo.obsidian.vaultPath":Quickshell.env("OBSIDIAN_VAULT"),"integrations.obsidian.autoTheme":true})
-   // Actual theme apply/restore and vault fields belong to Hadalird's native
+   // Actual theme apply/restore and vault fields belong to Alis-Intergration's native
    // suite. Core navigation must work without activating a missing package.
-   check(!Hadalird.obsidianEnabled && !ObsidianTheme.enabled && !ObsidianTheme.busy,
+   check(!AlisIntergration.obsidianEnabled && !ObsidianTheme.enabled && !ObsidianTheme.busy,
          "missing optional integration activated a worker")
    overlay.navEditMode=true;wait(100)
    check(overlay.visibleNavItems.length===overlay.navPageOrder.length,"navigation editor lost full page order")

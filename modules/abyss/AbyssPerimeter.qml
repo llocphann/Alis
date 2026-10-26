@@ -779,7 +779,7 @@ Scope {
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
             exclusiveZone: 0
-            WlrLayershell.namespace: "hadalis:abyss-perimeter"
+            WlrLayershell.namespace: "alis:abyss-perimeter"
             // Niri needs a stable overlay for hit-tested Screen Edge modules
             // when the output is presented, even before the first hover popup.
             // Hidden/covered outputs retain the old Top fallback. Otherwise liquid.popupsOpen
@@ -1432,6 +1432,18 @@ Scope {
                 }
             }
             property bool dockHovered: false
+            readonly property bool desktopHasApps: {
+                if (ToplevelManager.activeToplevel?.activated)
+                    return true
+                if (CompositorService.isNiri) {
+                    const activeWs = (NiriService.allWorkspaces ?? []).find(ws => ws.output === window.outputName && ws.is_active)
+                    if (activeWs)
+                        return (activeWs.active_window_id !== null && activeWs.active_window_id !== undefined)
+                            || (NiriService.windows ?? []).some(w => w.workspace_id === activeWs.id)
+                    return !!NiriService.activeWindow
+                }
+                return (ToplevelManager.toplevels?.values ?? []).length > 0
+            }
             // Retain the source/arrival water during a visit and its final dive.
             // This reads semantic placement and the actor's presentation, not
             // the derived scene/permission, so Dock geometry cannot bind back
@@ -1464,10 +1476,10 @@ Scope {
                         || attachedPopupHold
                         || !liquid.hasPopupOverlapRect(requestedRecord.surface, 10))
                     && (((Config.options?.dock?.pinnedOnStartup ?? false) && !(Config.options?.dock?.hoverToReveal ?? false)) || window.dockHovered
-                        || companionExtension.dockHeld
+                        || (!window.desktopHasApps && companionExtension.dockHeld)
                         || attachedPopupHold
                         || (contentItem.item?.requestDockShow ?? false)
-                        || ((Config.options?.dock?.showOnDesktop ?? true) && !ToplevelManager.activeToplevel?.activated))
+                        || ((Config.options?.dock?.showOnDesktop ?? true) && !window.desktopHasApps && !ToplevelManager.activeToplevel?.activated))
                 edgeInsets: window.bodyInsets(edge,along,span)
                 span: Math.min((Geometry.horizontal(edge) ? window.width : window.height)-80,
                     Math.max(140,measuredSpan))
@@ -1885,7 +1897,7 @@ Scope {
         exclusiveZone: mapped ? thickness : 0
         implicitWidth: horizontal ? 1 : thickness
         implicitHeight: horizontal ? thickness : 1
-        WlrLayershell.namespace: "hadalis:abyss-reservation-" + edge
+        WlrLayershell.namespace: "alis:abyss-reservation-" + edge
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         anchors {

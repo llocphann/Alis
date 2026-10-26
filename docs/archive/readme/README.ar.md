@@ -1,20 +1,20 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
 
 <div dir="rtl">
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="Alis" width="800">
 </p>
 
-<h1 align="center">iNiR</h1>
+<h1 align="center">Alis</h1>
 
 <p align="center">
   <b>واجهة سطح مكتب كاملة لـ Niri، مبنية على Quickshell</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
-  <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/snowarch/alis/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/alis/stargazers"><img src="https://img.shields.io/github/stars/snowarch/alis?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
@@ -43,11 +43,11 @@
 
 ### شو هذا؟
 
-iNiR هو سطح المكتب كامل. الشريط فوق، الدوك، الإشعارات، الإعدادات، الخلفيات، كل شي. مو ثيم، مو ملفات dotfiles تنسخها. شل كامل يشتغل على لينكس.
+Alis هو سطح المكتب كامل. الشريط فوق، الدوك، الإشعارات، الإعدادات، الخلفيات، كل شي. مو ثيم، مو ملفات dotfiles تنسخها. شل كامل يشتغل على لينكس.
 
 ### شو أحتاج عشان أشغله؟
 
-كومبوزيتر. هذا اللي يدير النوافذ ويحط البكسلات على الشاشة. iNiR مصمم لـ [Niri](https://github.com/YaLTeR/niri) (كومبوزيتر Wayland تايلنق). في كود قديم من Hyprland من أيام ما كان فورك من dots الـ end-4، بس Niri هو اللي فعلياً أجربه وأستخدمه.
+كومبوزيتر. هذا اللي يدير النوافذ ويحط البكسلات على الشاشة. Alis مصمم لـ [Niri](https://github.com/YaLTeR/niri) (كومبوزيتر Wayland تايلنق). في كود قديم من Hyprland من أيام ما كان فورك من dots الـ end-4، بس Niri هو اللي فعلياً أجربه وأستخدمه.
 
 الشل يشتغل على [Quickshell](https://quickshell.outfoxxed.me/)، فريمورك لبناء شلات بـ QML (لغة UI من Qt). ما تحتاج تعرفها عشان تستخدمه، كل شي يتضبط من الـ GUI أو ملف JSON.
 
@@ -56,7 +56,7 @@ iNiR هو سطح المكتب كامل. الشريط فوق، الدوك، ال�
 ```
 تطبيقاتك
    ↓
-iNiR (شل: بار، سايدبار، دوك، إشعارات، إعدادات...)
+Alis (شل: بار، سايدبار، دوك، إشعارات، إعدادات...)
    ↓
 Quickshell (يشغل شلات QML)
    ↓
@@ -69,7 +69,7 @@ Wayland ← GPU
 
 مشروع شخصي طلع عن السيطرة. أستخدمه كل يوم، ناس كثير في الـ Discord بعد. بس أحياناً ينكسر، الكود فوضوي في أماكن، أتعلم وأنا أسوي.
 
-إذا شي ما اشتغل، `inir doctor` يصلح أغلب الأشياء. إذا ما نفع، الـ Discord نشط. لا تتوقع سوفتوير مصقول، هذا rice شخص واحد عجب ناس ثانيين.
+إذا شي ما اشتغل، `alis doctor` يصلح أغلب الأشياء. إذا ما نفع، الـ Discord نشط. لا تتوقع سوفتوير مصقول، هذا rice شخص واحد عجب ناس ثانيين.
 
 ### ليش موجود؟
 
@@ -80,7 +80,7 @@ Wayland ← GPU
 - **Shell**: طبقة الـ UI (بار، بانلز، أوفرليز)
 - **Compositor**: يدير النوافذ، يرسم على الشاشة (Niri، Hyprland، Sway...)
 - **Wayland**: بروتوكول العرض في لينكس (الجديد، بديل X11)
-- **QML**: لغة UI من Qt، iNiR مكتوب فيها
+- **QML**: لغة UI من Qt، Alis مكتوب فيها
 - **Material You**: نظام ألوان قوقل اللي يسوي باليتات من الصور (كذا يشتغل الـ auto-theming)
 - **ii / waffle**: ستايلين للبانل. ii = فايب Material Design، waffle = فايب Windows 11. `Super+Shift+W` يبدل بينهم
 
@@ -176,7 +176,7 @@ Wayland ← GPU
 
 - **إعدادات واجهة رسومية** — إعداد كل شيء بدون تحرير ملفات
 - **GameMode** — تعطيل تلقائي للتأثيرات عند التطبيقات بملء الشاشة
-- **تحديثات تلقائية** — `inir update` مع تراجع وترحيل وحفظ تغييرات المستخدم
+- **تحديثات تلقائية** — `alis update` مع تراجع وترحيل وحفظ تغييرات المستخدم
 - **شاشة القفل** و**شاشة الجلسة** (تسجيل خروج/إعادة تشغيل/إيقاف/سكون)
 - **وكيل Polkit**، **لوحة مفاتيح على الشاشة**، **مدير التشغيل التلقائي**
 - **9 لغات** — كشف تلقائي، مع توليد ترجمات بمساعدة الذكاء الاصطناعي
@@ -194,24 +194,24 @@ Wayland ← GPU
 <div dir="ltr">
 
 ```bash
-git clone https://github.com/snowarch/inir.git
-cd inir
+git clone https://github.com/snowarch/alis.git
+cd alis
 ./setup install       # تفاعلي — يسأل قبل كل خطوة
 ./setup install -y    # تلقائي — بدون أسئلة
 ```
 
 </div>
 
-يتعامل المُثبّت مع التبعيات، إعداد النظام، السمات — كل شيء. بعد التثبيت، شغّل `inir run` أو سجّل الخروج وأعد تسجيل الدخول.
+يتعامل المُثبّت مع التبعيات، إعداد النظام، السمات — كل شيء. بعد التثبيت، شغّل `alis run` أو سجّل الخروج وأعد تسجيل الدخول.
 
 <div dir="ltr">
 
 ```bash
-inir run                        # تشغيل الواجهة
-inir settings                   # فتح إعدادات واجهة رسومية
-inir logs                       # فحص سجلات وقت التشغيل
-inir doctor                     # تشخيص وإصلاح تلقائي
-inir update                     # سحب + ترحيل + إعادة تشغيل
+alis run                        # تشغيل الواجهة
+alis settings                   # فتح إعدادات واجهة رسومية
+alis logs                       # فحص سجلات وقت التشغيل
+alis doctor                     # تشخيص وإصلاح تلقائي
+alis update                     # سحب + ترحيل + إعادة تشغيل
 ```
 
 </div>
@@ -220,7 +220,7 @@ inir update                     # سحب + ترحيل + إعادة تشغيل
 
 | الطريقة | الأمر |
 |--------|---------|
-| تثبيت نظام | `sudo make install && inir run` |
+| تثبيت نظام | `sudo make install && alis run` |
 | قائمة TUI | `./setup` |
 | تراجع | `./setup rollback` |
 
@@ -244,7 +244,7 @@ inir update                     # سحب + ترحيل + إعادة تشغيل
 
 ## الخلفيات
 
-15 خلفية مضمنة. للمزيد، تحقق من [iNiR-Walls](https://github.com/snowarch/iNiR-Walls) — مجموعة منسقة تعمل جيداً مع خط أنابيب Material You.
+15 خلفية مضمنة. للمزيد، تحقق من [Alis-Walls](https://github.com/snowarch/Alis-Walls) — مجموعة منسقة تعمل جيداً مع خط أنابيب Material You.
 
 ---
 
@@ -267,9 +267,9 @@ inir update                     # سحب + ترحيل + إعادة تشغيل
 <div dir="ltr">
 
 ```bash
-inir logs                       # فحص سجلات وقت التشغيل الأخيرة
-inir restart                    # إعادة تشغيل وقت التشغيل النشط
-inir repair                     # doctor + إعادة تشغيل + فحص سجلات مفلترة
+alis logs                       # فحص سجلات وقت التشغيل الأخيرة
+alis restart                    # إعادة تشغيل وقت التشغيل النشط
+alis repair                     # doctor + إعادة تشغيل + فحص سجلات مفلترة
 ./setup doctor                  # تشخيص وإصلاح المشاكل الشائعة تلقائياً
 ./setup rollback                # التراجع عن آخر تحديث
 ```
@@ -295,7 +295,7 @@ inir repair                     # doctor + إعادة تشغيل + فحص سجل
 ---
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/graphs/contributors">المساهمون</a> &bull;
+  <a href="https://github.com/snowarch/alis/graphs/contributors">المساهمون</a> &bull;
   <a href="CHANGELOG.md">سجل التغييرات</a> &bull;
   <a href="LICENSE">رخصة GPL-3.0</a>
 </p>

@@ -10,17 +10,17 @@ For release `X.Y.Z`, update these files together before tagging:
 
 - `VERSION` -> `X.Y.Z`
 - `CHANGELOG.md` -> a dated `## [X.Y.Z] - YYYY-MM-DD` section
-- `distro/arch/inir-shell/PKGBUILD` -> `pkgver=X.Y.Z`
-- `distro/arch/inir-meta/PKGBUILD` -> `pkgver=X.Y.Z`
-- `sdata/dist-arch/inir-deps/PKGBUILD` -> `pkgver=X.Y.Z`
-- `distro/arch/inir-shell/PKGBUILD` -> default `_source_ref` must be exactly `vX.Y.Z`
+- `distro/arch/alis-shell/PKGBUILD` -> `pkgver=X.Y.Z`
+- `distro/arch/alis-meta/PKGBUILD` -> `pkgver=X.Y.Z`
+- `sdata/dist-arch/alis-deps/PKGBUILD` -> `pkgver=X.Y.Z`
+- `distro/arch/alis-shell/PKGBUILD` -> default `_source_ref` must be exactly `vX.Y.Z`
 - the affected Arch `.SRCINFO` files -> regenerate them so committed package metadata matches the PKGBUILDs
 
-`inir-deps` is the dependency-tracker meta-package that the source installer builds after dependency setup. Keep its committed `pkgver` aligned with `VERSION`; the installer stages a temporary recipe when it needs to inject the current version and must not rewrite the tracked PKGBUILD in-place.
+`alis-deps` is the dependency-tracker meta-package that the source installer builds after dependency setup. Keep its committed `pkgver` aligned with `VERSION`; the installer stages a temporary recipe when it needs to inject the current version and must not rewrite the tracked PKGBUILD in-place.
 
-The non-VCS `inir-shell` package must use the release tag as its committed default source ref. Do not leave `_source_ref` pointing at `stable`, `dev`, or another movable branch for a release. Do not try to bake the release commit SHA into the same release commit; the release tag is the immutable package identity used by the publication preflight.
+The non-VCS `alis-shell` package must use the release tag as its committed default source ref. Do not leave `_source_ref` pointing at `stable`, `dev`, or another movable branch for a release. Do not try to bake the release commit SHA into the same release commit; the release tag is the immutable package identity used by the publication preflight.
 
-After changing the source ref, regenerate `distro/arch/inir-shell/.SRCINFO`. Its source entry must resolve to the same tag archive, for example:
+After changing the source ref, regenerate `distro/arch/alis-shell/.SRCINFO`. Its source entry must resolve to the same tag archive, for example:
 
 ```text
 .../archive/vX.Y.Z.tar.gz
@@ -107,8 +107,8 @@ Do not move the tag after publication. `scripts/release.sh publish` requires all
 - `HEAD` equals `vX.Y.Z^{commit}`
 - the tag commit is contained in `origin/stable`
 - the tag exists on the remote and resolves to the same commit as the local tag
-- `distro/arch/inir-shell/PKGBUILD` defaults `_source_ref` to exactly `vX.Y.Z`
-- `distro/arch/inir-shell/.SRCINFO` points at the same tag archive
+- `distro/arch/alis-shell/PKGBUILD` defaults `_source_ref` to exactly `vX.Y.Z`
+- `distro/arch/alis-shell/.SRCINFO` points at the same tag archive
 - GitHub CLI (`gh`) is available and authenticated for the repository
 - the GitHub Wiki feature is enabled so repository docs can be synchronized
 - the Wiki repository has been initialized with at least one page and is reachable with non-interactive Git credentials

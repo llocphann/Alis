@@ -203,7 +203,7 @@
     {
       "argv": [
         "node",
-        "scripts/test-hadalis-native-session.mjs"
+        "scripts/test-alis-native-session.mjs"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -212,7 +212,7 @@
     {
       "argv": [
         "node",
-        "scripts/test-hadalis-static-helper-analysis.mjs"
+        "scripts/test-alis-static-helper-analysis.mjs"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -221,7 +221,7 @@
     {
       "argv": [
         "node",
-        "scripts/test-hadalis-transport-evidence.mjs"
+        "scripts/test-alis-transport-evidence.mjs"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -230,7 +230,7 @@
     {
       "argv": [
         "node",
-        "scripts/test-hadalis-reconciliation-evidence.mjs"
+        "scripts/test-alis-reconciliation-evidence.mjs"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -239,7 +239,7 @@
     {
       "argv": [
         "node",
-        "scripts/test-hadalis-receipt-evidence.mjs"
+        "scripts/test-alis-receipt-evidence.mjs"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -248,7 +248,7 @@
     {
       "argv": [
         "node",
-        "scripts/test-hadalis-legacy-ui-probe.mjs"
+        "scripts/test-alis-legacy-ui-probe.mjs"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -257,7 +257,7 @@
     {
       "argv": [
         "node",
-        "scripts/test-hadalis-legacy-ui-response-probe.mjs"
+        "scripts/test-alis-legacy-ui-response-probe.mjs"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -266,7 +266,7 @@
     {
       "argv": [
         "node",
-        "scripts/test-hadalis-legacy-ui-acceptance.mjs"
+        "scripts/test-alis-legacy-ui-acceptance.mjs"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -275,7 +275,7 @@
     {
       "argv": [
         "node",
-        "scripts/test-hadalis-native-scope-probe.mjs"
+        "scripts/test-alis-native-scope-probe.mjs"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -284,7 +284,7 @@
     {
       "argv": [
         "python3",
-        "scripts/test-hadalis-automation-model.py"
+        "scripts/test-alis-automation-model.py"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -293,7 +293,7 @@
     {
       "argv": [
         "python3",
-        "scripts/test-hadalis-automation-storage.py"
+        "scripts/test-alis-automation-storage.py"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -302,7 +302,7 @@
     {
       "argv": [
         "python3",
-        "scripts/test-hadalis-automation-recovery.py"
+        "scripts/test-alis-automation-recovery.py"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -311,7 +311,7 @@
     {
       "argv": [
         "python3",
-        "scripts/test-hadalis-automation-scheduler.py"
+        "scripts/test-alis-automation-scheduler.py"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -320,7 +320,7 @@
     {
       "argv": [
         "python3",
-        "scripts/test-hadalis-automation-startup.py"
+        "scripts/test-alis-automation-startup.py"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -348,7 +348,7 @@
     {
       "argv": [
         "python3",
-        "scripts/test-hadalis-chat-bridge.py"
+        "scripts/test-alis-chat-bridge.py"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -447,7 +447,7 @@
     {
       "argv": [
         "python3",
-        "scripts/test-hadalis-automation-credentials.py"
+        "scripts/test-alis-automation-credentials.py"
       ],
       "actual_exit": 0,
       "status": "PASS",
@@ -456,7 +456,7 @@
     {
       "argv": [
         "python3",
-        "scripts/test-hadalis-automation-install.py"
+        "scripts/test-alis-automation-install.py"
       ],
       "actual_exit": 0,
       "status": "PASS",

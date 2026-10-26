@@ -6,7 +6,7 @@ import Quickshell
 
 Singleton {
     id: root
-    readonly property var implementation: Hadalird.session?.tlpCapabilities ?? (null)
+    readonly property var implementation: AlisIntergration.session?.tlpCapabilities ?? (null)
     property string missingOperationError: ""
     readonly property int safetyRefreshIntervalMs: root.implementation?.safetyRefreshIntervalMs ?? (0)
     readonly property var values: root.implementation?.values ?? (({}))
@@ -25,15 +25,15 @@ Singleton {
     readonly property var intelGpuBoostKeys: root.implementation?.intelGpuBoostKeys ?? ([])
     function isRdwSetting(key: string): bool {
         if (root.implementation) return root.implementation.isRdwSetting(key)
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
         return false
     }
     function refreshRdw(): void {
         if (root.implementation) return root.implementation.refreshRdw()
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
     }
     function refresh(): void {
         if (root.implementation) return root.implementation.refresh()
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
     }
 }

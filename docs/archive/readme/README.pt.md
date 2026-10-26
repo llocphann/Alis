@@ -1,18 +1,18 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="Alis" width="800">
 </p>
 
-<h1 align="center">iNiR</h1>
+<h1 align="center">Alis</h1>
 
 <p align="center">
   <b>Um shell de desktop completo para Niri, feito com Quickshell</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
-  <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/snowarch/alis/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/alis/stargazers"><img src="https://img.shields.io/github/stars/snowarch/alis?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
@@ -41,11 +41,11 @@
 
 ### O que é isso?
 
-iNiR é o teu desktop inteiro. A barra no topo, o dock, notificações, configurações, wallpapers, tudo. Não é um tema, não são dotfiles pra copiar e colar. É um shell completo que roda no Linux.
+Alis é o teu desktop inteiro. A barra no topo, o dock, notificações, configurações, wallpapers, tudo. Não é um tema, não são dotfiles pra copiar e colar. É um shell completo que roda no Linux.
 
 ### O que preciso pra usar?
 
-Um compositor. É o que gerencia janelas e coloca pixels na tela. iNiR foi feito pro [Niri](https://github.com/YaLTeR/niri) (um compositor Wayland de tiling). Tem código velho do Hyprland de quando isso era um fork dos dots do end-4, mas o que realmente testo e uso é Niri.
+Um compositor. É o que gerencia janelas e coloca pixels na tela. Alis foi feito pro [Niri](https://github.com/YaLTeR/niri) (um compositor Wayland de tiling). Tem código velho do Hyprland de quando isso era um fork dos dots do end-4, mas o que realmente testo e uso é Niri.
 
 O shell roda no [Quickshell](https://quickshell.outfoxxed.me/), um framework pra fazer shells em QML (linguagem de UI do Qt). Não precisa saber nada disso pra usar, tudo se configura pela GUI ou um JSON.
 
@@ -54,7 +54,7 @@ O shell roda no [Quickshell](https://quickshell.outfoxxed.me/), um framework pra
 ```
 teus apps
    ↓
-iNiR (shell: barra, sidebars, dock, notificações, settings...)
+Alis (shell: barra, sidebars, dock, notificações, settings...)
    ↓
 Quickshell (roda shells QML)
    ↓
@@ -67,7 +67,7 @@ Wayland → GPU
 
 É um projeto pessoal que saiu do controle. Uso todo dia, muita gente no Discord também. Mas às vezes quebra, código tá bagunçado em partes, vou aprendendo enquanto faço.
 
-Se algo não funcionar, `inir doctor` arruma a maioria. Discord tá ativo se isso não resolver. Não espera software polido, isso é o rice de uma pessoa que outros curtiram.
+Se algo não funcionar, `alis doctor` arruma a maioria. Discord tá ativo se isso não resolver. Não espera software polido, isso é o rice de uma pessoa que outros curtiram.
 
 ### Por que existe?
 
@@ -78,7 +78,7 @@ Queria que meu desktop tivesse uma cara e funcionasse de um jeito, e nada mais f
 - **Shell**: a camada de UI (barra, painéis, overlays)
 - **Compositor**: gerencia janelas, desenha na tela (Niri, Hyprland, Sway...)
 - **Wayland**: protocolo de display do Linux (o novo, substitui X11)
-- **QML**: linguagem declarativa de UI do Qt, iNiR é escrito nisso
+- **QML**: linguagem declarativa de UI do Qt, Alis é escrito nisso
 - **Material You**: sistema de cores do Google que gera paletas de imagens (assim funciona o auto-theming)
 - **ii / waffle**: os dois estilos de painel. ii = vibe Material Design, waffle = vibe Windows 11. `Super+Shift+W` alterna
 
@@ -174,7 +174,7 @@ Sidebar direito:
 
 - **Configurações GUI** — configure tudo sem editar arquivos
 - **GameMode** — desativa efeitos automaticamente com apps em tela cheia
-- **Atualizações automáticas** — `inir update` com rollback, migrações e preservação de mudanças do usuário
+- **Atualizações automáticas** — `alis update` com rollback, migrações e preservação de mudanças do usuário
 - **Tela de bloqueio** e **tela de sessão** (logout/reboot/shutdown/suspend)
 - **Agente polkit**, **teclado na tela**, **gerenciador de autostart**
 - **9 idiomas** — detecção automática, com geração de traduções assistida por IA
@@ -190,27 +190,27 @@ Sidebar direito:
 ## Início rápido
 
 ```bash
-git clone https://github.com/snowarch/inir.git
-cd inir
+git clone https://github.com/snowarch/alis.git
+cd alis
 ./setup install       # interativo — pergunta antes de cada passo
 ./setup install -y    # automático — sem perguntas
 ```
 
-O instalador cuida de dependências, configuração do sistema, tematização — tudo. Após instalar, rode `inir run` para iniciar o shell, ou faça logout e login novamente.
+O instalador cuida de dependências, configuração do sistema, tematização — tudo. Após instalar, rode `alis run` para iniciar o shell, ou faça logout e login novamente.
 
 ```bash
-inir run                        # iniciar o shell
-inir settings                   # abrir configurações GUI
-inir logs                       # verificar logs de runtime
-inir doctor                     # auto-diagnosticar e corrigir
-inir update                     # pull + migrações + reiniciar
+alis run                        # iniciar o shell
+alis settings                   # abrir configurações GUI
+alis logs                       # verificar logs de runtime
+alis doctor                     # auto-diagnosticar e corrigir
+alis update                     # pull + migrações + reiniciar
 ```
 
 **Distros suportadas:** Arch (instalador automatizado). Outras distros podem instalar manualmente — veja [PACKAGES.md](../../PACKAGES.md).
 
 | Método | Comando |
 |--------|---------|
-| Instalação de sistema | `sudo make install && inir run` |
+| Instalação de sistema | `sudo make install && alis run` |
 | Menu TUI | `./setup` |
 | Rollback | `./setup rollback` |
 
@@ -234,7 +234,7 @@ Lista completa: [KEYBINDS.md](../../KEYBINDS.md)
 
 ## Wallpapers
 
-15 wallpapers vêm incluídos. Para mais, confira [iNiR-Walls](https://github.com/snowarch/iNiR-Walls) — uma coleção curada que funciona bem com o pipeline Material You.
+15 wallpapers vêm incluídos. Para mais, confira [Alis-Walls](https://github.com/snowarch/Alis-Walls) — uma coleção curada que funciona bem com o pipeline Material You.
 
 ---
 
@@ -255,9 +255,9 @@ Lista completa: [KEYBINDS.md](../../KEYBINDS.md)
 ## Solução de problemas
 
 ```bash
-inir logs                       # verifique os logs — a resposta geralmente está lá
-inir restart                    # reiniciar o shell
-inir repair                     # doctor + reinício + verificação de logs filtrada
+alis logs                       # verifique os logs — a resposta geralmente está lá
+alis restart                    # reiniciar o shell
+alis repair                     # doctor + reinício + verificação de logs filtrada
 ./setup doctor                  # auto-diagnosticar e corrigir problemas comuns
 ./setup rollback                # desfazer a última atualização
 ```
@@ -281,7 +281,7 @@ Veja [CONTRIBUTING.md](../../../CONTRIBUTING.md) para setup de desenvolvimento, 
 ---
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/graphs/contributors">Contribuidores</a> &bull;
+  <a href="https://github.com/snowarch/alis/graphs/contributors">Contribuidores</a> &bull;
   <a href="CHANGELOG.md">Changelog</a> &bull;
   <a href="LICENSE">Licença GPL-3.0</a>
 </p>

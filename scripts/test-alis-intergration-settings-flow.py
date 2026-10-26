@@ -65,11 +65,11 @@ for i, match in enumerate(flows):
     assert expected in inside, f"Flow #{i + 1} changed roles or was emptied"
 
 assert '"Refresh"' in qml
-assert 'Hadalird.refreshSystemStatus()' in qml
+assert 'AlisIntergration.refreshSystemStatus()' in qml
 assert '"Check status"' not in qml
 assert 'Reinstall helpers' not in qml and 'Install gateway' not in qml
 assert './setup integrations' in qml
-assert 'Hadalird.manage("helpers-' not in qml and 'Hadalird.manage("gateway-' not in qml
+assert 'AlisIntergration.manage("helpers-' not in qml and 'AlisIntergration.manage("gateway-' not in qml
 assert 'root.primaryTabs' in qml and 'integrationCapabilityTabs' in qml
 assert "settingsPageIndex: 38" in qml
-print("HADALIRD_SETTINGS_FLOW_PASS all package, helper and gateway flows use Qt-safe layouts")
+print("ALIS_INTERGRATION_SETTINGS_FLOW_PASS all package, helper and gateway flows use Qt-safe layouts")

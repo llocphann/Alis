@@ -11,8 +11,8 @@ Item {
     Loader {
         id: content
         width: parent.width
-        active: Hadalird.thinkfanEnabled && root.visible
-        source: Hadalird.settingsSource("thinkfan")
+        active: AlisIntergration.thinkfanEnabled && root.visible
+        source: AlisIntergration.settingsSource("thinkfan")
     }
     SettingsCardSection {
         id: fallback

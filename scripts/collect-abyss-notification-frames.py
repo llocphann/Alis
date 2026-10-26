@@ -314,7 +314,7 @@ def main():
     parser.add_argument("--seconds", type=int, default=6)
     parser.add_argument("--interval", type=float, default=.25)
     parser.add_argument("--config", type=Path, default=Path(
-        os.environ.get("HADALIS_QS_CONFIG",
+        os.environ.get("ALIS_QS_CONFIG",
                        str(Path.home() / ".config/quickshell/alis"))))
     parser.add_argument("--output-dir", type=Path)
     args = parser.parse_args()

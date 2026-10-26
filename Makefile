@@ -60,7 +60,7 @@ test-equalizer-contracts:
 
 test-perimeter-contracts:
 	@bash scripts/test-perimeter-contracts.sh
-	@python3 scripts/test-iris-production-surface-contract.py
+	@python3 scripts/test-abyss-production-surface-contract.py
 	@python3 scripts/test-connected-input-lifecycle.py
 	@python3 scripts/test-quick-notes-corner-contract.py
 	@python3 scripts/test-alis-companion-optional.py

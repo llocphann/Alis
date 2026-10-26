@@ -1457,33 +1457,33 @@ Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
 Dashboard native process exit: 124
-  INFO: Launching config: "/tmp/hadalis-dashboard-editor-field-sfh6djnb/shell.qml"
+  INFO: Launching config: "/tmp/alis-dashboard-editor-field-sfh6djnb/shell.qml"
   INFO: Shell ID: "f025999fd5897185f50575f6f8fb95d1" Path ID "f025999fd5897185f50575f6f8fb95d1"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/exd3c6hwmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.157989.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/hadalis-dashboard-editor-field-sfh6djnb/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/alis-dashboard-editor-field-sfh6djnb/config/alis/config.json failed: File does not exist.
  DEBUG qml: [Config] File not found, creating new file.
-  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/hadalis-dashboard-editor-field-sfh6djnb/config/alis/config.json failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-editor-field-sfh6djnb/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-sfh6djnb/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/alis-dashboard-editor-field-sfh6djnb/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dashboard-editor-field-sfh6djnb/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-editor-field-sfh6djnb/state/quickshell/user/gamemode_active failed: File does not exist.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f1c7300f0a0)
   INFO qml: CHECKS_START
   INFO qml: CONFIG_READY
   INFO qml: CASE_START [[1280,900],"Dashboard","top"]
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-sfh6djnb/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/hadalis-dashboard-editor-field-sfh6djnb/state/quickshell/user/notifications.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-editor-field-sfh6djnb/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-dashboard-editor-field-sfh6djnb/state/quickshell/user/notifications.json failed: File does not exist.
  DEBUG qml: [Notifications] File not found, creating new file.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/hadalis-dashboard-editor-field-sfh6djnb/state/quickshell/user/todo.txt failed: File does not exist.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/hadalis-dashboard-editor-field-sfh6djnb/state/quickshell/user/todo.json failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/alis-dashboard-editor-field-sfh6djnb/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/alis-dashboard-editor-field-sfh6djnb/state/quickshell/user/todo.json failed: File does not exist.
  DEBUG qml: [Todo] JSON not found, creating new file.
-  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/hadalis-dashboard-editor-field-sfh6djnb/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-dashboard-editor-field-sfh6djnb/state/quickshell/user/events.json failed: File does not exist.
  DEBUG qml: [Events] File not found, creating new file.
-  WARN scene: QML FileView at @services/Notepad.qml[217:5]: Read of /tmp/hadalis-dashboard-editor-field-sfh6djnb/state/quickshell/user/notepad-tabs.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Notepad.qml[217:5]: Read of /tmp/alis-dashboard-editor-field-sfh6djnb/state/quickshell/user/notepad-tabs.json failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f1c347734c0)
-  WARN scene: QML FileView at @services/Notepad.qml[267:5]: Read of /tmp/hadalis-dashboard-editor-field-sfh6djnb/state/quickshell/user/notepad.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/Notepad.qml[267:5]: Read of /tmp/alis-dashboard-editor-field-sfh6djnb/state/quickshell/user/notepad.txt failed: File does not exist.
   INFO qml: [Weather] Getting location from IP...
   INFO qml: [Weather] Location: [redacted]
   INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","top"] open-partial 0
@@ -1673,23 +1673,23 @@ Command: python3 scripts/test-dashboard-music-scroll-runtime.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalis-dashboard-music-gcgf_her/shell.qml"
+  INFO: Launching config: "/tmp/alis-dashboard-music-gcgf_her/shell.qml"
   INFO: Shell ID: "59e0ba61cdf4f3998c1e7a6b26920ff4" Path ID "59e0ba61cdf4f3998c1e7a6b26920ff4"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/1ng3d9hwmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.161510.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-music-gcgf_her/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-gcgf_her/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/hadalis-dashboard-music-gcgf_her/state/quickshell/user/notifications.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dashboard-music-gcgf_her/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-music-gcgf_her/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-dashboard-music-gcgf_her/state/quickshell/user/notifications.json failed: File does not exist.
  DEBUG qml: [Notifications] File not found, creating new file.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/hadalis-dashboard-music-gcgf_her/state/quickshell/user/todo.txt failed: File does not exist.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/hadalis-dashboard-music-gcgf_her/state/quickshell/user/todo.json failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/alis-dashboard-music-gcgf_her/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/alis-dashboard-music-gcgf_her/state/quickshell/user/todo.json failed: File does not exist.
  DEBUG qml: [Todo] JSON not found, creating new file.
-  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/hadalis-dashboard-music-gcgf_her/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-dashboard-music-gcgf_her/state/quickshell/user/events.json failed: File does not exist.
  DEBUG qml: [Events] File not found, creating new file.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fb047ddb420)
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-gcgf_her/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-music-gcgf_her/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
   INFO qml: [Weather] Getting location from IP...
   INFO qml: [Weather] Location: [redacted]
@@ -1833,7 +1833,7 @@ Command: python3 scripts/test-desktop-widget-editor-coordinates.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalis-widget-coordinates-3_f_i3bc/shell.qml"
+  INFO: Launching config: "/tmp/alis-widget-coordinates-3_f_i3bc/shell.qml"
   INFO: Shell ID: "f90f75a11a8f4b03c71524b231b2d9ab" Path ID "f90f75a11a8f4b03c71524b231b2d9ab"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/zri34bhwmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
@@ -1842,27 +1842,27 @@ Output:
   INFO qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version n9.0.2 GPL version 3 or later
 Failed to open VDPAU backend libvdpau_nvidia.so: cannot open shared object file: No such file or directory
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/hadalis-widget-coordinates-3_f_i3bc/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/alis-widget-coordinates-3_f_i3bc/config/alis/config.json failed: File does not exist.
  DEBUG qml: [Config] File not found, creating new file.
-  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/hadalis-widget-coordinates-3_f_i3bc/config/alis/config.json failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-widget-coordinates-3_f_i3bc/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-widget-coordinates-3_f_i3bc/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/hadalis-widget-coordinates-3_f_i3bc/state/quickshell/user/notifications.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/alis-widget-coordinates-3_f_i3bc/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-widget-coordinates-3_f_i3bc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-widget-coordinates-3_f_i3bc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-widget-coordinates-3_f_i3bc/state/quickshell/user/notifications.json failed: File does not exist.
  DEBUG qml: [Notifications] File not found, creating new file.
-  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/hadalis-widget-coordinates-3_f_i3bc/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-widget-coordinates-3_f_i3bc/state/quickshell/user/events.json failed: File does not exist.
  DEBUG qml: [Events] File not found, creating new file.
-  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/hadalis-widget-coordinates-3_f_i3bc/state/quickshell/states.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-widget-coordinates-3_f_i3bc/state/quickshell/states.json failed: File does not exist.
  DEBUG qml: Failed to load persistent states file: 2
  DEBUG qml: [Persistent] File not found, creating new file.
-  WARN scene: QML FileView at @services/DesktopItems.qml[408:5]: Read of /tmp/hadalis-widget-coordinates-3_f_i3bc/state/quickshell/user/desktop-items.json failed: File does not exist.
+  WARN scene: QML FileView at @services/DesktopItems.qml[408:5]: Read of /tmp/alis-widget-coordinates-3_f_i3bc/state/quickshell/user/desktop-items.json failed: File does not exist.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f449a5fbe40)
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f447efecfc0)
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-widget-coordinates-3_f_i3bc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-widget-coordinates-3_f_i3bc/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
  DEBUG qml: [ShellUpdates] Loading repo path from version.json...
  DEBUG qml: [ShellUpdates] No repo_path in version.json, searching for repository...
   INFO qml: [Weather] Getting location from IP...
- DEBUG qml: [ShellUpdates] Repository not found, using config dir: /tmp/hadalis-widget-coordinates-3_f_i3bc/.
+ DEBUG qml: [ShellUpdates] Repository not found, using config dir: /tmp/alis-widget-coordinates-3_f_i3bc/.
  DEBUG qml: [ShellUpdates] Update feature will not be available
  DEBUG qml: [ShellUpdates] Git available: false
   INFO qml: [Weather] Location: [redacted]
@@ -1895,7 +1895,7 @@ Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
 Traceback (most recent call last):
   File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-dock-abyss-hover-orientation-contract.py", line 49, in <module>
-    assert 'Drag.keys: ["inir-dock-pinned-app"]' in settings
+    assert 'Drag.keys: ["alis-dock-pinned-app"]' in settings
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 AssertionError
 END FAILURE: Python regression: scripts/test-dock-abyss-hover-orientation-contract.py
@@ -1926,7 +1926,7 @@ Traceback (most recent call last):
     test()
     ~~~~^^
   File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-fcitx5-session-integration.py", line 136, in test_preserved_niri_config_migration
-    check(lines.count('spawn-at-startup "/opt/test/inir" "input-method" "start"') == 1,
+    check(lines.count('spawn-at-startup "/opt/test/alis" "input-method" "start"') == 1,
     ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
           "migration must add exactly one path-safe startup entry")
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1945,128 +1945,128 @@ Command: python3 scripts/test-global-actions-query-parity.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
----- CHECK [185]: Python regression: scripts/test-hadalird-arch-package.py ----
-Command: python3 scripts/test-hadalird-arch-package.py
+---- CHECK [185]: Python regression: scripts/test-alis-intergration-arch-package.py ----
+Command: python3 scripts/test-alis-intergration-arch-package.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: FAIL (exit 1)
-BEGIN FAILURE: Python regression: scripts/test-hadalird-arch-package.py
-Command: python3 scripts/test-hadalird-arch-package.py
+BEGIN FAILURE: Python regression: scripts/test-alis-intergration-arch-package.py
+Command: python3 scripts/test-alis-intergration-arch-package.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
 Traceback (most recent call last):
-  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-hadalird-arch-package.py", line 12, in <module>
+  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-alis-intergration-arch-package.py", line 12, in <module>
     result = subprocess.run(["bash", "-ec", 'source "$1"; name="$2"; declare -n values="$name"; printf "%s\\n" "${values[@]}"',
                              "fixture", str(recipe), field], text=True, capture_output=True, check=True)
   File "/usr/lib/python3.14/subprocess.py", line 578, in run
     raise CalledProcessError(retcode, process.args,
                              output=stdout, stderr=stderr)
-subprocess.CalledProcessError: Command '['bash', '-ec', 'source "$1"; name="$2"; declare -n values="$name"; printf "%s\\n" "${values[@]}"', 'fixture', '/tmp/alis-validation.Je8iOH/Alis/sdata/dist-arch/inir-deps/PKGBUILD', 'depends']' returned non-zero exit status 1.
-END FAILURE: Python regression: scripts/test-hadalird-arch-package.py
+subprocess.CalledProcessError: Command '['bash', '-ec', 'source "$1"; name="$2"; declare -n values="$name"; printf "%s\\n" "${values[@]}"', 'fixture', '/tmp/alis-validation.Je8iOH/Alis/sdata/dist-arch/alis-deps/PKGBUILD', 'depends']' returned non-zero exit status 1.
+END FAILURE: Python regression: scripts/test-alis-intergration-arch-package.py
 
----- CHECK [186]: Python regression: scripts/test-hadalird-gateway-bootstrap.py ----
-Command: python3 scripts/test-hadalird-gateway-bootstrap.py
+---- CHECK [186]: Python regression: scripts/test-alis-intergration-gateway-bootstrap.py ----
+Command: python3 scripts/test-alis-intergration-gateway-bootstrap.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: FAIL (exit 1)
-BEGIN FAILURE: Python regression: scripts/test-hadalird-gateway-bootstrap.py
-Command: python3 scripts/test-hadalird-gateway-bootstrap.py
+BEGIN FAILURE: Python regression: scripts/test-alis-intergration-gateway-bootstrap.py
+Command: python3 scripts/test-alis-intergration-gateway-bootstrap.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
 Traceback (most recent call last):
-  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-hadalird-gateway-bootstrap.py", line 17, in <module>
+  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-alis-intergration-gateway-bootstrap.py", line 17, in <module>
     trusted = module.expected_files(ROOT)
-  File "/tmp/alis-validation.Je8iOH/Alis/scripts/hadalird-system-package.py", line 72, in expected_files
-    raise ValueError("Hadalis system gateway source hash mismatch: " + name)
-ValueError: Hadalis system gateway source hash mismatch: assets/helpers/alis-hadalird-system-provision
-END FAILURE: Python regression: scripts/test-hadalird-gateway-bootstrap.py
+  File "/tmp/alis-validation.Je8iOH/Alis/scripts/alis-intergration-system-package.py", line 72, in expected_files
+    raise ValueError("Alis system gateway source hash mismatch: " + name)
+ValueError: Alis system gateway source hash mismatch: assets/helpers/alis-intergration-system-provision
+END FAILURE: Python regression: scripts/test-alis-intergration-gateway-bootstrap.py
 
----- CHECK [187]: Python regression: scripts/test-hadalird-install-lifecycle.py ----
-Command: python3 scripts/test-hadalird-install-lifecycle.py
+---- CHECK [187]: Python regression: scripts/test-alis-intergration-install-lifecycle.py ----
+Command: python3 scripts/test-alis-intergration-install-lifecycle.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
----- CHECK [188]: Python regression: scripts/test-hadalird-manager.py ----
-Command: python3 scripts/test-hadalird-manager.py
+---- CHECK [188]: Python regression: scripts/test-alis-intergration-manager.py ----
+Command: python3 scripts/test-alis-intergration-manager.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: FAIL (exit 1)
-BEGIN FAILURE: Python regression: scripts/test-hadalird-manager.py
-Command: python3 scripts/test-hadalird-manager.py
+BEGIN FAILURE: Python regression: scripts/test-alis-intergration-manager.py
+Command: python3 scripts/test-alis-intergration-manager.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
 Traceback (most recent call last):
-  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-hadalird-manager.py", line 118, in <module>
-    assert (home / "current/assets/helpers/inir-thinkfan").stat().st_mode & 0o111
+  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-alis-intergration-manager.py", line 118, in <module>
+    assert (home / "current/assets/helpers/alis-thinkfan").stat().st_mode & 0o111
            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~
 AssertionError
-END FAILURE: Python regression: scripts/test-hadalird-manager.py
+END FAILURE: Python regression: scripts/test-alis-intergration-manager.py
 
----- CHECK [189]: Python regression: scripts/test-hadalird-obsidian-wrapper.py ----
-Command: python3 scripts/test-hadalird-obsidian-wrapper.py
+---- CHECK [189]: Python regression: scripts/test-alis-intergration-obsidian-wrapper.py ----
+Command: python3 scripts/test-alis-intergration-obsidian-wrapper.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
----- CHECK [190]: Python regression: scripts/test-hadalird-optional.py ----
-Command: python3 scripts/test-hadalird-optional.py
+---- CHECK [190]: Python regression: scripts/test-alis-intergration-optional.py ----
+Command: python3 scripts/test-alis-intergration-optional.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: FAIL (exit 1)
-BEGIN FAILURE: Python regression: scripts/test-hadalird-optional.py
-Command: python3 scripts/test-hadalird-optional.py
+BEGIN FAILURE: Python regression: scripts/test-alis-intergration-optional.py
+Command: python3 scripts/test-alis-intergration-optional.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalird-host-x_mbskbq/absent/shell.qml"
+  INFO: Launching config: "/tmp/alis-intergration-host-x_mbskbq/absent/shell.qml"
   INFO: Shell ID: "d0830ed02126e2aeae31872bf1ebddc4" Path ID "d0830ed02126e2aeae31872bf1ebddc4"
-  INFO: Saving logs to "/tmp/hadalird-host-x_mbskbq/absent/runtime/quickshell/by-id/qpk34chwmt/log.qslog"
+  INFO: Saving logs to "/tmp/alis-intergration-host-x_mbskbq/absent/runtime/quickshell/by-id/qpk34chwmt/log.qslog"
   WARN: --- WARNING ---
   WARN: WAYLAND_DISPLAY is present but QT_QPA_PLATFORM is "offscreen"
   WARN: If you are actually running wayland, set QT_QPA_PLATFORM to "wayland" or most functionality will be broken.
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   WARN : Failed to create wl_display (No such file or directory)
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/hadalird-host-x_mbskbq/absent/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/alis-intergration-host-x_mbskbq/absent/config/alis/config.json failed: File does not exist.
  DEBUG qml: [Config] File not found, creating new file.
-  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/hadalird-host-x_mbskbq/absent/config/alis/config.json failed: File does not exist.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/hadalird-host-x_mbskbq/absent/state/quickshell/user/todo.txt failed: File does not exist.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/hadalird-host-x_mbskbq/absent/state/quickshell/user/todo.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/alis-intergration-host-x_mbskbq/absent/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/alis-intergration-host-x_mbskbq/absent/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/alis-intergration-host-x_mbskbq/absent/state/quickshell/user/todo.json failed: File does not exist.
  DEBUG qml: [Todo] JSON not found, creating new file.
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalird-host-x_mbskbq/absent/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalird-host-x_mbskbq/absent/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-intergration-host-x_mbskbq/absent/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-intergration-host-x_mbskbq/absent/state/quickshell/user/gamemode_active failed: File does not exist.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f395cdbfe00)
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalird-host-x_mbskbq/absent/state/quickshell/user/gamemode_active failed: File does not exist.
- ERROR qml: HADALIRD_HOST_FAIL missing package erased the saved selection check@qs:@/qs/shell.qml:26
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-intergration-host-x_mbskbq/absent/state/quickshell/user/gamemode_active failed: File does not exist.
+ ERROR qml: ALIS_INTERGRATION_HOST_FAIL missing package erased the saved selection check@qs:@/qs/shell.qml:26
 runChecks@qs:@/qs/shell.qml:69
 expression for onTriggered@qs:@/qs/shell.qml:129
 
-END FAILURE: Python regression: scripts/test-hadalird-optional.py
+END FAILURE: Python regression: scripts/test-alis-intergration-optional.py
 
----- CHECK [191]: Python regression: scripts/test-hadalird-polkit-visibility.py ----
-Command: python3 scripts/test-hadalird-polkit-visibility.py
+---- CHECK [191]: Python regression: scripts/test-alis-intergration-polkit-visibility.py ----
+Command: python3 scripts/test-alis-intergration-polkit-visibility.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
----- CHECK [192]: Python regression: scripts/test-hadalird-preferences-migration.py ----
-Command: python3 scripts/test-hadalird-preferences-migration.py
+---- CHECK [192]: Python regression: scripts/test-alis-intergration-preferences-migration.py ----
+Command: python3 scripts/test-alis-intergration-preferences-migration.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
----- CHECK [193]: Python regression: scripts/test-hadalird-settings-flow.py ----
-Command: python3 scripts/test-hadalird-settings-flow.py
+---- CHECK [193]: Python regression: scripts/test-alis-intergration-settings-flow.py ----
+Command: python3 scripts/test-alis-intergration-settings-flow.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
----- CHECK [194]: Python regression: scripts/test-hadalird-system-provision.py ----
-Command: python3 scripts/test-hadalird-system-provision.py
+---- CHECK [194]: Python regression: scripts/test-alis-intergration-system-provision.py ----
+Command: python3 scripts/test-alis-intergration-system-provision.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: FAIL (exit 1)
-BEGIN FAILURE: Python regression: scripts/test-hadalird-system-provision.py
-Command: python3 scripts/test-hadalird-system-provision.py
+BEGIN FAILURE: Python regression: scripts/test-alis-intergration-system-provision.py
+Command: python3 scripts/test-alis-intergration-system-provision.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
 Traceback (most recent call last):
-  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-hadalird-system-provision.py", line 14, in <module>
+  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-alis-intergration-system-provision.py", line 14, in <module>
     exec(compile(gateway.read_text(), str(gateway), "exec"), mod.__dict__)
                  ~~~~~~~~~~~~~~~~~^^
   File "/usr/lib/python3.14/pathlib/__init__.py", line 787, in read_text
@@ -2075,8 +2075,8 @@ Traceback (most recent call last):
   File "/usr/lib/python3.14/pathlib/__init__.py", line 771, in open
     return io.open(self, mode, buffering, encoding, errors, newline)
            ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-FileNotFoundError: [Errno 2] No such file or directory: '/tmp/alis-validation.Je8iOH/Alis/assets/helpers/inir-hadalird-system-provision'
-END FAILURE: Python regression: scripts/test-hadalird-system-provision.py
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/alis-validation.Je8iOH/Alis/assets/helpers/alis-alis-intergration-system-provision'
+END FAILURE: Python regression: scripts/test-alis-intergration-system-provision.py
 
 ---- CHECK [195]: Python regression: scripts/test-alis-companion-layer-shell.py ----
 Command: python3 scripts/test-alis-companion-layer-shell.py
@@ -2091,28 +2091,28 @@ Traceback (most recent call last):
   File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-alis-companion-layer-shell.py", line 55, in <module>
     assert result.returncode == 0 and "ALIS_COMPANION_CORE_LAYER_PASS" in result.stdout and not any(e in result.stdout for e in errors), result.stdout[-18000:]
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError:   INFO: Launching config: "/tmp/hadalis-without-companion-mdjzwluc/shell.qml"
+AssertionError:   INFO: Launching config: "/tmp/alis-without-companion-mdjzwluc/shell.qml"
   INFO: Shell ID: "c4f4f4d55c6ee235cdade888ba066596" Path ID "c4f4f4d55c6ee235cdade888ba066596"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/6hl3fchwmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.167780.sock
   WARN: Could not load icon "image-missing?fallback=image-missing" at size QSize(17, 17) from request
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/hadalis-without-companion-mdjzwluc/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/alis-without-companion-mdjzwluc/config/alis/config.json failed: File does not exist.
  DEBUG qml: [Config] File not found, creating new file.
-  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/hadalis-without-companion-mdjzwluc/config/alis/config.json failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-without-companion-mdjzwluc/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-without-companion-mdjzwluc/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/hadalis-without-companion-mdjzwluc/state/quickshell/user/notifications.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/alis-without-companion-mdjzwluc/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-without-companion-mdjzwluc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-without-companion-mdjzwluc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-without-companion-mdjzwluc/state/quickshell/user/notifications.json failed: File does not exist.
  DEBUG qml: [Notifications] File not found, creating new file.
-  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/hadalis-without-companion-mdjzwluc/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-without-companion-mdjzwluc/state/quickshell/user/events.json failed: File does not exist.
  DEBUG qml: [Events] File not found, creating new file.
-  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/hadalis-without-companion-mdjzwluc/state/quickshell/states.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-without-companion-mdjzwluc/state/quickshell/states.json failed: File does not exist.
  DEBUG qml: Failed to load persistent states file: 2
  DEBUG qml: [Persistent] File not found, creating new file.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f4a00569180)
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f49f5fa7fc0)
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-without-companion-mdjzwluc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-without-companion-mdjzwluc/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
   INFO qml: ALIS_COMPANION_CORE_LAYER_FAIL
 
@@ -2210,8 +2210,8 @@ A connection to the bus can't be made
 
 END FAILURE: Python regression: scripts/test-alis-companion-optional.py
 
----- CHECK [197]: Python regression: scripts/test-inir-process-cleanup.py ----
-Command: python3 scripts/test-inir-process-cleanup.py
+---- CHECK [197]: Python regression: scripts/test-alis-process-cleanup.py ----
+Command: python3 scripts/test-alis-process-cleanup.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
@@ -2225,18 +2225,18 @@ Command: python3 scripts/test-ipc-registry-generator.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
----- CHECK [200]: Python regression: scripts/test-iris-corner-poc-contract.py ----
-Command: python3 scripts/test-iris-corner-poc-contract.py
+---- CHECK [200]: Python regression: scripts/test-abyss-corner-poc-contract.py ----
+Command: python3 scripts/test-abyss-corner-poc-contract.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
----- CHECK [201]: Python regression: scripts/test-iris-g2-contract.py ----
-Command: python3 scripts/test-iris-g2-contract.py
+---- CHECK [201]: Python regression: scripts/test-abyss-g2-contract.py ----
+Command: python3 scripts/test-abyss-g2-contract.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
----- CHECK [202]: Python regression: scripts/test-iris-production-surface-contract.py ----
-Command: python3 scripts/test-iris-production-surface-contract.py
+---- CHECK [202]: Python regression: scripts/test-abyss-production-surface-contract.py ----
+Command: python3 scripts/test-abyss-production-surface-contract.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
@@ -2437,7 +2437,7 @@ Traceback (most recent call last):
     raise AssertionError(
         f"{source} is missing required Material-only contract token: {token!r}"
     )
-AssertionError: Appearance.qml compatibility boundary is missing required Material-only contract token: 'readonly property bool inirEverywhere: false'
+AssertionError: Appearance.qml compatibility boundary is missing required Material-only contract token: 'readonly property bool alisEverywhere: false'
 END FAILURE: Python regression: scripts/test-material-only-global-style-contract.py
 
 ---- CHECK [217]: Python regression: scripts/test-material-only-settings-contract.py ----
@@ -2509,25 +2509,25 @@ Command: python3 scripts/test-notification-timeout-runtime.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalis-notification-timeout-lhtgqos_/shell.qml"
-  INFO: Shell ID: "hadalis-notification-timeout-test" Path ID "c90df1b0b425bcfc8590eb8ed7d258e3"
+  INFO: Launching config: "/tmp/alis-notification-timeout-lhtgqos_/shell.qml"
+  INFO: Shell ID: "alis-notification-timeout-test" Path ID "c90df1b0b425bcfc8590eb8ed7d258e3"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/y7p3kehwmt/log.qslog"
   WARN: --- WARNING ---
   WARN: WAYLAND_DISPLAY is present but QT_QPA_PLATFORM is "offscreen"
   WARN: If you are actually running wayland, set QT_QPA_PLATFORM to "wayland" or most functionality will be broken.
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/hadalis-notification-timeout-lhtgqos_/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/alis-notification-timeout-lhtgqos_/config/alis/config.json failed: File does not exist.
  DEBUG qml: [Config] File not found, creating new file.
-  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/hadalis-notification-timeout-lhtgqos_/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/alis-notification-timeout-lhtgqos_/config/alis/config.json failed: File does not exist.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f856bafeba0)
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-1.1581.sock
-  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/hadalis-notification-timeout-lhtgqos_/state/quickshell/user/notifications.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-notification-timeout-lhtgqos_/state/quickshell/user/notifications.json failed: File does not exist.
  DEBUG qml: [Notifications] File not found, creating new file.
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-notification-timeout-lhtgqos_/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-notification-timeout-lhtgqos_/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-notification-timeout-lhtgqos_/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-notification-timeout-lhtgqos_/state/quickshell/user/gamemode_active failed: File does not exist.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f856b78cca0)
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-notification-timeout-lhtgqos_/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-notification-timeout-lhtgqos_/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
   WARN scene: @shell.qml[59:-1]: TypeError: Cannot read property 'running' of null
   WARN scene: @shell.qml[59:-1]: TypeError: Cannot read property 'running' of null
@@ -2712,15 +2712,15 @@ Command: python3 scripts/test-popup-anchor-hover-runtime.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalis-popup-hover-l994eqz5/shell.qml"
+  INFO: Launching config: "/tmp/alis-popup-hover-l994eqz5/shell.qml"
   INFO: Shell ID: "6e4b1075d0e484292a06027c2229fac4" Path ID "6e4b1075d0e484292a06027c2229fac4"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/xip3qehwmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.173028.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-popup-hover-l994eqz5/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-popup-hover-l994eqz5/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-popup-hover-l994eqz5/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-popup-hover-l994eqz5/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-popup-hover-l994eqz5/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-popup-hover-l994eqz5/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
  ERROR qml: POPUP_ANCHOR_HOVER_TRACE [{"stage":"edge-start","edge":"bottom","point":null,"scene":[916,1125],"content":{"x":150,"y":1085,"width":180,"height":0},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":false,"body":false,"anchor":false,"progress":0,"contains":false},{"stage":"padding-before","edge":"bottom","point":[143,1021],"scene":[916,1125],"content":{"x":150,"y":971,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"bottom","point":[143,1021],"scene":[916,1125],"content":{"x":150,"y":971,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"bottom","point":[337,1021],"scene":[916,1125],"content":{"x":150,"y":971,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"bottom","point":[337,1021],"scene":[916,1125],"content":{"x":150,"y":971,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"bottom","point":[240,964],"scene":[916,1125],"content":{"x":150,"y":971,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"bottom","point":[240,964],"scene":[916,1125],"content":{"x":150,"y":971,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"bottom","point":[240,1078],"scene":[916,1125],"content":{"x":150,"y":971,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"bottom","point":[240,1078],"scene":[916,1125],"content":{"x":150,"y":971,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"bottom","point":[131,1114],"scene":[916,1125],"content":{"x":150,"y":971,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"bottom","point":[131,1114],"scene":[916,1125],"content":{"x":150,"y":971,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"bottom","point":[349,1114],"scene":[916,1125],"content":{"x":150,"y":971,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"bottom","point":[349,1114],"scene":[916,1125],"content":{"x":150,"y":971,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"edge-start","edge":"bottom","point":null,"scene":[911,1125],"content":{"x":150,"y":1085,"width":180,"height":0},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":1085,"width":80,"height":32,"left":160,"right":240,"top":1085,"bottom":1117}],"requested":false,"body":false,"anchor":false,"progress":0,"contains":false},{"stage":"padding-before","edge":"top","point":[143,104],"scene":[906,1070],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"top","point":[143,104],"scene":[906,1070],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"top","point":[337,104],"scene":[906,1070],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"top","point":[337,104],"scene":[906,1070],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"top","point":[240,47],"scene":[906,1070],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"top","point":[240,47],"scene":[906,1070],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"top","point":[240,161],"scene":[906,1070],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"top","point":[240,161],"scene":[906,1070],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"top","point":[131,11],"scene":[906,1070],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"top","point":[131,11],"scene":[906,1070],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"top","point":[349,11],"scene":[906,1070],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"top","point":[349,11],"scene":[906,1070],"content":{"x":150,"y":54,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"edge-start","edge":"top","point":null,"scene":[906,1070],"content":{"x":150,"y":40,"width":180,"height":0},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":160,"y":8,"width":80,"height":32,"left":160,"right":240,"top":8,"bottom":40}],"requested":false,"body":false,"anchor":false,"progress":0,"contains":false},{"stage":"padding-before","edge":"left","point":[47,200],"scene":[906,1070],"content":{"x":54,"y":150,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"left","point":[47,200],"scene":[906,1070],"content":{"x":54,"y":150,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-before","edge":"left","point":[241,200],"scene":[906,1070],"content":{"x":54,"y":150,"width":180,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":32,"height":80,"left":8,"right":40,"top":160,"bottom":240}],"requested":true,"body":true,"anchor":false,"progress":1,"contains":true},{"stage":"padding-after","edge":"left","point":[241,200],"scene":[916,1125],"content":{"x":40,"y":150,"width":0,"height":100},"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"source":[{"x":8,"y":160,"width":0,"height":80,"left":8,"right":8,"top":160,"bottom":240}],"requested":false,"body":false,"anchor":false,"progress":0,"contains":false}]
  ERROR qml: POPUP_ANCHOR_HOVER_FAIL painted popup padding dismissed owner on left: {"point":[241,200],"input":{"x":0,"y":0,"width":0,"height":0,"left":0,"right":0,"top":0,"bottom":0},"content":{"x":40,"y":150,"width":0,"height":100},"requested":false,"hosted":false} check@qs:@/qs/shell.qml:108
@@ -2822,15 +2822,15 @@ Command: python3 scripts/test-recording-abyss-runtime.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalis-recording-field-vc7cxoix/shell.qml"
+  INFO: Launching config: "/tmp/alis-recording-field-vc7cxoix/shell.qml"
   INFO: Shell ID: "efc8c21abc7b681fdc712b16d7b1ff64" Path ID "efc8c21abc7b681fdc712b16d7b1ff64"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/acr3dghwmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.175381.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-recording-field-vc7cxoix/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-recording-field-vc7cxoix/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-recording-field-vc7cxoix/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-recording-field-vc7cxoix/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-recording-field-vc7cxoix/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-recording-field-vc7cxoix/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
 
 FAIL: native connected Recording controls
@@ -2943,7 +2943,7 @@ Traceback (most recent call last):
   File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-settings-concise-copy-surface.py", line 299, in <module>
     assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: ('DesktopWidgetsConfig.qml', 'Custom QML widgets: ~/.config/inir/widgets/ (widget.json and .qml required).')
+AssertionError: ('DesktopWidgetsConfig.qml', 'Custom QML widgets: ~/.config/alis/widgets/ (widget.json and .qml required).')
 END FAILURE: Python regression: scripts/test-settings-concise-copy-surface.py
 
 ---- CHECK [264]: Python regression: scripts/test-settings-flat-navigation.py ----
@@ -2961,8 +2961,8 @@ Command: python3 scripts/test-settings-information-architecture.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
----- CHECK [267]: Python regression: scripts/test-settings-inir-task-tabs-contract.py ----
-Command: python3 scripts/test-settings-inir-task-tabs-contract.py
+---- CHECK [267]: Python regression: scripts/test-settings-alis-task-tabs-contract.py ----
+Command: python3 scripts/test-settings-alis-task-tabs-contract.py
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
@@ -3028,7 +3028,7 @@ Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
 Shell surface contract regression(s):
-  - Dock iRiS Screen Edge / shadow contract missing: : Appearance.inir.colLayer1
+  - Dock Abyss Screen Edge / shadow contract missing: : Appearance.alis.colLayer1
 END FAILURE: Python regression: scripts/test-shell-surface-contracts.py
 
 ---- CHECK [275]: Python regression: scripts/test-sidebar-left-theme-contract.py ----
@@ -3140,7 +3140,7 @@ Command: python3 scripts/test-wallpaper-background-apply-runtime.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
-opengl   INFO: Launching config: "/tmp/hadalis-background-apply-umz5gqrh/shell.qml"
+opengl   INFO: Launching config: "/tmp/alis-background-apply-umz5gqrh/shell.qml"
   INFO: Shell ID: "dc1438ee7f141b3929f6865786623dae" Path ID "dc1438ee7f141b3929f6865786623dae"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/8oa4hphwmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
@@ -3148,13 +3148,13 @@ opengl   INFO: Launching config: "/tmp/hadalis-background-apply-umz5gqrh/shell.q
   INFO qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version n9.0.2 GPL version 3 or later
 Failed to open VDPAU backend libvdpau_nvidia.so: cannot open shared object file: No such file or directory
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-background-apply-umz5gqrh/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-background-apply-umz5gqrh/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/DesktopItems.qml[408:5]: Read of /tmp/hadalis-background-apply-umz5gqrh/state/quickshell/user/desktop-items.json failed: File does not exist.
-  WARN: Process failed to start, likely because the binary could not be found. Command: QList("/tmp/hadalis-background-apply-umz5gqrh/scripts/native-dispatch", "niri", "get-hot-corners")
-  WARN: Process failed to start, likely because the binary could not be found. Command: QList("/tmp/hadalis-background-apply-umz5gqrh/scripts/scan-widgets.sh", "/tmp/hadalis-background-apply-umz5gqrh/config/alis/widgets")
-  WARN: Process failed to start, likely because the binary could not be found. Command: QList("/tmp/hadalis-background-apply-umz5gqrh/scripts/native-dispatch", "niri", "sync-backdrop-overview-shadow", "off")
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-background-apply-umz5gqrh/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-background-apply-umz5gqrh/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-background-apply-umz5gqrh/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/DesktopItems.qml[408:5]: Read of /tmp/alis-background-apply-umz5gqrh/state/quickshell/user/desktop-items.json failed: File does not exist.
+  WARN: Process failed to start, likely because the binary could not be found. Command: QList("/tmp/alis-background-apply-umz5gqrh/scripts/native-dispatch", "niri", "get-hot-corners")
+  WARN: Process failed to start, likely because the binary could not be found. Command: QList("/tmp/alis-background-apply-umz5gqrh/scripts/scan-widgets.sh", "/tmp/alis-background-apply-umz5gqrh/config/alis/widgets")
+  WARN: Process failed to start, likely because the binary could not be found. Command: QList("/tmp/alis-background-apply-umz5gqrh/scripts/native-dispatch", "niri", "sync-backdrop-overview-shadow", "off")
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-background-apply-umz5gqrh/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
   WARN qml: [AwwwBackend] Error: "none of the requested outputs are valid"
  ERROR qml: WALLPAPER_BACKGROUND_FAIL QtQuickTest::fail tryCompare@qrc:/qt-project.org/imports/QtTest/TestCase.qml:1178
@@ -3172,18 +3172,18 @@ Command: python3 scripts/test-wallpaper-carousel-runtime.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalis-wallpaper-carousel-lotdsnez/shell.qml"
+  INFO: Launching config: "/tmp/alis-wallpaper-carousel-lotdsnez/shell.qml"
   INFO: Shell ID: "3e86219154cde90e71905f1c8fbe1915" Path ID "3e86219154cde90e71905f1c8fbe1915"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/zxa4sphwmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.200786.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-wallpaper-carousel-lotdsnez/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-wallpaper-carousel-lotdsnez/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-wallpaper-carousel-lotdsnez/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-wallpaper-carousel-lotdsnez/state/quickshell/user/gamemode_active failed: File does not exist.
  ERROR qml: WALLPAPER_CAROUSEL_FAIL liquid mode has two wallpaper owners check@qs:@/qs/shell.qml:30
 runChecks@qs:@/qs/shell.qml:37
 expression for onTriggered@qs:@/qs/shell.qml:105 {"window":[916,1125,true,true],"action":[677,4,43,36,true,true,false],"position":{"x":707,"y":240},"tooltip":[true,true,false,false,false]}
-  WARN scene: QML FileView at @services/MaterialThemeLoader.qml[577:5]: Read of /tmp/hadalis-wallpaper-carousel-lotdsnez/state/quickshell/user/generated/colors.json failed: File does not exist.
+  WARN scene: QML FileView at @services/MaterialThemeLoader.qml[577:5]: Read of /tmp/alis-wallpaper-carousel-lotdsnez/state/quickshell/user/generated/colors.json failed: File does not exist.
 
 END FAILURE: Python regression: scripts/test-wallpaper-carousel-runtime.py
 
@@ -3246,17 +3246,17 @@ Command: python3 scripts/test-weather-popup-handoff-runtime.py
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
-  INFO: Launching config: "/tmp/hadalis-weather-handoff-bwpmh3bc/shell.qml"
+  INFO: Launching config: "/tmp/alis-weather-handoff-bwpmh3bc/shell.qml"
   INFO: Shell ID: "72feffc302ef79b8d7ac8cbbb0a47ffb" Path ID "72feffc302ef79b8d7ac8cbbb0a47ffb"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/aed4ashwmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.203964.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-weather-handoff-bwpmh3bc/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-weather-handoff-bwpmh3bc/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/hadalis-weather-handoff-bwpmh3bc/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-weather-handoff-bwpmh3bc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-weather-handoff-bwpmh3bc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-weather-handoff-bwpmh3bc/state/quickshell/user/events.json failed: File does not exist.
  DEBUG qml: [Events] File not found, creating new file.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-weather-handoff-bwpmh3bc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-weather-handoff-bwpmh3bc/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
  ERROR qml: WEATHER_HANDOFF_FAIL Weather handoff retained Clock hover/tail on top {"weather":{"requested":false,"hover":false,"content":false},"clock":{"requested":false,"hover":false,"module":false,"content":false,"editor":false,"linger":false,"progress":0},"anchors":{"clock":[368,8],"weather":[464,8]},"slots":[null,{"kind":"weather","input":{"x":287,"y":8,"width":418,"height":360,"left":287,"right":705,"top":8,"bottom":368}},null,null]} check@qs:@/qs/shell.qml:86
 runChecks@qs:@/qs/shell.qml:137
@@ -3631,7 +3631,7 @@ Command: run_shell_regression scripts/test-config-namespace-contract.sh
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
-not ok - missing config namespace contract file: distro/arch/inir-shell/inir-shell.install
+not ok - missing config namespace contract file: distro/arch/alis-shell/alis-shell.install
 END FAILURE: shell regression: scripts/test-config-namespace-contract.sh
 
 ---- CHECK [373]: shell regression: scripts/test-config-namespace-migration.sh ----
@@ -3744,26 +3744,26 @@ Output:
 == Alis updater source ==
 
 == optional host lifecycle ==
-  INFO: Launching config: "/tmp/hadalird-host-u1tjgrm9/absent/shell.qml"
+  INFO: Launching config: "/tmp/alis-intergration-host-u1tjgrm9/absent/shell.qml"
   INFO: Shell ID: "a27810d4224b2a38b0d4a6bef3e55892" Path ID "a27810d4224b2a38b0d4a6bef3e55892"
-  INFO: Saving logs to "/tmp/hadalird-host-u1tjgrm9/absent/runtime/quickshell/by-id/tou474iwmt/log.qslog"
+  INFO: Saving logs to "/tmp/alis-intergration-host-u1tjgrm9/absent/runtime/quickshell/by-id/tou474iwmt/log.qslog"
   WARN: --- WARNING ---
   WARN: WAYLAND_DISPLAY is present but QT_QPA_PLATFORM is "offscreen"
   WARN: If you are actually running wayland, set QT_QPA_PLATFORM to "wayland" or most functionality will be broken.
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   WARN : Failed to create wl_display (No such file or directory)
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/hadalird-host-u1tjgrm9/absent/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/alis-intergration-host-u1tjgrm9/absent/config/alis/config.json failed: File does not exist.
  DEBUG qml: [Config] File not found, creating new file.
-  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/hadalird-host-u1tjgrm9/absent/config/alis/config.json failed: File does not exist.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/hadalird-host-u1tjgrm9/absent/state/quickshell/user/todo.txt failed: File does not exist.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/hadalird-host-u1tjgrm9/absent/state/quickshell/user/todo.json failed: File does not exist.
+  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/alis-intergration-host-u1tjgrm9/absent/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/alis-intergration-host-u1tjgrm9/absent/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/alis-intergration-host-u1tjgrm9/absent/state/quickshell/user/todo.json failed: File does not exist.
  DEBUG qml: [Todo] JSON not found, creating new file.
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalird-host-u1tjgrm9/absent/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalird-host-u1tjgrm9/absent/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-intergration-host-u1tjgrm9/absent/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-intergration-host-u1tjgrm9/absent/state/quickshell/user/gamemode_active failed: File does not exist.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f3f16b13e00)
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalird-host-u1tjgrm9/absent/state/quickshell/user/gamemode_active failed: File does not exist.
- ERROR qml: HADALIRD_HOST_FAIL missing package erased the saved selection check@qs:@/qs/shell.qml:26
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-intergration-host-u1tjgrm9/absent/state/quickshell/user/gamemode_active failed: File does not exist.
+ ERROR qml: ALIS_INTERGRATION_HOST_FAIL missing package erased the saved selection check@qs:@/qs/shell.qml:26
 runChecks@qs:@/qs/shell.qml:69
 expression for onTriggered@qs:@/qs/shell.qml:129
 
@@ -3790,8 +3790,8 @@ Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
 == translation runtime boundary ==
 == package and release source identity ==
-grep: distro/arch/inir-shell/PKGBUILD: No such file or directory
-FAIL: local required contract: distro/arch/inir-shell/PKGBUILD no longer identifies the Alis repository
+grep: distro/arch/alis-shell/PKGBUILD: No such file or directory
+FAIL: local required contract: distro/arch/alis-shell/PKGBUILD no longer identifies the Alis repository
 END FAILURE: shell regression: scripts/test-local-required-contracts.sh
 
 ---- CHECK [396]: shell regression: scripts/test-lyrics-service-lifecycle.sh ----
@@ -3954,8 +3954,8 @@ Output:
    Compiling alis-native v0.1.0 (/tmp/alis-validation.Je8iOH/Alis/native/alis-native)
    Compiling alis-inputd v0.1.0 (/tmp/alis-validation.Je8iOH/Alis/native/alis-inputd)
     Finished `release` profile [optimized] target(s) in 2m 17s
-Installed Alis Rust runtime to /tmp/tmp.MqmIG0qN3I/opt/inir/share/quickshell/alis/native/bin
-FAIL: staged install missing /tmp/tmp.MqmIG0qN3I/opt/inir/bin/inir
+Installed Alis Rust runtime to /tmp/tmp.MqmIG0qN3I/opt/alis/share/quickshell/alis/native/bin
+FAIL: staged install missing /tmp/tmp.MqmIG0qN3I/opt/alis/bin/alis
 END FAILURE: shell regression: scripts/test-make-install-lifecycle.sh
 
 ---- CHECK [399]: shell regression: scripts/test-material-theme-loader-lifecycle.sh ----
@@ -4007,7 +4007,7 @@ Command: run_shell_regression scripts/test-niri-keybind-launcher-contract.sh
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
-FAIL: Niri keybind launcher contract: missing defaults/niri/config.d/75-inir-launcher-binds.kdl
+FAIL: Niri keybind launcher contract: missing defaults/niri/config.d/75-alis-launcher-binds.kdl
 END FAILURE: shell regression: scripts/test-niri-keybind-launcher-contract.sh
 
 ---- CHECK [408]: shell regression: scripts/test-optional-audio-deps-contract.sh ----
@@ -4024,7 +4024,7 @@ Command: run_shell_regression scripts/test-packaging-contract.sh
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
-not ok - missing packaging file: distro/arch/inir-shell/PKGBUILD
+not ok - missing packaging file: distro/arch/alis-shell/PKGBUILD
 END FAILURE: shell regression: scripts/test-packaging-contract.sh
 
 ---- CHECK [410]: shell regression: scripts/test-panel-style-adapter.sh ----
@@ -4182,7 +4182,7 @@ Command: run_shell_regression scripts/test-update-lifecycle.sh
 Exit code: 1
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
-not ok - missing lifecycle file: distro/arch/inir-shell/PKGBUILD
+not ok - missing lifecycle file: distro/arch/alis-shell/PKGBUILD
 END FAILURE: shell regression: scripts/test-update-lifecycle.sh
 
 ---- CHECK [437]: shell regression: scripts/test-update-service-guards.sh ----
@@ -4277,13 +4277,13 @@ Exit code: 2
 Working directory: /tmp/alis-validation.Je8iOH/Alis
 Output:
 Traceback (most recent call last):
-  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-hadalird-arch-package.py", line 12, in <module>
+  File "/tmp/alis-validation.Je8iOH/Alis/scripts/test-alis-intergration-arch-package.py", line 12, in <module>
     result = subprocess.run(["bash", "-ec", 'source "$1"; name="$2"; declare -n values="$name"; printf "%s\\n" "${values[@]}"',
                              "fixture", str(recipe), field], text=True, capture_output=True, check=True)
   File "/usr/lib/python3.14/subprocess.py", line 578, in run
     raise CalledProcessError(retcode, process.args,
                              output=stdout, stderr=stderr)
-subprocess.CalledProcessError: Command '['bash', '-ec', 'source "$1"; name="$2"; declare -n values="$name"; printf "%s\\n" "${values[@]}"', 'fixture', '/tmp/alis-validation.Je8iOH/Alis/sdata/dist-arch/inir-deps/PKGBUILD', 'depends']' returned non-zero exit status 1.
+subprocess.CalledProcessError: Command '['bash', '-ec', 'source "$1"; name="$2"; declare -n values="$name"; printf "%s\\n" "${values[@]}"', 'fixture', '/tmp/alis-validation.Je8iOH/Alis/sdata/dist-arch/alis-deps/PKGBUILD', 'depends']' returned non-zero exit status 1.
 make: *** [Makefile:123: test-package-hooks] Error 1
 END FAILURE: Make contract: package lifecycle hooks
 
@@ -4293,7 +4293,7 @@ Working directory: /tmp/alis-validation.Je8iOH/Alis
 Result: PASS
 
 ========================================
-HADALIS VALIDATION SUMMARY
+ALIS VALIDATION SUMMARY
 Exact SHA: 559d8d4fb576da04ca837198be7b021baf8a4ee0
 Result: FAIL
 Checks run: 451
@@ -4326,11 +4326,11 @@ Failed checks:
   - Python regression: scripts/test-desktop-widget-editor-coordinates.py (exit 1)
   - Python regression: scripts/test-dock-abyss-hover-orientation-contract.py (exit 1)
   - Python regression: scripts/test-fcitx5-session-integration.py (exit 1)
-  - Python regression: scripts/test-hadalird-arch-package.py (exit 1)
-  - Python regression: scripts/test-hadalird-gateway-bootstrap.py (exit 1)
-  - Python regression: scripts/test-hadalird-manager.py (exit 1)
-  - Python regression: scripts/test-hadalird-optional.py (exit 1)
-  - Python regression: scripts/test-hadalird-system-provision.py (exit 1)
+  - Python regression: scripts/test-alis-intergration-arch-package.py (exit 1)
+  - Python regression: scripts/test-alis-intergration-gateway-bootstrap.py (exit 1)
+  - Python regression: scripts/test-alis-intergration-manager.py (exit 1)
+  - Python regression: scripts/test-alis-intergration-optional.py (exit 1)
+  - Python regression: scripts/test-alis-intergration-system-provision.py (exit 1)
   - Python regression: scripts/test-alis-companion-layer-shell.py (exit 1)
   - Python regression: scripts/test-alis-companion-optional.py (exit 1)
   - Python regression: scripts/test-local-ai-gguf-runtime.py (exit 1)

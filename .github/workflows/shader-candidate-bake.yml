@@ -27,7 +27,7 @@ jobs:
       - name: Apply and validate strict-lossless Aqua candidate
         run: |
           set -euo pipefail
-          git config user.name "Hadalis Shader Baker"
+          git config user.name "Alis Shader Baker"
           git config user.email "actions@users.noreply.github.com"
           git fetch origin dev
           git reset --hard origin/dev

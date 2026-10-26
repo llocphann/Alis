@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read local sidecar lyrics for the Hadalis MPD Music tab (with word-level timing & prosody)."""
+"""Read local sidecar lyrics for the Alis MPD Music tab (with word-level timing & prosody)."""
 from __future__ import annotations
 import hashlib
 import json

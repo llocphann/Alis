@@ -6,7 +6,7 @@ import Quickshell
 
 Singleton {
     id: root
-    readonly property var implementation: Hadalird.session?.tlp ?? (null)
+    readonly property var implementation: AlisIntergration.session?.tlp ?? (null)
     property string missingOperationError: ""
     readonly property bool available: root.implementation?.available ?? (false)
     readonly property bool supported: root.implementation?.supported ?? (false)
@@ -18,7 +18,7 @@ Singleton {
     readonly property int currentStart: root.implementation?.currentStart ?? (-1)
     readonly property string backend: root.implementation?.backend ?? ("")
     readonly property string tlpVersion: root.implementation?.tlpVersion ?? ("")
-    readonly property string statusReason: root.implementation?.statusReason ?? (Hadalird.available ? "integration-disabled" : "integration-not-installed")
+    readonly property string statusReason: root.implementation?.statusReason ?? (AlisIntergration.available ? "integration-disabled" : "integration-not-installed")
     readonly property string limitKind: root.implementation?.limitKind ?? ("none")
     readonly property int minimumLimit: root.implementation?.minimumLimit ?? (1)
     readonly property int maximumLimit: root.implementation?.maximumLimit ?? (100)
@@ -36,10 +36,10 @@ Singleton {
     readonly property bool continuous: root.implementation?.continuous ?? (false)
     function refresh(): void {
         if (root.implementation) return root.implementation.refresh()
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
     }
     function apply(): void {
         if (root.implementation) return root.implementation.apply()
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
     }
 }

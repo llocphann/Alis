@@ -94,7 +94,7 @@ Scope {
                     Qt.alpha(Appearance.m3colors.m3shadow, dockRoot.screenEdgeShadowOpacity)
                 readonly property real edgeDecorationMargin: Math.max(
                     Appearance.sizes.elevationMargin,
-                    PerimeterTokens.irisFuseDepth,
+                    PerimeterTokens.abyssFuseDepth,
                     dockRoot.screenEdgeShadowEnabled ? dockRoot.screenEdgeShadowSize + 2 : 0)
 
                 function beginDockResize(): void {
@@ -167,7 +167,7 @@ Scope {
                 WlrLayershell.layer: WlrLayer.Overlay
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
                 // Physical-output coordinates are required by the connected
-                // iRiS geometry. Never assign exclusiveZone on this window.
+                // Abyss geometry. Never assign exclusiveZone on this window.
                 exclusionMode: ExclusionMode.Ignore
                 color: "transparent"
 
@@ -190,8 +190,8 @@ Scope {
                     item: dockMouseArea
                 }
 
-                ConnectedSurfaceIrisEdgeSurface {
-                    id: dockIrisSurface
+                ConnectedSurfaceAbyssEdgeSurface {
+                    id: dockAbyssSurface
                     z: 0
                     anchors.fill: parent
                     visible: dockVisualBackground.visible
@@ -207,9 +207,9 @@ Scope {
                         dockConnectedBody.width,
                         dockConnectedBody.height)
                     bodyRadius: dockVisualBackground.radius
-                    fillColor: dockVisualBackground.irisFillColor
-                    borderColor: dockVisualBackground.irisBorderColor
-                    borderWidth: dockVisualBackground.irisBorderWidth
+                    fillColor: dockVisualBackground.abyssFillColor
+                    borderColor: dockVisualBackground.abyssBorderColor
+                    borderWidth: dockVisualBackground.abyssBorderWidth
                     progress: 1
                     shadowEnabled: dockRoot.screenEdgeShadowEnabled
                         && dockRoot.screenEdgeShadowSize > 0
@@ -317,7 +317,7 @@ Scope {
                             // Single connected-body geometry, mirroring the
                             // screenshot controls: one resting rect ends exactly
                             // at the Screen Edge inner boundary. The visual plate
-                            // and iRiS field both consume this same item.
+                            // and Abyss field both consume this same item.
                             Item {
                                 id: dockConnectedBody
                                 anchors.fill: parent
@@ -358,12 +358,12 @@ Scope {
                                     && !auroraEverywhere
                                     && !root.zzzEverywhere
                                     && !regaliaEverywhere
-                                // The iRiS field owns the connected silhouette. Some
+                                // The Abyss field owns the connected silhouette. Some
                                 // dialect-specific body plates intentionally use a
                                 // transparent Rectangle base, so expose the effective
                                 // shell paint separately instead of making the weld
                                 // disappear while the body remains visible.
-                                readonly property color irisFillColor: root.zzzEverywhere
+                                readonly property color abyssFillColor: root.zzzEverywhere
                                     ? ColorUtils.applyAlpha(
                                         Appearance.zzz.chromeAlt,
                                         zzzGlassActive
@@ -372,12 +372,12 @@ Scope {
                                     : regaliaEverywhere
                                         ? Appearance.regalia.barSurfaceFloating
                                         : color
-                                readonly property color irisBorderColor: root.zzzEverywhere
+                                readonly property color abyssBorderColor: root.zzzEverywhere
                                     ? Appearance.zzz.hairline
                                     : regaliaEverywhere
                                         ? "transparent"
                                         : border.color
-                                readonly property real irisBorderWidth: root.zzzEverywhere
+                                readonly property real abyssBorderWidth: root.zzzEverywhere
                                     ? 1
                                     : regaliaEverywhere ? 0 : border.width
                                 readonly property string wallpaperUrl: {
@@ -441,7 +441,7 @@ Scope {
                                                 ? Appearance.alis.roundingNormal
                                                 : Appearance.rounding.large
                                 // Keep the body plate on the same rounded
-                                // rectangle as the iRiS SDF record. Squaring the
+                                // rectangle as the Abyss SDF record. Squaring the
                                 // edge-facing corners here overpaints the smooth
                                 // union fillets and makes Dock read as a detached
                                 // island even though the SDF weld is present.

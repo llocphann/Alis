@@ -37,15 +37,15 @@ Scope {
         Qt.alpha(Appearance.m3colors.m3shadow, root.edgeShadowOpacity)
     // When a real top Bar owns the attachment edge, keep the toast's right
     // side free instead of welding it into the physical right Screen Edge.
-    // Leave enough room for the iRiS fuse/AA reach so it cannot visually touch
+    // Leave enough room for the Abyss fuse/AA reach so it cannot visually touch
     // that tangent owner. If the Bar is elsewhere, the toast falls back to the
     // top-right Screen Edge corner and intentionally joins the right frame.
     readonly property real topBarFreeRightInset: Math.max(
-        PerimeterTokens.irisFuseDepth + 2,
+        PerimeterTokens.abyssFuseDepth + 2,
         root.edgeShadowEnabled ? root.edgeShadowSize + 2 : 0)
     readonly property real edgeDecorationMargin: Math.max(
         8,
-        PerimeterTokens.irisFuseDepth,
+        PerimeterTokens.abyssFuseDepth,
         root.edgeShadowEnabled ? root.edgeShadowSize + 2 : 0)
     readonly property real toastBodyPadding: 8
     readonly property bool useAbyssPresentation:
@@ -325,7 +325,7 @@ Scope {
                 outerRadius: PerimeterTokens.popupRadius
                 screenMargin: root.screenEdgeThickness
                 connectorLength: 0
-                seamOverlap: PerimeterTokens.irisWeldDepth
+                seamOverlap: PerimeterTokens.abyssWeldDepth
                 progress: root.surfaceRevealProgress
                 devicePixelRatio: popup.devicePixelRatio
             }
@@ -334,14 +334,14 @@ Scope {
                 id: toastRevealClip
                 geometry: toastGeometry
 
-                ConnectedSurfaceIrisFrame {
+                ConnectedSurfaceAbyssFrame {
                     id: toastFrame
                     anchors.fill: parent
                     geometry: toastGeometry
                     fillColor: Appearance.colors.colLayer0
                     borderColor: Appearance.colors.colLayer0Border
                     borderWidth: 0
-                    fuseDepth: PerimeterTokens.irisFuseDepth
+                    fuseDepth: PerimeterTokens.abyssFuseDepth
                     externalFrameThickness: root.screenEdgeThickness
                     shadowEnabled: root.edgeShadowEnabled
                         && root.edgeShadowSize > 0

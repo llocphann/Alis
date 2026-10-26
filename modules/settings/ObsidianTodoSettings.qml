@@ -12,8 +12,8 @@ Item {
     Loader {
         id: content
         width: parent.width
-        active: Hadalird.obsidianEnabled && root.visible
-        source: Hadalird.settingsSource("obsidianTodo")
+        active: AlisIntergration.obsidianEnabled && root.visible
+        source: AlisIntergration.settingsSource("obsidianTodo")
     }
     SettingsCardSection {
         id: fallback
@@ -30,7 +30,7 @@ Item {
             text: Translation.tr("Install Alis-Intergration; enable Obsidian in Settings → Integrations.")
         }
         DialogButton {
-            objectName: "hadalisTodoFallbackRestore"
+            objectName: "alisTodoFallbackRestore"
             visible: Todo.backend === "obsidian"
             buttonText: Translation.tr("Use Alis")
             onClicked: Todo.reactivateInternal()

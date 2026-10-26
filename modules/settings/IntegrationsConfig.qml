@@ -17,18 +17,18 @@ ContentPage {
     property string activePlugin: "management"
     property string activeSection: "calendar"
     property var capabilitySelections: ({})
-    readonly property var primaryTabs: Hadalird.installedPlugins.map(plugin => ({
+    readonly property var primaryTabs: AlisIntergration.installedPlugins.map(plugin => ({
         displayName: plugin.name, icon: plugin.icon, value: plugin.id
     })).concat([{displayName: Translation.tr("Management"), icon: "extension", value: "management"}])
-    readonly property var selectedPlugin: Hadalird.installedPlugins.find(plugin => plugin.id === root.activePlugin) ?? null
+    readonly property var selectedPlugin: AlisIntergration.installedPlugins.find(plugin => plugin.id === root.activePlugin) ?? null
     readonly property var capabilityTabs: (selectedPlugin?.capabilities ?? []).map(capability => ({
         displayName: capability.name, value: capability.id
     }))
     readonly property var selectedCapability: selectedPlugin?.capabilities.find(capability =>
         capability.id === root.capabilitySelections[root.activePlugin]) ?? selectedPlugin?.capabilities[0] ?? null
     readonly property var catalog: {
-        const installed = Hadalird.installedPlugins
-        return Hadalird.pluginCatalog.filter(plugin => !installed.some(item => item.id === plugin.id)).concat(installed)
+        const installed = AlisIntergration.installedPlugins
+        return AlisIntergration.pluginCatalog.filter(plugin => !installed.some(item => item.id === plugin.id)).concat(installed)
     }
     onPrimaryTabsChanged: {
         if (!primaryTabs.some(tab => tab.value === activePlugin)) activePlugin = "management"
@@ -37,7 +37,7 @@ ContentPage {
         const label = String(section ?? "").toLowerCase()
         const wanted = /to-do|todo|quick note|zettelkasten/.test(label) ? "obsidian"
             : /fan|cooling|thermal/.test(label) ? "thinkfan" : label
-        const plugin = Hadalird.installedPlugins.find(item => wanted.includes(item.id) || wanted.includes(item.name.toLowerCase()))
+        const plugin = AlisIntergration.installedPlugins.find(item => wanted.includes(item.id) || wanted.includes(item.name.toLowerCase()))
         if (plugin) {
             activePlugin = plugin.id
             const capability = /todo|to-do/.test(label) ? "todo"
@@ -55,11 +55,11 @@ ContentPage {
         capabilitySelections = next
     }
     function pluginState(plugin): string {
-        if (!Hadalird.available || Hadalird.loadFailed)
-            return Hadalird.diagnostic === "not-installed" ? Translation.tr("Not installed") : Translation.tr("Unavailable")
-        if (!Hadalird.installedPlugins.some(item => item.id === plugin.id)) return Translation.tr("Unavailable")
-        if (Hadalird.updateAvailable) return Translation.tr("Update available")
-        return Hadalird.pluginEnabled(plugin.id) ? Translation.tr("Enabled") : Translation.tr("Disabled")
+        if (!AlisIntergration.available || AlisIntergration.loadFailed)
+            return AlisIntergration.diagnostic === "not-installed" ? Translation.tr("Not installed") : Translation.tr("Unavailable")
+        if (!AlisIntergration.installedPlugins.some(item => item.id === plugin.id)) return Translation.tr("Unavailable")
+        if (AlisIntergration.updateAvailable) return Translation.tr("Update available")
+        return AlisIntergration.pluginEnabled(plugin.id) ? Translation.tr("Enabled") : Translation.tr("Disabled")
     }
 
     SettingsTaskNavigator {
@@ -83,35 +83,35 @@ ContentPage {
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
-                text: Hadalird.managerBusy ? Translation.tr("Working…")
-                    : Hadalird.available ? "Alis-Intergration " + Hadalird.version + " · " + Translation.tr("Installed")
-                    : Hadalird.diagnostic === "not-installed" ? Translation.tr("No plugins installed. Install the optional package to get started.")
-                    : Translation.tr("Integration package unavailable") + " · " + Hadalird.diagnostic
+                text: AlisIntergration.managerBusy ? Translation.tr("Working…")
+                    : AlisIntergration.available ? "Alis-Intergration " + AlisIntergration.version + " · " + Translation.tr("Installed")
+                    : AlisIntergration.diagnostic === "not-installed" ? Translation.tr("No plugins installed. Install the optional package to get started.")
+                    : Translation.tr("Integration package unavailable") + " · " + AlisIntergration.diagnostic
             }
             Flow {
                 Layout.fillWidth: true
                 spacing: 8
                 DialogButton {
-                    buttonText: Hadalird.available ? Translation.tr("Reinstall") : Translation.tr("Install Alis-Intergration")
-                    enabled: !Hadalird.managerBusy
-                    onClicked: Hadalird.manage("install")
+                    buttonText: AlisIntergration.available ? Translation.tr("Reinstall") : Translation.tr("Install Alis-Intergration")
+                    enabled: !AlisIntergration.managerBusy
+                    onClicked: AlisIntergration.manage("install")
                 }
                 DialogButton {
-                    visible: Hadalird.available
+                    visible: AlisIntergration.available
                     buttonText: Translation.tr("Check updates")
-                    enabled: !Hadalird.managerBusy
-                    onClicked: Hadalird.manage("check")
+                    enabled: !AlisIntergration.managerBusy
+                    onClicked: AlisIntergration.manage("check")
                 }
                 DialogButton {
-                    visible: Hadalird.updateAvailable
+                    visible: AlisIntergration.updateAvailable
                     buttonText: Translation.tr("Update")
-                    enabled: !Hadalird.managerBusy
-                    onClicked: Hadalird.manage("install")
+                    enabled: !AlisIntergration.managerBusy
+                    onClicked: AlisIntergration.manage("install")
                 }
                 DialogButton {
                     buttonText: Translation.tr("Refresh")
-                    enabled: !Hadalird.managerBusy
-                    onClicked: { Hadalird.refresh(); Hadalird.refreshSystemStatus() }
+                    enabled: !AlisIntergration.managerBusy
+                    onClicked: { AlisIntergration.refresh(); AlisIntergration.refreshSystemStatus() }
                 }
                 DialogButton {
                     buttonText: Translation.tr("Diagnostics")
@@ -119,28 +119,28 @@ ContentPage {
                 }
                 DialogButton {
                     objectName: "integrationRestoreInternalTodos"
-                    visible: Todo.backend === "obsidian" && !Hadalird.obsidianEnabled
+                    visible: Todo.backend === "obsidian" && !AlisIntergration.obsidianEnabled
                     enabled: !Todo.internalPersistenceBusy
                     buttonText: Translation.tr("Use Alis tasks")
                     onClicked: Todo.reactivateInternal()
                 }
                 DialogButton {
-                    visible: Hadalird.canRollback
+                    visible: AlisIntergration.canRollback
                     buttonText: Translation.tr("Restore Alis-Intergration")
-                    enabled: !Hadalird.managerBusy
-                    onClicked: Hadalird.manage("rollback")
+                    enabled: !AlisIntergration.managerBusy
+                    onClicked: AlisIntergration.manage("rollback")
                 }
                 DialogButton {
-                    visible: Hadalird.available && !packageSection.confirmRemoval
+                    visible: AlisIntergration.available && !packageSection.confirmRemoval
                     buttonText: Translation.tr("Remove Alis-Intergration")
-                    enabled: !Hadalird.managerBusy
+                    enabled: !AlisIntergration.managerBusy
                     onClicked: packageSection.confirmRemoval = true
                 }
                 DialogButton {
                     visible: packageSection.confirmRemoval
                     buttonText: Translation.tr("Confirm removal")
-                    enabled: !Hadalird.managerBusy
-                    onClicked: { packageSection.confirmRemoval = false; Hadalird.manage("remove") }
+                    enabled: !AlisIntergration.managerBusy
+                    onClicked: { packageSection.confirmRemoval = false; AlisIntergration.manage("remove") }
                 }
                 DialogButton {
                     visible: packageSection.confirmRemoval
@@ -151,32 +151,32 @@ ContentPage {
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
-                visible: Hadalird.managerError.length > 0 || Hadalird.managerMessage.length > 0
-                color: Hadalird.managerError.length > 0 ? Appearance.colors.colError : Appearance.colors.colSubtext
-                text: Hadalird.managerError || Hadalird.managerMessage
+                visible: AlisIntergration.managerError.length > 0 || AlisIntergration.managerMessage.length > 0
+                color: AlisIntergration.managerError.length > 0 ? Appearance.colors.colError : Appearance.colors.colSubtext
+                text: AlisIntergration.managerError || AlisIntergration.managerMessage
             }
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.WrapAnywhere
                 visible: packageSection.showDiagnostics
-                text: Hadalird.status()
+                text: AlisIntergration.status()
                 font.family: Appearance.font.family.monospace
                 font.pixelSize: Appearance.font.pixelSize.small
             }
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
-                visible: Hadalird.available && !Hadalird.pluginMetadataAvailable
+                visible: AlisIntergration.available && !AlisIntergration.pluginMetadataAvailable
                 text: Translation.tr("Update the optional package to show plugin tabs.")
             }
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colSubtext
-                text: "Gateway: " + (Hadalird.systemProvisionerAvailable ? Translation.tr("Ready") : Translation.tr("Not installed"))
-                    + " · Helpers: " + (Hadalird.systemHelpersInstalled ? Translation.tr("Ready")
-                        : Hadalird.systemHelpersDiagnostic === "unchecked" ? Translation.tr("Not checked")
-                        : Hadalird.systemHelpersDiagnostic.includes("not-installed") ? Translation.tr("Not installed")
+                text: "Gateway: " + (AlisIntergration.systemProvisionerAvailable ? Translation.tr("Ready") : Translation.tr("Not installed"))
+                    + " · Helpers: " + (AlisIntergration.systemHelpersInstalled ? Translation.tr("Ready")
+                        : AlisIntergration.systemHelpersDiagnostic === "unchecked" ? Translation.tr("Not checked")
+                        : AlisIntergration.systemHelpersDiagnostic.includes("not-installed") ? Translation.tr("Not installed")
                         : Translation.tr("Needs attention"))
                     + "\n" + Translation.tr("Manage system helpers with ./setup integrations.")
             }
@@ -198,10 +198,10 @@ ContentPage {
                         buttonIcon: catalogCard.modelData.icon
                         text: catalogCard.modelData.name
                         autoToggle: false
-                        checked: Hadalird.options?.[catalogCard.modelData.id] === true
-                        enabled: Hadalird.available && !Hadalird.managerBusy
-                            && Hadalird.installedPlugins.some(plugin => plugin.id === catalogCard.modelData.id)
-                        onToggledByUser: value => Hadalird.setPluginEnabled(catalogCard.modelData.id, value)
+                        checked: AlisIntergration.options?.[catalogCard.modelData.id] === true
+                        enabled: AlisIntergration.available && !AlisIntergration.managerBusy
+                            && AlisIntergration.installedPlugins.some(plugin => plugin.id === catalogCard.modelData.id)
+                        onToggledByUser: value => AlisIntergration.setPluginEnabled(catalogCard.modelData.id, value)
                     }
                 }
             }
@@ -222,8 +222,8 @@ ContentPage {
         StyledText {
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
-            visible: !Hadalird.pluginEnabled(root.activePlugin)
-            text: !Hadalird.available || Hadalird.loadFailed
+            visible: !AlisIntergration.pluginEnabled(root.activePlugin)
+            text: !AlisIntergration.available || AlisIntergration.loadFailed
                 ? Translation.tr("Plugin unavailable. Refresh or update the optional package.")
                 : Translation.tr("Enable this plugin in Management to configure it.")
         }
@@ -232,9 +232,9 @@ ContentPage {
             objectName: "integrationPluginSettings"
             Layout.fillWidth: true
             Layout.preferredHeight: item?.implicitHeight ?? 0
-            active: root.visible && root.selectedPlugin !== null && Hadalird.pluginEnabled(root.activePlugin)
+            active: root.visible && root.selectedPlugin !== null && AlisIntergration.pluginEnabled(root.activePlugin)
             property string capabilitySource: root.selectedCapability
-                ? Hadalird.settingsSource(Config.options?.panelFamily === "waffle"
+                ? AlisIntergration.settingsSource(Config.options?.panelFamily === "waffle"
                     ? root.selectedCapability.waffleSettings ?? root.selectedCapability.settings
                     : root.selectedCapability.settings) : ""
             property string capabilityView: root.selectedCapability?.view ?? ""

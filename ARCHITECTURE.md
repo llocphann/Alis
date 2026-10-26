@@ -34,7 +34,7 @@ Three mutually exclusive UI families are switchable at runtime (`Super+Shift+W`)
 | Panels | `ii*` | `w*` and shared panels | `abyss*` and documented shared fallbacks |
 
 Family URL loaders isolate inactive visual trees. Services/models remain shared.
-Abyss is not an iRiS Island implementation; its original single SDF owns physical
+Abyss is not an Abyss Island implementation; its original single SDF owns physical
 perimeter, panel union and final silhouette shadow. Critical and specialist
 fallbacks are listed in [Panel Families](docs/PANEL_FAMILIES.md).
 
@@ -189,7 +189,7 @@ This compatibility layer must never revive Orbit, Mascot, Workspace Strip, or a 
 Handlers are registered with `IpcHandler { target: "name" }` and invoked with:
 
 ```text
-inir <target> <function> [args]
+alis <target> <function> [args]
 ```
 
 The always-instantiated `dev` target provides session-only semantic navigation for lazy UI:
@@ -225,10 +225,10 @@ cd Alis
 ```
 
 Two install modes are tracked in `version.json`:
-- **Repo-sync**: `./setup install` → syncs to `~/.config/quickshell/inir/`.
-- **Package-managed**: `make install` → copies to `/usr/share/quickshell/inir/`.
+- **Repo-sync**: `./setup install` → syncs to `~/.config/quickshell/alis/`.
+- **Package-managed**: `make install` → copies to `/usr/share/quickshell/alis/`.
 
-User config for running QML remains at `~/.config/illogical-impulse/config.json`. Shell scripts/CLI default to `~/.config/inir/` with a legacy fallback; those namespaces are not yet unified.
+User config for running QML remains at `~/.config/illogical-impulse/config.json`. Shell scripts/CLI default to `~/.config/alis/` with a legacy fallback; those namespaces are not yet unified.
 
 ## Migrations
 
@@ -241,25 +241,25 @@ Migrations live under `sdata/migrations/`.
 ## Daily Development
 
 ```bash
-inir run
-inir restart
-inir logs | tail -50
-inir status
-inir doctor
-inir settings
+alis run
+alis restart
+alis logs | tail -50
+alis status
+alis doctor
+alis settings
 
-inir <target> <function> [args...]
-inir overview toggle
-inir audio volumeUp
+alis <target> <function> [args...]
+alis overview toggle
+alis audio volumeUp
 ```
 
-Never run raw `qs kill -c inir` / `qs -c inir` by hand. Alis runs under the compatibility unit `inir.service` (`systemd --user`); `inir restart` is the supported forced restart path.
+Never run raw `qs kill -c alis` / `qs -c alis` by hand. Alis runs under the compatibility unit `alis.service` (`systemd --user`); `alis restart` is the supported forced restart path.
 
 ## Connected Perimeter Status
 
 Material connected presentation retains its existing ownership boundary:
 
-- **Connected popup presentation is active by default** for existing ii bar popups through `StyledPopup.qml`. `ConnectedSurfaceGeometry` and `ConnectedSurfaceRevealClip` retain the slide-only lifecycle, while `ConnectedSurfaceIrisFrame` renders the exact iRiS v2.31.0 SDF union in the Overlay window using Top-layer Bar/Screen Edge owner records without repainting those owners. `ConnectedSurfaceBodyMask` keeps compositor input on the revealed rounded body only. Legacy `ConnectedSurfaceFrame` / `ConnectedSurfaceMask` remain available for Waffle and non-cutover shared surfaces; they are no longer the ii StyledPopup renderer.
+- **Connected popup presentation is active by default** for existing ii bar popups through `StyledPopup.qml`. `ConnectedSurfaceGeometry` and `ConnectedSurfaceRevealClip` retain the slide-only lifecycle, while `ConnectedSurfaceAbyssFrame` renders the exact Abyss v2.31.0 SDF union in the Overlay window using Top-layer Bar/Screen Edge owner records without repainting those owners. `ConnectedSurfaceBodyMask` keeps compositor input on the revealed rounded body only. Legacy `ConnectedSurfaceFrame` / `ConnectedSurfaceMask` remain available for Waffle and non-cutover shared surfaces; they are no longer the ii StyledPopup renderer.
 - **Retired `iiPerimeter` composition remains absent.** Abyss is an independent family with its own output-local renderer, not a reactivation of that cutover. Material ScreenEdges keeps the same locked FrameWindow ownership, rounded workspace opening, Bar-owned inset rules and reservation windows; its healthy paint backend is now the texture-free `ScreenEdgeField` analytic SDF, with the former Shape/MultiEffect renderer retained only as a lazy shader-error fallback.
 
 Detailed contracts and local visual acceptance steps live in `docs/PERIMETER.md` and `docs/SHELL_SURFACE_CONTRACTS.md`.

@@ -14,7 +14,7 @@ done
 mkdir -p "$popup_test_root/config/illogical-impulse"
 cp "$repo_root/defaults/config.json" "$popup_test_root/config/illogical-impulse/config.json"
 cat > "$popup_test_root/shell.qml" <<'QML'
-//@ pragma ShellId hadalis-abyss-styled-popup-test
+//@ pragma ShellId alis-abyss-styled-popup-test
 import QtQuick
 import Quickshell
 import Quickshell.Wayland

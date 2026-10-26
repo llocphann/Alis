@@ -12,7 +12,7 @@ if not shutil.which("qs") or not shutil.which("notify-send"):
     print("SKIP: notification lifetime requires Quickshell and notify-send")
     raise SystemExit(0)
 
-with tempfile.TemporaryDirectory(prefix="hadalis-notification-timeout-") as folder:
+with tempfile.TemporaryDirectory(prefix="alis-notification-timeout-") as folder:
     root = Path(folder)
     for name in ("modules", "services", "GlobalStates.qml", "qmldir", "assets", "scripts", "defaults", "translations"):
         (root / name).symlink_to(repo / name)
@@ -25,7 +25,7 @@ with tempfile.TemporaryDirectory(prefix="hadalis-notification-timeout-") as fold
     fixture_config["gameMode"]["autoDetect"] = False
     fixture_config["gameMode"]["disableNiriAnimations"] = False
     (config / "config.json").write_text(json.dumps(fixture_config))
-    seed = int(os.environ.get("HADALIS_TEST_NOTIFICATION_HISTORY_ID", "0"))
+    seed = int(os.environ.get("ALIS_TEST_NOTIFICATION_HISTORY_ID", "0"))
     if seed:
         history = root / "state/quickshell/user/notifications.json"
         history.parent.mkdir(parents=True)
@@ -33,7 +33,7 @@ with tempfile.TemporaryDirectory(prefix="hadalis-notification-timeout-") as fold
             "appName":"History QA","time":1,"actions":[],"body":"","image":"",
             "appIcon":"","urgency":"normal"}]))
     (root / "shell.qml").write_text(r'''
-//@ pragma ShellId hadalis-notification-timeout-test
+//@ pragma ShellId alis-notification-timeout-test
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -81,7 +81,7 @@ ShellRoot {
    root.send("paused",1800);root.advance(1)
   } else if(root.stage===1 && root.find("paused")) {
    const n=root.find("paused")
-   if(!root.check(Notifications.idOffset===Number(Quickshell.env("HADALIS_TEST_NOTIFICATION_HISTORY_ID") || "0")
+   if(!root.check(Notifications.idOffset===Number(Quickshell.env("ALIS_TEST_NOTIFICATION_HISTORY_ID") || "0")
       && n.notificationId===n.notification.id+Notifications.idOffset,"cold ingress uses the persisted native ID offset"))return
    if(!root.check(n.popup && n.timer?.interval===1800 && n.notification.expireTimeout===1800,
       "native app timeout preserves 1800 ms; popup="+n.popup+" interval="+n.timer?.interval+" native="+n.notification.expireTimeout))return

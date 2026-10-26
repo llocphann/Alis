@@ -148,7 +148,7 @@ for token in (
 
 for token in (
     "load_preset:output:",
-    "hadalis_live_eq",
+    "alis_live_eq",
     "socat",
 ):
     forbid(helper, token, "equalizer-control.sh")

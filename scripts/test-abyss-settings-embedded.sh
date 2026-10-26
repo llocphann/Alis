@@ -11,7 +11,7 @@ done
 mkdir -p "$settings_test_root/config/illogical-impulse"
 cp "$repo_root/defaults/config.json" "$settings_test_root/config/illogical-impulse/config.json"
 cat > "$settings_test_root/shell.qml" <<'QML'
-//@ pragma ShellId hadalis-abyss-settings-embedded-test
+//@ pragma ShellId alis-abyss-settings-embedded-test
 import QtQuick
 import Quickshell
 import qs

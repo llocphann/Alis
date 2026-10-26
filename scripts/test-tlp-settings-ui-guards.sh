@@ -45,7 +45,7 @@ assert_not_contains() {
 }
 
 for row in "$classic" "$waffle"; do
-    assert_contains 'active: Hadalird.tlpEnabled' "$row" "$(basename "$row") must gate its optional payload"
+    assert_contains 'active: AlisIntergration.tlpEnabled' "$row" "$(basename "$row") must gate its optional payload"
     assert_not_contains 'gpuFrequencyGroupKeys' "$row" "$(basename "$row") must not duplicate integration implementation"
 done
 
@@ -99,13 +99,13 @@ assert_contains 'for (const index of retired)' "$arrangement" \
     'all retired compatibility pages, including historical page 28, must stay internal-only'
 [ ! -e "$legacy_tlp" ] || fail 'retired TlpConfig compatibility page must be deleted'
 
-# Worker/kernel/schema/batch guards run in Hadalird. Keep host registration
+# Worker/kernel/schema/batch guards run in AlisIntergration. Keep host registration
 # and supported Waffle routing/optional gates in the core.
 assert_contains 'singleton TlpRuntimeCapabilities 1.0 TlpRuntimeCapabilities.qml' "$repo_root/services/qmldir" 'typed capability facade must remain registered'
 assert_contains 'pageTitle: Translation.tr("Battery")' "$waffle_page" 'Waffle Battery page must remain registered'
-assert_contains 'source: Hadalird.settingsSource("tlpWaffle")' "$waffle_page" 'Waffle page must load the optional presentation'
-assert_contains 'active: root.visible && Hadalird.tlpEnabled' "$waffle_page" 'Waffle settings must be selected and visible'
-assert_contains 'active: root.showIntegrationSettings && root.visible && Hadalird.tlpEnabled' "$power" 'core TLP card must require selected optional integration'
+assert_contains 'source: AlisIntergration.settingsSource("tlpWaffle")' "$waffle_page" 'Waffle page must load the optional presentation'
+assert_contains 'active: root.visible && AlisIntergration.tlpEnabled' "$waffle_page" 'Waffle settings must be selected and visible'
+assert_contains 'active: root.showIntegrationSettings && root.visible && AlisIntergration.tlpEnabled' "$power" 'core TLP card must require selected optional integration'
 
 printf '%s\n' '1..1'
 printf '%s\n' 'ok 1 - TLP UI guards and System Power integration are present'

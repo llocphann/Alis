@@ -19,7 +19,7 @@ edge = source("modules/screenCorners/ScreenEdges.qml")
 edge_fallback = source("modules/screenCorners/ScreenEdgeLegacyFallback.qml")
 theme = source("modules/common/Appearance.qml")
 popup = source("modules/bar/StyledPopup.qml")
-iris = source("modules/common/perimeter/ConnectedSurfaceIrisFrame.qml")
+abyss = source("modules/common/perimeter/ConnectedSurfaceAbyssFrame.qml")
 shared = source("modules/common/widgets/StyledRectangularShadow.qml")
 sidebar = source("modules/sidebar/SidebarHost.qml")
 overview = source("modules/overview/OverviewDashboard.qml")
@@ -123,7 +123,7 @@ assert 'property color colShadow: m3colors.transparent' not in theme
 # Connected corners must cast shadow from their actual SDF union, not a
 # rectangular approximation of the body. Capture is bounded to the body/fuse
 # reach, and both mask and final output respect the owning Screen Edge.
-require(iris,
+require(abyss,
     "readonly property real shadowTextureExtent:",
     "Math.max(0, root.shadowExtent) + root.fuse + root.aaReach + 2",
     "readonly property rect shadowMaskBounds:",
@@ -147,14 +147,14 @@ require(iris,
     "live: true",
     "id: field",
 )
-assert iris.index("id: shadowMaskField") < iris.index("id: blurredShadow") < iris.index("id: isolatedShadow") < iris.index("id: field")
-assert "RectangularShadow {" not in iris, "The connected shadow may not diverge from the iRiS silhouette"
+assert abyss.index("id: shadowMaskField") < abyss.index("id: blurredShadow") < abyss.index("id: isolatedShadow") < abyss.index("id: field")
+assert "RectangularShadow {" not in abyss, "The connected shadow may not diverge from the Abyss silhouette"
 
 for surface in (popup, sidebar, overview):
     require(surface, "Appearance.m3colors.m3shadow", "shadowEnabled:")
 for surface in settings:
     require(surface,
-        "ConnectedSurfaceIrisEdgeSurface {",
+        "ConnectedSurfaceAbyssEdgeSurface {",
         "Appearance.m3colors.m3shadow",
         "screenEdge?.physicalShadow?.enabled ?? true",
         "screenEdge?.physicalShadow?.size ?? 15",

@@ -590,8 +590,8 @@ Scope {
             // ── Floating settings card (no separate drop shadow — the card
             //    sits on the scrim backdrop; the panel border provides depth) ──
 // ── Bottom-connected settings popup ──
-            ConnectedSurfaceIrisEdgeSurface {
-                id: settingsIrisSurface
+            ConnectedSurfaceAbyssEdgeSurface {
+                id: settingsAbyssSurface
                 visible: !root.embeddedHost
                 z: 1
                 anchors.fill: parent
@@ -1347,7 +1347,7 @@ Scope {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             radius: Appearance.rounding.normal
-                            // settingsIrisSurface already paints the structural
+                            // settingsAbyssSurface already paints the structural
                             // colLayer0 body; keep inner content transparent.
                             color: "transparent"
                             border.width: 0

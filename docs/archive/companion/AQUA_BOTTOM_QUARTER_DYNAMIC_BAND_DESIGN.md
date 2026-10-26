@@ -1,8 +1,8 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
 
-> Companion implementation and remaining product tasks belong to [Alis-Companion](https://github.com/llocphann/Alis-Companion). Original Hadalis receipts keep their original scope.
+> Companion implementation and remaining product tasks belong to [Alis-Companion](https://github.com/llocphann/Alis-Companion). Original Alis receipts keep their original scope.
 
-<!-- hadalis-doc-kind: research -->
+<!-- alis-doc-kind: research -->
 
 # Aqua BOTTOM ×1.5 private moving margin0 / margin0.25 dual-raster gate
 

@@ -31,7 +31,7 @@ write_cmd qml 'exit 1'
 write_cmd pacman 'exit 1'
 
 detect_version() {
-    HADALIS_QML_VERSION_SYSTEM_FALLBACKS=0 \
+    ALIS_QML_VERSION_SYSTEM_FALLBACKS=0 \
         PATH="$tmp/bin:/usr/bin:/bin" \
         bash "$helper" "$tmp/bin/qmlformat"
 }

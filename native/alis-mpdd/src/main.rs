@@ -828,7 +828,7 @@ fn cache_dir() -> PathBuf {
     std::env::var_os("XDG_CACHE_HOME")
         .map(PathBuf::from)
         .unwrap_or_else(|| home_dir().join(".cache"))
-        .join("hadalis")
+        .join("alis")
         .join("music-covers")
 }
 

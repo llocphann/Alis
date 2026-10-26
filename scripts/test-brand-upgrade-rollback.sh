@@ -8,26 +8,26 @@ tmp="$(mktemp -d)"
 trap 'rm -rf -- "$tmp"' EXIT
 stage="$tmp/package-root"
 home="$tmp/home"
-mkdir -p "$home/.config/inir" "$home/.local/state/quickshell/user" "$stage"
-printf 'settings private, unchanged\n' > "$home/.config/inir/config.json"
+mkdir -p "$home/.config/alis" "$home/.local/state/quickshell/user" "$stage"
+printf 'settings private, unchanged\n' > "$home/.config/alis/config.json"
 printf 'owner-welcome-complete\n' > "$home/.local/state/quickshell/user/first_run.txt"
-before_config="$(sha256sum "$home/.config/inir/config.json" | cut -d' ' -f1)"
+before_config="$(sha256sum "$home/.config/alis/config.json" | cut -d' ' -f1)"
 before_marker="$(sha256sum "$home/.local/state/quickshell/user/first_run.txt" | cut -d' ' -f1)"
 make_args=("DESTDIR=$stage" "PREFIX=/usr")
 install_staged() { make -s install-bin install-desktop install-icon "${make_args[@]}"; }
 uninstall_staged() { make -s uninstall-bin uninstall-desktop uninstall-icon "${make_args[@]}"; }
 check_staged() {
     [[ -x "$stage/usr/bin/alis" ]] || fail 'public Alis command absent'
-    [[ ! -e "$stage/usr/bin/inir" ]] || fail 'retired iNiR command unexpectedly installed'
+    [[ ! -e "$stage/usr/bin/alis" ]] || fail 'retired Alis command unexpectedly installed'
     grep -Fxq 'Name=Alis Settings' "$stage/usr/share/applications/alis-settings.desktop" ||
         fail 'Alis Settings entry missing'
-    [[ ! -e "$stage/usr/share/applications/inir-settings.desktop" ]] ||
-        fail 'retired iNiR Settings entry unexpectedly packaged'
+    [[ ! -e "$stage/usr/share/applications/alis-settings.desktop" ]] ||
+        fail 'retired Alis Settings entry unexpectedly packaged'
     [[ -s "$stage/usr/share/icons/hicolor/scalable/apps/alis.svg" ]] ||
         fail 'public icon absent'
 }
 check_user_data() {
-    [[ "$(sha256sum "$home/.config/inir/config.json" | cut -d' ' -f1)" == "$before_config" ]] ||
+    [[ "$(sha256sum "$home/.config/alis/config.json" | cut -d' ' -f1)" == "$before_config" ]] ||
         fail 'owner configuration changed by package operations'
     [[ "$(sha256sum "$home/.local/state/quickshell/user/first_run.txt" | cut -d' ' -f1)" == "$before_marker" ]] ||
         fail 'First Run marker changed by package operations'

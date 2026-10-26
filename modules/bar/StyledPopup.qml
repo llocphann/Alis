@@ -301,7 +301,7 @@ LazyLoader {
     readonly property real _screenEdgeThickness: Math.max(1, Math.min(32,
         Math.round(Config.options?.appearance?.screenEdge?.width ?? 10)))
     // Placement stops at the real Screen Edge inner boundary. Tangent welding
-    // is SDF-only inside ConnectedSurfaceIrisFrame, so content/input never need
+    // is SDF-only inside ConnectedSurfaceAbyssFrame, so content/input never need
     // to live underneath the physical Screen Edge just to keep the fillet.
     readonly property real _popupScreenMargin: root._screenEdgeThickness
     // Share the public Screen Edge shadow controls and raw Material shadow ink.
@@ -752,7 +752,7 @@ LazyLoader {
             // Match the accepted G2 morphology: the SDF body overlaps its
             // primary owner by the locked weld depth, while reveal/paint/input
             // clipping still starts at the real Bar/Screen Edge boundary.
-            seamOverlap: PerimeterTokens.irisWeldDepth
+            seamOverlap: PerimeterTokens.abyssWeldDepth
             progress: root.revealProgress
             devicePixelRatio: popupWindow.devicePixelRatio
         }
@@ -785,14 +785,14 @@ LazyLoader {
             id: popupRevealClip
             geometry: geometry
 
-            ConnectedSurfaceIrisFrame {
+            ConnectedSurfaceAbyssFrame {
                 id: frame
                 anchors.fill: parent
                 geometry: geometry
                 fillColor: root._surfaceColor
                 borderColor: root._borderColor
                 borderWidth: root._borderWidth
-                fuseDepth: PerimeterTokens.irisFuseDepth
+                fuseDepth: PerimeterTokens.abyssFuseDepth
                 externalFrameThickness: root._screenEdgeThickness
                 // Own hover on the complete popup body, including its visual
                 // padding, but not on the reveal viewport's empty screen area.
@@ -826,7 +826,7 @@ LazyLoader {
                 // Track the actual content plane as well as the decorative body.
                 // Interactive children (notably StyledSwitch/MouseArea controls)
                 // sit above ConnectedSurfaceFrame and can otherwise make the
-                // iRiS body's HoverHandler report a transient leave while the pointer
+                // Abyss body's HoverHandler report a transient leave while the pointer
                 // is still visibly inside the popup, causing retract/reopen jitter.
                 HoverHandler {
                     enabled: root.active

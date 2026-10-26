@@ -14,7 +14,7 @@ done
 mkdir -p "$wave_test_root/config/illogical-impulse"
 cp "$repo_root/defaults/config.json" "$wave_test_root/config/illogical-impulse/config.json"
 cat > "$wave_test_root/shell.qml" <<'QML'
-//@ pragma ShellId hadalis-abyss-wave-runtime-test
+//@ pragma ShellId alis-abyss-wave-runtime-test
 import QtQuick
 import Quickshell
 import qs.modules.common

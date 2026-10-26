@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Guard Hadalis's Obsidian Settings wrapper after real owner width=0 report.
+"""Guard Alis's Obsidian Settings wrapper after real owner width=0 report.
 
 The parent settings page is a ColumnLayout. A plain Item child must explicitly
-participate in width negotiation. Otherwise its deferred Hadalird child can
+participate in width negotiation. Otherwise its deferred Alis-Intergration child can
 have positive implicitHeight with zero paint width, producing a blank page.
 This is a source regression only; native Niri geometry still needs acceptance.
 """
@@ -21,11 +21,11 @@ for name, source in (("Theme", theme), ("Todo", todo)):
     assert re.search(r"\bLoader\s*\{[\s\S]*?\bwidth\s*:\s*parent\.width", source), (
         f"{name}: deferred package loader lost wrapper width")
     assert "implicitHeight:" in source, f"{name}: cannot size page height"
-    assert "Hadalird.obsidianEnabled" in source, f"{name}: lost opt-in gate"
+    assert "AlisIntergration.obsidianEnabled" in source, f"{name}: lost opt-in gate"
 
 assert 'objectName: "integrationPluginSettings"' in page
 assert 'Layout.fillWidth: true' in page and 'Layout.preferredHeight: item?.implicitHeight ?? 0' in page
-assert 'Hadalird.pluginEnabled(root.activePlugin)' in page
-assert "Hadalird.systemProvisionerAvailable" in page, (
-    "Privileged helper button must report the absent Hadalis system gateway")
-print("HADALIRD_OBSIDIAN_WRAPPER_PASS both deferred cards fill page width; optional helper precondition visible")
+assert 'AlisIntergration.pluginEnabled(root.activePlugin)' in page
+assert "AlisIntergration.systemProvisionerAvailable" in page, (
+    "Privileged helper button must report the absent Alis system gateway")
+print("ALIS_INTERGRATION_OBSIDIAN_WRAPPER_PASS both deferred cards fill page width; optional helper precondition visible")

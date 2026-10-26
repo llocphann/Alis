@@ -8,7 +8,7 @@ from native_test_session import private_wayland, run_qs
 
 ROOT = Path(__file__).resolve().parents[1]
 PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNwmLDhPwAFFAKA8JVvSQAAAABJRU5ErkJggg==")
-with tempfile.TemporaryDirectory(prefix="hadalis-note-image-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-note-image-") as name:
     folder = Path(name)
     for entry in ["modules", "services", "GlobalStates.qml", "qmldir", "assets", "scripts", "defaults", "translations"]:
         (folder / entry).symlink_to(ROOT / entry)

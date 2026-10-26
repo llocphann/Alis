@@ -431,7 +431,7 @@ Scope {
                     outerRadius: PerimeterTokens.popupRadius
                     screenMargin: root._screenEdgeThickness
                     connectorLength: 0
-                    seamOverlap: PerimeterTokens.irisWeldDepth
+                    seamOverlap: PerimeterTokens.abyssWeldDepth
                     progress: 1 - root.connectedOffsetScale
                     devicePixelRatio: osdRoot.devicePixelRatio
                 }
@@ -440,14 +440,14 @@ Scope {
                     geometry: connectedGeometry
                     visible: root.connectedIndicator
 
-                    ConnectedSurfaceIrisFrame {
+                    ConnectedSurfaceAbyssFrame {
                         id: statusFrame
                         anchors.fill: parent
                         geometry: connectedGeometry
                         fillColor: Appearance.colors.colLayer0
                         borderColor: Appearance.colors.colLayer0Border
                         borderWidth: 0
-                        fuseDepth: PerimeterTokens.irisFuseDepth
+                        fuseDepth: PerimeterTokens.abyssFuseDepth
                         externalFrameThickness: root._screenEdgeThickness
                         shadowEnabled: root._edgeShadowEnabled
                             && root._edgeShadowExtent > 0

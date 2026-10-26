@@ -12,7 +12,7 @@ with tempfile.TemporaryDirectory(prefix="alis-cli-instance-selection-") as name:
     bindir = base / "bin"; bindir.mkdir()
     current = base / "config/quickshell/alis"; current.mkdir(parents=True)
     other_display = base / "private full Alis"; other_display.mkdir()
-    foreign = base / "hadalis-recording-field-fixture"; foreign.mkdir()
+    foreign = base / "alis-recording-field-fixture"; foreign.mkdir()
     for folder in [current, other_display]:
         (folder / "shell.qml").write_text("//@ pragma ShellId alis\n// fixture only\n")
     (foreign / "shell.qml").write_text("// a Recording test is not the Alis shell\n")
@@ -51,7 +51,7 @@ else:sys.exit(83)
                OTHER_DISPLAY_ALIAS=str(other_display), REAL_CONFIG=str(current),
                ALIS_SYSTEM_RUNTIME_DIR=str(base/"absent-system"),
                ALIS_FALLBACK_SYSTEM_RUNTIME_DIR=str(base/"absent-fallback"))
-    for key in ["ALIS_RUNTIME_DIR","INIR_RUNTIME_DIR","HADALIS_RUNTIME_DIR","QS_CONFIG_NAME","QS_CONFIG_PATH","QS_MANIFEST"]:
+    for key in ["ALIS_RUNTIME_DIR","ALIS_RUNTIME_DIR","ALIS_RUNTIME_DIR","QS_CONFIG_NAME","QS_CONFIG_PATH","QS_MANIFEST"]:
         env.pop(key,None)
     for text_only in [False, True]:
         p = subprocess.run(["bash",str(cli),"logs","--full"],env={**env,"TEXT_ONLY":str(int(text_only))},

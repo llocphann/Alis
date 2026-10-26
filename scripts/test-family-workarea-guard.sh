@@ -11,7 +11,7 @@ trap 'rm -rf -- "$guard_test_root"' EXIT
 # separately in nested Niri because the offscreen plugin has no layer backend.
 cp "$repo_root/FamilyWorkAreaHold.qml" "$guard_test_root/Controller.qml"
 cat > "$guard_test_root/shell.qml" <<'QML'
-//@ pragma ShellId hadalis-workarea-guard-test
+//@ pragma ShellId alis-workarea-guard-test
 import QtQuick
 import Quickshell
 ShellRoot {

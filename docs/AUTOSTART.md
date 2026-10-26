@@ -1,45 +1,45 @@
 # Autostart and Session
 
-How iNiR starts, how apps autostart, and how sessions end.
+How Alis starts, how apps autostart, and how sessions end.
 
 ## Shell startup
 
-iNiR itself runs as a systemd user service. It does not start via niri's `spawn-at-startup`. This gives it crash recovery, proper lifecycle management, and journal logging.
+Alis itself runs as a systemd user service. It does not start via niri's `spawn-at-startup`. This gives it crash recovery, proper lifecycle management, and journal logging.
 
 The service connects to your compositor via a wants link:
 
 ```
-~/.config/systemd/user/niri.service.wants/inir.service
+~/.config/systemd/user/niri.service.wants/alis.service
 ```
 
-When niri starts, systemd starts iNiR. When niri stops, iNiR stops. Manage the link with:
+When niri starts, systemd starts Alis. When niri stops, Alis stops. Manage the link with:
 
 ```bash
-inir service enable     # create wants link
-inir service disable    # remove it
-inir service status     # check state
+alis service enable     # create wants link
+alis service disable    # remove it
+alis service status     # check state
 ```
 
 For the full boot sequence, see [Runtime and Boot Pipeline](RUNTIME.md).
 
 ## App autostart
 
-There are two layers of autostart in a typical iNiR setup:
+There are two layers of autostart in a typical Alis setup:
 
 ### Compositor level (spawn-at-startup)
 
 These are defined in `~/.config/niri/config.d/50-startup.kdl` and managed by the compositor:
 
-- `exec wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store` (clipboard text history, browser-markup filtering)
+- `exec wl-paste --no-newline --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store` (clipboard text history, browser-markup filtering)
 - `exec wl-paste --type image --watch cliphist store` (clipboard image history)
 - `polkit-mate-authentication-agent-1` (GUI sudo prompts)
 - `kbuildsycoca6` (KDE desktop entry cache)
 
-These run before iNiR starts and are independent of the shell. The two clipboard watchers are single-instance startup writers: Niri owns each long-running `wl-paste` process directly, so the command must not add a nested background `&`.
+These run before Alis starts and are independent of the shell. The two clipboard watchers are single-instance startup writers: Niri owns each long-running `wl-paste` process directly, so the command must not add a nested background `&`.
 
 ### Shell level (Autostart service)
 
-iNiR has its own autostart manager that handles:
+Alis has its own autostart manager that handles:
 
 - **Desktop entries**: standard `.desktop` files in `~/.config/autostart/`
 - **Custom commands**: user-defined commands configured through Settings
@@ -58,14 +58,14 @@ The lock screen uses Wayland's session lock protocol (WlSessionLock). This is a 
 
 ### Fallback
 
-If the QML lock surface fails to render within 2 seconds, iNiR falls back to swaylock or hyprlock (whichever is installed). This prevents the session from being locked with no visible unlock UI.
+If the QML lock surface fails to render within 2 seconds, Alis falls back to swaylock or hyprlock (whichever is installed). This prevents the session from being locked with no visible unlock UI.
 
 ### IPC
 
 ```bash
-inir lock activate     # lock the session
-inir lock deactivate   # unlock (requires auth)
-inir lock status       # check lock state
+alis lock activate     # lock the session
+alis lock deactivate   # unlock (requires auth)
+alis lock status       # check lock state
 ```
 
 ### Config
@@ -80,13 +80,13 @@ Lock settings are in Settings > System > Lock:
 The session screen provides logout, reboot, shutdown, and suspend actions. Access it from:
 - Keybind (configurable)
 - Power button in the bar/taskbar
-- IPC: `inir session open`
+- IPC: `alis session open`
 
 Before executing an action, the session screen checks for running package managers and active downloads. If found, it warns you before proceeding.
 
 ## Polkit agent
 
-iNiR includes a PolicyKit authentication agent. When a privileged operation needs authorization (installing a package, mounting a disk), a dialog appears asking for your password.
+Alis includes a PolicyKit authentication agent. When a privileged operation needs authorization (installing a package, mounting a disk), a dialog appears asking for your password.
 
 The shell's polkit agent coexists with the system one (mate-polkit, which niri starts). If the shell's agent fails to register (because another one is already active), that's fine. You'll still get prompted.
 
@@ -100,6 +100,6 @@ Idle timeouts are handled by swayidle, configured through Settings or IPC:
 - **Lock**: lock the session after inactivity (default: 10 minutes)
 - **Suspend**: suspend the system after inactivity (default: off)
 
-Idle timeouts are configured in Settings (backed by `services/Idle.qml`); there is no `inir idle` CLI command.
+Idle timeouts are configured in Settings (backed by `services/Idle.qml`); there is no `alis idle` CLI command.
 
 Fullscreen video players and presentations automatically inhibit idle via the idle-inhibit Wayland protocol.

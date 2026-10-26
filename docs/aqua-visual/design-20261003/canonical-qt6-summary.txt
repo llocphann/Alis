@@ -1,4 +1,4 @@
-HADALIS VALIDATION SUMMARY
+ALIS VALIDATION SUMMARY
 Exact SHA: a1156722159c7840eda93ad37ad5e9dfb1e229b8
 Result: FAIL
 Checks run: 408
@@ -61,5 +61,5 @@ Environment-dependent / release-only checks not run by daily validation:
   - multi-monitor/hotplug/suspend-resume/fractional-scaling/focus/fullscreen acceptance
   - live audio/hardware behavior that requires the real desktop session
   - GitHub release publication, Wiki remote access, and hosted release permissions
-FINAL LOG: /tmp/hadalis-aqua-a11567221-maintainer-qt6.log
+FINAL LOG: /tmp/alis-aqua-a11567221-maintainer-qt6.log
 ========================================

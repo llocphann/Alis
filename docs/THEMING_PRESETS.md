@@ -4,9 +4,9 @@
 
 ## How presets work
 
-Normally, iNiR extracts colors from your wallpaper using Material You. Presets skip that step and inject a complete Material 3 color palette directly. The palette propagates to external apps (GTK, terminals, Firefox, etc.) the same way wallpaper colors do.
+Normally, Alis extracts colors from your wallpaper using Material You. Presets skip that step and inject a complete Material 3 color palette directly. The palette propagates to external apps (GTK, terminals, Firefox, etc.) the same way wallpaper colors do.
 
-Apply presets from Settings > Appearance > Theme. The `inir theme` command manages external-app theming targets (`list-targets`, `inspect`, `doctor`, `apply`, `scaffold`); it does not switch shell color presets.
+Apply presets from Settings > Appearance > Theme. The `alis theme` command manages external-app theming targets (`list-targets`, `inspect`, `doctor`, `apply`, `scaffold`); it does not switch shell color presets.
 
 When a preset is active, changing wallpapers changes the background image but doesn't regenerate colors.
 
@@ -18,7 +18,7 @@ The full, current list of presets lives in `modules/common/ThemePresets.qml` and
 grep -oP '^\s*id:\s*"\K[^"]+' modules/common/ThemePresets.qml | grep -vE '^(auto|custom)$'
 ```
 
-At time of writing there are 46 theme presets (plus the special `auto` and `custom` entries), spanning Catppuccin (4 flavors), Gruvbox, Nord, Dracula, Tokyo Night, Kanagawa, Rose Pine, Everforest, Solarized, Monokai, Ayu, the iNiR signature styles (Angel / Angel Light), and many more. Preset IDs are kebab-case (e.g. `rose-pine`, `gruvbox-dark`, `tokyo-night`, `one-dark`). Use the ID, not a display name, when scripting.
+At time of writing there are 46 theme presets (plus the special `auto` and `custom` entries), spanning Catppuccin (4 flavors), Gruvbox, Nord, Dracula, Tokyo Night, Kanagawa, Rose Pine, Everforest, Solarized, Monokai, Ayu, the Alis signature styles (Angel / Angel Light), and many more. Preset IDs are kebab-case (e.g. `rose-pine`, `gruvbox-dark`, `tokyo-night`, `one-dark`). Use the ID, not a display name, when scripting.
 
 ## Preset features
 

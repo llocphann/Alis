@@ -1,6 +1,6 @@
 # Authentic Aqua reference metadata — safe existing-receipt projection prep
 
-Repository llocphann/Hadalis, dev PREPUBLICATION b759c369745353094cd1b9e1e67c2894ce699ce8; profile profile-1e0042aca8e24db2. This is NOT a renderer, image, or manifest change. All four original assets are tracked at blob IDs d232af73adeb2e9d4673ced04269f73a5d84a06d, f11033572cd43634be1c5a6451f5d172989c17a8, dbeabf0c00b58f5ef1e32a5f86016fbd1e71881a, 01d76718c365fe675359b3bfc9e5b303bbacaff6 (respectively).
+Repository llocphann/Alis, dev PREPUBLICATION b759c369745353094cd1b9e1e67c2894ce699ce8; profile profile-1e0042aca8e24db2. This is NOT a renderer, image, or manifest change. All four original assets are tracked at blob IDs d232af73adeb2e9d4673ced04269f73a5d84a06d, f11033572cd43634be1c5a6451f5d172989c17a8, dbeabf0c00b58f5ef1e32a5f86016fbd1e71881a, 01d76718c365fe675359b3bfc9e5b303bbacaff6 (respectively).
 
 Historical same-profile job -52 already passed, receipt source d1f1231790bd8d683cced6bd52bcc966cc95b75b, evidence JOB-AQUA-ORIGINAL-PNG-METADATA-P1E0042-20261003-52:0, observed Unix 1790984126, exit0, private stdout SHA-256 af9900523d6c780db27a749b02f8518fa4acb1c1c018eee89f85273c88a83df6. Neither original SHA-256 strings nor true original pixels were visible via GitHub connector; do not invent these. Legacy reference/manifest.json remains INVALID and untouched.
 

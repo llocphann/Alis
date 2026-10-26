@@ -69,7 +69,7 @@ QML
 }
 
 run_guard() {
-    HADALIS_CRITICAL_ISOLATION_ROOT="$1" bash "$guard"
+    ALIS_CRITICAL_ISOLATION_ROOT="$1" bash "$guard"
 }
 
 expect_failure() {

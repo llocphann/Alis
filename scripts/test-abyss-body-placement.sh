@@ -22,7 +22,7 @@ Item {
 }
 QML
 cat > "$placement_test_root/shell.qml" <<'QML'
-//@ pragma ShellId hadalis-abyss-body-placement-test
+//@ pragma ShellId alis-abyss-body-placement-test
 import QtQuick
 import Quickshell
 import qs

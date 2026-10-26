@@ -2,11 +2,11 @@
 
 # Prompt — Next Chat: Optimization / Bug Fix / Refinement
 
-Continue work on the GitHub repository `llocphann/Hadalis`, branch `dev`.
+Continue work on the GitHub repository `llocphann/Alis`, branch `dev`.
 
 **Hard workflow lock:** work and commit directly on `dev`. Do not create or switch to another branch and do not open a pull request unless the maintainer explicitly asks for it.
 
-The iRiS integration phase is complete. Treat the current iRiS/perimeter
+The Abyss integration phase is complete. Treat the current Abyss/perimeter
 architecture as the production baseline; this new phase is for **optimization,
 bug fixing and refinement of existing features**, not another migration.
 
@@ -17,7 +17,7 @@ Before editing:
 1. Refetch the latest `dev` because other agents may push concurrently.
 2. Read:
    - `README.md` §1.1;
-   - `docs/IRIS_INTEGRATION_COMPLETE.md`;
+   - `docs/ABYSS_INTEGRATION_COMPLETE.md`;
    - `docs/PERIMETER.md`;
    - `docs/SHELL_SURFACE_CONTRACTS.md`.
 3. Do not create/switch to a work branch or open a PR unless explicitly requested.
@@ -37,9 +37,9 @@ Architecture constraints:
 - Physical Screen Edge geometry is locked and owned only by
   `modules/screenCorners/ScreenEdges.qml`.
 - Normal ii Bar physical perimeter is part of that same locked frame.
-- ii Bar popups use `StyledPopup -> ConnectedSurfaceIrisFrame/IrisField`.
-- Sidebar/Dashboard/Settings use `ConnectedSurfaceIrisEdgeSurface`.
-- Dashboard-owned Applications Search shares the Dashboard iRiS field and must
+- ii Bar popups use `StyledPopup -> ConnectedSurfaceAbyssFrame/AbyssField`.
+- Sidebar/Dashboard/Settings use `ConnectedSurfaceAbyssEdgeSurface`.
+- Dashboard-owned Applications Search shares the Dashboard Abyss field and must
   not paint a second connected field.
 - Motion remains slide-only through `SurfaceMotion`.
 - Do not reintroduce `ConnectedSurfaceJoinFlares`, `PerimeterCornerShadow`,

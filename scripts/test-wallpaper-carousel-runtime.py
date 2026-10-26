@@ -4,7 +4,7 @@ from pathlib import Path
 import json,os,shutil,tempfile,subprocess
 from native_test_session import private_wayland,run_qs
 ROOT=Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix='hadalis-wallpaper-carousel-') as name:
+with tempfile.TemporaryDirectory(prefix='alis-wallpaper-carousel-') as name:
  folder=Path(name)
  (folder/"wallpapers").mkdir()
  for entry in ['modules','services','GlobalStates.qml','qmldir','assets','scripts','defaults','translations']:(folder/entry).symlink_to(ROOT/entry)
@@ -34,7 +34,7 @@ Window {
  AbyssOrbitalWeather {id:orbit;x:650;y:320;width:280;height:230}
  WallpaperCrossfader {
   id:wall;x:80;y:380;width:820;height:260;sourceSize:Qt.size(820,260)
-  transitionType:"inirMelt";transitionBaseDuration:350
+  transitionType:"alisMelt";transitionBaseDuration:350
   onTransitionStarted:root.starts++
   onTransitionFinished:root.finishes++
  }
@@ -48,7 +48,7 @@ Window {
   function allLabels(item){let result=[];if(item.objectName==="wallpaperCardLabel")result.push(item);for(const child of item.data ?? item.children ?? [])result=result.concat(allLabels(child));return result}
   function runChecks(){try {
    tryCompare(Config,"ready",true,4000)
-   Config.setNestedValues({"background.transition.type":"inirMelt","background.transition.enable":true})
+   Config.setNestedValues({"background.transition.type":"alisMelt","background.transition.enable":true})
    check(!AwwwBackend.enabled,"liquid mode has two wallpaper owners")
    GlobalStates.wallpaperLauncherOpen=true
    tryVerify(()=>picker.count===5,7000)
@@ -71,7 +71,7 @@ Window {
    const surface=findChild(tip.contentItem,"styledToolTipSurface")
    tryVerify(()=>surface.radius>=12,1500)
    check(tip.contentItem.abyss && surface.radius>=12 && surface.color===AbyssStyle.surface,"hover tip did not use the Abyss material")
-   root.contentItem.grabToImage(result=>result.saveToFile("/tmp/hadalis-wallpaper-hover-20261007.png"))
+   root.contentItem.grabToImage(result=>result.saveToFile("/tmp/alis-wallpaper-hover-20261007.png"))
    wait(120);mouseMove(search);tryVerify(()=>!tip.contentItem.shown,2000)
    Weather.data={hourly:[{label:"12:00",temp:"24°",code:0,isNight:false}]}
    tryVerify(()=>findChild(orbit,"abyssWeatherNode")!==null,2000)
@@ -125,7 +125,7 @@ Window {
   if env is None:print('SKIP: wallpaper native test requires private Niri');raise SystemExit(0)
   config=folder/'config/alis';config.mkdir(parents=True,exist_ok=True)
   data=json.loads((ROOT/'defaults/config.json').read_text());data.setdefault('wallpapers',{})['directory']=str(folder/'wallpapers');(config/'config.json').write_text(json.dumps(data))
-  env.update(WALLPAPER_FIXTURES=str(folder/"wallpapers"),QUOTED_IMAGE=str(odd),WALLPAPER_CAPTURE='/tmp/hadalis-wallpaper-carousel-20261007.png',QSG_RHI_BACKEND='opengl',ALIS_DISABLE_LIQUID_SHADER='1')
+  env.update(WALLPAPER_FIXTURES=str(folder/"wallpapers"),QUOTED_IMAGE=str(odd),WALLPAPER_CAPTURE='/tmp/alis-wallpaper-carousel-20261007.png',QSG_RHI_BACKEND='opengl',ALIS_DISABLE_LIQUID_SHADER='1')
   result=run_qs(folder,env,timeout=40);output=result.stdout
   if result.returncode or 'WALLPAPER_CAROUSEL_PASS' not in output or any(e in output for e in ['WALLPAPER_CAROUSEL_FAIL','ReferenceError:','TypeError:','Unable to assign','Binding loop','Failed to load configuration']):print(output);raise SystemExit(1)
   for line in output.splitlines():

@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if not shutil.which("mpd") or not shutil.which("ffmpeg"):
     raise SystemExit("SKIP: real MPD/FFmpeg executables unavailable")
 
-with tempfile.TemporaryDirectory(prefix="hadalis-private-mpd-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-private-mpd-") as name:
     folder = Path(name)
     music = folder / "music"
     music.mkdir()

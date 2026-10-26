@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.services
 
-// Compatibility input contract; application-specific editors live in Hadalird.
+// Compatibility input contract; application-specific editors live in AlisIntergration.
 Item {
     id: root
     required property var definition
@@ -13,10 +13,10 @@ Item {
     Loader {
         id: content
         width: parent.width
-        active: Hadalird.tlpEnabled
+        active: AlisIntergration.tlpEnabled
         function loadSettings(): void {
             if (!active) { source = ""; return }
-            const path = Qt.resolvedUrl(Hadalird.settingsSource("tlpWaffleRow"))
+            const path = Qt.resolvedUrl(AlisIntergration.settingsSource("tlpWaffleRow"))
             if (String(source) === String(path)) return
             setSource(path, {
                 definition: Qt.binding(() => root.definition),

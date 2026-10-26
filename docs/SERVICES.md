@@ -2,14 +2,14 @@
 
 70+ QML singletons that handle everything that isn't pure UI. Each service is registered in `services/qmldir` (or `services/deferred/qmldir`) and available as a singleton import everywhere.
 
-> Only some services expose an IPC handler. The real IPC targets are listed where they exist; if a service has no `IPC target:` note, it has no `IpcHandler` and is not callable from the `inir` CLI. To regenerate the authoritative list: `grep -rl IpcHandler services/ | xargs grep -oP 'target:\s*"\K[^"]+'`.
+> Only some services expose an IPC handler. The real IPC targets are listed where they exist; if a service has no `IPC target:` note, it has no `IpcHandler` and is not callable from the `alis` CLI. To regenerate the authoritative list: `grep -rl IpcHandler services/ | xargs grep -oP 'target:\s*"\K[^"]+'`.
 
 ## Optional features
 
 | Service | What it does |
 |---------|-------------|
 | **Alis-Companion** | Discovers the separately installed Companion package and loads its session only when enabled. IPC target: `alis-companion`. Compatibility IPC target: `aqua`. Missing packages keep keyboard/input ownership empty. |
-| **Alis-Intergration** | Validates the separately installed TLP, Thinkfan and Obsidian package and loads only selected integrations. IPC target: `integrations` (legacy alias: `hadalird`). Missing or disabled packages keep their workers unloaded; Core installation and removal preserve optional payloads and user profiles. |
+| **Alis-Intergration** | Validates the separately installed TLP, Thinkfan and Obsidian package and loads only selected integrations. IPC target: `integrations` (legacy alias: `alis-intergration`). Missing or disabled packages keep their workers unloaded; Core installation and removal preserve optional payloads and user profiles. |
 
 ## Compositor
 
@@ -26,7 +26,7 @@
 | Service | What it does |
 |---------|-------------|
 | **Audio** | PipeWire integration. Default sink/source, volume, mute, per-app mixer. EasyEffects virtual sink detection. IPC target: `audio`. |
-| **MprisController** | MPRIS player management. Filters real players, retains legacy YT Music deduplication compatibility, tracks the active player with a grace period for track transitions, and binds MPD Music to the matching default or legacy Hadalis-named `mpd-mpris` instance. IPC target: `mpris`. |
+| **MprisController** | MPRIS player management. Filters real players, retains legacy YT Music deduplication compatibility, tracks the active player with a grace period for track transitions, and binds MPD Music to the matching default or legacy Alis-named `mpd-mpris` instance. IPC target: `mpris`. |
 | **LocalMusic** | Left Sidebar MPD frontend. Reads MPD songs/saved playlists/queue, performs MPD-only database/queue operations, and requests an endpoint-matched `mpd-mpris` player from MprisController for normal transport. |
 | **YtMusic** | Legacy YouTube Music compatibility backend retained in source while the Left Sidebar has moved to `LocalMusic`; it is no longer the user-facing sidebar music route. IPC target: `ytmusic`. |
 
@@ -122,7 +122,7 @@
 |---------|-------------|
 | **TimerService** | Pomodoro timer with persistent state. |
 | **Updates** | System update checker (Arch only, uses `checkupdates`). |
-| **ShellUpdates** | iNiR update checker. Git-based, tracks commits behind remote. IPC target: `shellUpdate`. |
+| **ShellUpdates** | Alis update checker. Git-based, tracks commits behind remote. IPC target: `shellUpdate`. |
 | **Ydotool** | Virtual keyboard input for on-screen keyboard. |
 | **LatexRenderer** | LaTeX math rendering via MicroTeX. |
 | **Translation** | i18n string lookup. Auto language detection, 15 languages. |

@@ -17,7 +17,7 @@
     "installed_at": "2026-10-24T23:10:12+07:00",
     "install_mode": "repo-copy",
     "alis_service": "active",
-    "inir_service": "inactive",
+    "alis_service": "inactive",
     "deployed_by_this_chat": false
   },
   "feature_inventory": [

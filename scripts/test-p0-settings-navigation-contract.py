@@ -84,8 +84,8 @@ for retired in [
 # System power controls and old deep links remain reachable independently.
 integrations = (ROOT / "modules/settings/IntegrationsConfig.qml").read_text()
 facade = (ROOT / "modules/settings/GeneralConfig.qml").read_text()
-require(integrations, 'Hadalird.installedPlugins.map', "plugin navigation must derive from discovery")
-require(integrations, 'Hadalird.pluginEnabled(root.activePlugin)', "plugin settings lost their explicit opt-in gate")
+require(integrations, 'AlisIntergration.installedPlugins.map', "plugin navigation must derive from discovery")
+require(integrations, 'AlisIntergration.pluginEnabled(root.activePlugin)', "plugin settings lost their explicit opt-in gate")
 require(facade, 'showIntegrationSettings: false', "System must keep only generic battery controls")
 forbid(system, "ThinkfanSettings {", "System restored a duplicate plugin editor")
 require(registry, 'const optionalPower = key === "system"', "legacy System plugin links lost their redirect")

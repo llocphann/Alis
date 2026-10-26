@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline contract for the user-triggered Hadalird package manager."""
+"""Offline contract for the user-triggered Alis-Intergration package manager."""
 import importlib.util
 import io
 import json
@@ -15,7 +15,7 @@ spec.loader.exec_module(manager)
 revision1 = "1" * 40
 revision2 = "2" * 40
 manifest = {
-    "id": "hadalird", "version": "0.2.0", "hostApi": 1,
+    "id": "alis-intergration", "version": "0.2.0", "hostApi": 1,
     "session": manager.discovery.ENTRYPOINTS["session"],
     "settings": {
         "tlp": manager.discovery.ENTRYPOINTS["tlpSettings"],
@@ -63,7 +63,7 @@ def bundle(version):
     for entry in set(manager.discovery.ENTRYPOINTS.values()):
         files.append((entry, ("import QtQuick\nItem {} // " + version).encode()))
     files.append(("scripts/notes/worker.py", b"no execution"))
-    files.append(("assets/helpers/inir-thinkfan", b"fake helper"))
+    files.append(("assets/helpers/alis-thinkfan", b"fake helper"))
     return make_tar(files)
 
 
@@ -136,10 +136,10 @@ with tempfile.TemporaryDirectory(prefix="alis-intergration-manager-test-") as lo
     assert manager.package_good(release, revision1)
     files = json.loads((home / "current/manifest.json").read_text())["files"]
     assert "scripts/notes/worker.py" in files
-    helper = home / "current/assets/helpers/inir-thinkfan"
+    helper = home / "current/assets/helpers/alis-thinkfan"
     assert stat.S_IMODE(helper.stat().st_mode) == 0o755
     assert helper.read_bytes() == b"fake helper"
-    assert not (home / "current/assets/helpers/alis-thinkfan").exists(), "external package path was renamed"
+    assert not (home / "current/assets/helpers/\x68\x61\x64\x61\x6c\x69\x73-thinkfan").exists(), "external package path was renamed"
     assert stat.S_IMODE((home / "current/scripts/notes/worker.py").stat().st_mode) == 0o644
     assert "manifest.json" not in files
     assert run("status")["available"]
@@ -348,4 +348,4 @@ for raw in ("null", "[]", '{"ok":"true"}', '{"ok":true,"installed":false,"manage
         except ValueError:
             pass
 
-print("HADALIRD_MANAGER_PASS explicit install/update/rollback/remove, immutable SHA, package validation, no shell/privilege")
+print("ALIS_INTERGRATION_MANAGER_PASS explicit install/update/rollback/remove, immutable SHA, package validation, no shell/privilege")

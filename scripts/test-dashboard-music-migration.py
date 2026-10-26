@@ -4,10 +4,10 @@ import json, os, subprocess, tempfile
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 MIGRATION=ROOT/"sdata/migrations/059-dashboard-local-music.sh"
-for dirname in ["inir","illogical-impulse"]:
+for dirname in ["alis","illogical-impulse"]:
  for enabled in [False,True]:
   for explicit in [None,False,True]:
-   with tempfile.TemporaryDirectory(prefix="hadalis-music-move-") as name:
+   with tempfile.TemporaryDirectory(prefix="alis-music-move-") as name:
     base=Path(name); path=base/dirname/"config.json"; path.parent.mkdir()
     original={"sidebar":{"music":{"enable":enabled,"mpdHost":"/tmp/private mpd.sock","mpdPort":6610,"libraryFolder":"/Music/四"},"left":{"tabOrder":["news","music","ai","ytmusic","tools"]}},"custom":{"keep":[0,False,"四"]}}
     if explicit is not None: original["dashboard"]={"music":{"enable":explicit},"showHeader":False}

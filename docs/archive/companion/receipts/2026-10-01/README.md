@@ -6,7 +6,7 @@ The 45 sanitized JSON reports previously cluttered the top level of
 `docs/` as `docs/aqua-*.json`. They have been **relocated without changing their
 blob contents or Git object IDs**. Source SHAs, timestamps, PASS/FAIL/HOLD results,
 scope, negative observations and unqualified gates remain exactly as recorded.
-These are old AQUA/Hadalis-era research and isolated tests: do **not** interpret
+These are old AQUA/Alis-era research and isolated tests: do **not** interpret
 an individual `result: pass` as present-day Alis / Alis-Companion desktop,
 visual, pointer, canonical or owner acceptance.
 

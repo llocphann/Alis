@@ -6,7 +6,7 @@ import Quickshell.Io;
 import QtQuick;
 
 /**
- * Internal Hadalis to-do persistence backend.
+ * Internal Alis to-do persistence backend.
  *
  * Used only through the Todo singleton facade.
  *

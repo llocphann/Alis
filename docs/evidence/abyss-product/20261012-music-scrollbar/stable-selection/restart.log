@@ -1,12 +1,12 @@
-  INFO: Launching config: "/tmp/hadalis-dashboard-music-tkqjr5r7/shell.qml"
+  INFO: Launching config: "/tmp/alis-dashboard-music-tkqjr5r7/shell.qml"
   INFO: Shell ID: "efcda154b418abdd83d7c00dd0b56bd7" Path ID "efcda154b418abdd83d7c00dd0b56bd7"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/dtwja6ormt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.927067.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-music-tkqjr5r7/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-tkqjr5r7/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-tkqjr5r7/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dashboard-music-tkqjr5r7/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-music-tkqjr5r7/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-music-tkqjr5r7/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
   INFO qml: [Weather] Getting location from IP...
   INFO qml: [Weather] Location: [redacted]

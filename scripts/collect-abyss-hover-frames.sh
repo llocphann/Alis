@@ -4,7 +4,7 @@
 set -uo pipefail
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-output_dir="${1:-${TMPDIR:-/tmp}/hadalis-abyss-hover-$(date +%Y%m%d-%H%M%S)}"
+output_dir="${1:-${TMPDIR:-/tmp}/alis-abyss-hover-$(date +%Y%m%d-%H%M%S)}"
 mkdir -p -- "$output_dir" || exit 1
 # Preserve a single uploadable bundle, including partial diagnostic evidence
 # when an IPC call fails. Keep the original exit status in the bundle.
@@ -37,8 +37,8 @@ fi
 # Bare qs ipc call instead looks for a nonexistent "default" config. Resolve
 # the live alis path to avoid targeting a stale install or a different shell.
 candidates=()
-if [[ -n "${HADALIS_QS_CONFIG:-}" ]]; then
-    candidates+=("$HADALIS_QS_CONFIG")
+if [[ -n "${ALIS_QS_CONFIG:-}" ]]; then
+    candidates+=("$ALIS_QS_CONFIG")
 else
     if command -v jq >/dev/null 2>&1; then
         while IFS= read -r qml; do
@@ -72,7 +72,7 @@ if [[ -z "$resolved_config" ]]; then
     {
         printf 'ERROR: no running Alis Quickshell instance found.\n'
         printf 'Inspect: qs list --all\n'
-        printf 'Optional: HADALIS_QS_CONFIG=/path/to/running/alis\n'
+        printf 'Optional: ALIS_QS_CONFIG=/path/to/running/alis\n'
         printf 'No shell was started or changed by this script.\n'
     } | tee "$output_dir/config-error.txt" >&2
     exit 3
@@ -98,7 +98,7 @@ source_mismatch=false
     printf 'git_HEAD=%s\n' "$(git -C "$repo_root" rev-parse HEAD 2>/dev/null || printf unavailable)"
     printf 'git_branch=%s\n' "$(git -C "$repo_root" branch --show-current 2>/dev/null || printf unavailable)"
     printf 'qs_binary=%s\n' "$(command -v qs)"
-    printf 'qs_config_requested=%s\n' "${HADALIS_QS_CONFIG:-auto}"
+    printf 'qs_config_requested=%s\n' "${ALIS_QS_CONFIG:-auto}"
     printf 'qs_config_resolved=%s\n' "$resolved_config"
     installed_sha="$(git -C "$resolved_config" rev-parse HEAD 2>/dev/null || true)"
     printf 'installed_git_HEAD=%s\n' "${installed_sha:-unavailable}"
@@ -124,7 +124,7 @@ source_mismatch=false
 if [[ "$source_mismatch" == true ]]; then
     {
         printf 'ERROR: installed Alis QML does not match this dev checkout.\n'
-        printf 'Run the supported Hadalis setup update from this checkout, then restart Alis.\n'
+        printf 'Run the supported Alis setup update from this checkout, then restart Alis.\n'
         printf 'From repo: ./setup update --local  (sync this dev checkout; skip git pull)\n'
         printf 'Then: alis restart; bash scripts/collect-abyss-hover-frames.sh\n'
         printf 'No FPS or hover conclusion can be drawn from this stale runtime.\n'

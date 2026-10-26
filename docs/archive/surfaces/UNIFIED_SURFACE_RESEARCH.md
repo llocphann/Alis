@@ -1,8 +1,8 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
 
 # Unified Surface Composition Research
 
-> **Historical research / superseded execution guidance.** Production iRiS cutover has already landed. Do not use this document as the active implementation contract. Current instructions live in `README.md` §1.1/§2.1, `docs/UNIFIED_SURFACE_HANDOFF.md`, `docs/PERIMETER.md` and `docs/SHELL_SURFACE_CONTRACTS.md`. References below to JoinFlares, RoundCorner, pre-cutover baselines or “not approved for production” describe the investigation history only.
+> **Historical research / superseded execution guidance.** Production Abyss cutover has already landed. Do not use this document as the active implementation contract. Current instructions live in `README.md` §1.1/§2.1, `docs/UNIFIED_SURFACE_HANDOFF.md`, `docs/PERIMETER.md` and `docs/SHELL_SURFACE_CONTRACTS.md`. References below to JoinFlares, RoundCorner, pre-cutover baselines or “not approved for production” describe the investigation history only.
 
 Status: **archived research context**
 
@@ -10,7 +10,7 @@ Last active research synchronization: 2026-09-20.
 
 ## 1. Why this document exists
 
-Hadalis needs Bar/Screen Edge connected popups, Sidebar, Dashboard, Settings Overlay and similar edge-attached surfaces to read as **one continuous material/silhouette**, closer to Caelestia.
+Alis needs Bar/Screen Edge connected popups, Sidebar, Dashboard, Settings Overlay and similar edge-attached surfaces to read as **one continuous material/silhouette**, closer to Caelestia.
 
 The previous experiments attempted to synthesize the contact corners separately with:
 
@@ -152,11 +152,11 @@ if module is near right edge:
 
 It only consumes the new rectangles.
 
-This exactly matches the Hadalis requirement that moving a Bar module should cause its popup contact shape to follow automatically.
+This exactly matches the Alis requirement that moving a Bar module should cause its popup contact shape to follow automatically.
 
 ---
 
-## 4. Existing Hadalis pieces worth keeping
+## 4. Existing Alis pieces worth keeping
 
 The research does **not** imply rewriting the entire shell.
 
@@ -189,7 +189,7 @@ This does **not** prove that ScreenEdges.FrameWindow must become the final unifi
 
 ### 4.3 Current module-reorder infrastructure is sufficient as an input
 
-Hadalis Bar modules are driven from configured layout/zone data. Reordering changes the real QML Item positions. Because popup ownership is already tied to the source Item, the future unified renderer can consume **live output-space rectangles** rather than storing contact-corner state.
+Alis Bar modules are driven from configured layout/zone data. Reordering changes the real QML Item positions. Because popup ownership is already tied to the source Item, the future unified renderer can consume **live output-space rectangles** rather than storing contact-corner state.
 
 ---
 
@@ -197,7 +197,7 @@ Hadalis Bar modules are driven from configured layout/zone data. Reordering chan
 
 This is a fundamental constraint and must shape the architecture.
 
-Each `QQuickWindow` has its own scenegraph/content root. Current Hadalis surfaces are often independent layer-shell windows:
+Each `QQuickWindow` has its own scenegraph/content root. Current Alis surfaces are often independent layer-shell windows:
 
 ```text
 ScreenEdges FrameWindow  -> Top
@@ -228,7 +228,7 @@ Content/input windows
   own controls, focus, pointer handling, keyboard input, semantic lifecycle
 ```
 
-This is a promising hybrid architecture because Hadalis does not need to move all interactive content into a single monolithic window.
+This is a promising hybrid architecture because Alis does not need to move all interactive content into a single monolithic window.
 
 ---
 
@@ -301,7 +301,7 @@ It may be useful only for diagnostic sketches, not the target implementation.
 
 ### Option B — Full-screen QML ShaderEffect SDF
 
-Hadalis already ships a compiled ShaderEffect example:
+Alis already ships a compiled ShaderEffect example:
 
 - `modules/common/widgets/FluidRipple.frag`
 - `modules/common/widgets/FluidRipple.qsb`
@@ -340,7 +340,7 @@ Pros:
 
 Risks:
 
-- Hadalis currently has no native QML rendering plugin;
+- Alis currently has no native QML rendering plugin;
 - Qt ABI/version compatibility matters;
 - adds CMake/build/package complexity;
 - repo-copy update cannot merely copy source if a binary module must be rebuilt;
@@ -389,7 +389,7 @@ The default shell package currently uses a no-compiler style packaging path and 
 Do not begin a production C++ renderer until these questions have concrete answers:
 
 1. Where will the plugin live for repo-copy installs?
-2. Will `inir update` detect source/plugin ABI mismatch?
+2. Will `alis update` detect source/plugin ABI mismatch?
 3. Who builds it for repo-copy users?
 4. Is it an optional package plus capability detection, or mandatory?
 5. How is `QML2_IMPORT_PATH`/Qt 6 import discovery configured consistently for:
@@ -648,7 +648,7 @@ If the QSB PoC passes, study a minimal native plugin rather than copying all Cae
 Likely minimal types:
 
 ```text
-Hadalis.Surface
+Alis.Surface
 ├── SurfaceGroup
 ├── SurfaceRect
 ├── SurfaceFrame / SurfaceInvertedRect
@@ -674,7 +674,7 @@ Production renderer requirements:
 - stable hot reload behavior;
 - explicit missing-plugin fallback.
 
-License note: both Hadalis and Caelestia repositories are GPL-family compatible for adaptation, but copied/adapted source must retain the appropriate notices and attribution. Re-check exact per-file headers before porting code.
+License note: both Alis and Caelestia repositories are GPL-family compatible for adaptation, but copied/adapted source must retain the appropriate notices and attribution. Re-check exact per-file headers before porting code.
 
 ---
 
@@ -842,12 +842,12 @@ Do not retire them before the new composition domain has proven production parit
    - How to handle transparent Material configurations and wallpaper fallback effects?
 
 3. **Native plugin lifecycle**
-   - What exact package/import strategy preserves the simplicity of `inir update`?
-   - Should repo-copy users require a separately installed `inir-surface-renderer` package?
+   - What exact package/import strategy preserves the simplicity of `alis update`?
+   - Should repo-copy users require a separately installed `alis-surface-renderer` package?
 
 ### Secondary
 
-4. How much of Caelestia's border-sink shader is needed for Hadalis' locked frame geometry?
+4. How much of Caelestia's border-sink shader is needed for Alis' locked frame geometry?
 5. Can a bounded ShaderEffect prototype render only an affected strip/union bbox instead of full output?
 6. How should auto-hidden Bar geometry participate while hidden/revealing?
 7. How should Settings Overlay form a local composition domain under its scrim?
@@ -917,12 +917,12 @@ reversed ordering.
 
 Architectural consequence:
 
-> A visual host whose relationship to other same-layer Hadalis surfaces matters
+> A visual host whose relationship to other same-layer Alis surfaces matters
 > must remain mapped. Shape enable/disable, opacity and registry membership may
 > change; the host's Wayland surface lifetime must not be used as an animation or
 > visibility mechanism.
 
-This independently validates the existing Hadalis fullscreen lifecycle locks on
+This independently validates the existing Alis fullscreen lifecycle locks on
 \`ScreenEdges.FrameWindow\` and the Bar.
 
 Upstream references inspected:
@@ -934,7 +934,7 @@ Upstream references inspected:
 
 ### 21.2 Top cannot be the sole visual domain for an Overlay popout
 
-Current Hadalis layering is materially different between the perimeter and
+Current Alis layering is materially different between the perimeter and
 popouts:
 
 - \`ScreenEdges.FrameWindow\`: \`WlrLayer.Top\`
@@ -1033,7 +1033,7 @@ measured independently.
 ### 21.4 Shadow ownership belongs to the unified renderer
 
 Niri layer-rule shadows are surface-geometry shadows. The compositor sees layer
-surface geometry, not Hadalis' arbitrary SDF alpha silhouette. They are therefore
+surface geometry, not Alis' arbitrary SDF alpha silhouette. They are therefore
 not a correct source for the future common connected-surface shadow.
 
 Production target:
@@ -1085,7 +1085,7 @@ U1 should use a QML \`ShaderEffect\` with a committed precompiled \`.qsb\`.
 
 Reasons:
 
-- Hadalis already ships and loads \`FluidRipple.qsb\` by relative URL;
+- Alis already ships and loads \`FluidRipple.qsb\` by relative URL;
 - Qt 6 \`ShaderEffect\` is explicitly designed to consume offline-compiled QSB
   shader packs;
 - no new C++ QML module or ABI is required;
@@ -1113,7 +1113,7 @@ with \`qt_add_qml_module()\`, compiles shaders with \`qt_add_shaders()\`, and
 installs the backing library, plugin, \`qmldir\`, and typeinfo under the Qt QML
 import hierarchy.
 
-Hadalis must not add that infrastructure merely to run U1.
+Alis must not add that infrastructure merely to run U1.
 
 ### 22.3 Proposed native package boundary if U3 selects QSG
 
@@ -1121,7 +1121,7 @@ If U3 demonstrates that QSB cannot meet the production shape-count/fill-rate
 budget, the native module should be a separate capability package:
 
 \`\`\`text
-URI: Hadalis.Surface
+URI: Alis.Surface
 
 SurfaceGroup
 SurfaceRect
@@ -1133,13 +1133,13 @@ Suggested installation boundary:
 
 \`\`\`text
 Arch:
-  /usr/lib/qt6/qml/Hadalis/Surface/
+  /usr/lib/qt6/qml/Alis/Surface/
     qmldir
     *.qmltypes
     plugin/backing .so files as generated by Qt CMake
 
 Nix:
-  <store>/lib/qt-6/qml/Hadalis/Surface/
+  <store>/lib/qt-6/qml/Alis/Surface/
 \`\`\`
 
 Use \`qt_add_qml_module()\` and \`qt_add_shaders()\`; do not hand-maintain plugin
@@ -1153,7 +1153,7 @@ A future native surface capability should follow a narrow lifecycle pattern:
 
 ### 22.4 Repo-copy and fallback contract for a future native renderer
 
-A future native renderer must not turn \`inir update\` into a compiler.
+A future native renderer must not turn \`alis update\` into a compiler.
 
 Recommended contract:
 
@@ -1162,14 +1162,14 @@ repo-copy/default capability:
   committed QSB renderer available
 
 package-manager enhanced capability:
-  optional/required Hadalis.Surface native QML module
+  optional/required Alis.Surface native QML module
   wrapper exposes deterministic capability flag/import path
 \`\`\`
 
 Do not statically import an optional native module from a QML file that must also
 work without it. Keep native and QSB renderer implementations in separate lazily
 loaded QML files, so the fallback file can load without parsing
-\`import Hadalis.Surface\`.
+\`import Alis.Surface\`.
 
 Qt plugin compatibility also matters: Qt rejects plugins built against a higher
 minor Qt than the runtime's lower minor, and binary compatibility assumes a
@@ -1181,9 +1181,9 @@ No runtime download/build path is approved.
 
 ---
 
-## 23. Minimum Caelestia Blob model actually needed by Hadalis
+## 23. Minimum Caelestia Blob model actually needed by Alis
 
-Current Caelestia \`blob.frag\` contains substantially more behavior than Hadalis
+Current Caelestia \`blob.frag\` contains substantially more behavior than Alis
 needs initially. The minimum transferable mathematical model is:
 
 ### Rounded rectangle SDF
@@ -1221,7 +1221,7 @@ dFrame = smooth-max(dOuter, -dInner, kFrame)
 \`kFrame\` must be clamped to the thinnest frame side so the smooth-max fillet
 cannot exceed the available border thickness.
 
-The locked Hadalis Screen Edge/Bar dimensions are inputs to this frame record.
+The locked Alis Screen Edge/Bar dimensions are inputs to this frame record.
 U1 does not modify \`ScreenEdges.qml\`.
 
 ### Border sink
@@ -1528,29 +1528,29 @@ separate from this research/documentation work.
 
 ---
 
-## 26. Direction change: iRiS v2.31.0 is now the primary reference
+## 26. Direction change: Abyss v2.31.0 is now the primary reference
 
 The maintainer explicitly changed the implementation reference from Caelestia to
-upstream iNiR **iRiS v2.31.0**.
+upstream Alis **Abyss v2.31.0**.
 
 Primary upstream baseline:
 
-- repository: `snowarch/iNiR`
+- repository: `snowarch/Alis`
 - release: `v2.31.0`
 - commit: `9574fa424c0d1008e927454e933a7fbe292f9fb2`
-- field source: *modules/iris/field/IrisField.qml*
-- shader: `modules/iris/field/IrisField.frag`
-- compiled shader: `modules/iris/field/IrisField.frag.qsb`
-- shape attachment reference: *modules/iris/stage/IrisStage.qml*
-- card reference: *modules/iris/control/IrisControlCenter.qml*
-- morph/body reference: *modules/iris/components/IrisMorphSurface.qml*
+- field source: *modules/abyss/field/AbyssField.qml*
+- shader: `modules/abyss/field/AbyssField.frag`
+- compiled shader: `modules/abyss/field/AbyssField.frag.qsb`
+- shape attachment reference: *modules/abyss/stage/AbyssStage.qml*
+- card reference: *modules/abyss/control/AbyssControlCenter.qml*
+- morph/body reference: *modules/abyss/components/AbyssMorphSurface.qml*
 
 Caelestia research remains useful historical context for the general "one field,
 one silhouette" idea, but it is no longer the implementation template.
 
-### 26.1 Why iRiS is a better Hadalis reference
+### 26.1 Why Abyss is a better Alis reference
 
-iRiS and Hadalis already share the relevant runtime architecture:
+Abyss and Alis already share the relevant runtime architecture:
 
 - Quickshell;
 - Qt Quick/QML;
@@ -1562,9 +1562,9 @@ iRiS and Hadalis already share the relevant runtime architecture:
 Therefore the surface field can be studied and ported without translating a
 native C++/QSG Blob implementation first.
 
-### 26.2 Exact iRiS field rule
+### 26.2 Exact Abyss field rule
 
-iRiS stores ordinary rounded-box bodies and combines them in one shader pass.
+Abyss stores ordinary rounded-box bodies and combines them in one shader pass.
 
 The shader always keeps the plain union:
 
@@ -1581,14 +1581,14 @@ smoothUnion(owner, child, child.fuse)
 A body therefore melts only into the body named by its `joins` relation. It
 does not automatically fuse into every nearby surface.
 
-The polynomial smooth minimum is the upstream iRiS implementation, not a new
-Hadalis formula.
+The polynomial smooth minimum is the upstream Abyss implementation, not a new
+Alis formula.
 
-### 26.3 Do not conflate iRiS edge pieces with iRiS cards
+### 26.3 Do not conflate Abyss edge pieces with Abyss cards
 
 Two upstream mechanisms must remain distinct.
 
-**Edge piece attachment** — `IrisStage.meltInto()`:
+**Edge piece attachment** — `AbyssStage.meltInto()`:
 
 ```text
 reach = min(width, height) / 2 + 1
@@ -1598,7 +1598,7 @@ joins = pieceEdge:<side> or frame
 
 This is appropriate for a piece directly attached to a screen/frame edge.
 
-**Card/popup attachment** — e.g. `IrisControlCenter`:
+**Card/popup attachment** — e.g. `AbyssControlCenter`:
 
 ```text
 bodyRect remains the card body
@@ -1607,7 +1607,7 @@ joins = island / origin field id
 fuse = fuseDeep
 ```
 
-This second model is the closer analogue for Hadalis `StyledPopup`.
+This second model is the closer analogue for Alis `StyledPopup`.
 
 Do not apply the large edge-piece `reach` to production Bar popups merely
 because it makes a visible corner.
@@ -1617,20 +1617,20 @@ because it makes a visible corner.
 Implementation commits:
 
 - `c2a15b9b87e5d8cb144405fc5ef8dec01126716a` —
-  `research(surface): add iRiS-faithful corner PoC`
+  `research(surface): add Abyss-faithful corner PoC`
 - `0a39ba386849c96248393b52ea4fd10552c57856` —
-  `test(surface): lock iRiS corner morphology`
+  `test(surface): lock Abyss corner morphology`
 
 Location:
 
 ```text
-scripts/iris-corner-poc/
+scripts/abyss-corner-poc/
 ```
 
 It is excluded by `sdata/runtime-exclusions.json`; no production QML imports it.
 
-The PoC carries the **exact upstream v2.31.0** `IrisField.frag` and
-`IrisField.frag.qsb`. The Hadalis wrapper only supplies a two-body field:
+The PoC carries the **exact upstream v2.31.0** `AbyssField.frag` and
+`AbyssField.frag.qsb`. The Alis wrapper only supplies a two-body field:
 
 ```text
 owner
@@ -1640,7 +1640,7 @@ popup -> joins: "owner"
 It supports two explicit modes:
 
 - `card-owner` — default and relevant to `StyledPopup`;
-- `edge-reach` — diagnostic reproduction of `IrisStage.meltInto()`.
+- `edge-reach` — diagnostic reproduction of `AbyssStage.meltInto()`.
 
 No production Bar, ScreenEdges, StyledPopup, Sidebar, Dashboard, Settings or
 Waffle file is changed by the PoC.
@@ -1678,7 +1678,7 @@ before: 107 PASS / 24 FAIL / 2 SKIP
 after:  108 PASS / 24 FAIL / 2 SKIP
 ```
 
-The new iRiS PoC contract passed. The existing 24 failures were not introduced
+The new Abyss PoC contract passed. The existing 24 failures were not introduced
 by the PoC. Nix package validation also passed.
 
 Live desktop/GPU appearance is still required before any production cutover.
@@ -1694,11 +1694,11 @@ Until live inspection accepts the PoC:
 - do not touch Waffle;
 - keep the immutable ii `SurfaceMotion` slide-only contract.
 
-If the PoC looks wrong, revise or discard only `scripts/iris-corner-poc/`.
+If the PoC looks wrong, revise or discard only `scripts/abyss-corner-poc/`.
 
 If the `card-owner` silhouette is accepted, the next production experiment is
 an **ii-only** field-backed popup background that reuses existing anchor/content
-lifecycle while feeding generic owner/popup body records to an iRiS-style field.
+lifecycle while feeding generic owner/popup body records to an Abyss-style field.
 
 
 ### 26.8 Calibrated profiles, matrix harness and ABI lock
@@ -1706,11 +1706,11 @@ lifecycle while feeding generic owner/popup body records to an iRiS-style field.
 Additional PoC commits:
 
 - `ff54e4b47578e271271bd023d9a39e4793213c62` —
-  `test(surface): add live iRiS corner matrix capture`
+  `test(surface): add live Abyss corner matrix capture`
 - `b50f93f8eed288c42faf9b6c90296a6ef93b7c32` —
-  `research(surface): add calibrated iRiS corner profiles`
+  `research(surface): add calibrated Abyss corner profiles`
 - `204ece1d96d117d49371a0ed6a2399635dfa757d` —
-  `test(surface): lock iRiS field shader ABI`
+  `test(surface): lock Abyss field shader ABI`
 
 The default **diagnostic** profile is deliberately enlarged for visual review:
 
@@ -1722,7 +1722,7 @@ fuse            56
 weld            4
 ```
 
-The **upstream-relative** profile follows iRiS v2.31 defaults more closely:
+The **upstream-relative** profile follows Abyss v2.31 defaults more closely:
 
 ```text
 owner thickness 42
@@ -1733,7 +1733,7 @@ weld            3
 ```
 
 Those upstream-relative values are grounded in
-*modules/iris/style/IrisStyle.qml*:
+*modules/abyss/style/AbyssStyle.qml*:
 
 - `radiusPanel = corner(30)`;
 - `fuseDeep = 30 * density * meltDepth` at default factors;
@@ -1748,7 +1748,7 @@ same topology at the smaller upstream-scale values.
 The live matrix harness:
 
 ```text
-scripts/iris-corner-poc/capture-matrix.sh
+scripts/abyss-corner-poc/capture-matrix.sh
 ```
 
 captures all twelve required cases:
@@ -1760,14 +1760,14 @@ sourceT 0.02 / 0.50 / 0.98
 ```
 
 Each case launches only the isolated PoC, waits for the
-`HADALIS_IRIS_POC` readiness marker, captures with `grim`, and terminates that
-exact PoC process. It does not restart/reload/IPC-call the running Hadalis shell.
+`ALIS_ABYSS_POC` readiness marker, captures with `grim`, and terminates that
+exact PoC process. It does not restart/reload/IPC-call the running Alis shell.
 
-The exact upstream v2.31 `IrisField.frag.qsb` ABI is now guarded. The wrapper
+The exact upstream v2.31 `AbyssField.frag.qsb` ABI is now guarded. The wrapper
 must provide all twenty shape uniforms, five blocks each for radii/fuse/join/
 also/paints/glass, plus viewport/screen/field/material and backdrop uniforms.
 
-The PoC intentionally keeps `paintsA..E = 0`: in iRiS v2.31 the shader comments
+The PoC intentionally keeps `paintsA..E = 0`: in Abyss v2.31 the shader comments
 and implementation state that paints flags no longer alter union topology/fill;
 they are retained for QML-side shadow ownership. The PoC has no shadow/material
 migration, so this is deliberate.
@@ -1779,23 +1779,23 @@ Do not begin production integration before the live matrix is visually reviewed.
 First capture the enlarged topology:
 
 ```sh
-HADALIS_IRIS_POC_PROFILE=diagnostic \
-scripts/iris-corner-poc/capture-matrix.sh
+ALIS_ABYSS_POC_PROFILE=diagnostic \
+scripts/abyss-corner-poc/capture-matrix.sh
 ```
 
 On a multi-output session, select the target explicitly:
 
 ```sh
-HADALIS_IRIS_POC_OUTPUT=<output-name> \
-HADALIS_IRIS_POC_PROFILE=diagnostic \
-scripts/iris-corner-poc/capture-matrix.sh
+ALIS_ABYSS_POC_OUTPUT=<output-name> \
+ALIS_ABYSS_POC_PROFILE=diagnostic \
+scripts/abyss-corner-poc/capture-matrix.sh
 ```
 
 Then capture the upstream-scale comparison:
 
 ```sh
-HADALIS_IRIS_POC_PROFILE=upstream-relative \
-scripts/iris-corner-poc/capture-matrix.sh
+ALIS_ABYSS_POC_PROFILE=upstream-relative \
+scripts/abyss-corner-poc/capture-matrix.sh
 ```
 
 PASS requires the contact sheet to show, for every edge and clamp extreme:
@@ -1806,7 +1806,7 @@ PASS requires the contact sheet to show, for every edge and clamp extreme:
 4. clamping near output corners does not require a corner-specific branch;
 5. the smaller upstream-relative profile preserves the same topology.
 
-If any case fails, revise/revert only `scripts/iris-corner-poc/`. Do not patch
+If any case fails, revise/revert only `scripts/abyss-corner-poc/`. Do not patch
 production `StyledPopup`, Bar, ScreenEdges or Waffle.
 
 ### 26.10 Focused live evidence and multi-owner corner coverage
@@ -1816,18 +1816,18 @@ full-output screenshot. Two additional developer-only commits tighten the live
 acceptance gate without touching production:
 
 - `e7700ea31c5ff07edda001ef0f00674e33f217c0` —
-  `test(surface): add focused iRiS contact captures`
+  `test(surface): add focused Abyss contact captures`
 - `f72af8b8407e796eb117402d1057da47f257aa9d` —
-  `test(surface): cover iRiS corner multi-owner joins`
+  `test(surface): cover Abyss corner multi-owner joins`
 
-Each live case now persists a plain-number `HADALIS_IRIS_POC` JSON record with
+Each live case now persists a plain-number `ALIS_ABYSS_POC` JSON record with
 the selected output's layout origin/size and the semantic popup geometry. The
 harness keeps the full-output PNG and also asks `grim -g` for a focused
 junction crop in compositor layout coordinates. This deliberately avoids using
 Qt `devicePixelRatio` as a compositor-scale proxy.
 
 The previous two-body PoC was sufficient for a centered Bar/popup junction but
-did not prove the actual Hadalis corner case: a popup can be attached to its
+did not prove the actual Alis corner case: a popup can be attached to its
 primary Bar/owner **and** reach a perpendicular physical Screen Edge.
 
 The isolated field therefore now contains four ordinary records:
@@ -1839,7 +1839,7 @@ frame-end             # perpendicular Screen Edge at tangent end
 popup
 ```
 
-The popup relationship is geometry-derived and uses the existing two iRiS QSB
+The popup relationship is geometry-derived and uses the existing two Abyss QSB
 join slots:
 
 ```text
@@ -1850,9 +1850,9 @@ end clamp:     joins = ["owner", "frame-end"]
 
 There is still no module identity, corner flag, Canvas flare, `RoundCorner`,
 `contactInset`, contact plane or border-sink helper. The tangent frame bodies
-are real field owners. The default Hadalis Screen Edge thickness used by the PoC
+are real field owners. The default Alis Screen Edge thickness used by the PoC
 is 10 logical px and may be overridden only as a geometry input with
-`HADALIS_IRIS_POC_FRAME_THICKNESS`.
+`ALIS_ABYSS_POC_FRAME_THICKNESS`.
 
 This matters for production planning because current `StyledPopup` already
 derives adjacent Screen Edge attachment from resting body geometry. A future
@@ -1862,7 +1862,7 @@ than replace it with per-popup corner choices.
 Source-side validation after the multi-owner change:
 
 ```text
-scripts/test-iris-corner-poc-contract.py  PASS
+scripts/test-abyss-corner-poc-contract.py  PASS
 canonical validator                       115 PASS / 22 FAIL / 2 SKIP
 Nix package                               PASS
 ```
@@ -1886,22 +1886,22 @@ separate blob or hand-drawn corner.
 Production `StyledPopup`, `ConnectedSurfaceFrame`, Bar, ScreenEdges and Waffle
 remain unchanged by these commits.
 
-### 26.11 Production composition-domain finding — upstream one field, Hadalis split layers
+### 26.11 Production composition-domain finding — upstream one field, Alis split layers
 
 A follow-up source audit of exact upstream
-`snowarch/iNiR@9574fa424c0d1008e927454e933a7fbe292f9fb2` found an
+`snowarch/Alis@9574fa424c0d1008e927454e933a7fbe292f9fb2` found an
 architectural precondition that the morphology PoC does not model by itself.
 
-Upstream iRiS does **not** ask a popup field in one window to visually weld to
-an owner painted by another window. In *IrisBar.qml*, one full-output
+Upstream Abyss does **not** ask a popup field in one window to visually weld to
+an owner painted by another window. In *AbyssBar.qml*, one full-output
 `barWindow` builds a single `fieldShapes` registry by concatenating the
 Island, Control Center, Stage/cards, edit surfaces and Dock bodies, then gives
-that registry to one `IrisField`. Control Center/cards publish their rounded
+that registry to one `AbyssField`. Control Center/cards publish their rounded
 body records into that same field and join an owner record there. The owner and
 the joined card therefore share both the output-local coordinate system and the
 paint/composition domain.
 
-Hadalis production currently has a different ownership boundary:
+Alis production currently has a different ownership boundary:
 
 ```text
 Bar / ScreenEdges        Top-layer surfaces
@@ -1910,7 +1910,7 @@ StyledPopup              separate full-output Overlay surface
 
 `StyledPopup` already derives anchor/body placement and tangent Screen Edge
 contact from geometry, but its current `ConnectedSurfaceFrame` paints only the
-popup-side presentation. The isolated iRiS PoC, by contrast, paints the primary
+popup-side presentation. The isolated Abyss PoC, by contrast, paints the primary
 owner, tangent frame owners and popup together inside its one Overlay field.
 
 Therefore a direct copy of the PoC field wrapper into `StyledPopup` is **not**
@@ -1921,7 +1921,7 @@ content or changing physical-edge shadow/effect ownership.
 
 This does not invalidate the current morphology gate. The existing diagnostic
 and upstream-relative matrices still answer the first question: does the exact
-iRiS SDF/join model produce the desired connected silhouette?
+Abyss SDF/join model produce the desired connected silhouette?
 
 If that gate passes, add a second isolated composition experiment before any
 production cutover. Its purpose is to preserve the owner records as **field
@@ -1934,7 +1934,7 @@ output-local shape registry
   optional tangent frame owner
   popup
         |
-        +-- exact iRiS SDF/join math
+        +-- exact Abyss SDF/join math
         |
         +-- popup/junction-limited paint viewport
              + existing attachment-boundary reveal/clip
@@ -1953,7 +1953,7 @@ Gate order is now:
 1. **G1 — morphology:** run and visually accept both existing 12-case
    `card-owner` matrices on the real Wayland/Niri/GPU session.
 2. **G2 — split composition:** only after G1 passes, use an isolated
-   developer-only PoC to reproduce Hadalis' actual owner/popup composition
+   developer-only PoC to reproduce Alis' actual owner/popup composition
    boundary and verify that a local Overlay field can use owner geometry without
    duplicate owner paint.
 3. Only after G2 acceptance may production integration design advance to a
@@ -1966,13 +1966,13 @@ fractional-scale behavior.
 
 Do not solve this boundary by moving Bar/ScreenEdges, changing their geometry,
 adding same-layer helper windows, restoring corner-specific flags, or touching
-Waffle. If a local paint viewport cannot preserve the iRiS morphology, keep the
+Waffle. If a local paint viewport cannot preserve the Abyss morphology, keep the
 experiment isolated and research another composition strategy.
 
 ### 26.12 Shader viewport feasibility — math owners do not require full-owner paint bounds
 
-The exact committed iRiS v2.31 shader provides a source-side answer to the
-composition question above. `IrisField.frag` reconstructs the output-space
+The exact committed Abyss v2.31 shader provides a source-side answer to the
+composition question above. `AbyssField.frag` reconstructs the output-space
 sample position as:
 
 ```glsl
@@ -1984,7 +1984,7 @@ evaluates every rounded-box body and explicit join against that output-space
 `p`. Therefore the shader math does **not** require the pass viewport to equal
 the union of all owner bounds.
 
-Upstream *IrisField.qml* currently derives `pass.x/y/width/height` from the
+Upstream *AbyssField.qml* currently derives `pass.x/y/width/height` from the
 union of all shapes as its normal render-bounds policy. That is an upstream
 wrapper choice/optimization, not a coordinate-system requirement of the QSB.
 
@@ -2005,7 +2005,7 @@ shoulder plus antialiasing reach. It also has to follow the animated popup durin
 the 300 ms slide so no shoulder is clipped mid-motion. Those bounds must be
 derived from generic geometry and fuse, not from edge/module names.
 
-Hadalis already has a compatible clipping primitive for the other half of this
+Alis already has a compatible clipping primitive for the other half of this
 problem: `ConnectedSurfaceRevealClip` keeps children in full-output
 coordinates and clips them at the resting attachment boundary. A G2 PoC can
 therefore test a field pass with output-local shapes, local paint bounds and the
@@ -2017,9 +2017,9 @@ Two contracts remain intentionally unresolved until that isolated experiment:
 - **input:** `Region` cannot consume shader alpha. The current
   `ConnectedSurfaceMask` includes Bézier-connector strip approximations that
   belong to the old flare renderer. Do not silently carry those strips into the
-  final iRiS cutover. G2 must determine the minimum generic input/hover region
+  final Abyss cutover. G2 must determine the minimum generic input/hover region
   needed for body interaction and Bar-to-popup pointer transfer.
-- **shadow:** the iRiS field shader itself does not replace Hadalis' popup
+- **shadow:** the Abyss field shader itself does not replace Alis' popup
   free-side shadow ownership. G2 must prove a popup-only shadow path that does
   not repaint or shadow the Top-layer Bar/Screen Edge and does not require the
   obsolete flare renderer to remain underneath.
@@ -2060,9 +2060,9 @@ capture pixels.
 The live harness was hardened in two source-only commits after this audit:
 
 - `1d67202d9b54c626779956ef991ae4454a93859c` —
-  `test(surface): preserve iRiS matrix provenance`
+  `test(surface): preserve Abyss matrix provenance`
 - `1d5a4c0cf80d19b437c1732a4fecb7eb6b7f4f48` —
-  `test(surface): validate iRiS capture labels`
+  `test(surface): validate Abyss capture labels`
 
 The first prevents the second G1 profile run from overwriting the first run's
 manifest. Artifacts are now profile-specific:
@@ -2078,8 +2078,8 @@ The session JSON records the requested profile/mode, Quickshell/grim executable
 paths, Wayland display and the explicit coordinate-space rule
 `compositor-layout-logical` with DPR crop application disabled.
 
-The second commit rejects unknown `HADALIS_IRIS_POC_MODE` or
-`HADALIS_IRIS_POC_PROFILE` values. Previously the QML window would correctly
+The second commit rejects unknown `ALIS_ABYSS_POC_MODE` or
+`ALIS_ABYSS_POC_PROFILE` values. Previously the QML window would correctly
 fall back to `card-owner` / `diagnostic` while the shell harness kept the
 invalid environment string in filenames and manifest labels, which could create
 mislabelled visual evidence.
@@ -2095,15 +2095,15 @@ maintainer machine.
 The next local sequence should therefore begin with:
 
 ```sh
-python3 scripts/test-iris-corner-poc-contract.py
+python3 scripts/test-abyss-corner-poc-contract.py
 
-HADALIS_IRIS_POC_OUTPUT=<output-name> \
-HADALIS_IRIS_POC_PROFILE=diagnostic \
-scripts/iris-corner-poc/capture-matrix.sh
+ALIS_ABYSS_POC_OUTPUT=<output-name> \
+ALIS_ABYSS_POC_PROFILE=diagnostic \
+scripts/abyss-corner-poc/capture-matrix.sh
 
-HADALIS_IRIS_POC_OUTPUT=<output-name> \
-HADALIS_IRIS_POC_PROFILE=upstream-relative \
-scripts/iris-corner-poc/capture-matrix.sh
+ALIS_ABYSS_POC_OUTPUT=<output-name> \
+ALIS_ABYSS_POC_PROFILE=upstream-relative \
+scripts/abyss-corner-poc/capture-matrix.sh
 ```
 
 Review the two `detail-sheet-card-owner-*.png` files and their matching
@@ -2113,10 +2113,10 @@ profile-specific manifests/session metadata before any G2 work.
 
 To reduce operator error during the real-session gate, commit
 `6211d6fbd6fed92a93ff92d935b84d32d400184f`
-(`test(surface): bundle iRiS G1 evidence run`) adds:
+(`test(surface): bundle Abyss G1 evidence run`) adds:
 
 ```text
-scripts/iris-corner-poc/capture-g1.sh
+scripts/abyss-corner-poc/capture-g1.sh
 ```
 
 This wrapper is developer-only and runtime-excluded with the rest of the PoC.
@@ -2128,7 +2128,7 @@ The wrapper deliberately makes the acceptance sequence stricter:
 2. The source contract runs before any screenshot is taken.
 3. Both required profiles run in order:
    `diagnostic`, then `upstream-relative`.
-4. Unless the maintainer explicitly sets `HADALIS_IRIS_POC_CAPTURE_DIR`, one
+4. Unless the maintainer explicitly sets `ALIS_ABYSS_POC_CAPTURE_DIR`, one
    timestamped directory contains the complete paired attempt.
 5. `g1-run.txt` records the actual checkout HEAD, requested output, mode and
    profile pair, so later review cannot accidentally mix artifacts from
@@ -2137,8 +2137,8 @@ The wrapper deliberately makes the acceptance sequence stricter:
 The preferred live command is now:
 
 ```sh
-HADALIS_IRIS_POC_OUTPUT=<output-name> \
-scripts/iris-corner-poc/capture-g1.sh
+ALIS_ABYSS_POC_OUTPUT=<output-name> \
+scripts/abyss-corner-poc/capture-g1.sh
 ```
 
 The resulting evidence directory should contain both detail sheets, both
@@ -2152,10 +2152,10 @@ start G2 merely because the wrapper or static contract succeeds.
 ### 26.15 G1 evidence integrity verifier
 
 Commit `a4c7263160c52583d5718222593b796fc6b5356a`
-(`test(surface): verify iRiS G1 evidence integrity`) adds a structural verifier:
+(`test(surface): verify Abyss G1 evidence integrity`) adds a structural verifier:
 
 ```text
-scripts/iris-corner-poc/verify-g1-evidence.py
+scripts/abyss-corner-poc/verify-g1-evidence.py
 ```
 
 The G1 wrapper now runs it automatically after both profile matrices.
@@ -2214,7 +2214,7 @@ an older detail sheet behind.
 
 The wrapper now refuses both conditions. Before the static contract or any
 screenshot, it requires a new/empty evidence directory and a clean scoped set of
-PoC/contract/runtime-exclusion files. It does not require the entire Hadalis
+PoC/contract/runtime-exclusion files. It does not require the entire Alis
 working tree to be clean, so unrelated development remains unaffected.
 
 The run manifest now adds:
@@ -2273,7 +2273,7 @@ The real Niri evidence directory
 `g1-20260920T150214Z` passed the structural verifier on `eDP-1`, and both
 focused profile sheets were visually accepted. G1 is therefore closed.
 
-G2 now tests the actual Hadalis layer split rather than another same-window
+G2 now tests the actual Alis layer split rather than another same-window
 field:
 
 ```text
@@ -2301,7 +2301,7 @@ constraints:
 2. tangent clamp boundary: when the popup joins a perpendicular physical edge,
    never rasterize into that frame strip.
 
-The owner records remain present in the exact iRiS SDF calculation, so the
+The owner records remain present in the exact Abyss SDF calculation, so the
 smooth-union fillet immediately **outside** each external owner is preserved.
 Only pixels already owned and painted by the Top domain are excluded from the
 Overlay raster.
@@ -2351,7 +2351,7 @@ complete rounded shadow
 The same `clipExternalOwners(rect)` function now governs three independent
 Overlay domains:
 
-- iRiS field raster bounds;
+- Abyss field raster bounds;
 - pointer input body bounds;
 - displayed shadow texture bounds.
 
@@ -2368,7 +2368,7 @@ gate.
 ### 26.20 G2 standalone shader packaging failure
 
 The second live split-composition sheet made a separate failure visible: there
-was no yellow iRiS field at all. Only the Top fake owner, cyan semantic outline,
+was no yellow Abyss field at all. Only the Top fake owner, cyan semantic outline,
 dark shadow and regular Overlay content were present. Desktop pixels remained
 visible through the popup body.
 
@@ -2376,7 +2376,7 @@ This invalidates the prior assumption that a structural geometry PASS implied
 the field renderer had participated.
 
 The G2 runner uses its own directory as the Quickshell config root. A relative
-shader URL escaping that root (`../IrisField.frag.qsb`) is not a valid
+shader URL escaping that root (`../AbyssField.frag.qsb`) is not a valid
 standalone packaging contract. G2 now packages the locked QSB inside its own
 config root. It is not a rebuilt or modified shader: Git stores the local G2
 asset with the same blob SHA as the locked G1/upstream QSB.
@@ -2397,7 +2397,7 @@ No production cutover is authorized until all three pass in one fresh matrix.
 ### 26.21 G2 accepted and production StyledPopup cutover
 
 The final G2 matrix is accepted. Unlike the earlier structurally valid but
-shader-transparent attempts, the accepted evidence visibly renders the iRiS
+shader-transparent attempts, the accepted evidence visibly renders the Abyss
 field while preserving split-composition ownership.
 
 Production reuses that architecture directly: full output-local owner records
@@ -2409,7 +2409,7 @@ A post-cutover parity audit found one important morphology detail that the first
 production translation had omitted: accepted G2 used `fuse = 30` and
 `weld = 3`. Production now carries both as explicit perimeter tokens.
 `ConnectedSurfaceGeometry.seamOverlap` supplies the primary-owner weld and the
-tangent screen margin becomes `screenEdgeThickness - irisWeldDepth`; the iRiS
+tangent screen margin becomes `screenEdgeThickness - abyssWeldDepth`; the Abyss
 frame still clips paint/shadow/input at the real owner boundary. This preserves
 the validated SDF relation without repainting or stealing input from the owner.
 

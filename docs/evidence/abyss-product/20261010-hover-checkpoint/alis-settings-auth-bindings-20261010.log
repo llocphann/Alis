@@ -1,0 +1,7 @@
+ALIS_INTERGRATION_POLKIT_ELEVATION_PASS rail/focus yield to native/external authentication; embedded surface hides and restores
+  INFO: Launching config: "/tmp/alis-settings-auth-2jpup9jn/shell.qml"
+  INFO: Shell ID: "fd02df73cbfefa96dbd25d713aec89a8" Path ID "fd02df73cbfefa96dbd25d713aec89a8"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/dut4fteomt/log.qslog"
+  INFO: Configuration Loaded
+ DEBUG qml: ALIS_INTERGRATION_POLKIT_BINDINGS_NATIVE_PASS {"cases":65,"hosts":2}
+

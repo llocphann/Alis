@@ -15,10 +15,10 @@ import re
 import subprocess
 
 UNITS = (
-    "hadalis-worker.service",
-    "hadalis-chat-bridge.service",
-    "hadalis-privilege.service",
-    "hadalis-chatgpt.service",
+    "alis-worker.service",
+    "alis-chat-bridge.service",
+    "alis-privilege.service",
+    "alis-chatgpt.service",
 )
 MAX_JSON_BYTES = 8 * 1024 * 1024
 
@@ -213,10 +213,10 @@ def main() -> int:
     blockers: list[str] = []
     state = Path(os.environ.get(
         "XDG_STATE_HOME", str(Path.home() / ".local/state")
-    )) / "hadalis-automation"
+    )) / "alis-automation"
     config = Path(os.environ.get(
         "XDG_CONFIG_HOME", str(Path.home() / ".config")
-    )) / "hadalis" / "automation.json"
+    )) / "alis" / "automation.json"
     units = [unit_snapshot(unit, blockers) for unit in UNITS]
     active_units = [u["unit"] for u in units[:3] if u.get("active") == "active"]
     processes = process_snapshot(blockers)

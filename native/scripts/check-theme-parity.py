@@ -112,7 +112,7 @@ def make_templates(root: Path) -> None:
             {
                 "name": "fixture",
                 "input": "fixture.txt",
-                "output": "~/.config/hadalis-native-theme-fixture/rendered.txt",
+                "output": "~/.config/alis-native-theme-fixture/rendered.txt",
             }
         ]
     }
@@ -208,7 +208,7 @@ def run_backend(
         "meta": normalize_meta(load_json(out / "meta.json")),
         "scss": scss_map(out / "colors.scss"),
         "template": (
-            home / ".config/hadalis-native-theme-fixture/rendered.txt"
+            home / ".config/alis-native-theme-fixture/rendered.txt"
         ).read_text(),
     }
 
@@ -244,7 +244,7 @@ def main() -> int:
     assert_consumers()
     python = choose_theme_python()
 
-    with tempfile.TemporaryDirectory(prefix="hadalis-theme-parity.") as temp_raw:
+    with tempfile.TemporaryDirectory(prefix="alis-theme-parity.") as temp_raw:
         temp = Path(temp_raw)
         image = temp / "fixture.png"
         template_dir = temp / "template-root"

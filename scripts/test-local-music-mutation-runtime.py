@@ -12,7 +12,7 @@ from native_test_session import run_qs
 
 ROOT = Path(__file__).resolve().parents[1]
 
-with tempfile.TemporaryDirectory(prefix="hadalis-music-mutation-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-music-mutation-") as name:
     folder = Path(name)
     def write(path, text):
         target = folder / path

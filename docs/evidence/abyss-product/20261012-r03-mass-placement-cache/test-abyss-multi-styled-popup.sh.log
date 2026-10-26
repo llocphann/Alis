@@ -1,5 +1,5 @@
   INFO: Launching config: "/tmp/tmp.ntcqeJk2Fg/shell.qml"
-  INFO: Shell ID: "hadalis-abyss-multi-styled-popup-test" Path ID "9b22b240a67a4ed24a8db210ccd3ef71"
+  INFO: Shell ID: "alis-abyss-multi-styled-popup-test" Path ID "9b22b240a67a4ed24a8db210ccd3ef71"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/53zwbbhsmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1537829.sock

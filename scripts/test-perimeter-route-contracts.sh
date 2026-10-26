@@ -34,8 +34,8 @@ grep -Fq 'StyledPopup {' "$weather_popup" \
     || fail 'Weather hover presentation must use StyledPopup'
 python3 "$root/scripts/test-connected-route-lifecycle.py" \
     || fail 'Weather connected actions or hover-owned route regressed'
-grep -Fq 'ConnectedSurfaceIrisEdgeSurface {' "$sidebar" \
-    || fail 'left/right SidebarHost must use the shared iRiS edge adapter'
+grep -Fq 'ConnectedSurfaceAbyssEdgeSurface {' "$sidebar" \
+    || fail 'left/right SidebarHost must use the shared Abyss edge adapter'
 grep -Fq 'readonly property real hiddenTranslateDistance:' "$sidebar" \
     || fail 'left/right SidebarHost must fully clear its native host on close'
 if grep -Fq 'ConnectedSurfaceConnector {' "$sidebar"; then

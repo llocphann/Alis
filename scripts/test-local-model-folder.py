@@ -75,19 +75,19 @@ with tempfile.TemporaryDirectory(prefix='local-model-folder-') as temporary:
         with (folder / (name + '.gguf')).open('wb') as output:
             output.write(struct.pack('<4sIQQ', b'GGUF', 3, 1, 1))
             output.truncate(21 * 1024 * 1024)
-    env = dict(os.environ, INIR_GGUF_ROOTS='[]', PYTHONDONTWRITEBYTECODE='1')
+    env = dict(os.environ, ALIS_GGUF_ROOTS='[]', PYTHONDONTWRITEBYTECODE='1')
     result = subprocess.run(['python3', str(SCRIPT), '--extra-root', str(b)], env=env, capture_output=True, text=True, check=True)
     found = json.loads(result.stdout)
     assert len(found['models']) == 1 and found['models'][0]['path'] == str(b / 'B.gguf')
     for invalid in ('relative/model-folder', 'x' * 4097):
         result = subprocess.run(['python3', str(SCRIPT), '--extra-root', invalid], env=env, capture_output=True, text=True, check=True)
         assert json.loads(result.stdout)['models'] == [] and json.loads(result.stdout).get('error')
-    with patch.dict(os.environ, INIR_GGUF_ROOTS=json.dumps([str(a)])):
+    with patch.dict(os.environ, ALIS_GGUF_ROOTS=json.dumps([str(a)])):
         assert inventory.roots(str(b)) == [b, a]
         assert inventory.roots(str(a)) == [a]
         assert inventory.roots() == [a]
     with patch.dict(os.environ):
-        for key in ('INIR_GGUF_ROOTS','HF_HUB_CACHE','HUGGINGFACE_HUB_CACHE','HF_HOME','XDG_CACHE_HOME'):
+        for key in ('ALIS_GGUF_ROOTS','HF_HUB_CACHE','HUGGINGFACE_HUB_CACHE','HF_HOME','XDG_CACHE_HOME'):
             os.environ.pop(key,None)
         assert inventory.roots()[0]==Path.home()/'.cache/huggingface/hub'
         os.environ['XDG_CACHE_HOME']=str(private/'xdg-cache')
@@ -102,7 +102,7 @@ with tempfile.TemporaryDirectory(prefix='local-model-folder-') as temporary:
         assert [m['name'] for m in cached['models']]==['B'],'modern cache must beat stale alias'
         assert inventory.roots(str(a))[:2]==[a,b],'explicit extra root remains first'
         assert inventory.roots(str(b)).count(b)==1,'selected cache root is not duplicated'
-        os.environ['INIR_GGUF_ROOTS']='[]'
+        os.environ['ALIS_GGUF_ROOTS']='[]'
         assert inventory.roots()==[],'fixture override must isolate all standard caches'
     result = subprocess.run(['python3', str(SCRIPT), '--extra-root', str(private / 'missing')], env=env, capture_output=True, text=True, check=True)
     assert json.loads(result.stdout)['error'] == 'Model folder not found'

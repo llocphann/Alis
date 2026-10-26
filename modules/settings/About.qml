@@ -377,7 +377,7 @@ ContentPage {
         title: Translation.tr("Based on")
 
         SettingsGroup {
-            // Preserve upstream iNiR attribution under Based on, not as the
+            // Preserve upstream Alis attribution under Based on, not as the
             // primary product identity.
             RowLayout {
                 objectName: "aboutBasedOnHorizontalRow"
@@ -407,12 +407,12 @@ ContentPage {
                         Layout.alignment: Qt.AlignVCenter
 
                         StyledText {
-                            text: "iNiR"
+                            text: "Alis"
                             font.pixelSize: Appearance.font.pixelSize.title
                         }
 
                         StyledText {
-                            text: "[https://github.com/snowarch/iNiR](https://github.com/snowarch/iNiR)"
+                            text: "[https://github.com/snowarch/Alis](https://github.com/snowarch/Alis)"
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: Appearance.colors.colPrimary
                             textFormat: Text.MarkdownText
@@ -482,7 +482,7 @@ ContentPage {
 
             StyledText {
                 Layout.fillWidth: true
-                text: "Alis builds on iNiR's Niri/Quickshell foundation and end-4's illogical-impulse."
+                text: "Alis builds on Alis's Niri/Quickshell foundation and end-4's illogical-impulse."
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -495,8 +495,8 @@ ContentPage {
 
                 RippleButtonWithIcon {
                     materialIcon: "open_in_new"
-                    mainText: "iNiR"
-                    onClicked: Qt.openUrlExternally("https://github.com/snowarch/iNiR")
+                    mainText: "Alis"
+                    onClicked: Qt.openUrlExternally("https://github.com/snowarch/Alis")
                 }
 
                 RippleButtonWithIcon {

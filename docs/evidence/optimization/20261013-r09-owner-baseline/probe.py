@@ -1,12 +1,12 @@
 from pathlib import Path
 import json,os,subprocess,time,hashlib
-OUT=Path.cwd()/'.git/maintainer-validation/20261013-r09-owner-counter';CONFIG=Path('/home/llocphann/.config/quickshell/inir')
+OUT=Path.cwd()/'.git/maintainer-validation/20261013-r09-owner-counter';CONFIG=Path('/home/llocphann/.config/quickshell/alis')
 def ipc(method):
  p=subprocess.run(['qs','-p',str(CONFIG),'ipc','call','abyssHoverProbe',method],capture_output=True,text=True,timeout=3)
  if p.returncode:raise RuntimeError(p.stderr[-200:])
  return json.loads(p.stdout)
 def identity():
- apps=json.loads(subprocess.check_output(['qs','list','--all','--json'],text=True));app=next(a for a in apps if a['shell_id']=='inir'and Path(a['config_path']).parent==CONFIG)
+ apps=json.loads(subprocess.check_output(['qs','list','--all','--json'],text=True));app=next(a for a in apps if a['shell_id']=='alis'and Path(a['config_path']).parent==CONFIG)
  manifest=CONFIG/'version.json';version=json.loads(manifest.read_text())if manifest.exists()else{}
  src={}
  for name in ['modules/abyss/AbyssPerimeter.qml','modules/abyss/looks/AbyssField.qml','modules/abyss/looks/AbyssField.frag.qsb','modules/common/widgets/PopupToolTip.qml']:

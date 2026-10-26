@@ -778,7 +778,7 @@ if args.scheme != "scheme-monochrome":
                     if 4.0 <= h.chroma < floor:
                         material_colors[role] = argb_to_hex(Hct.from_hct(h.hue, floor, h.tone).to_int())
 
-# Material's stock light surfaces are deliberately near-white. Hadalis light
+# Material's stock light surfaces are deliberately near-white. Alis light
 # mode instead uses a high-tone ramp in the active theme hue.
 if not darkmode:
     tint_light_surfaces(material_colors, args.scheme, hct)

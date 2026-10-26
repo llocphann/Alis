@@ -160,7 +160,7 @@ TUI_THEME_TEMPLATE = """/**
  * @description System24 TUI layout with Alis Material You colors.
  * @author refact0r (system24 base), Alis (palette integration)
  * @version 2.2.0
- * @source https://github.com/snowarch/inir
+ * @source https://github.com/snowarch/alis
  */
 
 @import url('system24.local.css');

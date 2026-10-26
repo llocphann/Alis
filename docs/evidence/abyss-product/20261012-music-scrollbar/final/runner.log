@@ -1,12 +1,12 @@
-  INFO: Launching config: "/tmp/hadalis-dashboard-music-yq2yzl1w/shell.qml"
+  INFO: Launching config: "/tmp/alis-dashboard-music-yq2yzl1w/shell.qml"
   INFO: Shell ID: "a3969aa6dc7a447215a6b32c4bfa3b1b" Path ID "a3969aa6dc7a447215a6b32c4bfa3b1b"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/w7ijvrnrmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.909288.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-music-yq2yzl1w/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-yq2yzl1w/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-yq2yzl1w/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dashboard-music-yq2yzl1w/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-music-yq2yzl1w/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-music-yq2yzl1w/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
  ERROR qml: MUSIC_SCROLL_FAIL short/empty list forces a scrollbar musicResultList check@qs:@/qs/shell.qml:61
 runChecks@qs:@/qs/shell.qml:85

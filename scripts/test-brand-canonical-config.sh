@@ -5,10 +5,10 @@ root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 tmp="$(mktemp -d)"
 trap 'rm -rf -- "$tmp"' EXIT
 fail() { printf 'FAIL: canonical config: %s\n' "$*" >&2; exit 1; }
-mkdir -p "$tmp/config"/{alis,illogical-impulse,inir}
+mkdir -p "$tmp/config"/{alis,illogical-impulse,alis}
 printf 'canonical bytes\n' > "$tmp/config/alis/config.json"
 printf 'old upstream bytes\n' > "$tmp/config/illogical-impulse/config.json"
-printf 'other old bytes\n' > "$tmp/config/inir/config.json"
+printf 'other old bytes\n' > "$tmp/config/alis/config.json"
 export HOME="$tmp" XDG_CONFIG_HOME="$tmp/config"
 
 actual="$(bash -c 'source "$1"; alis_config_dir' _ "$root/scripts/lib/config-path.sh")"
@@ -26,21 +26,21 @@ grep -Fq '/alis' "$root/modules/common/Directories.qml" ||
     REPO_ROOT="$root"
     source "$root/sdata/lib/migrations.sh"
     if is_migration_needed 019-config-dir-rename-compat; then
-        fail 'historical migration 019 would recreate retired inir namespace'
+        fail 'historical migration 019 would recreate retired alis namespace'
     fi
     tui_check_skip() { :; }
     apply_migration 019-config-dir-rename-compat true ||
         fail 'superseded forced migration did not abort safely'
     if is_migration_needed 050-rust-native-default; then
-        fail 'historical 050 would recreate retired inir backend state'
+        fail 'historical 050 would recreate retired alis backend state'
     fi
     apply_migration 050-rust-native-default true ||
         fail 'superseded forced backend migration did not abort safely'
 )
 [[ "$(cat "$tmp/config/illogical-impulse/config.json")" == 'old upstream bytes' ]] ||
     fail 'old upstream bytes mutated'
-[[ "$(cat "$tmp/config/inir/config.json")" == 'other old bytes' ]] ||
-    fail 'old inir bytes mutated'
+[[ "$(cat "$tmp/config/alis/config.json")" == 'other old bytes' ]] ||
+    fail 'old alis bytes mutated'
 
 rm -rf -- "$tmp/config/alis"
 actual="$(bash -c 'source "$1"; alis_config_dir' _ "$root/scripts/lib/config-path.sh")"
@@ -59,9 +59,9 @@ actual="$(bash -c 'source "$1"; resolve_alis_config_dir' _ "$root/sdata/lib/envi
     fail 'pre-cutover migration check was destructive'
 grep -Fq 'title: Translation.tr("Based on")' "$root/modules/settings/About.qml" ||
     fail 'upstream attribution section missing'
-grep -Fq 'mainText: "iNiR"' "$root/modules/settings/About.qml" ||
+grep -Fq 'mainText: "Alis"' "$root/modules/settings/About.qml" ||
     fail 'source credit incorrectly relabeled as Alis'
-grep -Fq 'label: "iNiR"' "$root/modules/waffle/settings/pages/WAboutPage.qml" ||
+grep -Fq 'label: "Alis"' "$root/modules/waffle/settings/pages/WAboutPage.qml" ||
     fail 'Waffle source credit incorrectly relabeled as Alis'
 grep -Fq 'BASHPID' "$root/scripts/brand-canonical-cutover.sh" ||
     fail 'cutover backups lack a unique process identifier'
@@ -74,7 +74,7 @@ cmp "$root/distro/arch/alis-shell/alis-shell.install" "$root/distro/arch/alis-sh
 for hook in "$root/distro/arch/alis-shell/alis-shell.install" "$root/distro/arch/alis-shell-git/alis-shell-git.install"; do
     grep -Fq 'do not enable a second service' "$hook" ||
         fail 'fresh install hook does not warn about dual service ownership'
-    grep -Fq 'If inir.service is still present, DO NOT start Alis' "$hook" ||
+    grep -Fq 'If alis.service is still present, DO NOT start Alis' "$hook" ||
         fail 'upgrade hook would start a second shell owner'
 done
 echo 'PASS: Alis config resolution, historical migration isolation, credits and unique backups'

@@ -28,7 +28,7 @@ echo "  SSH access OK"
 
 # Step 2: Verify GitHub has LICENSE
 echo "[2/5] Verifying LICENSE exists on GitHub..."
-if ! curl -sf "https://raw.githubusercontent.com/llocphann/Hadalis/dev/LICENSE" >/dev/null 2>&1; then
+if ! curl -sf "https://raw.githubusercontent.com/llocphann/Alis/dev/LICENSE" >/dev/null 2>&1; then
     echo "ERROR: LICENSE not found on GitHub."
     echo "  Push your local commits first: git push origin dev"
     exit 1

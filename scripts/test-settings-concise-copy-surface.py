@@ -20,10 +20,10 @@ assert "Settings copy stays terse." in README
 assert "only a few words or one short clause" in README
 assert "paragraph-length explanation" in README
 
-# Hadalird tests its owned vault labels/help and native field behavior. Core
+# Alis-Intergration tests its owned vault labels/help and native field behavior. Core
 # must retain the disabled-by-default wrapper instead of a duplicate editor.
-assert 'active: Hadalird.obsidianEnabled' in OBSIDIAN
-assert 'source: Hadalird.settingsSource("obsidian")' in OBSIDIAN
+assert 'active: AlisIntergration.obsidianEnabled' in OBSIDIAN
+assert 'source: AlisIntergration.settingsSource("obsidian")' in OBSIDIAN
 
 overlay_start = OVERLAY.index("id: overlayContentContainer")
 overlay_end = OVERLAY.index("// ── Page header", overlay_start)
@@ -334,9 +334,9 @@ assert "active: AlisCompanion.available" in companion_source
 assert "source: AlisCompanion.settingsSource" in companion_source
 assert "onClicked: AlisCompanion.refresh()" in companion_source
 for name, dynamic_source in (
-    ("ThinkfanSettings.qml", 'Hadalird.settingsSource("thinkfan")'),
-    ("ObsidianThemeSettings.qml", 'Hadalird.settingsSource("obsidian")'),
-    ("ObsidianTodoSettings.qml", 'Hadalird.settingsSource("obsidianTodo")'),
+    ("ThinkfanSettings.qml", 'AlisIntergration.settingsSource("thinkfan")'),
+    ("ObsidianThemeSettings.qml", 'AlisIntergration.settingsSource("obsidian")'),
+    ("ObsidianTodoSettings.qml", 'AlisIntergration.settingsSource("obsidianTodo")'),
 ):
     source = (ROOT / "modules/settings" / name).read_text(encoding="utf-8")
     assert dynamic_source in source, name

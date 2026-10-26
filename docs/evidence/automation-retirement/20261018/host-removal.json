@@ -18,10 +18,10 @@
   "host_removal": {
     "schedule_cancelled": true,
     "units_disabled_stopped_removed": [
-      "hadalis-worker.service",
-      "hadalis-chat-bridge.service",
-      "hadalis-privilege.service",
-      "hadalis-chatgpt.service"
+      "alis-worker.service",
+      "alis-chat-bridge.service",
+      "alis-privilege.service",
+      "alis-chatgpt.service"
     ],
     "desktop_supervisor_only_stopped": true,
     "desktop_launcher_main_exec_restored": true,

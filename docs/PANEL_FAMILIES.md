@@ -1,12 +1,12 @@
 # Panel Families
 
-Hadalis has three separate UI families sharing services, models and configuration: Material II (`ii`), Waffle (`waffle`) and Abyss (`abyss`). Switch at runtime with `Super+Shift+W`, Settings → Modules → Panel Style, or `inir panelFamily set abyss`.
+Alis has three separate UI families sharing services, models and configuration: Material II (`ii`), Waffle (`waffle`) and Abyss (`abyss`). Switch at runtime with `Super+Shift+W`, Settings → Modules → Panel Style, or `alis panelFamily set abyss`.
 
 Abyss (`abyss`) is the default; Waffle (`waffle`) is the other supported panel style. Old `ii` settings and IPC calls migrate to Abyss without resetting shared feature preferences.
 
 ## Material design baseline
 
-Abyss inherits the shared content and token system described below. The former Material panel family is retired; its source is retained for shared feature reuse and regression comparison. Hadalis 1.0 exposes **Material as the only shell-wide Global Theme**. Wallpaper-derived palettes, named color presets, motion settings, and local component presentation options are independent of that Global Theme boundary.
+Abyss inherits the shared content and token system described below. The former Material panel family is retired; its source is retained for shared feature reuse and regression comparison. Alis 1.0 exposes **Material as the only shell-wide Global Theme**. Wallpaper-derived palettes, named color presets, motion settings, and local component presentation options are independent of that Global Theme boundary.
 
 ### Global theme
 
@@ -137,7 +137,7 @@ Some panels are shared between families (cheatsheet, region selector, on-screen 
 
 ## Abyss
 
-**Perimeter Liquid Shell.** The screen edge is the shell; panels deform inward from one continuous liquid body. Abyss is not an iRiS Island implementation.
+**Perimeter Liquid Shell.** The screen edge is the shell; panels deform inward from one continuous liquid body. Abyss is not an Abyss Island implementation.
 
 `ShellAbyssPanels.qml` source-loads the Abyss composition. One `AbyssPerimeter` per output owns the final SDF silhouette, fill, specular rim and shadow. Bar zones, dock, sidebars, popups, notifications and OSD contribute geometry records rather than independent body painters. Palette-derived `AbyssStyle` tokens control typography, tension, material and bounded motion.
 

@@ -44,7 +44,7 @@ done < <(
     # Research snapshots cite other repositories, deleted historical components
     # and proposed source paths. Keep their evidence literal; active manuals
     # still require every quoted QML path to resolve in the current tree.
-    head -n 5 "$doc" | grep -q '^<!-- hadalis-doc-kind: research -->$' && continue
+    head -n 5 "$doc" | grep -q '^<!-- alis-doc-kind: research -->$' && continue
     grep -hoP '`\K[a-zA-Z0-9_./-]+\.qml(?=`)' "$doc" 2>/dev/null
   done | sort -u
 )

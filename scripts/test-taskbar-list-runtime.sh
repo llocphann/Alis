@@ -40,7 +40,7 @@ QtObject {
 }
 QML
 cat > "$taskbar_test_root/shell.qml" <<'QML'
-//@ pragma ShellId hadalis-taskbar-list-test
+//@ pragma ShellId alis-taskbar-list-test
 import QtQuick
 import Quickshell
 ShellRoot {

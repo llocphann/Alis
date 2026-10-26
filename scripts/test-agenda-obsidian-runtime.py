@@ -20,7 +20,7 @@ ShellRoot {
  property int checks:0
  property bool finished:false
  property string action:Quickshell.env("AGENDA_ACTION")
- readonly property string observedPackage:Hadalird.packageRoot
+ readonly property string observedPackage:AlisIntergration.packageRoot
  Connections {
   target:Todo.obsidianBackend
   function onAgendaMutationFinished(success,payload){console.info("AGENDA_BRIDGE_RECEIPT",root.action,success,JSON.stringify(payload))}
@@ -35,7 +35,7 @@ ShellRoot {
    if(root.phase===0 && Config.ready && root.ticks>=60) {
     // The private probe has completed. Mount source through the actual adapter,
     // without installing/enabling anything in the owner's package/data roots.
-    Hadalird.packageRoot=Quickshell.env("INTEGRATION_SOURCE");Hadalird.available=true;Hadalird.loadFailed=false
+    AlisIntergration.packageRoot=Quickshell.env("INTEGRATION_SOURCE");AlisIntergration.available=true;AlisIntergration.loadFailed=false
     root.phase=1
    } else if(root.phase===1 && Todo.ready && !Todo.busy && Events.ready && !Events.persistenceBusy) {
     if(root.action==="create") {
@@ -71,7 +71,7 @@ ShellRoot {
     root.check(Todo.list.length===2 && Todo.list.some(value=>value.done && value.content.includes("Synced name")),"unlink destroyed/changed the independent task")
     root.finish()
    }
-  }catch(error){console.error("AGENDA_OBSIDIAN_FAIL",error.message,error.stack,JSON.stringify({events:Events.list,unlinks:Events.todoUnlinks,tasks:Todo.list,backendTasks:Todo.obsidianBackend.list,error:Todo.obsidianErrorCode,requested:Todo.requestedBackend,mode:Todo.obsidianSourceMode,configured:Todo.obsidianConfigured,host:Hadalird.status()}));Qt.quit()}}
+  }catch(error){console.error("AGENDA_OBSIDIAN_FAIL",error.message,error.stack,JSON.stringify({events:Events.list,unlinks:Events.todoUnlinks,tasks:Todo.list,backendTasks:Todo.obsidianBackend.list,error:Todo.obsidianErrorCode,requested:Todo.requestedBackend,mode:Todo.obsidianSourceMode,configured:Todo.obsidianConfigured,host:AlisIntergration.status()}));Qt.quit()}}
  }
 }
 '''
@@ -86,11 +86,11 @@ with tempfile.TemporaryDirectory(prefix='alis-agenda-obsidian-') as name:
   for kind in ['config','state','cache','data','runtime']:
    path=folder/kind;path.mkdir(mode=0o700);env['XDG_'+kind.upper()+('_DIR' if kind=='runtime' else '_HOME')]=str(path)
   vault=folder/'Vault';vault.mkdir();note=vault/'Tasks.md'
-  start='## Tasks' if mode=='markdown-note' else '<!-- hadalis:todo:start -->'
-  end='## Journal' if mode=='markdown-note' else '<!-- hadalis:todo:end -->'
+  start='## Tasks' if mode=='markdown-note' else '<!-- alis:todo:start -->'
+  end='## Journal' if mode=='markdown-note' else '<!-- alis:todo:end -->'
   note.write_text('# Private fixture\n'+start+'\n- [x] Existing\n'+end+'\nIndependent diary\n')
   config=folder/'config/illogical-impulse';config.mkdir();data=json.loads((ROOT/'defaults/config.json').read_text())
-  data['integrations']={'hadalird':{'obsidian':True,'tlp':False,'thinkfan':False}}
+  data['integrations']={'alis-intergration':{'obsidian':True,'tlp':False,'thinkfan':False}}
   data['todo']={'backend':'obsidian','obsidian':{'vaultPath':str(vault),'sourceMode':mode,'notePath':'Tasks.md','preferTasksPlugin':False,'allowBasicOfflineMutation':True,'dailyNote':{'folder':'','format':'Tasks.md','plannerHeading':'Tasks','plannerHeadingLevel':2,'defaultDurationMinutes':30}}}
   data['obsidianTheme']={'enabled':False};(config/'config.json').write_text(json.dumps(data))
   state=folder/'state/quickshell/user';state.mkdir(parents=True);events=state/'events.json';events.write_text('{"nextId":1,"events":[]}')

@@ -9,7 +9,7 @@ if not shutil.which("qs"):
     print("SKIP: Notes pin runtime requires Quickshell")
     raise SystemExit(0)
 
-with tempfile.TemporaryDirectory(prefix="hadalis-notes-pin-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-notes-pin-") as name:
     folder = Path(name)
     for entry in ["modules", "services", "GlobalStates.qml", "qmldir", "assets", "scripts", "defaults", "translations"]:
         (folder / entry).symlink_to(ROOT / entry)

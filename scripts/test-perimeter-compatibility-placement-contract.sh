@@ -39,11 +39,11 @@ for token in \
     'required property string edge' \
     'GlobalStates.sidebarLeftPresentationOutput' \
     'GlobalStates.sidebarRightPresentationOutput' \
-    'ConnectedSurfaceIrisEdgeSurface {' \
+    'ConnectedSurfaceAbyssEdgeSurface {' \
     'ownerThickness: root.screenEdgeHoverWidth' \
     'readonly property real hiddenTranslateDistance:' \
     '- root.screenEdgeHoverWidth)'; do
-    grep -Fq -- "$token" "$sidebar" || fail "Sidebar direct-edge/iRiS contract missing: $token"
+    grep -Fq -- "$token" "$sidebar" || fail "Sidebar direct-edge/Abyss contract missing: $token"
 done
 for retired in 'sidebarBridgeGeometry' 'ConnectedSurfaceConnector {' 'ConnectedSurfaceJoinFlares' 'directEdgeInset'; do
     ! grep -Fq "$retired" "$sidebar" || fail "Sidebar restored retired edge geometry: $retired"
@@ -54,4 +54,4 @@ grep -Fq 'visible: surfaceSection.sidebarRole' "$settings" \
 grep -Fq 'text: Translation.tr("Width")' "$settings" \
     || fail 'Shell Layout must retain sidebar width setting'
 
-printf 'PASS: locked Screen Edge and iRiS left/right Sidebar placement remain supported\n'
+printf 'PASS: locked Screen Edge and Abyss left/right Sidebar placement remain supported\n'

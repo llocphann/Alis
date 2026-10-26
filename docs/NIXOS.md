@@ -2,28 +2,28 @@
 
 > Experimental. The Arch installer remains the primary supported installation path.
 
-Alis ships Nix packaging with public `alis` CLI and compatibility `inir` runtime identity. The current flake supports `x86_64-linux` and `aarch64-linux` and exports:
+Alis ships Nix packaging with public `alis` CLI and compatibility `alis` runtime identity. The current flake supports `x86_64-linux` and `aarch64-linux` and exports:
 
 | Output | Purpose |
 |---|---|
-| `packages.<system>.default` / `packages.<system>.alis` | Alis package with `alis` CLI and legacy `inir` support |
-| `packages.<system>.inir` | Legacy alias of the same package |
-| `nixosModules.default` / `nixosModules.alis` / `nixosModules.inir` | NixOS module for the same single user service |
-| `homeModules.default` / `homeModules.alis` / `homeModules.inir` | Home Manager module |
-| `homeManagerModules.default` / `homeManagerModules.alis` / `homeManagerModules.inir` | Conventional Home Manager aliases |
+| `packages.<system>.default` / `packages.<system>.alis` | Alis package with `alis` CLI and legacy `alis` support |
+| `packages.<system>.alis` | Legacy alias of the same package |
+| `nixosModules.default` / `nixosModules.alis` / `nixosModules.alis` | NixOS module for the same single user service |
+| `homeModules.default` / `homeModules.alis` / `homeModules.alis` | Home Manager module |
+| `homeManagerModules.default` / `homeManagerModules.alis` / `homeManagerModules.alis` | Conventional Home Manager aliases |
 | `formatter.<system>` | `nixpkgs-fmt` |
 
 The flake does **not** run `./setup install` or `./setup update`. Nix owns the packaged files and the shell runs from the immutable store path.
 
 The package and modules are ordinary expressions under `nix/`, so flakes are optional. Both flake and non-flake consumers use the same `package.nix`, NixOS module, and Home Manager module.
 
-The repository does not currently commit a `flake.lock`. A direct `nix build .#inir` or `nix flake check` from this checkout therefore resolves the `nixos-unstable` input at evaluation time rather than providing a repository-owned nixpkgs snapshot. Consumer configurations that add Hadalis as an input normally get reproducibility from their own committed lock file. For a standalone/release build that must be reproducible, pin or lock the outer Nix configuration instead of assuming this checkout has a fixed nixpkgs revision.
+The repository does not currently commit a `flake.lock`. A direct `nix build .#alis` or `nix flake check` from this checkout therefore resolves the `nixos-unstable` input at evaluation time rather than providing a repository-owned nixpkgs snapshot. Consumer configurations that add Alis as an input normally get reproducibility from their own committed lock file. For a standalone/release build that must be reproducible, pin or lock the outer Nix configuration instead of assuming this checkout has a fixed nixpkgs revision.
 
-The package installs visible Alis desktop entries and icon with hidden legacy iNiR entries. Public `Exec` commands point to wrapped `$out/bin/alis`, so application-menu launches receive the same runtime dependency and QML environment as terminal/service launches.
+The package installs visible Alis desktop entries and icon with hidden legacy Alis entries. Public `Exec` commands point to wrapped `$out/bin/alis`, so application-menu launches receive the same runtime dependency and QML environment as terminal/service launches.
 
-The packaged README and the complete Markdown reference set from `docs/` are available under `$out/share/doc/inir/`. This keeps installation, configuration, module, troubleshooting, and maintainer references available even when the immutable package is used without a source checkout.
+The packaged README and the complete Markdown reference set from `docs/` are available under `$out/share/doc/alis/`. This keeps installation, configuration, module, troubleshooting, and maintainer references available even when the immutable package is used without a source checkout.
 
-**Public configuration:** New setups should use `programs.alis`, which aliases to `programs.inir`. Existing configs remain supported; both map to one `inir.service` during compatibility. Configure one prefix at a time.
+**Public configuration:** New setups should use `programs.alis`, which aliases to `programs.alis`. Existing configs remain supported; both map to one `alis.service` during compatibility. Configure one prefix at a time.
 
 ## Without flakes
 
@@ -47,7 +47,7 @@ in
 }
 ```
 
-For Home Manager, import `nix/home-module.nix` instead. `programs.inir.package` can be overridden when you need a custom build.
+For Home Manager, import `nix/home-module.nix` instead. `programs.alis.package` can be overridden when you need a custom build.
 
 
 ## With flakes and niri-flake
@@ -81,7 +81,7 @@ Import the NixOS module together with niri-flake:
 
   programs.niri.enable = true;
 
-  programs.inir = {
+  programs.alis = {
     enable = true;
     service.compositor = "niri";
     extraPackages = [ config.programs.niri.package ];
@@ -93,9 +93,9 @@ Import the NixOS module together with niri-flake:
 
 ## Service wiring
 
-`programs.inir.service.enable` defaults to `true`.
+`programs.alis.service.enable` defaults to `true`.
 
-`programs.inir.service.compositor = "niri"` makes `niri.service` want `inir.service`. The generated user service participates in the graphical-session lifecycle and starts early enough to claim the StatusNotifierWatcher bus name before the main graphical session target:
+`programs.alis.service.compositor = "niri"` makes `niri.service` want `alis.service`. The generated user service participates in the graphical-session lifecycle and starts early enough to claim the StatusNotifierWatcher bus name before the main graphical session target:
 
 - `Type=dbus`
 - `BusName=org.kde.StatusNotifierWatcher`
@@ -106,12 +106,12 @@ Import the NixOS module together with niri-flake:
 
 This ordering mirrors the canonical packaged user service and avoids the cold-login tray ownership race.
 
-When the NixOS or Home Manager module owns `inir.service`, keep service installation and enablement declarative. Do **not** run `inir service install` or `inir service enable`: those launcher commands are intended for source/manual installs and materialize a mutable unit/wants link under the user's XDG systemd directory, which can shadow the module-generated unit. Change `programs.inir.service.*` options and rebuild instead. For ad-hoc start/stop/restart operations, use `systemctl --user <action> inir.service` so the declarative unit remains authoritative.
+When the NixOS or Home Manager module owns `alis.service`, keep service installation and enablement declarative. Do **not** run `alis service install` or `alis service enable`: those launcher commands are intended for source/manual installs and materialize a mutable unit/wants link under the user's XDG systemd directory, which can shadow the module-generated unit. Change `programs.alis.service.*` options and rebuild instead. For ad-hoc start/stop/restart operations, use `systemctl --user <action> alis.service` so the declarative unit remains authoritative.
 
 For Hyprland/UWSM:
 
 ```nix
-programs.inir.service.compositor = "hyprland";
+programs.alis.service.compositor = "hyprland";
 ```
 
 That wires the service under `wayland-wm@Hyprland.service`.
@@ -119,18 +119,18 @@ That wires the service under `wayland-wm@Hyprland.service`.
 To create the service without compositor auto-start wiring:
 
 ```nix
-programs.inir.service.compositor = null;
+programs.alis.service.compositor = null;
 ```
 
 Then start it manually when needed:
 
 ```bash
-systemctl --user start inir.service
+systemctl --user start alis.service
 ```
 
 ## Home Manager
 
-Import the Home Manager module from the same Hadalis input:
+Import the Home Manager module from the same Alis input:
 
 ```nix
 { inputs, ... }: {
@@ -138,7 +138,7 @@ Import the Home Manager module from the same Hadalis input:
     inputs.alis.homeModules.alis
   ];
 
-  programs.inir = {
+  programs.alis = {
     enable = true;
     service.compositor = "niri";
   };
@@ -148,42 +148,42 @@ Import the Home Manager module from the same Hadalis input:
 The Home Manager module can optionally expose the packaged runtime at the traditional Quickshell path:
 
 ```nix
-programs.inir.configSymlink.enable = true;
+programs.alis.configSymlink.enable = true;
 ```
 
 This creates a symlink at:
 
 ```text
-~/.config/quickshell/inir
+~/.config/quickshell/alis
 ```
 
 Do not enable it when that path is already occupied by a repo-managed checkout.
 
 ## Runtime dependencies
 
-The Nix package wraps `inir` with the runtime dependencies declared in `nix/package.nix`. Core tools include Quickshell, clipboard/screenshot/audio tooling, systemd utilities, and the shell's command-line dependencies. Optional packages are added when they exist in the selected nixpkgs set.
+The Nix package wraps `alis` with the runtime dependencies declared in `nix/package.nix`. Core tools include Quickshell, clipboard/screenshot/audio tooling, systemd utilities, and the shell's command-line dependencies. Optional packages are added when they exist in the selected nixpkgs set.
 
 EasyEffects and its `socat` control transport are intentionally **not** part of the default Nix runtime closure. The Equalizer Phase 1 backend is optional and degrades to an unavailable capability when these tools are absent; Media playback does not depend on them. To opt into the native EasyEffects backend and its control transport, add both explicitly to the module service `PATH`:
 
 ```nix
-programs.inir.extraPackages = [
+programs.alis.extraPackages = [
   pkgs.easyeffects
   pkgs.socat
 ];
 ```
 
-This can be combined with other entries already supplied through `extraPackages`. The existing EasyEffects service also detects a Flatpak installation at runtime, so the Hadalis package itself does not need to make the native package or its control transport hard dependencies.
+This can be combined with other entries already supplied through `extraPackages`. The existing EasyEffects service also detects a Flatpak installation at runtime, so the Alis package itself does not need to make the native package or its control transport hard dependencies.
 
-The package also sets the runtime location through `INIR_SYSTEM_RUNTIME_DIR` / `INIR_FALLBACK_SYSTEM_RUNTIME_DIR`, so package-managed runs do not depend on a mutable source checkout.
+The package also sets the runtime location through `ALIS_SYSTEM_RUNTIME_DIR` / `ALIS_FALLBACK_SYSTEM_RUNTIME_DIR`, so package-managed runs do not depend on a mutable source checkout.
 
 ## Privileged integration limitation
 
 The current Nix package installs the shell runtime and launcher into the Nix store. It does **not** provision the system-level privileged helper/polkit installation used by the source/Arch paths for:
 
-- `/usr/libexec/inir-battery-charge-limit`
-- `/usr/libexec/inir-thinkfan`
+- `/usr/libexec/alis-battery-charge-limit`
+- `/usr/libexec/alis-thinkfan`
 
-As a result, do not assume battery charge-limit or ThinkFan privileged controls are available merely because the Nix package/module is enabled. Those integrations require separate system-level provisioning until Hadalis gains a Nix-native privileged-helper/polkit path.
+As a result, do not assume battery charge-limit or ThinkFan privileged controls are available merely because the Nix package/module is enabled. Those integrations require separate system-level provisioning until Alis gains a Nix-native privileged-helper/polkit path.
 
 This limitation is specific to privileged system integration; the shell should continue to degrade gracefully when those helpers are unavailable.
 
@@ -191,7 +191,7 @@ For ThinkFan-specific service/config prerequisites and helper behavior, see [Thi
 
 ## Updating
 
-For Nix-managed installations, `inir update` is not the package update path. Update the Hadalis flake/source pin and rebuild your NixOS or Home Manager configuration.
+For Nix-managed installations, `alis update` is not the package update path. Update the Alis flake/source pin and rebuild your NixOS or Home Manager configuration.
 
 For example, with a flake lock:
 
@@ -204,7 +204,7 @@ Use the equivalent Home Manager rebuild command when the package is managed ther
 
 ## Troubleshooting
 
-- Use `inir logs` (or your normal user-service journal workflow) for runtime errors.
-- Check `systemctl --user status inir.service` when startup ordering or DBus ownership is in question.
-- Keep `programs.inir.extraPackages` for compositor/runtime tools that are intentionally supplied by your configuration rather than duplicating packages already wrapped by `nix/package.nix`.
-- User preferences continue to live in the normal iNiR/Hadalis config/state locations; the packaged QML payload itself is immutable.
+- Use `alis logs` (or your normal user-service journal workflow) for runtime errors.
+- Check `systemctl --user status alis.service` when startup ordering or DBus ownership is in question.
+- Keep `programs.alis.extraPackages` for compositor/runtime tools that are intentionally supplied by your configuration rather than duplicating packages already wrapped by `nix/package.nix`.
+- User preferences continue to live in the normal Alis/Alis config/state locations; the packaged QML payload itself is immutable.

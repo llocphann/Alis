@@ -30,8 +30,8 @@ Singleton {
         && !GameMode.hasFullscreenOnOutput(root.session?.companionTargetOutput ?? "")
         && !Notifications.notificationPolicyActive
     readonly property var contextSource: contextAvailable ? contextFeed : null
-    readonly property string sessionSource: packageRoot + "/HadalisSession.qml"
-    readonly property string outputSource: packageRoot + "/HadalisOutput.qml"
+    readonly property string sessionSource: packageRoot + "/AlisSession.qml"
+    readonly property string outputSource: packageRoot + "/AlisOutput.qml"
     readonly property string settingsSource: available ? packageRoot + "/modules/settings/CompanionConfig.qml" : ""
 
     function registerOutput(output): void {

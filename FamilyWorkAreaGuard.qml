@@ -27,7 +27,7 @@ Scope {
             exclusiveZone: hold.retained ? 3 : 0
             implicitHeight: 3
             anchors { top: true; left: true; right: true }
-            WlrLayershell.namespace: "hadalis:family-workarea-guard"
+            WlrLayershell.namespace: "alis:family-workarea-guard"
             WlrLayershell.layer: WlrLayer.Top
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
             mask: Region {}

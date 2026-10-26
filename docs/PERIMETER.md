@@ -10,17 +10,17 @@ ii Bar popouts use:
 StyledPopup.qml
   -> ConnectedSurfaceGeometry.qml
   -> ConnectedSurfaceRevealClip.qml
-  -> ConnectedSurfaceIrisFrame.qml
-       -> ConnectedSurfaceIrisField.qml
-       -> IrisField.frag.qsb
+  -> ConnectedSurfaceAbyssFrame.qml
+       -> ConnectedSurfaceAbyssField.qml
+       -> AbyssField.frag.qsb
   -> ConnectedSurfaceContentHost.qml
   -> ConnectedSurfaceBodyMask.qml
 ```
 
 Existing feature-owned bodies that attach directly to Screen Edge use
-`ConnectedSurfaceIrisEdgeSurface.qml`. It adapts an already-laid-out body into
-the same iRiS field, welds only the SDF record under the owner with
-`irisWeldDepth`, and clips field/shadow pixels at the real owner boundary.
+`ConnectedSurfaceAbyssEdgeSurface.qml`. It adapts an already-laid-out body into
+the same Abyss field, welds only the SDF record under the owner with
+`abyssWeldDepth`, and clips field/shadow pixels at the real owner boundary.
 Sidebar, Dashboard, Settings and Dock use this adapter.
 
 ii Bar popup, Dock, Sidebar and Dashboard shadows share the public Screen Edge
@@ -42,7 +42,7 @@ The old standalone corner/wedge painters are retired and must remain absent:
 Waffle/non-cutover surfaces may still use `ConnectedSurfaceFrame` and
 `ConnectedSurfaceMask`, but that frame no longer paints endpoint wedges.
 Search and OSK likewise keep direct square joined edges until explicitly moved to
-an iRiS adapter.
+an Abyss adapter.
 
 ## Screen Edge ownership
 
@@ -57,7 +57,7 @@ not constructed on the healthy path. Do not add a Bar-local shadow or another Sc
 
 Transparent Material surfaces still use independent Material shadow ink:
 surface alpha must never turn `Appearance.colors.colShadow` transparent.
-Connected iRiS elevation is derived from a second viewport of the same
+Connected Abyss elevation is derived from a second viewport of the same
 locked SDF field as the visible body, then blurred and texture-cropped to
 the real owner boundary. The shadow mask includes the smooth-union fillets;
 a separate rectangular body shadow does not. Screen Edge retains its own
@@ -73,22 +73,22 @@ paint. `ScreenCorners.qml` must not paint fake rounded corners.
 ## Sidebar contract
 
 `SidebarHost.qml` owns left/right placement and lifecycle. The content body
-starts at the inner Screen Edge boundary; `ConnectedSurfaceIrisEdgeSurface`
+starts at the inner Screen Edge boundary; `ConnectedSurfaceAbyssEdgeSurface`
 owns the joined field. During close, `hiddenTranslateDistance` moves the body
-past the complete native host plus iRiS/shadow overflow so neither body nor
+past the complete native host plus Abyss/shadow overflow so neither body nor
 field can remain visible as a sliver.
 
 ## Dashboard and Settings
 
 Bottom-connected Dashboard and Settings surfaces use
-`ConnectedSurfaceIrisEdgeSurface` with the real Screen Edge/Bar owner
-thickness. Their local body rectangles are transparent while the iRiS field owns
+`ConnectedSurfaceAbyssEdgeSurface` with the real Screen Edge/Bar owner
+thickness. Their local body rectangles are transparent while the Abyss field owns
 the visible fill and shadow. No full-overlay wedge/flare helper is allowed.
 
 ## Contributor rules
 
 - preserve `StyledPopup.qml` as the normal ii Bar-popout entry point;
-- use the existing iRiS adapter for Material curved connected contact; do not recreate Canvas/Shape wedge patches;
+- use the existing Abyss adapter for Material curved connected contact; do not recreate Canvas/Shape wedge patches;
 - keep Material's physical Screen Edge renderer separate from its Overlay surfaces;
 - preserve output ownership, slide/retract lifecycle, focus and click-through input;
 - keep Waffle supported without reintroducing legacy corner painters;
@@ -99,7 +99,7 @@ attachment and fractional scaling.
 
 ## Abyss ownership
 
-`AbyssPerimeter.qml` is the sole Abyss painter per output. The root unloads Material/Waffle compositions before selecting it. `AbyssGeometry.js` subtracts a rounded workspace opening from the screen and supplies edge-attached deformation records. One original `AbyssField.frag.qsb` smooth-unions those records, then paints the final fill/rim/shadow once. Abyss does not use the iRiS Island field, separate panel backgrounds or corner patches.
+`AbyssPerimeter.qml` is the sole Abyss painter per output. The root unloads Material/Waffle compositions before selecting it. `AbyssGeometry.js` subtracts a rounded workspace opening from the screen and supplies edge-attached deformation records. One original `AbyssField.frag.qsb` smooth-unions those records, then paints the final fill/rim/shadow once. Abyss does not use the Abyss Island field, separate panel backgrounds or corner patches.
 
 The visual layer-shell host stays mapped on Top in default fullscreen mode, with empty input and no paint when suppressed. Explicit visible-in-fullscreen uses Overlay while still releasing reservations. Bar and pinned dock reserve only persistent depth on their own edge through transparent, input-free windows; auto-hide reserves only the thin perimeter. Sidebars, popups and transient content reserve zero space.
 

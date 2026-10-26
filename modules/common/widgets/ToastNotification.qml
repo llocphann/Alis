@@ -19,7 +19,7 @@ Item {
     // existing progress timer. Errors retain explicit dismissal/copy actions.
     readonly property bool showDismissButton: root.source !== "reload"
     property color accentColor: Appearance.colors.colPrimary
-    // Connected hosts provide the outer iRiS plate/shadow. Keep this component
+    // Connected hosts provide the outer Abyss plate/shadow. Keep this component
     // as the interactive/content layer so reload toasts can become one attached block.
     property bool connectedSurface: false
     property bool copied: false

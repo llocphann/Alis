@@ -3,7 +3,7 @@
 import json,os,subprocess,tempfile
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix="hadalis-wallpaper-migration-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-wallpaper-migration-") as name:
  base=Path(name);conf=base/"illogical-impulse/config.json";conf.parent.mkdir()
  initial={"wallpaperSelector":{"style":"coverflow","selectionTarget":"waffle","targetMonitor":"DP-1","useSystemFileDialog":True},"background":{"wallpaperPath":"/images/owned.png","transition":{"enable":False,"type":"random","duration":900}},"enabledPanels":["iiCoverflowSelector","iiWallpaperLauncher","dock"],"future":{"retained":True}}
  conf.write_text(json.dumps(initial));conf.chmod(0o600)
@@ -13,7 +13,7 @@ with tempfile.TemporaryDirectory(prefix="hadalis-wallpaper-migration-") as name:
  invoke("migration_check && migration_apply")
  value=json.loads(conf.read_text())
  assert value["wallpaperSelector"]=={**initial["wallpaperSelector"],"style":"caelestia","useSystemFileDialog":False}
- assert value["background"]=={**initial["background"],"transition":{**initial["background"]["transition"],"type":"inirMelt"}}
+ assert value["background"]=={**initial["background"],"transition":{**initial["background"]["transition"],"type":"alisMelt"}}
  assert value["enabledPanels"]==["dock","iiWallpaperSelector"] and value["future"]==initial["future"]
  assert conf.stat().st_mode&0o777==0o600
  invoke("! migration_check")

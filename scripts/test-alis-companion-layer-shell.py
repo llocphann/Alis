@@ -6,7 +6,7 @@ import tempfile
 from native_test_session import private_wayland, run_qs
 
 ROOT = Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix="hadalis-without-companion-") as temporary:
+with tempfile.TemporaryDirectory(prefix="alis-without-companion-") as temporary:
     folder = Path(temporary)
     for name in ("modules", "services", "scripts", "defaults", "translations", "assets", "qmldir", "GlobalStates.qml"):
         (folder / name).symlink_to(ROOT / name)
@@ -48,7 +48,7 @@ ShellRoot {
         if environment is None:
             print("SKIP: actual Abyss core boot needs an isolated Wayland backend")
             raise SystemExit(0)
-        environment.update(INIR_COMPANIOND="/nonexistent/never-run", INIR_GGUF_ROOTS="[]",
+        environment.update(ALIS_COMPANIOND="/nonexistent/never-run", ALIS_GGUF_ROOTS="[]",
                            QT_QUICK_BACKEND="software", QT_QUICK_CONTROLS_STYLE="Basic", QT_QPA_PLATFORMTHEME="generic")
         result = run_qs(folder, environment)
     errors = ("ALIS_COMPANION_CORE_LAYER_FAIL", "ReferenceError:", "TypeError:", "Binding loop", "Unable to assign", "is not a type")

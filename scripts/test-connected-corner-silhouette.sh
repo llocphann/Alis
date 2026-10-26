@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-node - "$repo_root/modules/common/perimeter/ConnectedSurfaceIrisFrame.qml" <<'NODE'
+node - "$repo_root/modules/common/perimeter/ConnectedSurfaceAbyssFrame.qml" <<'NODE'
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const frame = fs.readFileSync(process.argv[2], 'utf8');
@@ -38,7 +38,7 @@ const endJoinShape = new Function('root',
     `return (${binding('var popupEndJoinShape', '\n\n    // A box shadow')});`);
 
 const Qt = { rect: (x, y, width, height) => ({x, y, width, height}) };
-const PerimeterTokens = { irisWeldDepth: 3 };
+const PerimeterTokens = { abyssWeldDepth: 3 };
 const cases = [
     ['top', 'start', {x: 7, y: 7, width: 103, height: 80}],
     ['top', 'end', {x: 390, y: 7, width: 103, height: 80}],

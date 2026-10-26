@@ -33,10 +33,10 @@ RETIREMENT_FILES = {
     "scripts/test-retired-service-audit.py",
 }
 RETIRED_SCRIPT = re.compile(
-    r"^scripts/(?:AUTO-F01-|alis-automation-task\.|hadalis-automation-control\.|"
-    r"install-hadalis-automation\.|hadalis-git-credential\.|"
-    r"inspect-hadalis-native-scope\.|automation_test_helpers\.|"
-    r"test-(?:AUTO-F01-|automation-|hadalis-(?:automation-|chat-bridge|"
+    r"^scripts/(?:AUTO-F01-|alis-automation-task\.|alis-automation-control\.|"
+    r"install-alis-automation\.|alis-git-credential\.|"
+    r"inspect-alis-native-scope\.|automation_test_helpers\.|"
+    r"test-(?:AUTO-F01-|automation-|alis-(?:automation-|chat-bridge|"
     r"legacy-ui-|native-|receipt-|reconciliation-|static-helper-|transport-)))"
 )
 
@@ -49,10 +49,10 @@ EXTERNAL_LINKS = re.compile(
     r"automation/(?:worker|manager|chat_bridge)/|"
     r"modules/settings/AutomationTaskConfig\.qml|"
     r"\bAutomationTaskConfig\b|"
-    r"scripts/(?:alis-automation-task|hadalis-automation-control|"
-    r"install-hadalis-automation|hadalis-git-credential)\.py|"
-    r"scripts/inspect-hadalis-native-scope\.mjs|"
-    r"hadalis-(?:worker|chat-bridge|privilege|chatgpt)\.service)"
+    r"scripts/(?:alis-automation-task|alis-automation-control|"
+    r"install-alis-automation|alis-git-credential)\.py|"
+    r"scripts/inspect-alis-native-scope\.mjs|"
+    r"alis-(?:worker|chat-bridge|privilege|chatgpt)\.service)"
 )
 
 

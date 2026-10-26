@@ -8,7 +8,7 @@ trap 'rm -rf -- "$tmp"' EXIT
 fail() { printf 'not ok - %s\n' "$1" >&2; exit 1; }
 assert_file_contains() { grep -Fq -- "$1" "$2" || fail "$3"; }
 assert_text_contains() { grep -Fq -- "$1" <<<"$2" || fail "$3"; }
-# Worker timeout/cadence and helper behavior coverage is owned by Hadalird.
+# Worker timeout/cadence and helper behavior coverage is owned by AlisIntergration.
 # Core still guards generic power-provider restoration and inert old migrations.
 # Power profile restore must fail closed while tlp-pd ownership is unknown. A
 # Process startup failure must cancel the timeout without pretending the probe

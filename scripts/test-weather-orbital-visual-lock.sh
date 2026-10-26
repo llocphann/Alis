@@ -69,7 +69,7 @@ def approved_visual_after_exact_cache_patch(payload: bytes, approved_blob: str) 
     patch = (root / "scripts/fixtures/weather-orbit-exact-table-cache.patch").read_bytes()
     if hashlib.sha256(patch).hexdigest() != "26a2053ea5aa13519be94cf2e71082e572f5bd76231303b604c75e4cb84ccaea":
         return False
-    with tempfile.TemporaryDirectory(prefix="hadalis-weather-visual-lock-") as name:
+    with tempfile.TemporaryDirectory(prefix="alis-weather-visual-lock-") as name:
         private = Path(name)
         original = private / "modules/bar/weather/OrbitalWeather.qml"
         original.parent.mkdir(parents=True)

@@ -6,9 +6,9 @@ import qs.modules.common.widgets
 
 Item {
     id: root
-    // Settings navigation metadata belongs to this Hadalis-side wrapper.
+    // Settings navigation metadata belongs to this Alis-side wrapper.
     // Without it IntegrationsConfig page 38 fails to instantiate before its
-    // optional Hadalird payload can be loaded or checked.
+    // optional Alis-Intergration payload can be loaded or checked.
     property string settingsTaskSection: ""
     // The page content is a ColumnLayout. Without this hint the wrapper can
     // receive width=0, so the loaded Obsidian card paints into a zero-width
@@ -18,8 +18,8 @@ Item {
     Loader {
         id: content
         width: parent.width
-        active: Hadalird.obsidianEnabled
-        source: Hadalird.settingsSource("obsidian")
+        active: AlisIntergration.obsidianEnabled
+        source: AlisIntergration.settingsSource("obsidian")
     }
     StyledText {
         id: unavailable

@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 
-// Conservative compositor input region for iRiS-connected popups.
+// Conservative compositor input region for Abyss-connected popups.
 //
 // The visual SDF may extend a smooth-union fillet outside the body, but pointer
 // ownership stays on the actually revealed rounded body only. This deliberately

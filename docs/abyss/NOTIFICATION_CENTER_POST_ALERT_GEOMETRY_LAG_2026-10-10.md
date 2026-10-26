@@ -2,7 +2,7 @@
 
 **Status:** OPEN — owner-reported, visually confirmed, native cause undetermined.  
 **Date:** 2026-10-10, owner recording named \`2026-10-10_21.55.09.mp4\`.  
-**Scope:** iNiR / Niri / Abyss connected Notification Center Popup, on \`dev\` only.  
+**Scope:** Alis / Niri / Abyss connected Notification Center Popup, on \`dev\` only.  
 **Task authority:** [ISSUES.md](../../to-do/cloud-bot/ISSUES.md); this is technical research, not a separate checklist.  
 **Related but distinct:** [Unresolved Screen Edge hover issue](POPUP_EDGE_HOVER_UNRESOLVED_2026-10-10.md). Do not conflate premature hover dismissal with incorrect popup geometry.
 

@@ -85,8 +85,8 @@ The action "deploy" will now appear when you search for it in Overview.
 ## IPC
 
 ```bash
-inir globalActions list              # list all available actions
-inir globalActions search "screen"   # search actions by name
-inir globalActions run <id>          # execute an action by ID
-inir globalActions runWithArgs <id> <args>  # execute with extra arguments
+alis globalActions list              # list all available actions
+alis globalActions search "screen"   # search actions by name
+alis globalActions run <id>          # execute an action by ID
+alis globalActions runWithArgs <id> <args>  # execute with extra arguments
 ```

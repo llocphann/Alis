@@ -1,5 +1,5 @@
   INFO: Launching config: "/tmp/tmp.YxeSz6Osp2/shell.qml"
-  INFO: Shell ID: "hadalis-abyss-wave-runtime-test" Path ID "fabb775a38a7dac55a1eeb5cafd0ebdd"
+  INFO: Shell ID: "alis-abyss-wave-runtime-test" Path ID "fabb775a38a7dac55a1eeb5cafd0ebdd"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/wfi31tv42mt/log.qslog"
   WARN: --- WARNING ---
   WARN: WAYLAND_DISPLAY is present but QT_QPA_PLATFORM is "offscreen"

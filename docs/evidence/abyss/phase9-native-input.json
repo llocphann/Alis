@@ -505,13 +505,13 @@
             "keyboard_interactivity": "None"
           },
           {
-            "namespace": "hadalis:family-workarea-guard",
+            "namespace": "alis:family-workarea-guard",
             "output": "winit",
             "layer": "Top",
             "keyboard_interactivity": "None"
           },
           {
-            "namespace": "hadalis:abyss-perimeter",
+            "namespace": "alis:abyss-perimeter",
             "output": "winit",
             "layer": "Top",
             "keyboard_interactivity": "None"

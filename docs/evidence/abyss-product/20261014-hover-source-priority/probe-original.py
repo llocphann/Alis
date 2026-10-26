@@ -7,7 +7,7 @@ from pathlib import Path
 from native_test_session import private_wayland, run_qs
 
 ROOT = Path('/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis')
-with tempfile.TemporaryDirectory(prefix="hadalis-popup-hover-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-popup-hover-") as name:
     folder = Path(name)
     for entry in ["modules", "services", "GlobalStates.qml", "qmldir", "assets", "scripts", "defaults", "translations"]:
         (folder / entry).symlink_to(ROOT / entry)

@@ -24,23 +24,23 @@
   "evidence": {
     "native-dashboard-isolated-pass.txt": {
       "sha256": "98c494d5b8b298f8963acfba0581f52dbc3891e6f36609fd7510feac2d3ea3a0",
-      "original_local_path": "/tmp/hadalis-dashboard-popup-v2-20261005.log"
+      "original_local_path": "/tmp/alis-dashboard-popup-v2-20261005.log"
     },
     "native-dashboard-composition-fail.txt": {
       "sha256": "6a9339421bbf6b03d57c7b859fd50d55ddb1ddbfc38b2ddcf0e3541017c86c5b",
-      "original_local_path": "/tmp/hadalis-dashboard-popup-v4-20261005.log"
+      "original_local_path": "/tmp/alis-dashboard-popup-v4-20261005.log"
     },
     "native-body-placement-pass.txt": {
       "sha256": "dd9bcd63695e2b4a7096fdfc19378a5c2c4cbe8caf82fdc9115e60e207779531",
-      "original_local_path": "/tmp/hadalis-dashboard-host-regression-20261005.log"
+      "original_local_path": "/tmp/alis-dashboard-host-regression-20261005.log"
     },
     "native-reload-notification-pass.txt": {
       "sha256": "51f784408d372f07edaa3ec5553d72813b9740c447a7e976372e9391e8650992",
-      "original_local_path": "/tmp/hadalis-reload-notification-v2-20261004.log"
+      "original_local_path": "/tmp/alis-reload-notification-v2-20261004.log"
     },
     "native-notification-timeout-pass.txt": {
       "sha256": "6285505f5a3bea85258e4133786e78033d0e9d4a0623bf8242cbfbd9febd4876",
-      "original_local_path": "/tmp/hadalis-notification-timeout-reload-20261004.log"
+      "original_local_path": "/tmp/alis-notification-timeout-reload-20261004.log"
     }
   },
   "canonical_candidate_validation": "NOT_RUN",

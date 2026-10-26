@@ -19,7 +19,7 @@ Item {
     property bool shadowRight: true
     // Joined body corners stay square at an owning Bar/Screen Edge seam.
     // Auxiliary round-wedge painters are retired; these flags only control body
-    // corner radii and shadow clipping for non-iRiS consumers such as Waffle.
+    // corner radii and shadow clipping for non-Abyss consumers such as Waffle.
     property bool joinTop: false
     property bool joinBottom: false
     property bool joinLeft: false

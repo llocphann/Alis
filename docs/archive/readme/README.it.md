@@ -1,18 +1,18 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="Alis" width="800">
 </p>
 
-<h1 align="center">iNiR</h1>
+<h1 align="center">Alis</h1>
 
 <p align="center">
   <b>Una shell desktop completa per Niri, costruita con Quickshell</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
-  <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/snowarch/alis/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/alis/stargazers"><img src="https://img.shields.io/github/stars/snowarch/alis?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
@@ -41,11 +41,11 @@
 
 ### Cos'è questo?
 
-iNiR è tutto il tuo desktop. La barra in alto, il dock, notifiche, impostazioni, sfondi, tutto. Non è un tema, non sono dotfiles da copiare. È una shell completa che gira su Linux.
+Alis è tutto il tuo desktop. La barra in alto, il dock, notifiche, impostazioni, sfondi, tutto. Non è un tema, non sono dotfiles da copiare. È una shell completa che gira su Linux.
 
 ### Cosa serve per farlo girare?
 
-Un compositor. È quello che gestisce le finestre e mette i pixel sullo schermo. iNiR è fatto per [Niri](https://github.com/YaLTeR/niri) (un compositor Wayland a tiling). C'è del vecchio codice Hyprland da quando era un fork dei dots di end-4, ma Niri è quello che testo e uso davvero.
+Un compositor. È quello che gestisce le finestre e mette i pixel sullo schermo. Alis è fatto per [Niri](https://github.com/YaLTeR/niri) (un compositor Wayland a tiling). C'è del vecchio codice Hyprland da quando era un fork dei dots di end-4, ma Niri è quello che testo e uso davvero.
 
 La shell gira su [Quickshell](https://quickshell.outfoxxed.me/), un framework per costruire shell in QML (il linguaggio UI di Qt). Non serve saperlo per usarla, tutto si configura dalla GUI o un file JSON.
 
@@ -54,7 +54,7 @@ La shell gira su [Quickshell](https://quickshell.outfoxxed.me/), un framework pe
 ```
 le tue app
    ↓
-iNiR (shell: barra, sidebar, dock, notifiche, impostazioni...)
+Alis (shell: barra, sidebar, dock, notifiche, impostazioni...)
    ↓
 Quickshell (fa girare shell QML)
    ↓
@@ -67,7 +67,7 @@ Wayland → GPU
 
 È un progetto personale che mi è sfuggito di mano. Lo uso ogni giorno, tanta gente su Discord anche. Ma a volte si rompe, il codice è disordinato in posti, imparo mentre faccio.
 
-Se qualcosa non funziona, `inir doctor` sistema la maggior parte. Se non basta, Discord è attivo. Non aspettarti software rifinito, questo è il rice di una persona che è piaciuto ad altri.
+Se qualcosa non funziona, `alis doctor` sistema la maggior parte. Se non basta, Discord è attivo. Non aspettarti software rifinito, questo è il rice di una persona che è piaciuto ad altri.
 
 ### Perché esiste?
 
@@ -78,7 +78,7 @@ Volevo che il mio desktop avesse un certo aspetto e funzionasse in un certo modo
 - **Shell**: il layer UI (barra, pannelli, overlay)
 - **Compositor**: gestisce finestre, disegna sullo schermo (Niri, Hyprland, Sway...)
 - **Wayland**: protocollo display di Linux (il nuovo, sostituisce X11)
-- **QML**: linguaggio UI dichiarativo di Qt, iNiR è scritto in questo
+- **QML**: linguaggio UI dichiarativo di Qt, Alis è scritto in questo
 - **Material You**: sistema colori Google che genera palette da immagini (così funziona l'auto-theming)
 - **ii / waffle**: i due stili di pannello. ii = vibes Material Design, waffle = vibes Windows 11. `Super+Shift+W` per cambiare
 
@@ -174,7 +174,7 @@ Barra laterale destra:
 
 - **Impostazioni GUI** — configura tutto senza modificare file
 - **GameMode** — disabilita automaticamente gli effetti per le app a schermo intero
-- **Aggiornamenti automatici** — `inir update` con rollback, migrazioni e preservazione delle modifiche utente
+- **Aggiornamenti automatici** — `alis update` con rollback, migrazioni e preservazione delle modifiche utente
 - **Schermata di blocco** e **schermata di sessione** (logout/riavvio/spegnimento/sospensione)
 - **Agente polkit**, **tastiera su schermo**, **gestore avvio automatico**
 - **9 lingue** — rilevamento automatico, con generazione traduzioni assistita da IA
@@ -190,27 +190,27 @@ Barra laterale destra:
 ## Avvio rapido
 
 ```bash
-git clone https://github.com/snowarch/inir.git
-cd inir
+git clone https://github.com/snowarch/alis.git
+cd alis
 ./setup install       # interattivo — chiede prima di ogni passo
 ./setup install -y    # automatico — nessuna domanda
 ```
 
-L'installer gestisce dipendenze, configurazione di sistema, tematizzazione — tutto. Dopo l'installazione, esegui `inir run` per avviare la shell, o disconnettiti e riconnettiti.
+L'installer gestisce dipendenze, configurazione di sistema, tematizzazione — tutto. Dopo l'installazione, esegui `alis run` per avviare la shell, o disconnettiti e riconnettiti.
 
 ```bash
-inir run                        # avviare la shell
-inir settings                   # aprire le impostazioni GUI
-inir logs                       # controllare i log di runtime
-inir doctor                     # auto-diagnosi e riparazione
-inir update                     # pull + migrazioni + riavvio
+alis run                        # avviare la shell
+alis settings                   # aprire le impostazioni GUI
+alis logs                       # controllare i log di runtime
+alis doctor                     # auto-diagnosi e riparazione
+alis update                     # pull + migrazioni + riavvio
 ```
 
 **Distro supportate:** Arch (installer automatizzato). Altre distro possono installare manualmente — vedi [PACKAGES.md](../../PACKAGES.md).
 
 | Metodo | Comando |
 |--------|---------|
-| Installazione di sistema | `sudo make install && inir run` |
+| Installazione di sistema | `sudo make install && alis run` |
 | Menu TUI | `./setup` |
 | Rollback | `./setup rollback` |
 
@@ -234,7 +234,7 @@ Lista completa: [KEYBINDS.md](../../KEYBINDS.md)
 
 ## Sfondi
 
-15 sfondi sono inclusi. Per altri, vedi [iNiR-Walls](https://github.com/snowarch/iNiR-Walls) — una collezione curata che funziona bene con la pipeline Material You.
+15 sfondi sono inclusi. Per altri, vedi [Alis-Walls](https://github.com/snowarch/Alis-Walls) — una collezione curata che funziona bene con la pipeline Material You.
 
 ---
 
@@ -255,9 +255,9 @@ Lista completa: [KEYBINDS.md](../../KEYBINDS.md)
 ## Risoluzione problemi
 
 ```bash
-inir logs                       # controlla i log — la risposta di solito è lì
-inir restart                    # riavvia la shell
-inir repair                     # doctor + riavvio + controllo log filtrato
+alis logs                       # controlla i log — la risposta di solito è lì
+alis restart                    # riavvia la shell
+alis repair                     # doctor + riavvio + controllo log filtrato
 ./setup doctor                  # auto-diagnosi e risoluzione problemi comuni
 ./setup rollback                # annulla l'ultimo aggiornamento
 ```
@@ -281,7 +281,7 @@ Vedi [CONTRIBUTING.md](../../../CONTRIBUTING.md) per la configurazione dell'ambi
 ---
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/graphs/contributors">Contributori</a> &bull;
+  <a href="https://github.com/snowarch/alis/graphs/contributors">Contributori</a> &bull;
   <a href="CHANGELOG.md">Changelog</a> &bull;
   <a href="LICENSE">Licenza GPL-3.0</a>
 </p>

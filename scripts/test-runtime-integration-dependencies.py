@@ -66,7 +66,7 @@ def main() -> None:
         require(text, "  curl", source)
         require(text, "'geoclue: GPS-backed weather location detection'", source)
 
-    # Physical ThinkFan capability guards are owned/tested in optional Hadalird.
+    # Physical ThinkFan capability guards are owned/tested in optional AlisIntergration.
     forbid(doctor, '"thinkfan:thinkfan"', "doctor.sh")
     for source, text in (("alis-shell", arch), ("alis-shell-git", arch_git)):
         require(text, "'thinkfan: managed fan-control integration'", source)

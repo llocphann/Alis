@@ -189,8 +189,8 @@ grep -Fq 'MIGRATION_ID="055-retire-abyss-utilities-module"' "$migration" \
 
 migration_tmp="$(mktemp -d)"
 trap 'rm -rf -- "$migration_tmp"' EXIT
-mkdir -p "$migration_tmp/inir"
-cat > "$migration_tmp/inir/config.json" <<'JSON'
+mkdir -p "$migration_tmp/alis"
+cat > "$migration_tmp/alis/config.json" <<'JSON'
 {"abyss":{"modules":{"placements":[{"id":"utilities","kind":"utilities"},{"id":"quick","kind":"utilButtons"}],"outputLayouts":[{"outputName":"A","placements":[{"id":"u-a","kind":"utilities"},{"id":"clock","kind":"clock"}]},{"outputName":"B","placements":[{"id":"u-b","kind":"utilities"}]}]}}}
 JSON
 (
@@ -204,7 +204,7 @@ JSON
         and ((.abyss.modules.outputLayouts[0].placements | map(.kind) | sort) == ["clock","utilButtons"])
         and (.abyss.modules.outputLayouts[1].placements | map(.kind)) == ["utilButtons"]
         and (.abyss.modules.outputLayouts[0].placements[] | select(.kind=="utilButtons") | .id) == "utilButtons"
-    ' "$XDG_CONFIG_HOME/inir/config.json" >/dev/null \
+    ' "$XDG_CONFIG_HOME/alis/config.json" >/dev/null \
         || { printf 'FAIL: Utilities migration did not preserve/insert Quick Actions correctly\n' >&2; exit 1; }
 )
 
@@ -220,7 +220,7 @@ done
 mkdir -p "$test_root/config/illogical-impulse"
 cp "$repo_root/defaults/config.json" "$test_root/config/illogical-impulse/config.json"
 cat > "$test_root/shell.qml" <<'QML'
-//@ pragma ShellId hadalis-abyss-utilities-popup-test
+//@ pragma ShellId alis-abyss-utilities-popup-test
 import QtQuick
 import QtTest
 import Quickshell

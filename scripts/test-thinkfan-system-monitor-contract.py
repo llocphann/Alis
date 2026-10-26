@@ -131,7 +131,7 @@ def main() -> None:
         "readonly property real _popupScreenMargin: root._screenEdgeThickness",
         "screenMargin: root._popupScreenMargin",
         "connectorLength: 0",
-        "ConnectedSurfaceIrisFrame {",
+        "ConnectedSurfaceAbyssFrame {",
         "shadowEnabled: root._edgeShadowEnabled",
         "screenEdge?.physicalShadow?.enabled ?? true",
         "Qt.alpha(Appearance.m3colors.m3shadow, root._edgeShadowOpacity)",
@@ -168,11 +168,11 @@ def main() -> None:
 
     integrations = read("modules/settings/IntegrationsConfig.qml")
     check('ThinkfanSettings {' not in system_settings, "System duplicated the plugin editor")
-    check('Hadalird.installedPlugins.map' in integrations, "Integration tabs must use verified discovery")
-    check('Hadalird.pluginEnabled(root.activePlugin)' in integrations, "Fan editor lost its opt-in gate")
+    check('AlisIntergration.installedPlugins.map' in integrations, "Integration tabs must use verified discovery")
+    check('AlisIntergration.pluginEnabled(root.activePlugin)' in integrations, "Fan editor lost its opt-in gate")
     fan_wrapper=read("modules/settings/ThinkfanSettings.qml")
-    check('active: Hadalird.thinkfanEnabled && root.visible' in fan_wrapper, "fan settings must be selected and visible")
-    check('source: Hadalird.settingsSource("thinkfan")' in fan_wrapper, "fan settings lost the optional source")
+    check('active: AlisIntergration.thinkfanEnabled && root.visible' in fan_wrapper, "fan settings must be selected and visible")
+    check('source: AlisIntergration.settingsSource("thinkfan")' in fan_wrapper, "fan settings lost the optional source")
     check('SettingsPageRegistry.navigateToKey("integrations", "Thinkfan")' in system_facade, "Legacy fan navigation lost its plugin destination")
 
     for token in (
@@ -260,7 +260,7 @@ def main() -> None:
     check('apply_migration "$migration_id" true' in migration_engine,
           "Required migrations must re-apply from real state when a managed artifact is missing/outdated")
 
-    check("Hadalird.session?.thinkfan" in thinkfan_service, "fan facade lost its optional owner")
+    check("AlisIntergration.session?.thinkfan" in thinkfan_service, "fan facade lost its optional owner")
     check("Process {" not in thinkfan_service and "Timer {" not in thinkfan_service, "fan facade retained duplicate polling")
     check("[Alis-Intergration](https://github.com/llocphann/Alis-Intergration)" in thinkfan_docs, "fan documentation must identify the official optional owner")
 

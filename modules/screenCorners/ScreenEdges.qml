@@ -14,7 +14,7 @@ import Quickshell.Wayland
 //
 // SCREEN-EDGE-GEOMETRY-LOCK (maintainer approved 2026-09-19):
 // BAR-SCREEN-EDGE-CORNER-LOCK (maintainer approved 2026-09-19):
-// The current Screen Edge + normal ii Bar silhouette is the canonical Hadalis
+// The current Screen Edge + normal ii Bar silhouette is the canonical Alis
 // physical perimeter. Screen Edge and Bar endpoint corners are one geometry:
 // the single inverted rounded workspace hole below. Future refactors must keep
 // this exact ownership/placement/path model. The only approved visual degree of
@@ -25,7 +25,7 @@ import Quickshell.Wayland
 //
 // Caelestia does not build its border from four strips plus corner patches.
 // Its idle border is one inverted rounded rectangle: the window bounds are the
-// outer rect and the workspace is one rounded inner hole. Hadalis preserves
+// outer rect and the workspace is one rounded inner hole. Alis preserves
 // that exact geometry in the texture-free ScreenEdgeField analytic SDF. The
 // historical ShapePath / OddEvenFill + MultiEffect renderer remains only as a
 // lazy ShaderEffect.Error fallback. The four thin ReservationWindow surfaces
@@ -177,7 +177,7 @@ Scope {
         // physical output bounds, matching Caelestia ContentWindow.
         exclusionMode: ExclusionMode.Ignore
 
-        WlrLayershell.namespace: "hadalis:screen-edge-frame"
+        WlrLayershell.namespace: "alis:screen-edge-frame"
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
@@ -284,7 +284,7 @@ Scope {
         implicitWidth: horizontal ? 1 : root.thickness
         implicitHeight: horizontal ? root.thickness : 1
 
-        WlrLayershell.namespace: "hadalis:screen-edge-reservation-" + edge
+        WlrLayershell.namespace: "alis:screen-edge-reservation-" + edge
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 

@@ -1,4 +1,4 @@
-Hadalis maintainer local validation
+Alis maintainer local validation
 Log: /tmp/alis-round0-canonical-4848d5ae462846db623a49e502b9515fe468a557.log
 [01] host tool preflight                                        PASS
 [02] build and baseline shell syntax                            PASS
@@ -164,24 +164,24 @@ Log: /tmp/alis-round0-canonical-4848d5ae462846db623a49e502b9515fe468a557.log
 [162] Python regression: scripts/test-fcitx5-session-integration.py PASS
 [163] Python regression: scripts/test-fcitx5-settings-integration.py PASS
 [164] Python regression: scripts/test-global-actions-query-parity.py PASS
-[165] Python regression: scripts/test-hadalird-arch-package.py   PASS
-[166] Python regression: scripts/test-hadalird-gateway-bootstrap.py PASS
-[167] Python regression: scripts/test-hadalird-install-lifecycle.py PASS
-[168] Python regression: scripts/test-hadalird-manager.py        PASS
-[169] Python regression: scripts/test-hadalird-obsidian-wrapper.py PASS
-[170] Python regression: scripts/test-hadalird-optional.py       PASS
-[171] Python regression: scripts/test-hadalird-polkit-visibility.py PASS
-[172] Python regression: scripts/test-hadalird-preferences-migration.py PASS
-[173] Python regression: scripts/test-hadalird-settings-flow.py  PASS
-[174] Python regression: scripts/test-hadalird-system-provision.py PASS
+[165] Python regression: scripts/test-alis-intergration-arch-package.py   PASS
+[166] Python regression: scripts/test-alis-intergration-gateway-bootstrap.py PASS
+[167] Python regression: scripts/test-alis-intergration-install-lifecycle.py PASS
+[168] Python regression: scripts/test-alis-intergration-manager.py        PASS
+[169] Python regression: scripts/test-alis-intergration-obsidian-wrapper.py PASS
+[170] Python regression: scripts/test-alis-intergration-optional.py       PASS
+[171] Python regression: scripts/test-alis-intergration-polkit-visibility.py PASS
+[172] Python regression: scripts/test-alis-intergration-preferences-migration.py PASS
+[173] Python regression: scripts/test-alis-intergration-settings-flow.py  PASS
+[174] Python regression: scripts/test-alis-intergration-system-provision.py PASS
 [175] Python regression: scripts/test-alis-companion-layer-shell.py    PASS
 [176] Python regression: scripts/test-alis-companion-optional.py       PASS
-[177] Python regression: scripts/test-inir-process-cleanup.py    PASS
+[177] Python regression: scripts/test-alis-process-cleanup.py    PASS
 [178] Python regression: scripts/test-internal-todo-persistence-runtime.py PASS
 [179] Python regression: scripts/test-ipc-registry-generator.py  PASS
-[180] Python regression: scripts/test-iris-corner-poc-contract.py PASS
-[181] Python regression: scripts/test-iris-g2-contract.py        PASS
-[182] Python regression: scripts/test-iris-production-surface-contract.py PASS
+[180] Python regression: scripts/test-abyss-corner-poc-contract.py PASS
+[181] Python regression: scripts/test-abyss-g2-contract.py        PASS
+[182] Python regression: scripts/test-abyss-production-surface-contract.py PASS
 [183] Python regression: scripts/test-light-mode-upstream-contract.py PASS
 [184] Python regression: scripts/test-loading-presentation-contract.py PASS
 [185] Python regression: scripts/test-local-ai-gguf-runtime.py   PASS
@@ -244,7 +244,7 @@ Log: /tmp/alis-round0-canonical-4848d5ae462846db623a49e502b9515fe468a557.log
 [242] Python regression: scripts/test-settings-flat-navigation.py PASS
 [243] Python regression: scripts/test-settings-hierarchy-runtime.py PASS
 [244] Python regression: scripts/test-settings-information-architecture.py PASS
-[245] Python regression: scripts/test-settings-inir-task-tabs-contract.py PASS
+[245] Python regression: scripts/test-settings-alis-task-tabs-contract.py PASS
 [246] Python regression: scripts/test-settings-inline-search-layout.py PASS
 [247] Python regression: scripts/test-settings-navigation-behavior.py PASS
 [248] Python regression: scripts/test-settings-ownership-cleanup.py PASS
@@ -409,7 +409,7 @@ Log: /tmp/alis-round0-canonical-4848d5ae462846db623a49e502b9515fe468a557.log
 [407] Make contract: package lifecycle hooks                     PASS
 [408] source tree remains clean after validation                 PASS
 
-Hadalis validation: FAIL
+Alis validation: FAIL
 SHA: 4848d5ae462846db623a49e502b9515fe468a557
 Passed: 384
 Failed: 24

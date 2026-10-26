@@ -1,6 +1,6 @@
 # IPC Reference
 
-Alis exposes IPC targets you can call from Niri keybinds, scripts, or your terminal. The public command and session identity are `alis`; the retired `inir` command is unavailable.
+Alis exposes IPC targets you can call from Niri keybinds, scripts, or your terminal. The public command and session identity are `alis`; the retired `alis` command is unavailable.
 
 > **Quick discovery:** `alis help` lists all targets, `alis <target> --help` shows available functions.
 > Shell completions: `eval "$(alis completions bash)"` (also zsh, fish).
@@ -914,7 +914,7 @@ package.
 
 ---
 
-### hadalird
+### alis-intergration
 
 Legacy API 1 alias for `integrations`; both targets use the same package, settings and worker owner.
 

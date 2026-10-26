@@ -1269,7 +1269,7 @@ ContentPage {
                     Layout.bottomMargin: 2
                     text: {
                         const raw = Config.options?.background?.transition?.type ?? "crossfade"
-                        const t = (raw === "alisMelt" || raw === "inirMelt") ? "alisMelt" : AwwwBackend.normalizedAwwwTransitionType(raw, Config.options?.background?.transition?.direction ?? "right")
+                        const t = (raw === "alisMelt" || raw === "alisMelt") ? "alisMelt" : AwwwBackend.normalizedAwwwTransitionType(raw, Config.options?.background?.transition?.direction ?? "right")
                         switch (t) {
                         case "alisMelt": return Translation.tr("Abyss Liquid: organic, theme-colored fluid flow. Uses fade if unsupported.")
                         case "none":   return Translation.tr("Instant switch — no visible transition.")
@@ -1296,7 +1296,7 @@ ContentPage {
                 }
 
                 ConfigSelectionArray {
-                    currentValue: ["alisMelt", "inirMelt"].includes(Config.options?.background?.transition?.type) ? "alisMelt"
+                    currentValue: ["alisMelt", "alisMelt"].includes(Config.options?.background?.transition?.type) ? "alisMelt"
                         : AwwwBackend.normalizedAwwwTransitionType(Config.options?.background?.transition?.type ?? "alisMelt",Config.options?.background?.transition?.direction ?? "right")
                     onSelected: newValue => {
                         Config.setNestedValue("background.transition.type", newValue);

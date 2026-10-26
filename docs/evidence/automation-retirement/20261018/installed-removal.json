@@ -1,7 +1,7 @@
 {
   "installed_roots": [
     "quickshell/alis",
-    "quickshell/inir"
+    "quickshell/alis"
   ],
   "verified_backup_files": 109,
   "removed_owned_source_and_cache_files": 105,

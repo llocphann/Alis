@@ -36,8 +36,8 @@ grep -Fq 'joinedEdge: Presentation.joinedEdge(root.activeKind,' "$repo_root/modu
 
 migration_tmp="$(mktemp -d)"
 trap 'rm -rf -- "$migration_tmp"' EXIT
-mkdir -p "$migration_tmp/inir"
-cat > "$migration_tmp/inir/config.json" <<'JSON'
+mkdir -p "$migration_tmp/alis"
+cat > "$migration_tmp/alis/config.json" <<'JSON'
 {"abyss":{"modules":{"placements":[{"id":"wifi","kind":"wifi"},{"id":"clock","kind":"clock"},{"id":"bluetooth","kind":"bluetooth"}],"outputLayouts":[{"outputName":"A","placements":[{"id":"bt-a","kind":"bluetooth"},{"id":"media","kind":"media"}]}]}}}
 JSON
 (
@@ -47,7 +47,7 @@ JSON
     migration_apply || { printf 'FAIL: connectivity migration apply failed\n' >&2; exit 1; }
     migration_check && { printf 'FAIL: connectivity migration is not idempotent\n' >&2; exit 1; }
     jq -e '(.abyss.modules.placements | map(.kind)) == ["clock"]
-        and (.abyss.modules.outputLayouts[0].placements | map(.kind)) == ["media"]'         "$XDG_CONFIG_HOME/inir/config.json" >/dev/null         || { printf 'FAIL: connectivity migration removed/preserved wrong placements\n' >&2; exit 1; }
+        and (.abyss.modules.outputLayouts[0].placements | map(.kind)) == ["media"]'         "$XDG_CONFIG_HOME/alis/config.json" >/dev/null         || { printf 'FAIL: connectivity migration removed/preserved wrong placements\n' >&2; exit 1; }
 )
 
 if ! command -v qs >/dev/null || [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
@@ -62,7 +62,7 @@ done
 mkdir -p "$network_test_root/config/illogical-impulse"
 cp "$repo_root/defaults/config.json" "$network_test_root/config/illogical-impulse/config.json"
 cat > "$network_test_root/shell.qml" <<'QML'
-//@ pragma ShellId hadalis-abyss-network-popup-test
+//@ pragma ShellId alis-abyss-network-popup-test
 import QtQuick
 import Quickshell
 import qs

@@ -1,7 +1,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),crypto=require('node:crypto'),assert=require('node:assert/strict');
-const base='/tmp/hadalis-abyss-resume-0620';
+const base='/tmp/alis-abyss-resume-0620';
 function load(path){const c=vm.createContext({});vm.runInContext(fs.readFileSync(path,'utf8').replace(/^\.pragma library\s*/,''),c);return c;}
-const before=load(base+'/wave-before-travel.js'),after=load('/home/llocphann/Hadalis/modules/abyss/looks/AbyssWave.js');
+const before=load(base+'/wave-before-travel.js'),after=load('/home/llocphann/Alis/modules/abyss/looks/AbyssWave.js');
 const frames=2400,samples=256;
 function work(api,travel=false){const s=api.create(samples,1920,1200,api.parameters({preset:'deep'})),hash=crypto.createHash('sha256');
  for(let i=0;i<frames;i++){

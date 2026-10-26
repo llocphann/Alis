@@ -54,7 +54,7 @@ Scope {
     readonly property int screenEdgeHoverWidth: Math.max(1, Math.round(
         Config.options?.appearance?.screenEdge?.width ?? 10))
     // The physical frame's antialiased inner edge can expose a ~1-2 px dark
-    // raster seam at fractional scale. Let only the iRiS field paint across the
+    // raster seam at fractional scale. Let only the Abyss field paint across the
     // shared seam token; content, input and shadow still stop at the real owner.
     readonly property real screenEdgePaintOverlap: Math.min(
         PerimeterTokens.seamOverlap,
@@ -73,7 +73,7 @@ Scope {
         root.roleLayoutState?.width ?? Appearance.sizes.sidebarWidth)
     // The owning Overlay surface is anchored to the physical display edge.
     // The content body starts at the inner boundary of the persistent Screen
-    // Edge. iRiS keeps its SDF weld underneath the owner and may raster-overlap
+    // Edge. Abyss keeps its SDF weld underneath the owner and may raster-overlap
     // only the tiny seam above; layout/input never underlap the Screen Edge.
     // Perimeter sidebars are content-sized by definition. Preserve explicit
     // custom height, but treat legacy/full layout state as fit-to-content.
@@ -87,19 +87,19 @@ Scope {
         Config.options?.appearance?.screenEdge?.physicalShadow?.enabled ?? true
     readonly property real screenEdgeShadowSize: Math.max(0, Math.min(32,
         Math.round(Config.options?.appearance?.screenEdge?.physicalShadow?.size ?? 15)))
-    // Reserve tangent room for the iRiS field and free-side shadow. This is
+    // Reserve tangent room for the Abyss field and free-side shadow. This is
     // field/shadow extent only; no standalone wedge geometry is painted.
     readonly property real edgeDecorationMargin: Math.max(
         Appearance.sizes.hyprlandGapsOut,
-        PerimeterTokens.irisFuseDepth,
+        PerimeterTokens.abyssFuseDepth,
         root.screenEdgeShadowEnabled ? root.screenEdgeShadowSize + 2 : 0)
-    // During the close tail the iRiS field remains resident. Move its body far
+    // During the close tail the Abyss field remains resident. Move its body far
     // enough beyond the native host that neither body, weld nor shadow can leave
     // a one-pixel sliver at the physical left/right edge.
     readonly property real hiddenTranslateDistance:
         Math.ceil(root.effectiveSidebarWidth) + Math.max(
             Appearance.sizes.hyprlandGapsOut,
-            PerimeterTokens.irisFuseDepth,
+            PerimeterTokens.abyssFuseDepth,
             root.screenEdgeShadowEnabled ? root.screenEdgeShadowSize + 2 : 0)
     readonly property real screenEdgeShadowOpacity: Math.max(0, Math.min(1.0,
         Number(Config.options?.appearance?.screenEdge?.physicalShadow?.opacity ?? 0.70)))
@@ -978,12 +978,12 @@ Scope {
             }
         }
 
-        // Exact iRiS contact with the persistent vertical Screen Edge. The
+        // Exact Abyss contact with the persistent vertical Screen Edge. The
         // content starts at the owner's inner boundary; only the SDF record
         // welds underneath it. The field follows the same slide translation and
         // disappears only after the exit animation has fully completed.
-        ConnectedSurfaceIrisEdgeSurface {
-            id: sidebarIrisSurface
+        ConnectedSurfaceAbyssEdgeSurface {
+            id: sidebarAbyssSurface
             z: -1
             anchors.fill: parent
             edge: root.edge

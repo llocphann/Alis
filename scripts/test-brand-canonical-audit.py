@@ -19,7 +19,7 @@ with tempfile.TemporaryDirectory() as tmp:
     subprocess.run(['git', 'init', '-q', tmp], check=True)
     (root / 'scripts/lib').mkdir(parents=True)
     fixture = root / 'scripts/lib/ipc-registry.sh'
-    fixture.write_text('spawn "inir" "settings"\nexec inir help\n')
+    fixture.write_text('spawn "alis" "settings"\nexec alis help\n')
     subprocess.run(['git', '-C', tmp, 'add', '.'], check=True)
     def run():
         out = io.StringIO()
@@ -30,13 +30,13 @@ with tempfile.TemporaryDirectory() as tmp:
     assert rc == 2 and result['by_kind']['launcher'] == 2, result
     fixture.write_text('spawn "alis" "settings"\nexec alis help\n')
     (root / 'nix').mkdir()
-    (root / 'nix/home-module.nix').write_text('imports = [ common.optionsModule (lib.mkAliasOptionModule [ "programs" "inir" ] [ "programs" "alis" ]) ];\n')
-    (root / 'setup').write_text('local retired_path="${XDG_STATE_HOME:-$HOME/.local/state}/alis-cutover-backups/retired-inir.service"\n')
+    (root / 'nix/home-module.nix').write_text('imports = [ common.optionsModule (lib.mkAliasOptionModule [ "programs" "alis" ] [ "programs" "alis" ]) ];\n')
+    (root / 'setup').write_text('local retired_path="${XDG_STATE_HOME:-$HOME/.local/state}/alis-cutover-backups/retired-alis.service"\n')
     subprocess.run(['git', '-C', tmp, 'add', '.'], check=True)
     rc, result = run()
     assert rc == 0 and result['remaining_active_references'] == 0, result
     with (root / 'setup').open('a') as stream:
-        stream.write('systemctl --user start inir.service\n')
+        stream.write('systemctl --user start alis.service\n')
     rc, result = run()
     assert rc == 2 and result['by_kind']['service'] == 1, result
 print('PASS: quoted retired commands and active unit operations refused; exact recovery/config aliases accepted')

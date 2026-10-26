@@ -2,7 +2,7 @@
 
 > **Status: RETIRED FROM RUNTIME**
 >
-> These experiments were removed from the active Hadalis/Abyss runtime after live use did not deliver the intended behavior, despite source contracts and synthetic Wayland checks passing. This document is historical reference only and must not be treated as an active runtime contract.
+> These experiments were removed from the active Alis/Abyss runtime after live use did not deliver the intended behavior, despite source contracts and synthetic Wayland checks passing. This document is historical reference only and must not be treated as an active runtime contract.
 
 ## 2026-09-30 Method A reintroduction — retired again
 
@@ -86,7 +86,7 @@ Status: Confirmation source/contracts and automated synthetic Wayland acceptance
 
 ## Goal
 
-Confirmation prompts use the existing Abyss connected-surface field instead of introducing another detached dialog renderer. Placement is source-owned when Hadalis can resolve a live Bar/System Tray/Dock anchor; otherwise the request uses a top-center fallback on the target output.
+Confirmation prompts use the existing Abyss connected-surface field instead of introducing another detached dialog renderer. Placement is source-owned when Alis can resolve a live Bar/System Tray/Dock anchor; otherwise the request uses a top-center fallback on the target output.
 
 The intended flow is:
 
@@ -105,17 +105,17 @@ This deliberately reuses `StyledPopup`, the stable popup slots in `AbyssSurfaceC
 
 ## Source audit
 
-### Hadalis close confirmation
+### Alis close confirmation
 
-`modules/closeConfirm/CloseConfirm.qml` is a Hadalis-owned confirmation path. It receives `closeConfirm` IPC, snapshots the focused Niri window and, after approval, performs the real close action through `niri msg action close-window --id ...` (with the existing Spotify minimize exception). This path is safe to rehost because Hadalis owns both the confirmation semantics and the final action.
+`modules/closeConfirm/CloseConfirm.qml` is a Alis-owned confirmation path. It receives `closeConfirm` IPC, snapshots the focused Niri window and, after approval, performs the real close action through `niri msg action close-window --id ...` (with the existing Spotify minimize exception). This path is safe to rehost because Alis owns both the confirmation semantics and the final action.
 
 The existing Material implementation is a fullscreen layer-shell window with a centered `WindowDialog`. Waffle has a separate supported renderer and must remain independent.
 
 ### Application-native dialogs
 
-A compositor-visible transient window is not, by itself, an interceptable confirmation protocol. Hadalis can observe/focus/close windows, but that does not provide a reliable API for extracting button roles, invoking the application's original action, or suppressing the application's own dialog without changing behavior.
+A compositor-visible transient window is not, by itself, an interceptable confirmation protocol. Alis can observe/focus/close windows, but that does not provide a reliable API for extracting button roles, invoking the application's original action, or suppressing the application's own dialog without changing behavior.
 
-Accordingly, arbitrary application-native confirmations are **not** to be recreated from window title/text heuristics. In particular, a ChatGPT tray menu entry labelled `Quit` can be invoked through the StatusNotifier/DBusMenu surface, but that menu surface does not expose a standard semantic contract saying whether the application will subsequently create its own native confirmation. Triggering it and drawing a second Hadalis confirmation would risk duplicate prompts; replacing it by label matching would risk bypassing application semantics.
+Accordingly, arbitrary application-native confirmations are **not** to be recreated from window title/text heuristics. In particular, a ChatGPT tray menu entry labelled `Quit` can be invoked through the StatusNotifier/DBusMenu surface, but that menu surface does not expose a standard semantic contract saying whether the application will subsequently create its own native confirmation. Triggering it and drawing a second Alis confirmation would risk duplicate prompts; replacing it by label matching would risk bypassing application semantics.
 
 ChatGPT Quit therefore remains a runtime target for a future reliable app/native bridge, not a source-only claim of completed interception.
 
@@ -129,7 +129,7 @@ The useful part for this project is the **live tray anchor** itself. A request t
 
 The current `scripts/native-dispatch` surface routes keyboard/input helpers, Niri configuration, clipboard filtering, MPD/lyrics, theme generation and desktop-icon synchronization. It exposes no dialog interception, transient-window action bridge, portal request broker or generic app-confirmation transport.
 
-The Niri portal configuration delegates portal implementations to GNOME/GTK, including `org.freedesktop.impl.portal.Access = gtk`. Hadalis is therefore not currently the portal backend that owns those confirmation semantics. Rehosting portal confirmations would require an explicit portal/backend integration rather than observing a GTK dialog after it appears.
+The Niri portal configuration delegates portal implementations to GNOME/GTK, including `org.freedesktop.impl.portal.Access = gtk`. Alis is therefore not currently the portal backend that owns those confirmation semantics. Rehosting portal confirmations would require an explicit portal/backend integration rather than observing a GTK dialog after it appears.
 
 Likewise, the shared System Tray menu renderer ultimately sends `QsMenuEntry.triggered()` for a selected menu row. The menu entry surface contains presentation state such as text/icon/enabled/check/children, but the repository has no additional action-role or confirmation-response channel layered on top of it.
 
@@ -189,7 +189,7 @@ Implemented:
 
 ### Phase C — normal confirmation
 
-Implemented for the Hadalis-owned `closeConfirm` backend:
+Implemented for the Alis-owned `closeConfirm` backend:
 
 - the request is presented through a focused `StyledPopup`;
 - source app IDs can attach the popup to a matching Tray/Bar/Dock anchor;

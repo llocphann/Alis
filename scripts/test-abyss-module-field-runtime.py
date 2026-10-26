@@ -6,7 +6,7 @@ from PIL import Image,ImageChops
 ROOT=Path(__file__).resolve().parents[1]
 if not shutil.which('qs') or not (os.environ.get('DISPLAY') or os.environ.get('WAYLAND_DISPLAY')):
  print('SKIP: module field GPU requires Quickshell/display');raise SystemExit(0)
-with tempfile.TemporaryDirectory(prefix='hadalis-module-field-') as name:
+with tempfile.TemporaryDirectory(prefix='alis-module-field-') as name:
  folder=Path(name)
  for entry in ['modules','services','GlobalStates.qml','qmldir','assets','scripts','defaults','translations']:(folder/entry).symlink_to(ROOT/entry)
  cfg=folder/'config/alis';cfg.mkdir(parents=True)

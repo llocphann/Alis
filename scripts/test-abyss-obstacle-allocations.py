@@ -72,7 +72,7 @@ def functions(values: dict[str, str], suffix: str) -> str:
     return "\n".join(result)
 
 
-HARNESS = r'''//@ pragma ShellId hadalis-abyss-obstacle-allocation-oracle
+HARNESS = r'''//@ pragma ShellId alis-abyss-obstacle-allocation-oracle
 import QtQuick
 import Quickshell
 import "Oracle.js" as Oracle
@@ -235,7 +235,7 @@ def main() -> None:
     if args.proposal and current != fixture["expressions"]:
         raise SystemExit("FAIL: proposal baseline changed; re-audit current source")
     candidate = PROPOSAL if args.proposal else current
-    with tempfile.TemporaryDirectory(prefix="hadalis-abyss-obstacle-oracle-") as temp:
+    with tempfile.TemporaryDirectory(prefix="alis-abyss-obstacle-oracle-") as temp:
         directory = Path(temp)
         (directory / "Baseline.qml").write_text(component(fixture["expressions"]))
         (directory / "Candidate.qml").write_text(component(candidate))

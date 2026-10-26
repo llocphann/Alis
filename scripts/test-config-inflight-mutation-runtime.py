@@ -7,7 +7,7 @@ from pathlib import Path
 from native_test_session import run_qs
 
 ROOT = Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix="hadalis-config-write-race-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-config-write-race-") as name:
     folder = Path(name)
     for entry in ["modules", "services", "qmldir", "GlobalStates.qml", "assets", "scripts", "defaults", "translations"]:
         (folder / entry).symlink_to(ROOT / entry)

@@ -434,13 +434,13 @@ Scope {
             // Polkit owns the foreground during either external pkexec
             // or Quickshell's internal authorization dialog.
             WlrLayershell.layer: (GlobalStates.settingsNativeDialogOpen
-                || Hadalird.authorizationPending || PolkitService.active)
+                || AlisIntergration.authorizationPending || PolkitService.active)
                 ? WlrLayer.Bottom : WlrLayer.Overlay
             WlrLayershell.keyboardFocus: root.settingsOpen
                 && !GlobalStates.regionSelectorOpen
                 && !GlobalStates.settingsNativeDialogOpen
                 && !PolkitService.active
-                && !Hadalird.authorizationPending
+                && !AlisIntergration.authorizationPending
                 ? WlrKeyboardFocus.Exclusive
                 : WlrKeyboardFocus.None
             color: "transparent"
@@ -594,8 +594,8 @@ Scope {
             }
 
             // ── Bottom-connected settings popup ──
-            ConnectedSurfaceIrisEdgeSurface {
-                id: settingsIrisSurface
+            ConnectedSurfaceAbyssEdgeSurface {
+                id: settingsAbyssSurface
                 z: 1
                 anchors.fill: parent
                 edge: "bottom"

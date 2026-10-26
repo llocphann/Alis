@@ -38,7 +38,7 @@ assert.equal(routing.outputDevice('[Window]\noutputDevice=wrong'),'');cases++;
 console.log('AUDIO_ROUTING_PASS '+cases+' directed/idle/self-driver/ambiguous/disconnected/device-name cases');
 ''', str(ROOT / "modules/common/functions/audioRouting.js")], check=True)
 
-with tempfile.TemporaryDirectory(prefix="hadalis-audio-routing-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-audio-routing-") as name:
     folder = Path(name)
     for entry in ["modules", "GlobalStates.qml", "qmldir", "assets", "scripts", "defaults", "translations"]:
         (folder / entry).symlink_to(ROOT / entry)

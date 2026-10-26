@@ -39,29 +39,29 @@ fi
 ! grep -Fq 'property int fakeScreenRounding' "$root/modules/common/Config.qml" || fail 'fakeScreenRounding schema remains'
 
 for token in \
-    'ConnectedSurfaceIrisEdgeSurface {' \
-    'id: sidebarIrisSurface' \
+    'ConnectedSurfaceAbyssEdgeSurface {' \
+    'id: sidebarAbyssSurface' \
     'readonly property real hiddenTranslateDistance:' \
-    'PerimeterTokens.irisFuseDepth' \
+    'PerimeterTokens.abyssFuseDepth' \
     '? -root.hiddenTranslateDistance' \
     ': root.hiddenTranslateDistance'; do
-    grep -Fq -- "$token" "$sidebar" || fail "Sidebar iRiS/full-hide contract missing: $token"
+    grep -Fq -- "$token" "$sidebar" || fail "Sidebar Abyss/full-hide contract missing: $token"
 done
 
 for token in \
-    'ConnectedSurfaceIrisEdgeSurface {' \
-    'id: dashboardIrisSurface' \
+    'ConnectedSurfaceAbyssEdgeSurface {' \
+    'id: dashboardAbyssSurface' \
     'ownerThickness: root.attachmentThickness'; do
-    grep -Fq "$token" "$dashboard" || fail "Dashboard iRiS edge contract missing: $token"
+    grep -Fq "$token" "$dashboard" || fail "Dashboard Abyss edge contract missing: $token"
 done
 
 for token in \
-    'ConnectedSurfaceIrisEdgeSurface {' \
-    'id: dockIrisSurface' \
+    'ConnectedSurfaceAbyssEdgeSurface {' \
+    'id: dockAbyssSurface' \
     'ownerThickness: dockRoot.screenEdgeThickness' \
     'screenEdge?.physicalShadow?.enabled ?? true' \
     'Appearance.m3colors.m3shadow'; do
-    grep -Fq "$token" "$dock" || fail "Dock iRiS edge contract missing: $token"
+    grep -Fq "$token" "$dock" || fail "Dock Abyss edge contract missing: $token"
 done
 
 for file in "$search" "$osk" "$common/ConnectedSurfaceFrame.qml"; do
@@ -84,9 +84,9 @@ done
 ! grep -Fq 'GlobalStates.openOrbit(' "$screen_corners" \
     || fail 'ScreenCorners restored retired Orbit interaction'
 
-grep -Fq 'ConnectedSurfaceFrame {' "$waffle" || fail 'Waffle lost shared non-iRiS frame'
+grep -Fq 'ConnectedSurfaceFrame {' "$waffle" || fail 'Waffle lost shared non-Abyss frame'
 grep -Fq 'connectorVisible: false' "$waffle" || fail 'Waffle connector painter must stay disabled'
 ! grep -Fq 'function updateAnchor()' "$waffle" || fail 'Waffle restored manual anchor compatibility API'
 ! grep -Fq '_anchorRevision' "$waffle" || fail 'Waffle restored manual anchor revision shim'
 
-printf 'PASS: runtime QML is free of retired round-wedge geometry; current iRiS/direct-seam routes are authoritative\n'
+printf 'PASS: runtime QML is free of retired round-wedge geometry; current Abyss/direct-seam routes are authoritative\n'

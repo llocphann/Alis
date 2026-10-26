@@ -4,7 +4,7 @@ function usage
     printf '%s\n' \
         'Usage: fish scripts/validate-all.fish [options]' \
         '' \
-        'Runs Hadalis validation from one Fish entrypoint and writes one persistent log.' \
+        'Runs Alis validation from one Fish entrypoint and writes one persistent log.' \
         '' \
         'Options:' \
         '  -f, --full         Run REQUIRED LOCAL + Nix (if available) + live checks + interactive acceptance.' \
@@ -34,7 +34,7 @@ end
 set -l script_dir (cd (dirname (status --current-filename)); and pwd -P)
 set -l repo_root (git -C "$script_dir/.." rev-parse --show-toplevel 2>/dev/null)
 if test $status -ne 0 -o -z "$repo_root"
-    printf 'FATAL: validate-all.fish must run from a Hadalis Git checkout.\n' >&2
+    printf 'FATAL: validate-all.fish must run from a Alis Git checkout.\n' >&2
     exit 2
 end
 
@@ -44,7 +44,7 @@ if not set -q TMPDIR
     set -g TMPDIR /tmp
 end
 
-set -g VALIDATION_WORKDIR (mktemp -d "$TMPDIR/hadalis-full-validation.XXXXXX")
+set -g VALIDATION_WORKDIR (mktemp -d "$TMPDIR/alis-full-validation.XXXXXX")
 if test $status -ne 0 -o -z "$VALIDATION_WORKDIR"
     printf 'FATAL: could not create validation workspace.\n' >&2
     exit 2
@@ -57,7 +57,7 @@ function cleanup_validation --on-event fish_exit
 end
 
 set -l timestamp (date +%Y%m%d-%H%M%S)
-set -g VALIDATION_LOG "$TMPDIR/hadalis-full-validation-$timestamp.log"
+set -g VALIDATION_LOG "$TMPDIR/alis-full-validation-$timestamp.log"
 if set -q _flag_log
     set VALIDATION_LOG $_flag_log[-1]
     if not string match -qr '^/' -- "$VALIDATION_LOG"
@@ -159,10 +159,10 @@ function run_canonical_validator
 
     log_only ''
     log_only "---- CHECK [$CHECK_NO]: REQUIRED / $label ----"
-    log_only "Command: HADALIS_VALIDATION_LOG=$child_log "(string join ' ' -- $validator_cmd)
+    log_only "Command: ALIS_VALIDATION_LOG=$child_log "(string join ' ' -- $validator_cmd)
     log_only "Working directory: $PWD"
 
-    env HADALIS_VALIDATION_LOG="$child_log" $validator_cmd > "$child_stdout" 2>&1
+    env ALIS_VALIDATION_LOG="$child_log" $validator_cmd > "$child_stdout" 2>&1
     set -l rc $status
 
     log_only 'BEGIN CANONICAL VALIDATOR STDOUT'
@@ -294,7 +294,7 @@ set -l branch (git branch --show-current)
 set -l status_before "$VALIDATION_WORKDIR/git-status-before.txt"
 git status --porcelain=v1 --untracked-files=all > "$status_before"
 
-log_line 'Hadalis full validation (Fish orchestrator)'
+log_line 'Alis full validation (Fish orchestrator)'
 log_line "Started: $START_ISO"
 log_line "Repository: $repo_root"
 log_line "Branch: "(test -n "$branch"; and echo "$branch"; or echo DETACHED)
@@ -416,7 +416,7 @@ end
 
 log_line ''
 log_line '========================================'
-log_line 'HADALIS FULL VALIDATION SUMMARY'
+log_line 'ALIS FULL VALIDATION SUMMARY'
 log_line "Exact SHA: $exact_sha"
 log_line "Result: $final_result"
 log_line "Checks: $CHECK_NO"

@@ -5,11 +5,11 @@ ROOT=Path(__file__).resolve().parents[1]
 backend=(ROOT/"services/ObsidianTodoBackend.qml").read_text()
 qmldir=(ROOT/"services/qmldir").read_text()
 assert 'property bool active: false' in backend
-assert 'active: root.active && Hadalird.obsidianEnabled' in backend
+assert 'active: root.active && AlisIntergration.obsidianEnabled' in backend
 assert 'return false' in backend and 'integration-unavailable' in backend
 for forbidden in ('Process {','Timer {','FileView {','"eval"','["obsidian"'):
     assert forbidden not in backend, "core retained a worker/runtime CLI: "+forbidden
-assert 'Hadalird.backendSource("managed")' in backend
+assert 'AlisIntergration.backendSource("managed")' in backend
 assert "ObsidianTodoBackend 1.0 ObsidianTodoBackend.qml" in qmldir
 for field in ['vaultPath', 'notePath', 'preferTasksPlugin', 'allowBasicOfflineMutation']:
     assert "root."+field in backend and "item."+field in backend, "lost live parameter binding: "+field

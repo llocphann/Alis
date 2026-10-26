@@ -36,7 +36,7 @@ Scope {
             visible: GlobalStates.familyTransitionActive
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
-            WlrLayershell.namespace: "hadalis:abyss-transition"
+            WlrLayershell.namespace: "alis:abyss-transition"
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
             anchors { top: true; bottom: true; left: true; right: true }

@@ -1,6 +1,6 @@
 # Aqua source-original overview preview — preparation only
 
-`llocphann/Hadalis` `dev`, PREPUBLICATION HEAD `b07cbf4f6e053820ea1df3ff46b8d1c7aeee396e`, profile `profile-1e0042aca8e24db2`. The FOUR authentic source boards are now byte-verified in schema2 reference version `authentic-assets-sha256-936258b4e5cffbb1`; -55 receipt terminal PASS, source `2b86f3b9ae9224719d811f762cad8a13fda65a61`, three evidence IDs `:0/:1/:2`, all exit0 observed Unix `1790985447`. Keep all four originals immutable.
+`llocphann/Alis` `dev`, PREPUBLICATION HEAD `b07cbf4f6e053820ea1df3ff46b8d1c7aeee396e`, profile `profile-1e0042aca8e24db2`. The FOUR authentic source boards are now byte-verified in schema2 reference version `authentic-assets-sha256-936258b4e5cffbb1`; -55 receipt terminal PASS, source `2b86f3b9ae9224719d811f762cad8a13fda65a61`, three evidence IDs `:0/:1/:2`, all exit0 observed Unix `1790985447`. Keep all four originals immutable.
 
 GitHub connector fetch of large original 1.9–2.2 MB PNGs returned empty base64; separate sandbox public-source network probe could not resolve raw.githubusercontent.com (no original pixels viewed). Therefore **VISUAL_REVIEW_BLOCKED** remains until true source pixels can be opened. Historical renderer safe images b04003 (nested-Niri real Bar left/right), f53348 (A/B baseline) and 3dc5f9 (Qt synthetic four-pose) were actually reviewed but are NOT original references. No source renderer edit or current-source GPU acceptance.
 

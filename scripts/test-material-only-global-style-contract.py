@@ -320,7 +320,7 @@ def main() -> None:
         forbid(appearance, token, "Appearance.qml retired compatibility")
 
     for token in (
-        'globalStyle === "inir"',
+        'globalStyle === "alis"',
         'globalStyle === "angel"',
         'globalStyle === "aurora"',
         'globalStyle === "regalia"',
@@ -329,7 +329,7 @@ def main() -> None:
         forbid(appearance, token, "Appearance.qml")
 
     for token in (
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.angelEverywhere",
         "id: auroraBlurSource",
@@ -399,7 +399,7 @@ def main() -> None:
     }
     for source, source_text in shared_material_primitives.items():
         for token in (
-            "Appearance.inirEverywhere",
+            "Appearance.alisEverywhere",
             "Appearance.auroraEverywhere",
             "Appearance.angelEverywhere",
             "Appearance.regaliaEverywhere",
@@ -475,7 +475,7 @@ def main() -> None:
         "color: Appearance.colors.colOutline",
     ):
         require(page_placeholder, token, "PagePlaceholder.qml")
-    forbid(page_placeholder, "Appearance.inir.", "PagePlaceholder.qml")
+    forbid(page_placeholder, "Appearance.alis.", "PagePlaceholder.qml")
 
     for token in (
         "color: Appearance.colors.colSurfaceContainerHigh",
@@ -718,7 +718,7 @@ console.log('Selection group palette: PASS (18 family/shape/state cases)');
         "color: Appearance.colors.colSubtext",
     ):
         require(material_placeholder_message, token, "MaterialPlaceholderMessage.qml")
-    forbid(material_placeholder_message, "Appearance.inir.", "MaterialPlaceholderMessage.qml")
+    forbid(material_placeholder_message, "Appearance.alis.", "MaterialPlaceholderMessage.qml")
 
     for token in (
         "radius: Appearance.rounding.small",
@@ -934,7 +934,7 @@ for(const abyss of [false,true])for(const darkmode of [false,true]) {
         "cookieEverywhere",
         "zzzEverywhere",
         "angelEverywhere",
-        "inirEverywhere",
+        "alisEverywhere",
         "auroraEverywhere",
     ):
         forbid(motion_contract, token, "Appearance.qml popup reveal")
@@ -972,7 +972,7 @@ for(const abyss of [false,true])for(const darkmode of [false,true]) {
         "cookieEverywhere",
         "zzzEverywhere",
         "angelEverywhere",
-        "inirEverywhere",
+        "alisEverywhere",
         "auroraEverywhere",
     ):
         forbid(hover_contract, token, "Appearance.qml interaction aliases")
@@ -1001,7 +1001,7 @@ for(const abyss of [false,true])for(const darkmode of [false,true]) {
         "cookieEverywhere",
         "zzzEverywhere",
         "angelEverywhere",
-        "inirEverywhere",
+        "alisEverywhere",
         "auroraEverywhere",
     ):
         forbid(colors_contract, token, "Appearance.qml colors")
@@ -1048,7 +1048,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
     animation_curves_start = appearance.index("animationCurves: QtObject {", font_strategy_start)
     font_contract = appearance[font_strategy_start:animation_curves_start]
     for token in (
-        'globalStyle === "inir"',
+        'globalStyle === "alis"',
         'globalStyle === "angel"',
         'globalStyle === "regalia"',
         'globalStyle === "zzz"',
@@ -1073,7 +1073,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "cookieEverywhere",
         "zzzEverywhere",
         "angelEverywhere",
-        "inirEverywhere",
+        "alisEverywhere",
         "auroraEverywhere",
     ):
         forbid(animation_contract, token, "Appearance.qml animation presets")
@@ -1105,7 +1105,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         'const cards = styleId === "cards"',
         'case "cards":',
         'case "aurora":',
-        'case "inir":',
+        'case "alis":',
         'case "angel":',
         'case "regalia":',
         'case "zzz":',
@@ -1127,7 +1127,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
     ):
         forbid(styled_popup, token, "StyledPopup.qml")
@@ -1138,7 +1138,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.cookieEverywhere",
         "ZzzPlate {",
@@ -1165,7 +1165,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.cookieEverywhere",
         "RegaliaPlate {",
@@ -1193,7 +1193,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
             "Appearance.zzzEverywhere",
             "Appearance.regaliaEverywhere",
             "Appearance.angelEverywhere",
-            "Appearance.inirEverywhere",
+            "Appearance.alisEverywhere",
             "Appearance.auroraEverywhere",
             "Appearance.cookieEverywhere",
         ):
@@ -1221,7 +1221,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.cookieEverywhere",
         "RegaliaControlFace {",
@@ -1245,13 +1245,13 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.cookieEverywhere",
         "Appearance.zzz.",
         "Appearance.regalia.",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.aurora.",
         "Appearance.cookie.",
         "AuroraBlurCorner",
@@ -1269,13 +1269,13 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.cookieEverywhere",
         "Appearance.zzz.",
         "Appearance.regalia.",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.aurora.",
         "Appearance.cookie.",
         "AuroraBlurCorner",
@@ -1293,9 +1293,9 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
     # Active Bar controls must not reintroduce frozen Global Theme routing.
     for token in (
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
     ):
         forbid(weather_bar, token, "WeatherBar.qml")
     for token in (
@@ -1309,11 +1309,11 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
     for token in (
         "Appearance.zzzEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.zzz.",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.aurora.",
         "AngelPartialBorder {",
     ):
@@ -1339,21 +1339,21 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         (
             battery_indicator,
             "BatteryIndicator.qml",
-            ("Appearance.inirEverywhere", "Appearance.angelEverywhere",
-             "Appearance.inir.", "Appearance.angel."),
+            ("Appearance.alisEverywhere", "Appearance.angelEverywhere",
+             "Appearance.alis.", "Appearance.angel."),
             ("Appearance.colors.colError", "Appearance.colors.colOnLayer0"),
         ),
         (
             clock_widget,
             "ClockWidget.qml",
-            ("Appearance.inirEverywhere", "Appearance.angelEverywhere",
-             "Appearance.inir.", "Appearance.angel."),
+            ("Appearance.alisEverywhere", "Appearance.angelEverywhere",
+             "Appearance.alis.", "Appearance.angel."),
             ("color: Appearance.colors.colOnLayer1",),
         ),
         (
             notification_unread_count,
             "NotificationUnreadCount.qml",
-            ("Appearance.inirEverywhere", "Appearance.inir."),
+            ("Appearance.alisEverywhere", "Appearance.alis."),
             ("radius: Math.min(width, height) / 2",
              "color: Appearance.colors.colOnLayer0",
              "color: Appearance.colors.colLayer0"),
@@ -1361,8 +1361,8 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         (
             active_window,
             "ActiveWindow.qml",
-            ("Appearance.inirEverywhere", "Appearance.regaliaEverywhere",
-             "Appearance.inir.", "Appearance.regalia."),
+            ("Appearance.alisEverywhere", "Appearance.regaliaEverywhere",
+             "Appearance.alis.", "Appearance.regalia."),
             ("property color titleColor: Appearance.colors.colOnLayer0",
              "property color appNameColor: Appearance.colors.colSubtext"),
         ),
@@ -1374,9 +1374,9 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
 
     for token in (
         "Appearance.zzzEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.zzz.",
-        "Appearance.inir.",
+        "Appearance.alis.",
     ):
         forbid(resource, token, "Resource.qml")
     for token in (
@@ -1426,11 +1426,11 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
     for token in (
         "Appearance.zzzEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.zzz.",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.aurora.",
     ):
         forbid(timer_indicator, token, "TimerIndicator.qml")
@@ -1449,10 +1449,10 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
 
     for token in (
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.aurora.",
     ):
         forbid(shell_update_indicator, token, "ShellUpdateIndicator.qml")
@@ -1468,11 +1468,11 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
 
     for token in (
         "Appearance.zzzEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.angelEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.zzz.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.angel.",
         "Appearance.aurora.",
     ):
@@ -1488,12 +1488,12 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.regaliaEverywhere",
         "Appearance.zzzEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.regalia.",
         "Appearance.zzz.",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.aurora.",
         "ZzzPlate {",
     ):
@@ -1536,12 +1536,12 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
 
     for token in (
         "Appearance.zzzEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.angelEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.zzz.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.aurora.",
         "Appearance.angel.",
         "Appearance.regalia.",
@@ -1599,12 +1599,12 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.regaliaEverywhere",
         "Appearance.zzzEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.regalia.",
         "Appearance.zzz.",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.aurora.",
         "ZzzPlate {",
     ):
@@ -1632,13 +1632,13 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
             "Appearance.zzzEverywhere",
             "Appearance.regaliaEverywhere",
             "Appearance.angelEverywhere",
-            "Appearance.inirEverywhere",
+            "Appearance.alisEverywhere",
             "Appearance.auroraEverywhere",
             "Appearance.cookieEverywhere",
             "Appearance.zzz.",
             "Appearance.regalia.",
             "Appearance.angel.",
-            "Appearance.inir.",
+            "Appearance.alis.",
             "Appearance.aurora.",
             "Appearance.cookie.",
             "Appearance.animationCurves.zzzOvershoot",
@@ -1670,16 +1670,16 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.cookieEverywhere",
         "Appearance.zzz.",
         "Appearance.regalia.",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.aurora.",
         "Appearance.cookie.",
-        "root.inir",
+        "root.alis",
     ):
         forbid(player_control, token, "PlayerControl.qml")
     for token in (
@@ -1724,7 +1724,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.cookieEverywhere",
         "RegaliaControlFace {",
@@ -1749,7 +1749,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
 
     # Active shared selectors must not route their popup/control chrome
     # through frozen legacy Global Theme predicates.
-    forbid(font_selector, "Appearance.inirEverywhere", "FontSelector.qml")
+    forbid(font_selector, "Appearance.alisEverywhere", "FontSelector.qml")
     for token in (
         "color: Appearance.colors.colLayer2Base",
         "radius: Appearance.rounding.normal",
@@ -1757,7 +1757,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
     ):
         require(font_selector, token, "FontSelector.qml")
 
-    forbid(icon_theme_selector, "Appearance.inirEverywhere", "IconThemeSelector.qml")
+    forbid(icon_theme_selector, "Appearance.alisEverywhere", "IconThemeSelector.qml")
     for token in (
         "color: Appearance.colors.colLayer2Base",
         "radius: Appearance.rounding.normal",
@@ -1770,19 +1770,19 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
 
     for token in (
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
     ):
         forbid(config_spin_box, token, "ConfigSpinBox.qml")
     require(config_spin_box, "color: Appearance.colors.colOnSurface", "ConfigSpinBox.qml")
 
     for token in (
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.aurora.",
     ):
         forbid(settings_switch, token, "SettingsSwitch.qml")
@@ -1793,8 +1793,8 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         require(settings_switch, token, "SettingsSwitch.qml")
 
     for token in (
-        "Appearance.inirEverywhere",
-        "Appearance.inir.",
+        "Appearance.alisEverywhere",
+        "Appearance.alis.",
     ):
         forbid(settings_note, token, "SettingsNote.qml")
     for token in (
@@ -1806,10 +1806,10 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
     for token in (
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.regalia.",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "RegaliaControlFace {",
     ):
         forbid(styled_spin_box, token, "StyledSpinBox.qml")
@@ -1830,13 +1830,13 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.cookieEverywhere",
         "Appearance.regaliaEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.angel.",
         "Appearance.zzz.",
         "Appearance.cookie.",
         "Appearance.regalia.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.aurora.",
         "EscalonadoShadow {",
         "ZzzPlate {",
@@ -1865,9 +1865,9 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
 
     for token in (
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
     ):
         forbid(config_switch, token, "ConfigSwitch.qml")
     require(config_switch, "color: Appearance.colors.colOnSurface", "ConfigSwitch.qml")
@@ -1896,12 +1896,12 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.regaliaEverywhere",
         "Appearance.zzzEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.regalia.",
         "Appearance.zzz.",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.aurora.",
     ):
         forbid(styled_slider, token, "StyledSlider.qml")
@@ -1929,7 +1929,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "RegaliaPlate {",
         "GlassBackground {",
@@ -1958,7 +1958,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
             "Appearance.zzzEverywhere",
             "Appearance.regaliaEverywhere",
             "Appearance.angelEverywhere",
-            "Appearance.inirEverywhere",
+            "Appearance.alisEverywhere",
             "Appearance.auroraEverywhere",
         ):
             forbid(chrome, token, source)
@@ -1984,7 +1984,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "ZzzPlate {",
     ):
@@ -2014,7 +2014,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
             "Appearance.zzzEverywhere",
             "Appearance.regaliaEverywhere",
             "Appearance.angelEverywhere",
-            "Appearance.inirEverywhere",
+            "Appearance.alisEverywhere",
             "Appearance.auroraEverywhere",
         ):
             forbid(chrome, token, source)
@@ -2034,7 +2034,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.cookieEverywhere",
     ):
@@ -2056,7 +2056,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
     ):
         forbid(window_search, token, "settings.qml search chrome")
@@ -2075,7 +2075,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "ZzzPlate {",
     ):
@@ -2096,7 +2096,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.cookieEverywhere",
     ):
@@ -2120,7 +2120,7 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.cookieEverywhere",
     ):
@@ -2146,13 +2146,13 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
         "Appearance.zzzEverywhere",
         "Appearance.regaliaEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "Appearance.cookieEverywhere",
         "Appearance.zzz.",
         "Appearance.regalia.",
         "Appearance.angel.",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.aurora.",
         "Appearance.cookie.",
     )
@@ -2243,7 +2243,7 @@ console.log('Onscreen keyboard palette and key shape: PASS (12 cases)');
     for token in legacy_style_tokens:
         forbid(compact_sidebar_right_content, token, "sidebarRight/CompactSidebarRightContent.qml")
     for token in (
-        "zzzEverywhere", "angelEverywhere", "inirEverywhere", "auroraEverywhere",
+        "zzzEverywhere", "angelEverywhere", "alisEverywhere", "auroraEverywhere",
         "ZzzPlate {", "ZzzPanelBackdrop {", "AngelPartialBorder {",
     ):
         forbid(compact_sidebar_right_content, token, "sidebarRight/CompactSidebarRightContent.qml")
@@ -2288,7 +2288,7 @@ console.log('Onscreen keyboard palette and key shape: PASS (12 cases)');
         "zzzEverywhere",
         "regaliaEverywhere",
         "angelEverywhere",
-        "inirEverywhere",
+        "alisEverywhere",
         "auroraEverywhere",
         "RegaliaPlate {",
         "ZzzPanelBackdrop {",
@@ -2345,7 +2345,7 @@ console.log('Onscreen keyboard palette and key shape: PASS (12 cases)');
         "zzzEverywhere",
         "regaliaEverywhere",
         "angelEverywhere",
-        "inirEverywhere",
+        "alisEverywhere",
         "auroraEverywhere",
         "RegaliaPlate {",
         "ZzzPanelBackdrop {",
@@ -2403,7 +2403,7 @@ console.log('Onscreen keyboard palette and key shape: PASS (12 cases)');
         forbid(vertical_bar_content, token, "verticalBar/VerticalBarContent.qml")
     for token in (
         "root.angelEverywhere",
-        "root.inirEverywhere",
+        "root.alisEverywhere",
         "root.auroraEverywhere",
         "root.zzzEverywhere",
         "AngelPartialBorder {",
@@ -2605,7 +2605,7 @@ console.log('Onscreen keyboard palette and key shape: PASS (12 cases)');
     for token in (
         "Appearance.zzzEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.auroraEverywhere",
         "ZzzPlate {",
         "ZzzPanelBackdrop {",
@@ -2641,7 +2641,7 @@ console.log('Onscreen keyboard palette and key shape: PASS (12 cases)');
         "y: root.embeddedSurface ? 0 : (1 - root.revealProgress) * dashContainer.height",
         "opacity: root.dashboardOpacity",
         "resultsOpacity: root.searchResultsOpacity",
-        "ConnectedSurfaceIrisEdgeSurface {",
+        "ConnectedSurfaceAbyssEdgeSurface {",
         'edge: "bottom"',
         "ownerThickness: root.attachmentThickness",
         "root.height + root.attachmentThickness",
@@ -2850,7 +2850,7 @@ console.log('Onscreen keyboard palette and key shape: PASS (12 cases)');
         require(control_panel_media, token, "controlPanel/MediaSection.qml")
     for token in (
         "readonly property color jiraCol",
-        "Appearance.inir.",
+        "Appearance.alis.",
         "Appearance.angel.",
         "Appearance.aurora.",
         "Appearance.zzz.",

@@ -26,8 +26,8 @@ grep -Fq 'property string shellConfig: `${Directories.configPath}/alis`' "$direc
   || fail 'live QML config path no longer matches the canonical Alis namespace'
 grep -Fq 'MIGRATION_REQUIRED=true' "$migration" \
   || fail 'config directory compatibility migration is no longer required'
-grep -Fq 'local config_new="${xdg_config_home}/inir"' "$migration" \
-  || fail 'migration 019 no longer names ~/.config/inir as the canonical directory'
+grep -Fq 'local config_new="${xdg_config_home}/alis"' "$migration" \
+  || fail 'migration 019 no longer names ~/.config/alis as the canonical directory'
 grep -Fq 'local config_legacy="${xdg_config_home}/illogical-impulse"' "$migration" \
   || fail 'migration 019 no longer recognizes the live QML compatibility directory'
 grep -Fq 'ln -s "$config_new" "$config_legacy"' "$migration" \
@@ -57,7 +57,7 @@ for hook in "$stable_hook" "$git_hook"; do
     || fail "$hook no longer explains the per-user migration ownership boundary"
   grep -Fq 'do not enable a second service or run old migration 019' "$hook" \
     || fail "$hook no longer protects upgrades from a second shell owner or historical config move"
-  if grep -Fq 'Runtime migrations, when needed, are applied by Hadalis' "$hook"; then
+  if grep -Fq 'Runtime migrations, when needed, are applied by Alis' "$hook"; then
     fail "$hook again implies the package transaction mutates per-user config"
   fi
 done

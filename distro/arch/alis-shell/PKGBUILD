@@ -6,7 +6,7 @@ arch=('x86_64')
 url='https://github.com/llocphann/Alis'
 license=('GPL-3.0-only')
 install=alis-shell.install
-# Hadalis does not publish version tags/releases yet. Keep the non-VCS package
+# Alis does not publish version tags/releases yet. Keep the non-VCS package
 # reproducible by pinning the reviewed source snapshot; release automation can
 # switch this to a tag once the project publishes one.
 _source_ref="${ALIS_SOURCE_REF:-c74d8a2336a311699ced1a00898bc4b2527a3a45}"
@@ -144,10 +144,10 @@ package() {
 
   install -Dm755 "$srcroot/scripts/alis" "$pkgdir/usr/bin/alis"
   install -Dm644 "$srcroot/assets/systemd/alis.service" "$pkgdir/usr/lib/systemd/user/alis.service"
-  # Privileged gateway is shipped by the trusted Hadalis system package.
-  # Optional Hadalird helper payloads are not bundled in Core.
-  install -Dm755 "$srcroot/assets/helpers/alis-hadalird-system-provision" "$pkgdir/usr/libexec/alis-hadalird-system-provision"
-  install -Dm644 "$srcroot/assets/polkit/org.alis.hadalird-system-provision.policy" "$pkgdir/usr/share/polkit-1/actions/org.alis.hadalird-system-provision.policy"
+  # Privileged gateway is shipped by the trusted Alis system package.
+  # Optional Alis-Intergration helper payloads are not bundled in Core.
+  install -Dm755 "$srcroot/assets/helpers/alis-intergration-system-provision" "$pkgdir/usr/libexec/alis-intergration-system-provision"
+  install -Dm644 "$srcroot/assets/polkit/org.alis.intergration-system-provision.policy" "$pkgdir/usr/share/polkit-1/actions/org.alis.intergration-system-provision.policy"
 
   for launcher in "$pkgdir/usr/bin/alis" "$shellroot/scripts/alis"; do
     python3 - "$launcher" <<'PY'

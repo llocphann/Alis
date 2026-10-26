@@ -73,7 +73,7 @@ legacy='in'+'ir'
 for p in files:
  text=read_exact(p);new=[]
  for line in text.splitlines(keepends=True):
-  venv=re.match(r'^(\s*)INIR_VENV(\s+"[^"\r\n]+"[^\r\n]*)',line)
+  venv=re.match(r'^(\s*)ALIS_VENV(\s+"[^"\r\n]+"[^\r\n]*)',line)
   if venv and not has_canonical_venv:
    new.append(venv[1]+'ALIS_VENV'+venv[2]+('\r\n'if line.endswith('\r\n')else'\n'))
    has_canonical_venv=True

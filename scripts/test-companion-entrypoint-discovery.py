@@ -21,7 +21,7 @@ def load(name, path):
 manager = load("companion_manager_fixture", ROOT / "scripts/companion-manager.py")
 discovery = load("alis_companion_status_fixture", ROOT / "scripts/alis-companion-status.py")
 CANONICAL = "native/bin/alis-companiond"
-PINNED_LEGACY = "native/bin/inir-companiond"
+PINNED_LEGACY = "native/bin/alis-companiond"
 assert manager.COMPATIBLE_BINARIES == discovery.COMPATIBLE_BINARIES == {
     CANONICAL, PINNED_LEGACY
 }
@@ -31,8 +31,8 @@ def write_package(release, daemon):
     release.mkdir(parents=True, exist_ok=True)
     manifest = {
         "id": "alis-companion", "hostApi": 1, "version": "0.1.0",
-        "session": "HadalisSession.qml",
-        "output": "HadalisOutput.qml",
+        "session": "AlisSession.qml",
+        "output": "AlisOutput.qml",
         "settings": "modules/settings/CompanionConfig.qml",
         "binary": daemon, "sourceSha": "a" * 40,
     }
@@ -85,4 +85,4 @@ with tempfile.TemporaryDirectory(prefix="alis-companion-entrypoint-") as temp:
         assert manager.installed_revision(data) == "", "invalid host API accepted"
         assert not discovery.inspect(shell, data)["available"], "invalid host API discovered"
 
-print("PASS: pinned iNiR and canonical Alis companion daemon discovery, executable gate, path and host API rejection")
+print("PASS: pinned Alis and canonical Alis companion daemon discovery, executable gate, path and host API rejection")

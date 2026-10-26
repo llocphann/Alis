@@ -7,7 +7,7 @@ sidebar_test_root="$(mktemp -d)"
 trap 'rm -rf -- "$sidebar_test_root"' EXIT
 cp "$repo_root/modules/abyss/AbyssSidebarReveal.qml" "$sidebar_test_root/Reveal.qml"
 cat > "$sidebar_test_root/shell.qml" <<'QML'
-//@ pragma ShellId hadalis-abyss-sidebar-reveal-test
+//@ pragma ShellId alis-abyss-sidebar-reveal-test
 import QtQuick
 import Quickshell
 ShellRoot {

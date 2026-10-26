@@ -85,14 +85,14 @@ Two environment-owned acceptance items remain separate and must not be inferred
 from source inspection:
 
 1. run the analytic-vs-pre-cutover owner-session A/B with
-   `HADALIS_SCREEN_EDGE_ANALYTIC_PERCEPTUAL=1` and retain the reported
+   `ALIS_SCREEN_EDGE_ANALYTIC_PERCEPTUAL=1` and retain the reported
    `global_mae` / edge-band diagnostic; the intended budget is <= 1% global
    normalized mean pixel error;
 2. visually verify real Niri/Quickshell idle/maximized/fullscreen,
    top/bottom/left/right Bar ownership, fractional scaling and multi-output
    behavior on the exact runtime SHA.
 
-No whole-Hadalis CPU/GPU/RAM/FPS percentage is claimed without before/after
+No whole-Alis CPU/GPU/RAM/FPS percentage is claimed without before/after
 measurement.
 
 
@@ -196,7 +196,7 @@ already-bounded raster footprint.
 
 Live owner-session acceptance remains separate:
 
-1. run `HADALIS_SCREEN_EDGE_BANDED_PERCEPTUAL=1
+1. run `ALIS_SCREEN_EDGE_BANDED_PERCEPTUAL=1
    python3 scripts/test-screen-edge-banded-perceptual.py` and retain
    `global_mae`, `edge_mae` and `max_channel_delta`; intended global budget
    is <=1%;
@@ -205,12 +205,12 @@ Live owner-session acceptance remains separate:
 3. verify real Niri/Quickshell multi-output, fractional scaling, Bar ownership
    and fullscreen transitions.
 
-No whole-Hadalis CPU/GPU/RAM/FPS percentage is claimed without before/after
+No whole-Alis CPU/GPU/RAM/FPS percentage is claimed without before/after
 measurement.
 
 ## 2026-10-06 — subsystem removal boundary
 
-The maintainer removed the Hadalis Automation subsystem and the MegaQML/MEGAcmd
+The maintainer removed the Alis Automation subsystem and the MegaQML/MEGAcmd
 Cloud Storage integration from current `dev`. Older worker queues/results,
 MegaQML failures, Cloud Storage qualification notes and exact-SHA validation
 counts above are historical evidence only; they are not current runtime,
@@ -390,7 +390,7 @@ retry this session”.
 4. then leave wallpaper thumbnails and diversify into another high-value hot
    path rather than accumulating micro-candidates in the same subsystem.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed from static analysis.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed from static analysis.
 
 ## 2026-10-07 — App identity-rule lookup hot-path research
 
@@ -574,7 +574,7 @@ this ranks below Candidate A.
 3. inspect another distinct collection hot path rather than expanding this into
    speculative AppSearch micro-caches.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed from static analysis.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed from static analysis.
 
 ## 2026-10-07 — Bar Taskbar pinned-order research
 
@@ -666,7 +666,7 @@ Continue with another distinct high-value collection/process/render path rather
 than multiplying taskbar micro-caches. Prefer a path where the same expensive
 data transformation is demonstrably repeated within one event or visible frame.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed from static analysis.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed from static analysis.
 
 ## 2026-10-07 — Niri toplevel matching research
 
@@ -785,7 +785,7 @@ remain dropped exactly as current source specifies.
   substring matches and one-handle-per-window ownership make that a behavioral
   redesign, not the strict-lossless bucket optimization above.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Niri layout-sort cache research
@@ -878,7 +878,7 @@ window sort occurs. This is potentially a correctness consistency question, not
 an optimization. Do not silently switch it to the new private view under a
 strict-lossless patch without first establishing the intended consumer order.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Desktop-entry lookup memo research
@@ -973,7 +973,7 @@ than re-running heuristic/normalization/token-overlap work. The structural gain
 is largest for misses and unusual Electron/AppImage ids that fall through to
 token scoring.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Clipboard/Booru image process research
@@ -1090,7 +1090,7 @@ A future repair should key by normalized full source URL/provider+id or a hash
 and define how legacy basename-only files are ignored/migrated. Do not fold that
 behavioral change into a process-only optimization patch.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Media artwork resolver process research
@@ -1129,7 +1129,7 @@ metadata identity: normalized source URL + title + artist + album. Multiple
 resolver instances with the same identity therefore target the same cache file,
 yet can independently probe or produce it.
 
-This can happen for active-player surfaces because Hadalis has both the
+This can happen for active-player surfaces because Alis has both the
 canonical `MediaArtwork` singleton and additional resolver instances in
 `PlayerControl`, `PlayerBase`, `CavaTheme`, Bar media and YtMusic-specific
 surfaces. Other owners legitimately resolve non-active players, so replacing
@@ -1199,7 +1199,7 @@ or replaced externally. A process-free session-known-success set would change
 that recovery contract unless coupled to authoritative file lifetime/version
 evidence.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Settings World Clock process research
@@ -1234,7 +1234,7 @@ liveTimeProc.command = ["/usr/bin/bash", "-c", script]
 For N configured timezones, each refresh starts one Bash plus N external
 `date` children.
 
-Two existing sibling implementations already prove Hadalis does not need those
+Two existing sibling implementations already prove Alis does not need those
 children:
 
 - `services/WorldClock.qml`;
@@ -1290,7 +1290,7 @@ Required oracle:
 - repeated refresh while a prior process is still running, if that condition is
   reachable in the current Settings process wrapper.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Shared MPRIS position ticker research
@@ -1384,7 +1384,7 @@ Do not centralize this as a permanently running MPRIS poll. The current code is
 already presentation/demand gated. Any shared owner must preserve that property
 and balance all leases on destruction/visibility transitions.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Saved-theme catalog polling research
@@ -1449,7 +1449,7 @@ A robust eventual design may combine:
 - `FolderListModel` for add/remove/name/order changes;
 - watched per-file content or another authoritative directory/content change
   signal for same-name overwrites;
-- explicit refresh after Hadalis itself saves/deletes a theme.
+- explicit refresh after Alis itself saves/deletes a theme.
 
 Do not delete the polling timer merely because `FolderListModel.countChanged`
 works for add/remove.
@@ -1473,11 +1473,11 @@ For Candidate B later:
 - external create/delete;
 - external same-name overwrite;
 - atomic rename replacement;
-- Hadalis save/delete;
+- Alis save/delete;
 - editor closed/reopened;
 - no refresh/process activity while the relevant settings surface is inactive.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Settings search registry hot-path research
@@ -1599,7 +1599,7 @@ highlight markup, not merely result count.
   separately, but it should not be conflated with the live-control registry
   candidate above.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Niri focus-only enrichment research
@@ -1709,7 +1709,7 @@ these media-art Image decode sizes.
 
 ### Candidate — HIGH CONFIDENCE for RAM/GPU, visual budget <1%: bound direct media-art decode size to conservative presentation resolution
 
-Hadalis already has a local precedent for this exact class of image:
+Alis already has a local precedent for this exact class of image:
 `MediaCrossSlideImage.qml` loads both transition layers with:
 
 ```qml
@@ -1780,7 +1780,7 @@ pixel data before accounting for implementation-specific texture/mipmap/effect
 overheads. A 216×216 conservative decode for a 108×108 foreground slot is about
 0.18 MB of RGBA pixels.
 
-Those numbers are size arithmetic, **not measured Hadalis RSS/VRAM savings**.
+Those numbers are size arithmetic, **not measured Alis RSS/VRAM savings**.
 Actual decoder behavior varies by image format and Qt backend, and some formats
 may transiently decode more data before scaling. The steady-state image/texture
 residency, however, has a clear upper-bound opportunity.
@@ -1818,7 +1818,7 @@ budget at the chosen scale must be rejected or use a larger decode target.
 - ColorQuantizer paths already use their own tiny rescale settings and are not
   the target of this work.
 
-No whole-Hadalis RAM/GPU percentage is claimed without measurement.
+No whole-Alis RAM/GPU percentage is claimed without measurement.
 
 ## 2026-10-07 — MPRIS desktop-entry hint memo research
 
@@ -1921,7 +1921,7 @@ representative set of PipeWire nodes/browser players before and after memo use.
 This is CPU/allocation work only; no visual or media-control behavior is
 intended to change.
 
-No whole-Hadalis CPU percentage is claimed without runtime measurement.
+No whole-Alis CPU percentage is claimed without runtime measurement.
 
 ## 2026-10-07 — Cloudflare WARP direct-argv research
 
@@ -2199,7 +2199,7 @@ Assert:
 - active/display player membership/order remains identical.
 
 This is a cumulative session RAM/JS-allocation cleanup, not a GPU optimization,
-and no whole-Hadalis percentage is claimed without runtime measurement.
+and no whole-Alis percentage is claimed without runtime measurement.
 
 ### Adjacent private-map sweep
 
@@ -2339,7 +2339,7 @@ removed from every expensive GPU sample. At the default minimum 6-second
 cadence this is up to about ten avoided shell launches per minute of active
 monitoring; low-power mode reduces both the original and optimized cadence.
 
-No whole-Hadalis CPU/RAM percentage is claimed without runtime measurement.
+No whole-Alis CPU/RAM percentage is claimed without runtime measurement.
 
 ## 2026-10-07 — Notification timer object-reuse research
 
@@ -2473,7 +2473,7 @@ Structural saving:
 - `markReadForApp`: one extra full-list scan is removed per matching
   notification.
 
-This is CPU/JS collection work only and no whole-Hadalis percentage is claimed
+This is CPU/JS collection work only and no whole-Alis percentage is claimed
 without runtime measurement.
 
 ## 2026-10-07 — Notification badge lookup research
@@ -2579,7 +2579,7 @@ must remain a separate patch/oracle: one optimizes group-derived badge reads,
 the other removes redundant notification-ID scans during timeout/read
 mutations.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — System tray classification research
@@ -2672,7 +2672,7 @@ lookups. Absolute gain will normally be modest because tray item counts are
 small, but the service is shell-lifetime state and the change is fully
 lossless.
 
-No whole-Hadalis CPU/RAM percentage is claimed without runtime measurement.
+No whole-Alis CPU/RAM percentage is claimed without runtime measurement.
 
 ## 2026-10-07 — Network nmcli helper direct-argv research
 
@@ -2795,7 +2795,7 @@ processes disappear:
 The two required `nmcli` queries remain. This complements rather than replaces
 the existing event-driven monitor architecture.
 
-No whole-Hadalis CPU/RAM percentage is claimed without runtime measurement.
+No whole-Alis CPU/RAM percentage is claimed without runtime measurement.
 
 ## 2026-10-07 — Default-off startup probe ownership research
 
@@ -2846,7 +2846,7 @@ but `ThinkFanService.Component.onCompleted` immediately calls
 `root.refresh()`, whose detector runs:
 
 ```text
-/usr/libexec/inir-thinkfan --status
+/usr/libexec/alis-thinkfan --status
 ```
 
 The long-lived ownership is only required when profile-follow is enabled.
@@ -2891,7 +2891,7 @@ The shipped default is:
 while `TlpService` still owns unconditional startup detection and runs:
 
 ```text
-/usr/libexec/inir-battery-charge-limit --status
+/usr/libexec/alis-battery-charge-limit --status
 ```
 
 Normal UPower battery telemetry does not need that helper.
@@ -3008,7 +3008,7 @@ Suggested proof order:
 For each, compare child-process traces on default config and on the explicitly
 enabled feature. Enabled-feature behavior must remain unchanged.
 
-No whole-Hadalis startup percentage is claimed without a measured before/after
+No whole-Alis startup percentage is claimed without a measured before/after
 boot trace.
 
 ## 2026-10-07 — Pre-QML environment cache and ABI fast-path research
@@ -3017,7 +3017,7 @@ Research-only continuation on current `dev`
 `3015b97b62ca1458e869873f10521c115929be9f`. No runtime/product source was
 changed in this round.
 
-Current `scripts/inir`:
+Current `scripts/alis`:
 `5cf6ca0ef112cf0f98ee28f23cc618cbb34d5018`.
 
 ### Candidate A — P0 / HIGH CONFIDENCE: make the documented systemd user-environment cache actually live in the parent shell
@@ -3228,7 +3228,7 @@ direct-argv cleanup. A future optimization would require capturing raw
 `where-am-i` output and reproducing the current extraction semantics in QML or
 a helper with a focused parser oracle.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — ScreenTime startup FileView research
@@ -3315,7 +3315,7 @@ candidate.
 Compare `ready`, `_todayData`, `_dirty`, current app/session fields and
 `dataChanged()` timing/order against the current Process-backed path.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Region Selector script argv research
@@ -3424,7 +3424,7 @@ directory ownership would be incorrect. Moving screenshotTemp creation to
 global startup would trade an interaction-time shell for extra unconditional
 startup I/O and is not justified by static analysis.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Sidebar World Clock process cadence research
@@ -3576,7 +3576,7 @@ Before implementation:
 - record child-process count for 5 minutes of sidebar-open operation in normal
   and seconds modes.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Bounded wallpaper blur surface research
@@ -3643,7 +3643,7 @@ For scale only, one RGBA8 full-output surface is approximately:
 - 3840×2160×4 = 31.6 MiB;
 
 before any additional blur-pyramid/intermediate storage. These are texture-size
-calculations, **not measured Hadalis RSS/VRAM savings**.
+calculations, **not measured Alis RSS/VRAM savings**.
 
 Strict visual direction:
 
@@ -3709,23 +3709,23 @@ optimization as a new gain.
 hidden, which is the correct lifecycle baseline. This candidate targets the
 remaining **visible-state full-screen FBO area**, not hidden residency.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
-## 2026-10-07 — Connected iRiS shadow pass research
+## 2026-10-07 — Connected Abyss shadow pass research
 
 Research-only continuation on current `dev`
 `72e7a55c8033ad97699583ce496ef4b739e927f7`. No runtime/product source was
 changed in this round.
 
-Current `modules/common/perimeter/ConnectedSurfaceIrisFrame.qml`:
+Current `modules/common/perimeter/ConnectedSurfaceAbyssFrame.qml`:
 `e703046f2a527ad30afc1a83ccd71f5e5a78cba7`.
 
 The current shadow path is already spatially bounded to the popup body plus
 fillet/blur reach, which is good. It still consists of:
 
 ```text
-ConnectedSurfaceIrisField (shadowMaskField)
+ConnectedSurfaceAbyssField (shadowMaskField)
     -> ShaderEffectSource (shadowTextureSource)
     -> MultiEffect blur (blurredShadow)
     -> ShaderEffectSource crop (isolatedShadow)
@@ -3788,9 +3788,9 @@ Require:
 - no one-pixel seam at fractional scale;
 - 0% target visual deviation.
 
-### Candidate B — HIGH POTENTIAL, <1% program only: analytic iRiS shadow
+### Candidate B — HIGH POTENTIAL, <1% program only: analytic Abyss shadow
 
-After Candidate A, the remaining path still rasterizes the same iRiS silhouette
+After Candidate A, the remaining path still rasterizes the same Abyss silhouette
 a second time into `shadowMaskField`, captures it, and feeds a blur pyramid.
 
 A later experiment may compute shadow coverage analytically from the same SDF
@@ -3830,7 +3830,7 @@ texture:
 
 Any optimization must preserve those ownership and ghost-band guarantees.
 
-No whole-Hadalis GPU/RAM/FPS percentage is claimed without before/after
+No whole-Alis GPU/RAM/FPS percentage is claimed without before/after
 measurement.
 
 ## 2026-10-07 — Private bounded-cache mutation research
@@ -3967,7 +3967,7 @@ Examples deliberately retained:
 The optimization criterion is not “object clone exists”; it is “private
 imperative cache with no change-notification observer”.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Calendar event bucketing research
@@ -4141,7 +4141,7 @@ cache. Its semantics are different from per-day buckets, especially for
 multi-day all-day events. Keep range and bucket APIs separate unless a later
 oracle proves a common internal index can serve both exactly.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — LocalMusic folder payload duplication research
@@ -4158,7 +4158,7 @@ Current source identities:
   `d5b1880d5a1a3796f0faefe343cf3f2f9909953a`;
 - Python MPD fallback `scripts/local_music_mpd.py`:
   `0e05af4f8a308072fbed7bed96994559b66bf6f1`;
-- native MPD backend `native/inir-mpdd/src/main.rs`:
+- native MPD backend `native/alis-mpdd/src/main.rs`:
   `1c63b8e5281dad2a28e88ea3cb660f7cc0c0cb88`.
 
 Repository-wide search finds no consumer of `LocalMusic.folderCollections`
@@ -4269,7 +4269,7 @@ Promotion options:
    contract promises `folders`; then remove the field from both Rust and
    Python together; or
 2. if compatibility must be retained, add an explicit snapshot mode/version
-   where Hadalis requests the lean payload while the legacy CLI shape remains
+   where Alis requests the lean payload while the legacy CLI shape remains
    available.
 
 Do not remove the field from only one backend: Rust/Python selector parity is a
@@ -4306,7 +4306,7 @@ For Candidate B:
   semantics not equivalent to simple folder derivation. Do not collapse them
   without a separate contract.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 ## 2026-10-07 — LocalMusic search preparation research
 
@@ -4421,7 +4421,7 @@ costs, but it adds more retained structure and changes a wider set of bulk
 selection/navigation contracts. Measure large-library folder-navigation latency
 before expanding this candidate into a full music-library index.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — WorldClock timezone catalog research
@@ -4522,7 +4522,7 @@ No visual change is expected outside the moment the picker is intentionally
 opened; the picker must still present the complete model on its first visible
 frame.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 ## 2026-10-07 — Background active-workspace occupancy research
 
@@ -4665,7 +4665,7 @@ separate `dataChanged()` signal for other consumers, but not every
 `todayData` consumer listens to that signal. Any future in-place mutation must
 first replace that notification contract explicitly.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without runtime
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without runtime
 measurement.
 
 ## 2026-10-07 — Hyprland Background collection-pass research
@@ -4825,7 +4825,7 @@ sort can run whenever the Hyprland window list changes. Candidate B is a clean
 secondary allocation reduction and should be bundled only if its regression
 oracle is already being added.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 ## 2026-10-07 — GameMode fullscreen snapshot cache research
 
@@ -4972,7 +4972,7 @@ Instead of O(C * N) scans for C fullscreen-query consumers and N windows, the
 service performs one O(N) derivation per relevant Niri snapshot and O(1)
 lookups thereafter.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 ## 2026-10-07 — DesktopItems snapshot research
 
@@ -5095,5 +5095,5 @@ currently has no in-process filesystem existence API with proven identical path
 semantics. Keep it measurement-gated rather than replacing it with an
 unqualified QML/FileView approximation.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 

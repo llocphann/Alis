@@ -23,12 +23,12 @@ def main() -> None:
           "README must retain the maintainer-approved single-owner perimeter contract")
 
     styled_popup = read("modules/bar/StyledPopup.qml")
-    iris_frame = read("modules/common/perimeter/ConnectedSurfaceIrisFrame.qml")
-    iris_edge_surface = read("modules/common/perimeter/ConnectedSurfaceIrisEdgeSurface.qml")
+    abyss_frame = read("modules/common/perimeter/ConnectedSurfaceAbyssFrame.qml")
+    abyss_edge_surface = read("modules/common/perimeter/ConnectedSurfaceAbyssEdgeSurface.qml")
     for token in (
         "qs.modules.common.perimeter",
         "ConnectedSurfaceGeometry",
-        "ConnectedSurfaceIrisFrame",
+        "ConnectedSurfaceAbyssFrame",
         "ConnectedSurfaceRevealClip",
         "ConnectedSurfaceContentHost",
         "ConnectedSurfaceBodyMask",
@@ -69,22 +69,22 @@ def main() -> None:
         "root.clipExternalOwners(root.body, 0)",
         "root.clipExternalOwners(root.rawShadowBounds, 0)",
     ):
-        check(token in iris_frame,
-              f"iRiS paint-only owner overlap contract missing: {token}")
-    check("property real paintOverlap: 0" in iris_edge_surface
-          and "ownerPaintOverlap: root.paintOverlap" in iris_edge_surface,
-          "Direct iRiS edge adapter must expose opt-in paint-only seam overlap")
-    check("property real tangentFrameThickness: ownerThickness" in iris_edge_surface
-          and "externalFrameThickness: root.tangentFrameThickness" in iris_edge_surface,
-          "Direct iRiS edge adapter must separate primary-owner and tangent-frame thickness")
+        check(token in abyss_frame,
+              f"Abyss paint-only owner overlap contract missing: {token}")
+    check("property real paintOverlap: 0" in abyss_edge_surface
+          and "ownerPaintOverlap: root.paintOverlap" in abyss_edge_surface,
+          "Direct Abyss edge adapter must expose opt-in paint-only seam overlap")
+    check("property real tangentFrameThickness: ownerThickness" in abyss_edge_surface
+          and "externalFrameThickness: root.tangentFrameThickness" in abyss_edge_surface,
+          "Direct Abyss edge adapter must separate primary-owner and tangent-frame thickness")
 
     perimeter_tokens = read("modules/common/perimeter/PerimeterTokens.qml")
     for token in (
         "const revision = Config.revision",
         "Config.options?.appearance?.screenEdge?.radius ?? 25",
         "Math.max(0, Math.min(96",
-        "readonly property real irisFuseDepth: 30",
-        "readonly property real irisWeldDepth: 3",
+        "readonly property real abyssFuseDepth: 30",
+        "readonly property real abyssWeldDepth: 3",
         "readonly property real popupRadius: 28",
     ):
         check(token in perimeter_tokens,
@@ -137,17 +137,17 @@ def main() -> None:
     check("tangentAnimationOffset" not in geometry
           and "tangentRevealDirection" not in geometry,
           "Connected popup slide must remain on the attachment axis like Caelestia wrappers")
-    check("seamOverlap: PerimeterTokens.irisWeldDepth" in styled_popup,
+    check("seamOverlap: PerimeterTokens.abyssWeldDepth" in styled_popup,
           "Bar popup SDF must preserve the primary-owner weld while the reveal clip keeps owner pixels hidden")
     check("readonly property real _popupScreenMargin: root._screenEdgeThickness" in styled_popup
-          and "readonly property rect sdfBodyRect:" in iris_frame,
+          and "readonly property rect sdfBodyRect:" in abyss_frame,
           "Tangent-clamped Bar popups must stop at the real Screen Edge boundary and weld only their SDF record")
     check("ConnectedSurfaceRevealClip {" in styled_popup
           and "opacity: 1" in styled_popup,
           "Connected popup must use pure slide-under clipping instead of staged fade/scale")
 
     # Bottom-left Quick Notes is interaction/popup ownership only. It must
-    # consume the shared StyledPopup/iRiS presentation path and never become a
+    # consume the shared StyledPopup/Abyss presentation path and never become a
     # second physical Screen Edge painter.
     quick_notes_popup = read("modules/screenCorners/QuickNotesPopup.qml")
     screen_corners = read("modules/screenCorners/ScreenCorners.qml")
@@ -182,14 +182,14 @@ def main() -> None:
     ):
         check(not (ROOT / retired_path).exists(),
               f"Retired round-wedge geometry must be absent: {retired_path}")
-    iris_edge = read("modules/common/perimeter/ConnectedSurfaceIrisEdgeSurface.qml")
+    abyss_edge = read("modules/common/perimeter/ConnectedSurfaceAbyssEdgeSurface.qml")
     for token in (
         "readonly property rect weldedBodyRect:",
         "property real ownerThickness: 10",
-        "ConnectedSurfaceIrisFrame {",
+        "ConnectedSurfaceAbyssFrame {",
         "externalFrameThickness: root.tangentFrameThickness",
     ):
-        check(token in iris_edge, f"iRiS edge adapter contract missing: {token}")
+        check(token in abyss_edge, f"Abyss edge adapter contract missing: {token}")
 
     check("hoverEnabled: root.active" in styled_popup
           and "onBodyHoveredChanged: root._bodyHovered = bodyHovered" in styled_popup
@@ -228,13 +228,13 @@ def main() -> None:
           and "externalPressedState: compactMouse.pressed" in waffle_tile,
           "Waffle compact tile must explicitly route hover/press from its child MouseArea")
 
-    # Auxiliary edge-attached surfaces refined after the iRiS migration must
+    # Auxiliary edge-attached surfaces refined after the Abyss migration must
     # keep using the same production connected-surface vocabulary. These guards
     # intentionally check presentation ownership only; feature/IPC lifecycle
     # remains owned by each subsystem.
     region_selection = read("modules/regionSelector/RegionSelection.qml")
     for token in (
-        "ConnectedSurfaceIrisEdgeSurface {",
+        "ConnectedSurfaceAbyssEdgeSurface {",
         'edge: "bottom"',
         "ownerThickness: root.screenEdgeThickness",
         "physicalShadow?.enabled ?? true",
@@ -255,20 +255,20 @@ def main() -> None:
         check(token in region_selection,
               f"Region selector connected Screen Edge controls missing: {token}")
     check("opacity: regionSelectionControls.opacity" not in region_selection,
-          "Region selector outer iRiS shell must not fade with toolbar content")
+          "Region selector outer Abyss shell must not fade with toolbar content")
 
     osd = read("modules/onScreenDisplay/OnScreenDisplay.qml")
     for token in (
-        "ConnectedSurfaceIrisFrame {",
+        "ConnectedSurfaceAbyssFrame {",
         "ConnectedSurfaceBodyMask {",
-        "seamOverlap: PerimeterTokens.irisWeldDepth",
-        "fuseDepth: PerimeterTokens.irisFuseDepth",
+        "seamOverlap: PerimeterTokens.abyssWeldDepth",
+        "fuseDepth: PerimeterTokens.abyssFuseDepth",
         "visibleBodyRect: statusFrame.visibleBodyRect",
         "physicalShadow?.enabled ?? true",
         "Appearance.m3colors.m3shadow",
     ):
         check(token in osd,
-              f"Compact IPC/OSD popup iRiS contract missing: {token}")
+              f"Compact IPC/OSD popup Abyss contract missing: {token}")
     check("ConnectedSurfaceFrame {" not in osd
           and "ConnectedSurfaceMask {" not in osd,
           "Compact IPC/OSD popups must not restore the legacy connected frame/mask")
@@ -279,12 +279,12 @@ def main() -> None:
         "ConnectedSurfaceGeometry {",
         'edge: "bottom"',
         "ConnectedSurfaceRevealClip {",
-        "ConnectedSurfaceIrisFrame {",
+        "ConnectedSurfaceAbyssFrame {",
         "ConnectedSurfaceContentHost {",
         "PerimeterTokens.popupRadius",
         "screenMargin: root._screenEdgeThickness",
         "connectorLength: 0",
-        "seamOverlap: PerimeterTokens.irisWeldDepth",
+        "seamOverlap: PerimeterTokens.abyssWeldDepth",
         "externalFrameThickness: root._screenEdgeThickness",
         "physicalShadow?.enabled ?? true",
         "Appearance.m3colors.m3shadow",
@@ -328,14 +328,14 @@ def main() -> None:
         "root.topOwnerThickness",
         "screenMargin: root.screenEdgeThickness",
         "connectorLength: 0",
-        "seamOverlap: PerimeterTokens.irisWeldDepth",
+        "seamOverlap: PerimeterTokens.abyssWeldDepth",
         "ConnectedSurfaceRevealClip {",
-        "ConnectedSurfaceIrisFrame {",
+        "ConnectedSurfaceAbyssFrame {",
         "externalFrameThickness: root.screenEdgeThickness",
         "joinTop: true",
         "joinRight: !root.topBarOwnsEdge",
         "readonly property real topBarFreeRightInset: Math.max(",
-        "PerimeterTokens.irisFuseDepth + 2",
+        "PerimeterTokens.abyssFuseDepth + 2",
         "root.edgeShadowEnabled ? root.edgeShadowSize + 2 : 0",
         "root.topBarOwnsEdge ? root.topBarFreeRightInset : 0",
         "ConnectedSurfaceContentHost {",
@@ -355,7 +355,7 @@ def main() -> None:
     check("joinRight: true" not in toast_manager
           and "joinRight: !root.topBarOwnsEdge" in toast_manager,
           "Reload toast must prefer a real top Bar; right Screen Edge welding is fallback-only")
-    check("ConnectedSurfaceIrisEdgeSurface {" not in toast_manager
+    check("ConnectedSurfaceAbyssEdgeSurface {" not in toast_manager
           and "popup.width - width - root.edgeDecorationMargin" not in toast_manager
           and "x: Math.max(root.edgeDecorationMargin," not in toast_manager,
           "Reload toast must reuse StyledPopup geometry instead of the detached direct-edge host")
@@ -636,8 +636,8 @@ def main() -> None:
         "import qs.modules.common.perimeter",
         "duration: SurfaceMotion.duration",
         "easing.type: SurfaceMotion.easingType",
-        "ConnectedSurfaceIrisEdgeSurface {",
-        "id: dockIrisSurface",
+        "ConnectedSurfaceAbyssEdgeSurface {",
+        "id: dockAbyssSurface",
         "edge: root.position",
         "ownerThickness: dockRoot.screenEdgeThickness",
         "exclusionMode: ExclusionMode.Ignore",
@@ -655,17 +655,17 @@ def main() -> None:
         "screenEdge?.physicalShadow?.size ?? 15",
         "screenEdge?.physicalShadow?.opacity ?? 0.70",
         "Qt.alpha(Appearance.m3colors.m3shadow, dockRoot.screenEdgeShadowOpacity)",
-        "fillColor: dockVisualBackground.irisFillColor",
-        "borderColor: dockVisualBackground.irisBorderColor",
-        "borderWidth: dockVisualBackground.irisBorderWidth",
-        "readonly property color irisFillColor:",
+        "fillColor: dockVisualBackground.abyssFillColor",
+        "borderColor: dockVisualBackground.abyssBorderColor",
+        "borderWidth: dockVisualBackground.abyssBorderWidth",
+        "readonly property color abyssFillColor:",
         "readonly property bool matchDarkPhysicalEdge:",
         "Appearance.m3colors.darkmode",
         "? Appearance.colors.colLayer0",
         ": Appearance.alis.colLayer1",
     ):
         check(token in dock,
-              f"Dock iRiS Screen Edge / shadow contract missing: {token}")
+              f"Dock Abyss Screen Edge / shadow contract missing: {token}")
     check("nativeBlurGeometryExact" not in dock,
           "Dock must not retain an unused blur-proof compatibility alias")
     for stale_corner_override in (
@@ -675,9 +675,9 @@ def main() -> None:
         'bottomRightRadius: (root.position === "bottom" || root.position === "right") ? 0 : radius',
     ):
         check(stale_corner_override not in dock,
-              f"Dock body must not overpaint iRiS weld fillets: {stale_corner_override}")
+              f"Dock body must not overpaint Abyss weld fillets: {stale_corner_override}")
     check("StyledRectangularShadow {" not in dock,
-          "Dock must not retain its detached local shadow after iRiS cutover")
+          "Dock must not retain its detached local shadow after Abyss cutover")
     dock_visual_start = dock.index("sourceComponent: PanelWindow {")
     dock_reservation_start = dock.index("PanelWindow {\n            id: dockReservationWindow")
     check(dock_visual_start >= 0 and dock_reservation_start > dock_visual_start,
@@ -744,16 +744,16 @@ def main() -> None:
     for token in (
         "readonly property real hiddenTranslateDistance:",
         "Math.ceil(root.effectiveSidebarWidth) + Math.max(",
-        "PerimeterTokens.irisFuseDepth",
+        "PerimeterTokens.abyssFuseDepth",
         "? -root.hiddenTranslateDistance",
         ": root.hiddenTranslateDistance",
-        "ConnectedSurfaceIrisEdgeSurface {",
-        "id: sidebarIrisSurface",
+        "ConnectedSurfaceAbyssEdgeSurface {",
+        "id: sidebarAbyssSurface",
         "ownerThickness: root.screenEdgeHoverWidth",
         "paintOverlap: root.screenEdgePaintOverlap",
         "exclusionMode: ExclusionMode.Ignore",
     ):
-        check(token in sidebar_host, f"Sidebar iRiS/full-hide contract missing: {token}")
+        check(token in sidebar_host, f"Sidebar Abyss/full-hide contract missing: {token}")
     for retired in ("ConnectedSurfaceJoinFlares", "joinFlareRadius", "sidebarEdgeFlares"):
         check(retired not in sidebar_host,
               f"Sidebar must not retain retired wedge geometry: {retired}")
@@ -798,10 +798,10 @@ def main() -> None:
         if settings_path.endswith("SettingsOverlay.qml"):
             settings_surface += read("modules/settings/SettingsOverlayNativeHost.qml")
         # Authentication must cover Settings. The native flag matrix in
-        # test-hadalird-polkit-visibility.py exercises yielding and restoration.
+        # test-alis-intergration-polkit-visibility.py exercises yielding and restoration.
         for token in (
             "? WlrLayer.Bottom : WlrLayer.Overlay",
-            "ConnectedSurfaceIrisEdgeSurface {",
+            "ConnectedSurfaceAbyssEdgeSurface {",
             'edge: "bottom"',
             "ownerThickness: root._screenEdgeThickness",
             "bottomLeftRadius: 0",
@@ -809,7 +809,7 @@ def main() -> None:
             'color: "transparent"',
         ):
             check(token in settings_surface,
-                  f"{settings_path} iRiS bottom-attachment contract missing: {token}")
+                  f"{settings_path} Abyss bottom-attachment contract missing: {token}")
         check("ConnectedSurfaceJoinFlares" not in settings_surface,
               f"{settings_path} must not restore legacy endpoint wedge geometry")
 
@@ -838,7 +838,7 @@ def main() -> None:
               and "screenEdge?.physicalShadow?.size" in settings_surface
               and "screenEdge?.physicalShadow?.opacity" in settings_surface
               and "shadowExtent:" in settings_surface,
-              "Connected Settings iRiS surfaces must share the physical Screen Edge shadow controls")
+              "Connected Settings Abyss surfaces must share the physical Screen Edge shadow controls")
         check("ConnectedSurfaceJoinFlares" not in settings_surface,
               "Settings must not reintroduce floating endpoint wedge geometry")
 
@@ -869,14 +869,14 @@ def main() -> None:
     check("SurfaceMotion.duration" in dashboard
           and "SurfaceMotion.easingType" in dashboard,
           "Dashboard connected motion must use immutable SurfaceMotion")
-    check("ConnectedSurfaceIrisEdgeSurface {" in dashboard
-          and "id: dashboardIrisSurface" in dashboard
+    check("ConnectedSurfaceAbyssEdgeSurface {" in dashboard
+          and "id: dashboardAbyssSurface" in dashboard
           and "ownerThickness: root.attachmentThickness" in dashboard
-          and "PerimeterTokens.irisFuseDepth" in dashboard
+          and "PerimeterTokens.abyssFuseDepth" in dashboard
           and "id: dashboardSurfaceLayer" in dashboard
           and "z: 2" in dashboard
           and "ConnectedSurfaceJoinFlares" not in dashboard,
-          "Dashboard bottom attachment must keep content above the iRiS plate without legacy wedge geometry")
+          "Dashboard bottom attachment must keep content above the Abyss plate without legacy wedge geometry")
     dashboard_content = read("modules/dashboard/DashboardContent.qml")
     dashboard_canvas = read("modules/dashboard/DashboardCanvas.qml")
     dashboard_grid = read("modules/dashboard/DashboardEditGrid.qml")
@@ -902,7 +902,7 @@ def main() -> None:
         "wallpaperDominantColor",
         "Appearance.auroraEverywhere",
         "Appearance.angelEverywhere",
-        "Appearance.inirEverywhere",
+        "Appearance.alisEverywhere",
         "Appearance.zzzEverywhere",
     ):
         check(retired_dashboard_surface not in dashboard_content,
@@ -958,10 +958,10 @@ def main() -> None:
     check("PerimeterRuntime.qml" not in critical_panels,
           "Full iiPerimeter runtime must not be booted by the critical shell")
 
-    iris_frame = read("modules/common/perimeter/ConnectedSurfaceIrisFrame.qml")
-    iris_field = read("modules/common/perimeter/ConnectedSurfaceIrisField.qml")
-    iris_frag = read("modules/common/perimeter/IrisField.frag")
-    iris_mask = read("modules/common/perimeter/ConnectedSurfaceBodyMask.qml")
+    abyss_frame = read("modules/common/perimeter/ConnectedSurfaceAbyssFrame.qml")
+    abyss_field = read("modules/common/perimeter/ConnectedSurfaceAbyssField.qml")
+    abyss_frag = read("modules/common/perimeter/AbyssField.frag")
+    abyss_mask = read("modules/common/perimeter/ConnectedSurfaceBodyMask.qml")
     for token in (
         "function clipExternalOwners(raw, primaryOverlap)",
         "readonly property rect visibleBodyRect:",
@@ -985,40 +985,40 @@ def main() -> None:
         "sourceItem: blurredShadow",
         "hideSource: true",
         "smooth: true",
-        "ConnectedSurfaceIrisField {",
+        "ConnectedSurfaceAbyssField {",
         "readonly property bool bodyHovered: bodyHover.hovered",
     ):
-        check(token in iris_frame,
-              f"Production iRiS frame contract missing: {token}")
-    check("ConnectedSurfaceJoinFlares" not in iris_frame
-          and "ConnectedSurfaceConnector" not in iris_frame
-          and "RectangularShadow {" not in iris_frame,
+        check(token in abyss_frame,
+              f"Production Abyss frame contract missing: {token}")
+    check("ConnectedSurfaceJoinFlares" not in abyss_frame
+          and "ConnectedSurfaceConnector" not in abyss_frame
+          and "RectangularShadow {" not in abyss_frame,
           "Connected shadow must use the same smooth-union SDF instead of patch or box shadow geometry")
-    check('fragmentShader: Qt.resolvedUrl("IrisField.frag.qsb")' in iris_field
-          and "readonly property vector4d viewport:" in iris_field
-          and "pass.x, pass.y" in iris_field,
-          "Production iRiS field must use the locked local QSB with output-local viewport coordinates")
+    check('fragmentShader: Qt.resolvedUrl("AbyssField.frag.qsb")' in abyss_field
+          and "readonly property vector4d viewport:" in abyss_field
+          and "pass.x, pass.y" in abyss_field,
+          "Production Abyss field must use the locked local QSB with output-local viewport coordinates")
     for token in (
         "float roundedBoxCorners(",
         "float tangentAwareBody(",
         "primaryRelation > 0.5 && tangentRelation > 0.5",
         "also < -0.5 || also > 0.5",
     ):
-        check(token in iris_frag,
+        check(token in abyss_frag,
               f"Production tangent-contact shader contract missing: {token}")
-    check("tangentQuarterFillet" not in iris_frag
-          and "tangentContribution" not in iris_frag
-          and "tangentShoulder" not in iris_frag
-          and "outsideEllipse" not in iris_frag,
+    check("tangentQuarterFillet" not in abyss_frag
+          and "tangentContribution" not in abyss_frag
+          and "tangentShoulder" not in abyss_frag
+          and "outsideEllipse" not in abyss_frag,
           "Experimental tangent-corner shader paths must stay out of production")
-    check("_sourceStrip" not in iris_mask
-          and "_middleStrip" not in iris_mask
-          and "_bodyStrip" not in iris_mask
-          and "visibleBodyRect" in iris_mask,
-          "StyledPopup iRiS input must be body-only rather than the retired connector-strip approximation")
+    check("_sourceStrip" not in abyss_mask
+          and "_middleStrip" not in abyss_mask
+          and "_bodyStrip" not in abyss_mask
+          and "visibleBodyRect" in abyss_mask,
+          "StyledPopup Abyss input must be body-only rather than the retired connector-strip approximation")
     check("ConnectedSurfaceFrame {" not in styled_popup
           and "ConnectedSurfaceMask {" not in styled_popup,
-          "ii StyledPopup must not silently retain the legacy flare/mask renderer after iRiS cutover")
+          "ii StyledPopup must not silently retain the legacy flare/mask renderer after Abyss cutover")
 
     frame = read("modules/common/perimeter/ConnectedSurfaceFrame.qml")
     check("property real connectorBorderWidth: 0" in frame,

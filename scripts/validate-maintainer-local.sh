@@ -4,8 +4,8 @@ set -uo pipefail
 # newly created log files private even when the caller's umask is permissive.
 umask 077
 
-repo_url="${HADALIS_VALIDATION_REPO_URL:-https://github.com/llocphann/Alis.git}"
-branch="${HADALIS_VALIDATION_BRANCH:-dev}"
+repo_url="${ALIS_VALIDATION_REPO_URL:-https://github.com/llocphann/Alis.git}"
+branch="${ALIS_VALIDATION_BRANCH:-dev}"
 mode="remote"
 strict_qml=0
 original_args=("$@")
@@ -32,7 +32,7 @@ done
 
 workspace="$(mktemp -d "${TMPDIR:-/tmp}/alis-validation.XXXXXX")"
 checkout="$workspace/Alis"
-log_path="${HADALIS_VALIDATION_LOG:-${TMPDIR:-/tmp}/alis-maintainer-validation-$(date +%Y%m%d-%H%M%S).log}"
+log_path="${ALIS_VALIDATION_LOG:-${TMPDIR:-/tmp}/alis-maintainer-validation-$(date +%Y%m%d-%H%M%S).log}"
 if [[ "$log_path" != /* ]]; then
     log_path="$PWD/$log_path"
 fi
@@ -287,7 +287,7 @@ probe_qml_parser() {
 }
 run_qml_guards() {
     local output rc
-    output="$(HADALIS_QMLFORMAT_ALLOW_UNKNOWN="$qml_parser_allow_unknown" fish scripts/qml-check.fish --all 2>&1)"; rc=$?; printf '%s\n' "$output"
+    output="$(ALIS_QMLFORMAT_ALLOW_UNKNOWN="$qml_parser_allow_unknown" fish scripts/qml-check.fish --all 2>&1)"; rc=$?; printf '%s\n' "$output"
     if [[ "$qml_parser_status" == 'QML parser: AVAILABLE '* ]]; then
         if grep -Fq 'QML parser rejected the file' <<<"$output"; then qml_parser_status="${qml_parser_status/AVAILABLE/FAIL}"; else qml_parser_status="${qml_parser_status/AVAILABLE/PASS}"; fi
     fi
@@ -396,7 +396,7 @@ run_check 'source tree remains clean after validation' source_tree_clean
 
 log_line ''
 log_line '========================================'
-log_line 'HADALIS VALIDATION SUMMARY'
+log_line 'ALIS VALIDATION SUMMARY'
 log_line "Exact SHA: $validation_sha"
 log_line "Result: $([[ $failures -eq 0 ]] && printf PASS || printf FAIL)"
 log_line "Checks run: $checks"

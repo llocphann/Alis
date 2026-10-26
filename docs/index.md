@@ -18,12 +18,12 @@ It provides the bar, dock, sidebars, notifications, settings, wallpapers, overvi
 ## Common commands
 
 ```bash
-inir run
-inir restart
-inir settings
-inir logs
-inir doctor
-inir update
+alis run
+alis restart
+alis settings
+alis logs
+alis doctor
+alis update
 ```
 
 ## Branches

@@ -3,7 +3,7 @@
 # Foreign Alis application data (notably ~/.cache/alis) is NEVER overwritten.
 MIGRATION_ID="061-alis-namespace-alias"
 MIGRATION_TITLE="Add Alis XDG namespace aliases"
-MIGRATION_DESCRIPTION="Optionally alias free Alis config/cache/data/state paths to existing iNiR roots. Skip foreign Alis paths without touching them."
+MIGRATION_DESCRIPTION="Optionally alias free Alis config/cache/data/state paths to existing Alis roots. Skip foreign Alis paths without touching them."
 MIGRATION_TARGET_FILE=""
 MIGRATION_REQUIRED=false
 
@@ -19,8 +19,8 @@ _alis_alias_collect() {
         "${XDG_CACHE_HOME:-$HOME/.cache}" \
         "${XDG_DATA_HOME:-$HOME/.local/share}" \
         "${XDG_STATE_HOME:-$HOME/.local/state}"; do
-        [[ -d "$base/inir" ]] || continue
-        _alis_alias_sources+=("$base/inir")
+        [[ -d "$base/alis" ]] || continue
+        _alis_alias_sources+=("$base/alis")
         _alis_alias_destinations+=("$base/alis")
     done
 }
@@ -29,7 +29,7 @@ _alis_alias_compatible() {
     local src="$1" dest="$2" linked=""
     [[ -L "$dest" ]] || return 1
     linked="$(readlink -- "$dest" 2>/dev/null || true)"
-    [[ "$linked" == "$src" || "$linked" == "inir" ]]
+    [[ "$linked" == "$src" || "$linked" == "alis" ]]
 }
 
 migration_check() {
@@ -48,7 +48,7 @@ migration_preview() {
     _alis_alias_collect
     local i src dest
     if [[ ${#_alis_alias_sources[@]} -eq 0 ]]; then
-        printf 'No existing iNiR XDG directories need aliases.\n'
+        printf 'No existing Alis XDG directories need aliases.\n'
     fi
     for i in "${!_alis_alias_sources[@]}"; do
         src="${_alis_alias_sources[i]}"

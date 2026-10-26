@@ -39,7 +39,7 @@ exec "$ANTI_TEST_REAL_GRIM" "$@"
 SH
 chmod +x "$brightness_test_root/bin/brightnessctl" "$brightness_test_root/bin/ddcutil" "$brightness_test_root/bin/grim"
 cat > "$brightness_test_root/shell.qml" <<'QML'
-//@ pragma ShellId hadalis-anti-flashbang-brightness-test
+//@ pragma ShellId alis-anti-flashbang-brightness-test
 import QtQuick
 import Quickshell
 import qs

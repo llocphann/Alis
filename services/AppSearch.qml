@@ -397,7 +397,7 @@ Singleton {
             threshold: -10000 // Get all results, we'll filter ourselves
         })
 
-        // Apply Hadalis' custom boosts after fuzzysort. Keep only the
+        // Apply Alis' custom boosts after fuzzysort. Keep only the
         // requested top-K when a bounded caller (launcher/icon lookup) asks for
         // it; unlimited callers preserve the original full-sort behavior.
         if (limit > 0) {

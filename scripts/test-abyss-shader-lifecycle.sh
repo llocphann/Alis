@@ -9,7 +9,7 @@ fi
 python3 - "$repo_root" <<'PY'
 import json, os, pathlib, re, subprocess, sys, tempfile
 repo = pathlib.Path(sys.argv[1])
-with tempfile.TemporaryDirectory(prefix='hadalis-abyss-shader-') as tmp:
+with tempfile.TemporaryDirectory(prefix='alis-abyss-shader-') as tmp:
     root = pathlib.Path(tmp)
     for entry in ('modules', 'services', 'GlobalStates.qml', 'qmldir', 'assets', 'scripts', 'defaults', 'translations'):
         (root / entry).symlink_to(repo / entry)
@@ -25,7 +25,7 @@ with tempfile.TemporaryDirectory(prefix='hadalis-abyss-shader-') as tmp:
     (root / 'BrokenField.qml').write_text(broken)
     (root / 'AbyssField.vert.qsb').symlink_to(repo / 'modules/abyss/looks/AbyssField.vert.qsb')
     (root / 'broken.qsb').write_bytes(b'not a Qt shader package')
-    (root / 'shell.qml').write_text('''//@ pragma ShellId hadalis-abyss-shader-test
+    (root / 'shell.qml').write_text('''//@ pragma ShellId alis-abyss-shader-test
 import QtQuick
 import Quickshell
 import qs.modules.common

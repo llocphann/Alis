@@ -14,7 +14,7 @@ def png(width,height):
     scan=(b"\0"+bytes([35,170,220,255])*width)*height
     return b"\x89PNG\r\n\x1a\n"+chunk(b"IHDR",struct.pack(">IIBBBBB",width,height,8,6,0,0,0))+chunk(b"IDAT",zlib.compress(scan))+chunk(b"IEND",b"")
 
-with tempfile.TemporaryDirectory(prefix="hadalis-clipboard-image-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-clipboard-image-") as name:
     folder=Path(name)
     for entry in ["services","GlobalStates.qml","qmldir","assets","scripts","defaults","translations"]:
         (folder/entry).symlink_to(ROOT/entry)

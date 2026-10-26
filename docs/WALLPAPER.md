@@ -12,7 +12,7 @@ Pick a wallpaper and the entire desktop follows. Colors propagate to the shell, 
 
 Choose **Liquid** under Settings → Appearance → Background → Motion.
 The `alisMelt` preference uses the bundled GLSL/QSB shader. Saved
-`inirMelt` preferences still use the same shader. Abyss Liquid now reveals
+`alisMelt` preferences still use the same shader. Abyss Liquid now reveals
 wallpapers with an organic, softly refracting fluid front instead of discrete
 vertical columns. Its moving membrane deliberately shares the actual
 Abyss Panel material: `AbyssStyle.surface`, `surfaceRaised`, `specular`,
@@ -93,7 +93,7 @@ The "backdrop" is a separate wallpaper (or the main wallpaper with heavy blur) u
 
 ## Auto-cycling
 
-Set an interval and iNiR cycles through wallpapers in a directory automatically. Configurable per-directory with optional color regeneration on each change.
+Set an interval and Alis cycles through wallpapers in a directory automatically. Configurable per-directory with optional color regeneration on each change.
 
 Settings -> Appearance -> Background -> Shuffle wallpapers controls:
 
@@ -116,12 +116,12 @@ When a preset is active, changing wallpapers still changes the background image 
 
 ## CLI reference
 
-There is no `inir wallpapers` command. The real IPC target is
+There is no `alis wallpapers` command. The real IPC target is
 `wallpaperSelector` (see [docs/IPC.md](IPC.md)):
 
 ```bash
-inir wallpaperSelector toggle   # Open/close the wallpaper picker grid
-inir wallpaperSelector random   # Pick a random wallpaper from the current folder
+alis wallpaperSelector toggle   # Open/close the wallpaper picker grid
+alis wallpaperSelector random   # Pick a random wallpaper from the current folder
 ```
 
 Setting a specific wallpaper by path is done through the picker UI (or the

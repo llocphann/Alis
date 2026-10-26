@@ -12,7 +12,7 @@ layout {
     gaps 25
 
     // Keep the workspace itself transparent. The overview backdrop is a separate
-    // compositor plane; Hadalis places its wallpaper surface there via the layer
+    // compositor plane; Alis places its wallpaper surface there via the layer
     // rule in 80-layer-rules.kdl.
     background-color "transparent"
 
@@ -106,7 +106,7 @@ overview {
     zoom 0.75
 
     // Niri backdrop colors are opaque (their alpha channel is ignored). Leave
-    // this unset so the Hadalis wallpaper layer placed within the backdrop can
+    // this unset so the Alis wallpaper layer placed within the backdrop can
     // own the hot-corner/overview background instead of a hard-coded gray fill.
     // backdrop-color "#777777"
 

@@ -20,7 +20,7 @@ import tempfile
 
 REPO = Path(__file__).resolve().parents[2]
 QML = REPO / "services" / "IconThemeService.qml"
-THEME = "Hadalis-Native-Fixture"
+THEME = "Alis-Native-Fixture"
 
 FILES = {
     "kdeglobals": ("Icons", "Theme"),
@@ -179,7 +179,7 @@ def main() -> int:
     source = QML.read_text()
     assert_consumer_order(source)
 
-    with tempfile.TemporaryDirectory(prefix="hadalis-icon-parity.") as temp_raw:
+    with tempfile.TemporaryDirectory(prefix="alis-icon-parity.") as temp_raw:
         temp = Path(temp_raw)
         py_home = temp / "python"
         rs_home = temp / "rust"

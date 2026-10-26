@@ -1,20 +1,20 @@
-  INFO: Launching config: "/tmp/hadalis-dashboard-music-fxhefn3e/shell.qml"
+  INFO: Launching config: "/tmp/alis-dashboard-music-fxhefn3e/shell.qml"
   INFO: Shell ID: "53b4030c393c912842e38c7800f591d8" Path ID "53b4030c393c912842e38c7800f591d8"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/zucdgtarmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.623165.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-fxhefn3e/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-music-fxhefn3e/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/hadalis-dashboard-music-fxhefn3e/state/quickshell/user/notifications.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-music-fxhefn3e/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dashboard-music-fxhefn3e/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/alis-dashboard-music-fxhefn3e/state/quickshell/user/notifications.json failed: File does not exist.
  DEBUG qml: [Notifications] File not found, creating new file.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[412:5]: Read of /tmp/hadalis-dashboard-music-fxhefn3e/state/quickshell/user/todo.txt failed: File does not exist.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[337:5]: Read of /tmp/hadalis-dashboard-music-fxhefn3e/state/quickshell/user/todo.json failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[412:5]: Read of /tmp/alis-dashboard-music-fxhefn3e/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[337:5]: Read of /tmp/alis-dashboard-music-fxhefn3e/state/quickshell/user/todo.json failed: File does not exist.
  DEBUG qml: [Todo] JSON not found, creating new file.
-  WARN scene: QML FileView at @services/Events.qml[62:5]: Read of /tmp/hadalis-dashboard-music-fxhefn3e/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[62:5]: Read of /tmp/alis-dashboard-music-fxhefn3e/state/quickshell/user/events.json failed: File does not exist.
  DEBUG qml: [Events] File not found, creating new file.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fef5efce380)
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-fxhefn3e/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-music-fxhefn3e/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
   INFO qml: [Weather] Getting location from IP...
   INFO qml: [Weather] Location: [redacted]

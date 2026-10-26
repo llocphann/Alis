@@ -1,6 +1,6 @@
 # QML/Quickshell Performance Optimization Guide
 
-Best practices for optimizing iNiR based on Qt6 QML documentation and KDAB recommendations.
+Best practices for optimizing Alis based on Qt6 QML documentation and KDAB recommendations.
 
 ## Quick Reference
 
@@ -223,7 +223,7 @@ Rectangle {
 
 ## 12. Null Safety & Config Access
 
-iNiR's config uses Quickshell's `JsonAdapter` + `FileView`. Every property is declared in `Config.qml` with a typed default. When the user's `config.json` has a value, JsonAdapter reads it; when it doesn't, the schema default applies. The property always exists for declared schema keys.
+Alis's config uses Quickshell's `JsonAdapter` + `FileView`. Every property is declared in `Config.qml` with a typed default. When the user's `config.json` has a value, JsonAdapter reads it; when it doesn't, the schema default applies. The property always exists for declared schema keys.
 
 ```qml
 // Config access: schema properties are guaranteed by JsonAdapter
@@ -231,7 +231,7 @@ property int value: Config.options.bar.cornerStyle  //  always valid
 
 // ❌ Direct assignment: persists to disk via JsonAdapter, but does NOT emit
 //    configChanged(). Listeners (settings pages, bar layout, theme reactivity)
-//    will not update. This is the #1 silent bug source in iNiR.
+//    will not update. This is the #1 silent bug source in Alis.
 // Config.options.bar.bottom = true
 
 // ✅ Always use setNestedValue(): persists to disk AND emits configChanged()
@@ -274,7 +274,7 @@ Native blur is deliberately shape-aware. Rounded rectangles publish their exact 
 
 Launchers, overview, wallpaper pickers and most other heavy panels are created on demand. Their IPC commands remain registered through lightweight routers. Sidebars are the deliberate exception: their fullscreen roots load in the deferred phase, their content waits for the first valid mapped geometry, and both remain resident afterward so rapid close/reopen can reverse one surface without rebuilding its workspace.
 
-Thumbnail jobs launched by the wallpaper and generated-image pickers run in a transient user scope rather than the `inir.service` cgroup. `inir restart` cancels any unfinished iNiR thumbnail pool, and completed scopes are collected automatically, so their workers and page cache are not reported as shell memory.
+Thumbnail jobs launched by the wallpaper and generated-image pickers run in a transient user scope rather than the `alis.service` cgroup. `alis restart` cancels any unfinished Alis thumbnail pool, and completed scopes are collected automatically, so their workers and page cache are not reported as shell memory.
 
 ### Stateful visual lifetimes
 

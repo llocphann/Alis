@@ -16,10 +16,10 @@ RETIRED = (
     "automation/chat_bridge/desktop_host.py",
     "scripts/AUTO-F01-service-probe.py",
     "scripts/alis-automation-task.py",
-    "scripts/hadalis-automation-control.py",
-    "scripts/hadalis-git-credential.py",
-    "scripts/inspect-hadalis-native-scope.mjs",
-    "scripts/install-hadalis-automation.py",
+    "scripts/alis-automation-control.py",
+    "scripts/alis-git-credential.py",
+    "scripts/inspect-alis-native-scope.mjs",
+    "scripts/install-alis-automation.py",
 )
 UNRELATED = (
     "modules/settings/CompanionConfig.qml",

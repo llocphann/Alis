@@ -95,7 +95,7 @@ Singleton {
         id: obsidian
         active: (root.useObsidian || root._obsidianSetupActive) && root.useLegacyManagedNote
         vaultPath: root.sharedVaultPath
-        notePath: String(Config.options?.todo?.obsidian?.notePath ?? "Hadalis/Todo.md")
+        notePath: String(Config.options?.todo?.obsidian?.notePath ?? "Alis/Todo.md")
         preferTasksPlugin: Config.options?.todo?.obsidian?.preferTasksPlugin ?? true
         allowBasicOfflineMutation:
             Config.options?.todo?.obsidian?.allowBasicOfflineMutation ?? true

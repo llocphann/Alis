@@ -14,7 +14,7 @@
   "qml_parser": "PASS; qmlformat on Qt 6.11.2",
   "source_tree_clean_in_validator": true,
   "log_sha256": "d60ce0537bae2a13b221841caa554bc2f266baaa328d748d020193ddc04b106d",
-  "private_log_path": "/tmp/hadalis-aqua-presence-79490997e.log",
+  "private_log_path": "/tmp/alis-aqua-presence-79490997e.log",
   "failed_checks": [
     {
       "check": "Python regression: scripts/test-abyss-dock-menu-axis-contract.py",
@@ -153,7 +153,7 @@
       "exit": 1
     },
     {
-      "check": "shell regression: scripts/test-hadalis-desktop-repair.sh",
+      "check": "shell regression: scripts/test-alis-desktop-repair.sh",
       "exit": 2
     },
     {

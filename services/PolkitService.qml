@@ -117,7 +117,7 @@ Singleton {
                 return
 
             // FailedToStart does not emit exited; lack of pidof must not disable
-            // Hadalis' own authentication agent.
+            // Alis' own authentication agent.
             root._loadImpl()
         }
 

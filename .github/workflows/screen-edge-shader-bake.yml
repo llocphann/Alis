@@ -28,7 +28,7 @@ jobs:
       - name: Bake reproducible Screen Edge QSB
         run: |
           set -euo pipefail
-          cd /__w/Hadalis/Hadalis
+          cd /__w/Alis/Alis
 
           QSB="$(command -v qsb || true)"
           if [ -z "$QSB" ]; then QSB=/usr/lib/qt6/bin/qsb; fi
@@ -51,7 +51,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
-          cd /__w/Hadalis/Hadalis
+          cd /__w/Alis/Alis
           python3 - <<'PY'
           import base64
           import json
@@ -76,7 +76,7 @@ jobs:
                       "Accept": "application/vnd.github+json",
                       "Authorization": f"Bearer {token}",
                       "X-GitHub-Api-Version": "2022-11-28",
-                      "User-Agent": "hadalis-screen-edge-qsb-baker",
+                      "User-Agent": "alis-screen-edge-qsb-baker",
                   },
               )
               with urlopen(req) as response:

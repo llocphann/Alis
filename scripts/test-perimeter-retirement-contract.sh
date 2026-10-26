@@ -55,9 +55,9 @@ for export in \
     'ConnectedSurfaceFrame 1.0 ConnectedSurfaceFrame.qml' \
     'ConnectedSurfaceContentHost 1.0 ConnectedSurfaceContentHost.qml' \
     'ConnectedSurfaceMask 1.0 ConnectedSurfaceMask.qml' \
-    'ConnectedSurfaceIrisField 1.0 ConnectedSurfaceIrisField.qml' \
-    'ConnectedSurfaceIrisFrame 1.0 ConnectedSurfaceIrisFrame.qml' \
-    'ConnectedSurfaceIrisEdgeSurface 1.0 ConnectedSurfaceIrisEdgeSurface.qml' \
+    'ConnectedSurfaceAbyssField 1.0 ConnectedSurfaceAbyssField.qml' \
+    'ConnectedSurfaceAbyssFrame 1.0 ConnectedSurfaceAbyssFrame.qml' \
+    'ConnectedSurfaceAbyssEdgeSurface 1.0 ConnectedSurfaceAbyssEdgeSurface.qml' \
     'ConnectedSurfaceBodyMask 1.0 ConnectedSurfaceBodyMask.qml'; do
     grep -Fq "$export" "$qmldir" || fail "supported perimeter export missing: $export"
 done
@@ -67,12 +67,12 @@ grep -Fq 'PerimeterTopology.inwardDirectionForEdge(edge)' "$geometry" \
 grep -Fq 'property real connectorWidth: PerimeterTokens.connectorWidth' "$geometry" \
     || fail 'ConnectedSurfaceGeometry lost shared connector tokens'
 
-for primitive in ConnectedSurfaceGeometry ConnectedSurfaceIrisFrame ConnectedSurfaceContentHost ConnectedSurfaceBodyMask; do
+for primitive in ConnectedSurfaceGeometry ConnectedSurfaceAbyssFrame ConnectedSurfaceContentHost ConnectedSurfaceBodyMask; do
     grep -Fq "$primitive" "$styled" || fail "StyledPopup no longer uses supported primitive: $primitive"
 done
 
-grep -Fq 'ConnectedSurfaceIrisEdgeSurface {' "$sidebar" \
-    || fail 'SidebarHost lost the supported iRiS edge-surface adapter'
+grep -Fq 'ConnectedSurfaceAbyssEdgeSurface {' "$sidebar" \
+    || fail 'SidebarHost lost the supported Abyss edge-surface adapter'
 grep -Fq 'readonly property real hiddenTranslateDistance:' "$sidebar" \
     || fail 'SidebarHost lost its full-hide distance'
 if grep -Fq 'ConnectedSurfaceConnector {' "$sidebar" \

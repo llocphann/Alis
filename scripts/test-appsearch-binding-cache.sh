@@ -14,7 +14,7 @@ import Quickshell
 import qs.services
 ShellRoot {
     id:root;property int step:0;property bool finished:false
-    property string query:"hadalis-nonexistent-binding-fixture"
+    property string query:"alis-nonexistent-binding-fixture"
     readonly property string guessedIcon:AppSearch.guessIcon(query)
     function check(ok,message): bool { if(ok)return true;console.error("SEARCH_CACHE_FAIL",message);finished=true;return false }
     Timer {

@@ -8,7 +8,7 @@ Scope: find remaining optimization opportunities that are either strict-lossless
 
 Rules:
 
-- Do not claim whole-Hadalis CPU/GPU/RAM/FPS percentages without before/after measurement.
+- Do not claim whole-Alis CPU/GPU/RAM/FPS percentages without before/after measurement.
 - Preserve runtime behavior, read/dependency order, lifecycle, input/focus, output ownership and fallbacks.
 - A visual-change candidate must have a deterministic or owner-session A/B oracle and stay below 1% normalized visual error before promotion.
 - Prefer lifecycle/allocation/render-pass removal over changing animation timing or fidelity.
@@ -49,7 +49,7 @@ Earlier `NO ACTION`, `ALREADY OPTIMIZED`, `MEASURE FIRST`, `SUPERSEDED`, and `NO
 
 | `modules/common/widgets/GlassBackground.qml` + `AngelBackground.qml` + `RicelinSurface.qml` + `ZzzGlassWash.qml` | **HIGH-CONFIDENCE CANDIDATE — bound wallpaper-glass rendering to the visible surface.** These helpers position a screen-sized wallpaper behind a usually much smaller panel, then enable a `MultiEffect` layer on that screen-sized item and mask/clip the result back to the panel. `GlassBackground.qml` explicitly notes that hiding the layer releases roughly 16 MiB per instance. Research a padded, screen-aligned local capture/sourceRect whose bounds are only the panel plus exact blur reach. Keep the original decoded wallpaper cache and sampling transform. | Medium. Crop coordinates, PreserveAspectCrop mapping, fractional scale and corner masks must be exact. | **High local/persistent potential** for visible glass panels because the offscreen blur area can fall from screen area to panel+padding area. | **High local potential** from smaller FBO/effect intermediates; decoded source cache may remain shared. | 0% is plausible for a sourceRect/crop-only path if blur padding and sampling coordinates are exact; otherwise require <1% raster A/B. |
 | `modules/bar/BarContent.qml` + `modules/dock/Dock.qml` | **HIGH-CONFIDENCE CANDIDATE — full-screen wallpaper layer used to paint only a thin Bar/Dock slice.** Both Aurora/Angel fallback paths create an Image sized to the whole output, then enable `MultiEffect` blur while the parent clips to Bar/Dock geometry. Research capture-before-blur: retain the same screen-aligned wallpaper transform but materialize only the visible strip/body plus `blurMax` support. Native-blur paths stay unchanged. | Medium. All four Dock edges, Bar top/bottom ownership, PreserveAspectCrop and blur-edge support must be exact. | **High local potential** on non-native-blur Aurora/Angel paths; structural work scales with cropped area rather than full output. | **High local potential**: a full-screen RGBA8 layer is ~7.9 MiB at 1920×1080 and ~31.6 MiB at 3840×2160 before effect intermediates; the candidate should allocate only strip/body+padding textures. These are texture-size calculations, not measured RSS savings. | Target 0%; exact crop oracle should compare every visible pixel including 64 px blur reach. |
-| `modules/common/perimeter/ConnectedSurfaceIrisFrame.qml` | **HIGH-CONFIDENCE CANDIDATE — connected shadow has a 4-stage render chain.** Current path renders a second `ConnectedSurfaceIrisField` as a shadow mask, captures it with `ShaderEffectSource`, blurs via `MultiEffect`, then captures the blurred result again with another `ShaderEffectSource` to enforce owner-side clipping. First investigate eliminating only the second capture with an exact clipped presentation item; separately evaluate an analytic SDF shadow integrated with the field as a <1% visual candidate. | Medium for capture elimination; Medium–High for analytic shadow. Owner-side scissoring, tangent weld rules and fractional scale are locked contracts. | Medium–High while connected popups/OSD/toasts/clipboard/edge surfaces are visible; savings multiply because this frame is reused by multiple surface families. | Medium from removing one or more transient shadow textures. | 0% target for second-capture removal; analytic replacement requires <1% global/edge-band A/B and existing shadow contract parity. |
+| `modules/common/perimeter/ConnectedSurfaceAbyssFrame.qml` | **HIGH-CONFIDENCE CANDIDATE — connected shadow has a 4-stage render chain.** Current path renders a second `ConnectedSurfaceAbyssField` as a shadow mask, captures it with `ShaderEffectSource`, blurs via `MultiEffect`, then captures the blurred result again with another `ShaderEffectSource` to enforce owner-side clipping. First investigate eliminating only the second capture with an exact clipped presentation item; separately evaluate an analytic SDF shadow integrated with the field as a <1% visual candidate. | Medium for capture elimination; Medium–High for analytic shadow. Owner-side scissoring, tangent weld rules and fractional scale are locked contracts. | Medium–High while connected popups/OSD/toasts/clipboard/edge surfaces are visible; savings multiply because this frame is reused by multiple surface families. | Medium from removing one or more transient shadow textures. | 0% target for second-capture removal; analytic replacement requires <1% global/edge-band A/B and existing shadow contract parity. |
 | `services/ResourceUsage.qml` + `modules/common/widgets/ResourceUsageMonitor.qml` | **HIGH-CONFIDENCE CANDIDATE — metric-demand gating.** Lifecycle is already good for history/network, but every active lease still initializes/polls GPU and starts `diskPollTimer` regardless of whether the consumer displays GPU/disk. Default process-backed GPU cadence is 6 s (15 s in Low Power) and disk launches `df -B1 /` every 30 s. Add independent GPU/temperature/disk demand bits, prime each metric when demand appears, and preserve existing defaults for callers until all consumers are annotated. | Low–Medium. Must preserve immediate freshness when a metric becomes visible and existing retry/startup semantics. | None directly; may reduce dGPU/process activity and system power rather than rendering work. | Negligible direct RAM. | 0%. |
 | `modules/background/Backdrop.qml` + `modules/waffle/backdrop/WaffleBackdrop.qml` | **MEASURE FIRST — full-screen blur is inherently full-screen, but animated branches remain expensive.** Static Aurora already decodes/renders at half resolution in the ii backdrop; GIF/video blur is gated by animation/effects/battery state and frozen-video frames release the decoder. Do not duplicate the Bar/Dock crop strategy here because the visible result is the whole output. Profile animated blur and transition overlap before proposing further visual compromise. | High for small expected gain unless profiling identifies a dominant branch. | Potentially high only during animated blurred wallpapers; otherwise current gating is already strong. | Medium transient during crossfade/animated blur. | 0% preferred; any temporal/downsample change requires <1% visual metric plus motion acceptance. |
 | `modules/lock/LockSurface.qml` | **MEASURE FIRST — many small effect layers plus one full-screen safe blur.** Current file contains one safe `MultiEffect` wallpaper blur and numerous conditional DropShadow layers on lock-screen text/icons. The focus retry timer is bounded by attempts and is not an idle-loop target. Profile effect-node/FBO residency while locked before considering group-shadow consolidation. | High because lock readability/authentication reliability outrank micro-savings. | Medium only while locked if many individual shadow layers are simultaneously materialized. | Low–Medium. | Target 0%; do not change legibility or focus timing. |
@@ -69,9 +69,9 @@ Earlier `NO ACTION`, `ALREADY OPTIMIZED`, `MEASURE FIRST`, `SUPERSEDED`, and `NO
 | `modules/wallpaperSelector/WallpaperSkewView.qml` | **HIGH-CONFIDENCE transient CPU/process candidate — uncached color analysis.** In addition to the GPU mask candidate above, current `dev` automatically walks every non-video item after color-cache load, component completion, count changes and folder changes; uncached images are processed in batches of 20 by one Bash script that invokes ImageMagick `convert` once per image. This work happens even with default `sortMode: "date"` and no color filter selected. Research a single native/batched analyzer with parity to the current 1×1 HSL result; separately evaluate demand-driven analysis only if color-filter first-use latency is explicitly accepted. | Medium. Hue/saturation bucket output, failure handling, queue ordering and cache publication must remain stable. Cache identity is currently filename-only and collides across folders; do not optimize around that bug without defining migration/path identity. | None. | Low direct RAM; lower transient child-process memory. | 0% for native-equivalent analysis; deferred first-use analysis changes interaction latency and is not strict behavioral parity. |
 
 
-| `scripts/inir` | **HIGH-CONFIDENCE startup latency/process candidate — repair the pre-QML environment cache and ABI fast path.** `_get_systemd_user_env()` mutates cache variables but both consumers capture it with command substitution, so the function runs in a subshell and its cache state does not reach the parent. `apply_qt_runtime_env()` can therefore invoke bounded `systemctl --user show-environment`, then background `ensure_systemd_graphical_env` invokes it again while QML starts. Separately, `check_qs_abi()` runs `qs --version` before consulting the mtime-keyed successful ABI cache. Populate/read environment cache in the parent shell, parse the snapshot once, and move the exact successful ABI cache check ahead of `qs --version` while retaining a full probe when binary/library identity changes. | Low–Medium. Session env recovery and ABI mismatch protection are startup-critical; fallback paths must remain byte/condition equivalent. | None. | Negligible steady RAM; lower transient process memory. | 0%; no UI behavior change. |
-| `shell.qml` + `services/ThinkFanService.qml` | **HIGH-CONFIDENCE default-startup process candidate — demand-gate ThinkFan ownership.** `shell.qml` force-materializes `ThinkFanService` every session, while the shipped default is `powerProfiles.fanControl.enabled=false`. The singleton immediately runs `/usr/libexec/inir-thinkfan --status` on completion. Keep session-long ownership when profile fan control is enabled, react when it becomes enabled later, and let Settings/System Monitor materialize/refresh the service on demand otherwise. | Low–Medium. Must preserve profile-follow immediately after enable and existing managed/direct-control detection. | None. | Negligible direct RAM; avoids helper/process fan-out on default sessions. | 0%. |
-| `services/Battery.qml` + `services/TlpService.qml` | **HIGH-CONFIDENCE default-startup process candidate — separate normal battery telemetry from charge-care capability.** Battery unconditionally binds many `TlpService.*` properties, which materializes `TlpService`; its completion unconditionally runs `/usr/libexec/inir-battery-charge-limit --status` even though shipped `battery.chargeLimit.enable=false`. Demand-load/prime the charge-limit adapter when charge care is enabled or the Battery/TLP Settings surface needs capability details; keep ordinary UPower battery state independent. | Medium. Settings must get authoritative capability/status immediately on first presentation, and enabled policies must reconcile on boot before any write. | None. | Negligible direct RAM; avoids helper/process fan-out on default sessions. | 0%. |
+| `scripts/alis` | **HIGH-CONFIDENCE startup latency/process candidate — repair the pre-QML environment cache and ABI fast path.** `_get_systemd_user_env()` mutates cache variables but both consumers capture it with command substitution, so the function runs in a subshell and its cache state does not reach the parent. `apply_qt_runtime_env()` can therefore invoke bounded `systemctl --user show-environment`, then background `ensure_systemd_graphical_env` invokes it again while QML starts. Separately, `check_qs_abi()` runs `qs --version` before consulting the mtime-keyed successful ABI cache. Populate/read environment cache in the parent shell, parse the snapshot once, and move the exact successful ABI cache check ahead of `qs --version` while retaining a full probe when binary/library identity changes. | Low–Medium. Session env recovery and ABI mismatch protection are startup-critical; fallback paths must remain byte/condition equivalent. | None. | Negligible steady RAM; lower transient process memory. | 0%; no UI behavior change. |
+| `shell.qml` + `services/ThinkFanService.qml` | **HIGH-CONFIDENCE default-startup process candidate — demand-gate ThinkFan ownership.** `shell.qml` force-materializes `ThinkFanService` every session, while the shipped default is `powerProfiles.fanControl.enabled=false`. The singleton immediately runs `/usr/libexec/alis-thinkfan --status` on completion. Keep session-long ownership when profile fan control is enabled, react when it becomes enabled later, and let Settings/System Monitor materialize/refresh the service on demand otherwise. | Low–Medium. Must preserve profile-follow immediately after enable and existing managed/direct-control detection. | None. | Negligible direct RAM; avoids helper/process fan-out on default sessions. | 0%. |
+| `services/Battery.qml` + `services/TlpService.qml` | **HIGH-CONFIDENCE default-startup process candidate — separate normal battery telemetry from charge-care capability.** Battery unconditionally binds many `TlpService.*` properties, which materializes `TlpService`; its completion unconditionally runs `/usr/libexec/alis-battery-charge-limit --status` even though shipped `battery.chargeLimit.enable=false`. Demand-load/prime the charge-limit adapter when charge care is enabled or the Battery/TLP Settings surface needs capability details; keep ordinary UPower battery state independent. | Medium. Settings must get authoritative capability/status immediately on first presentation, and enabled policies must reconcile on boot before any write. | None. | Negligible direct RAM; avoids helper/process fan-out on default sessions. | 0%. |
 | `services/Audio.qml` + `modules/common/widgets/SoundPicker.qml` | **HIGH-CONFIDENCE settings-only startup candidate — lazy sound-theme catalog.** Audio correctly refreshes microphone state on materialization, but also always runs `sh -> ls | sed | sort` to populate `themeSounds`. Repository search shows the catalog is consumed by `SoundPicker` only, and SoundPicker is used by Settings pages. Add idempotent `ensureThemeSoundsLoaded()`; refresh on audio-theme changes only after the catalog has been demanded. | Low. Preserve first Settings presentation and post-theme-change contents/order exactly. | None. | Negligible direct RAM; removes one startup shell pipeline. | 0%. |
 | `modules/common/Appearance.qml` | **HIGH-CONFIDENCE settings/explicit-backend startup candidate — demand-gate Niri blur capability probe.** Appearance runs `niri --version` whenever Niri is active. Yet `blurBackendFor()` explicitly makes `auto` fidelity-first and never selects compositor blur; `nativeBlurSupported` is otherwise used by explicit compositor selection and Effects Settings visibility. Probe only when any effective blur backend requests `compositor`, or when an Effects Settings surface asks for capability; reactively prime when config changes. | Low–Medium. Explicit compositor config present at boot must not briefly fall back to wallpaper/off due to an unresolved capability. | None. | Negligible. | 0%. |
 | `modules/common/widgets/MediaArtworkResolver.qml` | **HIGH-CONFIDENCE process dedupe candidate — share in-flight artwork resolution by cache key.** Six call sites can materialize independent resolvers for the same current media. Each instance independently launches cache-existence checks, local MIME checks/copies, file-stability checks, data-URI writers or curl download/retry workers against the same deterministic cache path. Atomic publish prevents corruption but does not prevent duplicated work. Research a shared resolver keyed by normalized metadata/cache identity that owns one in-flight operation and publishes readiness to all consumers. | Medium. Preserve display-source cache-busting, local-file stability checks, retries, MIME rejection and old-art retention during metadata transitions. | None directly. | Low–Medium transient reduction from fewer concurrent helper processes and duplicated buffers. | 0%. |
@@ -128,7 +128,7 @@ Earlier `NO ACTION`, `ALREADY OPTIMIZED`, `MEASURE FIRST`, `SUPERSEDED`, and `NO
 | `scripts/scan-widgets.sh` | **HIGH-CONFIDENCE strict-lossless process candidate — remove three avoidable child processes per custom-widget manifest.** The scanner is already one bounded shell owner, but its loop executes external `dirname`, `basename` and `cat` for every `widget.json`. The glob shape makes directory/id extraction expressible with Bash parameter expansion, and Bash's `$(<file)` reads the manifest without spawning `cat`. Preserve the same unreadable-file `continue`, trailing-newline command-substitution behavior and JSON text. | Low. Oracle unusual paths, unreadable manifests and exact output bytes before changing the script. | None. | Low transient process-memory reduction. CPU/process gain is exactly up to 3 fewer child processes per discovered manifest while retaining the single scanner process. | 0%. |
 
 | `services/LocalMusic.qml` | **RETIRED / IMPLEMENTED at `9376fa34f` (R16.1).** Current QML no longer declares or assigns `folderCollections`; keep this historical finding, but remove it from the pending implementation queue. The distinct backend/Python `folders` transport/schema candidate R16.2 is **still active**. **Historical R16.1 claim (not the current runtime state):** stop retaining dead `folderCollections` state in QML. At the original baseline, snapshot application stored `payload.tracks`, `payload.playlists` and `payload.folders`, but the live Songs browser derives folder navigation directly from `LocalMusic.libraryTracks`; current repository search finds no consumer of `LocalMusic.folderCollections`. Remove the property and assignment only, leaving native/Python snapshot shape unchanged. | Low. Re-run a dev-wide reference search and LocalMusic navigation/selection/playback oracle immediately before implementation. | None. | Medium potential for large libraries because the parsed `payload.folders` subtree duplicates track metadata by folder and can become collectible after snapshot application instead of being retained. Exact RSS needs measurement. | 0%. |
-| `native/inir-mpdd/src/main.rs` + `scripts/local_music_mpd.py` | **COMPATIBILITY-GATED higher-value follow-up — stop constructing/serializing the duplicate `folders` snapshot field only if the stable MPD snapshot contract is intentionally revised or a lean mode is added.** Rust currently clones track objects into folder buckets; Python emits the equivalent second representation. The shell does not need it after the QML dead-retention cleanup, but current deep benchmark contracts explicitly include `folders` among stable snapshot fields. | Medium–High contract risk. Do not silently remove from only one backend or break native/Python parity/manual callers. | None. | Potentially medium transport/transient RAM reduction for large libraries; also removes folder grouping/cloning/serialization CPU. No credit until compatibility is resolved. | 0%. |
+| `native/alis-mpdd/src/main.rs` + `scripts/local_music_mpd.py` | **COMPATIBILITY-GATED higher-value follow-up — stop constructing/serializing the duplicate `folders` snapshot field only if the stable MPD snapshot contract is intentionally revised or a lean mode is added.** Rust currently clones track objects into folder buckets; Python emits the equivalent second representation. The shell does not need it after the QML dead-retention cleanup, but current deep benchmark contracts explicitly include `folders` among stable snapshot fields. | Medium–High contract risk. Do not silently remove from only one backend or break native/Python parity/manual callers. | None. | Potentially medium transport/transient RAM reduction for large libraries; also removes folder grouping/cloning/serialization CPU. No credit until compatibility is resolved. | 0%. |
 
 | `services/MinimizedWindows.qml` | **HIGH-CONFIDENCE CPU/allocation candidate — replace workspace filter+sort selection with stable one-pass extrema/nearest selection.** `stashWorkspaceForOutput()` filters eligible workspaces, sorts descending by `idx`, then returns element 0. `restoreWorkspace()` filters one output, sorts ascending, then either finds exact `idx` or reduces to the nearest. Both sorts are unnecessary if the one-pass selector reproduces current stable-sort tie behavior explicitly. | Low. Tie behavior is the proof boundary: descending stash selection keeps the first source-order workspace among equal max `idx`; restore exact-`idx` keeps first source-order duplicate; nearest fallback must prefer lower `idx` on equal distance because the current ascending stable sort presents it first. | None. | Low transient allocation reduction plus O(W log W) -> O(W) CPU on minimize/restore fallback paths; persistent RAM unchanged. | 0%. |
 | `services/MinimizedWindows.qml` + `modules/waffle/bar/tasks/TaskAppButton.qml` | **HIGH-CONFIDENCE micro-candidate — count minimized windows without allocating a filtered ID array.** `countMinimizedForApp()` currently calls `getMinimizedForApp(appId).length`, allocating a temporary array. Waffle binds this count once per task-app delegate. Use a direct counter loop with the exact same case-insensitive substring predicate; keep `getMinimizedForApp()` for callers that actually need IDs. | Very low. Preserve null/error behavior for malformed app records and exact substring semantics. | None. | Low transient allocation/CPU reduction proportional to visible task-app delegates × minimized-state invalidations. | 0%. |
@@ -171,7 +171,7 @@ Earlier `NO ACTION`, `ALREADY OPTIMIZED`, `MEASURE FIRST`, `SUPERSEDED`, and `NO
 | `modules/settings/InterfaceConfig.qml` | **HIGH-CONFIDENCE process candidate — collapse Settings World Clock preview from one Bash + N external `date` children to one Bash.** Current 20 s visible-section refresh invokes `date` once per configured timezone. Sibling WorldClock implementations already pass timezones as argv and use Bash builtin `printf '%(...)T'`. Preserve cadence, namespace and `timezone|time|offset` protocol. | Low–Medium. Valid IANA zones are straightforward; malformed shell-significant timezone strings require an explicit safe-argv contract decision rather than preserving accidental shell parsing. | None. | Low transient RAM/CPU; removes N external processes per preview refresh for N configured zones. | 0%. |
 | `modules/sidebarLeft/widgets/WorldClockWidget.qml` | **HIGH-POTENTIAL / ORACLE-GATED — separate sparse timezone metadata refresh from in-process display ticking.** The visible sidebar clock currently starts one Bash every 30 s, or every second when seconds are enabled, to obtain time/offset/date/day-of-year/hour data. Reuse sparse offset metadata and advance display time locally; align minute-only updates to boundaries. | Medium–High temporal/locale risk until deterministic old-vs-new oracle exists. DST, quarter-hour zones, midnight/year rollover, clock jumps and locale formatting must match. | None. | Potentially meaningful process/wakeup reduction while the sidebar clock is visible; seconds mode can eliminate nearly one shell spawn per second. | Expected pixels 0%; time-format/event semantics must be proven. |
 
-| Direct media-art `Image` / `StyledImage` paths in media presets, Waffle Action Center/Widgets/Lock and VolumeMixer | **HIGH-CONFIDENCE RAM/GPU candidate within the <1% visual budget — bound decode size to conservative presentation resolution instead of decoding arbitrary original cover dimensions.** Hadalis already uses a 2× presentation-size `sourceSize` policy in `MediaCrossSlideImage.qml`, but several direct cover-art paths still have no sourceSize and use `cache:false`. Start with small foreground slots (48/96/104/108 px) at a 2× or DPR-proven bound; separately tune card-sized blurred sources with enough oversampling to preserve blur/filtering. | Medium. This is not exact pixel-lossless by assumption: source downscaling can change filtering/blur slightly. Require <1% global/edge-detail error at 1.0/1.25/1.5/2.0 DPR plus visual sharpness review. | Low–Medium GPU/texture residency reduction when large covers are shown on several surfaces; may also reduce upload/decode pressure. | Potentially medium steady image RAM for large source artwork; illustrative 2000×2000 RGBA is ~16 MB versus ~0.18 MB for a 216×216 2× decode target, before backend-specific overhead. | <1% measured visual budget; reject or raise decode target if exceeded. |
+| Direct media-art `Image` / `StyledImage` paths in media presets, Waffle Action Center/Widgets/Lock and VolumeMixer | **HIGH-CONFIDENCE RAM/GPU candidate within the <1% visual budget — bound decode size to conservative presentation resolution instead of decoding arbitrary original cover dimensions.** Alis already uses a 2× presentation-size `sourceSize` policy in `MediaCrossSlideImage.qml`, but several direct cover-art paths still have no sourceSize and use `cache:false`. Start with small foreground slots (48/96/104/108 px) at a 2× or DPR-proven bound; separately tune card-sized blurred sources with enough oversampling to preserve blur/filtering. | Medium. This is not exact pixel-lossless by assumption: source downscaling can change filtering/blur slightly. Require <1% global/edge-detail error at 1.0/1.25/1.5/2.0 DPR plus visual sharpness review. | Low–Medium GPU/texture residency reduction when large covers are shown on several surfaces; may also reduce upload/decode pressure. | Potentially medium steady image RAM for large source artwork; illustrative 2000×2000 RGBA is ~16 MB versus ~0.18 MB for a 216×216 2× decode target, before backend-specific overhead. | <1% measured visual budget; reject or raise decode target if exceeded. |
 
 | `services/Wallpapers.qml` | **HIGH-CONFIDENCE JS allocation candidate — mutate private thumbnail pending/known maps in place instead of cloning the complete map on every insert/delete.** Current `_singleThumbPending` and `_knownThumbnailOutputs` are private imperative sets; repository-wide search finds no binding, change handler or external consumer of their property identity. Enqueue/drain/remember/forget currently copy all keys with `Object.assign`. Preserve membership answers and queue order while mutating the private objects directly. | Very low. Final proof is that no `...Changed` signal is used as a wakeup and repeated/distinct key behavior is identical. | None. | Low–Medium transient JS allocation/GC reduction when browsing large wallpaper sets; avoids quadratic-ish cumulative key copying while filling/draining private sets. | 0%. |
 | `scripts/thumbnails/thumbgen.py` + `services/Wallpapers.qml` + `ThumbnailImage.qml` | **HIGH-CONFIDENCE protocol candidate — publish per-file READY/FAILED from the batch generator so delegates can skip post-batch `test -f` child processes.** Generation is already centralized, but each `ThumbnailImage` may still spawn its own existence check. Extend machine progress so Python reports whether the expected output actually exists after each result; only READY enters the shared known-thumbnail set. | Low–Medium. Current `PROGRESS ... FILE` token is not a success signal; fresh-cache and failure can both return false. Preserve retry/fallback behavior and do not mark failed outputs known. | None. | Low transient process-memory/CPU; can remove one per-delegate `test -f` process after successful/fresh batch work across large galleries. | 0%. |
@@ -201,7 +201,7 @@ Earlier `NO ACTION`, `ALREADY OPTIMIZED`, `MEASURE FIRST`, `SUPERSEDED`, and `NO
 
 | `services/TaskbarApps.qml` | **HIGH-CONFIDENCE CPU/allocation candidate — compile ignored-app regexes only when the ignored pattern list changes.** `computeApps()` runs behind a 16 ms coalescing timer and is retriggered by compositor/toplevel/AppSearch/config events, yet every run rebuilds the fixed system-pattern array, copies user patterns and constructs every `RegExp` again. Keep the compiled list resident and rebuild it on initial demand plus the existing `ignoredAppRegexesChanged`/config-replacement boundary. | Low. Preserve `_stringArray()` normalization, user-before-system pattern order, case-insensitive flags and the current `_compileRegexes()` behavior that logs/skips invalid regexes. Config reload/object replacement must not leave stale patterns. | None. | Low transient JS allocation/CPU reduction multiplied by every Waffle taskbar rebuild; persistent RAM is the same small compiled array already alive during each computation. | 0%. |
 | `modules/overview/OverviewNiriWidget.qml` + `modules/overview/Overview.qml` + `services/NiriService.qml` | **HIGH-CONFIDENCE CPU/allocation candidate — remove redundant per-output workspace sorts from Overview.** Every current assignment to `NiriService.allWorkspaces` already publishes the array sorted ascending by `idx`. JavaScript `filter()` preserves source order, but OverviewNiriWidget and both classic Overview Left/Right key paths filter that array by output and sort it by the same comparator again. Remove only those second sorts and retain the filter/find/index logic unchanged. | Very low. The source-order invariant must be regression-covered at every `allWorkspaces` publication site, including equal-`idx` stable ordering, activation and urgency updates. | None. | Low transient array/sort CPU reduction: O(W log W) follow-up sorts become O(W) filters on Overview recomputation/navigation. | 0%. |
-| `modules/background/Background.qml` + clock/widget diagnostic paths | **HIGH-CONFIDENCE normal-session CPU/allocation candidate — make desktop-clock diagnostic serialization demand-driven instead of continuously reactive.** Background says the clock diagnostics are bounded/inert, but production wiring observes `ClockWidget.debugPaletteReport` and `editControlsGeometryReport` unconditionally. That keeps nested `JSON.stringify`, `JSON.parse(clockSurface.surfaceReport)`, contrast calculations, CookieClock diagnostic serialization and an extra edit-control geometry solve live during ordinary clock/style/position changes. Preserve the documented `background clockDebugState` IPC response by building the same payload on demand when that function is called rather than maintaining serialized strings continuously. | Low–Medium. `clockDebugState` is documented even when `INIR_REGION_DEBUG` is not set; only mutating debug functions are env-gated. Preserve exact payload fields, disabled-state behavior, unloaded-clock behavior and any last-known snapshot semantics. | None. | Low–Medium transient JS/string allocation and avoidable geometry/diagnostic CPU reduction in normal sessions, especially during desktop-clock dragging/style changes. | 0%. |
+| `modules/background/Background.qml` + clock/widget diagnostic paths | **HIGH-CONFIDENCE normal-session CPU/allocation candidate — make desktop-clock diagnostic serialization demand-driven instead of continuously reactive.** Background says the clock diagnostics are bounded/inert, but production wiring observes `ClockWidget.debugPaletteReport` and `editControlsGeometryReport` unconditionally. That keeps nested `JSON.stringify`, `JSON.parse(clockSurface.surfaceReport)`, contrast calculations, CookieClock diagnostic serialization and an extra edit-control geometry solve live during ordinary clock/style/position changes. Preserve the documented `background clockDebugState` IPC response by building the same payload on demand when that function is called rather than maintaining serialized strings continuously. | Low–Medium. `clockDebugState` is documented even when `ALIS_REGION_DEBUG` is not set; only mutating debug functions are env-gated. Preserve exact payload fields, disabled-state behavior, unloaded-clock behavior and any last-known snapshot semantics. | None. | Low–Medium transient JS/string allocation and avoidable geometry/diagnostic CPU reduction in normal sessions, especially during desktop-clock dragging/style changes. | 0%. |
 | `modules/abyss/bar/AbyssBar.qml` + `modules/abyss/looks/AbyssLayout.js` | **HIGH-CONFIDENCE micro-candidate — compare normalized module IDs element-by-element instead of JSON-serializing both arrays.** `syncModuleIds()` currently computes enabled placement IDs and calls `JSON.stringify(next) !== JSON.stringify(moduleIds)` on every placements publication. `AbyssLayout.normalize()` already canonicalizes every accepted placement ID with `String(...)`, so length + ordered strict string comparison is equivalent before deciding whether to republish `moduleIds`. | Very low. Preserve enabled-only filtering, placement order, duplicate rejection performed by normalize, and no-op publication suppression. The proof depends on normalized string IDs; do not apply the helper to unnormalized editor drafts elsewhere. | None. | Low transient string/allocation/CPU reduction across per-edge/output AbyssBar placement updates; most useful during editor/layout churn. | 0%. |
 
 | Hotspot quick-toggle family — common/Waffle + Classic + Android | **HIGH-CONFIDENCE process/wakeup candidate — move hotspot status/actions into one shared state owner with surface-demand leasing.** Waffle can instantiate one common `HotspotToggle` as the Action Center button model and a second one inside `HotspotControl`; each instance owns its own 5 s `nmcli connection show --active` poll while the same Action Center is open. Classic/Android variants duplicate the same transport again for their own sidebar surfaces. Centralize status/start/stop processes and expose one reactive hotspot state; keep presentation/notifications local. | Low–Medium. Preserve the exact external-change freshness bound, initial/open refresh, action completion refresh, start delete-then-create transaction, stop semantics, config-derived SSID/password and failure notifications. Demand must be reference-counted so one closing surface cannot stop another live consumer. | None. | Low recurring CPU/transient RAM plus child-process reduction whenever multiple hotspot controls coexist; Waffle button+menu is a source-proven duplicate owner. | 0%. |
@@ -209,7 +209,7 @@ Earlier `NO ACTION`, `ALREADY OPTIMIZED`, `MEASURE FIRST`, `SUPERSEDED`, and `NO
 | `modules/sidebar/SidebarHost.qml` | **HIGH-CONFIDENCE failure/cold-load wakeup candidate — gate the 16 ms presentation frame ticker on readiness signals instead of polling Loader/geometry readiness.** `presentationTimer` repeats every 16 ms after a presentation request, while `tryPresent()` simply returns if the Loader is not Ready or geometry is zero. A slow cold load therefore polls readiness every frame, and Loader.Error/never-valid geometry can leave the ticker running indefinitely. Stop the ticker while prerequisites are false; re-arm from Loader status/geometry changes, then preserve the existing one warm / two cold 16 ms ready-frame settle before showing. | Medium. QML signal ordering and the compositor's required closed-frame contract are sensitive. Preserve cold/warm frame counts, resume remap, editor presentation, close cancellation, loader recovery and exact first-visible timing once prerequisites become valid. | None. | Low normal cold-open CPU/wakeup reduction; high failure-path protection by eliminating a possible ~62.5 Hz unbounded readiness poll. | 0%; presentation timing after readiness must remain identical. |
 | `modules/common/widgets/NotificationGroup.qml` | **HIGH-CONFIDENCE micro-candidate — do not reverse an entire notification group when collapsed UI displays only the newest two.** Current collapsed model evaluates `notifications.slice().reverse().slice(0, 2)`. Use only the final two source elements and reverse that tiny slice; keep the expanded full reverse unchanged. | Very low. Preserve newest-first ordering, fresh-array behavior, 0/1/2-item cases and opacity of the second collapsed item when the group has more than two notifications. | None. | Low transient CPU/allocation reduction for large app notification groups while collapsed: O(N) copy+reverse becomes O(1) bounded copy/reverse. | 0%. |
 
-| `services/HyprlandData.qml` | **HIGH-CONFIDENCE process candidate — route Hyprland raw events to the minimum snapshot refresh set instead of calling `updateAll()` for every event.** Today every raw event can request `hyprctl clients -j`, `monitors -j`, `layers -j`, `workspaces -j` and `activeworkspace -j` together. The socket event contract already separates window/workspace/monitor/layer/input classes. Keep `updateAll()` for startup, config reload, monitor topology and unknown events; route known window events to clients, layer events to layers, workspace/focus events to workspace+monitor state, and ignore input-only events for this service. | Medium. Exact event→snapshot ownership must be trace-tested against the Hyprland versions Hadalis supports. Unknown names must fall back to `updateAll()`; do not trust a closed enum. Preserve the current queued-refresh behavior when a domain process is already running. | None. | Potentially high transient CPU/process reduction on Hyprland: common window/title/focus/layer events can drop from up to five `hyprctl` child processes to the one or two snapshots they can actually invalidate. | 0%. |
+| `services/HyprlandData.qml` | **HIGH-CONFIDENCE process candidate — route Hyprland raw events to the minimum snapshot refresh set instead of calling `updateAll()` for every event.** Today every raw event can request `hyprctl clients -j`, `monitors -j`, `layers -j`, `workspaces -j` and `activeworkspace -j` together. The socket event contract already separates window/workspace/monitor/layer/input classes. Keep `updateAll()` for startup, config reload, monitor topology and unknown events; route known window events to clients, layer events to layers, workspace/focus events to workspace+monitor state, and ignore input-only events for this service. | Medium. Exact event→snapshot ownership must be trace-tested against the Hyprland versions Alis supports. Unknown names must fall back to `updateAll()`; do not trust a closed enum. Preserve the current queued-refresh behavior when a domain process is already running. | None. | Potentially high transient CPU/process reduction on Hyprland: common window/title/focus/layer events can drop from up to five `hyprctl` child processes to the one or two snapshots they can actually invalidate. | 0%. |
 | `services/HyprlandData.qml` + Bar workspace/active-window consumers | **HIGH-CONFIDENCE CPU/allocation candidate — derive largest-window-by-workspace during the existing clients publication pass.** `biggestWindowForWorkspace()` currently allocates a filtered array and reduces the full workspace subset every call. Bar Workspaces can call it once per workspace while ActiveWindow calls it independently. Build a private workspace-id→largest-window index while `windowList` is parsed, reusing the same pass that already builds `windowByAddress`; `addresses` can be pushed in that loop too instead of a second `map`. | Low–Medium. Preserve loose numeric/string workspace-id compatibility, **first strictly-largest wins**, and the current quirk where an all-zero-area workspace returns `null` because the reducer starts at null/area 0 and uses `>`, not `>=`. Preserve exact published window object identity. | Small private index; no extra cloned window records. | Low–Medium CPU/allocation reduction on window snapshot changes and Bar workspace recomputation; removes repeated O(N) filter arrays and area scans per workspace. | 0%. |
 | `services/deferred/HyprlandXkb.qml` | **HIGH-CONFIDENCE process/lookup candidate — read and index XKB `base.lst` once per file revision instead of spawning `cat` for every uncached layout description.** Current layout changes clear the visible code, spawn `cat /usr/share/X11/xkb/rules/base.lst`, split the entire file and `find` the first matching layout/variant line. Use a read-only watched `FileView`, build description→code in source order, and answer later layout changes O(1). | Low–Medium. Preserve exact first-match ordering, the current variant code concatenation, empty/missing-file behavior, cache invalidation when the rules file changes on disk, and immediate clearing of the previous layout code while a new description is unresolved. | Small map for the XKB rules file. | Low transient CPU/process reduction and faster layout switching after initialization; eliminates one `cat` child process plus a full-file split/search for each first-seen layout description. | 0%. |
 | `services/InternalTodoBackend.qml` | **HIGH-CONFIDENCE transport candidate pending a focused FileView fixture — use a dedicated read-only `FileView` for externally edited `todo.txt` instead of spawning `cat` after every debounced file change.** The existing warning is specifically about reusing the writer FileView after `setText()`; Quickshell documents `watchChanges + reload()` as the normal read path. Keep the writer FileView for writes/watch invalidation, add a second reader that never calls `setText`, reload it after the existing 300 ms debounce, and parse only after `loaded`. | Medium until fixture-proven. Preserve startup lock, self-write no-op behavior, 300 ms debounce, fresh-disk semantics, file-not-found/error behavior, list equality, and JSON write ordering. Atomic rename/write watcher behavior needs an explicit oracle before implementation. | One small FileView object; no retained duplicate task model required. | Low recurring process/RSS reduction for users who externally edit/auto-save the text mirror; removes one `cat` child process per debounced external change. | 0%. |
@@ -245,7 +245,7 @@ Earlier `NO ACTION`, `ALREADY OPTIMIZED`, `MEASURE FIRST`, `SUPERSEDED`, and `NO
 | `modules/bar/weather/OrbitalWeather.qml` + `modules/dashboard/DashWeather.qml` | **RETIRED / IMPLEMENTED at `63ea47423` (R43.2).** Current `hourAngles` shares a local per-quadrant `tables` map while preserving the direct liquid mode and uncached public fallback. This proposal is no longer pending; retain the historical proof/measurement boundary. **Historical R43.2 claim (not the current runtime state):** OrbitalWeather per-quadrant arc-length table reuse. At the original baseline, the non-liquid Dashboard orbit mapped each hourly label to an equal-arc position by rebuilding the same 72-sample cumulative ellipse-length table independently for every hour. Within one `hourAngles` evaluation, `orbitRadiusX/Y` and each quadrant\'s start/end angles are identical; only the target fraction differs. Build the exact existing table at most once per used quadrant and resolve every hour from that transient table with the same target/search/interpolation math. Keep liquid mode\'s direct parametric angle path unchanged. | Low. Preserve `hourFromLabel()` parsing, quadrant/fraction mapping, 72-sample arithmetic, linear interpolation, invalid-label fallback and exact hour ordering. Do not exploit ellipse symmetry or change `orbitAngleForHour()` fallback semantics unless separately proven. | At most four short transient cumulative-length arrays during one binding evaluation; no retained cache required. | **Low–Medium CPU reduction during Material Dashboard weather geometry/resizes**: an 8-hour model avoids rebuilding a 72-sample table eight times and instead builds only the quadrants actually used. Weather popup liquid mode is unaffected. | 0%. |
 
 | `modules/common/widgets/shapes/ShapeCanvas.qml` + `shapes/morph.js` + `shapes/cubic.js` | **HIGH-CONFIDENCE animation CPU/allocation candidate — ShapeCanvas allocation-free morph streaming.** Every Canvas paint calls `Morph.asCubics(progress)`. For M matched segments that routine allocates a result array, one interpolated `Cubic` per segment, two 8-slot arrays per interpolated segment (`Array.from(...).map(...)`), then an additional 8-slot array + closing `Cubic` so the final endpoint exactly equals the first anchor. ShapeCanvas repaints not only while `progress` animates but also for color/stroke changes, so the same geometry allocation can recur on color-only frames at stable progress. Extend the existing mutable interpolation path with a closed streaming iterator that reuses one `MutableCubic`, captures the first anchor, and overrides only the final endpoint exactly as `asCubics()` does today; stream directly into the Canvas path instead of materializing the cubic array. | Low–Medium. The final-segment closure rule is pixel-critical and the current `forEachCubic()` alone is **not** equivalent. Preserve interpolation arithmetic, segment order/count, progress overshoot, first/last anchor identity, fit-to-canvas transforms, stroke width compensation and all animation timing. | One reusable 8-number mutable cubic per ShapeCanvas instance instead of per-paint result/cubic/point arrays. | **Medium transient allocation + local CPU reduction** across shared Material Shape animations and color repaints; no change to MaterialShapes matching topology or pixels. | 0%. |
-| `modules/common/perimeter/ConnectedSurfaceIrisField.qml` + `ConnectedSurfaceIrisFrame.qml` | **HIGH-CONFIDENCE connected-surface CPU/allocation candidate — Connected iRiS shared shape-uniform packet.** A production frame owns two `ConnectedSurfaceIrisField` instances: the visible plate and the SDF shadow mask. Both consume the same five-shape snapshot and the same `smoothing: root.fuse`, yet each independently derives 20 shape vectors, 5 radius blocks, 5 fuse blocks and 10 join blocks (40 shape-derived `vector4d` values) plus the same id map and helper lookups. Prepare that immutable shape/smoothing packet once per snapshot and let both fields bind their named shader uniforms to the same prepared values; keep viewport/screen/tint/rim/edge field-local. | Low–Medium. Preserve capacity-20 zero fill, shape order, duplicate-id last-write map behavior, scalar coercion/fallbacks, non-array join wrapping, missing join names, exact update timing and every named ShaderEffect uniform value. Packet replacement must invalidate both fields in the same QML turn. Do not touch `IrisField.frag(.qsb)` or shadow-pass topology. | One shared O(capacity) prepared packet replaces two identical CPU-side preparations; each ShaderEffect still owns its uniform bindings/GPU uploads. | **Low–Medium CPU/allocation reduction during connected-popup geometry animation**, with zero claimed GPU-pass reduction. Distinct from Round 2.2 shadow-pass elimination research. | 0%. |
+| `modules/common/perimeter/ConnectedSurfaceAbyssField.qml` + `ConnectedSurfaceAbyssFrame.qml` | **HIGH-CONFIDENCE connected-surface CPU/allocation candidate — Connected Abyss shared shape-uniform packet.** A production frame owns two `ConnectedSurfaceAbyssField` instances: the visible plate and the SDF shadow mask. Both consume the same five-shape snapshot and the same `smoothing: root.fuse`, yet each independently derives 20 shape vectors, 5 radius blocks, 5 fuse blocks and 10 join blocks (40 shape-derived `vector4d` values) plus the same id map and helper lookups. Prepare that immutable shape/smoothing packet once per snapshot and let both fields bind their named shader uniforms to the same prepared values; keep viewport/screen/tint/rim/edge field-local. | Low–Medium. Preserve capacity-20 zero fill, shape order, duplicate-id last-write map behavior, scalar coercion/fallbacks, non-array join wrapping, missing join names, exact update timing and every named ShaderEffect uniform value. Packet replacement must invalidate both fields in the same QML turn. Do not touch `AbyssField.frag(.qsb)` or shadow-pass topology. | One shared O(capacity) prepared packet replaces two identical CPU-side preparations; each ShaderEffect still owns its uniform bindings/GPU uploads. | **Low–Medium CPU/allocation reduction during connected-popup geometry animation**, with zero claimed GPU-pass reduction. Distinct from Round 2.2 shadow-pass elimination research. | 0%. |
 
 | `modules/settings/SettingsPageRegistry.qml` + `SettingsPageRegistryData.qml` + static Settings search consumers | **HIGH-CONFIDENCE interactive CPU/allocation candidate — Settings static prepared family-routed search index.** `SettingsPageRegistryData.searchIndex()` already caches the translation-expanded raw static index, but every non-empty Settings query calls wrapper `SettingsPageRegistry.searchIndex()`, which re-filters legacy slots, runs `FamilyPolicy.settingsRoute()` for every entry, clones redirected entries, then each consumer lowercases `label`, `description`, `pageName`, `section` and `keywords.join(" ")` again. Prepare the routed static snapshot plus private normalized fields once per exact family/translation epoch; query edits then only run the existing term/scoring predicates. | Low. Invalidate on Translation index rebuild and every `panelFamily` change; preserve hidden-legacy filtering, Abyss page-name/route substitutions, raw object fields, consumer-specific `isPageApplicable`/allowed filtering, score/order/tie behavior and immediate family-switch observability. Do not fold dynamic control entries into this cache; candidates #43/#44 already own that separate lifecycle. | Bounded O(static search text) normalized strings and routed entry references for one active family epoch. | **Low–Medium interactive CPU/allocation reduction across standalone Settings, SettingsOverlay and SettingsFocus**: eliminates per-keystroke full-index route/filter/map/clones and repeated static metadata normalization. | 0%. |
 
@@ -270,7 +270,7 @@ Earlier `NO ACTION`, `ALREADY OPTIMIZED`, `MEASURE FIRST`, `SUPERSEDED`, and `NO
 
 1. **Bounded wallpaper-glass capture** — `GlassBackground` family plus Bar/Dock non-native-blur paths. This attacks screen-sized offscreen layers that are often displayed only through small panel geometry.
 2. **Pre-QML environment/ABI fast path** — repair the broken parent-shell environment cache and let unchanged ABI identity skip `qs --version`; highest-confidence startup latency candidate.
-3. **ConnectedSurfaceIrisFrame shadow capture elimination** — first remove only the redundant post-blur capture if exact clipping parity can be proven; keep analytic-shadow replacement as a separate <1% candidate.
+3. **ConnectedSurfaceAbyssFrame shadow capture elimination** — first remove only the redundant post-blur capture if exact clipping parity can be proven; keep analytic-shadow replacement as a separate <1% candidate.
 4. **ResourceUsage metric-demand gating** — add GPU/temperature/disk demand leases so persistent CPU/RAM-only consumers do not launch unrelated probes/processes.
 5. **Default-off capability demand gating** — ThinkFan, battery charge-limit/TLP, Audio sound catalog and Niri native-blur capability should not spawn startup probes until their feature/settings demand exists.
 6. **Anti-Flashbang native sampler** — high CPU/process reduction when the opt-in feature is enabled; preserve luminance/policy decisions exactly.
@@ -394,7 +394,7 @@ Earlier `NO ACTION`, `ALREADY OPTIMIZED`, `MEASURE FIRST`, `SUPERSEDED`, and `NO
 116. **Liquid Orbital Canvas per-frame node preparation** — prepare each hour node's angle ellipse frame and breathing radius once per Canvas paint, then reuse them across contour, glow, pod and moving-streak samples.
 117. **[RETIRED / IMPLEMENTED: `63ea47423`] OrbitalWeather per-quadrant arc-length table reuse** — already uses local tables in `hourAngles`; keep historical slot for stable numbering.
 118. **ShapeCanvas allocation-free morph streaming** — stream interpolated cubic segments through one reusable mutable cubic while retaining the exact final-anchor closure rule.
-119. **Connected iRiS shared shape-uniform packet** — prepare the common shape/smoothing uniform vectors once per snapshot and share them between visible and shadow-mask iRiS fields.
+119. **Connected Abyss shared shape-uniform packet** — prepare the common shape/smoothing uniform vectors once per snapshot and share them between visible and shadow-mask Abyss fields.
 120. **Settings static prepared family-routed search index** — cache the family-routed static Settings search snapshot and its normalized text fields per translation/family epoch instead of rebuilding them on every query edit.
 121. **least_busy_region processed-grayscale reuse** — reuse the exact scaled/cropped grayscale search image for final brightness statistics instead of decoding/resizing it a second time in the same invocation.
 122. **Waffle clock records-change process narrowing** — stop global desktop-widget record writes from directly launching Waffle clock image analysis; rely on the clock's actual enable/strategy/geometry/wallpaper invalidations.
@@ -461,21 +461,21 @@ Research direction:
 
 The strict-lossless oracle must compare the old/new result for all screen edges, arbitrary panel coordinates, fractional scale, multiple source aspect ratios and blur disabled/enabled. No implementation should rely on a guessed fixed 64 px padding when the effective kernel or scale changes.
 
-### R2.2 — Connected iRiS shadow pass reduction
+### R2.2 — Connected Abyss shadow pass reduction
 
-`modules/common/perimeter/ConnectedSurfaceIrisFrame.qml` blob `e703046f2a527ad30afc1a83ccd71f5e5a78cba7` currently contains:
+`modules/common/perimeter/ConnectedSurfaceAbyssFrame.qml` blob `e703046f2a527ad30afc1a83ccd71f5e5a78cba7` currently contains:
 
 ```text
-ConnectedSurfaceIrisField (shadowMaskField)
+ConnectedSurfaceAbyssField (shadowMaskField)
   -> ShaderEffectSource (shadowTextureSource)
   -> MultiEffect blur (blurredShadow)
   -> ShaderEffectSource crop (isolatedShadow)
-  -> visible ConnectedSurfaceIrisField
+  -> visible ConnectedSurfaceAbyssField
 ```
 
 The first promotion candidate is intentionally narrow: prove that `isolatedShadow` can be replaced by exact rectangular clipping/presentation without changing blur sampling or owner-side cutoffs. That would remove one capture texture/pass while leaving the accepted mask field and MultiEffect blur untouched.
 
-A second, separate candidate may adapt the Screen Edge analytic-shadow technique to the iRiS SDF and remove the mask/capture/blur chain entirely. That is not strict-lossless by assumption; it requires a <=1% raster budget plus edge-band and maximum-channel-delta checks.
+A second, separate candidate may adapt the Screen Edge analytic-shadow technique to the Abyss SDF and remove the mask/capture/blur chain entirely. That is not strict-lossless by assumption; it requires a <=1% raster budget plus edge-band and maximum-channel-delta checks.
 
 ### R2.3 — ResourceUsage metric leases
 
@@ -519,7 +519,7 @@ timeout
        -> magick ppm:- -colorspace Gray -format '%[fx:mean*100]' info:
 ```
 
-This is intentionally not classified as a default-idle Hadalis cost because the feature ships disabled. Once enabled, however, it is a high-frequency process pipeline and therefore a high-confidence optimization target.
+This is intentionally not classified as a default-idle Alis cost because the feature ships disabled. Once enabled, however, it is a high-frequency process pipeline and therefore a high-confidence optimization target.
 
 Strict-lossless research path:
 
@@ -711,7 +711,7 @@ Baseline: `dev` at `5cfb6cc9cc6cb1a4b782362b3137343e4fa8d83e`.
 
 ### R6.1 — Pre-QML environment cache is not actually shared
 
-Current source: `scripts/inir` at `5cf6ca0ef112cf0f98ee28f23cc618cbb34d5018`.
+Current source: `scripts/alis` at `5cf6ca0ef112cf0f98ee28f23cc618cbb34d5018`.
 
 The launcher declares:
 
@@ -775,13 +775,13 @@ The four ownership splits are independent:
 - shell has `property var _thinkFanService: ThinkFanService`;
 - default `powerProfiles.fanControl.enabled=false`;
 - `ThinkFanService.Component.onCompleted: root.refresh()`;
-- detector command is `/usr/libexec/inir-thinkfan --status`.
+- detector command is `/usr/libexec/alis-thinkfan --status`.
 
 **Battery charge care**
 - default `battery.chargeLimit.enable=false`;
 - ordinary Battery singleton binds `TlpService.available/supported/.../statusReason` unconditionally;
 - `TlpService.Component.onCompleted` calls `_detect()`;
-- detector command is `/usr/libexec/inir-battery-charge-limit --status`.
+- detector command is `/usr/libexec/alis-battery-charge-limit --status`.
 
 **Audio theme sound catalog**
 - Audio's microphone state refresh is legitimate startup work;
@@ -1005,7 +1005,7 @@ Therefore the process is not equivalent to the default-off ThinkFan/TLP-charge p
 Current capture helper `1375bd607bb522dca1218ddc581e638829ed25e5` defaults:
 
 ```bash
-max_concurrent="${INIR_WINDOW_PREVIEW_CAPTURE_CONCURRENCY:-2}"
+max_concurrent="${ALIS_WINDOW_PREVIEW_CAPTURE_CONCURRENCY:-2}"
 [[ ! "$max_concurrent" =~ ^[1-4]$ ]] && max_concurrent=2
 ```
 
@@ -1410,7 +1410,7 @@ Current `services/ThinkFanService.qml`: `943082413a143df3e642ee3d60587093dda1ec0
 The global handler sends every Config edit through `_handleProfileFollowEvent()`. When profile fan control is enabled:
 
 - status newer than 30 s -> schedule configured active-level reconciliation;
-- status older than 30 s -> immediately `refresh()`, starting `inir-thinkfan --status`.
+- status older than 30 s -> immediately `refresh()`, starting `alis-thinkfan --status`.
 
 The periodic status timer is intentionally sparse (5 min) when profile-follow is enabled but ThinkFan is not actively managed, so unrelated Settings edits can become the event that forces a stale-status process.
 
@@ -1451,7 +1451,7 @@ Use derived-property changes to request `apply()`, while preserving:
 - initial Config-ready detection;
 - detector completion reconciliation;
 - allowed/discrete limit normalization;
-- disabling a policy still owned by Hadalis.
+- disabling a policy still owned by Alis.
 
 This optimization becomes more valuable after Round 6 demand-gates TlpService itself, because the service can then remain completely absent for default charge-care-off sessions.
 
@@ -1601,7 +1601,7 @@ previews, quick-wallpaper thumbnails and notification app images. Their masks
 are not arbitrary alpha geometry; they are ordinary rounded rectangles or
 circles.
 
-Hadalis already has a stronger local precedent than a generic Qt performance
+Alis already has a stronger local precedent than a generic Qt performance
 recommendation. `scripts/test-performance-lifecycle.sh` explicitly requires
 `MediaCrossSlideImage` and InnerTune thumbnails to use
 `Quickshell.Widgets.ClippingRectangle`, and rejects restoring an
@@ -1698,7 +1698,7 @@ one render-primitive substitution first, then audit host reachability separately
 ### R12.4 — Ranking implication
 
 The leaf rounded-mask sweep is lower risk than replacing blur/shadow algorithms
-because it reuses a clipping primitive already protected by Hadalis performance
+because it reuses a clipping primitive already protected by Alis performance
 regressions. It should nevertheless start with a focused raster oracle, not a
 repository-wide mechanical replacement. If parity holds, prioritize repeated
 list/grid instances first, then the full-sidebar surface; leave complex/inverted
@@ -1847,7 +1847,7 @@ of a large universal speedup.
   those paths are explicit minimize/restore actions and lower priority than the
   recurring workspace-activation event path.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 14
@@ -1926,7 +1926,7 @@ render/process work.
 closed id was never present. Do not bundle that path until R14.1 establishes the
 notification contract; then extend the same oracle deliberately.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 15
@@ -2094,7 +2094,7 @@ same patch. Background currently references CustomWidgets for live custom widget
 ownership, and changing when the service scans/seeds config is a separate
 behavior/lifecycle problem.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 16
@@ -2109,7 +2109,7 @@ Current source identities are unchanged from the archived research baseline:
 
 - `services/LocalMusic.qml`: `88263668b48d85323a576c4c3645d9f40909f466`;
 - `modules/sidebarLeft/LocalMusicView.qml`: `d5b1880d5a1a3796f0faefe343cf3f2f9909953a`;
-- `native/inir-mpdd/src/main.rs`: `1c63b8e5281dad2a28e88ea3cb660f7cc0c0cb88`;
+- `native/alis-mpdd/src/main.rs`: `1c63b8e5281dad2a28e88ea3cb660f7cc0c0cb88`;
 - `scripts/local_music_mpd.py`: `0e05af4f8a308072fbed7bed96994559b66bf6f1`.
 
 ### R16.1 — QML retains a duplicate folder tree that the live Songs browser does not use
@@ -2218,7 +2218,7 @@ If a lean mode is adopted, measure:
 - QML parse time/RSS;
 - identical frontend library, folder-navigation and playback state.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 17
@@ -2386,7 +2386,7 @@ Longer-term unification into one shared parameterized classifier may be useful,
 but only after both service/Waffle and Material snapshots have parity tests.
 Do not merge config namespaces or Spotify policy as part of the optimization.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 18
@@ -2551,7 +2551,7 @@ Any direct-find change must preserve stderr suppression, extension predicate,
 path handling, completion/failure timing and deterministic final wallpaper
 selection after the existing QML sort.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 19
@@ -2711,7 +2711,7 @@ Required oracle:
 - focused/running flags and separator placement;
 - exact final item identity/order.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 20
@@ -2875,7 +2875,7 @@ historical wording only. `docs/archive/optimization/CROSS_REPO_OPTIMIZATION_HAND
 is evidence/history, not an active owner. A still-valid candidate must appear in
 this canonical audit to be considered active research.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 21
@@ -3048,7 +3048,7 @@ separate follow-up. Add/remove watchers are insufficient by themselves because
 same-name overwrite must also be detected. Do not remove polling until overwrite
 semantics are proven.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 22
@@ -3248,7 +3248,7 @@ Wayland-only fullscreen detection. Keep Niri on the GameMode authority path.
 This ranks below R22.4 because it removes smaller temporary arrays rather than an
 entire sort pipeline.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 23
@@ -3417,7 +3417,7 @@ KeyboardIndicators and WindowPreviewService.
 
 These are intentionally not promoted merely to increase candidate count.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 24
@@ -3653,7 +3653,7 @@ open/close, pause/resume and a non-default resource interval before deciding the
 parity contract. The correct target is likely visible progress freshness and
 bounded wakeups, not identical raw signal count, but that must be explicit.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 25
@@ -3862,7 +3862,7 @@ Also record child-process counts for five minutes of sidebar-open operation in
 both normal and seconds modes before/after. This remains ORACLE-GATED rather than
 declared strict-lossless from static analysis alone.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 26
@@ -3894,7 +3894,7 @@ Current source identities:
 - ii `VolumeMixer.qml`:
   `612903a3b1d8cdd5ebb933a53abd90c79aa93f7b`.
 
-### R26.1 — Existing Hadalis media code already proves a conservative decode-bound shape
+### R26.1 — Existing Alis media code already proves a conservative decode-bound shape
 
 `MediaCrossSlideImage.qml` requests both transition layers at approximately 2×
 logical presentation size. That is a strong in-tree precedent: it keeps the
@@ -3975,7 +3975,7 @@ Illustrative raw RGBA arithmetic:
 - 2000×2000 source: 16,000,000 bytes (~15.3 MiB) of pixel data;
 - 216×216 target for a 108×108 2× slot: 186,624 bytes (~0.18 MiB).
 
-This is **not** a claim that Qt/Hadalis RSS or VRAM will fall by exactly that
+This is **not** a claim that Qt/Alis RSS or VRAM will fall by exactly that
 amount. Decoder implementations can use transient full-resolution buffers,
 textures may have alignment/mipmap/effect overhead, and formats differ.
 Nevertheless, the steady presentation texture has a large upper-bound gap when
@@ -4020,7 +4020,7 @@ Do not reduce these from static reasoning:
 - Clipboard decoded images: intrinsic decoded dimensions participate in current
   preview-sizing regression contracts and are a separate non-candidate.
 
-No whole-Hadalis RAM/GPU percentage is claimed without measurement.
+No whole-Alis RAM/GPU percentage is claimed without measurement.
 
 
 ## Research continuation — round 27
@@ -4241,7 +4241,7 @@ Measurement/oracle:
 This remains lower priority than already source-proven Niri app-id bucketing and
 private layout-sort reuse.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 28
@@ -4406,7 +4406,7 @@ also re-read. They are event-driven/bounded; ConflictKiller already consolidates
 startup conflict detection into one deferred /proc scan. No promotion from this
 pass.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 29
@@ -4583,7 +4583,7 @@ entries, bounded top-K insertion for limited queries and equality suppression on
 list refresh. Those are precisely the kinds of transforms this audit would
 otherwise propose. No new high-confidence optimization is promoted there.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 
 ## Research continuation — round 30
@@ -4793,7 +4793,7 @@ are bounded by monitor/workspace configuration size and are dominated by user
 interaction rather than recurring large-list work. No source-only high-value
 candidate is added from those files in this round.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 ## Research continuation — round 31
 
@@ -5028,7 +5028,7 @@ suspend/resume, wall-clock jump and timezone-change edge cases for very small
 wake-up savings. Do not promote this path without profiler evidence that the
 single active minute comparison is material.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 ## Research continuation — round 32
 
@@ -5300,7 +5300,7 @@ and retain the existing production/fixture visual oracles. A later shader
 candidate must prove deterministic visual error below the audit budget rather
 than assuming fewer passes is acceptable.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 ## Research continuation — round 33
 
@@ -5457,7 +5457,7 @@ Required oracle:
 ### R33.3 — Desktop clock diagnostics perform production work even when nobody asks
 
 `Background.qml` describes the desktop-clock diagnostics as bounded/inert
-unless `INIR_REGION_DEBUG=1`. The mutating IPC functions are indeed guarded,
+unless `ALIS_REGION_DEBUG=1`. The mutating IPC functions are indeed guarded,
 but the data-production path is not.
 
 The normal ClockWidget instance is wired unconditionally:
@@ -5488,7 +5488,7 @@ This work is not required to paint the clock.
 However, the read-only IPC contract must remain intact. `docs/IPC.md` documents
 `clockDebugState` as returning palette, renderer and quick-control geometry
 diagnostics, and only the **mutating** diagnostic functions are documented as
-requiring `INIR_REGION_DEBUG=1`. Therefore simply disabling diagnostic
+requiring `ALIS_REGION_DEBUG=1`. Therefore simply disabling diagnostic
 properties when the environment flag is absent is not strict-lossless.
 
 Safer direction:
@@ -5595,7 +5595,7 @@ helper processes every five seconds. The work is bounded and user-visible
 settings-only, so it is not a startup/system-idle problem.
 
 Do **not** promote “remove polling” as strict-lossless yet. External Fcitx state
-can change outside Hadalis, and the existing five-second freshness window is
+can change outside Alis, and the existing five-second freshness window is
 observable. Candidate research paths are:
 
 - split static installation/config-file probes from dynamic daemon/input-method
@@ -5608,7 +5608,7 @@ observable. Candidate research paths are:
 Any event-driven replacement must prove the same external-change visibility,
 failure recovery and first-visible refresh behavior.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 ## Research continuation — round 34
 
@@ -5900,7 +5900,7 @@ plus validation/customization metadata on initial page construction. Most other
 processes are explicit apply/persist/open-folder transactions. No new recurring
 process candidate is promoted from its size alone.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 ## Research continuation — round 35
 
@@ -5955,7 +5955,7 @@ unbounded parallel spawning, but that does not solve ownership fan-out: an event
 arriving while processes are active marks the unrelated domains for another
 refresh too.
 
-The Hyprland event stream itself distinguishes the invalidation classes. Hadalis
+The Hyprland event stream itself distinguishes the invalidation classes. Alis
 already consumes examples such as:
 
 - `activewindowv2` / `windowtitlev2` in the anti-flashbang path;
@@ -5974,7 +5974,7 @@ A conservative strict-lossless router can therefore begin with:
 - **unknown event name -> full refresh**.
 
 The unknown fallback is important because Hyprland adds events over time and
-Hadalis must not silently stop observing a new state mutation.
+Alis must not silently stop observing a new state mutation.
 
 Do not combine this with a debounce in the first patch. Event-specific routing
 already removes unnecessary work without adding a new freshness delay.
@@ -6140,7 +6140,7 @@ pre-rename/truncated or writer-cached state.
 Required oracle:
 
 - startup with missing/existing JSON and txt files;
-- Hadalis UI write -> txt watcher -> no semantic self-reimport;
+- Alis UI write -> txt watcher -> no semantic self-reimport;
 - external editor overwrite;
 - atomic rename-style save;
 - rapid multiple external saves inside/outside 300 ms;
@@ -6169,7 +6169,7 @@ full-screen blur effects, but unlike panel glass they actually present the full
 output. The existing bounded-wallpaper-capture candidate cannot claim an
 area reduction there without changing the effect itself.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 ## Research continuation — round 36
 
@@ -6485,7 +6485,7 @@ image/ctime list. Reusing it directly is therefore not a strict-lossless
 centralization. A future shared immutable default-folder catalog would need its
 own ownership/lifetime proof.
 
-**ObsidianTheme appearance watcher:** enabling the Hadalis snippet can cause the
+**ObsidianTheme appearance watcher:** enabling the Alis snippet can cause the
 appearance-file watcher to debounce one follow-up apply after the helper itself
 adds the snippet. The Python helper is idempotent and does not rewrite an
 unchanged appearance/snippet payload. That extra process is bounded to snippet
@@ -6499,7 +6499,7 @@ ordered name list is safe but too small to promote ahead of the four candidates
 above; callers usually re-evaluate on geometry/DPR changes rather than every
 frame.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 ## Research continuation — round 37
 
@@ -6518,7 +6518,7 @@ Current source identities:
   `d5b1880d5a1a3796f0faefe343cf3f2f9909953a`;
 - `scripts/local_music_lyrics.py`:
   `cd46821e435fd74f50d83e5bf811e6d1ca0cfe8d`;
-- `native/inir-mpdd/src/main.rs`:
+- `native/alis-mpdd/src/main.rs`:
   `1c63b8e5281dad2a28e88ea3cb660f7cc0c0cb88`;
 - `services/LyricsService.qml`:
   `69df76941fa3d0fd7f069d9df6488950eb5972f3`;
@@ -6635,13 +6635,13 @@ Python fallback:
 timed.sort(key=lambda item: float(item["time"]))
 ```
 
-Rust `inir-mpdd` path:
+Rust `alis-mpdd` path:
 
 ```rust
 timed.sort_by(|left, right| left.0.total_cmp(&right.0));
 ```
 
-Hadalis also already uses the same algorithmic class in
+Alis also already uses the same algorithmic class in
 `LyricsService._indexForPosition()`, which binary-searches a sorted lyric
 timeline and then schedules the next lyric transition with a one-shot timer.
 
@@ -6820,7 +6820,7 @@ justifies a different collector contract.
 entries revision. The remaining sloppy-search raw lowercase gap belongs in the
 shared Cliphist service (R37.4), not as another panel-local cache.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without measurement.
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without measurement.
 
 ## Research continuation — round 38
 
@@ -7028,7 +7028,7 @@ A normal Booru request defaults to 20 images, so one response can create many
 Bash processes and, inside each Bash, an external `mkdir` child before the
 existing cache-file test. Missing cache entries then additionally launch curl.
 
-Hadalis already has central directory ownership. `Directories.qml` performs
+Alis already has central directory ownership. `Directories.qml` performs
 one ordered bootstrap command that:
 
 1. removes transient `booruPreviews` along with other transient media trees;
@@ -7109,7 +7109,7 @@ indicator. Restricting it to `DONE` may be semantically cleaner, but it changes
 observable notification timing. Treat that as a correctness/API-contract issue,
 not a strict-lossless performance candidate.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without comparable
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without comparable
 before/after measurement.
 
 ## Research continuation — round 39
@@ -7249,7 +7249,7 @@ profile evidence.
 uses a bounded 30 s retry only after `swayidle` failure. Neither is a recurring
 healthy-state hot path worth complicating.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without comparable
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without comparable
 before/after measurement.
 
 ## Research continuation — round 40
@@ -7423,7 +7423,7 @@ use simple filters, but they update at catalog/provider-state cadence rather
 than an interactive hot loop. Folding them into publication could alter NOTIFY
 ordering for very small savings; leave them unchanged in the first optimization.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without comparable
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without comparable
 before/after measurement.
 
 ## Research continuation — round 41
@@ -7624,7 +7624,7 @@ all lowercase titles needs workload evidence first.
 Its bounded scan/lookup is not promoted without evidence that Start-page rebuild
 frequency makes it material.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without comparable
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without comparable
 before/after measurement.
 
 ## Research continuation — round 42
@@ -7847,7 +7847,7 @@ normal theme counts are much smaller than wallpaper/keybind/model catalogs.
 Keep this below the promotion line unless profiling shows the settings search
 path is material.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without comparable
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without comparable
 before/after measurement.
 
 ## Research continuation — round 43
@@ -8072,7 +8072,7 @@ legacy compatibility backend while LocalMusic is the current user-facing music
 route. Keep this below active optimization work unless that route becomes
 product-relevant again.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without comparable
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without comparable
 before/after measurement.
 
 ## Research continuation — round 44
@@ -8099,9 +8099,9 @@ Current source identities:
   `89e0e348548a1d67418fce606ab143f837191d91`;
 - `modules/common/widgets/CookiePlate.qml`:
   `5183b71c47729c559357b1f63f9f2c558417e0b4`;
-- `modules/common/perimeter/ConnectedSurfaceIrisField.qml`:
+- `modules/common/perimeter/ConnectedSurfaceAbyssField.qml`:
   `8accfa340c430cbb1b794b166527a6305c7fab52`;
-- `modules/common/perimeter/ConnectedSurfaceIrisFrame.qml`:
+- `modules/common/perimeter/ConnectedSurfaceAbyssFrame.qml`:
   `e703046f2a527ad30afc1a83ccd71f5e5a78cba7`;
 - `modules/common/perimeter/ConnectedSurfaceConnector.qml`:
   `0f755095820759ae741462a041e81f5e437fbfec`;
@@ -8190,13 +8190,13 @@ Required oracle:
 The claim is allocation/local CPU reduction only. No whole-shell percentage is
 inferred from the broad consumer count.
 
-### R44.2 — Visible and shadow iRiS fields independently prepare identical shape uniforms
+### R44.2 — Visible and shadow Abyss fields independently prepare identical shape uniforms
 
-`ConnectedSurfaceIrisFrame` owns two instances of the same production field:
+`ConnectedSurfaceAbyssFrame` owns two instances of the same production field:
 
 ```text
-shadowMaskField: ConnectedSurfaceIrisField
-visible field:   ConnectedSurfaceIrisField
+shadowMaskField: ConnectedSurfaceAbyssField
+visible field:   ConnectedSurfaceAbyssField
 ```
 
 The shadow field explicitly uses:
@@ -8209,7 +8209,7 @@ smoothing: root.fuse
 and the visible field also uses `smoothing: root.fuse`. Therefore their
 shape-derived shader data are identical for every frame.
 
-Inside each `ConnectedSurfaceIrisField`, one shapes/smoothing update
+Inside each `ConnectedSurfaceAbyssField`, one shapes/smoothing update
 independently derives:
 
 - `shape0..shape19`: 20 `vector4d` values;
@@ -8238,7 +8238,7 @@ Strict-lossless direction:
 8. leave viewport, screen size, tint, rim and edge uniforms field-local because
    they differ between the visible and shadow passes.
 
-A standalone `ConnectedSurfaceIrisField` can retain self-preparation when no
+A standalone `ConnectedSurfaceAbyssField` can retain self-preparation when no
 external packet is supplied; sharing is only an optimization for owners that
 already have identical shape/smoothing inputs.
 
@@ -8268,7 +8268,7 @@ it removes duplicated **CPU-side preparation** for the two passes that remain.
 **ConnectedSurfaceConnector:** the Canvas draws one small two-shoulder Bézier
 path when extent/edge/color/stroke inputs change. There is no per-frame
 intermediate array or deep geometry loop. Its source duplication cost is below
-the promotion threshold compared with the iRiS field preparation above.
+the promotion threshold compared with the Abyss field preparation above.
 
 **Material shape construction:** `material-shapes.js` already memoizes every
 named polygon through `getCircle()/getSquare()/...`. Do not propose rebuilding
@@ -8285,11 +8285,11 @@ builds color stops, but caching Canvas gradient/color state has a larger
 context/geometry/theme invalidation surface than the local saving justifies
 without profiling.
 
-**iRiS shadow-pass removal:** already owned by Round 2.2. Do not count the
+**Abyss shadow-pass removal:** already owned by Round 2.2. Do not count the
 shared-uniform packet as GPU-pass reduction or re-promote the older shadow
 candidate.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without comparable
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without comparable
 before/after measurement.
 
 ## Research continuation — round 45
@@ -8466,7 +8466,7 @@ hot path.
 services from this exact `dev` SHA returns 404. Search-index hits that cannot be
 reproduced from current `dev` are not optimization evidence.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without comparable
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without comparable
 before/after measurement.
 
 ## Research continuation — round 46
@@ -8700,7 +8700,7 @@ position-refresh ownership question already represented by candidate #58.
 Do not assign a second candidate from another visible consumer until signal
 timing/freshness measurement defines the shared ticker contract.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without comparable
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without comparable
 before/after measurement.
 
 ## Research continuation — round 47
@@ -8930,7 +8930,7 @@ measurement.
 background work, but the per-output active-workspace/window derivation is
 already owned by R22.3. No new promotion.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without comparable
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without comparable
 before/after measurement.
 
 ## Research continuation — round 48
@@ -9196,7 +9196,7 @@ package managers/downloaders. The caller controls refresh cadence and the two
 domains are semantically separate. Combining them would save one occasional
 process but complicate distinct result ownership; below promotion threshold.
 
-No whole-Hadalis CPU/RAM/GPU/FPS percentage is claimed without comparable
+No whole-Alis CPU/RAM/GPU/FPS percentage is claimed without comparable
 before/after measurement.
 
 ## Research continuation — round 49
@@ -9208,7 +9208,7 @@ Exact source blobs inspected:
 - `modules/common/widgets/BarCavaVisualizer.qml`: `f4f0d2ebc36a85d6fafdfa21b7d27ec47a67d06c`;
 - `modules/bar/BarContent.qml`: `3afa7aa5e27c069ceed6c3db71d34f1e7ef445d1`;
 - `modules/common/widgets/WallpaperCrossfader.qml`: `3511869bf7f731a31514eff645dd20d108605e63`;
-- `modules/common/widgets/wallpaperTransitions/inirMelt.frag`: `5e530ac1c15de5b32b50a915cd7a92ad40385a3d`;
+- `modules/common/widgets/wallpaperTransitions/alisMelt.frag`: `5e530ac1c15de5b32b50a915cd7a92ad40385a3d`;
 - `services/ObsidianTodoBackend.qml`: `75d8f69588f7e4a1f0eb922863544e52bb65fa02`.
 
 ### R49.1 — Bar CAVA applies frame-invariant frequency-profile functions to every sample on every audio publication
@@ -9229,9 +9229,9 @@ For N samples and F incoming CAVA frames per second, the active non-flat path cu
 
 **MEASURE FIRST.** The current `WallpaperCrossfader.qml` creates two full-parent `ShaderEffectSource` objects bound to `img0` and `img1`; they have `visible: false` and `live: root._shaderTexturePrimePending`. It also constructs a `ShaderEffect`, visible only during priming/requested shader transitions. The recently reinforced priming path deliberately waits for presented frames before starting the transition, and the inactive image is cleared after finishing. **QML object presence alone does not prove that idle ShaderEffectSources retain GPU textures/FBOs**; `visible:false` plus `live:false` may already avoid work.
 
-Instrument QSG/RHI texture allocations and scene-graph resource residency for initial non-shader wallpaper, regular crossfade, `inirMelt` priming/animation/tail, subsequent idle, repeated transitions, multiple outputs and resize/DPR changes. Only if significant idle resource residency is actually observed, investigate cold/loading shader-source ownership while preserving the two presented-frame texture-prime handshake, image fill-mode/crop, transitions, cancellation, compile-failure/software-renderer fallback and exact first frame. No estimated VRAM or GPU percentage is justified before measurements.
+Instrument QSG/RHI texture allocations and scene-graph resource residency for initial non-shader wallpaper, regular crossfade, `alisMelt` priming/animation/tail, subsequent idle, repeated transitions, multiple outputs and resize/DPR changes. Only if significant idle resource residency is actually observed, investigate cold/loading shader-source ownership while preserving the two presented-frame texture-prime handshake, image fill-mode/crop, transitions, cancellation, compile-failure/software-renderer fallback and exact first frame. No estimated VRAM or GPU percentage is justified before measurements.
 
-**Explicit non-candidate:** `shaderTransition.time`'s 16 ms active timer is **not dead**: the actual `inirMelt.frag` samples `ubuf.time` to animate the wave edge. Do not remove or slow that clock under a strict-lossless claim.
+**Explicit non-candidate:** `shaderTransition.time`'s 16 ms active timer is **not dead**: the actual `alisMelt.frag` samples `ubuf.time` to animate the wave edge. Do not remove or slow that clock under a strict-lossless claim.
 
 ### R49.3 — a possible duplicate legacy Obsidian capability probe is not promoted yet
 
@@ -9239,7 +9239,7 @@ Instrument QSG/RHI texture allocations and scene-graph resource residency for in
 
 Rechecked and rejected as duplicate/low value: `DailyNoteTodoBackend`'s 60 s date comparison was already classified MEASURE-FIRST in R31.4; its timer does **not** run a Python scan every minute. Existing `BarCavaVisualizer` scratch reuse, wave strip cap and CAVA subscription lifecycle are intentional baselines, not new optimization targets.
 
-This is source research only. No tests or owner-session GPU/RAM profiling were performed for these proposals. Do not attribute whole-Hadalis CPU/GPU/RAM/FPS percentages to them.
+This is source research only. No tests or owner-session GPU/RAM profiling were performed for these proposals. Do not attribute whole-Alis CPU/GPU/RAM/FPS percentages to them.
 
 ## Research continuation — round 50
 
@@ -9272,7 +9272,7 @@ The following **remain present in current source** and are not retired by this p
 - MPRIS `_playerGrace` retains the map-copy logic; source `3a8184f9308f0816ea395ea26f182bb5a3fbcf15`. **OPEN / existing historical candidate**.
 - R49.2 WallpaperCrossfader shader-source residency remains **MEASURE FIRST**; no measured idle VRAM to retire or promote. R49.3 legacy managed-note capability probe remains **conditional / not promoted**, not an obsolete feature merely because Markdown mode is the default.
 
-Revalidation method: current `dev` source reads, precise feature fingerprints, historical candidate-to-commit linkage and test-fixture inspection; no runtime behavior was changed and no benchmark/owner-desktop validation was executed. Continue with more source-backed retirement sweeps, especially after concurrent product/optimizer commits. Preserve historical evidence; mark statuses instead of deleting whole rounds or moving portions of the canonical active ledger into competing documents. No whole-Hadalis CPU/GPU/RAM/FPS improvement percentage is claimed.
+Revalidation method: current `dev` source reads, precise feature fingerprints, historical candidate-to-commit linkage and test-fixture inspection; no runtime behavior was changed and no benchmark/owner-desktop validation was executed. Continue with more source-backed retirement sweeps, especially after concurrent product/optimizer commits. Preserve historical evidence; mark statuses instead of deleting whole rounds or moving portions of the canonical active ledger into competing documents. No whole-Alis CPU/GPU/RAM/FPS improvement percentage is claimed.
 
 ## Research continuation — round 51
 
@@ -9315,7 +9315,7 @@ R50's two verified completed findings remain `RETIRED / IMPLEMENTED`: R16.1 QML 
 
 R51.1 differs from the existing domain-specific `Config.configChanged` invalidation proposals: it reduces *private in-flight snapshot copy work* and does not suppress signals or any consumer binding. R51.2 is specific to the multi-surface Notepad editor, not the already-studied search normalization, Settings search or CAVA profiles.
 
-No runtime or tests executed through this GitHub-only research pass. The regression scripts are referenced as available fixtures, **not presented as passing on this baseline**. No whole-Hadalis CPU/GPU/RAM/FPS percentages are claimed. Continue strict-lossless source research and feature-specific oracle development.
+No runtime or tests executed through this GitHub-only research pass. The regression scripts are referenced as available fixtures, **not presented as passing on this baseline**. No whole-Alis CPU/GPU/RAM/FPS percentages are claimed. Continue strict-lossless source research and feature-specific oracle development.
 
 ## Research continuation — round 52
 
@@ -9411,7 +9411,7 @@ A head-index queue/ring buffer could reduce per-dequeue array movement, **but ad
 - R50.1 LocalMusic QML retention and R43.2 OrbitalWeather equal-arc table reuse remain `RETIRED / IMPLEMENTED`; the new audio commit does not touch those source paths. Earlier R51/R52 Config, Notepad and package-search candidates remain independent and still lack native parity benchmarks.
 - Existing audio dispatch timers and ramps were previously classified intentional/coalesced. Do not retire or rewrite them based only on this new graph analysis. The recent OSD repair must retain its behavior.
 
-This round **does not change runtime**. No local repository, actual QV4/Quickshell test, GPU measurement, desktop acceptance or whole-Hadalis CPU/RAM/FPS benchmark was run. The two analytical pure-JS probes are explicitly scoped and are not acceptance evidence for a code patch. Continue research in the next round.
+This round **does not change runtime**. No local repository, actual QV4/Quickshell test, GPU measurement, desktop acceptance or whole-Alis CPU/RAM/FPS benchmark was run. The two analytical pure-JS probes are explicitly scoped and are not acceptance evidence for a code patch. Continue research in the next round.
 
 ## Research continuation — round 54
 
@@ -9451,7 +9451,7 @@ Strict-lossless strategy to explore: construct exactly one appropriate `_display
 - **NOT a proposal to suppress `rangeLoaded` data construction blindly:** it is a public signal payload and might be used by future callers. Optimizing one consumer's snapshot path must not remove the signal or change public payload identity/order. The popup `NotificationCenterPopup` currently queries today's `getToday`/`getAppList(1)` and is **outside the repeated historical-merge subset**.
 - R24.3 proposed replacing the ScreenTime startup Bash `test/cat` process with the existing FileView primitive. This remains a separate unimplemented candidate; R54 does not retire it. R53.1's guarded EasyEffects graph fast-path, R52.1 custom-widget config clones and R51.1 overlays remain independent and await actual native parity/benchmark evidence.
 
-Research only. No runtime QML/native/service changes, no actual repository tests, no real QV4/desktop profile and no whole-Hadalis CPU/GPU/RAM/FPS percentage claims. Continue the next research round after native oracle development.
+Research only. No runtime QML/native/service changes, no actual repository tests, no real QV4/desktop profile and no whole-Alis CPU/GPU/RAM/FPS percentage claims. Continue the next research round after native oracle development.
 
 ## Research continuation — round 55
 
@@ -9478,7 +9478,7 @@ Required oracle: native Quickshell/QV4 fixture with `historyLength` at 0,1,2,60,
 - Graph presentation consumers cannot be treated as passive holders of arrays. The basic `Graph.qml` Canvas listens for `valuesChanged` and calls `requestPaint()`; source-level repaint equivalence does not follow from equal final arrays alone.
 - R53 guarded EasyEffects reachability, R54 ScreenTime history merges and previous retired R16.1/R43.2 statuses remain unchanged.
 
-This is source-audit research only. No runtime changes, no native Qt/QV4 test execution and no measured whole-Hadalis GPU/RAM/CPU/FPS gains. Continue research after the native history-list oracle.
+This is source-audit research only. No runtime changes, no native Qt/QV4 test execution and no measured whole-Alis GPU/RAM/CPU/FPS gains. Continue research after the native history-list oracle.
 
 ## Research continuation — round 56
 
@@ -9513,7 +9513,7 @@ Strict-lossless candidate: in each invocation construct a **private** `Map` from
 - The just-committed R54 ScreenTime historical merge and R55 ResourceUsage history list copy candidates are unchanged; both await real QV4/NOTIFY/performance evidence.
 - Consolidation hygiene: Round 55 accidentally assigned priority number **131** to both ScreenTime and ResourceUsage. The single canonical promotion list is normalized here to **131 ScreenTime, 132 ResourceUsage**, and this new timed-bucket investigation is **133**. No older priority definitions or runtime files change.
 
-This is source-only research and an isolated analytical JS test. No runtime QML/native code was edited; no repository regression, real QV4, visual-desktop acceptance or live profiler result was obtained; no whole-Hadalis CPU/GPU/RAM/FPS gain is claimed. Continue the following round with pinned native oracles.
+This is source-only research and an isolated analytical JS test. No runtime QML/native code was edited; no repository regression, real QV4, visual-desktop acceptance or live profiler result was obtained; no whole-Alis CPU/GPU/RAM/FPS gain is claimed. Continue the following round with pinned native oracles.
 ## Research continuation — round 57
 
 Baseline: `dev` at `114dc99ca1db584d7200e7a5e0aec49091e6e92f` (Round 56 is the latest canonical section at this read). The repository tree at this SHA contains 3,142 blobs among 3,526 tree entries; directory-wide inventory was used for selection, followed by targeted live-source reads, not a claim of opening every binary/source file. Audit search found no earlier dedicated `_streamMatchScore`, `streamNodeForPlayer`, `playerForStreamNode` or `_volumeTokens` candidate. R23.2 is a **different** MPRIS desktop-entry fuzzy-hint resolver, and R53.1 concerns **EasyEffects sink graph reachability**. Do not conflate these.
@@ -9547,7 +9547,7 @@ Real acceptance requires a native Quickshell/QV4 fixture with 0/1/many players a
 - The MPRIS service already avoids unnecessary `players` and `displayPlayers` reassignments via `_samePlayerOrder`, and its list rebuild is debounced at 50 ms with a separate 1,800 ms empty-list grace. These are existing optimizations and should **not** be reversed or counted as new gains.
 - `Network.qml` already uses `Map`/`Set` reconciliation for Wi-Fi AP rows. Its formerly quadratic stale-row scan is not re-promoted from this pass.
 
-**Research only.** No QML, native, IPC, process command, config, display behavior or tests in the repository were changed in this round. No native Quickshell/QV4 run, local maintainer validator, pixel A/B, desktop acceptance or measured Hadalis-wide GPU/RAM/CPU/FPS percentage was performed. Continue with a pinned native matching oracle and actual consumer hit-rate measurement.
+**Research only.** No QML, native, IPC, process command, config, display behavior or tests in the repository were changed in this round. No native Quickshell/QV4 run, local maintainer validator, pixel A/B, desktop acceptance or measured Alis-wide GPU/RAM/CPU/FPS percentage was performed. Continue with a pinned native matching oracle and actual consumer hit-rate measurement.
 
 ## Research continuation — round 58
 
@@ -9594,7 +9594,7 @@ Required oracle: pinned real `Events.qml` execution with 0/1/10/1,000/10,000 rec
 - R57 MPRIS, R56 CalendarSync and R54/R55 ScreenTime/ResourceUsage remain **OPEN, QV4/owner benchmark gated**. R16.1 LocalMusic and R43.2 OrbitalWeather remain **RETIRED / IMPLEMENTED**; no candidate was marked done solely due to a pure-JS model.
 - New promotion-order slots are **#135** (`GlobalActions`) and **#136** (`Events`); the latest unmodified previous slot was #134.
 
-**Research-only write**: this round changes neither QML/service/native runtime code nor test fixtures or branch `stable`. No local repo regression, Quickshell/QV4 runtime test, canonical maintainer validator, owner-session visual verification, or whole-Hadalis before/after CPU/GPU/RAM/FPS measurement was executed. Continue into a separate round only with fresh SHA, nonduplicated paths and oracle-qualified evidence.
+**Research-only write**: this round changes neither QML/service/native runtime code nor test fixtures or branch `stable`. No local repo regression, Quickshell/QV4 runtime test, canonical maintainer validator, owner-session visual verification, or whole-Alis before/after CPU/GPU/RAM/FPS measurement was executed. Continue into a separate round only with fresh SHA, nonduplicated paths and oracle-qualified evidence.
 
 ## Research continuation — round 59
 
@@ -9613,7 +9613,7 @@ Pinned blobs:
 
 Narrow strict-lossless proposal: only inside `_normalizeTabs`, use a fresh private `Set` instead of the `seenIds` array; replace `includes(id)` with `has(id)` and `push(id)` with `add(id)`. Do not reorder the input iteration, normalize before membership, change the truthiness short-circuit for empty IDs, or move ID generation out of its `do…while`. Preserve `String(tab.id ?? "")`, `trim()`, titles, bodies, the default numbering based on `normalized.length + 1`, fresh record/array identity, `_normalizedTabsNeedSave`, generated ID collision order, and the exact persisted result. For a non-array top-level value the original method returns immediately **without resetting** `_normalizedTabsNeedSave`; preserve that precondition. Every collected ID is a primitive string, so Set membership and array includes use the same string equality, even with Unicode and unsafe object-property names. Do not replace this with a plain JavaScript object dictionary.
 
-**Standalone seeded pure-JS differential probe (NOT repository/QV4 acceptance):** 16,000 cases of 0–94 tabs or malformed top-level values, with valid and invalid records, blank/duplicate/whitespace/Unicode/numeric IDs, missing/null fields, generated-ID collisions, initial save-flag state, and identical deterministic ID-generator sequences. Baseline and Set candidate matched **16,000/16,000 cases, zero mismatches** in final ordered records, IDs, title/text fields, save-required state and number/order of ID generations. Instrumented membership calls were **805,621 in each version**; the original growing array had an **18,825,044 upper bound** on inspected slots across cases. With 1,500 duplicate IDs, both produced identical outputs and made **2,999 membership calls**, while the original had a **2,248,500 inspected-slot upper bound**. Array slot bounds are deliberately *not exact comparisons* because `includes` can stop early; `Set.has` lookups have different overhead and temporary retained memory. These counts do not measure CPU time, real allocations, GC, frame rate or Hadalis-wide optimization percentages.
+**Standalone seeded pure-JS differential probe (NOT repository/QV4 acceptance):** 16,000 cases of 0–94 tabs or malformed top-level values, with valid and invalid records, blank/duplicate/whitespace/Unicode/numeric IDs, missing/null fields, generated-ID collisions, initial save-flag state, and identical deterministic ID-generator sequences. Baseline and Set candidate matched **16,000/16,000 cases, zero mismatches** in final ordered records, IDs, title/text fields, save-required state and number/order of ID generations. Instrumented membership calls were **805,621 in each version**; the original growing array had an **18,825,044 upper bound** on inspected slots across cases. With 1,500 duplicate IDs, both produced identical outputs and made **2,999 membership calls**, while the original had a **2,248,500 inspected-slot upper bound**. Array slot bounds are deliberately *not exact comparisons* because `includes` can stop early; `Set.has` lookups have different overhead and temporary retained memory. These counts do not measure CPU time, real allocations, GC, frame rate or Alis-wide optimization percentages.
 
 Real oracle required before implementation: QV4/Quickshell run actual `Notepad.qml` with 0/1/10/100/1,000/10,000 valid and malformed tabs; duplicate IDs including generator collisions; preservation of error/side-effect order for exotic `String` inputs, Unicode/trim, currentTab selection, `tabsChanged` notifications, fresh object identities, FileView loaded/saved/no-op/error state and exact healed JSON bytes. Check concurrent edits, reloads and mounted `NotepadWidget` editor ID/focus reconciliation. Measure actual size distribution, load latency, QV4 GC/temporary Set RAM and performance crossover. Most ordinary notebooks may have only a few tabs; do not assume a material benefit.
 
@@ -9625,7 +9625,7 @@ Real oracle required before implementation: QV4/Quickshell run actual `Notepad.q
 - A source-local call-site scan found no invocation of `LocalMusic._trackForIdentity` elsewhere **within that file**. Without proof of live external use, building an index for the entire music library has no established advantage; this path is not promoted.
 - Existing R57 MPRIS, R58 GlobalActions and R58 Events candidates remain OPEN with native/QV4 oracles unmet. Round 59 adds only priority **#137** for Notepad's *load-time* ID membership.
 
-**Research only.** No QML/native code, product behavior, timers, persisted config, tests, visual assets or `stable` branch changed. No native QV4 fixture, maintainer validator, live desktop A/B or measured whole-Hadalis GPU/RAM/CPU/FPS performance gain. Continue research with pinned newest source and native acceptance gates.
+**Research only.** No QML/native code, product behavior, timers, persisted config, tests, visual assets or `stable` branch changed. No native QV4 fixture, maintainer validator, live desktop A/B or measured whole-Alis GPU/RAM/CPU/FPS performance gain. Continue research with pinned newest source and native acceptance gates.
 
 ## Research continuation — round 60
 
@@ -9657,7 +9657,7 @@ Candidate direction: build **one private first-wins index from the already-const
 - `WallhavenView.qml`'s `next` command copies/reverses responses to find the latest matching page, but that code runs on user command rather than a render/keystroke loop; not a priority without huge history evidence.
 - R57 MPRIS, R58 GlobalActions/Events and R59 Notepad remain research-only. The only new promotion is **#138**, scoped to an active Overview or TaskView snapshot.
 
-**Research-only write:** no QML/JS runtime, compositor behavior, tests, images, config, native source or `stable` branch is changed. No native QV4 acceptance, canonical validator, desktop compositor session, pixel comparison or whole-Hadalis CPU/GPU/RAM/FPS measurement was performed. Continue with source-SHA-pinned parity evidence and measured workload frequency.
+**Research-only write:** no QML/JS runtime, compositor behavior, tests, images, config, native source or `stable` branch is changed. No native QV4 acceptance, canonical validator, desktop compositor session, pixel comparison or whole-Alis CPU/GPU/RAM/FPS measurement was performed. Continue with source-SHA-pinned parity evidence and measured workload frequency.
 
 ## Research continuation — round 61
 
@@ -9675,7 +9675,7 @@ Pinned sources:
 
 Narrow candidate: a single owner property such as `readonly property string displayQuery: StringUtils.cleanOnePrefix(root.debouncedSearchText, [root.prefixAction, root.prefixApp, root.prefixClipboard, root.prefixEmojis, root.prefixMath, root.prefixShellCommand, root.prefixWebSearch])`, then change **only** the delegate `query` binding to `root.displayQuery`. Preserve the exact prefix order and `??` defaults already applied when computing each prefix property; do **not** replace the helper with a “longest prefix” algorithm, a regular expression or a trim/lowercase operation. Overlapping prefixes, an empty string prefix, multi-character symbols and user-configured Unicode prefixes must yield the same raw substring as today. Keep `debouncedSearchText` rather than `searchingText` as the dependency to preserve the visible debounce, Dashboard crossfade and non-App/qalc update timing. Do not alter `SearchItem.highlightContent` or HTML escaping, `ScriptModel` objectProp/key identity, list order, keyboard navigation, actions or cached results. Because inputs are typed QML string properties, the helper is deterministic for a single input snapshot, but **QML evaluation/dependency ordering** still requires a live native oracle.
 
-**Isolated seeded JavaScript differential model, NOT a QV4 acceptance or CPU benchmark:** transcribed the exact `cleanOnePrefix` loop and compared per-delegate calls to a single owner computation on **24,000** query/prefix epochs with 0–51 simulated visible delegates (including 649 no-delegate epochs). Queries and the seven prefixes included blank/overlapping, ASCII, multicharacter, whitespace and Unicode fragments. Compared the full result string for every simulated delegate, with **zero mismatches** across **608,089 delegate evaluations**; five fixed edge cases (empty first prefix, overlapping prefix order, Unicode, unmatched prefix and slash prefix) also passed. Instrumented synthetic operation counts: per-delegate baseline **608,089** fresh prefix arrays, **3,216,156** startsWith checks, **303,570** slices; owner-once model **24,000** arrays, **126,988** startsWith checks, **11,989** slices. These numbers are synthetic and do **not** establish milliseconds saved or a Hadalis-wide CPU, RAM, GPU or FPS percentage. The owner model executes once on a query epoch even with **zero** delegates; in QML a lazily evaluated binding may not, so the lower bound and net gain must be measured with actual visible-row counts.
+**Isolated seeded JavaScript differential model, NOT a QV4 acceptance or CPU benchmark:** transcribed the exact `cleanOnePrefix` loop and compared per-delegate calls to a single owner computation on **24,000** query/prefix epochs with 0–51 simulated visible delegates (including 649 no-delegate epochs). Queries and the seven prefixes included blank/overlapping, ASCII, multicharacter, whitespace and Unicode fragments. Compared the full result string for every simulated delegate, with **zero mismatches** across **608,089 delegate evaluations**; five fixed edge cases (empty first prefix, overlapping prefix order, Unicode, unmatched prefix and slash prefix) also passed. Instrumented synthetic operation counts: per-delegate baseline **608,089** fresh prefix arrays, **3,216,156** startsWith checks, **303,570** slices; owner-once model **24,000** arrays, **126,988** startsWith checks, **11,989** slices. These numbers are synthetic and do **not** establish milliseconds saved or a Alis-wide CPU, RAM, GPU or FPS percentage. The owner model executes once on a query epoch even with **zero** delegates; in QML a lazily evaluated binding may not, so the lower bound and net gain must be measured with actual visible-row counts.
 
 **Strict-lossless gates before runtime implementation:** pin actual Config prefix updates and `searchPrefixes` object replacements; instrument `query` and `displayContent` properties per delegate after rapid query edits, delayed 60 ms search, zero/one/many virtualized rows, prefix changes while search is open, empty and overlapping prefixes, qalc asynchronous result publication, focus/key Tab/Enter, and embedded Dashboard crossfade. Confirm no stale owner `displayQuery` binding after source changes, and that sharing adds no early/later update or missed QML dependency. Compare rendered escaped/highlighted text character-for-character and focus/selection/order/ScriptModel reuse. Run native QV4/Quickshell with realistic result limits, time per search update, QV4 allocations/GC and no-results case. If typical live delegate fan-out is small or owner invalidation overhead dominates, reject as nonmaterial. No new persistent cache or global service state is needed.
 

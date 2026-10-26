@@ -37,7 +37,7 @@ check_cmd() {
 echo -e "${STY_BLUE}Critical components:${STY_RST}"
 check_cmd "qs" "Quickshell" && HAS_QUICKSHELL=true || HAS_QUICKSHELL=false
 check_cmd "niri" "Niri compositor" && HAS_NIRI=true || HAS_NIRI=false
-check_cmd "cargo" "Rust/Cargo (required to build Hadalis native runtime)" && HAS_CARGO=true || HAS_CARGO=false
+check_cmd "cargo" "Rust/Cargo (required to build Alis native runtime)" && HAS_CARGO=true || HAS_CARGO=false
 
 echo ""
 echo -e "${STY_BLUE}Build tools:${STY_RST}"
@@ -381,7 +381,7 @@ fi
 
 echo ""
 echo -e "${STY_CYAN}For more help, see:${STY_RST}"
-echo "  - https://github.com/snowarch/inir/wiki/Manual-Installation"
+echo "  - https://github.com/snowarch/alis/wiki/Manual-Installation"
 echo "  - https://quickshell.outfoxxed.me/docs"
 echo "  - https://github.com/YaLTeR/niri/wiki"
 echo ""

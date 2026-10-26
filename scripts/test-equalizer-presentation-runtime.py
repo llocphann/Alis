@@ -5,7 +5,7 @@ from pathlib import Path
 from native_test_session import private_wayland, run_qs
 
 ROOT = Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix="hadalis-eq-presentation-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-eq-presentation-") as name:
     folder = Path(name)
     for entry in ["modules", "GlobalStates.qml", "qmldir", "assets", "defaults", "translations"]:
         (folder / entry).symlink_to(ROOT / entry)

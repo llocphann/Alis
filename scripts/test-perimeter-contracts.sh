@@ -23,12 +23,12 @@ for file in \
     ConnectedSurfaceRevealClip.qml \
     ConnectedSurfaceContentHost.qml \
     ConnectedSurfaceMask.qml \
-    ConnectedSurfaceIrisField.qml \
-    ConnectedSurfaceIrisFrame.qml \
+    ConnectedSurfaceAbyssField.qml \
+    ConnectedSurfaceAbyssFrame.qml \
     ConnectedSurfaceBodyMask.qml \
-    ConnectedSurfaceIrisEdgeSurface.qml \
-    IrisField.frag \
-    IrisField.frag.qsb; do
+    ConnectedSurfaceAbyssEdgeSurface.qml \
+    AbyssField.frag \
+    AbyssField.frag.qsb; do
     [[ -f "$common/$file" ]] || fail "missing shared primitive $file"
 done
 
@@ -44,7 +44,7 @@ done
 ! grep -Fq 'RoundCorner 1.0' "$root/modules/common/widgets/qmldir" \
     || fail 'retired RoundCorner export remains'
 
-for primitive in ConnectedSurfaceGeometry ConnectedSurfaceIrisFrame ConnectedSurfaceRevealClip ConnectedSurfaceContentHost ConnectedSurfaceBodyMask; do
+for primitive in ConnectedSurfaceGeometry ConnectedSurfaceAbyssFrame ConnectedSurfaceRevealClip ConnectedSurfaceContentHost ConnectedSurfaceBodyMask; do
     grep -Fq "$primitive" "$styled" \
         || fail "StyledPopup must keep using $primitive"
 done
@@ -69,10 +69,10 @@ for token in \
     grep -Fq "$token" "$styled" \
         || fail "StyledPopup must keep control-centered tangent placement while attaching to the physical Bar edge: $token"
 done
-grep -Fq 'readonly property rect sdfBodyRect:' "$common/ConnectedSurfaceIrisFrame.qml" \
-    || fail 'iRiS tangent joins must weld only the SDF body record'
-grep -Fq 'x: root.sdfBodyRect.x' "$common/ConnectedSurfaceIrisFrame.qml" \
-    || fail 'iRiS popup shape must consume the tangent-welded SDF rect'
+grep -Fq 'readonly property rect sdfBodyRect:' "$common/ConnectedSurfaceAbyssFrame.qml" \
+    || fail 'Abyss tangent joins must weld only the SDF body record'
+grep -Fq 'x: root.sdfBodyRect.x' "$common/ConnectedSurfaceAbyssFrame.qml" \
+    || fail 'Abyss popup shape must consume the tangent-welded SDF rect'
 grep -Fq 'property real connectorWidth: PerimeterTokens.connectorWidth' "$common/ConnectedSurfaceGeometry.qml" \
     || fail 'connected geometry must source neck width from PerimeterTokens'
 grep -Fq 'readonly property real connectorWidth: 40' "$common/PerimeterTokens.qml" \
@@ -83,18 +83,18 @@ for token in \
     '- root.screenEdgeHoverWidth)' \
     '? root.screenEdgeHoverWidth' \
     ': Appearance.sizes.elevationMargin' \
-    'ConnectedSurfaceIrisEdgeSurface {' \
+    'ConnectedSurfaceAbyssEdgeSurface {' \
     'ownerThickness: root.screenEdgeHoverWidth' \
     'exclusionMode: ExclusionMode.Ignore' \
     'sidebarContentLoader.x + sidebarContentLoader.animTranslateX' \
     'progress: root.presentationOpen || sidebarContentLoader.animating ? 1 : 0' \
     'readonly property real hiddenTranslateDistance:' \
     'Math.ceil(root.effectiveSidebarWidth) + Math.max(' \
-    'PerimeterTokens.irisFuseDepth' \
+    'PerimeterTokens.abyssFuseDepth' \
     '? -root.hiddenTranslateDistance' \
     ': root.hiddenTranslateDistance'; do
     grep -Fq -- "$token" "$sidebar" \
-        || fail "SidebarHost must use owner-clipped iRiS Screen Edge composition: $token"
+        || fail "SidebarHost must use owner-clipped Abyss Screen Edge composition: $token"
 done
 if grep -Fq 'id: sidebarBridgeGeometry' "$sidebar" \
         || grep -Fq 'ConnectedSurfaceConnector {' "$sidebar" \
@@ -128,14 +128,14 @@ for token in \
     'id: dashboardSurfaceLayer' \
     '(1 - root.revealProgress) * dashContainer.height' \
     'clip: root.directBottomAttachment' \
-    'ConnectedSurfaceIrisEdgeSurface {' \
+    'ConnectedSurfaceAbyssEdgeSurface {' \
     'edge: "bottom"' \
     'ownerThickness: root.attachmentThickness' \
     'root.height + root.attachmentThickness' \
     'fillColor: Appearance.colors.colLayer0' \
     'readonly property rect connectedSurfaceRect:'; do
     grep -Fq "$token" "$dashboard" \
-        || fail "OverviewDashboard must use the iRiS bottom-owner composition: $token"
+        || fail "OverviewDashboard must use the Abyss bottom-owner composition: $token"
 done
 if grep -Fq 'ConnectedSurfaceJoinFlares {' "$dashboard" \
         || grep -Fq 'joinFlareRadius' "$dashboard"; then
@@ -144,8 +144,8 @@ fi
 
 for token in \
     'import qs.modules.common.perimeter' \
-    'ConnectedSurfaceIrisEdgeSurface {' \
-    'id: dockIrisSurface' \
+    'ConnectedSurfaceAbyssEdgeSurface {' \
+    'id: dockAbyssSurface' \
     'edge: root.position' \
     'ownerThickness: dockRoot.screenEdgeThickness' \
     'dockMouseArea.x + dockBackground.x + dockConnectedBody.x' \
@@ -154,10 +154,10 @@ for token in \
     'screenEdge?.physicalShadow?.opacity ?? 0.70' \
     'Qt.alpha(Appearance.m3colors.m3shadow, dockRoot.screenEdgeShadowOpacity)'; do
     grep -Fq "$token" "$dock" \
-        || fail "Dock must use the shared iRiS/Screen Edge shadow contract: $token"
+        || fail "Dock must use the shared Abyss/Screen Edge shadow contract: $token"
 done
 if grep -Fq 'StyledRectangularShadow {' "$dock"; then
-    fail 'Dock must not retain a detached local shadow beside the shared iRiS field'
+    fail 'Dock must not retain a detached local shadow beside the shared Abyss field'
 fi
 
 for shared_shadow_surface in "$sidebar" "$dashboard" "$dock"; do

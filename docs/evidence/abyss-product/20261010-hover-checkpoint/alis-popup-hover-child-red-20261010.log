@@ -1,0 +1,14 @@
+  INFO: Launching config: "/tmp/alis-popup-hover-h5cntnmz/shell.qml"
+  INFO: Shell ID: "0580952f465ec8a9215a5938d0fc4620" Path ID "0580952f465ec8a9215a5938d0fc4620"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/lj25tefomt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.236550.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[326:5]: Read of /tmp/alis-popup-hover-h5cntnmz/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[305:5]: Read of /tmp/alis-popup-hover-h5cntnmz/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[305:5]: Read of /tmp/alis-popup-hover-h5cntnmz/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+ ERROR qml: POPUP_ANCHOR_HOVER_FAIL anchor-to-popup handoff collapsed the popup check@qs:@/qs/shell.qml:78
+runChecks@qs:@/qs/shell.qml:106
+expression for onTriggered@qs:@/qs/shell.qml:151
+

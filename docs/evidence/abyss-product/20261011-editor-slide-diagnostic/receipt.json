@@ -3,7 +3,7 @@
   "kind": "focused-editor-diagnostic",
   "sourceSha": "6bb45f361346048e7368511169fa5151c390e4ac",
   "execution": "exact clean clone; private unfocused Niri; owned field grab only; no owner input",
-  "command": "HADALIS_DASHBOARD_TEST_ROOT=<clean-clone> python3 <diagnostic>",
+  "command": "ALIS_DASHBOARD_TEST_ROOT=<clean-clone> python3 <diagnostic>",
   "result": "PASS",
   "exitCode": 0,
   "cases": 16,

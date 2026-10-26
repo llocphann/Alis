@@ -7,7 +7,7 @@ ConnectedSurfaceFrame 1.0 ConnectedSurfaceFrame.qml
 ConnectedSurfaceRevealClip 1.0 ConnectedSurfaceRevealClip.qml
 ConnectedSurfaceContentHost 1.0 ConnectedSurfaceContentHost.qml
 ConnectedSurfaceMask 1.0 ConnectedSurfaceMask.qml
-ConnectedSurfaceIrisField 1.0 ConnectedSurfaceIrisField.qml
-ConnectedSurfaceIrisFrame 1.0 ConnectedSurfaceIrisFrame.qml
+ConnectedSurfaceAbyssField 1.0 ConnectedSurfaceAbyssField.qml
+ConnectedSurfaceAbyssFrame 1.0 ConnectedSurfaceAbyssFrame.qml
 ConnectedSurfaceBodyMask 1.0 ConnectedSurfaceBodyMask.qml
-ConnectedSurfaceIrisEdgeSurface 1.0 ConnectedSurfaceIrisEdgeSurface.qml
+ConnectedSurfaceAbyssEdgeSurface 1.0 ConnectedSurfaceAbyssEdgeSurface.qml

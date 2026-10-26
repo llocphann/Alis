@@ -129,7 +129,7 @@
       "mode": 420
     },
     {
-      "file": "defaults/niri/config.d/75-inir-launcher-binds.kdl",
+      "file": "defaults/niri/config.d/75-alis-launcher-binds.kdl",
       "before": "1358169bc8a33787c9279add00d88199089e2bf368e873541964431b69b5f1d4",
       "after": "a28df50874ffd6ec6122db1048151b275fdc3ad4dfca8f0e2d31e9e5a74b7119",
       "mode": 420

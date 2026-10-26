@@ -157,7 +157,7 @@ Item {
 
     function isShaderTransitionType(rawType): bool {
         const value = String(rawType ?? "")
-        return value === "inirMelt" || shaderTransitionTypes.indexOf(value) >= 0
+        return value === "alisMelt" || shaderTransitionTypes.indexOf(value) >= 0
     }
 
     function _resolvedShaderName(): string {
@@ -279,7 +279,7 @@ Item {
     function _normalizedTransitionType(rawType: string): string {
         switch (String(rawType ?? "crossfade")) {
         case "alisMelt":
-        case "inirMelt":
+        case "alisMelt":
         case "shaderRandom":
             return "crossfade"
         case "none":

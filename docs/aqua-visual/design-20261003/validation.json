@@ -876,7 +876,7 @@
           "exit": 1
         },
         {
-          "check": "shell regression: scripts/test-hadalis-desktop-repair.sh",
+          "check": "shell regression: scripts/test-alis-desktop-repair.sh",
           "exit": 2
         },
         {

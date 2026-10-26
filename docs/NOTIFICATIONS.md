@@ -1,12 +1,12 @@
 # Notifications
 
-How notifications work in iNiR, from arrival to display to history.
+How notifications work in Alis, from arrival to display to history.
 
 ## How it works
 
-iNiR implements the freedesktop notification spec via Quickshell's notification module. Apps send notifications over D-Bus, iNiR receives them, shows popups, and stores history.
+Alis implements the freedesktop notification spec via Quickshell's notification module. Apps send notifications over D-Bus, Alis receives them, shows popups, and stores history.
 
-When iNiR starts, it tells the session it's the notification daemon. If another notification daemon is running (mako, dunst, etc.), iNiR's ConflictKiller handles the conflict on startup.
+When Alis starts, it tells the session it's the notification daemon. If another notification daemon is running (mako, dunst, etc.), Alis's ConflictKiller handles the conflict on startup.
 
 ## Popups
 
@@ -28,7 +28,7 @@ Max 20 notifications per second. Spam from misbehaving apps gets throttled inste
 Toggle DND from:
 - Right sidebar toggle (ii)
 - Action center toggle (waffle)
-- IPC: `inir notifications toggleSilent`
+- IPC: `alis notifications toggleSilent`
 
 When DND is on, new notifications still arrive and get stored in history. They just don't show popups.
 
@@ -93,16 +93,16 @@ Popups appear at the bottom-right (Windows 11 style). The notification center (`
 ## IPC
 
 ```bash
-inir notification-center toggle     # Toggle the active family's center
-inir notification-center open       # Open notification history
-inir notification-center close      # Close notification history
-inir notification-center status     # Report family/open/output state
-inir notifications clearAll         # Clear all notifications
-inir notifications toggleSilent     # Toggle DND
+alis notification-center toggle     # Toggle the active family's center
+alis notification-center open       # Open notification history
+alis notification-center close      # Close notification history
+alis notification-center status     # Report family/open/output state
+alis notifications clearAll         # Clear all notifications
+alis notifications toggleSilent     # Toggle DND
 ```
 
 ## Troubleshooting
 
-**No notifications showing up**: check if another notification daemon is running (`pidof mako dunst`). iNiR's ConflictKiller should handle this, but if it doesn't, kill the other daemon manually.
+**No notifications showing up**: check if another notification daemon is running (`pidof mako dunst`). Alis's ConflictKiller should handle this, but if it doesn't, kill the other daemon manually.
 
-**Notifications from specific apps missing**: some apps send notifications to specific categories or with transient hints. Check `inir logs` for notification-related messages.
+**Notifications from specific apps missing**: some apps send notifications to specific categories or with transient hints. Check `alis logs` for notification-related messages.

@@ -56,7 +56,7 @@ Singleton {
     // until the next configured boundary, rather than being undone next minute.
     property real manualOverrideUntilMs: 0
 
-    // Debounce temperature-driven restarts of the process Hadalis owns. An
+    // Debounce temperature-driven restarts of the process Alis owns. An
     // externally started night-light process is observed but never restarted.
     Timer {
         id: restartDebounce
@@ -201,7 +201,7 @@ Singleton {
     }
 
     function _restartOwnedProcess(): void {
-        // Do not mutate an externally-owned process merely because Hadalis can
+        // Do not mutate an externally-owned process merely because Alis can
         // detect it. Only the child launched by this singleton is restartable.
         if (root._ownedProcessRunning())
             root._stopOwnedProcess(true)

@@ -286,7 +286,7 @@ Singleton {
         onTriggered: root.audioSignalActive = false
     }
 
-    // Port Serpantinum's no-data recovery idea into the shared Hadalis service.
+    // Port Serpantinum's no-data recovery idea into the shared Alis service.
     // Zero-amplitude frames still refresh this timer; it only fires when the
     // process itself stops producing valid frames while a consumer is active.
     Timer {

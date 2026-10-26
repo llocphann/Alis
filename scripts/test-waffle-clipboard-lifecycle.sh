@@ -20,7 +20,7 @@ loaders = [block(source.rfind('    LazyLoader {', 0, source.index('id: waffleCli
 for match in re.finditer(r'    (?:Deferred|OnDemand)PanelLoader \{[^\n]*ClipboardModule\.ClipboardPanel', source):
     loaders.append(block(match.start()))
 deferred = block(source.index('    component DeferredPanelLoader:'))
-with tempfile.TemporaryDirectory(prefix='hadalis-waffle-clipboard-') as tmp:
+with tempfile.TemporaryDirectory(prefix='alis-waffle-clipboard-') as tmp:
     root = pathlib.Path(tmp)
     (root / 'qmldir').write_text('singleton Config 1.0 Config.qml\nsingleton GlobalStates 1.0 GlobalStates.qml\n')
     (root / 'Config.qml').write_text('''pragma Singleton
@@ -44,7 +44,7 @@ QtObject { property bool shellEntryReady: true; property bool deferredPanelsRead
         folder.mkdir()
         (folder / 'qmldir').write_text(f'{typename} 1.0 {typename}.qml\n')
         (folder / f'{typename}.qml').write_text('import QtQuick\nimport ".."\nItem { Component.onCompleted: Config.created("'+name+'") }\n')
-    (root / 'shell.qml').write_text('''//@ pragma ShellId hadalis-waffle-clipboard-test
+    (root / 'shell.qml').write_text('''//@ pragma ShellId alis-waffle-clipboard-test
 import QtQuick
 import Quickshell
 import Quickshell.Io

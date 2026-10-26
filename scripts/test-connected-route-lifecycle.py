@@ -98,8 +98,8 @@ def main() -> None:
           "Normal Weather UX must not depend on retired broad perimeter routing")
 
     for token in (
-        "ConnectedSurfaceIrisEdgeSurface {",
-        "id: sidebarIrisSurface",
+        "ConnectedSurfaceAbyssEdgeSurface {",
+        "id: sidebarAbyssSurface",
         "ownerThickness: root.screenEdgeHoverWidth",
         "PerimeterTokens.seamOverlap",
         "Config.options?.appearance?.screenEdge?.width ?? 10",

@@ -14,7 +14,7 @@
   "qml_parser": "PASS (qmlformat on Qt 6.11.2; parser pass runs inside qml-check)",
   "source_tree_clean_in_validator": true,
   "log_sha256": "1ab0b6af76864c630117b60f407232159b3f4333b78e1af5d875a7628d3c1a7d",
-  "private_log_path": "/tmp/hadalis-maintainer-validation-20261004-040958.log",
+  "private_log_path": "/tmp/alis-maintainer-validation-20261004-040958.log",
   "terminal_log_sha256": "133e26e9a71a85071e1aa8d811c8464638f20fe57bbff4fa289ef869306d0d65",
   "failed_checks": [
     {
@@ -154,7 +154,7 @@
       "exit": 1
     },
     {
-      "check": "shell regression: scripts/test-hadalis-desktop-repair.sh",
+      "check": "shell regression: scripts/test-alis-desktop-repair.sh",
       "exit": 2
     },
     {

@@ -114,7 +114,7 @@ function setup_systemd_services(){
 # ThinkFan privileged bridge
 #####################################################################################
 function setup_thinkfan_helper(){
-  log_info "Thinkfan is optional and its helper is installed separately by Hadalird."
+  log_info "Thinkfan is optional and its helper is installed separately by AlisIntergration."
 }
 
 #####################################################################################

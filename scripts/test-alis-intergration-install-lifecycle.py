@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix="hadalird-core-lifecycle-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-intergration-core-lifecycle-") as name:
     private = Path(name)
     marker = private / "system-mutation"
     env = dict(os.environ,MARKER=str(marker))
@@ -36,7 +36,7 @@ uninstall_remove_thinkfan_bridge
     for target in ("install","uninstall"):
         result = subprocess.run(["make","-n",target,"DESTDIR="+str(private/"stage")],cwd=ROOT,text=True,capture_output=True)
         assert result.returncode==0,result.stderr
-        assert "assets/helpers/inir-thinkfan" not in result.stdout
-        assert "assets/helpers/inir-battery-charge-limit" not in result.stdout
+        assert "assets/helpers/alis-thinkfan" not in result.stdout
+        assert "assets/helpers/alis-battery-charge-limit" not in result.stdout
         assert "--config-reset" not in result.stdout and "--disable" not in result.stdout
-print("HADALIRD_CORE_LIFECYCLE_PASS retired migrations/default make targets/removal preserve optional hardware state")
+print("ALIS_INTERGRATION_CORE_LIFECYCLE_PASS retired migrations/default make targets/removal preserve optional hardware state")

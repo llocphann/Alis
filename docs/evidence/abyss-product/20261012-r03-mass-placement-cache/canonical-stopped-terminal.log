@@ -1,4 +1,4 @@
-Hadalis maintainer local validation
+Alis maintainer local validation
 Log: /tmp/alis-canonical-r03-7fcmjmpw/canonical.log
 [01] host tool preflight                                        PASS
 [02] build and baseline shell syntax                            PASS
@@ -154,24 +154,24 @@ Log: /tmp/alis-canonical-r03-7fcmjmpw/canonical.log
 [152] Python regression: scripts/test-fcitx5-session-integration.py PASS
 [153] Python regression: scripts/test-fcitx5-settings-integration.py PASS
 [154] Python regression: scripts/test-global-actions-query-parity.py PASS
-[155] Python regression: scripts/test-hadalird-arch-package.py   PASS
-[156] Python regression: scripts/test-hadalird-gateway-bootstrap.py PASS
-[157] Python regression: scripts/test-hadalird-install-lifecycle.py PASS
-[158] Python regression: scripts/test-hadalird-manager.py        PASS
-[159] Python regression: scripts/test-hadalird-obsidian-wrapper.py PASS
-[160] Python regression: scripts/test-hadalird-optional.py       PASS
-[161] Python regression: scripts/test-hadalird-polkit-visibility.py PASS
-[162] Python regression: scripts/test-hadalird-preferences-migration.py PASS
-[163] Python regression: scripts/test-hadalird-settings-flow.py  PASS
-[164] Python regression: scripts/test-hadalird-system-provision.py PASS
+[155] Python regression: scripts/test-alis-intergration-arch-package.py   PASS
+[156] Python regression: scripts/test-alis-intergration-gateway-bootstrap.py PASS
+[157] Python regression: scripts/test-alis-intergration-install-lifecycle.py PASS
+[158] Python regression: scripts/test-alis-intergration-manager.py        PASS
+[159] Python regression: scripts/test-alis-intergration-obsidian-wrapper.py PASS
+[160] Python regression: scripts/test-alis-intergration-optional.py       PASS
+[161] Python regression: scripts/test-alis-intergration-polkit-visibility.py PASS
+[162] Python regression: scripts/test-alis-intergration-preferences-migration.py PASS
+[163] Python regression: scripts/test-alis-intergration-settings-flow.py  PASS
+[164] Python regression: scripts/test-alis-intergration-system-provision.py PASS
 [165] Python regression: scripts/test-alis-companion-layer-shell.py    PASS
 [166] Python regression: scripts/test-alis-companion-optional.py       PASS
-[167] Python regression: scripts/test-inir-process-cleanup.py    PASS
+[167] Python regression: scripts/test-alis-process-cleanup.py    PASS
 [168] Python regression: scripts/test-internal-todo-persistence-runtime.py PASS
 [169] Python regression: scripts/test-ipc-registry-generator.py  PASS
-[170] Python regression: scripts/test-iris-corner-poc-contract.py PASS
-[171] Python regression: scripts/test-iris-g2-contract.py        PASS
-[172] Python regression: scripts/test-iris-production-surface-contract.py PASS
+[170] Python regression: scripts/test-abyss-corner-poc-contract.py PASS
+[171] Python regression: scripts/test-abyss-g2-contract.py        PASS
+[172] Python regression: scripts/test-abyss-production-surface-contract.py PASS
 [173] Python regression: scripts/test-light-mode-upstream-contract.py PASS
 [174] Python regression: scripts/test-loading-presentation-contract.py PASS
 [175] Python regression: scripts/test-local-ai-gguf-runtime.py   PASS
@@ -234,7 +234,7 @@ Log: /tmp/alis-canonical-r03-7fcmjmpw/canonical.log
 [232] Python regression: scripts/test-settings-flat-navigation.py PASS
 [233] Python regression: scripts/test-settings-hierarchy-runtime.py PASS
 [234] Python regression: scripts/test-settings-information-architecture.py PASS
-[235] Python regression: scripts/test-settings-inir-task-tabs-contract.py PASS
+[235] Python regression: scripts/test-settings-alis-task-tabs-contract.py PASS
 [236] Python regression: scripts/test-settings-inline-search-layout.py PASS
 [237] Python regression: scripts/test-settings-navigation-behavior.py PASS
 [238] Python regression: scripts/test-settings-ownership-cleanup.py PASS

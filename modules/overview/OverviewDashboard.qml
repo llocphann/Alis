@@ -72,7 +72,7 @@ Item {
         Number(Config.options?.appearance?.screenEdge?.physicalShadow?.opacity ?? 0.70)))
     readonly property real connectedDecorationMargin: root.embeddedSurface ? 0 : root.directBottomAttachment
         ? Math.max(Appearance.sizes.elevationMargin,
-            PerimeterTokens.irisFuseDepth, root.screenEdgeShadowSize + 2)
+            PerimeterTokens.abyssFuseDepth, root.screenEdgeShadowSize + 2)
         : Appearance.sizes.elevationMargin
 
     implicitWidth: dashContainer.width + root.connectedDecorationMargin * 2
@@ -202,11 +202,11 @@ Item {
         joinBottom: root.directBottomAttachment
     }
 
-    // The iRiS field supplies only the connected plate/shadow. Dashboard
+    // The Abyss field supplies only the connected plate/shadow. Dashboard
     // content must remain above it; otherwise the opaque field covers every
     // widget and the launcher appears as one blank background rectangle.
-    ConnectedSurfaceIrisEdgeSurface {
-        id: dashboardIrisSurface
+    ConnectedSurfaceAbyssEdgeSurface {
+        id: dashboardAbyssSurface
         z: 1
         anchors.fill: parent
         visible: !root.embeddedSurface && root.directBottomAttachment

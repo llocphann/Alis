@@ -31,7 +31,7 @@ SH
 relative='logs/maintainer validation.log'
 resolved_relative="$(
     cd "$tmp/caller"
-    TMPDIR="$tmp/workspace" HADALIS_VALIDATION_LOG="$relative" bash "$prefix"
+    TMPDIR="$tmp/workspace" ALIS_VALIDATION_LOG="$relative" bash "$prefix"
 )"
 expected_relative="$tmp/caller/$relative"
 [[ "$resolved_relative" == "$expected_relative" ]] \
@@ -42,7 +42,7 @@ expected_relative="$tmp/caller/$relative"
 absolute="$tmp/absolute validation.log"
 resolved_absolute="$(
     cd "$tmp/caller"
-    TMPDIR="$tmp/workspace" HADALIS_VALIDATION_LOG="$absolute" bash "$prefix"
+    TMPDIR="$tmp/workspace" ALIS_VALIDATION_LOG="$absolute" bash "$prefix"
 )"
 [[ "$resolved_absolute" == "$absolute" ]] \
     || fail 'absolute custom log path was unexpectedly rewritten'

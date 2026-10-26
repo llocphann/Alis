@@ -3,8 +3,8 @@
 from pathlib import Path
 import os, shutil, subprocess, tempfile
 
-if os.environ.get("HADALIS_SCREEN_EDGE_PIXEL_PARITY") != "1":
-    print("SKIP: Screen Edge pixel parity requires HADALIS_SCREEN_EDGE_PIXEL_PARITY=1")
+if os.environ.get("ALIS_SCREEN_EDGE_PIXEL_PARITY") != "1":
+    print("SKIP: Screen Edge pixel parity requires ALIS_SCREEN_EDGE_PIXEL_PARITY=1")
     raise SystemExit(0)
 
 from PIL import Image, ImageChops
@@ -109,7 +109,7 @@ ShellRoot {
 }
 '''
 
-with tempfile.TemporaryDirectory(prefix="hadalis-edge-shadow-") as tmp:
+with tempfile.TemporaryDirectory(prefix="alis-edge-shadow-") as tmp:
     root=Path(tmp)
     (root/"shell.qml").write_text(QML, encoding="utf-8")
     env=os.environ.copy()

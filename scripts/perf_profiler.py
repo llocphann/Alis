@@ -136,7 +136,7 @@ def build_architecture_map(
             },
             {
                 "class": "rhi_driver",
-                "match": "qs:vk*, qs:gl*, gallium*, amdgpu*, iris*, nvidia*, disk_cache*",
+                "match": "qs:vk*, qs:gl*, gallium*, amdgpu*, abyss*, nvidia*, disk_cache*",
                 "role": "Vulkan/OpenGL driver worker and shader compilation threads.",
                 "attribution": "direct_measurement",
             },
@@ -449,7 +449,7 @@ def classify_thread(comm: str, is_leader: bool = False) -> str:
         or name.startswith("qs:gl")
         or name.startswith("gallium")
         or name.startswith("amdgpu")
-        or name.startswith("iris")
+        or name.startswith("abyss")
         or name.startswith("nvidia")
         or "disk_cache" in name
         or "vulkan" in name

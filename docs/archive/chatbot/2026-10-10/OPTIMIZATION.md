@@ -1,4 +1,4 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../../to-do/README.md).
 
 # Cloud Bot — continuous strict-lossless optimization research
 
@@ -10,7 +10,7 @@ Canonical active objective migrated from `agent/WORK.md`. Historical checkpoint:
 - [ ] Audit current `dev` deltas and search earlier research for duplicate/ALREADY/CLOSED/SUPERSEDED candidates before promoting a new finding.
 - [ ] At consolidation, Round 60 documented the guarded X-axis subset in `modules/dashboard/DashboardLayout.js` (§74.1). On continuation, read the actual newest canonical audit and diversify into a distinct high-value hot path.
 - [ ] Round 59 §73.2 active-only responsive overlap scan was HIGH CONFIDENCE **pending malformed-state oracle**; do not silently promote it to CONFIRMED.
-- [ ] Record proven findings and exact constraints only in `docs/optimization/STRICT_LOSSLESS_GPU_RAM_CPU_AUDIT.md`. A completed round must CONTINUE, not DONE. Never fabricate whole-Hadalis speedup percentages.
+- [ ] Record proven findings and exact constraints only in `docs/optimization/STRICT_LOSSLESS_GPU_RAM_CPU_AUDIT.md`. A completed round must CONTINUE, not DONE. Never fabricate whole-Alis speedup percentages.
 - [ ] For necessary local validation, run focused repository tests and the canonical maintainer validator against an exact source SHA; record bounded evidence and keep environment-owned desktop acceptance separate.
 
 ## Maintainer-scoped Abyss audit — 2026-09-30

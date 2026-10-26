@@ -7,7 +7,7 @@
   "mode": "--current-repo --strict-qml; Qt 6 tools on PATH",
   "qmlParser": "PASS (qmlformat on Qt 6.11.2; parser pass runs inside qml-check)",
   "logSha256": "b75e3d7278f43ea1d80d0715444e91206494ac34ac259557a30e2138870e0f3b",
-  "privateLogPath": "/tmp/hadalis-maintainer-validation-20261004-213735.log",
+  "privateLogPath": "/tmp/alis-maintainer-validation-20261004-213735.log",
   "terminalLogSha256": "36ba315995ec70a2db60e675b60e7f39ccaa9f403a774cf9938f539b157c67a3",
   "aquaPythonPassed": 89,
   "aquaPythonFailed": [],
@@ -330,131 +330,131 @@
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-credentials.py",
+      "check": "Python regression: scripts/test-alis-automation-credentials.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-diagnostics.py",
+      "check": "Python regression: scripts/test-alis-automation-diagnostics.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-exec-evidence.py",
+      "check": "Python regression: scripts/test-alis-automation-exec-evidence.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-install.py",
+      "check": "Python regression: scripts/test-alis-automation-install.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-job-boundaries.py",
+      "check": "Python regression: scripts/test-alis-automation-job-boundaries.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-model.py",
+      "check": "Python regression: scripts/test-alis-automation-model.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-overnight.py",
+      "check": "Python regression: scripts/test-alis-automation-overnight.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-park.py",
+      "check": "Python regression: scripts/test-alis-automation-park.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-privilege-deployment.py",
+      "check": "Python regression: scripts/test-alis-automation-privilege-deployment.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-profile-lifecycle.py",
+      "check": "Python regression: scripts/test-alis-automation-profile-lifecycle.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-recovery.py",
+      "check": "Python regression: scripts/test-alis-automation-recovery.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-response-observation.py",
+      "check": "Python regression: scripts/test-alis-automation-response-observation.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-restart.py",
+      "check": "Python regression: scripts/test-alis-automation-restart.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-scheduler.py",
+      "check": "Python regression: scripts/test-alis-automation-scheduler.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-shell-live.py",
+      "check": "Python regression: scripts/test-alis-automation-shell-live.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-startup.py",
+      "check": "Python regression: scripts/test-alis-automation-startup.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-storage.py",
+      "check": "Python regression: scripts/test-alis-automation-storage.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-thinking.py",
+      "check": "Python regression: scripts/test-alis-automation-thinking.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-transport.py",
+      "check": "Python regression: scripts/test-alis-automation-transport.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-automation-workflows.py",
+      "check": "Python regression: scripts/test-alis-automation-workflows.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-chat-bridge.py",
+      "check": "Python regression: scripts/test-alis-chat-bridge.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-cursor-timeout.py",
+      "check": "Python regression: scripts/test-alis-cursor-timeout.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-desktop-host.py",
+      "check": "Python regression: scripts/test-alis-desktop-host.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-managed-chat-diagnose.py",
+      "check": "Python regression: scripts/test-alis-managed-chat-diagnose.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-native-live.py",
+      "check": "Python regression: scripts/test-alis-native-live.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-native-stream-recovery.py",
+      "check": "Python regression: scripts/test-alis-native-stream-recovery.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-overnight-check.py",
+      "check": "Python regression: scripts/test-alis-overnight-check.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-rotation-10.py",
+      "check": "Python regression: scripts/test-alis-rotation-10.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-worker-health.py",
+      "check": "Python regression: scripts/test-alis-worker-health.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-worker-recovery.py",
+      "check": "Python regression: scripts/test-alis-worker-recovery.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-hadalis-worker.py",
+      "check": "Python regression: scripts/test-alis-worker.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-inir-process-cleanup.py",
+      "check": "Python regression: scripts/test-alis-process-cleanup.py",
       "result": "PASS"
     },
     {
@@ -462,15 +462,15 @@
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-iris-corner-poc-contract.py",
+      "check": "Python regression: scripts/test-abyss-corner-poc-contract.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-iris-g2-contract.py",
+      "check": "Python regression: scripts/test-abyss-g2-contract.py",
       "result": "PASS"
     },
     {
-      "check": "Python regression: scripts/test-iris-production-surface-contract.py",
+      "check": "Python regression: scripts/test-abyss-production-surface-contract.py",
       "result": "PASS"
     },
     {

@@ -4,7 +4,7 @@ import json, os, tempfile
 from pathlib import Path
 from native_test_session import private_wayland, run_qs
 ROOT=Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix="hadalis-dashboard-music-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-dashboard-music-") as name:
  folder=Path(name)
  for entry in ["modules","services","GlobalStates.qml","qmldir","assets","scripts","defaults","translations"]:
   (folder/entry).symlink_to(ROOT/entry)
@@ -257,7 +257,7 @@ ShellRoot {
   data=json.loads((ROOT/"defaults/config.json").read_text());data["panelFamily"]="abyss";data["abyss"]["companion"]["enabled"]=False
   data["dashboard"]["music"].pop("showScrollbars",None)
   (config/"config.json").write_text(json.dumps(data))
-  capture=Path(os.environ.get("HADALIS_MUSIC_CAPTURE",str(folder/"dashboard-music.png")))
+  capture=Path(os.environ.get("ALIS_MUSIC_CAPTURE",str(folder/"dashboard-music.png")))
   env.update(QSG_RHI_BACKEND="opengl",MUSIC_CAPTURE=str(capture),MUSIC_CAPTURE_NARROW=str(capture.with_name(capture.stem+"-narrow.png")))
   result=run_qs(folder,env,timeout=80)
   if os.environ.get("ALIS_MUSIC_SCROLL_LOG"):

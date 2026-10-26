@@ -444,7 +444,7 @@ Item {
                             return samples
                         }
 
-                        // Three compact strokes recreate the original Hadalis
+                        // Three compact strokes recreate the original Alis
                         // electric-wire connector while staying inside this
                         // single CAVA + DSP graph. The normal 33 ms paint path
                         // draws directly; sample arrays exist only during the

@@ -1,6 +1,6 @@
 # Installation
 
-> **Native runtime:** Rust is the production backend. Current source installs compile the locked Rust 1.95+ workspace and install `inir-inputd`, `inir-mpdd`, `inir-native`, `inir-theme`, and the dedicated `inir-mega` Cloud Storage adapter. Python remains available as an explicit fallback for older compatibility routes through `scripts/native-backend status|rust|python`; Cloud Storage itself has no Python fallback. The pinned non-VCS Arch package gains `inir-mega` only when its reviewed source snapshot advances to a commit that contains the adapter.
+> **Native runtime:** Rust is the production backend. Current source installs compile the locked Rust 1.95+ workspace and install `alis-inputd`, `alis-mpdd`, `alis-native`, `alis-theme`, and the dedicated `alis-mega` Cloud Storage adapter. Python remains available as an explicit fallback for older compatibility routes through `scripts/native-backend status|rust|python`; Cloud Storage itself has no Python fallback. The pinned non-VCS Arch package gains `alis-mega` only when its reviewed source snapshot advances to a commit that contains the adapter.
 
 
 > **Primary path: Arch Linux.** `./setup install` also has distro-specific dependency routing for mutable Fedora systems and Debian/Ubuntu. Fedora Atomic/immutable systems and other distributions fall back to generic/manual guidance, so expect more manual intervention outside the primary Arch path.
@@ -76,7 +76,7 @@ For everything else, check [PACKAGES.md](PACKAGES.md). It's organized by categor
 >
 > EasyEffects itself is optional. The Equalizer capability stays unavailable when its backend/transport is absent; normal Media playback and volume controls continue to work.
 >
-> **Optional content packs** (`./setup` → Extras): the iNiR-Walls wallpaper
+> **Optional content packs** (`./setup` → Extras): the Alis-Walls wallpaper
 > pack, the ii-pixel-sddm login theme, and YAMIS icons.
 >
 > **Important for minimal installs (Arch base / netinstall):**
@@ -98,11 +98,11 @@ sudo make install
 
 With the default Makefile paths, this installs:
 
-- both `alis` (public) and `inir` (compatibility) launchers, Quickshell runtime payload, generated runtime metadata, the existing `inir.service`, Alis desktop IDs/icons with hidden legacy entries, docs, and license under `/usr/local`;
+- both `alis` (public) and `alis` (compatibility) launchers, Quickshell runtime payload, generated runtime metadata, the existing `alis.service`, Alis desktop IDs/icons with hidden legacy entries, docs, and license under `/usr/local`;
 - the battery/TLP and ThinkFan privileged helpers under `/usr/libexec`;
 - their polkit policies, plus the TLP settings schema, under `/usr/share`.
 
-Those system locations can be changed through the Makefile install variables when packaging. The target does **not** install distro dependencies, install ThinkFan/TLP themselves, or enable the compatibility inir user service for you.
+Those system locations can be changed through the Makefile install variables when packaging. The target does **not** install distro dependencies, install ThinkFan/TLP themselves, or enable the compatibility alis user service for you.
 
 The ThinkFan helper is only the Alis control bridge; managed fan control still requires the `thinkfan` executable, a working `thinkfan.service`, and a machine-specific ThinkFan configuration. See [ThinkFan Integration](THINKFAN.md) before enabling managed fan control.
 
@@ -113,29 +113,29 @@ cp -r dots/.config/* ~/.config/
 ```
 
 This gives you:
-- Niri config wired to the `inir` launcher
+- Niri config wired to the `alis` launcher
 - Theming templates for Material You colors
 - GTK settings
 - Fuzzel config
 
-### 5. Apply per-user migrations and enable the compatibility inir user service
+### 5. Apply per-user migrations and enable the compatibility alis user service
 
 Run the required config migrations as the user who will run Alis, not through `sudo`:
 
 ```bash
-inir migrate
+alis migrate
 ```
 
-Migration 019 establishes `~/.config/inir` as the canonical config directory while keeping the live QML compatibility path `~/.config/illogical-impulse` linked to it. `sudo make install` deliberately does not mutate user home directories, so this per-user step is separate from the system payload installation.
+Migration 019 establishes `~/.config/alis` as the canonical config directory while keeping the live QML compatibility path `~/.config/illogical-impulse` linked to it. `sudo make install` deliberately does not mutate user home directories, so this per-user step is separate from the system payload installation.
 
-Migration 019 is intentionally fail-closed when the legacy path cannot be reconciled without risking user data. If both `~/.config/inir` and `~/.config/illogical-impulse` are real directories, or if the legacy path is an unexpected file or points somewhere else, the migration stops and preserves both states unchanged. Reconcile the paths manually, keep any data you still need, then rerun `inir migrate`.
+Migration 019 is intentionally fail-closed when the legacy path cannot be reconciled without risking user data. If both `~/.config/alis` and `~/.config/illogical-impulse` are real directories, or if the legacy path is an unexpected file or points somewhere else, the migration stops and preserves both states unchanged. Reconcile the paths manually, keep any data you still need, then rerun `alis migrate`.
 
 Then create and enable the manual-install user service state:
 
 ```bash
-inir service install
-inir service enable
-inir service start
+alis service install
+alis service enable
+alis service start
 ```
 
 For a manual `make install`, those service commands create per-user systemd state. When uninstalling, tear that state down **before** `sudo make uninstall` removes the launcher. See [Uninstall and Service Teardown](UNINSTALL.md#manual-package-style-installation-sudo-make-install).
@@ -155,7 +155,7 @@ Or log out and back in.
 Check the logs:
 
 ```bash
-inir logs
+alis logs
 ```
 
 If everything went well, you should see:

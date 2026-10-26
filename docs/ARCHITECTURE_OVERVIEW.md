@@ -1,15 +1,15 @@
 # Architecture Overview
 
-How iNiR is put together, from the highest level down to the part that matters for your question.
+How Alis is put together, from the highest level down to the part that matters for your question.
 
 ## The 30-second version
 
-iNiR is a single-process QML application that runs inside Quickshell. There's no backend daemon, no IPC server, no separate process for services. Everything (the bar, sidebars, notifications, audio control, compositor IPC, config management) lives in one QML runtime talking to system services through D-Bus, sockets, and subprocess calls.
+Alis is a single-process QML application that runs inside Quickshell. There's no backend daemon, no IPC server, no separate process for services. Everything (the bar, sidebars, notifications, audio control, compositor IPC, config management) lives in one QML runtime talking to system services through D-Bus, sockets, and subprocess calls.
 
 ```
 Your apps
    |
-iNiR shell (bar, panels, notifications, settings, everything)
+Alis shell (bar, panels, notifications, settings, everything)
    |
 Quickshell (QML shell framework)
    |
@@ -34,7 +34,7 @@ Total cold start to panels visible: under 2 seconds on decent hardware.
 
 The shell has two completely separate visual identities that share the same services layer:
 
-**Material ii** uses Material Design language with **Material as the only shell-wide Global Theme** for Hadalis 1.0. Color presets, wallpaper-derived Material palettes, and supported per-feature presentation options remain separate from the Global Theme boundary. Its Classic Bar supports top, bottom, left, and right placement. Sidebars open from the edges. Overview provides the launcher/task-navigation surface.
+**Material ii** uses Material Design language with **Material as the only shell-wide Global Theme** for Alis 1.0. Color presets, wallpaper-derived Material palettes, and supported per-feature presentation options remain separate from the Global Theme boundary. Its Classic Bar supports top, bottom, left, and right placement. Sidebars open from the edges. Overview provides the launcher/task-navigation surface.
 
 **Waffle** uses Windows 11 Fluent Design. Taskbar at the bottom. Start menu. Action center. Notification center.
 
@@ -102,7 +102,7 @@ A simplified map of what lives where:
 |-----------|-------------|------------|
 | `modules/common/` | Config, Appearance, shared widgets | Critical |
 | `services/` | 70+ system integration singletons | High |
-| `scripts/inir` | CLI launcher (~3600 lines of bash) | High |
+| `scripts/alis` | CLI launcher (~3600 lines of bash) | High |
 | `sdata/` | Install, update, migrations | High |
 | `defaults/` | Shipped default config and app configs | Medium |
 | `modules/bar/` | Classic Bar runtime (ii family; horizontal and vertical placements) | Normal |
@@ -116,20 +116,20 @@ Full breakdown: [Project Map](PROJECT_MAP.md)
 
 ## Distribution
 
-iNiR ships as a git repo with an interactive installer:
+Alis ships as a git repo with an interactive installer:
 
 ```bash
-git clone https://github.com/llocphann/Hadalis.git
-cd Hadalis
+git clone https://github.com/llocphann/Alis.git
+cd Alis
 ./setup install
 ```
 
 Two install modes:
 
-- **Repo-sync**: `./setup install` syncs the repo to `~/.config/quickshell/inir/`
-- **Package-managed**: `make install` copies to `/usr/share/quickshell/inir/`
+- **Repo-sync**: `./setup install` syncs the repo to `~/.config/quickshell/alis/`
+- **Package-managed**: `make install` copies to `/usr/share/quickshell/alis/`
 
-Updates: `./setup update` or `inir update` (git pull + sync + migrate + restart).
+Updates: `./setup update` or `alis update` (git pull + sync + migrate + restart).
 
 The systemd service wires to the compositor via wants links, not `graphical-session.target` (which would also start on KDE/GNOME).
 

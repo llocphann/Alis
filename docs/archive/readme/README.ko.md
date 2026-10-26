@@ -1,18 +1,18 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="Alis" width="800">
 </p>
 
-<h1 align="center">iNiR</h1>
+<h1 align="center">Alis</h1>
 
 <p align="center">
   <b>Quickshell 기반의 Niri용 완전한 데스크톱 셸</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
-  <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/snowarch/alis/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/alis/stargazers"><img src="https://img.shields.io/github/stars/snowarch/alis?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
@@ -41,11 +41,11 @@
 
 ### 이게 뭔가요?
 
-iNiR은 데스크톱 전체입니다. 위의 바, 독, 알림, 설정, 배경화면, 전부. 테마가 아니고, 복붙하는 dotfiles도 아닙니다. Linux에서 돌아가는 완전한 셸이에요.
+Alis은 데스크톱 전체입니다. 위의 바, 독, 알림, 설정, 배경화면, 전부. 테마가 아니고, 복붙하는 dotfiles도 아닙니다. Linux에서 돌아가는 완전한 셸이에요.
 
 ### 실행하려면 뭐가 필요해요?
 
-컴포지터. 창을 관리하고 화면에 픽셀을 그리는 거예요. iNiR은 [Niri](https://github.com/YaLTeR/niri) (타일링 Wayland 컴포지터)용으로 만들어졌어요. end-4의 dots에서 포크했을 때의 오래된 Hyprland 코드가 있지만, 실제로 테스트하고 쓰는 건 Niri입니다.
+컴포지터. 창을 관리하고 화면에 픽셀을 그리는 거예요. Alis은 [Niri](https://github.com/YaLTeR/niri) (타일링 Wayland 컴포지터)용으로 만들어졌어요. end-4의 dots에서 포크했을 때의 오래된 Hyprland 코드가 있지만, 실제로 테스트하고 쓰는 건 Niri입니다.
 
 셸은 [Quickshell](https://quickshell.outfoxxed.me/) 위에서 돌아가요. QML(Qt의 UI 언어)로 셸을 만드는 프레임워크. 이걸 몰라도 쓸 수 있어요, 모든 설정은 GUI나 JSON 파일로 가능합니다.
 
@@ -54,7 +54,7 @@ iNiR은 데스크톱 전체입니다. 위의 바, 독, 알림, 설정, 배경화
 ```
 당신의 앱
    ↓
-iNiR (셸: 바, 사이드바, 독, 알림, 설정...)
+Alis (셸: 바, 사이드바, 독, 알림, 설정...)
    ↓
 Quickshell (QML 셸 실행)
    ↓
@@ -67,7 +67,7 @@ Wayland → GPU
 
 손을 벗어난 개인 프로젝트예요. 매일 쓰고 있고, Discord의 많은 사람들도 그래요. 근데 가끔 망가지고, 코드가 지저분한 곳도 있고, 하면서 배우는 중이에요.
 
-뭔가 안 되면 `inir doctor`가 대부분 고쳐요. 그래도 안 되면 Discord가 활발해요. 완성된 소프트웨어를 기대하지 마세요, 이건 다른 사람들이 좋아하게 된 한 사람의 rice입니다.
+뭔가 안 되면 `alis doctor`가 대부분 고쳐요. 그래도 안 되면 Discord가 활발해요. 완성된 소프트웨어를 기대하지 마세요, 이건 다른 사람들이 좋아하게 된 한 사람의 rice입니다.
 
 ### 왜 존재하나요?
 
@@ -78,7 +78,7 @@ Wayland → GPU
 - **Shell**: UI 레이어 (바, 패널, 오버레이)
 - **Compositor**: 창 관리, 화면에 그림 (Niri, Hyprland, Sway...)
 - **Wayland**: Linux 디스플레이 프로토콜 (새것, X11 대체)
-- **QML**: Qt의 선언적 UI 언어, iNiR은 이걸로 작성됨
+- **QML**: Qt의 선언적 UI 언어, Alis은 이걸로 작성됨
 - **Material You**: 이미지에서 팔레트 생성하는 Google 색상 시스템 (자동 테마가 이렇게 작동함)
 - **ii / waffle**: 두 패널 스타일. ii = Material Design 느낌, waffle = Windows 11 느낌. `Super+Shift+W`로 전환
 
@@ -174,7 +174,7 @@ Wayland → GPU
 
 - **GUI 설정** — 파일 편집 없이 모든 것 설정
 - **GameMode** — 전체 화면 앱에서 이펙트 자동 비활성화
-- **자동 업데이트** — `inir update`, 롤백·마이그레이션·사용자 변경 보존 포함
+- **자동 업데이트** — `alis update`, 롤백·마이그레이션·사용자 변경 보존 포함
 - **잠금 화면** 및 **세션 화면** (로그아웃/재시작/종료/절전)
 - **Polkit 에이전트**, **화면 키보드**, **자동 시작 관리자**
 - **9개 언어** — 자동 감지, AI 지원 번역 생성
@@ -190,27 +190,27 @@ Wayland → GPU
 ## 빠른 시작
 
 ```bash
-git clone https://github.com/snowarch/inir.git
-cd inir
+git clone https://github.com/snowarch/alis.git
+cd alis
 ./setup install       # 대화식 — 각 단계마다 확인
 ./setup install -y    # 자동 — 확인 없이 설치
 ```
 
-인스톨러가 의존성, 시스템 설정, 테마 — 모든 것을 처리합니다. 설치 후 `inir run`으로 셸을 시작하거나 로그아웃 후 다시 로그인하세요.
+인스톨러가 의존성, 시스템 설정, 테마 — 모든 것을 처리합니다. 설치 후 `alis run`으로 셸을 시작하거나 로그아웃 후 다시 로그인하세요.
 
 ```bash
-inir run                        # 셸 시작
-inir settings                   # 설정 GUI 열기
-inir logs                       # 런타임 로그 확인
-inir doctor                     # 자동 진단 및 수정
-inir update                     # pull + 마이그레이션 + 재시작
+alis run                        # 셸 시작
+alis settings                   # 설정 GUI 열기
+alis logs                       # 런타임 로그 확인
+alis doctor                     # 자동 진단 및 수정
+alis update                     # pull + 마이그레이션 + 재시작
 ```
 
 **지원 배포판:** Arch (자동 설치 프로그램). 다른 배포판은 수동 설치 가능 — [PACKAGES.md](../../PACKAGES.md) 참조.
 
 | 방법 | 명령 |
 |--------|---------|
-| 시스템 설치 | `sudo make install && inir run` |
+| 시스템 설치 | `sudo make install && alis run` |
 | TUI 메뉴 | `./setup` |
 | 롤백 | `./setup rollback` |
 
@@ -234,7 +234,7 @@ inir update                     # pull + 마이그레이션 + 재시작
 
 ## 배경화면
 
-15개 배경화면이 기본 포함됩니다. 더 필요하면 [iNiR-Walls](https://github.com/snowarch/iNiR-Walls)를 확인하세요 — Material You 파이프라인과 잘 맞는 큐레이션 컬렉션입니다.
+15개 배경화면이 기본 포함됩니다. 더 필요하면 [Alis-Walls](https://github.com/snowarch/Alis-Walls)를 확인하세요 — Material You 파이프라인과 잘 맞는 큐레이션 컬렉션입니다.
 
 ---
 
@@ -255,9 +255,9 @@ inir update                     # pull + 마이그레이션 + 재시작
 ## 문제 해결
 
 ```bash
-inir logs                       # 최근 런타임 로그 확인
-inir restart                    # 활성 런타임 재시작
-inir repair                     # doctor + 재시작 + 필터링된 로그 확인
+alis logs                       # 최근 런타임 로그 확인
+alis restart                    # 활성 런타임 재시작
+alis repair                     # doctor + 재시작 + 필터링된 로그 확인
 ./setup doctor                  # 일반적인 문제 자동 진단 및 수정
 ./setup rollback                # 마지막 업데이트 취소
 ```
@@ -281,7 +281,7 @@ inir repair                     # doctor + 재시작 + 필터링된 로그 확�
 ---
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/graphs/contributors">기여자</a> &bull;
+  <a href="https://github.com/snowarch/alis/graphs/contributors">기여자</a> &bull;
   <a href="CHANGELOG.md">변경 기록</a> &bull;
   <a href="LICENSE">GPL-3.0 라이선스</a>
 </p>

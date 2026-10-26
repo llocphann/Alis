@@ -356,7 +356,7 @@ for _ in range(50000):
 
 compiler = shutil.which("qsb") or "/usr/lib/qt6/bin/qsb"
 if Path(compiler).is_file():
-    with tempfile.TemporaryDirectory(prefix="hadalis-screen-edge-qsb-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="alis-screen-edge-qsb-") as tmp:
         rebuilt = Path(tmp) / qsb_path.name
         subprocess.run(
             [compiler, "--qt6", "-o", str(rebuilt), str(frag_path)],

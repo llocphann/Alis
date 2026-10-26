@@ -1,7 +1,7 @@
 from pathlib import Path
 import os,json,subprocess,time,signal,hashlib
 b=Path(__file__).resolve().parent
-meta=json.loads((b/'frozen-driver.json').read_text());env=dict(os.environ,HADALIS_VALIDATION_LOG=meta['raw_log'])
+meta=json.loads((b/'frozen-driver.json').read_text());env=dict(os.environ,ALIS_VALIDATION_LOG=meta['raw_log'])
 assert hashlib.sha256(Path(meta['driver']).read_bytes()).hexdigest()==meta['driver_sha256']
 stop=False
 proc=None

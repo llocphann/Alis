@@ -1,11 +1,11 @@
-  INFO: Launching config: "/tmp/hadalis-popup-hover-dkzkez1t/shell.qml"
+  INFO: Launching config: "/tmp/alis-popup-hover-dkzkez1t/shell.qml"
   INFO: Shell ID: "7f5eecd174e0c7f2b92d3623ad62e687" Path ID "7f5eecd174e0c7f2b92d3623ad62e687"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/mcd51f2rmt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.250559.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-popup-hover-dkzkez1t/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-popup-hover-dkzkez1t/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-popup-hover-dkzkez1t/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-popup-hover-dkzkez1t/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-popup-hover-dkzkez1t/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-popup-hover-dkzkez1t/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
   INFO qml: POPUP_ANCHOR_HOVER_PASS

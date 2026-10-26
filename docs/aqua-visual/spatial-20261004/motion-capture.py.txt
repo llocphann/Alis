@@ -1,6 +1,6 @@
 from pathlib import Path
 import os,runpy,subprocess,tempfile,signal,hashlib,json,sys
-root=Path('/home/llocphann/Hadalis');fixture=Path('/tmp/aqua-own-refinement-motion-20261004.qml')
+root=Path('/home/llocphann/Alis');fixture=Path('/tmp/aqua-own-refinement-motion-20261004.qml')
 output=Path(sys.argv[1])
 assert not output.exists();output.mkdir(mode=0o700)
 core=runpy.run_path(str(root/'scripts/aqua-manual-visual-matrix.py'))

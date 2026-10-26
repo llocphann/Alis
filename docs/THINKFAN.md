@@ -11,11 +11,11 @@ The integration has three pieces:
   - exposes status/control to existing Settings and System Monitor consumers;
   - returns unavailable state when the package or integration is absent. The
     Alis-Intergration worker owns polling, helper execution and timeout handling.
-- `/usr/libexec/inir-thinkfan`
+- `/usr/libexec/alis-thinkfan`
   - reports ThinkFan/service/hardware state as JSON with `--status`;
   - applies `managed` or `firmware` ownership when invoked as root;
   - on supported ThinkPad ACPI hardware, applies an explicit `auto` or fixed fan level 1–7 through `--set-level` without rewriting the machine's ThinkFan configuration.
-- `org.inir.thinkfan.policy`
+- `org.alis.thinkfan.policy`
   - authorizes the exact installed helper through Polkit;
   - allows it without a password prompt only for the active local session, while inactive/non-local subjects remain denied.
 
@@ -28,7 +28,7 @@ To use managed fan control, the machine must provide all of the following:
 1. the `thinkfan` executable;
 2. a system `thinkfan.service` visible to `systemctl`;
 3. a valid ThinkFan configuration, normally `/etc/thinkfan.yaml` or `/etc/thinkfan.conf`;
-4. the Alis-Intergration helper at `/usr/libexec/inir-thinkfan`;
+4. the Alis-Intergration helper at `/usr/libexec/alis-thinkfan`;
 5. the Alis-Intergration Polkit policy for privileged profile changes;
 6. an active local desktop session recognized by Polkit. The shipped policy does not prompt that active session for these narrowly scoped helper operations.
 
@@ -41,7 +41,7 @@ ThinkFan configuration is hardware-specific. Alis does not invent fan curves or 
 Status is intentionally unprivileged:
 
 ```bash
-/usr/libexec/inir-thinkfan --status
+/usr/libexec/alis-thinkfan --status
 ```
 
 The helper reports JSON containing:
@@ -62,8 +62,8 @@ Alis treats malformed output, an unsupported schema, helper launch failures, and
 The shell uses the privileged helper through `pkexec`. The equivalent commands are:
 
 ```bash
-pkexec /usr/libexec/inir-thinkfan --apply managed
-pkexec /usr/libexec/inir-thinkfan --apply firmware
+pkexec /usr/libexec/alis-thinkfan --apply managed
+pkexec /usr/libexec/alis-thinkfan --apply firmware
 ```
 
 `managed` performs the following checks/actions:
@@ -91,8 +91,8 @@ The Fan Control settings can store one fan level for each desktop power profile:
 Direct profile levels are exposed only when both `/proc/acpi/ibm/fan` and the ThinkPad ACPI `fan_control=1` capability are detected. Applying a level uses:
 
 ```bash
-pkexec /usr/libexec/inir-thinkfan --set-level auto
-pkexec /usr/libexec/inir-thinkfan --set-level 3
+pkexec /usr/libexec/alis-thinkfan --set-level auto
+pkexec /usr/libexec/alis-thinkfan --set-level 3
 ```
 
 **Safety:** a fixed level bypasses temperature-based fan curves. Use **Auto** unless the machine's thermal behavior is understood and monitored. Alis deliberately does not edit `/etc/thinkfan.yaml` or `/etc/thinkfan.conf`, because sensor mappings and safe temperature thresholds are machine-specific.
@@ -108,7 +108,7 @@ On systems without that interface, Alis can still report whether ThinkFan is ins
 Check the helper and service independently before debugging the UI:
 
 ```bash
-/usr/libexec/inir-thinkfan --status
+/usr/libexec/alis-thinkfan --status
 systemctl status thinkfan.service
 systemctl is-enabled thinkfan.service
 command -v thinkfan
@@ -118,10 +118,10 @@ If the helper is unavailable, check Gateway/Helpers status in Settings →
 Integrations, then explicitly select Install helpers or Reinstall helpers.
 Provisioning requires the trusted root-owned gateway; follow the current
 [Alis-Intergration installation guide](https://github.com/llocphann/Alis-Intergration) if it is
-missing. Core `inir-shell` updates do not repair independently owned optional
+missing. Core `alis-shell` updates do not repair independently owned optional
 helpers. Preserve package-manager ownership when repairing system files.
 
-Then verify the bridge directly with `/usr/libexec/inir-thinkfan --status` and
+Then verify the bridge directly with `/usr/libexec/alis-thinkfan --status` and
 refresh the integration. A successful helper install does not configure or start
 `thinkfan.service`; enabling managed control is a separate user action.
 
@@ -145,7 +145,7 @@ For ThinkFan configuration or sensor/fan-curve errors, validate ThinkFan outside
 
 - Core source/Make/Arch install and removal preserve the independently installed optional package, helpers, profiles and system services.
 - Alis-Intergration installs user-scoped immutable releases separately; its explicit `install-helpers` target stages helper/policy/schema paths without writing hardware profiles.
-- `inir-shell`/`inir-shell-git` advertise ThinkFan as optional. Configure and enable the integration separately.
+- `alis-shell`/`alis-shell-git` advertise ThinkFan as optional. Configure and enable the integration separately.
 - Nix currently packages the shell/runtime but does not install the privileged helper/policy into `/usr/libexec` and `/usr/share/polkit-1/actions`.
 
 The integration should therefore be treated as an optional capability whose availability is discovered at runtime rather than a shell startup requirement.

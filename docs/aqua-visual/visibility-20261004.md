@@ -14,4 +14,4 @@ Initial canonical validation completed on exact fix SHA `dd7f56ef699b5463dba7580
 
 AI was deferred at this visibility checkpoint; [following living-water checkpoint](alive-20261004/README.md) and [current spatial-motion evidence](spatial-20261004/README.md) records the later resumed implementation separately.
 
-For a bounded live diagnosis, use `qs ipc -c inir call aqua status`. For the isolated reproduction, run `python3 scripts/test-aqua-collapsed-bar.py`. The reproduction does not read or modify live settings and does not start the production daemon.
+For a bounded live diagnosis, use `qs ipc -c alis call aqua status`. For the isolated reproduction, run `python3 scripts/test-aqua-collapsed-bar.py`. The reproduction does not read or modify live settings and does not start the production daemon.

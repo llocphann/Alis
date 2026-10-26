@@ -14,7 +14,7 @@ done
 mkdir -p "$sampler_test_root/config/illogical-impulse"
 cp "$repo_root/defaults/config.json" "$sampler_test_root/config/illogical-impulse/config.json"
 cat > "$sampler_test_root/shell.qml" <<'QML'
-//@ pragma ShellId hadalis-anti-flashbang-sampler-test
+//@ pragma ShellId alis-anti-flashbang-sampler-test
 import QtQuick
 import Quickshell
 import qs.services

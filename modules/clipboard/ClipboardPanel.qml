@@ -513,7 +513,7 @@ Scope {
             outerRadius: PerimeterTokens.popupRadius
             screenMargin: root._screenEdgeThickness
             connectorLength: 0
-            seamOverlap: PerimeterTokens.irisWeldDepth
+            seamOverlap: PerimeterTokens.abyssWeldDepth
             progress: root._surfaceRevealProgress
             devicePixelRatio: window.devicePixelRatio
         }
@@ -522,14 +522,14 @@ Scope {
             id: clipboardRevealClip
             geometry: clipboardGeometry
 
-            ConnectedSurfaceIrisFrame {
+            ConnectedSurfaceAbyssFrame {
                 id: clipboardFrame
                 anchors.fill: parent
                 geometry: clipboardGeometry
                 fillColor: Appearance.colors.colLayer0
                 borderColor: Appearance.colors.colLayer0Border
                 borderWidth: 0
-                fuseDepth: PerimeterTokens.irisFuseDepth
+                fuseDepth: PerimeterTokens.abyssFuseDepth
                 externalFrameThickness: root._screenEdgeThickness
                 shadowEnabled: root._edgeShadowEnabled
                     && root._edgeShadowExtent > 0

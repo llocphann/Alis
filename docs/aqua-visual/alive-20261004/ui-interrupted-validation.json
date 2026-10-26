@@ -4,7 +4,7 @@
   "reason": "A new source fix isolates speech-control clicks from nearby disturbance; qualify that source in a fresh final run.",
   "completedChecks": 357,
   "completedFailures": [],
-  "privateLogPath": "/tmp/hadalis-maintainer-validation-20261004-162842.log",
+  "privateLogPath": "/tmp/alis-maintainer-validation-20261004-162842.log",
   "privateLogSha256AtStop": "27cbad0833ab7be82dfb1d1a24ad0e04db34bd907667a64a97780c9607871295",
   "canonicalPassClaimed": false,
   "privateLogSha256AfterExit": "27cbad0833ab7be82dfb1d1a24ad0e04db34bd907667a64a97780c9607871295"

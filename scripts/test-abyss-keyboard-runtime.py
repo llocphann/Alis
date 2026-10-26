@@ -4,7 +4,7 @@ import json,os,tempfile
 from pathlib import Path
 from native_test_session import private_wayland,run_qs
 ROOT=Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix='hadalis-abyss-keyboard-') as name:
+with tempfile.TemporaryDirectory(prefix='alis-abyss-keyboard-') as name:
  folder=Path(name)
  for entry in ['modules','services','GlobalStates.qml','qmldir','assets','scripts','defaults','translations']:(folder/entry).symlink_to(ROOT/entry)
  binary=folder/'bin';binary.mkdir();stub=binary/'ydotool'

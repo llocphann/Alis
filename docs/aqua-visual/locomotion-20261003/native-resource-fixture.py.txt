@@ -1,8 +1,8 @@
 import hashlib,json,os,select,subprocess,time
 from pathlib import Path
-root=Path('/home/llocphann/Hadalis')
+root=Path('/home/llocphann/Alis')
 sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
-binary=root/'native/target/release/inir-companiond'
+binary=root/'native/target/release/alis-companiond'
 proc=subprocess.Popen([str(binary)],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=0)
 pending=b''; sequence=0; states=[]
 def read_until(predicate,seconds):

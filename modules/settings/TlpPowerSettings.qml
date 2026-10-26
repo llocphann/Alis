@@ -19,8 +19,8 @@ Item {
     Loader {
         id: content
         width: parent.width
-        active: root.showIntegrationSettings && root.visible && Hadalird.tlpEnabled
-        source: Hadalird.settingsSource("tlp")
+        active: root.showIntegrationSettings && root.visible && AlisIntergration.tlpEnabled
+        source: AlisIntergration.settingsSource("tlp")
         onLoaded: item.selectedCategoryIndex = root.selectedCategoryIndex
     }
     Connections {

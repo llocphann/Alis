@@ -148,9 +148,9 @@
       "current_result": "PASS"
     },
     {
-      "original_failed_check": "shell regression: scripts/test-hadalis-desktop-repair.sh",
+      "original_failed_check": "shell regression: scripts/test-alis-desktop-repair.sh",
       "current_result": "EXPLICIT_EXCLUSION",
-      "reason": "MANUAL-DESKTOP-ACCEPTANCE: scripts/test-hadalis-desktop-repair.sh (live installed automation/session contract)"
+      "reason": "MANUAL-DESKTOP-ACCEPTANCE: scripts/test-alis-desktop-repair.sh (live installed automation/session contract)"
     },
     {
       "original_failed_check": "shell regression: scripts/test-megaqml-phase2-local.sh",

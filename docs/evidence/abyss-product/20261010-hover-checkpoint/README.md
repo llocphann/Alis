@@ -22,10 +22,10 @@ read AGENTS.md and the shared intake policy, refetch dev and preserve concurrent
 | This checkpoint's source tree | Unfinished composite mask/physical seam/source-priority candidate saved as WIP. It has no canonical validation and no owner desktop acceptance. |
 
 Previously pushed Music transport `8b2ed6f0a` and Recording presentation
-`fafb4687b` retain their documented focused evidence and owner gates. Hadalird
+`fafb4687b` retain their documented focused evidence and owner gates. Alis-Intergration
 optional extraction and Notes image export are source/package-qualified at
 `b0c975a7f40bdf531012be326bc728f5c014b696` (0.2.1); this continuation made no
-Hadalird or Alis-Companion changes. Their remaining delivery/host gates stay in the
+Alis-Intergration or Alis-Companion changes. Their remaining delivery/host gates stay in the
 active lists and owning repositories; do not reimplement completed extraction.
 
 ## Unfinished hover candidate
@@ -45,11 +45,11 @@ is claimed. Region/reactive allocation cost still needs qualification.
 
 | Final focused evidence | Result |
 | --- | --- |
-| `hadalis-popup-shoulder-geometry-final-20261010.log` | PASS: pixel-center oracle, four edges/scales/softness/progress/radii, physical seam versus placement clearance. |
-| `hadalis-popup-shoulder-mask-final-20261010.log` | **FAIL**: left bridge dwell assertion at x=14,y=200. |
-| `hadalis-popup-shoulder-weather-final-20261010.log` | PASS: 1,156 actual Clock/Weather geometry samples, four edges, reversal, content transfer and exit. |
-| `hadalis-popup-shoulder-cold-final-20261010.log` | PASS: cold mount/controller remount hover without clicks. |
-| `hadalis-recording-mask-final-20261010.log` | PASS: connected Recording controls and retained ii/Waffle presenter; finished before stop. No real owner recording started. |
+| `alis-popup-shoulder-geometry-final-20261010.log` | PASS: pixel-center oracle, four edges/scales/softness/progress/radii, physical seam versus placement clearance. |
+| `alis-popup-shoulder-mask-final-20261010.log` | **FAIL**: left bridge dwell assertion at x=14,y=200. |
+| `alis-popup-shoulder-weather-final-20261010.log` | PASS: 1,156 actual Clock/Weather geometry samples, four edges, reversal, content transfer and exit. |
+| `alis-popup-shoulder-cold-final-20261010.log` | PASS: cold mount/controller remount hover without clicks. |
+| `alis-recording-mask-final-20261010.log` | PASS: connected Recording controls and retained ii/Waffle presenter; finished before stop. No real owner recording started. |
 
 The failed bridge assertion requires both `requestedVisible` and `_contentHovered`.
 Its left x=14,y=200 probe overlaps the fixture's source anchor (x=8..40,y=160..240).

@@ -217,7 +217,7 @@ def summary(frames: list[dict], cfg: dict) -> dict:
     seen_anim = any(x["transitioning"] for x in samples)
     max_pulses = max((x.get("prime_pulse_count") or 0 for x in samples), default=0)
     max_swaps = max((x.get("frame_swap_count") or 0 for x in samples), default=0)
-    if types and not any(x in ("alisMelt", "inirMelt") for x in types):
+    if types and not any(x in ("alisMelt", "alisMelt") for x in types):
         interpretation = "NOT_LIQUID_SELECTED"
     elif max_fallback > 0 and max_success == 0:
         interpretation = "FALLBACK_OBSERVED"

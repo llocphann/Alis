@@ -1,5 +1,5 @@
 ========================================
-HADALIS VALIDATION SUMMARY
+ALIS VALIDATION SUMMARY
 Exact SHA: 151e86a5b26e094982a329d34216afad702907e8
 Result: FAIL
 Checks run: 408
@@ -19,7 +19,7 @@ Skipped checks:
   - PHASE-RUNNER-HELPER: scripts/test-megaqml-quickshell-classify.py (requires fixture/log arguments)
   - PHASE-RUNNER-HELPER: scripts/test-megaqml-ui-fixture.py (requires fixture/log arguments)
   - MANUAL-DEFERRED: scripts/test-aqua-manual-perimeter.py
-  - MANUAL-DESKTOP-ACCEPTANCE: scripts/test-hadalis-desktop-repair.sh (live installed automation/session contract)
+  - MANUAL-DESKTOP-ACCEPTANCE: scripts/test-alis-desktop-repair.sh (live installed automation/session contract)
   - MANUAL-PHASE-RUNNER: scripts/test-megaqml-phase2-local.sh (requires explicit SHA/output and can publish evidence)
   - MANUAL-PHASE-RUNNER: scripts/test-megaqml-quickshell-smoke.sh (requires explicit SHA/output and can publish evidence)
   - MANUAL-PHASE-RUNNER: scripts/test-megaqml-ui-loader-local.sh (requires explicit SHA/output and can publish evidence)
@@ -30,5 +30,5 @@ Environment-dependent / release-only checks not run by daily validation:
   - multi-monitor/hotplug/suspend-resume/fractional-scaling/focus/fullscreen acceptance
   - live audio/hardware behavior that requires the real desktop session
   - GitHub release publication, Wiki remote access, and hosted release permissions
-FINAL LOG: /tmp/hadalis-maintainer-product-151e86a5b-20261004.log
+FINAL LOG: /tmp/alis-maintainer-product-151e86a5b-20261004.log
 ========================================

@@ -14,7 +14,7 @@ on:
       - 'scripts/benchmark-python-vs-rust.sh'
       - 'scripts/test-native-benchmark-deep-contract.sh'
       - 'native/scripts/check-niri-customizations.py'
-      - 'scripts/inir'
+      - 'scripts/alis'
       - 'services/KeyboardIndicators.qml'
       - 'services/NiriService.qml'
       - 'services/LocalMusic.qml'

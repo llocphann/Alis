@@ -10,7 +10,7 @@ from native_test_session import private_wayland, run_qs
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKER = ROOT / "scripts/colors/preview-palette.py"
-with tempfile.TemporaryDirectory(prefix="hadalis-color-preview-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-color-preview-") as name:
     folder = Path(name)
     for entry in ["modules", "services", "GlobalStates.qml", "qmldir", "assets", "scripts", "defaults", "translations"]:
         (folder / entry).symlink_to(ROOT / entry)
@@ -139,7 +139,7 @@ ShellRoot {
         baseline = folder / "active-colors.json"
         original = json.dumps(palettes["a"])
         baseline.write_text(original)
-        env.update(INIR_STANDALONE_WINDOW="0", PREVIEW_IMAGES=str(fixtures),
+        env.update(ALIS_STANDALONE_WINDOW="0", PREVIEW_IMAGES=str(fixtures),
                    PREVIEW_A=json.dumps(palettes["a"]), PREVIEW_B=json.dumps(palettes["b"]),
                    PREVIEW_C=json.dumps(palettes["c"]), PREVIEW_HOOKS=str(hooks.parent),
                    PREVIEW_EXTERNAL_MARKER=str(marker), PREVIEW_BASELINE=str(baseline), PREVIEW_CAPTURE=str(folder))

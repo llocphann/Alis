@@ -31,14 +31,14 @@ assert len(trusted) == 2
 
 # 1. Verify no maintainer scripts exist in any distro package specification
 assert ".INSTALL" not in gateway.PKGBUILD
-assert "Package: alis-hadalird-gateway" in gateway.DEB_CONTROL
+assert "Package: alis-intergration-gateway" in gateway.DEB_CONTROL
 for forbidden in ("preinst", "postinst", "prerm", "postrm"):
     assert forbidden not in gateway.DEB_CONTROL
 for scriptlet in ("%pre", "%post", "%preun", "%postun", "%trigger"):
     assert scriptlet not in gateway.RPM_SPEC
 
 # 2. Verify distribution detection and fail-closed refusal on unsupported/immutable/declarative OSes
-with tempfile.TemporaryDirectory(prefix="hadalis-sys-f01-detect-") as tmp:
+with tempfile.TemporaryDirectory(prefix="alis-sys-f01-detect-") as tmp:
     base = Path(tmp)
 
     def make_os_release(name, content, extra_files=()):
@@ -91,7 +91,7 @@ with tempfile.TemporaryDirectory(prefix="hadalis-sys-f01-detect-") as tmp:
 
 
 # 3. Verify Debian (.deb) and Fedora/openSUSE (.rpm) unprivileged package builds & tamper refusal
-with tempfile.TemporaryDirectory(prefix="hadalis-sys-f01-build-") as tmp:
+with tempfile.TemporaryDirectory(prefix="alis-sys-f01-build-") as tmp:
     folder = Path(tmp)
 
     # --- Debian .deb build & verification ---
@@ -114,11 +114,11 @@ with tempfile.TemporaryDirectory(prefix="hadalis-sys-f01-build-") as tmp:
                 "drwxr-xr-x root/root 0 2026-10-26 00:00 ./\n"
                 "drwxr-xr-x root/root 0 2026-10-26 00:00 ./usr/\n"
                 "drwxr-xr-x root/root 0 2026-10-26 00:00 ./usr/libexec/\n"
-                "-rwxr-xr-x root/root 100 2026-10-26 00:00 ./usr/libexec/alis-hadalird-system-provision\n"
+                "-rwxr-xr-x root/root 100 2026-10-26 00:00 ./usr/libexec/alis-intergration-system-provision\n"
                 "drwxr-xr-x root/root 0 2026-10-26 00:00 ./usr/share/\n"
                 "drwxr-xr-x root/root 0 2026-10-26 00:00 ./usr/share/polkit-1/\n"
                 "drwxr-xr-x root/root 0 2026-10-26 00:00 ./usr/share/polkit-1/actions/\n"
-                "-rw-r--r-- root/root 100 2026-10-26 00:00 ./usr/share/polkit-1/actions/org.alis.hadalird-system-provision.policy\n"
+                "-rw-r--r-- root/root 100 2026-10-26 00:00 ./usr/share/polkit-1/actions/org.alis.intergration-system-provision.policy\n"
             )
             return SimpleNamespace(returncode=0, stdout=listing, stderr="")
         raise AssertionError("Unexpected deb build command: " + repr(command))
@@ -130,7 +130,7 @@ with tempfile.TemporaryDirectory(prefix="hadalis-sys-f01-build-") as tmp:
         return SimpleNamespace(returncode=0, stdout=b"tampered-bytes")
 
     deb_pkg = gateway.build_deb_package(ROOT, deb_dir, command=fake_deb_cmd, extract=good_extract)
-    assert deb_pkg.exists() and deb_pkg.name == "alis-hadalird-gateway_0.1.0-1_all.deb"
+    assert deb_pkg.exists() and deb_pkg.name == "alis-intergration-gateway_0.1.0-1_all.deb"
     assert not any("pkexec" in " ".join(c) for c in deb_seen)
 
     try:
@@ -148,10 +148,10 @@ with tempfile.TemporaryDirectory(prefix="hadalis-sys-f01-build-") as tmp:
         rpm_seen.append(command)
         if command[0] == "/usr/bin/rpmbuild":
             topdir = Path(command[3].split(" ", 1)[1])
-            assert (topdir / "SPECS/alis-hadalird-gateway.spec").read_text() == gateway.RPM_SPEC
+            assert (topdir / "SPECS/alis-intergration-gateway.spec").read_text() == gateway.RPM_SPEC
             for dest, (content, _, _) in trusted.items():
                 assert (topdir / "SOURCES" / Path(dest).name).read_bytes() == content
-            out_rpm = topdir / "RPMS/noarch/alis-hadalird-gateway-0.1.0-1.noarch.rpm"
+            out_rpm = topdir / "RPMS/noarch/alis-intergration-gateway-0.1.0-1.noarch.rpm"
             out_rpm.parent.mkdir(parents=True, exist_ok=True)
             out_rpm.write_bytes(b"synthetic-rpm")
             return SimpleNamespace(returncode=0, stdout="", stderr="")
@@ -182,11 +182,11 @@ with tempfile.TemporaryDirectory(prefix="hadalis-sys-f01-build-") as tmp:
 # 4. Full lifecycle per supported distro (arch, debian, fedora, opensuse):
 #    install -> idempotent re-run -> helper-active removal refusal -> modified-file refusal -> clean remove -> rollback
 for distro_family in ("arch", "debian", "fedora", "opensuse"):
-    with tempfile.TemporaryDirectory(prefix=f"hadalis-sys-f01-{distro_family}-") as tmp:
+    with tempfile.TemporaryDirectory(prefix=f"alis-sys-f01-{distro_family}-") as tmp:
         fs_root = Path(tmp) / "fs"
         user_pkg = Path(tmp) / "user-optional-package"
         user_pkg.mkdir(parents=True)
-        (user_pkg / "manifest.json").write_text('{"id":"hadalird","version":"0.2.0"}\n')
+        (user_pkg / "manifest.json").write_text('{"id":"alis-intergration","version":"0.2.0"}\n')
 
         for tool in gateway.SUPPORTED_DISTROS[distro_family]["requiredTools"]:
             tpath = fs_root / tool.lstrip("/")
@@ -217,7 +217,7 @@ for distro_family in ("arch", "debian", "fedora", "opensuse"):
 
                 # Unprivileged package builds
                 if cmd0 == "/usr/bin/makepkg":
-                    (Path(cwd) / "alis-hadalird-gateway-0.1.0-1-any.pkg.tar.zst").write_bytes(b"pkg")
+                    (Path(cwd) / "alis-intergration-gateway-0.1.0-1-any.pkg.tar.zst").write_bytes(b"pkg")
                     return SimpleNamespace(returncode=0, stdout="", stderr="")
                 if cmd0 == "/usr/bin/bsdtar" and command[1] == "-tf":
                     items = ".PKGINFO\n.BUILDINFO\n.MTREE\n" + "\n".join(trusted) + "\n"
@@ -230,7 +230,7 @@ for distro_family in ("arch", "debian", "fedora", "opensuse"):
                     return SimpleNamespace(returncode=0, stdout=lines, stderr="")
                 if cmd0 == "/usr/bin/rpmbuild":
                     topdir = Path(command[3].split(" ", 1)[1])
-                    out_rpm = topdir / "RPMS/noarch/alis-hadalird-gateway-0.1.0-1.noarch.rpm"
+                    out_rpm = topdir / "RPMS/noarch/alis-intergration-gateway-0.1.0-1.noarch.rpm"
                     out_rpm.parent.mkdir(parents=True, exist_ok=True)
                     out_rpm.write_bytes(b"rpm")
                     return SimpleNamespace(returncode=0, stdout="", stderr="")
@@ -240,7 +240,7 @@ for distro_family in ("arch", "debian", "fedora", "opensuse"):
                     return SimpleNamespace(returncode=0, stdout="\n".join("/" + d for d in trusted) + "\n", stderr="")
 
                 # Provisioner helper status
-                if cmd0.endswith("alis-hadalird-system-provision") and command[1] == "status":
+                if cmd0.endswith("alis-intergration-system-provision") and command[1] == "status":
                     active = helper_box["active"]
                     return SimpleNamespace(
                         returncode=0,
@@ -300,14 +300,14 @@ for distro_family in ("arch", "debian", "fedora", "opensuse"):
         helpers_active["active"] = False
 
         # Refusal to remove gateway if administrator modified a gateway file on disk
-        prov_file = fs_root / "usr/libexec/alis-hadalird-system-provision"
+        prov_file = fs_root / "usr/libexec/alis-intergration-system-provision"
         prov_file.write_bytes(b"administrator-custom-edit")
         try:
             gateway.remove(command=runner, distro=distro_family, fs_root=fs_root)
             raise AssertionError("Removed externally modified gateway file")
         except ValueError as err:
             assert "modified" in str(err)
-        prov_file.write_bytes(trusted["usr/libexec/alis-hadalird-system-provision"][0])
+        prov_file.write_bytes(trusted["usr/libexec/alis-intergration-system-provision"][0])
 
         # Clean removal when helpers are absent and files match pinned digests
         rem = gateway.remove(command=runner, distro=distro_family, fs_root=fs_root)
@@ -317,6 +317,6 @@ for distro_family in ("arch", "debian", "fedora", "opensuse"):
         # Rollback restores verified gateway state without touching user-owned optional package
         rb = gateway.rollback(ROOT, command=runner, distro=distro_family, fs_root=fs_root, extract=extract_fn)
         assert rb["ok"] and rb["installed"]
-        assert (user_pkg / "manifest.json").read_text() == '{"id":"hadalird","version":"0.2.0"}\n'
+        assert (user_pkg / "manifest.json").read_text() == '{"id":"alis-intergration","version":"0.2.0"}\n'
 
 print("SYS_F01_PASS multi-distro (arch/debian/fedora/opensuse) unprivileged build, pinned SHA-256 verification, Polkit native ownership, removal/rollback and unsupported/immutable/declarative refusal verified")

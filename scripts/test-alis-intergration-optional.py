@@ -10,15 +10,15 @@ import tempfile
 from native_test_session import run_qs
 
 ROOT = Path(__file__).resolve().parents[1]
-# The wrapper exposed by Hadalis must accept SettingsTaskSection metadata even
-# when the optional Hadalird package is absent: page creation precedes payload
+# The wrapper exposed by Alis must accept SettingsTaskSection metadata even
+# when the optional Alis-Intergration package is absent: page creation precedes payload
 # discovery. Regression for IntegrationsConfig.qml:38 (owner desktop log).
 integration_page = (ROOT / "modules/settings/IntegrationsConfig.qml").read_text()
 obsidian_wrapper = (ROOT / "modules/settings/ObsidianThemeSettings.qml").read_text()
 assert 'objectName: "integrationPluginSettings"' in integration_page
-assert 'Hadalird.installedPlugins.map' in integration_page
+assert 'AlisIntergration.installedPlugins.map' in integration_page
 assert 'property string settingsTaskSection: ""' in obsidian_wrapper, (
-    "Integrations page passes settingsTaskSection to the Hadalis-owned wrapper"
+    "Integrations page passes settingsTaskSection to the Alis-owned wrapper"
 )
 spec = importlib.util.spec_from_file_location("discovery", ROOT / "scripts/alis-intergration-status.py")
 discovery = importlib.util.module_from_spec(spec)
@@ -47,7 +47,7 @@ Item {
     common='property bool active:false;property string vaultPath:"";property bool ready:false;property bool busy:false;property var list:[];signal migrationCommitted(var payload);signal migrationFinished(bool success,var payload);'
     (path/discovery.ENTRYPOINTS["managedTodo"]).write_text('import QtQuick\nItem {'+common+'property string notePath:"";property bool preferTasksPlugin:true;property bool allowBasicOfflineMutation:true;}\n')
     (path/discovery.ENTRYPOINTS["dailyTodo"]).write_text('import QtQuick\nItem {'+common+'property string folder:"";property string noteFormat:"";property string plannerHeading:"";property int plannerHeadingLevel:2;property int defaultDurationMinutes:30;}\n')
-    (path / "HadalisSession.qml").write_text('''
+    (path / "AlisSession.qml").write_text('''
 import QtQuick
 Item {
  id:root
@@ -63,10 +63,10 @@ Item {
  QtObject {id:settings;property bool available:true;property var categories:[{id:"battery-care"}];signal mutationFinished(string kind,bool success);function apply(){root.operations++;return true}}
  QtObject {id:caps;property var values:({MODE:["auto"]})}
  QtObject {id:fan;property bool available:true;function applyProfile(profile){root.operations++;return true}}
- Component.onDestruction:console.info("HADALIRD_FIXTURE_DESTROYED")
+ Component.onDestruction:console.info("ALIS_INTERGRATION_FIXTURE_DESTROYED")
 }
 ''')
-    data = {"id":"hadalird","version":"fixture","hostApi":1,"sourceSha":"a"*40,
+    data = {"id":"alis-intergration","version":"fixture","hostApi":1,"sourceSha":"a"*40,
             "session":discovery.ENTRYPOINTS["session"],
             "settings":{key:discovery.ENTRYPOINTS[entry] for key,entry in
                         (("tlp","tlpSettings"),("thinkfan","thinkfanSettings"),("obsidian","obsidianSettings"),("obsidianTodo","obsidianTodoSettings"),
@@ -77,7 +77,7 @@ Item {
     return data
 
 
-with tempfile.TemporaryDirectory(prefix="hadalird-host-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-intergration-host-") as name:
     private = Path(name)
     data_home = private / "data"
     assert not discovery.inspect(private, data_home)["available"]
@@ -89,10 +89,10 @@ with tempfile.TemporaryDirectory(prefix="hadalird-host-") as name:
         (package / "manifest.json").write_text(json.dumps({**manifest,field:value}))
         assert not discovery.inspect(private, data_home)["available"],field
     (package / "manifest.json").write_text(json.dumps(manifest))
-    original = (package / "HadalisSession.qml").read_bytes()
-    (package / "HadalisSession.qml").write_text("modified")
+    original = (package / "AlisSession.qml").read_bytes()
+    (package / "AlisSession.qml").write_text("modified")
     assert not discovery.inspect(private, data_home)["available"]
-    (package / "HadalisSession.qml").write_bytes(original)
+    (package / "AlisSession.qml").write_bytes(original)
     assert discovery.inspect(private, data_home)["available"]
     for entry in ("thinkfanSettings","obsidianTodoSettings","tlpRowSettings","tlpWaffleSettings","tlpWaffleRowSettings"):
         target=package/discovery.ENTRYPOINTS[entry]
@@ -111,7 +111,7 @@ with tempfile.TemporaryDirectory(prefix="hadalird-host-") as name:
         config = shell / "config/alis"
         config.mkdir(parents=True)
         options = json.loads((ROOT / "defaults/config.json").read_text())
-        options["integrations"]["hadalird"] = {key:not present for key in ("tlp","thinkfan","obsidian")}
+        options["integrations"]["alisIntergration"] = {key:not present for key in ("tlp","thinkfan","obsidian")}
         options["battery"]["chargeLimit"]["enable"] = False
         (config / "config.json").write_text(json.dumps(options))
         (shell / "shell.qml").write_text('''
@@ -169,7 +169,7 @@ ShellRoot {
    const paths=JSON.stringify(Config.options.todo.obsidian)
    Config.setNestedValue("todo.backend","obsidian")
    tryCompare(Todo,"backend","obsidian",1000)
-   const button=findChild(todoUi,"hadalisTodoFallbackRestore")
+   const button=findChild(todoUi,"alisTodoFallbackRestore")
    tryVerify(()=>button!==null && button.visible && button.enabled,2000)
    check(button!==null && button.visible && button.enabled,"missing integration trapped the canonical task store "+JSON.stringify({visible:button?.visible,enabled:button?.enabled,busy:Todo.internalPersistenceBusy,parentVisible:todoUi.visible,height:todoUi.height}))
    button.clicked()
@@ -178,40 +178,40 @@ ShellRoot {
   }
   function runChecks(){try{
    tryCompare(Config,"ready",true,4000)
-   const present=Quickshell.env("HADALIRD_PRESENT")==="1"
+   const present=Quickshell.env("ALIS_INTERGRATION_PRESENT")==="1"
    if(!present){
     wait(500)
-    check(!Hadalird.available && !Hadalird.enabled && Hadalird.session===null,"missing package started")
-    check(Config.options.integrations.hadalird.tlp,"missing package erased the saved selection")
+    check(!AlisIntergration.available && !AlisIntergration.enabled && AlisIntergration.session===null,"missing package started")
+    check(Config.options.integrations.alisIntergration.tlp,"missing package erased the saved selection")
     check(!TlpService.available && !ThinkFanService.available && !managed.ready && !daily.ready,"missing worker reported ready")
     check(!TlpSettingsService.apply() && !ThinkFanService.applyProfile("managed") && !managed.addTask("no write") && !Zettelkasten.capture("no write","no write"),"missing action reported success")
     check(TlpSettingsService.lastError.length>0 && managed.errorMessage.length>0,"missing action gave no reason")
     checkCoreBattery()
     checkCoreTodo()
    }else{
-    tryCompare(Hadalird,"available",true,4000)
-    check(!Hadalird.enabled && Hadalird.session===null,"installed package enabled itself")
+    tryCompare(AlisIntergration,"available",true,4000)
+    check(!AlisIntergration.enabled && AlisIntergration.session===null,"installed package enabled itself")
     check(power.navigationCategories.length===0,"disabled settings retained package categories")
     checkCoreBattery()
     checkCoreTodo()
     power.selectedCategoryIndex=1
     power.visible=true
-    Config.setNestedValue("integrations.hadalird.tlp",true)
-    tryVerify(()=>Hadalird.session!==null,2000)
-    const owned=Hadalird.session
+    Config.setNestedValue("integrations.alisIntergration.tlp",true)
+    tryVerify(()=>AlisIntergration.session!==null,2000)
+    const owned=AlisIntergration.session
     tryVerify(()=>power.navigationCategories.length===2,1000)
     const page=findChild(power,"fixture-tlp-settings")
     tryVerify(()=>findChild(classicRow,"fixture-classic-row")!==null,1000)
     const row=findChild(classicRow,"fixture-classic-row")
     check(row.definition.key==="fixture" && row.compactProfileRows && row.groupDescription==="group","deferred row lost required inputs")
     classicRow.definition=({key:"changed"});tryVerify(()=>row.definition.key==="changed",1000)
-    Config.setNestedValue("integrations.hadalird.obsidian",true)
+    Config.setNestedValue("integrations.alisIntergration.obsidian",true)
     tryVerify(()=>findChild(todoUi,"fixture-obsidian-todo")!==null,1000)
     todoUi.visible=false
     tryVerify(()=>findChild(todoUi,"fixture-obsidian-todo")===null,1000)
     todoUi.visible=true
     tryVerify(()=>findChild(todoUi,"fixture-obsidian-todo")!==null,1000)
-    Config.setNestedValue("integrations.hadalird.obsidian",false)
+    Config.setNestedValue("integrations.alisIntergration.obsidian",false)
     tryVerify(()=>findChild(todoUi,"fixture-obsidian-todo")===null,1000)
     tryVerify(()=>findChild(power,"batteryLowWarningControl")===null,1000)
     check(page!==null && page.selectedCategoryIndex===1,"deferred settings lost the selected category")
@@ -224,11 +224,11 @@ ShellRoot {
     TlpService.apply();check(owned.operations===1,"charge action did not reach its sole owner")
     check(TlpSettingsService.apply() && owned.operations===2,"settings action did not reach its sole owner")
     check(!ThinkFanService.available && !ThinkFanService.applyProfile("managed") && owned.operations===2,"disabled fan reached a worker")
-    Config.setNestedValue("integrations.hadalird.thinkfan",true)
+    Config.setNestedValue("integrations.alisIntergration.thinkfan",true)
     tryCompare(ThinkFanService,"available",true,1000)
-    check(Hadalird.session===owned,"enabling a peer rebuilt the session")
+    check(AlisIntergration.session===owned,"enabling a peer rebuilt the session")
     check(ThinkFanService.applyProfile("managed") && owned.operations===3,"fan action lost its owner")
-    Config.setNestedValue("integrations.hadalird.tlp",false)
+    Config.setNestedValue("integrations.alisIntergration.tlp",false)
     tryCompare(TlpService,"available",false,1000)
     tryVerify(()=>power.navigationCategories.length===0,1000)
     tryVerify(()=>findChild(power,"fixture-tlp-settings")===null,1000)
@@ -236,12 +236,12 @@ ShellRoot {
     checkCoreBattery()
     check(Config.options.battery.low===30 && Config.options.battery.full===101 && Config.options.battery.suspend===5,"unloading optional settings lost battery preferences")
     TlpService.apply();check(owned.operations===3,"disabled charge leaked an action")
-    Config.setNestedValue("integrations.hadalird.thinkfan",false)
-    tryVerify(()=>Hadalird.session===null,2000)
-    check(!Hadalird.enabled && !ThinkFanService.available,"disabled package retained a worker")
+    Config.setNestedValue("integrations.alisIntergration.thinkfan",false)
+    tryVerify(()=>AlisIntergration.session===null,2000)
+    check(!AlisIntergration.enabled && !ThinkFanService.available,"disabled package retained a worker")
    }
-   console.info("HADALIRD_HOST_PASS",present ? "present-disabled-selected-unloaded" : "absent-fail-closed")
-  }catch(error){console.error("HADALIRD_HOST_FAIL",error.message,error.stack)}Qt.quit()}
+   console.info("ALIS_INTERGRATION_HOST_PASS",present ? "present-disabled-selected-unloaded" : "absent-fail-closed")
+  }catch(error){console.error("ALIS_INTERGRATION_HOST_FAIL",error.message,error.stack)}Qt.quit()}
  }
  Timer {interval:100;running:true;onTriggered:test.runChecks()}
 }
@@ -250,13 +250,13 @@ ShellRoot {
         runtime.mkdir(mode=0o700)
         env = dict(os.environ,QT_QPA_PLATFORM="offscreen",XDG_RUNTIME_DIR=str(runtime),
                    XDG_CONFIG_HOME=str(shell/"config"),XDG_STATE_HOME=str(shell/"state"),XDG_CACHE_HOME=str(shell/"cache"),
-                   XDG_DATA_HOME=str(data_home if present else shell/"data"),HADALIRD_PRESENT="1" if present else "0")
+                   XDG_DATA_HOME=str(data_home if present else shell/"data"),ALIS_INTERGRATION_PRESENT="1" if present else "0")
         env.pop("NIRI_SOCKET",None)
         env.pop("HYPRLAND_INSTANCE_SIGNATURE",None)
         result = run_qs(shell,env,timeout=20)
-        if result.returncode or "HADALIRD_HOST_PASS" not in result.stdout or any(token in result.stdout for token in ("HADALIRD_HOST_FAIL","TypeError:","ReferenceError:","Binding loop","Unable to assign","Failed to load configuration","Cannot assign to non-existent property","invalid context")):
+        if result.returncode or "ALIS_INTERGRATION_HOST_PASS" not in result.stdout or any(token in result.stdout for token in ("ALIS_INTERGRATION_HOST_FAIL","TypeError:","ReferenceError:","Binding loop","Unable to assign","Failed to load configuration","Cannot assign to non-existent property","invalid context")):
             print(result.stdout)
             raise SystemExit(1)
         if present:
-            assert "HADALIRD_FIXTURE_DESTROYED" in result.stdout,"session retained engine-owned singleton work"
-print("HADALIRD_HOST_PASS bounded discovery/identity, absent fail-closed, installed default-off, sole-owner actions, reactive peers and unload")
+            assert "ALIS_INTERGRATION_FIXTURE_DESTROYED" in result.stdout,"session retained engine-owned singleton work"
+print("ALIS_INTERGRATION_HOST_PASS bounded discovery/identity, absent fail-closed, installed default-off, sole-owner actions, reactive peers and unload")

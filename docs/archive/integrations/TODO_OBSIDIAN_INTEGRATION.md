@@ -1,6 +1,6 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
 
-> Obsidian implementation now belongs to optional [Hadalird](https://github.com/llocphann/Hadalird); this is the former in-core design.
+> Obsidian implementation now belongs to optional [Alis-Intergration](https://github.com/llocphann/Alis-Intergration); this is the former in-core design.
 
 # Todo ↔ Obsidian Integration
 
@@ -9,7 +9,7 @@ Status: **implemented on `dev`; Internal remains the default backend**
 Research baseline: 2026-09-22
 Runtime contract updated: 2026-09-22
 
-This document defines the safe integration boundary between Hadalis' existing
+This document defines the safe integration boundary between Alis' existing
 Todo UI and an Obsidian Markdown task source. It is intentionally conservative:
 the default internal backend must keep its current behavior, Obsidian files must
 never be rewritten wholesale, and Tasks-plugin semantics must never be silently
@@ -18,15 +18,15 @@ downgraded.
 ## 1. Goals
 
 1. Keep `TodoWidget` as the shared UI used by Sidebar Right and Dashboard.
-2. Let users select either the existing Hadalis store or an Obsidian note as
+2. Let users select either the existing Alis store or an Obsidian note as
    the canonical Todo source.
 3. Keep Obsidian Markdown editable from either application and reflect changes
-   in Hadalis without restarting Quickshell.
+   in Alis without restarting Quickshell.
 4. Preserve ordinary Markdown around the managed tasks byte-for-byte.
 5. Preserve Obsidian Tasks semantics for recurrence, custom statuses,
    completion dates and on-completion actions when that plugin is available.
 6. Work while Obsidian is closed for reading and for safe/basic mutations.
-7. Never launch Obsidian merely because Hadalis is polling or probing
+7. Never launch Obsidian merely because Alis is polling or probing
    capabilities.
 8. Fail closed on stale task references, ambiguous vaults, malformed managed
    sections or concurrent edits.
@@ -36,14 +36,14 @@ downgraded.
 - Parsing every task in an entire vault.
 - Reimplementing the Obsidian Tasks query language.
 - Reimplementing recurrence or custom-status transition logic.
-- Managing arbitrary Markdown outside the Hadalis-owned task region.
+- Managing arbitrary Markdown outside the Alis-owned task region.
 - Requiring a companion Obsidian plugin.
 - Depending on Advanced URI for task mutation.
 - Depending on the CLI as the only way to read the task note.
 - Automatically opening/focusing another vault in the background.
 - Persisting synthetic UUIDs into the user's Markdown.
 
-## 3. Current Hadalis contract
+## 3. Current Alis contract
 
 The current runtime has one singleton, `services/Todo.qml`.
 
@@ -118,7 +118,7 @@ The implementation adds a top-level `todo` object to `Config.qml` and
     "backend": "internal",
     "obsidian": {
       "vaultPath": "",
-      "notePath": "Hadalis/Todo.md",
+      "notePath": "Alis/Todo.md",
       "scope": "managed-section",
       "preferTasksPlugin": true,
       "allowBasicOfflineMutation": true
@@ -134,7 +134,7 @@ property JsonObject todo: JsonObject {
     property string backend: "internal"
     property JsonObject obsidian: JsonObject {
         property string vaultPath: ""
-        property string notePath: "Hadalis/Todo.md"
+        property string notePath: "Alis/Todo.md"
         property string scope: "managed-section"
         property bool preferTasksPlugin: true
         property bool allowBasicOfflineMutation: true
@@ -154,10 +154,10 @@ because the fallback remains `internal`.
 V1 manages only the region between exact markers:
 
 ```md
-<!-- hadalis:todo:start -->
+<!-- alis:todo:start -->
 - [ ] First task
 - [/] In progress task
-<!-- hadalis:todo:end -->
+<!-- alis:todo:end -->
 ```
 
 Rules:
@@ -166,13 +166,13 @@ Rules:
 - Both markers must exist before ordinary synchronization begins.
 - A missing or duplicate marker is an error, not permission to rewrite the
   document.
-- Text before the start marker and after the end marker is immutable to Hadalis.
+- Text before the start marker and after the end marker is immutable to Alis.
 - The marker lines themselves are immutable.
 - A setup/migration operation may create the region after explicit user action.
 - The parser ignores task-looking text inside fenced code blocks.
 - Newline convention (LF/CRLF) and final-newline state are preserved.
 - UTF-8 BOM, if present, is preserved.
-- Hadalis never normalizes unrelated whitespace.
+- Alis never normalizes unrelated whitespace.
 
 A dedicated note is recommended, but not required.
 
@@ -219,7 +219,7 @@ The task model exposed by the facade becomes a superset of the old model:
     statusChar: "/",
     statusType: "IN_PROGRESS",
 
-    sourcePath: "Hadalis/Todo.md",
+    sourcePath: "Alis/Todo.md",
     sourceLine: 17,
     rawLine: "- [/] Fix Sidebar",
     rawHash: "...",
@@ -272,7 +272,7 @@ Add a one-shot Python helper, proposed path:
 scripts/todo/obsidian_todo.py
 ```
 
-Python is already a Hadalis runtime dependency and is used by multiple current
+Python is already a Alis runtime dependency and is used by multiple current
 services.
 
 The helper communicates only JSON on stdout. Diagnostics go to stderr.
@@ -324,7 +324,7 @@ Reasons:
 - it works with Obsidian closed;
 - it does not launch/focus Obsidian;
 - it avoids CLI stdout timing/race behavior;
-- it gives Hadalis the exact raw lines needed for optimistic concurrency.
+- it gives Alis the exact raw lines needed for optimistic concurrency.
 
 `FileView` is suitable for the watcher. Quickshell currently watches both the
 file and its parent directory and re-adds the file watch after replacement, so
@@ -335,7 +335,7 @@ atomic rename/write does not permanently detach synchronization.
 Basic tasks may be mutated without Obsidian running, but "basic" is a proven
 capability, not a guess.
 
-A basic task is one for which Hadalis can safely perform a structural checkbox
+A basic task is one for which Alis can safely perform a structural checkbox
 operation without emulating Tasks-plugin behavior. In particular:
 
 - if `preferTasksPlugin=false`, ordinary space/x checkbox transitions may use
@@ -437,7 +437,7 @@ V1 therefore applies these restrictions:
    `FileSystemAdapter.getBasePath()` value from that probe and bind the
    following mutating eval to that exact value. This permits symlink aliases
    without weakening the guard against an active-vault switch.
-5. Serialize all Hadalis CLI calls. Current CLI versions have reported stdout
+5. Serialize all Alis CLI calls. Current CLI versions have reported stdout
    cross-talk when eval calls overlap.
 6. Use a helper-side lock in addition to the QML operation queue.
 7. Treat mutation stdout/exit code as transport information only. A reported
@@ -472,16 +472,16 @@ Useful settings include:
 - recurrence placement behavior
 
 Global Filter is particularly important. If Tasks is configured to recognize
-only tasks containing (for example) `#task`, Hadalis-created tasks must include
-that filter when Tasks-aware creation is available. Hadalis must not invent a
+only tasks containing (for example) `#task`, Alis-created tasks must include
+that filter when Tasks-aware creation is available. Alis must not invent a
 second manually configured copy of the filter.
 
 If plugin settings cannot be read, creation remains a plain Markdown task and
 the UI must not claim Tasks-aware behavior.
 
 V1 does not claim to reproduce Tasks' interactive Create/Edit modal. In
-particular, Hadalis Add Task does not synthesize optional created-date or other
-modal-only metadata. When a known non-empty Global Filter is required, Hadalis
+particular, Alis Add Task does not synthesize optional created-date or other
+modal-only metadata. When a known non-empty Global Filter is required, Alis
 may prepend that exact filter so the new checkbox is recognized by Tasks.
 Subsequent completion/status transitions use the Tasks API when available.
 
@@ -604,7 +604,7 @@ Put Todo integration in Settings → Services → Data. Reuse the existing
 
 Required controls:
 
-- Backend: Hadalis / Obsidian
+- Backend: Alis / Obsidian
 - Vault folder
 - Note path inside vault
 - Prefer Obsidian Tasks semantics
@@ -640,7 +640,7 @@ Before applying a migration:
 3. show added/duplicate/conflicting counts;
 4. back up the target note once;
 5. revalidate source hashes immediately before write;
-6. freeze Hadalis-side mutations of the internal store while the copy is in flight;
+6. freeze Alis-side mutations of the internal store while the copy is in flight;
 7. apply the managed-section patch atomically;
 8. rescan;
 9. only then set `todo.backend = "obsidian"`. If migration fails, times out,
@@ -693,7 +693,7 @@ Current Flathub packaging has moved past the earlier CLI/socket issue, and the
 integration should first use the officially registered Linux CLI at
 `~/.local/bin/obsidian` when available.
 
-Flatpak-specific handling belongs in diagnostics only. Hadalis should not mutate
+Flatpak-specific handling belongs in diagnostics only. Alis should not mutate
 Flatpak runtime directories or create compatibility socket links automatically.
 
 The URI handler remains the preferred explicit "Open in Obsidian" path and is
@@ -853,7 +853,7 @@ The integration is ready to ship only when all of the following are true:
 - Activating Obsidian never overwrites the dormant internal `todo.json`.
 - Editing the managed Markdown region in Obsidian updates both Sidebar and
   Dashboard.
-- Hadalis never modifies bytes outside the managed region.
+- Alis never modifies bytes outside the managed region.
 - A concurrent external edit cannot be silently overwritten.
 - Recurring/custom Tasks transitions use Tasks semantics when available.
 - Rich tasks are never silently downgraded when Tasks semantics are unavailable.

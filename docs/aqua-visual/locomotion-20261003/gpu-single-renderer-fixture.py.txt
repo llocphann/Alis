@@ -1,7 +1,7 @@
 import os,runpy,shutil,signal,subprocess,tempfile,json,hashlib
 from pathlib import Path
 from PIL import Image,ImageChops
-ROOT=Path('/home/llocphann/Hadalis')
+ROOT=Path('/home/llocphann/Alis')
 core=runpy.run_path(str(ROOT/'scripts/aqua-manual-visual-matrix.py'))
 cases=[]
 for quality in ('performance','balanced','quality'):
@@ -10,7 +10,7 @@ for quality in ('performance','balanced','quality'):
 for phase in (0,.125,.25,.375,.5,.625,.75,.875):
  cases.append(dict(quality='quality',yaw=32,expression='idle',translucency=.28,shimmer=.73,shine=0,gaze=0,walk=phase))
 QML='''//@ pragma UseQApplication
-//@ pragma Env INIR_STANDALONE_WINDOW=1
+//@ pragma Env ALIS_STANDALONE_WINDOW=1
 import QtQuick
 import QtQuick.Window
 import Quickshell

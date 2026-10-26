@@ -29,10 +29,10 @@ for file in "$common" "$nixos" "$home" "$package" "$workflow_parser" "$flake" "$
   [[ -f "$file" ]] || fail "missing Nix/runtime contract file: $file"
 done
 
-grep -Fq 'imports = [ (lib.mkAliasOptionModule [ "programs" "alis" ] [ "programs" "inir" ]) ];' "$common" \
-  || fail "public programs.alis options alias no longer supports the same single inir service"
+grep -Fq 'imports = [ (lib.mkAliasOptionModule [ "programs" "alis" ] [ "programs" "alis" ]) ];' "$common" \
+  || fail "public programs.alis options alias no longer supports the same single alis service"
 grep -Fq 'extraPackages = lib.mkOption {' "$common" \
-  || fail 'programs.inir.extraPackages option is missing'
+  || fail 'programs.alis.extraPackages option is missing'
 grep -Fq 'description = "Extra runtime packages made available to the Alis shell service.";' "$common" \
   || fail 'extraPackages no longer documents its service PATH contract'
 
@@ -65,7 +65,7 @@ grep -Fq 'for doc in docs/*.md; do' "$package" \
 if grep -Fq '"$docs/${doc##*/}"' "$package"; then
   fail 'Nix package docs loop contains an unescaped Bash parameter expansion inside an indented string'
 fi
-grep -Fq 'install -Dm644 LICENSE "$out/share/licenses/inir/LICENSE"' "$package" \
+grep -Fq 'install -Dm644 LICENSE "$out/share/licenses/alis/LICENSE"' "$package" \
   || fail 'Nix package no longer installs the project license'
 
 grep -Fq 'nativeBackend = pkgs.rustPlatform.buildRustPackage {' "$package" \
@@ -77,13 +77,13 @@ grep -Fq 'mkdir -p "$runtime/native/bin"' "$package" \
 
 grep -Fq '{ pkgs, withWorkflowParser ? false }:' "$package" \
   || fail 'Nix shell package no longer keeps Workflow parser capability opt-in'
-grep -Fq 'HADALIS_WORKFLOW_GRAMMAR' "$package" \
+grep -Fq 'ALIS_WORKFLOW_GRAMMAR' "$package" \
   || fail 'parser-capable Nix shell no longer exports its grammar path'
-grep -Fq 'HADALIS_TREE_SITTER_LIBRARY' "$package" \
+grep -Fq 'ALIS_TREE_SITTER_LIBRARY' "$package" \
   || fail 'parser-capable Nix shell no longer exports its Tree-sitter library path'
 grep -Fq 'lib.optionalString withWorkflowParser' "$package" \
   || fail 'default Nix shell no longer gates parser wrapper arguments'
-grep -Fq 'pname = "inir-workflow-parser";' "$workflow_parser" \
+grep -Fq 'pname = "alis-workflow-parser";' "$workflow_parser" \
   || fail 'Nix Workflow parser derivation is missing'
 grep -Fq 'version = "0.3.1";' "$workflow_parser" \
   || fail 'Nix Workflow parser grammar version drifted'
@@ -93,7 +93,7 @@ grep -Fq 'src/parser.c src/scanner.c' "$workflow_parser" \
   || fail 'Nix Workflow parser no longer builds the released generated C sources'
 grep -Fq 'treeSitterLibrary = "${treeSitterLib}/lib/libtree-sitter.so";' "$workflow_parser" \
   || fail 'Nix Workflow parser no longer exposes its runtime library path'
-grep -Fq 'inir-workflow-parser = workflowParser;' "$flake" \
+grep -Fq 'alis-workflow-parser = workflowParser;' "$flake" \
   || fail 'flake no longer exports the standalone Workflow parser capability'
 grep -Fq 'nixosModules.alis = nixosModule;' "$flake" \
   || fail 'public NixOS module alias missing'
@@ -101,14 +101,14 @@ grep -Fq 'homeModules.alis = homeModule;' "$flake" \
   || fail 'public Home Manager module alias missing'
 grep -Fq '          alis = package;' "$flake" \
   || fail 'public Alis flake package alias missing'
-grep -Fq 'inir-with-workflow-parser = packageWithWorkflowParser;' "$flake" \
-  || fail 'flake no longer exports the parser-capable Hadalis variant'
-grep -Fq 'nix build .#inir-with-workflow-parser --print-build-logs' "$nix_workflow" \
-  || fail 'Nix CI no longer builds the parser-capable Hadalis variant'
-grep -Fq 'Nix-managed installations keep inir.service declarative' "$package" \
+grep -Fq 'alis-with-workflow-parser = packageWithWorkflowParser;' "$flake" \
+  || fail 'flake no longer exports the parser-capable Alis variant'
+grep -Fq 'nix build .#alis-with-workflow-parser --print-build-logs' "$nix_workflow" \
+  || fail 'Nix CI no longer builds the parser-capable Alis variant'
+grep -Fq 'Nix-managed installations keep alis.service declarative' "$package" \
   || fail 'Nix package no longer blocks mutable service ownership commands'
-grep -Fq 'systemctl --user cat inir.service' "$package" \
-  || fail 'Nix package no longer validates the declarative inir.service before start/restart'
+grep -Fq 'systemctl --user cat alis.service' "$package" \
+  || fail 'Nix package no longer validates the declarative alis.service before start/restart'
 grep -Fq 'install|uninstall|remove|enable|disable)' "$package" \
   || fail 'Nix service ownership guard no longer covers all mutating service commands'
 grep -Fqx '      ${materialSymbolsWrapperArg} \' "$package" \
@@ -148,14 +148,14 @@ fi
 grep -Fq 'Quickshell.execDetached(["/usr/bin/env", "easyeffects", "--service-mode"])' "$easyeffects_service" \
   || fail 'EasyEffects service no longer exercises the PATH-resolved native runtime contract'
 if grep -Fq '++ optionalTop "easyeffects"' "$package"; then
-  fail 'Nix runtime hard-wires optional EasyEffects backend; provide it through programs.inir.extraPackages when desired'
+  fail 'Nix runtime hard-wires optional EasyEffects backend; provide it through programs.alis.extraPackages when desired'
 fi
 if grep -Fq '++ optionalTop "socat"' "$package"; then
-  fail 'Nix runtime hard-wires optional EasyEffects transport; provide it through programs.inir.extraPackages when desired'
+  fail 'Nix runtime hard-wires optional EasyEffects transport; provide it through programs.alis.extraPackages when desired'
 fi
 grep -Fq 'EasyEffects and its `socat` control transport are intentionally **not** part of the default Nix runtime closure.' "$nix_doc" \
   || fail 'NixOS docs no longer state that EasyEffects and socat are outside the default runtime closure'
-grep -Fq 'programs.inir.extraPackages = [' "$nix_doc" \
+grep -Fq 'programs.alis.extraPackages = [' "$nix_doc" \
   || fail 'NixOS docs no longer show the extraPackages opt-in path for optional runtime tools'
 grep -Fq '  pkgs.easyeffects' "$nix_doc" \
   || fail 'NixOS docs no longer show how to opt into the EasyEffects backend'

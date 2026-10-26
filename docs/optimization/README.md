@@ -1,4 +1,4 @@
-# Hadalis optimization research
+# Alis optimization research
 
 This directory is the **single active home for optimization documentation**.
 Do not create new optimization research Markdown elsewhere in `docs/`.
@@ -33,5 +33,5 @@ they are evidence artifacts, not competing optimization ledgers.
   ALREADY/CLOSED/SUPERSEDED findings.
 - Strict-lossless is the default. Visual substitutions require the audit's
   bounded A/B oracle and visual-error budget.
-- Never claim whole-Hadalis CPU/GPU/RAM/FPS percentages without comparable
+- Never claim whole-Alis CPU/GPU/RAM/FPS percentages without comparable
   before/after measurement.

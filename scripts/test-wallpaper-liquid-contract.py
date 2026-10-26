@@ -15,14 +15,14 @@ require('readonly property bool shaderTransitionRequested: Quickshell.env("ALIS_
         "Liquid shader must be requested by default, with an explicit local opt-out")
 require("ALIS_EXPERIMENTAL_MELT" not in cross, "legacy opt-in must not gate the Liquid effect")
 require('readonly property var shaderTransitionTypes: ["alisMelt"]' in cross
-        and 'return value === "inirMelt" || shaderTransitionTypes.indexOf(value) >= 0' in cross
+        and 'return value === "alisMelt" || shaderTransitionTypes.indexOf(value) >= 0' in cross
         and 'return isShaderTransitionType(raw) ? "alisMelt" : ""' in cross,
-        "old persisted inirMelt must resolve to the shipped alisMelt binary")
-require('transitionType !== "alisMelt" && transitionType !== "inirMelt"' in awww,
+        "old persisted alisMelt must resolve to the shipped alisMelt binary")
+require('transitionType !== "alisMelt" && transitionType !== "alisMelt"' in awww,
         "awww must not cover the internal Liquid surface for either saved alias")
-require('case "alisMelt":' in awww and 'case "inirMelt":' in awww,
+require('case "alisMelt":' in awww and 'case "alisMelt":' in awww,
         "Liquid aliases must keep the duration control available")
-require('Translation.tr("Liquid")' in ui and '["alisMelt", "inirMelt"].includes(' in ui,
+require('Translation.tr("Liquid")' in ui and '["alisMelt", "alisMelt"].includes(' in ui,
         "Liquid selection must display correctly for both saved aliases")
 require('_requestShaderPresentationFrame' in cross
         and 'shaderTransition.shaderPresented = true' in cross.split('function onFrameSwapped(): void {', 1)[1].split('if (!root._shaderTexturePrimePending)', 1)[0],

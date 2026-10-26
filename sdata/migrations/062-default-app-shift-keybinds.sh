@@ -73,7 +73,7 @@ binds_path = niri_dir / "config.d/70-binds.kdl"
 extra_path = niri_dir / "config.d/90-user-extra.kdl"
 override_paths = [
     niri_dir / "config.d/75-alis-launcher-binds.kdl",
-    niri_dir / "config.d/75-inir-launcher-binds.kdl",
+    niri_dir / "config.d/75-alis-launcher-binds.kdl",
 ]
 
 binds_text = binds_path.read_text(encoding="utf-8") if binds_path.is_file() else ""

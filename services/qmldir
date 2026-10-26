@@ -87,4 +87,4 @@ singleton YtMusic 1.0 YtMusic.qml
 singleton AlisCompanion 1.0 AlisCompanion.qml
 singleton ObsidianTheme 1.0 ObsidianTheme.qml
 
-singleton Hadalird 1.0 Hadalird.qml
+singleton AlisIntergration 1.0 AlisIntergration.qml

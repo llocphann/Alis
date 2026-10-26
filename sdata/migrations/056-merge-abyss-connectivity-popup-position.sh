@@ -13,7 +13,7 @@ _abyss_connectivity_position_config_path() {
   if [[ -f "$root/illogical-impulse/config.json" ]]; then
     printf '%s' "$root/illogical-impulse/config.json"
   else
-    printf '%s' "$root/inir/config.json"
+    printf '%s' "$root/alis/config.json"
   fi
 }
 

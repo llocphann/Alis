@@ -8,7 +8,7 @@ import Quickshell.Io
 /**
  * Optional 10-band DSP Equalizer facade for the Media Popup.
  *
- * Hadalis keeps one EqualizerService/backend boundary. The helper feature-probes
+ * Alis keeps one EqualizerService/backend boundary. The helper feature-probes
  * EasyEffects' local property API, applies the 10-to-32-band curve directly to
  * the active Equalizer instance, and persists only those Equalizer fields into
  * the currently selected preset. It never reloads the preset, so Convolver,

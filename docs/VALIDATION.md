@@ -29,7 +29,7 @@ fish scripts/validate-all.fish --strict-qml
 fish scripts/validate-all.fish --with-nix
 fish scripts/validate-all.fish --live
 fish scripts/validate-all.fish --interactive
-fish scripts/validate-all.fish --full --log /tmp/hadalis-my-validation.log
+fish scripts/validate-all.fish --full --log /tmp/alis-my-validation.log
 ```
 
 The Fish wrapper requires a clean working tree because the canonical validator deliberately tests a clean clone of the exact Git HEAD; uncommitted changes would otherwise be outside the tested snapshot. It records the exact SHA, tool/environment information, PASS/FAIL/SKIP for every orchestration stage, embeds the canonical validator output into the same persistent log, and returns nonzero when REQUIRED checks or explicitly requested optional/release checks fail.
@@ -39,10 +39,10 @@ The Fish wrapper requires a clean working tree because the canonical validator d
 The command creates a temporary clone, records the exact tested SHA, runs the required non-Nix validation matrix, and writes **one canonical diagnostic log**. By default the log is outside the working tree at:
 
 ```text
-/tmp/hadalis-maintainer-validation-YYYYMMDD-HHMMSS.log
+/tmp/alis-maintainer-validation-YYYYMMDD-HHMMSS.log
 ```
 
-The exact log path is printed at startup and again as `FINAL LOG:` in the terminal summary. Set `HADALIS_VALIDATION_LOG=/path/to/file.log` only when a different destination is needed.
+The exact log path is printed at startup and again as `FINAL LOG:` in the terminal summary. Set `ALIS_VALIDATION_LOG=/path/to/file.log` only when a different destination is needed.
 
 That single log is the only artifact a maintainer should need to send for review. The validator may use temporary per-check capture files internally, but they are removed with the temporary validation workspace and are not separate deliverables.
 

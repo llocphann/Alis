@@ -199,7 +199,7 @@ def run_backend(
         if kind == "python"
         else [str(rust_binary), "--compat", *common]
     )
-    with tempfile.TemporaryDirectory(prefix="hadalis-mpd-parity-cache.") as cache:
+    with tempfile.TemporaryDirectory(prefix="alis-mpd-parity-cache.") as cache:
         result = subprocess.run(
             argv,
             text=True,

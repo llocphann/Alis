@@ -15,7 +15,7 @@ perimeter = (repo / "modules/abyss/AbyssPerimeter.qml").read_text()
 start = perimeter.index("            AbyssBodyHost {\n                id: widgetEditorBody")
 end = perimeter.index("            AbyssBodyHost {\n                id: leftPanel", start)
 host = perimeter[start:end]
-with tempfile.TemporaryDirectory(prefix="hadalis-widget-editor-") as folder:
+with tempfile.TemporaryDirectory(prefix="alis-widget-editor-") as folder:
     root = Path(folder)
     for name in ("modules", "services", "GlobalStates.qml", "qmldir", "assets", "scripts", "defaults", "translations"):
         (root / name).symlink_to(repo / name)
@@ -146,7 +146,7 @@ ShellRoot {
   }
  }
 }
-'''.replace("  HOST", host).replace("CAPTURE_PATH", json.dumps(os.environ.get("HADALIS_EDITOR_CAPTURE_DIR", "")))
+'''.replace("  HOST", host).replace("CAPTURE_PATH", json.dumps(os.environ.get("ALIS_EDITOR_CAPTURE_DIR", "")))
     (root / "shell.qml").write_text(qml)
     env = dict(os.environ, QT_QPA_PLATFORM="wayland", XDG_CONFIG_HOME=str(root / "config"),
                XDG_STATE_HOME=str(root / "state"), XDG_CACHE_HOME=str(root / "cache"))

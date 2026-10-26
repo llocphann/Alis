@@ -1,4 +1,4 @@
-Hadalis maintainer local validation
+Alis maintainer local validation
 Log: /tmp/alis-canonical-final-bcc7i9t9/canonical.log
 [01] host tool preflight                                        PASS
 [02] build and baseline shell syntax                            PASS
@@ -144,24 +144,24 @@ Log: /tmp/alis-canonical-final-bcc7i9t9/canonical.log
 [142] Python regression: scripts/test-fcitx5-session-integration.py PASS
 [143] Python regression: scripts/test-fcitx5-settings-integration.py PASS
 [144] Python regression: scripts/test-global-actions-query-parity.py PASS
-[145] Python regression: scripts/test-hadalird-arch-package.py   PASS
-[146] Python regression: scripts/test-hadalird-gateway-bootstrap.py PASS
-[147] Python regression: scripts/test-hadalird-install-lifecycle.py PASS
-[148] Python regression: scripts/test-hadalird-manager.py        PASS
-[149] Python regression: scripts/test-hadalird-obsidian-wrapper.py PASS
-[150] Python regression: scripts/test-hadalird-optional.py       PASS
-[151] Python regression: scripts/test-hadalird-polkit-visibility.py PASS
-[152] Python regression: scripts/test-hadalird-preferences-migration.py PASS
-[153] Python regression: scripts/test-hadalird-settings-flow.py  PASS
-[154] Python regression: scripts/test-hadalird-system-provision.py PASS
+[145] Python regression: scripts/test-alis-intergration-arch-package.py   PASS
+[146] Python regression: scripts/test-alis-intergration-gateway-bootstrap.py PASS
+[147] Python regression: scripts/test-alis-intergration-install-lifecycle.py PASS
+[148] Python regression: scripts/test-alis-intergration-manager.py        PASS
+[149] Python regression: scripts/test-alis-intergration-obsidian-wrapper.py PASS
+[150] Python regression: scripts/test-alis-intergration-optional.py       PASS
+[151] Python regression: scripts/test-alis-intergration-polkit-visibility.py PASS
+[152] Python regression: scripts/test-alis-intergration-preferences-migration.py PASS
+[153] Python regression: scripts/test-alis-intergration-settings-flow.py  PASS
+[154] Python regression: scripts/test-alis-intergration-system-provision.py PASS
 [155] Python regression: scripts/test-alis-companion-layer-shell.py    PASS
 [156] Python regression: scripts/test-alis-companion-optional.py       PASS
-[157] Python regression: scripts/test-inir-process-cleanup.py    PASS
+[157] Python regression: scripts/test-alis-process-cleanup.py    PASS
 [158] Python regression: scripts/test-internal-todo-persistence-runtime.py PASS
 [159] Python regression: scripts/test-ipc-registry-generator.py  PASS
-[160] Python regression: scripts/test-iris-corner-poc-contract.py PASS
-[161] Python regression: scripts/test-iris-g2-contract.py        PASS
-[162] Python regression: scripts/test-iris-production-surface-contract.py PASS
+[160] Python regression: scripts/test-abyss-corner-poc-contract.py PASS
+[161] Python regression: scripts/test-abyss-g2-contract.py        PASS
+[162] Python regression: scripts/test-abyss-production-surface-contract.py PASS
 [163] Python regression: scripts/test-light-mode-upstream-contract.py PASS
 [164] Python regression: scripts/test-loading-presentation-contract.py PASS
 [165] Python regression: scripts/test-local-ai-gguf-runtime.py   PASS
@@ -224,7 +224,7 @@ Log: /tmp/alis-canonical-final-bcc7i9t9/canonical.log
 [222] Python regression: scripts/test-settings-flat-navigation.py PASS
 [223] Python regression: scripts/test-settings-hierarchy-runtime.py PASS
 [224] Python regression: scripts/test-settings-information-architecture.py PASS
-[225] Python regression: scripts/test-settings-inir-task-tabs-contract.py PASS
+[225] Python regression: scripts/test-settings-alis-task-tabs-contract.py PASS
 [226] Python regression: scripts/test-settings-inline-search-layout.py PASS
 [227] Python regression: scripts/test-settings-navigation-behavior.py PASS
 [228] Python regression: scripts/test-settings-ownership-cleanup.py PASS
@@ -381,7 +381,7 @@ Log: /tmp/alis-canonical-final-bcc7i9t9/canonical.log
 [379] Make contract: package lifecycle hooks                     PASS
 [380] source tree remains clean after validation                 PASS
 
-Hadalis validation: FAIL
+Alis validation: FAIL
 SHA: 7e31685bc44dcdd6c2166b87e15fd7ef15095240
 Passed: 373
 Failed: 7

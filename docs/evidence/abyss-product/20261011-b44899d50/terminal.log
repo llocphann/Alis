@@ -1,4 +1,4 @@
-Hadalis maintainer local validation
+Alis maintainer local validation
 Log: /tmp/alis-canonical-klcbap4i/canonical.log
 [01] host tool preflight                                        PASS
 [02] build and baseline shell syntax                            PASS
@@ -119,23 +119,23 @@ Log: /tmp/alis-canonical-klcbap4i/canonical.log
 [117] Python regression: scripts/test-fcitx5-session-integration.py PASS
 [118] Python regression: scripts/test-fcitx5-settings-integration.py PASS
 [119] Python regression: scripts/test-global-actions-query-parity.py PASS
-[120] Python regression: scripts/test-hadalird-arch-package.py   PASS
-[121] Python regression: scripts/test-hadalird-gateway-bootstrap.py PASS
-[122] Python regression: scripts/test-hadalird-install-lifecycle.py PASS
-[123] Python regression: scripts/test-hadalird-manager.py        PASS
-[124] Python regression: scripts/test-hadalird-obsidian-wrapper.py PASS
-[125] Python regression: scripts/test-hadalird-optional.py       PASS
-[126] Python regression: scripts/test-hadalird-polkit-visibility.py PASS
-[127] Python regression: scripts/test-hadalird-preferences-migration.py PASS
-[128] Python regression: scripts/test-hadalird-settings-flow.py  PASS
-[129] Python regression: scripts/test-hadalird-system-provision.py PASS
+[120] Python regression: scripts/test-alis-intergration-arch-package.py   PASS
+[121] Python regression: scripts/test-alis-intergration-gateway-bootstrap.py PASS
+[122] Python regression: scripts/test-alis-intergration-install-lifecycle.py PASS
+[123] Python regression: scripts/test-alis-intergration-manager.py        PASS
+[124] Python regression: scripts/test-alis-intergration-obsidian-wrapper.py PASS
+[125] Python regression: scripts/test-alis-intergration-optional.py       PASS
+[126] Python regression: scripts/test-alis-intergration-polkit-visibility.py PASS
+[127] Python regression: scripts/test-alis-intergration-preferences-migration.py PASS
+[128] Python regression: scripts/test-alis-intergration-settings-flow.py  PASS
+[129] Python regression: scripts/test-alis-intergration-system-provision.py PASS
 [130] Python regression: scripts/test-alis-companion-layer-shell.py    PASS
 [131] Python regression: scripts/test-alis-companion-optional.py       PASS
-[132] Python regression: scripts/test-inir-process-cleanup.py    PASS
+[132] Python regression: scripts/test-alis-process-cleanup.py    PASS
 [133] Python regression: scripts/test-ipc-registry-generator.py  PASS
-[134] Python regression: scripts/test-iris-corner-poc-contract.py PASS
-[135] Python regression: scripts/test-iris-g2-contract.py        PASS
-[136] Python regression: scripts/test-iris-production-surface-contract.py PASS
+[134] Python regression: scripts/test-abyss-corner-poc-contract.py PASS
+[135] Python regression: scripts/test-abyss-g2-contract.py        PASS
+[136] Python regression: scripts/test-abyss-production-surface-contract.py PASS
 [137] Python regression: scripts/test-light-mode-upstream-contract.py PASS
 [138] Python regression: scripts/test-loading-presentation-contract.py PASS
 [139] Python regression: scripts/test-local-ai-gguf-runtime.py   PASS
@@ -196,7 +196,7 @@ Log: /tmp/alis-canonical-klcbap4i/canonical.log
 [194] Python regression: scripts/test-settings-flat-navigation.py PASS
 [195] Python regression: scripts/test-settings-hierarchy-runtime.py PASS
 [196] Python regression: scripts/test-settings-information-architecture.py PASS
-[197] Python regression: scripts/test-settings-inir-task-tabs-contract.py PASS
+[197] Python regression: scripts/test-settings-alis-task-tabs-contract.py PASS
 [198] Python regression: scripts/test-settings-inline-search-layout.py PASS
 [199] Python regression: scripts/test-settings-navigation-behavior.py PASS
 [200] Python regression: scripts/test-settings-ownership-cleanup.py PASS
@@ -351,7 +351,7 @@ Log: /tmp/alis-canonical-klcbap4i/canonical.log
 [349] Make contract: package lifecycle hooks                     PASS
 [350] source tree remains clean after validation                 PASS
 
-Hadalis validation: PASS
+Alis validation: PASS
 SHA: b44899d504d106b7a6d65ff16030f583fb3b526d
 Passed: 349
 Failed: 0

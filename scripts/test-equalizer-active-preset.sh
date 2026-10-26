@@ -3,7 +3,7 @@ set -euo pipefail
 
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 helper="$root/scripts/equalizer-control.sh"
-tmp="$(mktemp -d "${TMPDIR:-/tmp}/hadalis-eq-active.XXXXXX")"
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/alis-eq-active.XXXXXX")"
 server_pid=""
 
 cleanup() {
@@ -178,7 +178,7 @@ done
 wait "$server_pid"
 server_pid=""
 
-python3 - "$preset_file" "$XDG_STATE_HOME/hadalis/equalizer_state.json" "$server_log" <<'PY'
+python3 - "$preset_file" "$XDG_STATE_HOME/alis/equalizer_state.json" "$server_log" <<'PY'
 import json
 import pathlib
 import sys
@@ -214,7 +214,7 @@ if eq["balance"] != 0.25 or eq["input-gain"] != -1.5 or eq["output-gain"] != 2.0
 if eq["mode"] != "IIR":
     raise SystemExit("FAIL: Equalizer processing mode changed")
 if eq["num-bands"] != 32 or eq["split-channels"] is not False:
-    raise SystemExit("FAIL: Hadalis 32-band Equalizer shape was not persisted")
+    raise SystemExit("FAIL: Alis 32-band Equalizer shape was not persisted")
 
 expected = {
     0: 5.0, 3: 7.0, 6: 5.0, 9: 2.0, 12: 1.0,
@@ -231,9 +231,9 @@ for index in range(32):
 
 state = json.loads(state_path.read_text(encoding="utf-8"))
 if state["preset"] != "Bass":
-    raise SystemExit("FAIL: Hadalis preset label did not commit")
+    raise SystemExit("FAIL: Alis preset label did not commit")
 if state["gains"] != [5.0, 7.0, 5.0, 2.0, 1.0, 0.0, 0.0, 0.0, 1.0, 2.0]:
-    raise SystemExit("FAIL: Hadalis DSP gains did not commit")
+    raise SystemExit("FAIL: Alis DSP gains did not commit")
 
 commands = log_path.read_text(encoding="utf-8").splitlines()
 if "get_last_loaded_preset:output" not in commands:

@@ -102,7 +102,7 @@ with tempfile.TemporaryDirectory() as tmp:
     if [round(float(line["time"]), 2) for line in payload["lines"]] != [1.0, 2.5, 4.0]:
         raise SystemExit("local lyrics timestamp parsing regressed.")
 
-spec = importlib.util.spec_from_file_location("hadalis_local_music_mpd", ROOT / "scripts/local_music_mpd.py")
+spec = importlib.util.spec_from_file_location("alis_local_music_mpd", ROOT / "scripts/local_music_mpd.py")
 if spec is None or spec.loader is None:
     raise SystemExit("could not import local_music_mpd helper")
 mpd_helper = importlib.util.module_from_spec(spec)

@@ -8,7 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix="hadalis-palette-cache-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-palette-cache-") as name:
     folder = Path(name)
     env = dict(os.environ, XDG_CONFIG_HOME=str(folder / "config"), XDG_CACHE_HOME=str(folder / "cache"),
                XDG_STATE_HOME=str(folder / "state"))

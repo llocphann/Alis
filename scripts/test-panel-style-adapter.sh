@@ -7,7 +7,7 @@ python3 - "$repo_root" <<'PY'
 import json, os, pathlib, subprocess, sys, tempfile, time
 repo=pathlib.Path(sys.argv[1])
 for family in ('ii','waffle','abyss'):
-    with tempfile.TemporaryDirectory(prefix='hadalis-style-adapter-') as directory:
+    with tempfile.TemporaryDirectory(prefix='alis-style-adapter-') as directory:
         root=pathlib.Path(directory)
         for entry in ('modules','services','GlobalStates.qml','qmldir','assets','scripts','defaults','translations'):
             (root/entry).symlink_to(repo/entry)
@@ -16,7 +16,7 @@ for family in ('ii','waffle','abyss'):
              'knownPanels':['iiDock','iiBar','iiCheatsheet'],'visitedPanelFamilies':[family],
              'dock':{'iconSize':43},'customExample':{'keep':'unchanged'}}
         config.write_text(json.dumps(old))
-        (root/'shell.qml').write_text('''//@ pragma ShellId hadalis-style-adapter-test
+        (root/'shell.qml').write_text('''//@ pragma ShellId alis-style-adapter-test
 import QtQuick
 import Quickshell
 import Quickshell.Io

@@ -6,7 +6,7 @@ running installation. Track requirements and acceptance in [BRAND-R01](https://g
 
 ## Legacy installation boundary
 
-An installation owned by `inir.service` needs a deliberate single-owner
+An installation owned by `alis.service` needs a deliberate single-owner
 handoff. Normal setup/update and `alis migrate` refuse the legacy service;
 never enable `alis.service` alongside it. Do not point an active legacy
 Quickshell config at canonical source before inspecting the handoff.
@@ -30,7 +30,7 @@ included in the canonical snapshot.
 
 ## Data and ownership
 
-Canonical roots take precedence when present. Historic `inir` and
+Canonical roots take precedence when present. Historic `alis` and
 `illogical-impulse` configuration may be copied only when compatible with the
 canonical destination; differing settings are refused. Preference, layout,
 notes and wizard marker bytes must survive. Existing foreign files, launchers
@@ -40,7 +40,7 @@ and symlinks are not overwritten. Backups live in the independent
 New keyring entries use `application=alis`. A missing canonical entry falls
 back to reading the original `illogical-impulse` secret without modifying it.
 Historical migrations cannot recreate the retired config namespace after
-canonical staging. Original project credits remain iNiR and illogical-impulse.
+canonical staging. Original project credits remain Alis and illogical-impulse.
 
 ## Rollback
 
@@ -53,7 +53,7 @@ as a rollback target.
 
 On an explicit owner decision, `--apply --owner-approved` stops
 `alis.service`, restores verified original service links and starts only
-`inir.service`. If the original startup fails, it attempts to restore Alis.
+`alis.service`. If the original startup fails, it attempts to restore Alis.
 Both units and all config/cache/data/state directories are retained.
 A managed historical public shim remains a valid service recovery target only
 when its bytes equal the retained private engine, the original ShellId and
@@ -76,11 +76,11 @@ is linked from GitHub Issues; a focused source result is not release approval.
 
 ## BRAND-R01 update compatibility when the previous service is retained
 
-The old `inir.service` file stays available for owner-controlled recovery after
+The old `alis.service` file stays available for owner-controlled recovery after
 a successful cutover. Its presence alone is **not** a reason to block future
 `alis update` commands. The update guard now allows updates **only** if the
 canonical `alis.service` is active, legacy service inactive and
-disabled/static, no legacy compositor `*.wants/inir.service` links remain,
+disabled/static, no legacy compositor `*.wants/alis.service` links remain,
 and the installed runtime has `ShellId alis`. An old active/enabled unit,
 missing canonical session, or partial migration still blocks updates.
 
@@ -94,7 +94,7 @@ their package manager. Source tests are not physical desktop verification.
 ## Transitional launcher bootstrap (before owner cutover)
 
 A repo-copy desktop may retain a **managed compatibility** `~/.local/bin/alis`
-launcher which forwards to the now-retired `inir` runtime. The source
+launcher which forwards to the now-retired `alis` runtime. The source
 `scripts/alis` is canonical but the installed launcher has not been updated.
 Both `alis update` and service cutover intentionally refuse a dual-owner
 state; demanding an already-canonical public CLI before staging created a
@@ -107,13 +107,13 @@ runtime (or verifies a complete existing Alis runtime), then copies the old
 managed launcher **byte-for-byte** to a unique
 `~/.local/state/alis-cutover-backups/launcher-*/alis` directory, and atomically
 installs the source canonical CLI at the user launcher path. It recognizes
-only the signed-off historical wrapper markers plus the internal iNiR
+only the signed-off historical wrapper markers plus the internal Alis
 delegation. Unknown executables, symlinks, shadowing PATH commands, partial
 runtime targets and package-managed installs are rejected. Already-canonical
 launchers and completely staged runtime are left unchanged.
 
 Staging **does not** stop either systemd unit, perform a data migration or
-change Niri keybinds. While `inir.service` still owns the desktop, replacing
+change Niri keybinds. While `alis.service` still owns the desktop, replacing
 the public CLI can affect commands aimed at the old runtime; conduct the
 subsequent cutover from a safe recovery-capable session. Run the separate
 `brand-canonical-cutover.sh --dry-run` after staging, and do not apply that
@@ -130,7 +130,7 @@ first-run marker.
 ## Retain an existing user-owned Alis cache during cutover
 
 An earlier Alis installation or another application may already have created
-`$XDG_CACHE_HOME/alis`. If there is also a legacy `inir` or
+`$XDG_CACHE_HOME/alis`. If there is also a legacy `alis` or
 `illogical-impulse` cache, the cutover leaves **both caches exactly as found**
 rather than refusing a new session solely because a cache directory exists.
 The dry-run prints `KEEP existing Alis cache unchanged; skip old cache copy`;
@@ -155,8 +155,8 @@ test does not count as R10 desktop verification.
 The owner observed a **real**, owner-approved service cutover failure:
 `alis.service: Two services allocated for the same bus name
 org.kde.StatusNotifierWatcher, refusing operation` (21:15:21 local time).
-The initial rollback brought `inir.service` back to **active** and
-`alis.service` to **not-found/inactive**. Merely stopping `inir.service`
+The initial rollback brought `alis.service` back to **active** and
+`alis.service` to **not-found/inactive**. Merely stopping `alis.service`
 does **not** retire its systemd unit, so the manager still reserves
 `BusName=org.kde.StatusNotifierWatcher` for both installed units.
 
@@ -171,9 +171,9 @@ runtime is retained.
 
 At owner-authorized cutover, the script stops the old owner before copying
 its final config/data/state, creates a verified original unit backup, moves
-`inir.service` to
-`$XDG_STATE_HOME/alis-cutover-backups/retired-inir.service` **outside
-systemd's unit search path**, installs a `inir.service -> /dev/null` mask,
+`alis.service` to
+`$XDG_STATE_HOME/alis-cutover-backups/retired-alis.service` **outside
+systemd's unit search path**, installs a `alis.service -> /dev/null` mask,
 rewires the compositor's managed `*.wants` link, reloads the user manager,
 and verifies **legacy unit = masked, canonical unit = loaded** before
 starting Alis. The mask also prevents lower-priority package units from

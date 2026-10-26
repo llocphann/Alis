@@ -36,23 +36,23 @@ for shell in bash fish zsh; do
 done
 grep -Fq 'tui_hero_card "Alis setup"' "$repo/setup" || fail "setup TUI still uses legacy product name"
 grep -Fq 'Alis — your niri shell' "$repo/sdata/lib/tui.sh" || fail 'status banner still carries previous public name'
-if grep -Fq 'iNiR — your niri shell' "$repo/sdata/lib/tui.sh"; then fail 'legacy status banner was not retired'; fi
+if grep -Fq 'Alis — your niri shell' "$repo/sdata/lib/tui.sh"; then fail 'legacy status banner was not retired'; fi
 grep -Fq 'Pending IDs: $pending_ids' "$repo/setup" || fail 'status fails to identify pending migrations'
-if grep -Fq 'Syncing iNiR...' "$repo/setup"; then fail "updater still displays old public name"; fi
+if grep -Fq 'Syncing Alis...' "$repo/setup"; then fail "updater still displays old public name"; fi
 grep -Fq "Installed Alis Rust runtime" "$repo/native/scripts/install-runtime.sh" || fail "Rust installer banner still uses previous brand"
 grep -Fq "tui_alert \"success\" \"Update complete\"" "$repo/setup" || fail "updater success banner missing"
 grep -Fxq 'Name=Alis Shell' "$repo/assets/applications/alis.desktop" || fail 'canonical desktop identity'
 grep -Fxq 'Name=Alis Settings' "$repo/assets/applications/alis-settings.desktop" || fail 'canonical settings identity'
 grep -Fxq "X-Alis-Managed=true" "$repo/assets/applications/alis.desktop" || fail "Alis desktop ownership marker missing"
-grep -Fq 'title: "Alis"' "$repo/modules/settings/About.qml" || fail "Alis classic About still named iNiR"
-grep -Fq 'text: "Alis"' "$repo/modules/waffle/settings/pages/WAboutPage.qml" || fail "Alis Waffle About still named iNiR"
+grep -Fq 'title: "Alis"' "$repo/modules/settings/About.qml" || fail "Alis classic About still named Alis"
+grep -Fq 'text: "Alis"' "$repo/modules/waffle/settings/pages/WAboutPage.qml" || fail "Alis Waffle About still named Alis"
 grep -Fq 'llocphann/Alis' "$repo/modules/settings/About.qml" || fail 'primary project link missing'
-grep -Fq 'snowarch/iNiR' "$repo/modules/settings/About.qml" || fail 'original upstream credit removed'
+grep -Fq 'snowarch/Alis' "$repo/modules/settings/About.qml" || fail 'original upstream credit removed'
 grep -Fq 'nixosModules.alis = nixosModule;' "$repo/flake.nix" || fail "Alis Nix module not exported"
 grep -Fq 'homeModules.alis = homeModule;' "$repo/flake.nix" || fail "Alis Home Manager module not exported"
 grep -Fq '          alis = package;' "$repo/flake.nix" || fail "Alis package not exported"
 for module in home-module nixos-module; do
-    grep -Fq 'mkAliasOptionModule [ "programs" "inir" ] [ "programs" "alis" ]' "$repo/nix/$module.nix" || fail 'legacy Nix option not mapped to canonical owner'
+    grep -Fq 'mkAliasOptionModule [ "programs" "alis" ] [ "programs" "alis" ]' "$repo/nix/$module.nix" || fail 'legacy Nix option not mapped to canonical owner'
 done
 for hook in "$repo/distro/arch/alis-shell/alis-shell.install" "$repo/distro/arch/alis-shell-git/alis-shell-git.install"; do
     grep -Fq 'Alis has been installed.' "$hook" || fail "Arch install notice still uses old public name"
@@ -89,7 +89,7 @@ make -s install-desktop "DESTDIR=$desktop_stage" "PREFIX=/usr" || fail "Make Ali
 [[ -f "$desktop_stage/usr/share/applications/alis-settings.desktop" ]] || fail "Alis desktop file missing from Make staging"
 grep -Fxq 'Exec=/usr/bin/alis settings' "$desktop_stage/usr/share/applications/alis-settings.desktop" || fail 'canonical settings entry target'
 grep -Fxq 'Exec=/usr/bin/alis service restart' "$desktop_stage/usr/share/applications/alis.desktop" || fail 'canonical shell entry target'
-[[ ! -e "$desktop_stage/usr/share/applications/inir.desktop" ]] || fail 'fresh install added a legacy product app ID'
+[[ ! -e "$desktop_stage/usr/share/applications/alis.desktop" ]] || fail 'fresh install added a legacy product app ID'
 make -s uninstall-desktop "DESTDIR=$desktop_stage" "PREFIX=/usr" || fail "Make Alis desktop uninstall"
 [[ ! -e "$desktop_stage/usr/share/applications/alis-settings.desktop" ]] || fail "managed Alis desktop entry not removed"
 printf "foreign desktop entry\n" > "$desktop_stage/usr/share/applications/alis-settings.desktop"

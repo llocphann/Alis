@@ -4,7 +4,7 @@
 // Docs: https://niri-wm.github.io/niri/Configuration:-Layer-Rules
 //
 // Layer-shell surfaces are used by bars, panels, wallpaper renderers, and
-// overlays. Hadalis uses them for its overview/backdrop wallpaper surfaces.
+// overlays. Alis uses them for its overview/backdrop wallpaper surfaces.
 //
 // place-within-backdrop = true tells Niri to render the surface inside the
 // compositor overview backdrop. Background/Bottom layers otherwise zoom with

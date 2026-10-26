@@ -219,7 +219,7 @@ Singleton {
         const size = Number(Config.options?.appearance?.screenEdge?.shadow?.size ?? 15)
         const opacity = Number(Config.options?.appearance?.screenEdge?.shadow?.opacity ?? 0.70)
 
-        // 12px / 24% was Hadalis' provisional shadow and is too weak to read on
+        // 12px / 24% was Alis' provisional shadow and is too weak to read on
         // dark wallpapers. Migrate only that exact legacy pair; any user-tuned
         // value is preserved. Caelestia's current ContentWindow uses blurMax=15
         // with 0.7 shadow alpha.

@@ -2,10 +2,10 @@
 
 ## Native Rust runtime
 
-Current-source install/package paths build the committed `native/Cargo.lock` workspace and ship the qualified helpers under `share/quickshell/inir/native/bin/`, including the opt-in Aqua backend `inir-companiond`. The rolling Arch package and Nix build current source; the pinned non-VCS Arch package gains newer helpers when its source snapshot advances. Python remains only for explicitly retained fallback paths.
+Current-source install/package paths build the committed `native/Cargo.lock` workspace and ship the qualified helpers under `share/quickshell/alis/native/bin/`, including the opt-in Aqua backend `alis-companiond`. The rolling Arch package and Nix build current source; the pinned non-VCS Arch package gains newer helpers when its source snapshot advances. Python remains only for explicitly retained fallback paths.
 
 
-This page documents the Arch-based source install dependency model used by `./setup install`, plus the separate Arch package recipes that distribute the Alis runtime (with iNiR compatibility) itself.
+This page documents the Arch-based source install dependency model used by `./setup install`, plus the separate Arch package recipes that distribute the Alis runtime (with Alis compatibility) itself.
 
 ## Packaging layers
 
@@ -13,20 +13,20 @@ Alis has two different Arch packaging trees with different responsibilities:
 
 | Path | Purpose |
 |---|---|
-| `sdata/dist-arch/` | Dependency-group recipes consumed by the source installer, plus the `inir-deps` orphan-protection tracker. |
-| `distro/arch/` | Distributable packages: `inir-shell`, `inir-shell-git`, and the `inir-meta` full-experience meta-package. |
+| `sdata/dist-arch/` | Dependency-group recipes consumed by the source installer, plus the `alis-deps` orphan-protection tracker. |
+| `distro/arch/` | Distributable packages: `alis-shell`, `alis-shell-git`, and the `alis-meta` full-experience meta-package. |
 
-The source installer reads the `depends` arrays from the dependency-group PKGBUILDs under `sdata/dist-arch/`; those group recipes are dependency declarations, not the packaged Hadalis shell payload.
+The source installer reads the `depends` arrays from the dependency-group PKGBUILDs under `sdata/dist-arch/`; those group recipes are dependency declarations, not the packaged Alis shell payload.
 
-`inir-deps` is different from the dependency groups. It is excluded from the dependency-install loop and is built only after dependency installation finishes. The installer stages its PKGBUILD in a temporary directory, filters its `depends` array to packages that are actually installed, and reinstalls the tracker so changes to `--no-*` choices are reflected in pacman's dependency metadata. The tracker contains no files of its own and exists to keep installed Hadalis dependencies from being removed by orphan cleanup.
+`alis-deps` is different from the dependency groups. It is excluded from the dependency-install loop and is built only after dependency installation finishes. The installer stages its PKGBUILD in a temporary directory, filters its `depends` array to packages that are actually installed, and reinstalls the tracker so changes to `--no-*` choices are reflected in pacman's dependency metadata. The tracker contains no files of its own and exists to keep installed Alis dependencies from being removed by orphan cleanup.
 
-The committed `sdata/dist-arch/inir-deps/PKGBUILD` version follows the repository `VERSION`; release publication checks this invariant.
+The committed `sdata/dist-arch/alis-deps/PKGBUILD` version follows the repository `VERSION`; release publication checks this invariant.
 
 ---
 
-## Core (`inir-core`)
+## Core (`alis-core`)
 
-Essential compositor, desktop, portal, and command-line dependencies declared by `sdata/dist-arch/inir-core/PKGBUILD`.
+Essential compositor, desktop, portal, and command-line dependencies declared by `sdata/dist-arch/alis-core/PKGBUILD`.
 
 | Package | Purpose |
 |---------|---------|
@@ -63,9 +63,9 @@ Essential compositor, desktop, portal, and command-line dependencies declared by
 
 ---
 
-## Quickshell (`inir-quickshell`)
+## Quickshell (`alis-quickshell`)
 
-Quickshell, Qt 6, and QML/KDE runtime dependencies declared by `sdata/dist-arch/inir-quickshell/PKGBUILD`.
+Quickshell, Qt 6, and QML/KDE runtime dependencies declared by `sdata/dist-arch/alis-quickshell/PKGBUILD`.
 
 | Package | Purpose |
 |---------|---------|
@@ -99,9 +99,9 @@ Quickshell, Qt 6, and QML/KDE runtime dependencies declared by `sdata/dist-arch/
 
 ---
 
-## Audio (`inir-audio`)
+## Audio (`alis-audio`)
 
-Core audio stack and media dependencies declared by `sdata/dist-arch/inir-audio/PKGBUILD`. This group is enabled by default and can be disabled with the installer's audio option.
+Core audio stack and media dependencies declared by `sdata/dist-arch/alis-audio/PKGBUILD`. This group is enabled by default and can be disabled with the installer's audio option.
 
 | Package | Purpose |
 |---------|---------|
@@ -116,7 +116,7 @@ Core audio stack and media dependencies declared by `sdata/dist-arch/inir-audio/
 | `mpv` | Media playback backend |
 | `mpv-mpris` | MPRIS bridge for mpv |
 | `mpd` | Local Music library, saved-playlist and queue backend |
-| `mpd-mpris` | MPRIS bridge for MPD/rmpc/Hadalis Music sessions |
+| `mpd-mpris` | MPRIS bridge for MPD/rmpc/Alis Music sessions |
 | `yt-dlp` | YouTube extraction backend |
 
 Equalizer Phase 1 keeps its backend and control transport optional. The group advertises these through `optdepends`, so the source install remains usable without them:
@@ -130,13 +130,13 @@ Missing either optional package must not make Media playback or shell startup fa
 
 The installer separately ensures `plasma-browser-integration` is present for browser media sessions and artwork.
 
-Hadalis Music and MPD clients such as `rmpc` share one MPD session. The Arch audio bundle installs both `mpd` and `mpd-mpris`; LocalMusic uses MPD protocol only for library/database/queue operations that MPRIS does not expose, while normal transport stays on the MPRIS boundary. The default bridge service targets MPD at `localhost:6600`.
+Alis Music and MPD clients such as `rmpc` share one MPD session. The Arch audio bundle installs both `mpd` and `mpd-mpris`; LocalMusic uses MPD protocol only for library/database/queue operations that MPRIS does not expose, while normal transport stays on the MPRIS boundary. The default bridge service targets MPD at `localhost:6600`.
 
 ---
 
-## Screenshots & Recording (`inir-screencapture`)
+## Screenshots & Recording (`alis-screencapture`)
 
-Screenshot, OCR, and recording dependencies declared by `sdata/dist-arch/inir-screencapture/PKGBUILD`.
+Screenshot, OCR, and recording dependencies declared by `sdata/dist-arch/alis-screencapture/PKGBUILD`.
 
 | Package | Purpose |
 |---------|---------|
@@ -151,9 +151,9 @@ Screenshot, OCR, and recording dependencies declared by `sdata/dist-arch/inir-sc
 
 ---
 
-## Input Toolkit (`inir-toolkit`)
+## Input Toolkit (`alis-toolkit`)
 
-Input simulation, hardware control, idle handling, screenshot helpers, and utility dependencies declared by `sdata/dist-arch/inir-toolkit/PKGBUILD`.
+Input simulation, hardware control, idle handling, screenshot helpers, and utility dependencies declared by `sdata/dist-arch/alis-toolkit/PKGBUILD`.
 
 | Package | Purpose |
 |---------|---------|
@@ -184,9 +184,9 @@ When the toolkit option is enabled, the installer also adds `uv` through the AUR
 
 ---
 
-## Fonts & Theming (`inir-fonts`)
+## Fonts & Theming (`alis-fonts`)
 
-Base font/theming dependencies declared by `sdata/dist-arch/inir-fonts/PKGBUILD`:
+Base font/theming dependencies declared by `sdata/dist-arch/alis-fonts/PKGBUILD`:
 
 | Package | Purpose |
 |---------|---------|
@@ -251,7 +251,7 @@ These integrations are useful when their corresponding feature is desired, but t
 | `whisper-cpp` | Local speech-to-text | Voice input/search |
 | `deno` / `node` / `bun` | JavaScript runtime for yt-dlp | YouTube media extraction when a JS runtime is required |
 
-`cava`, `yt-dlp`, and `mpv` remain required members of the `inir-audio` dependency group. `easyeffects` and `socat` are advertised by the audio group and dependency tracker as optional feature dependencies; their absence should leave Equalizer unavailable/degraded without breaking Media playback.
+`cava`, `yt-dlp`, and `mpv` remain required members of the `alis-audio` dependency group. `easyeffects` and `socat` are advertised by the audio group and dependency tracker as optional feature dependencies; their absence should leave Equalizer unavailable/degraded without breaking Media playback.
 
 ---
 
@@ -261,19 +261,19 @@ The package recipes under `distro/arch/` distribute Alis itself rather than serv
 
 | Package | Purpose |
 |---------|---------|
-| `inir-shell` | Versioned non-VCS Alis shell/runtime package. Before release tags exist, the committed recipe may pin an immutable reviewed commit snapshot; release preparation switches the default source identity to the immutable `vX.Y.Z` tag. |
-| `inir-shell-git` | Development/VCS package following `dev`. |
-| `inir-meta` | Full Alis desktop-experience meta-package depending on `inir-shell` plus the wider integration set. |
+| `alis-shell` | Versioned non-VCS Alis shell/runtime package. Before release tags exist, the committed recipe may pin an immutable reviewed commit snapshot; release preparation switches the default source identity to the immutable `vX.Y.Z` tag. |
+| `alis-shell-git` | Development/VCS package following `dev`. |
+| `alis-meta` | Full Alis desktop-experience meta-package depending on `alis-shell` plus the wider integration set. |
 
 The pre-release commit pin is a reproducible development/package snapshot, not evidence that current `dev` has passed package acceptance. Published release preparation must replace that default `_source_ref` with the release tag and regenerate `.SRCINFO`; `RELEASING.md` and the publication preflight own that invariant.
 
-`inir-meta` also keeps `easyeffects` and `socat` in `optdepends`, not `depends`. Installing the distributable shell or meta-package therefore does not make the Equalizer backend a hard requirement.
+`alis-meta` also keeps `easyeffects` and `socat` in `optdepends`, not `depends`. Installing the distributable shell or meta-package therefore does not make the Equalizer backend a hard requirement.
 
-`inir-shell` and `inir-shell-git` install the runtime payload, `inir` launcher, user service, desktop entries, icon, privileged helper/polkit assets, docs, and package-managed version metadata. Their packaged `setup migrate` path preserves package-manager launcher ownership rather than materializing a stale user-local launcher.
+`alis-shell` and `alis-shell-git` install the runtime payload, `alis` launcher, user service, desktop entries, icon, privileged helper/polkit assets, docs, and package-managed version metadata. Their packaged `setup migrate` path preserves package-manager launcher ownership rather than materializing a stale user-local launcher.
 
-For pacman installs, `/usr/lib/systemd/user/inir.service` remains the authoritative unit. The packaged launcher does not copy that unit into `~/.config/systemd/user`; `inir service enable` creates only the compositor-specific wants link and points it directly at the package unit. On upgrade, a legacy user unit is removed automatically only when it is byte-identical to the package unit. A different user unit is treated as an intentional override and causes the package-managed service command to stop with a warning instead of overwriting it.
+For pacman installs, `/usr/lib/systemd/user/alis.service` remains the authoritative unit. The packaged launcher does not copy that unit into `~/.config/systemd/user`; `alis service enable` creates only the compositor-specific wants link and points it directly at the package unit. On upgrade, a legacy user unit is removed automatically only when it is byte-identical to the package unit. A different user unit is treated as an intentional override and causes the package-managed service command to stop with a warning instead of overwriting it.
 
-Run `inir service disable` as each affected user before removing `inir-shell` or `inir-shell-git`. Pacman package hooks deliberately do not mutate users' home directories. If a package is removed while compositor wiring is still enabled, the removal message explains how to delete the resulting dangling `*.wants/inir.service` symlink and reload the user systemd manager.
+Run `alis service disable` as each affected user before removing `alis-shell` or `alis-shell-git`. Pacman package hooks deliberately do not mutate users' home directories. If a package is removed while compositor wiring is still enabled, the removal message explains how to delete the resulting dangling `*.wants/alis.service` symlink and reload the user systemd manager.
 
 For release-specific version/source invariants, see [RELEASING.md](RELEASING.md).
 
@@ -290,10 +290,10 @@ supported lifecycle. Default core setup and passive Settings never provision
 helpers; the core `--integration-helpers` flag is an explicit opt-in.
 
 Full Arch packages (`alis-shell` / `alis-shell-git`) own the trusted gateway
-at `/usr/libexec/alis-hadalird-system-provision` and its policy at
-`/usr/share/polkit-1/actions/org.alis.hadalird-system-provision.policy`.
+at `/usr/libexec/alis-intergration-system-provision` and its policy at
+`/usr/share/polkit-1/actions/org.alis.intergration-system-provision.policy`.
 These installed names are security compatibility contracts. On Arch repo-copy
-installs, explicit setup can build the reviewed `alis-hadalird-gateway`
+installs, explicit setup can build the reviewed `alis-intergration-gateway`
 package as the regular user and request normal administrator authorization
 for installation. A source checkout does not prove any package is installed.
 

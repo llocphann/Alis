@@ -3,10 +3,10 @@
 import json, os, tempfile
 from pathlib import Path
 from native_test_session import private_wayland, run_qs
-ROOT=Path(os.environ.get("HADALIS_DASHBOARD_TEST_ROOT",str(Path(__file__).resolve().parents[1]))).resolve()
+ROOT=Path(os.environ.get("ALIS_DASHBOARD_TEST_ROOT",str(Path(__file__).resolve().parents[1]))).resolve()
 CAPTURE=Path(os.environ["ALIS_DASHBOARD_FIELD_CAPTURE_DIR"]).resolve() if os.environ.get("ALIS_DASHBOARD_FIELD_CAPTURE_DIR") else None
 if CAPTURE:CAPTURE.mkdir(parents=True,exist_ok=True)
-with tempfile.TemporaryDirectory(prefix="hadalis-dashboard-editor-field-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-dashboard-editor-field-") as name:
  folder=Path(name)
  for entry in ["modules","services","GlobalStates.qml","qmldir","assets","scripts","defaults","translations"]:(folder/entry).symlink_to(ROOT/entry)
  (folder/"shell.qml").write_text(r'''

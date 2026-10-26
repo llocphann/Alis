@@ -29,7 +29,7 @@ assert.equal(a.builds,8);assert.equal(b.builds,1);
 console.log('WEATHER_ORBIT_NODE_PASS',cases,'exact angle/node arithmetic; qualifying eight-hour table builds 8 -> 1');
 '''
 subprocess.run(['node','-e','const OLD='+json.dumps(old)+';const NEW='+json.dumps(new)+';\n'+program],check=True,cwd=ROOT)
-with tempfile.TemporaryDirectory(prefix='hadalis-orbit-qv4-') as name:
+with tempfile.TemporaryDirectory(prefix='alis-orbit-qv4-') as name:
  folder=Path(name)
  for entry in ['modules','services','GlobalStates.qml','qmldir','assets','scripts','defaults','translations']:(folder/entry).symlink_to(ROOT/entry)
  (folder/'shell.qml').write_text(r'''

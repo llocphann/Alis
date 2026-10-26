@@ -5,7 +5,7 @@ assert hashlib.sha256(Path(m['driver']).read_bytes()).hexdigest()==m['driver_sha
 started=time.time()
 with tempfile.TemporaryDirectory(prefix='alis-canonical-sampler-outer-') as name:
  with private_wayland(Path(name)) as env:
-  env['HADALIS_VALIDATION_LOG']=str(o/'canonical-raw.log')
+  env['ALIS_VALIDATION_LOG']=str(o/'canonical-raw.log')
   with (o/'terminal.log').open('w') as log:
    p=subprocess.Popen(['bash',m['driver'],'--current-repo'],cwd=m['caller_checkout'],env=env,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
    (o/'running.json').write_text(json.dumps({'pid':p.pid,'process_group':p.pid,'started_unix':started,'source_sha':m['source_sha']},indent=2)+'\n')

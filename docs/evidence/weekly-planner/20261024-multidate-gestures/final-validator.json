@@ -1230,42 +1230,42 @@
     },
     {
       "check": 240,
-      "name": "Python regression: scripts/test-hadalird-arch-package.py",
+      "name": "Python regression: scripts/test-alis-intergration-arch-package.py",
       "result": "PASS"
     },
     {
       "check": 241,
-      "name": "Python regression: scripts/test-hadalird-gateway-bootstrap.py",
+      "name": "Python regression: scripts/test-alis-intergration-gateway-bootstrap.py",
       "result": "PASS"
     },
     {
       "check": 242,
-      "name": "Python regression: scripts/test-hadalird-install-lifecycle.py",
+      "name": "Python regression: scripts/test-alis-intergration-install-lifecycle.py",
       "result": "PASS"
     },
     {
       "check": 243,
-      "name": "Python regression: scripts/test-hadalird-manager.py",
+      "name": "Python regression: scripts/test-alis-intergration-manager.py",
       "result": "PASS"
     },
     {
       "check": 244,
-      "name": "Python regression: scripts/test-hadalird-obsidian-wrapper.py",
+      "name": "Python regression: scripts/test-alis-intergration-obsidian-wrapper.py",
       "result": "PASS"
     },
     {
       "check": 245,
-      "name": "Python regression: scripts/test-hadalird-optional.py",
+      "name": "Python regression: scripts/test-alis-intergration-optional.py",
       "result": "PASS"
     },
     {
       "check": 246,
-      "name": "Python regression: scripts/test-hadalird-polkit-visibility.py",
+      "name": "Python regression: scripts/test-alis-intergration-polkit-visibility.py",
       "result": "PASS"
     },
     {
       "check": 247,
-      "name": "Python regression: scripts/test-hadalird-preferences-migration.py",
+      "name": "Python regression: scripts/test-alis-intergration-preferences-migration.py",
       "result": "UNSETTLED"
     }
   ],

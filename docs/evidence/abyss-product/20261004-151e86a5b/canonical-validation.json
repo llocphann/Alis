@@ -11,7 +11,7 @@
     "scripts/test-anti-flashbang-brightness.sh"
   ],
   "failure_resolution_commit": "e7952384f",
-  "raw_log_private_path": "/tmp/hadalis-maintainer-product-151e86a5b-20261004.log",
+  "raw_log_private_path": "/tmp/alis-maintainer-product-151e86a5b-20261004.log",
   "raw_log_sha256": "83d24c464272d0b6dc04a7cef80ba1cc18cbde725e2ae4c0dc7a356e69c787c9",
   "owner_session_acceptance": "HOLD / NOT_COMPLETE",
   "automation_controlled": false,

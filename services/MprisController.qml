@@ -103,7 +103,7 @@ Singleton {
 		return !localHost || root._mpdBridgePort !== 6600
 	}
 	readonly property string _mpdPreferredMprisName: root._mpdBridgeCustomEndpoint
-		? "org.mpris.MediaPlayer2.mpd.hadalis"
+		? "org.mpris.MediaPlayer2.mpd.alis"
 		: "org.mpris.MediaPlayer2.mpd"
 	property MprisPlayer mpdPlayer: null
 
@@ -139,7 +139,7 @@ Singleton {
 		} else {
 			args.push("-host", host, "-port", String(root._mpdBridgePort))
 		}
-		args.push("-instance-name", "hadalis")
+		args.push("-instance-name", "alis")
 		return args
 	}
 
@@ -169,7 +169,7 @@ Singleton {
 		}
 		// LocalMusic is an explicit request for this exact MPD session. The
 		// localhost:6600 endpoint uses the distro user service; custom endpoints
-		// get a Hadalis-named bridge instance so transport never targets another
+		// get a Alis-named bridge instance so transport never targets another
 		// MPD server by accident.
 		root._maybeStartMpdMprisBridge()
 	}
@@ -262,7 +262,7 @@ Singleton {
 	// A non-default MPD endpoint cannot use the distro unit unchanged because
 	// that unit targets localhost:6600. mpd-mpris supports host/port/network and
 	// instance-name flags, so keep one shell-owned bridge for the configured
-	// endpoint and expose it as org.mpris.MediaPlayer2.mpd.hadalis.
+	// endpoint and expose it as org.mpris.MediaPlayer2.mpd.alis.
 	Process {
 		id: _mpdMprisCustomProc
 		running: false

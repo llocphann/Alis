@@ -62,11 +62,11 @@ This section is the **maintainer handoff for new chat sessions**. Read it before
 **Connected-surface policy — legacy round-wedge geometry retired:**
 
 - **Physical Screen Edge geometry remains locked** to the single full-screen rounded workspace opening below. `ScreenEdgeField` is the normal painter; the historical odd-even Shape/MultiEffect renderer is error fallback only.
-- ii Bar popups keep the production iRiS SDF union through `StyledPopup`.
-- Sidebar, Dashboard and Settings use `ConnectedSurfaceIrisEdgeSurface`, which adapts their real body rectangle to the same iRiS field without a standalone wedge/corner helper.
-- Dashboard-owned Applications Search inherits the Dashboard `ConnectedSurfaceIrisEdgeSurface`; the embedded `SearchWidget` must not paint a second field. Dock also uses `ConnectedSurfaceIrisEdgeSurface` on top/bottom/left/right so its body is one iRiS-connected block with Screen Edge. OSK, standalone/non-cutover Search and current Waffle bodies keep direct square joined edges without auxiliary endpoint wedges.
+- ii Bar popups keep the production Abyss SDF union through `StyledPopup`.
+- Sidebar, Dashboard and Settings use `ConnectedSurfaceAbyssEdgeSurface`, which adapts their real body rectangle to the same Abyss field without a standalone wedge/corner helper.
+- Dashboard-owned Applications Search inherits the Dashboard `ConnectedSurfaceAbyssEdgeSurface`; the embedded `SearchWidget` must not paint a second field. Dock also uses `ConnectedSurfaceAbyssEdgeSurface` on top/bottom/left/right so its body is one Abyss-connected block with Screen Edge. OSK, standalone/non-cutover Search and current Waffle bodies keep direct square joined edges without auxiliary endpoint wedges.
 - `ConnectedSurfaceJoinFlares`, `PerimeterCornerShadow`, common `RoundCorner`, fake screen-rounding paint and the `joinFlare*` token family are retired.
-- Sidebar close translation must clear the complete native left/right host plus iRiS/shadow overflow so no visible sliver survives at Screen Edge.
+- Sidebar close translation must clear the complete native left/right host plus Abyss/shadow overflow so no visible sliver survives at Screen Edge.
 - Runtime-sensitive geometry remains open until the maintainer validates left/right/top/bottom and fractional-scale behavior in the real Niri session.
 
 **Known-good physical perimeter invariants to preserve during all future popup work:**
@@ -92,15 +92,15 @@ radius      -> PerimeterTokens.frameRadius
 1. Read this section and §2.1 completely.
 2. Refetch current `dev` and re-read the exact target file plus its consumers immediately before writing.
 3. Treat `SCREEN-EDGE-GEOMETRY-LOCK` and `BAR-SCREEN-EDGE-CORNER-LOCK` as hard guards.
-4. For ii Popup work, inspect the iRiS frame/field/body-mask path. For Sidebar/Dashboard/Settings inspect `ConnectedSurfaceIrisEdgeSurface`; Dashboard-owned Applications Search shares that Dashboard field, while standalone Search/OSK/Waffle preserve direct square attachment unless explicitly migrated. Avoid editing locked physical perimeter files.
+4. For ii Popup work, inspect the Abyss frame/field/body-mask path. For Sidebar/Dashboard/Settings inspect `ConnectedSurfaceAbyssEdgeSurface`; Dashboard-owned Applications Search shares that Dashboard field, while standalone Search/OSK/Waffle preserve direct square attachment unless explicitly migrated. Avoid editing locked physical perimeter files.
 5. Update `scripts/test-shell-surface-contracts.py` whenever ownership or geometry contracts change intentionally.
 6. Do not claim runtime success until the maintainer has run `alis update` / `alis restart` and visually validated the result.
 
-### 1.2 iRiS integration phase status
+### 1.2 Abyss integration phase status
 
-The iRiS migration is complete and is now the production baseline. Before any
+The Abyss migration is complete and is now the production baseline. Before any
 future perimeter/connected-surface optimization, read
-[the archived migration notes](docs/archive/surfaces/IRIS_INTEGRATION_COMPLETE.md). New work should focus on optimization,
+[the archived migration notes](docs/archive/surfaces/ABYSS_INTEGRATION_COMPLETE.md). New work should focus on optimization,
 bug fixing and refinement rather than reopening the migration.
 
 Optimization research is centralized under [docs/optimization](docs/optimization/README.md); pending implementation is tracked in [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen). Superseded documents are indexed in [the archive](docs/archive/README.md).
@@ -145,7 +145,7 @@ The maintainer requires the physical Screen Edge corners to match Caelestia with
 - **`ScreenEdges.qml` is the only physical Screen Edge renderer.** Each output has exactly one painted full-screen frame surface.
 - The healthy frame painter is one analytic SDF: the full output minus one rounded inner workspace rectangle. This preserves the isolated geometry of Caelestia's `BlobInvertedRect` without four strips/corner patches or an offscreen blur source. The old odd-even path remains only inside the lazy shader-error fallback.
 - **Normal ii Bar is treated as a thicker side of that same frame.** This follows Caelestia `ContentWindow.qml`: when Bar owns top/bottom, the matching inner-frame inset becomes `Appearance.sizes.barHeight`; when VerticalBar owns left/right it becomes `Appearance.sizes.verticalBarWidth`. The other three sides remain the Screen Edge thickness. Therefore the two inward Bar endpoint corners are produced by the same locked rounded workspace hole, not by Bar-local patches.
-- **Connected curvature is iRiS-owned, not patch-owned.** `StyledPopup` and the shared edge adapter use the exact iRiS SDF path. Sidebar/Dashboard/Settings consume `ConnectedSurfaceIrisEdgeSurface`; Dashboard-owned Applications Search shares the Dashboard field, while standalone Search/OSK/Waffle keep direct square seams. No standalone round-wedge painter remains.
+- **Connected curvature is Abyss-owned, not patch-owned.** `StyledPopup` and the shared edge adapter use the exact Abyss SDF path. Sidebar/Dashboard/Settings consume `ConnectedSurfaceAbyssEdgeSurface`; Dashboard-owned Applications Search shares the Dashboard field, while standalone Search/OSK/Waffle keep direct square seams. No standalone round-wedge painter remains.
 - Caelestia's border defaults are preserved: Screen Edge thickness defaults to **10px** and corner radius defaults to **25px**. The full-output `FrameWindow` is the outer physical bound for the analytic field; the 50px padded outer path remains in the error fallback as the historical clipping reference. Radius is user-adjustable through Settings without changing renderer ownership.
 - The full-screen visual `FrameWindow` follows Caelestia's layer-shell placement contract: it is anchored to all four physical output edges and uses `ExclusionMode.Ignore` without setting an `exclusiveZone`, so edge reservations cannot inset the painted frame. The four thin `ReservationWindow` surfaces are transparent compositor reservations only; they set the positive edge `exclusiveZone` and otherwise remain in normal exclusion semantics. They never paint Screen Edge pixels and therefore cannot change the frame silhouette.
 - Physical Screen Edge elevation is owned by the same **single analytic `ScreenEdgeField` pass** as the frame fill. It must not introduce an offscreen capture, blur pyramid, edge/corner renderer, gradient band, radial patch, wedge, rectangle or second healthy-path geometry. Defaults retain Material `m3shadow`, logical size **15px**, and alpha **0.70**; the old `MultiEffect` settings exist only in the shader-error fallback.
@@ -184,16 +184,16 @@ ii Bar popups:
 modules/bar/StyledPopup.qml
   -> modules/common/perimeter/ConnectedSurfaceGeometry.qml
   -> modules/common/perimeter/ConnectedSurfaceRevealClip.qml
-  -> modules/common/perimeter/ConnectedSurfaceIrisFrame.qml
-       -> modules/common/perimeter/ConnectedSurfaceIrisField.qml
+  -> modules/common/perimeter/ConnectedSurfaceAbyssFrame.qml
+       -> modules/common/perimeter/ConnectedSurfaceAbyssField.qml
   -> modules/common/perimeter/ConnectedSurfaceContentHost.qml
   -> modules/common/perimeter/ConnectedSurfaceBodyMask.qml
   -> modules/common/perimeter/PerimeterTokens.qml
 
 feature-owned Screen Edge bodies:
 Sidebar / Dashboard / Settings
-  -> modules/common/perimeter/ConnectedSurfaceIrisEdgeSurface.qml
-  -> modules/common/perimeter/ConnectedSurfaceIrisFrame.qml
+  -> modules/common/perimeter/ConnectedSurfaceAbyssEdgeSurface.qml
+  -> modules/common/perimeter/ConnectedSurfaceAbyssFrame.qml
 
 direct square-seam compatibility:
 Waffle -> ConnectedSurfaceFrame.qml + ConnectedSurfaceMask.qml
@@ -203,7 +203,7 @@ Dock / Search / OSK -> feature-owned body geometry, no auxiliary wedge painter
 Rules:
 
 - `StyledPopup.qml` remains the entry point for existing ii Bar popouts.
-- Curved connected contact is owned by iRiS; direct-seam surfaces keep square joined body edges.
+- Curved connected contact is owned by Abyss; direct-seam surfaces keep square joined body edges.
 - `ConnectedSurfaceJoinFlares`, `PerimeterCornerShadow`, common `RoundCorner` and the `joinFlare*` token family are retired and must not be recreated.
 - Consumers provide content and source ownership; they must not recreate connector/stem geometry, private edge gaps or standalone corner wedges.
 - Keep source-aware placement, owner clipping and shaped input regions.

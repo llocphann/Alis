@@ -116,7 +116,7 @@ def functions(declarations: dict[str, str], suffix: str) -> str:
     return "\n".join(result)
 
 
-HARNESS = r'''//@ pragma ShellId hadalis-abyss-lossless-allocation-oracle
+HARNESS = r'''//@ pragma ShellId alis-abyss-lossless-allocation-oracle
 import QtQuick
 import Quickshell
 import "Oracle.js" as Oracle
@@ -276,7 +276,7 @@ def main() -> None:
     current = {name: declaration(sources["wave" if name == "processedBars" else "controller"], name)
                for name in NAMES}
     candidate = proposal(current) if args.proposal else current
-    with tempfile.TemporaryDirectory(prefix="hadalis-abyss-allocation-oracle-") as temp:
+    with tempfile.TemporaryDirectory(prefix="alis-abyss-allocation-oracle-") as temp:
         directory = Path(temp)
         baseline = fixture["declarations"]
         (directory / "Baseline.qml").write_text(component(baseline))

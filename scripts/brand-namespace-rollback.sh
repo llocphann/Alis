@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # Owner-invoked rollback ONLY for the optional BRAND-R01 XDG aliases.
-# The authoritative inir directories and all their contents are never deleted.
+# The authoritative alis directories and all their contents are never deleted.
 usage() {
     printf 'Usage: %s [--dry-run|--apply]\n' "${0##*/}"
     printf 'Checks all Alis XDG alias paths for conflicts before unlinking any.\n'
@@ -26,7 +26,7 @@ for base in \
         exit 1
     fi
     dest="$(readlink -- "$target")"
-    if [[ "$dest" != "$base/inir" && "$dest" != "inir" ]]; then
+    if [[ "$dest" != "$base/alis" && "$dest" != "alis" ]]; then
         printf 'Refusing foreign symlink at %s -> %s\n' "$target" "$dest" >&2
         exit 1
     fi
@@ -39,7 +39,7 @@ if [[ "$apply" == true ]]; then
     for target in "${paths[@]}"; do
         base="${target%/alis}"
         dest="$(readlink -- "$target" 2>/dev/null || true)"
-        if [[ -L "$target" && ( "$dest" == "$base/inir" || "$dest" == inir ) ]]; then
+        if [[ -L "$target" && ( "$dest" == "$base/alis" || "$dest" == alis ) ]]; then
             rm -- "$target"
         else
             printf 'Alias changed since preflight, refusing %s\n' "$target" >&2
@@ -47,4 +47,4 @@ if [[ "$apply" == true ]]; then
         fi
     done
 fi
-printf 'Authoritative inir directories were not touched.\n'
+printf 'Authoritative alis directories were not touched.\n'

@@ -148,7 +148,7 @@ VALIDATOR_FULL_LOG="$(sed -n 's/^FINAL LOG: //p' "$TMP_ROOT/validator.log" | tai
 printf '%s\n' "$VALIDATOR_SUMMARY"
 
 {
-    printf 'Hadalis Python/Rust full benchmark\n'
+    printf 'Alis Python/Rust full benchmark\n'
     printf 'Date: %s\n' "$(date --iso-8601=seconds)"
     printf 'Repo: %s\n' "$ROOT_DIR"
     printf 'HEAD: %s\n' "$HEAD_SHA"

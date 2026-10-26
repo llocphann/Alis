@@ -17,16 +17,16 @@
       "test-brand-canonical-cutover.sh",
       "test-local-required-contracts.sh",
       "test-local-distribution.sh (source/offline mode)",
-      "test-hadalird-arch-package.py",
-      "test-hadalird-manager.py",
-      "test-hadalird-optional.py",
+      "test-alis-intergration-arch-package.py",
+      "test-alis-intergration-manager.py",
+      "test-alis-intergration-optional.py",
       "test-alis-companion-optional.py",
       "test-alis-companion-layer-shell.py (isolated Wayland, not skipped)"
     ]
   },
   "unresolved_source_boundary": {
-    "path": "assets/helpers/alis-hadalird-system-provision",
-    "finding": "TRUSTED payload keys/destinations use Alis names while pinned hashes and external optional package payload retain inir helper/policy names. Preserve external paths, policy IDs and pinned bytes; qualify the full provisioner/consumer map before claiming helpers-install works.",
+    "path": "assets/helpers/alis-intergration-system-provision",
+    "finding": "TRUSTED payload keys/destinations use Alis names while pinned hashes and external optional package payload retain alis helper/policy names. Preserve external paths, policy IDs and pinned bytes; qualify the full provisioner/consumer map before claiming helpers-install works.",
     "mutated": false
   },
   "artifacts": [

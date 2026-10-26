@@ -264,7 +264,7 @@ brand_legacy_owner_present() {
                 # from loading alis.service with the same watcher BusName.
                 if [[ "$old_enable" == masked ]]; then
                     local old_path="${XDG_CONFIG_HOME}/systemd/user/$legacy_owner"
-                    local retired_path="${XDG_STATE_HOME:-$HOME/.local/state}/alis-cutover-backups/retired-inir.service"
+                    local retired_path="${XDG_STATE_HOME:-$HOME/.local/state}/alis-cutover-backups/retired-alis.service"
                     [[ -L "$old_path" && "$(readlink -- "$old_path")" == /dev/null &&
                        -f "$retired_path" && ! -L "$retired_path" ]] ||
                         return 0
@@ -604,7 +604,7 @@ show_help() {
     tui_section_start "Customization"
     tui_list_item "config      View and edit shell settings"
     tui_list_item "theme       Change wallpaper and color scheme"
-    tui_list_item "extras      Install optional extras (iNiR-Walls / SDDM / YAMIS icons)"
+    tui_list_item "extras      Install optional extras (Alis-Walls / SDDM / YAMIS icons)"
     tui_section_end
 
     tui_section_start "Options"
@@ -722,7 +722,7 @@ tui_menu() {
             "${ICON_CHECK}|Doctor|Diagnose and fix problems" \
             "${ICON_DOT}|Config|View and edit shell settings" \
             "${ICON_STAR}|Theme|Change wallpaper and color scheme" \
-            "${ICON_DOT}|Extras|Install optional extras (iNiR-Walls / SDDM / YAMIS icons)" \
+            "${ICON_DOT}|Extras|Install optional extras (Alis-Walls / SDDM / YAMIS icons)" \
             "${ICON_INFO}|Info|System and shell details dashboard" \
             "${ICON_DOT}|Logs|View recent runtime logs" \
             "${ICON_DOT}|Migrate|Review and apply config migrations" \
@@ -1588,14 +1588,14 @@ run_extras() {
 
     local action
     action=$(tui_choose_rich "Extras" \
-        "${ICON_DOT}|Install iNiR-Walls|Download optional wallpaper pack and copy image files" \
+        "${ICON_DOT}|Install Alis-Walls|Download optional wallpaper pack and copy image files" \
         "${ICON_DOT}|Install ii-pixel-sddm|Install/apply Alis SDDM login theme" \
         "${ICON_DOT}|Install YAMIS icons|Install/update yet-another-monochrome-icon-set (GPL-3, ~23 MiB)" \
         "${ICON_DOT}|Install all|Run all optional installers" \
         "${ICON_CIRCLE}|Back|Return to main menu")
 
     case "$action" in
-        "Install iNiR-Walls")
+        "Install Alis-Walls")
             echo ""
             extras_install_alis_walls
             ;;

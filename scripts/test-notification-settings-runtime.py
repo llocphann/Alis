@@ -10,7 +10,7 @@ repo = Path(__file__).resolve().parents[1]
 if not shutil.which("qs") or not os.environ.get("WAYLAND_DISPLAY"):
     print("SKIP: notification Settings requires Quickshell/Wayland")
     raise SystemExit(0)
-with tempfile.TemporaryDirectory(prefix="hadalis-notification-settings-") as folder:
+with tempfile.TemporaryDirectory(prefix="alis-notification-settings-") as folder:
     root = Path(folder)
     for name in ("modules", "services", "GlobalStates.qml", "qmldir", "assets", "scripts", "defaults", "translations"):
         (root / name).symlink_to(repo / name)
@@ -18,7 +18,7 @@ with tempfile.TemporaryDirectory(prefix="hadalis-notification-settings-") as fol
     config.mkdir(parents=True)
     shutil.copy(repo / "defaults/config.json", config / "config.json")
     (root / "shell.qml").write_text(r'''
-//@ pragma ShellId hadalis-notification-settings-test
+//@ pragma ShellId alis-notification-settings-test
 import QtQuick
 import Quickshell
 import qs.modules.common

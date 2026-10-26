@@ -34,6 +34,6 @@
   INFO qml: FULL_MODULE_TYPE shellUpdate ShellUpdateIndicator_QMLTYPE_1187(0x7f812a32c800) available true
   INFO qml: FULL_MODULE_TYPE weather WeatherBar_QMLTYPE_1192(0x7f810eb2d8e0) available true
   INFO qml: FULL_MODULE_TYPE taskbar BarTaskbar_QMLTYPE_1160(0x7f812a32d6e0) available true
-  WARN scene: QML FileView at @services/IconThemeService.qml[39:5]: Read of /tmp/alis-full-modules-xq9zvqaz/state/inir/native-backend failed: File does not exist.
+  WARN scene: QML FileView at @services/IconThemeService.qml[39:5]: Read of /tmp/alis-full-modules-xq9zvqaz/state/alis/native-backend failed: File does not exist.
   INFO qml: [Weather] Getting location from IP...
   INFO qml: ABYSS_FULL_MODULE_NATIVE_PASS 683 checks 106 frames 13 kinds; resident controls, rotation, input, configured size and capacity repair

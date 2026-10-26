@@ -4,7 +4,7 @@ import json, os, shutil, tempfile
 from pathlib import Path
 from native_test_session import private_wayland, run_qs
 ROOT=Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix="hadalis-cava-warm-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-cava-warm-") as name:
  folder=Path(name)
  for entry in ["modules","services","GlobalStates.qml","qmldir","assets","defaults","translations"]:(folder/entry).symlink_to(ROOT/entry)
  generator=folder/"scripts/cava/generate_config.sh";generator.parent.mkdir(parents=True)

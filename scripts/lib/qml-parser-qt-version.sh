@@ -22,7 +22,7 @@ parser_invocation_path="$(resolve_cmd "$parser")"
 [[ -n "$parser_invocation_path" ]] || exit 1
 parser_path="$(realpath "$parser_invocation_path" 2>/dev/null || printf '%s\n' "$parser_invocation_path")"
 parser_dir="$(cd -- "$(dirname -- "$parser_path")" && pwd -P)"
-system_fallbacks="${HADALIS_QML_VERSION_SYSTEM_FALLBACKS:-1}"
+system_fallbacks="${ALIS_QML_VERSION_SYSTEM_FALLBACKS:-1}"
 
 # qmlformat's own --version may be the formatter's tool version (for example
 # "qmlformat 1.0"), not the Qt runtime version. Prefer Qt installation tools.

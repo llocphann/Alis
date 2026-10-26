@@ -308,14 +308,14 @@ uninstall_reload_user_systemd() {
     fi
 }
 
-# Hadalird owns these payloads. Core removal preserves helpers, hardware
+# Alis-Intergration owns these payloads. Core removal preserves helpers, hardware
 # profiles, application data and already-running system services.
 uninstall_remove_battery_charge_limit() {
-    tui_info "Preserving optional Hadalird TLP integration"
+    tui_info "Preserving optional Alis-Intergration TLP integration"
 }
 
 uninstall_remove_thinkfan_bridge() {
-    tui_info "Preserving optional Hadalird Thinkfan integration"
+    tui_info "Preserving optional Alis-Intergration Thinkfan integration"
 }
 
 uninstall_create_backup() {
@@ -1048,7 +1048,7 @@ run_uninstall_quick() {
     # Stop services
     uninstall_stop_services
 
-    # Privileged Hadalis-owned helpers/policies are removed without touching
+    # Privileged Alis-owned helpers/policies are removed without touching
     # upstream TLP or ThinkFan package/service/config ownership.
     if ! uninstall_remove_battery_charge_limit; then
         tui_error "Battery charge-limit cleanup failed; no user files were removed."

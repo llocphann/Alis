@@ -12,16 +12,16 @@ spec = importlib.util.spec_from_file_location(
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
-# Two frozen files are exactly the reviewed Hadalis bytes. A runtime-local
+# Two frozen files are exactly the reviewed Alis bytes. A runtime-local
 # tamper or partial shell update fails closed before makepkg or Polkit.
 trusted = module.expected_files(ROOT)
 assert len(trusted) == 2
 assert set(trusted) == {
-    "usr/libexec/alis-hadalird-system-provision",
-    "usr/share/polkit-1/actions/org.alis.hadalird-system-provision.policy",
+    "usr/libexec/alis-intergration-system-provision",
+    "usr/share/polkit-1/actions/org.alis.intergration-system-provision.policy",
 }
 assert "source=()" in module.PKGBUILD
-assert "pkgname=alis-hadalird-gateway" in module.PKGBUILD
+assert "pkgname=alis-intergration-gateway" in module.PKGBUILD
 assert ".INSTALL" not in module.PKGBUILD
 assert "$startdir/payload/" in module.PKGBUILD
 assert "pacman" not in module.PKGBUILD
@@ -29,7 +29,7 @@ assert "curl" not in module.PKGBUILD
 
 # Source package can have been committed by pacman -U even if a later
 # status probe crashed; the reconciler must identify it without reinstallation.
-with tempfile.TemporaryDirectory(prefix="hadalis-gateway-state-") as fixture:
+with tempfile.TemporaryDirectory(prefix="alis-gateway-state-") as fixture:
     base = Path(fixture)
     assert not module.system_state(base, lambda _: False)["installed"]
     for destination, (content, _, _) in trusted.items():
@@ -46,7 +46,7 @@ with tempfile.TemporaryDirectory(prefix="hadalis-gateway-state-") as fixture:
     first.symlink_to(ROOT / next(iter(module.FILES)))
     assert module.system_state(base, lambda _: True)["diagnostic"] == "modified"
 
-with tempfile.TemporaryDirectory(prefix="hadalis-legacy-gateway-state-") as legacy_fixture:
+with tempfile.TemporaryDirectory(prefix="alis-legacy-gateway-state-") as legacy_fixture:
     legacy_base = Path(legacy_fixture)
     for dest, _ in module.LEGACY_FILES:
         src = Path("/" + dest)
@@ -59,7 +59,7 @@ with tempfile.TemporaryDirectory(prefix="hadalis-legacy-gateway-state-") as lega
         assert legacy_state["installed"] and legacy_state["packageInstalled"]
         assert legacy_state["diagnostic"] == "ready"
 
-with tempfile.TemporaryDirectory(prefix="hadalis-gateway-") as where:
+with tempfile.TemporaryDirectory(prefix="alis-gateway-") as where:
     folder = Path(where)
     root = folder / "runtime"
     for name in module.FILES:
@@ -93,10 +93,10 @@ with tempfile.TemporaryDirectory(prefix="hadalis-gateway-") as where:
         seen.append(command)
         if command[0] == "/usr/bin/makepkg":
             assert cwd == built
-            assert "pkgname=alis-hadalird-gateway" in (built / "PKGBUILD").read_text()
+            assert "pkgname=alis-intergration-gateway" in (built / "PKGBUILD").read_text()
             for name, (dest, _, _) in module.FILES.items():
                 assert (built / "payload" / Path(dest).name).read_bytes() == (ROOT / name).read_bytes()
-            (built / "alis-hadalird-gateway-0.1.0-1-any.pkg.tar.zst").write_bytes(b"synthetic")
+            (built / "alis-intergration-gateway-0.1.0-1-any.pkg.tar.zst").write_bytes(b"synthetic")
             return SimpleNamespace(returncode=0, stdout="", stderr="")
         if command[:2] == ["/usr/bin/bsdtar", "-tf"]:
             items = ".PKGINFO\n.BUILDINFO\n.MTREE\nusr/\nusr/libexec/\n"
@@ -114,12 +114,12 @@ with tempfile.TemporaryDirectory(prefix="hadalis-gateway-") as where:
     def bad_extract(_, dest):
         return SimpleNamespace(returncode=0, stdout=b"tampered")
 
-    with tempfile.TemporaryDirectory(prefix="hadalis-bad-gateway-") as other:
+    with tempfile.TemporaryDirectory(prefix="alis-bad-gateway-") as other:
         path = Path(other)
         # The synthetic makepkg command writes to its current build folder.
         def fake_bad(command, *, cwd=None, timeout=0):
             if command[0] == "/usr/bin/makepkg":
-                (cwd / "alis-hadalird-gateway-0.1.0-1-any.pkg.tar.zst").write_bytes(b"synthetic")
+                (cwd / "alis-intergration-gateway-0.1.0-1-any.pkg.tar.zst").write_bytes(b"synthetic")
             return fake_command(command, cwd=cwd, timeout=timeout) if command[0] != "/usr/bin/makepkg" else SimpleNamespace(returncode=0, stdout="", stderr="")
         try:
             module.build_package(root, path, command=fake_bad, extract=bad_extract)
@@ -132,4 +132,4 @@ with tempfile.TemporaryDirectory(prefix="hadalis-gateway-") as where:
     assert not any("/usr/bin/pkexec" in argv for argv in seen)
     assert not any("pacman" in " ".join(argv) for argv in seen)
 
-print("HADALIRD_ARCH_GATEWAY_BOOTSTRAP_PASS pinned payload, no elevated build, package inspection, tamper refusal")
+print("ALIS_INTERGRATION_ARCH_GATEWAY_BOOTSTRAP_PASS pinned payload, no elevated build, package inspection, tamper refusal")

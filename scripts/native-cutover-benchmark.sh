@@ -656,7 +656,7 @@ for binary in alis-inputd alis-mpdd alis-native alis-theme; do
 done
 
 section "CLIPBOARD PARITY + BENCHMARK"
-CLIP_INPUT='<meta http-equiv="content-type" content="text/html; charset=utf-8"><div>Hello&nbsp;Hadalis</div><div>Rust</div>'
+CLIP_INPUT='<meta http-equiv="content-type" content="text/html; charset=utf-8"><div>Hello&nbsp;Alis</div><div>Rust</div>'
 printf '%s' "$CLIP_INPUT" >"$TMP_ROOT/clip.in"
 printf '%s' "$CLIP_INPUT" | python3 scripts/clipboard-store.py --filter >"$TMP_ROOT/clip.py"
 py_clip_rc=$?

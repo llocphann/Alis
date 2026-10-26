@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline ownership and Polkit security regression for the Hadalis root gateway."""
+"""Offline ownership and Polkit security regression for the Alis root gateway."""
 import hashlib
 import json
 from pathlib import Path
@@ -8,20 +8,20 @@ import types
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
-gateway = ROOT / "assets/helpers/alis-hadalird-system-provision"
-policy = ROOT / "assets/polkit/org.alis.hadalird-system-provision.policy"
+gateway = ROOT / "assets/helpers/alis-intergration-system-provision"
+policy = ROOT / "assets/polkit/org.alis.intergration-system-provision.policy"
 mod = types.ModuleType("system_gateway_contract")
 exec(compile(gateway.read_text(), str(gateway), "exec"), mod.__dict__)
 
 doc = ET.parse(policy).getroot()
 action = doc.find(".//action")
-assert action is not None and action.attrib["id"] == "org.alis.hadalird-system-provision"
+assert action is not None and action.attrib["id"] == "org.alis.intergration-system-provision"
 assert action.find("./defaults/allow_any").text == "no"
 assert action.find("./defaults/allow_inactive").text == "no"
 assert action.find("./defaults/allow_active").text == "auth_admin"
-assert action.find(".//annotate[@key='org.freedesktop.policykit.exec.path']").text == "/usr/libexec/alis-hadalird-system-provision"
+assert action.find(".//annotate[@key='org.freedesktop.policykit.exec.path']").text == "/usr/libexec/alis-intergration-system-provision"
 
-with tempfile.TemporaryDirectory(prefix="hadalird-gateway-fixture-") as tmp:
+with tempfile.TemporaryDirectory(prefix="alis-intergration-gateway-fixture-") as tmp:
     base = Path(tmp)
     root = base / "root"
     package = base / "package"
@@ -36,7 +36,7 @@ with tempfile.TemporaryDirectory(prefix="hadalird-gateway-fixture-") as tmp:
         target = package / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(value)
-    manifest = {"id": "hadalird", "hostApi": 1, "files":
+    manifest = {"id": "alis-intergration", "hostApi": 1, "files":
                 {p: hashlib.sha256(v).hexdigest() for p, v in payload.items()}}
     (package / "manifest.json").write_text(json.dumps(manifest))
     assert mod.state(root)["diagnostic"] == "not-installed"
@@ -102,8 +102,8 @@ with tempfile.TemporaryDirectory(prefix="hadalird-gateway-fixture-") as tmp:
 
 for name in ("alis-shell", "alis-shell-git"):
     recipe = (ROOT / "distro/arch" / name / "PKGBUILD").read_text()
-    assert "/usr/libexec/alis-hadalird-system-provision" in recipe
-    assert "org.alis.hadalird-system-provision.policy" in recipe
+    assert "/usr/libexec/alis-intergration-system-provision" in recipe
+    assert "org.alis.intergration-system-provision.policy" in recipe
 
 # A valid *recipe* does not guarantee that the default immutable source
 # actually contains its declared trusted root-owned files.
@@ -120,4 +120,4 @@ assert source_sha != '8ca68efe423223bdf40059155748c53b38200de2', (
 srcinfo = (ROOT / 'distro/arch/alis-shell/.SRCINFO').read_text()
 assert f'/archive/{source_sha}.tar.gz' in srcinfo, (
     'Arch source metadata must match the updated immutable source pin')
-print('HADALIRD_SYSTEM_PROVISION_PASS root ownership, Polkit policy, byte pins, source snapshot')
+print('ALIS_INTERGRATION_SYSTEM_PROVISION_PASS root ownership, Polkit policy, byte pins, source snapshot')

@@ -1,4 +1,4 @@
-> Historical Abyss foundation archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. Its early family policy and checkpoint instructions are superseded. Current [design](../../ABYSS_LIQUID_MASS.md) and [categorized tasks](../../../to-do/README.md) govern new work; pending hardware acceptance remains open.
+> Historical Abyss foundation archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. Its early family policy and checkpoint instructions are superseded. Current [design](../../ABYSS_LIQUID_MASS.md) and [categorized tasks](../../../to-do/README.md) govern new work; pending hardware acceptance remains open.
 
 # Abyss — Perimeter Liquid Shell
 
@@ -18,7 +18,7 @@ Focused reads covered:
 - `Config.qml`, `Directories.qml`, settings registry, Modules, Bar, Dock,
   welcome profiles and family-related service/CLI consumers;
 - `ScreenEdges.qml`, `ScreenCorners.qml`, `docs/PERIMETER.md`, the common
-  perimeter manifests, iRiS field adapter/shader, Bar/BarContent/Workspaces,
+  perimeter manifests, Abyss field adapter/shader, Bar/BarContent/Workspaces,
   Dock/DockApps and SidebarHost;
 - ResourceUsage demand leases, MPRIS, Notifications, clipboard model,
   TaskbarApps/AppSearch, Niri workspace/output APIs, GameMode and theme pipeline;
@@ -32,7 +32,7 @@ Findings:
 2. Material's physical Screen Edge is geometry-locked. It paints one rounded
    workspace hole per output and reserves work area with transparent windows.
    Its painter, corners, insets and fullscreen mapping must remain unchanged.
-3. The existing connected field wraps upstream iRiS. It joins separately owned
+3. The existing connected field wraps upstream Abyss. It joins separately owned
    overlay bodies and crops their paint at owner boundaries. Abyss needs a
    different composition: one final silhouette for all perimeter deformations.
 4. Common IPC routers already live in the root. No new presentation component
@@ -73,7 +73,7 @@ Findings:
    and distinguish source validation from environment acceptance.
 
 Topology precedes interaction, legibility, motion, glass and glow. Abyss is not
-an iRiS Island implementation. No Material tree duplication or corner patches
+an Abyss Island implementation. No Material tree duplication or corner patches
 are part of this plan.
 
 
@@ -283,7 +283,7 @@ corrections:
 | `b92f1d4dd` | Release the outgoing critical/deferred family before constructing the next. The previous lifecycle registered duplicate shared `background` IPC and discarded an owner. The executed old-source control reproduces duplicate registrations. |
 | `ff6a1cd1d` | Gate field input on a presented frame, supported graphics backend and absence of shader error. Qt's QSB reflection cache can draw a recreated effect while its new manager remains Uncompiled; Compiled-only gating hid content on the second visit. The old predicate fails the real-GPU recreation test; five cold/cached creations, malformed QSB and software fail-closed checks pass. |
 | `bb9dde2b0` | Hold a transparent, input-free 3 px reservation during family handoff. Gapless tiled clients otherwise temporarily fill the output, triggering the existing fullscreen-size heuristic and hiding incoming reservations. |
-| `609a75ef4` | Resolve OSD border style flags through Appearance. Old value/media indicators reproduce ReferenceError for bare auroraEverywhere/inirEverywhere; production components now instantiate cleanly. |
+| `609a75ef4` | Resolve OSD border style flags through Appearance. Old value/media indicators reproduce ReferenceError for bare auroraEverywhere/alisEverywhere; production components now instantiate cleanly. |
 | `12e210182` | Keep the guard per output during fullscreen and for 80 ms after exit. Fullscreen clients ignore exclusive zones; unfullscreen tiled clients become distinguishable before family reservations return. The guard has alpha 0, empty input, no keyboard focus and settled zone 0. |
 | `1758ce02d` | Preserve Qt `list<string>` pins and ignore patterns with sequence normalization. `Array.isArray` rejected these real config values. The old-source Qt list test fails; pin/unpin now retains other pins and the live app model resolves installed apps. |
 | `d1ff545fc` | Release the desktop widget-toggle binding when its background owner is destroyed. The restored app workload exposed 15 late-binding TypeErrors during switching; the nullable owner now yields false during teardown. |

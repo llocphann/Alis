@@ -332,10 +332,10 @@ require "$easyeffects" 'readonly property bool uiDemand:' 'EasyEffects must expo
 require "$easyeffects" 'interval: root.uiDemand ? 5000 : 30000' 'EasyEffects must use slow background verification'
 require "$easyeffects" 'running: Config.ready && root.available && (root.uiDemand || root.active)' 'EasyEffects polling must sleep when inactive and hidden'
 
-# Worker cadence/timeout guards now run against the owned Hadalird workers.
+# Worker cadence/timeout guards now run against the owned Alis-Intergration workers.
 # Core typed facades must not retain a second process/timer owner.
 for facade in "$tlp" "$thinkfan" "$tlp_caps" "$tlp_settings"; do
-    require "$facade" 'Hadalird.session' 'integration facade must use the selected optional session'
+    require "$facade" 'AlisIntergration.session' 'integration facade must use the selected optional session'
     reject "$facade" 'Process {' 'core facade must not retain a duplicate helper process'
     reject "$facade" 'Timer {' 'core facade must not retain duplicate background polling'
 done

@@ -1,12 +1,12 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
 
 # Unified Surface — Fresh Chat Handoff
 
-Use this file only as an execution handoff for continuing Hadalis surface work in a new chat. Historical iRiS experiments live in `docs/UNIFIED_SURFACE_RESEARCH.md`; the active contracts are this file, `README.md`, `docs/PERIMETER.md` and `docs/SHELL_SURFACE_CONTRACTS.md`.
+Use this file only as an execution handoff for continuing Alis surface work in a new chat. Historical Abyss experiments live in `docs/UNIFIED_SURFACE_RESEARCH.md`; the active contracts are this file, `README.md`, `docs/PERIMETER.md` and `docs/SHELL_SURFACE_CONTRACTS.md`.
 
-## Phase status — iRiS integration complete
+## Phase status — Abyss integration complete
 
-The migration itself is closed. Use `docs/IRIS_INTEGRATION_COMPLETE.md` as the
+The migration itself is closed. Use `docs/ABYSS_INTEGRATION_COMPLETE.md` as the
 compact production baseline. Future work belongs to optimization, bug fixing and
 refinement unless new runtime evidence disproves an architectural invariant.
 
@@ -49,19 +49,19 @@ Do not add Bar-local or ScreenCorner-local `RoundCorner`, `PathArc`, wedge, cont
 StyledPopup.qml
   -> ConnectedSurfaceGeometry.qml
   -> ConnectedSurfaceRevealClip.qml
-  -> ConnectedSurfaceIrisFrame.qml
-       -> ConnectedSurfaceIrisField.qml
-       -> IrisField.frag.qsb
+  -> ConnectedSurfaceAbyssFrame.qml
+       -> ConnectedSurfaceAbyssField.qml
+       -> AbyssField.frag.qsb
   -> ConnectedSurfaceContentHost.qml
   -> ConnectedSurfaceBodyMask.qml
   -> PerimeterTokens.qml
 ```
 
-The accepted split-composition iRiS path keeps Bar/Screen Edge owner records in SDF math while clipping Overlay paint/shadow/input at the real owner boundary.
+The accepted split-composition Abyss path keeps Bar/Screen Edge owner records in SDF math while clipping Overlay paint/shadow/input at the real owner boundary.
 
 ### Feature-owned Screen Edge bodies
 
-`ConnectedSurfaceIrisEdgeSurface.qml` adapts an existing body into the same iRiS field.
+`ConnectedSurfaceAbyssEdgeSurface.qml` adapts an existing body into the same Abyss field.
 
 Current consumers:
 
@@ -70,7 +70,7 @@ Current consumers:
 - Settings Overlay;
 - Settings Focus.
 
-Dashboard-owned Applications Search shares the Dashboard iRiS field rather than creating an independent wedge/contact renderer.
+Dashboard-owned Applications Search shares the Dashboard Abyss field rather than creating an independent wedge/contact renderer.
 
 ### Direct square-seam consumers
 
@@ -95,9 +95,9 @@ The source contracts should reject any reintroduction of those symbols.
 
 ## Sidebar close contract
 
-`SidebarHost.qml` must use `ConnectedSurfaceIrisEdgeSurface` and a single slide translation.
+`SidebarHost.qml` must use `ConnectedSurfaceAbyssEdgeSurface` and a single slide translation.
 
-`hiddenTranslateDistance` must move the resident Sidebar body past the complete native host plus iRiS/shadow overflow on both left and right edges. During the close tail the field may remain resident, but neither body, weld nor shadow may leave a visible Screen Edge sliver.
+`hiddenTranslateDistance` must move the resident Sidebar body past the complete native host plus Abyss/shadow overflow on both left and right edges. During the close tail the field may remain resident, but neither body, weld nor shadow may leave a visible Screen Edge sliver.
 
 Do not reintroduce:
 
@@ -108,10 +108,10 @@ Do not reintroduce:
 
 ## Dashboard / Settings contact contract
 
-Dashboard and Settings use `ConnectedSurfaceIrisEdgeSurface` at the bottom owner.
+Dashboard and Settings use `ConnectedSurfaceAbyssEdgeSurface` at the bottom owner.
 
 - The real Screen Edge/Bar owner thickness is passed into the adapter.
-- The local connected body is transparent where the iRiS field owns fill/shadow.
+- The local connected body is transparent where the Abyss field owns fill/shadow.
 - Dashboard Search shares Dashboard ownership.
 - No full-overlay endpoint wedge may be drawn beside a centered Settings/Dashboard body.
 
@@ -119,7 +119,7 @@ Dashboard and Settings use `ConnectedSurfaceIrisEdgeSurface` at the bottom owner
 
 At minimum, review these whenever connected-surface ownership changes:
 
-- `scripts/test-iris-production-surface-contract.py`
+- `scripts/test-abyss-production-surface-contract.py`
 - `scripts/test-shell-surface-contracts.py`
 - `scripts/test-perimeter-contracts.sh`
 - `scripts/test-perimeter-source-contracts.sh`

@@ -47,44 +47,44 @@ Scope {
     }
     function refresh(): void {
         if (root.implementation) return root.implementation.refresh()
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
     }
     function reload(): void {
         if (root.implementation) return root.implementation.reload()
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
     }
     function refreshCapabilities(): void {
         if (root.implementation) return root.implementation.refreshCapabilities()
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
     }
     function initializeSection(): bool {
         if (root.implementation) return root.implementation.initializeSection()
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
         return false
     }
     function previewInternal(internalJsonPath: string): bool {
         if (root.implementation) return root.implementation.previewInternal(internalJsonPath)
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
         return false
     }
     function migrateInternal(internalJsonPath: string, expectedInternalSha: string): bool {
         if (root.implementation) return root.implementation.migrateInternal(internalJsonPath, expectedInternalSha)
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
         return false
     }
     function addTask(text: string): bool {
         if (root.implementation) return root.implementation.addTask(text)
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
         return false
     }
     function toggleTask(taskId: string): bool {
         if (root.implementation) return root.implementation.toggleTask(taskId)
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
         return false
     }
     function deleteTask(taskId: string): bool {
         if (root.implementation) return root.implementation.deleteTask(taskId)
-        root.missingOperationError = "Install and enable the Hadalird integration to use this action"
+        root.missingOperationError = "Install and enable the Alis-Intergration integration to use this action"
         return false
     }
     Connections {
@@ -96,10 +96,10 @@ Scope {
     }
     Loader {
         id: backendLoader
-        active: root.active && Hadalird.obsidianEnabled
+        active: root.active && AlisIntergration.obsidianEnabled
         function syncSource(): void {
             if (active && String(source).length === 0)
-                setSource(Hadalird.backendSource("managed"), {active:root.active, vaultPath:root.vaultPath, notePath:root.notePath, preferTasksPlugin:root.preferTasksPlugin, allowBasicOfflineMutation:root.allowBasicOfflineMutation})
+                setSource(AlisIntergration.backendSource("managed"), {active:root.active, vaultPath:root.vaultPath, notePath:root.notePath, preferTasksPlugin:root.preferTasksPlugin, allowBasicOfflineMutation:root.allowBasicOfflineMutation})
             else if (!active) source = ""
         }
         onActiveChanged: syncSource()

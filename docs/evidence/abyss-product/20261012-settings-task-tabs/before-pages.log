@@ -11,7 +11,7 @@
   WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-task-settings-pages-pr96kf74/state/quickshell/user/gamemode_active failed: File does not exist.
   WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-task-settings-pages-pr96kf74/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
-  WARN scene: QML FileView at @services/IconThemeService.qml[39:5]: Read of /tmp/alis-task-settings-pages-pr96kf74/state/inir/native-backend failed: File does not exist.
+  WARN scene: QML FileView at @services/IconThemeService.qml[39:5]: Read of /tmp/alis-task-settings-pages-pr96kf74/state/alis/native-backend failed: File does not exist.
   WARN scene: QML FileView at @services/MaterialThemeLoader.qml[577:5]: Read of /tmp/alis-task-settings-pages-pr96kf74/state/quickshell/user/generated/colors.json failed: File does not exist.
   WARN scene: QML FileView at @services/MaterialThemeLoader.qml[577:5]: Read of /tmp/alis-task-settings-pages-pr96kf74/state/quickshell/user/generated/colors.json failed: File does not exist.
   INFO qml: SETTINGS_PAGE_CAPTURE_PASS 4

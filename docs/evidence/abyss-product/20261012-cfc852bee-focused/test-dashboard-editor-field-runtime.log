@@ -1,26 +1,26 @@
 Dashboard native process exit: 0
-  INFO: Launching config: "/tmp/hadalis-dashboard-editor-field-7ukk6dez/shell.qml"
+  INFO: Launching config: "/tmp/alis-dashboard-editor-field-7ukk6dez/shell.qml"
   INFO: Shell ID: "00e6717fd8c1fc9800621beda5be5d33" Path ID "00e6717fd8c1fc9800621beda5be5d33"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/00as306smt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1319303.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dashboard-editor-field-7ukk6dez/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-editor-field-7ukk6dez/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: CHECKS_START
   INFO qml: CONFIG_READY
   INFO qml: CASE_START [[1280,900],"Dashboard","top"]
-  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/notifications.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/alis-dashboard-editor-field-7ukk6dez/state/quickshell/user/notifications.json failed: File does not exist.
  DEBUG qml: [Notifications] File not found, creating new file.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/todo.txt failed: File does not exist.
-  WARN scene: QML FileView at @services/InternalTodoBackend.qml[371:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/todo.json failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/alis-dashboard-editor-field-7ukk6dez/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[371:5]: Read of /tmp/alis-dashboard-editor-field-7ukk6dez/state/quickshell/user/todo.json failed: File does not exist.
  DEBUG qml: [Todo] JSON not found, creating new file.
-  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-dashboard-editor-field-7ukk6dez/state/quickshell/user/events.json failed: File does not exist.
  DEBUG qml: [Events] File not found, creating new file.
-  WARN scene: QML FileView at @services/Notepad.qml[196:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/notepad-tabs.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Notepad.qml[196:5]: Read of /tmp/alis-dashboard-editor-field-7ukk6dez/state/quickshell/user/notepad-tabs.json failed: File does not exist.
   WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fb07b6e30c0)
-  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/Notepad.qml[246:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/notepad.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-editor-field-7ukk6dez/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notepad.qml[246:5]: Read of /tmp/alis-dashboard-editor-field-7ukk6dez/state/quickshell/user/notepad.txt failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
   INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","top"] open-partial 0
   INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","top"] open-partial 0.005324 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-0.png

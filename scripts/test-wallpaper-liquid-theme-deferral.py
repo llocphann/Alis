@@ -18,7 +18,7 @@ def require(value, description):
 
 
 require('function _shouldDeferThemeForLiquid(path: string): bool' in service
-        and '(type === "alisMelt" || type === "inirMelt")' in service
+        and '(type === "alisMelt" || type === "alisMelt")' in service
         and '!AwwwBackend.active' in service,
         "only internal Liquid and its saved alias can defer theme generation")
 require('!WallpaperListener.isVideoPath(path)' in service

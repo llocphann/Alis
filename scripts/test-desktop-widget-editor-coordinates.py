@@ -8,7 +8,7 @@ from native_test_session import private_wayland, run_qs
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix="hadalis-widget-coordinates-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-widget-coordinates-") as name:
     folder = Path(name)
     for entry in ["modules", "services", "GlobalStates.qml", "qmldir", "assets",
                   "scripts", "defaults", "translations"]:
@@ -124,7 +124,7 @@ ShellRoot {
         data["abyss"]["companion"]["enabled"] = False
         data["background"]["wallpaperPath"] = str(wallpaper)
         # Internal ownership keeps this fixture off the owner's awww socket.
-        data["background"]["transition"]["type"] = "inirMelt"
+        data["background"]["transition"]["type"] = "alisMelt"
         data["background"]["effects"]["enableBlur"] = False
         data["background"]["parallax"].update(enable=False, enableWorkspace=True,
             enableSidebar=True, zoom=1.08, workspaceZoom=1.08, widgetDepth=1.38,

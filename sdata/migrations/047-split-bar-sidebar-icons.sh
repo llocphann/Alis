@@ -4,21 +4,21 @@
 MIGRATION_ID="047-split-bar-sidebar-icons"
 MIGRATION_TITLE="Separate Bar sidebar and distro modules"
 MIGRATION_DESCRIPTION="Keeps the distro icon in existing Bar layouts while giving the sidebar its own control."
-MIGRATION_TARGET_FILE="~/.config/inir/config.json"
+MIGRATION_TARGET_FILE="~/.config/alis/config.json"
 MIGRATION_REQUIRED=true
 
 _split_bar_config_path() {
-  if declare -F resolve_inir_config_dir >/dev/null 2>&1; then
-    printf '%s/config.json\n' "$(resolve_inir_config_dir)"
+  if declare -F resolve_alis_config_dir >/dev/null 2>&1; then
+    printf '%s/config.json\n' "$(resolve_alis_config_dir)"
     return
   fi
   local config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
-  if [[ -f "$config_home/inir/config.json" ]]; then
-    printf '%s/inir/config.json\n' "$config_home"
+  if [[ -f "$config_home/alis/config.json" ]]; then
+    printf '%s/alis/config.json\n' "$config_home"
   elif [[ -f "$config_home/illogical-impulse/config.json" ]]; then
     printf '%s/illogical-impulse/config.json\n' "$config_home"
   else
-    printf '%s/inir/config.json\n' "$config_home"
+    printf '%s/alis/config.json\n' "$config_home"
   fi
 }
 

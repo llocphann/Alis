@@ -1,4 +1,4 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../../to-do/README.md).
 
 # Cloud Bot — Abyss outstanding work
 
@@ -99,7 +99,7 @@ above remain open.
 1. [x] Replace existing wallpaper picker presentations with one Caelestia-like
    selector rendered through Abyss connected surfaces; preserve selection,
    folders, format previews, output targeting and existing wallpaper backend.
-2. [x] Use the current iNiR liquid wallpaper transition and its presented-frame
+2. [x] Use the current Alis liquid wallpaper transition and its presented-frame
    priming/ownership guarantees; compare pinned upstream sources.
 3. [x] Use the AI tab's providers/catalog/auth/request path for Aqua chat. The
    Aqua page adds only model selection and thinking effort for its AI controls.
@@ -145,11 +145,11 @@ above remain open.
 - **Wallpaper / style order (1, 2, 5):** `42e0855aa` consolidates picker routes,
   compatibility IPC and II/Waffle content into one connected carousel. Five
   rounded thumbnails, an enlarged center, extension-free captions and the lower
-  search pill follow the supplemental image. `inirMelt` has presented-frame
+  search pill follow the supplemental image. `alisMelt` has presented-frame
   texture priming, final-request coalescing, reduced-motion/error fallback and
   one wallpaper owner. Pinned references: [Caelestia shell](https://github.com/caelestia-dots/shell)
   `6f7ce62b7a6ff9e37b66526065643ca6e9d65783` and
-  [iNiR wallpaper](https://github.com/snowarch/iNiR/wiki/WALLPAPER)
+  [Alis wallpaper](https://github.com/snowarch/Alis/wiki/WALLPAPER)
   `db2233ce73e827373943aabd170f2ada8bf28471`. Native carousel/cache/melt and
   migration/mode contracts passed. Actual owner wallpaper/video/multi-output
   acceptance remains open.
@@ -207,11 +207,11 @@ Both runs used the default remote clean-clone mode of
 
 - **Initial FAIL:** `998239aaca31a33d270af278bc2a705679ff3aee`,
   368 PASS / 17 FAIL / 3 SKIP.
-  Local log: `/tmp/hadalis-maintainer-validation-redesign-20261007.log`.
+  Local log: `/tmp/alis-maintainer-validation-redesign-20261007.log`.
   SHA-256: `d4f74c2c01bb5bfd18859d78b233d4890f0832b497e3bd1e76579968490fe06f`.
 - **Final PASS:** `3881227eb8a626d470d05db1d68cdb2be04dab2b`,
   386 PASS / 0 FAIL / 3 SKIP. The validated source tree remained clean.
-  Local log: `/tmp/hadalis-maintainer-validation-redesign-rerun-20261007.log`.
+  Local log: `/tmp/alis-maintainer-validation-redesign-rerun-20261007.log`.
   SHA-256: `f2a5af0f23988882978b84673fb57679436ce79d65b7e05259fca5f3734df57d`.
 - **Skipped/deferred:** the manual Aqua perimeter test, the QML parser pass
   because the installed qmlformat Qt version could not be determined, and the
@@ -274,9 +274,9 @@ earlier 21-group source checklist does not close these newly reported problems.
   to whole-shell resource percentages.
 - [x] **Individual Edge 0px:** each physical edge accepts zero width. Preserve
   independent per-edge edge-only/module-inheritance controls and per-output
-  drafts. The new iRiS reference shows thin bare edges and local module bulges:
+  drafts. The new Abyss reference shows thin bare edges and local module bulges:
   a zero-width bare edge must not erase separately sized modules or their input.
-- [x] **Audio Spectrum bounce and cost:** compare the old iNiR upstream wave,
+- [x] **Audio Spectrum bounce and cost:** compare the old Alis upstream wave,
   restore its responsive bounce, and remove avoidable analyzer/solver/render
   churn. Keep one shared analyzer, finite idle teardown and fast warm reopen.
 
@@ -321,7 +321,7 @@ They do not substitute for owner-session visual/audio/hardware acceptance.
 - [x] Give edge-only module backing a 0–64px rounding override per Edge/output
   and an inherit action. The GPU field and immersion mask share record radii.
 - [x] Expose CSS Snippet theming explicitly. Apply/disable owns only
-  `.obsidian/snippets/99_Hadalis_Theme.css` and its enabled-snippet entry.
+  `.obsidian/snippets/99_Alis_Theme.css` and its enabled-snippet entry.
   Read the existing Carbon Cyan stops from Abyssal-Vault and Obsidian-Vault;
   exercise their appearance layouts on temporary copies, preserving theme,
   fonts, other snippets and user preferences.
@@ -342,7 +342,7 @@ They do not substitute for owner-session visual/audio/hardware acceptance.
   and card objects during a bounded 1.2s cache. Hidden paint/input, media activity,
   sampling and sorting leases are off; expiry unloads the tree. Closed startup
   does not allocate a Dashboard. This is a lifecycle proof, not RSS/latency percent.
-- Spectrum `000b5b9a1`: old iNiR signed carrier/phase bounce, one shared CAVA
+- Spectrum `000b5b9a1`: old Alis signed carrier/phase bounce, one shared CAVA
   owner, 800ms idle grace, bounded warm capacity. Five 64-bar popup cycles cause
   zero analyzer restarts; only real capacity growth restarts once. Audio-only
   frames cause zero elastic-solver steps. Thirty frozen interaction traces /
@@ -379,11 +379,11 @@ Earlier completed source groups do not close the new requirements below.
 
 - [x] Source and live new-window readback: nested Niri debug windows stay
   unfocused (`86d976a2c`). Run focused checks relevant to the affected product.
-- [x] Source/package extraction: TLP, Thinkfan and Obsidian are optional Hadalird integrations (final qualification below).
-  Hadalird `e9922c53a261a9b47be7f521f6a64cff334dde27` is pushed on `main`:
+- [x] Source/package extraction: TLP, Thinkfan and Obsidian are optional Alis-Intergration integrations (final qualification below).
+  Alis-Intergration `e9922c53a261a9b47be7f521f6a64cff334dde27` is pushed on `main`:
   disposable selected workers/settings, verified immutable user package and
   separately requested privileged helpers. Native host tests use the actual
-  package entry and private vault/hardware fixtures. Hadalis `d10fc5f87` provides
+  package entry and private vault/hardware fixtures. Alis `d10fc5f87` provides
   bounded package discovery, default-off switches and typed reactive facades;
   absent, invalid and disabled packages fail closed. Migration `e793a4f80`
   retains explicitly selected old features and explicit new true/false choices
@@ -396,7 +396,7 @@ Earlier completed source groups do not close the new requirements below.
   source/package/update qualification is complete below. Owner hardware and
   actual installed desktop acceptance remain separate.
 - [ ] Complete current Alis-Companion requirements using its own canonical task files.
-  Companion source belongs to Alis-Companion, not Hadalis. Refetch `main` before work;
+  Companion source belongs to Alis-Companion, not Alis. Refetch `main` before work;
   concurrent source changes exist. Offline guards are bounded evidence only.
 - [x] Source and focused validation: Local Music moves from Sidebar Left into a
   lazy Dashboard page (`6abf56328350b5871f1c626b2752d5e25d658539`). Centered round
@@ -412,7 +412,7 @@ Earlier completed source groups do not close the new requirements below.
   A single continuation heartbeat was scheduled for **2026-10-09 12:28:09 GMT+7**,
   exactly three minutes after that window's reset (12:25:09 GMT+7), and fired at
   12:28:36. New five-hour readback is 100% remaining; work resumed. Timer ID:
-  `ti-p-t-c-hadalis-sau-reset-5-gi`. The weekly window was ignored.
+  `ti-p-t-c-alis-sau-reset-5-gi`. The weekly window was ignored.
 
 ### Validation and deployment boundaries
 
@@ -424,7 +424,7 @@ on the pre-Music baseline. Both Dashboard routes pass bounded warm-cache checks:
 no eager tree, hidden leases/input/paint off, immediate reuse, expiry at 1.2 s.
 Focused logs are in the private validation state directory for 2026-10-09.
 
-Hadalird's focused package/helper/Obsidian checks and real host fixture pass.
+Alis-Intergration's focused package/helper/Obsidian checks and real host fixture pass.
 The current core Arch fixture executes both package functions with private
 native-binary placeholders, verifies privileged payload absence and preserves
 private TLP files on removal. It does not prove a compiled Arch transaction,
@@ -436,7 +436,7 @@ package fixture explicitly uses current source, not the default archive pin.
 Resume first with duplicate ownership and stale regression contracts:
 `Makefile` helper targets, `scripts/test-local-distribution.sh`, the old core
 TLP/helper/Obsidian implementation tests and runtime payload exclusions. Move
-their implementation oracles to Hadalird; preserve generic host and shared
+their implementation oracles to Alis-Intergration; preserve generic host and shared
 policy contracts. Inspect native Todo ownership before removing any backend.
 Register the new host/migration/lifecycle checks in the canonical acceptance
 path, then continue Alis-Companion's current task files from fresh `main`.
@@ -450,7 +450,7 @@ result is inferred for later source. Music and newer product changes have not
 been deployed to the owner's desktop. Unrelated working-tree changes and
 `docs/evidence/megaqml/` are preserved.
 
-**NOT_COMPLETE:** optional Hadalird extraction, remaining Alis-Companion requirements,
+**NOT_COMPLETE:** optional Alis-Intergration extraction, remaining Alis-Companion requirements,
 final exact-source canonical validation, owner-session acceptance and comparable
 whole-shell CPU/RAM/GPU/latency measurements. No resource percentages are claimed.
 
@@ -502,7 +502,7 @@ remain open. These changes have been pushed on `dev` and are not yet deployed.
   normal and fractional dimensions; native field inherited/square/rounded
   contours and corner fill pass. Owner drag/drop at every corner remains open.
 
-Hadalird `696fb5f` separately qualifies relocated helper/schema/config paths
+Alis-Intergration `696fb5f` separately qualifies relocated helper/schema/config paths
 and polkit authorization through staged package behavior; duplicate core
 ownership and stale implementation-specific core tests still require cleanup.
 The broad product task remains **NOT_COMPLETE**; no full canonical PASS,
@@ -511,7 +511,7 @@ is asserted for these source milestones.
 
 ## Maintainer follow-up — 2026-10-09: Screen Edge hover and Music browser
 
-Source-only fixes on Hadalis `dev` (do not cherry-pick to `stable` without qualified release acceptance):
+Source-only fixes on Alis `dev` (do not cherry-pick to `stable` without qualified release acceptance):
 
 - [x] Screen Edge module pointer hover is forwarded to the existing
   `StyledPopup` source lease (no second popup owner); clicking Weather no
@@ -576,7 +576,7 @@ imply the installed local desktop has received these patches.
   preservation, first/second Escape, queue larger than controls, both scroll
   areas, narrow/wide/fractional DPI, and real MPD/EQ playback.
 - [ ] Keep exact-source whole-suite failures and local Wayland acceptance open,
-  and preserve unrelated Hadalird/Companion work and `stable`.
+  and preserve unrelated Alis-Intergration/Companion work and `stable`.
 
 ## Media/Queue hover rework — 2026-10-09
 
@@ -689,12 +689,12 @@ nominal 34%/66% split applies when it does not clip transport controls.
 **Status:** source-fix staged on `dev`, not installed, not native-qualified,
 not eligible for stable promotion.
 
-## 2026-10-09 — Normal Screen Edge hover / Hadalird migration boundary
+## 2026-10-09 — Normal Screen Edge hover / Alis-Intergration migration boundary
 
 **Evidence:** owner's Niri + Quickshell startup reports installed Git source
 `999455dc0`; Edit Abyss Layout exposes hover but normal Screen Edges
 still require clicks. Git checkout freshness does not guarantee the synced
-`~/.config/quickshell/inir` QML tree has identical files.
+`~/.config/quickshell/alis` QML tree has identical files.
 
 **Changes on dev (not a claimed native fix):**
 - [x] Native Mask: replace `AbyssBar.qml` Region `item: module` with
@@ -705,10 +705,10 @@ still require clicks. Git checkout freshness does not guarantee the synced
 - [x] Add source and production QML guards for normal/edited hitbox
   bounds, fractional outward rounding, module drag position updates,
   and re-enabling normal mode without remounting.
-- [x] Hadalis optional settings wrapper
+- [x] Alis optional settings wrapper
   `modules/settings/ObsidianThemeSettings.qml` explicitly accepts
   `settingsTaskSection`; fixes IntegrationsConfig page 38 instantiation
-  independent of whether Hadalird is installed. No Hadalird repo edits.
+  independent of whether Alis-Intergration is installed. No Alis-Intergration repo edits.
 - [ ] **Do not mark DONE** until owner Niri/Quickshell verifies hover
   without clicking at Weather, Clock, Battery, Media, Resources, Launcher,
   tray and Wi-Fi/Bluetooth, with normal/edit toggles, focus/pointer exit
@@ -718,14 +718,14 @@ still require clicks. Git checkout freshness does not guarantee the synced
   `bar.inputRegions` sizes/positions, hoverTarget MouseArea.containsMouse,
   StyledPopup `_anchorReady` / `requestedVisible` /
   `presentationActive`, and `liquid.popupSlots`, without assuming
-  Hadalird caused a pointer-input failure.
+  Alis-Intergration caused a pointer-input failure.
 
 ## 2026-10-09 — Cold-start Abyss hover differs from Waffle → Abyss remount
 
-**Owner observation:** after installing/updating Hadalis, initial Abyss module
+**Owner observation:** after installing/updating Alis, initial Abyss module
 hover does not show popups; switching **Abyss → Waffle → Abyss** restores
 hover for every module. This is a more discriminating lifecycle clue than
-the previous standalone pointer/layer tests; neither Hadalird nor input
+the previous standalone pointer/layer tests; neither Alis-Intergration nor input
 mask has been proven responsible.
 
 - [x] In `StyledPopup.qml`, force owner/window anchor rediscovery on
@@ -765,15 +765,15 @@ Preserve the existing normal/cold hover acceptance items above.
   Music visibility. Private production-QML demand oracle and performance
   lifecycle checks passed; no owner MPD session was changed.
 - [x] `e17c7edc0`: remove ten byte-identical optional payload duplicates and
-  seven implementation tests from Core; Hadalird owns TLP/Thinkfan helpers,
+  seven implementation tests from Core; Alis-Intergration owns TLP/Thinkfan helpers,
   policies/schema and Obsidian/Todo/Zettelkasten workers. Core retains host
   facades/shared UI. Default staged install/update/uninstall prunes stale
   managed duplicates and preserves separately installed optional files.
-  Ownership receipt: `~/.local/state/hadalis-validation/20261009/optional-ownership-source-parity.json`.
+  Ownership receipt: `~/.local/state/alis-validation/20261009/optional-ownership-source-parity.json`.
 - [x] `751c1f294`: Core battery warning/suspend controls remain available
   without optional TLP. Native absent/disabled/selected/unload cases passed;
   old wrapper failed the same control-presence oracle.
-- [x] Hadalird `d4bad57`: package owns native vault/config/application path
+- [x] Alis-Intergration `d4bad57`: package owns native vault/config/application path
   editing and actual theme apply/restore coverage. Focused path and host
   lifecycle tests passed; Core navigation verifies missing integration stays
   dormant. No owner Obsidian vault/theme was edited.
@@ -784,7 +784,7 @@ Preserve the existing normal/cold hover acceptance items above.
 - [x] `d227b961e`: defer cold anchor rescan beyond `_anchorWindow` binding
   evaluation. Existing native cold/remount test now passes without the old
   binding-loop warning. Full private pointer test also passed in
-  `/tmp/hadalis-popup-hover-final-20261009.log`, including all four transfers,
+  `/tmp/alis-popup-hover-final-20261009.log`, including all four transfers,
   dismissal/reentry, click-only request and editable/read-only focus leases.
   Its process deadline covers the unchanged 22 frame/input steps; frame
   completion is asserted explicitly (QtTest `tryVerify` returns no value).
@@ -809,7 +809,7 @@ Preserve the existing normal/cold hover acceptance items above.
 **Canonical receipt:** clean-clone `--current-repo --strict-qml` at exact
 `751c1f2947eb622a3186b35b40fc9ccdebf22c5c` completed **FAIL: 300 PASS,
 20 FAIL, 1 SKIP**. Log:
-`~/.local/state/hadalis-validation/20261009/751c1f294-canonical.log`, SHA256
+`~/.local/state/alis-validation/20261009/751c1f294-canonical.log`, SHA256
 `3aac5cc044cbc7412912cc67078e48bafbbad4f514c1bf3ad8a323cc3669ace5`.
 Most failures have focused fixes above; this is not a canonical PASS at the
 new source. No CPU/RAM/GPU/FPS percentage or visual parity claim is justified.
@@ -817,7 +817,7 @@ new source. No CPU/RAM/GPU/FPS percentage or visual parity claim is justified.
 **Continue in this order:**
 1. Fix remaining focused native failures before another canonical run:
    embedded Settings fixture's >1000x700 assumption fails on private Niri's
-   smaller output (`/tmp/hadalis-settings-embedded-private-20261009.log`);
+   smaller output (`/tmp/alis-settings-embedded-private-20261009.log`);
    inspect actual host/card/output geometry rather than weakening layout.
    Editor runtime has delayed callbacks invoking destroyed StyledPopup
    methods; IPC corner's top join assertion also failed. Preserve workloads.
@@ -839,7 +839,7 @@ after that window's reset +3 minutes. Weekly usage never triggers a timer.
 
 ## 2026-10-09 — Native cold-start pointer loss narrowed to full AbyssPerimeter construction
 
-**Owner evidence:** `hadalis-abyss-perimeter-remount-20261009-212258.tar.gz`
+**Owner evidence:** `alis-abyss-perimeter-remount-20261009-212258.tar.gz`
 collected at exact `e8dab310f6145b3aa8a447f10c464b905fa8154b`.
 Installed QML matched source; before remount the 16 hover samples showed
 `barHover=false`, `fieldReady=true`, `barVisible=true`,
@@ -869,7 +869,7 @@ they do *not* prove a particular Quickshell/Niri internal defect.
 
 ### 2026-10-09 — Cold-start delayed-first-mount native FAIL and proven subtree-remount remedy
 
-Owner's exact-source `hadalis-abyss-cold-acceptance-20261009-213449.tar.gz`
+Owner's exact-source `alis-abyss-cold-acceptance-20261009-213449.tar.gz`
 on `c17390e2b455`: HEAD and installed source match; host status
 `perimeterLoaded=true`, `initialMountReady=true`,
 `shellEntryReady=true`, `deferredPanelsReady=true`.
@@ -878,7 +878,7 @@ All 24 samples have `fieldReady=true`, valid 12 input regions,
 change is **not sufficient** and must not be called a successful fix.
 
 The distinct owner controlled experiment
-`hadalis-abyss-perimeter-remount-20261009-212258.tar.gz` showed that
+`alis-abyss-perimeter-remount-20261009-212258.tar.gz` showed that
 destroying/recreating **only the entire AbyssPerimeter subtree** (without
 Waffle) changed native hover and popup presentation from 0/16 to 16/16.
 RefreshMask, equivalent mask identity swap, and PanelWindow visibility
@@ -901,7 +901,7 @@ lifecycle issue, not the internal cause of that lifecycle bug.
 
 ### 2026-10-09 — Direct Abyss cold-start native acceptance #1: PASS (408e4df2)
 
-**Owner artifact:** `hadalis-abyss-cold-acceptance-20261009-215143.tar.gz`.
+**Owner artifact:** `alis-abyss-cold-acceptance-20261009-215143.tar.gz`.
 Repo and installed runtime match exact `408e4df281469ee0bd314d3f6e95c108ec0ac34b`.
 Shell log states `[Abyss] Cold Niri perimeter re-created after first native frame`.
 Native critical host: `coldRecreated=true`,
@@ -943,7 +943,7 @@ runner; do not describe the entire run as green.
 
 ### 2026-10-09 — Direct Abyss cold-start native acceptance #2: PASS (5e5cf274)
 
-**Owner artifact:** `hadalis-abyss-cold-acceptance-20261009-220221.tar.gz`.
+**Owner artifact:** `alis-abyss-cold-acceptance-20261009-220221.tar.gz`.
 On exact repository SHA `5e5cf274d05bf30730836dfce1b7dcd22b7372dc`,
 installed source matched all 3 tested QML files:
 `ShellAbyssCriticalPanels.qml`, `AbyssPerimeter.qml`, `AbyssBar.qml`.
@@ -963,7 +963,7 @@ and the normal 12 bar input regions. Owner confirmed
 `cold_hover_popupSeen=true`; diagnostic script errors `[]`.
 
 **Native acceptance tally:** 2/2 separate owner capture sessions PASS.
-Owner was instructed to use distinct `inir restart` cold boot sessions
+Owner was instructed to use distinct `alis restart` cold boot sessions
 without switching Waffle; the reports do not independently encode the
 previous Quickshell PID/boot identity. It is fair to call 2/2 owner-driven
 acceptance samples PASS; it is **not** proof of all startup sequences or of
@@ -1040,48 +1040,48 @@ hover-loss 700ms later. Unlike preview menus, the desktop menu is
   ordinary text elision on Abyss and classic Bar. No stable branch changes.
 
 
-## 2026-10-10 — Hadalird extraction: source/package qualification complete
+## 2026-10-10 — Alis-Intergration extraction: source/package qualification complete
 
-The maintainer prioritized completing Hadalird before other product work.
+The maintainer prioritized completing Alis-Intergration before other product work.
 **This extraction milestone is complete at source/package scope; the broader
-Hadalis/Alis-Companion task remains NOT_COMPLETE.**
+Alis/Alis-Companion task remains NOT_COMPLETE.**
 
-- [x] Hadalird `642ba4e`, `1e4496e`, `4186832` own the remaining Classic and
+- [x] Alis-Intergration `642ba4e`, `1e4496e`, `4186832` own the remaining Classic and
   Waffle TLP row/editor implementations, Obsidian Todo/Quick Notes settings,
   and Thinkfan per-profile settings. Version 0.2.0 retains host API 1 and
   includes every settings entrypoint in the immutable hashed package.
-  Shared Core widgets/configuration/services remain in Hadalis.
-- [x] Hadalis `8ca68efe423223bdf40059155748c53b38200de2` retains only selected
+  Shared Core widgets/configuration/services remain in Alis.
+- [x] Alis `8ca68efe423223bdf40059155748c53b38200de2` retains only selected
   loaders, stable navigation/input contracts, service facades and generic
   Battery/internal Todo fallback. Missing/incomplete/disabled packages do
   not construct owned controls. Closing and reopening Waffle preserves its
   category/filter. Removing Obsidian leaves a user action to restore the
   preserved internal Todo store without clearing saved source paths.
-- [x] Implementation guards moved to Hadalird; Core keeps host/interface,
+- [x] Implementation guards moved to Alis-Intergration; Core keeps host/interface,
   shared UI and lifecycle coverage. Owned deferred worker/editor callbacks
   stop when their disposable QML context retires. Native unload previously
   exposed invalid-context/editor creation warnings and a delayed refresh
   TypeError; the same workload now passes. Owned task fields also avoid the
   observed Material TextField implicit-width loop.
-- [x] Clean source-pair qualification: Hadalird
-  `418683285d28c5b2a673ffc387f96047aca4306b` with Hadalis `8ca68efe4` passes
+- [x] Clean source-pair qualification: Alis-Intergration
+  `418683285d28c5b2a673ffc387f96047aca4306b` with Alis `8ca68efe4` passes
   all 19 `make test` entries, including 16-file Qt 6.12 parsing, actual
   Classic/Waffle/Obsidian/Thinkfan settings lifecycle, synthetic vault actions
   and injected status-only helper receipts. Test host discovery works from
   sibling checkouts without a maintainer-specific absolute path.
-  Receipt/log: `~/.local/state/hadalis-validation/20261009/hadalird-ui-pair.json`
-  and `hadalird-ui-pair-tests.log` in the same directory.
-- [x] Actual committed-package upgrade from Hadalird `d4bad57` to `1e4496e`:
+  Receipt/log: `~/.local/state/alis-validation/20261009/alis-intergration-ui-pair.json`
+  and `alis-intergration-ui-pair-tests.log` in the same directory.
+- [x] Actual committed-package upgrade from Alis-Intergration `d4bad57` to `1e4496e`:
   27 payload files match source, Core accepts the complete 0.2 package,
   reinstall is idempotent, older release bytes are retained, and uninstall
   removes only the owned link while preserving release/user fixture data.
   `4186832` changes test-host discovery/documentation only; runtime payload
-  bytes are unchanged. Receipt: `hadalird-exact-upgrade-receipt.json` in the
+  bytes are unchanged. Receipt: `alis-intergration-exact-upgrade-receipt.json` in the
   same validation directory. Default install/uninstall does not install
   privileged helpers or alter system services/policies.
 - [x] Canonical maintainer validator on a clean clone of **exact `8ca68efe4`**:
   **323 PASS, 0 FAIL, 1 SKIP** (Nix deferred/non-blocking), Qt 6.12 parser PASS.
-  Log: `~/.local/state/hadalis-validation/20261009/8ca68efe4-canonical.log`.
+  Log: `~/.local/state/alis-validation/20261009/8ca68efe4-canonical.log`.
   This is local canonical evidence, not GitHub CI or owner hardware acceptance.
 - [x] Non-VCS Arch metadata now pins the qualified `8ca68efe4` payload
   (`pkgrel=14`); regenerated `.SRCINFO` also includes already-declared Fcitx
@@ -1107,45 +1107,45 @@ remaining below 3% triggers a stop/checkpoint/push and a one-shot resume at
 that window's reset +3 minutes; weekly limits never trigger scheduling.
 
 
-## Hadalird UX — Hadalis-managed optional package (2026-10-10)
+## Alis-Intergration UX — Alis-managed optional package (2026-10-10)
 
-**Maintainer requirement:** Users must not need to clone Hadalird or run its
-installer manually. Hadalis owns installation, update checks, version status,
+**Maintainer requirement:** Users must not need to clone Alis-Intergration or run its
+installer manually. Alis owns installation, update checks, version status,
 uninstall and rollback from Settings > Integrations. The opt-in package is
-still owned by Hadalird; Hadalis retains the verified discovery and loader.
+still owned by Alis-Intergration; Alis retains the verified discovery and loader.
 No stable branch or running user system is modified by source work.
 
 **Source implementation for qualification (not owner desktop acceptance):**
 
-- Hadalis `scripts/hadalird-manager.py` fetches only the official
-  `llocphann/Hadalird` revision when a user clicks a package action.
+- Alis `scripts/alis-intergration-manager.py` fetches only the official
+  `llocphann/Alis-Intergration` revision when a user clicks a package action.
   Source identity is an immutable 40-digit Git SHA, downloaded archive entries
   are bounded and explicitly allowlisted, and host API/entrypoint compatibility
   and payload hashes are verified before an atomic user-owned release switch.
   No fetched installer script executes, and there is no idle network polling.
-- `services/Hadalird.qml` owns explicit package actions and unloads disposable
+- `services/AlisIntergration.qml` owns explicit package actions and unloads disposable
   integration workers before changing the release link. It reads the result,
   refreshes package discovery, reports errors and preserves stored selection
   preferences. It does not auto-enable integrations.
 - `modules/settings/IntegrationsConfig.qml` supplies Install, Check updates,
   Update, Restore previous and confirm-Remove controls. Removal retains
-  user data and previous versions. `scripts/test-hadalird-manager.py` proves
+  user data and previous versions. `scripts/test-alis-intergration-manager.py` proves
   the bounded offline package lifecycle with synthetic archive fixtures.
 - **System-helper boundary now implemented for Arch packaging (native
-  acceptance pending):** Hadalis owns the root-installed
-  `/usr/libexec/inir-hadalird-system-provision` gateway and its dedicated
-  `auth_admin` Polkit action, installed only by Hadalis' trusted distro
+  acceptance pending):** Alis owns the root-installed
+  `/usr/libexec/alis-alis-intergration-system-provision` gateway and its dedicated
+  `auth_admin` Polkit action, installed only by Alis' trusted distro
   package. The unprivileged Settings action requests Polkit authorization
-  explicitly, then the gateway copies **only** five approved Hadalird 0.2
+  explicitly, then the gateway copies **only** five approved Alis-Intergration 0.2
   helper/policy/schema payloads whose SHA-256 values are pinned in the trusted
   gateway. It verifies the exact content from a single buffered read, rejects
   unrelated system files or symlinks, and tracks root-owned installation
   state to permit owner-safe uninstall. No downloaded script runs as root.
   No TLP/Thinkfan service, charge policy, fan state or owner config is modified.
-  New Hadalird helper versions require an audited Hadalis trust-pin update,
+  New Alis-Intergration helper versions require an audited Alis trust-pin update,
   not silent privileged auto-upgrade. Nothing is enabled without explicit
   user choice.
-- `scripts/test-hadalird-system-provision.py` uses private filesystem
+- `scripts/test-alis-intergration-system-provision.py` uses private filesystem
   fixtures to test byte pins, foreign files, symlink refusal, Polkit policy
   and remove safety. It performs no real privileged operation. The manager
   regression exercises status/install/remove with injected synthetic receipts.
@@ -1154,7 +1154,7 @@ No stable branch or running user system is modified by source work.
 
 **Acceptance still required:** current-source Python offline test, Qt/QML
 parse, canonical validator, actual Settings install/check/update/reopen/
-rollback/uninstall on an installed compatible Hadalis and exact Hadalird SHA,
+rollback/uninstall on an installed compatible Alis and exact Alis-Intergration SHA,
 disconnected/offline error handling, input/focus and retained-user-data proof.
 No automatic background update, no owner/hardware test, and no stable
 promotion should be claimed before those receipts are recorded.
@@ -1171,7 +1171,7 @@ or audio-output acceptance.**
   actual `jumpTo` API. The previous test double invented that missing method;
   its corrected API reproduced the old TypeError and filtered-queue failure,
   then passed the same navigation/queue/selection/volume workload after repair.
-  Receipts: `/tmp/hadalis-music-queue-api-{red,green}-20261010.log`.
+  Receipts: `/tmp/alis-music-queue-api-{red,green}-20261010.log`.
 - [x] `4c1acc088`: Queue is bottom-anchored and follows one Player-height
   animation clock, expanding upwards without moving its bottom or Player
   origin. Genre/Folders support single, Ctrl toggle and Shift range selection;
@@ -1180,7 +1180,7 @@ or audio-output acceptance.**
   older single-selection state. Pure model and real private Dashboard tests
   passed, including opening/closing frame samples, both source lists, Play All,
   empty selection and cold restoration. Receipt:
-  `/tmp/hadalis-music-bottom-multi-20261010.log`.
+  `/tmp/alis-music-bottom-multi-20261010.log`.
 - [x] `be8902259598d60f74945f19d0eb0b5d6adf2430`: Styled and generic Abyss
   hover popups include their tangent-bounded connection to the owning inner
   Edge in input/hover, measured from current clipped geometry. Other bodies
@@ -1188,27 +1188,27 @@ or audio-output acceptance.**
   handoff, exit, explicit dismissal, disabled source and click-only policy passed;
   SDF/geometry and pyramid motion regressions passed. Source `4c1acc088` fails
   the connection dwell oracle with equivalent module-clearance geometry.
-  Receipts: `/tmp/hadalis-popup-connection-green-20261010.log` and
-  `/tmp/hadalis-popup-connection-old-source-red-20261010.log`. The earlier
+  Receipts: `/tmp/alis-popup-connection-green-20261010.log` and
+  `/tmp/alis-popup-connection-old-source-red-20261010.log`. The earlier
   fixed-coordinate trial used an incorrect requested window extent; retain it
   as harness evidence, not the old-source regression authority. Actual owner
   mask/focus/click-through and multi-output acceptance remain open.
 
-Fresh sync preserved concurrent Hadalird package-management source `4737960f5`
+Fresh sync preserved concurrent Alis-Intergration package-management source `4737960f5`
 and merged it with these fixes as `9ebaa5e0c6e959850ecf1cf2989983251708a714`,
 then pushed `dev`. Its offline manager fixture passed; actual optional UI
 qualification is tracked separately. Alis-Companion `main` documentation commit
 `732136ef65bb3c84d9339207210c955759a85b76` was reviewed and pushed without
-staging its concurrent native-authoring edits. Hadalird source/package extraction
+staging its concurrent native-authoring edits. Alis-Intergration source/package extraction
 remains qualified at `418683285d28c5b2a673ffc387f96047aca4306b`; do not redo it.
 
 Canonical validation launched on the clean exact pre-merge source **be8902259**:
-`/home/llocphann/.local/state/hadalis-validation/20261010/abyss-connection-canonical.log`
-and `/tmp/hadalis-current-canonical-20261010-console.log`. It was explicitly
+`/home/llocphann/.local/state/alis-validation/20261010/abyss-connection-canonical.log`
+and `/tmp/alis-current-canonical-20261010-console.log`. It was explicitly
 stopped at the five-hour budget threshold (exit 143): 217 completed checks
 reported PASS, check 218 did not finish and no aggregate result was emitted.
 **STOPPED / NOT_COMPLETE**, never canonical PASS. The maintainer subsequently
-stopped local work, then explicitly resumed all Hadalis tasks. Run canonical on
+stopped local work, then explicitly resumed all Alis tasks. Run canonical on
 a clean clone of the final runtime SHA after affected-source qualification.
 
 Remaining owner requirements, in this same active list:
@@ -1220,7 +1220,7 @@ Remaining owner requirements, in this same active list:
   but installed Dashboard Music and Perimeter bytes differ; no owner installation,
   reload or preference change was performed by this repair.
 - [x] Add persistent images to generic Quick Notes (paste/import and visible
-  preview), retaining existing note/editor/tab autosave. Optional **Hadalird**
+  preview), retaining existing note/editor/tab autosave. Optional **Alis-Intergration**
   owns Obsidian attachment placement/export, using the vault's configured auto
   attachment location. Transfer referenced images with notes, preserve originals
   until successful completion and qualify Unicode/collisions/failure/restart with
@@ -1235,7 +1235,7 @@ Remaining owner requirements, in this same active list:
   QML API; do not claim audible playback PASS or alter music files. Surface
   backend failures in Dashboard and diagnose queue/decoder races with a bounded
   synthetic MPD fixture before another runtime repair.
-- [ ] Qualify the merged Hadalird Settings install/check/update/rollback/remove
+- [ ] Qualify the merged Alis-Intergration Settings install/check/update/rollback/remove
   lifecycle and exact final Core SHA; do not infer its native acceptance from
   offline manager PASS or from be8902259's canonical run.
 
@@ -1245,12 +1245,12 @@ Companion stays disabled, G0 `dc4d5ecfe118` remains offline-only. Only the
 five-hour window remaining **below** 3% triggers checkpoint/push and a one-shot
 resume at that window's reset +3 minutes; weekly usage never triggers it.
 
-### Remaining Hadalis-only acceptance (no Alis-Companion work)
+### Remaining Alis-only acceptance (no Alis-Companion work)
 
 - [x] Focused GitHub Actions offline qualification for exact
   `a570d13f993cfd07d5fff68d528598e6c034963d`: the standalone
-  `Hadalird offline contracts` workflow run
-  https://github.com/llocphann/Hadalis/actions/runs/37975587559 completed
+  `Alis-Intergration offline contracts` workflow run
+  https://github.com/llocphann/Alis/actions/runs/37975587559 completed
   **SUCCESS** on user-package manager, private-root Polkit helper simulator,
   existing host removal safety and Arch PKGBUILD shell syntax. The earlier
   `9be1e9c1402055bb16b2aba97a6fa140a5b3a314` focused run also passed.
@@ -1269,93 +1269,93 @@ resume at that window's reset +3 minutes; weekly usage never triggers it.
 - [ ] Add trusted system-package provisioning for supported non-Arch
   distributions rather than using `sudo` on a user-owned checkout. No
   cross-distro support claim before packaging/Polkit checks.
-- [ ] Continue unrelated outstanding Hadalis `dev` fixes and strict-lossless
+- [ ] Continue unrelated outstanding Alis `dev` fixes and strict-lossless
   parity/measurement gates separately; leave Alis-Companion and `stable` untouched.
 
 
-## 2026-10-10 — Owner Hadalird installed: Obsidian wrapper width and CPU probes
+## 2026-10-10 — Owner Alis-Intergration installed: Obsidian wrapper width and CPU probes
 
-Owner screenshots confirm Hadalird **0.2.0** installed at source SHA
+Owner screenshots confirm Alis-Intergration **0.2.0** installed at source SHA
 `418683285d28c5b2a673ffc387f96047aca4306b` through
-Hadalis Settings; Niri/Quickshell no longer reports `page 38` load
+Alis Settings; Niri/Quickshell no longer reports `page 38` load
 failure. This is real owner **package-install discovery evidence**, not
 endorsement of the settings UI or privileged helper functionality.
 
-- [x] Hadalis `bcbccaf43f2823217848ab3f26a3d5fcd22e24c7`: fix
+- [x] Alis `bcbccaf43f2823217848ab3f26a3d5fcd22e24c7`: fix
   `modules/settings/ObsidianThemeSettings.qml` wrapper missing
   `QtQuick.Layouts` / `Layout.fillWidth: true`; in the Settings
   `ColumnLayout` the wrapper could have zero width yet preserve a large
   deferred card implicit height, consistent with the almost-empty owner
   Obsidian panel. Add focused offline regression; focused GitHub Actions
   workflow **PASS** at
-  https://github.com/llocphann/Hadalis/actions/runs/37979594747 .
+  https://github.com/llocphann/Alis/actions/runs/37979594747 .
   Disable the **Install system helpers** button until the root-owned
-  Hadalis provisioner exists. The missing provisioner is not a missing
-  Hadalird user package, and source updates alone cannot install it.
-- [x] External owner Hadalird package `aa49d0556e62db5f7358db96abac9d1626e5135e`
+  Alis provisioner exists. The missing provisioner is not a missing
+  Alis-Intergration user package, and source updates alone cannot install it.
+- [x] External owner Alis-Intergration package `aa49d0556e62db5f7358db96abac9d1626e5135e`
   resolves the owner log's repeated missing Intel pstate status reads on
   a non-Intel driver; gate both Intel/AMD `FileView.path` reads by the
   active CPU scaling driver, preserve passive-mode detection, unload on
   driver change and preserve capability-clearing behavior. Exact
   source-level contract GitHub Actions **PASS**:
-  https://github.com/llocphann/Hadalird/actions/runs/37979900616 .
-  The Hadalird package SHA changed; it must be updated through Hadalis'
+  https://github.com/llocphann/Alis-Intergration/actions/runs/37979900616 .
+  The Alis-Intergration package SHA changed; it must be updated through Alis'
   own **Check updates → Update** UI to load the fix.
-- [ ] Owner Niri live acceptance: refresh Hadalis `dev` at least
+- [ ] Owner Niri live acceptance: refresh Alis `dev` at least
   `bcbccaf`, open **Settings → Integrations → Obsidian**, ensure
   visible normal-width vault/path/theme controls and no blank/overlapping
-  panel; update Hadalird through Settings; confirm no repeated Intel
-  sysfs FileView warning after reload. Record exact Hadalis and
-  Hadalird SHAs. No vault writes, TLP/Thinkfan changes or automatic
+  panel; update Alis-Intergration through Settings; confirm no repeated Intel
+  sysfs FileView warning after reload. Record exact Alis and
+  Alis-Intergration SHAs. No vault writes, TLP/Thinkfan changes or automatic
   helper provision requested.
 - [ ] The trusted root-owned Arch **system provisioner** remains absent
-  in this owner session. Resolve through an audited Hadalis distro
+  in this owner session. Resolve through an audited Alis distro
   package install/upgrade with explicit authentication, and test
   Polkit cancellation/consent. Never copy user-downloaded helpers as root
   or equate an active preference toggle with working hardware access.
 - [ ] Unrelated `qt.svg` warning is not diagnosed by these logs; obtain
   its source before applying unrelated asset changes.
 
-## 2026-10-10 — Hadalird helper gateway missing on owner system
+## 2026-10-10 — Alis-Intergration helper gateway missing on owner system
 
-Owner Settings screenshot confirms that Hadalird 0.2.0 is installed and
-"Check helper status" reports the **Hadalis system Polkit gateway missing**.
+Owner Settings screenshot confirms that Alis-Intergration 0.2.0 is installed and
+"Check helper status" reports the **Alis system Polkit gateway missing**.
 The inactive "Install system helpers" button is an intentional fail-closed
 safeguard, not an uninstall failure. The available screenshot does not
 prove whether an Arch shell package is installed on the owner machine.
 
-**Source/package parity repair:** frozen `inir-shell` PKGBUILD and
+**Source/package parity repair:** frozen `alis-shell` PKGBUILD and
 `.SRCINFO` previously pinned `8ca68ef`, predating the gateway. Pin an
 immutable source commit that contains the trusted gateway and policy; advance
-`pkgrel` to force a package rebuild. Keep the `inir-shell-git` recipe
+`pkgrel` to force a package rebuild. Keep the `alis-shell-git` recipe
 and `.SRCINFO` in sync. Extend release/package contracts to verify the
 pinned source contains both root files, not just that current `dev` does.
 No other repository or `stable` branch is changed.
 
-- [ ] Owner acceptance: determine whether `pacman -Q inir-shell` or
-  `inir-shell-git` owns the shell on this machine. `inir update` alone
+- [ ] Owner acceptance: determine whether `pacman -Q alis-shell` or
+  `alis-shell-git` owns the shell on this machine. `alis update` alone
   cannot install root-owned package files.
-- [ ] Install/rebuild only a trusted, reviewed Hadalis system package with
+- [ ] Install/rebuild only a trusted, reviewed Alis system package with
   explicit administrator consent. Verify root gateway/policy are package
   owned and read-only to the regular user, then check status in Settings.
   Do not auto-run a remote installer as root or self-elevate during QML
   startup. Hardware actions remain opt-in.
-- [ ] Keep Obsidian and user-level Hadalird functional if the gateway is
+- [ ] Keep Obsidian and user-level Alis-Intergration functional if the gateway is
   absent. Integration toggles describe stored preferences, not verified
   availability of a hardware backend. No fan/charge policy changed by
   this package metadata repair.
 
 ## 2026-10-10 — Arch repo-copy gateway distribution
 
-Owner `inir status`: installed version 2.29.3; `dev` source
+Owner `alis status`: installed version 2.29.3; `dev` source
 `fb84c8f`; install mode `repo-copy`, update strategy `repo-setup`.
-Neither `inir-shell` nor `inir-shell-git` is installed, which explains
+Neither `alis-shell` nor `alis-shell-git` is installed, which explains
 why package-owned Polkit files are absent. The source-install flow must
 remain supported; do not require switching shell install methods.
 
-Hadalis adds a standalone gateway package action from Settings,
-separate from the user-space Hadalird release. It prepares an Arch package
-from fixed-digest Hadalis system files, verifies its contents, and only
+Alis adds a standalone gateway package action from Settings,
+separate from the user-space Alis-Intergration release. It prepares an Arch package
+from fixed-digest Alis system files, verifies its contents, and only
 requests administrator authorization after explicit user confirmation.
 Gateway registration does not automatically start TLP, change fan policy,
 alter charge limits, or install the remaining hardware helpers.
@@ -1369,23 +1369,23 @@ alter charge limits, or install the remaining hardware helpers.
 
 ### 2026-10-10 — Owner gateway install reported missing receipt
 
-Owner Settings reported `System gateway package did not return an operation receipt` after an explicit Arch standalone package install request. Source inspection found a definite post-transaction exception in `scripts/hadalird-system-package.py`: `system_state()` referenced unbound variable `p` in the root-file inventory. It could crash **after** successful `pacman -U`, losing the JSON receipt and leaving user-visible state stale. Fixed state reconciliation; failures now surface bounded child stderr/exit status. Offline CI: https://github.com/llocphann/Hadalis/actions/runs/37985086814 **PASS** for `66425869`. UI adds a read-only **Check Arch gateway status** action so a package already installed can be rediscovered without rerunning a privileged installer.
+Owner Settings reported `System gateway package did not return an operation receipt` after an explicit Arch standalone package install request. Source inspection found a definite post-transaction exception in `scripts/alis-intergration-system-package.py`: `system_state()` referenced unbound variable `p` in the root-file inventory. It could crash **after** successful `pacman -U`, losing the JSON receipt and leaving user-visible state stale. Fixed state reconciliation; failures now surface bounded child stderr/exit status. Offline CI: https://github.com/llocphann/Alis/actions/runs/37985086814 **PASS** for `66425869`. UI adds a read-only **Check Arch gateway status** action so a package already installed can be rediscovered without rerunning a privileged installer.
 
-- [ ] Owner native read-only check `pacman -Q inir-hadalird-gateway` or Settings gateway status, record installed/not-installed and file ownership. **Do not automatically retry installation:** earlier pacman transaction may have succeeded despite missing receipt.
-- [ ] Only if package is missing, user explicitly retries via Settings after updating Hadalis. Capture stdout/stderr/exit status on failure, distinguish makepkg, Polkit authentication, and pacman errors. Never auto-modify TLP/Thinkfan hardware state.
+- [ ] Owner native read-only check `pacman -Q alis-alis-intergration-gateway` or Settings gateway status, record installed/not-installed and file ownership. **Do not automatically retry installation:** earlier pacman transaction may have succeeded despite missing receipt.
+- [ ] Only if package is missing, user explicitly retries via Settings after updating Alis. Capture stdout/stderr/exit status on failure, distinguish makepkg, Polkit authentication, and pacman errors. Never auto-modify TLP/Thinkfan hardware state.
 
-### 2026-10-10 — Hadalird Settings simplification and Polkit foreground
+### 2026-10-10 — Alis-Intergration Settings simplification and Polkit foreground
 
-Owner confirms Hadalird 0.2.0 and the system helpers are ready but the
+Owner confirms Alis-Intergration 0.2.0 and the system helpers are ready but the
 Settings card is text-heavy, privileged reinstallation is confusing, and
 the Polkit dialog can be hidden behind the Abyss Settings surface.
 
-Hadalis `dev` repair scope only (Alis-Companion and stable untouched):
+Alis `dev` repair scope only (Alis-Companion and stable untouched):
 - Keep only short Gateway/Helpers status and primary `Install helpers`
   or `Reinstall helpers` (same explicit, integrity-checked, idempotent
   helper install), plus Update/Refresh. Move destructive package/helper
   controls and gateway maintenance into collapsed Advanced.
-- A single explicit `helpers-ensure` action checks a valid Hadalird
+- A single explicit `helpers-ensure` action checks a valid Alis-Intergration
   install, installs the trusted Arch gateway if absent, then performs
   a verified privileged helper install; each Polkit operation retains
   independent authorization. Do not remove existing helpers or change
@@ -1404,7 +1404,7 @@ Hadalis `dev` repair scope only (Alis-Companion and stable untouched):
   solely on offline checks.
 
 
-### 2026-10-10 — Hadalird package/helper state reconciliation
+### 2026-10-10 — Alis-Intergration package/helper state reconciliation
 
 The owner confirmed the system-helper UI displayed **ready** and offered
 `Remove system helpers` before the Settings simplification. This screenshot
@@ -1412,12 +1412,12 @@ is status evidence; it does not by itself prove native Polkit layering,
 hardware behavior, individual file ownership or per-operation rollback.
 
 Continuation after `3729ca5a5`:
-- [x] Add a read-only `system-status` operation to the Hadalis manager,
+- [x] Add a read-only `system-status` operation to the Alis manager,
   combining independent trusted gateway availability and helper status.
   Handle systems where a full distro package owns the gateway but the
   standalone Arch package does not exist; non-Arch package-query failure
   does not break the passive helper status.
-- [x] Refresh the local status once on Hadalis service startup, from the
+- [x] Refresh the local status once on Alis service startup, from the
   compact Settings **Refresh** action and after any completed/failed/
   cancelled privileged operation; never infer final state from a missing
   receipt or require the user to retry an indeterminate installation.
@@ -1458,32 +1458,32 @@ connected, even when MPD `status.error` reported a decoder failure.
 
 ### 2026-10-10 — Continued owner follow-ups: Weather and Quick Notes images
 
-The maintainer explicitly resumed all Hadalis work. The earlier local resume
+The maintainer explicitly resumed all Alis work. The earlier local resume
 automation was deleted on the stop request; it was not restarted on resumption.
 The established five-hour-only below-3% checkpoint policy still applies to a
 future budget exhaustion. Keep Alis-Companion and unrelated native-authoring files
-untouched while completing the current Hadalis requirements.
+untouched while completing the current Alis requirements.
 
 - **Weather qualification:** `test-weather-popup-handoff-runtime.py` exercises
   actual ClockCalendarPopup and WeatherPopup with stable slots, pyramid motion,
   source/body pointer ownership and connection input on top/bottom/left/right.
   Rapid hover reversal, content transfer and final exit passed: 1,148 sampled
-  geometry states in `/tmp/hadalis-weather-handoff-bounded-20261010.log`.
+  geometry states in `/tmp/alis-weather-handoff-bounded-20261010.log`.
   Weather production code was unchanged by this test; do not claim a new
   source fix or owner-session visual PASS. Early fixture attempts lacked
   unfocused frame synchronization and used an exit point inside a side popup;
   those are not authoritative product RED receipts. The corrected workload
   preserves the owner's non-focus debug policy. The video overlap gate remains
   open until installation identity and first/repeated visual handoff agree.
-- **Hadalis `add29d6f8`:** shared Notepad paste, Ctrl+V and context-menu Paste
+- **Alis `add29d6f8`:** shared Notepad paste, Ctrl+V and context-menu Paste
   route binary images through a bounded helper; image import and a virtualized
   preview strip are shared by Quick Notes hosts. Save original image bytes in
   the state attachment store and persist local Markdown links through the
   existing note autosave. Resolve asynchronous receipts against the original
   note ID; selection replacement preserves changes made after the snapshot.
-  Generic Notes work without Hadalird. An older package reports an explicit
+  Generic Notes work without AlisIntergration. An older package reports an explicit
   update requirement for image export.
-- **Hadalird `b0c975a7f40bdf531012be326bc728f5c014b696` (0.2.1):** optional
+- **Alis-Intergration `b0c975a7f40bdf531012be326bc728f5c014b696` (0.2.1):** optional
   Obsidian owns image export for both capture and Notepad migration. Read the
   chosen vault-config `app.json` attachment location (vault root, current note
   folder, a subfolder or specified vault folder), copy and verify bytes, replace
@@ -1496,10 +1496,10 @@ untouched while completing the current Hadalis requirements.
   saved restart and existing Notes/Timers pin tests passed. The actual optional
   worker and Core facade captured one synthetic image into a custom-config
   Unicode vault and preserved the source/draft. Logs:
-  `/tmp/hadalis-notes-image-selection-20261010.log`,
-  `/tmp/hadalis-notes-pin-images-20261010.log`,
-  `/tmp/hadalird-note-image-host-20261010.log`.
-  Qt 6 parsed all 16 Hadalird QML files; scoped package installation contract
+  `/tmp/alis-notes-image-selection-20261010.log`,
+  `/tmp/alis-notes-pin-images-20261010.log`,
+  `/tmp/alis-intergration-note-image-host-20261010.log`.
+  Qt 6 parsed all 16 Alis-Intergration QML files; scoped package installation contract
   passed. Clipboard data in these new tests was injected, not read from the
   owner's clipboard. Canonical and owner-native acceptance remain separate.
 
@@ -1524,7 +1524,7 @@ CPU/RAM/GPU percentage claim from these functional tests.
 - [x] Actual native QML fixture passed on all four edges, including audio-mode
   visibility, real pointer controls, connection dwell, auto-hide/recovery, drag,
   Stop callback, idle/secondary-output allocation and retained ii/Waffle snap.
-  Receipt: `/tmp/hadalis-recording-ipc-20261010.log`. Six affected QML files
+  Receipt: `/tmp/alis-recording-ipc-20261010.log`. Six affected QML files
   parsed with Qt 6; IPC registry check passed (64 targets). Private Niri stayed
   unfocused; the fixture injected recorder/audio callbacks and did not start an
   owner recording or alter system mute state.
@@ -1547,12 +1547,12 @@ CPU/RAM/GPU percentage claim from these functional tests.
   protocol server with both Python and the existing local Rust compatibility
   backend. It covers delayed Clear/Add versus Play, visible ACK, healthy
   connection, action ordering, repeated queue/bulk/playlist payloads and failed
-  payload/identical retry. Receipt: `/tmp/hadalis-music-all-mutations-20261010.log`.
+  payload/identical retry. Receipt: `/tmp/alis-music-all-mutations-20261010.log`.
   The Rust binary is an existing build, not a new source-build qualification.
 - [x] A separate real private MPD decoded generated WAV/FLAC, then passed Queue,
   Stop/idle/Play, Pause, Shuffle/Repeat and recovery from an indexed track whose
   header was deliberately corrupted. Receipt:
-  `/tmp/hadalis-music-private-open-error-20261010.log`. It used only a null audio
+  `/tmp/alis-music-private-open-error-20261010.log`. It used only a null audio
   output and synthetic files. Real QML demand events, MPD/source contracts,
   Dashboard diagnostic reducer/model and Qt 6 parse also passed.
 - [ ] Owner audible PipeWire playback and the owner's previously reported FLAC

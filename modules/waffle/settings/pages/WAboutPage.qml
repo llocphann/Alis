@@ -201,11 +201,11 @@ WSettingsPage {
 
             WSettingsButton {
                 Layout.fillWidth: true
-                label: "iNiR"
-                description: "github.com/snowarch/iNiR"
+                label: "Alis"
+                description: "github.com/snowarch/Alis"
                 icon: "open"
                 buttonText: Translation.tr("Open")
-                onButtonClicked: Qt.openUrlExternally("https://github.com/snowarch/iNiR")
+                onButtonClicked: Qt.openUrlExternally("https://github.com/snowarch/Alis")
             }
 
             WSettingsButton {
@@ -227,7 +227,7 @@ WSettingsPage {
 
             WText {
                 Layout.fillWidth: true
-                text: "Alis builds on iNiR's Niri/Quickshell foundation and end-4's illogical-impulse."
+                text: "Alis builds on Alis's Niri/Quickshell foundation and end-4's illogical-impulse."
                 wrapMode: Text.WordWrap
                 font.pixelSize: Looks.font.pixelSize.normal
                 color: Looks.colors.subfg

@@ -31,7 +31,7 @@ Item {
             / Math.max(1, root.activeBars))
 
     // Serpantinum mirrors low frequencies toward the center and higher
-    // frequencies toward the edges, then eases the outer bars to zero. Hadalis
+    // frequencies toward the edges, then eases the outer bars to zero. Alis
     // receives raw CAVA amplitudes plus an adaptive ceiling, so normalize first
     // and keep that same visual mapping without replacing the shared service.
     readonly property var processedBars: {

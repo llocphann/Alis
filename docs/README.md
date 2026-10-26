@@ -1,4 +1,4 @@
-# Hadalis documentation
+# Alis documentation
 
 **All active work lives in [Alis GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen).** Local and Cloud AI share that tracker; [AGENTS.md](../AGENTS.md) specifies deduplication, code prefixes, priorities and Owner verification. These technical documents are references, not task lists.
 

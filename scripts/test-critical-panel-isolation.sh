@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-root="${HADALIS_CRITICAL_ISOLATION_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
+root="${ALIS_CRITICAL_ISOLATION_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
 critical="$root/modules/ii/critical/ShellIiCriticalPanels.qml"
 deferred="$root/ShellIiPanels.qml"
 

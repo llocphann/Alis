@@ -2,7 +2,7 @@
 set -euo pipefail
 
 cmd="${1:-}"
-state_root="${XDG_STATE_HOME:-$HOME/.local/state}/hadalis"
+state_root="${XDG_STATE_HOME:-$HOME/.local/state}/alis"
 state_file="$state_root/equalizer_state.json"
 state_candidate="$state_root/equalizer_state.next.json"
 

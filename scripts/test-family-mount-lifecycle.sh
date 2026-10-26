@@ -12,7 +12,7 @@ repo = pathlib.Path(sys.argv[1])
 source = (repo / 'shell.qml').read_text()
 loaders = source[source.index('    LazyLoader {\n        id: iiCriticalHostLoader'):source.index('    // Close confirmation dialog')]
 mount = source[source.index('    readonly property string activePanelFamily:'):source.index('    // Direct config edits')]
-with tempfile.TemporaryDirectory(prefix='hadalis-family-mount-') as tmp:
+with tempfile.TemporaryDirectory(prefix='alis-family-mount-') as tmp:
     root = pathlib.Path(tmp)
     for entry in ('modules', 'services', 'GlobalStates.qml', 'qmldir', 'assets', 'scripts', 'defaults', 'translations'):
         (root / entry).symlink_to(repo / entry)
@@ -39,7 +39,7 @@ Scope {
     }
     for old, new in replacements.items():
         loaders = loaders.replace('source: "' + old + '"', 'source: "' + new + '"')
-    (root / 'shell.qml').write_text('''//@ pragma ShellId hadalis-family-mount-test
+    (root / 'shell.qml').write_text('''//@ pragma ShellId alis-family-mount-test
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -68,7 +68,7 @@ ShellRoot {
     for key in ('QS_CONFIG_PATH', 'QS_CONFIG_NAME', 'QS_MANIFEST'):
         env.pop(key, None)
     env.update(QT_QPA_PLATFORM='offscreen', LC_ALL='C.UTF-8', XDG_CONFIG_HOME=str(root / 'config'),
-               XDG_STATE_HOME=str(root / 'state'), XDG_CACHE_HOME=str(root / 'cache'), INIR_DISABLE_HOT_RELOAD='1')
+               XDG_STATE_HOME=str(root / 'state'), XDG_CACHE_HOME=str(root / 'cache'), ALIS_DISABLE_HOT_RELOAD='1')
     with (root / 'runtime.log').open('w') as log:
         proc = subprocess.Popen(['qs', '-p', str(root), '--no-color'], env=env, stdout=log, stderr=subprocess.STDOUT)
         def ipc(target, method, *args):

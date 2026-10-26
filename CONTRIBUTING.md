@@ -1,6 +1,6 @@
 # Contributing to Alis
 
-Alis is being developed on top of the cleaned iNiR runtime baseline. The current architectural target and perimeter constraints live in [README.md](README.md) and [ARCHITECTURE.md](ARCHITECTURE.md); do not infer feature completion from those target documents alone.
+Alis is being developed on top of the cleaned Alis runtime baseline. The current architectural target and perimeter constraints live in [README.md](README.md) and [ARCHITECTURE.md](ARCHITECTURE.md); do not infer feature completion from those target documents alone.
 
 ## Branch model
 
@@ -20,19 +20,19 @@ git clone https://github.com/llocphann/Alis.git
 cd Alis
 git switch dev
 ./setup install
-inir run
+alis run
 ```
 
-The runtime still uses the `inir` launcher/configuration identity in many places. Do not rename runtime paths, IPC targets, package names, or service identifiers as part of unrelated changes.
+The runtime still uses the `alis` launcher/configuration identity in many places. Do not rename runtime paths, IPC targets, package names, or service identifiers as part of unrelated changes.
 
 For a clean supervised restart while developing:
 
 ```bash
-inir restart
-inir logs -f
+alis restart
+alis logs -f
 ```
 
-Do not run `qs kill -c inir` or a bare `qs -c inir` for normal testing. The shell is designed to run under its supervised service lifecycle.
+Do not run `qs kill -c alis` or a bare `qs -c alis` for normal testing. The shell is designed to run under its supervised service lifecycle.
 
 ## Before opening a pull request
 
@@ -46,7 +46,7 @@ python3 scripts/lib/generate-ipc-registry.py --check
 
 `make test-local` is the aggregate non-QML release-boundary gate. It includes install/package lifecycle checks, doctor routing, optional-audio dependency policy, Equalizer Phase 1 architecture/service contracts, documentation verification, packaging contracts, and Nix module contracts.
 
-For runtime-facing changes, also exercise the affected flow on a real session and inspect `inir logs`. For packaging/install changes, use dry-run or staged install paths rather than writing into the host filesystem just to test a package layout.
+For runtime-facing changes, also exercise the affected flow on a real session and inspect `alis logs`. For packaging/install changes, use dry-run or staged install paths rather than writing into the host filesystem just to test a package layout.
 
 Keep each commit focused on one logical change. Prefer imperative, specific commit messages and avoid unrelated reformatting.
 

@@ -42,7 +42,7 @@ class RetiredServiceAuditTest(unittest.TestCase):
     def test_inert_pending_history_does_not_claim_an_installed_runtime(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            state = root / "hadalis-automation"
+            state = root / "alis-automation"
             state.mkdir()
             original = json.dumps({"profiles": {"uncertain": {
                 "desired": "stopped", "pending": {"attempt": "keep"},

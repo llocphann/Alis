@@ -5,7 +5,7 @@ repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 root_config="$repo_root/defaults/niri/config.kdl"
 binds="$repo_root/defaults/niri/config.d/70-binds.kdl"
 overrides="$repo_root/defaults/niri/config.d/75-alis-launcher-binds.kdl"
-migration="$repo_root/sdata/migrations/040-niri-inir-keybind-path.sh"
+migration="$repo_root/sdata/migrations/040-niri-alis-keybind-path.sh"
 repair="$repo_root/scripts/repair-niri-alis-keybinds.sh"
 
 fail() {
@@ -39,7 +39,7 @@ if pos != sorted(pos):
 PY
 
 wrapper='spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind"'
-if grep -Ev '^[[:space:]]*//' "$overrides" | grep -Eq 'spawn "(alis|inir)"|exec inir'; then
+if grep -Ev '^[[:space:]]*//' "$overrides" | grep -Eq 'spawn "(alis|alis)"|exec alis'; then
     fail 'launcher override contains a PATH-dependent bare command or a retired launcher'
 fi
 grep -Fq "$wrapper" "$overrides" \
@@ -106,10 +106,10 @@ result="$(HOME="$tmp/home" XDG_BIN_HOME= PATH=/usr/bin:/bin /bin/sh -c \
 
 # Preserve migration 040's historical PATH repair. This is a pre-cutover input
 # contract; the coordinated rebrand repair advances its output to Alis later.
-legacy_wrapper='spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec inir \"$@\"" "inir-keybind"'
+legacy_wrapper='spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind"'
 fixture="$tmp/config/niri/config.d/70-binds.kdl"
 mkdir -p "$(dirname -- "$fixture")"
-printf '%s\n' 'binds {' '  Mod+Q repeat=false { spawn "inir" "close-window"; }' '}' > "$fixture"
+printf '%s\n' 'binds {' '  Mod+Q repeat=false { spawn "alis" "close-window"; }' '}' > "$fixture"
 (
     export HOME="$tmp/home"
     export XDG_CONFIG_HOME="$tmp/config"
@@ -130,7 +130,7 @@ grep -Fq "$legacy_wrapper" "$fixture" \
 monolithic_root="$tmp/monolithic-config"
 monolithic_fixture="$monolithic_root/niri/config.kdl"
 mkdir -p "$(dirname -- "$monolithic_fixture")"
-printf '%s\n' 'binds {' '  Mod+Q repeat=false { spawn "inir" "close-window"; }' '}' > "$monolithic_fixture"
+printf '%s\n' 'binds {' '  Mod+Q repeat=false { spawn "alis" "close-window"; }' '}' > "$monolithic_fixture"
 cp -p "$monolithic_fixture" "$tmp/original-monolithic-config.kdl"
 (
     export HOME="$tmp/home"
@@ -143,13 +143,13 @@ cp -p "$monolithic_fixture" "$tmp/original-monolithic-config.kdl"
     tui_info() { :; }
     # shellcheck source=/dev/null
     source "$repo_root/sdata/lib/migrations.sh"
-    apply_migration '040-niri-inir-keybind-path' true
+    apply_migration '040-niri-alis-keybind-path' true
 )
 
 backup_file="$(find "$monolithic_root/alis/backups" -type f -name config.kdl -print -quit 2>/dev/null || true)"
 [[ -n "$backup_file" && -f "$backup_file" ]] \
     || fail 'monolithic keybind migration did not back up config.kdl'
-grep -Fq 'spawn "inir" "close-window"' "$backup_file" \
+grep -Fq 'spawn "alis" "close-window"' "$backup_file" \
     || fail 'monolithic migration backup does not preserve the pre-migration bind'
 cmp -s "$backup_file" "$tmp/original-monolithic-config.kdl" \
     || fail 'monolithic migration backup changed original config bytes'

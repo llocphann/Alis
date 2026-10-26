@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Small stdlib-only MPD client for Hadalis LocalMusic.
+"""Small stdlib-only MPD client for Alis LocalMusic.
 
-MPD owns the library, saved playlists and playback queue. Hadalis uses this
+MPD owns the library, saved playlists and playback queue. Alis uses this
 helper only for database/queue operations that MPRIS does not expose; transport
 controls are routed through mpd-mpris whenever that MPRIS player is available.
 """
@@ -17,7 +17,7 @@ from typing import Any
 
 ART_NAMES = ("cover", "folder", "front", "album", "artwork")
 ART_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp", ".avif")
-ART_CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME") or (Path.home() / ".cache")) / "hadalis" / "music-covers"
+ART_CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME") or (Path.home() / ".cache")) / "alis" / "music-covers"
 
 
 class MpdError(RuntimeError):

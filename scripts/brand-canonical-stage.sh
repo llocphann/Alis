@@ -32,7 +32,7 @@ grep -Fq '# Canonical CLI and runtime name is Alis.' "$repo/scripts/alis" ||
 for cmd in python3 rsync systemctl; do
     command -v "$cmd" >/dev/null || { echo "Missing dependency: $cmd" >&2; exit 2; }
 done
-# The previous public Alis wrapper delegates into iNiR and is owned by this
+# The previous public Alis wrapper delegates into Alis and is owned by this
 # project's compatibility installer. Never require the canonical launcher to
 # preexist: this is the very bootstrap stage that installs it.
 bin_dir="${XDG_BIN_HOME:-$HOME/.local/bin}"
@@ -53,11 +53,11 @@ if [[ -e "$launcher" ]]; then
         else
             launcher_kind=canonical-stale
         fi
-    elif { grep -Fq '# Alis is the public command while the proven iNiR runtime owns the session.' "$launcher" ||
+    elif { grep -Fq '# Alis is the public command while the proven Alis runtime owns the session.' "$launcher" ||
            grep -Fq '# Alis is the public command while the proven Alis runtime owns the session.' "$launcher"; } &&
          grep -Fq 'export ALIS_INTERNAL_CLI=1' "$launcher" &&
-         { grep -Fq 'exec bash "$script_dir/inir" "$@"' "$launcher" ||
-           grep -Fq 'exec inir "$@"' "$launcher"; }; then
+         { grep -Fq 'exec bash "$script_dir/alis" "$@"' "$launcher" ||
+           grep -Fq 'exec alis "$@"' "$launcher"; }; then
         launcher_kind=managed-compatibility
     else
         echo "Refusing to overwrite foreign/unknown Alis executable: $launcher" >&2
@@ -70,7 +70,7 @@ fi
 bash -n "$repo/scripts/alis" ||
     { echo 'Canonical source CLI fails shell syntax check' >&2; exit 2; }
 # Only repo-copy installations; packages must be upgraded by their manager.
-for version in "$cfg/inir/version.json" "$cfg/illogical-impulse/version.json" "$cfg/alis/version.json"; do
+for version in "$cfg/alis/version.json" "$cfg/illogical-impulse/version.json" "$cfg/alis/version.json"; do
     if [[ -f "$version" ]] &&
        grep -Eq '"(installMode|install_mode|updateStrategy|update_strategy|packageManager|package_manager)"[[:space:]]*:[[:space:]]*"(package-managed|package-manager|nix|pacman|aur|arch)"' "$version"; then
         echo "Package-managed install detected: $version" >&2; exit 2

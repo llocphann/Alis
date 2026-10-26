@@ -1,11 +1,11 @@
-  INFO: Launching config: "/tmp/hadalis-night-deep/shell.qml"
-  INFO: Shell ID: "hadalis-night-deep-qa" Path ID "b3c80f8b46d89ee372add82127a75c1c"
+  INFO: Launching config: "/tmp/alis-night-deep/shell.qml"
+  INFO: Shell ID: "alis-night-deep-qa" Path ID "b3c80f8b46d89ee372add82127a75c1c"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/q5iylyv1mt/log.qslog"
   WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
   INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1608015.sock
   INFO: Configuration Loaded
-  WARN scene: QML FileView at @services/GameMode.qml[306:5]: Read of /tmp/hadalis-night-deep/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[285:5]: Read of /tmp/hadalis-night-deep/state/quickshell/user/gamemode_active failed: File does not exist.
-  WARN scene: QML FileView at @services/GameMode.qml[285:5]: Read of /tmp/hadalis-night-deep/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[306:5]: Read of /tmp/alis-night-deep/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[285:5]: Read of /tmp/alis-night-deep/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[285:5]: Read of /tmp/alis-night-deep/state/quickshell/user/gamemode_active failed: File does not exist.
   INFO qml: NiriService: Loaded 1 outputs
   INFO qml: NIGHT_DEEP_READY

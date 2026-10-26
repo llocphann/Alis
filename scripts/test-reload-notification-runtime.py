@@ -11,7 +11,7 @@ if not shutil.which("qs") or not shutil.which("niri") or not shutil.which("notif
     print("SKIP: reload notification requires Quickshell, Niri, notify-send and Wayland")
     raise SystemExit(0)
 
-with tempfile.TemporaryDirectory(prefix="hadalis-reload-notification-") as folder:
+with tempfile.TemporaryDirectory(prefix="alis-reload-notification-") as folder:
     root = Path(folder)
     for name in ("modules", "GlobalStates.qml", "qmldir", "assets", "scripts", "defaults", "translations"):
         (root / name).symlink_to(repo / name)
@@ -32,7 +32,7 @@ Singleton {
     config.mkdir(parents=True)
     shutil.copy(repo / "defaults/config.json", config / "config.json")
     (root / "shell.qml").write_text(r'''
-//@ pragma ShellId hadalis-reload-notification-test
+//@ pragma ShellId alis-reload-notification-test
 import QtQuick
 import Quickshell
 import Quickshell.Io

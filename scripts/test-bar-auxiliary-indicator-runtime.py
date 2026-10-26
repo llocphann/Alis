@@ -7,7 +7,7 @@ import tempfile
 from native_test_session import private_wayland, run_qs
 
 ROOT = Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix="hadalis-indicator-geometry-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-indicator-geometry-") as name:
     shell = Path(name)
     for entry in ("modules", "services", "GlobalStates.qml", "qmldir", "assets", "scripts", "defaults", "translations"):
         (shell / entry).symlink_to(ROOT / entry)

@@ -61,9 +61,9 @@ with tempfile.TemporaryDirectory(prefix="alis-companion-managed-") as td:
     (source / "Makefile").write_text("install:\n\tpython3 scripts/stub_install.py\n")
     (source / "manifest.json").write_text(json.dumps({
         "id":"alis-companion", "hostApi":1, "version":"fixture",
-        "session":"HadalisSession.qml", "output":"HadalisOutput.qml",
+        "session":"AlisSession.qml", "output":"AlisOutput.qml",
         "settings":"modules/settings/CompanionConfig.qml",
-        "binary":"native/bin/inir-companiond"
+        "binary":"native/bin/alis-companiond"
     }))
     cmd("git","add","-A",cwd=source)
     cmd("git","-c","user.name=Fixture","-c","user.email=fixture@example.invalid",
@@ -71,7 +71,7 @@ with tempfile.TemporaryDirectory(prefix="alis-companion-managed-") as td:
     first = cmd("git","rev-parse","HEAD",cwd=source).stdout.strip()
     # The pinned upstream package intentionally uses this historical daemon
     # name. Alis must accept it without renaming the package's signed files.
-    assert json.loads((source/"manifest.json").read_text())["binary"] == "native/bin/inir-companiond"
+    assert json.loads((source/"manifest.json").read_text())["binary"] == "native/bin/alis-companiond"
     remote = root / "remote.git"
     cmd("git","clone","--bare","-q",str(source),str(remote))
     cmd("git","remote","add","origin",str(remote),cwd=source)

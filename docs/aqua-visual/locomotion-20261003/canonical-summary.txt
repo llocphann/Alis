@@ -1,4 +1,4 @@
-HADALIS VALIDATION SUMMARY
+ALIS VALIDATION SUMMARY
 Exact SHA: bea5a3b3880e03b5d081fca3a4df5630bb11aa71
 Result: FAIL
 Checks run: 409
@@ -41,7 +41,7 @@ Failed checks:
   - shell regression: scripts/test-abyss-network-popups.sh (exit 1)
   - shell regression: scripts/test-abyss-osd-content.sh (exit 1)
   - shell regression: scripts/test-abyss-utilities-popup.sh (exit 1)
-  - shell regression: scripts/test-hadalis-desktop-repair.sh (exit 2)
+  - shell regression: scripts/test-alis-desktop-repair.sh (exit 2)
   - shell regression: scripts/test-megaqml-phase2-local.sh (exit 64)
   - shell regression: scripts/test-megaqml-quickshell-smoke.sh (exit 64)
   - shell regression: scripts/test-megaqml-ui-loader-local.sh (exit 64)
@@ -61,5 +61,5 @@ Environment-dependent / release-only checks not run by daily validation:
   - multi-monitor/hotplug/suspend-resume/fractional-scaling/focus/fullscreen acceptance
   - live audio/hardware behavior that requires the real desktop session
   - GitHub release publication, Wiki remote access, and hosted release permissions
-FINAL LOG: /tmp/hadalis-maintainer-validation-20261003-231614.log
+FINAL LOG: /tmp/alis-maintainer-validation-20261003-231614.log
 ========================================

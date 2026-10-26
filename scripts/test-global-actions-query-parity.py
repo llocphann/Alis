@@ -49,7 +49,7 @@ console.log('GLOBAL_ACTION_QUERY_NODE_PASS',cases,'exact refs/order/read phases/
 '''
 subprocess.run(["node", "-e", "const OLD=" + json.dumps(old) + ";const NEW=" + json.dumps(new) + ";\n" + program], check=True, cwd=ROOT)
 
-with tempfile.TemporaryDirectory(prefix="hadalis-global-action-query-") as name:
+with tempfile.TemporaryDirectory(prefix="alis-global-action-query-") as name:
     folder = Path(name)
     for entry in ["modules", "services", "GlobalStates.qml", "qmldir", "assets", "scripts", "defaults", "translations"]:
         (folder / entry).symlink_to(ROOT / entry)

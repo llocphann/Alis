@@ -27,8 +27,8 @@ WSettingsPage {
         id: content
         Layout.fillWidth: true
         Layout.preferredHeight: item?.implicitHeight ?? 0
-        active: root.visible && Hadalird.tlpEnabled
-        source: Hadalird.settingsSource("tlpWaffle")
+        active: root.visible && AlisIntergration.tlpEnabled
+        source: AlisIntergration.settingsSource("tlpWaffle")
         onLoaded: {
             const savedFilter = root.filterText
             item.selectedCategoryIndex = root.selectedCategoryIndex

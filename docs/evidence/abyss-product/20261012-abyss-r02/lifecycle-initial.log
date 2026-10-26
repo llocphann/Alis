@@ -1,13 +1,13 @@
 PASS: Abyss shader lifecycle valid
 Traceback (most recent call last):
   File "<stdin>", line 58, in <module>
-AssertionError:   INFO: Launching config: "/tmp/hadalis-abyss-shader-c7efa7ab/shell.qml"
-  INFO: Shell ID: "hadalis-abyss-shader-test" Path ID "3573f424d484d95b745c7f3ca9a10c7c"
+AssertionError:   INFO: Launching config: "/tmp/alis-abyss-shader-c7efa7ab/shell.qml"
+  INFO: Shell ID: "alis-abyss-shader-test" Path ID "3573f424d484d95b745c7f3ca9a10c7c"
   INFO: Saving logs to "/run/user/1000/quickshell/by-id/3w5pi23smt/log.qslog"
   WARN: --- WARNING ---
   WARN: WAYLAND_DISPLAY is present but QT_QPA_PLATFORM is "offscreen"
   WARN: If you are actually running wayland, set QT_QPA_PLATFORM to "wayland" or most functionality will be broken.
-  WARN quickshell.qmlscanner: Ignoring unresolvable import "/tmp/hadalis-abyss-shader-c7efa7ab/AbyssGeometry.js" from "/tmp/hadalis-abyss-shader-c7efa7ab/BrokenField.qml"
+  WARN quickshell.qmlscanner: Ignoring unresolvable import "/tmp/alis-abyss-shader-c7efa7ab/AbyssGeometry.js" from "/tmp/alis-abyss-shader-c7efa7ab/BrokenField.qml"
   WARN scene: @BrokenField.qml[6:1]: Script qs:@/qs/AbyssGeometry.js unavailable
   WARN scene: @AbyssGeometry.js[-1:-1]: File not found
   INFO: Configuration Loaded

@@ -25,8 +25,8 @@
       "sha256": "efd7a9fc4bd732f1a795d2e2bee4f7de2689685cf645ac08d10636eb095392d6"
     }
   ],
-  "interaction_log": "hadalis-widget-editor-final-20261004.log",
-  "aqua_proposal_log": "hadalis-aqua-segment-proposal-20261004.log",
+  "interaction_log": "alis-widget-editor-final-20261004.log",
+  "aqua_proposal_log": "alis-aqua-segment-proposal-20261004.log",
   "aqua_proposal_source_sha": "9a0146f03a92fdf3abe888e933b69f007785e83b",
   "aqua_proposal_scope": "Pre-edit scalar-bound proposal; integrated production evidence is test-aqua-segment-allocations.log in canonical-focused-outputs.json",
   "owner_session_acceptance": "HOLD / NOT_COMPLETE",

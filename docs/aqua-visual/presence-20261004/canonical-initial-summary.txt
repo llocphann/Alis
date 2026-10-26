@@ -1,4 +1,4 @@
-HADALIS VALIDATION SUMMARY
+ALIS VALIDATION SUMMARY
 Exact SHA: 79490997ee146a6ef2428ce1abe45e53683ec071
 Result: FAIL
 Checks run: 410
@@ -42,7 +42,7 @@ Failed checks:
   - shell regression: scripts/test-abyss-osd-content.sh (exit 1)
   - shell regression: scripts/test-abyss-utilities-popup.sh (exit 1)
   - shell regression: scripts/test-anti-flashbang-sampler.sh (exit 1)
-  - shell regression: scripts/test-hadalis-desktop-repair.sh (exit 2)
+  - shell regression: scripts/test-alis-desktop-repair.sh (exit 2)
   - shell regression: scripts/test-megaqml-phase2-local.sh (exit 64)
   - shell regression: scripts/test-megaqml-quickshell-smoke.sh (exit 64)
   - shell regression: scripts/test-megaqml-ui-loader-local.sh (exit 64)
@@ -62,5 +62,5 @@ Environment-dependent / release-only checks not run by daily validation:
   - multi-monitor/hotplug/suspend-resume/fractional-scaling/focus/fullscreen acceptance
   - live audio/hardware behavior that requires the real desktop session
   - GitHub release publication, Wiki remote access, and hosted release permissions
-FINAL LOG: /tmp/hadalis-aqua-presence-79490997e.log
+FINAL LOG: /tmp/alis-aqua-presence-79490997e.log
 ========================================

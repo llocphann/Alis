@@ -9,7 +9,7 @@
   "live_visual_acceptance": "not_run",
   "checks": [
     {
-      "check": "iris-production",
+      "check": "abyss-production",
       "exit_code": 0,
       "duration_seconds": 0.03,
       "status": "pass",

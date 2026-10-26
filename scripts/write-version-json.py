@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write package-managed Hadalis install metadata as valid JSON."""
+"""Write package-managed Alis install metadata as valid JSON."""
 
 from __future__ import annotations
 

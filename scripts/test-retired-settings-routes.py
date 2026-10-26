@@ -56,7 +56,7 @@ class RetiredSettingsRoutesTest(unittest.TestCase):
         ci = source(".github/workflows/ci.yml")
         self.assertIn("python3 scripts/test-retired-settings-routes.py", ci)
         self.assertNotIn("scripts/test-AUTO-F01-", ci)
-        self.assertNotIn("scripts/test-hadalis-automation-", ci)
+        self.assertNotIn("scripts/test-alis-automation-", ci)
         self.assertFalse((ROOT / ".github/workflows/auto-f01.yml").exists())
         self.assertIn("SettingsPageRegistry", source("settings.qml"))
 

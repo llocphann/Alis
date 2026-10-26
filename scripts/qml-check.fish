@@ -44,7 +44,7 @@ for candidate in qmlformat6 /usr/lib/qt6/bin/qmlformat /usr/lib/x86_64-linux-gnu
 end
 
 # Ubuntu 24.04 ships Qt 6.4, which rejects valid modern syntax used by
-# current Hadalis/Quickshell QML. qmlformat may report its own tool version
+# current Alis/Quickshell QML. qmlformat may report its own tool version
 # (for example "qmlformat 1.0"), so resolve the Qt runtime version separately.
 # Treat Qt < 6.8 as unavailable instead of producing false startup failures.
 set -l parser_skip_reason ""
@@ -52,7 +52,7 @@ set -l parser_unknown_direct 0
 if test -n "$parser"
     set -l parser_qt_version (bash "$project_root/scripts/lib/qml-parser-qt-version.sh" "$parser" 2>/dev/null | head -1)
     if test -z "$parser_qt_version"
-        if test "$HADALIS_QMLFORMAT_ALLOW_UNKNOWN" = "1"
+        if test "$ALIS_QMLFORMAT_ALLOW_UNKNOWN" = "1"
             set parser_unknown_direct 1
         else
             set parser_skip_reason "qmlformat Qt version could not be determined"

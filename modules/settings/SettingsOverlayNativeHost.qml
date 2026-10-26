@@ -13,11 +13,11 @@ PanelWindow {
     // Both external pkexec agents and the shell's own Polkit window must
     // overlay Settings. Never promote Settings to Top during authentication.
     WlrLayershell.layer: (GlobalStates.settingsNativeDialogOpen
-        || Hadalird.authorizationPending || PolkitService.active)
+        || AlisIntergration.authorizationPending || PolkitService.active)
         ? WlrLayer.Bottom : WlrLayer.Overlay
     WlrLayershell.keyboardFocus: controller?.settingsOpen
         && !GlobalStates.regionSelectorOpen && !GlobalStates.settingsNativeDialogOpen
-        && !PolkitService.active && !Hadalird.authorizationPending
+        && !PolkitService.active && !AlisIntergration.authorizationPending
         ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     color: "transparent"
     anchors { top: true; bottom: true; left: true; right: true }

@@ -1,6 +1,6 @@
 # Aqua Visual First — original reference asset integrity checkpoint (2026-10-03)
 
-Repository `llocphann/Hadalis`, branch `dev`; managed profile `profile-1e0042aca8e24db2`. Pre-write observed HEAD `f292351e2450aa07d97a9b1353367d4fb4e77593`. Read and followed unchanged `AGENTS.md`, `to-do/README.md` and `automation/worker/README.md`. The most recent prior visual checkpoint is `docs/aqua-visual/runs/20261002T190454Z-b04003/checkpoint.md`. The production `modules/abyss/companion/AbyssCompanion.qml` still has `border.width: 0` (verified blob `714ac71485b67fa242cde62f6296962f56f9b3f5`); do not repeat prior baseline/A/B jobs.
+Repository `llocphann/Alis`, branch `dev`; managed profile `profile-1e0042aca8e24db2`. Pre-write observed HEAD `f292351e2450aa07d97a9b1353367d4fb4e77593`. Read and followed unchanged `AGENTS.md`, `to-do/README.md` and `automation/worker/README.md`. The most recent prior visual checkpoint is `docs/aqua-visual/runs/20261002T190454Z-b04003/checkpoint.md`. The production `modules/abyss/companion/AbyssCompanion.qml` still has `border.width: 0` (verified blob `714ac71485b67fa242cde62f6296962f56f9b3f5`); do not repeat prior baseline/A/B jobs.
 
 ## Source identity discovery
 

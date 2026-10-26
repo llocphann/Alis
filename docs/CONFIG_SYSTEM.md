@@ -12,17 +12,17 @@ The canonical config file used by live QML is:
 ~/.config/alis/config.json
 ```
 
-The CLI and installer prefer the Alis directory when it exists. Before cutover, they can still read an existing `illogical-impulse` or `inir` directory. Those legacy directories and saved preferences are migration inputs; renaming the product must not silently replace or discard them.
+The CLI and installer prefer the Alis directory when it exists. Before cutover, they can still read an existing `illogical-impulse` or `alis` directory. Those legacy directories and saved preferences are migration inputs; renaming the product must not silently replace or discard them.
 
-Migration 019 is historical: it moves the original `illogical-impulse` directory into `inir` and creates a compatibility symlink. Its recovery contract is preserved, including refusal to overwrite divergent real directories or foreign symlinks. Canonical Alis installations skip that migration. Do not run old migration 019 to prepare an Alis installation.
+Migration 019 is historical: it moves the original `illogical-impulse` directory into `alis` and creates a compatibility symlink. Its recovery contract is preserved, including refusal to overwrite divergent real directories or foreign symlinks. Canonical Alis installations skip that migration. Do not run old migration 019 to prepare an Alis installation.
 
 Repo-managed `./setup install` and update flows apply eligible migrations automatically after the canonical configuration and service ownership are ready. Package managers and manual `make install` deliberately do not mutate arbitrary user home directories. Fresh users must prepare the canonical Alis config before running migrations. Upgrading users must back up settings, reconcile config/state, verify active Niri keybinds and complete an owner-approved single-service handoff before running `alis migrate`. For a repo-copy upgrade, review the staging, cutover and recovery steps in [Canonical Alis cutover](BRAND_R01_CANONICAL_CUTOVER.md). Package-managed upgrades must preserve their package-manager ownership boundary. Do not run another user's config migration as root.
 
 ### Historical Alis directory aliases
 
-Migration `061-alis-namespace-alias` remains historical compatibility support for `alis` symlinks to existing `inir` directories under the user's XDG config, cache, data and state homes. It does not rename or copy a directory and skips occupied destinations, including real directories or unrelated symlinks. An alias is not a complete canonical runtime or service handoff; do not use it to bypass the cutover preflight.
+Migration `061-alis-namespace-alias` remains historical compatibility support for `alis` symlinks to existing `alis` directories under the user's XDG config, cache, data and state homes. It does not rename or copy a directory and skips occupied destinations, including real directories or unrelated symlinks. An alias is not a complete canonical runtime or service handoff; do not use it to bypass the cutover preflight.
 
-To reverse a historical alias, verify that the affected `alis` path is a symlink to `inir`, then remove only the symlink, preserving the directory it points to. A canonical config directory created by the cutover contains copied user data and must not be removed as though it were an alias.
+To reverse a historical alias, verify that the affected `alis` path is a symlink to `alis`, then remove only the symlink, preserving the directory it points to. A canonical config directory created by the cutover contains copied user data and must not be removed as though it were an alias.
 
 Changes you make in the file are picked up automatically within 50ms. No restart needed.
 

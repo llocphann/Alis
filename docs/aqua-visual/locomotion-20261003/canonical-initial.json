@@ -11,7 +11,7 @@
   "aqua_python_pass": 72,
   "aqua_python_fail": 4,
   "log_sha256": "7bf4402ab33c7f98dcc6ad81c075f507ad428219865830c72e4272b48e90d4a1",
-  "private_log_path": "/tmp/hadalis-maintainer-validation-20261003-230017.log",
+  "private_log_path": "/tmp/alis-maintainer-validation-20261003-230017.log",
   "failed_checks": [
     {
       "check": "Python regression: scripts/test-abyss-dock-menu-axis-contract.py",
@@ -162,7 +162,7 @@
       "exit": 1
     },
     {
-      "check": "shell regression: scripts/test-hadalis-desktop-repair.sh",
+      "check": "shell regression: scripts/test-alis-desktop-repair.sh",
       "exit": 2
     },
     {

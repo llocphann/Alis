@@ -1,0 +1,14 @@
+  INFO: Launching config: "/tmp/alis-popup-hover-vhbrrn4g/shell.qml"
+  INFO: Shell ID: "7d0529ad1b606954cc320fd962e379b1" Path ID "7d0529ad1b606954cc320fd962e379b1"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/jag7ubhomt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.347683.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[305:5]: Read of /tmp/alis-popup-hover-vhbrrn4g/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[326:5]: Read of /tmp/alis-popup-hover-vhbrrn4g/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[305:5]: Read of /tmp/alis-popup-hover-vhbrrn4g/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+ ERROR qml: POPUP_ANCHOR_HOVER_FAIL dwelling on the visible left connection closed the popup: {"content":{"x":54,"y":150,"width":180,"height":100},"input":{"x":8,"y":136,"width":240,"height":128,"left":8,"right":248,"top":136,"bottom":264},"x":14,"y":200,"edge":"left"} check@qs:@/qs/shell.qml:95
+runChecks@qs:@/qs/shell.qml:125
+expression for onTriggered@qs:@/qs/shell.qml:222
+

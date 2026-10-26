@@ -1,18 +1,18 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="Alis" width="800">
 </p>
 
-<h1 align="center">iNiR</h1>
+<h1 align="center">Alis</h1>
 
 <p align="center">
   <b>Niri के लिए Quickshell पर बना एक पूर्ण डेस्कटॉप शेल</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
-  <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/snowarch/alis/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/alis/stargazers"><img src="https://img.shields.io/github/stars/snowarch/alis?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
@@ -41,11 +41,11 @@
 
 ### ये क्या है?
 
-iNiR आपका पूरा डेस्कटॉप है। ऊपर की बार, डॉक, नोटिफिकेशन, सेटिंग्स, वॉलपेपर, सब कुछ। ये थीम नहीं है, कॉपी-पेस्ट करने वाली dotfiles नहीं है। Linux पर चलने वाला एक पूरा शेल है।
+Alis आपका पूरा डेस्कटॉप है। ऊपर की बार, डॉक, नोटिफिकेशन, सेटिंग्स, वॉलपेपर, सब कुछ। ये थीम नहीं है, कॉपी-पेस्ट करने वाली dotfiles नहीं है। Linux पर चलने वाला एक पूरा शेल है।
 
 ### चलाने के लिए क्या चाहिए?
 
-एक compositor। ये वो चीज़ है जो विंडोज़ को मैनेज करती है और स्क्रीन पर पिक्सल्स डालती है। iNiR [Niri](https://github.com/YaLTeR/niri) (एक tiling Wayland compositor) के लिए बना है। end-4 के dots से फोर्क होने के समय का पुराना Hyprland कोड है, लेकिन असल में टेस्ट और इस्तेमाल Niri होता है।
+एक compositor। ये वो चीज़ है जो विंडोज़ को मैनेज करती है और स्क्रीन पर पिक्सल्स डालती है। Alis [Niri](https://github.com/YaLTeR/niri) (एक tiling Wayland compositor) के लिए बना है। end-4 के dots से फोर्क होने के समय का पुराना Hyprland कोड है, लेकिन असल में टेस्ट और इस्तेमाल Niri होता है।
 
 शेल [Quickshell](https://quickshell.outfoxxed.me/) पर चलता है, QML (Qt की UI भाषा) में शेल बनाने का फ्रेमवर्क। इसे जानने की ज़रूरत नहीं, सब कुछ GUI या JSON फाइल से configure होता है।
 
@@ -54,7 +54,7 @@ iNiR आपका पूरा डेस्कटॉप है। ऊपर क�
 ```
 आपकी apps
    ↓
-iNiR (शेल: बार, साइडबार, डॉक, नोटिफिकेशन, सेटिंग्स...)
+Alis (शेल: बार, साइडबार, डॉक, नोटिफिकेशन, सेटिंग्स...)
    ↓
 Quickshell (QML शेल चलाता है)
    ↓
@@ -67,7 +67,7 @@ Wayland → GPU
 
 ये एक personal project है जो हाथ से निकल गया। मैं रोज़ इस्तेमाल करता हूँ, Discord पर बहुत लोग भी। लेकिन कभी-कभी टूटता है, कोड जगह-जगह गंदा है, करते-करते सीख रहा हूँ।
 
-कुछ काम नहीं करे तो `inir doctor` ज़्यादातर ठीक कर देता है। वो भी नहीं हुआ तो Discord active है। polished software की उम्मीद मत रखो, ये एक आदमी का rice है जो दूसरों को पसंद आ गया।
+कुछ काम नहीं करे तो `alis doctor` ज़्यादातर ठीक कर देता है। वो भी नहीं हुआ तो Discord active है। polished software की उम्मीद मत रखो, ये एक आदमी का rice है जो दूसरों को पसंद आ गया।
 
 ### ये क्यों exist करता है?
 
@@ -78,7 +78,7 @@ Wayland → GPU
 - **Shell**: UI layer (बार, पैनल, overlays)
 - **Compositor**: विंडोज़ मैनेज करता है, स्क्रीन पर ड्रॉ करता है (Niri, Hyprland, Sway...)
 - **Wayland**: Linux का display protocol (नया वाला, X11 की जगह)
-- **QML**: Qt की declarative UI भाषा, iNiR इसमें लिखा है
+- **QML**: Qt की declarative UI भाषा, Alis इसमें लिखा है
 - **Material You**: Google का color system जो इमेज से palette बनाता है (auto-theming ऐसे काम करता है)
 - **ii / waffle**: दो panel styles। ii = Material Design वाइब, waffle = Windows 11 वाइब। `Super+Shift+W` से switch करो
 
@@ -174,7 +174,7 @@ Wayland → GPU
 
 - **GUI सेटिंग्स** — फ़ाइलें संपादित किए बिना सब कुछ कॉन्फ़िगर करें
 - **GameMode** — फ़ुलस्क्रीन ऐप्स के लिए इफ़ेक्ट्स स्वचालित रूप से अक्षम
-- **ऑटो-अपडेट** — `inir update`, रोलबैक, माइग्रेशन, और उपयोगकर्ता परिवर्तन संरक्षण के साथ
+- **ऑटो-अपडेट** — `alis update`, रोलबैक, माइग्रेशन, और उपयोगकर्ता परिवर्तन संरक्षण के साथ
 - **लॉक स्क्रीन** और **सेशन स्क्रीन** (लॉगआउट/रीस्टार्ट/शटडाउन/सस्पेंड)
 - **Polkit एजेंट**, **ऑन-स्क्रीन कीबोर्ड**, **ऑटोस्टार्ट मैनेजर**
 - **9 भाषाएँ** — ऑटो-डिटेक्शन, AI-सहायित अनुवाद जनरेशन के साथ
@@ -190,27 +190,27 @@ Wayland → GPU
 ## त्वरित शुरुआत
 
 ```bash
-git clone https://github.com/snowarch/inir.git
-cd inir
+git clone https://github.com/snowarch/alis.git
+cd alis
 ./setup install       # इंटरैक्टिव — हर चरण पर पूछता है
 ./setup install -y    # स्वचालित — बिना पूछे इंस्टॉल
 ```
 
-इंस्टॉलर डिपेंडेंसी, सिस्टम कॉन्फ़िग, थीमिंग — सब संभालता है। इंस्टॉल के बाद `inir run` चलाएँ, या लॉगआउट करके वापस लॉगिन करें।
+इंस्टॉलर डिपेंडेंसी, सिस्टम कॉन्फ़िग, थीमिंग — सब संभालता है। इंस्टॉल के बाद `alis run` चलाएँ, या लॉगआउट करके वापस लॉगिन करें।
 
 ```bash
-inir run                        # शेल शुरू करें
-inir settings                   # सेटिंग्स GUI खोलें
-inir logs                       # रनटाइम लॉग देखें
-inir doctor                     # ऑटो-डायग्नोस और ठीक करें
-inir update                     # pull + माइग्रेशन + रीस्टार्ट
+alis run                        # शेल शुरू करें
+alis settings                   # सेटिंग्स GUI खोलें
+alis logs                       # रनटाइम लॉग देखें
+alis doctor                     # ऑटो-डायग्नोस और ठीक करें
+alis update                     # pull + माइग्रेशन + रीस्टार्ट
 ```
 
 **समर्थित डिस्ट्रो:** Arch (स्वचालित इंस्टॉलर)। अन्य डिस्ट्रो मैन्युअल रूप से इंस्टॉल कर सकते हैं — देखें [PACKAGES.md](../../PACKAGES.md)।
 
 | तरीक़ा | कमांड |
 |--------|---------|
-| सिस्टम इंस्टॉल | `sudo make install && inir run` |
+| सिस्टम इंस्टॉल | `sudo make install && alis run` |
 | TUI मेन्यू | `./setup` |
 | रोलबैक | `./setup rollback` |
 
@@ -234,7 +234,7 @@ inir update                     # pull + माइग्रेशन + रीस
 
 ## वॉलपेपर
 
-15 वॉलपेपर शामिल हैं। और चाहिए तो [iNiR-Walls](https://github.com/snowarch/iNiR-Walls) देखें — Material You पाइपलाइन के साथ अच्छा काम करने वाला एक क्यूरेटेड कलेक्शन।
+15 वॉलपेपर शामिल हैं। और चाहिए तो [Alis-Walls](https://github.com/snowarch/Alis-Walls) देखें — Material You पाइपलाइन के साथ अच्छा काम करने वाला एक क्यूरेटेड कलेक्शन।
 
 ---
 
@@ -255,9 +255,9 @@ inir update                     # pull + माइग्रेशन + रीस
 ## समस्या निवारण
 
 ```bash
-inir logs                       # हाल के रनटाइम लॉग देखें
-inir restart                    # सक्रिय रनटाइम रीस्टार्ट करें
-inir repair                     # doctor + रीस्टार्ट + फ़िल्टर्ड लॉग जाँच
+alis logs                       # हाल के रनटाइम लॉग देखें
+alis restart                    # सक्रिय रनटाइम रीस्टार्ट करें
+alis repair                     # doctor + रीस्टार्ट + फ़िल्टर्ड लॉग जाँच
 ./setup doctor                  # सामान्य समस्याओं का ऑटो-डायग्नोस और ठीक
 ./setup rollback                # आख़िरी अपडेट पूर्ववत करें
 ```
@@ -281,7 +281,7 @@ inir repair                     # doctor + रीस्टार्ट + फ़�
 ---
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/graphs/contributors">योगदानकर्ता</a> &bull;
+  <a href="https://github.com/snowarch/alis/graphs/contributors">योगदानकर्ता</a> &bull;
   <a href="CHANGELOG.md">चेंजलॉग</a> &bull;
   <a href="LICENSE">GPL-3.0 लाइसेंस</a>
 </p>

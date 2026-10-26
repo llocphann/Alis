@@ -1,8 +1,8 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
 
-> Companion implementation and remaining product tasks belong to [Alis-Companion](https://github.com/llocphann/Alis-Companion). Original Hadalis receipts keep their original scope.
+> Companion implementation and remaining product tasks belong to [Alis-Companion](https://github.com/llocphann/Alis-Companion). Original Alis receipts keep their original scope.
 
-<!-- hadalis-doc-kind: research -->
+<!-- alis-doc-kind: research -->
 
 # Aqua — nested Niri real pointer acceptance design
 
@@ -35,7 +35,7 @@ an actual pointer event as intended. Do not change production mask yet.
 
 - `scripts/aqua-fixtures/pointer-underlay/shell.qml` is a separate,
   full-output `WlrLayer.Bottom` PanelWindow with namespace
-  `hadalis:aqua-pointer-underlay`, no keyboard focus and a click witness.
+  `alis:aqua-pointer-underlay`, no keyboard focus and a click witness.
   It has no production loader, Aqua enablement or virtual input capability.
   Its `AQUA_POINTER_UNDERLAY_PRESS` coordinates appear only in private
   test logs. It must be launched only inside an owned nested Niri socket.
@@ -67,7 +67,7 @@ an actual pointer event as intended. Do not change production mask yet.
    Never run underlay on the real host display.
 3. **Production**: run the real unchanged Abyss production fixture with
    its own isolated XDG directories and D-Bus, pinned private release
-   `inir-companiond`, default-off and temporarily enabled phases.
+   `alis-companiond`, default-off and temporarily enabled phases.
    For pointer tests only, explicitly set
    `abyss.companion.interactive=true`, `edge=top`, `along=.72`,
    `size=1`, and a known nested output. Do not persist any user config.
@@ -128,7 +128,7 @@ independent outstanding gates.
 The source-only fixture `scripts/aqua-fixtures/pointer-underlay/companion-relay.py`
 was staged in `f8116f4000b40265648e8a20f0d6f29fa16b1012`. A future nested
 runner may explicitly point the real production bridge's private
-`INIR_COMPANIOND` override to this narrowly guarded executable while the
+`ALIS_COMPANIOND` override to this narrowly guarded executable while the
 relay itself starts the **real exact-source private Rust binary**. It
 preserves newline JSON stdio, records only bounded private
 `real_bridge_click_received` markers for v1 click events, and observes
@@ -327,7 +327,7 @@ was published on source
 `391d8e81d4617a6dbdb1199d009db4e0970ce073` and is **PASS**.
 The separately owned one-output nested Niri had distinct verified
 Wayland and IPC sockets, zero preexisting witness/production namespaces,
-and a privately built REAL Rust `inir-companiond`. The precise
+and a privately built REAL Rust `alis-companiond`. The precise
 native backend was `forced_wlr_protocols_wdotool`.
 The underlay separately confirmed *correct requested actual coordinates*
 for both the Aqua-disabled body-center control and Aqua-enabled exterior
@@ -533,7 +533,7 @@ receipt-symlink check fixed
 takes that ONE sanitized report and finds its
 private exact-run underlay log by the report's
 random session ID in the current user's
-`XDG_STATE_HOME/hadalis/aqua-pointer-<id>`
+`XDG_STATE_HOME/alis/aqua-pointer-<id>`
 (or `~/.local/state`). It requires the exact
 five-check observed sequence, exactly three
 real left-click underlay witnesses, valid
@@ -584,7 +584,7 @@ production, or assert a virtual-pointer backend fault.
 `dc06dd36aabc688f1945205bb4a814c58f91d90e`) is a separate
 **explicit opt-in retrospective** publisher. It requires a fresh,
 clean, permission-private `dev` clone under
-`${XDG_STATE_HOME:-~/.local/state}/hadalis/aqua-drift-publish.*/repo`,
+`${XDG_STATE_HOME:-~/.local/state}/alis/aqua-drift-publish.*/repo`,
 verifies the trusted GitHub origin/push URLs, exact old public
 report blob, exact reviewed read-only diagnostic script blob and
 ancestry of the original source SHA, and reads ONLY the original
@@ -1765,12 +1765,12 @@ It requires a clean
 current-user-owned,
 mode-0700, specifically
 named `XDG_STATE_HOME/
-hadalis/aqua-motion-inert.*`
+alis/aqua-motion-inert.*`
 scratch directory.
 It accepts only verified
 fetch AND exactly one
 push remote for the known
-Hadalis GitHub repository,
+Alis GitHub repository,
 checks the reviewed parent
 commit is an ancestor,
 pins Git BLOB hashes
@@ -2249,7 +2249,7 @@ The next separately qualified gate has been SOURCE STAGED only; no local dynamic
 - \`scripts/aqua-manual-offscreen-dynamic-geometry.py\` exact blob \`71262816d9d64c97061c90e03bed9acee76bdc18\` reuses the reviewed private-clone/source/remote safety guard of the frozen runner and additionally pins this dynamic fixture plus the first exact frozen receipt. The current local Quickshell MUST report version 0.3.1 to match that receipt; original Qt library version remains unrecorded and must not be inferred. A separate private D-Bus session launches \`QT_QPA_PLATFORM=offscreen\` Quickshell with inherited Wayland/Niri/display variables stripped. The child process has a 512 KiB file-size limit for its PRIVATE log; wait is bounded, surviving owned process-group children are terminated, and raw measurements stay local. A fresh unique \`docs/aqua-qt-dynamic-*.json\` may be pushed without force only after a fully parsed allowlisted 12-host sample matrix, with sanitized categorical results and source SHA. PASS certifies only the controlled, observed sampled frames and required per-host motion witnesses; missing/ambiguous witnesses yield INCONCLUSIVE or stop. It does NOT prove the global spring extrema, visually painted Bézier pixels, Rust-sourced state traces, actual Wayland Region/hover/click, multi-output/fractional scaling, or long-run quality.
 - \`scripts/test-aqua-offscreen-dynamic-geometry-contract.py\` exact blob \`08ca436a007d5d78831655644bee455d77f4cd28\` is an independent inert/synthetic contract. It pins the dynamic runner/fixture and original frozen dependencies, checks the strict reporting schema and redaction, tests the expected 12-host cross-product and intentionally malformed, absent and false-witness cases, and statically guards private offscreen execution/no pointer tooling/non-force receipt-only publication. It has NOT been observed running on the maintainer's computer. No first-run FAIL/PASS claim should be inferred from source staging.
 
-**NEXT SINGLE LOCAL GATE**: use ONE new clean current-user-owned private \`dev\` clone, distinct from prior runs, rooted in a mode-0700 \`XDG_STATE_HOME/hadalis/aqua-qt-motion.*\` scratch. Run ONLY \`python3 scripts/test-aqua-offscreen-dynamic-geometry-contract.py\` first. Require its exact \`AQUA_OFFSCREEN_DYNAMIC_INERT_CONTRACT_PASS\` output. Only then invoke the acknowledged existing \`python3 scripts/aqua-manual-offscreen-dynamic-geometry.py --acknowledge-private-offscreen-dynamic-motion\` on that same clone; it fetches and guards latest source itself. Inspect the exact new sanitized report on GitHub before another experiment. A local contract failure is NOT permission to edit the pinned fixture or blindly rerun. Production full-host Region, default-off Aqua, original Rust backend and \`stable\` are unchanged. No real pointer input or original user shell may be started at this stage.
+**NEXT SINGLE LOCAL GATE**: use ONE new clean current-user-owned private \`dev\` clone, distinct from prior runs, rooted in a mode-0700 \`XDG_STATE_HOME/alis/aqua-qt-motion.*\` scratch. Run ONLY \`python3 scripts/test-aqua-offscreen-dynamic-geometry-contract.py\` first. Require its exact \`AQUA_OFFSCREEN_DYNAMIC_INERT_CONTRACT_PASS\` output. Only then invoke the acknowledged existing \`python3 scripts/aqua-manual-offscreen-dynamic-geometry.py --acknowledge-private-offscreen-dynamic-motion\` on that same clone; it fetches and guards latest source itself. Inspect the exact new sanitized report on GitHub before another experiment. A local contract failure is NOT permission to edit the pinned fixture or blindly rerun. Production full-host Region, default-off Aqua, original Rust backend and \`stable\` are unchanged. No real pointer input or original user shell may be started at this stage.
 
 
 ## Motion-aware input target acceptance hypothesis (DESIGN ONLY; 2026-10-02)

@@ -225,7 +225,7 @@ def main() -> int:
         print(f"Rust binary not found: {rust_binary}", file=sys.stderr)
         return 2
 
-    with tempfile.TemporaryDirectory(prefix="hadalis-niri-write-parity.") as temporary:
+    with tempfile.TemporaryDirectory(prefix="alis-niri-write-parity.") as temporary:
         temp = Path(temporary)
         mock_bin = temp / "mock-bin"
         mock_bin.mkdir()

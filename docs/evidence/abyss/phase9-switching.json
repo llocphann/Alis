@@ -20,7 +20,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -50,7 +50,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -66,7 +66,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -99,7 +99,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -129,7 +129,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -145,7 +145,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -178,7 +178,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -208,7 +208,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -224,7 +224,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -257,7 +257,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -287,7 +287,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -303,7 +303,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -336,7 +336,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -366,7 +366,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -382,7 +382,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -415,7 +415,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -445,7 +445,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -461,7 +461,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -494,7 +494,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -524,7 +524,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -540,7 +540,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -573,7 +573,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -603,7 +603,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -619,7 +619,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -652,7 +652,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -682,7 +682,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -698,7 +698,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -731,7 +731,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -761,7 +761,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -777,7 +777,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -810,7 +810,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -840,7 +840,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -856,7 +856,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -889,7 +889,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -919,7 +919,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -935,7 +935,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -968,7 +968,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -998,7 +998,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1014,7 +1014,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -1047,7 +1047,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1077,7 +1077,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1093,7 +1093,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -1126,7 +1126,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1156,7 +1156,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1172,7 +1172,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -1205,7 +1205,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1235,7 +1235,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1251,7 +1251,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -1284,7 +1284,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1314,7 +1314,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1330,7 +1330,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -1363,7 +1363,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1393,7 +1393,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1409,7 +1409,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -1442,7 +1442,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1472,7 +1472,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1488,7 +1488,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -1521,7 +1521,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1551,7 +1551,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1567,7 +1567,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -1600,7 +1600,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1630,7 +1630,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1646,7 +1646,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -1679,7 +1679,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1709,7 +1709,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1725,7 +1725,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -1758,7 +1758,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1788,7 +1788,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1804,7 +1804,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],
@@ -1837,7 +1837,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1867,7 +1867,7 @@
             true
           ],
           "perimeter_painters": [
-            "hadalis:abyss-perimeter"
+            "alis:abyss-perimeter"
           ]
         },
         {
@@ -1883,7 +1883,7 @@
             false
           ],
           "perimeter_painters": [
-            "hadalis:screen-edge-frame"
+            "alis:screen-edge-frame"
           ]
         }
       ],

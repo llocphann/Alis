@@ -16,14 +16,14 @@ QtObject {
             Number(Config.options?.appearance?.screenEdge?.radius ?? 25)))
     }
 
-    // iRiS StyledPopup contact geometry is an exact SDF smooth union validated
+    // Abyss StyledPopup contact geometry is an exact SDF smooth union validated
     // by the real G1/G2 matrices. It is the only active curved contact renderer;
     // legacy Canvas/RoundCorner wedge tokens are intentionally retired.
-    readonly property real irisFuseDepth: 30
+    readonly property real abyssFuseDepth: 30
     // G2 upstream-relative morphology overlaps every joined owner by 3 logical
     // px for SDF continuity, while Overlay paint/input still starts at the
     // actual owner boundary.
-    readonly property real irisWeldDepth: 3
+    readonly property real abyssWeldDepth: 3
 
     // Free-corner radius used by connected popup body geometry.
     readonly property real popupRadius: 28

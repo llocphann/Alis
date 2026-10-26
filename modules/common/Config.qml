@@ -3212,7 +3212,7 @@ Singleton {
                 }
             }
             property JsonObject integrations: JsonObject {
-                property JsonObject hadalird: JsonObject {
+                property JsonObject alisIntergration: JsonObject {
                     property bool tlp: false
                     property bool thinkfan: false
                     property bool obsidian: false
@@ -3230,7 +3230,7 @@ Singleton {
                 property JsonObject obsidian: JsonObject {
                     property string vaultPath: ""
                     property string sourceMode: "markdown-note"
-                    property string notePath: "Hadalis/Todo.md"
+                    property string notePath: "Alis/Todo.md"
                     property string scope: "managed-section"
                     property JsonObject dailyNote: JsonObject {
                         property string folder: "00_Capture/01_Journal"

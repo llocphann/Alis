@@ -1,18 +1,18 @@
-> Historical snapshot archived on 2026-10-10 from Hadalis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
+> Historical snapshot archived on 2026-10-10 from Alis `8b2ed6f0a1fccddade206f0060ed19d19337a5da`. This document does not assign active work or prove that pending acceptance is complete. Use [the current categorized tasks](../../../to-do/README.md).
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="Alis" width="800">
 </p>
 
-<h1 align="center">iNiR</h1>
+<h1 align="center">Alis</h1>
 
 <p align="center">
   <b>Полноценный десктопный шелл для Niri на базе Quickshell</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
-  <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/snowarch/alis/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/alis/stargazers"><img src="https://img.shields.io/github/stars/snowarch/alis?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
@@ -41,11 +41,11 @@
 
 ### Что это?
 
-iNiR — это весь твой рабочий стол. Панель сверху, док, уведомления, настройки, обои, всё. Это не тема, не конфиги для копипаста. Это полноценный шелл, работающий на Linux.
+Alis — это весь твой рабочий стол. Панель сверху, док, уведомления, настройки, обои, всё. Это не тема, не конфиги для копипаста. Это полноценный шелл, работающий на Linux.
 
 ### Что нужно для запуска?
 
-Композитор. Это штука, которая управляет окнами и выводит пиксели на экран. iNiR сделан для [Niri](https://github.com/YaLTeR/niri) (тайлинговый Wayland-композитор). Есть старый код для Hyprland со времён форка dots от end-4, но реально тестируется и используется Niri.
+Композитор. Это штука, которая управляет окнами и выводит пиксели на экран. Alis сделан для [Niri](https://github.com/YaLTeR/niri) (тайлинговый Wayland-композитор). Есть старый код для Hyprland со времён форка dots от end-4, но реально тестируется и используется Niri.
 
 Шелл работает на [Quickshell](https://quickshell.outfoxxed.me/) — фреймворке для создания шеллов на QML (язык UI от Qt). Знать это не обязательно, всё настраивается через GUI или JSON-файл.
 
@@ -54,7 +54,7 @@ iNiR — это весь твой рабочий стол. Панель свер
 ```
 твои приложения
    ↓
-iNiR (шелл: панель, сайдбары, док, уведомления, настройки...)
+Alis (шелл: панель, сайдбары, док, уведомления, настройки...)
    ↓
 Quickshell (запускает QML-шеллы)
    ↓
@@ -67,7 +67,7 @@ Wayland → GPU
 
 Это личный проект, который вышел из-под контроля. Я пользуюсь им каждый день, куча людей в Discord тоже. Но иногда что-то ломается, код местами кривой, учусь на ходу.
 
-Если что-то не работает, `inir doctor` чинит большинство проблем. Discord активный, если это не поможет. Не жди отполированного софта — это рис одного человека, который понравился другим.
+Если что-то не работает, `alis doctor` чинит большинство проблем. Discord активный, если это не поможет. Не жди отполированного софта — это рис одного человека, который понравился другим.
 
 ### Зачем это существует?
 
@@ -78,7 +78,7 @@ Wayland → GPU
 - **Shell**: слой UI (панель, оверлеи)
 - **Compositor**: управляет окнами, рисует на экране (Niri, Hyprland, Sway...)
 - **Wayland**: протокол дисплея Linux (новый, замена X11)
-- **QML**: декларативный язык UI от Qt, на нём написан iNiR
+- **QML**: декларативный язык UI от Qt, на нём написан Alis
 - **Material You**: система цветов Google, генерирует палитры из картинок (так работает авто-тематизация)
 - **ii / waffle**: два стиля панелей. ii = Material Design вайбы, waffle = Windows 11 вайбы. `Super+Shift+W` переключает
 
@@ -174,7 +174,7 @@ Wayland → GPU
 
 - **GUI настройки** — настраивайте всё без редактирования файлов
 - **GameMode** — автоматически отключает эффекты при полноэкранных приложениях
-- **Авто-обновления** — `inir update` с откатом, миграциями и сохранением пользовательских изменений
+- **Авто-обновления** — `alis update` с откатом, миграциями и сохранением пользовательских изменений
 - **Экран блокировки** и **экран сессии** (выход/перезагрузка/выключение/сон)
 - **Polkit-агент**, **экранная клавиатура**, **менеджер автозапуска**
 - **9 языков** — автоопределение, с генерацией переводов через AI
@@ -190,27 +190,27 @@ Wayland → GPU
 ## Быстрый старт
 
 ```bash
-git clone https://github.com/snowarch/inir.git
-cd inir
+git clone https://github.com/snowarch/alis.git
+cd alis
 ./setup install       # интерактивный — спрашивает перед каждым шагом
 ./setup install -y    # автоматический — устанавливает всё без вопросов
 ```
 
-Установщик разберётся с зависимостями, системным конфигом, тематизацией — всем. После установки запустите `inir run` или перелогиньтесь.
+Установщик разберётся с зависимостями, системным конфигом, тематизацией — всем. После установки запустите `alis run` или перелогиньтесь.
 
 ```bash
-inir run                        # запустить шелл
-inir settings                   # открыть GUI настроек
-inir logs                       # проверить логи
-inir doctor                     # автодиагностика и исправление
-inir update                     # pull + миграции + перезапуск
+alis run                        # запустить шелл
+alis settings                   # открыть GUI настроек
+alis logs                       # проверить логи
+alis doctor                     # автодиагностика и исправление
+alis update                     # pull + миграции + перезапуск
 ```
 
 **Поддерживаемые дистрибутивы:** Arch (автоматический установщик). Другие дистрибутивы могут установить вручную — см. [PACKAGES.md](../../PACKAGES.md).
 
 | Метод | Команда |
 |--------|---------|
-| Системная установка | `sudo make install && inir run` |
+| Системная установка | `sudo make install && alis run` |
 | Меню TUI | `./setup` |
 | Откат | `./setup rollback` |
 
@@ -234,7 +234,7 @@ inir update                     # pull + миграции + перезапуск
 
 ## Обои
 
-15 обоев идут в комплекте. Больше — в [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), подборка, хорошо работающая с пайплайном Material You.
+15 обоев идут в комплекте. Больше — в [Alis-Walls](https://github.com/snowarch/Alis-Walls), подборка, хорошо работающая с пайплайном Material You.
 
 ---
 
@@ -255,9 +255,9 @@ inir update                     # pull + миграции + перезапуск
 ## Решение проблем
 
 ```bash
-inir logs                       # проверьте логи — ответ обычно там
-inir restart                    # перезапустить шелл
-inir repair                     # doctor + перезапуск + проверка логов
+alis logs                       # проверьте логи — ответ обычно там
+alis restart                    # перезапустить шелл
+alis repair                     # doctor + перезапуск + проверка логов
 ./setup doctor                  # автодиагностика и исправление типичных проблем
 ./setup rollback                # откатить последнее обновление
 ```
@@ -281,7 +281,7 @@ inir repair                     # doctor + перезапуск + проверк
 ---
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/graphs/contributors">Участники</a> &bull;
+  <a href="https://github.com/snowarch/alis/graphs/contributors">Участники</a> &bull;
   <a href="CHANGELOG.md">Changelog</a> &bull;
   <a href="LICENSE">Лицензия GPL-3.0</a>
 </p>

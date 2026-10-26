@@ -661,18 +661,18 @@ PanelWindow {
             }
 
             // Controls
-            // Material ii uses one connected iRiS body that grows directly from
+            // Material ii uses one connected Abyss body that grows directly from
             // the physical bottom Screen Edge. The toolbar and close action are
             // content inside that single body instead of separate floating cards.
-            ConnectedSurfaceIrisEdgeSurface {
-                id: regionControlsIris
+            ConnectedSurfaceAbyssEdgeSurface {
+                id: regionControlsAbyss
                 z: 9998
                 anchors.fill: parent
                 visible: !regionSelectionControls.useWaffle
                 edge: "bottom"
                 ownerThickness: root.screenEdgeThickness
                 // Same raster seam treatment as the now-validated Sidebar
-                // attachment: only iRiS paint overlaps the physical owner;
+                // attachment: only Abyss paint overlaps the physical owner;
                 // toolbar layout/input still stop at the real boundary.
                 paintOverlap: Math.min(
                     PerimeterTokens.seamOverlap,
