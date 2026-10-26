@@ -1312,7 +1312,7 @@ Item {
                             
                             objectName:"abyssModuleCustomSizeSlider"
                             visible:true
-                            from:.6;to:1.8
+                            from:.6;to:1.8;stepSize:.01
                             value:root.selected?.customSize
                             ? root.selected.size
                             : Placement.edgeSize(
@@ -1420,7 +1420,7 @@ Item {
                             
                             
                             objectName:"abyssEdgeGapSlider"
-                            unit:"px";from:0;to:32;value:root.gap
+                            unit:"px";from:0;to:32;stepSize:1;value:root.gap
                             onMoved:root.gap=value
                             
                             }
@@ -1440,7 +1440,7 @@ Item {
                             
                             
                             objectName:"abyssEdgeSizeSlider"
-                            from:.6;to:1.8
+                            from:.6;to:1.8;stepSize:.01
                             value:Placement.edgeSize(root.draftOptions,root.editingEdge)
                             
                             onMoved:root.edgeSizes=Object.assign(
@@ -1555,7 +1555,7 @@ Item {
                             Layout.minimumWidth:75*Appearance.fontSizeScale
                             
                             
-                            from:.6;to:1.8;value:root.moduleScale
+                            from:.6;to:1.8;stepSize:.01;value:root.moduleScale
                             
                             onMoved:root.moduleScale=value
                             StyledToolTip { text:"Overall module scale" }

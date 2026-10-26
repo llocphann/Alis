@@ -9,6 +9,7 @@ Slider {
     // Editor-only value gutter; other slider consumers keep original metrics.
     property bool editorCompact:false
     property real displayScale:unit === "%" ? 100 : 1
+    stepSize:unit === "%" ? .01 : 1
     readonly property string valueText:Math.round(value*displayScale)+" "+unit
     readonly property color sliderInk: Appearance.m3colors.darkmode
         ? AbyssStyle.textColor : "#000000"
