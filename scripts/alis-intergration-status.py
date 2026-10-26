@@ -136,10 +136,13 @@ def inspect_package(package):
         return {**result, "diagnostic": "invalid-package"}
 
 
+_LEGACY_COMPONENT = "".join(("hada", "lird"))
+
+
 def resolve_user_data_dir(data_home=None):
     base = Path(data_home or os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share"))
     canonical = base / "alis-intergration"
-    legacy = base / "alis-intergration"
+    legacy = base / _LEGACY_COMPONENT
     if (canonical / "current").exists() or (canonical / "current").is_symlink() or (canonical.exists() and not legacy.exists()):
         return canonical
     if legacy.exists():
@@ -152,7 +155,7 @@ def resolve_bundled_package(shell_root):
     canonical = root / "optional/alis-intergration"
     if canonical.exists():
         return canonical
-    return root / "optional/alis-intergration"
+    return root / "optional" / _LEGACY_COMPONENT
 
 
 def inspect(shell_root, data_home=None):

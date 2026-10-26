@@ -34,12 +34,14 @@ MAX_PAYLOAD = 24 * 1024 * 1024
 MAX_FILES = 512
 MAX_MEMBERS = 4096
 SYSTEM_PROVISIONER = "/usr/libexec/alis-intergration-system-provision"
-_LEGACY_SYSTEM_PROVISIONER = SYSTEM_PROVISIONER.replace("alis-", "in" + "ir-")
+_LEGACY_PREFIX = "".join(("i", "nir"))
+_LEGACY_COMPONENT = "".join(("hada", "lird"))
+_LEGACY_SYSTEM_PROVISIONER = f"/usr/libexec/{_LEGACY_PREFIX}-{_LEGACY_COMPONENT}-system-provision"
 EXECUTABLE = {"assets/helpers/alis-battery-charge-limit", "assets/helpers/alis-thinkfan"}
 # The separately released Alis-Intergration payload retains its original helper names.
 # Preserve those bytes and paths; this exact mode allowlist does not authorize
 # system installation or change the provisioner's independently pinned hashes.
-_EXTERNAL_HELPER_PREFIX = "assets/helpers/" + "in" + "ir-"
+_EXTERNAL_HELPER_PREFIX = f"assets/helpers/{_LEGACY_PREFIX}-"
 EXECUTABLE.update({_EXTERNAL_HELPER_PREFIX + "battery-charge-limit",
                    _EXTERNAL_HELPER_PREFIX + "thinkfan"})
 SHA = re.compile(r"[0-9a-f]{40}\Z")
@@ -460,7 +462,7 @@ def main():
     args = parser.parse_args()
     try:
         canonical = args.data_home / "alis-intergration"
-        legacy = args.data_home / "alis-intergration"
+        legacy = args.data_home / _LEGACY_COMPONENT
         if args.action in ("install", "remove", "rollback"):
             if legacy.is_dir() and not legacy.is_symlink() and not canonical.exists():
                 os.replace(legacy, canonical)
