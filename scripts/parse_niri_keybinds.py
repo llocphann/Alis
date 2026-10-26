@@ -178,15 +178,24 @@ IPC_MAP = {
     ('overview', 'toggle'): 'Alis Overview',
     ('clipboard', 'toggle'): 'Clipboard',
     ('lock', 'activate'): 'Lock screen',
+    ('lock', 'focus'): 'Focus lock screen',
     ('region', 'screenshot'): 'Screenshot region',
     ('region', 'ocr'): 'OCR region',
     ('region', 'search'): 'Reverse image search',
+    ('region', 'menu'): 'Snip menu',
+    ('region', 'recordWithSound'): 'Record region (with audio)',
+    ('region', 'record'): 'Record region',
     ('wallpaperSelector', 'toggle'): 'Wallpaper selector',
     ('settings', 'open'): 'Settings',
     ('cheatsheet', 'toggle'): 'Cheatsheet',
     ('panelFamily', 'cycle'): 'Cycle panel style',
     ('session', 'toggle'): 'Session dialog',
+    ('sidebarLeft', 'toggle'): 'Left sidebar',
+    ('sidebarRight', 'toggle'): 'Right sidebar',
+    ('ipc', 'wull'): 'Companion chat',
+    ('wull', 'chat'): 'Companion chat',
     ('browser', 'open'): 'Browser',
+    ('browser', 'new'): 'Browser (new window)',
     ('audio', 'volumeUp'): 'Volume up',
     ('audio', 'volumeDown'): 'Volume down',
     ('audio', 'mute'): 'Mute audio',
@@ -199,12 +208,18 @@ IPC_MAP = {
     ('notifications', 'clearAll'): 'Clear notifications',
     ('gamemode', 'toggle'): 'Toggle game mode',
     ('launcher', 'terminal'): 'Terminal',
+    ('launcher', 'terminal-new'): 'Terminal (new window)',
+    ('launcher', 'terminal-yazi'): 'Terminal (yazi)',
+    ('launcher', 'files'): 'File manager',
+    ('launcher', 'files-new'): 'File manager (new window)',
+    ('launcher', 'editor'): 'Text editor',
+    ('launcher', 'editor-new'): 'Text editor (new window)',
     ('launcher', 'close-window'): 'Close window',
 }
 
 # App detection
 TERMINALS = ['foot', 'kitty', 'alacritty', 'wezterm', 'ghostty', 'konsole', 'gnome-terminal']
-FILE_MANAGERS = ['dolphin', 'nautilus', 'thunar', 'nemo', 'pcmanfm', 'ranger']
+FILE_MANAGERS = ['dolphin', 'nautilus', 'thunar', 'nemo', 'pcmanfm', 'ranger', 'yazi']
 BROWSERS = ['firefox', 'zen-browser', 'chromium', 'brave', 'vivaldi']
 
 
@@ -213,12 +228,20 @@ def parse_alis_action(action: str) -> tuple[str, str] | None:
     if ipc_match:
         return ipc_match.group(1), ipc_match.group(2)
 
+    ipc_short_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"ipc"\s+"([\w-]+)"\s+"([\w-]+)"', action)
+    if ipc_short_match:
+        return ipc_short_match.group(1), ipc_short_match.group(2)
+
     settings_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"settings"(?:\s|;|$)', action)
     if settings_match:
         return 'settings', 'open'
 
     terminal_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"terminal"(?:\s|;|$)', action)
     if terminal_match:
+        if '"yazi"' in action:
+            return 'launcher', 'terminal-yazi'
+        if '"--new"' in action:
+            return 'launcher', 'terminal-new'
         return 'launcher', 'terminal'
 
     close_window_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"close-window"(?:\s|;|$)', action)
@@ -227,7 +250,21 @@ def parse_alis_action(action: str) -> tuple[str, str] | None:
 
     browser_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"browser"(?:\s|;|$)', action)
     if browser_match:
+        if '"--new"' in action:
+            return 'browser', 'new'
         return 'browser', 'open'
+
+    files_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"(?:files|file-manager)"(?:\s|;|$)', action)
+    if files_match:
+        if '"--new"' in action:
+            return 'launcher', 'files-new'
+        return 'launcher', 'files'
+
+    editor_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"editor"(?:\s|;|$)', action)
+    if editor_match:
+        if '"--new"' in action:
+            return 'launcher', 'editor-new'
+        return 'launcher', 'editor'
 
     direct_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"([\w-]+)"\s+"([\w-]+)"', action)
     if direct_match:
@@ -305,6 +342,8 @@ def generate_comment(action: str) -> str:
             app = spawn_match.group(1)
             if '/' in app:
                 app = app.split('/')[-1]
+            if app.count('.') >= 2:
+                app = app.split('.')[-1]
             return app
 
     return action[:30] + '...' if len(action) > 30 else action
@@ -320,13 +359,17 @@ def categorize_keybind(kb: dict) -> str:
         return 'System'
 
     # Alis Shell
-    if any(x in comment for x in ['alis ', 'clipboard', 'lock screen', 'wallpaper', 'settings', 'cheatsheet', 'panel style']):
+    if any(x in comment for x in ['alis ', 'clipboard', 'lock screen', 'wallpaper', 'settings', 'cheatsheet', 'panel style', 'left sidebar', 'right sidebar', 'companion chat']):
         return 'Alis Shell'
     alis_action = parse_alis_action(action)
     if alis_action:
-        target, _func = alis_action
-        if target in ('overlay', 'overview', 'clipboard', 'lock', 'wallpaperSelector', 'settings', 'cheatsheet', 'panelFamily', 'session'):
+        target, func = alis_action
+        if target in ('overlay', 'overview', 'clipboard', 'lock', 'wallpaperSelector', 'settings', 'cheatsheet', 'panelFamily', 'session', 'sidebarLeft', 'sidebarRight', 'wull', 'ipc'):
             return 'Alis Shell'
+        if target == 'region':
+            return 'Screenshots'
+        if target in ('launcher', 'browser') and func != 'close-window':
+            return 'Applications'
         if target == 'altSwitcher':
             return 'Window Switcher'
         if target in ('audio', 'mpris'):
@@ -343,11 +386,11 @@ def categorize_keybind(kb: dict) -> str:
         return 'Window Switcher'
 
     # Screenshots
-    if any(x in comment for x in ['screenshot', 'ocr', 'image search']):
+    if any(x in comment for x in ['screenshot', 'ocr', 'image search', 'snip menu', 'record region']):
         return 'Screenshots'
 
     # Applications
-    if any(x in comment for x in ['terminal', 'file manager', 'browser']):
+    if any(x in comment for x in ['terminal', 'file manager', 'browser', 'text editor']):
         return 'Applications'
     if any(x in action for x in TERMINALS + FILE_MANAGERS + BROWSERS):
         return 'Applications'
@@ -398,33 +441,36 @@ def categorize_keybind(kb: dict) -> str:
     if 'brightness' in comment:
         return 'Brightness'
 
+    if action.startswith('spawn '):
+        return 'Applications'
+
     return 'Other'
 
 
-def find_binds_block(content: str) -> str | None:
-    """Find the binds { } block handling nested braces."""
-    match = re.search(r'\bbinds\s*\{', content)
-    if not match:
-        return None
-
-    start = match.end()
-    depth = 1
-    i = start
-
-    while i < len(content) and depth > 0:
-        if content[i] == '{':
-            depth += 1
-        elif content[i] == '}':
-            depth -= 1
-        i += 1
-
-    return content[start:i-1] if depth == 0 else None
+def find_binds_blocks(content: str) -> list[str]:
+    """Find all top-level binds { } blocks in the config."""
+    blocks = []
+    for match in re.finditer(r'(?m)^[ \t]*binds\s*\{', content):
+        start = match.end()
+        depth = 1
+        i = start
+        while i < len(content) and depth > 0:
+            if content[i] == '{':
+                depth += 1
+            elif content[i] == '}':
+                depth -= 1
+            i += 1
+        if depth == 0:
+            blocks.append(content[start:i-1])
+    return blocks
 
 
 def resolve_includes(content: str, config_dir: Path) -> str:
-    """Resolve include directives by inlining included file contents."""
+    """Resolve include directives by inlining included file contents (skipping 75-*-launcher-binds.kdl)."""
     def replace_include(match):
         rel_path = match.group(1)
+        if 'launcher-binds.kdl' in rel_path:
+            return ''
         include_path = config_dir / rel_path
         if include_path.exists():
             return include_path.read_text()
@@ -439,11 +485,22 @@ def parse_niri_config(config_path: Path) -> dict:
 
     content = config_path.read_text()
     content = resolve_includes(content, config_path.parent)
-    binds_content = find_binds_block(content)
-    if not binds_content:
+    blocks = find_binds_blocks(content)
+    if not blocks:
         return {'error': 'No binds block found', 'children': []}
 
-    keybinds = parse_keybinds_from_block(binds_content)
+    keybinds = []
+    for block in blocks:
+        for kb in parse_keybinds_from_block(block):
+            combo_key = ('+'.join(sorted(kb['mods'])), kb['key'])
+            replaced = False
+            for idx, existing in enumerate(keybinds):
+                if ('+'.join(sorted(existing['mods'])), existing['key']) == combo_key:
+                    keybinds[idx] = kb
+                    replaced = True
+                    break
+            if not replaced:
+                keybinds.append(kb)
     keybinds_by_category = {}
 
     for kb in keybinds:

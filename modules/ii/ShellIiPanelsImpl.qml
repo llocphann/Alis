@@ -119,7 +119,7 @@ Item {
         open: GlobalStates.dashboardOpen
         // Lazy until first use, then resident for the shell session. Dashboard
         // owns its own hidden render/input gating while closed.
-        keepLoaded: (Config.options?.dashboard?.keepLoaded ?? false) || used
+        keepLoaded: true
         source: "../dashboard/Dashboard.qml"
     }
     DeferredPanelLoader { identifier: "iiLock"; component: Lock {} }

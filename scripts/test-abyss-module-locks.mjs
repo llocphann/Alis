@@ -127,4 +127,25 @@ for(let trial=0;trial<180;trial++){
   const actual=records.find(rec=>rec.id===p.id);check(Math.abs(actual.along-p.along)<1e-7&&Math.abs(actual.span-p.span)<1e-7,'generated moves preserve each reservation');
  }
 }
+// Flexible adaptation across Screen Edge width, Edge size, overall scale, and Abyss curvature:
+for(const edge of ['top','right','bottom','left']){
+ const legacy=layout.normalize([
+  {id:'distroIcon',kind:'distroIcon',edge,position:.00834,alignment:'start',joinCorner:true,locked:true,lockPosition:.0078,lockScale:1},
+  {id:'resources',kind:'resources',edge,position:.06},
+  {id:'activeWindow',kind:'activeWindow',edge,position:.15},
+  {id:'workspaces',kind:'workspaces',edge,position:.5},
+  {id:'clock',kind:'clock',edge,position:.62,locked:true,lockPosition:.62,lockScale:1},
+  {id:'tray',kind:'tray',edge,position:.95,joinCorner:true},
+  {id:'battery',kind:'battery',edge,position:.9915,alignment:'end',joinCorner:true,locked:true,lockPosition:.9921,lockScale:1}
+ ],edge);
+ for(const radius of [0,12,20,28,48,64,80])for(const thick of [6,10,16,24,32,40])for(const edgeScale of [.6,1,1.35,1.8])for(const editing of [false,true]){
+  const opts={editing,cornerRadius:radius,edgeThickness:thick,edgeThicknesses:{[edge]:thick},edgeSizes:{[edge]:edgeScale},size:edgeScale>1.5?1.2:1};
+  const recs=geometry(legacy,1920,1080,opts,1);
+  check(!layout.conflicts(recs).length,'locked modules flexibly adapt to edge thickness/size/curvature without conflict');
+  valid(recs,1920,1080);
+  const startRec=recs.find(r=>r.id==='distroIcon'),endRec=recs.find(r=>r.id==='battery');
+  check(Math.abs(startRec.along-startRec.edgeStart)<1e-6,'corner-welded start lock tracks updated corner clearance');
+  check(Math.abs(endRec.along+endRec.span-endRec.edgeEnd)<1e-6,'corner-welded end lock tracks updated corner clearance');
+ }
+}
 console.log('ABYSS_MODULE_LOCKS_PASS',checks);

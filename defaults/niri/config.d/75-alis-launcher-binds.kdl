@@ -23,11 +23,16 @@ binds {
     Mod+Comma { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "settings"; }
     Mod+Alt+Comma repeat=false { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "ipc" "wull" "chat"; }
     Mod+Slash { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "cheatsheet" "toggle"; }
-    Mod+Shift+W { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "panelFamily" "cycle"; }
+    Mod+Alt+W { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "panelFamily" "cycle"; }
     Mod+Shift+Q { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "session" "toggle"; }
     Mod+T { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "terminal"; }
+    Mod+Shift+T { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "terminal" "--new"; }
     Mod+Return { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "terminal"; }
+    Mod+Shift+Return { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "terminal" "--new"; }
+    Super+E { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "files"; }
+    Super+Shift+E { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "files" "--new"; }
     Super+W { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "browser"; }
+    Super+Shift+W { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "browser" "--new"; }
     Mod+Q repeat=false { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "close-window"; }
     Mod+Shift+R { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "region" "recordWithSound"; }
 

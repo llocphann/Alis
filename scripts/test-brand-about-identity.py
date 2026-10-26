@@ -11,12 +11,15 @@ assert len(avatar) > 1500 and avatar[:3] == bytes((0xff, 0xd8, 0xff)) and avatar
 for name, source in (("Material", material), ("Waffle", waffle)):
     assert 'assets/icons/alis-owner-avatar.jpg' in source, f"{name} is not using repo avatar"
     assert "https://github.com/llocphann/Alis" in source, f"{name} lost primary Alis repository"
+    assert "https://github.com/llocphann/Alis-Companion" in source, f"{name} missing Alis-Companion repository"
+    assert "https://github.com/llocphann/Alis-Intergration" in source, f"{name} missing Alis-Intergration repository"
     assert "https://github.com/snowarch/iNiR" in source, f"{name} lost iNiR credit"
     assert "https://github.com/end-4/dots-hyprland" in source, f"{name} lost illogical-impulse credit"
     assert source.index("Alis") < source.index("Based on"), f"{name} promotes upstream over Alis"
     section = source[source.index("Based on"):]
     assert section.find("iNiR") >= 0 and section.find("illogical-impulse") >= 0, f"{name} missing paired credits"
     assert source.count("assets/icons/alis-owner-avatar.jpg") == 1, f"{name} duplicated avatar resources"
+assert 'aboutBasedOnHorizontalRow' in material, "Material Based on section must arrange credits horizontally"
 assert 'text: "Alis"' in material and 'title: "Alis"' in material
 assert 'text: "Alis"' in waffle
 assert 'source: Quickshell.shellPath("assets/icons/sf.jpg")' not in material

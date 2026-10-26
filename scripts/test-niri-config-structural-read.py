@@ -58,4 +58,30 @@ with tempfile.TemporaryDirectory(prefix="inir-niri-read-") as temporary:
     }
     assert read(module.cmd_get_animations)["slowdown"] == 1.0
 
+    # Verify 90-user-extra.kdl active binds merge and Applications categorization
+    (config / "config.d/90-user-extra.kdl").write_text(
+        "binds {\n"
+        '    Mod+T { spawn "/home/user/.local/bin/alis" "terminal"; }\n'
+        '    Mod+Shift+T { spawn "/home/user/.local/bin/alis" "terminal" "--new"; }\n'
+        '    Super+E { spawn "/home/user/.local/bin/alis" "terminal" "yazi"; }\n'
+        '    Super+Shift+E { spawn "thunar"; }\n'
+        '    Super+W { spawn "/home/user/.local/bin/alis" "browser"; }\n'
+        '    Super+Shift+W { spawn "/home/user/.local/bin/alis" "browser" "--new"; }\n'
+        '    Super+O { spawn "md.obsidian.Obsidian"; }\n'
+        "}\n"
+    )
+    merged = read(module.cmd_get_binds)
+    app_cat = next((c for c in merged["categories"] if c["name"] == "Applications"), None)
+    assert app_cat is not None, merged["categories"]
+    app_binds = {merged["binds"][i]["key_combo"]: merged["binds"][i]["description"] for i in app_cat["binds"]}
+    assert app_binds == {
+        "Mod+T": "Terminal",
+        "Mod+Shift+T": "Terminal (new window)",
+        "Super+E": "Terminal (yazi)",
+        "Super+Shift+E": "File manager",
+        "Super+W": "Browser",
+        "Super+Shift+W": "Browser (new window)",
+        "Super+O": "Obsidian",
+    }, app_binds
+
 print("PASS: Niri read-only getters ignore commented values and quoted braces")

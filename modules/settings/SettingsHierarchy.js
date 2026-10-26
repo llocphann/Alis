@@ -21,20 +21,8 @@ function flat(pages,order) {
  return result;
 }
 function entries(pages,order,groupKey,currentPage,editMode) {
- const all=flat(pages,order);
- if(editMode)return all;
- if(groupKey) return [{name:"Settings",icon:"arrow_back",back:true,realIndex:currentPage}].concat(all.filter(page=>parentKey(page)===groupKey));
- const seen=new Set(),result=[];
- for(const page of all) {
-  const key=parentKey(page);
-  if(!key){result.push(page);continue;}
-  if(seen.has(key))continue;
-  seen.add(key);
-  const group=definitions.find(value=>value.key===key);
-  result.push({name:group.name,icon:group.icon,groupKey:key,realIndex:page.realIndex});
- }
- return result;
+ return flat(pages,order);
 }
 function selected(entry,pages,currentPage) {
- return !entry.back && (entry.groupKey ? parentKey(pages[currentPage])===entry.groupKey : entry.realIndex===currentPage);
+ return Boolean(entry && !entry.back && (entry.groupKey ? parentKey(pages[currentPage])===entry.groupKey : entry.realIndex===currentPage));
 }

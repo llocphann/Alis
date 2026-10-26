@@ -375,6 +375,7 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
     if(action==="rotation" && items.some(function(p) {return !canRotateModule(p.kind);}))
         return deny("This module type does not support manual rotation");
     var records=(action==="locked" || action==="joinCorner") && value ? (displayedRecords || geometry(placements,width,height,options,fontScale)) : [];
+    if(action==="locked" && value && conflicts(records).length)return deny(conflicts(records)[0]);
     if(action==="joinCorner" && value && items.some(function(p) {
         return !cornerForModule(records,p.id,width,height);
     }))return deny("Every selected module must be beside a corner to connect the group");
@@ -611,72 +612,161 @@ function clearanceInsets(insets, localRecords, edge, along, span, popupOwnerKind
 // chooses the closest feasible full-size packing, without automatic shrinking.
 function packLockedEdge(list,sizes,length,gap,options,horizontal,low,high) {
     low=low ?? 0;high=high ?? length;
+    var usable=Math.max(0,high-low);
     function record(p,start,span,scale) {
         return Object.assign({},p,{along:start,span:span,layoutScale:scale,vertical:!horizontal,
             depth:bounded(options?.depth,36,22,64)*p.depth,
             compact:p.compact});
     }
-    var locked=[],free=[];
+    var locked=[],free=[],boundaryAdapted=false;
+    var lockIndices=list.map(function(p,i) {return p.locked ? i : -1;}).filter(function(i) {return i>=0;});
+    var firstLockIdx=lockIndices.length ? lockIndices[0] : -1;
+    var lastLockIdx=lockIndices.length ? lockIndices[lockIndices.length-1] : -1;
     list.forEach(function(p,i) {
         if(p.locked) {
             var scale=bounded(p.lockScale,1,.01,1),span=sizes[i]*scale;
-            locked.push(record(p,bounded(p.lockPosition,p.position,0,1)*length-span/2,span,scale));
+            var anchor=bounded(p.lockPosition,p.position,0,1);
+            var raw=anchor*length-span/2;
+            if(i===firstLockIdx && p.joinCorner && anchor<.05) {
+                if(Math.abs(raw-low)>1e-7)boundaryAdapted=true;
+                raw=low;
+            } else if(i===lastLockIdx && p.joinCorner && anchor>.95) {
+                if(Math.abs(raw-(high-span))>1e-7)boundaryAdapted=true;
+                raw=high-span;
+            }
+            var clamped= usable>=span ? Math.max(low,Math.min(high-span,raw)) : raw;
+            if(Math.abs(clamped-raw)>1e-7)boundaryAdapted=true;
+            locked.push(record(p,clamped,span,scale));
         } else free.push({p:p,size:sizes[i],center:p.position*length});
     });
     locked.sort(function(a,b) {return a.along-b.along || a.id.localeCompare(b.id);});
+    var lockedSpan=locked.reduce(function(sum,p) {return sum+p.span;},0);
+    if(lockedSpan<=usable+1e-7) {
+        var fwd=low;
+        for(var j=0;j<locked.length;j++) {
+            if(locked[j].along<fwd-1e-7){locked[j].along=fwd;boundaryAdapted=true;}
+            fwd=locked[j].along+locked[j].span;
+        }
+        var bwd=high;
+        for(var k=locked.length-1;k>=0;k--) {
+            if(locked[k].along+locked[k].span>bwd+1e-7){locked[k].along=Math.max(low,bwd-locked[k].span);boundaryAdapted=true;}
+            bwd=locked[k].along;
+        }
+    }
+    var edgeName=list[0]?.edge || "top";
+    var edgeScaleFactor=edgeSize(options,edgeName)*(options?.edgeWidthAffectsModules?.[edgeName]===false
+        ? bounded(options?.edgeThickness,16,10,40)/16 : edgeThickness(options,edgeName)/16)*bounded(options?.size,1,.6,1.8);
+    var hasEdgeCustomization=edgeThickness(options,edgeName)!==16
+        || bounded(options?.edgeThickness,16,0,40)!==16
+        || Math.abs(edgeSize(options,edgeName)-1)>1e-6
+        || Math.abs(bounded(options?.size,1,.6,1.8)-1)>1e-6
+        || Math.abs(bounded(options?.cornerRadius,28,0,80)-28)>1e-6
+        || (Number.isFinite(Number(options?.edgeModuleRadii?.[edgeName])) && Number(options.edgeModuleRadii[edgeName])>=0);
+    var rawTotal=list.reduce(function(sum,p,i) {
+        return sum+sizes[i]*(p.locked ? bounded(p.lockScale,1,.01,1) : 1);
+    },0);
+    var baseTotal=rawTotal/Math.max(1,edgeScaleFactor);
+    var flexibleEdge=boundaryAdapted || !options?.editing || hasEdgeCustomization;
+    var allowFitScale=!options?.editing || (edgeScaleFactor>1+1e-6 && baseTotal<=usable+1e-7);
+    var lockBoundsError="";
     var end=low-gap;
     for(var i=0;i<locked.length;i++) {
         var own=locked[i];
-        if(own.along<low-1e-7 || own.along+own.span>high+1e-7)
-            return {error:"A locked module no longer fits this output. Undo the size change or unlock it."};
-        if(own.along<end-1e-7)
-            return {error:"Locked modules overlap at this size. Undo the size change or unlock them."};
+        if(own.along<low-1e-7 || own.along+own.span>high+1e-7) {
+            lockBoundsError="A locked module no longer fits this output. Undo the size change or unlock it.";
+            break;
+        }
+        if(own.along<end-1e-7) {
+            lockBoundsError="Locked modules overlap at this size. Undo the size change or unlock them.";
+            break;
+        }
         if(i>0)gap=Math.min(gap,Math.max(0,own.along-end));
         end=own.along+own.span;
     }
-    ["start","center","end"].forEach(function(alignment) {
-        var group=free.filter(function(item) {return item.p.alignment===alignment;});
-        var span=group.reduce(function(sum,item) {return sum+item.size;},0)+Math.max(0,group.length-1)*gap;
-        var cursor=alignment==="start" ? low : alignment==="end" ? high-span : (length-span)/2;
-        group.forEach(function(item) {item.center=cursor+item.size/2;cursor+=item.size+gap;});
-    });
-    free.sort(function(a,b) {return a.center-b.center || a.p.id.localeCompare(b.p.id);});
-    var intervals=[],cursor=low;
-    locked.forEach(function(p) {intervals.push({start:cursor,end:Math.max(cursor,p.along-gap)});cursor=p.along+p.span+gap;});
-    intervals.push({start:Math.min(high,cursor),end:high});
-    function pack(start,count,interval) {
-        if(!count)return {records:[],cost:0};
-        var group=free.slice(start,start+count),total=group.reduce(function(sum,p) {return sum+p.size;},0);
-        var available=interval.end-interval.start-gap*(count-1);
-        if(available<total-1e-7)return null;
-        var scale=1;
-        var cursor=interval.start;
-        var records=group.map(function(item) {
-            var span=item.size*scale,start=Math.max(cursor,item.center-span/2);
-            cursor=start+span+gap;return record(item.p,start,span,scale);
+    if(lockBoundsError && !allowFitScale)return {error:lockBoundsError};
+    function solveFree(useGap) {
+        if(lockBoundsError)return null;
+        var freeItems=free.map(function(item) {return Object.assign({},item);});
+        ["start","center","end"].forEach(function(alignment) {
+            var group=freeItems.filter(function(item) {return item.p.alignment===alignment;});
+            var span=group.reduce(function(sum,item) {return sum+item.size;},0)+Math.max(0,group.length-1)*useGap;
+            var cursor=alignment==="start" ? low : alignment==="end" ? high-span : (length-span)/2;
+            group.forEach(function(item) {item.center=cursor+item.size/2;cursor+=item.size+useGap;});
         });
-        var end=interval.end,cost=0;
-        for(var i=records.length-1;i>=0;i--) {
-            var p=records[i];p.along=Math.max(interval.start,Math.min(p.along,end-p.span));end=p.along-gap;
-            cost+=Math.abs(p.along+p.span/2-group[i].center);
-        }
-        return {records:records,cost:cost};
-    }
-    var states=[{cost:0,records:[]}];
-    intervals.forEach(function(interval) {
-        var next=[];
-        states.forEach(function(state,used) {
-            for(var count=0;count<=free.length-used;count++) {
-                var candidate=pack(used,count,interval);
-                if(!candidate)break;
-                var at=used+count,cost=state.cost+candidate.cost;
-                if(!next[at] || cost<next[at].cost-1e-7)next[at]={cost:cost,records:state.records.concat(candidate.records)};
+        freeItems.sort(function(a,b) {return a.center-b.center || a.p.id.localeCompare(b.p.id);});
+        var intervals=[],cursor=low;
+        locked.forEach(function(p) {intervals.push({start:cursor,end:Math.max(cursor,p.along-useGap)});cursor=p.along+p.span+useGap;});
+        intervals.push({start:Math.min(high,cursor),end:high});
+        function pack(start,count,interval) {
+            if(!count)return {records:[],cost:0};
+            var group=freeItems.slice(start,start+count),total=group.reduce(function(sum,p) {return sum+p.size;},0);
+            var available=interval.end-interval.start-useGap*(count-1);
+            if(available<total-1e-7)return null;
+            var scale=1;
+            var cursor=interval.start;
+            var records=group.map(function(item) {
+                var span=item.size*scale,start=Math.max(cursor,item.center-span/2);
+                cursor=start+span+useGap;return record(item.p,start,span,scale);
+            });
+            var end=interval.end,cost=0;
+            for(var i=records.length-1;i>=0;i--) {
+                var p=records[i];p.along=Math.max(interval.start,Math.min(p.along,end-p.span));end=p.along-useGap;
+                cost+=Math.abs(p.along+p.span/2-group[i].center);
             }
+            return {records:records,cost:cost};
+        }
+        var states=[{cost:0,records:[]}];
+        intervals.forEach(function(interval) {
+            var next=[];
+            states.forEach(function(state,used) {
+                for(var count=0;count<=freeItems.length-used;count++) {
+                    var candidate=pack(used,count,interval);
+                    if(!candidate)break;
+                    var at=used+count,cost=state.cost+candidate.cost;
+                    if(!next[at] || cost<next[at].cost-1e-7)next[at]={cost:cost,records:state.records.concat(candidate.records)};
+                }
+            });
+            states=next;
         });
-        states=next;
-    });
-    if(!states[free.length])return {error:"Not enough space around locked modules. Undo this change or unlock a module."};
-    return {records:locked.concat(states[free.length].records).sort(function(a,b) {return a.along-b.along || a.id.localeCompare(b.id);})};
+        return states[freeItems.length] ? locked.concat(states[freeItems.length].records).sort(function(a,b) {return a.along-b.along || a.id.localeCompare(b.id);}) : null;
+    }
+    var solved=solveFree(gap);
+    if(solved)return {records:solved};
+    if(flexibleEdge && usable>0) {
+        var reducedGap=solveFree(0);
+        if(reducedGap)return {records:reducedGap};
+        var rawTotal=list.reduce(function(sum,p,i) {
+            return sum+sizes[i]*(p.locked ? bounded(p.lockScale,1,.01,1) : 1);
+        },0);
+        if(rawTotal>0 && (rawTotal<=usable+1e-7 || allowFitScale)) {
+            var minGap=list.length>1 ? Math.min(gap,Math.max(0,(usable-rawTotal)/(list.length-1))) : 0;
+            var fitScale=rawTotal+minGap*Math.max(0,list.length-1)>usable
+                ? Math.max(.05,(usable-Math.min(gap,2)*Math.max(0,list.length-1))/rawTotal) : 1;
+            var flexGap=list.length>1 ? Math.min(gap,Math.max(0,(usable-rawTotal*fitScale)/(list.length-1))) : 0;
+            var entries=list.map(function(p,i) {
+                var itemScale=(p.locked ? bounded(p.lockScale,1,.01,1) : 1)*fitScale;
+                var span=sizes[i]*itemScale;
+                var anchor=p.locked ? bounded(p.lockPosition,p.position,0,1) : p.position;
+                var target=anchor*length-span/2;
+                if(p.locked && i===firstLockIdx && (p.alignment==="start" || (p.joinCorner && anchor<.2)))target=low;
+                else if(p.locked && i===lastLockIdx && (p.alignment==="end" || (p.joinCorner && anchor>.8)))target=high-span;
+                return {p:p,span:span,scale:itemScale,target:Math.max(low,Math.min(high-span,target))};
+            }).sort(function(a,b) {return a.target-b.target || a.p.id.localeCompare(b.p.id);});
+            var cur=low;
+            var flexRecords=entries.map(function(e) {
+                var start=Math.max(cur,e.target);
+                cur=start+e.span+flexGap;
+                return record(e.p,start,e.span,e.scale);
+            });
+            var lim=high;
+            for(var m=flexRecords.length-1;m>=0;m--) {
+                flexRecords[m].along=Math.max(low,Math.min(flexRecords[m].along,lim-flexRecords[m].span));
+                lim=flexRecords[m].along-flexGap;
+            }
+            return {records:flexRecords};
+        }
+    }
+    return {error:"Not enough space around locked modules. Undo this change or unlock a module."};
 }
 function packGeometry(placements, width, height, options, fontScale, bounds) {
     var result = [];

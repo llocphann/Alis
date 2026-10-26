@@ -2214,17 +2214,28 @@ fn set_value(section: &str, key: &str, value: &str) -> Result<Outcome> {
 mod keybind_labels;
 use keybind_labels::{action_category, action_description};
 
-fn get_binds() -> Result<Outcome> {
-    let path = resolve_section_file("config.d/70-binds.kdl");
-    let content = fs::read_to_string(&path).context("binds file not found")?;
-    let (_, inner_start, inner_end, _) = find_block_bounds(&content, "binds", true)
-        .ok_or_else(|| anyhow!("binds_block_not_found"))?;
-    let block = &content[inner_start..inner_end];
-    let base_line = content[..inner_start]
-        .bytes()
-        .filter(|byte| *byte == b'\n')
-        .count()
-        + 1;
+fn normalize_combo(combo: &str) -> String {
+    let parts: Vec<&str> = combo.split('+').filter(|p| !p.is_empty()).collect();
+    if parts.len() <= 1 {
+        return combo.to_owned();
+    }
+    let mut mods: Vec<String> = parts[..parts.len() - 1]
+        .iter()
+        .map(|p| {
+            if *p == "Mod" {
+                "Super".to_owned()
+            } else {
+                (*p).to_owned()
+            }
+        })
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect();
+    mods.push(parts[parts.len() - 1].to_owned());
+    mods.join("+")
+}
+
+fn parse_binds_block(block: &str, base_line: usize) -> Result<Vec<Value>> {
     let lines = block.lines().collect::<Vec<_>>();
     let bind_re = Regex::new(r"^([A-Za-z0-9_][A-Za-z0-9+_]*)\s*(.*?)\{(.*)$")?;
     let title_re = Regex::new(r#"\s*hotkey-overlay-title="[^"]+""#)?;
@@ -2292,6 +2303,71 @@ fn get_binds() -> Result<Outcome> {
             "commented": commented
         }));
         i += 1;
+    }
+
+    Ok(binds)
+}
+
+fn get_binds() -> Result<Outcome> {
+    let path = resolve_section_file("config.d/70-binds.kdl");
+    let content = fs::read_to_string(&path).context("binds file not found")?;
+    let (_, inner_start, inner_end, _) = find_block_bounds(&content, "binds", true)
+        .ok_or_else(|| anyhow!("binds_block_not_found"))?;
+    let block = &content[inner_start..inner_end];
+    let base_line = content[..inner_start]
+        .bytes()
+        .filter(|byte| *byte == b'\n')
+        .count()
+        + 1;
+    let mut binds = parse_binds_block(block, base_line)?;
+
+    let cfg_dir = config_dir();
+    let extra_files = [
+        cfg_dir.join("config.d/90-user-extra.kdl"),
+        cfg_dir.join("config.kdl"),
+    ];
+    for extra_path in extra_files {
+        if extra_path == path || !extra_path.is_file() {
+            continue;
+        }
+        let Ok(extra_content) = fs::read_to_string(&extra_path) else {
+            continue;
+        };
+        let Some((_, ex_start, ex_end, _)) = find_block_bounds(&extra_content, "binds", true)
+        else {
+            continue;
+        };
+        let ex_base_line = extra_content[..ex_start]
+            .bytes()
+            .filter(|byte| *byte == b'\n')
+            .count()
+            + 1;
+        let Ok(extra_binds) = parse_binds_block(&extra_content[ex_start..ex_end], ex_base_line)
+        else {
+            continue;
+        };
+        for eb in extra_binds {
+            if eb.get("commented").and_then(Value::as_bool).unwrap_or(false) {
+                continue;
+            }
+            let Some(eb_combo) = eb.get("key_combo").and_then(Value::as_str) else {
+                continue;
+            };
+            let norm = normalize_combo(eb_combo);
+            let mut replaced = false;
+            for existing in &mut binds {
+                if let Some(ex_combo) = existing.get("key_combo").and_then(Value::as_str) {
+                    if normalize_combo(ex_combo) == norm {
+                        *existing = eb.clone();
+                        replaced = true;
+                        break;
+                    }
+                }
+            }
+            if !replaced {
+                binds.push(eb);
+            }
+        }
     }
 
     let category_order = [

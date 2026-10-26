@@ -16,6 +16,7 @@ ContentPage {
     Component.onCompleted: Qt.callLater(() => root.cavaControlsReady = true)
 
     SettingsTaskNavigator {
+        showTabBar: false
         icon: "construction"
         title: Translation.tr("Advanced")
         description: Translation.tr("Color-generation controls and runtime diagnostics.")
@@ -57,9 +58,18 @@ ContentPage {
         onTriggered: Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
     }
 
+    GridLayout {
+        objectName: "advancedTwoColumnGrid"
+        Layout.fillWidth: true
+        columns: width >= 620 ? 2 : 1
+        columnSpacing: 14
+        rowSpacing: 14
+
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
         settingsTaskSection: "color"
-        visible: root.activeSection === "color"
+        visible: true
         expanded: true
         icon: "colors"
         title: Translation.tr("Color generation")
@@ -415,8 +425,10 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
         settingsTaskSection: "resources"
-        visible: root.activeSection === "resources"
+        visible: true
         expanded: true
         icon: "memory_alt"
         title: Translation.tr("Resource Monitor")
@@ -434,5 +446,6 @@ ContentPage {
                 }
             }
         }
+    }
     }
 }

@@ -324,6 +324,14 @@ Singleton {
         onFileChanged: reloadDebounce.restart()
     }
 
+    FileView {
+        id: userExtraWatcher
+        path: Quickshell.env("HOME") + "/.config/niri/config.d/90-user-extra.kdl"
+        watchChanges: true
+
+        onFileChanged: reloadDebounce.restart()
+    }
+
     Timer {
         id: reloadDebounce
         interval: 300
@@ -344,7 +352,7 @@ Singleton {
             name: "System",
             children: [{ keybinds: [
                 { mods: ["Super"], key: "Tab", comment: "Niri Overview" },
-                { mods: ["Super", "Shift"], key: "E", comment: "Quit Niri" },
+                { mods: ["Super", "Ctrl", "Shift"], key: "E", comment: "Quit Niri" },
                 { mods: ["Super"], key: "Escape", comment: "Toggle shortcuts inhibit" },
                 { mods: ["Super", "Shift"], key: "O", comment: "Power off monitors" }
             ]}]
@@ -359,7 +367,7 @@ Singleton {
                 { mods: ["Super"], key: "Slash", comment: "Cheatsheet" },
                 { mods: ["Super", "Alt"], key: "L", comment: "Lock Screen" },
                 { mods: ["Ctrl", "Alt"], key: "T", comment: "Wallpaper Selector" },
-                { mods: ["Super", "Shift"], key: "W", comment: "Cycle panel style" },
+                { mods: ["Super", "Alt"], key: "W", comment: "Cycle panel style" },
                 { mods: ["Super", "Shift"], key: "Q", comment: "Session dialog" }
             ]}]
         },
@@ -382,9 +390,13 @@ Singleton {
             name: "Applications",
             children: [{ keybinds: [
                 { mods: ["Super"], key: "T", comment: "Terminal" },
+                { mods: ["Super", "Shift"], key: "T", comment: "Terminal (new window)" },
                 { mods: ["Super"], key: "Return", comment: "Terminal" },
+                { mods: ["Super", "Shift"], key: "Return", comment: "Terminal (new window)" },
                 { mods: ["Super"], key: "E", comment: "File manager" },
-                { mods: ["Super"], key: "W", comment: "Browser" }
+                { mods: ["Super", "Shift"], key: "E", comment: "File manager (new window)" },
+                { mods: ["Super"], key: "W", comment: "Browser" },
+                { mods: ["Super", "Shift"], key: "W", comment: "Browser (new window)" }
             ]}]
         },
         {

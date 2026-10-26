@@ -479,6 +479,7 @@ def discover_applications() -> tuple[list[dict], bool]:
             categories = {c.strip() for c in sec.get("Categories", "").split(";") if c.strip()}
             mimes = {m.strip() for m in sec.get("MimeType", "").split(";") if m.strip()}
             slots = _classify_slots(desktop_id, app_id, exec_bin, categories, mimes, launch_cmd)
+            is_terminal_app = sec.get("Terminal", "false").strip().lower() == "true"
 
             raw_entries[identity_key] = {
                 "identityKey": identity_key,
@@ -491,6 +492,7 @@ def discover_applications() -> tuple[list[dict], bool]:
                 "exec": launch_cmd,
                 "execBin": os.path.basename(tokens[0]),
                 "isFlatpak": is_flatpak,
+                "terminal": is_terminal_app,
                 "installation": installation,
                 "origin": origin,
                 "categories": sorted(categories),
@@ -697,7 +699,79 @@ def check_command_availability(command_str: str, apps: list[dict] | None = None)
     return {"valid": False, "executable": tokens[0], "reason": f"Executable {tokens[0]!r} not found"}
 
 
-def resolve_launch_argv(slot_id: str, config_path: str, extra_args: list[str]) -> list[str]:
+TUI_APP_BINS = {
+    "yazi", "ranger", "lf", "nnn", "vifm", "mc",
+    "nvim", "vim", "vi", "nano", "hx", "helix", "micro", "kak",
+    "btop", "htop", "top", "nvtop", "nmtui", "pulsemixer", "alsamixer",
+}
+
+APP_ID_ALIASES = {
+    "zen": {"app.zen_browser.zen", "zen", "zen-browser", "zen-alpha", "zen-beta"},
+    "app.zen_browser.zen": {"app.zen_browser.zen", "zen", "zen-browser", "zen-alpha", "zen-beta"},
+    "zen-browser": {"app.zen_browser.zen", "zen", "zen-browser", "zen-alpha", "zen-beta"},
+    "firefox": {"firefox", "org.mozilla.firefox", "firefox-esr", "firefox-developer-edition"},
+    "org.mozilla.firefox": {"firefox", "org.mozilla.firefox", "firefox-esr", "firefox-developer-edition"},
+    "librewolf": {"librewolf", "io.gitlab.librewolf-community"},
+    "chromium": {"chromium", "org.chromium.chromium", "chromium-browser"},
+    "google-chrome": {"google-chrome", "google-chrome-stable", "com.google.chrome"},
+    "google-chrome-stable": {"google-chrome", "google-chrome-stable", "com.google.chrome"},
+    "brave": {"brave", "brave-browser", "com.brave.browser"},
+    "brave-browser": {"brave", "brave-browser", "com.brave.browser"},
+    "code": {"code", "code-oss", "com.visualstudio.code"},
+    "codium": {"codium", "vscodium", "com.vscodium.codium"},
+    "zed": {"zed", "zeditor", "dev.zed.zed"},
+    "zeditor": {"zed", "zeditor", "dev.zed.zed"},
+    "nautilus": {"nautilus", "org.gnome.nautilus"},
+    "dolphin": {"dolphin", "org.kde.dolphin"},
+    "thunar": {"thunar", "org.xfce.thunar"},
+    "kitty": {"kitty"},
+    "foot": {"foot", "footclient"},
+    "ghostty": {"ghostty", "com.mitchellh.ghostty"},
+    "alacritty": {"alacritty"},
+    "wezterm": {"wezterm", "org.wezfurlong.wezterm"},
+    "konsole": {"konsole", "org.kde.konsole"},
+}
+
+
+def _strip_new_flag(extra_args: list[str]) -> tuple[bool, list[str]]:
+    if extra_args and extra_args[0] == "--new":
+        return True, list(extra_args[1:])
+    return False, list(extra_args)
+
+
+def _apply_force_new_flags(slot_id: str, base_argv: list[str], target_app: dict | None, is_tui: bool) -> list[str]:
+    if not base_argv or is_tui:
+        return list(base_argv)
+    argv = list(base_argv)
+    exec_bin = os.path.basename(argv[0]).lower()
+    if exec_bin == "flatpak" and len(argv) >= 3:
+        for tok in argv[2:]:
+            if not tok.startswith("-"):
+                exec_bin = tok.lower()
+                break
+    app_id = str((target_app or {}).get("appId") or "").strip().lower()
+    ident = app_id or exec_bin
+
+    if slot_id == "browser":
+        if exec_bin != "xdg-open" and "--new-window" not in argv:
+            argv.append("--new-window")
+    elif slot_id == "fileManager":
+        if any(k in ident for k in ("nautilus", "dolphin", "cosmic")) and "--new-window" not in argv:
+            argv.append("--new-window")
+    elif slot_id == "editor":
+        if any(k in ident for k in ("code", "codium", "zed", "subl")):
+            if not any(f in argv for f in ("-n", "--new-window", "--new")):
+                argv.append("-n")
+        elif any(k in ident for k in ("text-editor", "texteditor", "gedit", "kate")):
+            if "--new-window" not in argv:
+                argv.append("--new-window")
+    return argv
+
+
+def _resolve_slot_details(slot_id: str, config_path: str, extra_args: list[str]) -> tuple[list[str], dict | None, bool, str]:
+    """Return (argv, target_app, is_tui, tui_bin)."""
+    force_new, clean_extra = _strip_new_flag(extra_args)
+
     cfg = {}
     if config_path and Path(config_path).is_file():
         try:
@@ -730,29 +804,287 @@ def resolve_launch_argv(slot_id: str, config_path: str, extra_args: list[str]) -
                 target_app = app
                 break
 
+    base_argv: list[str] = []
     if target_app is not None:
         base_argv = shlex.split(target_app["exec"])
-        return base_argv + list(extra_args)
-
-    # 3. Try configured command directly if its binary exists
-    if configured_cmd:
+    elif configured_cmd:
         chk = check_command_availability(configured_cmd, discovered)
         if chk.get("valid"):
             base_argv = shlex.split(configured_cmd)
-            return base_argv + list(extra_args)
+    else:
+        for fb in SLOT_FALLBACKS.get(slot_id, []):
+            chk = check_command_availability(fb, discovered)
+            if chk.get("valid"):
+                base_argv = shlex.split(fb)
+                if fb == "xdg-open" and slot_id == "browser" and not clean_extra:
+                    return base_argv + ["https://"], None, False, ""
+                if fb == "xdg-open" and slot_id == "fileManager" and not clean_extra:
+                    return base_argv + [str(Path.home())], None, False, ""
+                break
 
-    # 4. Fallback chain for the slot
-    for fb in SLOT_FALLBACKS.get(slot_id, []):
-        chk = check_command_availability(fb, discovered)
-        if chk.get("valid"):
-            base_argv = shlex.split(fb)
-            if fb == "xdg-open" and slot_id == "browser" and not extra_args:
-                return base_argv + ["https://"]
-            if fb == "xdg-open" and slot_id == "fileManager" and not extra_args:
-                return base_argv + [str(Path.home())]
-            return base_argv + list(extra_args)
+    if not base_argv:
+        # Final fallback chain if configured_cmd was invalid
+        for fb in SLOT_FALLBACKS.get(slot_id, []):
+            chk = check_command_availability(fb, discovered)
+            if chk.get("valid"):
+                base_argv = shlex.split(fb)
+                if fb == "xdg-open" and slot_id == "browser" and not clean_extra:
+                    return base_argv + ["https://"], None, False, ""
+                if fb == "xdg-open" and slot_id == "fileManager" and not clean_extra:
+                    return base_argv + [str(Path.home())], None, False, ""
+                break
 
-    return []
+    if not base_argv:
+        return [], None, False, ""
+
+    first_bin = os.path.basename(base_argv[0]).lower()
+    is_tui = False
+    tui_bin = ""
+    if slot_id != "terminal":
+        if (target_app and target_app.get("terminal")) or first_bin in TUI_APP_BINS:
+            is_tui = True
+            tui_bin = first_bin
+            term_argv, _, _, _ = _resolve_slot_details("terminal", config_path, [])
+            if not term_argv:
+                term_argv = ["kitty"]
+            return term_argv + ["-e"] + base_argv + clean_extra, target_app, True, tui_bin
+    else:
+        # Check if terminal is being invoked with a TUI app argument (e.g. `alis terminal yazi` or `alis terminal -e yazi`)
+        if clean_extra:
+            if len(clean_extra) >= 2 and clean_extra[0] == "-e":
+                cand = os.path.basename(clean_extra[1]).lower()
+                if cand:
+                    is_tui = True
+                    tui_bin = cand
+            elif len(clean_extra) == 1 and not clean_extra[0].startswith("-"):
+                cand = os.path.basename(clean_extra[0]).lower()
+                if cand:
+                    is_tui = True
+                    tui_bin = cand
+
+    if force_new:
+        base_argv = _apply_force_new_flags(slot_id, base_argv, target_app, is_tui)
+
+    return base_argv + clean_extra, target_app, is_tui, tui_bin
+
+
+def resolve_launch_argv(slot_id: str, config_path: str, extra_args: list[str]) -> list[str]:
+    argv, _, _, _ = _resolve_slot_details(slot_id, config_path, extra_args)
+    return argv
+
+
+def _pid_has_descendant_comm(root_pid: int | None, target_comm: str, window_obj: dict | None = None) -> bool:
+    target = (target_comm or "").strip().lower()
+    if not target:
+        return False
+    if isinstance(window_obj, dict) and isinstance(window_obj.get("mock_children_comms"), list):
+        return target in {str(c).strip().lower() for c in window_obj["mock_children_comms"]}
+    if not root_pid or int(root_pid) <= 0:
+        return False
+    queue = [int(root_pid)]
+    visited: set[int] = set()
+    while queue and len(visited) < 64:
+        pid = queue.pop(0)
+        if pid in visited:
+            continue
+        visited.add(pid)
+        proc_dir = Path(f"/proc/{pid}")
+        if not proc_dir.is_dir():
+            continue
+        if pid != int(root_pid):
+            try:
+                comm = (proc_dir / "comm").read_text(encoding="utf-8", errors="ignore").strip().lower()
+                if comm == target:
+                    return True
+            except Exception:
+                pass
+            try:
+                cmdline_raw = (proc_dir / "cmdline").read_bytes()
+                parts = [p.decode("utf-8", errors="ignore") for p in cmdline_raw.split(b"\0") if p]
+                if parts and os.path.basename(parts[0]).lower() == target:
+                    return True
+            except Exception:
+                pass
+        try:
+            for children_file in (proc_dir / "task").glob("*/children"):
+                for tok in children_file.read_text(encoding="utf-8", errors="ignore").split():
+                    if tok.isdigit():
+                        cpid = int(tok)
+                        if cpid not in visited:
+                            queue.append(cpid)
+        except Exception:
+            pass
+    return False
+
+
+def _query_niri_windows() -> list[dict]:
+    override = os.environ.get("ALIS_DEFAULT_APPS_WINDOWS_JSON")
+    if override:
+        try:
+            p = Path(override)
+            raw = p.read_text(encoding="utf-8") if p.is_file() else override
+            data = json.loads(raw)
+            return data if isinstance(data, list) else []
+        except Exception:
+            return []
+    if os.environ.get("ALIS_LAUNCH_DRY_RUN") == "1":
+        return []
+    niri_bin = _which("niri") or shutil.which("niri")
+    if not niri_bin:
+        return []
+    try:
+        proc = subprocess.run(
+            [niri_bin, "msg", "-j", "windows"],
+            text=True,
+            capture_output=True,
+            timeout=1.5,
+            check=False,
+        )
+        if proc.returncode != 0 or not proc.stdout.strip():
+            return []
+        data = json.loads(proc.stdout)
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
+def _focus_niri_window(window_id: int) -> bool:
+    focus_log = os.environ.get("ALIS_DEFAULT_APPS_FOCUS_LOG")
+    if focus_log:
+        try:
+            Path(focus_log).write_text(str(window_id), encoding="utf-8")
+            return True
+        except Exception:
+            return False
+    if os.environ.get("ALIS_LAUNCH_DRY_RUN") == "1":
+        return True
+    niri_bin = _which("niri") or shutil.which("niri")
+    if not niri_bin:
+        return False
+    try:
+        proc = subprocess.run(
+            [niri_bin, "msg", "action", "focus-window", "--id", str(window_id)],
+            text=True,
+            capture_output=True,
+            timeout=1.5,
+            check=False,
+        )
+        return proc.returncode == 0
+    except Exception:
+        return False
+
+
+def _candidate_window_app_ids(base_argv: list[str], target_app: dict | None) -> set[str]:
+    cands: set[str] = set()
+    if target_app:
+        app_id = str(target_app.get("appId") or "").strip().lower()
+        desktop_id = str(target_app.get("desktopId") or "").strip()
+        stem = (desktop_id[:-8] if desktop_id.endswith(".desktop") else desktop_id).strip().lower()
+        exec_bin = str(target_app.get("execBin") or "").strip().lower()
+        for k in (app_id, stem, exec_bin):
+            if k:
+                cands.add(k)
+                cands.update(APP_ID_ALIASES.get(k, set()))
+    if base_argv:
+        first_bin = os.path.basename(base_argv[0]).lower()
+        if first_bin == "flatpak":
+            for tok in base_argv[2:]:
+                if not tok.startswith("-"):
+                    first_bin = tok.lower()
+                    break
+        if first_bin and first_bin != "xdg-open":
+            cands.add(first_bin)
+            cands.update(APP_ID_ALIASES.get(first_bin, set()))
+    return cands
+
+
+def focus_or_launch(slot_id: str, config_path: str, extra_args: list[str]) -> dict:
+    force_new, clean_extra = _strip_new_flag(extra_args)
+    argv, target_app, is_tui, tui_bin = _resolve_slot_details(slot_id, config_path, extra_args)
+    if not argv:
+        return {"ok": False, "action": "none", "argv": []}
+
+    # Determine if we should attempt to focus an existing open window
+    can_focus = not force_new
+    if slot_id == "terminal":
+        if clean_extra and not is_tui:
+            can_focus = False
+    else:
+        if clean_extra:
+            can_focus = False
+
+    if can_focus:
+        windows = _query_niri_windows()
+        if windows:
+            matches = []
+            if is_tui and tui_bin:
+                for w in windows:
+                    w_app = str(w.get("app_id") or "").strip().lower()
+                    w_title = str(w.get("title") or "").strip().lower()
+                    w_pid = w.get("pid")
+                    if (
+                        w_app == tui_bin
+                        or _pid_has_descendant_comm(w_pid, tui_bin, w)
+                        or w_title == tui_bin
+                        or w_title.startswith(f"{tui_bin} ")
+                        or w_title.endswith(f" - {tui_bin}")
+                    ):
+                        matches.append(w)
+            else:
+                cand_ids = _candidate_window_app_ids(argv, target_app)
+                for w in windows:
+                    w_app = str(w.get("app_id") or "").strip().lower()
+                    if not w_app:
+                        continue
+                    matched_app = (
+                        w_app in cand_ids
+                        or any(w_app.endswith("." + cid) or cid.endswith("." + w_app) for cid in cand_ids if len(cid) > 2)
+                    )
+                    if not matched_app:
+                        continue
+                    # For plain terminal shortcut (Mod+T), ignore terminal windows dedicated to a TUI file manager (e.g. yazi)
+                    if slot_id == "terminal":
+                        w_pid = w.get("pid")
+                        w_title = str(w.get("title") or "").strip().lower()
+                        if any(
+                            _pid_has_descendant_comm(w_pid, fm_tui, w)
+                            or w_title == fm_tui
+                            or w_title.startswith(f"{fm_tui} ")
+                            for fm_tui in ("yazi", "ranger", "lf")
+                        ):
+                            continue
+                    matches.append(w)
+
+            if matches:
+                matches.sort(key=lambda w: int(w.get("id") or 0))
+                focused_indices = [i for i, w in enumerate(matches) if w.get("is_focused") is True]
+                if focused_indices and len(matches) > 1:
+                    chosen = matches[(focused_indices[0] + 1) % len(matches)]
+                elif focused_indices:
+                    chosen = matches[focused_indices[0]]
+                else:
+                    def _ts_key(w: dict) -> tuple[int, int, int]:
+                        ts = w.get("focus_timestamp") if isinstance(w.get("focus_timestamp"), dict) else {}
+                        return (
+                            int(ts.get("secs") or 0),
+                            int(ts.get("nanos") or 0),
+                            int(w.get("id") or 0),
+                        )
+                    chosen = max(matches, key=_ts_key)
+                wid = int(chosen.get("id") or 0)
+                if wid > 0 and _focus_niri_window(wid):
+                    return {
+                        "ok": True,
+                        "action": "focused",
+                        "windowId": wid,
+                        "argv": argv,
+                    }
+
+    return {
+        "ok": True,
+        "action": "launch",
+        "argv": argv,
+    }
 
 
 def main() -> int:
@@ -793,6 +1125,15 @@ def main() -> int:
         argv = resolve_launch_argv(slot_id, config_path, extra)
         print(json.dumps({"ok": bool(argv), "argv": argv}))
         return 0 if argv else 1
+    if cmd == "focus-or-launch":
+        slot_id = sys.argv[2] if len(sys.argv) > 2 else "terminal"
+        config_path = sys.argv[3] if len(sys.argv) > 3 else ""
+        extra = sys.argv[4:]
+        if extra and extra[0] == "--":
+            extra = extra[1:]
+        res = focus_or_launch(slot_id, config_path, extra)
+        print(json.dumps(res))
+        return 0 if res.get("ok") else 1
     return 1
 
 

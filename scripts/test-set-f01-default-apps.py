@@ -347,6 +347,125 @@ def test_discovery_matrix() -> None:
         )
         assert files_res["argv"] == ["nautilus", "--new-window", "/tmp"], files_res
 
+        # 5. Focus-or-launch + --new for GUI and TUI (Terminal=true) default applications
+        _make_executable(bin_dir, "yazi")
+        _write_desktop(
+            native_apps,
+            "yazi.desktop",
+            """
+            [Desktop Entry]
+            Type=Application
+            Name=Yazi
+            Exec=yazi
+            Terminal=true
+            Categories=System;FileTools;FileManager;
+            MimeType=inode/directory;
+            """,
+        )
+        (xdg_cfg_dir / "config.json").write_text(
+            json.dumps(
+                {
+                    "apps": {
+                        "terminal": "kitty",
+                        "browser": "app.zen_browser.zen",
+                        "fileManager": "yazi",
+                        "desktopIds": {
+                            "terminal": "native:kitty.desktop",
+                            "browser": "flatpak:system:app.zen_browser.zen",
+                            "fileManager": "native:yazi.desktop",
+                        },
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        windows_json = root / "windows.json"
+        focus_log = root / "focused-id.txt"
+        windows_json.write_text(
+            json.dumps(
+                [
+                    {
+                        "id": 11,
+                        "title": "Yazi: ~/Documents",
+                        "app_id": "kitty",
+                        "pid": 1001,
+                        "is_focused": False,
+                        "focus_timestamp": {"secs": 100, "nanos": 0},
+                        "mock_children_comms": ["yazi"],
+                    },
+                    {
+                        "id": 22,
+                        "title": "Zen Browser",
+                        "app_id": "app.zen_browser.zen",
+                        "pid": 1002,
+                        "is_focused": False,
+                        "focus_timestamp": {"secs": 200, "nanos": 0},
+                    },
+                ]
+            ),
+            encoding="utf-8",
+        )
+        env_focus = env_cli.copy()
+        env_focus["ALIS_DEFAULT_APPS_WINDOWS_JSON"] = str(windows_json)
+        env_focus["ALIS_DEFAULT_APPS_FOCUS_LOG"] = str(focus_log)
+
+        # When only a yazi kitty window is open, plain `alis terminal` must NOT hijack yazi; it launches a new plain kitty
+        plain_term = json.loads(
+            subprocess.check_output(
+                ["bash", str(ROOT / "scripts" / "launch-terminal.sh")],
+                env=env_focus,
+                text=True,
+            )
+        )
+        assert plain_term["action"] == "launch" and plain_term["argv"] == ["kitty"], plain_term
+
+        # `alis files` (with yazi configured) or `alis terminal yazi` focuses existing yazi window #11
+        yazi_focus = json.loads(
+            subprocess.check_output(
+                ["bash", str(ROOT / "scripts" / "alis"), "files"],
+                env=env_focus,
+                text=True,
+            )
+        )
+        assert yazi_focus["action"] == "focused" and yazi_focus["windowId"] == 11, yazi_focus
+        assert focus_log.read_text(encoding="utf-8").strip() == "11"
+
+        # `alis files --new` forces launching a new kitty -e yazi instance
+        yazi_new = json.loads(
+            subprocess.check_output(
+                ["bash", str(ROOT / "scripts" / "alis"), "files", "--new"],
+                env=env_focus,
+                text=True,
+            )
+        )
+        assert yazi_new["action"] == "launch" and yazi_new["argv"] == ["kitty", "-e", "yazi"], yazi_new
+
+        # `alis browser` focuses existing Zen Browser window #22
+        browser_focus = json.loads(
+            subprocess.check_output(
+                ["bash", str(ROOT / "scripts" / "alis"), "browser"],
+                env=env_focus,
+                text=True,
+            )
+        )
+        assert browser_focus["action"] == "focused" and browser_focus["windowId"] == 22, browser_focus
+        assert focus_log.read_text(encoding="utf-8").strip() == "22"
+
+        # `alis browser --new` forces launching a new browser window
+        browser_new = json.loads(
+            subprocess.check_output(
+                ["bash", str(ROOT / "scripts" / "alis"), "browser", "--new"],
+                env=env_focus,
+                text=True,
+            )
+        )
+        assert browser_new["action"] == "launch" and browser_new["argv"] == [
+            "flatpak",
+            "run",
+            "app.zen_browser.zen",
+            "--new-window",
+        ], browser_new
+
 
 def test_manual_xdg_sync() -> None:
     with tempfile.TemporaryDirectory(prefix="alis-set-f01-xdg-") as tmp:

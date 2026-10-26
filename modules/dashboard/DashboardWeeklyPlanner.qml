@@ -259,12 +259,11 @@ Item {
         }
         return Qt.color(EventPalette.eventSwatch(row?.event,row?.source))
     }
-    // Match the date and All-day headings to the actual timeline: its day
-    // cells have no opaque backing, so the pinned headings must not paint a
-    // contrasting solid Weather/Material card over the transparent grid.
-    // The Today tint on the day column stays visible through this surface.
+    // Match the pinned date and All-day headings to the Weekly Planner
+    // background color so initial/scrolled timed events never show through.
     readonly property bool abyssPanel: Config.options?.panelFamily === "abyss"
-    readonly property color headerSurface: "transparent"
+    readonly property color headerSurface: abyssPanel
+        ? AbyssStyle.surfaceDeep : Qt.alpha(Appearance.colors.colLayer0Base, 1)
     readonly property color headerInk: root.ink
     readonly property color headerMutedInk: root.mutedInk
     readonly property color headerAccent: abyssPanel
@@ -632,6 +631,11 @@ Item {
                                 width:parent.width;height:44
                                 visible:dayColumn.today || dayHeaderHover.hovered
                                 color:Qt.alpha(root.headerAccent,dayColumn.today?.12:.07)
+                            }
+                            Rectangle {
+                                y:44;width:parent.width;height:Math.max(0,parent.height-44)
+                                visible:dayColumn.today
+                                color:Qt.alpha(Appearance.colors.colPrimary,.045)
                             }
                             Rectangle {
                                 x:0;y:0;width:1;height:parent.height

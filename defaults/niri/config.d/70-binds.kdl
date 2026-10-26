@@ -21,7 +21,7 @@ binds {
     Mod+Tab repeat=false { toggle-overview; }
 
     // Quit Niri (shows confirmation dialog).
-    Mod+Shift+E { quit; }
+    Mod+Ctrl+Shift+E { quit; }
 
     // Escape hatch: re-enable keybinds if an app inhibits them (e.g. RDP client).
     Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
@@ -59,19 +59,23 @@ binds {
     Mod+Comma { spawn "alis" "settings"; }
     Mod+Alt+Comma repeat=false { spawn "alis" "ipc" "wull" "chat"; }
     Mod+Slash { spawn "alis" "cheatsheet" "toggle"; }
-    Mod+Shift+W { spawn "alis" "panelFamily" "cycle"; }
+    Mod+Alt+W { spawn "alis" "panelFamily" "cycle"; }
 
     // Session / power dialog.
     Mod+Shift+Q { spawn "alis" "session" "toggle"; }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // App launchers
+    // App launchers (press Shift to open a new instance)
     // ═══════════════════════════════════════════════════════════════════════
 
     Mod+T { spawn "alis" "terminal"; }
+    Mod+Shift+T { spawn "alis" "terminal" "--new"; }
     Mod+Return { spawn "alis" "terminal"; }
+    Mod+Shift+Return { spawn "alis" "terminal" "--new"; }
     Super+E { spawn "alis" "files"; }
+    Super+Shift+E { spawn "alis" "files" "--new"; }
     Super+W { spawn "alis" "browser"; }
+    Super+Shift+W { spawn "alis" "browser" "--new"; }
 
     // ═══════════════════════════════════════════════════════════════════════
     // Window management

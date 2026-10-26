@@ -516,6 +516,7 @@ ContentPage {
 
     SettingsTaskNavigator {
         objectName: "defaultAppsTaskTabs"
+        showTabBar: false
         icon: "apps"
         title: Translation.tr("Default Applications")
         description: ""
@@ -528,42 +529,54 @@ ContentPage {
         ]
     }
 
-    SettingsCardSection {
-        settingsTaskSection: "primary"
-        visible: root.activeSection === "primary"
-        expanded: true
-        icon: "apps"
-        title: Translation.tr("Core Applications")
+    GridLayout {
+        objectName: "defaultAppsTwoColumnGrid"
+        Layout.fillWidth: true
+        columns: width >= 620 ? 2 : 1
+        columnSpacing: 14
+        rowSpacing: 14
 
-        DiscoveryHeaderBar {
-            objectName: "defaultAppsDiscoverySummary"
-        }
+        SettingsCardSection {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            settingsTaskSection: "primary"
+            visible: true
+            expanded: true
+            icon: "apps"
+            title: Translation.tr("Core Applications")
 
-        Repeater {
-            model: AppLauncher.primarySlotDefinitions()
-            delegate: DefaultAppSlotCard {
-                required property var modelData
-                slotData: modelData
+            DiscoveryHeaderBar {
+                objectName: "defaultAppsDiscoverySummary"
+            }
+
+            Repeater {
+                model: AppLauncher.primarySlotDefinitions()
+                delegate: DefaultAppSlotCard {
+                    required property var modelData
+                    slotData: modelData
+                }
             }
         }
-    }
 
-    SettingsCardSection {
-        settingsTaskSection: "utilities"
-        visible: root.activeSection === "utilities"
-        expanded: true
-        icon: "tune"
-        title: Translation.tr("System Utilities")
+        SettingsCardSection {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            settingsTaskSection: "utilities"
+            visible: true
+            expanded: true
+            icon: "tune"
+            title: Translation.tr("System Utilities")
 
-        DiscoveryHeaderBar {
-            objectName: "defaultAppsUtilitiesDiscoverySummary"
-        }
+            DiscoveryHeaderBar {
+                objectName: "defaultAppsUtilitiesDiscoverySummary"
+            }
 
-        Repeater {
-            model: AppLauncher.utilitySlotDefinitions()
-            delegate: DefaultAppSlotCard {
-                required property var modelData
-                slotData: modelData
+            Repeater {
+                model: AppLauncher.utilitySlotDefinitions()
+                delegate: DefaultAppSlotCard {
+                    required property var modelData
+                    slotData: modelData
+                }
             }
         }
     }

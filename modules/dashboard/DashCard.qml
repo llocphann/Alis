@@ -19,9 +19,7 @@ Rectangle {
     property string icon: ""
     default property alias content: inner.data
 
-    readonly property bool compact:
-        (Config.options?.dashboard?.appearance?.density ?? "comfortable")
-            === "compact"
+    readonly property bool compact: false
     readonly property real cardOpacity: Math.max(0.3, Math.min(1,
         Config.options?.dashboard?.appearance?.cardOpacity ?? 1))
     readonly property bool showTitle:

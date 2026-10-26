@@ -27,7 +27,7 @@ ShellRoot {
  FloatingWindow {
   visible:true;implicitWidth:1000;implicitHeight:740;color:"#111820"
   Item {
-   id:scene;anchors.fill:parent
+   id:scene;width:parent.width;height:parent.height
    AbyssBar {id:layer;anchors.fill:parent;outputName:"A";edge:"top";editing:editor.visible;draftPlacements:!Config.ready?[]:editor.visible?editor.draft:null;draftOptions:editor.visible?editor.draftOptions:null;liquidController:liquid}
    AbyssEdgeEditor {id:editor;anchors.fill:parent;outputName:"A";moduleLayer:layer;controller:liquid;visible:GlobalStates.abyssEditing}
   }
@@ -97,12 +97,23 @@ ShellRoot {
     }
     editor.selectedId="a";editor.change("alignment","start");wait(60);editor.toggleLock("a");wait(60);capture("undo-before")
     const locked=JSON.stringify(editor.draft),own=JSON.parse(JSON.stringify(record("a")))
-    editor.moduleScale=1.8;wait(60);capture("infeasible-size")
+    editor.moduleScale=1.8;wait(60);capture("flexible-scale")
+    check(!editor.layoutConflicts.length,"locked module should flexibly adapt to moduleScale without conflict")
+    editor.edgeThicknesses=Object.assign({},editor.edgeThicknesses,{top:32});wait(60)
+    check(!editor.layoutConflicts.length,"locked module should flexibly adapt to larger Screen Edge thickness")
+    editor.edgeThicknesses=Object.assign({},editor.edgeThicknesses,{top:10});wait(60)
+    check(!editor.layoutConflicts.length,"locked module should flexibly adapt to smaller Screen Edge thickness")
+    Config.setNestedValue("abyss.perimeter.radius",48);wait(60)
+    check(!editor.layoutConflicts.length,"locked module should flexibly adapt to Abyss curvature change")
+    Config.setNestedValue("abyss.perimeter.radius",34);wait(60)
+    editor.forceActiveFocus();keyClick(Qt.Key_Z,Qt.ControlModifier);keyClick(Qt.Key_Z,Qt.ControlModifier);keyClick(Qt.Key_Z,Qt.ControlModifier);wait(60);capture("undo-size")
+    check(editor.moduleScale===1&&!editor.layoutConflicts.length,"Undo did not restore initial scale")
+    stable("a",own)
+    scene.width=240;wait(60);capture("infeasible-size")
     check(editor.layoutConflicts.length>0,"infeasible output size lacks visible conflict")
     editor.finish(true);check(GlobalStates.abyssEditing,"Done accepted an infeasible lock fallback")
     check(JSON.stringify(Config.options.abyss.modules.placements)===original,"conflict mutated saved placement")
-    editor.forceActiveFocus();keyClick(Qt.Key_Z,Qt.ControlModifier);wait(60);capture("undo-size")
-    check(editor.moduleScale===1&&!editor.layoutConflicts.length,"Undo did not restore feasible geometry")
+    scene.width=1000;wait(60)
     stable("a",own)
     editor.reset();wait(60);check(!editor.draft.some(p=>p.locked),"Reset left old locks active")
     editor.undo();wait(60);check(JSON.stringify(editor.draft)===locked,"Undo Reset lost per-ID locks")

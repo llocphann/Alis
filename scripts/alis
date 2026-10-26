@@ -3606,8 +3606,17 @@ launch_configured_slot() {
 
     if [[ -f "$helper_py" ]] && command -v python3 >/dev/null 2>&1; then
         local resolved_json
-        resolved_json="$(python3 "$helper_py" resolve-launch "$slot_id" "$config_file" -- "$@" 2>/dev/null || true)"
+        resolved_json="$(python3 "$helper_py" focus-or-launch "$slot_id" "$config_file" -- "$@" 2>/dev/null || true)"
         if [[ -n "$resolved_json" ]]; then
+            if [[ "${ALIS_LAUNCH_DRY_RUN:-0}" == "1" ]]; then
+                printf '%s\n' "$resolved_json"
+                exit 0
+            fi
+            local action
+            action="$(python3 -c 'import json, sys; print(json.loads(sys.argv[1]).get("action", ""))' "$resolved_json" 2>/dev/null || true)"
+            if [[ "$action" == "focused" ]]; then
+                exit 0
+            fi
             local -a resolved_argv=()
             mapfile -t resolved_argv < <(python3 -c '
 import json, sys
@@ -3617,10 +3626,6 @@ if data.get("ok") and data.get("argv"):
         print(item)
 ' "$resolved_json" 2>/dev/null || true)
             if [[ ${#resolved_argv[@]} -gt 0 ]]; then
-                if [[ "${ALIS_LAUNCH_DRY_RUN:-0}" == "1" ]]; then
-                    printf '%s\n' "$resolved_json"
-                    exit 0
-                fi
                 if command -v systemd-run >/dev/null 2>&1; then
                     exec systemd-run --user --scope --quiet --collect --property="Description=${description}" -- "${resolved_argv[@]}"
                 else

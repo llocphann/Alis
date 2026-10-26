@@ -124,7 +124,7 @@ Item {
 
     readonly property bool alisEverywhere: Appearance.alisEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
-    readonly property bool showPowerButtons: Config.options?.dashboard?.showPowerButtons ?? true
+    readonly property bool showPowerButtons: true
     readonly property color colText: abyss ? (Appearance.m3colors.darkmode ? AbyssStyle.textColor : "#000000") : Appearance.angelEverywhere ? Appearance.angel.colText : alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer0
     readonly property color colSubtext: abyss ? (Appearance.m3colors.darkmode ? AbyssStyle.textColorMuted : Qt.alpha("#000000", .66)) : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary : alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
 

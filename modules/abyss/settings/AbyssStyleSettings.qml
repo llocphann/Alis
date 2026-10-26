@@ -14,6 +14,8 @@ ColumnLayout {
     spacing: 16
     property string activeSection: "surface"
     property var sections: ["surface","performance"]
+    readonly property bool twoColumnSurfacePerformance: root.sections.length === 2
+        && root.sections.includes("surface") && root.sections.includes("performance")
     readonly property var waveValues: Wave.parameters(Config.options?.abyss?.waves)
     function spectrumChange(key,value): void {
         const options=Config.options?.abyss?.spectrum
@@ -154,7 +156,7 @@ ColumnLayout {
         description:"Screen Edge appearance and behavior."
         currentValue:root.activeSection
         onSelected:value=>root.activeSection=value
-        visible:options.length > 1
+        visible:options.length > 2
         showIntro:false
         options:[
             {displayName:"Surface",value:"surface",icon:"opacity"},
@@ -193,81 +195,117 @@ ColumnLayout {
             SettingsNote { text:"Uses the shared audio analyzer; sleeps when paused, hidden or reduced motion is enabled." }
         }
     }
-    SettingsCardSection {
-        title:"Surface";icon:"opacity";settingsTaskSection:"surface"
-        visible:root.activeSection==="surface"
-        SettingsGroup {
-            // Icon toggles share the row of the value they control. Empty
-            // icon slots keep all titles/sliders aligned when a row has no toggle.
-            CompactSurfacePercent {
-                text:"Surface opacity"
-                configKey:"abyss.surface.opacity";fallback:.78;minimum:0
-                toggleIcon:"opacity"
-                toggleDescription:"Transparent surfaces"
-                searchKeywords:["transparent", "surface", "opacity"]
-                toggleChecked:(Config.options?.abyss?.surface?.opacity ?? .78)<.999
-                onToggledByUser:checked=>Config.setNestedValue("abyss.surface.opacity",checked ? .78 : 1)
+    GridLayout {
+        Layout.fillWidth: true
+        columns: root.twoColumnSurfacePerformance && width >= 620 ? 2 : 1
+        columnSpacing: 14
+        rowSpacing: 14
+        visible: root.activeSection === "surface" || root.activeSection === "performance" || root.twoColumnSurfacePerformance
+
+        SettingsCardSection {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            title:"Surface";icon:"opacity";settingsTaskSection:"surface"
+            visible:root.activeSection==="surface" || root.twoColumnSurfacePerformance
+            SettingsGroup {
+                // Icon toggles share the row of the value they control. Empty
+                // icon slots keep all titles/sliders aligned when a row has no toggle.
+                CompactSurfacePercent {
+                    text:"Surface opacity"
+                    configKey:"abyss.surface.opacity";fallback:.78;minimum:0
+                    toggleIcon:"opacity"
+                    toggleDescription:"Transparent surfaces"
+                    searchKeywords:["transparent", "surface", "opacity"]
+                    toggleChecked:(Config.options?.abyss?.surface?.opacity ?? .78)<.999
+                    onToggledByUser:checked=>Config.setNestedValue("abyss.surface.opacity",checked ? .78 : 1)
+                }
+                // Screen Edge depth belongs to Edit Abyss Layout, not Surface.
+                CompactSurfacePercent {
+                    text:"Curvature";configKey:"abyss.perimeter.radius"
+                    fallback:34;minimum:12;maximum:64
+                }
+                CompactSurfacePercent {
+                    text:"Fusion softness";configKey:"abyss.surface.softness"
+                    fallback:24;minimum:4;maximum:48
+                }
+                CompactSurfacePercent {
+                    text:"Blur strength";configKey:"abyss.effects.blur.radius"
+                    fallback:10;maximum:24
+                    toggleIcon:"blur_on"
+                    toggleDescription:"Wallpaper blur"
+                    searchKeywords:["wallpaper", "blur", "toggle"]
+                    toggleChecked:Config.options?.abyss?.effects?.blur?.enabled ?? true
+                    onToggledByUser:checked=>Config.setNestedValue("abyss.effects.blur.enabled",checked)
+                }
+                CompactSurfaceRow {
+                    objectName:"abyssPanelOpacity"
+                    text:"Panel & content opacity";from:0;to:1;stepSize:.01
+                    currentValue:AbyssStyle.contentOpacity
+                    valueText:Math.round(currentValue*100)+"%"
+                    toggleIcon:"link"
+                    toggleObjectName:"abyssPanelOpacityFollow"
+                    toggleDescription:"Panel and content opacity follows Screen Edge"
+                    searchKeywords:["follow", "screen edge", "panel", "content", "opacity"]
+                    toggleChecked:(Config.options?.abyss?.content?.opacity ?? -1)<0
+                    onToggledByUser:checked=>Config.setNestedValue("abyss.content.opacity",checked ? -1 : AbyssStyle.contentOpacity)
+                    onMoved:value=>Config.setNestedValue("abyss.content.opacity",value)
+                }
+                CompactSurfaceRow {
+                    objectName:"abyssPanelBlur"
+                    text:"Panel background blur";from:0;to:24;stepSize:1
+                    currentValue:AbyssStyle.configuredContentBlurRadius
+                    valueText:Math.round(currentValue)+" px"
+                    toggleIcon:"link"
+                    toggleObjectName:"abyssPanelBlurFollow"
+                    toggleDescription:"Panel blur follows Screen Edge"
+                    searchKeywords:["follow", "screen edge", "panel", "blur"]
+                    toggleChecked:(Config.options?.abyss?.content?.blurRadius ?? -1)<0
+                    onToggledByUser:checked=>Config.setNestedValue("abyss.content.blurRadius",checked ? -1 : AbyssStyle.configuredContentBlurRadius)
+                    onMoved:value=>Config.setNestedValue("abyss.content.blurRadius",value)
+                }
+                CompactSurfacePercent {
+                    text:"Refraction strength";configKey:"abyss.effects.refraction.strength"
+                    fallback:6;maximum:16
+                    toggleIcon:"diamond"
+                    toggleDescription:"Refraction (Quality)"
+                    searchKeywords:["refraction", "quality", "effects"]
+                    toggleChecked:Config.options?.abyss?.effects?.refraction?.enabled ?? false
+                    onToggledByUser:checked=>Config.setNestedValue("abyss.effects.refraction.enabled",checked)
+                }
+                CompactSurfacePercent {
+                    text:"Rim highlight";configKey:"abyss.effects.surfaceHighlight"
+                    fallback:.45
+                }
+                CompactSurfacePercent {
+                    text:"Glow";configKey:"abyss.effects.glow.strength"
+                    fallback:.08;maximum:.3
+                }
             }
-            // Screen Edge depth belongs to Edit Abyss Layout, not Surface.
-            CompactSurfacePercent {
-                text:"Curvature";configKey:"abyss.perimeter.radius"
-                fallback:34;minimum:12;maximum:64
+        }
+        SettingsCardSection {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            title:"Performance";icon:"speed";settingsTaskSection:"performance"
+            visible:root.activeSection==="performance" || root.twoColumnSurfacePerformance
+            SettingsSwitch {
+                text:"Follow power profile"
+                description:"Match Abyss quality to the power profile."
+                autoToggle:false;checked:Config.options?.abyss?.autoQuality ?? false
+                onToggledByUser:checked=>Config.setNestedValue("abyss.autoQuality",checked)
             }
-            CompactSurfacePercent {
-                text:"Fusion softness";configKey:"abyss.surface.softness"
-                fallback:24;minimum:4;maximum:48
-            }
-            CompactSurfacePercent {
-                text:"Blur strength";configKey:"abyss.effects.blur.radius"
-                fallback:10;maximum:24
-                toggleIcon:"blur_on"
-                toggleDescription:"Wallpaper blur"
-                searchKeywords:["wallpaper", "blur", "toggle"]
-                toggleChecked:Config.options?.abyss?.effects?.blur?.enabled ?? true
-                onToggledByUser:checked=>Config.setNestedValue("abyss.effects.blur.enabled",checked)
-            }
-            CompactSurfaceRow {
-                objectName:"abyssPanelOpacity"
-                text:"Panel & content opacity";from:0;to:1;stepSize:.01
-                currentValue:AbyssStyle.contentOpacity
-                valueText:Math.round(currentValue*100)+"%"
-                toggleIcon:"link"
-                toggleObjectName:"abyssPanelOpacityFollow"
-                toggleDescription:"Panel and content opacity follows Screen Edge"
-                searchKeywords:["follow", "screen edge", "panel", "content", "opacity"]
-                toggleChecked:(Config.options?.abyss?.content?.opacity ?? -1)<0
-                onToggledByUser:checked=>Config.setNestedValue("abyss.content.opacity",checked ? -1 : AbyssStyle.contentOpacity)
-                onMoved:value=>Config.setNestedValue("abyss.content.opacity",value)
-            }
-            CompactSurfaceRow {
-                objectName:"abyssPanelBlur"
-                text:"Panel background blur";from:0;to:24;stepSize:1
-                currentValue:AbyssStyle.configuredContentBlurRadius
-                valueText:Math.round(currentValue)+" px"
-                toggleIcon:"link"
-                toggleObjectName:"abyssPanelBlurFollow"
-                toggleDescription:"Panel blur follows Screen Edge"
-                searchKeywords:["follow", "screen edge", "panel", "blur"]
-                toggleChecked:(Config.options?.abyss?.content?.blurRadius ?? -1)<0
-                onToggledByUser:checked=>Config.setNestedValue("abyss.content.blurRadius",checked ? -1 : AbyssStyle.configuredContentBlurRadius)
-                onMoved:value=>Config.setNestedValue("abyss.content.blurRadius",value)
-            }
-            CompactSurfacePercent {
-                text:"Refraction strength";configKey:"abyss.effects.refraction.strength"
-                fallback:6;maximum:16
-                toggleIcon:"diamond"
-                toggleDescription:"Refraction (Quality)"
-                searchKeywords:["refraction", "quality", "effects"]
-                toggleChecked:Config.options?.abyss?.effects?.refraction?.enabled ?? false
-                onToggledByUser:checked=>Config.setNestedValue("abyss.effects.refraction.enabled",checked)
-            }
-            CompactSurfacePercent {
-                text:"Rim highlight";configKey:"abyss.effects.surfaceHighlight"
-                fallback:.45
-            }
-            CompactSurfacePercent {
-                text:"Glow";configKey:"abyss.effects.glow.strength"
-                fallback:.08;maximum:.3
+            SettingsGroup {
+                ConfigSelectionArray {
+                    enabled:!(Config.options?.abyss?.autoQuality ?? false)
+                    currentValue:Config.options?.abyss?.quality ?? "balanced"
+                    options:[{displayName:"Performance",value:"performance"},{displayName:"Balanced",value:"balanced"},{displayName:"Quality",value:"quality"}]
+                    onSelected:value=>Config.setNestedValue("abyss.quality",value)
+                }
+                SettingsNote { text:"Wave samples: 128 Performance, 256 Balanced/Quality. Glass uses wallpaper, not window capture." }
+                ConfigSwitch {
+                    text:"Visible during fullscreen";autoToggle:false
+                    checked:Config.options?.abyss?.perimeter?.visibleInFullscreen ?? false
+                    onToggledByUser:checked=>Config.setNestedValue("abyss.perimeter.visibleInFullscreen",checked)
+                }
             }
         }
     }
@@ -430,30 +468,6 @@ ColumnLayout {
                 text:"Reduce animations (all families)";autoToggle:false
                 checked:Config.options?.performance?.reduceAnimations ?? false
                 onToggledByUser:checked=>Config.setNestedValue("performance.reduceAnimations",checked)
-            }
-        }
-    }
-    SettingsCardSection {
-        title:"Performance";icon:"speed";settingsTaskSection:"performance"
-        visible:root.activeSection==="performance"
-        SettingsSwitch {
-            text:"Follow power profile"
-            description:"Match Abyss quality to the power profile."
-            autoToggle:false;checked:Config.options?.abyss?.autoQuality ?? false
-            onToggledByUser:checked=>Config.setNestedValue("abyss.autoQuality",checked)
-        }
-        SettingsGroup {
-            ConfigSelectionArray {
-                enabled:!(Config.options?.abyss?.autoQuality ?? false)
-                currentValue:Config.options?.abyss?.quality ?? "balanced"
-                options:[{displayName:"Performance",value:"performance"},{displayName:"Balanced",value:"balanced"},{displayName:"Quality",value:"quality"}]
-                onSelected:value=>Config.setNestedValue("abyss.quality",value)
-            }
-            SettingsNote { text:"Wave samples: 128 Performance, 256 Balanced/Quality. Glass uses wallpaper, not window capture." }
-            ConfigSwitch {
-                text:"Visible during fullscreen";autoToggle:false
-                checked:Config.options?.abyss?.perimeter?.visibleInFullscreen ?? false
-                onToggledByUser:checked=>Config.setNestedValue("abyss.perimeter.visibleInFullscreen",checked)
             }
         }
     }

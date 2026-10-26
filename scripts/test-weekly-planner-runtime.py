@@ -144,8 +144,8 @@ Window {
    check(dayHeaders.every(item=>String(item.color)===String(planner.headerSurface))
      && String(headerCorner.color)===String(planner.headerSurface),
      "day/all-day/corner do not share the timeline surface")
-   check(planner.headerSurface.a===0,
-     "the pinned date/All-day headings obscure the transparent timeline background")
+   check(planner.headerSurface.a===1,
+     "the pinned date/All-day headings must be opaque matching the Weekly Planner background")
    check(String(planner.headerInk)===String(planner.ink),
      "heading labels no longer use the timeline's text palette")
    // Heading centres are tested in toolbar space, not just in the space

@@ -74,25 +74,6 @@ ContentPage {
         title: Translation.tr("General")
 
         SettingsGroup {
-            ConfigSwitch {
-                text: Translation.tr("Show header")
-                description: Translation.tr("Uptime chip and quick action buttons at the top")
-                checked: Config.options?.dashboard?.showHeader ?? true
-                onCheckedChanged: Config.setNestedValue("dashboard.showHeader", checked)
-            }
-            ConfigSwitch {
-                text: Translation.tr("Show power buttons")
-                description: Translation.tr("Lock and session buttons in the header")
-                enabled: Config.options?.dashboard?.showHeader ?? true
-                checked: Config.options?.dashboard?.showPowerButtons ?? true
-                onCheckedChanged: Config.setNestedValue("dashboard.showPowerButtons", checked)
-            }
-            ConfigSwitch {
-                text: Translation.tr("Preload Dashboard")
-                description: Translation.tr("Load before first open; stays warm after use")
-                checked: Config.options?.dashboard?.keepLoaded ?? false
-                onCheckedChanged: Config.setNestedValue("dashboard.keepLoaded", checked)
-            }
             ContentSubsection {
                 title: Translation.tr("Default tab after inactivity")
                 ConfigSelectionArray {
@@ -195,17 +176,6 @@ ContentPage {
         title: Translation.tr("Appearance")
 
         SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("Density")
-                ConfigSelectionArray {
-                    currentValue: Config.options?.dashboard?.appearance?.density ?? "comfortable"
-                    onSelected: newValue => Config.setNestedValue("dashboard.appearance.density", newValue)
-                    options: [
-                        { displayName: Translation.tr("Comfortable"), icon: "expand", value: "comfortable" },
-                        { displayName: Translation.tr("Compact"), icon: "compress", value: "compact" }
-                    ]
-                }
-            }
             ConfigSpinBox {
                 text: Translation.tr("Card opacity (%)")
                 value: Math.round((Config.options?.dashboard?.appearance?.cardOpacity ?? 1) * 100)

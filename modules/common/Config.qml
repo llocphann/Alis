@@ -2289,7 +2289,7 @@ Singleton {
                     property bool enable: true
                     property bool showScrollbars: true
                 }
-                property bool keepLoaded: false
+                property bool keepLoaded: true
                 property bool showHeader: true
                 property bool showPowerButtons: true
                 property JsonObject appearance: JsonObject {

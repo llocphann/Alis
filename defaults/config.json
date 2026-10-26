@@ -1089,7 +1089,7 @@
             "enable": true,
             "showScrollbars": true
         },
-        "keepLoaded": false,
+        "keepLoaded": true,
         "showHeader": true,
         "showPowerButtons": true,
         "appearance": {

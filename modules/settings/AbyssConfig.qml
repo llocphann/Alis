@@ -10,6 +10,8 @@ ContentPage {
     property string sidebarSection: "general"
     settingsPageIndex: 2
     settingsPageName: "Abyss"
+    readonly property bool twoColumnModulesBar: root.sections.length === 2
+        && root.sections.includes("modules") && root.sections.includes("bar")
     property alias activeSection: controls.activeSection
     function activateSettingsSearchSection(section: string): void {
         const label = String(section).toLowerCase().split(/[·›]/).pop().trim()
@@ -31,15 +33,29 @@ ContentPage {
                 sidebarSettings.item.activeSection = root.sidebarSection
         }
     }
-    AbyssStyleSettings { id: controls;sections:root.sections;activeSection:root.sections[0] }
-    Loader {
-        id: moduleSettings
+    GridLayout {
         Layout.fillWidth: true
-        Layout.preferredHeight: item?.implicitHeight ?? 0
-        visible: active
-        active: controls.activeSection === "bar"
-        source: "BarConfig.qml"
-        onLoaded: { item.embedded = true; item.settingsPageIndex = root.settingsPageIndex; item.activeSection = root.barSection }
+        columns: root.twoColumnModulesBar && width >= 620 ? 2 : 1
+        columnSpacing: 14
+        rowSpacing: 14
+
+        AbyssStyleSettings {
+            id: controls
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            sections: root.sections
+            activeSection: root.sections[0]
+        }
+        Loader {
+            id: moduleSettings
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            Layout.preferredHeight: item?.implicitHeight ?? 0
+            visible: active
+            active: controls.activeSection === "bar" || root.twoColumnModulesBar
+            source: "BarConfig.qml"
+            onLoaded: { item.embedded = true; item.settingsPageIndex = root.settingsPageIndex; item.activeSection = root.barSection }
+        }
     }
     Loader {
         Layout.fillWidth: true

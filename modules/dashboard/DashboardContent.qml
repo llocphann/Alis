@@ -366,7 +366,7 @@ Item {
         root._customDialogShown = false
     }
 
-    readonly property bool showHeader: Config.options?.dashboard?.showHeader ?? true
+    readonly property bool showHeader: true
 
     property var _agendaEditEvent: null
     property var _agendaPrefillDate: null
@@ -457,7 +457,7 @@ Item {
 
         ColumnLayout {
             id: mainColumn
-            readonly property bool compact: (Config.options?.dashboard?.appearance?.density ?? "comfortable") === "compact"
+            readonly property bool compact: false
             anchors.fill: parent
             anchors.margins: root.embeddedSurface ? 0 : (compact ? 12 : 16)
             spacing: compact ? 8 : 12

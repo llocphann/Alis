@@ -70,15 +70,24 @@ const KB_IPC_MAP: &[((&str, &str), &str)] = &[
     (("overview", "toggle"), "Alis Overview"),
     (("clipboard", "toggle"), "Clipboard"),
     (("lock", "activate"), "Lock screen"),
+    (("lock", "focus"), "Focus lock screen"),
     (("region", "screenshot"), "Screenshot region"),
     (("region", "ocr"), "OCR region"),
     (("region", "search"), "Reverse image search"),
+    (("region", "menu"), "Snip menu"),
+    (("region", "recordWithSound"), "Record region (with audio)"),
+    (("region", "record"), "Record region"),
     (("wallpaperSelector", "toggle"), "Wallpaper selector"),
     (("settings", "open"), "Settings"),
     (("cheatsheet", "toggle"), "Cheatsheet"),
     (("panelFamily", "cycle"), "Cycle panel style"),
     (("session", "toggle"), "Session dialog"),
+    (("sidebarLeft", "toggle"), "Left sidebar"),
+    (("sidebarRight", "toggle"), "Right sidebar"),
+    (("ipc", "wull"), "Companion chat"),
+    (("wull", "chat"), "Companion chat"),
     (("browser", "open"), "Browser"),
+    (("browser", "new"), "Browser (new window)"),
     (("audio", "volumeUp"), "Volume up"),
     (("audio", "volumeDown"), "Volume down"),
     (("audio", "mute"), "Mute audio"),
@@ -91,6 +100,12 @@ const KB_IPC_MAP: &[((&str, &str), &str)] = &[
     (("notifications", "clearAll"), "Clear notifications"),
     (("gamemode", "toggle"), "Toggle game mode"),
     (("launcher", "terminal"), "Terminal"),
+    (("launcher", "terminal-new"), "Terminal (new window)"),
+    (("launcher", "terminal-yazi"), "Terminal (yazi)"),
+    (("launcher", "files"), "File manager"),
+    (("launcher", "files-new"), "File manager (new window)"),
+    (("launcher", "editor"), "Text editor"),
+    (("launcher", "editor-new"), "Text editor (new window)"),
     (("launcher", "close-window"), "Close window"),
 ];
 
@@ -104,7 +119,7 @@ const KB_TERMINALS: &[&str] = &[
     "gnome-terminal",
 ];
 
-const KB_FILE_MANAGERS: &[&str] = &["dolphin", "nautilus", "thunar", "nemo", "pcmanfm", "ranger"];
+const KB_FILE_MANAGERS: &[&str] = &["dolphin", "nautilus", "thunar", "nemo", "pcmanfm", "ranger", "yazi"];
 
 const KB_BROWSERS: &[&str] = &["firefox", "zen-browser", "chromium", "brave", "vivaldi"];
 
@@ -114,9 +129,12 @@ use std::sync::LazyLock;
 static IPC_CALL: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"spawn\s+"(?:[^"]*/)?alis"\s+"ipc"\s+"call"\s+"([\w-]+)"\s+"([\w-]+)""#).unwrap()
 });
+static IPC_SHORT: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"spawn\s+"(?:[^"]*/)?alis"\s+"ipc"\s+"([\w-]+)"\s+"([\w-]+)""#).unwrap()
+});
 static SPECIAL_COMMAND: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r#"spawn\s+"(?:[^"]*/)?alis"\s+"(settings|terminal|close-window|browser)"(?:\s|;|$)"#,
+        r#"spawn\s+"(?:[^"]*/)?alis"\s+"(settings|terminal|close-window|browser|files|file-manager|editor)"(?:\s|;|$)"#,
     )
     .unwrap()
 });
@@ -144,11 +162,43 @@ fn alis_action(action: &str) -> Option<(String, String)> {
     if let Some(caps) = IPC_CALL.captures(action) {
         return Some((caps[1].to_owned(), caps[2].to_owned()));
     }
+    if let Some(caps) = IPC_SHORT.captures(action) {
+        return Some((caps[1].to_owned(), caps[2].to_owned()));
+    }
     if let Some(caps) = SPECIAL_COMMAND.captures(action) {
         let (target, function) = match &caps[1] {
             "settings" => ("settings", "open"),
-            "terminal" => ("launcher", "terminal"),
+            "terminal" => {
+                if action.contains("\"yazi\"") {
+                    ("launcher", "terminal-yazi")
+                } else if action.contains("\"--new\"") {
+                    ("launcher", "terminal-new")
+                } else {
+                    ("launcher", "terminal")
+                }
+            }
             "close-window" => ("launcher", "close-window"),
+            "browser" => {
+                if action.contains("\"--new\"") {
+                    ("browser", "new")
+                } else {
+                    ("browser", "open")
+                }
+            }
+            "files" | "file-manager" => {
+                if action.contains("\"--new\"") {
+                    ("launcher", "files-new")
+                } else {
+                    ("launcher", "files")
+                }
+            }
+            "editor" => {
+                if action.contains("\"--new\"") {
+                    ("launcher", "editor-new")
+                } else {
+                    ("launcher", "editor")
+                }
+            }
             _ => ("browser", "open"),
         };
         return Some((target.to_owned(), function.to_owned()));
@@ -236,7 +286,11 @@ pub(super) fn action_description(action: &str) -> String {
             return "Close window".into();
         }
         if let Some(caps) = SPAWN_APP.captures(action) {
-            return caps[1].rsplit('/').next().unwrap_or(&caps[1]).to_owned();
+            let base = caps[1].rsplit('/').next().unwrap_or(&caps[1]);
+            if base.matches('.').count() >= 2 {
+                return base.rsplit('.').next().unwrap_or(base).to_owned();
+            }
+            return base.to_owned();
         }
     }
     if action.chars().count() > 30 {
@@ -271,11 +325,14 @@ pub(super) fn action_category(description: &str, action: &str) -> &'static str {
             "settings",
             "cheatsheet",
             "panel style",
+            "left sidebar",
+            "right sidebar",
+            "companion chat",
         ],
     ) {
         return "Alis Shell";
     }
-    if let Some((target, _)) = alis_action(action) {
+    if let Some((target, function)) = alis_action(action) {
         if [
             "overlay",
             "overview",
@@ -286,10 +343,20 @@ pub(super) fn action_category(description: &str, action: &str) -> &'static str {
             "cheatsheet",
             "panelFamily",
             "session",
+            "sidebarLeft",
+            "sidebarRight",
+            "wull",
+            "ipc",
         ]
         .contains(&target.as_str())
         {
             return "Alis Shell";
+        }
+        if target == "region" {
+            return "Screenshots";
+        }
+        if (target == "launcher" || target == "browser") && function != "close-window" {
+            return "Applications";
         }
         if target == "altSwitcher" {
             return "Window Switcher";
@@ -310,10 +377,13 @@ pub(super) fn action_category(description: &str, action: &str) -> &'static str {
     if act.contains("altswitcher") {
         return "Window Switcher";
     }
-    if contains_any(&desc, &["screenshot", "ocr", "image search"]) {
+    if contains_any(
+        &desc,
+        &["screenshot", "ocr", "image search", "snip menu", "record region"],
+    ) {
         return "Screenshots";
     }
-    if contains_any(&desc, &["terminal", "file manager", "browser"]) {
+    if contains_any(&desc, &["terminal", "file manager", "browser", "text editor"]) {
         return "Applications";
     }
     if KB_TERMINALS
@@ -416,6 +486,9 @@ pub(super) fn action_category(description: &str, action: &str) -> &'static str {
     }
     if desc.contains("brightness") {
         return "Brightness";
+    }
+    if act.starts_with("spawn ") {
+        return "Applications";
     }
     "Other"
 }

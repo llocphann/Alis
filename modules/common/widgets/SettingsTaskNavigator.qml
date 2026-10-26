@@ -11,7 +11,8 @@ ColumnLayout {
     property string title: ""
     property string description: ""
     property string summary: ""
-    property bool showSummary: root.options.length === 0
+    property bool showTabBar: true
+    property bool showSummary: root.options.length === 0 || !root.showTabBar
     // The page header already shows name/description; the intro card is only
     // worth drawing on pages that need the extra onboarding copy.
     property bool showIntro: true
@@ -169,7 +170,7 @@ ColumnLayout {
     }
 
     Item {
-        visible: root.options.length > 0
+        visible: root.showTabBar && root.options.length > 0
         Layout.fillWidth: true
         implicitWidth: root.width
         width: root.width

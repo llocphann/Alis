@@ -69,6 +69,8 @@ ContentPage {
     }
 
     SettingsTaskNavigator {
+        visible: !root.abyssContent
+        showTabBar: !root.abyssContent
         icon: "toolbar"
         title: root.abyssContent ? Translation.tr("Module behavior") : Translation.tr("Classic Bar")
         description: Translation.tr("Position, surface, behavior, spectrum and modules for the Classic bar.")
@@ -411,7 +413,7 @@ ContentPage {
 
     SettingsCardSection {
         settingsTaskSection: "behavior"
-        visible: root.isIiActive && root.activeSection === "behavior"
+        visible: root.isIiActive && (root.activeSection === "behavior" || root.abyssContent)
         expanded: true
         icon: "visibility"
         title: Translation.tr("Behavior & clock")
@@ -529,7 +531,7 @@ ContentPage {
 
     SettingsCardSection {
         settingsTaskSection: "modules"
-        visible: root.isIiActive && root.activeSection === "modules"
+        visible: root.isIiActive && (root.activeSection === "modules" || root.abyssContent)
         expanded: true
         icon: "widgets"
         title: Translation.tr("Modules")

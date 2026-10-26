@@ -150,11 +150,27 @@ WSettingsPage {
         icon: "open"
 
         WSettingsButton {
-            label: Translation.tr("GitHub Repository")
+            label: "Alis"
             description: "github.com/llocphann/Alis"
             icon: "globe-search"
             buttonText: Translation.tr("Open")
             onButtonClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis")
+        }
+
+        WSettingsButton {
+            label: "Alis-Companion"
+            description: "github.com/llocphann/Alis-Companion"
+            icon: "globe-search"
+            buttonText: Translation.tr("Open")
+            onButtonClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis-Companion")
+        }
+
+        WSettingsButton {
+            label: "Alis-Intergration"
+            description: "github.com/llocphann/Alis-Intergration"
+            icon: "globe-search"
+            buttonText: Translation.tr("Open")
+            onButtonClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis-Intergration")
         }
 
         WSettingsButton {
@@ -179,20 +195,27 @@ WSettingsPage {
         title: Translation.tr("Based on")
         icon: "people"
 
-        WSettingsButton {
-            label: "iNiR"
-            description: "github.com/snowarch/iNiR"
-            icon: "open"
-            buttonText: Translation.tr("Open")
-            onButtonClicked: Qt.openUrlExternally("https://github.com/snowarch/iNiR")
-        }
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 12
 
-        WSettingsButton {
-            label: "illogical-impulse"
-            description: "github.com/end-4/dots-hyprland"
-            icon: "open"
-            buttonText: Translation.tr("Open")
-            onButtonClicked: Qt.openUrlExternally("https://github.com/end-4/dots-hyprland")
+            WSettingsButton {
+                Layout.fillWidth: true
+                label: "iNiR"
+                description: "github.com/snowarch/iNiR"
+                icon: "open"
+                buttonText: Translation.tr("Open")
+                onButtonClicked: Qt.openUrlExternally("https://github.com/snowarch/iNiR")
+            }
+
+            WSettingsButton {
+                Layout.fillWidth: true
+                label: "illogical-impulse"
+                description: "github.com/end-4/dots-hyprland"
+                icon: "open"
+                buttonText: Translation.tr("Open")
+                onButtonClicked: Qt.openUrlExternally("https://github.com/end-4/dots-hyprland")
+            }
         }
 
         ColumnLayout {

@@ -116,150 +116,223 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        expanded: true
         icon: "deployed_code"
         title: "Alis"
 
         SettingsGroup {
             RowLayout {
-                Layout.alignment: Qt.AlignHCenter
+                Layout.fillWidth: true
                 spacing: 20
                 Layout.topMargin: 10
                 Layout.bottomMargin: 10
 
-                // Round icon container
-                Rectangle {
-                    width: 68
-                    height: 68
-                    radius: 34
-                    color: "transparent"
-                    border.width: 2
-                    border.color: Appearance.colors.colPrimary
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 16
 
-                    Image {
-                        id: projectIcon
+                    // Round icon container
+                    Rectangle {
+                        width: 68
+                        height: 68
+                        radius: 34
+                        color: "transparent"
+                        border.width: 2
+                        border.color: Appearance.colors.colPrimary
 
-                        anchors.centerIn: parent
-                        width: 60
-                        height: 60
-                        sourceSize.width: 60
-                        sourceSize.height: 60
-                        source: Quickshell.shellPath("assets/icons/alis-owner-avatar.jpg")
-                        fillMode: Image.PreserveAspectFit
-                        layer.enabled: Appearance.effectsEnabled
+                        Image {
+                            id: projectIcon
 
-                        layer.effect: MultiEffect {
-                            maskEnabled: true
+                            anchors.centerIn: parent
+                            width: 60
+                            height: 60
+                            sourceSize.width: 120
+                            sourceSize.height: 120
+                            source: Quickshell.shellPath("assets/icons/alis-owner-avatar.jpg")
+                            fillMode: Image.PreserveAspectCrop
+                            layer.enabled: Appearance.effectsEnabled
 
-                            maskSource: ShaderEffectSource {
+                            layer.effect: MultiEffect {
+                                maskEnabled: true
 
-                                sourceItem: Rectangle {
-                                    width: 60
-                                    height: 60
-                                    radius: 30
+                                maskSource: ShaderEffectSource {
+
+                                    sourceItem: Rectangle {
+                                        width: 60
+                                        height: 60
+                                        radius: 30
+                                    }
+
                                 }
 
                             }
 
                         }
 
-                    }
-
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        visible: projectIcon.status !== Image.Ready
-                        text: "deployed_code"
-                        iconSize: 48
-                        color: Appearance.colors.colPrimary
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: _avatarFx.restart()
-                    }
-
-                    Text {
-                        id: _avatarFxLabel
-                        text: "\ud83e\udec3\ud83c\udffb"
-                        font.pixelSize: Appearance.font.pixelSize.hugeass
-                        anchors.centerIn: parent
-                        visible: false
-                        z: 10
-
-                        SequentialAnimation {
-                            id: _avatarFx
-                            PropertyAction { target: _avatarFxLabel; property: "visible"; value: true }
-                            PropertyAction { target: _avatarFxLabel; property: "scale"; value: 0 }
-                            PropertyAction { target: _avatarFxLabel; property: "opacity"; value: 1 }
-                            NumberAnimation { target: _avatarFxLabel; property: "scale"; to: 1.5; duration: 300; easing.type: Easing.OutBack }
-                            NumberAnimation { target: _avatarFxLabel; property: "scale"; to: 1.0; duration: 200 }
-                            PauseAnimation { duration: 800 }
-                            ParallelAnimation {
-                                NumberAnimation { target: _avatarFxLabel; property: "opacity"; to: 0; duration: 400 }
-                                NumberAnimation { target: _avatarFxLabel; property: "scale"; to: 2.0; duration: 400 }
-                            }
-                            PropertyAction { target: _avatarFxLabel; property: "visible"; value: false }
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            visible: projectIcon.status !== Image.Ready
+                            text: "deployed_code"
+                            iconSize: 48
+                            color: Appearance.colors.colPrimary
                         }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: _avatarFx.restart()
+                        }
+
+                        Text {
+                            id: _avatarFxLabel
+                            text: "\ud83e\udec3\ud83c\udffb"
+                            font.pixelSize: Appearance.font.pixelSize.hugeass
+                            anchors.centerIn: parent
+                            visible: false
+                            z: 10
+
+                            SequentialAnimation {
+                                id: _avatarFx
+                                PropertyAction { target: _avatarFxLabel; property: "visible"; value: true }
+                                PropertyAction { target: _avatarFxLabel; property: "scale"; value: 0 }
+                                PropertyAction { target: _avatarFxLabel; property: "opacity"; value: 1 }
+                                NumberAnimation { target: _avatarFxLabel; property: "scale"; to: 1.5; duration: 300; easing.type: Easing.OutBack }
+                                NumberAnimation { target: _avatarFxLabel; property: "scale"; to: 1.0; duration: 200 }
+                                PauseAnimation { duration: 800 }
+                                ParallelAnimation {
+                                    NumberAnimation { target: _avatarFxLabel; property: "opacity"; to: 0; duration: 400 }
+                                    NumberAnimation { target: _avatarFxLabel; property: "scale"; to: 2.0; duration: 400 }
+                                }
+                                PropertyAction { target: _avatarFxLabel; property: "visible"; value: false }
+                            }
+                        }
+
                     }
 
-                }
-
-                ColumnLayout {
-                    Layout.alignment: Qt.AlignVCenter
-
-                    StyledText {
-                        text: "Alis"
-                        font.pixelSize: Appearance.font.pixelSize.title
-                    }
-
-                    RowLayout {
-                        spacing: 6
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: 2
 
                         StyledText {
-                            text: ShellUpdates.localVersion || "—"
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colSubtext
+                            text: "Alis"
+                            font.pixelSize: Appearance.font.pixelSize.title
                         }
 
-                        Rectangle {
-                            visible: ShellUpdates.currentBranch.length > 0
-                            implicitWidth: branchLabel.implicitWidth + 12
-                            implicitHeight: branchLabel.implicitHeight + 4
-                            radius: Appearance.rounding.small
-                            color: ShellUpdates.isNonMainBranch
-                                ? ColorUtils.transparentize(Appearance.colors.colTertiary, 0.8)
-                                : ColorUtils.transparentize(Appearance.colors.colSubtext, 0.85)
+                        RowLayout {
+                            spacing: 6
 
                             StyledText {
-                                id: branchLabel
-                                anchors.centerIn: parent
-                                text: ShellUpdates.currentBranch
-                                font {
-                                    pixelSize: Appearance.font.pixelSize.smallest
-                                    family: Appearance.font.family.monospace
-                                }
+                                text: ShellUpdates.localVersion || "—"
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                color: Appearance.colors.colSubtext
+                            }
+
+                            Rectangle {
+                                visible: ShellUpdates.currentBranch.length > 0
+                                implicitWidth: branchLabel.implicitWidth + 12
+                                implicitHeight: branchLabel.implicitHeight + 4
+                                radius: Appearance.rounding.small
                                 color: ShellUpdates.isNonMainBranch
-                                    ? Appearance.colors.colTertiary
-                                    : Appearance.colors.colSubtext
+                                    ? ColorUtils.transparentize(Appearance.colors.colTertiary, 0.8)
+                                    : ColorUtils.transparentize(Appearance.colors.colSubtext, 0.85)
+
+                                StyledText {
+                                    id: branchLabel
+                                    anchors.centerIn: parent
+                                    text: ShellUpdates.currentBranch
+                                    font {
+                                        pixelSize: Appearance.font.pixelSize.smallest
+                                        family: Appearance.font.family.monospace
+                                    }
+                                    color: ShellUpdates.isNonMainBranch
+                                        ? Appearance.colors.colTertiary
+                                        : Appearance.colors.colSubtext
+                                }
                             }
                         }
-                    }
 
-                    StyledText {
-                        text: "[https://github.com/llocphann/Alis](https://github.com/llocphann/Alis)"
-                        font.pixelSize: Appearance.font.pixelSize.small
+                        StyledText {
+                            text: "[https://github.com/llocphann/Alis](https://github.com/llocphann/Alis)"
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colPrimary
+                            textFormat: Text.MarkdownText
+                            onLinkActivated: (link) => {
+                                return Qt.openUrlExternally(link);
+                            }
+
+                            PointingHandLinkHover {
+                            }
+
+                        }
+
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 12
+
+                    MaterialSymbol {
+                        text: "pets"
+                        iconSize: 40
                         color: Appearance.colors.colPrimary
-                        textFormat: Text.MarkdownText
-                        onLinkActivated: (link) => {
-                            return Qt.openUrlExternally(link);
-                        }
-
-                        PointingHandLinkHover {
-                        }
-
                     }
 
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: 2
+
+                        StyledText {
+                            text: "Alis-Companion"
+                            font.pixelSize: Appearance.font.pixelSize.large
+                            font.weight: Font.Medium
+                        }
+
+                        StyledText {
+                            text: "[https://github.com/llocphann/Alis-Companion](https://github.com/llocphann/Alis-Companion)"
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colPrimary
+                            textFormat: Text.MarkdownText
+                            onLinkActivated: (link) => Qt.openUrlExternally(link)
+
+                            PointingHandLinkHover {}
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 12
+
+                    MaterialSymbol {
+                        text: "extension"
+                        iconSize: 40
+                        color: Appearance.colors.colPrimary
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: 2
+
+                        StyledText {
+                            text: "Alis-Intergration"
+                            font.pixelSize: Appearance.font.pixelSize.large
+                            font.weight: Font.Medium
+                        }
+
+                        StyledText {
+                            text: "[https://github.com/llocphann/Alis-Intergration](https://github.com/llocphann/Alis-Intergration)"
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colPrimary
+                            textFormat: Text.MarkdownText
+                            onLinkActivated: (link) => Qt.openUrlExternally(link)
+
+                            PointingHandLinkHover {}
+                        }
+                    }
                 }
 
             }
@@ -280,6 +353,18 @@ ContentPage {
                     onClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis/issues")
                 }
 
+                RippleButtonWithIcon {
+                    materialIcon: "pets"
+                    mainText: "Alis-Companion"
+                    onClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis-Companion")
+                }
+
+                RippleButtonWithIcon {
+                    materialIcon: "extension"
+                    mainText: "Alis-Intergration"
+                    onClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis-Intergration")
+                }
+
             }
 
         }
@@ -287,7 +372,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        expanded: true
         icon: "favorite"
         title: Translation.tr("Based on")
 
@@ -295,98 +380,104 @@ ContentPage {
             // Preserve upstream iNiR attribution under Based on, not as the
             // primary product identity.
             RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 20
+                objectName: "aboutBasedOnHorizontalRow"
+                Layout.fillWidth: true
+                spacing: 24
                 Layout.topMargin: 10
                 Layout.bottomMargin: 10
 
-                Item {
-                    width: 64
-                    height: 64
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 16
 
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "widgets"
-                        iconSize: 56
-                        color: Appearance.colors.colPrimary
-                    }
-                }
+                    Item {
+                        width: 56
+                        height: 56
 
-                ColumnLayout {
-                    Layout.alignment: Qt.AlignVCenter
-
-                    StyledText {
-                        text: "iNiR"
-                        font.pixelSize: Appearance.font.pixelSize.title
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: "widgets"
+                            iconSize: 48
+                            color: Appearance.colors.colPrimary
+                        }
                     }
 
-                    StyledText {
-                        text: "[https://github.com/snowarch/iNiR](https://github.com/snowarch/iNiR)"
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colPrimary
-                        textFormat: Text.MarkdownText
-                        onLinkActivated: (link) => Qt.openUrlExternally(link)
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
 
-                        PointingHandLinkHover {}
-                    }
-                }
-            }
-
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 20
-                Layout.topMargin: 10
-                Layout.bottomMargin: 10
-
-                Item {
-                    width: 64
-                    height: 64
-
-                    Image {
-                        id: end4Icon
-
-                        anchors.fill: parent
-                        sourceSize.width: 64
-                        sourceSize.height: 64
-                        source: Quickshell.shellPath("assets/icons/illogical-impulse.svg")
-                        fillMode: Image.PreserveAspectFit
-                        visible: status === Image.Ready
-                    }
-
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        visible: end4Icon.status !== Image.Ready
-                        text: "favorite"
-                        iconSize: 64
-                        color: Appearance.colors.colPrimary
-                    }
-
-                }
-
-                ColumnLayout {
-                    Layout.alignment: Qt.AlignVCenter
-
-                    StyledText {
-                        text: "illogical-impulse"
-                        font.pixelSize: Appearance.font.pixelSize.title
-                    }
-
-                    StyledText {
-                        text: "[https://github.com/end-4/dots-hyprland](https://github.com/end-4/dots-hyprland)"
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colPrimary
-                        textFormat: Text.MarkdownText
-                        onLinkActivated: (link) => {
-                            return Qt.openUrlExternally(link);
+                        StyledText {
+                            text: "iNiR"
+                            font.pixelSize: Appearance.font.pixelSize.title
                         }
 
-                        PointingHandLinkHover {
+                        StyledText {
+                            text: "[https://github.com/snowarch/iNiR](https://github.com/snowarch/iNiR)"
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colPrimary
+                            textFormat: Text.MarkdownText
+                            onLinkActivated: (link) => Qt.openUrlExternally(link)
+
+                            PointingHandLinkHover {}
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 16
+
+                    Item {
+                        width: 56
+                        height: 56
+
+                        Image {
+                            id: end4Icon
+
+                            anchors.fill: parent
+                            sourceSize.width: 56
+                            sourceSize.height: 56
+                            source: Quickshell.shellPath("assets/icons/illogical-impulse.svg")
+                            fillMode: Image.PreserveAspectFit
+                            visible: status === Image.Ready
+                        }
+
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            visible: end4Icon.status !== Image.Ready
+                            text: "favorite"
+                            iconSize: 56
+                            color: Appearance.colors.colPrimary
                         }
 
                     }
 
-                }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
 
+                        StyledText {
+                            text: "illogical-impulse"
+                            font.pixelSize: Appearance.font.pixelSize.title
+                        }
+
+                        StyledText {
+                            text: "[https://github.com/end-4/dots-hyprland](https://github.com/end-4/dots-hyprland)"
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colPrimary
+                            textFormat: Text.MarkdownText
+                            onLinkActivated: (link) => {
+                                return Qt.openUrlExternally(link);
+                            }
+
+                            PointingHandLinkHover {
+                            }
+
+                        }
+
+                    }
+
+                }
             }
 
             StyledText {

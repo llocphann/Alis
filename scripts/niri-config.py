@@ -2464,15 +2464,24 @@ _KB_IPC_MAP = {
     ("overview", "toggle"): "Alis Overview",
     ("clipboard", "toggle"): "Clipboard",
     ("lock", "activate"): "Lock screen",
+    ("lock", "focus"): "Focus lock screen",
     ("region", "screenshot"): "Screenshot region",
     ("region", "ocr"): "OCR region",
     ("region", "search"): "Reverse image search",
+    ("region", "menu"): "Snip menu",
+    ("region", "recordWithSound"): "Record region (with audio)",
+    ("region", "record"): "Record region",
     ("wallpaperSelector", "toggle"): "Wallpaper selector",
     ("settings", "open"): "Settings",
     ("cheatsheet", "toggle"): "Cheatsheet",
     ("panelFamily", "cycle"): "Cycle panel style",
     ("session", "toggle"): "Session dialog",
+    ("sidebarLeft", "toggle"): "Left sidebar",
+    ("sidebarRight", "toggle"): "Right sidebar",
+    ("ipc", "wull"): "Companion chat",
+    ("wull", "chat"): "Companion chat",
     ("browser", "open"): "Browser",
+    ("browser", "new"): "Browser (new window)",
     ("audio", "volumeUp"): "Volume up",
     ("audio", "volumeDown"): "Volume down",
     ("audio", "mute"): "Mute audio",
@@ -2485,6 +2494,12 @@ _KB_IPC_MAP = {
     ("notifications", "clearAll"): "Clear notifications",
     ("gamemode", "toggle"): "Toggle game mode",
     ("launcher", "terminal"): "Terminal",
+    ("launcher", "terminal-new"): "Terminal (new window)",
+    ("launcher", "terminal-yazi"): "Terminal (yazi)",
+    ("launcher", "files"): "File manager",
+    ("launcher", "files-new"): "File manager (new window)",
+    ("launcher", "editor"): "Text editor",
+    ("launcher", "editor-new"): "Text editor (new window)",
     ("launcher", "close-window"): "Close window",
 }
 
@@ -2497,7 +2512,7 @@ _KB_TERMINALS = [
     "konsole",
     "gnome-terminal",
 ]
-_KB_FILE_MANAGERS = ["dolphin", "nautilus", "thunar", "nemo", "pcmanfm", "ranger"]
+_KB_FILE_MANAGERS = ["dolphin", "nautilus", "thunar", "nemo", "pcmanfm", "ranger", "yazi"]
 _KB_BROWSERS = ["firefox", "zen-browser", "chromium", "brave", "vivaldi"]
 
 
@@ -2508,14 +2523,33 @@ def _kb_parse_alis_action(action: str):
     )
     if m:
         return m.group(1), m.group(2)
+    m = re.search(
+        r'spawn\s+"(?:[^"]*/)?alis"\s+"ipc"\s+"([\w-]+)"\s+"([\w-]+)"', action
+    )
+    if m:
+        return m.group(1), m.group(2)
     if re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"settings"(?:\s|;|$)', action):
         return "settings", "open"
     if re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"terminal"(?:\s|;|$)', action):
+        if '"yazi"' in action:
+            return "launcher", "terminal-yazi"
+        if '"--new"' in action:
+            return "launcher", "terminal-new"
         return "launcher", "terminal"
     if re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"close-window"(?:\s|;|$)', action):
         return "launcher", "close-window"
     if re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"browser"(?:\s|;|$)', action):
+        if '"--new"' in action:
+            return "browser", "new"
         return "browser", "open"
+    if re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"(?:files|file-manager)"(?:\s|;|$)', action):
+        if '"--new"' in action:
+            return "launcher", "files-new"
+        return "launcher", "files"
+    if re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"editor"(?:\s|;|$)', action):
+        if '"--new"' in action:
+            return "launcher", "editor-new"
+        return "launcher", "editor"
     m = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"([\w-]+)"\s+"([\w-]+)"', action)
     if m:
         return m.group(1), m.group(2)
@@ -2569,7 +2603,10 @@ def _kb_generate_comment(action: str) -> str:
         m = re.search(r'spawn\s+"([^"]+)"', action)
         if m:
             app = m.group(1)
-            return app.split("/")[-1] if "/" in app else app
+            base = app.split("/")[-1] if "/" in app else app
+            if base.count(".") >= 2:
+                base = base.split(".")[-1]
+            return base
     return action[:30] + "..." if len(action) > 30 else action
 
 
@@ -2599,12 +2636,15 @@ def _kb_categorize(description: str, action: str) -> str:
             "settings",
             "cheatsheet",
             "panel style",
+            "left sidebar",
+            "right sidebar",
+            "companion chat",
         ]
     ):
         return "Alis Shell"
     alis = _kb_parse_alis_action(action)
     if alis:
-        target, _fn = alis
+        target, fn = alis
         if target in (
             "overlay",
             "overview",
@@ -2615,8 +2655,16 @@ def _kb_categorize(description: str, action: str) -> str:
             "cheatsheet",
             "panelFamily",
             "session",
+            "sidebarLeft",
+            "sidebarRight",
+            "wull",
+            "ipc",
         ):
             return "Alis Shell"
+        if target == "region":
+            return "Screenshots"
+        if target in ("launcher", "browser") and fn != "close-window":
+            return "Applications"
         if target == "altSwitcher":
             return "Window Switcher"
         if target in ("audio", "mpris"):
@@ -2632,9 +2680,9 @@ def _kb_categorize(description: str, action: str) -> str:
         return "Window Switcher"
     if "altswitcher" in act:
         return "Window Switcher"
-    if any(x in desc for x in ["screenshot", "ocr", "image search"]):
+    if any(x in desc for x in ["screenshot", "ocr", "image search", "snip menu", "record region"]):
         return "Screenshots"
-    if any(x in desc for x in ["terminal", "file manager", "browser"]):
+    if any(x in desc for x in ["terminal", "file manager", "browser", "text editor"]):
         return "Applications"
     if any(x in act for x in _KB_TERMINALS + _KB_FILE_MANAGERS + _KB_BROWSERS):
         return "Applications"
@@ -2713,6 +2761,8 @@ def _kb_categorize(description: str, action: str) -> str:
         return "Media"
     if "brightness" in desc:
         return "Brightness"
+    if act.startswith("spawn "):
+        return "Applications"
     return "Other"
 
 
@@ -2758,31 +2808,16 @@ def _kb_find_in_block(block_lines: list, key_combo: str, check_commented: bool =
 # ─── Keybind commands ──────────────────────────────────────────────────
 
 
-def cmd_get_binds():
-    """Return structured JSON of all keybinds from 70-binds.kdl.
+def _kb_normalize_combo(combo: str) -> str:
+    parts = [p for p in (combo or "").split("+") if p]
+    if len(parts) <= 1:
+        return combo
+    mods = sorted({"Super" if p == "Mod" else p for p in parts[:-1]})
+    return "+".join(mods + [parts[-1]])
 
-    Output: { binds: [...], categories: [...], config_file: "..." }
-    Each bind entry includes key_combo, options, action, action_raw,
-    category, description, line_number (1-based, in the file), commented.
-    """
-    binds_file = resolve_niri_section_file("config.d/70-binds.kdl")
-    if not binds_file.exists():
-        print(json.dumps({"error": f"Binds file not found: {binds_file}"}))
-        return 1
 
-    content = binds_file.read_text()
-    bounds = _find_block_bounds(content, "binds", top_level=True)
-    if not bounds:
-        print(json.dumps({"error": "No binds { } block found in file"}))
-        return 1
-
-    _, inner_start, inner_end, _ = bounds
-    block_content = content[inner_start:inner_end]
-
-    # Line number of the first character inside the block (1-based in the full file)
-    base_line = content[:inner_start].count("\n") + 1
-
-    all_binds = []
+def _kb_parse_binds_block(block_content: str, base_line: int) -> list[dict]:
+    parsed = []
     block_lines = block_content.split("\n")
     i = 0
     while i < len(block_lines):
@@ -2843,7 +2878,7 @@ def cmd_get_binds():
         description = _kb_generate_comment(action)
         category = _kb_categorize(description, action)
 
-        all_binds.append(
+        parsed.append(
             {
                 "key_combo": key_combo,
                 "options": options_clean,
@@ -2856,6 +2891,63 @@ def cmd_get_binds():
             }
         )
         i += 1
+    return parsed
+
+
+def cmd_get_binds():
+    """Return structured JSON of all keybinds from 70-binds.kdl and 90-user-extra.kdl.
+
+    Output: { binds: [...], categories: [...], config_file: "..." }
+    Each bind entry includes key_combo, options, action, action_raw,
+    category, description, line_number (1-based, in the file), commented.
+    """
+    binds_file = resolve_niri_section_file("config.d/70-binds.kdl")
+    if not binds_file.exists():
+        print(json.dumps({"error": f"Binds file not found: {binds_file}"}))
+        return 1
+
+    content = binds_file.read_text()
+    bounds = _find_block_bounds(content, "binds", top_level=True)
+    if not bounds:
+        print(json.dumps({"error": "No binds { } block found in file"}))
+        return 1
+
+    _, inner_start, inner_end, _ = bounds
+    block_content = content[inner_start:inner_end]
+    base_line = content[:inner_start].count("\n") + 1
+    all_binds = _kb_parse_binds_block(block_content, base_line)
+
+    # Also merge active binds from config.d/90-user-extra.kdl and root config.kdl
+    cfg_dir = get_niri_config_dir()
+    extra_files = [
+        cfg_dir / "config.d/90-user-extra.kdl",
+        cfg_dir / "config.kdl",
+    ]
+    for extra_path in extra_files:
+        if extra_path == binds_file or not extra_path.is_file():
+            continue
+        try:
+            extra_content = extra_path.read_text()
+        except Exception:
+            continue
+        extra_bounds = _find_block_bounds(extra_content, "binds", top_level=True)
+        if not extra_bounds:
+            continue
+        _, ex_start, ex_end, _ = extra_bounds
+        ex_base_line = extra_content[:ex_start].count("\n") + 1
+        extra_binds = _kb_parse_binds_block(extra_content[ex_start:ex_end], ex_base_line)
+        for eb in extra_binds:
+            if eb.get("commented"):
+                continue
+            norm = _kb_normalize_combo(eb["key_combo"])
+            replaced = False
+            for idx, existing in enumerate(all_binds):
+                if _kb_normalize_combo(existing["key_combo"]) == norm:
+                    all_binds[idx] = eb
+                    replaced = True
+                    break
+            if not replaced:
+                all_binds.append(eb)
 
     _KB_CATEGORY_ORDER = [
         "System",
