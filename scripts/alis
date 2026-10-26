@@ -2914,8 +2914,13 @@ restart_alis_service_or_fail() {
 
     ensure_service_unit_available
     ensure_systemd_graphical_env
+    systemctl --user stop alis.service >/dev/null 2>&1 || true
+    if has_instances "$dir"; then
+        kill_shell "$dir"
+        wait_for_stop "$dir" >/dev/null 2>&1 || true
+    fi
     systemctl --user reset-failed alis.service >/dev/null 2>&1 || true
-    systemctl --user restart alis.service >/dev/null 2>&1 || true
+    systemctl --user start alis.service >/dev/null 2>&1 || true
 
     if ! wait_for_start "$dir"; then
         echo "Timed out waiting for Alis to start" >&2
@@ -3812,6 +3817,10 @@ case "$command_name" in
             check_qs_abi
             wait_for_wayland_socket       # block until compositor socket exists
             apply_qt_runtime_env          # WAYLAND_DISPLAY + platformtheme fallback
+            if has_instances "$config_dir"; then
+                kill_shell "$config_dir"
+                wait_for_stop "$config_dir" >/dev/null 2>&1 || true
+            fi
             ensure_systemd_graphical_env & # export env to systemd for other services
             exec "$qs_bin" -n -p "$config_dir"
         fi
