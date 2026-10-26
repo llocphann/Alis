@@ -13,12 +13,13 @@ RippleButton {
     property string chipIcon: ""
     property bool monospace: false
     property real minimumWidth: 0
+    property real horizontalPaddingAmount: 24
     property color surfaceColor: Appearance.colors.colLayer1
 
     implicitWidth: Math.max(root.minimumWidth,
         label.implicitWidth
             + (icon.visible ? icon.implicitWidth + 6 : 0)
-            + 24)
+            + root.horizontalPaddingAmount)
     implicitHeight: 30
     buttonRadius: height / 2
     buttonRadiusPressed: buttonRadius
@@ -59,38 +60,44 @@ RippleButton {
             ? Appearance.colors.colPrimary : root._border
     }
 
-    contentItem: Row {
-        anchors.centerIn: parent
-        spacing: icon.visible ? 6 : 0
+    contentItem: Item {
+        implicitWidth: contentRow.implicitWidth
+        implicitHeight: contentRow.implicitHeight
 
-        MaterialSymbol {
-            id: icon
-            anchors.verticalCenter: parent.verticalCenter
-            visible: root.chipIcon.length > 0
-            text: root.chipIcon
-            iconSize: 15
-            color: root._ink
+        Row {
+            id: contentRow
+            anchors.centerIn: parent
+            spacing: icon.visible ? 6 : 0
 
-            Behavior on color {
-                enabled: Appearance.animationsEnabled
-                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+            MaterialSymbol {
+                id: icon
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.chipIcon.length > 0
+                text: root.chipIcon
+                iconSize: 15
+                color: root._ink
+
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                }
             }
-        }
 
-        StyledText {
-            id: label
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.text
-            horizontalAlignment: Text.AlignHCenter
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            font.family: root.monospace ? Appearance.font.family.monospace
-                : Appearance.font.family.main
-            font.weight: root.selected ? Font.DemiBold : Font.Normal
-            color: root._ink
+            StyledText {
+                id: label
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.text
+                horizontalAlignment: Text.AlignHCenter
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                font.family: root.monospace ? Appearance.font.family.monospace
+                    : Appearance.font.family.main
+                font.weight: root.selected ? Font.DemiBold : Font.Normal
+                color: root._ink
 
-            Behavior on color {
-                enabled: Appearance.animationsEnabled
-                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                }
             }
         }
     }

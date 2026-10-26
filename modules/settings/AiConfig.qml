@@ -17,14 +17,12 @@ ContentPage {
 
     function activateSettingsSearchSection(section: string): bool {
         const label = String(section ?? "").toLowerCase()
-        if (label.includes("privacy") || label.includes("polic"))
-            root.activeSection = "privacy"
+        if (label.includes("privacy") || label.includes("polic") || label.includes("voice"))
+            root.activeSection = "voice"
         else if (label.includes("provider") || label.includes("model"))
             root.activeSection = "providers"
         else if (label.includes("behavior") || label.includes("prompt"))
             root.activeSection = "behavior"
-        else if (label.includes("voice"))
-            root.activeSection = "voice"
         else root.activeSection = "setup"
         return true
     }
@@ -1166,20 +1164,9 @@ ContentPage {
                 color: Appearance.colors.colSubtext
                 wrapMode: Text.WordWrap
             }
-        }
-    }
 
-    // ── Privacy ──────────────────────────────────────────────────
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.columnSpan: parent.columns
-        settingsTaskSection: "privacy"
-        visible: true
-        expanded: true
-        icon: "policy"
-        title: Translation.tr("Privacy & policy")
+            SettingsDivider {}
 
-        SettingsGroup {
             ContentSubsection {
                 title: Translation.tr("Allow AI features")
                 tooltip: Translation.tr("Local only: use on-device models (Ollama, LM Studio).")

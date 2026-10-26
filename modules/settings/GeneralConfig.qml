@@ -20,12 +20,9 @@ GeneralConfigCore {
         if (value.includes("fan") || value.includes("thinkfan")
                 || value.includes("thermal") || value.includes("cooling")) {
             SettingsPageRegistry.navigateToKey("integrations", "Thinkfan")
-            root.activeSection = "power"
         } else if (value.includes("power") || value.includes("battery")
                 || value.includes("charge") || value.includes("tlp")) {
-            root.activeSection = "power"
-            // Battery care now lives in the primary Battery/TLP card, so the
-            // Power task itself is the deep-link destination.
+            SettingsPageRegistry.navigateToKey("integrations", "TLP")
         } else if (value.includes("audio") || value.includes("sound")) {
             root.activeSection = "audio"
         } else if (value.includes("language") || value.includes("locale")
@@ -40,7 +37,7 @@ GeneralConfigCore {
 
     function _consumeLegacyTlpPowerRedirect(): void {
         if (SettingsPageRegistry.consumeLegacyTlpPowerRedirect())
-            root.activeSection = "power"
+            SettingsPageRegistry.navigateToKey("integrations", "TLP")
     }
 
     Component.onCompleted: root._consumeLegacyTlpPowerRedirect()

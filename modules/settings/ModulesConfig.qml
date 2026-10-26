@@ -180,23 +180,72 @@ ContentPage {
                         anchors.fill: parent
                         visible: !panelStylePreview.isWaffleMode
 
-                        // Outer Screen Edge perimeter frame around all 4 sides
-                        Rectangle {
+                        // Unified Screen Edge + Top Bar + Connected Bottom Dock silhouette
+                        Canvas {
+                            id: abyssPerimeterCanvas
                             anchors.fill: parent
-                            color: "transparent"
-                            border.width: 8
-                            border.color: Appearance.colors.colLayer0
-                            radius: panelStylePreview.radius
+                            property color frameColor: Appearance.colors.colLayer0
+                            property color outlineColor: Appearance.colors.colOutlineVariant
+                            onFrameColorChanged: requestPaint()
+                            onOutlineColorChanged: requestPaint()
+                            onWidthChanged: requestPaint()
+                            onHeightChanged: requestPaint()
+                            onPaint: {
+                                const ctx = getContext("2d")
+                                ctx.reset()
+                                const w = width
+                                const h = height
+                                if (w <= 60 || h <= 60)
+                                    return
+                                const leftX = 8
+                                const rightX = w - 8
+                                const topY = 28
+                                const bottomY = h - 8
+                                const cornerR = 12
+                                const dockW = 148
+                                const dockH = 22
+                                const dockLeft = Math.round((w - dockW) / 2)
+                                const dockRight = dockLeft + dockW
+                                const dockTop = bottomY - dockH
+                                const dockR = 9
+                                const shoulderR = 8
+
+                                function traceInnerCutout() {
+                                    ctx.moveTo(leftX + cornerR, topY)
+                                    ctx.arcTo(rightX, topY, rightX, topY + cornerR, cornerR)
+                                    ctx.arcTo(rightX, bottomY, rightX - cornerR, bottomY, cornerR)
+                                    ctx.arcTo(dockRight, bottomY, dockRight, bottomY - shoulderR, shoulderR)
+                                    ctx.arcTo(dockRight, dockTop, dockRight - dockR, dockTop, dockR)
+                                    ctx.arcTo(dockLeft, dockTop, dockLeft, dockTop + dockR, dockR)
+                                    ctx.arcTo(dockLeft, bottomY, dockLeft - shoulderR, bottomY, shoulderR)
+                                    ctx.arcTo(leftX, bottomY, leftX, bottomY - cornerR, cornerR)
+                                    ctx.arcTo(leftX, topY, leftX + cornerR, topY, cornerR)
+                                    ctx.closePath()
+                                }
+
+                                // Fill outer Screen Edge + Top Bar + Connected Dock as one solid piece
+                                ctx.beginPath()
+                                ctx.rect(0, 0, w, h)
+                                traceInnerCutout()
+                                ctx.fillStyle = frameColor
+                                ctx.fill("evenodd")
+
+                                // Subtle inner contour along the connected Screen Edge & Dock boundary
+                                ctx.beginPath()
+                                traceInnerCutout()
+                                ctx.strokeStyle = outlineColor
+                                ctx.lineWidth = 1
+                                ctx.stroke()
+                            }
                         }
 
                         // Top integrated Abyss Bar (merged into the top Screen Edge)
-                        Rectangle {
+                        Item {
                             id: abyssTopBarMock
                             anchors.top: parent.top
                             anchors.left: parent.left
                             anchors.right: parent.right
                             height: 28
-                            color: Appearance.colors.colLayer0
 
                             // Left: Launcher button + Workspaces pill + Active Window chip
                             Row {
@@ -376,7 +425,7 @@ ContentPage {
                         }
 
                         // Inner concave Screen Edge viewport
-                        Rectangle {
+                        Item {
                             id: abyssViewportMock
                             anchors.top: abyssTopBarMock.bottom
                             anchors.left: parent.left
@@ -385,10 +434,6 @@ ContentPage {
                             anchors.leftMargin: 8
                             anchors.rightMargin: 8
                             anchors.bottomMargin: 8
-                            radius: 14
-                            color: "transparent"
-                            border.width: 1
-                            border.color: Appearance.colors.colOutlineVariant
 
                             // Niri tiled desktop windows inside workspace
                             RowLayout {
@@ -580,17 +625,12 @@ ContentPage {
                                 }
                             }
 
-                            // Bottom connected Abyss Dock rising from the bottom Screen Edge
-                            Rectangle {
-                                width: 146
+                            // Bottom connected Abyss Dock icons (dock body is fused into Screen Edge via abyssPerimeterCanvas)
+                            Item {
+                                width: 148
                                 height: 22
-                                radius: 10
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.bottom: parent.bottom
-                                anchors.bottomMargin: -2
-                                color: Appearance.colors.colLayer0
-                                border.width: 1
-                                border.color: Appearance.colors.colOutlineVariant
 
                                 Row {
                                     anchors.centerIn: parent
