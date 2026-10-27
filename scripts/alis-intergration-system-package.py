@@ -30,7 +30,7 @@ SHELL_PACKAGES = ("alis-shell", "alis-shell-git")
 FILES = {
     "assets/helpers/alis-intergration-system-provision": (
         "usr/libexec/alis-intergration-system-provision",
-        "aeb3f970e2e39361c82c34baa9de5b6ebc110bc0290ce197f12a4b4280eda2d0", 0o755),
+        "9ab93c037b5e67d57d380b9e9d311a2bf53452ea772ba2b765bf69c35bd83a86", 0o755),
     "assets/polkit/org.alis.intergration-system-provision.policy": (
         "usr/share/polkit-1/actions/org.alis.intergration-system-provision.policy",
         "9a119cf7083093543904913756a461377419ac29ad230dd42ed01af3ae79ab30", 0o644),

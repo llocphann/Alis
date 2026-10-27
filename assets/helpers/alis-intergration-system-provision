@@ -15,7 +15,7 @@ import tempfile
 TRUSTED = {
     "assets/helpers/alis-battery-charge-limit": (
         "/usr/libexec/alis-battery-charge-limit",
-        "2f22ed419137545708d4efd761fc4a63364b3c521301abb045c8d778ed13066b", 0o755),
+        "9ca3b1aee470a130fdc0e8861953858a9d2da218ee910ff3b4e2dc39398fba03", 0o755),
     "assets/helpers/alis-thinkfan": (
         "/usr/libexec/alis-thinkfan",
         "dfab10c593032322d89b2e06b796fbdaf6a36cbc55fba272acac85500166f06a", 0o755),

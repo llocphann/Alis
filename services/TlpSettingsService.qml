@@ -27,7 +27,7 @@ Singleton {
     readonly property bool busy: root.implementation?.busy ?? (false)
     readonly property string tlpVersion: root.implementation?.tlpVersion ?? ("")
     readonly property string statusReason: root.implementation?.statusReason ?? (AlisIntergration.available ? "integration-disabled" : "integration-not-installed")
-    readonly property string configFile: root.implementation?.configFile ?? ("/etc/tlp.d/99-alis-tlp-settings.conf")
+    readonly property string configFile: root.implementation?.configFile ?? ("/etc/tlp.conf")
     readonly property string lastError: root.implementation?.lastError ?? (root.missingOperationError)
     readonly property bool hasPendingChanges: root.implementation?.hasPendingChanges ?? (false)
     readonly property int pendingCount: root.implementation?.pendingCount ?? (0)
