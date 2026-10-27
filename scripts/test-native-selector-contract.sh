@@ -10,7 +10,7 @@ harness="$root/scripts/native-cutover-benchmark.sh"
 [[ -x "$dispatch" ]] || fail 'native-dispatch must be executable'
 [[ -x "$harness" ]] || fail 'native cutover harness must be executable'
 
-for token in     'input-lock)'     'input-keys)'     'niri)'     'clipboard-store)'     'mpd)'     'mpd-daemon)'     'mpd-subscribe)'     'lyrics)'     'theme)'     'desktop-icons)'
+for token in     'input-lock)'     'input-keys)'     'niri)'     'clipboard-store)'     'mpd)'     'mpd-daemon)'     'mpd-subscribe)'     'lyrics)'     'theme)'     'theme-preview)'     'least-busy-region)'     'scan-plugins)'     'telemetry)'     'desktop-icons)'
 do
     grep -Fq "$token" "$dispatch"         || fail "native-dispatch missing route: $token"
 done
@@ -52,7 +52,7 @@ grep -Fq 'DEFAULT_BIN_DIR="$ROOT_DIR/native/bin"' "$dispatch"     || fail 'nativ
 grep -Fq -- '--restore' "$harness"     || fail 'cutover harness must expose --restore'
 
 # Python remains the explicit emergency fallback after production cutover.
-for fallback in     scripts/daemon/keyboard_lock_state_daemon.py     scripts/daemon/osk_physical_key_daemon.py     scripts/local_music_mpd.py     scripts/niri-config.py     scripts/clipboard-store.py     scripts/colors/generate_colors_material.py
+for fallback in     scripts/daemon/keyboard_lock_state_daemon.py     scripts/daemon/osk_physical_key_daemon.py     scripts/local_music_mpd.py     scripts/niri-config.py     scripts/clipboard-store.py     scripts/colors/generate_colors_material.py     scripts/colors/preview-palette.py     scripts/images/least_busy_region.py     scripts/scan-plugins.py
 do
     [[ -f "$root/$fallback" ]] || fail "Python fallback missing: $fallback"
 done

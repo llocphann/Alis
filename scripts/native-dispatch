@@ -24,6 +24,14 @@ DEFAULT_BIN_DIR="$ROOT_DIR/native/bin"
 if [[ ! -x "$DEFAULT_BIN_DIR/alis-native" && -x "$ROOT_DIR/native/target/release/alis-native" ]]; then
     DEFAULT_BIN_DIR="$ROOT_DIR/native/target/release"
 fi
+if [[ ! -x "$DEFAULT_BIN_DIR/alis-native" ]]; then
+    REAL_ROOT_DIR="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd -P || true)"
+    if [[ -n "$REAL_ROOT_DIR" && -x "$REAL_ROOT_DIR/native/bin/alis-native" ]]; then
+        DEFAULT_BIN_DIR="$REAL_ROOT_DIR/native/bin"
+    elif [[ -n "$REAL_ROOT_DIR" && -x "$REAL_ROOT_DIR/native/target/release/alis-native" ]]; then
+        DEFAULT_BIN_DIR="$REAL_ROOT_DIR/native/target/release"
+    fi
+fi
 BIN_DIR="${BIN_DIR:-$DEFAULT_BIN_DIR}"
 STRICT="${ALIS_NATIVE_STRICT:-0}"
 MPD_SOCKET="${ALIS_MPD_SOCKET:-${XDG_RUNTIME_DIR:-/tmp}/alis/mpd.sock}"
@@ -65,7 +73,7 @@ rust_ready() {
 
 cmd="${1:-}"
 [[ -n "$cmd" ]] || {
-    echo "usage: native-dispatch <input-lock|input-keys|niri|clipboard-store|mpd|mpd-daemon|mpd-subscribe|lyrics|theme|desktop-icons|companion|backend-info> [args...]" >&2
+    echo "usage: native-dispatch <input-lock|input-keys|niri|clipboard-store|mpd|mpd-daemon|mpd-subscribe|lyrics|theme|theme-preview|least-busy-region|scan-plugins|telemetry|desktop-icons|companion|backend-info> [args...]" >&2
     exit 64
 }
 shift
@@ -74,9 +82,9 @@ if [[ "$MODE" == rust && "$STRICT" == 1 ]]; then
     required_binary=""
     case "$cmd" in
         input-lock|input-keys) required_binary=alis-inputd ;;
-        niri|clipboard-store|desktop-icons) required_binary=alis-native ;;
+        niri|clipboard-store|desktop-icons|scan-plugins|telemetry) required_binary=alis-native ;;
         mpd|mpd-daemon|mpd-subscribe|lyrics) required_binary=alis-mpdd ;;
-        theme) required_binary=alis-theme ;;
+        theme|theme-preview|least-busy-region) required_binary=alis-theme ;;
     esac
     if [[ -n "$required_binary" ]] && ! rust_ready "$required_binary"; then
         echo "[native-dispatch] missing Rust binary: $BIN_DIR/$required_binary" >&2
@@ -209,6 +217,48 @@ case "$cmd" in
         fi
         py="$(python_bin)"
         exec "$py" "$ROOT_DIR/scripts/colors/generate_colors_material.py" "$@"
+        ;;
+
+    theme-preview)
+        preview_path="${1:-}"
+        preview_opts="${2:-"{}"}"
+        [[ -n "$preview_path" ]] || { echo "theme-preview requires a wallpaper path" >&2; exit 64; }
+        if want_rust && rust_ready alis-theme; then
+            "$BIN_DIR/alis-theme" --path "$preview_path" --preview-options "$preview_opts"
+            rc=$?
+            if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
+            echo "[native-dispatch] Rust theme-preview failed ($rc), falling back to Python" >&2
+        fi
+        exec /usr/bin/python3 "$ROOT_DIR/scripts/colors/preview-palette.py" "$preview_path" "$preview_opts"
+        ;;
+
+    least-busy-region)
+        if want_rust && rust_ready alis-theme; then
+            "$BIN_DIR/alis-theme" --least-busy-region "$@"
+            rc=$?
+            if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
+            echo "[native-dispatch] Rust least-busy-region failed ($rc), falling back to Python" >&2
+        fi
+        py="$(python_bin)"
+        exec "$py" "$ROOT_DIR/scripts/images/least_busy_region.py" "$@"
+        ;;
+
+    scan-plugins)
+        if want_rust && rust_ready alis-native; then
+            "$BIN_DIR/alis-native" plugins scan --shell-root "$ROOT_DIR" "$@"
+            rc=$?
+            if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
+            echo "[native-dispatch] Rust scan-plugins failed ($rc), falling back to Python" >&2
+        fi
+        exec /usr/bin/python3 "$ROOT_DIR/scripts/scan-plugins.py" "$@"
+        ;;
+
+    telemetry)
+        if want_rust && rust_ready alis-native; then
+            exec "$BIN_DIR/alis-native" telemetry "$@"
+        fi
+        echo "[native-dispatch] telemetry requires the Rust backend" >&2
+        exit 69
         ;;
 
     desktop-icons)

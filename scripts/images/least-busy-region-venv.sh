@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+if [[ -x "$SCRIPT_DIR/../native-dispatch" ]]; then
+    "$SCRIPT_DIR/../native-dispatch" least-busy-region "$@" && exit 0
+fi
+
 if [[ -n "${ALIS_VENV:-}" ]]; then
     _ii_venv="$(eval echo "$ALIS_VENV")"
 elif [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then

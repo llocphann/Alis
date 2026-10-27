@@ -158,8 +158,8 @@ Singleton {
         // process. When Liquid is revealing this wallpaper, do not compete
         // with its GPU upload. A deadline still handles hidden/no-frame previews.
         root._previewWaitingForPresentation = Boolean(deferUntilPresented)
-        root._previewPending = {serial: ++root._previewSerial, command: ["/usr/bin/nice", "-n", "10", "/usr/bin/python3",
-            Quickshell.shellPath("scripts/colors/preview-palette.py"), path, JSON.stringify(options)]}
+        root._previewPending = {serial: ++root._previewSerial, command: ["/usr/bin/nice", "-n", "10",
+            Quickshell.shellPath("scripts/native-dispatch"), "theme-preview", path, JSON.stringify(options)]}
         if (root._previewWaitingForPresentation) {
             previewFrameDeadline.interval = 2400
             previewFrameDeadline.restart()

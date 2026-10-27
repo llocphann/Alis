@@ -1,6 +1,8 @@
 mod clipboard;
 mod desktop;
 mod niri;
+mod plugins;
+mod telemetry;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -33,6 +35,15 @@ enum Command {
         #[command(subcommand)]
         command: niri::NiriCommand,
     },
+
+    /// Native plugin manifest scanner replacing scripts/scan-plugins.py.
+    Plugins {
+        #[command(subcommand)]
+        command: plugins::PluginsCommand,
+    },
+
+    /// Native system telemetry reader for CPU, RAM, swap, network, GPU, disk, and temperatures.
+    Telemetry(telemetry::TelemetryArgs),
 }
 
 fn run() -> Result<i32> {
@@ -48,6 +59,16 @@ fn run() -> Result<i32> {
             let outcome = niri::run(command)?;
             println!("{}", serde_json::to_string(&outcome.value)?);
             Ok(outcome.code)
+        }
+        Command::Plugins { command } => {
+            let value = plugins::run(command)?;
+            println!("{}", serde_json::to_string(&value)?);
+            Ok(0)
+        }
+        Command::Telemetry(args) => {
+            let value = telemetry::run(args)?;
+            println!("{}", serde_json::to_string(&value)?);
+            Ok(0)
         }
     }
 }

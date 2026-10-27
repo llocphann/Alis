@@ -1,4 +1,6 @@
 mod palette;
+mod preview;
+mod region;
 mod sddm;
 mod seed_cache;
 mod source;
@@ -25,100 +27,106 @@ use crate::source::{
 use crate::template::{RenderRequest, render_templates};
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
-enum Mode {
+pub(crate) enum Mode {
     Dark,
     Light,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
-enum Transparency {
+pub(crate) enum Transparency {
     Opaque,
     Transparent,
 }
 
 #[derive(Debug, Parser)]
 #[command(about = "Dormant Rust parity implementation of generate_colors_material.py")]
-struct Args {
+pub(crate) struct Args {
     #[arg(long)]
-    path: Option<PathBuf>,
+    pub(crate) path: Option<PathBuf>,
 
     #[arg(long, default_value_t = 128)]
-    size: u32,
+    pub(crate) size: u32,
 
     #[arg(long)]
-    color: Option<String>,
+    pub(crate) color: Option<String>,
 
     #[arg(long, value_enum, default_value_t = Mode::Dark)]
-    mode: Mode,
+    pub(crate) mode: Mode,
 
     #[arg(long, default_value = "vibrant")]
-    scheme: String,
+    pub(crate) scheme: String,
 
     #[arg(long)]
-    smart: bool,
+    pub(crate) smart: bool,
 
     #[arg(long, value_enum, default_value_t = Transparency::Opaque)]
-    transparency: Transparency,
+    pub(crate) transparency: Transparency,
 
     #[arg(long)]
-    termscheme: Option<PathBuf>,
+    pub(crate) termscheme: Option<PathBuf>,
 
     #[arg(long, default_value_t = 0.4)]
-    harmony: f64,
+    pub(crate) harmony: f64,
 
     #[arg(long = "harmonize_threshold", default_value_t = 100.0)]
-    harmonize_threshold: f64,
+    pub(crate) harmonize_threshold: f64,
 
     #[arg(long = "term_fg_boost", default_value_t = 0.35)]
-    term_fg_boost: f64,
+    pub(crate) term_fg_boost: f64,
 
     #[arg(long = "term_saturation", default_value_t = 0.65)]
-    term_saturation: f64,
+    pub(crate) term_saturation: f64,
 
     #[arg(long = "term_brightness", default_value_t = 0.60)]
-    term_brightness: f64,
+    pub(crate) term_brightness: f64,
 
     #[arg(long = "term_bg_brightness", default_value_t = 0.50)]
-    term_bg_brightness: f64,
+    pub(crate) term_bg_brightness: f64,
 
     #[arg(long = "blend_bg_fg")]
-    blend_bg_fg: bool,
+    pub(crate) blend_bg_fg: bool,
 
     #[arg(long)]
-    cache: Option<PathBuf>,
+    pub(crate) cache: Option<PathBuf>,
 
     #[arg(long)]
-    soften: bool,
+    pub(crate) soften: bool,
 
     #[arg(long)]
-    debug: bool,
+    pub(crate) debug: bool,
 
     #[arg(long = "json-output")]
-    json_output: Option<PathBuf>,
+    pub(crate) json_output: Option<PathBuf>,
 
     #[arg(long = "palette-output")]
-    palette_output: Option<PathBuf>,
+    pub(crate) palette_output: Option<PathBuf>,
 
     #[arg(long = "app-palette-output")]
-    app_palette_output: Option<PathBuf>,
+    pub(crate) app_palette_output: Option<PathBuf>,
 
     #[arg(long = "terminal-output")]
-    terminal_output: Option<PathBuf>,
+    pub(crate) terminal_output: Option<PathBuf>,
 
     #[arg(long = "meta-output")]
-    meta_output: Option<PathBuf>,
+    pub(crate) meta_output: Option<PathBuf>,
 
     #[arg(long = "scss-output")]
-    scss_output: Option<PathBuf>,
+    pub(crate) scss_output: Option<PathBuf>,
 
     #[arg(long = "render-templates")]
-    render_templates: Option<PathBuf>,
+    pub(crate) render_templates: Option<PathBuf>,
 
     #[arg(long = "color-strength", default_value_t = 1.0)]
-    color_strength: f64,
+    pub(crate) color_strength: f64,
 
     #[arg(long = "invert-hue")]
-    invert_hue: bool,
+    pub(crate) invert_hue: bool,
+
+    #[arg(long = "preview-options")]
+    pub(crate) preview_options: Option<String>,
+
+    #[arg(long = "least-busy-region")]
+    pub(crate) least_busy_region: bool,
 }
 
 fn write_text(path: &Path, content: &str) -> Result<()> {
@@ -138,7 +146,7 @@ fn write_json(path: &Path, value: &Value) -> Result<()> {
     write_text(path, &(serde_json::to_string_pretty(value)? + "\n"))
 }
 
-fn terminal_source(path: Option<&Path>, dark: bool) -> Result<Option<Palette>> {
+pub(crate) fn terminal_source(path: Option<&Path>, dark: bool) -> Result<Option<Palette>> {
     let Some(path) = path else {
         return Ok(None);
     };
@@ -156,7 +164,7 @@ fn terminal_source(path: Option<&Path>, dark: bool) -> Result<Option<Palette>> {
     ))
 }
 
-fn resolve_seed(args: &Args) -> Result<(Argb, String, Option<PathBuf>, String)> {
+pub(crate) fn resolve_seed(args: &Args) -> Result<(Argb, String, Option<PathBuf>, String)> {
     if let Some(path) = &args.path {
         // Hash the actual image bytes: path + size + mtime is not sufficient
         // when a wallpaper is replaced in-place. A failed lookup must never
@@ -219,7 +227,20 @@ fn resolve_seed(args: &Args) -> Result<(Argb, String, Option<PathBuf>, String)> 
 }
 
 fn main() -> Result<()> {
+    let raw_args: Vec<String> = std::env::args().collect();
+    if raw_args.iter().skip(1).any(|arg| arg == "--least-busy-region") {
+        let region_args = region::parse_region_args(&raw_args[1..])?;
+        return region::run_region(&region_args);
+    }
+
     let args = Args::parse();
+    if let Some(preview_opts) = &args.preview_options {
+        let path = args
+            .path
+            .as_deref()
+            .ok_or_else(|| anyhow!("--preview-options requires --path"))?;
+        return preview::run_preview_cache(path, preview_opts);
+    }
     let profile = std::env::var("ALIS_THEME_PROFILE").as_deref() == Ok("1");
     let total_started = Instant::now();
     let seed_started = Instant::now();

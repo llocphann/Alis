@@ -71,7 +71,7 @@ Item {
     // ─── Processes ───────────────────────────────────────────────────
     Process {
         id: scanProcess
-        command: ["/usr/bin/python3", Quickshell.shellPath("scripts/scan-plugins.py")]
+        command: [Quickshell.shellPath("scripts/native-dispatch"), "scan-plugins"]
         stdout: SplitParser {
             onRead: data => root._parsePluginList(data)
         }

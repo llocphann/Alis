@@ -452,18 +452,17 @@ _alis_detect_stale_local_qs() {
 
 # --- Quickshell install-kind detection ----------------------------------------
 # Returns "kind:pkgname". Used by check_qs_abi() and `alis doctor --fix-abi`.
-# Each kind needs a different rebuild path — there is no universal command:
-#   arch-aur-foreign      built locally from AUR     -> paru -S --rebuild
-#   arch-repo-binary      precompiled in 3rd-party repo (CachyOS, chaotic-aur)
-#                                                     -> paru -Sa (forces source build)
-#   arch-repo-official    extra/quickshell           -> sudo pacman -Syu (waits for maintainer)
-#   arch-aur-bin          quickshell-bin (precompiled tarball)
-#                                                     -> switch to quickshell-git
-#   fedora-pkg            rpm/COPR install            -> sudo dnf upgrade
-#   nixos                 nixpkgs/flake               -> nixos-rebuild switch --upgrade
-#   debian                apt/dpkg                    -> compile from source
-#   source                /usr/local install          -> compile from source
-#   unknown               nothing matches             -> point at Quickshell docs
+# Each kind needs a different rebuild path — never switch stable installs onto
+# unpinned upstream quickshell-git:
+#   arch-aur-foreign      built locally (pinned or AUR) -> pinned builder / rebuild
+#   arch-repo-binary      precompiled in 3rd-party repo -> switch to official/pinned
+#   arch-repo-official    extra/quickshell              -> sync official or build pinned
+#   arch-aur-bin          quickshell-bin (precompiled)  -> switch to official/pinned
+#   fedora-pkg            rpm/COPR install              -> sudo dnf upgrade
+#   nixos                 nixpkgs/flake                 -> nixos-rebuild switch --upgrade
+#   debian                apt/dpkg                      -> build pinned release into prefix
+#   source                /usr/local install            -> build pinned release into prefix
+#   unknown               nothing matches               -> point at Quickshell docs
 _alis_quickshell_install_kind() {
     if command -v pacman >/dev/null 2>&1; then
         if pacman -Qi quickshell-bin &>/dev/null; then
@@ -499,24 +498,62 @@ _alis_quickshell_install_kind() {
     printf 'unknown:'
 }
 
+_alis_find_pinned_qs_builder() {
+    local candidate
+    for candidate in \
+        "$script_dir/lib/quickshell-pinned-build.sh" \
+        "${config_dir:-}/scripts/lib/quickshell-pinned-build.sh" \
+        "$launcher_root/share/quickshell/alis/scripts/lib/quickshell-pinned-build.sh" \
+        "$user_config_dir/scripts/lib/quickshell-pinned-build.sh" \
+        "$system_config_dir/scripts/lib/quickshell-pinned-build.sh" \
+        "$fallback_system_config_dir/scripts/lib/quickshell-pinned-build.sh"; do
+        if [[ -f "$candidate" ]]; then
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
 # Echoes the rebuild command for a kind:pkg pair. Empty if no auto-rebuild path exists.
 _alis_quickshell_rebuild_cmd() {
     local kind="${1%%:*}" pkg="${1#*:}"
-    local helper=""
-    if [[ "$kind" == arch-* ]]; then
-        for h in paru yay; do
-            if command -v "$h" >/dev/null 2>&1; then helper="$h"; break; fi
-        done
-        [[ -z "$helper" ]] && return  # No AUR helper means no automatic Arch path
-    fi
+    local pinned_builder=""
+    pinned_builder="$(_alis_find_pinned_qs_builder 2>/dev/null || true)"
     case "$kind" in
-        arch-aur-foreign)   printf '%s -S --rebuild --noconfirm %s' "$helper" "$pkg" ;;
-        arch-repo-binary)   printf '%s -Sa --noconfirm --skipreview %s' "$helper" "$pkg" ;;
-        arch-repo-official) printf 'sudo pacman -Rdd --noconfirm quickshell && %s -S --noconfirm quickshell-git' "$helper" ;;
-        arch-aur-bin)       printf 'sudo pacman -Rdd --noconfirm quickshell-bin && %s -S --noconfirm quickshell-git' "$helper" ;;
+        arch-repo-official)
+            if [[ -n "$pinned_builder" ]]; then
+                printf 'sudo pacman -Syu --noconfirm quickshell || bash %q --arch-pkg --noconfirm' "$pinned_builder"
+            else
+                printf 'sudo pacman -Syu --noconfirm quickshell'
+            fi
+            ;;
+        arch-aur-bin|arch-repo-binary)
+            if [[ -n "$pinned_builder" ]]; then
+                printf 'sudo pacman -Rdd --noconfirm %s && (sudo pacman -Syu --noconfirm quickshell || bash %q --arch-pkg --noconfirm)' "$pkg" "$pinned_builder"
+            else
+                printf 'sudo pacman -Rdd --noconfirm %s && sudo pacman -Syu --noconfirm quickshell' "$pkg"
+            fi
+            ;;
+        arch-aur-foreign)
+            if [[ "$pkg" == "quickshell-git" ]]; then
+                if [[ -n "$pinned_builder" ]]; then
+                    printf 'sudo pacman -Rdd --noconfirm quickshell-git && (sudo pacman -Syu --noconfirm quickshell || bash %q --arch-pkg --noconfirm)' "$pinned_builder"
+                else
+                    printf 'sudo pacman -Rdd --noconfirm quickshell-git && sudo pacman -Syu --noconfirm quickshell'
+                fi
+            elif [[ -n "$pinned_builder" ]]; then
+                printf 'bash %q --arch-pkg --noconfirm' "$pinned_builder"
+            fi
+            ;;
         fedora-pkg)         printf 'sudo dnf upgrade --refresh -y %s' "$pkg" ;;
         nixos)              printf 'sudo nixos-rebuild switch --upgrade' ;;
-        debian|source|unknown|*) ;;  # No automatic path
+        debian|source)
+            if [[ -n "$pinned_builder" ]]; then
+                printf 'bash %q --local-prefix' "$pinned_builder"
+            fi
+            ;;
+        unknown|*) ;;  # No automatic path
     esac
 }
 
