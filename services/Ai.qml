@@ -31,6 +31,8 @@ Singleton {
     property Component aiMessageComponent: AiMessageData {}
     property Component aiModelComponent: AiModel {}
     property Component textSessionComponent: AiTextSession { ai: root }
+    property Component agentSessionComponent: AiAgentSession { ai: root }
+    readonly property int agentSessionContractVersion: 1
     property Component geminiApiStrategy: GeminiApiStrategy {}
     property Component openaiApiStrategy: OpenAiApiStrategy {}
     property Component openaiResponseApiStrategy: OpenAiResponseApiStrategy {}
@@ -44,6 +46,10 @@ Singleton {
     function createTextSession(owner): var {
         root.ensureInitialized()
         return textSessionComponent.createObject(owner)
+    }
+    function createAgentSession(owner): var {
+        root.ensureInitialized()
+        return agentSessionComponent.createObject(owner)
     }
     function createStrategy(owner, format): var {
         const component = ({openai:openaiApiStrategy, gguf:openaiApiStrategy,
