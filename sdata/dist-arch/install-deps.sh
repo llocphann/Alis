@@ -511,7 +511,7 @@ tui_info "Registering dependencies with pacman..."
 
 _meta_dir="./sdata/dist-arch/alis-deps"
 if [[ -f "$_meta_dir/PKGBUILD" ]]; then
-  _alis_ver="$(cat ./VERSION 2>/dev/null || echo '2.29.3')"
+  _alis_ver="$(cat ./VERSION 2>/dev/null || echo '1.0.0')"
   _meta_build_dir="$(mktemp -d)"
 
   # Build from a staged recipe so setup never rewrites a tracked PKGBUILD just

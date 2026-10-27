@@ -6,8 +6,8 @@
 # Safe to remove with: sudo pacman -R alis-deps
 
 pkgname=alis-deps
-pkgver=2.29.3
-pkgrel=9
+pkgver=1.0.0
+pkgrel=1
 pkgdesc='Alis desktop shell - dependency tracker (meta-package)'
 url='https://github.com/llocphann/Alis'
 arch=(any)

@@ -37,7 +37,7 @@ dependencies = [
 
 [[package]]
 name = "alis-inputd"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "alis-protocol",
  "anyhow",
@@ -49,7 +49,7 @@ dependencies = [
 
 [[package]]
 name = "alis-mpdd"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -62,7 +62,7 @@ dependencies = [
 
 [[package]]
 name = "alis-native"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -76,14 +76,14 @@ dependencies = [
 
 [[package]]
 name = "alis-protocol"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "alis-theme"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",

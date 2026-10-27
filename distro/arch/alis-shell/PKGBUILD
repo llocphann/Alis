@@ -1,6 +1,6 @@
 pkgname=alis-shell
-pkgver=2.29.3
-pkgrel=17
+pkgver=1.0.0
+pkgrel=1
 pkgdesc='Alis shell payload, launcher, and user service'
 arch=('x86_64')
 url='https://github.com/llocphann/Alis'
@@ -9,7 +9,7 @@ install=alis-shell.install
 # Alis does not publish version tags/releases yet. Keep the non-VCS package
 # reproducible by pinning the reviewed source snapshot; release automation can
 # switch this to a tag once the project publishes one.
-_source_ref="${ALIS_SOURCE_REF:-c74d8a2336a311699ced1a00898bc4b2527a3a45}"
+_source_ref="${ALIS_SOURCE_REF:-v1.0.0}"
 _default_source_archive="https://github.com/llocphann/Alis/archive/${_source_ref}.tar.gz"
 _source_archive="${ALIS_SOURCE_ARCHIVE:-${_default_source_archive}}"
 _source_dir="${ALIS_SOURCE_DIR:-Alis-${_source_ref}}"

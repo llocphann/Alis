@@ -2,7 +2,7 @@
 
 > A complete desktop shell built on [Quickshell](https://quickshell.org/) for the [Niri](https://github.com/YaLTeR/niri) Wayland compositor.
 
-**Version**: 2.29.3 · **Stack**: QML (Quickshell), Bash, Python, Go
+**Version**: 1.0.0 · **Stack**: QML (Quickshell), Rust, Bash, Python
 
 Originally forked from [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) (illogical-impulse). Secondary Hyprland support is maintained.
 

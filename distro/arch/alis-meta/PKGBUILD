@@ -1,6 +1,6 @@
 pkgname=alis-meta
-pkgver=2.29.3
-pkgrel=7
+pkgver=1.0.0
+pkgrel=1
 pkgdesc='Full Alis desktop experience meta-package'
 arch=(any)
 url='https://github.com/llocphann/Alis'
