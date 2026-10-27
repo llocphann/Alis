@@ -207,6 +207,8 @@ Singleton {
     property var _settingsNativeDialogs: ({})
     readonly property bool settingsNativeDialogOpen:
         Object.keys(root._settingsNativeDialogs).length > 0
+        || (NiriService.polkitDialogWindowOpen ?? false)
+        || (AlisIntergration.authorizationPending ?? false)
 
     function openSettingsPage(index: int): void {
         root.openSettingsSection(index, "")

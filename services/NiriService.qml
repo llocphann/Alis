@@ -39,6 +39,7 @@ Singleton {
 
     property var outputs: ({})
     property var windows: []
+    property bool polkitDialogWindowOpen: false
     // Initial WindowsChanged has arrived, including an authoritative empty list.
     // Do not treat the pre-event [] as proof that cached previews are orphaned.
     property bool windowListReady: false
@@ -617,6 +618,17 @@ Singleton {
 
     function scheduleWindowsUpdate(newWindowsList) {
         const normalizedWindows = root._normalizeWindowFocus(newWindowsList)
+        const polkitWin = Array.isArray(normalizedWindows)
+            ? (normalizedWindows.find(w => {
+                const appId = String(w?.app_id ?? "").toLowerCase()
+                return appId.includes("polkit") || appId.includes("policykit")
+            }) ?? null)
+            : null
+        const nextPolkitOpen = polkitWin !== null
+        if (root.polkitDialogWindowOpen !== nextPolkitOpen)
+            root.polkitDialogWindowOpen = nextPolkitOpen
+        if (polkitWin && !polkitWin.is_focused && polkitWin.id !== undefined)
+            Qt.callLater(() => root.focusWindow(polkitWin.id))
         _windowOrderDirty = _windowOrderDirty
             || _windowOrderDiffers(_windowsDirty ? _pendingWindows : windows, normalizedWindows)
         _pendingWindows = normalizedWindows
