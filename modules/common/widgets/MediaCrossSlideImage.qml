@@ -258,15 +258,15 @@ ClippingRectangle {
         asynchronous: true
         cache: false
         smooth: true
-        mipmap: true
+        mipmap: !root.blurEnabled
         visible: false
-        sourceSize.width: Math.max(1, Math.round(root.width * 2))
-        sourceSize.height: Math.max(1, Math.round(root.height * 2))
+        sourceSize.width: Math.max(1, Math.round(root.width * (root.blurEnabled ? 1 : 2)))
+        sourceSize.height: Math.max(1, Math.round(root.height * (root.blurEnabled ? 1 : 2)))
         onStatusChanged: {
             if (root._backLayer === layerA)
                 root._startTransitionWhenReady()
         }
-        layer.enabled: root.effectEnabled
+        layer.enabled: root.effectEnabled && layerA.visible
         layer.effect: MultiEffect {
             blurEnabled: root.blurEnabled
             blur: root.blur
@@ -283,15 +283,15 @@ ClippingRectangle {
         asynchronous: true
         cache: false
         smooth: true
-        mipmap: true
+        mipmap: !root.blurEnabled
         visible: false
-        sourceSize.width: Math.max(1, Math.round(root.width * 2))
-        sourceSize.height: Math.max(1, Math.round(root.height * 2))
+        sourceSize.width: Math.max(1, Math.round(root.width * (root.blurEnabled ? 1 : 2)))
+        sourceSize.height: Math.max(1, Math.round(root.height * (root.blurEnabled ? 1 : 2)))
         onStatusChanged: {
             if (root._backLayer === layerB)
                 root._startTransitionWhenReady()
         }
-        layer.enabled: root.effectEnabled
+        layer.enabled: root.effectEnabled && layerB.visible
         layer.effect: MultiEffect {
             blurEnabled: root.blurEnabled
             blur: root.blur

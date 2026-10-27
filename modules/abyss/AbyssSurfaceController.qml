@@ -206,8 +206,8 @@ QtObject {
         popup.presentationWindow = null
         popup._bodyHovered = false
         popup._contentHovered = false
-        if (restore && popup.contentItem && entry?.home) {
-            popup.contentItem.parent = entry.home
+        if (restore && popup?.contentItem) {
+            popup.contentItem.parent = entry?.home ?? null
             popup.contentItem.visible = Qt.binding(() => popup.presentationActive)
         }
         const next = popupSlots.slice()

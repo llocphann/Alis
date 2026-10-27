@@ -670,7 +670,7 @@ Item {
             : (root.placementVisible
                 ? root.record.content.height : root.targetRecord.content.height)
         clip: true
-        visible: (!root.warmContent || root.visualResident) && (root.pyramidPresentationActive
+        visible: (root.visualResident || root.pyramidPresentationActive) && (root.pyramidPresentationActive
             ? (root.semanticOpen || root.progress > 0.001)
             : (root.placementVisible || root.progress > 0.001))
         // Pyramid uses the same pure slide-under principle as StyledPopup:

@@ -1008,12 +1008,14 @@ Item {
     // ShaderEffect samples Image texture providers without applying Image.fillMode.
     // Render each slot first so shader transitions receive the exact same
     // aspect-correct crop/fit pixels that the user sees before and after them.
+    readonly property bool _shaderTexturesNeeded: root._shaderTexturePrimePending || root._shaderRequestedActive
+
     ShaderEffectSource {
         id: shaderSlot0Texture
         anchors.fill: parent
         visible: false
         live: root._shaderTexturePrimePending
-        sourceItem: img0
+        sourceItem: root._shaderTexturesNeeded ? img0 : null
     }
 
     ShaderEffectSource {
@@ -1021,7 +1023,7 @@ Item {
         anchors.fill: parent
         visible: false
         live: root._shaderTexturePrimePending
-        sourceItem: img1
+        sourceItem: root._shaderTexturesNeeded ? img1 : null
     }
 
 

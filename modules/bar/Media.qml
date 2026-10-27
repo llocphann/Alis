@@ -150,7 +150,7 @@ Item {
                 value: (activePlayer && activePlayer.length > 0) ? (activePlayer.position / activePlayer.length) : 0
                 implicitSize: Math.round(22 * Appearance.sizes.barModuleScale)
                 colPrimary: Appearance.colors.colOnLayer0
-                enableAnimation: activePlayer?.playbackState === MprisPlaybackState.Playing
+                enableAnimation: false
 
                 Item {
                     anchors.centerIn: parent
@@ -239,6 +239,11 @@ Item {
 
             // Pausable marquee: hold at start, then glide left continuously.
             // Hover pauses mid-scroll; on exit it resumes from the paused position.
+            readonly property bool shouldAnimateMarquee: titleScroller.visible
+                && (root.QsWindow.window?.visible ?? false)
+                && titleScroller.overflowing
+                && Appearance.animationsEnabled
+                && (root.activePlayer?.isPlaying ?? false)
             property bool _marqueeHolding: true
             property bool _marqueeHovered: false
             property bool _marqueeReady: false
@@ -259,8 +264,7 @@ Item {
             }
 
             function _startHoldTimer() {
-                if (!titleScroller.visible || !titleScroller.overflowing
-                        || !Appearance.animationsEnabled || _marqueeHovered) return
+                if (!titleScroller.shouldAnimateMarquee || _marqueeHovered) return
                 holdTimer.start()
             }
 
@@ -294,6 +298,7 @@ Item {
             // overflow state (e.g. via the Media width or Bar height sliders).
             onWidthChanged: resetMarquee()
             onOverflowingChanged: resetMarquee()
+            onShouldAnimateMarqueeChanged: resetMarquee()
 
             onVisibleChanged: {
                 if (!visible) {

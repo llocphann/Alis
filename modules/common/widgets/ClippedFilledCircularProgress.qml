@@ -34,7 +34,13 @@ Item {
     implicitWidth: implicitSize
     implicitHeight: implicitSize
 
-    property real degree: value * 360
+    readonly property real _rawDegree: Math.max(0, Math.min(360, value * 360))
+    // Quantize compact progress arcs (<= 32px) to 0.5° steps (~0.08px arc length)
+    // so sub-pixel periodic position ticks do not trigger 48-frame 60 FPS
+    // CurveRenderer + OpacityMask FBO repaints when the arc has not visibly moved.
+    property real degree: (root.implicitSize <= 32 && _rawDegree > 0 && _rawDegree < 360)
+        ? (Math.round(_rawDegree * 2) / 2)
+        : _rawDegree
     property real centerX: root.width / 2
     property real centerY: root.height / 2
     property real arcRadius: root.implicitSize / 2 - root.lineWidth / 2 - (0.5 * root.accountForLightBleeding)
