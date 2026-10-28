@@ -159,14 +159,15 @@ Item {
             Layout.leftMargin: root.hp
             Layout.rightMargin: root.hp
             from: 0
-            to: YtMusic.currentDuration > 0 ? YtMusic.currentDuration : 1
+            readonly property real effectiveLength: StringUtils.validMediaDuration(YtMusic.currentDuration)
+            readonly property real effectivePosition: StringUtils.boundedMediaPosition(
+                YtMusic.currentPosition, effectiveLength)
+            to: effectiveLength > 0 ? effectiveLength : 1
             stopIndicatorValues: []
-            value: _dragging ? value : YtMusic.currentPosition
-            property bool _dragging: false
-            onPressedChanged: {
-                if (pressed) _dragging = true;
-                else { YtMusic.seek(value); _dragging = false; }
-            }
+            liveValue: effectivePosition
+            tooltipContent: StringUtils.friendlyTimeForSeconds(value)
+            onSeekCommitted: (val) => YtMusic.seek(val)
+            scrollable: true
         }
         Item { Layout.preferredHeight: 4 }
         // Time labels.
@@ -175,13 +176,13 @@ Item {
             Layout.leftMargin: root.hp + 4
             Layout.rightMargin: root.hp + 4
             StyledText {
-                text: root._fmt(seekSlider._dragging ? seekSlider.value : YtMusic.currentPosition)
+                text: root._fmt(seekSlider.pressed ? seekSlider.value : seekSlider.effectivePosition)
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colOnSurfaceVariant
             }
             Item { Layout.fillWidth: true }
             StyledText {
-                text: root._fmt(YtMusic.currentDuration)
+                text: root._fmt(seekSlider.effectiveLength)
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colOnSurfaceVariant
             }
@@ -527,12 +528,8 @@ Item {
                     id: volSlider
                     Layout.fillWidth: true
                     from: 0; to: 1
-                    // Track YtMusic.volume only when not dragging — otherwise the mpv round-trip
-                    // fights the drag and the handle jumps. (Same pattern as the seek slider.)
-                    property bool _dragging: false
-                    value: volSlider._dragging ? volSlider.value : YtMusic.volume
+                    liveValue: YtMusic.volume
                     stopIndicatorValues: []
-                    onPressedChanged: { if (pressed) _dragging = true; else { YtMusic.setVolume(value); _dragging = false; } }
                     onMoved: YtMusic.setVolume(value)
                 }
             }
@@ -561,10 +558,6 @@ Item {
     }
 
     function _fmt(seconds) {
-        if (!seconds || seconds <= 0) return "0:00";
-        const s = Math.floor(seconds);
-        const m = Math.floor(s / 60);
-        const sec = s % 60;
-        return m + ":" + (sec < 10 ? "0" + sec : "" + sec);
+        return StringUtils.friendlyTimeForSeconds(seconds);
     }
 }

@@ -50,7 +50,10 @@ Item {
     onWarmContentChanged: if (!warmContent) { warmExpiry.stop(); warmHeld=false }
     onVisualResidentChanged: {
         if (visualResident) warmExpiry.stop()
-        else if (warmHeld) warmExpiry.restart()
+        else {
+            if (!semanticOpen && !open) activationOrder = 0
+            if (warmHeld) warmExpiry.restart()
+        }
     }
     Timer {
         id: warmExpiry
@@ -103,13 +106,18 @@ Item {
     property string stackPolicy: ""
     // A visual origin for nearby Pyramid popups, without entering their
     // area-sorted allocator group. Recording controls keep their Edge slot.
-    property bool pyramidAnchor: false
+    property bool pyramidAnchor: identity === "leftPanel" || identity === "rightPanel"
     // Pyramid grouping follows the allocator's normal content-clearance scale.
     // Same-Edge popup intervals that overlap or come within this many logical
     // pixels participate in one visual neighborhood.
     property real stackProximity: 24
     property int activationOrder: 0
-    property int placementPriority: identity === "dialog" ? 2 : ["utility","edgeEditor"].includes(identity) ? 1 : identity === "dock" ? -1 : 0
+    property bool preserveAspect: false
+    readonly property bool contentFocused: contentFrame.activeFocus
+    property int placementPriority: identity === "dialog" ? 4
+        : ["dashboard","utility","edgeEditor","settings"].includes(identity) ? 3
+        : ["leftPanel","rightPanel"].includes(identity) ? 2
+        : identity === "dock" ? -1 : 0
     readonly property var placementMemo: ({})
     readonly property var placement: PlacementMemo.stable(placementMemo,
         controller?.bodyPlacements?.[identity] ?? null)
@@ -165,6 +173,10 @@ Item {
             depth:visualPlacementDepth,
             inward:visualPlacementInward
         }) : null
+    readonly property bool stackedInward:
+        (root.coordinatedPlacement?.inward ?? 0) > 0.5
+        || (root.visualPlacement?.inward ?? 0) > 0.5
+    z: root.stackedInward ? 0 : 1
     readonly property bool presented: open && placementVisible
     property real along: 0
     property real span: 380
@@ -228,8 +240,12 @@ Item {
                 visualPlacement ? null
                     : (!controller || root.visualResident ? obstacles : null),
                 largeSurface,visualPlacement)
+    readonly property string effectiveJoinedEdge: joinedEdge.length > 0
+        ? joinedEdge
+        : (root.visualPlacement?.vacancyBorrowed === true
+            ? String(root.visualPlacement?.vacancyDirection ?? "") : "")
     readonly property var record: Geometry.joinCorner(
-        rawPresentationRecord,joinedEdge,width,height,edgeInsets)
+        rawPresentationRecord,joinedEdge || effectiveJoinedEdge,width,height,edgeInsets)
     // A requested join can be rejected when the popup is too far away.
     // Input follows only the weld actually present in the painted record.
     readonly property string appliedJoinedEdge: record.joinedEdge ?? ""
@@ -252,7 +268,9 @@ Item {
         if (!root.includeEdgeConnection) return contentRect
         const region=Geometry.popupInput(contentRect,root.width,root.height,
             root.connectionInsets,root.edge,root.appliedJoinedEdge.length > 0
-                ? root.record.surface : root.rawPresentationRecord.surface)
+                ? root.record.surface : root.rawPresentationRecord.surface,
+            Math.max(root.coordinatedPlacement?.inward ?? 0,
+                root.visualPlacement?.inward ?? 0))
         return Qt.rect(region.x,region.y,region.width,region.height)
     }
     readonly property rect sourceBridge: {
@@ -350,6 +368,7 @@ Item {
         vacancyHovered: root.vacancyHovered
         vacancyHoverOrder: root.vacancyHoverOrder
         placementRequest: root.semanticOpen
+            && (!root.controller?.nextPresentationOrder || root.activationOrder > 0)
             ? ({id:root.identity,open:root.semanticOpen,order:root.activationOrder,
                 priority:root.placementPriority,padding:root.padding,
                 minSpan:root.minimumSpan,minDepth:root.minimumDepth,
@@ -358,6 +377,7 @@ Item {
                 stackPolicy:root.stackPolicy,
                 pyramidAnchor:root.pyramidAnchor,
                 stackProximity:root.stackProximity,
+                preserveAspect:root.preserveAspect,
                 record:root.requestedRecord})
             : null
         inputBounds: root.inputBounds
@@ -367,7 +387,15 @@ Item {
     function react(opening): void {
         if (controller) controller.impulse(edge,along+span/2,span,(opening ? 0.85 : -0.65)*waveInfluence,mass,opening ? "open" : "close")
     }
-    function markOpened(): void { if (open && controller?.nextPresentationOrder) activationOrder=controller.nextPresentationOrder() }
+    function markOpened(forceNewOrder = false): void {
+        if (!semanticOpen) {
+            if (!open && !visualResident)
+                activationOrder = 0
+            return
+        }
+        if (controller?.nextPresentationOrder && (forceNewOrder || activationOrder <= 0))
+            activationOrder = controller.nextPresentationOrder()
+    }
     function refreshVacancyInteraction(): void {
         if (!root.vacancyHovered || root.vacancyRole.length === 0) {
             root.vacancyHoverOrder = 0
@@ -504,10 +532,16 @@ Item {
         root.capturePyramidRestingState()
     onVisualPlacementChanged: if (initialized)
         root.capturePyramidRestingState()
-    onSemanticOpenChanged: if (initialized)
+    onSemanticOpenChanged: if (initialized) {
+        if (semanticOpen) markOpened(true)
+        else markOpened()
         root.syncPyramidSemanticState()
+    }
     onVacancyHoveredChanged: root.refreshVacancyInteraction()
     onVacancyRoleChanged: root.refreshVacancyInteraction()
+    onInputBoundsChanged: if (includeEdgeConnection) nativeInputRegion.changed()
+    onSourceBridgeChanged: if (includeEdgeConnection) nativeInputRegion.changed()
+    onConnectionRegionsChanged: if (includeEdgeConnection) nativeInputRegion.changed()
     onProgressChanged: {
         if (!placement && progress <= 0.001 && retainedPlacement !== null)
             retainedPlacement = null
@@ -515,11 +549,11 @@ Item {
         root.finishPyramidReopenIfDone()
     }
     onOpenChanged: if (initialized) { markOpened();react(open) }
-    onEmbeddedItemChanged: if (initialized) markOpened()
-    onContentKindChanged: if (initialized) markOpened()
+    onEmbeddedItemChanged: if (initialized) markOpened(true)
+    onContentKindChanged: if (initialized) markOpened(true)
     onControllerChanged: if (initialized) {
         root.resetPyramidMotion()
-        markOpened()
+        markOpened(true)
         root.refreshVacancyInteraction()
     }
     Component.onCompleted: {
@@ -550,6 +584,7 @@ Item {
     }
     Behavior on visualPlacementAlong {
         enabled: root.animatePlacementChanges && root.placementMotionReady
+            && (!root.animatePresentation || root.progress > 0.001)
             && AbyssStyle.motionEnabled
         NumberAnimation {
             duration: AbyssStyle.motionNormal
@@ -559,6 +594,7 @@ Item {
     }
     Behavior on visualPlacementSpan {
         enabled: root.animatePlacementChanges && root.placementMotionReady
+            && (!root.animatePresentation || root.progress > 0.001)
             && AbyssStyle.motionEnabled
         NumberAnimation {
             duration: AbyssStyle.motionNormal
@@ -568,6 +604,7 @@ Item {
     }
     Behavior on visualPlacementDepth {
         enabled: root.animatePlacementChanges && root.placementMotionReady
+            && (!root.animatePresentation || root.progress > 0.001)
             && AbyssStyle.motionEnabled
         NumberAnimation {
             duration: AbyssStyle.motionNormal
@@ -577,6 +614,7 @@ Item {
     }
     Behavior on visualPlacementInward {
         enabled: root.animatePlacementChanges && root.placementMotionReady
+            && (!root.animatePresentation || root.progress > 0.001)
             && AbyssStyle.motionEnabled
         NumberAnimation {
             duration: AbyssStyle.motionNormal

@@ -73,7 +73,7 @@ ContentPage {
 
     SettingsTaskNavigator {
         visible: !root.abyssContent
-        showTabBar: !root.abyssContent
+        showTabBar: false
         icon: "toolbar"
         title: root.abyssContent ? Translation.tr("Module behavior") : Translation.tr("Classic Bar")
         description: Translation.tr("Position, surface, behavior, spectrum and modules for the Classic bar.")
@@ -108,9 +108,26 @@ ContentPage {
         }
     }
 
+    GridLayout {
+        id: barTwoColumnGrid
+        Layout.fillWidth: true
+        columns: !root.abyssContent && width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
+        columnSpacing: 14
+        rowSpacing: 14
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        Layout.alignment: Qt.AlignTop
+        spacing: 14
+        visible: root.isIiActive && (!root.abyssContent || root.abyssCardFilter === "behavior" || root.abyssCardFilter === "")
+
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "appearance"
-        visible: root.isIiActive && root.activeSection === "appearance"
+        visible: root.isIiActive && !root.abyssContent
         expanded: true
         icon: "toolbar"
         title: Translation.tr("Appearance & Layout")
@@ -191,8 +208,9 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "appearance"
-        visible: root.isIiActive && root.activeSection === "appearance"
+        visible: root.isIiActive && !root.abyssContent
         expanded: true
         icon: "border_outer"
         title: Translation.tr("Screen Edge")
@@ -271,8 +289,9 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "spectrum"
-        visible: root.isIiActive && root.activeSection === "spectrum"
+        visible: root.isIiActive && !root.abyssContent
         expanded: true
         icon: "graphic_eq"
         title: Translation.tr("Audio spectrum")
@@ -415,8 +434,10 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
         settingsTaskSection: "behavior"
-        visible: root.isIiActive && (root.abyssCardFilter === "behavior"
+        visible: root.isIiActive && (!root.abyssContent || root.abyssCardFilter === "behavior"
             || (root.abyssCardFilter === "" && (root.activeSection === "behavior" || root.abyssContent)))
         expanded: true
         icon: "visibility"
@@ -532,12 +553,17 @@ ContentPage {
             }
         }
     }
+    }
 
     SettingsCardSection {
         id: barModulesCard
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        Layout.alignment: Qt.AlignTop
         Layout.minimumHeight: root.modulesCardMinHeight
         settingsTaskSection: "modules"
-        visible: root.isIiActive && (root.abyssCardFilter === "modules"
+        visible: root.isIiActive && (!root.abyssContent || root.abyssCardFilter === "modules"
             || (root.abyssCardFilter === "" && (root.activeSection === "modules" || root.abyssContent)))
         expanded: true
         icon: "widgets"
@@ -877,5 +903,6 @@ ContentPage {
                 }
             }
         }
+    }
     }
 }

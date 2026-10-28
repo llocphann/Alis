@@ -92,9 +92,13 @@ Item {
     function finishRetract(): void {
         if (!root.resident)
             return
+        const previousKind = root.activeKind
         root.resident = false
         root.activeKind = ""
         root.activePosition = ({})
+        if (previousKind === "dockAppMenu" && root.desiredKind !== "dockAppMenu"
+                && GlobalStates.abyssDockMenuModel !== undefined)
+            GlobalStates.abyssDockMenuModel = []
         Qt.callLater(root.syncRequest)
     }
 

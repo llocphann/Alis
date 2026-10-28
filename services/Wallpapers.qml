@@ -85,6 +85,13 @@ Singleton {
         AwwwBackend.clearPreview()
     }
 
+    function commitWallpaperPreview(path = ""): void {
+        const normalizedPath = FileUtils.trimFileProtocol(String(path ?? ""))
+        root._clearInternalPreview()
+        MaterialThemeLoader.commitColorPreview(normalizedPath)
+        AwwwBackend.clearPreview()
+    }
+
     function _clearInternalPreview(): void {
         root.internalPreviewPath = ""
         root.internalPreviewMonitor = ""
@@ -562,25 +569,24 @@ Singleton {
     function _deferLiquidTheme(path: string, darkMode: bool): void {
         root._pendingLiquidThemePath = FileUtils.trimFileProtocol(String(path ?? ""))
         root._pendingLiquidThemeDarkMode = darkMode
-        // Config already updates the actual wallpaper immediately. Only
-        // switchwall.sh/color extraction waits until the Liquid animation ends.
-        liquidThemeDeadline.interval = 2600
+        // Hold theme generation for 2 compositor frames (~32ms) while Liquid
+        // primes its GPU textures, then run Auto Theming in parallel with the
+        // transition animation so UI colors morph without lag.
+        liquidThemeDeadline.interval = 32
         liquidThemeDeadline.restart()
     }
 
     function liquidWallpaperTransitionFinished(displayedSource: string): void {
         const rendered = FileUtils.trimFileProtocol(String(displayedSource ?? ""))
-        // Carousel highlights are previews, not committed Apply calls. Their
-        // palette subprocess must wait for the actual Liquid texture/animation.
+        // Release any still-pending preview palette after texture prime/swap.
         if (root.internalPreviewActive && rendered === root.internalPreviewPath)
             MaterialThemeLoader.previewWallpaperPresented(rendered)
 
         const pending = root._pendingLiquidThemePath
         if (!pending || rendered !== pending)
             return
-        // Give the final swap a small margin so the palette update cannot
-        // interrupt the last Liquid frame. Rapid requests reset the deadline.
-        liquidThemeDeadline.interval = 150
+        // One-frame margin after prime/swap; rapid requests reset the deadline.
+        liquidThemeDeadline.interval = 16
         liquidThemeDeadline.restart()
     }
 
@@ -595,7 +601,7 @@ Singleton {
     Timer {
         id: liquidThemeDeadline
         repeat: false
-        interval: 2600
+        interval: 32
         onTriggered: root._flushLiquidTheme()
     }
 

@@ -1,14 +1,11 @@
 module qs.modules.abyss.content
 AbyssSettingsContent 1.0 AbyssSettingsContent.qml
-AbyssCalendar 1.0 AbyssCalendar.qml
 AbyssDockContent 1.0 AbyssDockContent.qml
 AbyssLeftContent 1.0 AbyssLeftContent.qml
-AbyssMediaSection 1.0 AbyssMediaSection.qml
 AbyssPopupContent 1.0 AbyssPopupContent.qml
 AbyssNetworkPopup 1.0 AbyssNetworkPopup.qml
 AbyssRightContent 1.0 AbyssRightContent.qml
 AbyssClipboardContent 1.0 AbyssClipboardContent.qml
-AbyssLauncherContent 1.0 AbyssLauncherContent.qml
 AbyssOsdContent 1.0 AbyssOsdContent.qml
 AbyssNotificationsContent 1.0 AbyssNotificationsContent.qml
 AbyssDashboardContent 1.0 AbyssDashboardContent.qml

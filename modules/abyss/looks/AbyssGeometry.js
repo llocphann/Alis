@@ -29,15 +29,22 @@ function popupSourceBridge(source,body,width,height,insets,edge) {
 }
 // Only the popup's tangent footprint reaches its owning inner Edge. Never
 // capture the output-wide strip or the full content canvas hidden by reveal.
-function popupInput(content,width,height,insets,edge,paintedSurface) {
+function popupInput(content,width,height,insets,edge,paintedSurface,inward) {
     if (!content || content.width <= 0 || content.height <= 0)
         return {x:0,y:0,width:0,height:0};
     var x=content.x,y=content.y,right=x+content.width,bottom=y+content.height;
+    var h=horizontal(edge);
+    var pad=0;
     // Feature bounds exclude the body's visual padding. The caller supplies
     // the actual painted footprint, including an applied adjacent-Edge weld.
     // Trim its off-output extrusion at the owner seam below.
     if (paintedSurface && paintedSurface.width > 0 && paintedSurface.height > 0) {
-        if (horizontal(edge)) {
+        pad=Math.max(0,h
+            ? Math.min(content.x-paintedSurface.x,
+                paintedSurface.x+paintedSurface.width-content.x-content.width)
+            : Math.min(content.y-paintedSurface.y,
+                paintedSurface.y+paintedSurface.height-content.y-content.height));
+        if (h) {
             x=paintedSurface.x;right=x+paintedSurface.width;
             if (edge === "top") bottom=paintedSurface.y+paintedSurface.height;
             else y=paintedSurface.y;
@@ -47,7 +54,7 @@ function popupInput(content,width,height,insets,edge,paintedSurface) {
             else x=paintedSurface.x;
         }
     }
-    var joined=Boolean(paintedSurface && (horizontal(edge)
+    var joined=Boolean(paintedSurface && (h
         ? (paintedSurface.x < 0 || paintedSurface.x+paintedSurface.width > width)
         : (paintedSurface.y < 0 || paintedSurface.y+paintedSurface.height > height)));
     if (edge === "top") y=joined ? 0 : Math.min(y,insets.top);
@@ -141,7 +148,8 @@ function _popupShoulders(width,height,insets,edge,record,radius,softness,recordR
             var y=h ? cross+.5 : tangent+.5;
             var qx=h ? Math.abs(x-wx-ww)-ww+wr : workspaceCross;
             var qy=h ? workspaceCross : Math.abs(y-wy-wh)-wh+wr;
-            var d=-(Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-wr);
+            var d=Math.min(-(Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-wr),
+                perimeterContactDistance(x,y,width,height,insets,radius,contactEdges));
             qx=h ? Math.abs(x-sx-sw)-sw+sr : surfaceCross;
             qy=h ? surfaceCross : Math.abs(y-sy-sh)-sh+sr;
             var bd=Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-sr;
@@ -157,7 +165,8 @@ function _popupShoulders(width,height,insets,edge,record,radius,softness,recordR
         painted=function(tangent,cross) {
             var x=h ? tangent+.5 : cross+.5;
             var y=h ? cross+.5 : tangent+.5;
-            var d=-roundedDistance(x,y,workspaceRect,radius);
+            var d=Math.min(-roundedDistance(x,y,workspaceRect,radius),
+                perimeterContactDistance(x,y,width,height,insets,radius,contactEdges));
             d=smoothUnion(d,surfaceDistance(x,y,width,height,surface,popupRadius,contactEdges,radius),softness);
             return d<0;
         };
@@ -390,11 +399,38 @@ function surfaceDistance(x,y,width,height,rect,radius,enabledEdges,contactRadius
     return Math.min(roundedDistance(x,y,rect,radius),
         physicalContactDistance(x,y,width,height,rect,contactRadius ?? radius,enabledEdges,radius));
 }
+function perimeterContactDistance(x,y,width,height,insets,radius,enabledEdges) {
+    if (!enabledEdges || !(enabledEdges[0] || enabledEdges[1] || enabledEdges[2] || enabledEdges[3]))
+        return Infinity;
+    var left=Math.max(0,insets.left),top=Math.max(0,insets.top);
+    var right=Math.max(0,insets.right),bottom=Math.max(0,insets.bottom);
+    var r=Math.max(0,Math.min(radius,(width-left-right)/2,(height-top-bottom)/2));
+    if (!(r>0)) return Infinity;
+    var d=Infinity;
+    if (enabledEdges[0] && insets.top<=0.001) {
+        if (insets.left>0.001) d=Math.min(d,contactCornerDistance(x,y,-width,insets.left,r));
+        if (insets.right>0.001) d=Math.min(d,contactCornerDistance(x,y,width-insets.right,width*2,r));
+    }
+    if (enabledEdges[2] && insets.bottom<=0.001) {
+        if (insets.left>0.001) d=Math.min(d,contactCornerDistance(x,height-y,-width,insets.left,r));
+        if (insets.right>0.001) d=Math.min(d,contactCornerDistance(x,height-y,width-insets.right,width*2,r));
+    }
+    if (enabledEdges[3] && insets.left<=0.001) {
+        if (insets.top>0.001) d=Math.min(d,contactCornerDistance(y,x,-height,insets.top,r));
+        if (insets.bottom>0.001) d=Math.min(d,contactCornerDistance(y,x,height-insets.bottom,height*2,r));
+    }
+    if (enabledEdges[1] && insets.right<=0.001) {
+        if (insets.top>0.001) d=Math.min(d,contactCornerDistance(y,width-x,-height,insets.top,r));
+        if (insets.bottom>0.001) d=Math.min(d,contactCornerDistance(y,width-x,height-insets.bottom,height*2,r));
+    }
+    return d;
+}
 function distance(x, y, width, height, insets, radius, records, softness, recordRadius, roundZeroCorners, cornerWidthInsets) {
     var left=insets.left>0 ? insets.left : -64, top=insets.top>0 ? insets.top : -64;
     var right=insets.right>0 ? insets.right : -64, bottom=insets.bottom>0 ? insets.bottom : -64;
-    var d = -roundedDistance(x,y,{x:left,y:top,width:width-left-right,height:height-top-bottom},radius);
     var contactEdges=physicalContactMask(cornerWidthInsets ?? insets,roundZeroCorners);
+    var d = Math.min(-roundedDistance(x,y,{x:left,y:top,width:width-left-right,height:height-top-bottom},radius),
+        perimeterContactDistance(x,y,width,height,insets,radius,contactEdges));
     for (var i=0;i<records.length;i++) {
         var rec=records[i];
         if (rec.surface.width>0 && rec.surface.height>0)

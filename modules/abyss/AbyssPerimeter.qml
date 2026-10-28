@@ -790,7 +790,7 @@ Scope {
             WlrLayershell.keyboardFocus: !window.presented || !field.ready || GlobalStates.regionSelectorOpen || GlobalStates.settingsNativeDialogOpen || PolkitService.active || window.overviewDragging || companionExtension.curiosityOwned
                 ? WlrKeyboardFocus.None
                 : (companionExtension.editing || window.editorOpen || (utility.presented && utility.ready) || liquid.popupExclusiveFocus || (popup.presented && (popup.contentItem.item?.keyboardFocus ?? false)) || (dialogBody.presented && dialogBody.ready) || (aux.presented && aux.ready) || (wallpaperBody.presented && wallpaperBody.ready) || (clipboardBody.presented && clipboardBody.ready) || (settings.presented && settings.ready) || (dashboardBody.presented && dashboardBody.ready) || (controls.presented && controls.ready)) ? WlrKeyboardFocus.Exclusive
-                : (companionExtension.editing || liquid.popupOnDemandFocus || (leftPanel.presented && leftPanel.ready) || (rightPanel.presented && rightPanel.ready) || (popup.presented && popup.ready) || (notification.presented && notification.ready && notification.contentKind === "center"))
+                : (companionExtension.editing || liquid.popupOnDemandFocus || (leftPanel.presented && leftPanel.ready) || (rightPanel.presented && rightPanel.ready) || (popup.presented && popup.ready && popup.activeKind !== "dockAppMenu") || (notification.presented && notification.ready && notification.contentKind === "center"))
                     ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
             anchors { top: true; bottom: true; left: true; right: true }
             Item { id: emptyInput; width: 0; height: 0 }
@@ -853,7 +853,6 @@ Scope {
                 if (expected && current !== expected)
                     return
                 if (current === "dockAppMenu") {
-                    GlobalStates.abyssDockMenuModel = []
                     GlobalStates.abyssDockMenuOwnerId = ""
                     GlobalStates.abyssDockMenuTriggerHovered = false
                 }
@@ -1101,35 +1100,110 @@ Scope {
             readonly property bool sidebarRevealAvailable: window.presented && field.ready && !window.editorOpen
                 && (Config.options?.abyss?.sidebars?.hoverEnabled ?? true)
                 && Geometry.targets(window.outputName,Config.options?.sidebar?.screenList ?? [],Quickshell.screens.map(s=>s.name))
-            readonly property bool sidebarOpeningAllowed: !utility.open && !settings.open && !dashboardBody.open
-                && !controls.open && !aux.open && !clipboardBody.open && !dialogBody.open && !GlobalStates.settingsNativeDialogOpen
+            readonly property bool sidebarOpeningAllowed: !utility.open && !settings.open
+                && !controls.open && !clipboardBody.open && !dialogBody.open && !GlobalStates.settingsNativeDialogOpen
                 && !PolkitService.active && !GlobalStates.regionSelectorOpen
+            readonly property bool leftEdgebarPopupOpen: corners.notesOpen
+                || ["0","1","2","3"].some(k => {
+                    const h = liquid.popupHosts[k]
+                    return Boolean(h && h.open && h.vacancyRole === "quickNotes")
+                })
+            readonly property bool rightEdgebarPopupOpen: corners.centerOpen
+                || ["0","1","2","3"].some(k => {
+                    const h = liquid.popupHosts[k]
+                    return Boolean(h && h.open && h.vacancyRole === "notificationCenter")
+                })
+            readonly property bool overviewPopupOpen: (aux.open && GlobalStates.overviewMode === "taskview")
+                || ["0","1","2","3"].some(k => {
+                    const h = liquid.popupHosts[k]
+                    return Boolean(h && h.open && h.presentationKind === "workspaces")
+                })
+            readonly property bool leftEdgebarDirectInteracting: corners.notesDirectInteracting
+                || Boolean(bar.hoveredModuleKinds["notesTimers"])
+                || ["0","1","2","3"].some(k => {
+                    const h = liquid.popupHosts[k]
+                    return Boolean(h && h.open && h.vacancyRole === "quickNotes" && (h.directHovered || h.contentFocused))
+                })
+            readonly property bool rightEdgebarDirectInteracting: corners.centerDirectInteracting
+                || Boolean(bar.hoveredModuleKinds["notificationActivity"])
+                || ["0","1","2","3"].some(k => {
+                    const h = liquid.popupHosts[k]
+                    return Boolean(h && h.open && h.vacancyRole === "notificationCenter" && (h.directHovered || h.contentFocused))
+                })
+            readonly property bool overviewDirectInteracting: Boolean(bar.hoveredModuleKinds["workspaces"])
+                || (aux.open && GlobalStates.overviewMode === "taskview" && (aux.vacancyHovered || aux.contentFocused))
+                || ["0","1","2","3"].some(k => {
+                    const h = liquid.popupHosts[k]
+                    return Boolean(h && h.open && h.presentationKind === "workspaces" && (h.directHovered || h.contentFocused))
+                })
+            readonly property bool leftSidebarDirectInteracting: leftReveal.edgeHovered
+                || leftReveal.bodyHovered
+                || (leftPanel.open && leftPanel.contentFocused)
+            readonly property bool rightSidebarDirectInteracting: rightReveal.edgeHovered
+                || rightReveal.bodyHovered
+                || (rightPanel.open && rightPanel.contentFocused)
+            readonly property int earliestSidebarOrder: {
+                const l = leftPanel.open && leftPanel.activationOrder > 0 ? leftPanel.activationOrder : 0
+                const r = rightPanel.open && rightPanel.activationOrder > 0 ? rightPanel.activationOrder : 0
+                if (l > 0 && r > 0) return Math.min(l, r)
+                return l > 0 ? l : r
+            }
+            readonly property int earliestOverviewOrder: {
+                let minOrder = aux.open && GlobalStates.overviewMode === "taskview" && aux.activationOrder > 0
+                    ? aux.activationOrder : 0
+                for (const k of ["0", "1", "2", "3"]) {
+                    const h = liquid.popupHosts[k]
+                    if (h && h.open && h.presentationKind === "workspaces" && h.activationOrder > 0)
+                        minOrder = minOrder > 0 ? Math.min(minOrder, h.activationOrder) : h.activationOrder
+                }
+                return minOrder
+            }
             component SidebarReveal: AbyssSidebarReveal {
                 required property string attachedEdge
                 required property var sidebarBody
+                property bool peerOpen: false
                 readonly property bool horizontal: Geometry.horizontal(attachedEdge)
                 readonly property real triggerThickness: Math.max(AbyssStyle.perimeterThickness,
                     Config.options?.sidebar?.edgeOpen?.regionWidth ?? 2)
+                readonly property var closedContent: sidebarBody.requestedRecord.content
                 readonly property var restingContent: sidebarBody.targetRecord.content
-                readonly property real triggerSpan: Math.min(180,
+                readonly property real closedSpan: Math.min(180,
                     (horizontal ? window.width : window.height)*.25,
-                    Math.max(0,horizontal ? restingContent.width : restingContent.height))
+                    Math.max(0,horizontal ? closedContent.width : closedContent.height))
+                readonly property real edgeStartInset: horizontal
+                    ? Math.max(window.nativeInsets.left, 16)
+                    : Math.max(window.nativeInsets.top, 16)
+                readonly property real edgeEndInset: horizontal
+                    ? Math.max(window.nativeInsets.right, 16)
+                    : Math.max(window.nativeInsets.bottom, 16)
+                readonly property real fullEdgeSpan: Math.max(closedSpan,
+                    (horizontal ? window.width : window.height) - edgeStartInset - edgeEndInset)
+                readonly property bool expandedEdgeSpan: sidebarBody.open || peerOpen
+                readonly property real triggerSpan: expandedEdgeSpan
+                    ? fullEdgeSpan
+                    : closedSpan
                 readonly property real triggerCenter: horizontal
-                    ? restingContent.x+restingContent.width/2
-                    : restingContent.y+restingContent.height/2
+                    ? closedContent.x+closedContent.width/2
+                    : closedContent.y+closedContent.height/2
                 // Follow the rendered panel, including role swaps and saved
-                // Start/End/custom placement. Use resting geometry so reveal
-                // motion cannot move the source out from under the pointer.
+                // Start/End/custom placement. Keep the closed trigger anchored to
+                // unborrowed geometry so VacancyBorrowing cannot shift the trigger
+                // out from under the pointer on open, and expand across the full
+                // safe edge span while open or when a peer/overview is open so
+                // moving along the edge between Sidebar and Edgebar/Overview
+                // never crosses a dead zone.
                 x: attachedEdge === "right" ? window.width-width
-                    : horizontal ? Math.max(0,Math.min(window.width-width,
-                        triggerCenter-width/2)) : 0
+                    : horizontal ? (expandedEdgeSpan ? edgeStartInset
+                        : Math.max(0,Math.min(window.width-width,
+                            triggerCenter-width/2))) : 0
                 y: attachedEdge === "bottom" ? window.height-height
-                    : horizontal ? 0 : Math.max(0,Math.min(window.height-height,
-                        triggerCenter-height/2))
+                    : horizontal ? 0 : (expandedEdgeSpan ? edgeStartInset
+                        : Math.max(0,Math.min(window.height-height,
+                            triggerCenter-height/2)))
                 width: horizontal ? triggerSpan : triggerThickness
                 height: horizontal ? triggerThickness : triggerSpan
                 openingAllowed: window.sidebarOpeningAllowed
-                closeBlocked: GlobalStates.activeContextMenuCount>0 || dialogBody.open || GlobalStates.settingsNativeDialogOpen
+                closeBlocked: GlobalStates.activeContextMenuCount>0 || dialogBody.open || dashboardBody.open || aux.open || GlobalStates.settingsNativeDialogOpen
                 z: 220
             }
             SidebarReveal {
@@ -1140,6 +1214,8 @@ Scope {
                 open: leftPanel.open
                 transientOpen: GlobalStates.sidebarLeftTransient
                 bodyItem: leftPanel.hoverParent
+                peerOpen: window.leftEdgebarPopupOpen || window.overviewPopupOpen
+                peerHovered: window.leftEdgebarDirectInteracting || window.overviewDirectInteracting
                 onRevealRequested: GlobalStates.openSidebarLeft(window.outputName, true)
                 onHideRequested: if (GlobalStates.sidebarLeftPresentationOutput===window.outputName) GlobalStates.closeSidebarLeft()
             }
@@ -1151,6 +1227,8 @@ Scope {
                 open: rightPanel.open
                 transientOpen: GlobalStates.sidebarRightTransient
                 bodyItem: rightPanel.hoverParent
+                peerOpen: window.rightEdgebarPopupOpen || window.overviewPopupOpen
+                peerHovered: window.rightEdgebarDirectInteracting || window.overviewDirectInteracting
                 onRevealRequested: GlobalStates.openSidebarRight(window.outputName, true)
                 onHideRequested: if (GlobalStates.sidebarRightPresentationOutput===window.outputName) GlobalStates.closeSidebarRight()
             }
@@ -1215,6 +1293,12 @@ Scope {
                     window.width,window.height)
                 outputName: window.outputName
                 vacancyRole: "featureSidebar"
+                minimumDepth: Math.min(depth, 180)
+                placementPriority: window.overviewPopupOpen
+                    && ((leftPanel.open && rightPanel.open)
+                        || (window.earliestOverviewOrder > 0
+                            && (leftPanel.activationOrder <= 0 || window.earliestOverviewOrder < leftPanel.activationOrder)))
+                    ? 1 : 2
                 open: window.presented && field.ready && (Config.options?.enabledPanels ?? []).includes("abyssSidebarLeft")
                     && GlobalStates.sidebarLeftOpen && GlobalStates.sidebarLeftPresentationOutput === window.outputName
 
@@ -1246,6 +1330,12 @@ Scope {
                     window.width,window.height)
                 outputName: window.outputName
                 vacancyRole: "systemSidebar"
+                minimumDepth: Math.min(depth, 180)
+                placementPriority: window.overviewPopupOpen
+                    && ((leftPanel.open && rightPanel.open)
+                        || (window.earliestOverviewOrder > 0
+                            && (rightPanel.activationOrder <= 0 || window.earliestOverviewOrder < rightPanel.activationOrder)))
+                    ? 1 : 2
                 open: window.presented && field.ready && (Config.options?.enabledPanels ?? []).includes("abyssSidebarRight")
                     && GlobalStates.sidebarRightOpen && GlobalStates.sidebarRightPresentationOutput === window.outputName
 
@@ -1354,6 +1444,17 @@ Scope {
                     edge: window?.positionEdge(presentationKind,
                         hostedPopup?._attachmentEdge ?? root?.barEdge ?? "top") ?? "top"
                     outputName: window.outputName
+                    preserveAspect: presentationKind === "workspaces"
+                    placementPriority: presentationKind === "workspaces"
+                        ? ((leftPanel.open && rightPanel.open)
+                            || !(window.earliestSidebarOrder > 0
+                                && (styledPopupHost.activationOrder <= 0 || window.earliestSidebarOrder < styledPopupHost.activationOrder))
+                            ? 2 : 1)
+                        : vacancyRole === "quickNotes"
+                            ? leftPanel.placementPriority
+                            : vacancyRole === "notificationCenter"
+                                ? rightPanel.placementPriority
+                                : 0
                     vacancyRole: (presentationKind === "quickNotes" || presentationKind === "notesTimers")
                         ? "quickNotes"
                         : ((presentationKind === "notificationCenter" || presentationKind === "notificationActivity")
@@ -1412,7 +1513,9 @@ Scope {
 
                     onPopupEntryChanged: {
                         retainedPlacement = null
+                        activationOrder = 0
                         resetPyramidMotion()
+                        if (semanticOpen) markOpened(true)
                     }
                     onCloseRequested: hostedPopup?.dismissPresentation()
                     Component.onCompleted:
@@ -1420,14 +1523,28 @@ Scope {
                     Component.onDestruction:
                         liquid.unregisterPopupHost(index,styledPopupHost)
 
+                    readonly property bool directHovered:
+                        popupContentHover.hovered
+                        || (hostedPopup?._anchorHover?.hovered ?? false)
+                        || (hostedPopup?.moduleHoverActive ?? false)
+                    readonly property bool pairedSidebarHovered:
+                        open && ((vacancyRole === "quickNotes" && window.leftSidebarDirectInteracting)
+                            || (vacancyRole === "notificationCenter" && window.rightSidebarDirectInteracting)
+                            || (presentationKind === "workspaces" && (window.leftSidebarDirectInteracting || window.rightSidebarDirectInteracting)))
+                    readonly property bool effectiveContentHovered:
+                        popupContentHover.hovered || pairedSidebarHovered
+                    onEffectiveContentHoveredChanged: {
+                        if (hostedPopup)
+                            hostedPopup._contentHovered = effectiveContentHovered
+                    }
+                    onHostedPopupChanged: {
+                        if (hostedPopup)
+                            hostedPopup._contentHovered = effectiveContentHovered
+                    }
                     HoverHandler {
                         id: popupContentHover
                         parent: styledPopupHost.hoverParent
                         enabled: styledPopupHost.open
-                        onHoveredChanged: {
-                            if (styledPopupHost.hostedPopup)
-                                styledPopupHost.hostedPopup._contentHovered = hovered
-                        }
                     }
                 }
             }
@@ -1454,6 +1571,7 @@ Scope {
                 id: dock
                 stableContentSize: true
                 residentContent: true
+                includeEdgeConnection: true
                 property real cachedSpan: 220
                 readonly property real measuredSpan: contentItem.item?.desiredSpan ?? cachedSpan
                 readonly property bool attachedPopupHold:
@@ -1470,10 +1588,14 @@ Scope {
                     && !window.editorOpen && !settings.open && !dashboardBody.open && !controls.open
                     && !aux.open && !clipboardBody.open && !utility.open
                     && (GlobalStates.abyssPopupKind === "dockAppMenu"
+                        || popup.activeKind === "dockAppMenu"
                         || attachedPopupHold
+                        || (contentItem.item?.requestDockShow ?? false)
                         || !liquid.participantOverlapsRect("popup", requestedRecord.surface, 10))
                     && (GlobalStates.abyssPopupKind === "dockAppMenu"
+                        || popup.activeKind === "dockAppMenu"
                         || attachedPopupHold
+                        || (contentItem.item?.requestDockShow ?? false)
                         || !liquid.hasPopupOverlapRect(requestedRecord.surface, 10))
                     && (((Config.options?.dock?.pinnedOnStartup ?? false) && !(Config.options?.dock?.hoverToReveal ?? false)) || window.dockHovered
                         || (!window.desktopHasApps && companionExtension.dockHeld)
@@ -1489,11 +1611,11 @@ Scope {
                 obstacles: {
                     // Keep the first concat's evaluation/copy phase intact.
                     const result = window.sideObstacles.concat(notification.progress > 0.001 ? [notification.record] : [])
-                    if (popup.progress > 0.001) result.push(popup.record)
+                    if (popup.progress > 0.001 && popup.activeKind !== "dockAppMenu") result.push(popup.record)
                     return result
                 }
                 source: "content/AbyssDockContent.qml"
-                HoverHandler { id: dockHover; parent: dock.contentItem; onHoveredChanged: { if (hovered) { dockClose.stop(); window.dockHovered = true } else dockClose.restart() } }
+                HoverHandler { id: dockHover; parent: dock.hoverParent; onHoveredChanged: { if (hovered) { dockClose.stop(); window.dockHovered = true } else dockClose.restart() } }
             }
             Item {
                 id: dockTrigger
@@ -1607,6 +1729,14 @@ Scope {
                 readonly property string presentationKind: "overview"
                 edge: window.positionEdge(presentationKind,"bottom")
                 outputName: window.outputName
+                preserveAspect: GlobalStates.overviewMode === "taskview"
+                minimumDepth: Math.min(depth, GlobalStates.overviewMode === "taskview" ? 140 : 360)
+                placementPriority: GlobalStates.overviewMode !== "taskview"
+                    ? 3
+                    : ((leftPanel.open && rightPanel.open)
+                        || !(window.earliestSidebarOrder > 0
+                            && (aux.activationOrder <= 0 || window.earliestSidebarOrder < aux.activationOrder))
+                        ? 2 : 1)
                 open: window.presented && field.ready && GlobalStates.overviewOpen
                     && (Config.options?.enabledPanels ?? []).includes("abyssOverview")
                     && GlobalStates.overviewPresentationOutput === window.outputName

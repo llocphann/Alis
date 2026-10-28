@@ -33,6 +33,7 @@ Item {
     readonly property bool hasPlayer:
         (player && player.trackTitle) || (isYtMusicActive && YtMusic.currentVideoId)
 
+    readonly property bool isMpdPlayer: !isYtMusicActive && player !== null && player === MprisController.mpdPlayer
     readonly property string effectiveArtUrl: isYtMusicActive && YtMusic.currentThumbnail
         ? YtMusic.currentThumbnail : (player?.trackArtUrl ?? "")
     readonly property string effectiveTitle: isYtMusicActive && YtMusic.currentTitle
@@ -41,6 +42,26 @@ Item {
         ? YtMusic.currentArtist : (player?.trackArtist ?? "")
     readonly property bool effectiveIsPlaying: isYtMusicActive
         ? YtMusic.isPlaying : (player?.isPlaying ?? false)
+    readonly property bool effectiveCanSeek: isYtMusicActive
+        ? YtMusic.canSeek : (player?.canSeek ?? false)
+    readonly property real _rawEffectiveLength: isYtMusicActive
+        ? YtMusic.currentDuration
+        : (((player?.lengthSupported ?? false) && (player?.length ?? 0) > 0)
+            ? (player?.length ?? 0)
+            : (isMpdPlayer
+                ? LocalMusic.currentDuration
+                : MprisController.effectiveLengthForPlayer(root.player)))
+    readonly property real effectiveLength: StringUtils.validMediaDuration(root._rawEffectiveLength)
+    readonly property real _rawEffectivePosition: isYtMusicActive
+        ? YtMusic.currentPosition
+        : ((isMpdPlayer && (player?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
+            ? LocalMusic.lyricsPosition
+            : (player?.position ?? 0))
+    readonly property real effectivePosition: StringUtils.boundedMediaPosition(
+        root._rawEffectivePosition, root.effectiveLength)
+    readonly property real effectiveDisplayedPosition: (seekLoader.item?.pressed ?? false)
+        ? Math.max(0, Math.min(root.effectiveLength, (seekLoader.item?.value ?? 0) * root.effectiveLength))
+        : root.effectivePosition
     readonly property bool positionTickerActive:
         root.player?.playbackState === MprisPlaybackState.Playing
         && GlobalStates.controlPanelOpen
@@ -270,38 +291,49 @@ Item {
                     implicitHeight: root.compactMode ? 12 : 16
 
                     Loader {
+                        id: seekLoader
                         anchors.fill: parent
-                        active: root.player?.canSeek ?? false
+                        active: root.effectiveCanSeek
                         sourceComponent: StyledSlider {
                             Accessible.name: Translation.tr("Playback position")
                             configuration: StyledSlider.Configuration.Wavy
-                            wavy: root.player?.isPlaying ?? false
-                            animateWave: root.player?.isPlaying ?? false
+                            wavy: root.effectiveIsPlaying
+                            animateWave: root.effectiveIsPlaying
                             highlightColor: root.blendedColors?.colPrimary
                                 ?? Appearance.colors.colPrimary
                             trackColor: root.blendedColors?.colSecondaryContainer
                                 ?? Appearance.colors.colSecondaryContainer
                             handleColor: root.blendedColors?.colPrimary
                                 ?? Appearance.colors.colPrimary
-                            value: root.player?.length > 0
-                                ? root.player.position / root.player.length : 0
+                            liveValue: root.effectiveLength > 0
+                                ? root.effectivePosition / root.effectiveLength : 0
+                            tooltipContent: StringUtils.friendlyTimeForSeconds(value * root.effectiveLength)
                             onMoved: root.player.position = value * root.player.length
+                            onSeekCommitted: (val) => {
+                                const target = val * root.effectiveLength
+                                if (root.isYtMusicActive)
+                                    YtMusic.seek(target)
+                                else if (root.isMpdPlayer)
+                                    LocalMusic.seek(target)
+                                else if (root.player)
+                                    root.player.position = target
+                            }
                             scrollable: true
                         }
                     }
 
                     Loader {
                         anchors.fill: parent
-                        active: !(root.player?.canSeek ?? false)
+                        active: !root.effectiveCanSeek
                         sourceComponent: StyledProgressBar {
-                            wavy: root.player?.isPlaying ?? false
-                            animateWave: root.player?.isPlaying ?? false
+                            wavy: root.effectiveIsPlaying
+                            animateWave: root.effectiveIsPlaying
                             highlightColor: root.blendedColors?.colPrimary
                                 ?? Appearance.colors.colPrimary
                             trackColor: root.blendedColors?.colSecondaryContainer
                                 ?? Appearance.colors.colSecondaryContainer
-                            value: root.player?.length > 0
-                                ? root.player.position / root.player.length : 0
+                            value: root.effectiveLength > 0
+                                ? root.effectivePosition / root.effectiveLength : 0
                         }
                     }
                 }
@@ -311,7 +343,7 @@ Item {
                     spacing: 4
 
                     StyledText {
-                        text: StringUtils.friendlyTimeForSeconds(root.player?.position ?? 0)
+                        text: StringUtils.friendlyTimeForSeconds(root.effectiveDisplayedPosition)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0
@@ -470,7 +502,7 @@ Item {
                     }
 
                     StyledText {
-                        text: StringUtils.friendlyTimeForSeconds(root.player?.length ?? 0)
+                        text: StringUtils.friendlyTimeForSeconds(root.effectiveLength)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0

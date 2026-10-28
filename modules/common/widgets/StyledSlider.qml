@@ -58,6 +58,16 @@ Slider {
     property string tooltipContent: `${Math.round(value * 100)}%`
     property bool scrollable: false
     property bool _userInteracting: false
+    property real liveValue: NaN
+    signal seekCommitted(real value)
+
+    Binding {
+        target: root
+        property: "value"
+        value: root.liveValue
+        when: !root.pressed && !root._userInteracting && !Number.isNaN(root.liveValue)
+        restoreMode: Binding.RestoreBindingOrValue
+    }
     property bool wavy: configuration === StyledSlider.Configuration.Wavy
     property bool animateWave: true
     property real waveAmplitudeMultiplier: wavy ? 0.5 : 0
@@ -156,9 +166,11 @@ Slider {
 
     onPressedChanged: {
         if (pressed) {
+            _userInteractingReset.stop()
             root._userInteracting = true
         } else {
             _userInteractingReset.restart()
+            root.seekCommitted(root.value)
             root.moved()
         }
     }
@@ -199,11 +211,11 @@ Slider {
             const step = root.stepSize > 0 ? root.stepSize : 0.02
             if (event.angleDelta.y > 0) {
                 root.value = Math.min(root.value + step, root.to)
-                root.moved()
             } else {
                 root.value = Math.max(root.value - step, root.from)
-                root.moved()
             }
+            root.seekCommitted(root.value)
+            root.moved()
         }
     }
 
@@ -298,6 +310,9 @@ Slider {
         }
 
         StyledToolTip {
+            useParentHover: false
+            externalHoverState: root.pressed
+            externalPressedState: false
             extraVisibleCondition: root.pressed
             text: root.tooltipContent
             font {

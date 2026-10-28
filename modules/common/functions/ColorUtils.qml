@@ -228,6 +228,13 @@ Singleton {
         return Qt.rgba(clamp01(r), clamp01(g), clamp01(b), overlayOpacity);
     }
 
+    function _contrastRatioWithLum(fgColor, bgLum) {
+        var l1 = relativeLuminance(fgColor);
+        var lighter = l1 >= bgLum ? l1 : bgLum;
+        var darker = l1 >= bgLum ? bgLum : l1;
+        return (lighter + 0.05) / (darker + 0.05);
+    }
+
     /**
      * Calculates relative luminance per WCAG 2.1 guidelines.
      * @param {color} color - Qt color object
@@ -341,7 +348,8 @@ Singleton {
             bgColor = Qt.rgba(0, 0, 0, 1);
         var fg = Qt.color(textColor);
         var bg = Qt.color(bgColor);
-        var ratio = contrastRatio(fg, bg);
+        var bgLum = relativeLuminance(bg);
+        var ratio = _contrastRatioWithLum(fg, bgLum);
         
         if (ratio >= minRatio) return fg;
 
@@ -351,8 +359,8 @@ Singleton {
         // inverse), which previously returned an unreadable extreme.
         var white = Qt.rgba(1, 1, 1, fg.a);
         var black = Qt.rgba(0, 0, 0, fg.a);
-        var whiteRatio = contrastRatio(white, bg);
-        var blackRatio = contrastRatio(black, bg);
+        var whiteRatio = (1.0 + 0.05) / (bgLum + 0.05);
+        var blackRatio = (bgLum + 0.05) / 0.05;
         var targetLightness = whiteRatio >= blackRatio ? 1.0 : 0.0;
         var target = targetLightness > 0.5 ? white : black;
 
@@ -367,7 +375,7 @@ Singleton {
             var candidateLightness = (failingLightness + passingLightness) / 2;
             var candidate = Qt.hsla(fg.hslHue, fg.hslSaturation,
                 candidateLightness, fg.a);
-            if (contrastRatio(candidate, bg) >= minRatio)
+            if (_contrastRatioWithLum(candidate, bgLum) >= minRatio)
                 passingLightness = candidateLightness;
             else
                 failingLightness = candidateLightness;
@@ -398,7 +406,10 @@ Singleton {
 
         var fg = Qt.color(accentColor);
         var bg = Qt.color(bgColor);
-        if (!fg.valid || !bg.valid || contrastRatio(fg, bg) >= target)
+        if (!fg.valid || !bg.valid)
+            return fg;
+        var bgLum = relativeLuminance(bg);
+        if (_contrastRatioWithLum(fg, bgLum) >= target)
             return fg;
 
         var endpoint = Qt.rgba(0, 0, 0, fg.a);
@@ -410,12 +421,14 @@ Singleton {
 
         // A style hint is useful only when it can actually satisfy the requested
         // contrast. Otherwise choose the stronger neutral endpoint deterministically.
-        if (contrastRatio(endpoint, bg) < target) {
+        if (_contrastRatioWithLum(endpoint, bgLum) < target) {
             var white = Qt.rgba(1, 1, 1, fg.a);
             var black = Qt.rgba(0, 0, 0, fg.a);
-            endpoint = contrastRatio(white, bg) >= contrastRatio(black, bg) ? white : black;
+            var whiteRatio = (1.0 + 0.05) / (bgLum + 0.05);
+            var blackRatio = (bgLum + 0.05) / 0.05;
+            endpoint = whiteRatio >= blackRatio ? white : black;
         }
-        if (contrastRatio(endpoint, bg) < target)
+        if (_contrastRatioWithLum(endpoint, bgLum) < target)
             return endpoint;
 
         // retention=1 is the untouched accent (known to fail); retention=0 is
@@ -425,7 +438,7 @@ Singleton {
         for (var i = 0; i < 20; i++) {
             var retention = (passingRetention + failingRetention) / 2;
             var candidate = mix(fg, endpoint, retention);
-            if (contrastRatio(candidate, bg) >= target)
+            if (_contrastRatioWithLum(candidate, bgLum) >= target)
                 passingRetention = retention;
             else
                 failingRetention = retention;

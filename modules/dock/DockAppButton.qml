@@ -110,12 +110,19 @@ DockButton {
         onTriggered: {
             if (root.buttonHovered && !root.down
                     && !root.pointerDragActive
-                    && !root.appListRoot?.dragActive)
+                    && !root.appListRoot?.reorderingActive
+                    && !root.appListRoot?.buttonPressed
+                    && !root.appListRoot?._committingReorder
+                    && !root.appListRoot?.suppressHoverPopup)
                 root.showContextMenu(true)
         }
     }
 
     Component.onDestruction: {
+        if (root.isDragged && root.appListRoot)
+            root.appListRoot.endAppDrag()
+        if (root.down && root.appListRoot)
+            root.appListRoot.buttonPressed = false
         if (root.abyssStyle && root.appListRoot)
             root.appListRoot.setAbyssContextMenuHover(root, false)
     }
@@ -135,23 +142,48 @@ DockButton {
     }
 
     // Subtle highlight for the canonical Panel app button.
-    scale: appIsActive
-        ? (root.regaliaStyle ? 1.0 : root.zzzStyle ? 1.02 : 1.05) : 1.0
+    property real _pressAxisInList: 0
+    property real _pressGrabOffset: 25
+    readonly property bool isDragged: Boolean(root.appListRoot?.reorderingActive
+        && root.appListRoot?.draggedUniqueId === root.appToplevel?.uniqueId)
+    readonly property real dragAxisOffset: (root.appListRoot && root.appListRoot.reorderingActive)
+        ? root.appListRoot.visualOffsetForIndex(
+            root.index ?? -1,
+            root.appListRoot.dragPointerAxis,
+            root.appListRoot.draggedTargetIndex)
+        : 0
+    z: root.isDragged ? 20 : (root.buttonHovered ? 2 : 0)
+
+    scale: root.isDragged
+        ? 1.12
+        : (appIsActive
+            ? (root.regaliaStyle ? 1.0 : root.zzzStyle ? 1.02 : 1.05) : 1.0)
     Behavior on scale {
         enabled: Appearance.animationsEnabled
         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
 
     transform: Translate {
-        y: (root.zzzStyle || root.islandStyle) && root.buttonHovered && !root.vertical ? -3 : 0
-        x: (root.zzzStyle || root.islandStyle) && root.buttonHovered && root.vertical ? -3 : 0
+        readonly property real hoverLift: (root.zzzStyle || root.islandStyle) && root.buttonHovered && !root.isDragged ? -3 : 0
+        y: (root.vertical ? root.dragAxisOffset : hoverLift)
+        x: (root.vertical ? hoverLift : root.dragAxisOffset)
         Behavior on y {
             enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+                && (!root.vertical || (Boolean(root.appListRoot?.reorderingActive) && !root.isDragged))
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: root.vertical ? Easing.OutCubic : Easing.OutBack
+                easing.overshoot: 2.2
+            }
         }
         Behavior on x {
             enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+                && (root.vertical || (Boolean(root.appListRoot?.reorderingActive) && !root.isDragged))
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: !root.vertical ? Easing.OutCubic : Easing.OutBack
+                easing.overshoot: 2.2
+            }
         }
     }
 
@@ -259,19 +291,26 @@ DockButton {
     // expose the same popup behavior.
     onButtonHoveredChanged: {
         if (buttonHovered && !root.isSeparator) {
-            hoverDelayTimer.restart()
             if (root.appListRoot) {
                 root.appListRoot.lastHoveredButton = root
                 root.appListRoot.buttonHovered = true
-                if (root.abyssStyle)
-                    root.appListRoot.setAbyssContextMenuHover(root, true)
+                if (!root.down && !root.appListRoot.reorderingActive
+                        && !root.appListRoot.buttonPressed
+                        && !root.appListRoot._committingReorder) {
+                    root.appListRoot.suppressHoverPopup = false
+                    hoverDelayTimer.restart()
+                    if (root.abyssStyle)
+                        root.appListRoot.setAbyssContextMenuHover(root, true)
+                }
+            } else if (!root.down) {
+                hoverDelayTimer.restart()
             }
             return
         }
 
         hoverDelayTimer.stop()
         if (root.appListRoot) {
-            if (root.abyssStyle)
+            if (root.abyssStyle && !root.appListRoot.reorderingActive)
                 root.appListRoot.setAbyssContextMenuHover(root, false)
             if (root.appListRoot.lastHoveredButton === root)
                 root.appListRoot.buttonHovered = false
@@ -369,6 +408,58 @@ DockButton {
                 // Scrolling up walks backwards through the window list.
                 root.cycleWindows(-direction)
             }
+        }
+    }
+
+    downAction: (event) => {
+        if (root.isSeparator || !root.appListRoot)
+            return
+        hoverDelayTimer.stop()
+        root.appListRoot.buttonPressed = true
+        const pt = root.mapToItem(root.appListRoot, event.x, event.y)
+        root._pressAxisInList = root.vertical ? pt.y : pt.x
+        root._pressGrabOffset = root._pressAxisInList - root.appListRoot.itemAxisStart(root.index)
+    }
+
+    moveAction: (event) => {
+        if (root.isSeparator || !root.appListRoot || !root.down)
+            return
+        const pt = root.mapToItem(root.appListRoot, event.x, event.y)
+        const axis = root.vertical ? pt.y : pt.x
+        if (!root.appListRoot.reorderingActive) {
+            if (Math.abs(axis - root._pressAxisInList) >= 6) {
+                root.suppressClickOnRelease = true
+                hoverDelayTimer.stop()
+                root.appListRoot.beginAppDrag(root, axis, root._pressGrabOffset)
+                root.appListRoot.updateAppDrag(axis)
+            }
+            return
+        }
+        if (root.isDragged)
+            root.appListRoot.updateAppDrag(axis)
+    }
+
+    releaseAction: () => {
+        if (root.appListRoot) {
+            if (root.isDragged)
+                root.appListRoot.endAppDrag()
+            root.appListRoot.buttonPressed = false
+        }
+    }
+
+    cancelAction: () => {
+        if (root.appListRoot) {
+            if (root.isDragged)
+                root.appListRoot.endAppDrag()
+            root.appListRoot.buttonPressed = false
+        }
+    }
+
+    onDownChanged: {
+        if (!root.down && root.appListRoot) {
+            if (root.isDragged)
+                root.appListRoot.endAppDrag()
+            root.appListRoot.buttonPressed = false
         }
     }
 

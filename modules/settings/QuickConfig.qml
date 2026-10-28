@@ -30,11 +30,11 @@ ContentPage {
     }
 
     SettingsTaskNavigator {
+        showTabBar: false
         icon: "bolt"
-        title: ""
-        description: ""
-        summary: ""
-        showIntro: false
+        title: Translation.tr("Quick")
+        description: Translation.tr("Wallpaper, game mode, capture folders and quick actions.")
+        summary: Translation.tr("Wallpaper · game mode · capture · quick actions")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
@@ -86,7 +86,7 @@ ContentPage {
     // Wallpaper selection
     SettingsCardSection {
         settingsTaskSection: "wallpaper"
-        visible: root.activeSection === "wallpaper"
+        visible: true
         expanded: true
         icon: "format_paint"
         title: Translation.tr("Wallpaper & Colors")
@@ -1506,9 +1506,26 @@ ContentPage {
     // Bar -> Appearance and Wallpaper -> Screens/Effects. Quick only provides
     // fast interactions; it must not recreate those configuration forms.
 
+    GridLayout {
+        id: quickTwoColumnGrid
+        Layout.fillWidth: true
+        columns: width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
+        columnSpacing: 14
+        rowSpacing: 14
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        Layout.alignment: Qt.AlignTop
+        spacing: 14
+
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
         settingsTaskSection: "game"
-        visible: root.activeSection === "game"
+        visible: true
         expanded: true
         icon: "sports_esports"
         title: Translation.tr("Game Mode")
@@ -1599,10 +1616,19 @@ ContentPage {
             }
         }
     }
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        Layout.alignment: Qt.AlignTop
+        spacing: 14
 
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "capture"
-        visible: root.activeSection === "capture"
+        visible: true
         expanded: true
         icon: "photo_camera"
         title: Translation.tr("Capture locations")
@@ -1678,8 +1704,10 @@ ContentPage {
 
     // Quick Actions
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
         settingsTaskSection: "actions"
-        visible: root.activeSection === "actions"
+        visible: true
         expanded: true
         icon: "bolt"
         title: Translation.tr("Quick Actions")
@@ -1737,6 +1765,8 @@ ContentPage {
             }
 
         }
+    }
+    }
     }
 
     // Subtle footer

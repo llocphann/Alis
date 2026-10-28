@@ -16,22 +16,22 @@ ContentPage {
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
     property string activeSection: "source"
-    readonly property bool screensTaskActive: root.isIiActive && root.activeSection === "screens"
+    readonly property bool screensTaskActive: root.isIiActive
 
     SettingsTaskNavigator {
         visible: root.isIiActive
+        showTabBar: false
         icon: "texture"
         title: Translation.tr("Wallpaper")
         description: Translation.tr("Wallpaper source, rotation, motion and effects.")
-        summary: Translation.tr("Source · motion · screens · effects · notifications")
+        summary: Translation.tr("Source · motion · screens · effects")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
             { displayName: Translation.tr("Source"), icon: "wallpaper", value: "source" },
             { displayName: Translation.tr("Motion"), icon: "transition_fade", value: "motion" },
             { displayName: Translation.tr("Screens"), icon: "devices", value: "screens" },
-            { displayName: Translation.tr("Effects"), icon: "auto_awesome", value: "effects" },
-            { displayName: Translation.tr("Notifications"), icon: "notifications", value: "notifications" }
+            { displayName: Translation.tr("Effects"), icon: "auto_awesome", value: "effects" }
         ]
     }
     readonly property var iiParallax: Config.options?.background?.parallax ?? {}
@@ -76,9 +76,25 @@ ContentPage {
         }
     }
 
+    GridLayout {
+        id: wallpaperGrid
+        Layout.fillWidth: true
+        columns: width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
+        columnSpacing: 14
+        rowSpacing: 14
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        Layout.alignment: Qt.AlignTop
+        spacing: 14
+
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "motion"
-        visible: root.isIiActive && root.activeSection === "motion"
+        visible: root.isIiActive
         expanded: true
         icon: "sync_alt"
         title: Translation.tr("Parallax")
@@ -229,8 +245,9 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "screens"
-        visible: root.isIiActive && root.activeSection === "screens"
+        visible: root.isIiActive
         expanded: true
         icon: "fullscreen"
         title: Translation.tr("Fullscreen behavior")
@@ -257,8 +274,9 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "screens"
-        visible: root.isIiActive && root.activeSection === "screens"
+        visible: root.isIiActive
         expanded: true
         icon: "devices"
         title: Translation.tr("Multi-monitor")
@@ -1102,8 +1120,9 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "source"
-        visible: !root.isIiActive || root.activeSection === "source"
+        visible: true
         expanded: true
         icon: "wallpaper"
         title: Translation.tr("Wallpaper backend (awww)")
@@ -1161,8 +1180,9 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "source"
-        visible: !root.isIiActive || root.activeSection === "source"
+        visible: true
         expanded: true
         icon: "folder"
         title: Translation.tr("Wallpapers folder")
@@ -1183,8 +1203,9 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "source"
-        visible: !root.isIiActive || root.activeSection === "source"
+        visible: true
         expanded: true
         icon: "shuffle"
         title: Translation.tr("Shuffle wallpapers")
@@ -1241,8 +1262,9 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "motion"
-        visible: root.isIiActive && root.activeSection === "motion"
+        visible: root.isIiActive
         expanded: true
         icon: "transition_fade"
         title: Translation.tr("Wallpaper transitions")
@@ -1383,9 +1405,19 @@ ContentPage {
         }
     }
 
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        Layout.alignment: Qt.AlignTop
+        spacing: 14
+
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "screens"
-        visible: root.isIiActive && root.activeSection === "screens"
+        visible: root.isIiActive
         expanded: true
         icon: "aspect_ratio"
         title: Translation.tr("Wallpaper scaling")
@@ -1752,8 +1784,9 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "effects"
-        visible: root.isIiActive && root.activeSection === "effects"
+        visible: root.isIiActive
         expanded: true
         icon: "wallpaper"
         title: Translation.tr("Wallpaper effects")
@@ -2251,24 +2284,6 @@ ContentPage {
     }
 
     // Desktop widget settings moved to DesktopWidgetsConfig.qml (settingsPageIndex: 14)
-
-    SettingsCardSection {
-        settingsTaskSection: "notifications"
-        visible: !root.isIiActive || root.activeSection === "notifications"
-        expanded: true
-        icon: "notifications"
-        title: Translation.tr("Notifications")
-
-        SettingsGroup {
-            SettingsSwitch {
-                buttonIcon: "hide_image"
-                text: Translation.tr("Hide wallpaper upscale notification")
-                checked: Config.options?.background?.hideUpscaleNotification ?? false
-                onCheckedChanged: Config.setNestedValue("background.hideUpscaleNotification", checked)
-                StyledToolTip {
-                    text: Translation.tr("Suppress the notification that appears when a wallpaper has lower resolution than your monitor")
-                }
-            }
-        }
+    }
     }
 }

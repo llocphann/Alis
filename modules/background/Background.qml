@@ -1323,6 +1323,11 @@ Scope {
                     }
 
                     onTransitionStarted: {
+                        // WallpaperCrossfader emits transitionStarted right after
+                        // its 2 texture-prime swaps complete. Release Auto Theming
+                        // now so colors morph in parallel with the transition.
+                        const state = wallpaper.renderState()
+                        Wallpapers.liquidWallpaperTransitionFinished(state.pendingSource || state.source)
                         if (!bgRoot.dynamicParallaxRequested || !bgRoot.pauseParallaxDuringTransitions || AwwwBackend.active)
                             return
                         bgRoot.beginParallaxTransition(true, "wallpaper")

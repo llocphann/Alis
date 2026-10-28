@@ -140,6 +140,16 @@ Item {
     readonly property var deformations: widthMorphActive ? presentedFrame.deformations : Layout.localSurfaces(renderedRecords.concat(capacityNotices),width,height,targetFrame?.options ?? configuredLayoutOptions,Appearance.fontSizeScale,AbyssStyle.barThickness)
 
     property var moduleIds: []
+    property var hoveredModuleKinds: ({})
+    function setModuleKindHovered(kind, hovered): void {
+        if (!kind) return
+        const current = Boolean(hoveredModuleKinds[kind])
+        if (current === Boolean(hovered)) return
+        const next = Object.assign({}, hoveredModuleKinds)
+        if (hovered) next[kind] = true
+        else delete next[kind]
+        hoveredModuleKinds = next
+    }
     function syncModuleIds(): void {
         const next=activePlacements.filter(p=>p.enabled).map(p=>p.id)
         if (JSON.stringify(next)!==JSON.stringify(moduleIds)) moduleIds=next
@@ -275,6 +285,8 @@ Item {
                 if (geometry)
                     root.popupHoverStateChanged(kind,geometry.edge,geometry.along+geometry.span/2,hovered)
             }
+            onHoveredChanged: if (root) root.setModuleKindHovered(module.kind, module.hovered)
+            Component.onDestruction: if (root) root.setModuleKindHovered(module.kind, false)
         }
     }
     Repeater {

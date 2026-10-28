@@ -1,3 +1,7 @@
+#![recursion_limit = "512"]
+
+mod colortags;
+mod editors;
 mod palette;
 mod preview;
 mod region;
@@ -174,7 +178,6 @@ pub(crate) fn resolve_seed(args: &Args) -> Result<(Argb, String, Option<PathBuf>
         let profile = std::env::var("ALIS_THEME_PROFILE").as_deref() == Ok("1");
         if let Some(ref cache) = cache
             && let Some((seed, auto_scheme)) = cache.lookup()
-            && cache.image_unchanged()
         {
             if profile {
                 eprintln!(
@@ -228,6 +231,15 @@ pub(crate) fn resolve_seed(args: &Args) -> Result<(Argb, String, Option<PathBuf>
 
 fn main() -> Result<()> {
     let raw_args: Vec<String> = std::env::args().collect();
+    if let Some(first) = raw_args.get(1).map(String::as_str) {
+        match first {
+            "--color-tags" => return colortags::run_color_tags(&raw_args[2..]),
+            "--vscode-theme" => return editors::run_vscode_theme(&raw_args[2..]),
+            "--opencode-theme" => return editors::run_opencode_theme(&raw_args[2..]),
+            "--zed-theme" => return editors::run_zed_theme(&raw_args[2..]),
+            _ => {}
+        }
+    }
     if raw_args.iter().skip(1).any(|arg| arg == "--least-busy-region") {
         let region_args = region::parse_region_args(&raw_args[1..])?;
         return region::run_region(&region_args);

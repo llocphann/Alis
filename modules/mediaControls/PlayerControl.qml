@@ -89,11 +89,17 @@ Item {
             MprisController.nextForPlayer(root.player)
     }
 
+    readonly property bool isMpdPlayer: !root.usingPlaybackAdapter
+        && root.player !== null
+        && root.player === MprisController.mpdPlayer
+
     function doSeek(seconds: real): void {
         if (root.usingPlaybackAdapter)
             root.playbackAdapter.seek(seconds)
         else if (root.isYtMusicPlayer)
             YtMusic.seek(seconds)
+        else if (root.isMpdPlayer)
+            LocalMusic.seek(seconds)
         else if (root.player)
             root.player.position = seconds
     }
@@ -143,14 +149,28 @@ Item {
     readonly property string resolverDisplaySource: artworkResolver.displaySource
     readonly property bool downloaded: root.displayedArtFilePath !== ""
     property string displayedArtFilePath: ""
-    readonly property real effectiveLength: root.usingPlaybackAdapter
+    readonly property real _rawEffectiveLength: root.usingPlaybackAdapter
         ? Number(root.playbackAdapter.length ?? 0)
-        : (root.isYtMusicPlayer ? YtMusic.currentDuration : (root.player?.length ?? 0))
+        : (root.isYtMusicPlayer
+            ? YtMusic.currentDuration
+            : (((root.player?.lengthSupported ?? false) && (root.player?.length ?? 0) > 0)
+                ? (root.player?.length ?? 0)
+                : (root.isMpdPlayer
+                    ? LocalMusic.currentDuration
+                    : MprisController.effectiveLengthForPlayer(root.player))))
+    readonly property real effectiveLength: StringUtils.validMediaDuration(root._rawEffectiveLength)
     readonly property real _rawEffectivePosition: root.usingPlaybackAdapter
         ? Number(root.playbackAdapter.position ?? 0)
-        : (root.isYtMusicPlayer ? YtMusic.currentPosition : (root.player?.position ?? 0))
+        : (root.isYtMusicPlayer
+            ? YtMusic.currentPosition
+            : ((root.isMpdPlayer && (root.player?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
+                ? LocalMusic.lyricsPosition
+                : (root.player?.position ?? 0)))
     readonly property real effectivePosition: StringUtils.boundedMediaPosition(
         root._rawEffectivePosition, root.effectiveLength)
+    readonly property real effectiveDisplayedPosition: (seekLoader.item?.pressed ?? false)
+        ? Math.max(0, Math.min(root.effectiveLength, (seekLoader.item?.value ?? 0) * root.effectiveLength))
+        : root.effectivePosition
     readonly property bool effectiveIsPlaying: root.usingPlaybackAdapter
         ? !!root.playbackAdapter.isPlaying
         : (root.isYtMusicPlayer ? YtMusic.isPlaying : (root.player?.isPlaying ?? false))
@@ -318,7 +338,7 @@ Item {
         }
         clip: true
 
-        layer.enabled: true
+        layer.enabled: root.presentationActive
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle { width: card.width; height: card.height; radius: card.radius }
         }
@@ -477,8 +497,9 @@ Item {
                             highlightColor: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
                             trackColor: blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer
                             handleColor: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
-                            value: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
-                            onMoved: root.doSeek(value * root.effectiveLength)
+                            liveValue: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
+                            tooltipContent: StringUtils.friendlyTimeForSeconds(value * root.effectiveLength)
+                            onSeekCommitted: (val) => root.doSeek(val * root.effectiveLength)
                             scrollable: true
                         }
                     }
@@ -509,7 +530,7 @@ Item {
 
                     StyledText {
                         Layout.minimumWidth: implicitWidth
-                        text: StringUtils.friendlyTimeForSeconds(root.effectivePosition)
+                        text: StringUtils.friendlyTimeForSeconds(root.effectiveDisplayedPosition)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0
@@ -578,7 +599,7 @@ Item {
                         id: playPauseButton
                         implicitWidth: root.narrowLayout ? 30 : (root.compactLayout ? 34 : 40)
                         implicitHeight: implicitWidth
-                        buttonText: root.player?.isPlaying ? Translation.tr("Pause") : Translation.tr("Play")
+                        buttonText: root.effectiveIsPlaying ? Translation.tr("Pause") : Translation.tr("Play")
                         buttonRadius: Appearance.rounding.full
                         colBackground: "transparent"
                         colBackgroundHover: Appearance.colors.colLayer1Hover
@@ -588,7 +609,7 @@ Item {
                         contentItem: Item {
                             MaterialSymbol {
                                 anchors.centerIn: parent
-                                text: root.player?.isPlaying ? "pause" : "play_arrow"
+                                text: root.effectiveIsPlaying ? "pause" : "play_arrow"
                                 iconSize: root.narrowLayout ? 19 : (root.compactLayout ? 21 : 24)
                                 fill: 1
                                 color: Appearance.colors.colOnLayer1

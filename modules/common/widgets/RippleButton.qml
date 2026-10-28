@@ -36,6 +36,7 @@ Button {
     property var moveAction // When mouse moves while pressed (for drag support)
     property var altAction // When right clicking
     property var middleClickAction // When middle clicking
+    property bool suppressClickOnRelease: false
     property Item dragTarget: null
     property int pointerDragThreshold: 10
     readonly property bool pointerDragActive: buttonMouseArea.drag.active
@@ -114,6 +115,7 @@ Button {
                 if (root.middleClickAction) root.middleClickAction();
                 return;
             }
+            root.suppressClickOnRelease = false
             root.down = true
             if (root.downAction) root.downAction(event);
             if (!root.rippleEnabled) return;
@@ -129,13 +131,17 @@ Button {
         onReleased: (event) => {
             root.down = false
             if (event.button != Qt.LeftButton) return;
+            const suppressClick = root.suppressClickOnRelease || root.pointerDragActive
+            root.suppressClickOnRelease = false
             if (root.releaseAction) root.releaseAction();
-            root.click() // Because the MouseArea already consumed the event
+            if (!suppressClick)
+                root.click() // Because the MouseArea already consumed the event
             if (!root.rippleEnabled) return;
             rippleFadeAnim.restart();
         }
         onCanceled: (event) => {
             root.down = false
+            root.suppressClickOnRelease = false
             if (root.cancelAction) root.cancelAction(event)
             else if (root.releaseAction) root.releaseAction();
             if (!root.rippleEnabled) return;

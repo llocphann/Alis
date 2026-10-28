@@ -7,24 +7,78 @@ function _number(value, fallback) {
     var number = Number(value);
     return Number.isFinite(number) ? number : fallback;
 }
-function _steps(full, minimum) {
+function _dedupeSteps(values) {
+    return values.filter(function(value, index, list) {
+        return list.findIndex(function(other) { return Math.abs(other-value) < .5; }) === index;
+    });
+}
+function _steps(full, minimum, extra) {
     full = Math.max(0, _number(full, 0));
     minimum = Math.max(0, Math.min(full, _number(minimum, full)));
     if (full <= 0) return [0];
     var values = [full, Math.max(minimum, full * .88),
         Math.max(minimum, full * .74), minimum];
-    return values.filter(function(value, index, list) {
-        return list.findIndex(function(other) { return Math.abs(other-value) < .5; }) === index;
+    (extra || []).forEach(function(v) {
+        var n = _number(v, NaN);
+        if (Number.isFinite(n) && n >= minimum - .01 && n <= full + .01)
+            values.push(Math.max(minimum, Math.min(full, n)));
     });
+    values.sort(function(a, b) { return b - a; });
+    return _dedupeSteps(values);
 }
-function _candidateSizes(fullSpan, fullDepth, minSpan, minDepth) {
-    var spans = _steps(fullSpan, minSpan), depths = _steps(fullDepth, minDepth);
+function _blockerFitSteps(request, fullSpan, fullDepth, minSpan, minDepth, accepted, gap, width, height, insets) {
+    var extraSpans = [], extraDepths = [];
+    if (!request || !request.record || !accepted || !accepted.length)
+        return {spans: extraSpans, depths: extraDepths};
+    var record = request.record, edge = record.edge;
+    var horizontal = edge === "top" || edge === "bottom";
+    var fullContentSpan = horizontal ? record.content.width : record.content.height;
+    var inferredPadding = Math.max(0, (record.span - fullContentSpan) / 2);
+    var padding = Math.max(0, _number(request.padding, inferredPadding));
+    var anchorCenter = record.along + record.span / 2;
+    var minimumInward = Math.max(0, _number(request.minimumInward, 0));
+    accepted.forEach(function(other) {
+        var maxContentDepth;
+        if (horizontal) {
+            maxContentDepth = edge === "top"
+                ? other.y - gap - (insets.top + padding + minimumInward)
+                : (height - insets.bottom - padding - minimumInward) - (other.y + other.height + gap);
+        } else {
+            maxContentDepth = edge === "left"
+                ? other.x - gap - (insets.left + padding + minimumInward)
+                : (width - insets.right - padding - minimumInward) - (other.x + other.width + gap);
+        }
+        var fitDepth = maxContentDepth + 2 * padding;
+        if (fitDepth >= minDepth && fitDepth <= fullDepth) {
+            extraDepths.push(fitDepth);
+            if (request.preserveAspect === true && fullDepth > 0)
+                extraSpans.push(Math.max(minSpan, Math.min(fullSpan, fullSpan * (fitDepth / fullDepth))));
+        }
+        var otherStart = horizontal ? other.x : other.y;
+        var otherEnd = otherStart + (horizontal ? other.width : other.height);
+        if (otherEnd + gap <= anchorCenter) {
+            var fitSpanBefore = 2 * ((anchorCenter - (otherEnd + gap)) + padding);
+            if (fitSpanBefore >= minSpan && fitSpanBefore <= fullSpan)
+                extraSpans.push(fitSpanBefore);
+        }
+        if (otherStart - gap >= anchorCenter) {
+            var fitSpanAfter = 2 * (((otherStart - gap) - anchorCenter) + padding);
+            if (fitSpanAfter >= minSpan && fitSpanAfter <= fullSpan)
+                extraSpans.push(fitSpanAfter);
+        }
+    });
+    return {spans: extraSpans, depths: extraDepths};
+}
+function _candidateSizes(fullSpan, fullDepth, minSpan, minDepth, extraSpans, extraDepths, preserveAspect) {
+    var spans = _steps(fullSpan, minSpan, extraSpans), depths = _steps(fullDepth, minDepth, extraDepths);
     var result = [];
     spans.forEach(function(span) {
         depths.forEach(function(depth) {
+            var spanRatio = fullSpan > 0 ? span / fullSpan : 1;
+            var depthRatio = fullDepth > 0 ? depth / fullDepth : 1;
+            var aspectPenalty = preserveAspect === true ? Math.abs(spanRatio - depthRatio) * .35 : 0;
             result.push({span:span, depth:depth,
-                cost:(fullSpan > 0 ? 1-span/fullSpan : 0)
-                    +(fullDepth > 0 ? 1-depth/fullDepth : 0)});
+                cost:(1 - spanRatio) + (1 - depthRatio) + aspectPenalty});
         });
     });
     result.sort(function(a,b) {
@@ -73,7 +127,7 @@ function _collides(rect, accepted, gap) {
             && rect.y+rect.height+gap > other.y;
     });
 }
-function _tiers(request, span, depth, accepted, gap, width, height, insets) {
+function _tiers(request, span, depth, accepted, gap, width, height, insets, sameEdgeOnly) {
     var base = _contentRect(request,span,depth,0,width,height,insets);
     var edge = request.record.edge;
     var horizontal = edge === "top" || edge === "bottom";
@@ -82,6 +136,8 @@ function _tiers(request, span, depth, accepted, gap, width, height, insets) {
     var tiers = [minimumInward];
     if (request.allowInward === false) return tiers;
     accepted.forEach(function(other) {
+        if (sameEdgeOnly && other.edge && other.edge !== edge)
+            return;
         var baseAlongStart = horizontal ? base.x : base.y;
         var baseAlongEnd = baseAlongStart+(horizontal ? base.width : base.height);
         var otherAlongStart = horizontal ? other.x : other.y;
@@ -159,6 +215,7 @@ function _orderedRequests(requests) {
     var ordered=Array.from(requests || []).filter(function(request) {
         return request && request.open && request.record;
     }).sort(_legacyCompare);
+    if (ordered.length < 2) return ordered;
     var parent=ordered.map(function(_,index) { return index; });
     function find(index) {
         while (parent[index] !== index) {
@@ -210,27 +267,47 @@ function arrange(requests, width, height, insets, gap) {
         var minSpan = Math.max(0,Math.min(fullSpan,_number(request.minSpan,fullSpan)));
         var minDepth = Math.max(0,Math.min(fullDepth,_number(request.minDepth,fullDepth)));
         var placement = null;
-        var sizes = _candidateSizes(fullSpan,fullDepth,minSpan,minDepth);
-        for (var s=0; s<sizes.length && !placement; s++) {
-            var size = sizes[s];
-            var tiers = _tiers(request,size.span,size.depth,accepted,gap,width,height,insets);
-            for (var t=0; t<tiers.length && !placement; t++) {
-                var rect = _contentRect(request,size.span,size.depth,tiers[t],
-                    width,height,insets);
-                if (!_within(rect,width,height,insets) || _collides(rect,accepted,gap))
-                    continue;
-                var anchorCenter = record.along+record.span/2;
-                placement = {
-                    visible:true,
-                    evicted:false,
-                    along:anchorCenter-size.span/2,
-                    inward:tiers[t],
-                    span:size.span,
-                    depth:size.depth,
-                    shrunk:size.span < fullSpan-.5 || size.depth < fullDepth-.5,
-                    content:rect
-                };
-                accepted.push(rect);
+        var minimumInward = Math.max(0,_number(request.minimumInward,0));
+        var baseRect = _contentRect(request,fullSpan,fullDepth,minimumInward,width,height,insets);
+        if (_within(baseRect,width,height,insets) && !_collides(baseRect,accepted,gap)) {
+            var baseCenter = record.along+record.span/2;
+            placement = {
+                visible:true,
+                evicted:false,
+                along:baseCenter-fullSpan/2,
+                inward:minimumInward,
+                span:fullSpan,
+                depth:fullDepth,
+                shrunk:false,
+                content:baseRect
+            };
+            accepted.push({x:baseRect.x,y:baseRect.y,width:baseRect.width,height:baseRect.height,edge:record.edge});
+        }
+        var fit = placement ? null : _blockerFitSteps(request,fullSpan,fullDepth,minSpan,minDepth,accepted,gap,width,height,insets);
+        var sizes = placement ? [] : _candidateSizes(fullSpan,fullDepth,minSpan,minDepth,fit.spans,fit.depths,request.preserveAspect === true);
+        var passes = [true, false];
+        for (var p=0; p<passes.length && !placement; p++) {
+            for (var s=0; s<sizes.length && !placement; s++) {
+                var size = sizes[s];
+                var tiers = _tiers(request,size.span,size.depth,accepted,gap,width,height,insets,passes[p]);
+                for (var t=0; t<tiers.length && !placement; t++) {
+                    var rect = _contentRect(request,size.span,size.depth,tiers[t],
+                        width,height,insets);
+                    if (!_within(rect,width,height,insets) || _collides(rect,accepted,gap))
+                        continue;
+                    var anchorCenter = record.along+record.span/2;
+                    placement = {
+                        visible:true,
+                        evicted:false,
+                        along:anchorCenter-size.span/2,
+                        inward:tiers[t],
+                        span:size.span,
+                        depth:size.depth,
+                        shrunk:size.span < fullSpan-.5 || size.depth < fullDepth-.5,
+                        content:rect
+                    };
+                    accepted.push({x:rect.x,y:rect.y,width:rect.width,height:rect.height,edge:record.edge});
+                }
             }
         }
         result[request.id] = placement || {

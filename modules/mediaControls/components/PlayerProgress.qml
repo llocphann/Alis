@@ -35,12 +35,15 @@ Item {
         root.position, root.length)
     readonly property real progressValue: length > 0
         ? Math.max(0, Math.min(1, boundedPosition / length)) : 0
+    readonly property bool seeking: sliderLoader.item?.pressed ?? false
+    readonly property real seekPosition: Math.max(0, Math.min(root.length, (sliderLoader.item?.value ?? 0) * root.length))
+    readonly property real effectiveDisplayedPosition: root.seeking ? root.seekPosition : root.boundedPosition
     readonly property bool waveAnimationActive: root.enableWavy && root.isPlaying
         && root.visible && Appearance.animationsEnabled
     property real displayedProgress: progressValue
 
     Behavior on displayedProgress {
-        enabled: Appearance.animationsEnabled && root.isPlaying
+        enabled: Appearance.animationsEnabled && root.isPlaying && !root.seeking
         // Match PlayerBase's 500 ms sample cadence so the bar keeps moving
         // continuously instead of pausing between lower-frequency updates.
         NumberAnimation { duration: 500; easing.type: Easing.Linear }
@@ -48,6 +51,7 @@ Item {
 
     // Seekable slider
     Loader {
+        id: sliderLoader
         anchors.fill: parent
         active: root.canSeek
         sourceComponent: StyledSlider {
@@ -59,8 +63,9 @@ Item {
             highlightColor: root.highlightColor
             trackColor: root.trackColor
             handleColor: root.highlightColor
-            value: root.displayedProgress
-            onMoved: root.seekRequested(value * root.length)
+            liveValue: root.displayedProgress
+            tooltipContent: StringUtils.friendlyTimeForSeconds(value * root.length)
+            onSeekCommitted: (val) => root.seekRequested(val * root.length)
             scrollable: root.scrollable
         }
     }

@@ -126,12 +126,17 @@ Item {
             if (!root.simulation) return
             root.crestPeak = Wave.projectCrests(root.simulation,Appearance.effectsEnabled && AbyssStyle.quality !== "performance")
             const ctx = getContext("2d")
-            ctx.clearRect(0,0,width,height)
-            for (let i=0;i<width;i++) {
-                const value = Math.round(root.simulation.crests[i]/256*65535)
-                const foam = Math.round(root.simulation.whitewater[i]*255)
-                ctx.fillStyle = "rgb("+(value>>8)+","+(value&255)+","+foam+")"
-                ctx.fillRect(i,0,1,1)
+            ctx.fillStyle = "#000000"
+            ctx.fillRect(0, 0, width, height)
+            if (root.crestPeak <= 0) return
+            const crests = root.simulation.crests
+            const whitewater = root.simulation.whitewater
+            for (let i = 0; i < width; i++) {
+                const value = Math.round(crests[i] / 256 * 65535)
+                const foam = Math.round(whitewater[i] * 255)
+                if (value === 0 && foam === 0) continue
+                ctx.fillStyle = "rgb(" + (value >> 8) + "," + (value & 255) + "," + foam + ")"
+                ctx.fillRect(i, 0, 1, 1)
             }
         }
     }

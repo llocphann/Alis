@@ -206,6 +206,19 @@ Singleton {
     }
 
     /**
+     * Normalizes a media duration in seconds.
+     * MPRIS players with no real duration (live streams/TV) sometimes report
+     * a garbage mpris:length instead of omitting it — treat anything past a
+     * sane real-world media ceiling (24h) or non-positive as unknown (0).
+     */
+    function validMediaDuration(duration) {
+        const total = Number(duration);
+        if (!Number.isFinite(total) || total <= 0 || total > 86400)
+            return 0;
+        return total;
+    }
+
+    /**
      * Keeps an elapsed media position coherent with its reported duration.
      * Track metadata and MPRIS Position can arrive on separate D-Bus updates;
      * during that gap some players briefly expose the previous track position.
@@ -215,10 +228,10 @@ Singleton {
      */
     function boundedMediaPosition(position, duration) {
         const current = Number(position);
-        const total = Number(duration);
-        if (!Number.isFinite(current) || current <= 0)
+        const total = root.validMediaDuration(duration);
+        if (!Number.isFinite(current) || current <= 0 || current > 86400)
             return 0;
-        if (!Number.isFinite(total) || total <= 0)
+        if (total <= 0)
             return current;
         if (current <= total)
             return current;

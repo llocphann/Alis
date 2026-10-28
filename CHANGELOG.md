@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-28
+
+A performance and polish release completing the strict-lossless optimization pass across the Abyss layout engine, native Rust theme/MPD daemons, and shared media timeline/duration surfaces.
+
+### Added
+- **Native Rust editor & wallpaper color-tag pipeline (`alis-theme`)**: migrated Zed, VS Code, Terminal, and Cava theme generation plus dominant K-means wallpaper color-tag classification into `alis-theme` (`editors.rs`, `colortags.rs`), eliminating remaining Python/Bash subprocess overhead during wallpaper and palette switches.
+- **Browser & external media duration resolution (`MprisController`)**: automatic duration and position synchronization for Linux browser MPRIS providers (Firefox, Zen Browser, Chromium) that omit or strip `mpris:length` on metadata updates, combining one-shot `Seek(0)` state sync with non-blocking YouTube Innertube (`youtubei/v1/player`) and LRCLIB duration fallback.
+- **Activation-order-aware Abyss popup composition**: `AbyssVacancyBorrowing.js`, `AbyssBodyHost.qml`, and `AbyssPerimeter.qml` now preserve hover focus across paired Edgebar + Sidebar popups and dynamically adapt popup stacking and vacancy borrowing based on activation order (Edgebar-first expands Sidebar downward; Sidebar-first expands Edgebar upward; Dashboard + 1/2 Sidebars narrows sidebars while keeping Dashboard full width; 2 Sidebars + Overview shifts sidebars below Overview).
+
+### Changed
+- **Strict-lossless runtime & scenegraph optimizations**:
+  - **Abyss shader & layout solver**: removed unused corner uniforms from `AbyssField.frag` (cutting fragment uniform payload by 33% and GPU math by ~18%), cached placement geometry in `AbyssPlacementMemo.js`, and replaced `QQuickRepeater` overhead in `AbyssCorners.qml` and `AbyssPerimeter.qml` with direct inline surface bindings.
+  - **Color solver & desktop entry memoization (`ColorUtils`, `MprisController`)**: memoized iterative WCAG contrast solvers (`ensureReadable`, `readableAccentInk`) with precomputed background luminance and cached `DesktopEntries` hint lookups, turning 20-step binary searches and 1,500-regex desktop scans into $O(1)$ lookups.
+  - **Timer & animation gating**: stopped hidden elapsed/blink timers in `TimerIndicator.qml` and `BarMediaPopup.qml`, gated off-screen notification animations in `WSingleNotification.qml` and `WNotificationGroup.qml`, and pruned 26 dead legacy QML/Python/Bash modules.
+
+### Fixed
+- **Media duration sliders & seeking across all 19 surfaces**: added `liveValue` (`Binding.RestoreBindingOrValue`) and `seekCommitted` to `StyledSlider.qml` so C++ `QQuickSlider::setValue()` during dragging/seeking never breaks live QML progress bindings; added drag-only time tooltips; guarded `player.length` with `player.lengthSupported` across all media widgets; and fixed `LocalMusic` 8-second position snap-back and `alis-mpdd` idle TCP socket reconnect (`Broken pipe`).
+- **Dock drag hover suppression**: prevented Dock app preview popups from flickering open while dragging icons (`DockApps.qml`, `DockAppButton.qml`, `AbyssDockContent.qml`).
+- **Polkit authentication window priority**: ensured Polkit dialogs always render and focus above Settings windows.
+
 ## [1.0.0] - 2026-10-27
 
 Official stable 1.0.0 release introducing the hybrid Rust + pinned Quickshell v0.3.2 architecture across `Alis`, `Alis-Companion`, and `Alis-Intergration`.

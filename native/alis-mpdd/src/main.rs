@@ -255,41 +255,68 @@ impl MpdManager {
 
     fn with_client<T>(
         &self,
-        operation: impl FnOnce(&mut MpdClient, &str, &mut ArtLookup) -> Result<T>,
+        mut operation: impl FnMut(&mut MpdClient, &str, &mut ArtLookup) -> Result<T>,
     ) -> Result<T> {
         let mut guard = self
             .client
             .lock()
             .map_err(|_| anyhow!("mpd_mutex_poisoned"))?;
-        if guard.is_none() {
+        let had_cached = guard.is_some();
+        if !had_cached {
             *guard = Some(MpdClient::connect(&self.host, self.port)?);
         }
 
-        let client = guard.as_mut().expect("client initialized");
-        let root = if self.music_root_override.trim().is_empty() {
-            let mut resolved = self
-                .resolved_music_root
-                .lock()
-                .map_err(|_| anyhow!("mpd_root_mutex_poisoned"))?;
-            if resolved.is_none() {
-                *resolved = Some(music_root(client, ""));
+        let resolve_root = |client: &mut MpdClient,
+                            music_root_override: &str,
+                            resolved_music_root: &Mutex<Option<String>>|
+         -> Result<String> {
+            if music_root_override.trim().is_empty() {
+                let mut resolved = resolved_music_root
+                    .lock()
+                    .map_err(|_| anyhow!("mpd_root_mutex_poisoned"))?;
+                if resolved.is_none() {
+                    *resolved = Some(music_root(client, ""));
+                }
+                Ok(resolved.clone().unwrap_or_default())
+            } else {
+                Ok(expand_home(music_root_override)
+                    .to_string_lossy()
+                    .into_owned())
             }
-            resolved.clone().unwrap_or_default()
-        } else {
-            expand_home(&self.music_root_override)
-                .to_string_lossy()
-                .into_owned()
         };
 
         let mut art_lookup = self
             .art_lookup
             .lock()
             .map_err(|_| anyhow!("mpd_art_mutex_poisoned"))?;
-        let result = operation(client, &root, &mut art_lookup);
-        if result.is_err() {
-            *guard = None;
+
+        let first_result = {
+            let client = guard.as_mut().expect("client initialized");
+            let root = resolve_root(client, &self.music_root_override, &self.resolved_music_root)?;
+            operation(client, &root, &mut art_lookup)
+        };
+
+        match first_result {
+            Ok(value) => Ok(value),
+            Err(err) => {
+                *guard = None;
+                if had_cached && !err.to_string().starts_with("ACK ") {
+                    let mut fresh = MpdClient::connect(&self.host, self.port)?;
+                    let root = resolve_root(
+                        &mut fresh,
+                        &self.music_root_override,
+                        &self.resolved_music_root,
+                    )?;
+                    let retry_result = operation(&mut fresh, &root, &mut art_lookup);
+                    if retry_result.is_ok() {
+                        *guard = Some(fresh);
+                    }
+                    retry_result
+                } else {
+                    Err(err)
+                }
+            }
         }
-        result
     }
 }
 
@@ -898,6 +925,8 @@ struct ArtLookup {
     cache: PathBuf,
     folders: HashMap<PathBuf, String>,
     cached: HashMap<String, String>,
+    missing_embedded: HashSet<String>,
+    cache_indexed: bool,
 }
 
 impl Default for ArtLookup {
@@ -906,6 +935,8 @@ impl Default for ArtLookup {
             cache: cache_dir(),
             folders: HashMap::new(),
             cached: HashMap::new(),
+            missing_embedded: HashSet::new(),
+            cache_indexed: false,
         }
     }
 }
@@ -927,6 +958,42 @@ fn art_filename_rank(name: &str) -> Option<usize> {
 }
 
 impl ArtLookup {
+    fn ensure_cache_indexed(&mut self) {
+        if self.cache_indexed {
+            return;
+        }
+        self.cache_indexed = true;
+        let Ok(entries) = fs::read_dir(&self.cache) else {
+            return;
+        };
+        let mut best_by_key: HashMap<String, (usize, PathBuf)> = HashMap::new();
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+                continue;
+            };
+            let Some((rank, key)) = CACHE_ART_EXTENSIONS
+                .iter()
+                .enumerate()
+                .find_map(|(idx, ext)| name.strip_suffix(ext).map(|stem| (idx, stem)))
+            else {
+                continue;
+            };
+            if key.is_empty() || !fs::metadata(&path).is_ok_and(|meta| meta.len() > 0) {
+                continue;
+            }
+            if best_by_key
+                .get(key)
+                .is_none_or(|(best_rank, _)| rank < *best_rank)
+            {
+                best_by_key.insert(key.to_owned(), (rank, path));
+            }
+        }
+        for (key, (_, path)) in best_by_key {
+            self.cached.insert(key, file_url(&path));
+        }
+    }
+
     fn folder_art(&mut self, path_text: &str) -> String {
         if path_text.is_empty() || path_text.contains("://") {
             return String::new();
@@ -975,16 +1042,12 @@ impl ArtLookup {
         if let Some(art) = self.cached.get(&key) {
             return art.clone();
         }
-
-        let art = CACHE_ART_EXTENSIONS
-            .iter()
-            .map(|extension| self.cache.join(format!("{key}{extension}")))
-            .find(|path| fs::metadata(path).is_ok_and(|meta| meta.len() > 0))
-            .map(|path| file_url(&path))
-            .unwrap_or_default();
-
-        self.cached.insert(key, art.clone());
-        art
+        self.ensure_cache_indexed();
+        if let Some(art) = self.cached.get(&key) {
+            return art.clone();
+        }
+        self.cached.insert(key, String::new());
+        String::new()
     }
 }
 
@@ -1239,12 +1302,16 @@ fn populate_library_art(
         groups.entry(art_cache_key(track)).or_default().push(index);
     }
 
-    for indexes in groups.values() {
+    for (key, indexes) in groups {
+        if art_lookup.missing_embedded.contains(&key) {
+            continue;
+        }
         let Some(&first_index) = indexes.first() else {
             continue;
         };
         let Some((data, mime)) = fetch_mpd_art(client, track_str(&tracks[first_index], "uri"))
         else {
+            art_lookup.missing_embedded.insert(key);
             continue;
         };
         let Ok(art) = write_cached_art(&art_lookup.cache, &tracks[first_index], &data, &mime)
@@ -1254,24 +1321,27 @@ fn populate_library_art(
         if art.is_empty() {
             continue;
         }
-        art_lookup
-            .cached
-            .insert(art_cache_key(&tracks[first_index]), art.clone());
+        art_lookup.cached.insert(key, art.clone());
         for index in indexes {
-            tracks[*index].insert("art".into(), json!(art));
+            tracks[index].insert("art".into(), json!(art));
         }
     }
 }
 
-fn snapshot(client: &mut MpdClient, root: &str, include_folders: bool) -> Result<Value> {
+fn snapshot_with_art(
+    client: &mut MpdClient,
+    root: &str,
+    include_folders: bool,
+    art_lookup: &mut ArtLookup,
+) -> Result<Value> {
     let library_records = records(
         &client.command("listallinfo", std::iter::empty::<&str>())?,
         "file",
     );
-    let mut art_lookup = ArtLookup::default();
+    art_lookup.folders.clear();
     let mut tracks = Vec::with_capacity(library_records.len());
     for record in &library_records {
-        tracks.push(build_track(record, root, &mut art_lookup));
+        tracks.push(build_track(record, root, art_lookup));
     }
 
     tracks.sort_by_cached_key(|track| {
@@ -1284,7 +1354,7 @@ fn snapshot(client: &mut MpdClient, root: &str, include_folders: bool) -> Result
             casefold_key(track_str(track, "uri")),
         )
     });
-    populate_library_art(client, &mut tracks, &mut art_lookup);
+    populate_library_art(client, &mut tracks, art_lookup);
 
     let playlist_lines = client.command("listplaylists", std::iter::empty::<&str>())?;
     let mut playlist_names = playlist_lines
@@ -1305,7 +1375,7 @@ fn snapshot(client: &mut MpdClient, root: &str, include_folders: bool) -> Result
         let playlist_records = records(&lines, "file");
         let mut items = Vec::with_capacity(playlist_records.len());
         for record in &playlist_records {
-            items.push(Value::Object(build_track(record, root, &mut art_lookup)));
+            items.push(Value::Object(build_track(record, root, art_lookup)));
         }
         playlists.push(json!({
             "id": format!("mpd:{name}"),
@@ -1350,7 +1420,7 @@ fn snapshot(client: &mut MpdClient, root: &str, include_folders: bool) -> Result
         Vec::new()
     };
 
-    let mut payload = status_payload_mode_with_art(client, root, true, &mut art_lookup)?;
+    let mut payload = status_payload_mode_with_art(client, root, true, art_lookup)?;
     let object = payload
         .as_object_mut()
         .ok_or_else(|| anyhow!("invalid_status_payload"))?;
@@ -1364,6 +1434,11 @@ fn snapshot(client: &mut MpdClient, root: &str, include_folders: bool) -> Result
         object.insert("folders".into(), Value::Array(folder_values));
     }
     Ok(payload)
+}
+
+fn snapshot(client: &mut MpdClient, root: &str, include_folders: bool) -> Result<Value> {
+    let mut art_lookup = ArtLookup::default();
+    snapshot_with_art(client, root, include_folders, &mut art_lookup)
 }
 
 fn param_string(params: &Value, key: &str) -> Result<String> {
@@ -1424,11 +1499,7 @@ fn handle_operation(
                 .get("includeFolders")
                 .and_then(Value::as_bool)
                 .unwrap_or(true);
-            let result = snapshot(client, override_root, include_folders);
-            if result.is_ok() {
-                *art_lookup = ArtLookup::default();
-            }
-            result
+            snapshot_with_art(client, override_root, include_folders, art_lookup)
         }
         "queue" => {
             let uris = param_strings(params, "uris")?;
@@ -1698,6 +1769,11 @@ fn idle_loop(
                         })
                         .collect::<Vec<_>>();
                     if !changed.is_empty() {
+                        if changed.iter().any(|subsystem| subsystem == "database")
+                            && let Ok(mut art_lookup) = manager.art_lookup.lock()
+                        {
+                            *art_lookup = ArtLookup::default();
+                        }
                         let requires_rescan = changed.iter().any(|subsystem| {
                             matches!(subsystem.as_str(), "database" | "stored_playlist")
                         });

@@ -200,8 +200,10 @@ StyledOverlayWidget {
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         color: Appearance.colors.colSubtext
                         elide: Text.ElideRight
-                        text: (activePlayer && activePlayer.length > 0)
-                              ? `${StringUtils.friendlyTimeForSeconds(activePlayer.position)} / ${StringUtils.friendlyTimeForSeconds(activePlayer.length)}`
+                        readonly property real effectiveLength: MprisController.effectiveLengthForPlayer(activePlayer)
+                        readonly property real effectivePosition: MprisController.effectivePositionForPlayer(activePlayer, effectiveLength)
+                        text: (activePlayer && effectiveLength > 0)
+                              ? `${StringUtils.friendlyTimeForSeconds(effectivePosition)} / ${StringUtils.friendlyTimeForSeconds(effectiveLength)}`
                               : ""
                     }
 
@@ -210,8 +212,10 @@ StyledOverlayWidget {
                         wavy: activePlayer?.isPlaying ?? false
                         highlightColor: Appearance.colors.colPrimary
                         trackColor: Appearance.colors.colSecondaryContainer
-                        value: (activePlayer && activePlayer.length > 0)
-                               ? (activePlayer.position / activePlayer.length)
+                        readonly property real effectiveLength: MprisController.effectiveLengthForPlayer(activePlayer)
+                        readonly property real effectivePosition: MprisController.effectivePositionForPlayer(activePlayer, effectiveLength)
+                        value: (activePlayer && effectiveLength > 0)
+                               ? (effectivePosition / effectiveLength)
                                : 0
                     }
                 }

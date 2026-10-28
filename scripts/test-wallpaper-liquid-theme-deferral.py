@@ -31,11 +31,11 @@ require('const rendered = FileUtils.trimFileProtocol(String(displayedSource ?? "
         and 'const pending = root._pendingLiquidThemePath' in service
         and 'if (!pending || rendered !== pending)' in service,
         "a stale or preview transition must not flush a newer wallpaper")
-require('liquidThemeDeadline.interval = 2600' in service
+require('liquidThemeDeadline.interval = 32' in service
         and 'onTriggered: root._flushLiquidTheme()' in service,
-        "hidden or frame-starved surfaces must eventually apply theme changes")
-require('liquidThemeDeadline.interval = 150' in service,
-        "theme work must not begin until after the final compositor swap")
+        "2-frame texture-prime window and hidden surfaces must apply theme changes in parallel")
+require('liquidThemeDeadline.interval = 16' in service,
+        "theme work begins after the 2-frame texture prime swap")
 require('root._pendingLiquidThemePath = ""' in service
         and 'root._queueWallpaperScript(path, darkMode, false)' in service,
         "flush must atomically drain the latest request")
@@ -70,9 +70,9 @@ require('if (root._previewWaitingForPresentation || previewProcess.running' in p
         "rapid preview selections must coalesce to the newest pending palette request")
 require('String(path ?? "") !== root.previewPath' in palette,
         "stale compositor frame must never release the newer palette request")
-require('previewFrameDeadline.interval = 2400' in palette
-        and 'previewFrameDeadline.interval = 180' in palette,
-        "preview palette must wait for shader presentation with a bounded fallback")
+require('previewFrameDeadline.interval = 32' in palette
+        and 'previewFrameDeadline.interval = 16' in palette,
+        "preview palette waits only 2 prime frames before running in parallel with shader presentation")
 require('previewFrameDeadline.stop()' in palette
         and 'root._previewWaitingForPresentation = false' in palette,
         "closing/canceling the preview must disarm deferred palette work")

@@ -132,12 +132,15 @@ ShellRoot {
   old=images[edge+'-old'];off=images[edge+'-off'];assert ImageChops.difference(old,off).getbbox(alpha_only=False) is None,edge+' OFF changed original RGBA';checks+=1
   for r in [12,34,64]:
    empty_off=images[f'{edge}-empty-off-{r}'];empty_on=images[f'{edge}-empty-on-{r}']
-   assert ImageChops.difference(empty_off,empty_on).getbbox(alpha_only=False) is None,'empty flag drew corner geometry or shadow';checks+=1
+   assert ImageChops.difference(empty_off,empty_on).getbbox(alpha_only=False),'adjacent nonzero edges did not round at 0px edge corners';checks+=1
+   w,h=empty_off.size;mid=(0,120,w,h-120) if edge in ['left','right'] else (120,0,w-120,h)
+   assert ImageChops.difference(empty_off.crop(mid),empty_on.crop(mid)).getbbox(alpha_only=False) is None,'0px side gained a full strip';checks+=1
    body_off=images[f'{edge}-body-off-{r}'];body_on=images[f'{edge}-body-on-{r}']
    assert ImageChops.difference(body_off,body_on).getbbox(alpha_only=False),'actual contact did not round';checks+=1
    w,h=body_on.size
-   for box in [(0,0,32,32),(w-32,0,w,32),(0,h-32,32,h),(w-32,h-32,w,h)]:
-    assert ImageChops.difference(body_off.crop(box),body_on.crop(box)).getbbox(alpha_only=False) is None,'actual contact added a detached screen-corner shadow';checks+=1
+   opp=[(0,0,32,32),(0,h-32,32,h)] if edge=='right' else [(w-32,0,w,32),(w-32,h-32,w,h)] if edge=='left' else [(0,h-32,32,h),(w-32,h-32,w,h)] if edge=='top' else [(0,0,32,32),(w-32,0,w,32)]
+   for box in opp:
+    assert ImageChops.difference(body_off.crop(box),body_on.crop(box)).getbbox(alpha_only=False) is None,'actual contact altered opposite screen-corner shadow';checks+=1
   assert ImageChops.difference(images[f'{edge}-body-on-12'],images[f'{edge}-body-on-64']).getbbox(alpha_only=False),'global Surface Curvature did not reach actual contact';checks+=1
  assert ImageChops.difference(images['nonzero-old'],images['nonzero-on']).getbbox(alpha_only=False) is None,'nonzero choice changes original pixels';checks+=1
  # Local module endpoint contours round; the physical corners stay unchanged.

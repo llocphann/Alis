@@ -17,13 +17,26 @@ Rectangle {
     color: Looks.colors.bgPanelBody
 
     readonly property var activePlayer: MprisController.activePlayer
+    readonly property bool isMpdPlayer: !MprisController.isYtMusicActive
+        && activePlayer !== null
+        && activePlayer === MprisController.mpdPlayer
     readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (activePlayer?.trackTitle ?? "")
     readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (activePlayer?.trackArtist ?? "")
-    readonly property real effectivePosition: MprisController.isYtMusicActive
-        ? YtMusic.currentPosition : (activePlayer?.position ?? 0)
-    readonly property real effectiveLength: MprisController.isYtMusicActive
+    readonly property real _rawEffectiveLength: MprisController.isYtMusicActive
         ? YtMusic.currentDuration
-        : ((activePlayer?.lengthSupported ?? false) ? activePlayer.length : 0)
+        : (((activePlayer?.lengthSupported ?? false) && (activePlayer?.length ?? 0) > 0)
+            ? activePlayer.length
+            : (isMpdPlayer
+                ? LocalMusic.currentDuration
+                : MprisController.effectiveLengthForPlayer(root.activePlayer)))
+    readonly property real effectiveLength: StringUtils.validMediaDuration(root._rawEffectiveLength)
+    readonly property real _rawEffectivePosition: MprisController.isYtMusicActive
+        ? YtMusic.currentPosition
+        : ((isMpdPlayer && (activePlayer?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
+            ? LocalMusic.lyricsPosition
+            : (activePlayer?.position ?? 0))
+    readonly property real effectivePosition: StringUtils.boundedMediaPosition(
+        root._rawEffectivePosition, root.effectiveLength)
     readonly property bool effectiveCanSeek: MprisController.isYtMusicActive
         ? YtMusic.canSeek
         : ((activePlayer?.canSeek ?? false)
@@ -31,10 +44,7 @@ Rectangle {
     readonly property real effectiveVolume: MprisController.getVolume()
 
     function formatTime(seconds: real): string {
-        if (!Number.isFinite(seconds) || seconds < 0)
-            return "0:00"
-        const whole = Math.floor(seconds)
-        return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`
+        return StringUtils.friendlyTimeForSeconds(seconds)
     }
 
     Timer {
@@ -208,7 +218,7 @@ Rectangle {
                 spacing: Looks.dp(6)
 
                 WText {
-                    text: root.formatTime(root.effectivePosition)
+                    text: root.formatTime(seekSlider.pressed ? seekSlider.value : root.effectivePosition)
                     color: Looks.colors.subfg
                     font.pixelSize: Looks.font.pixelSize.tiny
                 }
@@ -224,12 +234,17 @@ Rectangle {
                         property: "value"
                         value: seekSlider.modelValue
                         when: !seekSlider.pressed && !seekSlider._userInteracting
+                        restoreMode: Binding.RestoreBindingOrValue
                     }
-                    onMoved: {
-                        if (MprisController.isYtMusicActive && root.effectiveCanSeek)
-                            YtMusic.seek(value)
-                        else if (root.activePlayer && root.effectiveCanSeek)
-                            root.activePlayer.position = value
+                    onPressedChanged: {
+                        if (!pressed) {
+                            if (MprisController.isYtMusicActive && root.effectiveCanSeek)
+                                YtMusic.seek(value)
+                            else if (root.isMpdPlayer && root.effectiveCanSeek)
+                                LocalMusic.seek(value)
+                            else if (root.activePlayer && root.effectiveCanSeek)
+                                root.activePlayer.position = value
+                        }
                     }
                 }
 

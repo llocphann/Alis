@@ -24,8 +24,8 @@ Scope {
         if (colorTagsProcess.running || root._lastScanRoots.length === 0)
             return
         colorTagsProcess.exec([
-            "/usr/bin/python3",
-            `${Directories.scriptsPath}/colors/wallpaper-color-tags.py`,
+            `${Directories.scriptsPath}/native-dispatch`,
+            "color-tags",
             "--roots",
             ...root._lastScanRoots
         ])

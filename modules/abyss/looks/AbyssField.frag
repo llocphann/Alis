@@ -180,13 +180,39 @@ vec4 workspaceRect() {
     vec4 edges=mix(vec4(-64.0),insets,step(vec4(0.001),insets));
     return vec4(edges.xy,viewport.xy-edges.xy-edges.zw);
 }
+float perimeterContact(vec2 p,float radius) {
+    if(dot(contactEdges,vec4(1.0))<.5) return 1e20;
+    vec4 edges=max(vec4(0.0),insets);
+    float r=max(0.0,min(radius,min(viewport.x-edges.x-edges.z,viewport.y-edges.y-edges.w)*.5));
+    if(r<=0.0) return 1e20;
+    float d=1e20;
+    if(contactEdges.x>.5 && insets.y<=0.001) {
+        if(insets.x>0.001) d=min(d,contactCorner(p,-viewport.x,insets.x,r));
+        if(insets.z>0.001) d=min(d,contactCorner(p,viewport.x-insets.z,viewport.x*2.0,r));
+    }
+    if(contactEdges.z>.5 && insets.w<=0.001) {
+        if(insets.x>0.001) d=min(d,contactCorner(vec2(p.x,viewport.y-p.y),-viewport.x,insets.x,r));
+        if(insets.z>0.001) d=min(d,contactCorner(vec2(p.x,viewport.y-p.y),viewport.x-insets.z,viewport.x*2.0,r));
+    }
+    if(contactEdges.w>.5 && insets.x<=0.001) {
+        if(insets.y>0.001) d=min(d,contactCorner(p.yx,-viewport.y,insets.y,r));
+        if(insets.w>0.001) d=min(d,contactCorner(p.yx,viewport.y-insets.w,viewport.y*2.0,r));
+    }
+    if(contactEdges.y>.5 && insets.z<=0.001) {
+        if(insets.y>0.001) d=min(d,contactCorner(vec2(p.y,viewport.x-p.x),-viewport.y,insets.y,r));
+        if(insets.w>0.001) d=min(d,contactCorner(vec2(p.y,viewport.x-p.x),viewport.y-insets.w,viewport.y*2.0,r));
+    }
+    return d;
+}
+float perimeterDistance(vec2 p) {
+    return min(-roundedBox(p,workspaceRect(),material.x),perimeterContact(p,material.x));
+}
 float field(vec2 p) {
     bool boundPoint=material.x >= 0.0 && material.x <= 32768.0
         && material.y <= 32768.0
         && all(lessThanEqual(abs(p),vec2(32768.0)));
     float support=max(0.1,material.y)+1.0;
-    vec4 hole=workspaceRect();
-    float d=-roundedBox(p,hole,material.x);
+    float d=perimeterDistance(p);
     // Fold the same 40 slots in the same order without duplicating the
     // distance/control-flow program 40 times in the driver compiler.
     vec4 rectangles[40]=vec4[40](
@@ -229,7 +255,7 @@ void main() {
     float depth=exp(-abs(d)*0.045);
     // Bodies occupy the workspace side of the resting Edge. Blend their
     // independent material into the same union pass at each attachment neck.
-    float bodyBlend=smoothstep(0.0,24.0,-roundedBox(p,workspaceRect(),material.x));
+    float bodyBlend=smoothstep(0.0,24.0,perimeterDistance(p));
     float opacity=mix(surface.a,contentMaterial.x,bodyBlend);
     float blurRadius=mix(effects.x,contentMaterial.y,bodyBlend);
     vec4 tint=vec4(surface.rgb/max(surface.a,0.0001)*opacity,opacity);

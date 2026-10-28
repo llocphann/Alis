@@ -5,7 +5,6 @@ AbyssField 1.0 AbyssField.qml
 AbyssFieldImmersion 1.0 AbyssFieldImmersion.qml
 AbyssButton 1.0 AbyssButton.qml
 AbyssLabel 1.0 AbyssLabel.qml
-AbyssSeparator 1.0 AbyssSeparator.qml
 AbyssSlider 1.0 AbyssSlider.qml
 AbyssSearchField 1.0 AbyssSearchField.qml
 AbyssCheckBox 1.0 AbyssCheckBox.qml

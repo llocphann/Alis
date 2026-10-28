@@ -83,6 +83,11 @@ Singleton {
         const player = MprisController.activePlayer
         return player?.desktopEntry || player?.identity || "__alis_music_player__"
     }
+    readonly property string playerTrackTitle: {
+        if (YtMusic.isPlaying)
+            return YtMusic.currentTitle || ""
+        return MprisController.activePlayer?.trackTitle || ""
+    }
 
     function _afterSubscriptionChange(wasActive: bool): void {
         if (!wasActive && root.active) {
@@ -159,6 +164,7 @@ Singleton {
     onCfgStereoChanged: root._scheduleConfigRefresh()
     onEffectiveBarsChanged: if (!root._suppressConfigRestart) root._scheduleConfigRefresh()
     onPlayerDesktopEntryChanged: root._scheduleSourceRefresh()
+    onPlayerTrackTitleChanged: root._scheduleSourceRefresh()
 
     function _scheduleConfigRefresh(): void {
         root._pendingConfigGeneration = true
@@ -263,6 +269,10 @@ Singleton {
         function onTrackChanged(): void {
             root._scheduleSourceRefresh()
         }
+        function onIsPlayingChanged(): void {
+            if (MprisController.isPlaying)
+                root._scheduleSourceRefresh()
+        }
     }
 
     Connections {
@@ -283,7 +293,11 @@ Singleton {
         id: signalRelease
         interval: 1800
         repeat: false
-        onTriggered: root.audioSignalActive = false
+        onTriggered: {
+            root.audioSignalActive = false
+            if (root.active && (MprisController.isPlaying || YtMusic.isPlaying))
+                root._scheduleSourceRefresh()
+        }
     }
 
     // Port Serpantinum's no-data recovery idea into the shared Alis service.
@@ -344,6 +358,9 @@ Singleton {
     Process {
         id: configGen
         running: false
+        environment: ({
+            CAVA_TRACK_TITLE: root.playerTrackTitle
+        })
         command: ["/usr/bin/bash", root.scriptPath, root.configPath,
             String(root.cfgFramerate), String(root.cfgSensitivity),
             String(root._generationBars), String(root.cfgStereo),

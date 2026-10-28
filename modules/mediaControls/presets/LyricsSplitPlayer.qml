@@ -266,7 +266,7 @@ Item {
 
                 StyledText {
                     Layout.alignment: Qt.AlignBottom
-                    text: `${StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)} / ${StringUtils.friendlyTimeForSeconds(playerBase.effectiveLength)}`
+                    text: `${StringUtils.friendlyTimeForSeconds(playerProgress.effectiveDisplayedPosition)} / ${StringUtils.friendlyTimeForSeconds(playerBase.effectiveLength)}`
                     color: root.subInk
                     font.family: Appearance.font.family.numbers
                     font.pixelSize: Appearance.font.pixelSize.smaller
@@ -280,6 +280,7 @@ Item {
                 spacing: 10
 
                 PlayerProgress {
+                    id: playerProgress
                     Layout.fillWidth: true
                     implicitHeight: 16
                     position: playerBase.effectivePosition

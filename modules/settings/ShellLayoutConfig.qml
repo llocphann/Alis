@@ -75,6 +75,14 @@ ContentPage {
         return scope
     }
 
+    SettingsTaskNavigator {
+        showTabBar: false
+        icon: "dashboard_customize"
+        title: Translation.tr("Shell Layout")
+        description: Translation.tr("Arrange persistent surfaces here or on the desktop; both use live layout.")
+        summary: Translation.tr("Live shell layout · persistent surfaces")
+    }
+
     SettingsCardSection {
         expanded: true
         icon: "dashboard_customize"
@@ -115,6 +123,14 @@ ContentPage {
         }
     }
 
+    GridLayout {
+        id: shellLayoutTwoColumnGrid
+        Layout.fillWidth: true
+        columns: width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
+        columnSpacing: 14
+        rowSpacing: 14
+
     Repeater {
         model: root.surfaces
 
@@ -122,13 +138,18 @@ ContentPage {
             id: surfaceSection
             required property var modelData
 
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: 1
+            Layout.alignment: Qt.AlignTop
+
             readonly property string surfaceId: modelData.id
             readonly property var currentState: root.stateFor(surfaceId)
             readonly property bool lifted: root.liftedSurfaceId === surfaceId
             readonly property bool sidebarRole: surfaceId === "featureSidebar"
                 || surfaceId === "systemSidebar"
 
-            expanded: sidebarRole
+            expanded: true
             icon: modelData.icon
             title: Translation.tr(modelData.labelKey)
 
@@ -305,5 +326,6 @@ ContentPage {
                 }
             }
         }
+    }
     }
 }

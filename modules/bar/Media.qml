@@ -101,6 +101,7 @@ Item {
         BarMediaPopup {
             id: mediaPopupContent
             focus: true
+            presentationActive: barMediaPopup.presentationActive
             onCloseRequested: root.barMediaPopupVisible = false
         }
     }
@@ -147,7 +148,9 @@ Item {
                 id: mediaCircProg
                 anchors.centerIn: parent
                 lineWidth: Math.round(Appearance.rounding.unsharpen * Appearance.sizes.barModuleScale)
-                value: (activePlayer && activePlayer.length > 0) ? (activePlayer.position / activePlayer.length) : 0
+                readonly property real effectiveLength: MprisController.effectiveLengthForPlayer(activePlayer)
+                readonly property real effectivePosition: MprisController.effectivePositionForPlayer(activePlayer, effectiveLength)
+                value: effectiveLength > 0 ? Math.max(0, Math.min(1, effectivePosition / effectiveLength)) : 0
                 implicitSize: Math.round(22 * Appearance.sizes.barModuleScale)
                 colPrimary: Appearance.colors.colOnLayer0
                 enableAnimation: false

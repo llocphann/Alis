@@ -59,7 +59,9 @@ MouseArea {
         implicitSize: Math.round(20 * Appearance.sizes.barModuleScale)
 
         lineWidth: Math.round(Appearance.rounding.unsharpen * Appearance.sizes.barModuleScale)
-        value: activePlayer?.position / activePlayer?.length
+        readonly property real effectiveLength: MprisController.effectiveLengthForPlayer(activePlayer)
+        readonly property real effectivePosition: MprisController.effectivePositionForPlayer(activePlayer, effectiveLength)
+        value: effectiveLength > 0 ? Math.max(0, Math.min(1, effectivePosition / effectiveLength)) : 0
         colPrimary: Appearance.colors.colOnLayer0
         enableAnimation: false
 

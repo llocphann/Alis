@@ -12,6 +12,15 @@ ContentPage {
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
 
+    SettingsTaskNavigator {
+        visible: root.isIiActive
+        showTabBar: false
+        icon: "overview_key"
+        title: Translation.tr("Overview")
+        description: Translation.tr("Workspace hover and workspace preview layout.")
+        summary: Translation.tr("Hover timing · layout · content · appearance")
+    }
+
     SettingsCardSection {
         visible: !root.isIiActive
         expanded: true
@@ -29,20 +38,25 @@ ContentPage {
         }
     }
 
-    SettingsCardSection {
+    GridLayout {
+        objectName: "overviewTwoColumnGrid"
+        Layout.fillWidth: true
         visible: root.isIiActive
-        expanded: true
-        icon: "overview_key"
-        title: Translation.tr("Overview")
+        columns: width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
+        columnSpacing: 14
+        rowSpacing: 14
 
-        SettingsGroup {
-            GridLayout {
-                objectName: "overviewTwoColumnGrid"
-                Layout.fillWidth: true
-                columns: width >= 620 ? 2 : 1
-                columnSpacing: 14
-                rowSpacing: 14
+        SettingsCardSection {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: 1
+            Layout.alignment: Qt.AlignTop
+            expanded: true
+            icon: "overview_key"
+            title: Translation.tr("Overview")
 
+            SettingsGroup {
                 ColumnLayout {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignTop
@@ -143,7 +157,19 @@ ContentPage {
                         }
                     }
                 }
+            }
+        }
 
+        SettingsCardSection {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: 1
+            Layout.alignment: Qt.AlignTop
+            expanded: true
+            icon: "preview"
+            title: Translation.tr("Content")
+
+            SettingsGroup {
                 ColumnLayout {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignTop

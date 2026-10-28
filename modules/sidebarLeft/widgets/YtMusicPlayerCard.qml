@@ -283,6 +283,7 @@ Item {
 
                 // Progress
                 StyledSlider {
+                    id: progressSlider
                     Layout.fillWidth: true
                     Layout.preferredHeight: 14
                     configuration: StyledSlider.Configuration.Wavy
@@ -291,8 +292,12 @@ Item {
                     highlightColor: root.colPrimary
                     trackColor: root.colLayer2
                     handleColor: root.colPrimary
-                    value: YtMusic.currentDuration > 0 ? YtMusic.currentPosition / YtMusic.currentDuration : 0
-                    onMoved: YtMusic.seek(value * YtMusic.currentDuration)
+                    readonly property real effectiveLength: StringUtils.validMediaDuration(YtMusic.currentDuration)
+                    readonly property real effectivePosition: StringUtils.boundedMediaPosition(
+                        YtMusic.currentPosition, effectiveLength)
+                    liveValue: effectiveLength > 0 ? effectivePosition / effectiveLength : 0
+                    tooltipContent: StringUtils.friendlyTimeForSeconds(value * effectiveLength)
+                    onSeekCommitted: (val) => YtMusic.seek(val * effectiveLength)
                     scrollable: true
                 }
 
@@ -302,11 +307,14 @@ Item {
                     spacing: 2
 
                     StyledText {
-                        text: StringUtils.friendlyTimeForSeconds(YtMusic.currentPosition)
+                        text: StringUtils.friendlyTimeForSeconds(
+                            progressSlider.pressed
+                                ? progressSlider.value * progressSlider.effectiveLength
+                                : progressSlider.effectivePosition)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: root.colText
-                        Layout.preferredWidth: 28
+                        Layout.minimumWidth: implicitWidth
                     }
 
                     Item { Layout.fillWidth: true; Layout.minimumWidth: 0 }
@@ -435,11 +443,11 @@ Item {
                     Item { Layout.fillWidth: true; Layout.minimumWidth: 0 }
 
                     StyledText {
-                        text: StringUtils.friendlyTimeForSeconds(YtMusic.currentDuration)
+                        text: StringUtils.friendlyTimeForSeconds(progressSlider.effectiveLength)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: root.colText
-                        Layout.preferredWidth: 28
+                        Layout.minimumWidth: implicitWidth
                         horizontalAlignment: Text.AlignRight
                     }
                 }

@@ -617,13 +617,13 @@ switch() {
         mv "$_json_tmp" "$_json_out"
         [[ -s "$_palette_tmp" ]] && publish_if_changed "$_palette_tmp" "$_palette_out" || rm -f "$_palette_tmp"
         [[ -s "$_app_palette_tmp" ]] && publish_if_changed "$_app_palette_tmp" "$_app_palette_out" || rm -f "$_app_palette_tmp"
-        if [[ "$force_dark_terminal" == "true" ]]; then
+        if [[ "$force_dark_terminal" == "true" && "$mode_flag" != "dark" ]]; then
             rm -f "$_terminal_tmp"
         else
             [[ -s "$_terminal_tmp" ]] && publish_if_changed "$_terminal_tmp" "$_terminal_out" || rm -f "$_terminal_tmp"
         fi
         [[ -s "$_meta_tmp" ]] && publish_if_changed "$_meta_tmp" "$_meta_out" || rm -f "$_meta_tmp"
-        if [[ "$force_dark_terminal" != "true" ]]; then
+        if [[ "$force_dark_terminal" != "true" || "$mode_flag" == "dark" ]]; then
             [[ -s "$_scss_tmp" ]] && publish_if_changed "$_scss_tmp" "$STATE_DIR/user/generated/material_colors.scss" || rm -f "$_scss_tmp"
         fi
         if write_chromium_theme_contract "$_app_palette_out" "$_chromium_tmp" && [[ -s "$_chromium_tmp" ]]; then
@@ -648,6 +648,9 @@ switch() {
         if [[ "${ALIS_THEME_PROFILE:-}" == "1" ]]; then
             _theme_perf_dark="$(date +%s%N)"
         fi
+        if [[ "$mode_flag" == "dark" && "$theme_generation_succeeded" == "true" ]]; then
+            theme_perf_stage switchwall forced_dark_terminal "$_theme_perf_dark"
+        else
         scss_generate_args=("${generate_colors_material_args[@]}")
 
         # Reuse the first generation's exact seed and resolved scheme when it
@@ -711,6 +714,7 @@ switch() {
             rm -f "$_terminal_force_tmp"
         fi
         theme_perf_stage switchwall forced_dark_terminal "$_theme_perf_dark"
+        fi
     else
         rm -f "$_scss_tmp"
     fi
@@ -728,9 +732,11 @@ switch() {
     # Running it here on top caused 2x app theming per regen and races between
     # the parallel module workers.  CLI standalone use (shell not running) can
     # invoke applycolor.sh manually if app theming is desired.
-    # Pass screen width, height, and wallpaper path to post_process (only when app theming is on)
+    # Pass screen width, height, and wallpaper path to post_process (only when app theming is on).
+    # post_process is a no-op hook by default; avoid spawning compositor/xrandr queries unless overridden.
     if [ "$enable_apps_shell" != "false" ]; then
-        read max_width_desired max_height_desired <<< "$(get_max_monitor_resolution)"
+        max_width_desired=""
+        max_height_desired=""
         post_process "$max_width_desired" "$max_height_desired" "$imgpath"
     fi
     # THEME-PERF-09: complete-publication signal for the running QML shell.

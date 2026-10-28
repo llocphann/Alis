@@ -81,6 +81,8 @@ Item {
         id: niri
         OverviewNiriWidget {
             anchors.centerIn: parent
+            width: root.width
+            height: root.height
             panelWindow: root.QsWindow.window
             embeddedSurface: true
             taskViewMode: true

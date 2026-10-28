@@ -62,7 +62,7 @@ FocusScope {
     }
     function applyPath(path:string):void {
         if(!path)return
-        Wallpapers.clearWallpaperPreview()
+        Wallpapers.commitWallpaperPreview(path)
         Wallpapers.applySelectionTarget(path,selectionTarget,Appearance.m3colors.darkmode,selectionMonitorName)
         GlobalStates.wallpaperLauncherOpen=false
         closeRequested()

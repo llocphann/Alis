@@ -38,7 +38,6 @@ Item {
         if (GlobalStates.abyssPopupKind !== "dockAppMenu"
                 || GlobalStates.abyssPopupTargetOutput !== root.outputName)
             return
-        GlobalStates.abyssDockMenuModel = []
         GlobalStates.abyssDockMenuOwnerId = ""
         GlobalStates.abyssDockMenuTriggerHovered = false
         GlobalStates.abyssPopupKind = ""
@@ -70,11 +69,14 @@ Item {
         rowSpacing: 2; columnSpacing: 2
         DockApps {
             id: apps
+            residentDelegates: true
             vertical: root.vertical
             abyssMenuPresenter: (model, x, y, ownerId) =>
                 root.openAppMenu(model, x, y, ownerId)
             abyssMenuHoverPresenter: (ownerId, hovered) =>
                 root.updateAppMenuHover(ownerId, hovered)
+            abyssMenuClosePresenter: () =>
+                root.closeAppMenu()
             dockPosition: root.edge
             parentWindow: root.QsWindow.window
             Layout.preferredHeight: root.vertical ? implicitHeight : 50

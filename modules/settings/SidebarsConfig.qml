@@ -8,6 +8,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.abyss.settings
 
 ContentPage {
     id: root
@@ -312,6 +313,12 @@ ContentPage {
             SettingsGroup {
                 ContentSubsection {
                     title: Translation.tr("General")
+
+                    AbyssOutputSelector {
+                        visible: Config.options?.panelFamily === "abyss"
+                        configPath: "sidebar.screenList"
+                        title: Translation.tr("Sidebar outputs")
+                    }
 
                     SidebarHeightPreview {
                         Layout.fillWidth: true

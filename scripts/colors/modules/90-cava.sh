@@ -50,14 +50,12 @@ print('#%02x%02x%02x' % (int(r2*255), int(g2*255), int(b2*255)))
 # Build gradient from palette - uses bright, visible colors first
 build_gradient_theme() {
   local count="$1"
-  local -a keys=(primary tertiary secondary error success primary_fixed tertiary_fixed primary_container)
   local -a colors=()
   local c
-  for key in "${keys[@]}"; do
-    c=$(palette_color "$key")
+  while IFS= read -r c; do
     [[ -n "$c" ]] && colors+=("$c")
     (( ${#colors[@]} >= count )) && break
-  done
+  done < <(jq -r '[.primary, .tertiary, .secondary, .error, .success, .primary_fixed, .tertiary_fixed, .primary_container] | map(select(. != null and . != "")) | .[]' "$PALETTE_FILE" 2>/dev/null || true)
   (( ${#colors[@]} >= 1 )) || return 1
   printf '%s\n' "${colors[@]}"
 }
@@ -65,17 +63,15 @@ build_gradient_theme() {
 # Build gradient with saturated variants of palette colors
 build_gradient_vibrant() {
   local count="$1"
-  local -a keys=(primary tertiary secondary error success primary_fixed tertiary_fixed inverse_primary)
   local -a colors=()
   local c sat
-  for key in "${keys[@]}"; do
-    c=$(palette_color "$key")
+  while IFS= read -r c; do
     if [[ -n "$c" ]]; then
       sat=$(saturate_hex "$c" 1.6)
       colors+=("$sat")
     fi
     (( ${#colors[@]} >= count )) && break
-  done
+  done < <(jq -r '[.primary, .tertiary, .secondary, .error, .success, .primary_fixed, .tertiary_fixed, .inverse_primary] | map(select(. != null and . != "")) | .[]' "$PALETTE_FILE" 2>/dev/null || true)
   (( ${#colors[@]} >= 1 )) || return 1
   printf '%s\n' "${colors[@]}"
 }
@@ -159,16 +155,29 @@ generate_managed_block() {
   local sensitivity bars framerate bar_width bar_spacing stereo
   local input_method input_source
 
-  color_source=$(cava_cfg colorSource "theme")
-  gradient_count=$(cava_cfg gradientCount "8")
-  fg_override=$(cava_cfg foreground "")
-  bg_override=$(cava_cfg background "")
-  sensitivity=$(cava_cfg sensitivity "100")
-  bars=$(cava_cfg bars "0")
-  framerate=$(cava_cfg framerate "60")
-  bar_width=$(cava_cfg barWidth "2")
-  bar_spacing=$(cava_cfg barSpacing "1")
-  stereo=$(cava_cfg stereo "true")
+  local -a _cava_vals=()
+  mapfile -t _cava_vals < <(config_json '[
+    (.appearance.cava.colorSource // "theme"),
+    (.appearance.cava.gradientCount // "8"),
+    (.appearance.cava.foreground // ""),
+    (.appearance.cava.background // ""),
+    (.appearance.cava.sensitivity // "100"),
+    (.appearance.cava.bars // "0"),
+    (.appearance.cava.framerate // "60"),
+    (.appearance.cava.barWidth // "2"),
+    (.appearance.cava.barSpacing // "1"),
+    (if .appearance.cava.stereo == null then "true" else (.appearance.cava.stereo | tostring) end)
+  ] | .[]' "")
+  color_source="${_cava_vals[0]:-theme}"
+  gradient_count="${_cava_vals[1]:-8}"
+  fg_override="${_cava_vals[2]:-}"
+  bg_override="${_cava_vals[3]:-}"
+  sensitivity="${_cava_vals[4]:-100}"
+  bars="${_cava_vals[5]:-0}"
+  framerate="${_cava_vals[6]:-60}"
+  bar_width="${_cava_vals[7]:-2}"
+  bar_spacing="${_cava_vals[8]:-1}"
+  stereo="${_cava_vals[9]:-true}"
 
   # Clamp gradient count
   (( gradient_count < 1 )) && gradient_count=1

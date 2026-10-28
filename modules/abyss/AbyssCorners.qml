@@ -71,6 +71,7 @@ Item {
         property bool allowed: true
         property int dwell: 220
         property bool dwellReady: false
+        readonly property bool pointerHovered: allowed && mouse.containsMouse
         property bool containsMouse: allowed && dwellReady && mouse.containsMouse
         readonly property var liquidController: root.controller
         readonly property string popupAttachmentEdge: "bottom"
@@ -119,6 +120,18 @@ Item {
         hoverAllowed:root.centerAvailable
         keyboardAllowed:root.quickNotesEditorOutput.length === 0
     }
+    readonly property bool notesOpen: Boolean(notesPopup.presentationActive)
+    readonly property bool centerOpen: Boolean(centerPopup.presentationActive)
+    readonly property bool notesDirectInteracting: Boolean(notesAnchor.pointerHovered
+        || notesPopup._anchorHover?.hovered
+        || notesPopup._bodyHovered
+        || notesPopup.popupPinned
+        || notesPopup.editorFocused)
+    readonly property bool centerDirectInteracting: Boolean(centerAnchor.pointerHovered
+        || centerPopup._anchorHovered
+        || centerPopup._bodyHovered
+        || centerPopup.entryBridgeHeld
+        || centerPopup.exitGraceHeld)
     onNotesAvailableChanged: {
         if (!notesAvailable && notesPopup.presentationActive) {
             // A blocked/evicted surface is an explicit ownership loss, not a

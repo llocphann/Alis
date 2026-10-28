@@ -216,16 +216,19 @@ function _vacancyBestCandidate(owner,peer,placements,width,height,insets,gap,pai
     var peerEdge=String(peer.request?.record?.edge ?? "");
     var ownerInward=Math.max(0,_vacancyNumber(owner.placement?.inward,0));
     var peerInward=Math.max(0,_vacancyNumber(peer.placement?.inward,0));
-    // Same-edge coexistence can push one member inward. If this owner stayed
-    // on the physical Edge while its semantic peer moved inward, fill the
-    // newly exposed outer strip along the peer envelope. Otherwise use only
-    // literal rectangle separation, avoiding the old full-height detour.
+    // Same-edge coexistence can push one member inward. If this owner is the
+    // outer Edge-direct member and its semantic peer was pushed inward, fill
+    // the exposed strip along the peer envelope. Otherwise use only literal
+    // rectangle separation, avoiding the old full-height detour.
     var fillOuterStrip=edge === peerEdge && ownerInward+.5 < peerInward;
+    var h=_vacancyHorizontal(edge);
     var preferParallel=pair?.parallelEnvelope === true;
     var dirs=["top","bottom","left","right"], best=null;
     for (var i=0;i<dirs.length;i++) {
         var dir=dirs[i];
         if (!_vacancyDirectionAllowed(edge,dir)) continue;
+        var tangentDir=(dir === "top" || dir === "bottom") !== h;
+        if (fillOuterStrip && !tangentDir) continue;
         var parallelGap=preferParallel
             ? _vacancyParallelEnvelopeExtent(content,peerContent,dir) : 0;
         var parallel=parallelGap >= .5;
@@ -239,7 +242,7 @@ function _vacancyBestCandidate(owner,peer,placements,width,height,insets,gap,pai
         var baseCollision=false;
         for (var id in placements) {
             if (String(id) === String(owner.id)
-                    || (parallel && String(id) === String(peer.id))) continue;
+                    || ((parallel || fillOuterStrip) && String(id) === String(peer.id))) continue;
             var p=placements[id];
             if (!p || p.visible === false || !p.content) continue;
             var blocker=_vacancyRect(p.content);
@@ -269,6 +272,11 @@ function _vacancyBestCandidate(owner,peer,placements,width,height,insets,gap,pai
 
 function resolve(requests,metadata,placements,width,height,insets,gap) {
     if (!placements || !requests?.length || !metadata?.length) return placements;
+    if (requests.length < 2) {
+        var single=requests[0];
+        var singlePlacement=single && single.id !== undefined ? placements[String(single.id)] : null;
+        if (!singlePlacement || singlePlacement.shrunk !== true) return placements;
+    }
     width=Math.max(0,_vacancyNumber(width,0));
     height=Math.max(0,_vacancyNumber(height,0));
     if (width <= 0 || height <= 0) return placements;
@@ -329,10 +337,14 @@ function resolve(requests,metadata,placements,width,height,insets,gap) {
         // allocator input: entering a moving body must never switch owners,
         // restart placement animation, or be required to obtain the vacancy.
         var ordered=[];
+        var sameEdgeSidebarOuter=String(first.request?.record?.edge ?? "")
+                === String(second.request?.record?.edge ?? "")
+            && Math.max(0,_vacancyNumber(first.placement?.inward,0))+.5
+                < Math.max(0,_vacancyNumber(second.placement?.inward,0));
         var preferred=choices.find(function(x) {
             return x.owner.role === pair.automatic;
         });
-        if (preferred) ordered.push(preferred);
+        if (preferred && !sameEdgeSidebarOuter) ordered.push(preferred);
         choices.slice().sort(function(a,b) {
             return b.requestOrder-a.requestOrder || b.candidate.gain-a.candidate.gain
                 || String(a.owner.id).localeCompare(String(b.owner.id));
@@ -346,7 +358,6 @@ function resolve(requests,metadata,placements,width,height,insets,gap) {
                 _vacancyNumber(second.request?.order,0))
         });
     });
-    if (!plans.length) return placements;
 
     // Priority matters only when expanded rectangles compete. Independent pairs
     // remain expanded together.
@@ -372,6 +383,58 @@ function resolve(requests,metadata,placements,width,height,insets,gap) {
             chosen.owner.request,chosen.owner.placement,
             chosen.candidate.content,chosen.candidate.direction,chosen.candidate.delta);
         accepted.push(chosen);
+    });
+
+    // When a body was shrunk symmetrically around its anchorCenter by a one-sided
+    // perpendicular blocker (e.g. a sidebar shrunk below an overview popup),
+    // restore the unblocked side back toward its requested [along, along + span].
+    var working=result || placements;
+    requests.forEach(function(req) {
+        var id=String(req?.id ?? "");
+        if (!id || req?.open !== true) return;
+        var p=working[id];
+        if (!p || p.visible === false || !p.content || p.vacancyBorrowed || p.shrunk !== true)
+            return;
+        var reqAlong=_vacancyNumber(req?.record?.along,NaN);
+        var reqSpan=_vacancyNumber(req?.record?.span,NaN);
+        if (!Number.isFinite(reqAlong) || !Number.isFinite(reqSpan) || p.span >= reqSpan-.5)
+            return;
+        var edge=String(req?.record?.edge ?? "");
+        var h=_vacancyHorizontal(edge);
+        var panel=_vacancyPanelRect(req,p,width,height,insets);
+        var content=_vacancyRect(p.content);
+        var bounds=_vacancySafeBounds(req,width,height,insets);
+        var dirs=h ? ["left","right"] : ["top","bottom"];
+        var best=null;
+        dirs.forEach(function(dir) {
+            var baseWant=dir === "left" ? Math.max(0,panel.x-reqAlong)
+                : dir === "right" ? Math.max(0,(reqAlong+reqSpan)-(panel.x+panel.width))
+                : dir === "top" ? Math.max(0,panel.y-reqAlong)
+                : Math.max(0,(reqAlong+reqSpan)-(panel.y+panel.height));
+            var oppositeShift=dir === "left" ? Math.max(0,(panel.x+panel.width)-(reqAlong+reqSpan))
+                : dir === "right" ? Math.max(0,panel.x-reqAlong)
+                : dir === "top" ? Math.max(0,(panel.y+panel.height)-(reqAlong+reqSpan))
+                : Math.max(0,panel.y-reqAlong);
+            var want=Math.min(Math.max(0,reqSpan-p.span),baseWant+oppositeShift*.5);
+            if (want < .5) return;
+            var max=Math.min(want,_vacancySafeExtent(panel,bounds,dir));
+            if (max < .5) return;
+            for (var otherId in working) {
+                if (String(otherId) === id) continue;
+                var op=working[otherId];
+                if (!op || op.visible === false || !op.content) continue;
+                max=Math.min(max,_vacancyBlockerExtent(content,_vacancyRect(op.content),dir,gap));
+                if (max < .5) break;
+            }
+            if (max < .5) return;
+            var grown=_vacancyGrow(content,dir,max);
+            if (!best || max > best.delta)
+                best={direction:dir,delta:max,content:grown};
+        });
+        if (best) {
+            if (!result) { result=Object.assign({},placements); working=result; }
+            result[id]=_vacancyExpandedPlacement(req,p,best.content,best.direction,best.delta);
+        }
     });
     return result || placements;
 }

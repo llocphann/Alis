@@ -86,6 +86,10 @@ run_zed_themegen() {
     --template "$ZED_TEMPLATE_FILE"
   )
 
+  if "$REPO_ROOT/scripts/native-dispatch" zed-theme "${args[@]}" >> "$ZED_THEMEGEN_LOG" 2>&1; then
+    return 0
+  fi
+
   local go_bin
   go_bin="$(resolve_go_bin || true)"
 

@@ -7,6 +7,10 @@
 function equal(a,b) {
     if (Object.is(a,b)) return true;
     if (a===null || b===null || typeof a!=="object" || typeof b!=="object") return false;
+    if (a.along!==b.along || a.inward!==b.inward || a.span!==b.span || a.depth!==b.depth
+            || a.visible!==b.visible || a.evicted!==b.evicted || a.shrunk!==b.shrunk
+            || a.x!==b.x || a.y!==b.y || a.width!==b.width || a.height!==b.height)
+        return false;
     if (Array.isArray(a)!==Array.isArray(b)) return false;
     var keys=Object.keys(a),other=Object.keys(b);
     if (keys.length!==other.length) return false;

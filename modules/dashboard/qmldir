@@ -4,7 +4,6 @@ DashCalendar 1.0 DashCalendar.qml
 DashCard 1.0 DashCard.qml
 DashClock 1.0 DashClock.qml
 DashGithub 1.0 DashGithub.qml
-DashLayoutEditor 1.0 DashLayoutEditor.qml
 DashMedia 1.0 DashMedia.qml
 DashNotes 1.0 DashNotes.qml
 DashNotifications 1.0 DashNotifications.qml

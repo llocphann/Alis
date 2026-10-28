@@ -8,6 +8,7 @@ monitor when nothing better exists.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -57,6 +58,7 @@ PREFERRED_PLAYBACK_TOKENS = (
     "firefox",
     "zen",
     "mpv",
+    "mpd",
     "vlc",
     "strawberry",
     "audacious",
@@ -72,8 +74,11 @@ PREFERRED_PLAYBACK_TOKENS = (
 DESKTOP_ENTRY_BINARIES: dict[str, tuple[str, ...]] = {
     "spotify": ("spotify",),
     "mpv": ("mpv",),
+    "mpd": ("mpd",),
+    "mpd-mpris": ("mpd",),
     "vlc": ("vlc",),
     "firefox": ("firefox", "zen"),
+    "zen": ("zen", "firefox"),
     "chromium": ("chromium", "chrome", "brave", "google-chrome", "google-chrome-stable"),
     "chrome": ("chrome", "google-chrome", "google-chrome-stable", "brave"),
     "brave": ("brave",),
@@ -242,7 +247,14 @@ def _is_excluded(stream: SinkInput) -> bool:
     return False
 
 
-def _score_stream(stream: SinkInput, hint_binaries: set[str]) -> int:
+def _title_tokens(text: str) -> set[str]:
+    return {
+        tok for tok in re.findall(r"\w+", text.lower())
+        if len(tok) >= 2 and tok not in ("the", "and", "for", "with", "official", "video", "audio")
+    }
+
+
+def _score_stream(stream: SinkInput, hint_binaries: set[str], track_title: str = "") -> int:
     if _is_excluded(stream):
         return -10_000
     if stream.corked:
@@ -277,6 +289,20 @@ def _score_stream(stream: SinkInput, hint_binaries: set[str]) -> int:
         if any(h in identity for h in hint_binaries):
             score += 260
 
+    norm_title = track_title.strip().lower()
+    media_name = stream.media_name.strip().lower()
+    if norm_title and media_name:
+        if norm_title in media_name or (len(media_name) >= 4 and media_name in norm_title):
+            score += 600
+        else:
+            title_words = _title_tokens(norm_title)
+            media_words = _title_tokens(media_name)
+            overlap = len(title_words & media_words)
+            if overlap >= 2 or (overlap == 1 and len(title_words) == 1):
+                score += 350 + min(overlap, 5) * 30
+    if "youtube" in media_name or "music" in media_name or "spotify" in media_name:
+        score += 60
+
     if any(token in identity for token in PREFERRED_PLAYBACK_TOKENS):
         score += 40
 
@@ -290,7 +316,7 @@ def _default_sink_monitor() -> str:
     return "auto"
 
 
-def resolve_source(desktop_entry: str = "") -> str:
+def resolve_source(desktop_entry: str = "", track_title: str = "") -> str:
     server_info = _run(["pactl", "info"])
     if not server_info:
         return "auto"
@@ -299,9 +325,10 @@ def resolve_source(desktop_entry: str = "") -> str:
     clients = _parse_clients(_run(["pactl", "list", "clients"]))
     streams = _parse_sink_inputs(_run(["pactl", "list", "sink-inputs"]), clients)
     hint_binaries = _hint_binaries(desktop_entry)
+    effective_title = track_title or os.environ.get("CAVA_TRACK_TITLE", "")
 
     ranked = sorted(
-        ((_score_stream(stream, hint_binaries), stream) for stream in streams),
+        ((_score_stream(stream, hint_binaries, effective_title), stream) for stream in streams),
         key=lambda item: (item[0], item[1].index),
         reverse=True,
     )
@@ -322,8 +349,9 @@ def resolve_source(desktop_entry: str = "") -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--desktop-entry", default="")
+    parser.add_argument("--track-title", default="")
     args = parser.parse_args()
-    print(resolve_source(args.desktop_entry))
+    print(resolve_source(args.desktop_entry, args.track_title))
 
 
 if __name__ == "__main__":

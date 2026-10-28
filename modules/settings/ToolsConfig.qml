@@ -16,6 +16,7 @@ ContentPage {
     property string activeSection: "recording"
 
     SettingsTaskNavigator {
+        showTabBar: false
         icon: "build"
         title: Translation.tr("Tools")
         description: Translation.tr("Capture, selection and overlay settings by tool.")
@@ -371,10 +372,27 @@ ContentPage {
         }
     }
 
+    GridLayout {
+        id: toolsTwoColumnGrid
+        Layout.fillWidth: true
+        columns: width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
+        columnSpacing: 14
+        rowSpacing: 14
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        Layout.alignment: Qt.AlignTop
+        spacing: 14
+
     SettingsCardSection {
         id: screenRecordSection
+        Layout.fillWidth: true
+        Layout.fillHeight: true
         settingsTaskSection: "recording"
-        visible: root.activeSection === "recording"
+        visible: true
         expanded: true
         icon: "screen_record"
         title: Translation.tr("Screen recording")
@@ -750,10 +768,19 @@ ContentPage {
             }
         }
     }
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        Layout.alignment: Qt.AlignTop
+        spacing: 14
 
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "snipping"
-        visible: root.activeSection === "snipping"
+        visible: true
         expanded: true
         icon: "screenshot_frame_2"
         title: Translation.tr("Region selector (screen snipping/Google Lens)")
@@ -958,8 +985,9 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "crosshair"
-        visible: root.activeSection === "crosshair"
+        visible: true
         expanded: true
         icon: "point_scan"
         title: Translation.tr("Crosshair overlay")
@@ -1002,8 +1030,9 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "discord"
-        visible: root.activeSection === "discord"
+        visible: true
         expanded: true
         icon: "forum"
         title: Translation.tr("Overlay: Discord")
@@ -1022,8 +1051,10 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
         settingsTaskSection: "osd"
-        visible: root.activeSection === "osd"
+        visible: true
         expanded: true
         icon: "voting_chip"
         title: Translation.tr("On-screen display")
@@ -1056,5 +1087,7 @@ ContentPage {
                 }
             }
         }
+    }
+    }
     }
 }

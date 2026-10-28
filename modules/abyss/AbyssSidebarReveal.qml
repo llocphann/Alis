@@ -13,7 +13,8 @@ Item {
     property int closeDelay: 240
     property bool edgeHovered: edgeHover.hovered
     property bool bodyHovered: bodyHover.hovered
-    readonly property bool hovered: edgeHovered || bodyHovered
+    property bool peerHovered: false
+    readonly property bool hovered: edgeHovered || bodyHovered || (open && peerHovered)
     property bool ownedOpen: false
     property bool transientOpen: false
     signal revealRequested()

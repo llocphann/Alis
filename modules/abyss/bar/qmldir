@@ -2,4 +2,3 @@ module qs.modules.abyss.bar
 AbyssBar 1.0 AbyssBar.qml
 AbyssBarModule 1.0 AbyssBarModule.qml
 AbyssWorkspaces 1.0 AbyssWorkspaces.qml
-AbyssTray 1.0 AbyssTray.qml

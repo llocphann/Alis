@@ -22,11 +22,28 @@ Item {
     readonly property bool isYtMusicPlayer: MprisController.isYtMusicActive
     readonly property bool hasPlayer: (player && player.trackTitle) || (isYtMusicPlayer && YtMusic.currentVideoId)
 
+    readonly property bool isMpdPlayer: !isYtMusicPlayer && player !== null && player === MprisController.mpdPlayer
     readonly property string effectiveTitle: isYtMusicPlayer ? YtMusic.currentTitle : (player?.trackTitle ?? "")
     readonly property string effectiveArtist: isYtMusicPlayer ? YtMusic.currentArtist : (player?.trackArtist ?? "")
     readonly property string effectiveArtUrl: isYtMusicPlayer ? YtMusic.currentThumbnail : (player?.trackArtUrl ?? "")
-    readonly property real effectivePosition: isYtMusicPlayer ? YtMusic.currentPosition : (player?.position ?? 0)
-    readonly property real effectiveLength: isYtMusicPlayer ? YtMusic.currentDuration : (player?.length ?? 0)
+    readonly property real _rawEffectiveLength: isYtMusicPlayer
+        ? YtMusic.currentDuration
+        : (((player?.lengthSupported ?? false) && (player?.length ?? 0) > 0)
+            ? (player?.length ?? 0)
+            : (isMpdPlayer
+                ? LocalMusic.currentDuration
+                : MprisController.effectiveLengthForPlayer(root.player)))
+    readonly property real effectiveLength: StringUtils.validMediaDuration(root._rawEffectiveLength)
+    readonly property real _rawEffectivePosition: isYtMusicPlayer
+        ? YtMusic.currentPosition
+        : ((isMpdPlayer && (player?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
+            ? LocalMusic.lyricsPosition
+            : (player?.position ?? 0))
+    readonly property real effectivePosition: StringUtils.boundedMediaPosition(
+        root._rawEffectivePosition, root.effectiveLength)
+    readonly property real effectiveDisplayedPosition: (seekLoader.item?.pressed ?? false)
+        ? Math.max(0, Math.min(root.effectiveLength, (seekLoader.item?.value ?? 0) * root.effectiveLength))
+        : root.effectivePosition
     readonly property bool effectiveIsPlaying: isYtMusicPlayer ? YtMusic.isPlaying : (player?.isPlaying ?? false)
     readonly property bool effectiveCanSeek: isYtMusicPlayer ? YtMusic.canSeek : (player?.canSeek ?? false)
 
@@ -230,6 +247,7 @@ Item {
                     implicitHeight: 16
 
                     Loader {
+                        id: seekLoader
                         anchors.fill: parent
                         active: root.effectiveCanSeek
                         sourceComponent: StyledSlider {
@@ -242,12 +260,16 @@ Item {
                                 : Appearance.alisEverywhere ? Appearance.alis.colLayer2 : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                             handleColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                                 : Appearance.alisEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                            value: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
-                            onMoved: {
+                            liveValue: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
+                            tooltipContent: StringUtils.friendlyTimeForSeconds(value * root.effectiveLength)
+                            onSeekCommitted: (val) => {
+                                const target = val * root.effectiveLength
                                 if (root.isYtMusicPlayer) {
-                                    YtMusic.seek(value * root.effectiveLength)
+                                    YtMusic.seek(target)
+                                } else if (root.isMpdPlayer) {
+                                    LocalMusic.seek(target)
                                 } else if (root.player) {
-                                    root.player.position = value * root.player.length
+                                    root.player.position = target
                                 }
                             }
                             scrollable: true
@@ -275,7 +297,7 @@ Item {
                     spacing: 4
 
                     StyledText {
-                        text: StringUtils.friendlyTimeForSeconds(root.effectivePosition)
+                        text: StringUtils.friendlyTimeForSeconds(root.effectiveDisplayedPosition)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: Appearance.angelEverywhere ? Appearance.angel.colText

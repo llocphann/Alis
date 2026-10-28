@@ -133,6 +133,47 @@ const rec=placedPanel(W,H,IN,"left",feature.request.record.along,feature.request
 assert.deepEqual([rec.content.x,rec.content.y,rec.content.width,rec.content.height],
  [r.out.leftPanel.content.x,r.out.leftPanel.content.y,r.out.leftPanel.content.width,r.out.leftPanel.content.height]);
 
+// Same-edge Sidebar + QuickNotes:
+// 1. QuickNotes hovered first (order=1, inward=456), Sidebar opened second (order=2, inward=0) -> Sidebar expands bottom.
+const edgeNotesFirst=m("styledPopup0","quickNotes","left",1,{visible:true,along:696,inward:456,span:370,depth:346,content:{x:484,y:710,width:318,height:342}});
+const edgeSidebarSecond=m("leftPanel","featureSidebar","left",2,{visible:true,along:190,inward:0,span:700,depth:460,content:{x:28,y:204,width:432,height:672}});
+r=run([edgeSidebarSecond,edgeNotesFirst]);
+assert.deepEqual(borrowers(r.out),["leftPanel"]);
+assert.equal(r.out.leftPanel.vacancyDirection,"bottom");
+assert(r.out.leftPanel.span > edgeSidebarSecond.placement.span);
+
+// 2. Sidebar opened first (order=1, inward=342), QuickNotes hovered second (order=2, inward=0) -> QuickNotes expands top.
+const edgeSidebarFirst=m("leftPanel","featureSidebar","left",1,{visible:true,along:190,inward:342,span:700,depth:460,content:{x:370,y:204,width:432,height:672}});
+const edgeNotesSecond=m("styledPopup0","quickNotes","left",2,{visible:true,along:696,inward:0,span:370,depth:346,content:{x:28,y:710,width:318,height:342}});
+r=run([edgeSidebarFirst,edgeNotesSecond]);
+assert.deepEqual(borrowers(r.out),["styledPopup0"]);
+assert.equal(r.out.styledPopup0.vacancyDirection,"top");
+assert.equal(r.out.styledPopup0.content.y,edgeSidebarFirst.placement.content.y);
+
+// 3. One-sided perpendicular blocker (Overview at top) shrinks Sidebars symmetrically
+// around anchorCenter -> VacancyBorrowing shifts unblocked bottom down slightly
+// and adjusts vertical height while keeping Overview at full size.
+const topOverview=m("styledPopup0","","top",3,{visible:true,along:100,inward:0,span:1720,depth:232,content:{x:114,y:54,width:1692,height:204}});
+const shrunkLeftSidebar={
+ request:{id:"leftPanel",open:true,order:1,padding:14,record:{edge:"left",along:190,span:700,targetDepth:460,depth:460}},
+ meta:{id:"leftPanel",role:"featureSidebar",hovered:false,hoverOrder:0},
+ placement:{visible:true,shrunk:true,along:268,inward:0,span:544,depth:460,content:{x:28,y:282,width:432,height:516}}
+};
+const shrunkRightSidebar={
+ request:{id:"rightPanel",open:true,order:2,padding:14,record:{edge:"right",along:190,span:700,targetDepth:460,depth:460}},
+ meta:{id:"rightPanel",role:"systemSidebar",hovered:false,hoverOrder:0},
+ placement:{visible:true,shrunk:true,along:268,inward:0,span:544,depth:460,content:{x:1460,y:282,width:432,height:516}}
+};
+r=run([topOverview,shrunkLeftSidebar,shrunkRightSidebar]);
+assert.equal(r.out.leftPanel.vacancyDirection,"bottom");
+assert.equal(r.out.leftPanel.along,268);
+assert.equal(r.out.leftPanel.span,661);
+assert.equal(r.out.leftPanel.along+r.out.leftPanel.span,929);
+assert.equal(r.out.rightPanel.vacancyDirection,"bottom");
+assert.equal(r.out.rightPanel.along,268);
+assert.equal(r.out.rightPanel.span,661);
+assert.equal(r.out.rightPanel.along+r.out.rightPanel.span,929);
+
 console.log("PASS: two semantic pairs borrow independently without collision");
 """
 raise SystemExit(subprocess.run(["node","-e",program],cwd=ROOT).returncode)

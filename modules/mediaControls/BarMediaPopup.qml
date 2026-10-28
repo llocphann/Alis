@@ -63,7 +63,7 @@ Item {
     // The popup no longer owns a decorative CAVA consumer; this state now gates
     // only the EqualizerPanel, whose integrated analyzer is the single live
     // spectrum shown on this surface.
-    readonly property bool presentationActive: root.QsWindow.window?.visible ?? false
+    property bool presentationActive: root.QsWindow.window?.visible ?? false
 
     function _samePlayerOrder(a, b): bool {
         if ((a?.length ?? 0) !== (b?.length ?? 0)) return false
@@ -166,6 +166,7 @@ Item {
                     y: (playerDelegate.index - root.currentTab)
                         * playerViewport.height
                     enabled: playerDelegate.index === root.currentTab
+                    visible: enabled || tabSlideAnim.running
                     z: enabled ? 2 : 1
 
                     function focusPrimaryControl(): void {
@@ -175,6 +176,7 @@ Item {
                     Behavior on y {
                         enabled: Appearance.animationsEnabled
                         NumberAnimation {
+                            id: tabSlideAnim
                             duration: root.tabSlideDuration
                             easing.type: Appearance.animation.elementMove.type
                             easing.bezierCurve:

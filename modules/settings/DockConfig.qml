@@ -124,24 +124,42 @@ ContentPage {
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
     property bool addApplicationsOpen: false
 
-    SettingsCardSection {
-        visible: root.isIiActive
-        expanded: true
+    SettingsTaskNavigator {
+        visible: !root.embedded
+        showTabBar: false
         icon: "call_to_action"
         title: Translation.tr("Dock")
+        description: Translation.tr("Hover reveals the Dock at the edge; Empty workspace shows it on an empty desktop.")
+        summary: Translation.tr("Behavior · window indicators · pinned apps")
+    }
 
-        SettingsGroup {
-            GridLayout {
-                objectName: "dockTwoColumnGrid"
+    GridLayout {
+        objectName: "dockTwoColumnGrid"
+        Layout.fillWidth: true
+        visible: root.isIiActive
+        columns: width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
+        columnSpacing: 14
+        rowSpacing: 14
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: 1
+            Layout.alignment: Qt.AlignTop
+            spacing: 14
+
+            SettingsCardSection {
                 Layout.fillWidth: true
-                columns: width >= 620 ? 2 : 1
-                columnSpacing: 14
-                rowSpacing: 14
+                expanded: true
+                icon: "call_to_action"
+                title: Translation.tr("Dock")
 
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignTop
-                    spacing: 12
+                SettingsGroup {
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignTop
+                        spacing: 12
 
                     ConfigRow {
                         id: dockPrimaryToggles
@@ -336,6 +354,18 @@ ContentPage {
                         }
                     }
 
+                    }
+                }
+            }
+
+            SettingsCardSection {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                expanded: true
+                icon: "more_horiz"
+                title: Translation.tr("Window indicators")
+
+                SettingsGroup {
                     ContentSubsection {
                         title: Translation.tr("Window indicators")
 
@@ -379,12 +409,24 @@ ContentPage {
                         }
                     }
                 }
+            }
+        }
 
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignTop
-                    spacing: 12
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: 1
+            Layout.alignment: Qt.AlignTop
+            spacing: 14
 
+            SettingsCardSection {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                expanded: true
+                icon: "keep"
+                title: Translation.tr("Pinned apps")
+
+                SettingsGroup {
                     ContentSubsection {
                         title: Translation.tr("Pinned apps")
 

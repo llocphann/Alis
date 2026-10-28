@@ -75,7 +75,7 @@ Singleton {
         const title = player?.trackTitle ?? "";
         const artist = player?.trackArtist ?? "";
         const album = player?.trackAlbum ?? "";
-        const duration = player?.length ?? 0;
+        const duration = MprisController.effectiveLengthForPlayer(player);
         const key = JSON.stringify([
             player?.dbusName ?? "",
             player?.uniqueId ?? 0,

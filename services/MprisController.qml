@@ -466,9 +466,7 @@ Singleton {
 		const name = player?.dbusName ?? "";
 		if (!name) return;
 		if (player.trackTitle || player.isPlaying) {
-			let nextGrace = Object.assign({}, _playerGrace);
-			nextGrace[name] = Date.now();
-			_playerGrace = nextGrace;
+			_playerGrace[name] = Date.now();
 		}
 	}
 	
@@ -559,8 +557,236 @@ Singleton {
 		if (match?.[1]) return match[1];
 		match = value.match(/youtu\.be\/([A-Za-z0-9_-]{11})/);
 		if (match?.[1]) return match[1];
-		match = value.match(/youtube\.com\/(?:shorts|live)\/([A-Za-z0-9_-]{11})/);
+		match = value.match(/youtube\.com\/(?:shorts|live|embed)\/([A-Za-z0-9_-]{11})/);
 		return match?.[1] ?? "";
+	}
+
+	property var _resolvedTrackLengths: ({})
+	property var _pendingLengthLookups: ({})
+	property int _resolvedTrackLengthsVersion: 0
+	property var _browserPositionSyncKeys: ({})
+
+	function _durationCacheKeysForPlayer(player): var {
+		if (!player) return [];
+		const keys = [];
+		const rawUrl = String(player.metadata?.["xesam:url"] ?? "").trim();
+		const videoId = root._extractYoutubeVideoId(rawUrl);
+		if (videoId.length > 0)
+			keys.push(`yt:${videoId}`);
+		if (rawUrl.length > 0 && !rawUrl.endsWith(".youtube.com/") && !rawUrl.endsWith("//youtube.com/"))
+			keys.push(`url:${rawUrl}`);
+		const title = root._normTitle(player.trackTitle).replace(/\s+-\s+youtube$/, "");
+		const artist = root._normTitle(player.trackArtist);
+		if (title.length > 0)
+			keys.push(`meta:${player.dbusName ?? ""}:${title}|${artist}`);
+		return keys;
+	}
+
+	function _rememberLengthForKeys(keys: var, lengthSeconds: real): void {
+		const valid = StringUtils.validMediaDuration(lengthSeconds);
+		if (valid <= 0 || !keys || keys.length === 0)
+			return;
+		let changed = false;
+		const next = Object.assign({}, root._resolvedTrackLengths);
+		for (const key of keys) {
+			if (!key) continue;
+			if (Math.abs(Number(next[key] ?? 0) - valid) > 0.5) {
+				next[key] = valid;
+				changed = true;
+			}
+		}
+		if (changed) {
+			root._resolvedTrackLengths = next;
+			root._resolvedTrackLengthsVersion++;
+		}
+	}
+
+	function _rememberPlayerLength(player): void {
+		if (!player || !(player.lengthSupported ?? false))
+			return;
+		const valid = StringUtils.validMediaDuration(player.length);
+		if (valid <= 0)
+			return;
+		root._rememberLengthForKeys(root._durationCacheKeysForPlayer(player), valid);
+	}
+
+	function _lookupResolvedTrackLength(player): real {
+		const _ = root._resolvedTrackLengthsVersion;
+		if (!player) return 0;
+		const keys = root._durationCacheKeysForPlayer(player);
+		const map = root._resolvedTrackLengths ?? {};
+		for (const key of keys) {
+			const val = StringUtils.validMediaDuration(map[key] ?? 0);
+			if (val > 0)
+				return val;
+		}
+		return 0;
+	}
+
+	function _resolveExternalDurationForPlayer(player): void {
+		if (!player) return;
+		if ((player.lengthSupported ?? false) && StringUtils.validMediaDuration(player.length) > 0) {
+			root._rememberPlayerLength(player);
+			return;
+		}
+		if (root._lookupResolvedTrackLength(player) > 0)
+			return;
+		const keys = root._durationCacheKeysForPlayer(player);
+		if (keys.length === 0)
+			return;
+		const primaryKey = keys[0];
+		if (root._pendingLengthLookups[primaryKey])
+			return;
+
+		const rawUrl = String(player.metadata?.["xesam:url"] ?? "").trim();
+		const videoId = root._extractYoutubeVideoId(rawUrl);
+		if (videoId.length > 0) {
+			const nextPending = Object.assign({}, root._pendingLengthLookups);
+			nextPending[primaryKey] = true;
+			root._pendingLengthLookups = nextPending;
+
+			const xhr = new XMLHttpRequest();
+			xhr.open("POST", "https://www.youtube.com/youtubei/v1/player?prettyPrint=false");
+			xhr.setRequestHeader("Content-Type", "application/json");
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState !== XMLHttpRequest.DONE)
+					return;
+				const updatedPending = Object.assign({}, root._pendingLengthLookups);
+				delete updatedPending[primaryKey];
+				root._pendingLengthLookups = updatedPending;
+				if (xhr.status >= 200 && xhr.status < 300) {
+					try {
+						const resp = JSON.parse(xhr.responseText);
+						const len = StringUtils.validMediaDuration(Number(resp?.videoDetails?.lengthSeconds ?? 0));
+						if (len > 0) {
+							const latestKeys = keys.concat(root._durationCacheKeysForPlayer(player));
+							root._rememberLengthForKeys(latestKeys, len);
+						}
+					} catch (_e) {}
+				}
+			};
+			xhr.send(JSON.stringify({
+				videoId: videoId,
+				context: {
+					client: {
+						clientName: "WEB",
+						clientVersion: "2.20250101.00.00"
+					}
+				}
+			}));
+			return;
+		}
+
+		const rawTitle = String(player.trackTitle ?? "").trim().replace(/\s+-\s+YouTube$/i, "");
+		const rawArtist = String(player.trackArtist ?? "").trim();
+		if (rawTitle.length > 0 && rawArtist.length > 0) {
+			const nextPending = Object.assign({}, root._pendingLengthLookups);
+			nextPending[primaryKey] = true;
+			root._pendingLengthLookups = nextPending;
+
+			const xhr = new XMLHttpRequest();
+			const queryUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(rawTitle)}&artist_name=${encodeURIComponent(rawArtist)}`;
+			xhr.open("GET", queryUrl);
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState !== XMLHttpRequest.DONE)
+					return;
+				const updatedPending = Object.assign({}, root._pendingLengthLookups);
+				delete updatedPending[primaryKey];
+				root._pendingLengthLookups = updatedPending;
+				if (xhr.status >= 200 && xhr.status < 300) {
+					try {
+						const resp = JSON.parse(xhr.responseText);
+						const len = StringUtils.validMediaDuration(Number(resp?.duration ?? 0));
+						if (len > 0) {
+							const latestKeys = keys.concat(root._durationCacheKeysForPlayer(player));
+							root._rememberLengthForKeys(latestKeys, len);
+						}
+					} catch (_e) {}
+				}
+			};
+			xhr.send();
+		}
+	}
+
+	function _syncBrowserPlayerPositionAndLength(player): void {
+		if (!player) return;
+		if ((player.lengthSupported ?? false) && StringUtils.validMediaDuration(player.length) > 0) {
+			root._rememberPlayerLength(player);
+			return;
+		}
+		if (root._isBrowserPlayer(player)) {
+			const rawUrl = String(player.metadata?.["xesam:url"] ?? "").trim();
+			const title = root._normTitle(player.trackTitle);
+			const syncKey = `${player.dbusName ?? ""}|${rawUrl}|${title}`;
+			if ((player.isPlaying ?? false) && (player.canSeek ?? false)
+					&& title.length > 0 && !root._browserPositionSyncKeys[syncKey]) {
+				const nextSync = Object.assign({}, root._browserPositionSyncKeys);
+				nextSync[syncKey] = true;
+				root._browserPositionSyncKeys = nextSync;
+				// Firefox/Zen Browser's MPRIS D-Bus handler returns Position=0 on GetAll
+				// and strips mpris:length on metadata updates, but calling Seek(0)
+				// triggers UpdatePositionState() which emits Seeked(realPositionUs)
+				// and Metadata with mpris:length without altering playback.
+				player.seek(0);
+			}
+		}
+		root._resolveExternalDurationForPlayer(player);
+	}
+
+	function effectiveLengthForPlayer(player): real {
+		const _ = root._resolvedTrackLengthsVersion;
+		if (!player) {
+			return root.isYtMusicActive
+				? StringUtils.validMediaDuration(YtMusic.currentDuration)
+				: 0;
+		}
+		if (root._isYtMusicMpv(player)) {
+			const ytLen = StringUtils.validMediaDuration(YtMusic.currentDuration);
+			if (ytLen > 0)
+				return ytLen;
+		}
+		if (player.lengthSupported ?? false) {
+			const directLen = StringUtils.validMediaDuration(player.length);
+			if (directLen > 0)
+				return directLen;
+		}
+		if (player === root.mpdPlayer) {
+			const mpdLen = StringUtils.validMediaDuration(LocalMusic.currentDuration);
+			if (mpdLen > 0)
+				return mpdLen;
+		}
+		const resolved = root._lookupResolvedTrackLength(player);
+		if (resolved > 0)
+			return resolved;
+		Qt.callLater(() => root._syncBrowserPlayerPositionAndLength(player));
+		return 0;
+	}
+
+	function effectivePositionForPlayer(player, effectiveLength = -1): real {
+		const len = effectiveLength >= 0
+			? StringUtils.validMediaDuration(effectiveLength)
+			: root.effectiveLengthForPlayer(player);
+		if (!player) {
+			const rawYtPos = root.isYtMusicActive ? YtMusic.currentPosition : 0;
+			return StringUtils.boundedMediaPosition(rawYtPos, len);
+		}
+		if (root._isYtMusicMpv(player) && YtMusic.currentDuration > 0)
+			return StringUtils.boundedMediaPosition(YtMusic.currentPosition, len);
+		const isMpd = player === root.mpdPlayer;
+		const rawPos = (isMpd && (player.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
+			? LocalMusic.lyricsPosition
+			: (player.position ?? 0);
+		return StringUtils.boundedMediaPosition(rawPos, len);
+	}
+
+	function _hasActiveYoutubeSessionMetadata(player): bool {
+		if (!player?.isPlaying) return false;
+		const artist = (player.trackArtist ?? "").trim();
+		const artUrl = (player.trackArtUrl ?? "").trim();
+		const length = (player.lengthSupported ?? false)
+			? (player.length ?? 0)
+			: root._lookupResolvedTrackLength(player);
+		return artist.length > 0 || artUrl.length > 0 || length >= 30;
 	}
 
 	function isRealPlayer(player) {
@@ -578,9 +804,13 @@ Singleton {
 		const lowerAlbum = (player?.trackAlbum ?? "").toLowerCase();
 		// YouTube hover previews inherit the browser MPRIS service, but their
 		// page URL has no playable video id. Reject them before the streaming
-		// branches below can accept isPlaying/length as sufficient evidence.
+		// branches below can accept isPlaying/length as sufficient evidence,
+		// unless the browser has an actively playing MediaSession with real
+		// artist/art/duration metadata (Firefox/Zen reports origin-only
+		// https://www.youtube.com/ when unfocused or on another workspace).
 		if (root._isBrowserPlayer(player) && root._isYoutubeUrl(rawUrl)
-				&& root._extractYoutubeVideoId(rawUrl).length === 0) {
+				&& root._extractYoutubeVideoId(rawUrl).length === 0
+				&& !root._hasActiveYoutubeSessionMetadata(player)) {
 			return false;
 		}
 		if (lowerUrl.includes("x.com") || lowerUrl.includes("twitter.com") ||
@@ -695,7 +925,9 @@ Singleton {
 		// Enhanced GIF/short media detection
 		const trackUrl = player.metadata?.["xesam:url"] ?? "";
 		const mimeType = player.metadata?.["xesam:mimeType"] ?? "";
-		const trackLength = player.length ?? 0;
+		const trackLength = (player.lengthSupported ?? false)
+			? (player.length ?? 0)
+			: root._lookupResolvedTrackLength(player);
 		
 		// Filter very short media (< 5 seconds) - likely GIFs or ads
 		if (trackLength > 0 && trackLength < 5) return false;
@@ -728,7 +960,8 @@ Singleton {
 		}
 		// Ignore YouTube hover cards with zero progress (no playback yet)
 		if (isBrowserPlayer && root._isYoutubeUrl(trackUrl)) {
-			if (root._extractYoutubeVideoId(trackUrl).length === 0) return false;
+			if (root._extractYoutubeVideoId(trackUrl).length === 0
+					&& !root._hasActiveYoutubeSessionMetadata(player)) return false;
 			if (!player.isPlaying) {
 				const hasProgress = (player.position ?? 0) > 0 || (player.length ?? 0) > 0;
 				if (!hasProgress) return false;
@@ -1027,6 +1260,8 @@ Singleton {
 
 			Component.onCompleted: {
 				root._ensureBrowserCapabilities(modelData)
+				root._rememberPlayerLength(modelData)
+				root._syncBrowserPlayerPositionAndLength(modelData)
 				// Only track if it's a real player
 				if (!root._manualPlayerSelection && isRealPlayer(modelData) && (root.trackedPlayer == null || modelData.isPlaying)) {
 					root.trackedPlayer = modelData;
@@ -1062,6 +1297,7 @@ Singleton {
 				// Increment version to force activePlayer re-evaluation
 				root._playbackStateVersion++;
 				_streamMetadataRefresh.restart();
+				root._syncBrowserPlayerPositionAndLength(modelData);
 				// Update tracked player if this one started playing
 				if (!root._manualPlayerSelection && modelData.isPlaying && root.trackedPlayer !== modelData && isRealPlayer(modelData)) {
 					root.trackedPlayer = modelData;
@@ -1072,11 +1308,28 @@ Singleton {
 			
 			// Rebuild when track title changes (affects isRealPlayer filter)
 			function onTrackTitleChanged() {
+				root._rememberPlayerLength(modelData);
+				root._syncBrowserPlayerPositionAndLength(modelData);
 				root._rebuildPlayerList();
 			}
 
 			function onTrackArtUrlChanged() {
 				root._rebuildPlayerList();
+			}
+
+			function onMetadataChanged() {
+				root._rememberPlayerLength(modelData);
+				root._syncBrowserPlayerPositionAndLength(modelData);
+			}
+
+			function onLengthChanged() {
+				root._rememberPlayerLength(modelData);
+			}
+
+			function onLengthSupportedChanged() {
+				root._rememberPlayerLength(modelData);
+				if (!(modelData.lengthSupported ?? false))
+					root._syncBrowserPlayerPositionAndLength(modelData);
 			}
 		}
 	}
@@ -1349,16 +1602,26 @@ Singleton {
 		return ["chromium", "googlechrome", "chrome", "firefox", "zen", "brave", "vivaldi", "opera", "librewolf", "floorp", "waterfox"].includes(key);
 	}
 
+	property var _desktopEntryHintCache: ({})
+
 	function _desktopEntryForHint(value): var {
 		const hint = root._cleanDisplayName(value);
 		if (!hint.length) return null;
+		const entries = DesktopEntries.applications.values ?? [];
+		const cacheKey = `${entries.length}:${hint}`;
+		const cached = root._desktopEntryHintCache[cacheKey];
+		if (cached !== undefined)
+			return cached;
 		const direct = AppSearch.lookupDesktopEntry(hint);
-		if (direct) return direct;
+		if (direct) {
+			root._desktopEntryHintCache[cacheKey] = direct;
+			return direct;
+		}
 		const hintKey = root._volumeKey(hint);
 		const hintTokens = root._volumeTokens(hint);
 		let best = null;
 		let bestScore = 0;
-		for (const entry of DesktopEntries.applications.values ?? []) {
+		for (const entry of entries) {
 			if (!entry || entry.noDisplay) continue;
 			const command = Array.from(entry.command ?? []);
 			const values = [entry.id, entry.name, entry.genericName, entry.startupClass, command.length > 0 ? command[0] : ""];
@@ -1385,7 +1648,9 @@ Singleton {
 				best = entry;
 			}
 		}
-		return bestScore >= 36 ? best : null;
+		const resolved = bestScore >= 36 ? best : null;
+		root._desktopEntryHintCache[cacheKey] = resolved;
+		return resolved;
 	}
 
 	function playerDisplayName(player): string {
@@ -1514,6 +1779,10 @@ Singleton {
 		return !!(player && player === root.mpdPlayer && LocalMusic.available);
 	}
 
+	function _playerTrackKey(player): string {
+		return String(player?.dbusName || player?.identity || player?.uniqueId || "");
+	}
+
 	function _softwareLoopSupported(player): bool {
 		return !!(player && !player.loopSupported && (player.canControl || player.canSeek || player.canTogglePlaying));
 	}
@@ -1606,7 +1875,7 @@ Singleton {
 				const mode = states[key];
 				if (!key || mode === undefined || Number(mode) === Number(MprisLoopState.None))
 					continue;
-				const length = Number(player?.length ?? 0);
+				const length = Number(root.effectiveLengthForPlayer(player) ?? 0);
 				const pos = Number(player?.position ?? 0);
 				const prevPos = Number(lastPositions[key] ?? 0);
 				if (Number.isFinite(pos) && pos > 0)

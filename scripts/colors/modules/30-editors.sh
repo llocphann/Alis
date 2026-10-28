@@ -92,9 +92,10 @@ apply_code_editors() {
 
       _check_vscode_fork() {
         local jq_key="$1" fork_key="$2" config_dir="$3"
-        if [[ $(echo "$editors_config" | jq -r ".$jq_key // true") == 'true' ]] && [[ -d "$config_dir" ]]; then
+        [[ -d "$config_dir" ]] || return 0
+        if [[ $(printf '%s' "$editors_config" | jq -r ".$jq_key // true") == 'true' ]]; then
           enabled_forks+=("$fork_key")
-        elif [[ -d "$config_dir" ]]; then
+        else
           disabled_forks+=("$fork_key")
         fi
       }
@@ -118,12 +119,14 @@ apply_code_editors() {
     fi
 
     if [[ ${#enabled_forks[@]} -gt 0 ]]; then
-      if ensure_vscode_themegen; then
-        local vscode_cmd=("$VSCODE_THEMEGEN_BIN" "--colors" "$colors_file" "--terminal-json" "$TERMINAL_FILE" "--scss" "$SCSS_FILE")
-        for fork in "${enabled_forks[@]}"; do
-          vscode_cmd+=("--forks" "$fork")
-        done
-        "${vscode_cmd[@]}" >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1 || true
+      local vscode_args=("--colors" "$colors_file" "--terminal-json" "$TERMINAL_FILE" "--scss" "$SCSS_FILE")
+      for fork in "${enabled_forks[@]}"; do
+        vscode_args+=("--forks" "$fork")
+      done
+      if "$REPO_ROOT/scripts/native-dispatch" vscode-theme "${vscode_args[@]}" >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1; then
+        :
+      elif ensure_vscode_themegen; then
+        "$VSCODE_THEMEGEN_BIN" "${vscode_args[@]}" >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1 || true
       else
         "$python_cmd" "$SCRIPT_DIR/generate_terminal_configs.py" --scss "$SCSS_FILE" --colors "$colors_file" --terminal-json "$TERMINAL_FILE" --vscode --vscode-forks "${enabled_forks[@]}" >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1 || true
       fi
@@ -131,19 +134,23 @@ apply_code_editors() {
 
     # Strip theme from individually disabled forks
     if [[ ${#disabled_forks[@]} -gt 0 ]]; then
-      if ensure_vscode_themegen; then
-        local strip_cmd=("$VSCODE_THEMEGEN_BIN" "--strip")
-        for fork in "${disabled_forks[@]}"; do
-          strip_cmd+=("--forks" "$fork")
-        done
-        "${strip_cmd[@]}" >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1 || true
+      local strip_args=("--strip")
+      for fork in "${disabled_forks[@]}"; do
+        strip_args+=("--forks" "$fork")
+      done
+      if "$REPO_ROOT/scripts/native-dispatch" vscode-theme "${strip_args[@]}" >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1; then
+        :
+      elif ensure_vscode_themegen; then
+        "$VSCODE_THEMEGEN_BIN" "${strip_args[@]}" >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1 || true
       else
         "$python_cmd" "$SCRIPT_DIR/vscode/theme_generator.py" --strip --forks "${disabled_forks[@]}" >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1 || true
       fi
     fi
   else
     # VSCode theming globally disabled — strip all installed forks
-    if ensure_vscode_themegen; then
+    if "$REPO_ROOT/scripts/native-dispatch" vscode-theme --strip >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1; then
+      :
+    elif ensure_vscode_themegen; then
       "$VSCODE_THEMEGEN_BIN" --strip >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1 || true
     else
       "$python_cmd" "$SCRIPT_DIR/vscode/theme_generator.py" --strip >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1 || true
@@ -154,7 +161,9 @@ apply_code_editors() {
     local enable_opencode
     enable_opencode=$(config_bool '.appearance.wallpaperTheming.enableOpenCode' false)
     if [[ "$enable_opencode" == 'true' ]]; then
-      if ensure_opencode_themegen; then
+      if "$REPO_ROOT/scripts/native-dispatch" opencode-theme "$SCSS_FILE" "$colors_file" "$TERMINAL_FILE" >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1; then
+        :
+      elif ensure_opencode_themegen; then
         "$OPENCODE_THEMEGEN_BIN" "$SCSS_FILE" "$colors_file" "$TERMINAL_FILE" >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1 || true
       else
         "$python_cmd" "$SCRIPT_DIR/opencode/theme_generator.py" "$SCSS_FILE" "$colors_file" "$TERMINAL_FILE" >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1 || true

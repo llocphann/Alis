@@ -206,6 +206,7 @@ Item {
 
                 // Progress bar
                 PlayerProgress {
+                    id: playerProgress
                     Layout.fillWidth: true
                     implicitHeight: 16
                     position: playerBase.effectivePosition
@@ -233,7 +234,7 @@ Item {
                     spacing: 4
 
                     StyledText {
-                        text: StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)
+                        text: StringUtils.friendlyTimeForSeconds(playerProgress.effectiveDisplayedPosition)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: Appearance.zzzEverywhere ? Appearance.zzz.ink

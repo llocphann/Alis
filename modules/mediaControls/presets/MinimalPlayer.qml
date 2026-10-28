@@ -183,6 +183,7 @@ Item {
 
                 // Progress bar
                 PlayerProgress {
+                    id: playerProgress
                     Layout.fillWidth: true
                     Layout.topMargin: 2
                     implicitHeight: 14
@@ -208,7 +209,7 @@ Item {
 
                 StyledText {
                     Layout.alignment: Qt.AlignRight
-                    text: StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)
+                    text: StringUtils.friendlyTimeForSeconds(playerProgress.effectiveDisplayedPosition)
                         + " / "
                         + StringUtils.friendlyTimeForSeconds(playerBase.effectiveLength)
                     font.pixelSize: Appearance.font.pixelSize.smallest

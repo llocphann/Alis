@@ -40,4 +40,18 @@ const ins={left:0,top:0,right:0,bottom:0},record={surface:{x:150,y:-50,width:120
 const small=G.distance(140.5,.5,400,240,ins,12,[record],24,29,{top:true});
 const large=G.distance(140.5,.5,400,240,ins,64,[record],24,29,{top:true});
 check(small!==large,'Surface Curvature did not change the actual contact');
+// Nonzero adjacent Screen Edges round their inner corners against an enabled
+// 0px Edge on all four sides (both bare edges and Scale-modules expanded strips).
+for(const edge of ['top','right','bottom','left'])for(const strip of [10,44]){
+ const mixed={left:strip,top:strip,right:strip,bottom:strip,[edge]:0};
+ const pts=edge==='top'?[[strip+4,4],[400-strip-4,4]]
+  :edge==='bottom'?[[strip+4,236],[400-strip-4,236]]
+  :edge==='left'?[[4,strip+4],[4,240-strip-4]]
+  :[[396,strip+4],[396,240-strip-4]];
+ for(const [px,py] of pts){
+  const dOff=G.distance(px,py,400,240,mixed,20,[],24,29,{});
+  const dOn=G.distance(px,py,400,240,mixed,20,[],24,29,{[edge]:true});
+  check(dOff>0 && dOn<0,`adjacent ${strip}px corner on 0px ${edge} did not round at (${px},${py})`);
+ }
+}
 console.log('ABYSS_ZERO_CORNERS_PASS',checks);

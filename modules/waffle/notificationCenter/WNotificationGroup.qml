@@ -174,7 +174,7 @@ Item {
                 color: Looks.colors.danger
 
                 SequentialAnimation on opacity {
-                    running: root.hasCritical
+                    running: root.visible && (root.QsWindow.window?.visible ?? true) && root.hasCritical
                     loops: Animation.Infinite
                     NumberAnimation { to: 0.4; duration: 600 }
                     NumberAnimation { to: 1; duration: 600 }

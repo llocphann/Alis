@@ -1,6 +1,6 @@
 pkgbase = alis-shell-git
 	pkgdesc = Alis shell payload, launcher, and user service (git)
-	pkgver = 1.0.0.r0.g0000000
+	pkgver = 1.0.1.r0.g0000000
 	pkgrel = 1
 	url = https://github.com/llocphann/Alis
 	install = alis-shell-git.install

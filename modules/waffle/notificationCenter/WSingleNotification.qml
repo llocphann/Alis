@@ -328,7 +328,7 @@ MouseArea {
                     color: Looks.colors.danger
 
                     SequentialAnimation on opacity {
-                        running: root.isCritical
+                        running: root.visible && (root.QsWindow.window?.visible ?? true) && root.isCritical
                         loops: Animation.Infinite
                         NumberAnimation { to: 0.4; duration: 600 }
                         NumberAnimation { to: 1; duration: 600 }

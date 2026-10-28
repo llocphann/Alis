@@ -226,7 +226,7 @@ MouseArea {
             Layout.alignment: Qt.AlignVCenter
 
             SequentialAnimation on opacity {
-                running: root.pomodoroActive && root.pomodoroRunning && !(TimerService?.pomodoroBreak ?? false)
+                running: root.visible && (root.QsWindow.window?.visible ?? true) && root.pomodoroActive && root.pomodoroRunning && !(TimerService?.pomodoroBreak ?? false)
                 loops: Animation.Infinite
                 NumberAnimation { to: 0.5; duration: 800; easing.type: Easing.InOutSine }
                 NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }

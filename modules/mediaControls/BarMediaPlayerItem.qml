@@ -26,6 +26,21 @@ Item { // Player instance - Old style design
     property string artDownloadLocation: Directories.coverArt
     property color artDominantColor: ColorUtils.mix((colorQuantizer?.colors[0] ?? Appearance.colors.colPrimary), Appearance.colors.colPrimaryContainer, 0.8) || Appearance.colors.colSecondaryContainer
     readonly property bool downloaded: artworkResolver.ready
+    readonly property bool isMpdPlayer: player !== null && player === MprisController.mpdPlayer
+    readonly property real _rawEffectiveLength: ((player?.lengthSupported ?? false) && (player?.length ?? 0) > 0)
+        ? (player?.length ?? 0)
+        : (isMpdPlayer
+            ? LocalMusic.currentDuration
+            : MprisController.effectiveLengthForPlayer(root.player))
+    readonly property real effectiveLength: StringUtils.validMediaDuration(root._rawEffectiveLength)
+    readonly property real _rawEffectivePosition: (isMpdPlayer && (player?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
+        ? LocalMusic.lyricsPosition
+        : (player?.position ?? 0)
+    readonly property real effectivePosition: StringUtils.boundedMediaPosition(
+        root._rawEffectivePosition, root.effectiveLength)
+    readonly property real effectiveDisplayedPosition: (sliderLoader.item?.pressed ?? false)
+        ? Math.max(0, Math.min(root.effectiveLength, (sliderLoader.item?.value ?? 0) * root.effectiveLength))
+        : root.effectivePosition
 
     property string displayedArtFilePath: artworkResolver.displaySource
 
@@ -122,7 +137,7 @@ Item { // Player instance - Old style design
 
         AngelPartialBorder { targetRadius: background.radius; coverage: 0.5 }
 
-        layer.enabled: true
+        layer.enabled: root.presentationActive
         layer.effect: OpacityMask {
             maskSource: Rectangle {
                 width: background.width
@@ -178,7 +193,7 @@ Item { // Player instance - Old style design
             opacity: Appearance.alisEverywhere ? 0.5 : 0.3
             visible: root.displayedArtFilePath !== ""
 
-            layer.enabled: Appearance.effectsEnabled
+            layer.enabled: root.presentationActive && Appearance.effectsEnabled
             layer.effect: MultiEffect {
                 source: blurredArt
                 anchors.fill: source
@@ -224,7 +239,7 @@ Item { // Player instance - Old style design
                 radius: Appearance.rounding.verysmall
                 color: ColorUtils.transparentize(blendedColors.colLayer1, 0.5)
 
-                layer.enabled: true
+                layer.enabled: root.presentationActive
                 layer.effect: OpacityMask {
                     maskSource: Rectangle {
                         width: artBackground.width
@@ -299,7 +314,7 @@ Item { // Player instance - Old style design
                             : Appearance.auroraEverywhere ? Appearance.aurora.colTextSecondary
                             : blendedColors.colSubtext
                         elide: Text.ElideRight
-                        text: `${StringUtils.friendlyTimeForSeconds(root.player?.position)} / ${StringUtils.friendlyTimeForSeconds(root.player?.length)}`
+                        text: `${StringUtils.friendlyTimeForSeconds(root.effectiveDisplayedPosition)} / ${StringUtils.friendlyTimeForSeconds(root.effectiveLength)}`
                     }
                     RowLayout {
                         id: sliderRow
@@ -334,10 +349,16 @@ Item { // Player instance - Old style design
                                     handleColor: Appearance.alisEverywhere ? Appearance.alis.colPrimary
                                         : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                                         : blendedColors.colPrimary
-                                    value: root.player?.length > 0 ? root.player.position / root.player.length : 0
-                                    onMoved: {
-                                        root.player.position = value * root.player.length;
+                                    liveValue: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
+                                    tooltipContent: StringUtils.friendlyTimeForSeconds(value * root.effectiveLength)
+                                    onSeekCommitted: (val) => {
+                                        const target = val * root.effectiveLength
+                                        if (root.isMpdPlayer)
+                                            LocalMusic.seek(target)
+                                        else if (root.player)
+                                            root.player.position = target
                                     }
+                                    scrollable: true
                                 }
                             }
 
@@ -357,7 +378,7 @@ Item { // Player instance - Old style design
                                     trackColor: Appearance.alisEverywhere ? Appearance.alis.colLayer2
                                         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
                                         : blendedColors.colSecondaryContainer
-                                    value: root.player?.length > 0 ? root.player.position / root.player.length : 0
+                                    value: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
                                 }
                             }
                         }

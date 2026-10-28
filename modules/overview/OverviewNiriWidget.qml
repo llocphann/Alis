@@ -120,7 +120,9 @@ Item {
 
     property real baseWorkspaceWidth: (logicalWidth * root.scale) / logicalScale
     property real baseWorkspaceHeight: (logicalHeight * root.scale) / logicalScale
-    property real workspaceImplicitWidth: {
+    readonly property real workspaceAspectRatio:
+        baseWorkspaceHeight <= 0 || baseWorkspaceWidth <= 0 ? 1 : baseWorkspaceHeight / baseWorkspaceWidth
+    property real naturalWorkspaceImplicitWidth: {
         const cols = root.overviewColumns;
         const spacing = root.workspaceSpacing;
         const totalBase = baseWorkspaceWidth * cols + spacing * Math.max(0, cols - 1);
@@ -129,10 +131,23 @@ Item {
             return baseWorkspaceWidth;
         return (maxWidth - spacing * Math.max(0, cols - 1)) / cols;
     }
-    property real workspaceImplicitHeight: {
-        const aspect = baseWorkspaceHeight <= 0 || baseWorkspaceWidth <= 0 ? 1 : baseWorkspaceHeight / baseWorkspaceWidth;
-        return workspaceImplicitWidth * aspect;
+    property real naturalWorkspaceImplicitHeight: naturalWorkspaceImplicitWidth * workspaceAspectRatio
+    property real workspaceImplicitWidth: {
+        const cols = Math.max(1, root.overviewColumns);
+        const rows = Math.max(1, root.overviewRows);
+        const spacing = root.workspaceSpacing;
+        const pad = (root.taskViewMode ? 16 : 10) * 2 + root.presentationMargin * 2;
+        let w = root.naturalWorkspaceImplicitWidth;
+        if (root.embeddedSurface && root.width > pad + spacing * (cols - 1) + 1) {
+            w = Math.min(w, (root.width - pad - spacing * (cols - 1)) / cols);
+        }
+        if (root.embeddedSurface && root.height > pad + spacing * (rows - 1) + 1 && root.workspaceAspectRatio > 0) {
+            const maxH = (root.height - pad - spacing * (rows - 1)) / rows;
+            w = Math.min(w, maxH / root.workspaceAspectRatio);
+        }
+        return Math.max(1, w);
     }
+    property real workspaceImplicitHeight: workspaceImplicitWidth * workspaceAspectRatio
 
     property real workspaceNumberMargin: 80
     property real workspaceNumberSize: root.taskViewMode ? 120 : 250
@@ -167,8 +182,12 @@ Item {
 
     readonly property real presentationMargin:
         root.embeddedSurface ? 0 : Appearance.sizes.elevationMargin
-    implicitWidth: overviewBackground.implicitWidth + root.presentationMargin * 2
-    implicitHeight: overviewBackground.implicitHeight + root.presentationMargin * 2
+    implicitWidth: Math.max(1, root.overviewColumns) * root.naturalWorkspaceImplicitWidth
+        + Math.max(0, root.overviewColumns - 1) * root.workspaceSpacing
+        + overviewBackground.padding * 2 + root.presentationMargin * 2
+    implicitHeight: Math.max(1, root.overviewRows) * root.naturalWorkspaceImplicitHeight
+        + Math.max(0, root.overviewRows - 1) * root.workspaceSpacing
+        + overviewBackground.padding * 2 + root.presentationMargin * 2
 
     function openWindowContext(windowItem, mouseX, mouseY) {
         if (!windowItem || !windowItem.windowData) return

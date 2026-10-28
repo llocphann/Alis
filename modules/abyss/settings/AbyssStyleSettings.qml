@@ -487,7 +487,6 @@ ColumnLayout {
                     spacing: 10
 
                     AbyssPositionSettings { compactActions: true }
-                    AbyssOutputSelector { configPath:"sidebar.screenList";title:"Sidebar outputs" }
                     AbyssOutputSelector { configPath:"notifications.screenList";title:"Notification outputs" }
                 }
 

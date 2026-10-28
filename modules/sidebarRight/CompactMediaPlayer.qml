@@ -457,14 +457,15 @@ Item {
                                 spacing: 6
 
                                 StyledText {
-                                    text: _formatTime(playerBase.effectivePosition)
-                                font.pixelSize: Appearance.font.pixelSize.smallest
-                                font.family: Appearance.font.family.numbers
-                                font.weight: Font.Medium
-                                color: root.colTextSecondary
+                                    text: _formatTime(playerProgress.effectiveDisplayedPosition)
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    font.family: Appearance.font.family.numbers
+                                    font.weight: Font.Medium
+                                    color: root.colTextSecondary
                                 }
 
                                 PlayerProgress {
+                                    id: playerProgress
                                     Layout.fillWidth: true
                                     implicitHeight: 12
                                     position: playerBase.effectivePosition
@@ -683,10 +684,7 @@ Item {
 
     // ── Helpers ───────────────────────────────────────────────────
     function _formatTime(seconds: real): string {
-        if (!seconds || seconds <= 0) return "0:00"
-        const mins = Math.floor(seconds / 60)
-        const secs = Math.floor(seconds % 60)
-        return mins + ":" + (secs < 10 ? "0" : "") + secs
+        return StringUtils.friendlyTimeForSeconds(seconds)
     }
 
     // ── Transport button component ────────────────────────────────

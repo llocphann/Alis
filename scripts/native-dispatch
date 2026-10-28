@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "${BASH_SOURCE[0]}" == /*/scripts/native-dispatch ]]; then
+    ROOT_DIR="${BASH_SOURCE[0]%/scripts/native-dispatch}"
+else
+    ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+fi
 source "$ROOT_DIR/scripts/lib/brand-env-compat.sh"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/alis"
 MODE_FILE="$STATE_DIR/native-backend"
@@ -107,6 +111,9 @@ case "$cmd" in
 
     input-lock)
         if want_rust && rust_ready alis-inputd; then
+            if (( $# == 0 )); then
+                exec "$BIN_DIR/alis-inputd" --mode locks
+            fi
             "$BIN_DIR/alis-inputd" --mode locks "$@"
             rc=$?
             if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
@@ -117,6 +124,9 @@ case "$cmd" in
 
     input-keys)
         if want_rust && rust_ready alis-inputd; then
+            if (( $# == 0 )); then
+                exec "$BIN_DIR/alis-inputd" --mode keys
+            fi
             "$BIN_DIR/alis-inputd" --mode keys "$@"
             rc=$?
             if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
@@ -241,6 +251,47 @@ case "$cmd" in
         fi
         py="$(python_bin)"
         exec "$py" "$ROOT_DIR/scripts/images/least_busy_region.py" "$@"
+        ;;
+
+    color-tags)
+        if want_rust && rust_ready alis-theme; then
+            "$BIN_DIR/alis-theme" --color-tags "$@"
+            rc=$?
+            if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
+            echo "[native-dispatch] Rust color-tags failed ($rc), falling back to Python" >&2
+        fi
+        py="$(python_bin)"
+        exec "$py" "$ROOT_DIR/scripts/colors/wallpaper-color-tags.py" "$@"
+        ;;
+
+    vscode-theme)
+        if want_rust && rust_ready alis-theme; then
+            "$BIN_DIR/alis-theme" --vscode-theme "$@"
+            rc=$?
+            if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
+            echo "[native-dispatch] Rust vscode-theme failed ($rc), falling back to Python/Go" >&2
+        fi
+        exit 69
+        ;;
+
+    opencode-theme)
+        if want_rust && rust_ready alis-theme; then
+            "$BIN_DIR/alis-theme" --opencode-theme "$@"
+            rc=$?
+            if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
+            echo "[native-dispatch] Rust opencode-theme failed ($rc), falling back to Python/Go" >&2
+        fi
+        exit 69
+        ;;
+
+    zed-theme)
+        if want_rust && rust_ready alis-theme; then
+            "$BIN_DIR/alis-theme" --zed-theme "$@"
+            rc=$?
+            if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
+            echo "[native-dispatch] Rust zed-theme failed ($rc), falling back to Python/Go" >&2
+        fi
+        exit 69
         ;;
 
     scan-plugins)

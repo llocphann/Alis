@@ -339,7 +339,7 @@ Singleton {
         const url = player.metadata?.["xesam:url"] ?? ""
         const art = player.trackArtUrl ?? ""
         const pos = player.position ?? 0
-        const len = player.length ?? 0
+        const len = (player.lengthSupported ?? false) ? (player.length ?? 0) : 0
 
         // Don't sync title/artist from MPRIS — we set them ourselves in _playInternal
         // and --force-media-title feeds back a concatenated "Title - Artist" string

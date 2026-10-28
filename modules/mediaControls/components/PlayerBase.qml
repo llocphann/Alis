@@ -41,12 +41,20 @@ QtObject {
     // Artwork motion is keyed only by real art identity. Metadata-only updates
     // must not move the cover, or one track change animates twice.
     readonly property string mediaTransitionKey: (root.effectiveArtUrl ?? "").split("?")[0].split("#")[0]
-    readonly property real effectiveLength: isYtMusicPlayer
+    readonly property bool isMpdPlayer: player !== null && player === MprisController.mpdPlayer
+    readonly property real _rawEffectiveLength: isYtMusicPlayer
         ? YtMusic.currentDuration
-        : (player?.length ?? 0)
+        : (((player?.lengthSupported ?? false) && (player?.length ?? 0) > 0)
+            ? (player?.length ?? 0)
+            : (isMpdPlayer
+                ? LocalMusic.currentDuration
+                : MprisController.effectiveLengthForPlayer(root.player)))
+    readonly property real effectiveLength: StringUtils.validMediaDuration(root._rawEffectiveLength)
     readonly property real _rawEffectivePosition: isYtMusicPlayer
         ? YtMusic.currentPosition
-        : (player?.position ?? 0)
+        : ((isMpdPlayer && (player?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
+            ? LocalMusic.lyricsPosition
+            : (player?.position ?? 0))
     readonly property real effectivePosition: StringUtils.boundedMediaPosition(
         root._rawEffectivePosition, root.effectiveLength)
     readonly property bool effectiveIsPlaying: isYtMusicPlayer
@@ -109,6 +117,8 @@ QtObject {
     function seek(seconds: real): void {
         if (isYtMusicPlayer) {
             YtMusic.seek(seconds)
+        } else if (isMpdPlayer) {
+            LocalMusic.seek(seconds)
         } else if (player) {
             player.position = seconds
         }

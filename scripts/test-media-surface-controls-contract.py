@@ -203,4 +203,62 @@ for source, name in (
         f"{name} must not treat MPRIS Playlist as repeat-one.",
     )
 
+styled_slider = read("modules/common/widgets/StyledSlider.qml")
+bar_media_item = read("modules/mediaControls/BarMediaPlayerItem.qml")
+lock_media_widget = read("modules/lock/LockMediaWidget.qml")
+ytmusic_card = read("modules/sidebarLeft/widgets/YtMusicPlayerCard.qml")
+it_player = read("modules/sidebarLeft/innertune/ITPlayer.qml")
+mpdd_source = read("native/alis-mpdd/src/main.rs")
+
+for token in (
+    "function validMediaDuration(duration)",
+    "const total = root.validMediaDuration(duration);",
+):
+    require(string_utils, token, f"StringUtils duration normalization missing: {token}")
+
+for token in (
+    "property real liveValue: NaN",
+    "signal seekCommitted(real value)",
+    "restoreMode: Binding.RestoreBindingOrValue",
+    "useParentHover: false",
+    "externalHoverState: root.pressed",
+):
+    require(styled_slider, token, f"StyledSlider non-breaking liveValue binding contract missing: {token}")
+
+for source, name in (
+    (player_progress, "PlayerProgress"),
+    (player, "PlayerControl"),
+    (left_widget, "MediaPlayerWidget"),
+    (control_panel, "MediaSection"),
+    (bar_media_item, "BarMediaPlayerItem"),
+    (lock_media_widget, "LockMediaWidget"),
+    (ytmusic_card, "YtMusicPlayerCard"),
+    (it_player, "ITPlayer"),
+):
+    require(source, "liveValue:", f"{name} duration slider must bind liveValue so C++ setValue does not break updates.")
+    require(source, "tooltipContent: StringUtils.friendlyTimeForSeconds(", f"{name} duration slider must display formatted media time in tooltip.")
+    require(source, "onSeekCommitted:", f"{name} duration slider must commit seek on release/wheel.")
+
+require(lock_media_widget, "import qs", "LockMediaWidget must import qs for GlobalStates.")
+require(local_service, "property real _lastMpdPositionSampleMs: 0", "LocalMusic must track fresh MPD sample timestamps without snapping back after 8s.")
+require(mpdd_source, "if had_cached && !err.to_string().starts_with(\"ACK \")", "alis-mpdd must reconnect and retry once when a cached MPD socket times out.")
+
+for token in (
+    "function effectiveLengthForPlayer(player): real",
+    "function _resolveExternalDurationForPlayer(player): void",
+    "function _syncBrowserPlayerPositionAndLength(player): void",
+):
+    require(mpris, token, f"MprisController browser duration/position resolution missing: {token}")
+
+for source, name in (
+    (player_base, "PlayerBase"),
+    (player, "PlayerControl"),
+    (left_widget, "MediaPlayerWidget"),
+    (control_panel, "MediaSection"),
+    (bar_media_item, "BarMediaPlayerItem"),
+    (lock_media_widget, "LockMediaWidget"),
+):
+    require(source, "lengthSupported", f"{name} must guard player.length with player.lengthSupported.")
+    require(source, "MprisController.effectiveLengthForPlayer(", f"{name} must fall back to MprisController.effectiveLengthForPlayer when lengthSupported is false.")
+
 print("Unified media controls/CAVA + sidebar edge reveal contract: OK")

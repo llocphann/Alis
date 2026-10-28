@@ -62,24 +62,24 @@ apply_term_sequences() {
   sequences_tmp="$(mktemp "$STATE_DIR/user/generated/terminal/sequences.XXXXXX")"
   cp "$SEQUENCES_TEMPLATE" "$sequences_tmp"
 
+  local sed_args=(-e 's/\$alpha/100/g')
   if [[ -f "$TERMINAL_FILE" ]] && command -v jq &>/dev/null; then
     local idx value
-    for idx in $(seq 0 15); do
-      value=$(jq -r ".term${idx} // empty" "$TERMINAL_FILE" 2>/dev/null || true)
+    while IFS=$'\t' read -r idx value; do
       [[ -n "$value" ]] || continue
-      sed -i "s/\$term${idx} #/${value#\#}/g" "$sequences_tmp"
-    done
+      sed_args+=(-e "s/\\\$term${idx} #/${value#\#}/g")
+    done < <(jq -r 'to_entries[] | select(.key | test("^term([0-9]|1[0-5])$")) | "\(.key | ltrimstr("term"))\t\(.value // "")"' "$TERMINAL_FILE" 2>/dev/null || true)
   else
     local color_names color_values
     mapfile -t color_names < <(cut -d: -f1 "$SCSS_FILE")
     mapfile -t color_values < <(cut -d: -f2 "$SCSS_FILE" | cut -d ' ' -f2 | cut -d ';' -f1)
 
     for i in "${!color_names[@]}"; do
-      sed -i "s/${color_names[$i]} #/${color_values[$i]#\#}/g" "$sequences_tmp"
+      sed_args+=(-e "s/${color_names[$i]} #/${color_values[$i]#\#}/g")
     done
   fi
 
-  sed -i 's/\$alpha/100/g' "$sequences_tmp"
+  sed -i "${sed_args[@]}" "$sequences_tmp"
   mv "$sequences_tmp" "$sequences_file"
 
   local shell_pids
@@ -166,11 +166,12 @@ apply_terminal_configs() {
   local all_supported=(kitty alacritty foot wezterm ghostty konsole starship omp btop lazygit yazi)
   local enabled_terminals=()
   for term in "${all_supported[@]}"; do
-    local enabled
-    enabled=$(config_bool ".appearance.wallpaperTheming.terminals.${term}" true)
     local binary_name="$term"
     [[ "$term" == "omp" ]] && binary_name='oh-my-posh'
-    [[ "$enabled" == 'true' ]] && command -v "$binary_name" &>/dev/null && enabled_terminals+=("$term")
+    command -v "$binary_name" &>/dev/null || continue
+    local enabled
+    enabled=$(config_bool ".appearance.wallpaperTheming.terminals.${term}" true)
+    [[ "$enabled" == 'true' ]] && enabled_terminals+=("$term")
   done
 
   [[ ${#enabled_terminals[@]} -gt 0 ]] || return 0

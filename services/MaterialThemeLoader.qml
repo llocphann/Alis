@@ -64,7 +64,7 @@ Singleton {
     }
     Timer {
         interval: 1500
-        running: true
+        running: root.themeProfileEnabled
         repeat: true
         onTriggered: {
             themeProfileControl.reload()
@@ -161,7 +161,7 @@ Singleton {
         root._previewPending = {serial: ++root._previewSerial, command: ["/usr/bin/nice", "-n", "10",
             Quickshell.shellPath("scripts/native-dispatch"), "theme-preview", path, JSON.stringify(options)]}
         if (root._previewWaitingForPresentation) {
-            previewFrameDeadline.interval = 2400
+            previewFrameDeadline.interval = 32
             previewFrameDeadline.restart()
         } else {
             previewFrameDeadline.stop()
@@ -173,16 +173,16 @@ Singleton {
         if (!root.previewActive || !root._previewWaitingForPresentation
                 || String(path ?? "") !== root.previewPath)
             return
-        // Let the compositor finish the final Liquid frame before invoking
-        // Python/native palette generation; latest selection still wins.
-        previewFrameDeadline.interval = 180
+        // Release after 2-frame texture prime so palette colors animate in
+        // parallel with the Liquid transition; latest selection still wins.
+        previewFrameDeadline.interval = 16
         previewFrameDeadline.restart()
     }
 
     Timer {
         id: previewFrameDeadline
         repeat: false
-        interval: 2400
+        interval: 32
         onTriggered: {
             root._previewWaitingForPresentation = false
             root._startNextPreview()
@@ -229,6 +229,24 @@ Singleton {
             root._previewExternalDeferred = false
             root.requestExternalApply(false, "preview-cancel")
         }
+    }
+
+    function commitColorPreview(path = ""): void {
+        if (!root.previewActive) return
+        const target = String(path ?? "")
+        const keepPreviewPalette = root._previewPalette !== null
+            && (target.length === 0 || target === root.previewPath)
+        previewFrameDeadline.stop()
+        root._previewWaitingForPresentation = false
+        root.previewActive = false
+        root.previewPath = ""
+        ++root._previewSerial
+        root._previewPending = null
+        if (!keepPreviewPalette)
+            root._restorePreviewBaseline()
+        root._previewBaseline = null
+        root._previewPalette = null
+        root._previewExternalDeferred = false
     }
 
     function _restorePreviewBaseline(): void {

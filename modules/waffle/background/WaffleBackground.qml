@@ -237,6 +237,10 @@ Variants {
                     source: wallpaperContainer.needsStaticTexture
                         ? panelRoot.wallpaperUrl : ""
                     visible: !panelRoot.wallpaperIsGif && !panelRoot.wallpaperIsVideo && ready
+                    onTransitionStarted: {
+                        const state = wallpaper.renderState()
+                        Wallpapers.liquidWallpaperTransitionFinished(state.pendingSource || state.source)
+                    }
                     onTransitionFinished: {
                         Wallpapers.liquidWallpaperTransitionFinished(wallpaper.renderState().displayedSource)
                     }

@@ -6,6 +6,7 @@ import Qt5Compat.GraphicalEffects as GE
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
+import qs
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
@@ -22,6 +23,21 @@ Item {
 
     required property MprisPlayer player
     readonly property bool hasPlayer: player && player.trackTitle
+    readonly property bool isMpdPlayer: player !== null && player === MprisController.mpdPlayer
+    readonly property real _rawEffectiveLength: ((player?.lengthSupported ?? false) && (player?.length ?? 0) > 0)
+        ? (player?.length ?? 0)
+        : (isMpdPlayer
+            ? LocalMusic.currentDuration
+            : MprisController.effectiveLengthForPlayer(root.player))
+    readonly property real effectiveLength: StringUtils.validMediaDuration(root._rawEffectiveLength)
+    readonly property real _rawEffectivePosition: (isMpdPlayer && (player?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
+        ? LocalMusic.lyricsPosition
+        : (player?.position ?? 0)
+    readonly property real effectivePosition: StringUtils.boundedMediaPosition(
+        root._rawEffectivePosition, root.effectiveLength)
+    readonly property real effectiveDisplayedPosition: (seekLoader.item?.pressed ?? false)
+        ? Math.max(0, Math.min(root.effectiveLength, (seekLoader.item?.value ?? 0) * root.effectiveLength))
+        : root.effectivePosition
     readonly property bool presentationActive: GlobalStates.screenLocked
         && root.visible
         && (root.QsWindow.window?.visible ?? false)
@@ -264,6 +280,7 @@ Item {
                     implicitHeight: 16
 
                     Loader {
+                        id: seekLoader
                         anchors.fill: parent
                         active: root.player?.canSeek ?? false
                         sourceComponent: StyledSlider {
@@ -273,8 +290,15 @@ Item {
                             highlightColor: Appearance.alisEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             trackColor: Appearance.alisEverywhere ? Appearance.alis.colLayer2 : Appearance.zzzEverywhere ? Appearance.colors.colLayer2 : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                             handleColor: Appearance.alisEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                            value: root.player?.length > 0 ? root.player.position / root.player.length : 0
-                            onMoved: root.player.position = value * root.player.length
+                            liveValue: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
+                            tooltipContent: StringUtils.friendlyTimeForSeconds(value * root.effectiveLength)
+                            onSeekCommitted: (val) => {
+                                const target = val * root.effectiveLength
+                                if (root.isMpdPlayer)
+                                    LocalMusic.seek(target)
+                                else if (root.player)
+                                    root.player.position = target
+                            }
                             scrollable: true
                         }
                     }
@@ -287,7 +311,7 @@ Item {
                             animateWave: root.player?.isPlaying ?? false
                             highlightColor: Appearance.alisEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             trackColor: Appearance.alisEverywhere ? Appearance.alis.colLayer2 : Appearance.zzzEverywhere ? Appearance.colors.colLayer2 : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
-                            value: root.player?.length > 0 ? root.player.position / root.player.length : 0
+                            value: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
                         }
                     }
                 }
@@ -298,7 +322,7 @@ Item {
                     spacing: 4
 
                     StyledText {
-                        text: StringUtils.friendlyTimeForSeconds(root.player?.position ?? 0)
+                        text: StringUtils.friendlyTimeForSeconds(root.effectiveDisplayedPosition)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: Appearance.alisEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
@@ -409,7 +433,7 @@ Item {
                     Item { Layout.fillWidth: true }
 
                     StyledText {
-                        text: StringUtils.friendlyTimeForSeconds(root.player?.length ?? 0)
+                        text: StringUtils.friendlyTimeForSeconds(root.effectiveLength)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: Appearance.alisEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)

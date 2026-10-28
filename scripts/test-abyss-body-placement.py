@@ -160,6 +160,68 @@ assert.equal(packed.dock.inward,0,
     'restored Dock returns to the physical Edge');
 
 assert.deepEqual(arrange([],1200,900,edgeInsets),{});
+
+// Dashboard + 1 or 2 Sidebars: Dashboard keeps full width while both Sidebars
+// shrink width at inward=0 instead of closing or being pushed inward.
+const hdInsets={left:14,right:14,top:40,bottom:14};
+function hdRequest(id,edge,order,depth,along,span,options={}) {
+ const padding=options.padding ?? 14;
+ const record=panel(1920,1080,hdInsets,edge,along,span,depth,1,padding,[],options.largeSurface ?? true);
+ return {id,open:true,order,priority:options.priority ?? 0,padding,
+   allowInward:options.allowInward ?? true,
+   preserveAspect:options.preserveAspect ?? false,
+   minSpan:Math.min(record.span,options.minSpan ?? (options.largeSurface ? 520 : 220)),
+   minDepth:Math.min(record.targetDepth,options.minDepth ?? (options.largeSurface ? 360 : 120)),record};
+}
+const leftSb=hdRequest('leftPanel','left',1,460,190,700,{priority:2,largeSurface:false});
+const rightSb=hdRequest('rightPanel','right',2,460,190,700,{priority:2,largeSurface:false});
+const dash=hdRequest('dashboard','top',3,818,268,1384,{priority:3,largeSurface:true});
+let hdPacked=arrange([leftSb,rightSb,dash],1920,1080,hdInsets);
+assert(hdPacked.dashboard.visible && !hdPacked.dashboard.shrunk,'Dashboard keeps full dimensions');
+assert(hdPacked.leftPanel.visible && hdPacked.leftPanel.inward===0 && hdPacked.leftPanel.shrunk && hdPacked.leftPanel.depth===258,
+    'Left sidebar shrinks width to exact gap beside Dashboard');
+assert(hdPacked.rightPanel.visible && hdPacked.rightPanel.inward===0 && hdPacked.rightPanel.shrunk && hdPacked.rightPanel.depth===258,
+    'Right sidebar shrinks width to exact gap beside Dashboard');
+
+// Overview hovered first (order=1, prio=2) then Sidebar opened second (order=2, prio=1):
+// Overview stays full size and Sidebar scales down below Overview at inward=0.
+const ovFirst=hdRequest('overview','top',1,232,100,1720,{priority:2,largeSurface:false,preserveAspect:true});
+const sbSecond=hdRequest('leftPanel','left',2,460,190,700,{priority:1,largeSurface:false});
+hdPacked=arrange([ovFirst,sbSecond],1920,1080,hdInsets);
+assert(hdPacked.overview.visible && !hdPacked.overview.shrunk && hdPacked.overview.inward===0,
+    'Overview hovered first retains full size at top edge');
+assert(hdPacked.leftPanel.visible && hdPacked.leftPanel.inward===0 && hdPacked.leftPanel.shrunk && hdPacked.leftPanel.along===268,
+    'Sidebar opened after Overview scales down below Overview at inward=0');
+
+// Sidebar opened first (order=1, prio=2) then Overview hovered second (order=2, prio=1):
+// Sidebar stays full size and Overview scales down above Sidebar at inward=0.
+const sbFirst=hdRequest('leftPanel','left',1,460,190,700,{priority:2,largeSurface:false});
+const ovSecond=hdRequest('overview','top',2,232,100,1720,{priority:1,largeSurface:false,preserveAspect:true});
+hdPacked=arrange([sbFirst,ovSecond],1920,1080,hdInsets);
+assert(hdPacked.leftPanel.visible && !hdPacked.leftPanel.shrunk && hdPacked.leftPanel.inward===0,
+    'Sidebar opened first retains full size at left edge');
+assert(hdPacked.overview.visible && hdPacked.overview.inward===0 && hdPacked.overview.shrunk && hdPacked.overview.depth===154,
+    'Overview opened after Sidebar scales down at top edge instead of jumping to bottom');
+
+// Edgebar + Sidebar same-priority order rules:
+// 1. Edgebar first (order=1, prio=2), Sidebar second (order=2, prio=2) -> Sidebar at inward=0, Edgebar pushed outward at full size.
+const ebFirst=hdRequest('quickNotes','left',1,346,696,370,{priority:2,largeSurface:false});
+const sbAfterEb=hdRequest('leftPanel','left',2,460,190,700,{priority:2,largeSurface:false});
+hdPacked=arrange([ebFirst,sbAfterEb],1920,1080,hdInsets);
+assert(hdPacked.leftPanel.visible && hdPacked.leftPanel.inward===0 && !hdPacked.leftPanel.shrunk,
+    'Sidebar opened after Edgebar claims inward=0 at full size');
+assert(hdPacked.quickNotes.visible && hdPacked.quickNotes.inward===456 && !hdPacked.quickNotes.shrunk,
+    'Edgebar opened first is pushed outward to inward=456 while keeping full original size');
+
+// 2. Sidebar first (order=1, prio=2), Edgebar second (order=2, prio=2) -> Edgebar at inward=0, Sidebar pushed outward at full size.
+const sbBeforeEb=hdRequest('leftPanel','left',1,460,190,700,{priority:2,largeSurface:false});
+const ebSecond=hdRequest('quickNotes','left',2,346,696,370,{priority:2,largeSurface:false});
+hdPacked=arrange([sbBeforeEb,ebSecond],1920,1080,hdInsets);
+assert(hdPacked.quickNotes.visible && hdPacked.quickNotes.inward===0 && !hdPacked.quickNotes.shrunk,
+    'Edgebar opened after Sidebar claims inward=0 at full size');
+assert(hdPacked.leftPanel.visible && hdPacked.leftPanel.inward===342 && !hdPacked.leftPanel.shrunk,
+    'Sidebar opened first is pushed outward to inward=342 while keeping full original size');
+
 console.log('PASS: anchors retained, inward partitioning, readable reflow, edge-locked Dock eviction/restoration and exact geometry');
 """
 raise SystemExit(subprocess.run(["node","-e",program],cwd=root).returncode)

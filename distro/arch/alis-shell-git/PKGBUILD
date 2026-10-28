@@ -1,5 +1,5 @@
 pkgname=alis-shell-git
-pkgver=1.0.0.r0.g0000000
+pkgver=1.0.1.r0.g0000000
 pkgrel=1
 pkgdesc='Alis shell payload, launcher, and user service (git)'
 arch=('x86_64')

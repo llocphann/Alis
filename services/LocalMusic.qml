@@ -117,17 +117,20 @@ Singleton {
     property real _lyricsAnchorMs: 0
     property real _lyricsLivePos: 0
     property real _lastMprisNudgeMs: 0
+    property real _lastMpdPositionSampleMs: 0
 
     readonly property real _baseLyricsPosition: {
-        const mprisPosition = Number(mprisPlayer?.position)
-        const mpdPosition = Math.max(0, currentPosition)
-        if (mpdConnected && mpdPosition > 0) {
-            if (!mprisAvailable || !Number.isFinite(mprisPosition) || Math.abs(mprisPosition - mpdPosition) <= 1.2)
+        const dur = StringUtils.validMediaDuration(currentDuration)
+        const mprisRaw = Number(mprisPlayer?.position)
+        const mpdPosition = StringUtils.boundedMediaPosition(currentPosition, dur)
+        const mpdSampleFresh = root._lastMpdPositionSampleMs > 0
+            && (Date.now() - root._lastMpdPositionSampleMs) < 1500
+        if (mprisAvailable && Number.isFinite(mprisRaw) && mprisRaw > 0) {
+            const mprisPosition = StringUtils.boundedMediaPosition(mprisRaw, dur)
+            if (mpdSampleFresh && Math.abs(mprisPosition - mpdPosition) > 2.5)
                 return mpdPosition
-        }
-        if (mprisAvailable && Number.isFinite(mprisPosition) && mprisPosition > 0) {
-            if (mpdPosition <= 0 || Math.abs(mprisPosition - mpdPosition) <= 8)
-                return Math.max(0, mprisPosition)
+            if (mprisPosition > 0)
+                return mprisPosition
         }
         return mpdPosition
     }
@@ -221,7 +224,9 @@ Singleton {
         currentArtist = String(track.artist ?? "")
         currentAlbum = String(track.album ?? "")
         currentArt = String(track.art ?? "")
-        currentDuration = Math.max(0, Number(track.duration ?? currentDuration) || 0)
+        const trackDur = StringUtils.validMediaDuration(track.duration ?? currentDuration)
+        if (trackDur > 0 || currentDuration <= 0)
+            currentDuration = trackDur
     }
 
     function _applyPayload(payload, includeLibrary = false): void {
@@ -253,8 +258,13 @@ Singleton {
         currentIndex = Number(status.song ?? -1)
         if (currentIndex >= 0)
             resumeIndex = currentIndex
+        root._lastMpdPositionSampleMs = Date.now()
         currentPosition = Math.max(0, Number(status.elapsed ?? 0) || 0)
-        currentDuration = Math.max(0, Number(status.duration ?? 0) || 0)
+        const statusDur = StringUtils.validMediaDuration(status.duration ?? 0)
+        const fallbackDur = statusDur > 0
+            ? statusDur
+            : StringUtils.validMediaDuration(mprisAvailable ? (mprisPlayer?.length ?? 0) : 0)
+        currentDuration = fallbackDur
         const mpdVolume = Number(status.volume)
         if (Number.isFinite(mpdVolume) && mpdVolume >= 0)
             volume = Math.max(0, Math.min(1, mpdVolume / 100))
@@ -657,6 +667,7 @@ Singleton {
         currentIndex = index
         resumeIndex = index
         _applyCurrentTrack(valid[index])
+        root._lastMpdPositionSampleMs = Date.now()
         currentPosition = 0
         error = ""
 
@@ -751,8 +762,18 @@ Singleton {
     }
 
     function _sendMpd(command: string, args): void {
+        const cleanArgs = Array.isArray(args) ? args.slice() : []
+        if (command === "seekcur") {
+            const existingIdx = _commandRequests.findIndex(req => req.command === "seekcur")
+            if (existingIdx >= 0) {
+                const updated = _commandRequests.slice()
+                updated[existingIdx] = { command: command, args: cleanArgs }
+                _commandRequests = updated
+                return
+            }
+        }
         _commandRequests = [..._commandRequests, {
-            command: command, args: Array.isArray(args) ? args.slice() : []
+            command: command, args: cleanArgs
         }]
         _scheduleMpdMutation("command")
     }
@@ -840,7 +861,12 @@ Singleton {
     }
 
     function seek(seconds: real): void {
-        const target = Math.max(0, Number(seconds) || 0)
+        const dur = StringUtils.validMediaDuration(currentDuration)
+        const target = dur > 0
+            ? Math.max(0, Math.min(dur, Number(seconds) || 0))
+            : Math.max(0, Number(seconds) || 0)
+        root._lastMpdPositionSampleMs = Date.now()
+        currentPosition = target
         root._reanchorLyricsPosition(target, true)
         const player = mprisPlayer
         if (!mpdMutationPending && player && (player.canSeek ?? false)

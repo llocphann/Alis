@@ -709,8 +709,9 @@ Item {
                 stopIndicatorValues: []
                 from: 0
                 to: 1
-                value: LocalMusic.volume
-                onMoved: LocalMusic.setVolume(value)
+                liveValue: LocalMusic.volume
+                onSeekCommitted: (val) => LocalMusic.setVolume(val)
+                scrollable: true
             }
         }
 
