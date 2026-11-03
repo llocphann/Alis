@@ -22,7 +22,7 @@ Singleton {
     }
 
     function _refreshPresentedStatus(): void {
-        if (root.uiDemand && root.enabled && !root._mpdSubscriptionActive)
+        if (root.uiDemand && root.enabled)
             root.refreshStatus()
     }
     readonly property string configuredLibraryFolder:
@@ -127,7 +127,7 @@ Singleton {
             && (Date.now() - root._lastMpdPositionSampleMs) < 1500
         if (mprisAvailable && Number.isFinite(mprisRaw) && mprisRaw > 0) {
             const mprisPosition = StringUtils.boundedMediaPosition(mprisRaw, dur)
-            if (mpdSampleFresh && Math.abs(mprisPosition - mpdPosition) > 2.5)
+            if (mpdSampleFresh && Math.abs(mprisPosition - mpdPosition) > 0.35)
                 return mpdPosition
             if (mprisPosition > 0)
                 return mprisPosition
@@ -140,8 +140,16 @@ Singleton {
         const now = Date.now()
         if (!snap && root.playing && root._lyricsAnchorMs > 0) {
             const predicted = root._lyricsAnchorPos + Math.max(0, (now - root._lyricsAnchorMs) / 1000)
-            if (Math.abs(cleanPos - predicted) <= 1.15)
+            const drift = cleanPos - predicted
+            if (Math.abs(drift) <= 0.04)
                 return
+            if (Math.abs(drift) <= 0.28) {
+                const blended = predicted + drift * 0.45
+                root._lyricsAnchorPos = blended
+                root._lyricsAnchorMs = now
+                root._lyricsLivePos = blended
+                return
+            }
         }
         root._lyricsAnchorPos = cleanPos
         root._lyricsAnchorMs = now
@@ -258,12 +266,17 @@ Singleton {
         currentIndex = Number(status.song ?? -1)
         if (currentIndex >= 0)
             resumeIndex = currentIndex
-        root._lastMpdPositionSampleMs = Date.now()
+        _lastMpdPositionSampleMs = Date.now()
         currentPosition = Math.max(0, Number(status.elapsed ?? 0) || 0)
-        const statusDur = StringUtils.validMediaDuration(status.duration ?? 0)
+        const rawStatusDur = Number(status.duration ?? 0) || 0
+        const statusDur = typeof StringUtils !== "undefined"
+            ? StringUtils.validMediaDuration(rawStatusDur)
+            : Math.max(0, rawStatusDur)
         const fallbackDur = statusDur > 0
             ? statusDur
-            : StringUtils.validMediaDuration(mprisAvailable ? (mprisPlayer?.length ?? 0) : 0)
+            : (typeof StringUtils !== "undefined" && typeof mprisAvailable !== "undefined" && mprisAvailable
+                ? StringUtils.validMediaDuration(mprisPlayer?.length ?? 0)
+                : 0)
         currentDuration = fallbackDur
         const mpdVolume = Number(status.volume)
         if (Number.isFinite(mpdVolume) && mpdVolume >= 0)
@@ -323,8 +336,11 @@ Singleton {
             "lyricsby", "lyricist", "writtenby", "composedby", "composer", "musicby",
             "producedby", "producer", "arrangedby", "arranger", "mixedby", "mixing",
             "masteredby", "mastering", "recordedby", "vocalsby", "publishedby",
-            "copyright", "sángtác", "lời", "nhạc", "hoàâm", "hòaâm", "phốikhí",
-            "biêntập", "thựchiện"
+            "copyright", "artist", "artists", "album", "title", "songtitle", "songstitle",
+            "singer", "vocal", "vocals", "guitar", "bass", "drums", "piano", "keyboard",
+            "strings", "editor", "subtitles", "transcribedby", "syncedby", "lrcby",
+            "sángtác", "lời", "nhạc", "hoàâm", "hòaâm", "phốikhí",
+            "biêntập", "thựchiện", "casĩ", "trìnhbày", "biểudiễn", "thuâm"
         ].includes(lower)
     }
 
@@ -490,6 +506,10 @@ Singleton {
 
     function refreshStatus(): void {
         if (!enabled || _statusProc.running || _scanProc.running) return
+        if (error.length > 0 && mpdConnected) {
+            error = ""
+            _sendMpd("clearerror", [])
+        }
         _statusProc.command = [
             root.nativeDispatchPath, "mpd", "status",
             mpdHost, String(mpdPort), configuredLibraryFolder
@@ -1042,6 +1062,10 @@ Singleton {
             if (root.mprisAvailable && (now - root._lastMprisNudgeMs) >= 480) {
                 root._lastMprisNudgeMs = now
                 root.mprisPlayer?.positionChanged()
+            }
+            if (root.uiDemand && (now - root._lastMpdPositionSampleMs) >= 2200) {
+                root._lastMpdPositionSampleMs = now
+                root.refreshStatus()
             }
             if (root._lyricsAnchorMs <= 0) {
                 root._reanchorLyricsPosition(root._baseLyricsPosition)

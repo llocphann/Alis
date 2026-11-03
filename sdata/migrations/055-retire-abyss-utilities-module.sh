@@ -13,8 +13,10 @@ _abyss_utilities_config_path() {
   local root="${XDG_CONFIG_HOME:-$HOME/.config}"
   if [[ -f "$root/illogical-impulse/config.json" ]]; then
     printf '%s' "$root/illogical-impulse/config.json"
+  elif [[ -f "$root/alis/config.json" ]]; then
+    printf '%s' "$root/alis/config.json"
   else
-    printf '%s' "$root/inir/config.json"
+    printf '%s' "$root/alis/config.json"
   fi
 }
 

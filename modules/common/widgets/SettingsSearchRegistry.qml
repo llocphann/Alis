@@ -63,16 +63,22 @@ Singleton {
             }
         }
         
-        // Ahora colapsar todas excepto la target y expandir la target
-        for (var j = 0; j < collapsibleSections.length; j++) {
-            var s = collapsibleSections[j];
-            if (!s) continue;
-            
-            if (s === targetSection) {
-                s.expanded = true;
-            } else {
-                s.expanded = false;
+        if (targetSection) {
+            if (targetSection._topPage && typeof targetSection._topPage.selectCardSection === "function") {
+                targetSection._topPage.selectCardSection(targetSection);
             }
+            if (typeof targetSection.ensureControlOnActiveSectionSubTab === "function") {
+                targetSection.ensureControlOnActiveSectionSubTab(control);
+            }
+            targetSection.expanded = true;
+        }
+
+        var p = control;
+        while (p) {
+            if (typeof p.ensureControlOnActiveSubTab === "function") {
+                p.ensureControlOnActiveSubTab(control);
+            }
+            p = p.parent;
         }
         
         return targetSection;

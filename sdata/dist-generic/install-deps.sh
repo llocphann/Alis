@@ -229,7 +229,7 @@ echo ""
 
 echo -e "${STY_BLUE}Optional but recommended:${STY_RST}"
 echo "  kitty (terminal), nautilus (file manager), fuzzel (launcher)"
-echo "  easyeffects, mpv, yt-dlp, tesseract-ocr"
+echo "  easyeffects, mpv, tesseract-ocr"
 echo ""
 
 #####################################################################################
@@ -381,7 +381,7 @@ fi
 
 echo ""
 echo -e "${STY_CYAN}For more help, see:${STY_RST}"
-echo "  - https://github.com/snowarch/inir/wiki/Manual-Installation"
+echo "  - https://github.com/llocphann/Alis/wiki/Manual-Installation"
 echo "  - https://quickshell.outfoxxed.me/docs"
 echo "  - https://github.com/YaLTeR/niri/wiki"
 echo ""

@@ -90,7 +90,7 @@ Scope {
     function stopRecording(): void {
         if (root.stopAction) root.stopAction()
         else {
-            Quickshell.execDetached([Directories.recordScriptPath, "--stop"])
+            Quickshell.execDetached(["/usr/bin/bash", Directories.recordScriptPath, "--stop"])
             root.recordingStatus.scheduleQuickCheck()
         }
     }

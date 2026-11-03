@@ -372,6 +372,7 @@ Item { // Player instance - Old style design
                                 active: !(root.player?.canSeek ?? false)
                                 sourceComponent: StyledProgressBar {
                                     wavy: root.player?.isPlaying
+                                    animateWave: root.presentationActive && (root.player?.isPlaying ?? false)
                                     highlightColor: Appearance.alisEverywhere ? Appearance.alis.colPrimary
                                         : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                                         : blendedColors.colPrimary

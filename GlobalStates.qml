@@ -62,7 +62,6 @@ Singleton {
         }
         return false
     }
-    property bool crosshairOpen: false
     property bool sidebarLeftOpen: false
     property string sidebarLeftTargetOutput: ""
     // Hover/clickless opens are leases, not sticky semantic opens. Abyss uses
@@ -188,7 +187,6 @@ Singleton {
     property string oskTargetMonitor: ""
     onOskOpenChanged: if (oskOpen)
         oskTargetMonitor=focusedScreen?.name ?? primaryScreen?.name ?? ""
-    property bool overlayOpen: false
     property bool overviewOpen: false
     property string overviewMode: "default"
     property string overviewTargetOutput: ""
@@ -218,12 +216,7 @@ Singleton {
         const route = FamilyPolicy.settingsRoute(Config.options?.panelFamily,index,section)
         index = route.pageIndex
         const targetSection = route.section.trim()
-        const isWaffle = Config.options?.panelFamily === "waffle"
-            && Config.options?.waffles?.settings?.useMaterialStyle !== true
-        if (isWaffle) {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),
-                "waffle-settings-window"])
-        } else if (Config.options?.panelFamily === "abyss" || (Config.options?.settingsUi?.overlayMode ?? false)) {
+        if (Config.options?.panelFamily === "abyss" || (Config.options?.settingsUi?.overlayMode ?? false)) {
             root.settingsOverlayTargetOutput = root.resolveOutputName("",[])
             root.settingsOverlayRequestedSection = targetSection
             root.settingsOverlayRequestedPage = index
@@ -412,8 +405,8 @@ Singleton {
     // Lightweight browsing identity survives the bounded Dashboard UI cache.
     property var dashboardMusicBrowser: ({})
     property var dashboardPlannerBrowser: ({})
+    property var dashboardSpacedRepetitionBrowser: ({})
     property bool workspaceShowNumbers: false
-    property var activeBooruImageMenu: null  // Track which BooruImage has its menu open
     property var activeTaskViewMenu: null  // Track which WindowThumbnail has its menu open
     // Waffle-specific states
     property bool searchOpen: false

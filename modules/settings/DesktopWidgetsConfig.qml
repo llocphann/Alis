@@ -791,19 +791,23 @@ ContentPage {
             interval: 3000
             onTriggered: wrb.armed = false
         }
-        contentItem: RowLayout {
-            id: wrbRow
-            anchors.centerIn: parent
-            spacing: 6
-            MaterialSymbol {
-                text: wrb.armed ? "warning" : "restart_alt"
-                iconSize: 18
-                color: wrb.armed ? Appearance.colors.colError : Appearance.colors.colSubtext
-            }
-            StyledText {
-                text: wrb.armed ? Translation.tr("Confirm reset") : Translation.tr("Reset to defaults")
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: wrb.armed ? Appearance.colors.colError : Appearance.colors.colSubtext
+        contentItem: Item {
+            Row {
+                id: wrbRow
+                anchors.centerIn: parent
+                spacing: 6
+                MaterialSymbol {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: wrb.armed ? "warning" : "restart_alt"
+                    iconSize: 18
+                    color: wrb.armed ? Appearance.colors.colError : Appearance.colors.colSubtext
+                }
+                StyledText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: wrb.armed ? Translation.tr("Confirm reset") : Translation.tr("Reset to defaults")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: wrb.armed ? Appearance.colors.colError : Appearance.colors.colSubtext
+                }
             }
         }
         StyledToolTip {
@@ -1109,21 +1113,25 @@ ContentPage {
                 colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.10)
                 downAction: () => wac.paletteDetailsOpen = !wac.paletteDetailsOpen
 
-                contentItem: RowLayout {
-                    id: paletteDetailsRow
-                    anchors.centerIn: parent
-                    spacing: 5
-                    MaterialSymbol {
-                        text: wac.paletteDetailsOpen ? "expand_less" : "tune"
-                        iconSize: 16
-                        color: wac.paletteDetailsOpen
-                            ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
-                    }
-                    StyledText {
-                        text: Translation.tr("Customize roles")
-                        color: wac.paletteDetailsOpen
-                            ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.smaller
+                contentItem: Item {
+                    Row {
+                        id: paletteDetailsRow
+                        anchors.centerIn: parent
+                        spacing: 5
+                        MaterialSymbol {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: wac.paletteDetailsOpen ? "expand_less" : "tune"
+                            iconSize: 16
+                            color: wac.paletteDetailsOpen
+                                ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                        }
+                        StyledText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: Translation.tr("Customize roles")
+                            color: wac.paletteDetailsOpen
+                                ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                        }
                     }
                 }
             }
@@ -1531,7 +1539,395 @@ ContentPage {
         loading: root._taskLoadingCount > 0
     }
 
+    readonly property var desktopWidgetSurface: ({
+        title: Translation.tr("Desktop widgets"),
+        description: Translation.tr("Clock, weather, media, visualizer, and custom widgets"),
+        icon: "widgets",
+        path: "background.widgets.screenList"
+    })
+    readonly property var desktopWidgetDescriptors: {
+        void Config.revision
+        void CustomWidgets.ready
+        const widgets = [
+            { key: "clock", title: Translation.tr("Clock"), icon: "schedule", defaultOn: true },
+            { key: "weather", title: Translation.tr("Weather"), icon: "cloud", defaultOn: false },
+            { key: "mediaControls", title: Translation.tr("Media controls"), icon: "album", defaultOn: false },
+            { key: "visualizer", title: Translation.tr("Visualizer"), icon: "graphic_eq", defaultOn: false },
+            { key: "systemMonitor", title: Translation.tr("System monitor"), icon: "monitor_heart", defaultOn: false },
+            { key: "battery", title: Translation.tr("Battery"), icon: "battery_full", defaultOn: false },
+            { key: "notes", title: Translation.tr("Notes"), icon: "sticky_note_2", defaultOn: false },
+            { key: "calendarUpcoming", title: Translation.tr("Upcoming Events"), icon: "event", defaultOn: false },
+            { key: "uptime", title: Translation.tr("System uptime"), icon: "avg_pace", defaultOn: false },
+            { key: "worldClock", title: Translation.tr("World clock"), icon: "public", defaultOn: false },
+            { key: "userCard", title: Translation.tr("User card"), icon: "account_circle", defaultOn: false },
+            { key: "newsTicker", title: Translation.tr("News Ticker"), icon: "newspaper", defaultOn: false },
+            { key: "japaneseTypography", title: Translation.tr("Japanese Typography"), icon: "translate", defaultOn: false },
+            { key: "customImage", title: Translation.tr("Custom image"), icon: "add_photo_alternate", defaultOn: false },
+            { key: "imageConverter", title: Translation.tr("Image converter"), icon: "transform", defaultOn: false }
+        ]
+        if (CustomWidgets.ready) {
+            for (const widget of CustomWidgets.widgets) {
+                widgets.push({
+                    key: "custom." + widget.id,
+                    title: String(widget.name ?? widget.id),
+                    icon: String(widget.icon ?? "widgets"),
+                    defaultOn: Boolean(Config.getNestedValue(
+                        "background.widgets.custom." + widget.id + ".enable", false))
+                })
+            }
+        }
+        return widgets
+    }
+
+    function connectedScreenNames(): var {
+        const screens = Quickshell.screens
+        let names = []
+        for (let i = 0; i < screens.length; i++) {
+            const name = String(screens[i]?.name ?? "")
+            if (name.length > 0 && !names.includes(name))
+                names.push(name)
+        }
+        return names
+    }
+
+    function primaryScreenName(): string {
+        const preferred = Config.options?.display?.primaryMonitor ?? ""
+        const names = connectedScreenNames()
+        if (preferred && names.includes(preferred))
+            return preferred
+        return names.length > 0 ? names[0] : ""
+    }
+
+    function desktopWidgetOutputNames(): var {
+        const names = connectedScreenNames().slice()
+        for (const name of DesktopWidgetLayout.savedOutputNames()) {
+            if (name.length > 0 && !names.includes(name))
+                names.push(name)
+        }
+        return names
+    }
+
+    function desktopWidgetBaseEnabled(descriptor): bool {
+        return Boolean(DesktopWidgetLayout.baseValue(
+            descriptor.key, "enable", descriptor.defaultOn ?? false))
+    }
+
+    function desktopWidgetEnabled(outputName: string, descriptor): bool {
+        return DesktopWidgetLayout.enabled(outputName, descriptor.key,
+            desktopWidgetBaseEnabled(descriptor))
+    }
+
+    function desktopWidgetHasOverrides(outputName: string, widgetKey: string): bool {
+        const override = DesktopWidgetLayout.widgetOverride(outputName, widgetKey)
+        return override !== null && Object.keys(override).length > 0
+    }
+
+    function configuredScreens(path: string): var {
+        const raw = Config.getNestedValue(path, [])
+        const names = connectedScreenNames()
+        let selected = []
+        for (let i = 0; i < (raw?.length ?? 0); i++) {
+            const name = String(raw[i] ?? "")
+            if (name.length > 0 && names.includes(name) && !selected.includes(name))
+                selected.push(name)
+        }
+        return selected
+    }
+
+    function allScreensEnabled(path: string): bool {
+        const raw = Config.getNestedValue(path, [])
+        return !raw || raw.length === 0
+    }
+
+    function surfaceEnabled(path: string, screenName: string): bool {
+        if (allScreensEnabled(path))
+            return true
+        return configuredScreens(path).includes(screenName)
+    }
+
+    function visibilitySummary(path: string): string {
+        if (allScreensEnabled(path))
+            return Translation.tr("All monitors")
+        const selected = configuredScreens(path)
+        if (selected.length === 0)
+            return Translation.tr("Saved outputs missing")
+        if (selected.length === 1)
+            return selected[0]
+        return selected.length + Translation.tr(" monitors")
+    }
+
+    function setSurfaceAll(path: string): void {
+        Config.setNestedValue(path, [])
+    }
+
+    function setSurfaceScreen(path: string, screenName: string, enabled: bool): void {
+        const names = connectedScreenNames()
+        if (!screenName || names.length === 0)
+            return
+
+        let current = configuredScreens(path)
+        if (current.length === 0 && !enabled)
+            current = names.slice()
+
+        if (enabled) {
+            if (!current.includes(screenName))
+                current.push(screenName)
+        } else {
+            if (current.length <= 1 && current.includes(screenName))
+                return
+            current = current.filter(name => name !== screenName)
+        }
+
+        if (names.length > 0 && names.every(name => current.includes(name)))
+            current = []
+        Config.setNestedValue(path, current)
+    }
+
+    component SurfaceVisibilityBlock: Rectangle {
+        id: surfaceBlock
+        required property var surface
+        readonly property real leadingWidth: Appearance.font.pixelSize.hugeass + Appearance.sizes.spacingLarge
+        readonly property bool allOutputs: root.allScreensEnabled(surface.path)
+
+        Layout.fillWidth: true
+        implicitHeight: surfaceLayout.implicitHeight + Appearance.sizes.spacingLarge * 2
+        radius: Appearance.rounding.small
+        color: Appearance.colors.colLayer1
+        border.width: 1
+        border.color: SettingsMaterialPreset.groupBorderColor
+
+        ColumnLayout {
+            id: surfaceLayout
+            anchors.fill: parent
+            anchors.margins: Appearance.sizes.spacingLarge
+            spacing: Appearance.sizes.spacingSmall
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Appearance.sizes.spacingMedium
+
+                Rectangle {
+                    implicitWidth: surfaceBlock.leadingWidth
+                    implicitHeight: surfaceBlock.leadingWidth
+                    radius: Appearance.rounding.small
+                    color: surfaceBlock.allOutputs ? Appearance.colors.colSecondaryContainer : Appearance.colors.colPrimaryContainer
+                    Layout.alignment: Qt.AlignTop
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: surfaceBlock.surface.icon
+                        iconSize: Appearance.font.pixelSize.hugeass
+                        color: surfaceBlock.allOutputs ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnPrimaryContainer
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Appearance.sizes.spacingSmall
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: surfaceBlock.surface.title
+                            font.pixelSize: Appearance.font.pixelSize.normal
+                            font.weight: Font.Medium
+                            color: Appearance.colors.colOnLayer1
+                            elide: Text.ElideRight
+                        }
+
+                        Rectangle {
+                            implicitWidth: summaryText.implicitWidth + Appearance.sizes.spacingMedium
+                            implicitHeight: summaryText.implicitHeight + Appearance.sizes.spacingSmall
+                            radius: Appearance.rounding.full
+                            color: surfaceBlock.allOutputs ? Appearance.colors.colSecondaryContainer : Appearance.colors.colPrimaryContainer
+                            Layout.alignment: Qt.AlignVCenter
+
+                            StyledText {
+                                id: summaryText
+                                anchors.centerIn: parent
+                                text: root.visibilitySummary(surfaceBlock.surface.path)
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: surfaceBlock.allOutputs ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnPrimaryContainer
+                            }
+                        }
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: surfaceBlock.surface.description
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.colors.colSubtext
+                        wrapMode: Text.WordWrap
+                    }
+                }
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                Layout.leftMargin: surfaceBlock.leadingWidth + Appearance.sizes.spacingMedium
+                text: surfaceBlock.surface.selectionLabel ?? Translation.tr("Visible on")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                font.weight: Font.Medium
+                color: Appearance.colors.colSubtext
+            }
+
+            Flow {
+                Layout.fillWidth: true
+                Layout.leftMargin: surfaceBlock.leadingWidth + Appearance.sizes.spacingMedium
+                spacing: Appearance.sizes.spacingSmall / 2
+
+                SelectionGroupButton {
+                    leftmost: true
+                    rightmost: true
+                    buttonIcon: "select_all"
+                    buttonText: Translation.tr("All outputs")
+                    toggled: surfaceBlock.allOutputs
+                    onClicked: root.setSurfaceAll(surfaceBlock.surface.path)
+                }
+
+                Repeater {
+                    model: root.connectedScreenNames()
+
+                    SelectionGroupButton {
+                        required property var modelData
+                        readonly property string screenName: String(modelData ?? "")
+                        leftmost: true
+                        rightmost: true
+                        buttonIcon: "monitor"
+                        buttonText: screenName
+                        toggled: root.surfaceEnabled(surfaceBlock.surface.path, screenName)
+                        onClicked: root.setSurfaceScreen(surfaceBlock.surface.path, screenName, !toggled)
+                    }
+                }
+            }
+        }
+    }
+
+    component DesktopWidgetOutputBlock: Rectangle {
+        id: outputBlock
+        required property string outputName
+        readonly property bool connected: root.connectedScreenNames().includes(outputName)
+        readonly property bool primary: outputName === root.primaryScreenName()
+        readonly property bool hasOverrides: DesktopWidgetLayout.outputRecord(outputName) !== null
+        readonly property bool globallyVisible: DesktopWidgetLayout.outputAllowed(outputName)
+
+        Layout.fillWidth: true
+        implicitHeight: outputColumn.implicitHeight + Appearance.sizes.spacingLarge * 2
+        radius: Appearance.rounding.small
+        color: Appearance.colors.colLayer1
+        border.width: 1
+        border.color: outputBlock.primary
+            ? Appearance.colors.colPrimary : SettingsMaterialPreset.groupBorderColor
+
+        ColumnLayout {
+            id: outputColumn
+            anchors.fill: parent
+            anchors.margins: Appearance.sizes.spacingLarge
+            spacing: Appearance.sizes.spacingSmall / 2
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Appearance.sizes.spacingSmall
+
+                MaterialSymbol {
+                    text: "monitor"
+                    iconSize: Appearance.font.pixelSize.large
+                    color: outputBlock.primary
+                        ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: outputBlock.outputName
+                    font.pixelSize: Appearance.font.pixelSize.normal
+                    font.weight: Font.Medium
+                    color: Appearance.colors.colOnLayer1
+                    elide: Text.ElideRight
+                }
+
+                StyledText {
+                    visible: !outputBlock.connected
+                    text: Translation.tr("Disconnected")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colError
+                }
+
+                StyledText {
+                    visible: !outputBlock.globallyVisible
+                    text: Translation.tr("Desktop widgets") + ": " + Translation.tr("Disabled")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colError
+                }
+
+                RippleButtonWithIcon {
+                    visible: outputBlock.hasOverrides
+                    materialIcon: "restart_alt"
+                    mainText: Translation.tr("Reset")
+                    onClicked: DesktopWidgetLayout.clearOutput(outputBlock.outputName)
+                }
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 400 ? 2 : 1
+                uniformCellWidths: false
+                columnSpacing: 12
+                rowSpacing: 4
+
+                Repeater {
+                    model: root.desktopWidgetDescriptors
+
+                    RowLayout {
+                        id: widgetOutputRow
+                        required property var modelData
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        spacing: Appearance.sizes.spacingSmall
+
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            enabled: outputBlock.globallyVisible
+                            enableSettingsSearch: false
+                            autoToggle: false
+                            buttonIcon: widgetOutputRow.modelData.icon
+                            text: widgetOutputRow.modelData.title
+                            description: outputBlock.outputName
+                            checked: root.desktopWidgetEnabled(
+                                outputBlock.outputName, widgetOutputRow.modelData)
+                            onToggledByUser: checked => DesktopWidgetLayout.setEnabled(
+                                outputBlock.outputName, widgetOutputRow.modelData.key, checked)
+                        }
+
+                        RippleButton {
+                            visible: root.desktopWidgetHasOverrides(
+                                outputBlock.outputName, widgetOutputRow.modelData.key)
+                            implicitWidth: 36
+                            implicitHeight: 36
+                            buttonRadius: Appearance.rounding.full
+                            colBackground: "transparent"
+                            colBackgroundHover: Appearance.colors.colLayer2Hover
+                            colRipple: Appearance.colors.colLayer2Active
+                            onClicked: DesktopWidgetLayout.clearWidget(
+                                outputBlock.outputName, widgetOutputRow.modelData.key)
+                            contentItem: MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "undo"
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnLayer1
+                            }
+                            StyledToolTip { text: Translation.tr("Reset") }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     SettingsCardSection {
+        bentoColumn: "left"
         settingsTaskSection: "manage"
         visible: root.isIiActive && root.activeSection === "manage"
         expanded: true
@@ -1582,6 +1978,7 @@ ContentPage {
 
     // ── Edit Mode & Grid ─────────────────────────────────────
     SettingsCardSection {
+        bentoColumn: "left"
         settingsTaskSection: "manage"
         visible: root.isIiActive && root.activeSection === "manage"
         expanded: true
@@ -1632,6 +2029,7 @@ ContentPage {
 
     // ── Widget colors ─────────────────────────────────────────
     SettingsCardSection {
+        bentoColumn: "left"
         settingsTaskSection: "manage"
         visible: root.isIiActive && root.activeSection === "manage"
         expanded: true
@@ -1671,6 +2069,7 @@ ContentPage {
     // ── Power Saving ──────────────────────────────────────────
     SettingsCardSection {
         id: powerSavingSection
+        bentoColumn: "left"
         settingsTaskSection: "manage"
         visible: root.isIiActive && root.activeSection === "manage"
         expanded: true
@@ -1746,6 +2145,38 @@ ContentPage {
                                 : Appearance.colors.colSubtext
                         }
                     }
+                }
+            }
+        }
+    }
+
+    // ── Per-monitor Desktop Widgets visibility ────────────────
+    SettingsCardSection {
+        id: desktopWidgetsMonitorSection
+        bentoColumn: "right"
+        settingsTaskSection: "manage"
+        visible: root.isIiActive && root.activeSection === "manage"
+        expanded: true
+        icon: "widgets"
+        title: Translation.tr("Desktop widgets")
+
+        SettingsGroup {
+            NoticeBox {
+                Layout.fillWidth: true
+                materialIcon: "monitor"
+                text: Translation.tr("Clock, weather, media, visualizer, and custom widgets")
+            }
+
+            SurfaceVisibilityBlock {
+                surface: root.desktopWidgetSurface
+            }
+
+            Repeater {
+                model: root.desktopWidgetOutputNames()
+
+                DesktopWidgetOutputBlock {
+                    required property var modelData
+                    outputName: String(modelData ?? "")
                 }
             }
         }

@@ -262,66 +262,71 @@ Variants {
 
             // Video wallpaper. Keep the decoder only while animation is enabled,
             // or briefly while the cached still frame is being generated.
-            Video {
-                id: videoWallpaper
+            Loader {
                 anchors.fill: parent
                 anchors.margins: parent.mediaMargin
-                visible: !backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
+                active: !backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
                     && !backdropWindow.useFrozenVideoFrame
-                source: {
-                    // The Aurora branch owns its own player. Keep this pipeline
-                    // completely unloaded while that style is visible.
-                    if (!videoWallpaper.visible || !backdropWindow.wallpaperIsVideo) return "";
-                    const path = backdropWindow.wallpaperPathRaw;
-                    if (!path) return "";
-                    return path.startsWith("file://") ? path : ("file://" + path);
-                }
-                fillMode: backdropWindow.videoFillMode
-                loops: MediaPlayer.Infinite
-                muted: true
-                autoPlay: true
-
-                readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
-
-                function pauseAndShowFirstFrame() {
-                    pause()
-                    seek(0) // Ensure first frame is displayed when paused
-                }
-
-                onPlaybackStateChanged: {
-                    if (playbackState === MediaPlayer.PlayingState && !shouldPlay) {
-                        pauseAndShowFirstFrame()
+                sourceComponent: Video {
+                    id: videoWallpaper
+                    anchors.fill: parent
+                    visible: !backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
+                        && !backdropWindow.useFrozenVideoFrame
+                    source: {
+                        // The Aurora branch owns its own player. Keep this pipeline
+                        // completely unloaded while that style is visible.
+                        if (!videoWallpaper.visible || !backdropWindow.wallpaperIsVideo) return "";
+                        const path = backdropWindow.wallpaperPathRaw;
+                        if (!path) return "";
+                        return path.startsWith("file://") ? path : ("file://" + path);
                     }
-                    if (playbackState === MediaPlayer.StoppedState && visible && shouldPlay) {
-                        play()
-                    }
-                }
+                    fillMode: backdropWindow.videoFillMode
+                    loops: MediaPlayer.Infinite
+                    muted: true
+                    autoPlay: true
 
-                onShouldPlayChanged: {
-                    if (visible && backdropWindow.wallpaperIsVideo) {
-                        if (shouldPlay) play()
-                        else pauseAndShowFirstFrame()
-                    }
-                }
+                    readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
 
-                onVisibleChanged: {
-                    if (visible && backdropWindow.wallpaperIsVideo) {
-                        if (shouldPlay) play()
-                        else pauseAndShowFirstFrame()
-                    } else {
+                    function pauseAndShowFirstFrame() {
                         pause()
+                        seek(0) // Ensure first frame is displayed when paused
                     }
-                }
 
-                layer.enabled: visible && Appearance.effectsEnabled
-                    && backdropWindow.enableAnimatedBlur
-                    && backdropWindow.backdropBlurRadius > 0
-                layer.effect: MultiEffect {
-                    blurEnabled: true
-                    blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0
-                    blurMax: 64
-                    saturation: backdropWindow.backdropSaturation
-                    contrast: backdropWindow.backdropContrast
+                    onPlaybackStateChanged: {
+                        if (playbackState === MediaPlayer.PlayingState && !shouldPlay) {
+                            pauseAndShowFirstFrame()
+                        }
+                        if (playbackState === MediaPlayer.StoppedState && visible && shouldPlay) {
+                            play()
+                        }
+                    }
+
+                    onShouldPlayChanged: {
+                        if (visible && backdropWindow.wallpaperIsVideo) {
+                            if (shouldPlay) play()
+                            else pauseAndShowFirstFrame()
+                        }
+                    }
+
+                    onVisibleChanged: {
+                        if (visible && backdropWindow.wallpaperIsVideo) {
+                            if (shouldPlay) play()
+                            else pauseAndShowFirstFrame()
+                        } else {
+                            pause()
+                        }
+                    }
+
+                    layer.enabled: visible && Appearance.effectsEnabled
+                        && backdropWindow.enableAnimatedBlur
+                        && backdropWindow.backdropBlurRadius > 0
+                    layer.effect: MultiEffect {
+                        blurEnabled: true
+                        blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0
+                        blurMax: 64
+                        saturation: backdropWindow.backdropSaturation
+                        contrast: backdropWindow.backdropContrast
+                    }
                 }
             }
 
@@ -416,68 +421,73 @@ Variants {
             }
 
             // Aurora-style for Videos
-            Video {
-                id: auroraVideoWallpaper
+            Loader {
                 anchors.fill: parent
                 anchors.margins: parent.mediaMargin
-                visible: backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
+                active: backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
                     && !backdropWindow.useFrozenVideoFrame
-                source: {
-                    // Do not borrow videoWallpaper.source: that kept the hidden
-                    // non-Aurora MediaPlayer loaded as a second decoder.
-                    if (!auroraVideoWallpaper.visible) return "";
-                    const path = backdropWindow.wallpaperPathRaw;
-                    if (!path) return "";
-                    return path.startsWith("file://") ? path : ("file://" + path);
-                }
-                fillMode: backdropWindow.videoFillMode
-                loops: MediaPlayer.Infinite
-                muted: true
-                autoPlay: true
-
-                readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
-
-                function pauseAndShowFirstFrame() {
-                    pause()
-                    seek(0)
-                }
-
-                onPlaybackStateChanged: {
-                    if (playbackState === MediaPlayer.PlayingState && !shouldPlay) {
-                        pauseAndShowFirstFrame()
+                sourceComponent: Video {
+                    id: auroraVideoWallpaper
+                    anchors.fill: parent
+                    visible: backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
+                        && !backdropWindow.useFrozenVideoFrame
+                    source: {
+                        // Do not borrow videoWallpaper.source: that kept the hidden
+                        // non-Aurora MediaPlayer loaded as a second decoder.
+                        if (!auroraVideoWallpaper.visible) return "";
+                        const path = backdropWindow.wallpaperPathRaw;
+                        if (!path) return "";
+                        return path.startsWith("file://") ? path : ("file://" + path);
                     }
-                    if (playbackState === MediaPlayer.StoppedState && visible && shouldPlay) {
-                        play()
-                    }
-                }
+                    fillMode: backdropWindow.videoFillMode
+                    loops: MediaPlayer.Infinite
+                    muted: true
+                    autoPlay: true
 
-                onShouldPlayChanged: {
-                    if (visible && backdropWindow.wallpaperIsVideo) {
-                        if (shouldPlay) play()
-                        else pauseAndShowFirstFrame()
-                    }
-                }
+                    readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
 
-                onVisibleChanged: {
-                    if (visible && backdropWindow.wallpaperIsVideo) {
-                        if (shouldPlay) play()
-                        else pauseAndShowFirstFrame()
-                    } else {
+                    function pauseAndShowFirstFrame() {
                         pause()
+                        seek(0)
                     }
-                }
 
-                layer.enabled: visible && Appearance.effectsEnabled
-                    && backdropWindow.enableAnimatedBlur
-                layer.effect: MultiEffect {
-                    source: auroraVideoWallpaper
-                    anchors.fill: source
-                    saturation: Appearance.angelEverywhere
-                        ? Appearance.angel.blurSaturation
-                        : (Appearance.effectsEnabled ? 0.2 : 0)
-                    blurEnabled: Appearance.effectsEnabled
-                    blurMax: 64
-                    blur: Appearance.effectsEnabled ? 1 : 0
+                    onPlaybackStateChanged: {
+                        if (playbackState === MediaPlayer.PlayingState && !shouldPlay) {
+                            pauseAndShowFirstFrame()
+                        }
+                        if (playbackState === MediaPlayer.StoppedState && visible && shouldPlay) {
+                            play()
+                        }
+                    }
+
+                    onShouldPlayChanged: {
+                        if (visible && backdropWindow.wallpaperIsVideo) {
+                            if (shouldPlay) play()
+                            else pauseAndShowFirstFrame()
+                        }
+                    }
+
+                    onVisibleChanged: {
+                        if (visible && backdropWindow.wallpaperIsVideo) {
+                            if (shouldPlay) play()
+                            else pauseAndShowFirstFrame()
+                        } else {
+                            pause()
+                        }
+                    }
+
+                    layer.enabled: visible && Appearance.effectsEnabled
+                        && backdropWindow.enableAnimatedBlur
+                    layer.effect: MultiEffect {
+                        source: auroraVideoWallpaper
+                        anchors.fill: source
+                        saturation: Appearance.angelEverywhere
+                            ? Appearance.angel.blurSaturation
+                            : (Appearance.effectsEnabled ? 0.2 : 0)
+                        blurEnabled: Appearance.effectsEnabled
+                        blurMax: 64
+                        blur: Appearance.effectsEnabled ? 1 : 0
+                    }
                 }
             }
 

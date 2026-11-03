@@ -106,7 +106,7 @@ Item {
         }
         clip: true
 
-        layer.enabled: Appearance.effectsEnabled
+        layer.enabled: root.visible && Appearance.effectsEnabled
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle { width: card.width; height: card.height; radius: card.radius }
         }
@@ -122,7 +122,7 @@ Item {
             opacity: Appearance.alisEverywhere ? 0.2 : (Appearance.auroraEverywhere ? 0.3 : 0.6)
             visible: root.displayedArtFilePath !== ""
 
-            layer.enabled: Appearance.effectsEnabled
+            layer.enabled: root.visible && bgArt.visible && Appearance.effectsEnabled
             layer.effect: MultiEffect {
                 blurEnabled: true
                 blur: Appearance.alisEverywhere ? 0.5 : 0.4
@@ -157,7 +157,7 @@ Item {
                 color: "transparent"
                 clip: true
 
-                layer.enabled: Appearance.effectsEnabled
+                layer.enabled: root.visible && Appearance.effectsEnabled
                 layer.effect: GE.OpacityMask {
                     maskSource: Rectangle {
                         width: 110
@@ -174,7 +174,7 @@ Item {
                     asynchronous: true
                     cache: false
 
-                    layer.enabled: Appearance.effectsEnabled
+                    layer.enabled: root.visible && coverArtContainer.transitioning && Appearance.effectsEnabled
                     layer.effect: MultiEffect {
                         blurEnabled: true
                         blur: coverArtContainer.transitioning ? 1 : 0
@@ -286,7 +286,7 @@ Item {
                         sourceComponent: StyledSlider {
                             configuration: StyledSlider.Configuration.Wavy
                             wavy: root.player?.isPlaying ?? false
-                            animateWave: root.player?.isPlaying ?? false
+                            animateWave: root.presentationActive && (root.player?.isPlaying ?? false)
                             highlightColor: Appearance.alisEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             trackColor: Appearance.alisEverywhere ? Appearance.alis.colLayer2 : Appearance.zzzEverywhere ? Appearance.colors.colLayer2 : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                             handleColor: Appearance.alisEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
@@ -308,7 +308,7 @@ Item {
                         active: !(root.player?.canSeek ?? false)
                         sourceComponent: StyledProgressBar {
                             wavy: root.player?.isPlaying ?? false
-                            animateWave: root.player?.isPlaying ?? false
+                            animateWave: root.presentationActive && (root.player?.isPlaying ?? false)
                             highlightColor: Appearance.alisEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             trackColor: Appearance.alisEverywhere ? Appearance.alis.colLayer2 : Appearance.zzzEverywhere ? Appearance.colors.colLayer2 : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                             value: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0

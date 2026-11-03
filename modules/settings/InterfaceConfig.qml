@@ -20,165 +20,45 @@ ContentPage {
     settingsPageName: Translation.tr("Panels")
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property bool showAllIiSections: false
+    property real notificationsCardMinHeight: 0
+    readonly property real notificationsCardImplicitHeight: notificationsCard.naturalCardImplicitHeight
     property string activeSection: "tools"
     readonly property string _legacyTimezoneCopy: Translation.tr("No timezones yet; add or reorder regional suggestions.")
 
     SettingsTaskNavigator {
         visible: !root.embedded
-        showTabBar: false
+        showTabBar: true
+        showIntro: false
         icon: "bottom_app_bar"
         title: Translation.tr("Panels")
-        description: Translation.tr("Panels, notifications, widgets and floating tools.")
-        summary: Translation.tr("Floating tools · visual effects · Alt-Tab switcher")
+        description: Translation.tr("Panels, notifications and window switcher.")
+        summary: Translation.tr("Notifications · Alt-Tab switcher")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
-            { displayName: Translation.tr("Tools"), icon: "dashboard_customize", value: "tools" },
-            { displayName: Translation.tr("Notifications"), icon: "notifications", value: "notifications" }
-        ]
-    }
-
-    function floatingToolsEnabled(): bool {
-        return (Config.options?.enabledPanels ?? []).includes("iiOverlay")
-    }
-
-    function openFloatingTools(): void {
-        GlobalStates.settingsOverlayOpen = false
-        GlobalStates.overlayOpen = true
+            { displayName: Translation.tr("Alt-Tab Window Switcher"), icon: "keyboard_tab", value: "tools" },
+            { displayName: Translation.tr("Notifications & Center"), icon: "notifications", value: "notifications" }
+        ].filter(option => option.value !== "notifications" || root.isIiActive)
     }
 
     GridLayout {
         Layout.fillWidth: true
-        columns: width >= 620 ? 2 : 1
-        uniformCellWidths: columns === 2
+        columns: 2
+        uniformCellWidths: true
         columnSpacing: 14
         rowSpacing: 14
 
-    ColumnLayout {
-        Layout.row: 0
-        Layout.column: 0
-        Layout.fillWidth: true
-        Layout.fillHeight: true
+    SettingsCardSection {
+        id: notificationsCard
+        _preventBentoReparent: true
+        _bentoExtraHeight: expanded ? Math.max(0, root.notificationsCardMinHeight - naturalCardImplicitHeight) : 0
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignTop
-        spacing: 14
-        visible: root.activeSection === "tools"
-
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        settingsTaskSection: "tools"
-        visible: root.activeSection === "tools"
-        expanded: true
-        icon: "dashboard_customize"
-        title: Translation.tr("Floating tools (Super+G)")
-
-        SettingsGroup {
-            NoticeBox {
-                Layout.fillWidth: true
-                materialIcon: "info"
-                text: Translation.tr("Floating image and widgets panel (Super+G)")
-            }
-
-            RippleButtonWithIcon {
-                Layout.fillWidth: true
-                enabled: root.floatingToolsEnabled()
-                materialIcon: "open_in_new"
-                mainText: Translation.tr("Open")
-                onClicked: root.openFloatingTools()
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Background & dim")
-
-                SettingsSwitch {
-                    buttonIcon: "water"
-                    text: Translation.tr("Darken screen behind overlay")
-                    checked: Config.options?.overlay?.darkenScreen ?? false
-                    onCheckedChanged: Config.setNestedValue("overlay.darkenScreen", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Add a dark scrim behind overlay panels for better visibility")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "opacity"
-                    text: Translation.tr("Overlay scrim dim (%)")
-                    value: Config.options?.overlay?.scrimDim ?? 30
-                    from: 0
-                    to: 100
-                    stepSize: 5
-                    enabled: Config.options?.overlay?.darkenScreen ?? false
-                    onValueChanged: Config.setNestedValue("overlay.scrimDim", value)
-                    StyledToolTip {
-                        text: Translation.tr("How dark the background scrim should be")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "opacity"
-                    text: Translation.tr("Overlay background opacity (%)")
-                    value: Math.round((Config.options?.overlay?.backgroundOpacity ?? 0.9) * 100)
-                    from: 20
-                    to: 100
-                    stepSize: 5
-                    onValueChanged: Config.setNestedValue("overlay.backgroundOpacity", value / 100)
-                    StyledToolTip {
-                        text: Translation.tr("Opacity of the overlay panel background")
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Animations")
-
-                SettingsSwitch {
-                    buttonIcon: "movie"
-                    text: Translation.tr("Enable opening zoom animation")
-                    checked: Config.options?.overlay?.openingZoomAnimation ?? true
-                    onCheckedChanged: Config.setNestedValue("overlay.openingZoomAnimation", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Animate overlay panels with a zoom effect when opening")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "speed"
-                    text: Translation.tr("Overlay animation duration (ms)")
-                    value: Config.options?.overlay?.animationDurationMs ?? 180
-                    from: 0
-                    to: 1000
-                    stepSize: 20
-                    onValueChanged: Config.setNestedValue("overlay.animationDurationMs", value)
-                    StyledToolTip {
-                        text: Translation.tr("Duration of overlay open/close animations")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "speed"
-                    text: Translation.tr("Background dim animation (ms)")
-                    value: Config.options?.overlay?.scrimAnimationDurationMs ?? 140
-                    from: 0
-                    to: 1000
-                    stepSize: 20
-                    onValueChanged: Config.setNestedValue("overlay.scrimAnimationDurationMs", value)
-                    StyledToolTip {
-                        text: Translation.tr("Duration of the background scrim fade animation")
-                    }
-                }
-            }
-        }
-    }
-    }
-
-    SettingsCardSection {
         settingsTaskSection: "notifications"
-        Layout.row: 1
-        Layout.column: 0
-        Layout.columnSpan: parent.columns
+        Layout.columnSpan: 2
         Layout.fillWidth: true
-        visible: root.isIiActive && (root.activeSection === "notifications" || (!root.embedded && Config.options?.panelFamily !== "abyss"))
+        visible: root.isIiActive && (root.activeSection === "notifications" || ((!root.embedded || root.showAllIiSections) && Config.options?.panelFamily !== "abyss"))
         expanded: true
         icon: "notifications"
         title: Translation.tr("Notifications")
@@ -186,8 +66,8 @@ ContentPage {
         SettingsGroup {
             GridLayout {
                 Layout.fillWidth: true
-                columns: width >= 620 ? 2 : 1
-                uniformCellWidths: columns === 2
+                columns: 2
+                uniformCellWidths: true
                 columnSpacing: 16
                 rowSpacing: 12
 
@@ -255,8 +135,7 @@ ContentPage {
 
             RowLayout {
                 spacing: 8
-                enabled: Config.options?.notifications?.quietHours?.enable ?? false
-                opacity: enabled ? 1 : 0.5
+                visible: Config.options?.notifications?.quietHours?.enable ?? false
 
                 StyledText {
                     text: Translation.tr("From")
@@ -265,7 +144,6 @@ ContentPage {
                 }
                 MaterialTextField {
                     Layout.preferredWidth: 90
-                    placeholderText: "22:00"
                     text: Config.options?.notifications?.quietHours?.start ?? "22:00"
                     // Reject anything that isn't HH:MM instead of persisting junk.
                     onEditingFinished: {
@@ -282,7 +160,6 @@ ContentPage {
                 }
                 MaterialTextField {
                     Layout.preferredWidth: 90
-                    placeholderText: "08:00"
                     text: Config.options?.notifications?.quietHours?.end ?? "08:00"
                     onEditingFinished: {
                         if (/^([01]?\d|2[0-3]):[0-5]\d$/.test(text))
@@ -306,18 +183,6 @@ ContentPage {
                 }
                 StyledToolTip {
                     text: Translation.tr("Spacing between notifications and the screen edge/anchor")
-                }
-            }
-
-            ConfigSwitch {
-                buttonIcon: "sync"
-                text: Translation.tr("Auto-sync badge with popup list")
-                checked: !(Config.options?.notifications?.useLegacyCounter ?? true)
-                onCheckedChanged: {
-                    Config.setNestedValue("notifications.useLegacyCounter", !checked)
-                }
-                StyledToolTip {
-                    text: Translation.tr("Sync badges with live popup count, including externally cleared alerts; off uses manual count.")
                 }
             }
 
@@ -352,6 +217,7 @@ ContentPage {
             ContentSubsection {
                 title: Translation.tr("Notification position")
                 visible: Config.options?.panelFamily === "abyss"
+                Layout.topMargin: -8
                 Layout.preferredHeight: 0
                 Layout.maximumHeight: 0
                 implicitHeight: 0
@@ -369,6 +235,10 @@ ContentPage {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignTop
                     spacing: 8
+
+            SettingsDivider {
+                visible: parent.parent.columns === 1
+            }
 
             ContentSubsectionLabel {
                 text: Translation.tr("Notification center")
@@ -509,6 +379,18 @@ ContentPage {
                 }
             }
 
+            ConfigSwitch {
+                buttonIcon: "sync"
+                text: Translation.tr("Auto-sync badge with popup list")
+                checked: !(Config.options?.notifications?.useLegacyCounter ?? true)
+                onCheckedChanged: {
+                    Config.setNestedValue("notifications.useLegacyCounter", !checked)
+                }
+                StyledToolTip {
+                    text: Translation.tr("Sync badges with live popup count, including externally cleared alerts; off uses manual count.")
+                }
+            }
+
             RippleButtonWithIcon {
                 Layout.fillWidth: true
                 visible: Config.options?.panelFamily !== "abyss"
@@ -530,8 +412,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        Layout.row: 0
-        Layout.column: parent.columns === 2 ? 1 : 0
+        _preventBentoReparent: true
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredWidth: 1
@@ -540,7 +421,7 @@ ContentPage {
         visible: root.isIiActive && root.activeSection === "tools"
         expanded: true
         icon: "keyboard_tab"
-        title: Translation.tr("Alt-Tab switcher (Material ii)")
+        title: Translation.tr("Alt-Tab Behavior & Animation")
 
         SettingsGroup {
             SettingsSwitch {
@@ -551,19 +432,20 @@ ContentPage {
                     ? false
                     : (Config.options?.altSwitcher?.noVisualUi ?? false)
                 onCheckedChanged: Config.setNestedValue("altSwitcher.noVisualUi", checked)
-                StyledToolTip {
-                    text: Translation.tr("Use Alt+Tab to switch windows without showing the switcher overlay")
-                }
             }
 
             SettingsSwitch {
-                buttonIcon: "colors"
-                text: Translation.tr("Tint app icons")
-                checked: Config.options?.altSwitcher?.monochromeIcons ?? false
-                onCheckedChanged: Config.setNestedValue("altSwitcher.monochromeIcons", checked)
-                StyledToolTip {
-                    text: Translation.tr("Apply accent color tint to app icons in the switcher")
-                }
+                buttonIcon: "history"
+                text: Translation.tr("Most recently used first")
+                checked: Config.options?.altSwitcher?.useMostRecentFirst ?? true
+                onCheckedChanged: Config.setNestedValue("altSwitcher.useMostRecentFirst", checked)
+            }
+
+            SettingsSwitch {
+                buttonIcon: "overview_key"
+                text: Translation.tr("Show Niri overview while switching")
+                checked: Config.options?.altSwitcher?.showOverviewWhileSwitching ?? false
+                onCheckedChanged: Config.setNestedValue("altSwitcher.showOverviewWhileSwitching", checked)
             }
 
             SettingsSwitch {
@@ -571,9 +453,6 @@ ContentPage {
                 text: Translation.tr("Enable slide animation")
                 checked: Config.options?.altSwitcher?.enableAnimation ?? true
                 onCheckedChanged: Config.setNestedValue("altSwitcher.enableAnimation", checked)
-                StyledToolTip {
-                    text: Translation.tr("Animate window selection with a slide effect")
-                }
             }
 
             ConfigSpinBox {
@@ -584,83 +463,33 @@ ContentPage {
                 to: 1000
                 stepSize: 25
                 onValueChanged: Config.setNestedValue("altSwitcher.animationDurationMs", value)
-                StyledToolTip {
-                    text: Translation.tr("Duration of the slide animation between windows")
-                }
-            }
-
-            SettingsSwitch {
-                buttonIcon: "history"
-                text: Translation.tr("Most recently used first")
-                checked: Config.options?.altSwitcher?.useMostRecentFirst ?? true
-                onCheckedChanged: Config.setNestedValue("altSwitcher.useMostRecentFirst", checked)
-                StyledToolTip {
-                    text: Translation.tr("Order windows by most recently focused instead of position")
-                }
-            }
-
-            ConfigSpinBox {
-                icon: "opacity"
-                text: Translation.tr("Background opacity (%)")
-                value: Math.round((Config.options?.altSwitcher?.backgroundOpacity ?? 0.9) * 100)
-                from: 10
-                to: 100
-                stepSize: 5
-                onValueChanged: Config.setNestedValue("altSwitcher.backgroundOpacity", value / 100)
-                StyledToolTip {
-                    text: Translation.tr("Opacity of the switcher panel background")
-                }
-            }
-
-            ConfigSpinBox {
-                icon: "blur_on"
-                text: Translation.tr("Blur amount (%)")
-                value: Math.round((Config.options?.altSwitcher?.blurAmount ?? 0.4) * 100)
-                from: 0
-                to: 100
-                stepSize: 5
-                onValueChanged: Config.setNestedValue("altSwitcher.blurAmount", value / 100)
-                StyledToolTip {
-                    text: Translation.tr("Amount of blur applied to the switcher background")
-                }
-            }
-
-            ConfigSpinBox {
-                icon: "opacity"
-                text: Translation.tr("Scrim dim (%)")
-                value: Config.options?.altSwitcher?.scrimDim ?? 35
-                from: 0
-                to: 100
-                stepSize: 5
-                onValueChanged: Config.setNestedValue("altSwitcher.scrimDim", value)
-                StyledToolTip {
-                    text: Translation.tr("How dark the screen behind the switcher should be")
-                }
             }
 
             ConfigSpinBox {
                 icon: "hourglass_top"
-                text: Translation.tr("Auto-hide delay after selection (ms)")
+                text: Translation.tr("Auto-hide delay (ms)")
                 value: Config.options?.altSwitcher?.autoHideDelayMs ?? 500
                 from: 50
                 to: 2000
                 stepSize: 50
                 onValueChanged: Config.setNestedValue("altSwitcher.autoHideDelayMs", value)
-                StyledToolTip {
-                    text: Translation.tr("How long to wait before hiding the switcher after releasing Alt")
-                }
             }
+        }
+    }
 
-            SettingsSwitch {
-                buttonIcon: "overview_key"
-                text: Translation.tr("Show Niri overview while switching")
-                checked: Config.options?.altSwitcher?.showOverviewWhileSwitching ?? false
-                onCheckedChanged: Config.setNestedValue("altSwitcher.showOverviewWhileSwitching", checked)
-                StyledToolTip {
-                    text: Translation.tr("Open Niri's native overview alongside the window switcher")
-                }
-            }
+    SettingsCardSection {
+        _preventBentoReparent: true
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        Layout.alignment: Qt.AlignTop
+        settingsTaskSection: "tools"
+        visible: root.isIiActive && root.activeSection === "tools"
+        expanded: true
+        icon: "styler"
+        title: Translation.tr("Alt-Tab Appearance & Layout")
 
+        SettingsGroup {
             ConfigSelectionArray {
                 options: [
                     { displayName: Translation.tr("Default (sidebar)"), icon: "side_navigation", value: "default" },
@@ -674,6 +503,33 @@ ContentPage {
                 }
             }
 
+            SettingsSwitch {
+                buttonIcon: "colors"
+                text: Translation.tr("Tint app icons")
+                checked: Config.options?.altSwitcher?.monochromeIcons ?? false
+                onCheckedChanged: Config.setNestedValue("altSwitcher.monochromeIcons", checked)
+            }
+
+            ConfigSpinBox {
+                icon: "opacity"
+                text: Translation.tr("Background opacity (%)")
+                value: Math.round((Config.options?.altSwitcher?.backgroundOpacity ?? 0.9) * 100)
+                from: 10
+                to: 100
+                stepSize: 5
+                onValueChanged: Config.setNestedValue("altSwitcher.backgroundOpacity", value / 100)
+            }
+
+            ConfigSpinBox {
+                icon: "blur_on"
+                text: Translation.tr("Blur amount (%)")
+                value: Math.round((Config.options?.altSwitcher?.blurAmount ?? 0.4) * 100)
+                from: 0
+                to: 100
+                stepSize: 5
+                onValueChanged: Config.setNestedValue("altSwitcher.blurAmount", value / 100)
+            }
+
             ContentSubsection {
                 title: Translation.tr("Layout & alignment")
 
@@ -684,9 +540,6 @@ ContentPage {
                     text: Translation.tr("Compact horizontal style (icons only)")
                     checked: Config.options?.altSwitcher?.compactStyle ?? false
                     onCheckedChanged: Config.setNestedValue("altSwitcher.compactStyle", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Show only app icons in a horizontal row, similar to macOS Spotlight")
-                    }
                 }
 
                 ConfigSelectionArray {
@@ -699,19 +552,6 @@ ContentPage {
                         { displayName: Translation.tr("Align to right edge"), icon: "align_horizontal_right", value: "right" },
                         { displayName: Translation.tr("Center on screen"), icon: "align_horizontal_center", value: "center" }
                     ]
-                }
-
-                SettingsSwitch {
-                    enabled: !(Config.options?.altSwitcher?.compactStyle ?? false)
-                        && (Config.options?.altSwitcher?.preset ?? "default") !== "list"
-                        && (Config.options?.altSwitcher?.preset ?? "default") !== "skew"
-                    buttonIcon: "styler"
-                    text: Translation.tr("Use Material 3 card layout")
-                    checked: Config.options?.altSwitcher?.useM3Layout ?? false
-                    onCheckedChanged: Config.setNestedValue("altSwitcher.useM3Layout", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Use Material Design 3 style for the switching panel")
-                    }
                 }
             }
         }

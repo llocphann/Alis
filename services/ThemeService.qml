@@ -35,6 +35,12 @@ Singleton {
         enableChrome: wallpaperThemingCfg?.enableChrome ?? true,
         enableZed: wallpaperThemingCfg?.enableZed ?? true,
         enableVSCode: wallpaperThemingCfg?.enableVSCode ?? true,
+        vscodeCode: wallpaperThemingCfg?.vscodeEditors?.code ?? true,
+        vscodeCodium: wallpaperThemingCfg?.vscodeEditors?.codium ?? true,
+        enableSpicetify: wallpaperThemingCfg?.enableSpicetify ?? false,
+        enableSteam: wallpaperThemingCfg?.enableSteam ?? false,
+        enablePearDesktop: wallpaperThemingCfg?.enablePearDesktop ?? true,
+        enableOpenCode: wallpaperThemingCfg?.enableOpenCode ?? false,
         enableNeovim: wallpaperThemingCfg?.enableNeovim ?? false,
         useBackdropForColors: wallpaperThemingCfg?.useBackdropForColors ?? false,
         forceTerminalDarkMode: wallpaperThemingCfg?.terminalGenerationProps?.forceDarkMode ?? false,
@@ -49,6 +55,9 @@ Singleton {
     property string _lastPanelFamily: ""
     property real _lastRegenTimestamp: 0
     property bool _regenPending: false
+    property bool _bootExternalSyncDone: false
+    property string _pendingExternalMode: ""
+    property string _pendingExternalThemeId: ""
     readonly property int _regenCooldownMs: 700
 
     onCurrentThemeChanged: {
@@ -135,6 +144,37 @@ Singleton {
         });
     }
 
+    function _runExternalApplyNow(mode: string, themeId: string): void {
+        if (mode === "auto") {
+            MaterialThemeLoader.requestExternalApply(false, "theme-service");
+            if (vesktopEnabled) {
+                root._triggerVesktopThemeGeneration()
+            }
+        } else if (mode === "variant") {
+            if (vesktopEnabled) {
+                root._triggerVesktopThemeGeneration()
+            }
+        } else if (mode === "manual") {
+            ThemePresets.applyPreset(themeId, true);
+            if (vesktopEnabled) {
+                root._log("[ThemeService] applyCurrentTheme manual branch requesting Vesktop regeneration")
+                root._triggerVesktopThemeGeneration()
+            }
+        }
+    }
+
+    function _scheduleOrRunExternalApply(mode: string, themeId: string): void {
+        if (!root._bootExternalSyncDone && !root.isStandaloneSettingsWindow) {
+            root._bootExternalSyncDone = true
+            root._pendingExternalMode = mode
+            root._pendingExternalThemeId = themeId
+            bootExternalSyncTimer.restart()
+            return
+        }
+        bootExternalSyncTimer.stop()
+        root._runExternalApplyNow(mode, themeId)
+    }
+
     function applyCurrentTheme(applyExternal = defaultApplyExternal): void {
         // Trace startup/theme-switch reapplication separately from wallpaper generation.
         MaterialThemeLoader.themeProfileStage("qml_theme_service_apply_current", 0)
@@ -148,11 +188,7 @@ Singleton {
             // MaterialThemeLoader owns the run: spawning applycolor.sh here as
             // well doubled every user action into two parallel module waves.
             if (applyExternal) {
-                MaterialThemeLoader.requestExternalApply(false, "theme-service");
-            }
-
-            if (applyExternal && vesktopEnabled) {
-                root._triggerVesktopThemeGeneration()
+                root._scheduleOrRunExternalApply("auto", currentTheme)
             }
         } else {
             const paletteType = Config.options?.appearance?.palette?.type ?? "auto"
@@ -167,14 +203,19 @@ Singleton {
                 const mode = Appearance.m3colors.darkmode ? "dark" : "light"
                 root._log("[ThemeService] Re-applying variant", paletteType, "with seed", seedColor, "mode", mode);
                 MaterialThemeLoader.applySchemeVariant(seedColor, paletteType, mode)
-                if (applyExternal && vesktopEnabled) {
-                    root._triggerVesktopThemeGeneration()
+                if (applyExternal) {
+                    root._scheduleOrRunExternalApply("variant", currentTheme)
                 }
             } else {
-                ThemePresets.applyPreset(currentTheme, applyExternal);
-                if (applyExternal && vesktopEnabled) {
-                    root._log("[ThemeService] applyCurrentTheme manual branch requesting Vesktop regeneration")
-                    root._triggerVesktopThemeGeneration()
+                if (applyExternal && !root._bootExternalSyncDone && !root.isStandaloneSettingsWindow) {
+                    ThemePresets.applyPreset(currentTheme, false);
+                    root._scheduleOrRunExternalApply("manual", currentTheme)
+                } else {
+                    ThemePresets.applyPreset(currentTheme, applyExternal);
+                    if (applyExternal && vesktopEnabled) {
+                        root._log("[ThemeService] applyCurrentTheme manual branch requesting Vesktop regeneration")
+                        root._triggerVesktopThemeGeneration()
+                    }
                 }
             }
         }
@@ -336,6 +377,22 @@ Singleton {
         // this prevents the configChanged debounce 260ms later from firing a
         // duplicate switchwall.sh.
         onTriggered: root.regenerateAutoTheme("theme-selection")
+    }
+
+    Timer {
+        id: bootExternalSyncTimer
+        interval: 1200
+        repeat: false
+        running: false
+        onTriggered: {
+            if (root._pendingExternalMode.length > 0) {
+                const mode = root._pendingExternalMode
+                const themeId = root._pendingExternalThemeId
+                root._pendingExternalMode = ""
+                root._pendingExternalThemeId = ""
+                root._runExternalApplyNow(mode, themeId)
+            }
+        }
     }
 
     // Theme Scheduling

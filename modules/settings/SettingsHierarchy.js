@@ -1,11 +1,11 @@
 // Presentation only: saved page indices, ordering and visibility remain owned
 // by SettingsArrangement. Every applicable destination has exactly one parent.
 var definitions = [
- {key:"abyss",name:"Abyss",icon:"water",pages:["abyss","abyss-waves","abyss-modules","abyss-popups","companion","dock","sidebars","dashboard","overview"]},
+ {key:"abyss",name:"Abyss",icon:"water",pages:["abyss","abyss-waves","abyss-modules","abyss-popups","companion","ai","dock","sidebars","dashboard","overview"]},
  {key:"appearance",name:"Appearance",icon:"palette",pages:["themes","wallpaper","effects","advanced"]},
  {key:"desktop",name:"Desktop",icon:"desktop_windows",pages:["bar","panels","widgets","modules","shell-layout","waffle-style"]},
- {key:"general",name:"General",icon:"settings",pages:["system","monitors","compositor","autostart","shortcuts","about"]},
- {key:"apps",name:"Apps & data",icon:"apps",pages:["default-apps","ai","integrations","services"]},
+ {key:"general",name:"General",icon:"settings",pages:["system","monitors","compositor","applications","autostart","shortcuts","about"]},
+ {key:"apps",name:"Apps & data",icon:"apps",pages:["default-apps","integrations","services"]},
  {key:"tools",name:"Tools",icon:"build",pages:["tools"]}
 ];
 function parentKey(page) {

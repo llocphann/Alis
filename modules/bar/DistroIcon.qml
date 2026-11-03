@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs
 import qs.services
 import qs.modules.common
@@ -10,6 +11,7 @@ Item {
     readonly property bool abyssMode:
         (Config.options?.panelFamily ?? "ii") === "abyss"
     property bool showAbyssMark: false
+    property real contentRotation: 0
     signal abyssControlsHoverChanged(bool hovered)
     readonly property real markSize:
         19.5 * Appearance.sizes.barModuleScale
@@ -22,6 +24,7 @@ Item {
         anchors.centerIn: parent
         width: root.markSize
         height: root.markSize
+        rotation: -root.contentRotation
         clip: true
 
         Item {
@@ -77,6 +80,7 @@ Item {
         interval: 2800
         repeat: true
         running: root.abyssMode && root.visible && AbyssStyle.motionEnabled
+            && !GlobalStates.screenLocked && (root.QsWindow.window?.visible ?? true)
         onTriggered: root.showAbyssMark = !root.showAbyssMark
     }
 

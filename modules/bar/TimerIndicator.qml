@@ -21,6 +21,8 @@ MouseArea {
             root._pointerFocused = false
     }
     property bool vertical: false
+    property real contentRotation: 0
+    readonly property bool verticalContent: Math.abs(root.contentRotation) === 90
 
     readonly property bool pinnedToBar: Persistent.states?.timer?.pinnedToBar ?? false
 
@@ -216,10 +218,12 @@ MouseArea {
         id: contentRow
         anchors.centerIn: pill
         spacing: 4 * Appearance.sizes.barModuleScale
+        layoutDirection: root.contentRotation < 0 ? Qt.RightToLeft : Qt.LeftToRight
 
         MaterialSymbol {
             text: root.showPinnedIdle ? "schedule" : root.iconName
             iconSize: Math.round(Appearance.font.pixelSize.normal * Appearance.sizes.barModuleScale)
+            rotation: -root.contentRotation
             color: root.paused
                 ? Appearance.colors.colOnLayer1Inactive
                 : root.accentColor
@@ -233,14 +237,26 @@ MouseArea {
             }
         }
 
-        StyledText {
-            visible: !root.vertical
-            text: root.showPinnedIdle ? Translation.tr("Timer") : root.timeText
-            font.pixelSize: Math.round(Appearance.font.pixelSize.small * Appearance.sizes.barModuleScale)
-            color: root.paused
-                ? Appearance.colors.colOnLayer1Inactive
-                : Appearance.colors.colOnLayer1
+        Item {
+            visible: !root.vertical && (!root.verticalContent || !root.showPinnedIdle)
             Layout.alignment: Qt.AlignVCenter
+            implicitWidth: root.verticalContent ? timerLabel.implicitHeight : timerLabel.implicitWidth
+            implicitHeight: root.verticalContent ? timerLabel.implicitWidth : timerLabel.implicitHeight
+
+            StyledText {
+                id: timerLabel
+                anchors.centerIn: parent
+                horizontalAlignment: Text.AlignHCenter
+                text: root.verticalContent
+                    ? root.timeText.replace(":", "\n")
+                    : (root.showPinnedIdle ? Translation.tr("Timer") : root.timeText)
+                font.pixelSize: Math.round((root.verticalContent ? Appearance.font.pixelSize.smaller : Appearance.font.pixelSize.small) * Appearance.sizes.barModuleScale)
+                lineHeight: root.verticalContent ? 0.85 : 1.0
+                rotation: -root.contentRotation
+                color: root.paused
+                    ? Appearance.colors.colOnLayer1Inactive
+                    : Appearance.colors.colOnLayer1
+            }
         }
 
         Item {
@@ -265,6 +281,7 @@ MouseArea {
                 anchors.centerIn: parent
                 text: "pause"
                 iconSize: Math.round(Appearance.font.pixelSize.small * Appearance.sizes.barModuleScale)
+                rotation: -root.contentRotation
                 color: Appearance.colors.colOnLayer1Inactive
             }
         }

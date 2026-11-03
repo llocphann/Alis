@@ -610,6 +610,7 @@ fn vscode_settings_path(fork_name: &str) -> PathBuf {
 
 fn ensure_vscode_registered(fork_key: &str, ext_dir: &Path) -> Result<()> {
     let ext_base = vscode_ext_base(fork_key);
+    fs::create_dir_all(&ext_base)?;
     let registry_path = ext_base.join("extensions.json");
     let mut entries: Vec<Value> = fs::read_to_string(&registry_path)
         .ok()
@@ -629,7 +630,7 @@ fn ensure_vscode_registered(fork_key: &str, ext_dir: &Path) -> Result<()> {
     entries.push(json!({
         "identifier": {"id": ext_id},
         "version": "1.0.0",
-        "location": {"$mid": 1.0, "path": ext_dir.to_string_lossy(), "scheme": "file"},
+        "location": {"$mid": 1, "path": ext_dir.to_string_lossy(), "scheme": "file"},
         "relativeLocation": VSCODE_EXTENSION_ID
     }));
     let tmp = registry_path.with_extension("json.tmp");
@@ -1374,13 +1375,20 @@ pub fn run_vscode_theme(raw_args: &[String]) -> Result<()> {
     let mut theme_bytes = serde_json::to_vec_pretty(&theme_json)?;
     theme_bytes.push(b'\n');
 
-    let selected: Vec<(&str, &str)> = if forks.is_empty() {
+    let explicit_forks = !forks.is_empty();
+    let selected: Vec<(&str, &str)> = if !explicit_forks {
         VSCODE_FORKS
             .iter()
-            .filter(|&&(_, name, _)| {
-                vscode_settings_path(name)
-                    .parent()
-                    .is_some_and(Path::is_dir)
+            .filter(|&&(key, name, _)| {
+                key == "code"
+                    || key == "codium"
+                    || vscode_settings_path(name)
+                        .parent()
+                        .is_some_and(Path::is_dir)
+                    || vscode_settings_path(name)
+                        .parent()
+                        .and_then(Path::parent)
+                        .is_some_and(Path::is_dir)
             })
             .map(|&(k, n, _)| (k, n))
             .collect()
@@ -1399,7 +1407,21 @@ pub fn run_vscode_theme(raw_args: &[String]) -> Result<()> {
     let mut success = 0;
     for (fork_key, fork_name) in &selected {
         let settings_path = vscode_settings_path(fork_name);
-        if !settings_path.parent().is_some_and(Path::is_dir) {
+        if let Some(parent) = settings_path.parent() {
+            if !parent.is_dir() {
+                if explicit_forks
+                    || *fork_key == "code"
+                    || *fork_key == "codium"
+                    || parent.parent().is_some_and(Path::is_dir)
+                {
+                    if fs::create_dir_all(parent).is_err() {
+                        continue;
+                    }
+                } else {
+                    continue;
+                }
+            }
+        } else {
             continue;
         }
         let legacy_dir = vscode_ext_base(fork_key).join("alis.alis-theme-1.0.0");
@@ -1419,13 +1441,18 @@ pub fn run_vscode_theme(raw_args: &[String]) -> Result<()> {
         }
         let _ = ensure_vscode_registered(fork_key, &ext_dir);
 
+        // Write both theme files in-place to preserve inode for Linux inotify (_watch: true)
         let theme_path = ext_dir.join("themes").join(active_file);
-        let tmp_path = theme_path.with_extension("json.tmp");
-        if fs::write(&tmp_path, &theme_bytes).is_err()
-            || fs::rename(&tmp_path, &theme_path).is_err()
-        {
+        if fs::write(&theme_path, &theme_bytes).is_err() {
             continue;
         }
+        let other_file = if active_file == VSCODE_FILE_DARK {
+            VSCODE_FILE_LIGHT
+        } else {
+            VSCODE_FILE_DARK
+        };
+        let other_path = ext_dir.join("themes").join(other_file);
+        let _ = fs::write(&other_path, &theme_bytes);
 
         if let Ok(mut settings) = load_vscode_settings(&settings_path) {
             let current_theme = settings

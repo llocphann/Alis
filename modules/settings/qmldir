@@ -16,6 +16,15 @@ GeneralConfigCore 1.0 GeneralConfigCore.qml
 TlpPowerSettings 1.0 TlpPowerSettings.qml
 WaffleConfig 1.0 WaffleConfig.qml
 AutostartConfig 1.0 AutostartConfig.qml
+ApplicationsConfig 1.0 ApplicationsConfig.qml
+AdvancedConfig 1.0 AdvancedConfig.qml
+InterfaceConfig 1.0 InterfaceConfig.qml
+OverviewConfig 1.0 OverviewConfig.qml
+DashboardConfig 1.0 DashboardConfig.qml
+DashboardMusicSettings 1.0 DashboardMusicSettings.qml
+DashboardSpacedRepetitionSettings 1.0 DashboardSpacedRepetitionSettings.qml
+EffectsConfig 1.0 EffectsConfig.qml
+ModulesConfig 1.0 ModulesConfig.qml
 DockConfig 1.0 DockConfig.qml
 SidebarsConfig 1.0 SidebarsConfig.qml
 SettingsOverlay 1.0 SettingsOverlay.qml
@@ -33,3 +42,4 @@ ObsidianThemeSettings 1.0 ObsidianThemeSettings.qml
 
 ObsidianTodoSettings 1.0 ObsidianTodoSettings.qml
 ThinkfanSettings 1.0 ThinkfanSettings.qml
+AiConfig 1.0 AiConfig.qml

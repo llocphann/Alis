@@ -20,8 +20,11 @@ LATIN_CREDIT_PREFIXES = {
     "lyricsby", "lyricist", "writtenby", "composedby", "composer", "musicby",
     "producedby", "producer", "arrangedby", "arranger", "mixedby", "mixing",
     "masteredby", "mastering", "recordedby", "vocalsby", "publishedby",
-    "copyright", "sángtác", "lời", "nhạc", "hoàâm", "hòaâm", "phốikhí",
-    "biêntập", "thựchiện",
+    "copyright", "artist", "artists", "album", "title", "songtitle", "songstitle",
+    "singer", "vocal", "vocals", "guitar", "bass", "drums", "piano", "keyboard",
+    "strings", "editor", "subtitles", "transcribedby", "syncedby", "lrcby",
+    "sángtác", "lời", "nhạc", "hoàâm", "hòaâm", "phốikhí",
+    "biêntập", "thựchiện", "casĩ", "trìnhbày", "biểudiễn", "thuâm",
 }
 
 
@@ -93,6 +96,12 @@ FALL_KEYWORDS = {
 }
 
 
+def _norm_stem(value: str) -> str:
+    s = re.sub(r"[\u2010-\u2015]", "-", (value or "").strip())
+    s = re.sub(r"^\s*\d{1,3}\s*(?:[-._]\s+|\)\s*)", "", s)
+    return re.sub(r"\s+", " ", s).strip().lower()
+
+
 def candidates(track: Path) -> list[Path]:
     fallback_dir = Path(
         os.environ.get("XDG_DATA_HOME") or (Path.home() / ".local" / "share")
@@ -106,6 +115,26 @@ def candidates(track: Path) -> list[Path]:
         fallback_dir / f"{track.stem}-{digest}.lrc",
         fallback_dir / f"{track.stem}-{digest}.txt",
     ]
+    stripped = re.sub(r"^\s*\d{1,3}\s*(?:[-._]\s+|\)\s*)", "", track.stem).strip()
+    if stripped and stripped != track.stem:
+        result.insert(2, track.with_name(f"{stripped}.lrc"))
+        result.append(track.with_name(f"{stripped}.txt"))
+
+    parent = track.parent
+    if parent.is_dir():
+        target_norm = _norm_stem(track.stem)
+        target_primary = target_norm.split(" _ ")[0].strip() if " _ " in target_norm else target_norm
+        try:
+            for entry in sorted(parent.iterdir()):
+                if entry.suffix.lower() not in (".lrc", ".txt"):
+                    continue
+                cand_norm = _norm_stem(entry.stem)
+                cand_tail = cand_norm.split(" - ", 1)[1].strip() if " - " in cand_norm else cand_norm
+                if cand_norm in (target_norm, target_primary) or cand_tail in (target_norm, target_primary):
+                    result.append(entry)
+        except OSError:
+            pass
+
     seen: set[str] = set()
     unique: list[Path] = []
     for path in result:
@@ -263,19 +292,16 @@ def parse_inline_words(raw_lyric: str, line_start: float, line_end: float, offse
     for idx, (seg_t, seg_text) in enumerate(timed_segments):
         if not seg_text:
             continue
-        has_explicit_end = idx + 1 < len(timed_segments) and not timed_segments[idx + 1][1]
+        is_last_seg = not any(t_txt for _, t_txt in timed_segments[idx + 1:])
         next_t = timed_segments[idx + 1][0] if idx + 1 < len(timed_segments) else line_end
         if next_t <= seg_t:
             next_t = max(seg_t + 0.18, line_end if idx + 1 == len(timed_segments) else seg_t + 0.28)
         sub_words = seg_text.split()
         if len(sub_words) == 1:
             w_str = sub_words[0]
-            if not has_explicit_end:
+            if is_last_seg and (next_t - seg_t) > 2.4:
                 char_count = max(1, len(re.sub(r"[^\w]+", "", w_str)))
-                clause_pause = w_str.endswith((",", ";", ":", ".", "?", "!", "…"))
-                max_natural = max(0.32, 0.18 + char_count * 0.055) if clause_pause else max(0.55, 0.28 + char_count * 0.075)
-                if (next_t - seg_t) > max_natural * 1.35:
-                    next_t = seg_t + max_natural
+                next_t = seg_t + min(2.2, max(0.85, 0.35 + char_count * 0.11))
             raw_words.append((seg_t, next_t, w_str))
         else:
             weights = [prosodic_word_weight(w, i, len(sub_words))[0] for i, w in enumerate(sub_words)]
@@ -303,7 +329,7 @@ def _estimated_line_vocal_span(clean_text: str) -> float:
     if not tokens or clean_text.strip() == "♪":
         return 1.2
     chars = len(re.sub(r"[^\w]+", "", clean_text))
-    return max(0.95, min(6.2, 0.28 + len(tokens) * 0.24 + chars * 0.036))
+    return max(1.25, min(8.5, 0.42 + len(tokens) * 0.40 + chars * 0.05))
 
 
 def synthesize_prosodic_words(clean_text: str, line_start: float, line_end: float) -> list[dict[str, object]]:

@@ -220,6 +220,17 @@ Item {
             if (editedIsSelected) root.closeInlineEventEditor()
         } else root.deleteConfirmation=false
     }
+    function handleEscape(): bool {
+        if (sidePanel.visible && typeof sidePanel.item?.handleEscape === "function"
+                && sidePanel.item.handleEscape()) {
+            return true
+        }
+        if (root.selectedEventKeys.length > 0) {
+            root.clearEventSelection()
+            return true
+        }
+        return false
+    }
     function handleSelectionKey(event): bool {
         if (event.key===Qt.Key_Escape && root.selectedEventKeys.length>0) {
             root.clearEventSelection()

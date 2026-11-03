@@ -77,6 +77,7 @@ Item {
         }
 
         RippleButton {
+            id: pickerButton
             Layout.fillWidth: true
             implicitHeight: 36
             buttonText: root.label
@@ -111,6 +112,11 @@ Item {
                     text: "edit"
                     iconSize: Appearance.font.pixelSize.smaller
                     color: Appearance.colors.colSubtext
+                    opacity: pickerButton.buttonHovered ? 1 : 0
+                    Behavior on opacity {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                    }
                 }
             }
 

@@ -84,12 +84,6 @@ ApplicationWindow {
             component: Qt.resolvedUrl("modules/waffle/settings/pages/WShortcutsPage.qml")
         },
         {
-            key: "about",
-            name: Translation.tr("About"),
-            icon: "info",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WAboutPage.qml")
-        },
-        {
             key: "monitors",
             name: Translation.tr("Monitors"),
             icon: "desktop",
@@ -106,12 +100,6 @@ ApplicationWindow {
             name: Translation.tr("Workspace Strip"),
             icon: "desktop",
             component: Qt.resolvedUrl("modules/waffle/settings/pages/WWorkspaceStripPage.qml")
-        },
-        {
-            key: "mascot",
-            name: Translation.tr("Mascot"),
-            icon: "image",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WMascotPage.qml")
         },
         {
             key: "ai",
@@ -139,7 +127,7 @@ ApplicationWindow {
         }
         ,{key: "integrations",name:Translation.tr("Integrations"),icon:"apps",
           component:Qt.resolvedUrl("modules/waffle/settings/pages/WIntegrationsPage.qml")}
-        ,{key: "default-apps",name:Translation.tr("Default Applications"),icon:"apps",
+        ,{key: "default-apps",name:Translation.tr("Default Apps & Autostart"),icon:"apps",
           component:Qt.resolvedUrl("modules/waffle/settings/pages/WDefaultAppsPage.qml")}
     ]
 
@@ -210,10 +198,17 @@ ApplicationWindow {
         }
     }
 
+    readonly property real waffleBarReserve:
+        ((Config.options?.waffles?.bar?.enable ?? true) && (GlobalStates.barOpen ?? true)) ? 48 : 0
+    readonly property real targetWindowWidth:
+        Math.min(Math.max((Screen.width || 1920) - 96, 760), 1600)
+    readonly property real targetWindowHeight:
+        Math.min(Math.max((Screen.height || 1080) - waffleBarReserve - 72, 520), 1080)
+
     minimumWidth: 700
     minimumHeight: 450
-    width: 1000
-    height: 650
+    width: targetWindowWidth
+    height: targetWindowHeight
     color: root.uiReady ? Looks.colors.bg0Opaque : "transparent"
 
     // Loading state

@@ -39,9 +39,45 @@ ApplicationWindow {
     property string _requestedStartSection: ""
     property bool _navigationInitialized: false
 
+    function preferredCategoryEntry(categoryLabel: string, groupPages: var): var {
+        if (!groupPages || groupPages.length === 0)
+            return null
+        if (Persistent.ready && Persistent.states?.settings) {
+            try {
+                const map = JSON.parse(String(Persistent.states.settings.categoryPages || "{}")) || {}
+                const savedIdx = Number(map[categoryLabel] ?? -1)
+                if (savedIdx >= 0) {
+                    const found = groupPages.find(item => item.realIndex === savedIdx)
+                    if (found)
+                        return found
+                }
+            } catch (e) {}
+        }
+        return groupPages[0]
+    }
+
     function _persistCurrentPage(): void {
-        if (root._navigationInitialized && Persistent.ready && Persistent.states?.settings)
+        if (root._navigationInitialized && Persistent.ready && Persistent.states?.settings) {
             Persistent.states.settings.iiPage = Math.max(0, Math.min(root.currentPage, root.pages.length - 1))
+            const pageIdx = Persistent.states.settings.iiPage
+            const cats = SettingsPageRegistry.categories ?? []
+            for (let i = 0; i < cats.length; i++) {
+                const cat = cats[i]
+                if (cat && Array.isArray(cat.pages) && cat.pages.includes(pageIdx) && cat.label) {
+                    let map = {}
+                    try {
+                        map = JSON.parse(String(Persistent.states.settings.categoryPages || "{}")) || {}
+                    } catch (e) {
+                        map = {}
+                    }
+                    if (map[cat.label] !== pageIdx) {
+                        map[cat.label] = pageIdx
+                        Persistent.states.settings.categoryPages = JSON.stringify(map)
+                    }
+                    break
+                }
+            }
+        }
     }
 
     function initializeNavigation(): void {
@@ -50,6 +86,7 @@ ApplicationWindow {
         const persisted = Persistent.states?.settings?.iiPage ?? 0
         const requested = root._requestedStartPage >= 0 ? root._requestedStartPage : persisted
         root.currentPage = SettingsPageRegistry.safePageIndex(requested)
+        root.navGroup = Hierarchy.parentKey(root.pages[root.currentPage])
         // A stale external deep link must not spotlight a control in a retired page.
         if (root._requestedStartPage >= 0
                 && !SettingsPageRegistry.isPageApplicable(root._requestedStartPage))
@@ -73,7 +110,7 @@ ApplicationWindow {
         root.navGroup=Hierarchy.parentKey(root.pages[root.currentPage])
     }
 
-    property bool uiReady: Config.ready
+    property bool uiReady: Config.ready && Persistent.ready && root._navigationInitialized
 
     property string navGroup: ""
     readonly property var navPageOrder: SettingsPageRegistry.navigationPageIndexes(false)
@@ -478,10 +515,28 @@ ApplicationWindow {
         }
     }
 
+    Connections {
+        target: Config.options ?? null
+        function onPanelFamilyChanged() {
+            if (!SettingsPageRegistry.isPageApplicable(root.currentPage))
+                root.currentPage = 0
+        }
+    }
+
+    readonly property real waffleBarReserve: Config.options?.panelFamily === "waffle" ? 48 : 0
+    readonly property real targetWindowWidth: Math.round(Math.min(
+        1600,
+        Math.max(900, (Screen.width > 0 ? Screen.width : 1920) * 0.90),
+        Math.max(750, (Screen.width > 0 ? Screen.width : 1920) - 48)))
+    readonly property real targetWindowHeight: Math.round(Math.min(
+        1080,
+        Math.max(720, (Screen.height > 0 ? Screen.height : 1200) * 0.92),
+        Math.max(500, ((Screen.height > 0 ? Screen.height : 1200) - root.waffleBarReserve) - 24)))
+
     minimumWidth: 750
     minimumHeight: 500
-    width: 1100
-    height: 750
+    width: targetWindowWidth
+    height: targetWindowHeight
     // Match Screen Edge's render path: keep the native window transparent and
     // let one QML surface own colLayer0, including any global transparency.
     color: "transparent"
@@ -501,8 +556,9 @@ ApplicationWindow {
     ColumnLayout {
         anchors {
             fill: parent
-            margins: contentPadding
+            margins: 16
         }
+        spacing: 0
         z: 2
         visible: root.uiReady
         opacity: visible ? 1 : 0
@@ -525,9 +581,10 @@ ApplicationWindow {
             id: settingsHeader
             visible: Config.options?.windows?.showTitlebar ?? true
             Layout.fillWidth: true
-            Layout.preferredHeight: root.navEditMode ? 58 : 52
-            Layout.leftMargin: 12
-            Layout.rightMargin: 6
+            Layout.preferredHeight: root.navEditMode ? 58 : 44
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+            Layout.bottomMargin: 12
 
             Behavior on Layout.preferredHeight {
                 enabled: Appearance.animationsEnabled
@@ -539,13 +596,13 @@ ApplicationWindow {
             }
 
             readonly property real headerGap: root.navEditMode ? 8 : 12
-            readonly property real identityWidth: root.navEditMode ? 176 : 210
-            readonly property real actionsWidth: Math.max(108, actionsRow.implicitWidth)
+            readonly property real identityWidth: root.navEditMode ? 176 : 190
+            readonly property real actionsWidth: Math.max(112, actionsRow.implicitWidth)
             readonly property bool defaultOrder: SettingsChromeLayout.headerOrder.join(",") === "identity,search,actions"
 
             function searchWidth(): real {
-                const preferred = root.navEditMode ? 420 : 480
-                const minimum = root.navEditMode ? 150 : 200
+                const preferred = root.navEditMode ? 390 : 420
+                const minimum = root.navEditMode ? 150 : 180
                 if (settingsHeader.defaultOrder) {
                     const side = Math.max(settingsHeader.identityWidth, settingsHeader.actionsWidth)
                     return Math.max(minimum, Math.min(preferred,
@@ -692,12 +749,13 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             color: Appearance.colors.colOnLayer0
                             text: Translation.tr("Settings")
+                            marquee: true
+                            maximumLineCount: 1
                             font {
                                 family: Appearance.font.family.title
                                 pixelSize: Appearance.font.pixelSize.title
                                 variableAxes: Appearance.font.variableAxes.title
                             }
-                            elide: Text.ElideRight
                         }
 
                         StyledText {
@@ -705,7 +763,8 @@ ApplicationWindow {
                             text: SystemInfo.displayName || SystemInfo.username
                             color: Appearance.colors.colSubtext
                             font.pixelSize: Appearance.font.pixelSize.small
-                            elide: Text.ElideRight
+                            marquee: true
+                            maximumLineCount: 1
                         }
                     }
                 }
@@ -943,14 +1002,14 @@ ApplicationWindow {
         RowLayout { // Window content with navigation rail and content pane
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: contentPadding
+            spacing: 10
             Item {
                 id: navRailWrapper
                 Layout.fillHeight: true
-                Layout.margins: 5
+                Layout.preferredWidth: root.navEditMode ? 228 : 204
                 implicitWidth: root.navEditMode ? 228 : 204
 
-                Behavior on implicitWidth {
+                Behavior on Layout.preferredWidth {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation {
                         duration: Appearance.animation.elementResize.duration
@@ -963,11 +1022,12 @@ ApplicationWindow {
                     id: navRailFlickable
                     visible: !root.navEditMode || navEditLoader.status !== Loader.Ready
                     anchors.fill: parent
-                    anchors.bottomMargin: navBottomActions.height + 8
+                    anchors.margins: 2
+                    anchors.bottomMargin: navBottomActions.height + 6
                     contentHeight: navCol.implicitHeight
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
-                    interactive: contentHeight > height
+                    interactive: false
 
                     ScrollBar.vertical: StyledScrollBar {
                         policy: ScrollBar.AlwaysOff
@@ -982,7 +1042,7 @@ ApplicationWindow {
                             id: navRepeater
                             model: SettingsPageRegistry.categories
 
-                            delegate: ColumnLayout {
+                            delegate: RippleButton {
                                 id: navHeadingGroup
                                 required property int index
                                 required property var modelData
@@ -991,177 +1051,58 @@ ApplicationWindow {
                                     idx => root.pages[idx] && SettingsPageRegistry.isPageApplicable(idx)).map(
                                     idx => Object.assign({}, root.pages[idx], { realIndex: idx }))
                                 readonly property bool hasActivePage: navHeadingGroup.groupPages.some(item => item.realIndex === root.currentPage)
-                                property bool dropdownOpen: false
+                                objectName: navHeadingGroup.groupPages.length > 0
+                                    ? ("settingsNav_" + (navHeadingGroup.groupPages[0].key || ""))
+                                    : ("settingsNavGroup_" + index)
                                 visible: navHeadingGroup.groupPages.length > 0
                                 Layout.fillWidth: true
-                                spacing: 2
-
-                                HoverHandler {
-                                    id: groupHover
-                                    onHoveredChanged: {
-                                        if (groupHover.hovered) {
-                                            collapseDelayTimer.stop()
-                                            navHeadingGroup.dropdownOpen = true
-                                        } else {
-                                            collapseDelayTimer.restart()
+                                implicitHeight: 36
+                                rippleEnabled: true
+                                buttonRadius: Appearance.rounding.small
+                                toggled: navHeadingGroup.hasActivePage
+                                colBackground: "transparent"
+                                colBackgroundHover: Appearance.colors.colLayer1Hover
+                                colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                                colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+                                onClicked: {
+                                    if (navHeadingGroup.groupPages.length > 0) {
+                                        const hubEntry = root.preferredCategoryEntry(navHeadingGroup.headingTitle, navHeadingGroup.groupPages)
+                                        if (pagesStack.currentItem && typeof pagesStack.currentItem.exitSubView === "function" && pagesStack.currentItem.isSubViewActive) {
+                                            pagesStack.currentItem.exitSubView()
+                                        }
+                                        if (root.currentPage !== hubEntry.realIndex) {
+                                            root.activateNavigation(hubEntry)
                                         }
                                     }
                                 }
 
-                                Timer {
-                                    id: collapseDelayTimer
-                                    interval: 110
-                                    repeat: false
-                                    onTriggered: {
-                                        if (!groupHover.hovered)
-                                            navHeadingGroup.dropdownOpen = false
-                                    }
-                                }
+                                contentItem: RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 10
+                                    spacing: 9
 
-                                Rectangle {
-                                    id: headingBar
-                                    Layout.fillWidth: true
-                                    implicitHeight: 36
-                                    radius: Appearance.rounding.small
-                                    color: navHeadingGroup.dropdownOpen
-                                        ? Appearance.colors.colLayer1Hover
-                                        : (navHeadingGroup.hasActivePage
-                                            ? Qt.alpha(Appearance.colors.colPrimaryContainer, 0.48)
-                                            : "transparent")
-
-                                    Behavior on color {
-                                        enabled: Appearance.animationsEnabled
-                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                    MaterialSymbol {
+                                        text: navHeadingGroup.groupPages.length > 0
+                                            ? SettingsPageRegistry.iconForPage(navHeadingGroup.groupPages[0].realIndex)
+                                            : "folder"
+                                        iconSize: 18
+                                        color: SettingsMaterialPreset.navigationIconColor(
+                                            navHeadingGroup.index,
+                                            Math.max(1, SettingsPageRegistry.categories.length),
+                                            navHeadingGroup.hasActivePage)
                                     }
 
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 8
-                                        spacing: 8
-
-                                        MaterialSymbol {
-                                            text: navHeadingGroup.groupPages.length > 0
-                                                ? SettingsPageRegistry.iconForPage(navHeadingGroup.groupPages[0].realIndex)
-                                                : "folder"
-                                            iconSize: 17
-                                            color: SettingsMaterialPreset.navigationIconColor(
-                                                navHeadingGroup.index,
-                                                Math.max(1, SettingsPageRegistry.categories.length),
-                                                navHeadingGroup.hasActivePage || navHeadingGroup.dropdownOpen)
-                                        }
-
-                                        StyledText {
-                                            Layout.fillWidth: true
-                                            text: navHeadingGroup.headingTitle
-                                            font.pixelSize: Appearance.font.pixelSize.small
-                                            font.weight: (navHeadingGroup.hasActivePage || navHeadingGroup.dropdownOpen)
-                                                ? Font.DemiBold : Font.Medium
-                                            color: navHeadingGroup.hasActivePage
-                                                ? Appearance.colors.colOnPrimaryContainer
-                                                : Appearance.colors.colOnLayer1
-                                            elide: Text.ElideRight
-                                        }
-
-                                        MaterialSymbol {
-                                            text: "expand_more"
-                                            iconSize: 17
-                                            rotation: navHeadingGroup.dropdownOpen ? 180 : 0
-                                            color: Appearance.colors.colOnSurfaceVariant
-                                            Behavior on rotation {
-                                                enabled: Appearance.animationsEnabled
-                                                NumberAnimation {
-                                                    duration: Appearance.animation.elementMoveFast.duration
-                                                    easing.type: Easing.OutCubic
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Item {
-                                    Layout.fillWidth: true
-                                    implicitHeight: navHeadingGroup.dropdownOpen ? groupPagesCol.implicitHeight : 0
-                                    clip: true
-                                    enabled: navHeadingGroup.dropdownOpen
-
-                                    Behavior on implicitHeight {
-                                        enabled: Appearance.animationsEnabled
-                                        NumberAnimation {
-                                            duration: 210
-                                            easing.type: Easing.OutCubic
-                                        }
-                                    }
-
-                                    ColumnLayout {
-                                        id: groupPagesCol
-                                        width: parent.width
-                                        spacing: SettingsMaterialPreset.navItemSpacing
-                                        opacity: navHeadingGroup.dropdownOpen ? 1 : 0
-
-                                        Behavior on opacity {
-                                            enabled: Appearance.animationsEnabled
-                                            NumberAnimation { duration: 160 }
-                                        }
-
-                                        Repeater {
-                                            model: navHeadingGroup.groupPages
-
-                                            delegate: RippleButton {
-                                                id: navBtn
-                                                required property int index
-                                                required property var modelData
-                                                objectName: "settingsNav_" + (modelData.groupKey || modelData.key || "back")
-                                                Layout.fillWidth: true
-                                                Layout.leftMargin: 8
-                                                implicitHeight: SettingsMaterialPreset.navItemHeight
-                                                rippleEnabled: true
-                                                buttonRadius: Math.min(width, height) / 2
-                                                readonly property int pageRealIndex: modelData.realIndex
-                                                toggled: Hierarchy.selected(modelData, root.pages, root.currentPage)
-                                                colBackground: "transparent"
-                                                colBackgroundToggled: Appearance.colors.colPrimaryContainer
-                                                colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
-                                                colBackgroundHover: Appearance.colors.colLayer1Hover
-                                                onClicked: root.activateNavigation(modelData)
-
-                                                contentItem: RowLayout {
-                                                    anchors.fill: parent
-                                                    anchors.leftMargin: 10
-                                                    anchors.rightMargin: 9
-                                                    spacing: 9
-
-                                                    MaterialSymbol {
-                                                        text: navBtn.modelData.icon || ""
-                                                        iconSize: 18
-                                                        color: SettingsMaterialPreset.navigationIconColor(
-                                                            Math.max(0, root.navPageOrder.indexOf(navBtn.modelData.realIndex)),
-                                                            Math.max(1, root.navPageOrder.length),
-                                                            navBtn.toggled)
-                                                        rotation: navBtn.modelData.iconRotation || 0
-                                                        Behavior on color {
-                                                            enabled: Appearance.animationsEnabled
-                                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                                                        }
-                                                    }
-
-                                                    StyledText {
-                                                        Layout.fillWidth: true
-                                                        text: navBtn.modelData.name || ""
-                                                        font.pixelSize: Appearance.font.pixelSize.small
-                                                        font.weight: navBtn.toggled ? Font.DemiBold : Font.Normal
-                                                        color: navBtn.toggled
-                                                            ? Appearance.colors.colOnPrimaryContainer
-                                                            : Appearance.colors.colOnSurfaceVariant
-                                                        elide: Text.ElideRight
-                                                        Behavior on color {
-                                                            enabled: Appearance.animationsEnabled
-                                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        text: navHeadingGroup.headingTitle
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                        font.weight: navHeadingGroup.hasActivePage ? Font.DemiBold : Font.Medium
+                                        color: navHeadingGroup.hasActivePage
+                                            ? Appearance.colors.colOnPrimaryContainer
+                                            : Appearance.colors.colOnLayer1
+                                        marquee: true
+                                        maximumLineCount: 1
                                     }
                                 }
                             }
@@ -1384,11 +1325,36 @@ ApplicationWindow {
                 border.width: 0
                 border.color: "transparent"
 
-                // ── Page header: icon + name + description ──
+                // ── Page header: iOS Breadcrumb (`‹ Back`) + Title + Subtitle ──
                 Item {
                     id: windowPageHeader
                     anchors { top: parent.top; left: parent.left; right: parent.right }
                     readonly property var meta: root.pages[root.currentPage] ?? {}
+                    readonly property var activeCategory: SettingsPageRegistry.categories.find(
+                        cat => (cat?.pages ?? []).includes(root.currentPage)) ?? null
+                    readonly property var groupPages: (activeCategory?.pages ?? []).filter(
+                        idx => root.pages[idx] && SettingsPageRegistry.isPageApplicable(idx)).map(
+                        idx => Object.assign({}, root.pages[idx], { realIndex: idx }))
+                    readonly property int hubPageIndex: groupPages.length > 0 ? groupPages[0].realIndex : root.currentPage
+                    readonly property Item activePageItem: pagesStack.currentItem
+                    readonly property bool isOnSiblingSubPage: false
+                    readonly property bool isOnInPageSubView: false
+                    readonly property bool isDrilledDown: false
+                    readonly property string backLabel: ""
+                    readonly property string activeTitle: String(activeCategory?.label || meta.name || "")
+                    readonly property string activeIcon: String(meta.icon || "settings")
+
+                    function navigateBack(): void {
+                        if (windowPageHeader.isOnInPageSubView && windowPageHeader.activePageItem
+                                && typeof windowPageHeader.activePageItem.exitSubView === "function") {
+                            windowPageHeader.activePageItem.exitSubView()
+                            return
+                        }
+                        if (windowPageHeader.isOnSiblingSubPage && windowPageHeader.groupPages.length > 0) {
+                            root.activateNavigation(windowPageHeader.groupPages[0])
+                        }
+                    }
+
                     height: root.settingsSearchText.trim().length > 0 ? 0 : 48
                     visible: root.settingsSearchText.trim().length === 0
 
@@ -1397,16 +1363,64 @@ ApplicationWindow {
                         anchors.fill: parent
                         anchors.leftMargin: 20
                         anchors.rightMargin: 20
+                        anchors.topMargin: 6
+                        anchors.bottomMargin: 6
                         spacing: 10
 
+                        RippleButton {
+                            id: windowBackBtn
+                            objectName: "settingsHeaderBackButton"
+                            visible: windowPageHeader.isDrilledDown
+                            Layout.alignment: Qt.AlignVCenter
+                            implicitHeight: 30
+                            implicitWidth: windowBackRow.implicitWidth + 18
+                            buttonRadius: height / 2
+                            colBackground: Appearance.colors.colPrimaryContainer
+                            colBackgroundHover: Appearance.colors.colPrimaryContainerHover
+                            onClicked: windowPageHeader.navigateBack()
+
+                            contentItem: Item {
+                                Row {
+                                    id: windowBackRow
+                                    anchors.centerIn: parent
+                                    spacing: 4
+
+                                    MaterialSymbol {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "chevron_left"
+                                        iconSize: 18
+                                        color: Appearance.colors.colOnPrimaryContainer
+                                    }
+
+                                    StyledText {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: windowPageHeader.backLabel
+                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                        font.weight: Font.DemiBold
+                                        color: Appearance.colors.colOnPrimaryContainer
+                                    }
+                                }
+                            }
+                        }
+
+                        MaterialSymbol {
+                            visible: windowPageHeader.isDrilledDown
+                            Layout.alignment: Qt.AlignVCenter
+                            text: "chevron_right"
+                            iconSize: 16
+                            color: Appearance.colors.colSubtext
+                        }
+
                         MaterialShapeWrappedMaterialSymbol {
-                            text: windowPageHeader.meta.icon ?? ""
+                            text: windowPageHeader.activeIcon
                             iconSize: 15
                             Layout.alignment: Qt.AlignVCenter
                         }
 
                         StyledText {
-                            text: windowPageHeader.meta.name ?? ""
+                            text: windowPageHeader.activeTitle
+                            marquee: true
+                            maximumLineCount: 1
                             font {
                                 family: Appearance.font.family.title
                                 pixelSize: Appearance.font.pixelSize.normal
@@ -1420,7 +1434,8 @@ ApplicationWindow {
                             text: windowPageHeader.meta.desc ?? ""
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: Appearance.colors.colSubtext
-                            elide: Text.ElideRight
+                            marquee: true
+                            maximumLineCount: 1
                         }
                     }
 
@@ -1451,6 +1466,7 @@ ApplicationWindow {
                     visible: root.settingsSearchText.trim().length === 0
                     enabled: visible
                     loadEnabled: Config.ready && root._navigationInitialized
+                    onPageNavigationRequested: pageIndex => root.currentPage = pageIndex
 
                     SettingsPageLoadingOverlay {
                         anchors.fill: parent

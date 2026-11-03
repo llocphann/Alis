@@ -96,6 +96,7 @@ Singleton {
                 property string model: "gemini-2.5-flash"
                 property real temperature: 0.5
                 property string promptName: ""
+                property string modelAliasesJson: "{}"
             }
 
             property JsonObject aquaCheckIn: JsonObject {
@@ -135,12 +136,6 @@ Singleton {
                 }
             }
 
-            property JsonObject booru: JsonObject {
-                property bool allowNsfw: false
-                property bool showTagsOnHover: true
-                property string provider: "yandere"
-            }
-
             property JsonObject idle: JsonObject {
                 property bool inhibit: false
             }
@@ -163,84 +158,6 @@ Singleton {
 
             property JsonObject orbit: JsonObject {
                 property list<string> stashEntries: []
-            }
-
-            property JsonObject overlay: JsonObject {
-                property list<string> open: ["crosshair", "recorder", "volumeMixer", "resources"]
-                property JsonObject crosshair: JsonObject {
-                    property bool pinned: false
-                    property bool clickthrough: true
-                    property real x: 827
-                    property real y: 441
-                    property real width: 250
-                    property real height: 100
-                }
-                property JsonObject floatingImage: JsonObject {
-                    property bool pinned: false
-                    property bool clickthrough: false
-                    property real x: 1650
-                    property real y: 390
-                    property real width: 0
-                    property real height: 0
-                }
-                property JsonObject fpsLimiter: JsonObject {
-                    property bool pinned: false
-                    property bool clickthrough: false
-                    property real x: 1570
-                    property real y: 615
-                    property real width: 280
-                    property real height: 80
-                }
-                property JsonObject recorder: JsonObject {
-                    property bool pinned: false
-                    property bool clickthrough: false
-                    property real x: 80
-                    property real y: 80
-                    property real width: 350
-                    property real height: 130
-                }
-                property JsonObject resources: JsonObject {
-                    property bool pinned: false
-                    property bool clickthrough: true
-                    property real x: 1500
-                    property real y: 770
-                    property real width: 350
-                    property real height: 200
-                    property int tabIndex: 0
-                }
-                property JsonObject volumeMixer: JsonObject {
-                    property bool pinned: false
-                    property bool clickthrough: false
-                    property real x: 80
-                    property real y: 280
-                    property real width: 350
-                    property real height: 600
-                    property int tabIndex: 0
-                }
-                property JsonObject notes: JsonObject {
-                    property bool pinned: false
-                    property bool clickthrough: true
-                    property real x: 1400
-                    property real y: 42
-                    property real width: 460
-                    property real height: 330
-                }
-                property JsonObject discord: JsonObject {
-                    property bool pinned: false
-                    property bool clickthrough: false
-                    property real x: 1200
-                    property real y: 560
-                    property real width: 320
-                    property real height: 160
-                }
-                property JsonObject notifications: JsonObject {
-                    property bool pinned: false
-                    property bool clickthrough: false
-                    property real x: 1200
-                    property real y: 80
-                    property real width: 420
-                    property real height: 500
-                }
             }
 
             property JsonObject timer: JsonObject {
@@ -273,6 +190,8 @@ Singleton {
             property JsonObject settings: JsonObject {
                 property int iiPage: 0
                 property int wafflePage: 0
+                property string pageSections: "{}"
+                property string categoryPages: "{}"
                 property int themeTab: 0
                 property string themeTag: ""
                 property string gowallFormat: "png"

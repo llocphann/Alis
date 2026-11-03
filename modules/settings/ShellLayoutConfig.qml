@@ -126,8 +126,8 @@ ContentPage {
     GridLayout {
         id: shellLayoutTwoColumnGrid
         Layout.fillWidth: true
-        columns: width >= 620 ? 2 : 1
-        uniformCellWidths: columns === 2
+        columns: 1
+        uniformCellWidths: false
         columnSpacing: 14
         rowSpacing: 14
 
@@ -139,7 +139,6 @@ ContentPage {
             required property var modelData
 
             Layout.fillWidth: true
-            Layout.fillHeight: true
             Layout.preferredWidth: 1
             Layout.alignment: Qt.AlignTop
 

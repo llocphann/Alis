@@ -9,7 +9,7 @@ import QtQuick.Layouts
 
 Item {
     id: root
-    property alias currentIndex: tabBar.currentIndex
+    property int currentIndex: 0
     required property var tabButtonList
     property real maxWidth: -1
     property int compactThreshold: 4
@@ -24,6 +24,10 @@ Item {
     property real reorderStartX: 0
     property real reorderCurrentX: 0
     property var _reorderWidths: []
+
+    function _tabCount(): int {
+        return Math.max(0, root.tabButtonList?.length ?? 0)
+    }
 
     function ensureCurrentVisible() {
         if (!flick.interactive) return;
@@ -43,13 +47,19 @@ Item {
     }
 
     function incrementCurrentIndex() {
-        tabBar.incrementCurrentIndex()
+        const count = root._tabCount()
+        if (count <= 0) return
+        root.currentIndex = Math.min(count - 1, root.currentIndex + 1)
     }
     function decrementCurrentIndex() {
-        tabBar.decrementCurrentIndex()
+        const count = root._tabCount()
+        if (count <= 0) return
+        root.currentIndex = Math.max(0, root.currentIndex - 1)
     }
     function setCurrentIndex(index) {
-        tabBar.setCurrentIndex(index)
+        const count = root._tabCount()
+        const normalized = Math.max(0, Number(index) || 0)
+        root.currentIndex = count > 0 ? Math.min(count - 1, normalized) : normalized
     }
 
     function _cacheReorderWidths(): void {
@@ -140,7 +150,7 @@ Item {
                 id: groupContainer
                 z: 0
                 anchors.verticalCenter: parent.verticalCenter
-                readonly property real padding: 4
+                readonly property real padding: 0
                 implicitWidth: contentItem.implicitWidth + padding * 2
                 height: 40
                 x: flick.contentWidth > flick.width ? 0 : Math.max(0, (flick.width - width) / 2)
@@ -161,6 +171,7 @@ Item {
 
                 Rectangle {
                     id: activeIndicator
+                    objectName: "activeIndicator"
                     z: 1
                     opacity: root.reorderEnabled ? 0.35 : 1
                     Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
@@ -178,17 +189,39 @@ Item {
                     Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     // Animation
-                    property Item targetItem: tabRepeater.itemAt(root.currentIndex)
+                    property bool _layoutReady: false
+                    property int _delegateVersion: 0
+                    property Item targetItem: {
+                        void(activeIndicator._delegateVersion)
+                        return (tabRepeater.count > root.currentIndex && root.currentIndex >= 0)
+                            ? tabRepeater.itemAt(root.currentIndex)
+                            : null
+                    }
+                    onTargetItemChanged: {
+                        if (targetItem && targetItem.width > 0 && !_layoutReady) {
+                            Qt.callLater(() => { activeIndicator._layoutReady = true; });
+                        }
+                    }
+                    Connections {
+                        target: activeIndicator.targetItem
+                        function onWidthChanged(): void {
+                            if (activeIndicator.targetItem && activeIndicator.targetItem.width > 0 && !activeIndicator._layoutReady) {
+                                Qt.callLater(() => { activeIndicator._layoutReady = true; });
+                            }
+                        }
+                    }
                     AnimatedTabIndexPair {
                         id: leftBound
+                        animate: activeIndicator._layoutReady && Appearance.animationsEnabled
                         idx1Duration: 50
-                        idx2Duration: 200
+                        idx2Duration: 180
                         index: activeIndicator.targetItem ? (groupContainer.padding + activeIndicator.targetItem.x) : 0
                     }
                     AnimatedTabIndexPair {
                         id: rightBound
+                        animate: activeIndicator._layoutReady && Appearance.animationsEnabled
                         idx1Duration: 50
-                        idx2Duration: 200
+                        idx2Duration: 180
                         index: activeIndicator.targetItem ? (groupContainer.padding + activeIndicator.targetItem.x + activeIndicator.targetItem.width) : 0
                     }
                     x: root.currentIndex >= 0 && activeIndicator.targetItem ? Math.min(leftBound.idx1, leftBound.idx2) : 0
@@ -205,6 +238,8 @@ Item {
                     Repeater {
                         id: tabRepeater
                         model: root.tabButtonList
+                        onItemAdded: activeIndicator._delegateVersion++
+                        onItemRemoved: activeIndicator._delegateVersion++
                         delegate: ToolbarTabButton {
                             id: tabButton
                             required property int index
@@ -227,10 +262,6 @@ Item {
                                     enabled: Appearance.animationsEnabled && !tabButton.beingDragged
                                     NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic }
                                 }
-                            }
-                            Behavior on x {
-                                enabled: Appearance.animationsEnabled
-                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic }
                             }
                             Behavior on opacity {
                                 enabled: Appearance.animationsEnabled
@@ -321,20 +352,6 @@ Item {
             }
             root.userSelected(root.currentIndex)
             Qt.callLater(root.ensureCurrentVisible)
-        }
-    }
-
-    // TabBar doesn't allow tabs to be of different sizes. Literally unusable. 
-    // We use it only for the logic and draw stuff manually
-    TabBar {
-        id: tabBar
-        z: -1
-        background: null
-        Repeater { // This is to fool the TabBar that it has tabs so it does the indices properly
-            model: root.tabButtonList.length
-            delegate: TabButton {
-                background: null
-            }
         }
     }
 }

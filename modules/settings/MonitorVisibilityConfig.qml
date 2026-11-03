@@ -19,8 +19,19 @@ ContentPage {
     // Reserve 55 px for the card/group chrome and keep monitor tiles compact.
     readonly property real arrangementCanvasHeight:
         embeddedArrangementOnly ? Math.max(80, height - 55) : 292
+    readonly property real settingsArrangementCanvasHeight: {
+        const targetCardH = SettingsMaterialPreset.standardBentoHeight > 400
+            ? SettingsMaterialPreset.standardBentoHeight
+            : 831
+        const cardOverhead = SettingsMaterialPreset.cardPadding * 2
+            + (monitorArrangementCard.showHeader ? 33 : 0)
+            + SettingsMaterialPreset.groupPadding * 2
+            + (monitorArrangementNotice.visible ? monitorArrangementNotice.implicitHeight + SettingsMaterialPreset.groupSpacing : 0)
+        return Math.max(480, targetCardH - cardOverhead)
+    }
     readonly property real arrangementVisualScale:
         embeddedArrangementOnly ? 0.65 : 0.70
+    readonly property string _legacyPrimaryMonitorHint: Translation.tr("Primary monitor sets the fallback output; display controls are in Compositor.")
 
     property string activeSection: "outputs"
 
@@ -1177,7 +1188,7 @@ ContentPage {
             GridLayout {
                 Layout.fillWidth: true
                 columns: width >= 520 ? 2 : 1
-                uniformCellWidths: columns === 2
+                uniformCellWidths: false
                 columnSpacing: 12
                 rowSpacing: 4
 
@@ -1231,6 +1242,8 @@ ContentPage {
     }
 
     SettingsCardSection {
+        id: monitorArrangementCard
+        bentoColumn: "full"
         settingsTaskSection: "outputs"
         visible: CompositorService.isNiri
         expanded: true
@@ -1242,6 +1255,7 @@ ContentPage {
 
         SettingsGroup {
             NoticeBox {
+                id: monitorArrangementNotice
                 visible: root.arrangementChromeVisible
                 Layout.fillWidth: true
                 materialIcon: "drag_pan"
@@ -1258,7 +1272,9 @@ ContentPage {
                 id: monitorLayoutCanvas
                 objectName: "monitorArrangementCanvas"
                 Layout.fillWidth: true
-                implicitHeight: root.arrangementCanvasHeight
+                implicitHeight: root.embeddedArrangementOnly
+                    ? root.arrangementCanvasHeight
+                    : root.settingsArrangementCanvasHeight
                 radius: Appearance.rounding.normal
                 color: Appearance.colors.colLayer1
                 border.width: 1
@@ -1529,184 +1545,5 @@ ContentPage {
                 text: root.monitorLayoutInfo
             }
         }
-    }
-
-    GridLayout {
-        Layout.fillWidth: true
-        visible: !root.embeddedArrangementOnly
-        columns: width >= 620 ? 2 : 1
-        uniformCellWidths: columns === 2
-        columnSpacing: 14
-        rowSpacing: 14
-
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "outputs"
-        visible: !root.embeddedArrangementOnly
-        expanded: true
-        icon: "settings_input_component"
-        title: Translation.tr("Shell visibility")
-
-        SettingsGroup {
-            NoticeBox {
-                Layout.fillWidth: true
-                materialIcon: "info"
-                text: Translation.tr("Primary monitor sets the fallback output; display controls are in Compositor.")
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Primary monitor")
-                tooltip: Translation.tr("Used as the default output when a popup cannot infer the focused monitor.")
-
-                ConfigSelectionArray {
-                    currentValue: Config.options?.display?.primaryMonitor ?? ""
-                    options: root.monitorOptions()
-                    onSelected: newValue => Config.setNestedValue("display.primaryMonitor", newValue)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Connected outputs")
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: Appearance.sizes.spacingSmall / 2
-
-                    Repeater {
-                        model: Quickshell.screens
-
-                        MonitorInfoRow {
-                            required property var modelData
-                            monitor: modelData
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "popups"
-        visible: !root.embeddedArrangementOnly
-        expanded: true
-        icon: "notifications"
-        title: Translation.tr("Popups")
-
-        SettingsGroup {
-            NoticeBox {
-                Layout.fillWidth: true
-                materialIcon: "merge"
-                text: Translation.tr("These surfaces are shared by both families, so the same monitor choices apply in Material and Waffle.")
-            }
-
-            PresetActions {
-                paths: root.surfacePaths(root.sharedSurfaces)
-            }
-
-            Repeater {
-                model: root.sharedSurfaces
-                SurfaceVisibilityBlock {
-                    required property var modelData
-                    surface: modelData
-                }
-            }
-        }
-    }
-
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        spacing: 14
-        visible: !root.embeddedArrangementOnly
-
-        SettingsCardSection {
-            Layout.fillWidth: true
-            settingsTaskSection: "surfaces"
-            visible: !root.embeddedArrangementOnly
-            expanded: true
-            icon: "web_asset"
-            title: Translation.tr("Material shell surfaces")
-
-            SettingsGroup {
-                NoticeBox {
-                    Layout.fillWidth: true
-                    materialIcon: "apps"
-                    text: Translation.tr("These controls only affect the Material family: the ii bar, dock, and floating media controls.")
-                }
-
-                PresetActions {
-                    paths: root.surfacePaths(root.iiSurfaces)
-                }
-
-                Repeater {
-                    model: root.iiSurfaces
-                    SurfaceVisibilityBlock {
-                        required property var modelData
-                        surface: modelData
-                    }
-                }
-            }
-        }
-
-        SettingsCardSection {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            settingsTaskSection: "outputs"
-            visible: !root.embeddedArrangementOnly
-            expanded: true
-            icon: "preview"
-            title: Translation.tr("Overview placement")
-
-            SettingsGroup {
-                SettingsSwitch {
-                    buttonIcon: "screen_share"
-                    text: Translation.tr("Active screen only")
-                    checked: Config.options?.overview?.activeScreenOnly ?? true
-                    onCheckedChanged: Config.setNestedValue("overview.activeScreenOnly", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Open the overview on the monitor where it was invoked")
-                    }
-                }
-            }
-        }
-    }
-
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "widgets"
-        visible: !root.embeddedArrangementOnly
-        expanded: true
-        icon: "widgets"
-        title: Translation.tr("Desktop widgets")
-
-        SettingsGroup {
-            NoticeBox {
-                Layout.fillWidth: true
-                materialIcon: "monitor"
-                text: Translation.tr("Clock, weather, media, visualizer, and custom widgets")
-            }
-
-            SurfaceVisibilityBlock {
-                surface: root.desktopWidgetSurface
-            }
-
-            Repeater {
-                model: root.desktopWidgetOutputNames()
-
-                DesktopWidgetOutputBlock {
-                    required property var modelData
-                    outputName: String(modelData ?? "")
-                }
-            }
-        }
-    }
     }
 }

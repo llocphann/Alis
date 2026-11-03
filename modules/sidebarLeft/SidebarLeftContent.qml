@@ -8,10 +8,7 @@ import qs.modules.common.models
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.abyss.looks
-import qs.modules.sidebarLeft.animeSchedule
 import qs.modules.sidebarLeft.news
-// DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
-// import qs.modules.sidebarLeft.plugins
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -46,15 +43,10 @@ Item {
     property string outerSizeMode: "full"
     property string attachedEdge: "left"
 
-    property bool aiChatEnabled: (Config.options?.policies?.ai ?? 0) !== 0
+    property bool aiChatEnabled: true
     property bool translatorEnabled: (Config.options?.sidebar?.translator?.enable ?? false)
-    property bool animeEnabled: (Config.options?.policies?.weeb ?? 0) !== 0
-    property bool animeCloset: (Config.options?.policies?.weeb ?? 0) === 2
-    property bool animeScheduleEnabled: Config.options?.sidebar?.animeSchedule?.enable ?? false
     property bool newsEnabled: Config.options?.sidebar?.news?.enable ?? true
     property bool toolsEnabled: Config.options?.sidebar?.tools?.enable ?? false
-    // DISABLED: webapps — requires quickshell-webengine
-    property bool pluginsEnabled: false // Config.options?.sidebar?.plugins?.enable ?? false
 
     // Tabs exposing contentPreferredHeight can let the panel hug their content.
     readonly property real activeTabContentHeight: swipeView.currentItem?.item?.contentPreferredHeight ?? -1
@@ -62,7 +54,7 @@ Item {
     readonly property bool fitToContent:
         ((Config.options?.sidebar?.collapseWidgetsTab ?? false)
             || root.outerSizeMode === "fit")
-        && !pluginViewActive && !activeTabEditing && activeTabContentHeight > 0
+        && !activeTabEditing && activeTabContentHeight > 0
     readonly property real availableContentHeight: Math.max(0,
         root.screenHeight - Appearance.sizes.hyprlandGapsOut * 2)
     readonly property real preferredContentHeight: root.fitToContent
@@ -74,41 +66,14 @@ Item {
     readonly property real minimumUsefulWidth: 320
     readonly property real maximumUsefulWidth: 900
 
-    // ─── WebApp state — DISABLED (requires quickshell-webengine) ─────
-    property string _activeWebAppId: ""
-    property bool pluginViewActive: false // _activeWebAppId !== ""
-
-    // Persistent cache: pluginId → WebAppView instance
-    property var _webViewCache: ({})
-    property int _webViewCount: 0  // for reactivity
-
-    // DISABLED: webapps — all functions below are stubs until quickshell-webengine is available
-    property var _profileCache: ({})
-
-    function _getOrCreateProfile(id: string): QtObject { return null }
-
-    // ─── WebApp management functions (DISABLED) ──────────────────────
-
-    function openWebApp(id: string, url: string, name: string, icon: string, userscriptSources): void {}
-    function closeWebApp(): void {}
-    function removeWebApp(id: string): void {}
-    function _freezeAllWebApps(): void {}
-    function _resumeActiveWebApp(): void {}
-
-    // ─── Restore last active plugin (DISABLED) ──────────────────────
-    property bool _restoredLastPlugin: false
-    function _tryRestoreLastPlugin(): void {}
-    function _doRestoreLastPlugin(): void {}
-
     readonly property var _tabDefaultOrder: [
-        "ai", "translator", "anime", "animeSchedule", "news", "tools"
+        "ai", "translator", "news", "tools"
     ]
     readonly property var resolvedTabOrder: {
         const result = []
         const saved = Config.options?.sidebar?.left?.tabOrder ?? root._tabDefaultOrder
         for (let i = 0; i < saved.length; i++) {
-            const savedId = saved[i]
-            const id = savedId === "ytmusic" ? "music" : savedId
+            const id = saved[i]
             if (root._tabDefaultOrder.includes(id) && !result.includes(id)) result.push(id)
         }
         for (let i = 0; i < root._tabDefaultOrder.length; i++) {
@@ -125,44 +90,10 @@ Item {
         const result = []
         if (root.aiChatEnabled) result.push({ id: "ai", icon: "neurology", name: Translation.tr("Intelligence") })
         if (root.translatorEnabled) result.push({ id: "translator", icon: "translate", name: Translation.tr("Translator") })
-        if (root.animeEnabled && !root.animeCloset) result.push({ id: "anime", icon: "bookmark_heart", name: Translation.tr("Anime") })
-        if (root.animeScheduleEnabled) result.push({ id: "animeSchedule", icon: "calendar_month", name: Translation.tr("Schedule") })
         if (root.newsEnabled) result.push({ id: "news", icon: "newspaper", name: Translation.tr("News") })
-        // Local Music is a Dashboard page; saved Sidebar orders remain readable.
         if (root.toolsEnabled) result.push({ id: "tools", icon: "build", name: Translation.tr("Tools") })
-        // DISABLED: webapps — requires quickshell-webengine rebuild
-        // if (root.pluginsEnabled) result.push({ id: "plugins", icon: "extension", name: Translation.tr("Web Apps") })
         result.sort((a, b) => root.resolvedTabOrder.indexOf(a.id) - root.resolvedTabOrder.indexOf(b.id))
         return result
-    }
-
-    // Find the index of the plugins tab
-    readonly property int _pluginsTabIndex: {
-        for (let i = 0; i < tabButtonList.length; i++) {
-            if (tabButtonList[i].icon === "extension") return i
-        }
-        return -1
-    }
-
-    function migrateLegacyMusicConfig(): void {
-        const legacyEnabled = Config.options?.sidebar?.ytmusic?.enable ?? false
-        const localEnabled = Config.options?.sidebar?.music?.enable ?? false
-        const savedOrder = Config.options?.sidebar?.left?.tabOrder ?? []
-        const migratedOrder = []
-        let orderChanged = false
-        for (const rawId of savedOrder) {
-            const id = rawId === "ytmusic" ? "music" : rawId
-            if (id !== rawId) orderChanged = true
-            if (!migratedOrder.includes(id)) migratedOrder.push(id)
-        }
-
-        const values = {}
-        if (legacyEnabled) {
-            values["sidebar.ytmusic.enable"] = false
-            if (!localEnabled) values["sidebar.music.enable"] = true
-        }
-        if (orderChanged) values["sidebar.left.tabOrder"] = migratedOrder
-        if (Object.keys(values).length > 0) Config.setNestedValues(values)
     }
 
     function focusActiveItem() {
@@ -202,10 +133,7 @@ Item {
         const view = DevNavigation.currentDestination.substring("sidebar-left/".length)
         const iconByView = {
             "ai": "neurology", "translator": "translate",
-            "anime": "bookmark_heart", "anime-schedule": "calendar_month",
-            "news": "newspaper", "music": "library_music",
-            "ytmusic": "library_music", // legacy dev-navigation alias
-            "tools": "build"
+            "news": "newspaper", "tools": "build"
         }
         const icon = iconByView[view] ?? ""
         const index = root.tabButtonList.findIndex(tab => tab.icon === icon)
@@ -215,7 +143,6 @@ Item {
     onTabButtonListChanged: Qt.callLater(root.syncSelectedTabIndex)
 
     Component.onCompleted: {
-        root.migrateLegacyMusicConfig()
         root.applyDevDestination()
         Qt.callLater(() => {
             root.selectedTabId = root.tabButtonList[swipeView.currentIndex]?.id ?? ""
@@ -324,7 +251,7 @@ Item {
             anchors.topMargin: sidebarPadding - 4
             spacing: sidebarPadding
 
-            // Tab bar — hidden when webapp is fullscreen in sidebar
+            // Tab bar
             Toolbar {
                 id: toolbarContainer
                 Layout.alignment: Qt.AlignHCenter
@@ -332,7 +259,6 @@ Item {
                 padding: 6
                 implicitHeight: tabBar.implicitHeight + padding * 2
                 transparent: false
-                visible: !root.pluginViewActive
 
                 ToolbarTabBar {
                     id: tabBar
@@ -383,7 +309,8 @@ Item {
                 id: sidebarLeftInnerSurface
                 objectName: "sidebarLeftInnerSurface"
                 radius: Appearance.rounding.normal
-                color: root.innerContentSurfaceColor // Material fallback: color: Appearance.colors.colLayer1
+                // Material fallback: color: Appearance.colors.colLayer1
+                color: root.innerContentSurfaceColor
                 border.width: 0
                 border.color: "transparent"
                 // Organic morph on style/shape switch (organic-transitions)
@@ -397,7 +324,6 @@ Item {
                     id: swipeView
                     anchors.fill: parent
                     spacing: 10
-                    visible: !root.pluginViewActive
                     // Sync back to tabBar when swiping
                     onCurrentIndexChanged: {
                         tabBar.setCurrentIndex(currentIndex)
@@ -435,58 +361,26 @@ Item {
                                 switch (modelData.icon) {
                                     case "neurology": return aiChatComp
                                     case "translate": return translatorComp
-                                    case "bookmark_heart": return animeComp
-                                    case "calendar_month": return animeScheduleComp
                                     case "newspaper": return newsComp
                                     case "build": return toolsComp
-                                    // DISABLED: webapps
-                                    // case "extension": return pluginsComp
                                     default: return null
                                 }
                             }
                         }
                     }
                 }
-
-                // ── WebApp overlay ───────────────────────────────────
-                // WebAppViews live HERE, above the SwipeView.
-                // Visibility controlled by: active webapp + sidebar open state.
-                Item {
-                    id: webAppOverlay
-                    anchors.fill: parent
-                    visible: root.pluginViewActive && GlobalStates.sidebarLeftOpen
-                    z: 5
-                }
             }
         }
 
         Component { id: aiChatComp; AiChat {} }
         Component { id: translatorComp; Translator {} }
-        Component { id: animeComp; Anime {} }
-        Component { id: animeScheduleComp; AnimeScheduleView {} }
         Component { id: newsComp; NewsView {} }
         Component { id: toolsComp; ToolsView {} }
-        // DISABLED: webapps — requires quickshell-webengine rebuild
-        // Component {
-        //     id: pluginsComp
-        //     PluginsTab {
-        //         activePluginId: root._activeWebAppId
-        //         onPluginRequested: (id, url, name, icon, userscriptSources) => root.openWebApp(id, url, name, icon, userscriptSources)
-        //         onPluginCloseRequested: root.closeWebApp()
-        //         onPluginRemoved: (id) => root.removeWebApp(id)
-        //     }
-        // }
 
         Keys.onPressed: (event) => {
             if (event.key === Qt.Key_Escape) {
                 if (root.tabEditMode) {
                     root.tabEditMode = false
-                    event.accepted = true
-                    return
-                }
-                // If webapp is open, close it first (go back to list)
-                if (root.pluginViewActive) {
-                    root.closeWebApp()
                     event.accepted = true
                     return
                 }

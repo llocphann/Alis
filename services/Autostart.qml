@@ -57,10 +57,13 @@ Singleton {
             return ""
         }
     }
+    readonly property string autostartFilePath: root.startupFilePath
+    readonly property bool busy: root.status === "write"
 
     readonly property string beginMarker: "// >>> alis-managed-autostart >>>"
     readonly property string endMarker: "// <<< alis-managed-autostart <<<"
     readonly property string sectionHeader: "// Managed by Alis Settings — add or remove entries via Settings › Autostart."
+    readonly property string launchHelperPath: "~/.config/quickshell/alis/scripts/autostart-launch.sh"
 
     // ── Model ────────────────────────────────────────────────────────────
 
@@ -82,6 +85,7 @@ Singleton {
     property string _tail: ""
     property bool _hasMarkers: false
     property string _pendingWriteText: ""
+    property bool _needsManagedUpgrade: false
 
     // ── Lifecycle ────────────────────────────────────────────────────────
 
@@ -95,6 +99,76 @@ Singleton {
         }
     }
 
+    Connections {
+        target: AppSearch
+        function onListChanged() {
+            if (root.ready)
+                root._normalizeManagedEntries(true)
+        }
+    }
+
+    function _canonicalDesktopId(rawId): string {
+        const clean = String(rawId ?? "").trim().replace(/\.desktop$/i, "")
+        if (clean.length === 0)
+            return ""
+        const entry = AppSearch.lookupDesktopEntry(clean)
+        const resolved = String(entry?.id ?? "").trim().replace(/\.desktop$/i, "")
+        return resolved.length > 0 ? resolved : clean
+    }
+
+    function _desktopIdsMatch(idA, idB): bool {
+        const a = String(idA ?? "").trim().replace(/\.desktop$/i, "")
+        const b = String(idB ?? "").trim().replace(/\.desktop$/i, "")
+        if (a.length === 0 || b.length === 0)
+            return false
+        if (a.toLowerCase() === b.toLowerCase())
+            return true
+        return _canonicalDesktopId(a).toLowerCase() === _canonicalDesktopId(b).toLowerCase()
+    }
+
+    function _normalizeManagedEntries(writeIfChanged): void {
+        const current = root.entries ?? []
+        if (current.length === 0 && !root._needsManagedUpgrade)
+            return
+        const next = []
+        const appIndexByCanonical = new Map()
+        let changed = root._needsManagedUpgrade
+        for (let i = 0; i < current.length; i++) {
+            const item = current[i]
+            if (item.type !== "app") {
+                next.push(item)
+                continue
+            }
+            const rawId = String(item.desktopId ?? "").trim()
+            const canonicalId = _canonicalDesktopId(rawId)
+            if (canonicalId !== rawId)
+                changed = true
+            const key = canonicalId.toLowerCase()
+            if (appIndexByCanonical.has(key)) {
+                const existingIdx = appIndexByCanonical.get(key)
+                next[existingIdx] = {
+                    type: "app",
+                    desktopId: canonicalId,
+                    enabled: Boolean(next[existingIdx].enabled || item.enabled)
+                }
+                changed = true
+            } else {
+                appIndexByCanonical.set(key, next.length)
+                next.push({
+                    type: "app",
+                    desktopId: canonicalId,
+                    enabled: item.enabled === true
+                })
+            }
+        }
+        if (changed) {
+            root._needsManagedUpgrade = false
+            root.entries = next
+            if (writeIfChanged && root._hasMarkers)
+                root._write()
+        }
+    }
+
     function reload(): void {
         if (!isNiri || startupFilePath.length === 0) {
             root.status = isNiri ? "missing" : "notniri"
@@ -102,6 +176,10 @@ Singleton {
         }
         startupFileView.path = Qt.resolvedUrl(startupFilePath)
         startupFileView.reload()
+    }
+
+    function refresh(): void {
+        root.reload()
     }
 
     // ── Parse / serialize ────────────────────────────────────────────────
@@ -150,8 +228,12 @@ Singleton {
         const cmd0 = _basename(Array.isArray(app.command) ? (app.command[0] ?? "") : (app.command ?? ""))
         const t0 = String(tokens[0] ?? "").toLowerCase()
         if (t0 === "gtk-launch") {
-            const t1 = String(tokens[1] ?? "").toLowerCase().replace(/\.desktop$/, "")
-            return t1.length > 0 && t1 === id
+            const t1 = String(tokens[1] ?? "").replace(/\.desktop$/i, "")
+            return t1.length > 0 && _desktopIdsMatch(t1, id)
+        }
+        if (t0.endsWith("/autostart-launch.sh") && String(tokens[1] ?? "") === "app") {
+            const t2 = String(tokens[2] ?? "").replace(/\.desktop$/i, "")
+            return t2.length > 0 && _desktopIdsMatch(t2, id)
         }
         // Raw executable form.
         const b0 = _basename(tokens[0])
@@ -189,8 +271,11 @@ Singleton {
 
         const entries = []
         const mlines = managedText.split("\n")
-        const appRe = /^spawn-at-startup\s+"gtk-launch"\s+"((?:[^"\\]|\\.)*)"\s*$/
-        const cmdRe = /^spawn-sh-at-startup\s+"((?:[^"\\]|\\.)*)"\s*$/
+        const legacyAppRe = /^spawn-at-startup\s+"gtk-launch"\s+"((?:[^"\\]|\\.)*)"\s*$/
+        const helperAppRe = /^spawn-at-startup\s+"(?:[^"\\]|\\.)*autostart-launch\.sh"\s+"app"\s+"((?:[^"\\]|\\.)*)"\s*$/
+        const legacyCmdRe = /^spawn-sh-at-startup\s+"((?:[^"\\]|\\.)*)"\s*$/
+        const helperCmdRe = /^spawn-at-startup\s+"(?:[^"\\]|\\.)*autostart-launch\.sh"\s+"sh"\s+"((?:[^"\\]|\\.)*)"\s*$/
+        let sawLegacyLine = false
         for (let i = 0; i < mlines.length; i++) {
             let line = mlines[i].trim()
             if (line.length === 0) continue
@@ -199,13 +284,25 @@ Singleton {
                 enabled = false
                 line = line.replace(/^\/\//, "").trim()
             }
-            let m = line.match(appRe)
+            let m = line.match(helperAppRe)
             if (m) {
                 entries.push({ type: "app", desktopId: _unescape(m[1]), enabled: enabled })
                 continue
             }
-            m = line.match(cmdRe)
+            m = line.match(legacyAppRe)
             if (m) {
+                sawLegacyLine = true
+                entries.push({ type: "app", desktopId: _unescape(m[1]), enabled: enabled })
+                continue
+            }
+            m = line.match(helperCmdRe)
+            if (m) {
+                entries.push({ type: "command", command: _unescape(m[1]), enabled: enabled })
+                continue
+            }
+            m = line.match(legacyCmdRe)
+            if (m) {
+                sawLegacyLine = true
                 entries.push({ type: "command", command: _unescape(m[1]), enabled: enabled })
                 continue
             }
@@ -224,26 +321,29 @@ Singleton {
         root._head = head
         root._tail = tail
         root._hasMarkers = hasMarkers
+        root._needsManagedUpgrade = sawLegacyLine
         root.entries = entries
         root.externalLines = external
         root.ready = true
         root.status = "read"
         _log("[Autostart] Parsed", entries.length, "managed +", external.length, "external spawn lines")
+        root._normalizeManagedEntries(true)
     }
 
     function _serialize(): string {
         const lines = []
+        const helper = _escape(root.launchHelperPath)
         lines.push(beginMarker)
         lines.push(sectionHeader)
         for (let i = 0; i < root.entries.length; i++) {
             const e = root.entries[i]
             const prefix = e.enabled ? "" : "// "
             if (e.type === "app") {
-                const id = _escape(e.desktopId ?? "")
-                lines.push(`${prefix}spawn-at-startup "gtk-launch" "${id}"`)
+                const id = _escape(_canonicalDesktopId(e.desktopId ?? ""))
+                lines.push(`${prefix}spawn-at-startup "${helper}" "app" "${id}"`)
             } else {
                 const cmd = _escape(e.command ?? "")
-                lines.push(`${prefix}spawn-sh-at-startup "${cmd}"`)
+                lines.push(`${prefix}spawn-at-startup "${helper}" "sh" "${cmd}"`)
             }
         }
         lines.push(endMarker)
@@ -280,12 +380,13 @@ Singleton {
 
     function addApp(desktopId): void {
         if (!root.ready) return
-        const id = String(desktopId ?? "").trim()
+        const id = _canonicalDesktopId(desktopId)
         if (id.length === 0) return
         // Avoid duplicates by desktopId.
         const entries = root.entries.slice()
         for (let i = 0; i < entries.length; i++) {
-            if (entries[i].type === "app" && entries[i].desktopId === id) {
+            if (entries[i].type === "app" && _desktopIdsMatch(entries[i].desktopId, id)) {
+                entries[i].desktopId = id
                 if (!entries[i].enabled) entries[i].enabled = true
                 root.entries = entries
                 _write()
@@ -331,7 +432,7 @@ Singleton {
         const id = String(desktopId ?? "")
         for (let i = 0; i < root.entries.length; i++) {
             const e = root.entries[i]
-            if (e.type === "app" && e.desktopId === id) return e.enabled === true
+            if (e.type === "app" && _desktopIdsMatch(e.desktopId, id)) return e.enabled === true
         }
         return false
     }
@@ -358,7 +459,7 @@ Singleton {
         if (!app) return "none"
         const id = String(app.id ?? "")
         for (let i = 0; i < root.entries.length; i++) {
-            if (root.entries[i].type === "app" && root.entries[i].desktopId === id)
+            if (root.entries[i].type === "app" && _desktopIdsMatch(root.entries[i].desktopId, id))
                 return "managed"
         }
         if (root.isAppExternal(app)) return "external"
@@ -367,15 +468,16 @@ Singleton {
 
     function setAppEnabled(desktopId, enabled): void {
         if (!root.ready) return
-        const id = String(desktopId ?? "")
+        const id = _canonicalDesktopId(desktopId)
         const entries = root.entries.slice()
         let idx = -1
         for (let i = 0; i < entries.length; i++) {
-            if (entries[i].type === "app" && entries[i].desktopId === id) { idx = i; break }
+            if (entries[i].type === "app" && _desktopIdsMatch(entries[i].desktopId, id)) { idx = i; break }
         }
         if (enabled && idx === -1) {
             entries.push({ type: "app", desktopId: id, enabled: true })
         } else if (idx !== -1) {
+            entries[idx].desktopId = id
             entries[idx].enabled = enabled === true
         }
         root.entries = entries

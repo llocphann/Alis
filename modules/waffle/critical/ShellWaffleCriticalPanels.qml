@@ -4,9 +4,6 @@ import QtQuick
 import Quickshell
 import qs.services
 import qs.modules.common
-import qs.modules.waffle.background as WaffleBackgroundModule
-import qs.modules.waffle.bar as WaffleBarModule
-import qs.modules.waffle.backdrop as WaffleBackdropModule
 
 Item {
     id: root
@@ -23,17 +20,17 @@ Item {
 
     CriticalPanelLoader {
         identifier: "wBar"
-        component: WaffleBarModule.WaffleBar {}
+        source: Qt.resolvedUrl("../bar/WaffleBar.qml")
     }
 
     CriticalPanelLoader {
         identifier: "wBackground"
-        component: WaffleBackgroundModule.WaffleBackground {}
+        source: Qt.resolvedUrl("../background/WaffleBackground.qml")
     }
 
     CriticalPanelLoader {
         identifier: "wBackdrop"
         extraCondition: Config.options?.waffles?.background?.backdrop?.enable ?? true
-        component: WaffleBackdropModule.WaffleBackdrop {}
+        source: Qt.resolvedUrl("../backdrop/WaffleBackdrop.qml")
     }
 }

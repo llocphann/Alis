@@ -11,7 +11,7 @@ import qs.modules.waffle.settings
 WSettingsPage {
     id: root
 
-    settingsPageIndex: 17
+    settingsPageIndex: 15
     pageTitle: Translation.tr("Shell Layout")
     pageIcon: "desktop"
     pageDescription: Translation.tr("Move persistent Waffle surfaces live or from Settings")

@@ -13,11 +13,9 @@ Item {
 
     property var track: MprisController.activeTrack
     property bool isPlaying: MprisController.isPlaying
-    readonly property string effectiveTitle: StringUtils.cleanMusicTitle(
-        MprisController.isYtMusicActive ? YtMusic.currentTitle : (track?.title ?? ""))
-    readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (track?.artist ?? "")
-    readonly property string effectiveRawArtUrl: MprisController.isYtMusicActive
-        ? YtMusic.currentThumbnail : (track?.artUrl ?? "")
+    readonly property string effectiveTitle: StringUtils.cleanMusicTitle(track?.title ?? "")
+    readonly property string effectiveArtist: track?.artist ?? ""
+    readonly property string effectiveRawArtUrl: track?.artUrl ?? ""
     readonly property bool metadataCoherent: root.isCoherentTitle(root.effectiveTitle)
     readonly property real screenWidth: root.QsWindow?.window?.screen?.width ?? 1920
     readonly property real screenHeight: root.QsWindow?.window?.screen?.height ?? 1080

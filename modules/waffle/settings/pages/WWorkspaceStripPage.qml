@@ -11,7 +11,7 @@ import qs.modules.waffle.settings
 // loads in both families; this mirrors modules/settings/WorkspaceStripConfig.qml).
 WSettingsPage {
     id: root
-    settingsPageIndex: 13
+    settingsPageIndex: 12
     pageTitle: Translation.tr("Workspace Strip")
     pageIcon: "desktop"
     pageDescription: Translation.tr("Edge-hover workspace navigator")

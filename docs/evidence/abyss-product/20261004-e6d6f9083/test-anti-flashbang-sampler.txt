@@ -1,1 +1,0 @@
-PASS: production screencopy probe, controlled white/dark Qt pixel captures, periodic sensitivity, cancellation and watchdog

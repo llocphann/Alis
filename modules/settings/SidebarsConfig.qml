@@ -18,26 +18,29 @@ ContentPage {
     }
 
     settingsPageIndex: embedded ? 2 : 23
-    settingsPageName: Translation.tr("Sidebars")
+    settingsPageName: Translation.tr("Sidebars & Overview")
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
 
-    property string activeSection: "general"
+    property string activeSection: "left_right"
+
+    Component.onCompleted: {
+        if (Config.options?.overview?.workspaceHover?.enable === false)
+            Config.setNestedValue("overview.workspaceHover.enable", true)
+    }
 
     SettingsTaskNavigator {
         showTabBar: false
+        showIntro: false
         icon: "side_navigation"
-        title: Translation.tr("Sidebars")
-        description: Translation.tr("Sidebar layout, widgets, media and edge behavior.")
-        summary: Translation.tr("General \u00b7 Left \u00b7 Right \u00b7 Media \u00b7 Opening")
+        title: Translation.tr("Sidebars & Overview")
+        description: Translation.tr("Sidebar layout, edgebars and workspace overview.")
+        summary: Translation.tr("Sidebars · Edgebars · Overview")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
-            { displayName: Translation.tr("General"), icon: "tune", value: "general" },
-            { displayName: Translation.tr("Left sidebar"), icon: "first_page", value: "left" },
-            { displayName: Translation.tr("Right sidebar"), icon: "last_page", value: "right" },
-            { displayName: Translation.tr("Media & content"), icon: "music_note", value: "media" },
-            { displayName: Translation.tr("Opening"), icon: "swipe", value: "open" }
+            { displayName: Translation.tr("Left & Right Sidebars"), icon: "side_navigation", value: "left_right" },
+            { displayName: Translation.tr("Layout & Edge Trigger"), icon: "tune", value: "general" }
         ]
     }
 
@@ -50,48 +53,44 @@ ContentPage {
             value:sizing.state.width;valueText:Math.round(value)+" px"
             onMoved:ShellLayoutController.setProperty(sizing.role,"thickness",value,"")
         }
-        ConfigSelectionArray {
-            currentValue:sizing.state.sizeMode === "custom" ? "custom" : "fit"
-            options:[{displayName:"Fit content",value:"fit"},{displayName:"Custom height",value:"custom"}]
-            onSelected:value=>{
-                ShellLayoutController.setProperty(sizing.role,"sizeMode",value,"")
-                if (sizing.role === "featureSidebar")
-                    Config.setNestedValue("sidebar.collapseWidgetsTab", value === "fit")
-            }
-        }
         WindowDialogSlider {
             text:"Height";Layout.fillWidth:true;from:320;to:2160;stepSize:1
-            visible:sizing.state.sizeMode === "custom"
             value:sizing.state.customHeight;valueText:Math.round(value)+" px"
-            onMoved:ShellLayoutController.setProperty(sizing.role,"height",value,"")
+            onMoved:{
+                if (sizing.state.sizeMode !== "custom") {
+                    ShellLayoutController.setProperty(sizing.role,"sizeMode","custom","")
+                    if (sizing.role === "featureSidebar")
+                        Config.setNestedValue("sidebar.collapseWidgetsTab", false)
+                }
+                ShellLayoutController.setProperty(sizing.role,"height",value,"")
+            }
         }
     }
 
     GridLayout {
         id: sidebarsGrid
         Layout.fillWidth: true
-        columns: width >= 620 ? 2 : 1
-        uniformCellWidths: columns === 2
+        columns: 2
+        uniformCellWidths: true
         columnSpacing: 14
         rowSpacing: 14
-        visible: root.isIiActive
+        visible: root.isIiActive && children.length > 0
 
         SettingsCardSection {
             id: leftSidebarCard
-            Layout.row: 0
-            Layout.column: 0
+            _declarationOrder: 0
+            bentoColumn: "left"
             Layout.preferredWidth: 1
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.minimumHeight: sidebarsGrid.columns === 2
-                ? Math.max(leftSidebarCard.implicitHeight, rightSidebarCard.implicitHeight) : 0
-            settingsTaskSection: "left"
+            Layout.alignment: Qt.AlignTop
             visible: root.isIiActive
             expanded: true
             icon: "first_page"
             title: Translation.tr("Left sidebar")
 
             SettingsGroup {
+                Layout.fillHeight: true
                 SidebarSize { role:"featureSidebar";title:"Left Sidebar size" }
 
                 ContentSubsection {
@@ -121,36 +120,13 @@ ContentPage {
                         }
                     }
 
-                    ConfigRow {
-                        uniform: true
-                        SettingsSwitch {
-                            buttonIcon: "calendar_month"
-                            text: Translation.tr("Anime Schedule")
-                            checked: Config.options.sidebar?.animeSchedule?.enable ?? false
-                            onCheckedChanged: Config.setNestedValue("sidebar.animeSchedule.enable", checked)
-                            StyledToolTip {
-                                text: Translation.tr("View anime airing schedule, seasonal and top anime")
-                            }
-                        }
-
-                        SettingsSwitch {
-                            buttonIcon: "build"
-                            text: Translation.tr("Tools")
-                            checked: Config.options.sidebar?.tools?.enable ?? false
-                            onCheckedChanged: Config.setNestedValue("sidebar.tools.enable", checked)
-                            StyledToolTip {
-                                text: Translation.tr("Niri debug options and quick actions")
-                            }
-                        }
-                    }
-
                     SettingsSwitch {
-                        buttonIcon: "folder_open"
-                        text: Translation.tr("Open folder after wallpaper download")
-                        checked: Config.options.sidebar?.openFolderOnDownload ?? false
-                        onCheckedChanged: Config.setNestedValue("sidebar.openFolderOnDownload", checked)
+                        buttonIcon: "build"
+                        text: Translation.tr("Tools")
+                        checked: Config.options.sidebar?.tools?.enable ?? false
+                        onCheckedChanged: Config.setNestedValue("sidebar.tools.enable", checked)
                         StyledToolTip {
-                            text: Translation.tr("Open the file manager after downloading a wallpaper")
+                            text: Translation.tr("Niri debug options and quick actions")
                         }
                     }
                 }
@@ -159,476 +135,350 @@ ContentPage {
 
         SettingsCardSection {
             id: rightSidebarCard
-            Layout.row: sidebarsGrid.columns === 2 ? 0 : 1
-            Layout.column: sidebarsGrid.columns === 2 ? 1 : 0
+            _declarationOrder: 1
+            bentoColumn: "right"
             Layout.preferredWidth: 1
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.minimumHeight: sidebarsGrid.columns === 2
-                ? Math.max(leftSidebarCard.implicitHeight, rightSidebarCard.implicitHeight) : 0
-            settingsTaskSection: "right"
+            Layout.alignment: Qt.AlignTop
             visible: root.isIiActive
             expanded: true
             icon: "last_page"
             title: Translation.tr("Right sidebar")
 
             SettingsGroup {
+                Layout.fillHeight: true
                 SidebarSize { role:"systemSidebar";title:"Right Sidebar size" }
 
                 ContentSubsection {
-                    id: rightSidebarWidgets
-                    title: Translation.tr("Right Sidebar")
-                    tooltip: Translation.tr("Toggle which widgets appear in the right sidebar")
-
-                    readonly property var defaults: ["calculator", "sysmon"]
-
-                    function isEnabled(widgetId) {
-                        return (Config.options?.sidebar?.right?.enabledWidgets ?? defaults).includes(widgetId)
-                    }
-
-                    function setWidget(widgetId, active) {
-                        _log(`[RightSidebar] setWidget(${widgetId}, ${active})`)
-                        let current = [...(Config.options?.sidebar?.right?.enabledWidgets ?? defaults)]
-                        _log(`[RightSidebar] Current widgets:`, JSON.stringify(current))
-
-                        const index = current.indexOf(widgetId)
-                        // includes() uses SameValueZero while indexOf() uses strict
-                        // equality. Preserve the old malformed NaN behavior without
-                        // repeating a full membership scan for normal widget ids.
-                        const included = index !== -1
-                            || (widgetId !== widgetId && current.includes(widgetId))
-                        if (active && !included) {
-                            current.push(widgetId)
-                            _log(`[RightSidebar] Adding ${widgetId}, new array:`, JSON.stringify(current))
-                            Config.setNestedValue("sidebar.right.enabledWidgets", current)
-                        } else if (!active && included) {
-                            current.splice(index, 1)
-                            _log(`[RightSidebar] Removing ${widgetId}, new array:`, JSON.stringify(current))
-                            Config.setNestedValue("sidebar.right.enabledWidgets", current)
-                        } else {
-                            _log(`[RightSidebar] No change needed`)
-                        }
-                    }
-
-                    ConfigRow {
-                        uniform: true
-                        SettingsSwitch {
-                            buttonIcon: "calculate"
-                            text: Translation.tr("Calculator")
-                            Component.onCompleted: checked = rightSidebarWidgets.isEnabled("calculator")
-                            onClicked: {
-                                rightSidebarWidgets.setWidget("calculator", checked)
-                            }
-                        }
-
-                        SettingsSwitch {
-                            buttonIcon: "monitor_heart"
-                            text: Translation.tr("System Monitor")
-                            Component.onCompleted: checked = rightSidebarWidgets.isEnabled("sysmon")
-                            onClicked: {
-                                rightSidebarWidgets.setWidget("sysmon", checked)
-                            }
-                        }
-                    }
-                }
-
-                ContentSubsection {
                     title: Translation.tr("Sliders")
+                    tooltip: Translation.tr("Choose which sliders appear in the right sidebar")
 
                     ConfigRow {
                         uniform: true
-                        SettingsSwitch {
-                            buttonIcon: "check"
-                            text: Translation.tr("Enable")
-                            checked: Config.options.sidebar.quickSliders.enable
-                            onCheckedChanged: {
-                                Config.setNestedValue("sidebar.quickSliders.enable", checked);
-                            }
-                            StyledToolTip {
-                                text: Translation.tr("Show volume/brightness/mic sliders in the sidebar")
-                            }
-                        }
-
                         SettingsSwitch {
                             buttonIcon: "brightness_6"
                             text: Translation.tr("Brightness")
-                            enabled: Config.options.sidebar.quickSliders.enable
                             checked: Config.options.sidebar.quickSliders.showBrightness
                             onCheckedChanged: {
+                                if (checked && !(Config.options?.sidebar?.quickSliders?.enable ?? true))
+                                    Config.setNestedValue("sidebar.quickSliders.enable", true);
                                 Config.setNestedValue("sidebar.quickSliders.showBrightness", checked);
                             }
                             StyledToolTip {
                                 text: Translation.tr("Show brightness slider")
                             }
                         }
-                    }
 
-                    ConfigRow {
-                        uniform: true
                         SettingsSwitch {
                             buttonIcon: "volume_up"
                             text: Translation.tr("Volume")
-                            enabled: Config.options.sidebar.quickSliders.enable
                             checked: Config.options.sidebar.quickSliders.showVolume
                             onCheckedChanged: {
+                                if (checked && !(Config.options?.sidebar?.quickSliders?.enable ?? true))
+                                    Config.setNestedValue("sidebar.quickSliders.enable", true);
                                 Config.setNestedValue("sidebar.quickSliders.showVolume", checked);
                             }
                             StyledToolTip {
                                 text: Translation.tr("Show volume slider")
                             }
                         }
-
-                        SettingsSwitch {
-                            buttonIcon: "mic"
-                            text: Translation.tr("Microphone")
-                            enabled: Config.options.sidebar.quickSliders.enable
-                            checked: Config.options.sidebar.quickSliders.showMic
-                            onCheckedChanged: {
-                                Config.setNestedValue("sidebar.quickSliders.showMic", checked);
-                            }
-                            StyledToolTip {
-                                text: Translation.tr("Show microphone input level slider")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        SettingsCardSection {
-            id: generalSidebarCard
-            Layout.row: sidebarsGrid.columns === 2 ? 1 : 2
-            Layout.column: 0
-            Layout.preferredWidth: 1
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.minimumHeight: sidebarsGrid.columns === 2
-                ? Math.max(generalSidebarCard.implicitHeight, openingSidebarCard.implicitHeight) : 0
-            settingsTaskSection: "general"
-            visible: root.isIiActive
-            expanded: true
-            icon: "tune"
-            title: Translation.tr("General")
-
-            SettingsGroup {
-                ContentSubsection {
-                    title: Translation.tr("General")
-
-                    AbyssOutputSelector {
-                        visible: Config.options?.panelFamily === "abyss"
-                        configPath: "sidebar.screenList"
-                        title: Translation.tr("Sidebar outputs")
                     }
 
-                    SidebarHeightPreview {
-                        Layout.fillWidth: true
-                    }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: Translation.tr("Sidebar content stays loaded between openings.")
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        wrapMode: Text.WordWrap
-                    }
-                }
-
-                ContentSubsection {
-                    title: Translation.tr("Arrange")
-                    tooltip: Translation.tr("Arrange sidebar sections, tab order and elastic heights")
-
-                    SidebarLayoutEditor {
-                        Layout.fillWidth: true
-                    }
-                }
-            }
-        }
-
-        SettingsCardSection {
-            id: openingSidebarCard
-            Layout.row: sidebarsGrid.columns === 2 ? 1 : 3
-            Layout.column: sidebarsGrid.columns === 2 ? 1 : 0
-            Layout.preferredWidth: 1
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.minimumHeight: sidebarsGrid.columns === 2
-                ? Math.max(generalSidebarCard.implicitHeight, openingSidebarCard.implicitHeight) : 0
-            settingsTaskSection: "open"
-            visible: root.isIiActive
-            expanded: true
-            icon: "swipe"
-            title: Translation.tr("Opening & media")
-
-            SettingsGroup {
-                ContentSubsection {
-                    title: Translation.tr("Side edge open")
-                    tooltip: Config.options?.panelFamily === "abyss" ? "Hover a side Screen Edge; enter the sidebar to keep it open." : Translation.tr("Open the left or right sidebar by touching that screen edge")
-
-                    ConfigRow {
-                        uniform: true
-                        SettingsSwitch {
-                            buttonIcon: "dock_to_left"
-                            text: Translation.tr("Hover screen edges")
-                            checked: Config.options?.panelFamily === "abyss" ? (Config.options?.abyss?.sidebars?.hoverEnabled ?? true) : (Config.options?.sidebar?.edgeOpen?.enable ?? false)
-                            onCheckedChanged: Config.setNestedValue(Config.options?.panelFamily === "abyss" ? "abyss.sidebars.hoverEnabled" : "sidebar.edgeOpen.enable", checked)
-                        }
-                        ConfigSpinBox {
-                            icon: "width"
-                            text: Translation.tr("Trigger width (px)")
-                            value: Config.options?.sidebar?.edgeOpen?.regionWidth ?? 2
-                            from: 1
-                            to: 12
-                            stepSize: 1
-                            enabled: Config.options?.panelFamily === "abyss" ? (Config.options?.abyss?.sidebars?.hoverEnabled ?? true) : (Config.options?.sidebar?.edgeOpen?.enable ?? false)
-                            opacity: enabled ? 1 : 0.5
-                            onValueChanged: Config.setNestedValue("sidebar.edgeOpen.regionWidth", value)
-                        }
-                    }
-                }
-
-                ContentSubsection {
-                    visible: Config.options?.panelFamily !== "abyss"
-                    title: Translation.tr("Corner open")
-                    tooltip: Translation.tr("Open sidebars from screen corners.")
-                    ConfigRow {
-                        uniform: true
-                        SettingsSwitch {
-                            buttonIcon: "check"
-                            text: Translation.tr("Enable")
-                            checked: Config.options.sidebar.cornerOpen.enable
-                            onCheckedChanged: {
-                                Config.setNestedValue("sidebar.cornerOpen.enable", checked);
-                            }
-                            StyledToolTip {
-                                text: Translation.tr("Allow opening sidebars by interacting with screen corners")
-                            }
-                        }
-                    }
                     SettingsSwitch {
-                        buttonIcon: "highlight_mouse_cursor"
-                        text: Translation.tr("Hover to trigger")
-                        checked: Config.options.sidebar.cornerOpen.clickless
+                        buttonIcon: "mic"
+                        text: Translation.tr("Microphone")
+                        checked: Config.options.sidebar.quickSliders.showMic
                         onCheckedChanged: {
-                            Config.setNestedValue("sidebar.cornerOpen.clickless", checked);
+                            if (checked && !(Config.options?.sidebar?.quickSliders?.enable ?? true))
+                                Config.setNestedValue("sidebar.quickSliders.enable", true);
+                            Config.setNestedValue("sidebar.quickSliders.showMic", checked);
                         }
-
                         StyledToolTip {
-                            text: Translation.tr("When this is off you'll have to click")
+                            text: Translation.tr("Show microphone input level slider")
                         }
                     }
-                    ConfigRow {
-                        SettingsSwitch {
-                            enabled: !Config.options.sidebar.cornerOpen.clickless
-                            text: Translation.tr("Force hover open at absolute corner")
-                            checked: Config.options.sidebar.cornerOpen.clicklessCornerEnd
-                            onCheckedChanged: {
-                                Config.setNestedValue("sidebar.cornerOpen.clicklessCornerEnd", checked);
-                            }
+                }
+            }
+        }
 
-                            StyledToolTip {
-                                text: Translation.tr("Hover the corner tip; scroll controls remain available elsewhere.")
-                            }
-                        }
+        SettingsCardSection {
+            id: leftEdgebarCard
+            _declarationOrder: 2
+            bentoColumn: "left"
+            Layout.preferredWidth: 1
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignTop
+            visible: root.isIiActive
+            expanded: true
+            icon: "dock_to_right"
+            title: Translation.tr("Left edgebar")
+
+            SettingsGroup {
+                Layout.fillHeight: true
+                ContentSubsection {
+                    title: Translation.tr("Left Edgebar size")
+                    WindowDialogSlider {
+                        text: "Width"
+                        Layout.fillWidth: true
+                        from: 280; to: 720; stepSize: 10
+                        value: Config.options?.quickNotes?.popupWidth ?? 420
+                        valueText: Math.round(value) + " px"
+                        onMoved: Config.setNestedValue("quickNotes.popupWidth",value)
+                    }
+                    WindowDialogSlider {
+                        text: "Height"
+                        Layout.fillWidth: true
+                        from: 300; to: 640; stepSize: 10
+                        value: Config.options?.quickNotes?.popupHeight ?? 300
+                        valueText: Math.round(value) + " px"
+                        onMoved: Config.setNestedValue("quickNotes.popupHeight",value)
+                    }
+                }
+            }
+        }
+
+        SettingsCardSection {
+            id: rightEdgebarCard
+            _declarationOrder: 3
+            bentoColumn: "right"
+            Layout.preferredWidth: 1
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignTop
+            visible: root.isIiActive
+            expanded: true
+            icon: "dock_to_left"
+            title: Translation.tr("Right edgebar")
+
+            SettingsGroup {
+                Layout.fillHeight: true
+                ContentSubsection {
+                    title: Translation.tr("Right Edgebar size")
+                    WindowDialogSlider {
+                        text: "Width"
+                        Layout.fillWidth: true
+                        from: 320; to: 760; stepSize: 10
+                        value: Config.options?.notificationCenter?.popupWidth ?? 420
+                        valueText: Math.round(value) + " px"
+                        onMoved: Config.setNestedValue("notificationCenter.popupWidth",value)
+                    }
+                    WindowDialogSlider {
+                        text: "Height"
+                        Layout.fillWidth: true
+                        from: 260; to: 900; stepSize: 10
+                        value: Config.options?.notificationCenter?.popupHeight ?? 560
+                        valueText: Math.round(value) + " px"
+                        onMoved: Config.setNestedValue("notificationCenter.popupHeight",value)
+                    }
+                }
+            }
+        }
+
+        SettingsCardSection {
+            id: overviewTriggerGridCard
+            _declarationOrder: 4
+            bentoColumn: "left"
+            _consumesBentoExtraHeight: true
+            Layout.preferredWidth: 1
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignTop
+            visible: root.isIiActive
+            expanded: true
+            icon: "overview_key"
+            title: Translation.tr("Overview Trigger & Grid")
+
+            SettingsGroup {
+                Layout.fillHeight: true
+                ContentSubsection {
+                    title: Translation.tr("Hover timing (ms)")
+
+                    ConfigRow {
+                        uniform: true
+
                         ConfigSpinBox {
-                            icon: "arrow_cool_down"
-                            text: Translation.tr("with vertical offset")
-                            value: Config.options.sidebar.cornerOpen.clicklessCornerVerticalOffset
+                            Layout.fillWidth: true
+                            icon: "timer"
+                            text: Translation.tr("Open")
+                            value: Config.options?.overview?.workspaceHover?.delayMs ?? 280
                             from: 0
-                            to: 20
+                            to: 1200
+                            stepSize: 20
+                            onValueChanged: Config.setNestedValue(
+                                "overview.workspaceHover.delayMs", value)
+                        }
+
+                        ConfigSpinBox {
+                            Layout.fillWidth: true
+                            icon: "timer_off"
+                            text: Translation.tr("Close")
+                            value: Config.options?.overview?.workspaceHover?.closeDelayMs ?? 220
+                            from: 0
+                            to: 1200
+                            stepSize: 20
+                            onValueChanged: Config.setNestedValue(
+                                "overview.workspaceHover.closeDelayMs", value)
+                        }
+                    }
+                }
+
+                ContentSubsection {
+                    title: Translation.tr("Grid layout")
+
+                    ConfigRow {
+                        uniform: true
+
+                        ConfigSpinBox {
+                            Layout.fillWidth: true
+                            icon: "splitscreen_bottom"
+                            text: Translation.tr("Rows")
+                            value: Config.options?.overview?.rows ?? 1
+                            from: 1
+                            to: 6
                             stepSize: 1
-                            onValueChanged: {
-                                Config.setNestedValue("sidebar.cornerOpen.clicklessCornerVerticalOffset", value);
-                            }
-                            StyledToolTip {
-                                text: Translation.tr("Offset corner hover vertically to avoid horizontal-edge triggers.")
-                            }
+                            onValueChanged: Config.setNestedValue(
+                                "overview.rows", value)
+                        }
+
+                        ConfigSpinBox {
+                            Layout.fillWidth: true
+                            icon: "splitscreen_right"
+                            text: Translation.tr("Columns")
+                            value: Config.options?.overview?.columns ?? 5
+                            from: 1
+                            to: 8
+                            stepSize: 1
+                            onValueChanged: Config.setNestedValue(
+                                "overview.columns", value)
                         }
                     }
 
                     ConfigRow {
                         uniform: true
-                        SettingsSwitch {
-                            buttonIcon: "vertical_align_bottom"
-                            text: Translation.tr("Place at bottom")
-                            checked: Config.options.sidebar.cornerOpen.bottom
-                            onCheckedChanged: {
-                                Config.setNestedValue("sidebar.cornerOpen.bottom", checked);
-                            }
 
-                            StyledToolTip {
-                                text: Translation.tr("Place the corners to trigger at the bottom")
-                            }
-                        }
-                        SettingsSwitch {
-                            buttonIcon: "unfold_more_double"
-                            text: Translation.tr("Value scroll")
-                            checked: Config.options.sidebar.cornerOpen.valueScroll
-                            onCheckedChanged: {
-                                Config.setNestedValue("sidebar.cornerOpen.valueScroll", checked);
-                            }
-
-                            StyledToolTip {
-                                text: Translation.tr("Brightness and volume")
-                            }
-                        }
-                    }
-                    SettingsSwitch {
-                        buttonIcon: "visibility"
-                        text: Translation.tr("Visualize region")
-                        checked: Config.options.sidebar.cornerOpen.visualize
-                        onCheckedChanged: {
-                            Config.setNestedValue("sidebar.cornerOpen.visualize", checked);
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("Show a colored overlay indicating the corner trigger areas (debug)")
-                        }
-                    }
-                    ConfigRow {
                         ConfigSpinBox {
-                            icon: "arrow_range"
-                            text: Translation.tr("Region width")
-                            value: Config.options.sidebar.cornerOpen.cornerRegionWidth
-                            from: 1
-                            to: 300
-                            stepSize: 1
-                            onValueChanged: {
-                                Config.setNestedValue("sidebar.cornerOpen.cornerRegionWidth", value);
-                            }
-                            StyledToolTip {
-                                text: Translation.tr("Horizontal size of the active corner area")
-                            }
-                        }
-                        ConfigSpinBox {
-                            icon: "height"
-                            text: Translation.tr("Region height")
-                            value: Config.options.sidebar.cornerOpen.cornerRegionHeight
-                            from: 1
-                            to: 300
-                            stepSize: 1
-                            onValueChanged: {
-                                Config.setNestedValue("sidebar.cornerOpen.cornerRegionHeight", value);
-                            }
-                            StyledToolTip {
-                                text: Translation.tr("Vertical size of the active corner area")
-                            }
-                        }
-                    }
-                }
-
-                ContentSubsection {
-                    title: Translation.tr("Anime Schedule")
-                    visible: Config.options.sidebar?.animeSchedule?.enable ?? false
-
-                    SettingsSwitch {
-                        buttonIcon: "visibility_off"
-                        text: Translation.tr("Show NSFW")
-                        checked: Config.options.sidebar?.animeSchedule?.showNsfw ?? false
-                        onCheckedChanged: Config.setNestedValue("sidebar.animeSchedule.showNsfw", checked)
-                        StyledToolTip {
-                            text: Translation.tr("Include adult-rated anime in results")
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 10
-
-                        MaterialSymbol {
-                            text: "play_circle"
-                            iconSize: Appearance.font.pixelSize.larger
-                            color: Appearance.colors.colOnLayer1
-                        }
-
-                        ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 2
+                            icon: "loupe"
+                            text: Translation.tr("% scale")
+                            value: Math.round((Config.options?.overview?.scale ?? 0.17) * 100)
+                            from: 5
+                            to: 50
+                            stepSize: 1
+                            onValueChanged: Config.setNestedValue(
+                                "overview.scale", value / 100)
+                        }
 
-                            StyledText {
-                                text: Translation.tr("Watch site")
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                color: Appearance.colors.colOnLayer1
-                            }
-
-                            MaterialTextField {
-                                Layout.fillWidth: true
-                                placeholderText: "https://9animetv.to/search?keyword=%s"
-                                text: Config.options.sidebar?.animeSchedule?.watchSite ?? ""
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: Appearance.colors.colOnSurface
-                                placeholderTextColor: Appearance.colors.colSubtext
-                                background: Rectangle {
-                                    color: Appearance.colors.colLayer1
-                                    radius: Appearance.rounding.small
-                                    border.width: parent.activeFocus ? 2 : 1
-                                    border.color: parent.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
-                                }
-                                onTextEdited: Config.setNestedValue("sidebar.animeSchedule.watchSite", text)
-
-                                StyledToolTip {
-                                    text: Translation.tr("Custom streaming site URL. Use %s for search query.")
-                                }
-                            }
+                        ConfigSpinBox {
+                            Layout.fillWidth: true
+                            icon: "grid_3x3"
+                            text: Translation.tr("Gap (px)")
+                            value: Config.options?.overview?.workspaceSpacing ?? 5
+                            from: 0
+                            to: 32
+                            stepSize: 1
+                            onValueChanged: Config.setNestedValue(
+                                "overview.workspaceSpacing", value)
                         }
                     }
                 }
+            }
+        }
 
+        SettingsCardSection {
+            id: overviewAppearanceCard
+            _declarationOrder: 5
+            bentoColumn: "right"
+            _consumesBentoExtraHeight: true
+            Layout.preferredWidth: 1
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignTop
+            visible: root.isIiActive
+            expanded: true
+            icon: "preview"
+            title: Translation.tr("Overview Appearance")
+
+            SettingsGroup {
+                Layout.fillHeight: true
                 ContentSubsection {
-                    title: Translation.tr("Gelbooru")
-                    visible: (Config.options?.policies?.weeb ?? 0) !== 0
+                    title: Translation.tr("Content & appearance")
 
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: Translation.tr("Gelbooru currently requires account API credentials for API access.")
-                        wrapMode: Text.Wrap
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.smaller
+                    ConfigRow {
+                        uniform: true
+
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            buttonIcon: "preview"
+                            text: Translation.tr("Window previews")
+                            checked: Config.options?.overview?.showPreviews !== false
+                            onCheckedChanged: Config.setNestedValue(
+                                "overview.showPreviews", checked)
+                        }
+
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            buttonIcon: "looks_one"
+                            text: Translation.tr("Workspace numbers")
+                            checked: Config.options?.overview?.showWorkspaceNumbers ?? false
+                            onCheckedChanged: Config.setNestedValue(
+                                "overview.showWorkspaceNumbers", checked)
+                        }
                     }
 
                     ConfigRow {
-                        Layout.fillWidth: true
-                        spacing: 6
+                        uniform: true
+                        Layout.topMargin: 12
 
-                        MaterialTextField {
+                        SettingsSwitch {
                             Layout.fillWidth: true
-                            placeholderText: Translation.tr("User ID")
-                            text: Config.options?.sidebar?.booru?.gelbooru?.userId ?? ""
-                            onEditingFinished: Config.setNestedValue("sidebar.booru.gelbooru.userId", text.trim())
+                            buttonIcon: "center_focus_strong"
+                            text: Translation.tr("Center app icons")
+                            checked: Config.options?.overview?.centerIcons ?? true
+                            onCheckedChanged: Config.setNestedValue(
+                                "overview.centerIcons", checked)
                         }
 
-                        MaterialTextField {
+                        SettingsSwitch {
                             Layout.fillWidth: true
-                            placeholderText: Translation.tr("API key")
-                            echoMode: TextInput.Password
-                            text: Config.options?.sidebar?.booru?.gelbooru?.apiKey ?? ""
-                            onEditingFinished: Config.setNestedValue("sidebar.booru.gelbooru.apiKey", text.trim())
+                            buttonIcon: "blur_on"
+                            text: Translation.tr("Blur wallpaper")
+                            checked: Config.options?.overview?.backgroundBlurEnable !== false
+                            onCheckedChanged: Config.setNestedValue(
+                                "overview.backgroundBlurEnable", checked)
+                        }
+                    }
+
+                    ConfigRow {
+                        uniform: true
+                        Layout.topMargin: 12
+
+                        SettingsSwitch {
+                            Layout.fillWidth: true
+                            buttonIcon: "screen_share"
+                            text: Translation.tr("Active screen only")
+                            checked: Config.options?.overview?.activeScreenOnly ?? true
+                            onCheckedChanged: Config.setNestedValue("overview.activeScreenOnly", checked)
+                            StyledToolTip {
+                                text: Translation.tr("Open the overview on the monitor where it was invoked")
+                            }
+                        }
+
+                        ConfigSpinBox {
+                            Layout.fillWidth: true
+                            icon: "opacity"
+                            text: Translation.tr("Workspace dim (%)")
+                            value: Config.options?.overview?.backgroundDim ?? 35
+                            from: 0
+                            to: 80
+                            stepSize: 5
+                            onValueChanged: Config.setNestedValue(
+                                "overview.backgroundDim", value)
                         }
                     }
                 }
-
-                ContentSubsection {
-                    title: Translation.tr("Booru download paths")
-                    visible: (Config.options?.policies?.weeb ?? 0) !== 0
-
-                    ContentSubsectionLabel {
-                        text: Translation.tr("SFW download folder (empty = wallpapers dir)")
-                    }
-                    MaterialTextField {
-                        Layout.fillWidth: true
-                        placeholderText: Directories.wallpapersPath
-                        text: Config.options?.sidebar?.booru?.downloadPath?.sfw ?? ""
-                        onEditingFinished: Config.setNestedValue("sidebar.booru.downloadPath.sfw", text)
-                    }
-
-                    ContentSubsectionLabel {
-                        text: Translation.tr("NSFW download folder (empty = wallpapers/pepper)")
-                    }
-                    MaterialTextField {
-                        Layout.fillWidth: true
-                        placeholderText: Directories.wallpapersPath + "/pepper"
-                        text: Config.options?.sidebar?.booru?.downloadPath?.nsfw ?? ""
-                        onEditingFinished: Config.setNestedValue("sidebar.booru.downloadPath.nsfw", text)
-                    }
-                }
+                Item { Layout.fillHeight: true }
             }
         }
     }

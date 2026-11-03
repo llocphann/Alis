@@ -28,25 +28,69 @@ Item {
     property real closeScale: 0.97
     property int openDuration: Looks.transition.duration.panel
     property int slideOffset: Looks.dp(20)
+    readonly property real panelOpacity: panelContent.opacity
+
+    Timer {
+        id: closeFallbackTimer
+        interval: Math.max(120, root.closeAnimDuration + 120)
+        repeat: false
+        onTriggered: {
+            if (root.closing || !root.presented) {
+                closeAnim.stop()
+                panelContent.opacity = 0
+                root.closing = false
+                root.closed()
+            }
+        }
+    }
+
+    Timer {
+        id: openFallbackTimer
+        interval: Math.max(160, root.openDuration + 140)
+        repeat: false
+        onTriggered: {
+            if (root.presented && !root.closing && panelContent.opacity < 0.99) {
+                openAnim.stop()
+                panelContent.sourceEdgeMargin = root.visualMargin
+                panelContent.sideEdgeMargin = root.visualMargin
+                panelContent.opacity = 1
+                panelContent.scale = 1
+            }
+        }
+    }
 
     function close() {
-        if (root.closing)
+        openFallbackTimer.stop()
+        if (root.closing) {
+            closeFallbackTimer.restart()
             return
+        }
         root.closing = true
         openAnim.stop()
-        closeAnim.restart()
+        if (Looks.transition.enabled && root.closeAnimDuration > 0) {
+            closeFallbackTimer.restart()
+            closeAnim.restart()
+        } else {
+            closeFallbackTimer.stop()
+            panelContent.opacity = 0
+            root.closing = false
+            root.closed()
+        }
     }
 
     function present() {
+        closeFallbackTimer.stop()
         closeAnim.stop()
         root.closing = false
         panelContent.sourceEdgeMargin = -root.slideOffset
         panelContent.sideEdgeMargin = -root.slideOffset
         panelContent.opacity = 0
         panelContent.scale = root.openScale
-        if (Looks.transition.enabled) {
+        if (Looks.transition.enabled && root.openDuration > 0) {
+            openFallbackTimer.restart()
             openAnim.restart()
         } else {
+            openFallbackTimer.stop()
             panelContent.sourceEdgeMargin = root.visualMargin
             panelContent.sideEdgeMargin = root.visualMargin
             panelContent.opacity = 1
@@ -191,6 +235,8 @@ Item {
             }
             ScriptAction {
                 script: {
+                    closeFallbackTimer.stop()
+                    panelContent.opacity = 0
                     root.closing = false
                     root.closed()
                 }

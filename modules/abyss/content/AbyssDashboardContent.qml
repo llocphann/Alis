@@ -10,6 +10,9 @@ Item {
     function handleEscape(): bool {
         return content.handleEscape()
     }
+    function focusPrimarySurface(): void {
+        content.focusPrimarySurface()
+    }
     readonly property real topControlReserve: editor.desiredHeight+16
     DashboardContent {
         id: content

@@ -34,6 +34,17 @@ PanelWindow {
     property var selectionMode: RegionSelection.SelectionMode.RectCorners
     signal dismiss()
 
+    onActionChanged: {
+        if (root.screenshotReady
+                && root.enableContentRegions
+                && (root.action === RegionSelection.SnipAction.Search
+                    || root.action === RegionSelection.SnipAction.CharRecognition)
+                && !imageDetectionProcess.running
+                && root.imageRegions.length === 0) {
+            imageDetectionProcess.running = true;
+        }
+    }
+
     readonly property bool useNiri: CompositorService.isNiri
     readonly property real screenEdgeThickness: Math.max(1, Math.min(32,
         Math.round(Config.options?.appearance?.screenEdge?.width ?? 10)))
@@ -316,7 +327,11 @@ PanelWindow {
             } else {
                 root.screenshotReady = true
             }
-            if (root.enableContentRegions) imageDetectionProcess.running = true;
+            if (root.enableContentRegions
+                    && (root.action === RegionSelection.SnipAction.Search
+                        || root.action === RegionSelection.SnipAction.CharRecognition)) {
+                imageDetectionProcess.running = true;
+            }
             root.preparationDone = !checkRecordingProc.running;
         }
     }
@@ -335,7 +350,7 @@ PanelWindow {
     onPreparationDoneChanged: {
         if (!preparationDone) return;
         if (root.isRecording && root.recordingShouldStop) {
-            Quickshell.execDetached([Directories.recordScriptPath, "--stop"]);
+            Quickshell.execDetached(["/usr/bin/bash", Directories.recordScriptPath, "--stop"]);
             root.dismiss();
             return;
         }
@@ -405,7 +420,7 @@ PanelWindow {
         const annotationCommand = `${(Config.options?.regionSelector?.annotation?.useSatty ?? false) ? "satty" : "swappy"} -f -`;
         switch (root.action) {
             case RegionSelection.SnipAction.Copy:
-                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropToStdout} | tee "$_ss" | /usr/bin/wl-copy && echo -n "$_ss" | /usr/bin/wl-copy --primary && ${cleanup} && /usr/bin/notify-send "Screenshot copied" "${rw}x${rh} saved to $_ss" -a "Screenshot" -i camera-photo -t 3000`]
+                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropToStdout} | tee "$_ss" | /usr/bin/wl-copy && echo -n "$_ss" | /usr/bin/wl-copy --primary && ${cleanup} && /usr/bin/sleep 0.08 && /usr/bin/notify-send "Screenshot copied" "${rw}x${rh} saved to $_ss" -a "Screenshot" -i camera-photo -t 3000`]
                 break;
             case RegionSelection.SnipAction.Edit:
                 if (Config.options?.regionSelector?.annotation?.useNativeEditor ?? true) {
@@ -423,10 +438,10 @@ PanelWindow {
                 snipProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && /usr/bin/tesseract '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' stdout -l $(/usr/bin/tesseract --list-langs | /usr/bin/awk 'NR>1{print $1}' | /usr/bin/tr '\\n' '+' | /usr/bin/sed 's/\\+$/\\n/') | tee >(/usr/bin/wl-copy --primary) | /usr/bin/wl-copy && ${cleanup} && /usr/bin/notify-send "Text recognized" "OCR text copied to clipboard" -a "OCR" -i edit-find -t 3000`]
                 break;
             case RegionSelection.SnipAction.Record:
-                snipProc.command = ["/usr/bin/bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}'`]
+                snipProc.command = ["/usr/bin/bash", Directories.recordScriptPath, "--region", slurpRegion]
                 break;
             case RegionSelection.SnipAction.RecordWithSound:
-                snipProc.command = ["/usr/bin/bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}' --sound`]
+                snipProc.command = ["/usr/bin/bash", Directories.recordScriptPath, "--region", slurpRegion, "--sound"]
                 break;
             default:
                 root.dismiss();
@@ -497,6 +512,7 @@ PanelWindow {
 
             // Controls
             onPressed: (mouse) => {
+                if (imageDetectionProcess.running) imageDetectionProcess.running = false;
                 root.dragStartX = mouse.x;
                 root.dragStartY = mouse.y;
                 root.draggingX = mouse.x;
@@ -529,13 +545,17 @@ PanelWindow {
                 root.snip();
             }
             onPositionChanged: (mouse) => {
-                root.updateTargetedRegion(mouse.x, mouse.y);
-                if (!root.dragging) return;
+                if (!root.dragging) {
+                    root.updateTargetedRegion(mouse.x, mouse.y);
+                    return;
+                }
                 root.draggingX = mouse.x;
                 root.draggingY = mouse.y;
                 root.dragDiffX = mouse.x - root.dragStartX;
                 root.dragDiffY = mouse.y - root.dragStartY;
-                root.points.push({ x: mouse.x, y: mouse.y });
+                if (root.selectionMode === RegionSelection.SelectionMode.Circle) {
+                    root.points.push({ x: mouse.x, y: mouse.y });
+                }
             }
 
             // Clip only the dim/selection-guide rendering to the workspace
@@ -554,22 +574,10 @@ PanelWindow {
                     - root.screenshotTopOwnerInset
                     - root.screenshotBottomOwnerInset)
                 clip: true
-                // Match the exact rounded inner workspace hole painted by
-                // ScreenEdges.qml. A rectangular clip protects the straight
-                // edge bands but still lets the screenshot scrim cover the four
-                // rounded frame corners because RegionSelection lives on Overlay.
-                layer.enabled: true
-                layer.smooth: true
-                layer.effect: GE.OpacityMask {
-                    maskSource: Rectangle {
-                        width: selectionVisualViewport.width
-                        height: selectionVisualViewport.height
-                        radius: Math.max(0, Math.min(
-                            PerimeterTokens.frameRadius,
-                            width / 2,
-                            height / 2))
-                    }
-                }
+                // Keep layer.enabled off during interactive region selection so
+                // full-screen FBO + OpacityMask re-renders do not stall every
+                // 1px mouse movement event.
+                layer.enabled: false
 
                 Loader {
                     x: -selectionVisualViewport.x
@@ -752,8 +760,8 @@ PanelWindow {
                             transparent: true
                             action: root.action
                             selectionMode: root.selectionMode
-                            onActionChanged: root.action = action
-                            onSelectionModeChanged: root.selectionMode = selectionMode
+                            onActionChanged: if (action !== undefined && root.action !== action) root.action = action
+                            onSelectionModeChanged: if (selectionMode !== undefined && root.selectionMode !== selectionMode) root.selectionMode = selectionMode
                             onDismiss: root.dismiss();
                             onFullscreenRequested: root.snipFullscreen()
                             onColorPickerRequested: {
@@ -786,8 +794,8 @@ PanelWindow {
                     WaffleRegion.WOptionsToolbar {
                         action: root.action
                         selectionMode: root.selectionMode
-                        onActionChanged: root.action = action
-                        onSelectionModeChanged: root.selectionMode = selectionMode
+                        onActionChanged: if (action !== undefined && root.action !== action) root.action = action
+                        onSelectionModeChanged: if (selectionMode !== undefined && root.selectionMode !== selectionMode) root.selectionMode = selectionMode
                         onDismiss: root.dismiss()
                         onFullscreenRequested: root.snipFullscreen()
                         onColorPickerRequested: {

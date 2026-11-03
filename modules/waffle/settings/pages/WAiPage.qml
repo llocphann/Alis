@@ -26,7 +26,7 @@ import qs.modules.waffle.settings
  */
 WSettingsPage {
     id: root
-    settingsPageIndex: 15
+    settingsPageIndex: 13
     pageTitle: Translation.tr("AI")
     pageIcon: "wand"
     pageDescription: Translation.tr("Providers, models, behavior, voice input")
@@ -522,31 +522,6 @@ WSettingsPage {
                 if (Persistent.states?.ai)
                     Persistent.states.ai.temperature = Math.round(value * 100) / 100
             }
-        }
-    }
-
-    // ── Privacy ──────────────────────────────────────────────────────────
-    WSettingsCard {
-        title: Translation.tr("Privacy & policy")
-        icon: "shield"
-
-        WSettingsRow {
-            label: Translation.tr("Allow AI features")
-            icon: "shield"
-            description: Translation.tr("Local only: use on-device models (Ollama, LM Studio).")
-        }
-
-        WSettingsChoiceGroup {
-            Layout.leftMargin: 0
-            Layout.rightMargin: 0
-            columns: 3
-            currentValue: Config.options?.policies?.ai ?? 0
-            onSelected: newValue => Config.setNestedValue("policies.ai", newValue)
-            options: [
-                { label: Translation.tr("No"), value: 0 },
-                { label: Translation.tr("Yes"), value: 1 },
-                { label: Translation.tr("Local only"), value: 2 }
-            ]
         }
     }
 

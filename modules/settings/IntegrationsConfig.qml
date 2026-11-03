@@ -17,9 +17,15 @@ ContentPage {
     property string activePlugin: "management"
     property string activeSection: "calendar"
     property var capabilitySelections: ({})
-    readonly property var primaryTabs: AlisIntergration.installedPlugins.map(plugin => ({
-        displayName: plugin.name, icon: plugin.icon, value: plugin.id
-    })).concat([{displayName: Translation.tr("Management"), icon: "extension", value: "management"}])
+    readonly property var primaryTabs: [{
+        displayName: Translation.tr("Management & Calendar"),
+        icon: "extension",
+        value: "management"
+    }].concat(AlisIntergration.installedPlugins.map(plugin => ({
+        displayName: plugin.name,
+        icon: plugin.icon,
+        value: plugin.id
+    })))
     readonly property var selectedPlugin: AlisIntergration.installedPlugins.find(plugin => plugin.id === root.activePlugin) ?? null
     readonly property var capabilityTabs: (selectedPlugin?.capabilities ?? []).map(capability => ({
         displayName: capability.name, value: capability.id
@@ -36,13 +42,18 @@ ContentPage {
     function activateSettingsSearchSection(section: string): bool {
         const label = String(section ?? "").toLowerCase()
         const wanted = /to-do|todo|quick note|zettelkasten/.test(label) ? "obsidian"
-            : /fan|cooling|thermal/.test(label) ? "thinkfan" : label
+            : /fan|cooling|thermal/.test(label) ? "thinkfan"
+            : /spaced repetition|vocabulary|flashcard|cefr|sm-2/.test(label) ? "spaced_repetition" : label
         const plugin = AlisIntergration.installedPlugins.find(item => wanted.includes(item.id) || wanted.includes(item.name.toLowerCase()))
         if (plugin) {
             activePlugin = plugin.id
-            const capability = /todo|to-do/.test(label) ? "todo"
-                : /quick note|zettelkasten/.test(label) ? "quicknotes" : ""
-            if (capability) selectCapability(capability)
+            if (plugin.id === "obsidian") {
+                selectCapability("theming")
+            } else {
+                const capability = /todo|to-do/.test(label) ? "todo"
+                    : /quick note|zettelkasten/.test(label) ? "quicknotes" : ""
+                if (capability) selectCapability(capability)
+            }
             return true
         }
         activePlugin = "management"
@@ -70,139 +81,136 @@ ContentPage {
         onSelected: value => root.activePlugin = value
     }
 
-    ColumnLayout {
-        Layout.fillWidth: true
+    SettingsCardSection {
+        id: packageSection
         visible: root.activePlugin === "management"
-        SettingsCardSection {
-            id: packageSection
-            title: Translation.tr("Management")
-            icon: "extension"
-            expanded: true
-            property bool confirmRemoval: false
-            property bool showDiagnostics: false
-            StyledText {
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                text: AlisIntergration.managerBusy ? Translation.tr("Working…")
-                    : AlisIntergration.available ? "Alis-Intergration " + AlisIntergration.version + " · " + Translation.tr("Installed")
-                    : AlisIntergration.diagnostic === "not-installed" ? Translation.tr("No plugins installed. Install the optional package to get started.")
-                    : Translation.tr("Integration package unavailable") + " · " + AlisIntergration.diagnostic
+        title: Translation.tr("Management")
+        icon: "extension"
+        expanded: true
+        property bool confirmRemoval: false
+        property bool showDiagnostics: false
+        StyledText {
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+            text: AlisIntergration.managerBusy ? Translation.tr("Working…")
+                : AlisIntergration.available ? "Alis-Intergration " + AlisIntergration.version + " · " + Translation.tr("Installed")
+                : AlisIntergration.diagnostic === "not-installed" ? Translation.tr("No plugins installed. Install the optional package to get started.")
+                : Translation.tr("Integration package unavailable") + " · " + AlisIntergration.diagnostic
+        }
+        Flow {
+            Layout.fillWidth: true
+            spacing: 8
+            DialogButton {
+                buttonText: AlisIntergration.available ? Translation.tr("Reinstall") : Translation.tr("Install Alis-Intergration")
+                enabled: !AlisIntergration.managerBusy
+                onClicked: AlisIntergration.manage("install")
             }
-            Flow {
-                Layout.fillWidth: true
-                spacing: 8
-                DialogButton {
-                    buttonText: AlisIntergration.available ? Translation.tr("Reinstall") : Translation.tr("Install Alis-Intergration")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: AlisIntergration.manage("install")
-                }
-                DialogButton {
-                    visible: AlisIntergration.available
-                    buttonText: Translation.tr("Check updates")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: AlisIntergration.manage("check")
-                }
-                DialogButton {
-                    visible: AlisIntergration.updateAvailable
-                    buttonText: Translation.tr("Update")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: AlisIntergration.manage("install")
-                }
-                DialogButton {
-                    buttonText: Translation.tr("Refresh")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: { AlisIntergration.managerError = ""; AlisIntergration.refresh(); AlisIntergration.refreshSystemStatus() }
-                }
-                DialogButton {
-                    buttonText: Translation.tr("Diagnostics")
-                    onClicked: packageSection.showDiagnostics = !packageSection.showDiagnostics
-                }
-                DialogButton {
-                    objectName: "integrationRestoreInternalTodos"
-                    visible: Todo.backend === "obsidian" && !AlisIntergration.obsidianEnabled
-                    enabled: !Todo.internalPersistenceBusy
-                    buttonText: Translation.tr("Use Alis tasks")
-                    onClicked: Todo.reactivateInternal()
-                }
-                DialogButton {
-                    visible: AlisIntergration.canRollback
-                    buttonText: Translation.tr("Restore Alis-Intergration")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: AlisIntergration.manage("rollback")
-                }
-                DialogButton {
-                    visible: AlisIntergration.available && !packageSection.confirmRemoval
-                    buttonText: Translation.tr("Remove Alis-Intergration")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: packageSection.confirmRemoval = true
-                }
-                DialogButton {
-                    visible: packageSection.confirmRemoval
-                    buttonText: Translation.tr("Confirm removal")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: { packageSection.confirmRemoval = false; AlisIntergration.manage("remove") }
-                }
-                DialogButton {
-                    visible: packageSection.confirmRemoval
-                    buttonText: Translation.tr("Cancel")
-                    onClicked: packageSection.confirmRemoval = false
-                }
+            DialogButton {
+                visible: AlisIntergration.available
+                buttonText: Translation.tr("Check updates")
+                enabled: !AlisIntergration.managerBusy
+                onClicked: AlisIntergration.manage("check")
             }
-            StyledText {
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                visible: AlisIntergration.managerError.length > 0 || AlisIntergration.managerMessage.length > 0
-                color: AlisIntergration.managerError.length > 0 ? Appearance.colors.colError : Appearance.colors.colSubtext
-                text: AlisIntergration.managerError || AlisIntergration.managerMessage
+            DialogButton {
+                visible: AlisIntergration.updateAvailable
+                buttonText: Translation.tr("Update")
+                enabled: !AlisIntergration.managerBusy
+                onClicked: AlisIntergration.manage("install")
             }
-            StyledText {
-                Layout.fillWidth: true
-                wrapMode: Text.WrapAnywhere
-                visible: packageSection.showDiagnostics
-                text: AlisIntergration.status()
-                font.family: Appearance.font.family.monospace
-                font.pixelSize: Appearance.font.pixelSize.small
+            DialogButton {
+                buttonText: Translation.tr("Refresh")
+                enabled: !AlisIntergration.managerBusy
+                onClicked: { AlisIntergration.managerError = ""; AlisIntergration.refresh(); AlisIntergration.refreshSystemStatus() }
             }
-            StyledText {
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                visible: AlisIntergration.available && !AlisIntergration.pluginMetadataAvailable
-                text: Translation.tr("Update the optional package to show plugin tabs.")
+            DialogButton {
+                buttonText: Translation.tr("Diagnostics")
+                onClicked: packageSection.showDiagnostics = !packageSection.showDiagnostics
             }
-            StyledText {
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                color: Appearance.colors.colSubtext
-                text: "Gateway: " + (AlisIntergration.systemProvisionerAvailable ? Translation.tr("Ready") : Translation.tr("Not installed"))
-                    + " · Helpers: " + (AlisIntergration.systemHelpersInstalled ? Translation.tr("Ready")
-                        : AlisIntergration.systemHelpersDiagnostic === "unchecked" ? Translation.tr("Not checked")
-                        : AlisIntergration.systemHelpersDiagnostic.includes("not-installed") ? Translation.tr("Not installed")
-                        : Translation.tr("Needs attention"))
-                    + "\n" + Translation.tr("Manage system helpers with ./setup integrations.")
+            DialogButton {
+                objectName: "integrationRestoreInternalTodos"
+                visible: Todo.backend === "obsidian" && !AlisIntergration.obsidianEnabled
+                enabled: !Todo.internalPersistenceBusy
+                buttonText: Translation.tr("Use Alis tasks")
+                onClicked: Todo.reactivateInternal()
             }
-            SettingsDivider {}
-            GridLayout {
-                Layout.fillWidth: true
-                columns: width >= 620 ? 3 : 1
-                uniformCellWidths: columns === 3
-                columnSpacing: 12
-                rowSpacing: 8
-                Repeater {
-                    model: root.catalog
-                    delegate: SettingsSwitch {
-                        id: catalogCard
-                        required property var modelData
-                        objectName: "integrationToggle_" + catalogCard.modelData.id
-                        Layout.preferredWidth: 1
-                        Layout.fillWidth: true
-                        buttonIcon: catalogCard.modelData.icon
-                        text: catalogCard.modelData.name
-                        autoToggle: false
-                        checked: AlisIntergration.options?.[catalogCard.modelData.id] === true
-                        enabled: AlisIntergration.available && !AlisIntergration.managerBusy
-                            && AlisIntergration.installedPlugins.some(plugin => plugin.id === catalogCard.modelData.id)
-                        onToggledByUser: value => AlisIntergration.setPluginEnabled(catalogCard.modelData.id, value)
-                    }
+            DialogButton {
+                visible: AlisIntergration.canRollback
+                buttonText: Translation.tr("Restore Alis-Intergration")
+                enabled: !AlisIntergration.managerBusy
+                onClicked: AlisIntergration.manage("rollback")
+            }
+            DialogButton {
+                visible: AlisIntergration.available && !packageSection.confirmRemoval
+                buttonText: Translation.tr("Remove Alis-Intergration")
+                enabled: !AlisIntergration.managerBusy
+                onClicked: packageSection.confirmRemoval = true
+            }
+            DialogButton {
+                visible: packageSection.confirmRemoval
+                buttonText: Translation.tr("Confirm removal")
+                enabled: !AlisIntergration.managerBusy
+                onClicked: { packageSection.confirmRemoval = false; AlisIntergration.manage("remove") }
+            }
+            DialogButton {
+                visible: packageSection.confirmRemoval
+                buttonText: Translation.tr("Cancel")
+                onClicked: packageSection.confirmRemoval = false
+            }
+        }
+        StyledText {
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+            visible: AlisIntergration.managerError.length > 0 || AlisIntergration.managerMessage.length > 0
+            color: AlisIntergration.managerError.length > 0 ? Appearance.colors.colError : Appearance.colors.colSubtext
+            text: AlisIntergration.managerError || AlisIntergration.managerMessage
+        }
+        StyledText {
+            Layout.fillWidth: true
+            wrapMode: Text.WrapAnywhere
+            visible: packageSection.showDiagnostics
+            text: AlisIntergration.status()
+            font.family: Appearance.font.family.monospace
+            font.pixelSize: Appearance.font.pixelSize.small
+        }
+        StyledText {
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+            visible: AlisIntergration.available && !AlisIntergration.pluginMetadataAvailable
+            text: Translation.tr("Update the optional package to show plugin tabs.")
+        }
+        StyledText {
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+            color: Appearance.colors.colSubtext
+            text: "Gateway: " + (AlisIntergration.systemProvisionerAvailable ? Translation.tr("Ready") : Translation.tr("Not installed"))
+                + " · Helpers: " + (AlisIntergration.systemHelpersInstalled ? Translation.tr("Ready")
+                    : AlisIntergration.systemHelpersDiagnostic === "unchecked" ? Translation.tr("Not checked")
+                    : AlisIntergration.systemHelpersDiagnostic.includes("not-installed") ? Translation.tr("Not installed")
+                    : Translation.tr("Needs attention"))
+                + "\n" + Translation.tr("Manage system helpers with ./setup integrations.")
+        }
+        SettingsDivider {}
+        GridLayout {
+            Layout.fillWidth: true
+            columns: width >= 540 ? 3 : 2
+            uniformCellWidths: true
+            columnSpacing: 10
+            rowSpacing: 8
+            Repeater {
+                model: root.catalog
+                delegate: SettingsSwitch {
+                    id: catalogCard
+                    required property var modelData
+                    objectName: "integrationToggle_" + catalogCard.modelData.id
+                    Layout.preferredWidth: 1
+                    Layout.fillWidth: true
+                    buttonIcon: catalogCard.modelData.icon
+                    text: catalogCard.modelData.name
+                    autoToggle: false
+                    checked: AlisIntergration.options?.[catalogCard.modelData.id] === true
+                    enabled: AlisIntergration.available && !AlisIntergration.managerBusy
+                        && AlisIntergration.installedPlugins.some(plugin => plugin.id === catalogCard.modelData.id)
+                    onToggledByUser: value => AlisIntergration.setPluginEnabled(catalogCard.modelData.id, value)
                 }
             }
         }
@@ -210,10 +218,12 @@ ContentPage {
 
     ColumnLayout {
         Layout.fillWidth: true
+        spacing: SettingsMaterialPreset.pageSpacing
         visible: root.selectedPlugin !== null
         SettingsTaskNavigator {
             objectName: "integrationCapabilityTabs"
-            visible: root.capabilityTabs.length > 1
+            visible: false
+            showTabBar: false
             showIntro: false
             options: root.capabilityTabs
             currentValue: root.selectedCapability?.id ?? ""
@@ -247,6 +257,21 @@ ContentPage {
             onCapabilitySourceChanged: reload()
             onCapabilityViewChanged: reload()
         }
+        Loader {
+            id: obsidianCombinedTodoSettings
+            objectName: "integrationObsidianTodoSettings"
+            Layout.fillWidth: true
+            Layout.preferredHeight: item?.implicitHeight ?? 0
+            visible: active
+            active: root.visible && root.activePlugin === "obsidian"
+                && AlisIntergration.pluginEnabled("obsidian")
+                && (root.selectedCapability?.id ?? "theming") === "theming"
+            source: active ? AlisIntergration.settingsSource("obsidianTodo") : ""
+            onLoaded: {
+                if (item && item.hasOwnProperty("settingsView"))
+                    item.settingsView = "all"
+            }
+        }
         StyledText {
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
@@ -254,13 +279,6 @@ ContentPage {
             text: Translation.tr("Plugin settings could not be loaded. Refresh or update the optional package.")
             color: Appearance.colors.colError
         }
-    }
-    SettingsTaskNavigator {
-        visible: root.activePlugin === "management" && options.length > 1
-        showIntro: false
-        currentValue: root.activeSection
-        onSelected: value => root.activeSection = value
-        options: [{displayName: "Calendar", icon: "calendar_month", value: "calendar"}]
     }
     SettingsCardSection {
         settingsTaskSection: "calendar"
@@ -279,47 +297,23 @@ ContentPage {
                     onCheckedChanged: Config.setNestedValue("calendar.externalSync.enable", checked)
                 }
 
-                ConfigSpinBox {
-                    icon: "update"
-                    text: Translation.tr("Refresh interval (minutes)")
-                    value: Config.options?.calendar?.externalSync?.refreshMinutes ?? 15
-                    from: 5
-                    to: 120
-                    stepSize: 5
-                    onValueChanged: Config.setNestedValue("calendar.externalSync.refreshMinutes", value)
-                    enabled: Config.options?.calendar?.externalSync?.enable ?? false
-                }
-            }
-
-            ConfigRow {
-                uniform: true
                 SettingsSwitch {
                     buttonIcon: "event"
-                    text: Translation.tr("Show upcoming events below calendar")
+                    text: Translation.tr("Show upcoming events")
                     checked: Config.options?.calendar?.showUpcoming ?? true
                     onCheckedChanged: Config.setNestedValue("calendar.showUpcoming", checked)
-                }
-
-                ConfigSpinBox {
-                    icon: "date_range"
-                    text: Translation.tr("Upcoming days to show")
-                    value: Config.options?.calendar?.upcomingDays ?? 3
-                    from: 1
-                    to: 14
-                    stepSize: 1
-                    onValueChanged: Config.setNestedValue("calendar.upcomingDays", value)
                 }
             }
 
             ConfigSpinBox {
-                icon: "event"
-                text: Translation.tr("Maximum indicators per edge")
-                description: Translation.tr("Calendar event dots (0 hides them; up to 3 per edge, 12 per day)")
-                value: Math.max(0,Math.min(3,Config.options?.calendar?.maxEventDots ?? 3))
-                from: 0
-                to: 3
-                stepSize: 1
-                onValueChanged: Config.setNestedValue("calendar.maxEventDots", value)
+                icon: "update"
+                text: Translation.tr("Refresh interval (minutes)")
+                value: Config.options?.calendar?.externalSync?.refreshMinutes ?? 15
+                from: 5
+                to: 120
+                stepSize: 5
+                onValueChanged: Config.setNestedValue("calendar.externalSync.refreshMinutes", value)
+                enabled: Config.options?.calendar?.externalSync?.enable ?? false
             }
         }
 
@@ -350,21 +344,25 @@ ContentPage {
                     colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.80)
                     onClicked: addSourceForm.expanded = true
 
-                    contentItem: RowLayout {
-                        id: addRow
-                        anchors.centerIn: parent
-                        spacing: 4
+                    contentItem: Item {
+                        Row {
+                            id: addRow
+                            anchors.centerIn: parent
+                            spacing: 4
 
-                        MaterialSymbol {
-                            text: "add"
-                            iconSize: 16
-                            color: Appearance.colors.colPrimary
-                        }
-                        StyledText {
-                            text: Translation.tr("Add")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            font.weight: Font.Medium
-                            color: Appearance.colors.colPrimary
+                            MaterialSymbol {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "add"
+                                iconSize: 16
+                                color: Appearance.colors.colPrimary
+                            }
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: Translation.tr("Add")
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colPrimary
+                            }
                         }
                     }
                 }

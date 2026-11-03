@@ -13,12 +13,36 @@ import qs.modules.waffle.settings
 
 WSettingsPage {
     id: root
-    settingsPageIndex: 12
+    settingsPageIndex: 11
     pageTitle: Translation.tr("Autostart")
     pageIcon: "power"
     pageDescription: Translation.tr("Apps that start with Alis")
 
     // ── Helpers ──────────────────────────────────────────────────────────
+
+    property var commandEntriesModel: []
+    property var filteredAppsModel: []
+
+    function refreshModels(): void {
+        commandEntriesModel = getCommandEntries()
+        filteredAppsModel = getFilteredApps()
+    }
+
+    Component.onCompleted: refreshModels()
+
+    Connections {
+        target: Autostart
+        function onEntriesChanged() {
+            root.refreshModels()
+        }
+    }
+
+    Connections {
+        target: AppSearch
+        function onListChanged() {
+            root.refreshModels()
+        }
+    }
 
     function getCommandEntries(): var {
         const cmds = []
@@ -42,13 +66,7 @@ WSettingsPage {
                 continue
             result.push(app)
         }
-        result.sort((a, b) => {
-            const aEnabled = Autostart.isAppOn(a)
-            const bEnabled = Autostart.isAppOn(b)
-            if (aEnabled !== bEnabled)
-                return aEnabled ? -1 : 1
-            return (a.name || "").localeCompare(b.name || "")
-        })
+        result.sort((a, b) => (a.name || "").localeCompare(b.name || ""))
         return result
     }
 
@@ -148,6 +166,7 @@ WSettingsPage {
                 font.pixelSize: Looks.font.pixelSize.small
                 color: Looks.colors.fg
                 placeholderTextColor: Looks.colors.subfg
+                onTextChanged: root.filteredAppsModel = root.getFilteredApps()
                 background: Rectangle {
                     color: Looks.colors.bg1
                     radius: Looks.dp(4)
@@ -161,9 +180,9 @@ WSettingsPage {
             ListView {
                 id: appListView
                 Layout.fillWidth: true
-                implicitHeight: Math.min(400, appListView.contentHeight)
+                implicitHeight: Math.min(400, Math.max(appListView.contentHeight, appListView.count * 44))
                 clip: true
-                model: root.getFilteredApps()
+                model: root.filteredAppsModel
 
                 WText {
                     anchors.fill: parent
@@ -265,8 +284,9 @@ WSettingsPage {
                         WSwitch {
                             Layout.alignment: Qt.AlignVCenter
                             visible: !appDelegate.isExternal
+                            checkable: false
                             checked: appDelegate.isOn
-                            onClicked: Autostart.setAppEnabled(appDelegate.modelData.id, !checked)
+                            onClicked: Autostart.setAppEnabled(appDelegate.modelData.id, !appDelegate.isOn)
                         }
                     }
                 }
@@ -319,7 +339,7 @@ WSettingsPage {
                 Layout.fillWidth: true
                 implicitHeight: Math.min(200, commandListView.contentHeight)
                 clip: true
-                model: root.getCommandEntries()
+                model: root.commandEntriesModel
 
                 WText {
                     anchors.fill: parent

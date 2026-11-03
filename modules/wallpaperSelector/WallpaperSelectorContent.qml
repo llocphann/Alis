@@ -172,16 +172,16 @@ MouseArea {
         } else if (event.modifiers & Qt.AltModifier && event.key === Qt.Key_Right) {
             Wallpapers.navigateForward();
             event.accepted = true;
-        } else if (event.key === Qt.Key_Left) {
+        } else if (event.key === Qt.Key_Left || (!filterField.activeFocus && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier)) && event.key === Qt.Key_H)) {
             grid.moveSelection(-1);
             event.accepted = true;
-        } else if (event.key === Qt.Key_Right) {
+        } else if (event.key === Qt.Key_Right || (!filterField.activeFocus && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier)) && event.key === Qt.Key_L)) {
             grid.moveSelection(1);
             event.accepted = true;
-        } else if (event.key === Qt.Key_Up) {
+        } else if (event.key === Qt.Key_Up || (!filterField.activeFocus && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier)) && event.key === Qt.Key_K)) {
             grid.moveSelection(-grid.columns);
             event.accepted = true;
-        } else if (event.key === Qt.Key_Down) {
+        } else if (event.key === Qt.Key_Down || (!filterField.activeFocus && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier)) && event.key === Qt.Key_J)) {
             grid.moveSelection(grid.columns);
             event.accepted = true;
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -315,7 +315,6 @@ MouseArea {
                             { icon: "movie", name: "Videos", path: Directories.videos },
                             { icon: "", name: "---", path: "INTENTIONALLY_INVALID_DIR" },
                             { icon: "wallpaper", name: "Wallpapers", path: `${Directories.pictures}/Wallpapers` },
-                            ...((Config.options?.policies?.weeb ?? 0) === 1 ? [{ icon: "favorite", name: "Homework", path: `${Directories.pictures}/homework` }] : []),
                         ]
                         delegate: RippleButton {
                             id: quickDirButton

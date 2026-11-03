@@ -6,7 +6,7 @@ let
   wantedUnit = common.compositorUnit cfg.service.compositor;
 in
 {
-  imports = [ common.optionsModule (lib.mkAliasOptionModule [ "programs" "inir" ] [ "programs" "alis" ]) ];
+  imports = [ common.optionsModule (lib.mkAliasOptionModule [ "programs" "alis" ] [ "programs" "alis" ]) ];
 
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ cfg.package ];

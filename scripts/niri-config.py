@@ -510,6 +510,7 @@ def cmd_get_input():
             "numlock": False,
         },
         "touchpad": {
+            "off": False,
             "tap": True,
             "natural_scroll": False,
             "dwt": False,
@@ -564,7 +565,7 @@ def cmd_get_input():
         print(json.dumps(result))
         return 0
 
-    content = input_file.read_text()
+    content = _strip_kdl_line_comments(input_file.read_text())
 
     # Extract subsections — handle nested braces properly
     input_block = _extract_block(content, "input", top_level=True)
@@ -605,6 +606,9 @@ def cmd_get_input():
 
         # Touchpad
         if tp_block:
+            result["touchpad"]["off"] = bool(
+                re.search(r"^\s*off(?:\s+true)?\s*$", tp_block, re.MULTILINE)
+            )
             result["touchpad"]["tap"] = bool(
                 re.search(r"^\s*tap\s*$", tp_block, re.MULTILINE)
             )
@@ -1068,16 +1072,19 @@ def cmd_get_layout():
         if m:
             result["center_focused"] = m.group(1)
 
-        result["always_center_single_column"] = bool(
-            re.search(
-                r"^\s*always-center-single-column(?:\s+true)?\s*$",
-                layout_block,
-                re.MULTILINE,
+        result["always_center_single_column"] = (
+            result["center_focused"] == "always"
+            or bool(
+                re.search(
+                    r"^\s*always-center-single-column(?:\s+true)?\s*;?\s*$",
+                    layout_block,
+                    re.MULTILINE,
+                )
             )
         )
         result["empty_workspace_above_first"] = bool(
             re.search(
-                r"^\s*empty-workspace-above-first(?:\s+true)?\s*$",
+                r"^\s*empty-workspace-above-first(?:\s+true)?\s*;?\s*$",
                 layout_block,
                 re.MULTILINE,
             )
@@ -1294,8 +1301,41 @@ def cmd_get_animations():
 # ─── Window Rules ─────────────────────────────────────────────────────
 
 
+def _iter_window_rule_blocks(content: str):
+    """Yield (block_start, inner_start, inner_end, block_end, inner_text) for top-level window-rule blocks."""
+    structure = _kdl_structural_view(content)
+    pattern = re.compile(r"^[ \t]*window-rule[ \t]*\{", re.MULTILINE)
+    for match in pattern.finditer(structure):
+        if _brace_depth_before(structure, match.start()) != 0:
+            continue
+        inner_start = match.end()
+        depth = 1
+        i = inner_start
+        while i < len(structure) and depth > 0:
+            if structure[i] == "{":
+                depth += 1
+            elif structure[i] == "}":
+                depth -= 1
+            i += 1
+        if depth == 0:
+            yield match.start(), inner_start, i - 1, i, content[inner_start : i - 1]
+
+
+def _is_global_window_rule_block(block: str) -> bool:
+    cleaned = _strip_kdl_line_comments(block)
+    return not bool(re.search(r"^\s*(?:match|exclude)\b", cleaned, re.MULTILINE))
+
+
+def _is_inactive_window_rule_block(block: str) -> bool:
+    cleaned = _strip_kdl_line_comments(block)
+    has_inactive = bool(re.search(r"^\s*match\s+is-active\s*=\s*false\s*;?\s*$", cleaned, re.MULTILINE))
+    has_other_match = bool(re.search(r"^\s*(?:match\s+(?!is-active\s*=\s*false)|exclude\b)", cleaned, re.MULTILINE))
+    return has_inactive and not has_other_match
+
+
 def cmd_get_window_rules():
     rules_file = resolve_niri_section_file("config.d/30-window-rules.kdl")
+    extra_file = resolve_niri_section_file("config.d/90-user-extra.kdl")
 
     result = {
         "corner_radius": 16,
@@ -1303,43 +1343,33 @@ def cmd_get_window_rules():
         "inactive_opacity": 0.9,
     }
 
-    if not rules_file.exists():
+    candidate_files = []
+    if rules_file.exists():
+        candidate_files.append(rules_file)
+    if extra_file.exists() and extra_file != rules_file:
+        candidate_files.append(extra_file)
+
+    if not candidate_files:
         print(json.dumps(result))
         return 0
 
-    content = rules_file.read_text()
-
-    # Find all window-rule blocks
-    pos = 0
-    while True:
-        match = re.search(r"window-rule\s*\{", content[pos:])
-        if not match:
-            break
-        block_start = pos + match.end()
-        depth = 1
-        i = block_start
-        while i < len(content) and depth > 0:
-            if content[i] == "{":
-                depth += 1
-            elif content[i] == "}":
-                depth -= 1
-            i += 1
-        block = content[block_start : i - 1] if depth == 0 else ""
-        pos = i
-
-        # Check if this is the inactive-opacity rule (has match is-active=false)
-        if re.search(r"match\s+is-active\s*=\s*false", block):
-            m = re.search(r"opacity\s+([\d.]+)", block)
-            if m:
-                result["inactive_opacity"] = float(m.group(1))
-        else:
-            # General rule — corner radius / clip
-            m = re.search(r"geometry-corner-radius\s+(\d+)", block)
-            if m:
-                result["corner_radius"] = int(m.group(1))
-            m = re.search(r"clip-to-geometry\s+(true|false)", block)
-            if m:
-                result["clip_to_geometry"] = m.group(1) == "true"
+    for file_path in candidate_files:
+        content = file_path.read_text()
+        for _, _, _, _, block in _iter_window_rule_blocks(content):
+            cleaned_block = _strip_kdl_line_comments(block)
+            if _is_inactive_window_rule_block(cleaned_block):
+                m = re.search(r"^\s*opacity\s+([\d.]+)", cleaned_block, re.MULTILINE)
+                if m:
+                    result["inactive_opacity"] = float(m.group(1))
+                elif file_path == rules_file:
+                    result["inactive_opacity"] = 1.0
+            elif _is_global_window_rule_block(cleaned_block):
+                m = re.search(r"^\s*geometry-corner-radius\s+(\d+)", cleaned_block, re.MULTILINE)
+                if m:
+                    result["corner_radius"] = int(m.group(1))
+                m = re.search(r"^\s*clip-to-geometry\s+(true|false)", cleaned_block, re.MULTILINE)
+                if m:
+                    result["clip_to_geometry"] = m.group(1) == "true"
 
     print(json.dumps(result))
     return 0
@@ -1880,7 +1910,20 @@ def _set_input(config_dir, key, value):
             return 1
 
     elif subsection == "touchpad":
-        if prop in ("tap", "natural-scroll", "dwt", "dwtp"):
+        if prop in ("off", "enabled", "enable"):
+            input_blk = _extract_block(content, "input", top_level=True) or ""
+            tp_blk = _extract_block(input_blk, "touchpad") or ""
+            current_off = bool(
+                re.search(r"^\s*off(?:\s+true)?\s*$", tp_blk, re.MULTILINE)
+            )
+            if value == "toggle":
+                next_off = not current_off
+            elif prop == "off":
+                next_off = value in ("on", "true", "1")
+            else:
+                next_off = value in ("off", "false", "0")
+            content = _toggle_flag(content, "touchpad", "off", next_off)
+        elif prop in ("tap", "natural-scroll", "dwt", "dwtp"):
             content = _toggle_flag(content, "touchpad", prop, value == "on")
         elif prop in (
             "drag-lock",
@@ -1985,9 +2028,22 @@ def _set_layout(config_dir, key, value):
         content = _set_value_in_block(
             content, "layout", "center-focused-column", f'"{value}"', top_level=True
         )
+        if value == "always":
+            content = _toggle_flag(
+                content, "layout", "always-center-single-column", True, top_level=True
+            )
 
     elif key == "always-center-single-column":
-        content = _toggle_flag(content, "layout", key, value == "on", top_level=True)
+        enable = value == "on"
+        content = _toggle_flag(content, "layout", key, enable, top_level=True)
+        if not enable:
+            layout_blk = _strip_kdl_line_comments(
+                _extract_block(content, "layout", top_level=True) or ""
+            )
+            if re.search(r'center-focused-column\s+"always"', layout_blk):
+                content = _set_value_in_block(
+                    content, "layout", "center-focused-column", '"never"', top_level=True
+                )
 
     elif key == "empty-workspace-above-first":
         content = _toggle_flag(content, "layout", key, value == "on", top_level=True)
@@ -2063,9 +2119,13 @@ def _set_animations(config_dir, key, value):
             )
 
     elif key == "slowdown":
-        anim_block = _extract_block(content, "animations", top_level=True)
-        if anim_block and "slowdown" in anim_block:
-            content = re.sub(r"(slowdown\s+)[\d.]+", rf"\g<1>{value}", content, count=1)
+        anim_block = _strip_kdl_line_comments(
+            _extract_block(content, "animations", top_level=True) or ""
+        )
+        if re.search(r"^\s*slowdown\s+[\d.]+", anim_block, re.MULTILINE):
+            content = re.sub(
+                r"(?m)^(\s*slowdown\s+)[\d.]+", rf"\g<1>{value}", content, count=1
+            )
         else:
             content = re.sub(
                 r"(animations\s*\{)\s*\n",
@@ -2092,7 +2152,7 @@ def _set_animations(config_dir, key, value):
         type_block = _extract_block(anim_block, anim_type)
 
         if param == "enabled":
-            if type_block:
+            if type_block is not None:
                 content = _toggle_flag(content, anim_type, "off", value != "on")
             elif value != "on":
                 content = re.sub(
@@ -2103,11 +2163,23 @@ def _set_animations(config_dir, key, value):
                 )
             return _write_validated(anim_file, content)
 
-        if type_block:
+        defaults = ANIMATION_DEFAULTS[anim_type]
+        default_spring_map = {
+            "damping-ratio": str(defaults["damping_ratio"]),
+            "stiffness": str(int(defaults["stiffness"])),
+            "epsilon": str(defaults["epsilon"]),
+        }
+        default_spring_map[param] = str(value)
+        full_spring_line = (
+            f"spring damping-ratio={default_spring_map['damping-ratio']} "
+            f"stiffness={default_spring_map['stiffness']} "
+            f"epsilon={default_spring_map['epsilon']}"
+        )
+
+        if type_block is not None:
             spring_match = re.search(r"spring\s+(.*)", type_block)
             if spring_match:
                 old_spring_line = spring_match.group(0)
-                # Replace the specific param in the spring line
                 if re.search(rf"{re.escape(param)}=[\d.]+", old_spring_line):
                     new_spring_line = re.sub(
                         rf"{re.escape(param)}=[\d.]+",
@@ -2118,19 +2190,17 @@ def _set_animations(config_dir, key, value):
                     new_spring_line = old_spring_line + f" {param}={value}"
                 content = content.replace(old_spring_line, new_spring_line, 1)
             else:
-                # No spring line yet — add one
                 type_pattern = rf"({re.escape(anim_type)}\s*\{{)"
                 content = re.sub(
                     type_pattern,
-                    rf"\g<1>\n        spring {param}={value}",
+                    rf"\g<1>\n        {full_spring_line}",
                     content,
                     count=1,
                 )
         else:
-            # Animation type block doesn't exist — create it
             content = re.sub(
                 r"(animations\s*\{)\s*\n",
-                rf"\g<1>\n    {anim_type} {{\n        spring {param}={value}\n    }}\n",
+                rf"\g<1>\n    {anim_type} {{\n        {full_spring_line}\n    }}\n",
                 content,
                 count=1,
             )
@@ -2142,8 +2212,38 @@ def _set_animations(config_dir, key, value):
     return _write_validated(anim_file, content)
 
 
+def _update_global_window_rule_prop(content: str, kdl_prop: str, value: str, create_if_missing: bool) -> tuple[str, bool]:
+    for _, inner_start, inner_end, _, block in _iter_window_rule_blocks(content):
+        if _is_global_window_rule_block(block):
+            new_block = _set_in_block(block, kdl_prop, str(value))
+            return content[:inner_start] + new_block + content[inner_end:], True
+    if not create_if_missing:
+        return content, False
+    new_rule = f"window-rule {{\n    {kdl_prop} {value}\n}}\n\n"
+    first_rule = next(_iter_window_rule_blocks(content), None)
+    if first_rule is not None:
+        idx = first_rule[0]
+        return content[:idx] + new_rule + content[idx:], True
+    return (content.rstrip() + "\n\n" + new_rule.strip() + "\n") if content.strip() else (new_rule.strip() + "\n"), True
+
+
+def _update_inactive_window_rule_opacity(content: str, value: str, create_if_missing: bool) -> tuple[str, bool]:
+    for _, inner_start, inner_end, _, block in _iter_window_rule_blocks(content):
+        if _is_inactive_window_rule_block(block):
+            new_block = _set_in_block(block, "opacity", str(value))
+            return content[:inner_start] + new_block + content[inner_end:], True
+    if not create_if_missing:
+        return content, False
+    return (
+        content.rstrip()
+        + f"\n\nwindow-rule {{\n    match is-active=false\n    opacity {value}\n}}\n",
+        True,
+    )
+
+
 def _set_window_rules(config_dir, key, value):
     rules_file = resolve_niri_section_file("config.d/30-window-rules.kdl")
+    extra_file = resolve_niri_section_file("config.d/90-user-extra.kdl")
     if not rules_file.exists():
         print(json.dumps({"error": "window rules config file not found"}))
         return 1
@@ -2151,54 +2251,55 @@ def _set_window_rules(config_dir, key, value):
     content = rules_file.read_text()
 
     if key == "corner-radius":
-        if re.search(r"geometry-corner-radius\s+\d+", content):
-            content = re.sub(
-                r"(geometry-corner-radius\s+)\d+",
-                rf"\g<1>{value}",
-                content,
-                count=1,
-            )
-        else:
-            # Insert in first window-rule block
-            content = re.sub(
-                r"(window-rule\s*\{)\s*\n",
-                rf"\g<1>\n    geometry-corner-radius {value}\n",
-                content,
-                count=1,
-            )
+        content, _ = _update_global_window_rule_prop(
+            content, "geometry-corner-radius", str(value), create_if_missing=True
+        )
+        if extra_file.exists() and extra_file != rules_file:
+            extra_content = extra_file.read_text()
+            for _, _, _, _, block in _iter_window_rule_blocks(extra_content):
+                if _is_global_window_rule_block(block) and re.search(
+                    r"^\s*geometry-corner-radius\b", _strip_kdl_line_comments(block), re.MULTILINE
+                ):
+                    next_extra, changed = _update_global_window_rule_prop(
+                        extra_content, "geometry-corner-radius", str(value), create_if_missing=False
+                    )
+                    if changed:
+                        _write_validated(extra_file, next_extra, silent=True)
+                    break
 
     elif key == "inactive-opacity":
-        # Find the inactive rule block (has match is-active=false)
-        inactive_pattern = r"(window-rule\s*\{[^}]*match\s+is-active\s*=\s*false[^}]*)(opacity\s+[\d.]+)"
-        if re.search(inactive_pattern, content, re.DOTALL):
-            content = re.sub(
-                r"(match\s+is-active\s*=\s*false\s*\n\s*)(opacity\s+)[\d.]+",
-                rf"\g<1>\g<2>{value}",
-                content,
-                count=1,
-            )
-        else:
-            # No inactive rule exists — append one
-            content = (
-                content.rstrip()
-                + f"\n\nwindow-rule {{\n    match is-active=false\n    opacity {value}\n}}\n"
-            )
+        content, _ = _update_inactive_window_rule_opacity(
+            content, str(value), create_if_missing=True
+        )
+        if extra_file.exists() and extra_file != rules_file:
+            extra_content = extra_file.read_text()
+            for _, _, _, _, block in _iter_window_rule_blocks(extra_content):
+                if _is_inactive_window_rule_block(block) and re.search(
+                    r"^\s*opacity\b", _strip_kdl_line_comments(block), re.MULTILINE
+                ):
+                    next_extra, changed = _update_inactive_window_rule_opacity(
+                        extra_content, str(value), create_if_missing=False
+                    )
+                    if changed:
+                        _write_validated(extra_file, next_extra, silent=True)
+                    break
 
     elif key == "clip-to-geometry":
-        if re.search(r"clip-to-geometry\s+(true|false)", content):
-            content = re.sub(
-                r"(clip-to-geometry\s+)(true|false)",
-                rf"\g<1>{value}",
-                content,
-                count=1,
-            )
-        else:
-            content = re.sub(
-                r"(window-rule\s*\{)\s*\n",
-                rf"\g<1>\n    clip-to-geometry {value}\n",
-                content,
-                count=1,
-            )
+        content, _ = _update_global_window_rule_prop(
+            content, "clip-to-geometry", str(value), create_if_missing=True
+        )
+        if extra_file.exists() and extra_file != rules_file:
+            extra_content = extra_file.read_text()
+            for _, _, _, _, block in _iter_window_rule_blocks(extra_content):
+                if _is_global_window_rule_block(block) and re.search(
+                    r"^\s*clip-to-geometry\b", _strip_kdl_line_comments(block), re.MULTILINE
+                ):
+                    next_extra, changed = _update_global_window_rule_prop(
+                        extra_content, "clip-to-geometry", str(value), create_if_missing=False
+                    )
+                    if changed:
+                        _write_validated(extra_file, next_extra, silent=True)
+                    break
 
     else:
         print(json.dumps({"error": f"Unknown window-rules key: {key}"}))
@@ -2492,8 +2593,12 @@ _KB_IPC_MAP = {
     ("session", "toggle"): "Session dialog",
     ("sidebarLeft", "toggle"): "Left sidebar",
     ("sidebarRight", "toggle"): "Right sidebar",
-    ("ipc", "aqua"): "Companion chat",
-    ("aqua", "chat"): "Companion chat",
+    ("ipc", "aqua"): "Companion Chatbox",
+    ("aqua", "chat"): "Companion Chatbox",
+    ("ipc", "wull"): "Companion Chatbox",
+    ("wull", "chat"): "Companion Chatbox",
+    ("ipc", "companion"): "Companion Chatbox",
+    ("companion", "chat"): "Companion Chatbox",
     ("browser", "open"): "Browser",
     ("browser", "new"): "Browser (new window)",
     ("audio", "volumeUp"): "Volume up",
@@ -2653,6 +2758,7 @@ def _kb_categorize(description: str, action: str) -> str:
             "left sidebar",
             "right sidebar",
             "companion chat",
+            "companion chatbox",
         ]
     ):
         return "Alis Shell"
@@ -2672,6 +2778,8 @@ def _kb_categorize(description: str, action: str) -> str:
             "sidebarLeft",
             "sidebarRight",
             "aqua",
+            "wull",
+            "companion",
             "ipc",
         ):
             return "Alis Shell"

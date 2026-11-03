@@ -1,2 +1,0 @@
-PASS: ALLOCATION_ORACLE_PASS cases=30065 reactive_steps=11
-Baseline: 45551e186f078395f8c40c562b0cf1304fc16230; native QV4 values/read order/errors/fresh identity/QObject dependencies/NOTIFY

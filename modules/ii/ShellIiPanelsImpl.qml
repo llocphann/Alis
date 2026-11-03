@@ -14,7 +14,6 @@ import qs.modules.sessionScreen
 import qs.modules.tilingOverlay
 import qs.modules.wallpaperSelector
 import qs.modules.wallpaperLauncher
-import qs.modules.ii.overlay
 import qs.modules.shellUpdate
 import qs.modules.clipboard as ClipboardModule
 
@@ -125,11 +124,6 @@ Item {
     DeferredPanelLoader { identifier: "iiLock"; component: Lock {} }
     DeferredPanelLoader { identifier: "iiMediaControls"; component: MediaControls {} }
     OnDemandPanelLoader { identifier: "iiOnScreenKeyboard"; open: GlobalStates.oskOpen; component: OnScreenKeyboard {} }
-    OnDemandPanelLoader {
-        identifier: "iiOverlay"
-        open: GlobalStates.overlayOpen || OverlayContext.hasPinnedWidgets || OverlayContext.nativeDialogOpen
-        component: Overlay {}
-    }
     OnDemandPanelLoader { identifier: "iiOverview"; open: GlobalStates.overviewOpen; closeGraceMs: Appearance.animation.elementMoveExit.duration + 80; source: "../overview/Overview.qml" }
     DeferredPanelLoader { identifier: "iiPolkit"; component: Polkit {} }
 
@@ -217,7 +211,6 @@ Item {
             GlobalShortcut { name: "oskToggle"; description: "Toggles on screen keyboard on press"; onPressed: GlobalStates.oskOpen = !GlobalStates.oskOpen }
             GlobalShortcut { name: "oskOpen"; description: "Opens on screen keyboard on press"; onPressed: GlobalStates.oskOpen = true }
             GlobalShortcut { name: "oskClose"; description: "Closes on screen keyboard on press"; onPressed: GlobalStates.oskOpen = false }
-            GlobalShortcut { name: "overlayToggle"; description: "Toggles overlay on press"; onPressed: GlobalStates.overlayOpen = !GlobalStates.overlayOpen }
             GlobalShortcut { name: "sessionToggle"; description: "Toggles session screen on press"; onPressed: GlobalStates.sessionOpen = !GlobalStates.sessionOpen }
             GlobalShortcut { name: "sessionOpen"; description: "Opens session screen on press"; onPressed: GlobalStates.sessionOpen = true }
             GlobalShortcut { name: "sessionClose"; description: "Closes session screen on press"; onPressed: GlobalStates.sessionOpen = false }

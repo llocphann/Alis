@@ -1,1 +1,0 @@
-PASS: live module identity and placement, popup/IPC preview drag drafts, Cancel, latest-config merge and output isolation

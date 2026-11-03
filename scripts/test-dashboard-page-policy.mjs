@@ -89,4 +89,10 @@ for(const available of [['dashboard','music','weeklyPlanner'],['dashboard','week
 }
 eq(policy.move(ids,ids,'missing',1),ids,'unknown drag changed valid order');
 eq(policy.move(ids,ids,'music',NaN),ids,'invalid drop changed valid order');
+const withSrAvailable = ['dashboard', 'music', 'weeklyPlanner', 'spacedRepetition'];
+eq(
+    policy.move(['dashboard', 'music', 'weeklyPlanner'], withSrAvailable, 'spacedRepetition', 1),
+    ['dashboard', 'spacedRepetition', 'music', 'weeklyPlanner'],
+    'moving newly available spacedRepetition tab dropped an existing visible page'
+);
 console.log(`DASHBOARD_PAGE_POLICY_PASS ${checks} checks; stable/reordered two and three pages, thresholds, vertical/diagonal, bursts, phases, reversal, inner-browser ownership`);

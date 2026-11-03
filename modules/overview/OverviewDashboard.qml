@@ -97,7 +97,15 @@ Item {
         enabled: root.editing && root.popupPresented && !root.externalEditToolbar
         onActivated: root.handleEscape()
     }
-    function focusSearchInput(): void { searchWidget.focusSearchInput() }
+    function focusSearchInput(): void {
+        if (dashboardContent.currentPageId === "spacedRepetition"
+                && root.searchingText.length === 0
+                && !(GlobalStates.overviewSearchPrefix?.length > 0)) {
+            dashboardContent.focusPrimarySurface()
+            return
+        }
+        searchWidget.focusSearchInput()
+    }
     function disableExpandAnimation(): void { searchWidget.disableExpandAnimation() }
     function cancelSearch(): void { searchWidget.cancelSearch() }
     function focusFirstItem(): void { searchWidget.focusFirstItem() }

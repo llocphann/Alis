@@ -29,11 +29,13 @@ Rectangle {
         NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
 
-    // No accent rail here — SettingsGroup lives inside SettingsCardSection
-    // which already has the left accent rail. A second rail here would double.
+    function ensureControlOnActiveSubTab(control) {
+        // Pagination is handled at ContentPage level.
+    }
 
     ColumnLayout {
         id: content
+        objectName: "settingsGroupContent"
         anchors {
             fill: parent
             margins: SettingsMaterialPreset.groupPadding

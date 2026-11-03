@@ -1,1 +1,0 @@
-  INFO qml: NOTIFICATION_SETTINGS_PASS free-position per-output store reset configured-timeout waffle-family

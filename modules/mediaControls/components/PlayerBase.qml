@@ -21,54 +21,29 @@ QtObject {
     property int slideDirection: 1
     property bool positionUpdatesActive: true
 
-    // YtMusic detection
-    readonly property bool isYtMusicPlayer: {
-        if (!player) return false
-        if (YtMusic.mpvPlayer && player === YtMusic.mpvPlayer) return true
-        return MprisController._isYtMusicMpv(player)
-    }
-
-    // Effective properties (YtMusic or regular player)
-    readonly property string effectiveTitle: isYtMusicPlayer
-        ? YtMusic.currentTitle
-        : (player?.trackTitle ?? "")
-    readonly property string effectiveArtist: isYtMusicPlayer
-        ? YtMusic.currentArtist
-        : (player?.trackArtist ?? "")
-    readonly property string effectiveArtUrl: isYtMusicPlayer
-        ? YtMusic.currentThumbnail
-        : MprisController.effectiveArtUrl(player)
+    // Effective properties
+    readonly property string effectiveTitle: player?.trackTitle ?? ""
+    readonly property string effectiveArtist: player?.trackArtist ?? ""
+    readonly property string effectiveArtUrl: MprisController.effectiveArtUrl(player)
     // Artwork motion is keyed only by real art identity. Metadata-only updates
     // must not move the cover, or one track change animates twice.
     readonly property string mediaTransitionKey: (root.effectiveArtUrl ?? "").split("?")[0].split("#")[0]
     readonly property bool isMpdPlayer: player !== null && player === MprisController.mpdPlayer
-    readonly property real _rawEffectiveLength: isYtMusicPlayer
-        ? YtMusic.currentDuration
-        : (((player?.lengthSupported ?? false) && (player?.length ?? 0) > 0)
-            ? (player?.length ?? 0)
-            : (isMpdPlayer
-                ? LocalMusic.currentDuration
-                : MprisController.effectiveLengthForPlayer(root.player)))
+    readonly property real _rawEffectiveLength: ((player?.lengthSupported ?? false) && (player?.length ?? 0) > 0)
+        ? (player?.length ?? 0)
+        : (isMpdPlayer
+            ? LocalMusic.currentDuration
+            : MprisController.effectiveLengthForPlayer(root.player))
     readonly property real effectiveLength: StringUtils.validMediaDuration(root._rawEffectiveLength)
-    readonly property real _rawEffectivePosition: isYtMusicPlayer
-        ? YtMusic.currentPosition
-        : ((isMpdPlayer && (player?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
-            ? LocalMusic.lyricsPosition
-            : (player?.position ?? 0))
+    readonly property real _rawEffectivePosition: (isMpdPlayer && (player?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
+        ? LocalMusic.lyricsPosition
+        : (player?.position ?? 0)
     readonly property real effectivePosition: StringUtils.boundedMediaPosition(
         root._rawEffectivePosition, root.effectiveLength)
-    readonly property bool effectiveIsPlaying: isYtMusicPlayer
-        ? YtMusic.isPlaying
-        : (player?.isPlaying ?? false)
-    readonly property bool effectiveCanSeek: isYtMusicPlayer
-        ? YtMusic.canSeek
-        : (player?.canSeek ?? false)
-    readonly property bool effectiveCanGoPrevious: isYtMusicPlayer
-        ? YtMusic.canGoPrevious
-        : MprisController.canGoPreviousForPlayer(root.player)
-    readonly property bool effectiveCanGoNext: isYtMusicPlayer
-        ? YtMusic.canGoNext
-        : MprisController.canGoNextForPlayer(root.player)
+    readonly property bool effectiveIsPlaying: player?.isPlaying ?? false
+    readonly property bool effectiveCanSeek: player?.canSeek ?? false
+    readonly property bool effectiveCanGoPrevious: MprisController.canGoPreviousForPlayer(root.player)
+    readonly property bool effectiveCanGoNext: MprisController.canGoNextForPlayer(root.player)
 
     // Art download management
     property string artDownloadLocation: Directories.coverArt
@@ -97,11 +72,7 @@ QtObject {
 
     // Player actions
     function togglePlaying(): void {
-        if (isYtMusicPlayer) {
-            YtMusic.togglePlaying()
-        } else {
-            player?.togglePlaying()
-        }
+        player?.togglePlaying()
     }
 
     function previous(): void {
@@ -115,9 +86,7 @@ QtObject {
     }
 
     function seek(seconds: real): void {
-        if (isYtMusicPlayer) {
-            YtMusic.seek(seconds)
-        } else if (isMpdPlayer) {
+        if (isMpdPlayer) {
             LocalMusic.seek(seconds)
         } else if (player) {
             player.position = seconds
@@ -150,8 +119,7 @@ QtObject {
         target: root.player
 
         function onTrackArtUrlChanged(): void {
-            if (!root.isYtMusicPlayer)
-                Qt.callLater(root.checkAndDownloadArt)
+            Qt.callLater(root.checkAndDownloadArt)
         }
 
         function onTrackTitleChanged(): void {
@@ -164,25 +132,6 @@ QtObject {
 
         function onTrackAlbumChanged(): void {
             Qt.callLater(root.checkAndDownloadArt)
-        }
-    }
-
-    property var ytMusicConnections: Connections {
-        target: YtMusic
-
-        function onCurrentThumbnailChanged(): void {
-            if (root.isYtMusicPlayer)
-                Qt.callLater(root.checkAndDownloadArt)
-        }
-
-        function onCurrentTitleChanged(): void {
-            if (root.isYtMusicPlayer)
-                Qt.callLater(root.checkAndDownloadArt)
-        }
-
-        function onCurrentArtistChanged(): void {
-            if (root.isYtMusicPlayer)
-                Qt.callLater(root.checkAndDownloadArt)
         }
     }
 

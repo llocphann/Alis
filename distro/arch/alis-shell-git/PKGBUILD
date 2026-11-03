@@ -73,8 +73,7 @@ optdepends=(
   'kvantum: Qt style engine'
   'libqalculate: calculator widget backend'
   'mission-center: graphical system monitor (default task manager)'
-  'mpv: media playback and YouTube Music support'
-  'mpv-mpris: richer mpv media session integration'
+  'mpv: media playback'
   'mpd: local Music library and queue backend'
   'mpd-mpris: MPD/rmpc/Alis Music controls through MPRIS'
   'nautilus: default file manager integration'
@@ -95,8 +94,6 @@ optdepends=(
   'wf-recorder: screen recording support'
   'wtype: Wayland text injection helper'
   'ydotool: virtual keyboard and clipboard paste helper'
-  'yt-dlp: YouTube media backend'
-  'python-ytmusicapi: YouTube Music browsing (InnerTube engine)'
   'millennium-bin: Steam theming via Millennium (requires steam)'
 )
 makedepends=(git cargo)

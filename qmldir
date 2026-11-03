@@ -1,3 +1,6 @@
 module qs
 singleton GlobalStates 1.0 GlobalStates.qml
 FamilyWorkAreaHold 1.0 FamilyWorkAreaHold.qml
+MediaArtworkResolver 1.0 modules/common/widgets/MediaArtworkResolver.qml
+singleton SettingsPageRegistryData 1.0 modules/settings/SettingsPageRegistryData.qml
+singleton SettingsPageRegistry 1.0 modules/settings/SettingsPageRegistry.qml

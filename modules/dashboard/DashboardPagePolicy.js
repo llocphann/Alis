@@ -13,7 +13,11 @@ function normalized(raw) {
 // Only substitute visible slots. Hidden and future pages retain their stored
 // positions and identity when a currently available page moves around them.
 function move(raw, available, id, target) {
-    var result=normalized(raw), visible=ordered(result,available), from=visible.indexOf(id);
+    var result=normalized(raw);
+    Array.from(available || []).forEach(function(page) {
+        if (typeof page==="string" && page.length && result.indexOf(page)<0) result.push(page);
+    });
+    var visible=ordered(result,available), from=visible.indexOf(id);
     if (from<0 || !Number.isFinite(target)) return result;
     target=Math.max(0,Math.min(visible.length-1,Math.round(target)));
     visible.splice(from,1);visible.splice(target,0,id);

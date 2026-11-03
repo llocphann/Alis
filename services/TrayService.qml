@@ -157,25 +157,69 @@ Singleton {
         return item && item.id;
     }
 
+    function _normalizeTrayMatchKey(value): string {
+        return String(value ?? "").toLowerCase().replace(/\.desktop$/i, "").replace(/[^a-z0-9]+/g, "")
+    }
+
+    function isAutostartTrayItem(item): bool {
+        if (!item)
+            return false
+        const itemKeys = [
+            _normalizeTrayMatchKey(item.id),
+            _normalizeTrayMatchKey(item.title)
+        ].filter(k => k.length >= 3)
+        if (itemKeys.length === 0)
+            return false
+
+        const managed = Autostart.entries ?? []
+        for (let i = 0; i < managed.length; i++) {
+            const e = managed[i]
+            if (!e || !e.enabled)
+                continue
+            const rawTarget = e.type === "app"
+                ? String(e.desktopId ?? "")
+                : String(e.command ?? "").trim().split(/\s+/)[0]
+            const targetKey = _normalizeTrayMatchKey(rawTarget.split("/").pop())
+            if (targetKey.length < 3)
+                continue
+            if (itemKeys.some(ik => ik === targetKey || ik.endsWith(targetKey) || targetKey.endsWith(ik)))
+                return true
+        }
+        return false
+    }
+
     property var _pinnedItems: {
-        const value = Config.options?.tray?.pinnedItems
+        const value = Config.options?.bar?.tray?.pinnedItems ?? Config.options?.tray?.pinnedItems
         return Array.isArray(value) ? value : []
     }
     property list<var> itemsInUserList: SystemTray.items.values.filter(i =>
         isValidItem(i) && _pinnedItems.includes(i.id))
     property list<var> itemsNotInUserList: SystemTray.items.values.filter(i =>
         isValidItem(i) && !_pinnedItems.includes(i.id)
-        && (!smartTray || i.status !== Status.Passive))
+        && (!smartTray || i.status !== Status.Passive || isAutostartTrayItem(i)))
 
-    property bool invertPins: Config.options?.tray?.invertPinnedItems ?? true
+    property bool invertPins: Config.options?.bar?.tray?.invertPinnedItems ?? Config.options?.tray?.invertPinnedItems ?? true
     property list<var> pinnedItems: invertPins ? itemsNotInUserList : itemsInUserList
     property list<var> unpinnedItems: invertPins ? itemsInUserList : itemsNotInUserList
 
     function getSafeIcon(item): string {
         if (!item) return "";
         const app = getProblematicAppInfo(item);
-        if (app && app.fixedIcon) return app.fixedIcon;
-        return item.icon ?? "";
+        if (app && app.fixedIcon) return Quickshell.iconPath(app.fixedIcon, "application-x-executable");
+        const rawIcon = String(item.icon ?? "");
+        if (rawIcon.length > 0) {
+            if (rawIcon.startsWith("image://") || rawIcon.startsWith("file://") || rawIcon.startsWith("qrc:"))
+                return rawIcon;
+            if (rawIcon.startsWith("/"))
+                return "file://" + rawIcon;
+            const themed = Quickshell.iconPath(rawIcon, true);
+            if (themed.length > 0)
+                return themed;
+        }
+        const fallbackKey = String(item.id || item.title || item.tooltipTitle || "");
+        if (fallbackKey.length > 0)
+            return AppSearch.getIconSource(fallbackKey, "application-x-executable");
+        return Quickshell.iconPath("application-x-executable", true);
     }
 
     function getTooltipForItem(item) {

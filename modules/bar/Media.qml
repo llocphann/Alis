@@ -16,9 +16,12 @@ Item {
     id: root
 
     property bool borderless: Config.options?.bar?.borderless ?? false
+    property real contentRotation: 0
+    readonly property bool verticalContent: Math.abs(root.contentRotation) === 90
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
     readonly property string cleanedTitle: StringUtils.cleanMusicTitle(activePlayer?.trackTitle) || Translation.tr("No media")
     readonly property string fullTrackText: `${cleanedTitle}${activePlayer?.trackArtist ? ' • ' + activePlayer.trackArtist : ''}`
+    readonly property string verticalTrackText: Array.from(cleanedTitle).join("\n")
     property bool edgeHostedExpansion: false
     readonly property string popupMode: edgeHostedExpansion ? "bar" : Config.options?.media?.popupMode ?? "dock"
     readonly property bool showVerboseLabel: Config.options?.bar?.verbose ?? true
@@ -134,6 +137,7 @@ Item {
         id: rowLayout
 
         spacing: root.mediaTextGap
+        layoutDirection: root.contentRotation < 0 ? Qt.RightToLeft : Qt.LeftToRight
         anchors.fill: parent
         anchors.leftMargin: root.mediaInset
         anchors.rightMargin: root.mediaInset
@@ -165,6 +169,7 @@ Item {
                         fill: 1
                         text: activePlayer?.isPlaying ? "pause" : "music_note"
                         iconSize: Math.round(Appearance.font.pixelSize.normal * Appearance.sizes.barModuleScale)
+                        rotation: -root.contentRotation
                         color: Appearance.colors.colOnLayer0
                         Behavior on color {
                             enabled: Appearance.animationsEnabled
@@ -181,12 +186,12 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             Layout.fillWidth: true
             Layout.minimumWidth: 0
-            implicitWidth: titleText.implicitWidth
+            implicitWidth: root.verticalContent ? verticalTitleText.implicitHeight : titleText.implicitWidth
             implicitHeight: titleText.implicitHeight
             clip: true
 
             readonly property string fullText: root.fullTrackText
-            readonly property bool overflowing: titleText.implicitWidth > width + 1
+            readonly property bool overflowing: !root.verticalContent && (titleText.implicitWidth > width + 1)
             // Short labels sit centered in the reserved Media label area. Long
             // labels still start at the leading edge so the marquee keeps the
             // same readable entry point and scrolling distance.
@@ -200,6 +205,8 @@ Item {
 
             Row {
                 id: marqueeRow
+                visible: !root.verticalContent
+                rotation: root.verticalContent ? 0 : -root.contentRotation
                 height: parent.height
                 spacing: titleScroller.gap
                 x: titleScroller.restingX
@@ -238,6 +245,22 @@ Item {
                     font: titleText.font
                     text: titleScroller.fullText
                 }
+            }
+
+            StyledText {
+                id: verticalTitleText
+                visible: root.verticalContent
+                anchors.centerIn: parent
+                width: titleScroller.height
+                height: titleScroller.width
+                rotation: -root.contentRotation
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                font.pixelSize: Math.max(10, Math.round(Appearance.font.pixelSize.smaller * Appearance.sizes.barModuleScale))
+                lineHeight: 0.82
+                elide: Text.ElideRight
+                color: Appearance.colors.colOnLayer1
+                text: root.verticalTrackText
             }
 
             // Pausable marquee: hold at start, then glide left continuously.

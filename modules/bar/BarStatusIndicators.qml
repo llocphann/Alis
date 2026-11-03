@@ -7,6 +7,7 @@ import qs.modules.common.widgets
 Item {
     id: root
     property bool vertical: false
+    property real contentRotation: 0
     property color contentColor: Appearance.colors.colOnLayer0
     property string pendingConnectivityKind: ""
     signal hoverPopupRequested(string kind)
@@ -51,6 +52,7 @@ Item {
             MaterialSymbol {
                 text: "volume_off"
                 iconSize: Math.round(Appearance.font.pixelSize.larger * Appearance.sizes.barModuleScale)
+                rotation: -root.contentRotation
                 color: root.contentColor
             }
         }
@@ -60,11 +62,13 @@ Item {
             MaterialSymbol {
                 text: "mic_off"
                 iconSize: Math.round(Appearance.font.pixelSize.larger * Appearance.sizes.barModuleScale)
+                rotation: -root.contentRotation
                 color: root.contentColor
             }
         }
         HyprlandXkbIndicator {
             vertical: root.vertical
+            rotation: -root.contentRotation
             Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
             color: root.contentColor
         }
@@ -72,12 +76,14 @@ Item {
             vertical: root.vertical
             reveal: Notifications.silent || Notifications.unread > 0
             NotificationUnreadCount {
+                rotation: -root.contentRotation
                 indicatorColor: root.contentColor
             }
         }
         MaterialSymbol {
             text: Network.materialSymbol
             iconSize: Math.round(Appearance.font.pixelSize.larger * Appearance.sizes.barModuleScale)
+            rotation: -root.contentRotation
             color: root.contentColor
 
             HoverHandler {
@@ -107,6 +113,7 @@ Item {
             visible: BluetoothStatus.available
             text: BluetoothStatus.activeIcon
             iconSize: Math.round(Appearance.font.pixelSize.larger * Appearance.sizes.barModuleScale)
+            rotation: -root.contentRotation
             color: root.contentColor
 
             HoverHandler {

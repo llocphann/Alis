@@ -275,7 +275,7 @@ ColumnLayout {
         objectName: "abyssIpcPlacementHelpNote"
         // Embedded IPC editor intentionally has no explanatory paragraph.
         // Full settings pages retain their help text.
-        visible: !root.compactIpcEditor
+        visible: !root.compactIpcEditor && !root.compactActions
         text: root.compactVertical
             ? "Override Edge and position for this output."
             : root.ipcOnly

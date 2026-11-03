@@ -14,7 +14,7 @@ Item {
     id: root
     objectName: "dashboardMusic"
     // A visual-only preference: leave Flickable/wheel/key navigation alive.
-    readonly property bool showMusicScrollbars: Config.options?.dashboard?.music?.showScrollbars ?? true
+    readonly property bool showMusicScrollbars: Config.options?.dashboard?.music?.showScrollbars ?? false
     required property var backend
     property bool presentationActive: visible
     // Queue is a compact preview until hovered; expand it upwards by shrinking

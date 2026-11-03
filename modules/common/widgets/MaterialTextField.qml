@@ -1,22 +1,23 @@
 import qs.modules.common
 import qs.modules.common.widgets
 import QtQuick
-import QtQuick.Controls.Material
+import QtQuick.Templates as T
 import QtQuick.Controls
 
 /**
  * Material 3 styled TextField (filled style)
  * https://m3.material.io/components/text-fields/overview
  */
-TextField {
+T.TextField {
     id: root
-    Material.theme: Material.System
-    Material.accent: Appearance.colors.colPrimary
-    Material.primary: Appearance.colors.colPrimary
-    Material.background: Appearance.colors.colLayer1
-    Material.foreground: Appearance.colors.colOnSurface
-    Material.containerStyle: Material.Outlined
+    color: Appearance.colors.colOnSurface
     renderType: Text.NativeRendering
+    leftPadding: 12
+    rightPadding: 12
+    topPadding: 8
+    bottomPadding: 8
+    implicitHeight: Math.max(40, contentHeight + topPadding + bottomPadding)
+    verticalAlignment: TextInput.AlignVCenter
 
     // Settings search integration
     property bool enableSettingsSearch: true
@@ -87,11 +88,24 @@ TextField {
 
     selectedTextColor: Appearance.colors.colOnSecondaryContainer
     selectionColor: Appearance.colors.colSecondaryContainer
-    placeholderTextColor: Appearance.colors.colOnLayer1
+    placeholderTextColor: Appearance.colors.colSubtext
     clip: true
 
+    Text {
+        anchors.fill: parent
+        anchors.leftMargin: root.leftPadding
+        anchors.rightMargin: root.rightPadding
+        verticalAlignment: Text.AlignVCenter
+        visible: !root.length && !root.preeditText
+        text: root.placeholderText
+        font: root.font
+        color: root.placeholderTextColor
+        opacity: 0.65
+        elide: Text.ElideRight
+    }
+
     background: Item {
-        implicitHeight: 56
+        implicitHeight: 40
 
         Rectangle {
             anchors.fill: parent

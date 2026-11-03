@@ -22,12 +22,14 @@ alis/
 │   │   └── widgets/              # Reusable widgets + qmldir
 │   ├── bar/                      # Classic Bar runtime
 │   ├── background/               # Wallpaper + desktop widgets/items
-│   ├── sidebarLeft/              # AI chat, music, widgets
-│   ├── sidebarRight/             # Toggles, calendar, tools
+│   ├── dashboard/                # Dashboard, Music, Weekly Planner, Custom Tabs & optional Spaced Repetition
+│   ├── regionSelector/           # Region selection (Screenshot, Recording, OCR)
+│   ├── sidebarLeft/              # Intelligence (AI/Companion), Translator, Tools, News
+│   ├── sidebarRight/             # Toggles, calendar, notifications
 │   ├── settings/                 # Config UI pages
 │   ├── dock/                     # App dock
 │   ├── overview/                 # Workspace overview + app search/task view
-│   ├── wallpaperLauncher/        # Compact wallpaper carousel
+│   ├── wallpaperSelector/        # Wallpaper selector (grid & coverflow with Vim h/j/k/l navigation)
 │   ├── abyss/                    # Single perimeter field + embedded native content
 │   │   ├── looks/                # Style, deterministic geometry and shader
 │   │   ├── bar/                  # Five-zone horizontal/vertical modules
@@ -39,17 +41,15 @@ alis/
 │   │   ├── actionCenter/         # Quick settings
 │   │   ├── notificationCenter/   # Notification list + calendar
 │   │   └── looks/Looks.qml       # Waffle visual tokens
-│   ├── ii/                       # ii-family overlay/sidebar components
 │   └── ...
-├── services/                     # Runtime singletons (+ deferred services)
-├── scripts/                      # Shell/fish/python helpers
+├── native/                       # Production Rust backend workspace (alis-native, alis-inputd, alis-mpdd, alis-theme)
+├── services/                     # Runtime singletons (+ AlisCompanion, AlisIntergration, SpacedRepetition, deferred)
+├── scripts/                      # Shell/fish/python helpers and regression validators
 ├── sdata/                        # Install/update lifecycle and migrations
-├── defaults/                     # Shipped default configuration/templates
+├── defaults/                     # Shipped default configuration/templates + Widget SDK
 ├── translations/                 # Canonical en_US UI catalog + validators
 ├── distro/                       # Packaging/distribution data
-├── assets/                       # Icons, wallpapers, systemd unit, desktop entry
-├── docs/                         # Documentation and historical research
-└── to-do/                        # Active Cloud Bot tasks
+└── assets/                       # Icons, wallpapers, systemd unit, desktop entry
 ```
 
 The live tree intentionally has no Orbit, Mascot, Workspace Strip, `barM3`, Pill-Bar, Islands-Bar, Scenic-Bar, or Frame-Bar module directory. Those systems are retired, not optional renderers.
@@ -70,27 +70,29 @@ The live tree intentionally has no Orbit, Mascot, Workspace Strip, `barM3`, Pill
 
 **modules/abyss/:** independent perimeter-centric liquid family. `AbyssPerimeter.qml` owns one painter per output; `AbyssBodyHost.qml` owns lazy content and bounded input without painting; `looks/AbyssGeometry.js` and `looks/AbyssField.frag(.qsb)` own topology; `looks/AbyssStyle.qml` centralizes palette, motion and effects. Critical/specialist fallbacks share implementations rather than backend copies.
 
-**modules/ii/:** ii-family-specific overlay/sidebar components.
+**modules/dashboard/:** unified Dashboard surface hosting the main `Dashboard` widget grid, `Music`, `Weekly Planner`, user-managed `Custom Tabs` (`Create`, `Rename`, `Delete` via `DashboardEditToolbar.qml`), and the optional `Spaced Repetition` tab loaded from `Alis-Intergration`.
+
+**modules/sidebarLeft/:** Left Sidebar hosting `Intelligence` (AI / `Alis-Companion` unified chat view), `Translator`, `Tools`, and `News` on the shared `edgeSurfaceColor` Abyss surface palette.
+
+**modules/regionSelector/:** `Super+Shift+S` region selection overlay (`Screenshot` + `Rect` default active tab, `Recording`, `OCR`) with compositor-isolated post-capture notification.
 
 **modules/background/:** per-output desktop surface, wallpaper renderer, desktop items, and desktop widgets.
 
 **modules/overview/:** normal workspace overview/app search/task-view implementation. Orbit is not part of the live overview path.
 
-**services/:** runtime singletons for audio, network, compositor IPC, theming, navigation, wallpaper, desktop layout, lyrics, and related backend behavior.
+**native/:** Rust workspace (`alis-native`, `alis-inputd`, `alis-mpdd`, `alis-theme`) serving as the default production backend.
 
-**scripts/:** CLI, theming, maintenance, and helper scripts.
+**services/:** runtime singletons for audio, network, compositor IPC, theming, navigation, wallpaper, desktop layout, lyrics, optional `AlisCompanion` / `AlisIntergration` package discovery, and related backend behavior.
+
+**scripts/:** CLI, theming, maintenance, helper scripts, and regression validators.
 
 **sdata/:** install/update lifecycle and append-only migration history.
 
-**defaults/:** curated shipped defaults and platform/application templates.
+**defaults/:** curated shipped defaults, platform/application templates, and `defaults/widgets/WIDGET-SDK.md`.
 
 **translations/:** the canonical English shell UI catalog `en_US.json` plus English-only validation tooling. The runtime does not ship or generate alternate shell UI locale catalogs.
 
 **assets/:** static icons, images, wallpapers, systemd units, desktop entries, and related packaged data.
-
-**docs/:** user/developer Markdown documentation and archived research/history.
-
-**to-do/:** one active chatbot-work index under `cloud-bot/`; ChatGPT is the sole reasoning agent.
 
 ## Key File Locations
 
@@ -198,4 +200,4 @@ Connected popup presentation is already active through `StyledPopup.qml` for exi
 
 ## Connected Perimeter Status
 
-The live shell supports ii and Waffle as separate panel families. Existing bar popups already use the shared connected geometry/render/input primitives through `StyledPopup.qml`, including top/bottom/left/right attachment and edge-origin reveal. The full configurable `iiPerimeter` composition runtime also exists under `modules/common/perimeter/` and `modules/perimeter/`, but its broad ownership cutover remains guarded until it can replace the legacy composition without dropping functionality.
+The live shell supports `abyss`, `ii`, and `waffle` as panel families (`abyss` and `waffle` are the public families; `ii` migrates to `abyss` while retaining shared Material visual tokens). Existing bar popups use the shared connected geometry/render/input primitives through `StyledPopup.qml` and `ConnectedSurfaceAbyssFrame.qml`, while Sidebar, Dashboard, and Settings use `ConnectedSurfaceAbyssEdgeSurface.qml`.

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Quickshell
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -8,21 +9,32 @@ import qs.modules.common.widgets
 ContentPage {
     id: root
     settingsPageIndex: 25
-    settingsPageName: Translation.tr("Effects")
+    settingsPageName: Translation.tr("Effects & Visuals")
     property string activeSection: "glass"
+    readonly property bool isIiActive: Config.options?.panelFamily !== "waffle"
 
+    function activateSettingsSearchSection(section: string): bool {
+        const label = String(section ?? "").toLowerCase()
+        if (label.includes("color") || label.includes("cava") || label.includes("spectrum") || label.includes("app"))
+            root.activeSection = "color"
+        else
+            root.activeSection = "glass"
+        return true
+    }
+
+    // Help contract marker: Translation.tr("Set rendering policy, then adjust specific effects.")
     SettingsTaskNavigator {
         showTabBar: false
+        showIntro: false
         icon: "blur_on"
-        title: Translation.tr("Effects")
-        description: Translation.tr("Set rendering policy, then adjust specific effects.")
-        summary: Translation.tr("Glass · per-area policy · motion")
-        currentValue: root.activeSection
+        title: Translation.tr("Effects & Visuals")
+        description: Translation.tr("Blur backend, per-area glass policy, backdrop, app color generation and Cava spectrum.")
+        summary: Translation.tr("Blur & Glass · Backdrop · App Color Generation & Cava")
+        currentValue: (root.activeSection === "areas" || root.activeSection === "motion") ? "glass" : root.activeSection
         onSelected: value => root.activeSection = value
         options: [
-            { displayName: Translation.tr("Glass"), icon: "blur_on", value: "glass" },
-            { displayName: Translation.tr("Areas"), icon: "tune", value: "areas" },
-            { displayName: Translation.tr("Motion"), icon: "animation", value: "motion" }
+            { displayName: Translation.tr("Blur, Glass & Areas"), icon: "blur_on", value: "glass" },
+            { displayName: Translation.tr("App Color Generation & Cava"), icon: "colors", value: "color" }
         ]
     }
 
@@ -44,55 +56,47 @@ ContentPage {
         objectName: "effectsTwoColumnGrid"
         Layout.fillWidth: true
         columns: width >= 620 ? 2 : 1
+        uniformCellWidths: columns === 2
         columnSpacing: 14
         rowSpacing: 14
 
-        ColumnLayout {
+        SettingsCardSection {
+            _preventBentoReparent: true
+            Layout.preferredWidth: 1
             Layout.fillWidth: true
+            Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
-            spacing: 14
+            visible: true
+            expanded: true
+            icon: "blur_on"
+            title: Translation.tr("Blur, Glass & Power")
 
-            SettingsCardSection {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                settingsTaskSection: "glass"
-                visible: true
-                expanded: true
-                icon: "blur_on"
-                title: Translation.tr("Blur and glass")
-                SettingsGroup {
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Appearance.sizes.spacingMedium
-                        MaterialSymbol { text: "auto_awesome"; iconSize: Appearance.font.pixelSize.larger }
-                        StyledText { Layout.fillWidth: true; text: Translation.tr("Default blur backend") }
-                        StyledComboBox {
-                            Layout.preferredWidth: 210
-                            model: root.backendOptions
-                            textRole: "displayName"
-                            currentIndex: Math.max(0, root.backendOptions.findIndex(o => o.value === (Config.options?.performance?.blurBackend ?? "auto")))
-                            onActivated: index => Config.setNestedValue("performance.blurBackend", root.backendOptions[index].value)
-                        }
-                    }
-                    SettingsSwitch {
-                        visible: Appearance.nativeBlurSupported
-                        buttonIcon: "blur_on"
-                        text: Translation.tr("Allow compositor blur")
-                        checked: Config.options?.performance?.compositorBlur ?? true
-                        onCheckedChanged: Config.setNestedValue("performance.compositorBlur", checked)
+            SettingsGroup {
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Appearance.sizes.spacingMedium
+                    MaterialSymbol { text: "auto_awesome"; iconSize: Appearance.font.pixelSize.larger }
+                    StyledText { Layout.fillWidth: true; text: Translation.tr("Default blur backend") }
+                    StyledComboBox {
+                        Layout.preferredWidth: 200
+                        model: root.backendOptions
+                        textRole: "displayName"
+                        currentIndex: Math.max(0, root.backendOptions.findIndex(o => o.value === (Config.options?.performance?.blurBackend ?? "auto")))
+                        onActivated: index => Config.setNestedValue("performance.blurBackend", root.backendOptions[index].value)
                     }
                 }
-            }
+                SettingsSwitch {
+                    visible: Appearance.nativeBlurSupported
+                    buttonIcon: "blur_on"
+                    text: Translation.tr("Allow compositor blur")
+                    checked: Config.options?.performance?.compositorBlur ?? true
+                    onCheckedChanged: Config.setNestedValue("performance.compositorBlur", checked)
+                }
 
-            SettingsCardSection {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                settingsTaskSection: "motion"
-                visible: true
-                expanded: true
-                icon: "animation"
-                title: Translation.tr("Motion and power")
-                SettingsGroup {
+                SettingsDivider {}
+
+                ConfigRow {
+                    uniform: true
                     SettingsSwitch {
                         buttonIcon: "animation"
                         text: Translation.tr("Reduce animations")
@@ -105,182 +109,211 @@ ContentPage {
                         checked: Config.options?.performance?.lowPower ?? false
                         onCheckedChanged: Config.setNestedValue("performance.lowPower", checked)
                     }
-                    SettingsSwitch {
-                        buttonIcon: "memory"
-                        text: Translation.tr("Notify when a restart would free memory")
-                        checked: Config.options?.performance?.memoryWarningNotification ?? false
-                        onCheckedChanged: Config.setNestedValue("performance.memoryWarningNotification", checked)
-                    }
                 }
             }
         }
 
-        ColumnLayout {
+        SettingsCardSection {
+            _preventBentoReparent: true
+            Layout.preferredWidth: 1
             Layout.fillWidth: true
+            Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
-            spacing: 14
+            visible: true
+            expanded: true
+            icon: "tune"
+            title: Translation.tr("Per-area Overrides")
 
-            SettingsCardSection {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                settingsTaskSection: "areas"
-                visible: true
-                expanded: true
-                icon: "tune"
-                title: Translation.tr("Per-area overrides")
-                SettingsGroup {
+            SettingsGroup {
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: 2
+                    uniformCellWidths: true
+                    columnSpacing: 12
+                    rowSpacing: 8
+
                     Repeater {
                         model: root.areaDescriptors
                         delegate: RowLayout {
                             required property var modelData
+                            required property int index
                             Layout.fillWidth: true
-                            spacing: Appearance.sizes.spacingMedium
-                            MaterialSymbol { text: modelData.icon; iconSize: Appearance.font.pixelSize.larger }
-                            StyledText { Layout.fillWidth: true; text: modelData.label }
+                            Layout.columnSpan: index === 4 ? 2 : 1
+                            spacing: Appearance.sizes.spacingSmall
+                            MaterialSymbol { text: modelData.icon; iconSize: Appearance.font.pixelSize.normal }
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: modelData.label
+                                elide: Text.ElideRight
+                            }
                             StyledComboBox {
-                                Layout.preferredWidth: 210
+                                Layout.preferredWidth: index === 4 ? 200 : 136
                                 readonly property var options: [{ displayName: Translation.tr("Inherit"), value: "inherit" }].concat(root.backendOptions)
                                 model: options
                                 textRole: "displayName"
                                 currentIndex: Math.max(0, options.findIndex(o => o.value === (Config.options?.performance?.blurAreas?.[modelData.key] ?? "inherit")))
-                                onActivated: index => Config.setNestedValue("performance.blurAreas." + modelData.key, options[index].value)
+                                onActivated: idx => Config.setNestedValue("performance.blurAreas." + modelData.key, options[idx].value)
                             }
-                        }
-                    }
-                }
-            }
-
-            SettingsCardSection {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                settingsTaskSection: "areas"
-                visible: true
-                expanded: true
-                icon: "filter_b_and_w"
-                title: Translation.tr("Visual Effects")
-
-                SettingsGroup {
-                    SettingsSwitch {
-                        buttonIcon: "filter_b_and_w"
-                        text: Translation.tr("Desaturation effect")
-                        checked: Boolean(Config.options?.appearance?.desaturation?.enable)
-                        onCheckedChanged: Config.setNestedValue("appearance.desaturation.enable", checked)
-                        StyledToolTip {
-                            text: Translation.tr("Apply a grayscale/dimmed effect to shell components")
-                        }
-                    }
-
-                    SettingsDivider {}
-
-                    ConfigRow {
-                        enabled: Boolean(Config.options?.appearance?.desaturation?.enable)
-                        uniform: true
-                        ConfigSpinBox {
-                            icon: "invert_colors"
-                            text: Translation.tr("Saturation %")
-                            value: Math.round((Config.options?.appearance?.desaturation?.saturation ?? -0.7) * -100)
-                            from: 0
-                            to: 100
-                            stepSize: 10
-                            onValueChanged: Config.setNestedValue("appearance.desaturation.saturation", -value / 100)
-                            StyledToolTip {
-                                text: Translation.tr("Amount of color to remove (0 = normal, 100 = grayscale)")
-                            }
-                        }
-                        ConfigSpinBox {
-                            icon: "brightness_6"
-                            text: Translation.tr("Dim %")
-                            value: Math.round((Config.options?.appearance?.desaturation?.brightness ?? -0.15) * -100)
-                            from: 0
-                            to: 50
-                            stepSize: 5
-                            onValueChanged: Config.setNestedValue("appearance.desaturation.brightness", -value / 100)
-                            StyledToolTip {
-                                text: Translation.tr("Amount of brightness reduction (0 = normal)")
-                            }
-                        }
-                    }
-
-                    SettingsDivider {}
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 8
-                        Layout.rightMargin: 8
-                        spacing: 8
-
-                        StyledText {
-                            text: Translation.tr("Apply to")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Boolean(Config.options?.appearance?.desaturation?.enable)
-                                ? Appearance.colors.colOnSurface
-                                : Appearance.colors.colSubtext
-                        }
-
-                        ButtonGroup {
-                            enabled: Boolean(Config.options?.appearance?.desaturation?.enable)
-                            uniformCellSizes: true
-                            spacing: 0
-
-                            SelectionGroupButton {
-                                leftmost: true
-                                buttonText: Translation.tr("All")
-                                toggled: (Config.options?.appearance?.desaturation?.scope ?? "all") === "all"
-                                onClicked: Config.setNestedValue("appearance.desaturation.scope", "all")
-                            }
-                            SelectionGroupButton {
-                                buttonText: Translation.tr("Panels only")
-                                toggled: (Config.options?.appearance?.desaturation?.scope ?? "all") === "panels"
-                                onClicked: Config.setNestedValue("appearance.desaturation.scope", "panels")
-                            }
-                            SelectionGroupButton {
-                                rightmost: true
-                                buttonText: Translation.tr("Custom")
-                                toggled: (Config.options?.appearance?.desaturation?.scope ?? "all") === "custom"
-                                onClicked: Config.setNestedValue("appearance.desaturation.scope", "custom")
-                            }
-                        }
-                    }
-
-                    ColumnLayout {
-                        visible: (Config.options?.appearance?.desaturation?.scope ?? "all") === "custom"
-                        enabled: Boolean(Config.options?.appearance?.desaturation?.enable)
-                        Layout.fillWidth: true
-                        spacing: 0
-
-                        SettingsSwitch {
-                            buttonIcon: "toolbar"
-                            text: Translation.tr("Bar")
-                            checked: Config.options?.appearance?.desaturation?.bar ?? true
-                            onCheckedChanged: Config.setNestedValue("appearance.desaturation.bar", checked)
-                        }
-                        SettingsSwitch {
-                            buttonIcon: "dock_to_bottom"
-                            text: Translation.tr("Dock")
-                            checked: Config.options?.appearance?.desaturation?.dock ?? true
-                            onCheckedChanged: Config.setNestedValue("appearance.desaturation.dock", checked)
-                        }
-                        SettingsSwitch {
-                            buttonIcon: "view_sidebar"
-                            text: Translation.tr("Sidebars")
-                            checked: Config.options?.appearance?.desaturation?.sidebars ?? true
-                            onCheckedChanged: Config.setNestedValue("appearance.desaturation.sidebars", checked)
-                        }
-                        SettingsSwitch {
-                            buttonIcon: "layers"
-                            text: Translation.tr("Overlays")
-                            checked: Config.options?.appearance?.desaturation?.overlays ?? true
-                            onCheckedChanged: Config.setNestedValue("appearance.desaturation.overlays", checked)
-                        }
-                        SettingsSwitch {
-                            buttonIcon: "picture_in_picture"
-                            text: Translation.tr("Popups")
-                            checked: Config.options?.appearance?.desaturation?.popups ?? true
-                            onCheckedChanged: Config.setNestedValue("appearance.desaturation.popups", checked)
                         }
                     }
                 }
             }
         }
+
+        SettingsCardSection {
+            _preventBentoReparent: true
+            Layout.preferredWidth: 1
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignTop
+            visible: root.isIiActive
+            expanded: true
+            icon: "wallpaper"
+            title: Translation.tr("Wallpaper Blur & Dim")
+
+            SettingsGroup {
+                SettingsSwitch {
+                    buttonIcon: "blur_on"
+                    text: Translation.tr("Enable wallpaper blur when windows are present")
+                    checked: Config.options?.background?.effects?.enableBlur ?? false
+                    onCheckedChanged: Config.setNestedValue("background.effects.enableBlur", checked)
+                }
+
+                ConfigSpinBox {
+                    visible: Config.options?.background?.effects?.enableBlur ?? false
+                    icon: "blur_medium"
+                    text: Translation.tr("Blur radius")
+                    value: Config.options?.background?.effects?.blurRadius ?? 32
+                    from: 0
+                    to: 100
+                    stepSize: 2
+                    onValueChanged: Config.setNestedValue("background.effects.blurRadius", value)
+                }
+
+                SettingsDivider {}
+
+                ConfigRow {
+                    uniform: true
+
+                    ConfigSpinBox {
+                        icon: "brightness_6"
+                        text: Translation.tr("Dim overlay (%)")
+                        value: Config.options?.background?.effects?.dim ?? 0
+                        from: 0
+                        to: 100
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("background.effects.dim", value)
+                    }
+
+                    ConfigSpinBox {
+                        icon: "brightness_low"
+                        text: Translation.tr("Extra dim when windows (%)")
+                        value: Config.options?.background?.effects?.dynamicDim ?? 0
+                        from: 0
+                        to: 100
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("background.effects.dynamicDim", value)
+                    }
+                }
+            }
+        }
+
+        SettingsCardSection {
+            _preventBentoReparent: true
+            Layout.preferredWidth: 1
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignTop
+            visible: root.isIiActive
+            expanded: true
+            icon: "texture"
+            title: Translation.tr("Overview Backdrop")
+
+            SettingsGroup {
+                SettingsSwitch {
+                    buttonIcon: "texture"
+                    text: Translation.tr("Enable backdrop layer for overview")
+                    checked: Config.options?.background?.backdrop?.enable ?? true
+                    onCheckedChanged: Config.setNestedValue("background.backdrop.enable", checked)
+                }
+
+                ConfigRow {
+                    uniform: true
+                    visible: Config.options?.background?.backdrop?.enable ?? true
+
+                    SettingsSwitch {
+                        buttonIcon: "palette"
+                        text: Translation.tr("Derive theme colors from backdrop")
+                        checked: Config.options?.appearance?.wallpaperTheming?.useBackdropForColors ?? false
+                        onCheckedChanged: {
+                            Config.setNestedValue("appearance.wallpaperTheming.useBackdropForColors", checked)
+                            if (!(Config.options?.background?.backdrop?.useMainWallpaper ?? true)) {
+                                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
+                            }
+                        }
+                    }
+
+                    SettingsSwitch {
+                        visible: !(Config.options?.background?.backdrop?.hideWallpaper ?? false)
+                        buttonIcon: "image"
+                        text: Translation.tr("Use main wallpaper")
+                        checked: Config.options?.background?.backdrop?.useMainWallpaper ?? true
+                        onCheckedChanged: {
+                            Config.setNestedValue("background.backdrop.useMainWallpaper", checked)
+                            if (checked) {
+                                Config.setNestedValue("background.backdrop.wallpaperPath", "")
+                            }
+                        }
+                    }
+                }
+
+                RippleButtonWithIcon {
+                    visible: !(Config.options?.background?.backdrop?.useMainWallpaper ?? true)
+                    Layout.fillWidth: true
+                    buttonRadius: Appearance.rounding.small
+                    materialIcon: "wallpaper"
+                    mainText: Translation.tr("Pick backdrop wallpaper")
+                    onClicked: {
+                        Config.setNestedValue("wallpaperSelector.selectionTarget", "backdrop")
+                        Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"])
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+                    visible: Config.options?.background?.backdrop?.enable ?? true
+
+                    ConfigSpinBox {
+                        icon: "blur_on"
+                        text: Translation.tr("Blur radius")
+                        value: Config.options?.background?.backdrop?.blurRadius ?? 64
+                        from: 0
+                        to: 100
+                        stepSize: 2
+                        onValueChanged: Config.setNestedValue("background.backdrop.blurRadius", value)
+                    }
+
+                    ConfigSpinBox {
+                        icon: "brightness_5"
+                        text: Translation.tr("Dim (%)")
+                        value: Config.options?.background?.backdrop?.dim ?? 20
+                        from: 0
+                        to: 100
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("background.backdrop.dim", value)
+                    }
+                }
+            }
+        }
+    }
+
+    AdvancedConfig {
+        id: embeddedAdvancedSection
+        objectName: "effectsAdvancedSection"
+        visible: true
+        embedded: true
+        settingsPageIndex: root.settingsPageIndex
+        Layout.fillWidth: true
+        Layout.topMargin: 14
     }
 }

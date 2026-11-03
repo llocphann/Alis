@@ -37,25 +37,33 @@ RippleButton {
     buttonRadius: Appearance.rounding.small
     colBackground: Appearance.colors.colLayer2
 
-    contentItem: RowLayout {
-        spacing: 5
-        MaterialSymbol {
-            text: buttonWithIconRoot.nerdIcon || buttonWithIconRoot.materialIcon
-            iconSize: Appearance.font.pixelSize.larger
-            color: buttonWithIconRoot.contentColor
-            Behavior on color {
-                enabled: Appearance.animationsEnabled
-                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    contentItem: Item {
+        implicitWidth: contentRow.implicitWidth
+        implicitHeight: contentRow.implicitHeight
+        RowLayout {
+            id: contentRow
+            anchors.centerIn: parent
+            width: Math.min(parent.width, implicitWidth)
+            spacing: 5
+            MaterialSymbol {
+                Layout.alignment: Qt.AlignVCenter
+                text: buttonWithIconRoot.nerdIcon || buttonWithIconRoot.materialIcon
+                iconSize: Appearance.font.pixelSize.larger
+                color: buttonWithIconRoot.contentColor
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                fill: buttonWithIconRoot.materialIconFill ? 1 : 0
+                animateFill: true
+                forceNerd: buttonWithIconRoot.nerdIcon !== ""
             }
-            fill: buttonWithIconRoot.materialIconFill ? 1 : 0
-            animateFill: true
-            forceNerd: buttonWithIconRoot.nerdIcon !== ""
-        }
-        Loader {
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            sourceComponent: buttonWithIconRoot.mainContentComponent
-            Layout.alignment: Qt.AlignVCenter
+            Loader {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                sourceComponent: buttonWithIconRoot.mainContentComponent
+                Layout.alignment: Qt.AlignVCenter
+            }
         }
     }
 }

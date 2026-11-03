@@ -837,9 +837,8 @@ def _write_theme_file(
     }
     data = json.dumps(theme, indent=2, ensure_ascii=False) + "\n"
     tmp = theme_path.with_suffix(".tmp")
-    with open(tmp, "w") as f:
+    with open(theme_path, "w") as f:
         f.write(data)
-    tmp.rename(theme_path)
 
 
 def _load_settings(path: Path) -> dict:
@@ -1149,12 +1148,13 @@ def generate_all_vscode_themes(
         scss_path: Path to material_colors.scss
         forks: List of fork keys to generate for (None = all installed)
     """
+    explicit_forks = forks is not None
     if forks is None:
         # Auto-detect installed forks
         forks = [
             key
             for key, name in VSCODE_FORKS.items()
-            if get_settings_path(name).parent.exists()
+            if key in ("code", "codium") or get_settings_path(name).parent.exists()
         ]
 
     results = {}
@@ -1166,7 +1166,10 @@ def generate_all_vscode_themes(
 
         settings_path = get_settings_path(fork_name)
         if not settings_path.parent.exists():
-            continue
+            if explicit_forks or fork_key in ("code", "codium") or settings_path.parent.parent.exists():
+                settings_path.parent.mkdir(parents=True, exist_ok=True)
+            else:
+                continue
 
         success = generate_vscode_theme(
             colors_json_path, scss_path, str(settings_path), fork_key

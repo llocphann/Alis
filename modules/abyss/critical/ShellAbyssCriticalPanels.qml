@@ -48,7 +48,7 @@ Item {
     property bool coldPerimeterRecreated: false
     Timer {
         id: nativeColdPerimeterRecreate
-        interval: 600
+        interval: 50
         repeat: false
         running: CompositorService.isNiri
             && GlobalStates.abyssColdPerimeterRecreatePending
@@ -73,7 +73,7 @@ Item {
     property bool diagnosticPerimeterUnmounted: false
     Timer {
         id: perimeterProbeRestore
-        interval: 450
+        interval: 50
         repeat: false
         onTriggered: root.diagnosticPerimeterUnmounted = false
     }

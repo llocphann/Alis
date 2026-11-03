@@ -73,103 +73,107 @@ GroupButton {
     colBackgroundActive: root.abyssTaskNavigation ? SettingsMaterialPreset.taskTabPressedColor : root.useAbyssPillShape && Config.options?.panelFamily === "abyss"
         ? Qt.alpha(Appearance.colors.colPrimary,.26) : Appearance.colors.colSecondaryContainerActive
 
-    contentItem: RowLayout {
-        // Keep the icon fixed at the leading edge while the clipped text
-        // viewport slides open from left to right (and retracts from the right).
-        spacing: root.buttonIcon?.length > 0 && root.buttonText?.length > 0
-            && root.labelExpanded ? 4 : 0
+    contentItem: Item {
+        implicitWidth: innerRow.implicitWidth
+        implicitHeight: innerRow.implicitHeight
         clip: root.revealActiveLabelOnly
 
-        Behavior on spacing {
-            enabled: Appearance.animationsEnabled && root.enableImplicitWidthAnimation
-            NumberAnimation { duration: 160; easing.type: Easing.InOutCubic }
-        }
+        RowLayout {
+            id: innerRow
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: (root.leftAlignContent || root.revealActiveLabelOnly) ? parent.left : undefined
+            anchors.horizontalCenter: (!root.leftAlignContent && !root.revealActiveLabelOnly) ? parent.horizontalCenter : undefined
+            // Keep the icon fixed at the leading edge while the clipped text
+            // viewport slides open from left to right (and retracts from the right).
+            spacing: root.buttonIcon?.length > 0 && root.buttonText?.length > 0
+                && root.labelExpanded ? 6 : 0
 
-        Item {
-            id: iconReveal
-            Layout.alignment: Qt.AlignVCenter
-            implicitWidth: root.buttonIcon?.length > 0 ? materialSymbol.implicitWidth : 0
-            implicitHeight: materialSymbol.implicitHeight
-            opacity: root.buttonIcon?.length > 0 ? 1 : 0
-            visible: opacity > 0
-            clip: true
-
-            Behavior on implicitWidth {
+            Behavior on spacing {
                 enabled: Appearance.animationsEnabled && root.enableImplicitWidthAnimation
-                animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
-            }
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled && root.enableImplicitWidthAnimation
-                animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                NumberAnimation { duration: 160; easing.type: Easing.InOutCubic }
             }
 
-            MaterialSymbol {
-                id: materialSymbol
-                anchors.centerIn: parent
-                text: root.buttonIcon
-                iconSize: Appearance.font.pixelSize.normal
-                color: root.abyssTaskNavigation
-                    ? (root.toggled ? SettingsMaterialPreset.taskTabSelectedInk : SettingsMaterialPreset.taskTabInk)
-                    : root.toggled
-                    ? (root.highContrastSelection ? Appearance.colors.colOnPrimaryContainer
-                        : Appearance.colors.colOnPrimary)
-                    : Appearance.colors.colOnSecondaryContainer
-            }
-        }
+            Item {
+                id: iconReveal
+                Layout.alignment: Qt.AlignVCenter
+                implicitWidth: root.buttonIcon?.length > 0 ? materialSymbol.implicitWidth : 0
+                implicitHeight: materialSymbol.implicitHeight
+                opacity: root.buttonIcon?.length > 0 ? 1 : 0
+                visible: opacity > 0
+                clip: true
 
-        Item {
-            Layout.minimumWidth: 0
-            implicitWidth: root.buttonText?.length > 0 && root.labelExpanded
-                ? Math.min(textItem.implicitWidth, root.maxTextWidth) : 0
-            implicitHeight: textMetrics.height // Force height to that of regular text
-            // Do not unmount or fade a label during selection changes: fading
-            // and visible:opacity>0 could drop the text on rapid toggles.
-            visible: root.buttonText?.length > 0
-            clip: true
+                Behavior on implicitWidth {
+                    enabled: Appearance.animationsEnabled && root.enableImplicitWidthAnimation
+                    animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+                }
+                Behavior on opacity {
+                    enabled: Appearance.animationsEnabled && root.enableImplicitWidthAnimation
+                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
 
-            Behavior on implicitWidth {
-                enabled: Appearance.animationsEnabled && root.enableImplicitWidthAnimation
-                NumberAnimation { duration: 190; easing.type: Easing.InOutCubic }
-            }
-            TextMetrics {
-                id: textMetrics
-                font.family: Appearance.font.family.main
-                text: "Abc"
+                MaterialSymbol {
+                    id: materialSymbol
+                    anchors.centerIn: parent
+                    verticalAlignment: Text.AlignVCenter
+                    text: root.buttonIcon
+                    iconSize: Appearance.font.pixelSize.normal
+                    color: root.abyssTaskNavigation
+                        ? (root.toggled ? SettingsMaterialPreset.taskTabSelectedInk : SettingsMaterialPreset.taskTabInk)
+                        : root.toggled
+                        ? (root.highContrastSelection ? Appearance.colors.colOnPrimaryContainer
+                            : Appearance.colors.colOnPrimary)
+                        : Appearance.colors.colOnSecondaryContainer
+                }
             }
 
-            StyledText {
-                id: textItem
-                // The glyphs remain at full natural width behind a clipping
-                // viewport. Animating the viewport edge reveals left->right
-                // and collapses right->left without intermediate ellipses.
-                x: 0
-                y: 0
-                width: root.revealActiveLabelOnly
-                    ? Math.min(implicitWidth, root.maxTextWidth) : parent.width
-                height: parent.height
-                horizontalAlignment: root.revealActiveLabelOnly || root.leftAlignContent
-                    ? Text.AlignLeft : Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                elide: root.revealActiveLabelOnly ? Text.ElideNone : Text.ElideRight
-                maximumLineCount: 1
-                color: root.abyssTaskNavigation
-                    ? (root.toggled ? SettingsMaterialPreset.taskTabSelectedInk : SettingsMaterialPreset.taskTabInk)
-                    : root.toggled
-                    ? (root.highContrastSelection ? Appearance.colors.colOnPrimaryContainer
-                        : Appearance.colors.colOnPrimary)
-                    : Appearance.colors.colOnSecondaryContainer
-                font.weight: root.highContrastSelection && root.toggled
-                    ? Font.DemiBold : Font.Normal
-                text: root.buttonText
-            }
-        }
+            Item {
+                Layout.alignment: Qt.AlignVCenter
+                Layout.minimumWidth: 0
+                implicitWidth: root.buttonText?.length > 0 && root.labelExpanded
+                    ? Math.min(textItem.implicitWidth, root.maxTextWidth) : 0
+                implicitHeight: textMetrics.height // Force height to that of regular text
+                // Do not unmount or fade a label during selection changes: fading
+                // and visible:opacity>0 could drop the text on rapid toggles.
+                visible: root.buttonText?.length > 0
+                clip: true
 
-        // With GridLayout-forced equal button widths, this absorbs only the
-        // trailing free space and leaves icon + label against the left inset.
-        Item {
-            visible: root.leftAlignContent
-            Layout.fillWidth: root.leftAlignContent
-            Layout.preferredWidth: root.leftAlignContent ? 1 : 0
+                Behavior on implicitWidth {
+                    enabled: Appearance.animationsEnabled && root.enableImplicitWidthAnimation
+                    NumberAnimation { duration: 190; easing.type: Easing.InOutCubic }
+                }
+                TextMetrics {
+                    id: textMetrics
+                    font.family: Appearance.font.family.main
+                    text: "Abc"
+                }
+
+                StyledText {
+                    id: textItem
+                    // The glyphs remain at full natural width behind a clipping
+                    // viewport. Animating the viewport edge reveals left->right
+                    // and collapses right->left without intermediate ellipses.
+                    x: 0
+                    y: 0
+                    width: root.revealActiveLabelOnly
+                        ? Math.min(implicitWidth, root.maxTextWidth) : parent.width
+                    height: parent.height
+                    horizontalAlignment: root.revealActiveLabelOnly || root.leftAlignContent || textItem._marqueeOverflow
+                        ? Text.AlignLeft : Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    marquee: !root.revealActiveLabelOnly
+                    elide: Text.ElideNone
+                    maximumLineCount: 1
+                    color: root.abyssTaskNavigation
+                        ? (root.toggled ? SettingsMaterialPreset.taskTabSelectedInk : SettingsMaterialPreset.taskTabInk)
+                        : root.toggled
+                        ? (root.highContrastSelection ? Appearance.colors.colOnPrimaryContainer
+                            : Appearance.colors.colOnPrimary)
+                        : Appearance.colors.colOnSecondaryContainer
+                    font.weight: root.highContrastSelection && root.toggled
+                        ? Font.DemiBold : Font.Normal
+                    text: root.buttonText
+                }
+            }
         }
     }
 }

@@ -4,7 +4,6 @@ import Quickshell
 import Quickshell.Wayland
 import qs.modules.common
 import qs.modules.common.functions
-import qs.modules.waffle.looks
 import qs.services
 
 // Elegant family transition overlay

@@ -42,6 +42,8 @@ StyledPopup {
             spacing: 5
             Layout.fillWidth: true
             property bool rowVisible: {
+                if (!root.presentationActive)
+                    return true;
                 let timeValue = Battery.isCharging ? Battery.timeToFull : Battery.timeToEmpty;
                 let power = Battery.energyRate;
                 return !(Battery.chargeState == 4 || timeValue <= 0 || power <= 0.01);
@@ -49,7 +51,7 @@ StyledPopup {
             visible: opacity > 0
             opacity: rowVisible ? 1 : 0
             Behavior on opacity {
-                enabled: Appearance.animationsEnabled
+                enabled: root.presentationActive && Appearance.animationsEnabled
                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
             }
 
@@ -67,6 +69,8 @@ StyledPopup {
                 horizontalAlignment: Text.AlignRight
                 color: Appearance.colors.colOnSurfaceVariant
                 text: {
+                    if (!root.presentationActive)
+                        return "0h, 00m";
                     function formatTime(seconds) {
                         var h = Math.floor(seconds / 3600);
                         var m = Math.floor((seconds % 3600) / 60);
@@ -87,11 +91,11 @@ StyledPopup {
             spacing: 5
             Layout.fillWidth: true
 
-            property bool rowVisible: !(Battery.chargeState != 4 && Battery.energyRate == 0)
+            property bool rowVisible: !root.presentationActive || !(Battery.chargeState != 4 && Battery.energyRate == 0)
             visible: opacity > 0
             opacity: rowVisible ? 1 : 0
             Behavior on opacity {
-                enabled: Appearance.animationsEnabled
+                enabled: root.presentationActive && Appearance.animationsEnabled
                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
             }
 
@@ -103,6 +107,9 @@ StyledPopup {
 
             StyledText {
                 text: {
+                    if (!root.presentationActive) {
+                        return Translation.tr("Discharging:");
+                    }
                     if (Battery.chargeState == 4) {
                         return Translation.tr("Fully charged");
                     } else if (Battery.chargeState == 1) {
@@ -119,6 +126,9 @@ StyledPopup {
                 horizontalAlignment: Text.AlignRight
                 color: Appearance.colors.colOnSurfaceVariant
                 text: {
+                    if (!root.presentationActive) {
+                        return "0.00W";
+                    }
                     if (Battery.chargeState == 4) {
                         return "";
                     } else {

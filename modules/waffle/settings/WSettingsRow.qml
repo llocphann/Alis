@@ -191,9 +191,25 @@ Item {
                 animation: ColorAnimation { duration: Looks.transition.enabled ? 120 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
             }
 
+            readonly property bool isImageIcon:
+                root.icon.startsWith("/") || root.icon.startsWith("file://")
+
+            Image {
+                visible: parent.isImageIcon
+                anchors.fill: parent
+                anchors.margins: 1
+                source: parent.isImageIcon
+                    ? (root.icon.startsWith("file://") ? root.icon : "file://" + root.icon)
+                    : ""
+                sourceSize.width: Looks.dp(60)
+                sourceSize.height: Looks.dp(60)
+                fillMode: Image.PreserveAspectCrop
+            }
+
             FluentIcon {
+                visible: !parent.isImageIcon
                 anchors.centerIn: parent
-                icon: root.icon
+                icon: parent.isImageIcon ? "" : root.icon
                 implicitSize: Looks.dp(16)
                 color: mouseArea.containsMouse ? Looks.colors.accent : Looks.colors.subfg
                 

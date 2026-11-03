@@ -7,7 +7,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell.Widgets
 
-Column {
+RowLayout {
     id: root
 
     property alias text: sliderName.text
@@ -22,37 +22,42 @@ Column {
     property alias stepSize: sliderWidget.stepSize
 
     signal moved()
-    
-    Layout.minimumWidth: 220
-    spacing: -2
-    RowLayout {
-        width: parent.width
-        spacing: 8
+
+    Layout.fillWidth: true
+    Layout.minimumWidth: 200
+    spacing: 10
+    implicitHeight: Math.max(sliderName.implicitHeight, sliderWidget.implicitHeight)
+
+    ContentSubsectionLabel {
+        id: sliderName
         visible: root.text.length > 0
-        ContentSubsectionLabel {
-            id: sliderName
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            elide: Text.ElideRight
-            text: ""
-        }
-        StyledText {
-            text: root.valueText
-            color: Appearance.colors.colSubtext
-            font.pixelSize: Appearance.font.pixelSize.small
-            horizontalAlignment: Text.AlignRight
-        }
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.alignment: Qt.AlignVCenter
+        elide: Text.ElideRight
+        text: ""
     }
+
     StyledSlider {
         id: sliderWidget
-        anchors {
-            left: parent.left
-            right: parent.right
-            leftMargin: 4
-            rightMargin: 4
-        }
+        Layout.fillWidth: !sliderName.visible
+        Layout.preferredWidth: sliderName.visible ? Math.round(185 * Appearance.fontSizeScale) : -1
+        Layout.maximumWidth: sliderName.visible ? Math.round(210 * Appearance.fontSizeScale) : -1
+        Layout.minimumWidth: Math.round(110 * Appearance.fontSizeScale)
+        Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
         Accessible.name: root.accessibleName
         configuration: StyledSlider.Configuration.S
         onMoved: root.moved()
+    }
+
+    StyledText {
+        visible: root.text.length > 0
+        Layout.preferredWidth: Math.round(44 * Appearance.fontSizeScale)
+        Layout.alignment: Qt.AlignVCenter
+        text: root.valueText
+        color: Appearance.colors.colSubtext
+        font.pixelSize: Appearance.font.pixelSize.smaller
+        font.family: Appearance.font.family.numbers
+        horizontalAlignment: Text.AlignRight
     }
 }

@@ -70,10 +70,10 @@ Item {
     // bodies move inward; side-attached bodies move along their physical Edge.
     // Both leave the widget canvas dimensions unchanged during editing.
     readonly property real minimumInward: edge === "top"
-        && (contentItem.item?.editMode ?? false)
+        && ((contentItem.item?.editMode ?? false) || (contentItem.item?.tabNamingActive ?? false))
         ? Math.max(0, Number(contentItem.item?.topControlReserve ?? 0)) : 0
     readonly property real requestedAlong: !Geometry.horizontal(edge)
-        && (contentItem.item?.editMode ?? false)
+        && ((contentItem.item?.editMode ?? false) || (contentItem.item?.tabNamingActive ?? false))
         ? Math.max(along, Number(contentItem.item?.topControlReserve ?? 0)) : along
     // Keep Dock/icon geometry fixed, but let panel content reflow before any
     // lower-priority body is evicted. These are panel dimensions including
@@ -566,6 +566,10 @@ Item {
         }
         if (open) Qt.callLater(() => { if (root.open) root.react(true) })
     }
+    onAcceptsInputChanged: if (typeof root.QsWindow?.window?.ensureEscapeFocus === "function")
+        Qt.callLater(root.QsWindow.window.ensureEscapeFocus)
+    onReadyChanged: if (typeof root.QsWindow?.window?.ensureEscapeFocus === "function")
+        Qt.callLater(root.QsWindow.window.ensureEscapeFocus)
     property int escapeKeyCount: 0
     Keys.onEscapePressed: event => {
         root.escapeKeyCount++
@@ -576,6 +580,11 @@ Item {
         if ((dashboard?.editMode ?? false)
                 && typeof dashboard.handleEscape === "function"
                 && dashboard.handleEscape()) {
+            event.accepted = true
+            return
+        }
+        if (typeof content.item?.handleEscape === "function"
+                && content.item.handleEscape()) {
             event.accepted = true
             return
         }

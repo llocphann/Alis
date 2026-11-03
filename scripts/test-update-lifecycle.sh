@@ -294,8 +294,8 @@ PY_UPDATES
 python3 "$payload_tool" manifest --root "$repo_root" > "$tmp/manifest"
 grep -q '^shell.qml:' "$tmp/manifest" || fail 'runtime manifest is missing shell.qml'
 grep -q '^scripts/alis:' "$tmp/manifest" || fail 'runtime manifest is missing scripts/alis'
-if grep -q '^scripts/inir:' "$tmp/manifest"; then
-    fail 'runtime manifest shipped the retired public scripts/inir launcher'
+if grep -q '^scripts/alis:' "$tmp/manifest"; then
+    fail 'runtime manifest shipped the retired public scripts/alis launcher'
 fi
 for excluded in \
     scripts/qml-check.fish \

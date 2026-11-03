@@ -58,17 +58,17 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) and [STRUCTURE.md](STRUCTURE.md) for the 
 |---|---|
 | `modules/` | QML shell modules and surfaces |
 | `modules/common/` | Shared configuration, appearance, and widget infrastructure |
-| `modules/ii/` | Active Material ii / Classic presentation components |
+| `modules/abyss/` | Active Abyss connected liquid perimeter family |
 | `modules/waffle/` | Active Waffle/Windows-style presentation family |
-| `services/` | Runtime service singletons and integrations |
+| `native/` | Production Rust backend daemons (`alis-native`, `alis-inputd`, `alis-mpdd`, `alis-theme`) |
+| `services/` | Runtime service singletons and optional package integrations (`AlisCompanion`, `AlisIntergration`) |
 | `scripts/` | Launcher, checks, generators, and runtime helpers |
 | `sdata/` | Install/update lifecycle, payload policy, and migrations |
-| `defaults/` | Shipped configuration defaults |
+| `defaults/` | Shipped configuration defaults and Widget SDK (`defaults/widgets/WIDGET-SDK.md`) |
 | `distro/` | Distribution packaging |
-| `nix/` | Nix package and module definitions |
-| `translations/` | Localization data and tooling |
+| `translations/` | Canonical `en_US` localization catalog and validators |
 
-Both `ii` and `waffle` are active panel families. Shared runtime, service, IPC, and configuration changes must preserve both families when their contract is family-independent. Keep family-specific UI in its owning family instead of treating a family switch as perimeter module placement. Genuinely retired renderers or features should not be reintroduced without a deliberate architecture decision.
+`abyss`, `ii`, and `waffle` are supported panel families (`abyss` and `waffle` are the public families; `ii` shares the Material token substrate). Shared runtime, service, IPC, and configuration changes must preserve family-independent contracts across all supported families. Keep family-specific UI in its owning family instead of treating a family switch as perimeter module placement. Genuinely retired renderers or features should not be reintroduced without a deliberate architecture decision.
 
 ## Connected Perimeter invariant
 
@@ -128,7 +128,7 @@ After IPC changes, run:
 python3 scripts/lib/generate-ipc-registry.py --check
 ```
 
-and update `docs/IPC.md` when the public contract changes.
+and update [ARCHITECTURE.md](ARCHITECTURE.md) when the public contract changes.
 
 ## New QML files
 
@@ -175,10 +175,10 @@ Changes to these areas can affect a large part of the shell and deserve narrower
 | Config schema | `defaults/config.json` + consumer(s) + active settings UI(s) |
 | A new service | `services/qmldir` |
 | A new shared widget | `modules/common/widgets/qmldir` |
-| IPC targets | generated IPC registry + `docs/IPC.md` |
+| IPC targets | generated IPC registry + `ARCHITECTURE.md` |
 | Runtime payload contents | canonical payload manifests/policy + all package consumers |
-| Dependencies | installer/package definitions + `docs/PACKAGES.md` |
-| Install paths | launcher/service/desktop/package/Nix consumers |
+| Dependencies | installer/package definitions + `sdata/` |
+| Install paths | launcher/service/desktop/package consumers |
 
 ## Migrations
 
@@ -196,18 +196,18 @@ User-visible strings belong in the translation system. Follow existing keys and 
 
 ## Releases
 
-Release preparation and publication are maintainer workflows. Follow [docs/RELEASING.md](docs/RELEASING.md) for the version/package files that move together, stable/tag preconditions, validation commands, draft-release staging, Wiki synchronization, and recovery behavior.
+Release preparation and publication are maintainer workflows. Validate using `bash scripts/validate-maintainer-local.sh` and update `version.json` and [CHANGELOG.md](CHANGELOG.md) together when cutting a release.
 
 Do not publish directly from `dev`, retarget the non-VCS Arch package to a moving branch, or bypass the release helper's preflight checks for routine releases.
 
 ## AI-assisted contributions
 
-AI assistance is acceptable; unverified output is not. Before publishing AI-assisted work:
+AI assistance is acceptable; unverified output is not. Follow [AGENTS.md](AGENTS.md) and before publishing AI-assisted work:
 
 - Verify every API and path against the current repository or upstream documentation.
 - Run the checks relevant to the changed subsystem.
 - Exercise runtime behavior when the change cannot be validated statically.
-- Describe meaningful validation in the pull request.
+- Describe meaningful validation in the pull request or canonical GitHub Issue.
 - Do not add generated boilerplate, drive-by restructuring, or attribution footers to unrelated project files.
 
 ## Code of Conduct
@@ -216,4 +216,4 @@ This project follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Getting help
 
-GitHub Issues and Discussions are currently disabled for this private repository. For a change already under review, use its pull-request conversation. For questions that do not belong to an existing pull request, coordinate through the maintainer channel that granted repository access rather than relying on an unavailable issue tracker.
+Active tasks, bugs, and features are tracked in [Alis GitHub Issues](https://github.com/llocphann/Alis/issues), [Alis-Companion GitHub Issues](https://github.com/llocphann/Alis-Companion/issues), and [Alis-Intergration GitHub Issues](https://github.com/llocphann/Alis-Intergration/issues) as documented in [AGENTS.md](AGENTS.md).

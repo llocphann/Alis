@@ -1,1 +1,0 @@
-PASS: production screencopy probe and controlled Qt pixels; real service dimming, unchanged base, lock/sleep cancellation, wake resampling and disable restoration with fake hardware [34, 46, 49, 50, 10, 50, 43, 50, 50, 49, 50]

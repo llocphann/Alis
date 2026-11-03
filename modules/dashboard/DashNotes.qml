@@ -14,7 +14,16 @@ DashCard {
     icon: ""
     Layout.fillHeight: true
 
+    function handleEscape(): bool {
+        if (quickNotesView.editor.markdownEditing) {
+            quickNotesView.releaseEditorFocus()
+            return true
+        }
+        return false
+    }
+
     QuickNotesView {
+        id: quickNotesView
         objectName: "quickNotesSharedDashboardView"
         Layout.fillWidth: true
         Layout.fillHeight: true

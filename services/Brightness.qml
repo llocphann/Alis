@@ -305,6 +305,7 @@ Singleton {
         property bool ready: false
         property bool animateChanges: !monitor.isDdc
         property bool writePending: false
+        property int _lastSyncedRaw: -1
 
         onBrightnessChanged: {
             if (!monitor.ready) return;
@@ -328,6 +329,7 @@ Singleton {
         }
 
         function restoreLastGood(): void {
+            monitor._lastSyncedRaw = -1
             const screenName = monitor.screen?.name ?? ""
             const value = BrightnessPolicy.pickRestoreValue(
                 root.lastValidBrightness[screenName],
@@ -349,6 +351,7 @@ Singleton {
 
         function initialize() {
             monitor.ready = false;
+            monitor._lastSyncedRaw = -1;
             if (isDdc) {
                 initProc.command = ["ddcutil", "-b", busNum, "getvcp", "10", "--brief"]
             } else if (!root.backlightDetectionReady) {
@@ -473,6 +476,9 @@ Singleton {
             if (!Number.isFinite(brightnessValue) || brightnessValue < 0.01)
                 return
             const rawValueRounded = Math.max(Math.floor(brightnessValue * monitor.rawMaxBrightness), 1);
+            if (!isDdc && rawValueRounded === monitor._lastSyncedRaw)
+                return
+            monitor._lastSyncedRaw = rawValueRounded
             if (isDdc) {
                 if (!busNum)
                     return

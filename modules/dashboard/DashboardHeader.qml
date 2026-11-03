@@ -55,6 +55,7 @@ Item {
         if(id==="dashboard") return Translation.tr("Dashboard")
         if(id==="music") return Translation.tr("Music")
         if(id==="weeklyPlanner") return Translation.tr("Weekly Planner")
+        if(id==="spacedRepetition") return Translation.tr("Spaced Repetition")
         return root.customTabs.find(tab => tab.id === id)?.name ?? String(id ?? "")
     }
     function focusMovedPage(): void {
@@ -87,11 +88,12 @@ Item {
         dragTarget=index
     }
     function finishPageDrag(position): void {
-        const id=dragPageId,target=dragTarget
-        const accept=draggingPage && reorderAllowed && position.x>=0 && position.x<=width
+        const id=dragPageId,target=dragTarget,wasDragging=draggingPage
+        const accept=wasDragging && reorderAllowed && position.x>=0 && position.x<=width
             && position.y>=-16 && position.y<=height+16
         cancelPageDrag()
         if(accept)moveFocusedPage(id,target)
+        else if(!wasDragging && target>=0)root.pageRequested(target)
     }
     onReorderAllowedChanged: if(!reorderAllowed)cancelPageDrag()
     onPageIdsChanged: {
@@ -167,6 +169,7 @@ Item {
         spacing: root.narrow ? 3 : 8
 
         HeaderButton {
+            objectName: "dashboardEditLayoutButton"
             enabled: root.pageIds[root.currentPage] === "dashboard"
                 || root.pageIds[root.currentPage]?.startsWith("custom-")
             iconName: root.editMode ? "done" : "edit"
@@ -185,6 +188,7 @@ Item {
             tooltip: Translation.tr("Wallpapers")
             onClicked: {
                 GlobalStates.dashboardOpen = false;
+                GlobalStates.overviewOpen = false;
                 GlobalStates.wallpaperSelectorOpen = true;
             }
         }
@@ -193,6 +197,7 @@ Item {
             tooltip: Translation.tr("Settings")
             onClicked: {
                 GlobalStates.dashboardOpen = false;
+                GlobalStates.overviewOpen = false;
                 Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"]);
             }
         }
@@ -202,6 +207,7 @@ Item {
             tooltip: Translation.tr("Lock")
             onClicked: {
                 GlobalStates.dashboardOpen = false;
+                GlobalStates.overviewOpen = false;
                 GlobalStates.screenLocked = true;
             }
         }
@@ -211,6 +217,7 @@ Item {
             tooltip: Translation.tr("Session")
             onClicked: {
                 GlobalStates.dashboardOpen = false;
+                GlobalStates.overviewOpen = false;
                 GlobalStates.sessionOpen = true;
             }
         }
@@ -220,64 +227,71 @@ Item {
         objectName: "dashboardPageDots"
         anchors.centerIn: parent
         spacing: 4
+        width: pageDotsRow.implicitWidth + (root.editMode && customTabActions.implicitWidth > 0 ? pages.spacing + customTabActions.implicitWidth : 0)
         visible: root.pageCount > 1
-        Repeater {
-            id:pageRepeater
-            model: root.pageCount
-            delegate: RippleButton {
-                id:pageButton
-                required property int index
-                objectName: "dashboardPage" + index
-                implicitWidth: root.pageDotButtonWidth
-                implicitHeight: 32
-                buttonRadius: 16
-                enabled: root.reorderAllowed || (root.navigationAllowed && !root.editMode)
-                focusPolicy:Qt.StrongFocus
-                Accessible.name:root.pageLabel(root.pageIds[index])
-                colBackground: "transparent"
-                colBackgroundHover: Qt.alpha(root.colText, .08)
-                contentItem: Item {
+        Row {
+            id: pageDotsRow
+            Layout.alignment: Qt.AlignVCenter
+            spacing: pages.spacing
+            Repeater {
+                id:pageRepeater
+                model: root.pageCount
+                delegate: RippleButton {
+                    id:pageButton
+                    required property int index
+                    objectName: "dashboardPage" + index
+                    x: index * (root.pageDotButtonWidth + pages.spacing)
+                    implicitWidth: root.pageDotButtonWidth
+                    implicitHeight: 32
+                    buttonRadius: 16
+                    enabled: root.reorderAllowed || (root.navigationAllowed && !root.editMode)
+                    focusPolicy:Qt.StrongFocus
+                    Accessible.name:root.pageLabel(root.pageIds[index])
+                    colBackground: "transparent"
+                    colBackgroundHover: Qt.alpha(root.colText, .08)
+                    contentItem: Item {
+                        Rectangle {
+                            objectName: "dashboardPageDot" + index
+                            anchors.centerIn: parent
+                            width: root.pageDotDiameter
+                            height: root.pageDotDiameter
+                            radius: width / 2
+                            // Every base dot stays visible: the selected highlight
+                            // travels above them instead of swapping colors at once.
+                            color: Qt.alpha(root.colText, .35)
+                        }
+                    }
+                    onClicked: if(!root.editMode && root.navigationAllowed)root.pageRequested(index)
+                    Keys.onPressed: event => {
+                        if(root.reorderAllowed && (event.modifiers & Qt.AltModifier)
+                                && (event.key===Qt.Key_Left || event.key===Qt.Key_Right)) {
+                            root.moveFocusedPage(root.pageIds[index],index+(event.key===Qt.Key_Left?-1:1))
+                            event.accepted=true
+                        }else if(event.key===Qt.Key_Escape && root.cancelPageDrag())event.accepted=true
+                        else event.accepted=false
+                    }
                     Rectangle {
-                        objectName: "dashboardPageDot" + index
-                        anchors.centerIn: parent
-                        width: root.pageDotDiameter
-                        height: root.pageDotDiameter
-                        radius: width / 2
-                        // Every base dot stays visible: the selected highlight
-                        // travels above them instead of swapping colors at once.
-                        color: Qt.alpha(root.colText, .35)
+                        anchors.fill:parent;anchors.margins:2;radius:12;color:"transparent"
+                        border.width:pageButton.activeFocus?1:0;border.color:root.colText
                     }
-                }
-                onClicked: if(!root.editMode && root.navigationAllowed)root.pageRequested(index)
-                Keys.onPressed: event => {
-                    if(root.reorderAllowed && (event.modifiers & Qt.AltModifier)
-                            && (event.key===Qt.Key_Left || event.key===Qt.Key_Right)) {
-                        root.moveFocusedPage(root.pageIds[index],index+(event.key===Qt.Key_Left?-1:1))
-                        event.accepted=true
-                    }else if(event.key===Qt.Key_Escape && root.cancelPageDrag())event.accepted=true
-                    else event.accepted=false
-                }
-                Rectangle {
-                    anchors.fill:parent;anchors.margins:2;radius:12;color:"transparent"
-                    border.width:pageButton.activeFocus?1:0;border.color:root.colText
-                }
-                MouseArea {
-                    anchors.fill:parent
-                    enabled:root.reorderAllowed
-                    cursorShape:pressed?Qt.ClosedHandCursor:Qt.OpenHandCursor
-                    onPressed: mouse => {
-                        pageButton.forceActiveFocus()
-                        const point=mapToItem(root,mouse.x,mouse.y)
-                        root.dragPageOrder=JSON.stringify(root.pageIds)
-                        root.dragPageId=root.pageIds[pageButton.index]
-                        root.dragPress=point;root.dragPointer=point;root.dragTarget=pageButton.index
+                    MouseArea {
+                        anchors.fill:parent
+                        enabled:root.reorderAllowed
+                        cursorShape:pressed?Qt.ClosedHandCursor:Qt.OpenHandCursor
+                        onPressed: mouse => {
+                            pageButton.forceActiveFocus()
+                            const point=mapToItem(root,mouse.x,mouse.y)
+                            root.dragPageOrder=JSON.stringify(root.pageIds)
+                            root.dragPageId=root.pageIds[pageButton.index]
+                            root.dragPress=point;root.dragPointer=point;root.dragTarget=pageButton.index
+                        }
+                        onPositionChanged:mouse=>{if(pressed)root.updatePageDrag(mapToItem(root,mouse.x,mouse.y))}
+                        onReleased:mouse=>root.finishPageDrag(mapToItem(root,mouse.x,mouse.y))
+                        onCanceled:root.cancelPageDrag()
                     }
-                    onPositionChanged:mouse=>{if(pressed)root.updatePageDrag(mapToItem(root,mouse.x,mouse.y))}
-                    onReleased:mouse=>root.finishPageDrag(mapToItem(root,mouse.x,mouse.y))
-                    onCanceled:root.cancelPageDrag()
-                }
-                StyledToolTip {
-                    text:parent.Accessible.name+(root.editMode?" · "+Translation.tr("Drag to reorder; Alt+Left/Right also moves tabs") : "")
+                    StyledToolTip {
+                        text:parent.Accessible.name+(root.editMode?" · "+Translation.tr("Drag to reorder; Alt+Left/Right also moves tabs") : "")
+                    }
                 }
             }
         }
@@ -287,9 +301,13 @@ Item {
         id: customTabActions
         objectName: "dashboardCustomTabActions"
         Layout.alignment: Qt.AlignVCenter
+        Layout.leftMargin: root.editMode ? 0 : -pages.spacing
         spacing: 2
         z: 10
         visible: root.pageCount > 0
+        readonly property string targetCustomTabId: root.pageIds[root.currentPage]?.startsWith("custom-")
+            ? root.pageIds[root.currentPage]
+            : (root.customTabs[root.customTabs.length - 1]?.id ?? "")
         RippleButton {
             objectName: "dashboardCreateCustomTab"
             visible: root.editMode
@@ -310,13 +328,15 @@ Item {
         }
         RippleButton {
             objectName: "dashboardRenameCustomTab"
-            visible: root.pageIds[root.currentPage]?.startsWith("custom-") && root.editMode
+            visible: root.editMode
+            enabled: root.editMode && customTabActions.targetCustomTabId.length > 0
+            opacity: enabled ? 1 : 0.45
             implicitWidth: 27
             implicitHeight: 30
             buttonRadius: Appearance.rounding.full
             colBackground: "transparent"
             colBackgroundHover: Qt.alpha(root.colText, .08)
-            onClicked: root.renameTabRequested(root.pageIds[root.currentPage])
+            onClicked: if (customTabActions.targetCustomTabId.length > 0) root.renameTabRequested(customTabActions.targetCustomTabId)
             contentItem: MaterialSymbol {
                 text: "drive_file_rename_outline"
                 iconSize: 17
@@ -326,13 +346,15 @@ Item {
         }
         RippleButton {
             objectName: "dashboardDeleteCustomTab"
-            visible: root.pageIds[root.currentPage]?.startsWith("custom-") && root.editMode
+            visible: root.editMode
+            enabled: root.editMode && customTabActions.targetCustomTabId.length > 0
+            opacity: enabled ? 1 : 0.45
             implicitWidth: 27
             implicitHeight: 30
             buttonRadius: Appearance.rounding.full
             colBackground: "transparent"
             colBackgroundHover: Qt.alpha(root.colText, .08)
-            onClicked: root.deleteTabRequested(root.pageIds[root.currentPage])
+            onClicked: if (customTabActions.targetCustomTabId.length > 0) root.deleteTabRequested(customTabActions.targetCustomTabId)
             contentItem: MaterialSymbol {
                 text: "delete_outline"
                 iconSize: 17

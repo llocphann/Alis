@@ -21,6 +21,7 @@ MouseArea {
             root._pointerFocused = false
     }
     property bool vertical: false
+    property real contentRotation: 0
 
     readonly property bool contentAvailable: ShellUpdates.showUpdate || ShellUpdates.isUpdating
     visible: root.contentAvailable
@@ -114,11 +115,13 @@ MouseArea {
         id: contentRow
         anchors.centerIn: pill
         spacing: 5 * Appearance.sizes.barModuleScale
+        layoutDirection: root.contentRotation < 0 ? Qt.RightToLeft : Qt.LeftToRight
 
         MaterialSymbol {
             id: updateIcon
             text: ShellUpdates.isUpdating ? "settings" : "upgrade"
             iconSize: Math.round(Appearance.font.pixelSize.normal * Appearance.sizes.barModuleScale)
+            rotation: -root.contentRotation
             color: root.accentColor
             Layout.alignment: Qt.AlignVCenter
 
@@ -126,8 +129,8 @@ MouseArea {
                 loops: Animation.Infinite
                 running: ShellUpdates.isUpdating && root.visible
                     && (root.Window.window?.visible ?? true)
-                from: 0
-                to: 360
+                from: -root.contentRotation
+                to: 360 - root.contentRotation
                 duration: 1200
             }
 
@@ -155,6 +158,7 @@ MouseArea {
             }
             font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * Appearance.sizes.barModuleScale)
             font.weight: Font.DemiBold
+            rotation: -root.contentRotation
             color: root.accentColor
             Layout.alignment: Qt.AlignVCenter
         }

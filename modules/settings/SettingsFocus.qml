@@ -1748,11 +1748,17 @@ Scope {
                                 if (!pageHost.currentItem || !section)
                                     return;
 
+                                const peers = typeof section.rowPeerSections === "function"
+                                    ? section.rowPeerSections()
+                                    : [section];
                                 for (let i = 0; i < items.length; i++) {
                                     if (items[i] && items[i].collapsible)
-                                        items[i].expanded = i === index;
+                                        items[i].expanded = i === index || peers.indexOf(items[i]) >= 0;
                                 }
-                                section.expanded = true;
+                                if (typeof section.setRowExpanded === "function")
+                                    section.setRowExpanded(true);
+                                else
+                                    section.expanded = true;
                                 sectionRail.allExpanded = false;
                                 sectionRail.activeIndex = index;
 

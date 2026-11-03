@@ -65,6 +65,7 @@ DashCard {
                 // below, so hidden residency does not keep those backends hot.
                 active: root.hasPlayer
                 sourceComponent: PlayerControl {
+                    visible: root.presentationActive
                     player: root.player
                     playbackAdapter: root.playbackAdapter
                     visualizerPoints: []

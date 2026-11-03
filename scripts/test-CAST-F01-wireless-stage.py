@@ -47,6 +47,21 @@ assert module.displays({"type": "aa{sv}", "data": [[
     ["protocol", field("u", 2)],
 ]]})[0]["protocol"] == "Miracast MICE"
 
+# GNOME Network Displays 0.99.0 shifted NdSinkProtocol enum values (3=P2P@100, 4=MICE@200, 5=CC@50)
+v099 = module.displays({"type": "aa{sv}", "data": [
+    ["uuid", field("s", "p2p-099"), "display-name", field("s", "[TV] Samsung 8 Series (43)"),
+     "state", field("u", 0), "priority", field("i", 100), "protocol", field("u", 3)],
+    ["uuid", field("s", "mice-099"), "display-name", field("s", "Office MICE"),
+     "state", field("u", 0), "priority", field("i", 200), "protocol", field("u", 4)],
+    ["uuid", field("s", "cc-099"), "display-name", field("s", "Living Room Cast"),
+     "state", field("u", 0), "priority", field("i", 50), "protocol", field("u", 5)],
+]})
+assert [(d["uuid"], d["protocol"], d["protocolId"]) for d in v099] == [
+    ("p2p-099", "Miracast P2P", 1),
+    ("cc-099", "Chromecast", 3),
+    ("mice-099", "Miracast MICE", 2),
+], v099
+
 try:
     module.displays({"type": "as", "data": ["fake TV"]})
     assert False, "must reject unexpected variant signatures"
@@ -163,4 +178,16 @@ assert "function findWirelessSink(devices, uuid)" in policy
 # Do not use fake receiver names or mutate network, bypass portals or restart.
 assert "nmcli" not in script.read_text()
 assert "systemctl" in script.read_text() and "ActiveState" in script.read_text()
+
+preload_src = (root / "native/nd-screencast-fix/alis_nd_screencast_fix.c").read_text()
+for word in (
+    "inter_sink_copy_probe",
+    "gst_buffer_new_allocate",
+    "GST_BUFFER_COPY_FLAGS | GST_BUFFER_COPY_TIMESTAMPS",
+    '"min-buffers", 4',
+    '"enable-last-sample", FALSE',
+    "pw_src_buffer_probe",
+):
+    assert word in preload_src, word
+
 print("CAST_F01_WIRELESS_PASS: typed D-Bus discovery, request ownership and QML UI")

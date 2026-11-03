@@ -558,7 +558,7 @@ Singleton {
 
     function _shouldDeferThemeForLiquid(path: string): bool {
         const type = String(Config.options?.background?.transition?.type ?? "")
-        return (type === "alisMelt" || type === "inirMelt")
+        return (type === "alisMelt")
             && !AwwwBackend.active
             && (Config.options?.background?.transition?.enable ?? true)
             && Appearance.animationsEnabled

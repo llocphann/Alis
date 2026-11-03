@@ -20,6 +20,19 @@ Item {
     readonly property var hiddenPages: SettingsPageRegistry.hiddenPages.filter(index =>
         SettingsPageRegistry.pages[index] && SettingsPageRegistry.isPageApplicable(index))
 
+    property var _activeCancelRename: null
+
+    function handleEscape(): bool {
+        if (typeof root._activeCancelRename === "function") {
+            const cancelFn = root._activeCancelRename
+            root._activeCancelRename = null
+            cancelFn()
+            root.forceActiveFocus()
+            return true
+        }
+        return false
+    }
+
     component NavRow: Rectangle {
         id: row
         required property int pageIdx
@@ -37,6 +50,22 @@ Item {
         color: row.active ? Appearance.colors.colPrimaryContainer
             : hover.hovered ? Appearance.colors.colLayer1Hover : "transparent"
         HoverHandler { id: hover }
+
+        onEditingNameChanged: {
+            if (row.editingName)
+                root._activeCancelRename = row.cancelTabRename
+            else if (root._activeCancelRename === row.cancelTabRename)
+                root._activeCancelRename = null
+        }
+
+        function cancelTabRename(): void {
+            if (!row.editingName)
+                return
+            row.editingName = false
+            tabNameInput.text = row.page?.name ?? ""
+            if (root._activeCancelRename === row.cancelTabRename)
+                root._activeCancelRename = null
+        }
 
         function commitTabRename(): void {
             if (!row.editingName)
@@ -85,8 +114,7 @@ Item {
                             row.commitTabRename()
                     }
                     Keys.onEscapePressed: {
-                        tabNameInput.text = row.page?.name ?? ""
-                        row.editingName = false
+                        row.cancelTabRename()
                     }
                 }
             }
@@ -253,6 +281,22 @@ Item {
                     width: editorColumn.width
                     spacing: 2
 
+                    onEditingHeadingChanged: {
+                        if (headingSection.editingHeading)
+                            root._activeCancelRename = headingSection.cancelHeadingRename
+                        else if (root._activeCancelRename === headingSection.cancelHeadingRename)
+                            root._activeCancelRename = null
+                    }
+
+                    function cancelHeadingRename(): void {
+                        if (!headingSection.editingHeading)
+                            return
+                        headingSection.editingHeading = false
+                        headingInput.text = headingSection.headingTitle
+                        if (root._activeCancelRename === headingSection.cancelHeadingRename)
+                            root._activeCancelRename = null
+                    }
+
                     function commitHeadingRename(): void {
                         if (!headingSection.editingHeading)
                             return
@@ -306,8 +350,7 @@ Item {
                                             headingSection.commitHeadingRename()
                                     }
                                     Keys.onEscapePressed: {
-                                        headingInput.text = headingSection.headingTitle
-                                        headingSection.editingHeading = false
+                                        headingSection.cancelHeadingRename()
                                     }
                                 }
                             }

@@ -33,9 +33,6 @@ binds {
     // Alis shell overlays & tools
     // ═══════════════════════════════════════════════════════════════════════
 
-    // Crosshair overlay toggle.
-    Super+G { spawn "alis" "overlay" "toggle"; }
-
     // Alis app launcher / overview.
     Mod+Space repeat=false { spawn "alis" "overview" "toggle"; }
 
@@ -247,15 +244,18 @@ binds {
     // Hardware keys → Alis IPC (with OSD feedback)
     // ═══════════════════════════════════════════════════════════════════════
 
+    // Touchpad toggle.
+    XF86Favorites allow-when-locked=true { spawn "alis" "touchpad" "toggle"; }
+
     // Volume (routed through Alis for OSD + EasyEffects-aware sink resolution).
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "alis" "audio" "volumeUp"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "alis" "audio" "volumeDown"; }
+    XF86AudioRaiseVolume allow-when-locked=true cooldown-ms=50 { spawn "alis" "audio" "volumeUp"; }
+    XF86AudioLowerVolume allow-when-locked=true cooldown-ms=50 { spawn "alis" "audio" "volumeDown"; }
     XF86AudioMute        allow-when-locked=true { spawn "alis" "audio" "mute"; }
     XF86AudioMicMute     allow-when-locked=true { spawn "alis" "audio" "micMute"; }
 
     // Brightness.
-    XF86MonBrightnessUp   allow-when-locked=true { spawn "alis" "brightness" "increment"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "alis" "brightness" "decrement"; }
+    XF86MonBrightnessUp   allow-when-locked=true cooldown-ms=50 { spawn "alis" "brightness" "increment"; }
+    XF86MonBrightnessDown allow-when-locked=true cooldown-ms=50 { spawn "alis" "brightness" "decrement"; }
 
     // Media playback (MPRIS — works with any player: Spotify, Firefox, mpv…).
     XF86AudioPlay  { spawn "alis" "mpris" "playPause"; }

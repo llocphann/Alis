@@ -74,13 +74,6 @@ Item { // Wrapper
             - 24
     )
 
-    property bool clipboardWorkSafetyActive: {
-        const enabled = Config.options?.workSafety?.enable?.clipboard ?? false;
-        const keywords = Config.options?.workSafety?.triggerCondition?.networkNameKeywords ?? [];
-        const sensitiveNetwork = (StringUtils.stringListContainsSubstring(Network.networkName.toLowerCase(), keywords))
-        return enabled && sensitiveNetwork;
-    }
-
     // All actions are now centralized in GlobalActions service.
     property var searchActions: GlobalActions.searchActions
 
@@ -151,12 +144,6 @@ Item { // Wrapper
         root.searchingText = text;
     }
 
-    function containsUnsafeLink(entry) {
-        if (entry == undefined) return false;
-        const unsafeKeywords = Config.options?.workSafety?.triggerCondition?.linkKeywords ?? [];
-        return StringUtils.stringListContainsSubstring(entry.toLowerCase(), unsafeKeywords);
-    }
-
     function updateSearchResults(): void {
         const text = root.debouncedSearchText;
         
@@ -178,11 +165,6 @@ Item { // Wrapper
         if (text.startsWith(root.prefixClipboard)) {
             const searchString = StringUtils.cleanPrefix(text, root.prefixClipboard);
             root.cachedResults = Cliphist.fuzzyQuery(searchString).map((entry, index, array) => {
-                const mightBlurImage = Cliphist.entryIsImage(entry) && root.clipboardWorkSafetyActive;
-                let shouldBlurImage = mightBlurImage;
-                if (mightBlurImage) {
-                    shouldBlurImage = shouldBlurImage && (containsUnsafeLink(array[index - 1]) || containsUnsafeLink(array[index + 1]));
-                }
                 const type = `#${entry.match(/^\s*(\S+)/)?.[1] || ""}`
                 return {
                     key: type,
@@ -195,8 +177,8 @@ Item { // Wrapper
                         { name: "Copy", materialIcon: "content_copy", execute: () => { Cliphist.copy(entry); } },
                         { name: "Delete", materialIcon: "delete", execute: () => { Cliphist.deleteEntry(entry); } }
                     ],
-                    blurImage: shouldBlurImage,
-                    blurImageText: Translation.tr("Work safety")
+                    blurImage: false,
+                    blurImageText: ""
                 };
             });
             return;

@@ -92,14 +92,12 @@ assert "invert: true" in SCRIM
 assert "bottomLeftRadius: 0" in SCRIM and "bottomRightRadius: 0" in SCRIM
 assert "fillColor: Appearance.colors.colScrim" in SCRIM
 
-# SET-R03: sidebar hover help stays short in both source and English catalog.
+# SET-R03: sidebar help stays short in both source and English catalog.
 SIDEBARS = (ROOT / "modules" / "settings" / "SidebarsConfig.qml").read_text(encoding="utf-8")
 EN_US = json.loads((ROOT / "translations" / "en_US.json").read_text(encoding="utf-8"))
-assert "Hover a side Screen Edge; enter the sidebar to keep it open." in SIDEBARS
 assert "Why this is cool:" not in SIDEBARS
 for hint in (
-    "Hover the corner tip; scroll controls remain available elsewhere.",
-    "Offset corner hover vertically to avoid horizontal-edge triggers.",
+    "Sidebar layout, widgets, media and edge behavior.",
 ):
     assert hint in SIDEBARS, hint
     assert EN_US.get(hint) == hint, hint

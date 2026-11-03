@@ -72,8 +72,8 @@ jobs:
       - name: Validate Alis-only flake exports
         run: |
           test "$(nix eval --raw .#packages.x86_64-linux.alis.pname)" = alis
-          if nix eval --raw .#packages.x86_64-linux.inir.pname >/dev/null 2>&1; then
-            echo "Legacy inir flake export must not remain" >&2
+          if nix eval --raw .#packages.x86_64-linux.alis.pname >/dev/null 2>&1; then
+            echo "Legacy alis flake export must not remain" >&2
             exit 1
           fi
 

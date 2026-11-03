@@ -1,1 +1,0 @@
-PASS: heading deletion, tab moves, deduplication, hidden-page restore and persisted navigation

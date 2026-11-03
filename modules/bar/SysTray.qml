@@ -14,6 +14,7 @@ Item {
     implicitHeight: gridLayout.implicitHeight
     property bool vertical: false
     property bool invertSide: false
+    property real contentRotation: 0
     property bool trayOverflowOpen: false
     property bool showSeparator: true
     property bool showOverflowMenu: true
@@ -62,7 +63,7 @@ Item {
         const title = (i.title || "").toLowerCase();
         const isSpotify = id.indexOf("spotify") !== -1 || title.indexOf("spotify") !== -1;
         return (Config.options?.bar?.tray?.pinnedItems ?? []).includes(i.id)
-                && (!smartTray || i.status !== Status.Passive || isSpotify);
+                && (!smartTray || i.status !== Status.Passive || isSpotify || TrayService.isAutostartTrayItem(i));
     })
     property list<var> itemsNotInUserList: SystemTray.items.values.filter(i => {
         if (!isValidItem(i)) return false;
@@ -70,7 +71,7 @@ Item {
         const title = (i.title || "").toLowerCase();
         const isSpotify = id.indexOf("spotify") !== -1 || title.indexOf("spotify") !== -1;
         return !(Config.options?.bar?.tray?.pinnedItems ?? []).includes(i.id)
-                && (!smartTray || i.status !== Status.Passive || isSpotify);
+                && (!smartTray || i.status !== Status.Passive || isSpotify || TrayService.isAutostartTrayItem(i));
     })
 
     property bool invertPins: Config.options?.bar?.tray?.invertPinnedItems ?? false
@@ -156,7 +157,7 @@ Item {
                 color: root.trayOverflowOpen
                     ? Appearance.colors.colOnSecondaryContainer
                     : Appearance.colors.colOnLayer2
-                rotation: (root.trayOverflowOpen ? 180 : 0) - (90 * root.vertical) + (180 * root.invertSide)
+                rotation: (root.trayOverflowOpen ? 180 : 0) - (90 * root.vertical) + (180 * root.invertSide) - root.contentRotation
                 Behavior on rotation {
                     animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
@@ -207,6 +208,7 @@ Item {
                 required property SystemTrayItem modelData
                 item: modelData
                 trayParent: root
+                contentRotation: root.contentRotation
                 Layout.fillHeight: !root.vertical
                 Layout.fillWidth: root.vertical
                 onMenuClosed: (qsWindow) => root.releaseFocus(qsWindow);
@@ -226,6 +228,7 @@ Item {
 
         BarStatusIndicators {
             vertical: root.vertical
+            contentRotation: root.contentRotation
             Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
             onHoverPopupRequested: kind => root.hoverPopupRequested(kind)
             onConnectivityHoverChanged: (kind, hovered) =>

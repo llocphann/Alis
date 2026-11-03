@@ -410,10 +410,10 @@ ShellRoot {
    const settingsItem=settings.createObject(window.contentItem,{visible:false})
    check(settingsItem!==null,"Music settings failed to load")
    const scrollbarToggle=Array.from(settingsItem.contentData).find(item=>item.text===Translation.tr("Show Music scrollbars"))
-   check(scrollbarToggle!==undefined,"Music scrollbar Settings missing")
-   scrollbarToggle.checked=false
+   check(scrollbarToggle===undefined,"Music scrollbar toggle must be removed from Settings")
+   Config.setNestedValue("dashboard.music.showScrollbars",false)
    check(Config.options.dashboard.music.showScrollbars===false && !music.showMusicScrollbars,"Music scrollbar disable failed typed persistence/binding")
-   scrollbarToggle.checked=true
+   Config.setNestedValue("dashboard.music.showScrollbars",true)
    check(Config.options.dashboard.music.showScrollbars===true && music.showMusicScrollbars,"Music scrollbar enable failed typed persistence/binding")
    settingsItem.destroy()
    check(findChild(dashboard,"dashboardWeeklyPlanner")===null,"Planner allocated before its first visit")

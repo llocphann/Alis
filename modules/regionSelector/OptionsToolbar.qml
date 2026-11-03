@@ -17,9 +17,22 @@ import Quickshell.Wayland
 Toolbar {
     id: root
 
+    // Ordinals mirror RegionSelection.SnipAction & RegionSelection.SelectionMode.
+    // Using explicit integer constants avoids QML enum resolution order races
+    // when RegionSelection instantiates OptionsToolbar.
+    readonly property int actionCopy: 0
+    readonly property int actionEdit: 1
+    readonly property int actionSearch: 2
+    readonly property int actionCharRecognition: 3
+    readonly property int actionRecord: 4
+    readonly property int actionRecordWithSound: 5
+    readonly property int modeRectCorners: 0
+    readonly property int modeCircle: 1
+
     // Use a synchronizer on these
-    property var action
-    property var selectionMode
+    property int action: root.actionCopy
+    property int selectionMode: root.modeRectCorners
+    property bool _syncingBars: false
     // Signals
     signal dismiss()
     signal fullscreenRequested()
@@ -27,22 +40,30 @@ Toolbar {
 
     // Region actions selectable in-overlay (order = tab index)
     readonly property var actionList: [
-        { "action": RegionSelection.SnipAction.Copy,            "icon": "content_cut",      "name": Translation.tr("Shot") },
-        { "action": RegionSelection.SnipAction.Edit,            "icon": "draw",             "name": Translation.tr("Edit") },
-        { "action": RegionSelection.SnipAction.CharRecognition, "icon": "document_scanner", "name": Translation.tr("OCR") },
-        { "action": RegionSelection.SnipAction.Search,          "icon": "image_search",     "name": Translation.tr("Search") },
-        { "action": RegionSelection.SnipAction.Record,          "icon": "videocam",         "name": Translation.tr("Record") }
+        { "action": root.actionCopy,            "icon": "content_cut",      "name": Translation.tr("Shot") },
+        { "action": root.actionEdit,            "icon": "draw",             "name": Translation.tr("Edit") },
+        { "action": root.actionCharRecognition, "icon": "document_scanner", "name": Translation.tr("OCR") },
+        { "action": root.actionSearch,          "icon": "image_search",     "name": Translation.tr("Search") },
+        { "action": root.actionRecord,          "icon": "videocam",         "name": Translation.tr("Record") }
     ]
     function indexForAction(a) {
-        for (let i = 0; i < root.actionList.length; i++)
-            if (root.actionList[i].action === a) return i;
+        const list = root.actionList ?? []
+        for (let i = 0; i < list.length; i++)
+            if (list[i].action === a) return i;
         return 0;
+    }
+
+    function syncBarsFromProperties(): void {
+        root._syncingBars = true
+        actionBar.setCurrentIndex(root.indexForAction(root.action))
+        modeBar.setCurrentIndex(root.selectionMode === root.modeRectCorners ? 0 : 1)
+        root._syncingBars = false
     }
 
     function persistSnipChoice(): void {
         if (!(Config.options?.regionSelector?.rememberSnipChoice ?? true)) return
-        const isRecord = root.action === RegionSelection.SnipAction.Record
-            || root.action === RegionSelection.SnipAction.RecordWithSound
+        const isRecord = root.action === root.actionRecord
+            || root.action === root.actionRecordWithSound
         const updates = { "regionSelector.lastMode": root.selectionMode }
         if (!isRecord) updates["regionSelector.lastAction"] = root.action
         Config.setNestedValues(updates)
@@ -51,10 +72,13 @@ Toolbar {
     // Action selector
     ToolbarTabBar {
         id: actionBar
+        objectName: "regionActionTabBar"
         Layout.alignment: Qt.AlignVCenter
-        tabButtonList: root.actionList.map(a => ({"icon": a.icon, "name": a.name}))
+        compactThreshold: 6
+        tabButtonList: (root.actionList ?? []).map(a => ({"icon": a.icon, "name": a.name}))
         onCurrentIndexChanged: {
-            const a = root.actionList[currentIndex]?.action;
+            if (root._syncingBars) return;
+            const a = root.actionList?.[currentIndex]?.action;
             if (a !== undefined && a !== root.action) root.action = a;
         }
         onUserSelected: root.persistSnipChoice()
@@ -63,13 +87,17 @@ Toolbar {
     // Region shape (applies when drawing a region)
     ToolbarTabBar {
         id: modeBar
+        objectName: "regionModeTabBar"
         Layout.alignment: Qt.AlignVCenter
+        compactThreshold: 4
         tabButtonList: [
             {"icon": "activity_zone", "name": Translation.tr("Rect")},
             {"icon": "gesture", "name": Translation.tr("Circle")}
         ]
         onCurrentIndexChanged: {
-            root.selectionMode = currentIndex === 0 ? RegionSelection.SelectionMode.RectCorners : RegionSelection.SelectionMode.Circle;
+            if (root._syncingBars) return;
+            const nextMode = currentIndex === 0 ? root.modeRectCorners : root.modeCircle;
+            if (root.selectionMode !== nextMode) root.selectionMode = nextMode;
         }
         onUserSelected: root.persistSnipChoice()
     }
@@ -98,13 +126,10 @@ Toolbar {
         colOnBackground: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer
     }
 
-    onActionChanged: actionBar.setCurrentIndex(root.indexForAction(root.action))
-    onSelectionModeChanged: {
-        modeBar.setCurrentIndex(selectionMode === RegionSelection.SelectionMode.RectCorners ? 0 : 1);
-    }
+    onActionChanged: root.syncBarsFromProperties()
+    onSelectionModeChanged: root.syncBarsFromProperties()
 
     Component.onCompleted: {
-        actionBar.setCurrentIndex(root.indexForAction(root.action));
-        modeBar.setCurrentIndex(selectionMode === RegionSelection.SelectionMode.RectCorners ? 0 : 1);
+        root.syncBarsFromProperties()
     }
 }

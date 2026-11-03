@@ -67,6 +67,14 @@ DashCard {
         Todo.deleteItem(item.originalIndex)
     }
 
+    function handleEscape(): bool {
+        if (root.showAddDialog) {
+            root.showAddDialog = false
+            return true
+        }
+        return false
+    }
+
     Keys.onPressed: event => {
         if (event.key === Qt.Key_N && Todo.ready && !Todo.busy) {
             root.showAddDialog = true
@@ -77,8 +85,7 @@ DashCard {
         } else if (event.key === Qt.Key_PageUp) {
             root.currentTab = Math.max(0, root.currentTab - 1)
             event.accepted = true
-        } else if (event.key === Qt.Key_Escape && root.showAddDialog) {
-            root.showAddDialog = false
+        } else if (event.key === Qt.Key_Escape && root.handleEscape()) {
             event.accepted = true
         }
     }
@@ -351,14 +358,16 @@ DashCard {
             }
 
             Item {
-                x: 0
-                width: tabShell.halfWidth
-                height: tabShell.height
+                x: tabShell.inset
+                y: tabShell.inset
+                width: tabShell.halfWidth - tabShell.inset
+                height: tabShell.innerHeight
                 z: 4
 
                 Row {
                     id: leftTabLabel
                     anchors.centerIn: parent
+                    anchors.horizontalCenterOffset: -Math.round((tabShell.badgeSize + 4) / 2)
                     spacing: tabShell.labelSpacing
 
                     MaterialSymbol {
@@ -409,13 +418,15 @@ DashCard {
 
             Item {
                 x: tabShell.halfWidth
-                width: tabShell.halfWidth
-                height: tabShell.height
+                y: tabShell.inset
+                width: tabShell.halfWidth - tabShell.inset
+                height: tabShell.innerHeight
                 z: 4
 
                 Row {
                     id: rightTabLabel
                     anchors.centerIn: parent
+                    anchors.horizontalCenterOffset: -Math.round((tabShell.badgeSize + 4) / 2)
                     spacing: tabShell.labelSpacing
 
                     MaterialSymbol {

@@ -42,7 +42,7 @@
                 "api_format": "mistral"
             }
         ],
-        "systemPrompt": "## Style\n- Use casual tone, don't be formal! Make sure you answer precisely without hallucination and prefer bullet points over walls of text.\n\n## Context (ignore when irrelevant)\n- You are a helpful sidebar assistant on a {DISTRO} Linux system\n- Desktop environment: {DE}\n- Current date & time: {DATETIME}\n- Focused app: {WINDOWCLASS}\n\n## Presentation\n- Use Markdown features in your response\n- **Bold** text to **highlight keywords**\n- Use h2 headers with emojis (e.g. `## 🐧 Linux`)\n- Bullet points preferred over long paragraphs\n",
+        "systemPrompt": "## Style\n- Use casual tone, don't be formal! Make sure you answer precisely without hallucination and prefer bullet points over walls of text.\n\n## Context (ignore when irrelevant)\n- You are a helpful sidebar assistant on a {DISTRO} Linux system\n- Desktop environment: {DE}\n- Current date & time: {DATETIME}\n- Focused app: {WINDOWCLASS}\n\n## Presentation\n- Use Markdown features in your response\n- **Bold** text to **highlight keywords**\n- Use h2 headers with emojis (e.g. `## \ud83d\udc27 Linux`)\n- Bullet points preferred over long paragraphs\n",
         "tool": "functions"
     },
     "altSwitcher": {
@@ -126,7 +126,7 @@
             "material": 0,
             "cards": 3,
             "aurora": 0,
-            "inir": 1,
+            "alis": 1,
             "angel": 1,
             "regalia": 1,
             "zzz": 0,
@@ -333,6 +333,13 @@
         "editor": "code",
         "fileManager": "nautilus",
         "fileExplorer": "nautilus",
+        "pdfViewer": "okular",
+        "officeSuite": "libreoffice",
+        "htmlViewer": "firefox",
+        "imageViewer": "loupe",
+        "videoPlayer": "mpv",
+        "audioPlayer": "amberol",
+        "archiveManager": "file-roller",
         "manageUser": "kcmshell6 kcm_users",
         "network": "nm-connection-editor",
         "networkEthernet": "nm-connection-editor",
@@ -345,6 +352,13 @@
             "browser": "",
             "editor": "",
             "fileManager": "",
+            "pdfViewer": "",
+            "officeSuite": "",
+            "htmlViewer": "",
+            "imageViewer": "",
+            "videoPlayer": "",
+            "audioPlayer": "",
+            "archiveManager": "",
             "manageUser": "",
             "network": "",
             "networkEthernet": "",
@@ -406,22 +420,6 @@
             "enableAnimatedBlur": false
         },
         "hideWhenFullscreen": true,
-        "parallax": {
-            "enable": false,
-            "axis": "vertical",
-            "autoVertical": false,
-            "enableSidebar": true,
-            "enableWorkspace": true,
-            "workspaceShift": 1,
-            "vertical": true,
-            "zoom": 1,
-            "panelShift": 0.15,
-            "widgetDepth": 1.2,
-            "pauseDuringTransitions": true,
-            "transitionSettleMs": 220,
-            "widgetsFactor": 1.2,
-            "workspaceZoom": 1
-        },
         "thumbnailPath": "",
         "wallpaperPath": "",
         "pan": {
@@ -675,11 +673,11 @@
                 "locked": false,
                 "placementStrategy": "free",
                 "preset": "exhibition",
-                "primaryText": "夏の記憶",
-                "secondaryText": "潮風と、あの子と、終わらない夏",
-                "sealText": "特別展",
+                "primaryText": "\u590f\u306e\u8a18\u61b6",
+                "secondaryText": "\u6f6e\u98a8\u3068\u3001\u3042\u306e\u5b50\u3068\u3001\u7d42\u308f\u3089\u306a\u3044\u590f",
+                "sealText": "\u7279\u5225\u5c55",
                 "footerText": "PACIFIC DRIVE-IN",
-                "dateText": "7.12 — 8.31",
+                "dateText": "7.12 \u2014 8.31",
                 "showSecondary": true,
                 "showSeal": true,
                 "showFooter": true,
@@ -1037,9 +1035,6 @@
         "autoKillNotificationDaemons": true,
         "autoKillTrays": true
     },
-    "crosshair": {
-        "code": "0;P;d;1;0l;10;0o;2;1b;0"
-    },
     "display": {
         "primaryMonitor": ""
     },
@@ -1083,11 +1078,31 @@
         "pageOrder": [
             "dashboard",
             "music",
-            "weeklyPlanner"
+            "weeklyPlanner",
+            "spacedRepetition"
         ],
         "music": {
             "enable": true,
-            "showScrollbars": true
+            "showScrollbars": false
+        },
+        "spacedRepetition": {
+            "enable": true,
+            "dailyNewLimit": 20,
+            "dailyReviewLimit": 100,
+            "baseEase": 250,
+            "easyBonus": 130,
+            "hardMultiplier": 120,
+            "lapseMultiplier": 50,
+            "maximumInterval": 3650,
+            "loadBalance": true,
+            "leechThreshold": 6,
+            "boostMultiplier": 100,
+            "defaultLanguage": "en",
+            "studyDirection": "both",
+            "prioritizeOrder": "due_first",
+            "autoLookupLevel": true,
+            "autoLookupOnline": true,
+            "autoCloze": true
         },
         "keepLoaded": true,
         "showHeader": true,
@@ -1345,19 +1360,6 @@
         "pinnedOnStartup": false,
         "keepOnTop": false
     },
-    "overlay": {
-        "animationDurationMs": 120,
-        "backgroundOpacity": 1,
-        "clickthroughOpacity": 0.8,
-        "darkenScreen": false,
-        "floatingImage": {
-            "imageSource": "",
-            "scale": 0.5
-        },
-        "openingZoomAnimation": false,
-        "scrimAnimationDurationMs": 60,
-        "scrimDim": 100
-    },
     "quickNotes": {
         "enable": true,
         "monitorMode": "all",
@@ -1415,10 +1417,6 @@
         "memoryMonitoring": true,
         "memoryWarningNotification": false,
         "reduceAnimations": false
-    },
-    "policies": {
-        "ai": 0,
-        "weeb": 0
     },
     "regionSelector": {
         "rememberSnipChoice": true,
@@ -1492,22 +1490,6 @@
         "ai": {
             "textFadeIn": true
         },
-        "booru": {
-            "allowNsfw": false,
-            "defaultProvider": "yandere",
-            "gelbooru": {
-                "apiKey": "",
-                "userId": ""
-            },
-            "downloadPath": {
-                "sfw": "",
-                "nsfw": ""
-            },
-            "limit": 20,
-            "zerochan": {
-                "username": "[unset]"
-            }
-        },
         "cornerOpen": {
             "bottom": false,
             "clickless": false,
@@ -1578,9 +1560,7 @@
                 "news",
                 "tools",
                 "ai",
-                "translator",
-                "anime",
-                "animeSchedule"
+                "translator"
             ]
         },
         "right": {
@@ -1621,78 +1601,16 @@
         "tools": {
             "enable": false
         },
-        "software": {
-            "enable": false
-        },
-        "plugins": {
-            "enable": false,
-            "lastActivePlugin": ""
-        },
         "music": {
             "enable": false,
             "libraryFolder": "",
             "mpdHost": "127.0.0.1",
             "mpdPort": 6600
         },
-        "ytmusic": {
-            "enable": false,
-            "autoConnect": true,
-            "hideSyncBanner": false,
-            "browser": "firefox",
-            "cookiesPath": "",
-            "useManualCookies": false,
-            "connected": false,
-            "resolvedBrowserArg": "",
-            "audioQuality": "best",
-            "normalizeVolume": true,
-            "verbose": false,
-            "shuffleMode": false,
-            "repeatMode": 0,
-            "recentSearches": [],
-            "queue": [],
-            "playlists": [],
-            "liked": [],
-            "lastLikedSync": "",
-            "upNextNotifications": true,
-            "suppressUpNextInFullscreen": true,
-            "volume": 100,
-            "profile": {
-                "name": "",
-                "avatar": "",
-                "url": ""
-            },
-            "cache": {
-                "playlists": [],
-                "albums": [],
-                "liked": []
-            },
-            "resume": {
-                "videoId": "",
-                "title": "",
-                "artist": "",
-                "thumbnail": "",
-                "url": "",
-                "position": 0,
-                "wasPlaying": false,
-                "activePlaylist": [],
-                "currentIndex": -1,
-                "activePlaylistSource": ""
-            }
-        },
-        "wallhaven": {
-            "enable": true,
-            "limit": 24,
-            "fitMode": "auto",
-            "apiKey": ""
-        },
         "news": {
             "enable": true,
             "mode": "local",
             "topic": "WORLD"
-        },
-        "animeSchedule": {
-            "enable": false,
-            "showNsfw": false
         },
         "widgets": {
             "enable": true,
@@ -1854,17 +1772,6 @@
         "showTitlebar": true,
         "appIdentityRules": []
     },
-    "workSafety": {
-        "enable": {
-            "clipboard": true,
-            "wallpaper": true
-        },
-        "triggerCondition": {
-            "fileKeywords": [],
-            "linkKeywords": [],
-            "networkNameKeywords": []
-        }
-    },
     "idle": {
         "screenOffTimeout": 300,
         "lockTimeout": 600,
@@ -1917,7 +1824,6 @@
         "bar": true,
         "background": true,
         "cheatsheet": true,
-        "crosshair": false,
         "dock": true,
         "lock": true,
         "mediaControls": true,
@@ -1925,7 +1831,6 @@
         "onScreenDisplay": true,
         "onScreenKeyboard": true,
         "overview": true,
-        "overlay": false,
         "polkit": true,
         "regionSelector": true,
         "reloadPopup": true,
@@ -1968,7 +1873,7 @@
     },
     "waffles": {
         "settings": {
-            "useMaterialStyle": false
+            "useMaterialStyle": true
         },
         "modules": {
             "sidebarLeft": false,
@@ -2042,22 +1947,6 @@
                 "enableAnimation": false,
                 "enableAnimatedBlur": false,
                 "thumbnailPath": ""
-            },
-            "parallax": {
-                "enable": false,
-                "axis": "horizontal",
-                "enableWorkspace": false,
-                "enableSidebar": false,
-                "workspaceShift": 1,
-                "workspaceZoom": 1,
-                "zoom": 1,
-                "autoVertical": true,
-                "vertical": false,
-                "panelShift": 0.12,
-                "widgetsFactor": 1,
-                "widgetDepth": 1,
-                "pauseDuringTransitions": true,
-                "transitionSettleMs": 220
             },
             "widgets": {
                 "clock": {
@@ -2183,6 +2072,11 @@
             "aiEnabled": false,
             "endpoint": "http://127.0.0.1:11434",
             "model": "",
+            "actionModel": "",
+            "thinkingModel": "",
+            "modelAliasesJson": "{}",
+            "autoModelRoutingEnabled": true,
+            "mtpOptimizeEnabled": true,
             "thinkingEffort": "off",
             "proactive": "occasional",
             "proactiveEnabled": false,
@@ -2368,7 +2262,6 @@
         "abyssSessionScreen",
         "iiCheatsheet",
         "iiOnScreenKeyboard",
-        "iiOverlay",
         "iiControlPanel",
         "iiDashboard",
         "iiRegionSelector",
@@ -2394,7 +2287,8 @@
         "alisIntergration": {
             "tlp": false,
             "thinkfan": false,
-            "obsidian": false
+            "obsidian": false,
+            "spaced_repetition": true
         },
         "obsidian": {
             "autoTheme": false,

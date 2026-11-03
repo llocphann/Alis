@@ -36,7 +36,7 @@ Three mutually exclusive UI families are switchable at runtime (`Super+Shift+W`)
 Family URL loaders isolate inactive visual trees. Services/models remain shared.
 Abyss is not an Abyss Island implementation; its original single SDF owns physical
 perimeter, panel union and final silhouette shadow. Critical and specialist
-fallbacks are listed in [Panel Families](docs/PANEL_FAMILIES.md).
+fallbacks are documented in [STRUCTURE.md](STRUCTURE.md) and [README.md](README.md).
 
 The retired Bar renderer families (Islands, Scenic, Frame, M3 and Pill) are not runtime alternatives. Shared `island`, `pill` and `m3*` names may still appear where they describe unrelated live skins, widget shapes, Material color tokens, or other non-Bar behavior.
 
@@ -75,12 +75,14 @@ modules/
 │   └── widgets/              # Reusable widgets + qmldir
 ├── bar/                      # Classic Bar runtime
 ├── background/               # Wallpaper + desktop widgets/items
-├── sidebarLeft/              # AI chat, music, widgets
-├── sidebarRight/             # Toggles, calendar, tools
+├── dashboard/                # Dashboard, Music, Weekly Planner, Custom Tabs & optional Spaced Repetition
+├── regionSelector/           # Region selection (Screenshot, Recording, OCR)
+├── sidebarLeft/              # Intelligence (AI/Companion), Translator, Tools, News
+├── sidebarRight/             # Toggles, calendar, notifications
 ├── settings/                 # Config UI pages
 ├── dock/                     # App dock
 ├── overview/                 # Workspace overview + app search
-├── wallpaperLauncher/        # Compact wallpaper carousel
+├── wallpaperSelector/        # Wallpaper selector (grid & coverflow with Vim h/j/k/l navigation)
 ├── abyss/                    # Original geometry, field, content and settings
 │   ├── looks/                # Palette tokens, geometry policy and one shader
 │   ├── bar/                  # Five embedded module zones
@@ -95,13 +97,13 @@ modules/
 │   └── ...
 └── ...
 
-services/                     # Runtime singletons (+ services/deferred/)
-scripts/                      # Shell/fish/python helpers
+native/                       # Production Rust backend workspace (alis-native, alis-inputd, alis-mpdd, alis-theme)
+services/                     # Runtime singletons (+ AlisCompanion, AlisIntergration, SpacedRepetition, deferred/)
+scripts/                      # Shell/fish/python helpers and regression validators
 sdata/                        # Install/update lifecycle and migrations
-defaults/                     # Shipped defaults
+defaults/                     # Shipped defaults and Widget SDK
 translations/                 # Canonical en_US shell UI catalog + validators
 assets/                       # Icons, wallpapers, systemd unit, desktop entry
-docs/                         # User documentation
 ```
 
 Orbit, Mascot, Workspace Strip, and the retired Bar renderer modules are intentionally absent from the live module graph.
@@ -171,6 +173,9 @@ Waffle is a panel family, not a Dock style, and must not be folded into Dock sty
 | `DesktopItems` | Desktop item persistence + undo |
 | `DesktopWidgetLayout` | Per-output desktop-widget layout |
 | `LyricsService` | Synchronized media lyrics |
+| `AlisCompanion` | Optional [Alis-Companion](https://github.com/llocphann/Alis-Companion) package loader & Host API 1 bridge |
+| `AlisIntergration` | Optional [Alis-Intergration](https://github.com/llocphann/Alis-Intergration) plugin loader (`tlp`, `thinkfan`, `obsidian`, `spaced_repetition`) |
+| `SpacedRepetition` | Spaced Repetition proxy/bridge delegating to the optional `spaced_repetition` plugin when enabled |
 
 Wallpaper pickers apply through `Wallpapers.applySelectionTarget()`. Live preview goes through `Wallpapers.previewWallpaper()` and does not write config or regenerate colors. `modules/background/Background.qml` owns the per-output desktop surface; desktop widget instances are mapped through `Config.options.background.widgets.outputOverrides`, `screenList`, and `layerOrder`.
 
@@ -198,7 +203,7 @@ The always-instantiated `dev` target provides session-only semantic navigation f
 - `close()` — close navigable surfaces;
 - `current()` — current destination or `"closed"`.
 
-All IPC functions declare return types. Full reference: [docs/IPC.md](docs/IPC.md).
+All IPC functions declare return types. Inspect `shell.qml` and service `IpcHandler` blocks for registered targets.
 
 `taskview` remains a live shell route and maps to the normal Overview/task-view state; it is not an Orbit compatibility route.
 
@@ -262,7 +267,7 @@ Material connected presentation retains its existing ownership boundary:
 - **Connected popup presentation is active by default** for existing ii bar popups through `StyledPopup.qml`. `ConnectedSurfaceGeometry` and `ConnectedSurfaceRevealClip` retain the slide-only lifecycle, while `ConnectedSurfaceAbyssFrame` renders the exact Abyss v2.31.0 SDF union in the Overlay window using Top-layer Bar/Screen Edge owner records without repainting those owners. `ConnectedSurfaceBodyMask` keeps compositor input on the revealed rounded body only. Legacy `ConnectedSurfaceFrame` / `ConnectedSurfaceMask` remain available for Waffle and non-cutover shared surfaces; they are no longer the ii StyledPopup renderer.
 - **Retired `iiPerimeter` composition remains absent.** Abyss is an independent family with its own output-local renderer, not a reactivation of that cutover. Material ScreenEdges keeps the same locked FrameWindow ownership, rounded workspace opening, Bar-owned inset rules and reservation windows; its healthy paint backend is now the texture-free `ScreenEdgeField` analytic SDF, with the former Shape/MultiEffect renderer retained only as a lazy shader-error fallback.
 
-Detailed contracts and local visual acceptance steps live in `docs/PERIMETER.md` and `docs/SHELL_SURFACE_CONTRACTS.md`.
+Detailed contracts and local visual acceptance steps live in [README.md](README.md) and `scripts/test-shell-surface-contracts.py`.
 
 ## Localization Contract
 

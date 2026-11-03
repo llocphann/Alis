@@ -21,6 +21,7 @@ RippleButton {
     property bool hoverContextOpen: false
     property real iconSize: 24 * Appearance.sizes.barModuleScale
     property bool vertical: false
+    property real contentRotation: 0
     // "top", "bottom", "left", "right"
     property string barPosition: "top"
 
@@ -312,6 +313,7 @@ RippleButton {
             Loader {
                 id: iconLoader
                 anchors.centerIn: parent
+                rotation: -root.contentRotation
                 active: !root.isSeparator
                 sourceComponent: IconImage {
                     id: taskbarIcon
@@ -380,6 +382,7 @@ RippleButton {
             Loader {
                 active: Config.options?.dock?.monochromeIcons ?? false
                 anchors.fill: iconLoader
+                rotation: -root.contentRotation
                 sourceComponent: Item {
                     Desaturate {
                         id: desat

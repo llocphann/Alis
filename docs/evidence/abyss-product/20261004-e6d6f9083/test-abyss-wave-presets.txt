@@ -1,1 +1,0 @@
-PASS: restrained named presets, previous Calm as Balanced and unchanged Custom controls

@@ -13,7 +13,7 @@ Item {
     id: root
     focus: true
 
-    required property var targetWindow
+    property var targetWindow: null
     signal confirm()
     signal cancel()
 

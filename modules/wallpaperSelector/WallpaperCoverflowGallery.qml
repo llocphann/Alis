@@ -421,18 +421,22 @@ Item {
                 root.closeRequested()
             break
         case Qt.Key_Left:
+        case Qt.Key_H:
             if (alt || ctrl) Wallpapers.navigateBack()
             else root.moveSelection(-(shift ? 5 : 1))
             break
         case Qt.Key_Right:
+        case Qt.Key_L:
             if (alt || ctrl) Wallpapers.navigateForward()
             else root.moveSelection(shift ? 5 : 1)
             break
         case Qt.Key_Up:
+        case Qt.Key_K:
             if (alt || ctrl) Wallpapers.navigateUp()
             else root.moveSelection(-4)
             break
         case Qt.Key_Down:
+        case Qt.Key_J:
             root.moveSelection(4)
             break
         case Qt.Key_PageUp:

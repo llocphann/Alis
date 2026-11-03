@@ -89,7 +89,6 @@ check_dependencies() {
         "uv:uv"
         "cava:cava"
         "qalc:qalculate"
-        "yt-dlp:yt-dlp"
         "brightnessctl:brightnessctl"
         "slurp:slurp"
         "wf-recorder:wf-recorder"
@@ -1087,7 +1086,7 @@ check_quickshell_abi() {
     # Quickshell uses Qt private APIs — any Qt minor version bump (e.g. 6.10→6.11)
     # breaks ABI and requires rebuilding quickshell. This is the #1 cause of
     # "quickshell crashes on any UI interaction" after system updates.
-    # See: https://github.com/snowarch/iNiR/issues/93
+    # See: https://github.com/llocphann/Alis/issues/93
 
     if ! command -v qs >/dev/null 2>&1; then
         # No qs binary — dependency check will catch this

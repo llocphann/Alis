@@ -80,7 +80,6 @@ def get_config() -> dict:
     appearance = config.get("appearance") or {}
     bg = config.get("background") or {}
     transition = bg.get("transition") or {}
-    parallax = bg.get("parallax") or {}
     perf = config.get("performance") or {}
     return {
         "status": "PASS",
@@ -89,7 +88,6 @@ def get_config() -> dict:
         "transition_enabled": transition.get("enable"),
         "transition_duration_ms": transition.get("duration"),
         "reduce_animations": perf.get("reduceAnimations"),
-        "parallax_enabled": parallax.get("enable"),
         "wallpaper_hidden_by_backdrop": (bg.get("backdrop") or {}).get("hideWallpaper"),
         "has_wallpaper": bool(bg.get("wallpaperPath")),
     }
@@ -217,7 +215,7 @@ def summary(frames: list[dict], cfg: dict) -> dict:
     seen_anim = any(x["transitioning"] for x in samples)
     max_pulses = max((x.get("prime_pulse_count") or 0 for x in samples), default=0)
     max_swaps = max((x.get("frame_swap_count") or 0 for x in samples), default=0)
-    if types and not any(x in ("alisMelt", "inirMelt") for x in types):
+    if types and not any(x in ("alisMelt",) for x in types):
         interpretation = "NOT_LIQUID_SELECTED"
     elif max_fallback > 0 and max_success == 0:
         interpretation = "FALLBACK_OBSERVED"

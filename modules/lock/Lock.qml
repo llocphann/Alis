@@ -5,7 +5,6 @@ import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.lock
-import qs.modules.waffle.lock
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -148,27 +147,12 @@ Scope {
             root._cachedUseWaffleLock = Config.options?.panelFamily === "waffle"
         root.initIfReady()
     }
-    
-    Component {
-        id: iiLockComponent
-        LockSurface {
-            context: lockContext
-        }
-    }
-    
-    Component {
-        id: waffleLockComponent
-        WaffleLockSurface {
-            context: lockContext
-        }
-    }
-    
-    Component {
-        id: waffleLockSafeComponent
-        WaffleLockSurfaceSafe {
-            context: lockContext
-        }
-    }
+
+    readonly property string _lockSurfaceSource: root._cachedUseWaffleLock
+        ? Qt.resolvedUrl(CompositorService.isNiri
+            ? "../waffle/lock/WaffleLockSurfaceSafe.qml"
+            : "../waffle/lock/WaffleLockSurface.qml")
+        : Qt.resolvedUrl("LockSurface.qml")
     
     WlSessionLock {
         id: lock
@@ -199,14 +183,29 @@ Scope {
                 anchors.fill: parent
                 // Don't animate opacity - causes issues during hot-reload
                 opacity: active ? 1 : 0
-                sourceComponent: root._cachedUseWaffleLock
-                    ? (CompositorService.isNiri ? waffleLockSafeComponent : waffleLockComponent)
-                    : iiLockComponent
+
+                function _syncSource(): void {
+                    if (active) {
+                        setSource(root._lockSurfaceSource, { context: lockContext })
+                    } else if (source.toString().length > 0) {
+                        source = ""
+                    }
+                }
+
+                Component.onCompleted: _syncSource()
+
+                Connections {
+                    target: root
+                    function on_LockSurfaceSourceChanged() {
+                        if (lockSurfaceLoader.active)
+                            lockSurfaceLoader._syncSource()
+                    }
+                }
                 
                 // Detect load errors
                 onStatusChanged: {
                     if (status === Loader.Error) {
-                        console.error("[Lock] Lock surface failed to load:", sourceComponent.errorString())
+                        console.error("[Lock] Lock surface failed to load:", sourceComponent ? sourceComponent.errorString() : source)
                         root.useFallbackLock()
                     } else if (status === Loader.Loading) {
                         console.info("[Lock] Lock surface loading...")
@@ -225,6 +224,7 @@ Scope {
                 
                 // Re-focus when becoming active
                 onActiveChanged: {
+                    _syncSource()
                     if (active && item) {
                         Qt.callLater(() => {
                             if (item) item.forceActiveFocus()
@@ -359,25 +359,24 @@ Scope {
     }
 
     function initIfReady() {
-        if (!Config.ready || !Persistent.ready || GlobalStates.startupLockDone)
+        if (!Config.ready || GlobalStates.startupLockDone)
             return;
 
-        // This is session startup state, not compositor-instance state. The Lock
-        // component is loaded asynchronously, so Config/Persistent may already
-        // be ready before its Connections exist; Component.onCompleted below
-        // mirrors the current state and this singleton guard prevents hot-reload
-        // from locking again.
-        GlobalStates.startupLockDone = true;
-
         if (Config.options?.lock?.launchOnStartup ?? false) {
+            GlobalStates.startupLockDone = true;
             if (Config.options?.lock?.useHyprlock ?? false) {
                 Quickshell.execDetached(["/usr/bin/bash", "-lc", "/usr/bin/pidof hyprlock || /usr/bin/hyprlock"]);
-            } else if (!GlobalStates.screenLocked && !root._lockActivating) {
-                lockActivateDelay.restart();
+            } else {
+                GlobalStates.screenLocked = true;
             }
-        } else {
-            KeyringStorage.fetchKeyringData();
+            return;
         }
+
+        if (!Persistent.ready)
+            return;
+
+        GlobalStates.startupLockDone = true;
+        KeyringStorage.fetchKeyringData();
     }
 
     Connections {

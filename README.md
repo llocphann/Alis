@@ -3,16 +3,18 @@
 > This README is the current product and execution contract for completing **Alis 1.0**.
 > It intentionally contains only active requirements, release blockers, architecture constraints and validation gates. Historical implementation notes, one-off commit hashes and stale migration narratives belong in Git history / `CHANGELOG.md`, not here.
 >
-> **Target:** `1.0`
+> **Target:** `1.0` (`1.0.1` active `dev` line)
 > **Primary development branch:** `dev`
 > **Stable baseline:** `stable`
-> **Scope refresh:** 2026-09-28
+> **Scope refresh:** 2026-11-02
 >
-> **Current `dev` snapshot (2026-09-28):**
+> **Current `dev` snapshot (2026-11-02):**
 > - The qualified **Rust native workspace is the production backend**. `alis-native`, `alis-inputd`, `alis-mpdd` and `alis-theme` are built/shipped by supported install paths; Python implementations remain an explicit rollback/fail-soft path rather than the default selector.
 > - **Material is the only public shell-wide Global Theme**. Legacy persisted theme/style values are migration input only and must normalize to supported Material behavior rather than reactivate retired renderers.
 > - **Abyss and Waffle are the public panel families.** Material/`ii` panel values migrate to Abyss; Material remains the shared color/theme system, not a third panel family. Abyss inherits mature content and backends through one output-local liquid surface. Existing ii source is compatibility/reuse input, not permission to restore a public Material panel mode.
 > - **Waffle remains a supported independent panel family** and must not be removed or treated as legacy during ii cleanup.
+> - **Optional Companion & Integration packages:** [Alis-Companion](https://github.com/llocphann/Alis-Companion) (`alis-companion`, Host API 1) owns the optional 3D liquid droplet/octopus companions and the unified Left Sidebar `Intelligence` chat view (`AquaCompanionChatView.qml` with `/` slash commands, skills, RAG and MCP). [Alis-Intergration](https://github.com/llocphann/Alis-Intergration) (`alis-intergration`, Host API 1) owns the optional `tlp`, `thinkfan`, `obsidian` and `spaced_repetition` (SM-2/FSRS-inspired vocabulary & concept flashcards with CEFR A1–C2 grading, EN/DE/VI definitions, morphology and Bulk Auto-Syntax / Obsidian SR importer) plugins.
+> - **Dashboard & Left Sidebar:** Dashboard supports built-in tabs (`Dashboard`, `Music`, `Weekly Planner`), optional plugin tabs (`Spaced Repetition`), and user-managed Custom Tabs (`Create`, `Rename`, `Delete`) inside Edit Dashboard Layout. Left Sidebar unifies `Intelligence`, `Translator`, `Tools` and `News` on the shared Abyss `edgeSurfaceColor` surface contract.
 > - Source/contract completion is not the same as release acceptance: runtime-sensitive gates still require the canonical local validator and live Niri/Quickshell checks on the exact candidate SHA.
 
 ## 1. Source-of-truth and workflow
@@ -100,10 +102,10 @@ radius      -> PerimeterTokens.frameRadius
 
 The Abyss migration is complete and is now the production baseline. Before any
 future perimeter/connected-surface optimization, read
-[the archived migration notes](docs/archive/surfaces/ABYSS_INTEGRATION_COMPLETE.md). New work should focus on optimization,
+[ARCHITECTURE.md](ARCHITECTURE.md) and [CHANGELOG.md](CHANGELOG.md). New work should focus on optimization,
 bug fixing and refinement rather than reopening the migration.
 
-Optimization research is centralized under [docs/optimization](docs/optimization/README.md); pending implementation is tracked in [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen). Superseded documents are indexed in [the archive](docs/archive/README.md).
+Pending implementation and optimization work are tracked in [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen), [Alis-Companion Issues](https://github.com/llocphann/Alis-Companion/issues), and [Alis-Intergration Issues](https://github.com/llocphann/Alis-Intergration/issues). Historical changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
 **Fullscreen Bar lifecycle lock (maintainer-approved 2026-09-19):**
 
@@ -169,11 +171,11 @@ Further equalizer presentation experiments are planned/deferred rather than curr
 
 ## 3. v1.0 release blockers
 
-Active correctness, release, presentation and performance tasks are tracked in [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen), with stable task codes. See [canonical validation](docs/VALIDATION.md) for SHA-pinned local checks and separate maintainer desktop acceptance.
+Active correctness, release, presentation and performance tasks are tracked in [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen), with stable task codes. Run `bash scripts/validate-maintainer-local.sh` for SHA-pinned local checks and separate maintainer desktop acceptance.
 
 ## 3.1 Latest maintainer runtime findings
 
-Current open/reconciliation tasks start in [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen), following [AGENTS.md](AGENTS.md) priorities. Original source-complete notes and past checkpoints remain in [the archive](docs/archive/README.md).
+Current open/reconciliation tasks start in [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen), following [AGENTS.md](AGENTS.md) priorities. Past checkpoints and release notes remain in [CHANGELOG.md](CHANGELOG.md).
 
 ## 4. Connected-surface architecture contract
 
@@ -232,7 +234,7 @@ See [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Ao
 
 ## 7. Local release validation — P0 gate
 
-See [`docs/VALIDATION.md`](docs/VALIDATION.md) for the canonical validator contract and the separately labeled maintainer-only live checklist.
+Run `bash scripts/validate-maintainer-local.sh` for the canonical validator contract and refer to [AGENTS.md](AGENTS.md) for the separately labeled maintainer-only live checklist.
 
 ## 8. v1.0 definition of done
 
@@ -266,7 +268,7 @@ To avoid future contradictions:
 
 - keep this README focused on **current** v1.0 requirements, invariants and release gates;
 - classify each actionable maintainer request in GitHub Issues by its stable feature/rework/bug code, deduplicate and follow the owner's latest priority;
-- use [the documentation index](docs/README.md) for references and [the archive](docs/archive/README.md) for historical evidence; keep unfinished/bot-complete-unverified work in open GitHub Issues;
+- use [ARCHITECTURE.md](ARCHITECTURE.md) and [STRUCTURE.md](STRUCTURE.md) for architectural references and [CHANGELOG.md](CHANGELOG.md) for historical evidence; keep unfinished/bot-complete-unverified work in open GitHub Issues;
 - treat the Material-only Global Theme rule as canonical anywhere older documentation still describes multiple Global Themes;
 - do not pin transient implementation status to old commit hashes here;
 - put historical changes in `CHANGELOG.md` / Git history;

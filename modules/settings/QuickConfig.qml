@@ -71,18 +71,6 @@ ContentPage {
         Wallpapers.load()
     }
 
-    Process {
-        id: randomWallProc
-        property string status: ""
-        property string scriptPath: `${Directories.scriptsPath}/colors/random/random_konachan_wall.sh`
-        command: ["/usr/bin/bash", "-c", FileUtils.trimFileProtocol(randomWallProc.scriptPath)]
-        stdout: SplitParser {
-            onRead: data => {
-                randomWallProc.status = data.trim();
-            }
-        }
-    }
-
     // Wallpaper selection
     SettingsCardSection {
         settingsTaskSection: "wallpaper"
@@ -188,60 +176,6 @@ ContentPage {
                         toggled: Appearance.m3colors.darkmode
                         rightmost: true
                         onClicked: MaterialThemeLoader.setDarkMode(true)
-                    }
-                }
-
-                // Bottom left — random buttons (conditional on weeb policy)
-                RowLayout {
-                    anchors.bottom: parent.bottom
-                    anchors.left: parent.left
-                    anchors.margins: 10
-                    spacing: 6
-                    visible: (Config.options?.policies?.weeb ?? 0) === 1
-
-                    RippleButtonWithIcon {
-                        enabled: !randomWallProc.running
-                        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
-                        materialIcon: "ifl"
-                        mainText: randomWallProc.running ? Translation.tr("...") : Translation.tr("Konachan")
-                        colBackground: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.75)
-                        colBackgroundHover: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.85)
-                        mainContentComponent: Component {
-                            StyledText {
-                                text: randomWallProc.running ? Translation.tr("...") : Translation.tr("Konachan")
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: Appearance.colors.colOnLayer0
-                            }
-                        }
-                        onClicked: {
-                            randomWallProc.scriptPath = `${Directories.scriptsPath}/colors/random/random_konachan_wall.sh`;
-                            randomWallProc.running = true;
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("Random SFW Anime wallpaper from Konachan\nImage is saved to ~/Pictures/Wallpapers").replace("~/Pictures/Wallpapers", Directories.shortHomePath(Directories.wallpapersPath))
-                        }
-                    }
-                    RippleButtonWithIcon {
-                        enabled: !randomWallProc.running
-                        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
-                        materialIcon: "ifl"
-                        mainText: randomWallProc.running ? Translation.tr("...") : Translation.tr("osu!")
-                        colBackground: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.75)
-                        colBackgroundHover: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.85)
-                        mainContentComponent: Component {
-                            StyledText {
-                                text: randomWallProc.running ? Translation.tr("...") : Translation.tr("osu!")
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: Appearance.colors.colOnLayer0
-                            }
-                        }
-                        onClicked: {
-                            randomWallProc.scriptPath = `${Directories.scriptsPath}/colors/random/random_osu_wall.sh`;
-                            randomWallProc.running = true;
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("Random osu! seasonal background\nImage is saved to ~/Pictures/Wallpapers").replace("~/Pictures/Wallpapers", Directories.shortHomePath(Directories.wallpapersPath))
-                        }
                     }
                 }
 
@@ -653,14 +587,11 @@ ContentPage {
             }
         }
 
+        // Multi-monitor management panel
         SettingsGroup {
-
-            // Multi-monitor management panel
-            ColumnLayout {
-                id: multiMonitorPanel
-                visible: Config.options?.background?.multiMonitor?.enable ?? false
-                Layout.fillWidth: true
-                spacing: Appearance.sizes.spacingSmall
+            id: multiMonitorPanel
+            visible: Config.options?.background?.multiMonitor?.enable ?? false
+            Layout.fillWidth: true
 
                 property string selectedMonitor: {
                     const primary = GlobalStates.primaryScreen
@@ -1498,7 +1429,6 @@ ContentPage {
                         wrapMode: Text.WordWrap
                     }
                 }
-            }
         }
     }
 
@@ -1509,264 +1439,251 @@ ContentPage {
     GridLayout {
         id: quickTwoColumnGrid
         Layout.fillWidth: true
-        columns: width >= 620 ? 2 : 1
-        uniformCellWidths: columns === 2
+        columns: 1
+        uniformCellWidths: false
         columnSpacing: 14
         rowSpacing: 14
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        Layout.alignment: Qt.AlignTop
-        spacing: 14
+SettingsCardSection {
+    Layout.preferredWidth: 1
+    Layout.alignment: Qt.AlignTop
+    Layout.fillWidth: true
+    settingsTaskSection: "game"
+    visible: true
+    expanded: true
+    icon: "sports_esports"
+    title: Translation.tr("Game Mode")
 
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        settingsTaskSection: "game"
-        visible: true
-        expanded: true
-        icon: "sports_esports"
-        title: Translation.tr("Game Mode")
-
-        SettingsGroup {
-            SettingsSwitch {
-                buttonIcon: "fullscreen"
-                text: Translation.tr("Auto-detect fullscreen")
-                checked: Config.options?.gameMode?.autoDetect ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("gameMode.autoDetect", checked)
-                }
-                StyledToolTip {
-                    text: Translation.tr("Automatically enable Game Mode when apps go fullscreen")
-                }
+    SettingsGroup {
+        SettingsSwitch {
+            buttonIcon: "fullscreen"
+            text: Translation.tr("Auto-detect fullscreen")
+            checked: Config.options?.gameMode?.autoDetect ?? true
+            onCheckedChanged: {
+                Config.setNestedValue("gameMode.autoDetect", checked)
             }
-
-            SettingsSwitch {
-                buttonIcon: "animation"
-                text: Translation.tr("Disable animations")
-                checked: Config.options?.gameMode?.disableAnimations ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("gameMode.disableAnimations", checked)
-                }
-                StyledToolTip {
-                    text: Translation.tr("Turn off UI animations when Game Mode is active")
-                }
+            StyledToolTip {
+                text: Translation.tr("Automatically enable Game Mode when apps go fullscreen")
             }
+        }
 
-            SettingsSwitch {
-                buttonIcon: "blur_on"
-                text: Translation.tr("Disable effects")
-                checked: Config.options?.gameMode?.disableEffects ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("gameMode.disableEffects", checked)
-                }
-                StyledToolTip {
-                    text: Translation.tr("Turn off blur and shadows when Game Mode is active")
-                }
+        SettingsSwitch {
+            buttonIcon: "animation"
+            text: Translation.tr("Disable animations")
+            checked: Config.options?.gameMode?.disableAnimations ?? true
+            onCheckedChanged: {
+                Config.setNestedValue("gameMode.disableAnimations", checked)
             }
-
-            SettingsSwitch {
-                buttonIcon: "desktop_windows"
-                text: Translation.tr("Disable Niri animations")
-                checked: Config.options?.gameMode?.disableNiriAnimations ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("gameMode.disableNiriAnimations", checked)
-                }
-                StyledToolTip {
-                    text: Translation.tr("Turn off compositor animations when Game Mode is active")
-                }
+            StyledToolTip {
+                text: Translation.tr("Turn off UI animations when Game Mode is active")
             }
+        }
 
-            SettingsSwitch {
-                buttonIcon: "visibility_off"
-                text: Translation.tr("Disable Discover overlay")
-                checked: Config.options?.gameMode?.disableDiscoverOverlay ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("gameMode.disableDiscoverOverlay", checked)
-                }
-                StyledToolTip {
-                    text: Translation.tr("Stop discover-overlay while Game Mode is active")
-                }
+        SettingsSwitch {
+            buttonIcon: "blur_on"
+            text: Translation.tr("Disable effects")
+            checked: Config.options?.gameMode?.disableEffects ?? true
+            onCheckedChanged: {
+                Config.setNestedValue("gameMode.disableEffects", checked)
             }
-
-            SettingsSwitch {
-                buttonIcon: "visibility_off"
-                text: Translation.tr("Minimal mode")
-                checked: Config.options?.gameMode?.minimalMode ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("gameMode.minimalMode", checked)
-                }
-                StyledToolTip {
-                    text: Translation.tr("Make panels transparent and hide backgrounds for maximum performance")
-                }
+            StyledToolTip {
+                text: Translation.tr("Turn off blur and shadows when Game Mode is active")
             }
+        }
 
-            SettingsSwitch {
-                buttonIcon: "notifications_off"
-                text: Translation.tr("Suppress notifications")
-                checked: Config.options?.gameMode?.suppressNotifications ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("gameMode.suppressNotifications", checked)
-                }
-                StyledToolTip {
-                    text: Translation.tr("Hide notification popups while Game Mode is active")
-                }
+        SettingsSwitch {
+            buttonIcon: "desktop_windows"
+            text: Translation.tr("Disable Niri animations")
+            checked: Config.options?.gameMode?.disableNiriAnimations ?? true
+            onCheckedChanged: {
+                Config.setNestedValue("gameMode.disableNiriAnimations", checked)
+            }
+            StyledToolTip {
+                text: Translation.tr("Turn off compositor animations when Game Mode is active")
+            }
+        }
+
+        SettingsSwitch {
+            buttonIcon: "visibility_off"
+            text: Translation.tr("Disable Discover overlay")
+            checked: Config.options?.gameMode?.disableDiscoverOverlay ?? true
+            onCheckedChanged: {
+                Config.setNestedValue("gameMode.disableDiscoverOverlay", checked)
+            }
+            StyledToolTip {
+                text: Translation.tr("Stop discover-overlay while Game Mode is active")
+            }
+        }
+
+        SettingsSwitch {
+            buttonIcon: "visibility_off"
+            text: Translation.tr("Minimal mode")
+            checked: Config.options?.gameMode?.minimalMode ?? true
+            onCheckedChanged: {
+                Config.setNestedValue("gameMode.minimalMode", checked)
+            }
+            StyledToolTip {
+                text: Translation.tr("Make panels transparent and hide backgrounds for maximum performance")
+            }
+        }
+
+        SettingsSwitch {
+            buttonIcon: "notifications_off"
+            text: Translation.tr("Suppress notifications")
+            checked: Config.options?.gameMode?.suppressNotifications ?? true
+            onCheckedChanged: {
+                Config.setNestedValue("gameMode.suppressNotifications", checked)
+            }
+            StyledToolTip {
+                text: Translation.tr("Hide notification popups while Game Mode is active")
             }
         }
     }
-    }
+}
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        Layout.alignment: Qt.AlignTop
-        spacing: 14
+SettingsCardSection {
+    Layout.preferredWidth: 1
+    Layout.alignment: Qt.AlignTop
+    Layout.fillWidth: true
+    settingsTaskSection: "capture"
+    visible: true
+    expanded: true
+    icon: "photo_camera"
+    title: Translation.tr("Capture locations")
 
-    SettingsCardSection {
-        Layout.fillWidth: true
-        settingsTaskSection: "capture"
-        visible: true
-        expanded: true
-        icon: "photo_camera"
-        title: Translation.tr("Capture locations")
+    SettingsGroup {
+        NoticeBox {
+            Layout.fillWidth: true
+            materialIcon: "folder"
+            text: Translation.tr("Choose separate capture folders; detailed paths in Tools.")
+        }
 
-        SettingsGroup {
-            NoticeBox {
+        ContentSubsection {
+            title: Translation.tr("Recordings")
+
+            StyledText {
                 Layout.fillWidth: true
-                materialIcon: "folder"
-                text: Translation.tr("Choose separate capture folders; detailed paths in Tools.")
+                text: Directories.shortHomePath(root.effectiveRecordingPath)
+                color: Appearance.colors.colOnLayer1
+                elide: Text.ElideMiddle
             }
 
-            ContentSubsection {
-                title: Translation.tr("Recordings")
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Directories.shortHomePath(root.effectiveRecordingPath)
-                    color: Appearance.colors.colOnLayer1
-                    elide: Text.ElideMiddle
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Appearance.sizes.spacingSmall
-
-                    RippleButtonWithIcon {
-                        Layout.fillWidth: true
-                        materialIcon: "folder_open"
-                        mainText: Translation.tr("Open folder")
-                        onClicked: ShellExec.openDirectory(root.effectiveRecordingPath, Translation.tr("Open recordings folder"))
-                    }
-
-                    RippleButtonWithIcon {
-                        Layout.fillWidth: true
-                        materialIcon: "drive_file_move"
-                        mainText: Translation.tr("Change folder")
-                        onClicked: root.openCaptureFolderDialog("recordings")
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Screenshots")
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Directories.shortHomePath(root.effectiveScreenshotPath)
-                    color: Appearance.colors.colOnLayer1
-                    elide: Text.ElideMiddle
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Appearance.sizes.spacingSmall
-
-                    RippleButtonWithIcon {
-                        Layout.fillWidth: true
-                        materialIcon: "folder_open"
-                        mainText: Translation.tr("Open folder")
-                        onClicked: ShellExec.openDirectory(root.effectiveScreenshotPath, Translation.tr("Open screenshots folder"))
-                    }
-
-                    RippleButtonWithIcon {
-                        Layout.fillWidth: true
-                        materialIcon: "drive_file_move"
-                        mainText: Translation.tr("Change folder")
-                        onClicked: root.openCaptureFolderDialog("screenshots")
-                    }
-                }
-            }
-        }
-    }
-
-    // Quick Actions
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        settingsTaskSection: "actions"
-        visible: true
-        expanded: true
-        icon: "bolt"
-        title: Translation.tr("Quick Actions")
-
-        SettingsGroup {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Appearance.sizes.spacingSmall
 
                 RippleButtonWithIcon {
                     Layout.fillWidth: true
-                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
-                    materialIcon: "refresh"
-                    mainText: Translation.tr("Reload shell")
-                    onClicked: Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")])
+                    materialIcon: "folder_open"
+                    mainText: Translation.tr("Open folder")
+                    onClicked: ShellExec.openDirectory(root.effectiveRecordingPath, Translation.tr("Open recordings folder"))
                 }
 
                 RippleButtonWithIcon {
                     Layout.fillWidth: true
-                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
-                    materialIcon: "terminal"
-                    mainText: Translation.tr("Open config")
-                    onClicked: Qt.openUrlExternally(`${Directories.config}/alis/config.json`)
+                    materialIcon: "drive_file_move"
+                    mainText: Translation.tr("Change folder")
+                    onClicked: root.openCaptureFolderDialog("recordings")
+                }
+            }
+        }
+
+        ContentSubsection {
+            title: Translation.tr("Screenshots")
+
+            StyledText {
+                Layout.fillWidth: true
+                text: Directories.shortHomePath(root.effectiveScreenshotPath)
+                color: Appearance.colors.colOnLayer1
+                elide: Text.ElideMiddle
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Appearance.sizes.spacingSmall
+
+                RippleButtonWithIcon {
+                    Layout.fillWidth: true
+                    materialIcon: "folder_open"
+                    mainText: Translation.tr("Open folder")
+                    onClicked: ShellExec.openDirectory(root.effectiveScreenshotPath, Translation.tr("Open screenshots folder"))
                 }
 
                 RippleButtonWithIcon {
                     Layout.fillWidth: true
-                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
-                    materialIcon: "keyboard"
-                    mainText: Translation.tr("Shortcuts")
-                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "cheatsheet", "toggle"])
+                    materialIcon: "drive_file_move"
+                    mainText: Translation.tr("Change folder")
+                    onClicked: root.openCaptureFolderDialog("screenshots")
                 }
             }
-
-            SettingsSwitch {
-                buttonIcon: "notifications_active"
-                text: Translation.tr("Show reload toasts")
-                checked: Config.options?.reloadToasts?.enable ?? true
-                onCheckedChanged: Config.setNestedValue("reloadToasts.enable", checked)
-                StyledToolTip {
-                    text: Translation.tr("Show reload notices; errors always appear.")
-                }
-            }
-
-            SettingsSwitch {
-                buttonIcon: "sports_esports"
-                text: Translation.tr("Hide reload toasts in Game Mode")
-                checked: Config.options?.gameMode?.disableReloadToasts ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("gameMode.disableReloadToasts", checked)
-                }
-                StyledToolTip {
-                    text: Translation.tr("Automatically suppress reload toasts when Game Mode is active")
-                }
-            }
-
         }
     }
+}
+
+SettingsCardSection {
+    Layout.preferredWidth: 1
+    Layout.alignment: Qt.AlignTop
+    Layout.fillWidth: true
+    settingsTaskSection: "actions"
+    visible: true
+    expanded: true
+    icon: "bolt"
+    title: Translation.tr("Quick Actions")
+
+    SettingsGroup {
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Appearance.sizes.spacingSmall
+
+            RippleButtonWithIcon {
+                Layout.fillWidth: true
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                materialIcon: "refresh"
+                mainText: Translation.tr("Reload shell")
+                onClicked: Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")])
+            }
+
+            RippleButtonWithIcon {
+                Layout.fillWidth: true
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                materialIcon: "terminal"
+                mainText: Translation.tr("Open config")
+                onClicked: Qt.openUrlExternally(`${Directories.config}/alis/config.json`)
+            }
+
+            RippleButtonWithIcon {
+                Layout.fillWidth: true
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                materialIcon: "keyboard"
+                mainText: Translation.tr("Shortcuts")
+                onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "cheatsheet", "toggle"])
+            }
+        }
+
+        SettingsSwitch {
+            buttonIcon: "notifications_active"
+            text: Translation.tr("Show reload toasts")
+            checked: Config.options?.reloadToasts?.enable ?? true
+            onCheckedChanged: Config.setNestedValue("reloadToasts.enable", checked)
+            StyledToolTip {
+                text: Translation.tr("Show reload notices; errors always appear.")
+            }
+        }
+
+        SettingsSwitch {
+            buttonIcon: "sports_esports"
+            text: Translation.tr("Hide reload toasts in Game Mode")
+            checked: Config.options?.gameMode?.disableReloadToasts ?? true
+            onCheckedChanged: {
+                Config.setNestedValue("gameMode.disableReloadToasts", checked)
+            }
+            StyledToolTip {
+                text: Translation.tr("Automatically suppress reload toasts when Game Mode is active")
+            }
+        }
+
     }
+}
     }
 
     // Subtle footer

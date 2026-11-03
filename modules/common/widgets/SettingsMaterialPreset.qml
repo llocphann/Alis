@@ -10,7 +10,8 @@ QtObject {
     id: root
 
     // ── Page layout ──
-    readonly property int pageSpacing: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : 12) * Appearance.fontSizeScale)
+    readonly property int pageSpacing: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : 10) * Appearance.fontSizeScale)
+    property real standardBentoHeight: Math.round(831 * Appearance.fontSizeScale)
 
     // ── Card (SettingsCardSection) ──
     readonly property int cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
@@ -18,7 +19,7 @@ QtObject {
         : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius + 1
         : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
         : Appearance.rounding.normal
-    readonly property int cardPadding: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tilePadding : 14) * Appearance.fontSizeScale)
+    readonly property int cardPadding: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tilePadding : 11) * Appearance.fontSizeScale)
 
     // ── Card header ──
     readonly property int headerRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
@@ -26,8 +27,8 @@ QtObject {
         : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
         : Appearance.alisEverywhere ? Appearance.alis.roundingSmall
         : Appearance.rounding.small
-    readonly property int headerPaddingX: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal : 12) * Appearance.fontSizeScale)
-    readonly property int headerPaddingY: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingVertical : 7) * Appearance.fontSizeScale)
+    readonly property int headerPaddingX: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal : 10) * Appearance.fontSizeScale)
+    readonly property int headerPaddingY: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingVertical : 4) * Appearance.fontSizeScale)
 
     // ── Group (SettingsGroup) ──
     readonly property int groupRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
@@ -35,8 +36,8 @@ QtObject {
         : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
         : Appearance.alisEverywhere ? Appearance.alis.roundingSmall
         : Appearance.rounding.small
-    readonly property int groupPadding: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tilePadding : 12) * Appearance.fontSizeScale)
-    readonly property int groupSpacing: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : 7) * Appearance.fontSizeScale)
+    readonly property int groupPadding: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tilePadding : 10) * Appearance.fontSizeScale)
+    readonly property int groupSpacing: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : 6) * Appearance.fontSizeScale)
 
     // ── Colors ──
     // In angel/aurora, cards are more transparent to let the content area's

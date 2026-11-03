@@ -497,6 +497,7 @@ def test_manual_xdg_sync() -> None:
         _make_executable(bin_dir, "firefox")
         _make_executable(bin_dir, "nautilus")
         _make_executable(bin_dir, "zed")
+        _make_executable(bin_dir, "Stirling-PDF")
 
         _write_desktop(
             native_apps,
@@ -507,6 +508,11 @@ def test_manual_xdg_sync() -> None:
             native_apps,
             "org.gnome.Nautilus.desktop",
             "[Desktop Entry]\nType=Application\nName=Files\nExec=nautilus\nCategories=System;FileManager;\n",
+        )
+        _write_desktop(
+            native_apps,
+            "Stirling PDF.desktop",
+            "[Desktop Entry]\nType=Application\nName=Stirling-PDF\nExec=Stirling-PDF\nMimeType=application/pdf;\n",
         )
 
         # Mock xdg-settings and xdg-mime that persist to state_file (with optional simulated mismatch)
@@ -573,12 +579,18 @@ sys.exit(1)
         )
         assert bad_res["ok"] is False
 
-        # 2. Explicit apply-xdg for browser succeeds and verifies readback
+        # 2. Explicit apply-xdg for browser and pdfViewer (including .desktop ID with spaces) succeeds and verifies readback
         ok_res = json.loads(
             subprocess.check_output([str(HELPER), "apply-xdg", "browser", "firefox.desktop"], env=env, text=True)
         )
         assert ok_res["ok"] is True
         assert ok_res["readback"]["effectiveDesktopId"] == "firefox.desktop"
+
+        pdf_res = json.loads(
+            subprocess.check_output([str(HELPER), "apply-xdg", "pdfViewer", "Stirling PDF.desktop"], env=env, text=True)
+        )
+        assert pdf_res["ok"] is True, pdf_res
+        assert pdf_res["readback"]["effectiveDesktopId"] == "Stirling PDF.desktop"
 
         # 3. Simulated readback failure when xdg-settings refuses to update
         env_fail = env.copy()
@@ -720,6 +732,10 @@ Scope {
         width: 920
         height: 720
     }
+    Loader {
+        id: shortcutsLoader
+        source: "modules/settings/CheatsheetConfig.qml"
+    }
     Timer {
         interval: 400
         running: true
@@ -749,6 +765,39 @@ Scope {
             }
             AppLauncher.selectDiscoveredApp("browser", flatpakApp)
             AppLauncher.setCustomCommand("editor", "zed --new")
+            const browserSpawn = AppLauncher.niriSpawnActionForSlot("browser", false)
+            const resolvedSlot = AppLauncher.resolveShortcutAppInfo(browserSpawn)
+            const resolvedApp = AppLauncher.resolveShortcutAppInfo(AppLauncher.niriSpawnActionForApp(flatpakApp))
+            if (!shortcutsLoader.item || shortcutsLoader.status !== Loader.Ready || !resolvedSlot || resolvedSlot.slotId !== "browser" || !resolvedApp || resolvedApp.slotId !== "browser") {
+                console.error("SET_F01_SHORTCUT_LINK_FAIL", shortcutsLoader.status, JSON.stringify(resolvedSlot), JSON.stringify(resolvedApp))
+                Qt.quit()
+                return
+            }
+            AppLauncher.prepareShortcutForSlot("browser")
+            page.activeSection = "autostart"
+            function findObj(node, name) {
+                if (!node) return null
+                if (node.objectName === name) return node
+                const kids = node.children || []
+                for (let i = 0; i < kids.length; ++i) {
+                    const hit = findObj(kids[i], name)
+                    if (hit) return hit
+                }
+                return null
+            }
+            const autostartSec = findObj(page, "defaultAppsAutostartSection")
+            const appsCard = findObj(page, "autostartAppsCard")
+            const servicesCard = findObj(page, "autostartServicesCard")
+            if (!autostartSec || !autostartSec.visible || autostartSec.implicitHeight < 300 || !appsCard || !appsCard.visible || appsCard.implicitHeight < 300 || !servicesCard || !servicesCard.visible || servicesCard.implicitHeight < 300 || Math.abs(appsCard.implicitHeight - servicesCard.implicitHeight) > 1 || servicesCard.icon !== "rocket_launch") {
+                console.error("SET_F01_AUTOSTART_LAYOUT_FAIL",
+                    autostartSec ? autostartSec.visible : null,
+                    autostartSec ? autostartSec.implicitHeight : null,
+                    appsCard ? appsCard.implicitHeight : null,
+                    servicesCard ? servicesCard.implicitHeight : null,
+                    servicesCard ? servicesCard.icon : null)
+                Qt.quit()
+                return
+            }
             Config.flushWrites()
             console.log("SET_F01_RUNTIME_PASS",
                 Config.options.apps.browser,
@@ -790,7 +839,11 @@ Scope {
             )
             res = run_qs(folder, env, timeout=25)
             out = res.stdout or ""
-            if res.returncode != 0 or "SET_F01_RUNTIME_PASS flatpak run --user org.mozilla.firefox flatpak:user:org.mozilla.firefox zed --new" not in out:
+            if (
+                res.returncode != 0
+                or "SET_F01_RUNTIME_PASS flatpak run --user org.mozilla.firefox flatpak:user:org.mozilla.firefox zed --new" not in out
+                or any(err in out for err in ("TypeError:", "ReferenceError:", "Unable to assign", "SET_F01_AUTOSTART_LAYOUT_FAIL"))
+            ):
                 print(out)
                 raise SystemExit(1)
 
@@ -815,6 +868,10 @@ def main() -> None:
         "defaultAppCustomApply_",
     ):
         assert obj_prefix in ui_qml, f"DefaultAppsConfig missing {obj_prefix}"
+
+    launcher_qml = (ROOT / "services" / "AppLauncher.qml").read_text(encoding="utf-8")
+    for required_slot in ("imageViewer", "videoPlayer", "audioPlayer", "archiveManager"):
+        assert f'id: "{required_slot}"' in launcher_qml, f"AppLauncher.qml missing primary slot {required_slot}"
 
     test_discovery_matrix()
     test_manual_xdg_sync()

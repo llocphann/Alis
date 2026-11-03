@@ -17,6 +17,17 @@ ContentPage {
     property string activeSection: "displays"
     property bool pageReady: false
 
+    function activateSettingsSearchSection(section: string): bool {
+        const label = String(section ?? "").toLowerCase()
+        if (label.includes("touchpad") || label.includes("mouse") || label.includes("trackpoint")
+                || label.includes("input") || label.includes("cursor")) {
+            root.activeSection = "input"
+        } else {
+            root.activeSection = "displays"
+        }
+        return true
+    }
+
     property var outputList: []
     property int selectedOutputIndex: 0
 
@@ -360,14 +371,19 @@ ContentPage {
 
     function refreshActiveSection(): void {
         switch (root.activeSection) {
-        case "displays": loadOutputs(); break
+        case "displays":
+        case "layout":
+        case "animations":
+        case "rules":
+            loadOutputs()
+            loadLayout()
+            loadAnimations()
+            loadWindowRules()
+            break
         case "input":
             loadInput()
             loadCursorThemes()
             break
-        case "layout": loadLayout(); break
-        case "animations": loadAnimations(); break
-        case "rules": loadWindowRules(); break
         }
     }
 
@@ -650,6 +666,10 @@ ContentPage {
     }
 
     onActiveSectionChanged: {
+        if (root.activeSection === "layout" || root.activeSection === "animations" || root.activeSection === "rules") {
+            root.activeSection = "displays"
+            return
+        }
         if (root.pageReady)
             root.refreshActiveSection()
     }
@@ -711,6 +731,115 @@ ContentPage {
         onTriggered: root.shadowEditorReady = true
     }
 
+    function resyncWindowRulesControls() {
+        const wr = root.windowRulesData ?? {}
+        if (typeof clipToGeometrySwitch !== "undefined")
+            clipToGeometrySwitch.checked = wr.clip_to_geometry ?? true
+    }
+
+    function resyncLayoutControls() {
+        const ld = root.layoutData ?? {}
+        if (typeof layoutGapsSpin !== "undefined")
+            layoutGapsSpin.value = ld.gaps ?? 25
+        if (typeof alwaysCenterSingleColumnSwitch !== "undefined")
+            alwaysCenterSingleColumnSwitch.checked = ld.always_center_single_column ?? false
+        if (typeof emptyWorkspaceAboveFirstSwitch !== "undefined")
+            emptyWorkspaceAboveFirstSwitch.checked = ld.empty_workspace_above_first ?? false
+        if (typeof defaultColumnDisplayCombo !== "undefined")
+            defaultColumnDisplayCombo.currentIndex = root.choiceIndex(root.defaultColumnDisplayOptions, ld.default_column_display ?? "normal")
+        if (typeof borderEnabledSwitch !== "undefined")
+            borderEnabledSwitch.checked = ld.border?.enabled ?? false
+        if (typeof borderWidthSpin !== "undefined")
+            borderWidthSpin.value = ld.border?.width ?? 4
+        if (typeof focusRingEnabledSwitch !== "undefined")
+            focusRingEnabledSwitch.checked = ld.focus_ring?.enabled ?? false
+        if (typeof focusRingWidthSpin !== "undefined")
+            focusRingWidthSpin.value = ld.focus_ring?.width ?? 1
+        if (typeof shadowEnabledSwitch !== "undefined")
+            shadowEnabledSwitch.checked = ld.shadow?.enabled ?? true
+        if (typeof shadowSoftnessSpin !== "undefined")
+            shadowSoftnessSpin.value = ld.shadow?.softness ?? 30
+        if (typeof shadowSpreadSpin !== "undefined")
+            shadowSpreadSpin.value = ld.shadow?.spread ?? 5
+        if (typeof shadowOffsetXSpin !== "undefined")
+            shadowOffsetXSpin.value = ld.shadow?.offset_x ?? 0
+        if (typeof shadowOffsetYSpin !== "undefined")
+            shadowOffsetYSpin.value = ld.shadow?.offset_y ?? 5
+        if (typeof strutLeftSpin !== "undefined")
+            strutLeftSpin.value = ld.struts?.left ?? 0
+        if (typeof strutRightSpin !== "undefined")
+            strutRightSpin.value = ld.struts?.right ?? 0
+        if (typeof strutTopSpin !== "undefined")
+            strutTopSpin.value = ld.struts?.top ?? 0
+        if (typeof strutBottomSpin !== "undefined")
+            strutBottomSpin.value = ld.struts?.bottom ?? 0
+        if (typeof overviewZoomSpin !== "undefined")
+            overviewZoomSpin.value = Math.round((ld.overview_zoom ?? 0.75) * 100)
+    }
+
+    function resyncInputControls() {
+        const kb = root.keyboardData ?? {}
+        const tp = root.touchpadData ?? {}
+        const ms = root.mouseData ?? {}
+        const tk = root.trackpointData ?? {}
+        const cr = root.cursorData ?? {}
+        const gn = root.generalInputData ?? {}
+        if (typeof cursorHideWhenTypingSwitch !== "undefined")
+            cursorHideWhenTypingSwitch.checked = cr.hide_when_typing ?? true
+        if (typeof keyboardNumlockSwitch !== "undefined")
+            keyboardNumlockSwitch.checked = kb.numlock ?? false
+        if (typeof keyboardRepeatDelaySpin !== "undefined")
+            keyboardRepeatDelaySpin.value = kb.repeat_delay ?? 250
+        if (typeof keyboardRepeatRateSpin !== "undefined")
+            keyboardRepeatRateSpin.value = kb.repeat_rate ?? 50
+        if (typeof disablePowerKeySwitch !== "undefined")
+            disablePowerKeySwitch.checked = gn.disable_power_key_handling ?? false
+        if (typeof workspaceAutoBackAndForthSwitch !== "undefined")
+            workspaceAutoBackAndForthSwitch.checked = gn.workspace_auto_back_and_forth ?? false
+        if (typeof warpMouseToFocusSwitch !== "undefined")
+            warpMouseToFocusSwitch.checked = gn.warp_mouse_to_focus ?? false
+        if (typeof focusFollowsMouseSwitch !== "undefined")
+            focusFollowsMouseSwitch.checked = gn.focus_follows_mouse ?? false
+        if (typeof focusFollowsMouseMaxScrollSpin !== "undefined")
+            focusFollowsMouseMaxScrollSpin.value = gn.focus_follows_mouse_max_scroll ?? 0
+        if (typeof mouseNaturalScrollSwitch !== "undefined")
+            mouseNaturalScrollSwitch.checked = ms.natural_scroll ?? false
+        if (typeof mouseLeftHandedSwitch !== "undefined")
+            mouseLeftHandedSwitch.checked = ms.left_handed ?? false
+        if (typeof mouseMiddleEmulationSwitch !== "undefined")
+            mouseMiddleEmulationSwitch.checked = ms.middle_emulation ?? false
+        if (typeof mouseScrollButtonLockSwitch !== "undefined")
+            mouseScrollButtonLockSwitch.checked = ms.scroll_button_lock ?? false
+        if (typeof touchpadEnabledSwitch !== "undefined")
+            touchpadEnabledSwitch.checked = !(tp.off ?? false)
+        if (typeof touchpadTapSwitch !== "undefined")
+            touchpadTapSwitch.checked = tp.tap ?? true
+        if (typeof touchpadNaturalScrollSwitch !== "undefined")
+            touchpadNaturalScrollSwitch.checked = tp.natural_scroll ?? false
+        if (typeof touchpadDwtSwitch !== "undefined")
+            touchpadDwtSwitch.checked = tp.dwt ?? false
+        if (typeof touchpadDwtpSwitch !== "undefined")
+            touchpadDwtpSwitch.checked = tp.dwtp ?? false
+        if (typeof touchpadDisableExternalMouseSwitch !== "undefined")
+            touchpadDisableExternalMouseSwitch.checked = tp.disabled_on_external_mouse ?? false
+        if (typeof touchpadLeftHandedSwitch !== "undefined")
+            touchpadLeftHandedSwitch.checked = tp.left_handed ?? false
+        if (typeof touchpadMiddleEmulationSwitch !== "undefined")
+            touchpadMiddleEmulationSwitch.checked = tp.middle_emulation ?? false
+        if (typeof touchpadDragLockSwitch !== "undefined")
+            touchpadDragLockSwitch.checked = tp.drag_lock ?? false
+        if (typeof touchpadScrollButtonLockSwitch !== "undefined")
+            touchpadScrollButtonLockSwitch.checked = tp.scroll_button_lock ?? false
+        if (typeof trackpointNaturalScrollSwitch !== "undefined")
+            trackpointNaturalScrollSwitch.checked = tk.natural_scroll ?? false
+        if (typeof trackpointLeftHandedSwitch !== "undefined")
+            trackpointLeftHandedSwitch.checked = tk.left_handed ?? false
+        if (typeof trackpointMiddleEmulationSwitch !== "undefined")
+            trackpointMiddleEmulationSwitch.checked = tk.middle_emulation ?? false
+        if (typeof trackpointScrollButtonLockSwitch !== "undefined")
+            trackpointScrollButtonLockSwitch.checked = tk.scroll_button_lock ?? false
+    }
+
     // =====================
     // PROCESSES
     // =====================
@@ -744,6 +873,7 @@ ContentPage {
                 root.inputReady = false
                 root.handleJsonResult(inputCollector.text, "input", data => {
                     root.inputData = data
+                    root.resyncInputControls()
                     root.inputReady = true
                 })
             }
@@ -764,6 +894,7 @@ ContentPage {
                 root.layoutReady = false
                 root.handleJsonResult(layoutCollector.text, "layout", data => {
                     root.layoutData = data
+                    root.resyncLayoutControls()
                     root.layoutReady = true
                 })
             }
@@ -784,6 +915,8 @@ ContentPage {
                 root.animationsReady = false
                 root.handleJsonResult(animationsCollector.text, "animations", data => {
                     root.animationsData = data
+                    if (typeof animationsEnabledSwitch !== "undefined")
+                        animationsEnabledSwitch.checked = data?.enabled ?? true
                     root.animationsReady = true
                 })
             }
@@ -804,6 +937,7 @@ ContentPage {
                 root.windowRulesReady = false
                 root.handleJsonResult(windowRulesCollector.text, "windowRules", data => {
                     root.windowRulesData = data
+                    root.resyncWindowRulesControls()
                     root.windowRulesReady = true
                 })
             }
@@ -1147,245 +1281,123 @@ ContentPage {
     }
 
     SettingsTaskNavigator {
-        showTabBar: false
+        showTabBar: true
+        showIntro: false
         icon: "monitor"
         title: Translation.tr("Compositor")
         description: Translation.tr("Tune displays, input, layout and rules; unconfirmed display previews revert.")
-        summary: Translation.tr("Displays · Input · Layout · Animations · Rules")
+        summary: Translation.tr("Displays & Rules · Tiling Layout · Mouse & Touchpad")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
-            { displayName: Translation.tr("Displays"), icon: "monitor", value: "displays" },
-            { displayName: Translation.tr("Input"), icon: "keyboard", value: "input" },
-            { displayName: Translation.tr("Layout"), icon: "grid_view", value: "layout" },
-            { displayName: Translation.tr("Animations"), icon: "animation", value: "animations" },
-            { displayName: Translation.tr("Rules"), icon: "rule", value: "rules" }
+            { displayName: Translation.tr("Displays & Windows"), icon: "desktop_windows", value: "displays" },
+            { displayName: Translation.tr("Mouse, Touchpad & Cursor"), icon: "keyboard", value: "input" }
         ]
-    }
-
-    Item {
-        id: statusBanner
-        Layout.fillWidth: true
-        visible: root.lastActionError.length > 0 || root.lastActionInfo.length > 0 || !root.validationData.valid || root.hasAnyProcessError
-        implicitHeight: statusColumn.implicitHeight + 24
-
-        readonly property bool isError: root.lastActionError.length > 0 || !root.validationData.valid || root.hasAnyProcessError
-        readonly property color accentColor: isError ? Appearance.colors.colError : Appearance.colors.colPrimary
-
-        Rectangle {
-            anchors.fill: parent
-            color: Qt.rgba(statusBanner.accentColor.r, statusBanner.accentColor.g, statusBanner.accentColor.b, 0.10)
-            radius: Appearance.rounding.screenRounding
-            border.width: 2
-            border.color: statusBanner.accentColor
-
-            ColumnLayout {
-                id: statusColumn
-                anchors.fill: parent
-                anchors.margins: 16
-                spacing: 12
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    MaterialSymbol {
-                        text: statusBanner.isError ? "error" : "check_circle"
-                        color: statusBanner.accentColor
-                        iconSize: Appearance.font.pixelSize.hugeass
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 2
-
-                        StyledText {
-                            Layout.fillWidth: true
-                            text: root.lastActionError.length > 0
-                                ? root.lastActionError
-                                : !root.validationData.valid
-                                    ? (root.validationData.output?.length > 0 ? root.validationData.output : Translation.tr("Niri config validation failed."))
-                                    : root.hasAnyProcessError
-                                        ? root.processErrorSummary()
-                                        : root.lastActionInfo
-                            wrapMode: Text.WordWrap
-                            color: Appearance.colors.colOnLayer1
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            font.weight: Font.Medium
-                        }
-
-                        StyledText {
-                            Layout.fillWidth: true
-                            visible: root.niriConfigPath.length > 0
-                            text: Translation.tr("Config file: %1").arg(root.niriConfigPath)
-                            wrapMode: Text.WrapAnywhere
-                            color: Appearance.colors.colSubtext
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.family: Appearance.font.family.monospace
-                        }
-                    }
-                }
-
-                RowLayout {
-                    Layout.alignment: Qt.AlignRight
-                    spacing: 8
-
-                    Button {
-                        visible: !root.validationData.valid || root.hasAnyProcessError
-                        text: Translation.tr("Retry")
-                        onClicked: root.refreshAll()
-
-                        background: Rectangle {
-                            implicitWidth: 80
-                            implicitHeight: 36
-                            radius: Appearance.rounding.small
-                            color: Appearance.colors.colPrimary
-                        }
-
-                        contentItem: StyledText {
-                            text: parent.text
-                            color: Appearance.colors.colOnPrimary
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            font.pixelSize: Appearance.font.pixelSize.small
-                        }
-                    }
-
-                    Button {
-                        visible: root.lastActionError.length > 0 || root.lastActionInfo.length > 0
-                        text: Translation.tr("Dismiss")
-                        onClicked: {
-                            root.lastActionError = ""
-                            root.lastActionInfo = ""
-                        }
-
-                        background: Rectangle {
-                            implicitWidth: 80
-                            implicitHeight: 36
-                            radius: Appearance.rounding.small
-                            color: Appearance.colors.colLayer1
-                        }
-
-                        contentItem: StyledText {
-                            text: parent.text
-                            color: Appearance.colors.colOnLayer1
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            font.pixelSize: Appearance.font.pixelSize.small
-                        }
-                    }
-                }
-            }
-        }
     }
 
     GridLayout {
         Layout.fillWidth: true
-        columns: width >= 620 ? 2 : 1
-        uniformCellWidths: columns === 2
+        columns: 2
+        uniformCellWidths: true
         columnSpacing: 14
         rowSpacing: 14
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        spacing: 14
+SettingsCardSection {
+    Layout.preferredWidth: 1
+    Layout.alignment: Qt.AlignTop
+    Layout.fillWidth: true
+    settingsTaskSection: "displays"
+    bentoColumn: "left"
+    visible: true
+    expanded: true
+    icon: "monitor"
+    title: Translation.tr("Displays")
 
-    // =====================
-    // DISPLAYS SECTION
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        settingsTaskSection: "displays"
-        visible: true
-        expanded: true
-        icon: "monitor"
-        title: Translation.tr("Displays")
+    SettingsGroup {
+        StyledText {
+            Layout.fillWidth: true
+            text: Translation.tr("Display previews revert after 15 seconds unless confirmed.")
+            font.pixelSize: Appearance.font.pixelSize.small
+            color: Appearance.colors.colSubtext
+            wrapMode: Text.WordWrap
+        }
 
-        SettingsGroup {
-            StyledText {
+        ContentSubsection {
+            title: Translation.tr("Monitor")
+            visible: root.outputList.length > 1
+
+            StyledComboBox {
                 Layout.fillWidth: true
-                text: Translation.tr("Display previews revert after 15 seconds unless confirmed.")
-                font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.colors.colSubtext
-                wrapMode: Text.WordWrap
+                enabled: !root.displayControlsLocked
+                model: root.outputList.map(o => ({
+                    displayName: `${o.name} — ${o.make} ${o.model}`,
+                    value: o.name
+                }))
+                textRole: "displayName"
+                currentIndex: root.choiceIndex(model, root.currentOutputName)
+                onActivated: {
+                    const idx = root.outputList.findIndex(o => o.name === model[currentIndex].value)
+                    if (idx >= 0)
+                        root.selectedOutputIndex = idx
+                }
             }
+        }
 
-            ContentSubsection {
-                title: Translation.tr("Monitor")
-                visible: root.outputList.length > 1
+        Item {
+            Layout.fillWidth: true
+            implicitHeight: monitorInfoRow.implicitHeight + 8
+            visible: root.currentOutput !== null
 
-                StyledComboBox {
+            RowLayout {
+                id: monitorInfoRow
+                anchors {
+                    left: parent.left; right: parent.right
+                    verticalCenter: parent.verticalCenter
+                    leftMargin: 8; rightMargin: 8
+                }
+                spacing: 10
+
+                MaterialSymbol {
+                    text: "monitor"
+                    iconSize: Appearance.font.pixelSize.hugeass
+                    color: Appearance.colors.colPrimary
+                }
+
+                ColumnLayout {
                     Layout.fillWidth: true
-                    enabled: !root.displayControlsLocked
-                    model: root.outputList.map(o => ({
-                        displayName: `${o.name} — ${o.make} ${o.model}`,
-                        value: o.name
-                    }))
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.currentOutputName)
-                    onActivated: {
-                        const idx = root.outputList.findIndex(o => o.name === model[currentIndex].value)
-                        if (idx >= 0)
-                            root.selectedOutputIndex = idx
+                    spacing: 0
+
+                    StyledText {
+                        text: root.currentOutputName
+                        font.pixelSize: Appearance.font.pixelSize.normal
+                        font.weight: Font.Medium
+                        color: Appearance.colors.colOnLayer1
                     }
-                }
-            }
-
-            Item {
-                Layout.fillWidth: true
-                implicitHeight: monitorInfoRow.implicitHeight + 8
-                visible: root.currentOutput !== null
-
-                RowLayout {
-                    id: monitorInfoRow
-                    anchors {
-                        left: parent.left; right: parent.right
-                        verticalCenter: parent.verticalCenter
-                        leftMargin: 8; rightMargin: 8
-                    }
-                    spacing: 10
-
-                    MaterialSymbol {
-                        text: "monitor"
-                        iconSize: Appearance.font.pixelSize.hugeass
-                        color: Appearance.colors.colPrimary
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 0
-
-                        StyledText {
-                            text: root.currentOutputName
-                            font.pixelSize: Appearance.font.pixelSize.normal
-                            font.weight: Font.Medium
-                            color: Appearance.colors.colOnLayer1
-                        }
-                        StyledText {
-                            text: {
-                                const o = root.currentOutput
-                                if (!o) return ""
-                                const make = o.make ?? ""
-                                const model = o.model ?? ""
-                                const phys = o.physical_size ?? [0, 0]
-                                let info = `${make} ${model}`.trim()
-                                if (phys[0] > 0 && phys[1] > 0) {
-                                    const diag = Math.sqrt(phys[0]*phys[0] + phys[1]*phys[1]) / 25.4
-                                    info += ` — ${diag.toFixed(1)}"`
-                                }
-                                return info
+                    StyledText {
+                        text: {
+                            const o = root.currentOutput
+                            if (!o) return ""
+                            const make = o.make ?? ""
+                            const model = o.model ?? ""
+                            const phys = o.physical_size ?? [0, 0]
+                            let info = `${make} ${model}`.trim()
+                            if (phys[0] > 0 && phys[1] > 0) {
+                                const diag = Math.sqrt(phys[0]*phys[0] + phys[1]*phys[1]) / 25.4
+                                info += ` — ${diag.toFixed(1)}"`
                             }
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colSubtext
+                            return info
                         }
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.colors.colSubtext
                     }
                 }
             }
+        }
 
-            SettingsDivider { visible: root.currentOutput !== null }
+        SettingsDivider { visible: root.currentOutput !== null }
 
+        ConfigRow {
+            uniform: true
             ContentSubsection {
                 title: Translation.tr("Resolution")
                 visible: root.resolutionOptions.length > 0
@@ -1420,48 +1432,10 @@ ContentPage {
                     onActivated: root.safeApplyOutput("mode", "mode", `${root.currentResolution}@${model[currentIndex].rateString}`)
                 }
             }
+        }
 
-            ContentSubsection {
-                title: Translation.tr("Output position")
-                tooltip: Translation.tr("Logical coordinates in Niri's global space.")
-                visible: root.currentOutput !== null
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    ConfigSpinBox {
-                        id: positionXSpin
-                        Layout.fillWidth: true
-                        enabled: !root.displayControlsLocked
-                        text: "X"
-                        value: root.currentOutput?.position?.x ?? 0
-                        from: -10000
-                        to: 10000
-                        stepSize: 10
-                        onValueChanged: {
-                            if (!root.outputReady || !root.positionEditorReady) return
-                            root.applyAndPersistOutput("position", `${value},${positionYSpin.value}`)
-                        }
-                    }
-
-                    ConfigSpinBox {
-                        id: positionYSpin
-                        Layout.fillWidth: true
-                        enabled: !root.displayControlsLocked
-                        text: "Y"
-                        value: root.currentOutput?.position?.y ?? 0
-                        from: -10000
-                        to: 10000
-                        stepSize: 10
-                        onValueChanged: {
-                            if (!root.outputReady || !root.positionEditorReady) return
-                            root.applyAndPersistOutput("position", `${positionXSpin.value},${value}`)
-                        }
-                    }
-                }
-            }
-
+        ConfigRow {
+            uniform: true
             ContentSubsection {
                 title: Translation.tr("Scale")
 
@@ -1487,228 +1461,233 @@ ContentPage {
                     onActivated: root.safeApplyOutput("transform", "transform", model[currentIndex].value)
                 }
             }
+        }
 
-            ContentSubsection {
-                title: Translation.tr("Variable refresh rate (VRR)")
-                tooltip: Translation.tr("Adaptive sync / FreeSync / G-Sync.")
-                visible: root.vrrSupported
+        ContentSubsection {
+            title: Translation.tr("Output position")
+            tooltip: Translation.tr("Logical coordinates in Niri's global space.")
+            visible: root.currentOutput !== null
 
-                StyledComboBox {
-                    id: vrrCombo
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                ConfigSpinBox {
+                    id: positionXSpin
                     Layout.fillWidth: true
                     enabled: !root.displayControlsLocked
-                    model: root.vrrOptions
-                    textRole: "displayName"
-                    onActivated: {
-                        if (!root.outputReady) return
-                        root.applyAndPersistOutput("vrr", model[currentIndex].value)
+                    text: "X"
+                    value: root.currentOutput?.position?.x ?? 0
+                    from: -10000
+                    to: 10000
+                    stepSize: 10
+                    onValueChanged: {
+                        if (!root.outputReady || !root.positionEditorReady) return
+                        root.applyAndPersistOutput("position", `${value},${positionYSpin.value}`)
                     }
                 }
 
-                SettingsNote {
-                    icon: "monitor"
-                    text: Translation.tr("On demand enables VRR only for games and video.")
-                }
-
-                SettingsNote {
-                    visible: root.vrrMode === "on"
-                    warning: true
-                    icon: "flare"
-                    text: Translation.tr("Some monitors flicker or dim on the desktop with VRR always on.")
+                ConfigSpinBox {
+                    id: positionYSpin
+                    Layout.fillWidth: true
+                    enabled: !root.displayControlsLocked
+                    text: "Y"
+                    value: root.currentOutput?.position?.y ?? 0
+                    from: -10000
+                    to: 10000
+                    stepSize: 10
+                    onValueChanged: {
+                        if (!root.outputReady || !root.positionEditorReady) return
+                        root.applyAndPersistOutput("position", `${positionXSpin.value},${value}`)
+                    }
                 }
             }
         }
-    }
 
-    // =====================
-    // WINDOW RULES SECTION
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        settingsTaskSection: "rules"
-        visible: true
-        expanded: true
-        icon: "rounded_corner"
-        title: Translation.tr("Window Rules")
+        ContentSubsection {
+            title: Translation.tr("Variable refresh rate (VRR)")
+            tooltip: Translation.tr("Adaptive sync / FreeSync / G-Sync.")
+            visible: root.vrrSupported
 
-        SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("Corner radius")
-                tooltip: Translation.tr("Rounding applied to window corners (0 = square)")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    StyledSlider {
-                        id: cornerRadiusSlider
-                        Layout.fillWidth: true
-                        from: 0
-                        to: 32
-                        value: root.windowRulesData?.corner_radius ?? 16
-                        stepSize: 1
-                        configuration: StyledSlider.Configuration.S
-
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("window-rules", "corner-radius", String(Math.round(value)))
-                        }
-                    }
-
-                    StyledText {
-                        text: Math.round(cornerRadiusSlider.value) + "px"
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 35
-                        horizontalAlignment: Text.AlignRight
-                    }
-                }
-            }
-
-            SettingsDivider {}
-
-            ContentSubsection {
-                title: Translation.tr("Inactive window opacity")
-                tooltip: Translation.tr("Transparency of unfocused windows (1.0 = fully opaque)")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    StyledSlider {
-                        id: inactiveOpacitySlider
-                        Layout.fillWidth: true
-                        from: 0
-                        to: 100
-                        value: Math.round((root.windowRulesData?.inactive_opacity ?? 0.9) * 100)
-                        stepSize: 5
-                        configuration: StyledSlider.Configuration.S
-
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("window-rules", "inactive-opacity", (value / 100.0).toFixed(2))
-                        }
-                    }
-
-                    StyledText {
-                        text: (inactiveOpacitySlider.value / 100.0).toFixed(2)
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 35
-                        horizontalAlignment: Text.AlignRight
-                    }
-                }
-            }
-
-            SettingsSwitch {
+            StyledComboBox {
+                id: vrrCombo
                 Layout.fillWidth: true
-                buttonIcon: "crop"
-                text: Translation.tr("Clip windows to rounded geometry")
-                checked: root.windowRulesData?.clip_to_geometry ?? true
-                onCheckedChanged: {
-                    if (!root.windowRulesReady) return
-                    root.setConfig("window-rules", "clip-to-geometry", checked ? "true" : "false")
+                enabled: !root.displayControlsLocked
+                model: root.vrrOptions
+                textRole: "displayName"
+                onActivated: {
+                    if (!root.outputReady) return
+                    root.applyAndPersistOutput("vrr", model[currentIndex].value)
                 }
             }
         }
     }
+}
 
-    // =====================
-    // CURSOR SECTION
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        settingsTaskSection: "input"
-        visible: true
-        expanded: true
-        icon: "point_scan"
-        title: Translation.tr("Cursor")
+SettingsCardSection {
+    Layout.preferredWidth: 1
+    Layout.alignment: Qt.AlignTop
+    Layout.fillWidth: true
+    settingsTaskSection: "displays"
+    bentoColumn: "left"
+    visible: true
+    expanded: true
+    icon: "rounded_corner"
+    title: Translation.tr("Window Rules & Motion")
 
-        SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("Cursor theme")
-                visible: root.cursorThemes.length > 0
+    SettingsGroup {
+        ContentSubsection {
+            title: Translation.tr("Corner radius")
+            tooltip: Translation.tr("Rounding applied to window corners (0 = square)")
 
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.cursorThemes
-                    currentIndex: root.cursorThemes.indexOf(root.cursorData?.theme ?? "")
-                    onActivated: root.setConfig("input", "cursor.xcursor-theme", model[currentIndex])
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Cursor size")
-                tooltip: Translation.tr("Size in pixels (typically 24 or 32)")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    StyledSlider {
-                        id: cursorSizeSlider
-                        Layout.fillWidth: true
-                        from: 16
-                        to: 48
-                        value: root.cursorData?.size ?? 24
-                        stepSize: 2
-                        configuration: StyledSlider.Configuration.S
-
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("input", "cursor.xcursor-size", String(Math.round(value)))
-                        }
-                    }
-
-                    StyledText {
-                        text: Math.round(cursorSizeSlider.value) + "px"
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 35
-                        horizontalAlignment: Text.AlignRight
-                    }
-                }
-            }
-
-            SettingsSwitch {
+            RowLayout {
                 Layout.fillWidth: true
-                buttonIcon: "keyboard_hide"
-                text: Translation.tr("Hide cursor while typing")
-                checked: root.cursorData?.hide_when_typing ?? true
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "cursor.hide-when-typing", checked)
+                spacing: 8
+
+                StyledSlider {
+                    id: cornerRadiusSlider
+                    Layout.fillWidth: true
+                    from: 0
+                    to: 32
+                    value: root.windowRulesData?.corner_radius ?? 16
+                    liveValue: root.windowRulesData?.corner_radius ?? 16
+                    stepSize: 1
+                    configuration: StyledSlider.Configuration.S
+
+                    onMoved: {
+                        if (pressed) return
+                        root.setConfig("window-rules", "corner-radius", String(Math.round(value)))
+                    }
+                }
+
+                StyledText {
+                    text: Math.round(cornerRadiusSlider.value) + "px"
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.family: Appearance.font.family.monospace
+                    color: Appearance.colors.colSubtext
+                    Layout.preferredWidth: 35
+                    horizontalAlignment: Text.AlignRight
+                }
+            }
+        }
+
+        ContentSubsection {
+            title: Translation.tr("Inactive window opacity")
+            tooltip: Translation.tr("Transparency of unfocused windows (1.0 = fully opaque)")
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                StyledSlider {
+                    id: inactiveOpacitySlider
+                    Layout.fillWidth: true
+                    from: 0
+                    to: 100
+                    value: Math.round((root.windowRulesData?.inactive_opacity ?? 0.9) * 100)
+                    liveValue: Math.round((root.windowRulesData?.inactive_opacity ?? 0.9) * 100)
+                    stepSize: 5
+                    configuration: StyledSlider.Configuration.S
+
+                    onMoved: {
+                        if (pressed) return
+                        root.setConfig("window-rules", "inactive-opacity", (value / 100.0).toFixed(2))
+                    }
+                }
+
+                StyledText {
+                    text: (inactiveOpacitySlider.value / 100.0).toFixed(2)
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.family: Appearance.font.family.monospace
+                    color: Appearance.colors.colSubtext
+                    Layout.preferredWidth: 35
+                    horizontalAlignment: Text.AlignRight
+                }
+            }
+        }
+
+        SettingsSwitch {
+            id: clipToGeometrySwitch
+            Layout.fillWidth: true
+            buttonIcon: "crop"
+            text: Translation.tr("Clip windows to rounded geometry")
+            checked: root.windowRulesData?.clip_to_geometry ?? true
+            onCheckedChanged: {
+                if (!root.windowRulesReady) return
+                root.setConfig("window-rules", "clip-to-geometry", checked ? "true" : "false")
+            }
+        }
+
+        SettingsDivider {}
+
+        SettingsSwitch {
+            id: animationsEnabledSwitch
+            Layout.fillWidth: true
+            buttonIcon: "animation"
+            text: Translation.tr("Enable compositor animations")
+            checked: root.animationsData?.enabled ?? true
+            onCheckedChanged: {
+                if (!root.animationsReady) return
+                root.setBooleanConfig("animations", "enabled", checked)
+            }
+        }
+
+        ContentSubsection {
+            title: Translation.tr("Global animation slowdown")
+            tooltip: Translation.tr("1.0 is normal speed. Higher values make every animation slower.")
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                StyledSlider {
+                    id: slowdownSlider
+                    Layout.fillWidth: true
+                    from: 50
+                    to: 500
+                    value: Math.round((root.animationsData?.slowdown ?? 1.0) * 100)
+                    liveValue: Math.round((root.animationsData?.slowdown ?? 1.0) * 100)
+                    stepSize: 10
+                    configuration: StyledSlider.Configuration.S
+                    onMoved: {
+                        if (pressed) return
+                        root.setConfig("animations", "slowdown", (value / 100.0).toFixed(2))
+                    }
+                }
+
+                StyledText {
+                    text: (slowdownSlider.value / 100.0).toFixed(2) + "x"
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.family: Appearance.font.family.monospace
+                    color: Appearance.colors.colSubtext
+                    Layout.preferredWidth: 42
+                    horizontalAlignment: Text.AlignRight
                 }
             }
         }
     }
-
-    }
+}
 
     // =====================
     // LAYOUT SECTION
     // =====================
     SettingsCardSection {
+        Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        Layout.fillHeight: true
         Layout.preferredWidth: 1
-        settingsTaskSection: "layout"
+        settingsTaskSection: "displays"
+        bentoColumn: "right"
         visible: true
         expanded: true
         icon: "grid_view"
-        title: Translation.tr("Layout")
+        title: Translation.tr("Tiling & Columns")
 
         SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("Window gaps")
-                tooltip: Translation.tr("Gap from tiled windows to the Screen Edge/Bar; Edge thickness is reserved separately.")
-
+            ConfigRow {
+                uniform: true
                 ConfigSpinBox {
-                    text: Translation.tr("Gap size (px)")
+                    id: layoutGapsSpin
+                    text: Translation.tr("Window gap (px)")
                     value: root.layoutData?.gaps ?? 25
                     from: 0
                     to: 64
@@ -1716,6 +1695,19 @@ ContentPage {
                     onValueChanged: {
                         if (!root.layoutReady) return
                         root.setConfig("layout", "gaps", value)
+                    }
+                }
+
+                ConfigSpinBox {
+                    id: overviewZoomSpin
+                    text: Translation.tr("Overview zoom (%)")
+                    value: Math.round((root.layoutData?.overview_zoom ?? 0.75) * 100)
+                    from: 30
+                    to: 100
+                    stepSize: 5
+                    onValueChanged: {
+                        if (!root.layoutReady) return
+                        root.setConfig("layout", "overview.zoom", (value / 100.0).toFixed(2))
                     }
                 }
             }
@@ -1738,6 +1730,7 @@ ContentPage {
             }
 
             SettingsSwitch {
+                id: alwaysCenterSingleColumnSwitch
                 Layout.fillWidth: true
                 buttonIcon: "center_focus_strong"
                 text: Translation.tr("Always center a single column")
@@ -1756,15 +1749,8 @@ ContentPage {
                 onCheckedChanged: Config.setNestedValue("compositor.autoExpandSingleTilingWindow", checked)
             }
 
-            StyledText {
-                Layout.fillWidth: true
-                text: Translation.tr("Maximize a lone tiled window; restore its size when another opens.")
-                wrapMode: Text.WordWrap
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.small
-            }
-
             SettingsSwitch {
+                id: emptyWorkspaceAboveFirstSwitch
                 Layout.fillWidth: true
                 buttonIcon: "vertical_align_top"
                 text: Translation.tr("Empty workspace above first")
@@ -1777,9 +1763,9 @@ ContentPage {
 
             ContentSubsection {
                 title: Translation.tr("Default column display")
-                tooltip: Translation.tr("Choose whether new columns open normally or in tabbed mode.")
 
                 StyledComboBox {
+                    id: defaultColumnDisplayCombo
                     Layout.fillWidth: true
                     model: root.defaultColumnDisplayOptions
                     textRole: "displayName"
@@ -1787,17 +1773,26 @@ ContentPage {
                     onActivated: root.setConfig("layout", "default-column-display", model[currentIndex].value)
                 }
             }
+        }
+    }
 
-            SettingsDivider {}
+    SettingsCardSection {
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        Layout.preferredWidth: 1
+        settingsTaskSection: "displays"
+        bentoColumn: "right"
+        visible: true
+        expanded: true
+        icon: "border_style"
+        title: Translation.tr("Borders, Focus Ring & Shadow")
 
-            ContentSubsection {
-                title: Translation.tr("Window border")
-            }
-
+        SettingsGroup {
             SettingsSwitch {
+                id: borderEnabledSwitch
                 Layout.fillWidth: true
                 buttonIcon: "border_style"
-                text: Translation.tr("Enable border")
+                text: Translation.tr("Enable window border")
                 checked: root.layoutData?.border?.enabled ?? false
                 onCheckedChanged: {
                     if (!root.layoutReady) return
@@ -1805,78 +1800,24 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Border width")
+            ConfigSpinBox {
+                id: borderWidthSpin
                 visible: root.layoutData?.border?.enabled ?? false
-
-                ConfigSpinBox {
-                    text: Translation.tr("Width (px)")
-                    value: root.layoutData?.border?.width ?? 4
-                    from: 1
-                    to: 8
-                    stepSize: 1
-                    onValueChanged: {
-                        if (!root.layoutReady) return
-                        root.setConfig("layout", "border.width", value)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Border active color")
-                visible: root.layoutData?.border?.enabled ?? false
-
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: "#RRGGBB"
-                    text: root.layoutData?.border?.active_color ?? "#707070"
-                    onEditingFinished: {
-                        const val = text.trim()
-                        if (val.length > 0)
-                            root.setConfig("layout", "border.active-color", val)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Border inactive color")
-                visible: root.layoutData?.border?.enabled ?? false
-
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: "#RRGGBB"
-                    text: root.layoutData?.border?.inactive_color ?? "#d0d0d0"
-                    onEditingFinished: {
-                        const val = text.trim()
-                        if (val.length > 0)
-                            root.setConfig("layout", "border.inactive-color", val)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Border urgent color")
-                visible: root.layoutData?.border?.enabled ?? false
-
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: "#RRGGBB"
-                    text: root.layoutData?.border?.urgent_color ?? "#cc4444"
-                    onEditingFinished: {
-                        const val = text.trim()
-                        if (val.length > 0)
-                            root.setConfig("layout", "border.urgent-color", val)
-                    }
+                text: Translation.tr("Border width (px)")
+                value: root.layoutData?.border?.width ?? 4
+                from: 1
+                to: 8
+                stepSize: 1
+                onValueChanged: {
+                    if (!root.layoutReady) return
+                    root.setConfig("layout", "border.width", value)
                 }
             }
 
             SettingsDivider {}
 
-            ContentSubsection {
-                title: Translation.tr("Focus ring")
-            }
-
             SettingsSwitch {
+                id: focusRingEnabledSwitch
                 Layout.fillWidth: true
                 buttonIcon: "radio_button_checked"
                 text: Translation.tr("Enable focus ring")
@@ -1887,58 +1828,24 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Focus ring width")
+            ConfigSpinBox {
+                id: focusRingWidthSpin
                 visible: root.layoutData?.focus_ring?.enabled ?? false
-
-                ConfigSpinBox {
-                    text: Translation.tr("Width (px)")
-                    value: root.layoutData?.focus_ring?.width ?? 1
-                    from: 1
-                    to: 8
-                    stepSize: 1
-                    onValueChanged: {
-                        if (!root.layoutReady) return
-                        root.setConfig("layout", "focus-ring.width", value)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Focus ring active color")
-                visible: root.layoutData?.focus_ring?.enabled ?? false
-
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: "#RRGGBB"
-                    text: root.layoutData?.focus_ring?.active_color ?? "#808080"
-                    onEditingFinished: {
-                        const val = text.trim()
-                        if (val.length > 0)
-                            root.setConfig("layout", "focus-ring.active-color", val)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Focus ring inactive color")
-                visible: root.layoutData?.focus_ring?.enabled ?? false
-
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: "#RRGGBB"
-                    text: root.layoutData?.focus_ring?.inactive_color ?? "#505050"
-                    onEditingFinished: {
-                        const val = text.trim()
-                        if (val.length > 0)
-                            root.setConfig("layout", "focus-ring.inactive-color", val)
-                    }
+                text: Translation.tr("Focus ring width (px)")
+                value: root.layoutData?.focus_ring?.width ?? 1
+                from: 1
+                to: 8
+                stepSize: 1
+                onValueChanged: {
+                    if (!root.layoutReady) return
+                    root.setConfig("layout", "focus-ring.width", value)
                 }
             }
 
             SettingsDivider {}
 
             SettingsSwitch {
+                id: shadowEnabledSwitch
                 Layout.fillWidth: true
                 buttonIcon: "shadow"
                 text: Translation.tr("Window shadow")
@@ -1948,419 +1855,24 @@ ContentPage {
                     root.setBooleanConfig("layout", "shadow.enabled", checked)
                 }
             }
-
-            ContentSubsection {
-                title: Translation.tr("Shadow softness")
-                visible: root.layoutData?.shadow?.enabled ?? true
-
-                ConfigSpinBox {
-                    text: Translation.tr("Softness")
-                    value: root.layoutData?.shadow?.softness ?? 30
-                    from: 0
-                    to: 100
-                    stepSize: 1
-                    onValueChanged: {
-                        if (!root.layoutReady) return
-                        root.setConfig("layout", "shadow.softness", value)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Shadow spread")
-                visible: root.layoutData?.shadow?.enabled ?? true
-
-                ConfigSpinBox {
-                    text: Translation.tr("Spread")
-                    value: root.layoutData?.shadow?.spread ?? 5
-                    from: -32
-                    to: 64
-                    stepSize: 1
-                    onValueChanged: {
-                        if (!root.layoutReady) return
-                        root.setConfig("layout", "shadow.spread", value)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Shadow offset")
-                visible: root.layoutData?.shadow?.enabled ?? true
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    ConfigSpinBox {
-                        id: shadowOffsetXSpin
-                        Layout.fillWidth: true
-                        text: "X"
-                        value: root.layoutData?.shadow?.offset_x ?? 0
-                        from: -100
-                        to: 100
-                        stepSize: 1
-                        onValueChanged: {
-                            if (!root.layoutReady || !root.shadowEditorReady) return
-                            root.setConfig("layout", "shadow.offset", `${value},${shadowOffsetYSpin.value}`)
-                        }
-                    }
-
-                    ConfigSpinBox {
-                        id: shadowOffsetYSpin
-                        Layout.fillWidth: true
-                        text: "Y"
-                        value: root.layoutData?.shadow?.offset_y ?? 5
-                        from: -100
-                        to: 100
-                        stepSize: 1
-                        onValueChanged: {
-                            if (!root.layoutReady || !root.shadowEditorReady) return
-                            root.setConfig("layout", "shadow.offset", `${shadowOffsetXSpin.value},${value}`)
-                        }
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Shadow color")
-                visible: root.layoutData?.shadow?.enabled ?? true
-
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: "#RRGGBBAA"
-                    text: root.layoutData?.shadow?.color ?? "#0007"
-                    onEditingFinished: {
-                        const val = text.trim()
-                        if (val.length > 0)
-                            root.setConfig("layout", "shadow.color", val)
-                    }
-                }
-            }
-
-            SettingsDivider {}
-
-            ContentSubsection {
-                title: Translation.tr("Struts")
-                tooltip: Translation.tr("Additional manual shrink beyond the space already reserved by the Screen Edge or Bar.")
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                ConfigSpinBox {
-                    Layout.fillWidth: true
-                    text: Translation.tr("Left")
-                    icon: "arrow_back"
-                    value: root.layoutData?.struts?.left ?? 0
-                    from: 0
-                    to: 512
-                    stepSize: 8
-                    onValueChanged: {
-                        if (!root.layoutReady) return
-                        root.setConfig("layout", "struts.left", value)
-                    }
-                }
-
-                ConfigSpinBox {
-                    Layout.fillWidth: true
-                    text: Translation.tr("Right")
-                    icon: "arrow_forward"
-                    value: root.layoutData?.struts?.right ?? 0
-                    from: 0
-                    to: 512
-                    stepSize: 8
-                    onValueChanged: {
-                        if (!root.layoutReady) return
-                        root.setConfig("layout", "struts.right", value)
-                    }
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                ConfigSpinBox {
-                    Layout.fillWidth: true
-                    text: Translation.tr("Top")
-                    icon: "arrow_upward"
-                    value: root.layoutData?.struts?.top ?? 0
-                    from: 0
-                    to: 512
-                    stepSize: 8
-                    onValueChanged: {
-                        if (!root.layoutReady) return
-                        root.setConfig("layout", "struts.top", value)
-                    }
-                }
-
-                ConfigSpinBox {
-                    Layout.fillWidth: true
-                    text: Translation.tr("Bottom")
-                    icon: "arrow_downward"
-                    value: root.layoutData?.struts?.bottom ?? 0
-                    from: 0
-                    to: 512
-                    stepSize: 8
-                    onValueChanged: {
-                        if (!root.layoutReady) return
-                        root.setConfig("layout", "struts.bottom", value)
-                    }
-                }
-            }
-
-            SettingsDivider {}
-
-            ContentSubsection {
-                title: Translation.tr("Overview zoom")
-                tooltip: Translation.tr("How much workspaces are scaled in the overview")
-
-                ConfigSpinBox {
-                    text: Translation.tr("Zoom (%)")
-                    value: Math.round((root.layoutData?.overview_zoom ?? 0.75) * 100)
-                    from: 30
-                    to: 100
-                    stepSize: 5
-                    onValueChanged: {
-                        if (!root.layoutReady) return
-                        root.setConfig("layout", "overview.zoom", (value / 100.0).toFixed(2))
-                    }
-                }
-            }
         }
     }
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        spacing: 14
+SettingsCardSection {
+    Layout.preferredWidth: 1
+    Layout.alignment: Qt.AlignTop
+    Layout.fillWidth: true
+    settingsTaskSection: "input"
+    visible: true
+    expanded: true
+    icon: "mouse"
+    title: Translation.tr("Mouse, Focus & Cursor")
 
-    // =====================
-    // KEYBOARD SECTION
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        settingsTaskSection: "input"
-        visible: true
-        expanded: true
-        icon: "keyboard"
-        title: Translation.tr("Keyboard")
-
-        SettingsGroup {
-            // --- Keyboard layout ---
-            ContentSubsection {
-                title: Translation.tr("Keyboard layout")
-                tooltip: Translation.tr("XKB keyboard layout (e.g. us, es, de, fr)")
-
-                StyledComboBox {
-                    id: keyboardLayoutCombo
-                    Layout.fillWidth: true
-                    model: root.keyboardLayoutOptions
-                    textRole: "displayName"
-                    currentIndex: {
-                        const idx = root.choiceIndex(model, root.keyboardData?.layout ?? "us")
-                        return idx >= 0 ? idx : root.keyboardLayoutOptions.length - 1
-                    }
-                    onActivated: {
-                        const selected = model[currentIndex].value
-                        if (selected !== "__custom__")
-                            root.setConfig("input", "keyboard.layout", selected)
-                    }
-                }
-
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    visible: keyboardLayoutCombo.currentIndex === root.keyboardLayoutOptions.length - 1
-                    placeholderText: Translation.tr("XKB layout code (e.g. pl, ar, th, vi)")
-                    text: root.keyboardData?.layout ?? ""
-                    onEditingFinished: {
-                        const val = text.trim()
-                        if (val.length > 0)
-                            root.setConfig("input", "keyboard.layout", val)
-                    }
-                }
-            }
-
+    SettingsGroup {
+        ConfigRow {
+            uniform: true
             SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "dialpad"
-                text: Translation.tr("Numlock on startup")
-                checked: root.keyboardData?.numlock ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "keyboard.numlock", checked)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Track layout")
-                tooltip: Translation.tr("Keep the same layout globally or remember it per window.")
-
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.trackLayoutOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.keyboardData?.track_layout ?? "global")
-                    onActivated: root.setConfig("input", "keyboard.track-layout", model[currentIndex].value)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Variant")
-                tooltip: Translation.tr("Optional XKB variant, for example colemak_dh or nodeadkeys.")
-
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: Translation.tr("Optional - e.g. colemak_dh")
-                    text: root.keyboardData?.variant ?? ""
-                    onEditingFinished: root.setConfig("input", "keyboard.variant", text.trim())
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("XKB options")
-                tooltip: Translation.tr("Comma-separated options passed to libxkbcommon, such as compose:ralt or ctrl:nocaps.")
-
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: Translation.tr("Optional - e.g. grp:win_space_toggle,compose:ralt")
-                    text: root.keyboardData?.options ?? ""
-                    onEditingFinished: root.setConfig("input", "keyboard.options", text.trim())
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Modifiers")
-                tooltip: Translation.tr("Choose which modifier Niri treats as Mod on bare metal and in nested sessions.")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    StyledComboBox {
-                        Layout.fillWidth: true
-                        model: root.modKeyOptions.map(value => ({ displayName: value, value }))
-                        textRole: "displayName"
-                        currentIndex: root.choiceIndex(model, root.generalInputData?.mod_key ?? "Super")
-                        onActivated: root.setConfig("input", "mod-key", model[currentIndex].value)
-                    }
-
-                    StyledComboBox {
-                        Layout.fillWidth: true
-                        model: root.modKeyOptions.map(value => ({ displayName: value, value }))
-                        textRole: "displayName"
-                        currentIndex: root.choiceIndex(model, root.generalInputData?.mod_key_nested ?? "Alt")
-                        onActivated: root.setConfig("input", "mod-key-nested", model[currentIndex].value)
-                    }
-                }
-            }
-
-            SettingsDivider {}
-
-            ConfigRow {
-                uniform: true
-
-                ContentSubsection {
-                    Layout.fillWidth: true
-                    title: Translation.tr("Key repeat delay")
-                    tooltip: Translation.tr("Milliseconds before a held key starts repeating")
-
-                    ConfigSpinBox {
-                        text: Translation.tr("Delay (ms)")
-                        value: root.keyboardData?.repeat_delay ?? 250
-                        from: 100
-                        to: 1000
-                        stepSize: 50
-                        onValueChanged: {
-                            if (!root.inputReady) return
-                            root.setConfig("input", "keyboard.repeat-delay", value)
-                        }
-                    }
-                }
-
-                ContentSubsection {
-                    Layout.fillWidth: true
-                    title: Translation.tr("Key repeat rate")
-                    tooltip: Translation.tr("Characters per second when a key held")
-
-                    ConfigSpinBox {
-                        text: Translation.tr("Rate (chars/s)")
-                        value: root.keyboardData?.repeat_rate ?? 50
-                        from: 10
-                        to: 100
-                        stepSize: 5
-                        onValueChanged: {
-                            if (!root.inputReady) return
-                            root.setConfig("input", "keyboard.repeat-rate", value)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // =====================
-    // GENERAL INPUT SECTION
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        settingsTaskSection: "input"
-        visible: true
-        expanded: true
-        icon: "settings_input_component"
-        title: Translation.tr("General Input")
-
-        SettingsGroup {
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "power_settings_new"
-                text: Translation.tr("Disable power key handling")
-                checked: root.generalInputData?.disable_power_key_handling ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "disable-power-key-handling", checked)
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "history"
-                text: Translation.tr("Workspace auto back-and-forth")
-                checked: root.generalInputData?.workspace_auto_back_and_forth ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "workspace-auto-back-and-forth", checked)
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "center_focus_strong"
-                text: Translation.tr("Warp pointer to focused window")
-                checked: root.generalInputData?.warp_mouse_to_focus ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setWarpMouseMode(checked ? (root.generalInputData?.warp_mouse_to_focus_mode ?? "separate") : "off")
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Warp mode")
-                visible: root.generalInputData?.warp_mouse_to_focus ?? false
-
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.warpMouseModeOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.generalInputData?.warp_mouse_to_focus_mode ?? "separate")
-                    onActivated: root.setWarpMouseMode(model[currentIndex].value)
-                }
-            }
-
-            SettingsSwitch {
+                id: focusFollowsMouseSwitch
                 Layout.fillWidth: true
                 buttonIcon: "mouse"
                 text: Translation.tr("Focus follows mouse")
@@ -2371,345 +1883,156 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Focus follows mouse threshold")
-                tooltip: Translation.tr("0% focuses only fully visible windows.")
-                visible: root.generalInputData?.focus_follows_mouse ?? false
-
-                ConfigSpinBox {
-                    text: Translation.tr("Max scroll (%)")
-                    value: root.generalInputData?.focus_follows_mouse_max_scroll ?? 0
-                    from: 0
-                    to: 100
-                    stepSize: 5
-                    onValueChanged: {
-                        if (!root.inputReady) return
-                        root.setFocusFollowsMouse(true, value)
-                    }
-                }
-            }
-
-            SettingsDivider {}
-
-            ContentSubsection {
-                title: Translation.tr("Mouse")
-            }
-
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "swipe"
-                    text: Translation.tr("Natural scroll")
-                    checked: root.mouseData?.natural_scroll ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "mouse.natural-scroll", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "left_click"
-                    text: Translation.tr("Left-handed")
-                    checked: root.mouseData?.left_handed ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "mouse.left-handed", checked)
-                    }
-                }
-            }
-
             SettingsSwitch {
+                id: warpMouseToFocusSwitch
                 Layout.fillWidth: true
-                buttonIcon: "ads_click"
-                text: Translation.tr("Middle-click emulation")
-                checked: root.mouseData?.middle_emulation ?? false
+                buttonIcon: "center_focus_strong"
+                text: Translation.tr("Warp pointer to focus")
+                checked: root.generalInputData?.warp_mouse_to_focus ?? false
                 onCheckedChanged: {
                     if (!root.inputReady) return
-                    root.setBooleanConfig("input", "mouse.middle-emulation", checked)
+                    root.setWarpMouseMode(checked ? (root.generalInputData?.warp_mouse_to_focus_mode ?? "separate") : "off")
                 }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                ContentSubsection {
-                    Layout.fillWidth: true
-                    title: Translation.tr("Mouse acceleration")
-
-                    ConfigSelectionArray {
-                        currentValue: root.mouseData?.accel_profile ?? "flat"
-                        options: [
-                            { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
-                            { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
-                        ]
-                        onSelected: newValue => {
-                            root.setConfig("input", "mouse.accel-profile", newValue)
-                        }
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignBottom
-                    buttonIcon: "lock"
-                    text: Translation.tr("Scroll button lock")
-                    checked: root.mouseData?.scroll_button_lock ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "mouse.scroll-button-lock", checked)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Mouse scrolling")
-
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.pointerScrollMethodOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.mouseData?.scroll_method ?? "no-scroll")
-                    onActivated: root.setConfig("input", "mouse.scroll-method", model[currentIndex].value)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Mouse speed")
-                tooltip: Translation.tr("Acceleration speed. Negative = slower, positive = faster.")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    StyledSlider {
-                        id: mouseSpeedSlider
-                        Layout.fillWidth: true
-                        from: -100
-                        to: 100
-                        value: Math.round((root.mouseData?.accel_speed ?? 0) * 100)
-                        stepSize: 5
-                        configuration: StyledSlider.Configuration.S
-
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("input", "mouse.accel-speed", (value / 100.0).toFixed(2))
-                        }
-                    }
-
-                    StyledText {
-                        text: (mouseSpeedSlider.value / 100.0).toFixed(2)
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 40
-                        horizontalAlignment: Text.AlignRight
-                    }
-                }
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                text: Translation.tr("Common niri options are validated; advanced options remain in raw KDL.")
-                wrapMode: Text.WordWrap
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.small
             }
         }
-    }
 
-    }
+        ConfigRow {
+            uniform: true
 
-    // =====================
-    // ANIMATIONS SECTION
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "animations"
-        visible: true
-        expanded: true
-        icon: "animation"
-        title: Translation.tr("Animations")
-
-        SettingsGroup {
             SettingsSwitch {
+                id: mouseNaturalScrollSwitch
                 Layout.fillWidth: true
-                buttonIcon: "animation"
-                text: Translation.tr("Enable animations")
-                checked: root.animationsData?.enabled ?? true
+                buttonIcon: "swipe"
+                text: Translation.tr("Natural scroll")
+                checked: root.mouseData?.natural_scroll ?? false
                 onCheckedChanged: {
-                    if (!root.animationsReady) return
-                    root.setBooleanConfig("animations", "enabled", checked)
+                    if (!root.inputReady) return
+                    root.setBooleanConfig("input", "mouse.natural-scroll", checked)
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Global slowdown")
-                tooltip: Translation.tr("1.0 is normal speed. Higher values make every animation slower.")
+            SettingsSwitch {
+                id: mouseLeftHandedSwitch
+                Layout.fillWidth: true
+                buttonIcon: "left_click"
+                text: Translation.tr("Left-handed")
+                checked: root.mouseData?.left_handed ?? false
+                onCheckedChanged: {
+                    if (!root.inputReady) return
+                    root.setBooleanConfig("input", "mouse.left-handed", checked)
+                }
+            }
+        }
 
-                RowLayout {
+        ContentSubsection {
+            title: Translation.tr("Mouse acceleration & speed")
+
+            ConfigSelectionArray {
+                currentValue: root.mouseData?.accel_profile ?? "flat"
+                options: [
+                    { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
+                    { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
+                ]
+                onSelected: newValue => {
+                    root.setConfig("input", "mouse.accel-profile", newValue)
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                StyledSlider {
+                    id: mouseSpeedSlider
                     Layout.fillWidth: true
-                    spacing: 8
+                    from: -100
+                    to: 100
+                    value: Math.round((root.mouseData?.accel_speed ?? 0) * 100)
+                    liveValue: Math.round((root.mouseData?.accel_speed ?? 0) * 100)
+                    stepSize: 5
+                    configuration: StyledSlider.Configuration.S
 
-                    StyledSlider {
-                        id: slowdownSlider
-                        Layout.fillWidth: true
-                        from: 50
-                        to: 500
-                        value: Math.round((root.animationsData?.slowdown ?? 1.0) * 100)
-                        stepSize: 10
-                        configuration: StyledSlider.Configuration.S
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("animations", "slowdown", (value / 100.0).toFixed(2))
-                        }
+                    onMoved: {
+                        if (pressed) return
+                        root.setConfig("input", "mouse.accel-speed", (value / 100.0).toFixed(2))
                     }
+                }
 
-                    StyledText {
-                        text: (slowdownSlider.value / 100.0).toFixed(2) + "x"
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 42
-                        horizontalAlignment: Text.AlignRight
-                    }
+                StyledText {
+                    text: (mouseSpeedSlider.value / 100.0).toFixed(2)
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.family: Appearance.font.family.monospace
+                    color: Appearance.colors.colSubtext
+                    Layout.preferredWidth: 40
+                    horizontalAlignment: Text.AlignRight
+                }
+            }
+        }
+
+        SettingsDivider {}
+
+        ContentSubsection {
+            title: Translation.tr("Cursor theme & size")
+            visible: root.cursorThemes.length > 0
+
+            StyledComboBox {
+                Layout.fillWidth: true
+                model: root.cursorThemes
+                currentIndex: root.cursorThemes.indexOf(root.cursorData?.theme ?? "")
+                onActivated: root.setConfig("input", "cursor.xcursor-theme", model[currentIndex])
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+
+            StyledSlider {
+                id: cursorSizeSlider
+                Layout.fillWidth: true
+                from: 16
+                to: 48
+                value: root.cursorData?.size ?? 24
+                liveValue: root.cursorData?.size ?? 24
+                stepSize: 2
+                configuration: StyledSlider.Configuration.S
+
+                onMoved: {
+                    if (pressed) return
+                    root.setConfig("input", "cursor.xcursor-size", String(Math.round(value)))
                 }
             }
 
             StyledText {
-                text: Translation.tr("Higher stiffness reacts faster; damping reduces bounce.")
-                font.pixelSize: Appearance.font.pixelSize.smaller
+                text: Math.round(cursorSizeSlider.value) + "px"
+                font.pixelSize: Appearance.font.pixelSize.smallest
+                font.family: Appearance.font.family.monospace
                 color: Appearance.colors.colSubtext
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
+                Layout.preferredWidth: 35
+                horizontalAlignment: Text.AlignRight
             }
+        }
 
-            Repeater {
-                model: Object.keys(root.animationsData?.types ?? {})
-
-                delegate: ColumnLayout {
-                    id: animDelegate
-                    Layout.fillWidth: true
-                    spacing: 4
-
-                    required property string modelData
-                    readonly property var springData: root.animationsData?.types?.[modelData] ?? {}
-
-                    SettingsDivider {}
-
-                    ContentSubsection {
-                        title: root.animationLabels[animDelegate.modelData] ?? animDelegate.modelData
-                    }
-
-                    SettingsSwitch {
-                        Layout.fillWidth: true
-                        buttonIcon: "animation"
-                        text: Translation.tr("Enable")
-                        checked: root.animationIsEnabled(animDelegate.springData)
-                        onCheckedChanged: {
-                            if (!root.animationsReady) return
-                            root.setBooleanConfig("animations", animDelegate.modelData + ".enabled", checked)
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 12
-                        visible: (animDelegate.springData?.mode ?? "spring") === "spring" && root.animationIsEnabled(animDelegate.springData)
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            Layout.preferredWidth: 1
-                            spacing: 2
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                StyledText {
-                                    Layout.fillWidth: true
-                                    text: Translation.tr("Damping ratio")
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    color: Appearance.colors.colSubtext
-                                    elide: Text.ElideRight
-                                }
-                                StyledText {
-                                    text: (dampingSlider.value / 100.0).toFixed(2)
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    font.family: Appearance.font.family.monospace
-                                    color: Appearance.colors.colSubtext
-                                    horizontalAlignment: Text.AlignRight
-                                }
-                            }
-
-                            StyledSlider {
-                                id: dampingSlider
-                                Layout.fillWidth: true
-                                from: 1
-                                to: 200
-                                value: Math.round((animDelegate.springData?.damping_ratio ?? 1.0) * 100)
-                                stepSize: 5
-                                configuration: StyledSlider.Configuration.S
-
-                                onMoved: {
-                                    if (pressed) return
-                                    root.setConfig("animations", animDelegate.modelData + ".damping-ratio", (value / 100.0).toFixed(2))
-                                }
-                            }
-                        }
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            Layout.preferredWidth: 1
-                            spacing: 2
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                StyledText {
-                                    Layout.fillWidth: true
-                                    text: Translation.tr("Stiffness")
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    color: Appearance.colors.colSubtext
-                                    elide: Text.ElideRight
-                                }
-                                StyledText {
-                                    text: String(Math.round(stiffnessSlider.value))
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    font.family: Appearance.font.family.monospace
-                                    color: Appearance.colors.colSubtext
-                                    horizontalAlignment: Text.AlignRight
-                                }
-                            }
-
-                            StyledSlider {
-                                id: stiffnessSlider
-                                Layout.fillWidth: true
-                                from: 50
-                                to: 2000
-                                value: animDelegate.springData?.stiffness ?? 800
-                                stepSize: 50
-                                configuration: StyledSlider.Configuration.S
-
-                                onMoved: {
-                                    if (pressed) return
-                                    root.setConfig("animations", animDelegate.modelData + ".stiffness", String(Math.round(value)))
-                                }
-                            }
-                        }
-                    }
-                }
+        SettingsSwitch {
+            id: cursorHideWhenTypingSwitch
+            Layout.fillWidth: true
+            buttonIcon: "keyboard_hide"
+            text: Translation.tr("Hide cursor while typing")
+            checked: root.cursorData?.hide_when_typing ?? true
+            onCheckedChanged: {
+                if (!root.inputReady) return
+                root.setBooleanConfig("input", "cursor.hide-when-typing", checked)
             }
         }
     }
+}
 
     // =====================
     // TOUCHPAD SECTION
     // =====================
     SettingsCardSection {
+        Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        Layout.fillHeight: true
         Layout.preferredWidth: 1
         settingsTaskSection: "input"
         visible: true
@@ -2718,10 +2041,23 @@ ContentPage {
         title: Translation.tr("Touchpad")
 
         SettingsGroup {
+            SettingsSwitch {
+                id: touchpadEnabledSwitch
+                Layout.fillWidth: true
+                buttonIcon: "touchpad_mouse"
+                text: Translation.tr("Enable touchpad")
+                checked: !(root.touchpadData?.off ?? false)
+                onCheckedChanged: {
+                    if (!root.inputReady) return
+                    root.setBooleanConfig("input", "touchpad.off", !checked)
+                }
+            }
+
             ConfigRow {
                 uniform: true
 
                 SettingsSwitch {
+                    id: touchpadTapSwitch
                     Layout.fillWidth: true
                     buttonIcon: "touch_app"
                     text: Translation.tr("Tap to click")
@@ -2733,6 +2069,7 @@ ContentPage {
                 }
 
                 SettingsSwitch {
+                    id: touchpadNaturalScrollSwitch
                     Layout.fillWidth: true
                     buttonIcon: "swipe"
                     text: Translation.tr("Natural scroll")
@@ -2748,6 +2085,7 @@ ContentPage {
                 uniform: true
 
                 SettingsSwitch {
+                    id: touchpadDwtSwitch
                     Layout.fillWidth: true
                     buttonIcon: "block"
                     text: Translation.tr("Disable while typing")
@@ -2759,21 +2097,7 @@ ContentPage {
                 }
 
                 SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "joystick"
-                    text: Translation.tr("Disable while trackpointing")
-                    checked: root.touchpadData?.dwtp ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "touchpad.dwtp", checked)
-                    }
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
+                    id: touchpadDisableExternalMouseSwitch
                     Layout.fillWidth: true
                     buttonIcon: "mouse"
                     text: Translation.tr("Disable with external mouse")
@@ -2783,124 +2107,22 @@ ContentPage {
                         root.setBooleanConfig("input", "touchpad.disabled-on-external-mouse", checked)
                     }
                 }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "left_click"
-                    text: Translation.tr("Left-handed")
-                    checked: root.touchpadData?.left_handed ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "touchpad.left-handed", checked)
-                    }
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "ads_click"
-                    text: Translation.tr("Middle-click emulation")
-                    checked: root.touchpadData?.middle_emulation ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "touchpad.middle-emulation", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "pan_tool"
-                    text: Translation.tr("Drag lock")
-                    checked: root.touchpadData?.drag_lock ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "touchpad.drag-lock", checked)
-                    }
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                ContentSubsection {
-                    Layout.fillWidth: true
-                    title: Translation.tr("Touchpad acceleration")
-
-                    ConfigSelectionArray {
-                        currentValue: root.touchpadData?.accel_profile ?? "adaptive"
-                        options: [
-                            { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
-                            { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
-                        ]
-                        onSelected: newValue => {
-                            root.setConfig("input", "touchpad.accel-profile", newValue)
-                        }
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignBottom
-                    buttonIcon: "lock"
-                    text: Translation.tr("Scroll button lock")
-                    checked: root.touchpadData?.scroll_button_lock ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "touchpad.scroll-button-lock", checked)
-                    }
-                }
             }
 
             ContentSubsection {
-                title: Translation.tr("Touchpad scrolling")
+                Layout.fillWidth: true
+                title: Translation.tr("Touchpad acceleration & speed")
 
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.touchpadScrollMethodOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.touchpadData?.scroll_method ?? "two-finger")
-                    onActivated: root.setConfig("input", "touchpad.scroll-method", model[currentIndex].value)
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                ContentSubsection {
-                    Layout.fillWidth: true
-                    title: Translation.tr("Tap button map")
-
-                    StyledComboBox {
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        model: root.tapButtonMapOptions
-                        textRole: "displayName"
-                        currentIndex: root.choiceIndex(model, root.touchpadData?.tap_button_map ?? "left-right-middle")
-                        onActivated: root.setConfig("input", "touchpad.tap-button-map", model[currentIndex].value)
+                ConfigSelectionArray {
+                    currentValue: root.touchpadData?.accel_profile ?? "adaptive"
+                    options: [
+                        { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
+                        { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
+                    ]
+                    onSelected: newValue => {
+                        root.setConfig("input", "touchpad.accel-profile", newValue)
                     }
                 }
-
-                ContentSubsection {
-                    Layout.fillWidth: true
-                    title: Translation.tr("Click method")
-
-                    StyledComboBox {
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        model: root.clickMethodOptions
-                        textRole: "displayName"
-                        currentIndex: root.choiceIndex(model, root.touchpadData?.click_method ?? "button-areas")
-                        onActivated: root.setConfig("input", "touchpad.click-method", model[currentIndex].value)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Touchpad speed")
-                tooltip: Translation.tr("Acceleration speed. Negative = slower, positive = faster.")
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -2912,6 +2134,7 @@ ContentPage {
                         from: -100
                         to: 100
                         value: Math.round((root.touchpadData?.accel_speed ?? 0) * 100)
+                        liveValue: Math.round((root.touchpadData?.accel_speed ?? 0) * 100)
                         stepSize: 5
                         configuration: StyledSlider.Configuration.S
 
@@ -2938,8 +2161,8 @@ ContentPage {
     // TRACKPOINT SECTION
     // =====================
     SettingsCardSection {
+        Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        Layout.fillHeight: true
         Layout.preferredWidth: 1
         settingsTaskSection: "input"
         visible: true
@@ -2952,6 +2175,7 @@ ContentPage {
                 uniform: true
 
                 SettingsSwitch {
+                    id: trackpointNaturalScrollSwitch
                     Layout.fillWidth: true
                     buttonIcon: "swap_vert"
                     text: Translation.tr("Natural scroll")
@@ -2963,6 +2187,7 @@ ContentPage {
                 }
 
                 SettingsSwitch {
+                    id: trackpointLeftHandedSwitch
                     Layout.fillWidth: true
                     buttonIcon: "left_click"
                     text: Translation.tr("Left-handed")
@@ -2974,14 +2199,31 @@ ContentPage {
                 }
             }
 
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "ads_click"
-                text: Translation.tr("Middle-click emulation")
-                checked: root.trackpointData?.middle_emulation ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "trackpoint.middle-emulation", checked)
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    id: trackpointMiddleEmulationSwitch
+                    Layout.fillWidth: true
+                    buttonIcon: "ads_click"
+                    text: Translation.tr("Middle-click emulation")
+                    checked: root.trackpointData?.middle_emulation ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "trackpoint.middle-emulation", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    id: trackpointScrollButtonLockSwitch
+                    Layout.fillWidth: true
+                    buttonIcon: "lock"
+                    text: Translation.tr("Scroll button lock")
+                    checked: root.trackpointData?.scroll_button_lock ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "trackpoint.scroll-button-lock", checked)
+                    }
                 }
             }
 
@@ -3002,28 +2244,17 @@ ContentPage {
                     }
                 }
 
-                SettingsSwitch {
+                ContentSubsection {
                     Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignBottom
-                    buttonIcon: "lock"
-                    text: Translation.tr("Scroll button lock")
-                    checked: root.trackpointData?.scroll_button_lock ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "trackpoint.scroll-button-lock", checked)
+                    title: Translation.tr("Trackpoint scrolling")
+
+                    StyledComboBox {
+                        Layout.fillWidth: true
+                        model: root.pointerScrollMethodOptions
+                        textRole: "displayName"
+                        currentIndex: root.choiceIndex(model, root.trackpointData?.scroll_method ?? "on-button-down")
+                        onActivated: root.setConfig("input", "trackpoint.scroll-method", model[currentIndex].value)
                     }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Trackpoint scrolling")
-
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.pointerScrollMethodOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.trackpointData?.scroll_method ?? "on-button-down")
-                    onActivated: root.setConfig("input", "trackpoint.scroll-method", model[currentIndex].value)
                 }
             }
 
@@ -3041,6 +2272,7 @@ ContentPage {
                         from: -100
                         to: 100
                         value: Math.round((root.trackpointData?.accel_speed ?? 0) * 100)
+                        liveValue: Math.round((root.trackpointData?.accel_speed ?? 0) * 100)
                         stepSize: 5
                         configuration: StyledSlider.Configuration.S
 
@@ -3065,217 +2297,6 @@ ContentPage {
 
     // Default applications are owned by Settings -> Default Applications (SET-F01).
     readonly property string _legacyAppPresetHint: Translation.tr("Choose an app preset or custom command.")
-    // =====================
-    // NIRI CONFIG STATUS
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.columnSpan: parent.columns
-        visible: root.showCustomConfigStatusSection
-        expanded: false
-        icon: "rule_settings"
-        title: Translation.tr("Niri config status")
-
-        SettingsGroup {
-            Item {
-                Layout.fillWidth: true
-                implicitHeight: summaryRow.implicitHeight
-
-                RowLayout {
-                    id: summaryRow
-                    anchors.fill: parent
-                    spacing: 8
-
-                    MaterialSymbol {
-                        text: root.hasCustomConfigDiffs ? "info" : "task_alt"
-                        iconSize: Appearance.font.pixelSize.normal
-                        color: Appearance.colors.colSubtext
-                    }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: root.hasCustomConfigDiffs
-                            ? Translation.tr("%1 config files differ from Alis defaults").arg(root.customConfigActionableCount)
-                            : Translation.tr("Alis-managed files are unmodified")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnLayer1
-                        wrapMode: Text.WordWrap
-                    }
-                }
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                text: root.hasCustomConfigDiffs
-                    ? Translation.tr("These files were changed after installation. Alis may overwrite them on update — review them to keep your modifications.")
-                    : Translation.tr("Only generated and user-owned files differ from the managed defaults. Nothing needs attention.")
-                font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.colors.colSubtext
-                wrapMode: Text.WordWrap
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-
-                StyledText {
-                    text: Translation.tr("Modified by you: %1").arg(root.customConfigManagedOverrideCount)
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: Appearance.colors.colSubtext
-                }
-
-                StyledText {
-                    text: Translation.tr("Extra files: %1").arg(root.customConfigExtraFileCount)
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: Appearance.colors.colSubtext
-                }
-
-                StyledText {
-                    text: Translation.tr("Generated/user-owned: %1").arg(root.customConfigExpectedGeneratedCount + root.customConfigUserExtraCount)
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: Appearance.colors.colSubtext
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Button {
-                    visible: root.niriConfigDir.length > 0
-                    text: Translation.tr("Open config folder")
-                    onClicked: root.openConfigFolderExternally()
-
-                    background: Rectangle {
-                        implicitWidth: 140
-                        implicitHeight: 36
-                        radius: Appearance.rounding.small
-                        color: Appearance.colors.colLayer2
-                    }
-
-                    contentItem: StyledText {
-                        text: parent.text
-                        color: Appearance.colors.colOnLayer1
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
-                }
-
-                Button {
-                    visible: root.niriConfigPath.length > 0
-                    text: Translation.tr("Open config file")
-                    onClicked: root.openConfigFileExternally()
-
-                    background: Rectangle {
-                        implicitWidth: 120
-                        implicitHeight: 36
-                        radius: Appearance.rounding.small
-                        color: Appearance.colors.colLayer2
-                    }
-
-                    contentItem: StyledText {
-                        text: parent.text
-                        color: Appearance.colors.colOnLayer1
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
-                }
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                visible: root.niriConfigDir.length > 0
-                text: Translation.tr("Config directory: %1").arg(root.niriConfigDir)
-                wrapMode: Text.WrapAnywhere
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.smallest
-                font.family: Appearance.font.family.monospace
-            }
-
-            Repeater {
-                model: root.actionableCustomConfigFiles
-
-                delegate: ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    required property var modelData
-
-                    SettingsDivider {}
-
-                    ContentSubsection {
-                        title: modelData.path ?? ""
-                    }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: modelData.reason ?? ""
-                        wrapMode: Text.WordWrap
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        visible: (modelData.preview?.length ?? 0) > 0
-                        color: Appearance.colors.colLayer2
-                        radius: Appearance.rounding.small
-                        border.width: 1
-                        border.color: Appearance.colors.colOutlineVariant
-                        implicitHeight: previewText.implicitHeight + 16
-
-                        StyledText {
-                            id: previewText
-                            anchors.fill: parent
-                            anchors.margins: 8
-                            text: (modelData.preview ?? []).join("\n")
-                            wrapMode: Text.WrapAnywhere
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.family: Appearance.font.family.monospace
-                            color: Appearance.colors.colOnLayer1
-                        }
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Informational files")
-                visible: root.informationalCustomConfigFiles.length > 0
-            }
-
-            Repeater {
-                model: root.informationalCustomConfigFiles
-
-                delegate: ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    required property var modelData
-
-                    SettingsDivider {}
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: modelData.path ?? ""
-                        color: Appearance.colors.colOnLayer1
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.Medium
-                        wrapMode: Text.WrapAnywhere
-                    }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: modelData.reason ?? ""
-                        wrapMode: Text.WordWrap
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
-                }
-            }
-        }
-    }
     }
 
 }

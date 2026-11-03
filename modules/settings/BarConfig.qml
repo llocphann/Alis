@@ -73,21 +73,21 @@ ContentPage {
 
     SettingsTaskNavigator {
         visible: !root.abyssContent
-        showTabBar: false
+        showTabBar: true
+        showIntro: false
         icon: "toolbar"
         title: root.abyssContent ? Translation.tr("Module behavior") : Translation.tr("Classic Bar")
         description: Translation.tr("Position, surface, behavior, spectrum and modules for the Classic bar.")
-        summary: Translation.tr("Appearance · Spectrum · Behavior · Modules")
+        summary: Translation.tr("Appearance · Behavior & Spectrum · Modules")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: root.abyssContent ? [
             { displayName: Translation.tr("Modules"), icon: "widgets", value: "modules" },
             { displayName: Translation.tr("Behavior & clock"), icon: "visibility", value: "behavior" }
         ] : [
-            { displayName: Translation.tr("Appearance"), icon: "style", value: "appearance" },
-            { displayName: Translation.tr("Audio spectrum"), icon: "graphic_eq", value: "spectrum" },
-            { displayName: Translation.tr("Behavior & clock"), icon: "visibility", value: "behavior" },
-            { displayName: Translation.tr("Modules"), icon: "widgets", value: "modules" }
+            { displayName: Translation.tr("Appearance & Screen Edge"), icon: "style", value: "appearance" },
+            { displayName: Translation.tr("Behavior, Clock & Spectrum"), icon: "visibility", value: "behavior" },
+            { displayName: Translation.tr("Modules & Workspaces"), icon: "widgets", value: "modules" }
         ]
     }
 
@@ -111,463 +111,381 @@ ContentPage {
     GridLayout {
         id: barTwoColumnGrid
         Layout.fillWidth: true
-        columns: !root.abyssContent && width >= 620 ? 2 : 1
+        columns: root.abyssCardFilter !== "" ? 1 : 2
         uniformCellWidths: columns === 2
         columnSpacing: 14
         rowSpacing: 14
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        Layout.alignment: Qt.AlignTop
-        spacing: 14
-        visible: root.isIiActive && (!root.abyssContent || root.abyssCardFilter === "behavior" || root.abyssCardFilter === "")
+SettingsCardSection {
+    Layout.preferredWidth: 1
+    Layout.alignment: Qt.AlignTop
+    Layout.fillWidth: true
+    settingsTaskSection: "appearance"
+    visible: root.isIiActive && !root.abyssContent
+    expanded: true
+    icon: "toolbar"
+    title: Translation.tr("Appearance & Layout")
 
-    SettingsCardSection {
-        Layout.fillWidth: true
-        settingsTaskSection: "appearance"
-        visible: root.isIiActive && !root.abyssContent
-        expanded: true
-        icon: "toolbar"
-        title: Translation.tr("Appearance & Layout")
+    SettingsGroup {
+        SettingsNote {
+            icon: "toolbar"
+            text: Translation.tr("Classic Bar uses the Hug surface. Position only changes which screen edge it hugs.")
+        }
 
-        SettingsGroup {
-            SettingsNote {
-                icon: "toolbar"
-                text: Translation.tr("Classic Bar uses the Hug surface. Position only changes which screen edge it hugs.")
+        ContentSubsection {
+            title: Translation.tr("Position")
+
+            ConfigSelectionArray {
+                currentValue: ((Config.options?.bar?.bottom ?? false) ? 1 : 0)
+                    | ((Config.options?.bar?.vertical ?? false) ? 2 : 0)
+                onSelected: newValue => {
+                    Config.setNestedValue("bar.bottom", (newValue & 1) !== 0)
+                    Config.setNestedValue("bar.vertical", (newValue & 2) !== 0)
+                }
+                options: [
+                    { displayName: Translation.tr("Top"), icon: "arrow_upward", value: 0 },
+                    { displayName: Translation.tr("Bottom"), icon: "arrow_downward", value: 1 },
+                    { displayName: Translation.tr("Left"), icon: "arrow_back", value: 2 },
+                    { displayName: Translation.tr("Right"), icon: "arrow_forward", value: 3 }
+                ]
+            }
+        }
+
+        ConfigRow {
+            uniform: true
+
+            ConfigSpinBox {
+                icon: "height"
+                text: root.isVertical ? Translation.tr("Bar width (px)") : Translation.tr("Bar height (px)")
+                value: Config.options?.bar?.height ?? 40
+                from: 24
+                to: 80
+                stepSize: 2
+                onValueChanged: Config.setNestedValue("bar.height", value)
             }
 
-            ContentSubsection {
-                title: Translation.tr("Position")
-
-                ConfigSelectionArray {
-                    currentValue: ((Config.options?.bar?.bottom ?? false) ? 1 : 0)
-                        | ((Config.options?.bar?.vertical ?? false) ? 2 : 0)
-                    onSelected: newValue => {
-                        Config.setNestedValue("bar.bottom", (newValue & 1) !== 0)
-                        Config.setNestedValue("bar.vertical", (newValue & 2) !== 0)
-                    }
-                    options: [
-                        { displayName: Translation.tr("Top"), icon: "arrow_upward", value: 0 },
-                        { displayName: Translation.tr("Bottom"), icon: "arrow_downward", value: 1 },
-                        { displayName: Translation.tr("Left"), icon: "arrow_back", value: 2 },
-                        { displayName: Translation.tr("Right"), icon: "arrow_forward", value: 3 }
-                    ]
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                ConfigSpinBox {
-                    icon: "height"
-                    text: root.isVertical ? Translation.tr("Bar width (px)") : Translation.tr("Bar height (px)")
-                    value: Config.options?.bar?.height ?? 40
-                    from: 24
-                    to: 80
-                    stepSize: 2
-                    onValueChanged: Config.setNestedValue("bar.height", value)
-                }
-
-                ConfigSpinBox {
-                    icon: "rounded_corner"
-                    text: Translation.tr("Custom rounding (px)")
-                    value: Config.options?.bar?.customRounding ?? -1
-                    from: -1
-                    to: 50
-                    stepSize: 1
-                    onValueChanged: Config.setNestedValue("bar.customRounding", value)
-                    StyledToolTip {
-                        text: Translation.tr("-1 uses the active theme default; 0 is square.")
-                    }
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                ConfigSpinBox {
-                    icon: "opacity"
-                    text: Translation.tr("Background opacity (%)")
-                    value: Math.round((Config.options?.bar?.opacity ?? 1) * 100)
-                    from: 20
-                    to: 100
-                    stepSize: 5
-                    onValueChanged: Config.setNestedValue("bar.opacity", value / 100)
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "border_clear"
-                    text: Translation.tr("Borderless")
-                    checked: Config.options?.bar?.borderless ?? true
-                    onCheckedChanged: Config.setNestedValue("bar.borderless", checked)
+            ConfigSpinBox {
+                icon: "rounded_corner"
+                text: Translation.tr("Custom rounding (px)")
+                value: Config.options?.bar?.customRounding ?? -1
+                from: -1
+                to: 50
+                stepSize: 1
+                onValueChanged: Config.setNestedValue("bar.customRounding", value)
+                StyledToolTip {
+                    text: Translation.tr("-1 uses the active theme default; 0 is square.")
                 }
             }
         }
+
+        ConfigRow {
+            uniform: true
+
+            ConfigSpinBox {
+                icon: "opacity"
+                text: Translation.tr("Background opacity (%)")
+                value: Math.round((Config.options?.bar?.opacity ?? 1) * 100)
+                from: 20
+                to: 100
+                stepSize: 5
+                onValueChanged: Config.setNestedValue("bar.opacity", value / 100)
+            }
+
+            SettingsSwitch {
+                buttonIcon: "border_clear"
+                text: Translation.tr("Borderless")
+                checked: Config.options?.bar?.borderless ?? true
+                onCheckedChanged: Config.setNestedValue("bar.borderless", checked)
+            }
+        }
     }
+}
 
-    SettingsCardSection {
-        Layout.fillWidth: true
-        settingsTaskSection: "appearance"
-        visible: root.isIiActive && !root.abyssContent
-        expanded: true
-        icon: "border_outer"
-        title: Translation.tr("Screen Edge")
+SettingsCardSection {
+    Layout.preferredWidth: 1
+    Layout.alignment: Qt.AlignTop
+    Layout.fillWidth: true
+    settingsTaskSection: "appearance"
+    visible: root.isIiActive && !root.abyssContent
+    expanded: true
+    icon: "border_outer"
+    title: Translation.tr("Screen Edge")
 
-        SettingsGroup {
+    SettingsGroup {
+        ConfigRow {
+            uniform: true
+
+            ConfigSpinBox {
+                icon: "width"
+                text: Translation.tr("Screen edge width (px)")
+                value: Config.options?.appearance?.screenEdge?.width ?? 10
+                from: 1
+                to: 32
+                stepSize: 1
+                onValueChanged: Config.setNestedValue(
+                    "appearance.screenEdge.width", value)
+            }
+
+            ConfigSpinBox {
+                icon: "rounded_corner"
+                text: Translation.tr("Corner radius (px)")
+                value: Config.options?.appearance?.screenEdge?.radius ?? 25
+                from: 0
+                to: 96
+                stepSize: 1
+                onValueChanged: Config.setNestedValue(
+                    "appearance.screenEdge.radius", value)
+            }
+        }
+
+        SettingsSwitch {
+            buttonIcon: "shadow"
+            text: Translation.tr("Screen edge shadow")
+            checked: Config.options?.appearance?.screenEdge?.physicalShadow?.enabled ?? true
+            onCheckedChanged: Config.setNestedValue(
+                "appearance.screenEdge.physicalShadow.enabled", checked)
+        }
+
+        ConfigRow {
+            uniform: true
+
+            ConfigSpinBox {
+                icon: "blur_on"
+                text: Translation.tr("Shadow size (px)")
+                value: Config.options?.appearance?.screenEdge?.physicalShadow?.size ?? 15
+                from: 0
+                to: 32
+                stepSize: 1
+                enabled: Config.options?.appearance?.screenEdge?.physicalShadow?.enabled ?? true
+                opacity: enabled ? 1 : 0.5
+                onValueChanged: Config.setNestedValue(
+                    "appearance.screenEdge.physicalShadow.size", value)
+            }
+
+            ConfigSpinBox {
+                icon: "opacity"
+                text: Translation.tr("Shadow opacity (%)")
+                value: Math.round(
+                    (Config.options?.appearance?.screenEdge?.physicalShadow?.opacity ?? 0.70) * 100)
+                from: 0
+                to: 100
+                stepSize: 2
+                enabled: Config.options?.appearance?.screenEdge?.physicalShadow?.enabled ?? true
+                opacity: enabled ? 1 : 0.5
+                onValueChanged: Config.setNestedValue(
+                    "appearance.screenEdge.physicalShadow.opacity", value / 100)
+            }
+        }
+
+        SettingsNote {
+            icon: "info"
+            text: Translation.tr("Shared shadow for Edge, popups, Dock, Sidebar and Dashboard; hidden in fullscreen/lock.")
+        }
+    }
+}
+
+SettingsCardSection {
+    Layout.preferredWidth: 1
+    Layout.alignment: Qt.AlignTop
+    Layout.fillWidth: true
+    settingsTaskSection: "behavior"
+    visible: root.isIiActive && !root.abyssContent
+    expanded: true
+    icon: "graphic_eq"
+    title: Translation.tr("Audio spectrum")
+
+    SettingsGroup {
+        ConfigSwitch {
+            buttonIcon: "graphic_eq"
+            text: Translation.tr("Show spectrum in the bar")
+            checked: root.spectrumEnabled
+            onCheckedChanged: root.setSpectrumValue("bar.visualizer.enable", checked)
+        }
+
+        ConfigSelectionArray {
+            enabled: root.spectrumEnabled
+            opacity: enabled ? 1 : 0.5
+            currentValue: Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary"
+            onSelected: newValue => root.setSpectrumValue("bar.visualizer.multiMonitorMode", newValue)
+            options: [
+                { displayName: Translation.tr("Primary only"), icon: "filter_1", value: "primary" },
+                { displayName: Translation.tr("All monitors"), icon: "select_all", value: "all" }
+            ]
+        }
+
+        ConfigSelectionArray {
+            enabled: root.spectrumEnabled
+            opacity: enabled ? 1 : 0.5
+            currentValue: Config.options?.bar?.visualizer?.type ?? "bars"
+            onSelected: newValue => root.setSpectrumValue("bar.visualizer.type", newValue)
+            options: [
+                { displayName: Translation.tr("Bars"), icon: "equalizer", value: "bars" },
+                { displayName: Translation.tr("Wave"), icon: "waves", value: "wave" }
+            ]
+        }
+
+        ConfigRow {
+            uniform: true
+
+            ConfigSpinBox {
+                icon: "height"
+                text: Translation.tr("Height (%)")
+                value: Math.round((Config.options?.bar?.visualizer?.height ?? 0.6) * 100)
+                from: 10
+                to: 100
+                stepSize: 5
+                enabled: root.spectrumEnabled
+                onValueChanged: root.setSpectrumValue("bar.visualizer.height", value / 100)
+            }
+
+            ConfigSpinBox {
+                icon: "opacity"
+                text: Translation.tr("Opacity (%)")
+                value: Math.round((Config.options?.bar?.visualizer?.opacity ?? 0.35) * 100)
+                from: 5
+                to: 100
+                stepSize: 5
+                enabled: root.spectrumEnabled
+                onValueChanged: root.setSpectrumValue("bar.visualizer.opacity", value / 100)
+            }
+        }
+    }
+}
+
+SettingsCardSection {
+    Layout.preferredWidth: 1
+    Layout.alignment: Qt.AlignTop
+    Layout.fillWidth: true
+    settingsTaskSection: "behavior"
+    visible: root.isIiActive && (!root.abyssContent || root.abyssCardFilter === "behavior" || root.abyssCardFilter === "behavior_and_quick_actions"
+        || (root.abyssCardFilter === "" && (root.activeSection === "behavior" || root.abyssContent)))
+    expanded: true
+    icon: "visibility"
+    title: Translation.tr("Behavior & clock")
+
+    SettingsGroup {
+        ContentSubsection {
+            title: Translation.tr("Auto hide")
+
+            SettingsSwitch {
+                buttonIcon: "visibility_off"
+                text: Translation.tr("Auto hide")
+                checked: Config.options?.bar?.autoHide?.enable ?? false
+                onCheckedChanged: Config.setNestedValue("bar.autoHide.enable", checked)
+            }
+
             ConfigRow {
                 uniform: true
 
                 ConfigSpinBox {
-                    icon: "width"
-                    text: Translation.tr("Screen edge width (px)")
-                    value: Config.options?.appearance?.screenEdge?.width ?? 10
+                    icon: "width_normal"
+                    text: Translation.tr("Reveal region (px)")
+                    value: Config.options?.bar?.autoHide?.hoverRegionWidth ?? 2
                     from: 1
-                    to: 32
+                    to: 16
                     stepSize: 1
-                    onValueChanged: Config.setNestedValue(
-                        "appearance.screenEdge.width", value)
+                    enabled: Config.options?.bar?.autoHide?.enable ?? false
+                    opacity: enabled ? 1 : 0.5
+                    onValueChanged: Config.setNestedValue("bar.autoHide.hoverRegionWidth", value)
                 }
 
-                ConfigSpinBox {
-                    icon: "rounded_corner"
-                    text: Translation.tr("Corner radius (px)")
-                    value: Config.options?.appearance?.screenEdge?.radius ?? 25
-                    from: 0
-                    to: 96
-                    stepSize: 1
-                    onValueChanged: Config.setNestedValue(
-                        "appearance.screenEdge.radius", value)
+                SettingsSwitch {
+                    buttonIcon: "vertical_align_center"
+                    text: Translation.tr("Push windows")
+                    checked: Config.options?.bar?.autoHide?.pushWindows ?? false
+                    onCheckedChanged: Config.setNestedValue("bar.autoHide.pushWindows", checked)
                 }
             }
 
             SettingsSwitch {
-                buttonIcon: "shadow"
-                text: Translation.tr("Screen edge shadow")
-                checked: Config.options?.appearance?.screenEdge?.physicalShadow?.enabled ?? true
-                onCheckedChanged: Config.setNestedValue(
-                    "appearance.screenEdge.physicalShadow.enabled", checked)
+                buttonIcon: "keyboard_command_key"
+                text: Translation.tr("Reveal while Super is held")
+                checked: Config.options?.bar?.autoHide?.showWhenPressingSuper?.enable ?? true
+                onCheckedChanged: Config.setNestedValue("bar.autoHide.showWhenPressingSuper.enable", checked)
             }
 
-            ConfigRow {
-                uniform: true
-
-                ConfigSpinBox {
-                    icon: "blur_on"
-                    text: Translation.tr("Shadow size (px)")
-                    value: Config.options?.appearance?.screenEdge?.physicalShadow?.size ?? 15
-                    from: 0
-                    to: 32
-                    stepSize: 1
-                    enabled: Config.options?.appearance?.screenEdge?.physicalShadow?.enabled ?? true
-                    opacity: enabled ? 1 : 0.5
-                    onValueChanged: Config.setNestedValue(
-                        "appearance.screenEdge.physicalShadow.size", value)
-                }
-
-                ConfigSpinBox {
-                    icon: "opacity"
-                    text: Translation.tr("Shadow opacity (%)")
-                    value: Math.round(
-                        (Config.options?.appearance?.screenEdge?.physicalShadow?.opacity ?? 0.70) * 100)
-                    from: 0
-                    to: 100
-                    stepSize: 2
-                    enabled: Config.options?.appearance?.screenEdge?.physicalShadow?.enabled ?? true
-                    opacity: enabled ? 1 : 0.5
-                    onValueChanged: Config.setNestedValue(
-                        "appearance.screenEdge.physicalShadow.opacity", value / 100)
-                }
-            }
-
-            SettingsNote {
-                icon: "info"
-                text: Translation.tr("Shared shadow for Edge, popups, Dock, Sidebar and Dashboard; hidden in fullscreen/lock.")
+            ConfigSpinBox {
+                icon: "timer"
+                text: Translation.tr("Super reveal delay (ms)")
+                value: Config.options?.bar?.autoHide?.showWhenPressingSuper?.delay ?? 140
+                from: 0
+                to: 1000
+                stepSize: 20
+                enabled: Config.options?.bar?.autoHide?.showWhenPressingSuper?.enable ?? true
+                opacity: enabled ? 1 : 0.5
+                onValueChanged: Config.setNestedValue("bar.autoHide.showWhenPressingSuper.delay", value)
             }
         }
-    }
 
-    SettingsCardSection {
-        Layout.fillWidth: true
-        settingsTaskSection: "spectrum"
-        visible: root.isIiActive && !root.abyssContent
-        expanded: true
-        icon: "graphic_eq"
-        title: Translation.tr("Audio spectrum")
+        SettingsNote { visible:Config.options?.panelFamily==="abyss";text:Translation.tr("Clock follows Typography") }
+        Loader {
+            Layout.fillWidth:true
+            active:Config.options?.panelFamily!=="abyss"
+            sourceComponent:Component {
+                ContentSubsection {
+                    title: Translation.tr("Clock")
 
-        SettingsGroup {
-            ConfigSwitch {
-                buttonIcon: "graphic_eq"
-                text: Translation.tr("Show spectrum in the bar")
-                checked: root.spectrumEnabled
-                onCheckedChanged: root.setSpectrumValue("bar.visualizer.enable", checked)
-            }
+                    ConfigRow {
+                        uniform: true
 
-            ConfigSelectionArray {
-                enabled: root.spectrumEnabled
-                opacity: enabled ? 1 : 0.5
-                currentValue: Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary"
-                onSelected: newValue => root.setSpectrumValue("bar.visualizer.multiMonitorMode", newValue)
-                options: [
-                    { displayName: Translation.tr("Primary only"), icon: "filter_1", value: "primary" },
-                    { displayName: Translation.tr("All monitors"), icon: "select_all", value: "all" }
-                ]
-            }
-
-            ConfigSelectionArray {
-                enabled: root.spectrumEnabled
-                opacity: enabled ? 1 : 0.5
-                currentValue: Config.options?.bar?.visualizer?.type ?? "bars"
-                onSelected: newValue => root.setSpectrumValue("bar.visualizer.type", newValue)
-                options: [
-                    { displayName: Translation.tr("Bars"), icon: "equalizer", value: "bars" },
-                    { displayName: Translation.tr("Wave"), icon: "waves", value: "wave" }
-                ]
-            }
-
-            ConfigSelectionArray {
-                visible: (Config.options?.bar?.visualizer?.type ?? "bars") === "bars"
-                enabled: root.spectrumEnabled
-                opacity: enabled ? 1 : 0.5
-                currentValue: Config.options?.bar?.visualizer?.barsOrigin ?? "bottom"
-                onSelected: newValue => root.setSpectrumValue("bar.visualizer.barsOrigin", newValue)
-                options: [
-                    { displayName: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: "bottom" },
-                    { displayName: Translation.tr("Top"), icon: "vertical_align_top", value: "top" },
-                    { displayName: Translation.tr("Center rise"), icon: "center_focus_strong", value: "center" },
-                    { displayName: Translation.tr("Mirrored"), icon: "unfold_more", value: "mirror" }
-                ]
-            }
-
-            ConfigSelectionArray {
-                visible: (Config.options?.bar?.visualizer?.type ?? "bars") === "wave"
-                enabled: root.spectrumEnabled
-                opacity: enabled ? 1 : 0.5
-                currentValue: Config.options?.bar?.visualizer?.waveMode ?? "fill"
-                onSelected: newValue => root.setSpectrumValue("bar.visualizer.waveMode", newValue)
-                options: [
-                    { displayName: Translation.tr("Fill"), icon: "waves", value: "fill" },
-                    { displayName: Translation.tr("Line"), icon: "line_weight", value: "line" },
-                    { displayName: Translation.tr("Ribbon"), icon: "unfold_more", value: "ribbon" }
-                ]
-            }
-
-            ConfigSelectionArray {
-                enabled: root.spectrumEnabled
-                opacity: enabled ? 1 : 0.5
-                currentValue: Config.options?.bar?.visualizer?.frequencyProfile ?? "flat"
-                onSelected: newValue => root.setSpectrumValue("bar.visualizer.frequencyProfile", newValue)
-                options: [
-                    { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" },
-                    { displayName: Translation.tr("Bass"), icon: "graphic_eq", value: "bass" },
-                    { displayName: Translation.tr("Warm"), icon: "local_fire_department", value: "warm" },
-                    { displayName: Translation.tr("Vocal"), icon: "record_voice_over", value: "vocal" },
-                    { displayName: Translation.tr("Treble"), icon: "trending_up", value: "treble" },
-                    { displayName: Translation.tr("Smile"), icon: "waves", value: "smile" }
-                ]
-            }
-
-            ConfigRow {
-                uniform: true
-
-                ConfigSpinBox {
-                    icon: "view_column"
-                    text: Translation.tr("Band density (px)")
-                    value: Config.options?.bar?.visualizer?.density ?? 12
-                    from: 4
-                    to: 32
-                    stepSize: 1
-                    enabled: root.spectrumEnabled
-                    onValueChanged: root.setSpectrumValue("bar.visualizer.density", value)
-                }
-
-                ConfigSpinBox {
-                    icon: "space_bar"
-                    text: Translation.tr("Band gap (px)")
-                    value: Config.options?.bar?.visualizer?.gap ?? 2
-                    from: 0
-                    to: 12
-                    stepSize: 1
-                    enabled: root.spectrumEnabled
-                    onValueChanged: root.setSpectrumValue("bar.visualizer.gap", value)
-                }
-
-                ConfigSpinBox {
-                    icon: "blur_on"
-                    text: Translation.tr("Smoothing")
-                    value: Config.options?.bar?.visualizer?.smoothing ?? 2
-                    from: 0
-                    to: 8
-                    stepSize: 1
-                    enabled: root.spectrumEnabled
-                    onValueChanged: root.setSpectrumValue("bar.visualizer.smoothing", value)
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                ConfigSpinBox {
-                    icon: "height"
-                    text: Translation.tr("Height (%)")
-                    value: Math.round((Config.options?.bar?.visualizer?.height ?? 0.6) * 100)
-                    from: 10
-                    to: 100
-                    stepSize: 5
-                    enabled: root.spectrumEnabled
-                    onValueChanged: root.setSpectrumValue("bar.visualizer.height", value / 100)
-                }
-
-                ConfigSpinBox {
-                    icon: "opacity"
-                    text: Translation.tr("Opacity (%)")
-                    value: Math.round((Config.options?.bar?.visualizer?.opacity ?? 0.35) * 100)
-                    from: 5
-                    to: 100
-                    stepSize: 5
-                    enabled: root.spectrumEnabled
-                    onValueChanged: root.setSpectrumValue("bar.visualizer.opacity", value / 100)
-                }
-            }
-        }
-    }
-
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        settingsTaskSection: "behavior"
-        visible: root.isIiActive && (!root.abyssContent || root.abyssCardFilter === "behavior"
-            || (root.abyssCardFilter === "" && (root.activeSection === "behavior" || root.abyssContent)))
-        expanded: true
-        icon: "visibility"
-        title: Translation.tr("Behavior & clock")
-
-        SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("Auto hide")
-
-                SettingsSwitch {
-                    buttonIcon: "visibility_off"
-                    text: Translation.tr("Auto hide")
-                    checked: Config.options?.bar?.autoHide?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("bar.autoHide.enable", checked)
-                }
-
-                ConfigRow {
-                    uniform: true
-
-                    ConfigSpinBox {
-                        icon: "width_normal"
-                        text: Translation.tr("Reveal region (px)")
-                        value: Config.options?.bar?.autoHide?.hoverRegionWidth ?? 2
-                        from: 1
-                        to: 16
-                        stepSize: 1
-                        enabled: Config.options?.bar?.autoHide?.enable ?? false
-                        opacity: enabled ? 1 : 0.5
-                        onValueChanged: Config.setNestedValue("bar.autoHide.hoverRegionWidth", value)
-                    }
-
-                    SettingsSwitch {
-                        buttonIcon: "vertical_align_center"
-                        text: Translation.tr("Push windows")
-                        checked: Config.options?.bar?.autoHide?.pushWindows ?? false
-                        onCheckedChanged: Config.setNestedValue("bar.autoHide.pushWindows", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "keyboard_command_key"
-                    text: Translation.tr("Reveal while Super is held")
-                    checked: Config.options?.bar?.autoHide?.showWhenPressingSuper?.enable ?? true
-                    onCheckedChanged: Config.setNestedValue("bar.autoHide.showWhenPressingSuper.enable", checked)
-                }
-
-                ConfigSpinBox {
-                    icon: "timer"
-                    text: Translation.tr("Super reveal delay (ms)")
-                    value: Config.options?.bar?.autoHide?.showWhenPressingSuper?.delay ?? 140
-                    from: 0
-                    to: 1000
-                    stepSize: 20
-                    enabled: Config.options?.bar?.autoHide?.showWhenPressingSuper?.enable ?? true
-                    opacity: enabled ? 1 : 0.5
-                    onValueChanged: Config.setNestedValue("bar.autoHide.showWhenPressingSuper.delay", value)
-                }
-            }
-
-            SettingsNote { visible:Config.options?.panelFamily==="abyss";text:Translation.tr("Clock follows Typography") }
-            Loader {
-                Layout.fillWidth:true
-                active:Config.options?.panelFamily!=="abyss"
-                sourceComponent:Component {
-                    ContentSubsection {
-                        title: Translation.tr("Clock")
-
-                        ConfigRow {
-                            uniform: true
-
-                            FontSelector {
-                                id: timeFontSelector
-                                label: Translation.tr("Time font")
-                                icon: "schedule"
-                                selectedFont: Config.options?.bar?.clock?.timeFontFamily ?? ""
-                                onSelectedFontChanged: Config.setNestedValue("bar.clock.timeFontFamily", selectedFont)
-                            }
-
-                            ConfigSpinBox {
-                                icon: "format_size"
-                                text: Translation.tr("Time size (px)")
-                                value: Config.options?.bar?.clock?.timePixelSize ?? 0
-                                from: 0
-                                to: 64
-                                stepSize: 1
-                                onValueChanged: Config.setNestedValue("bar.clock.timePixelSize", value)
-                            }
+                        FontSelector {
+                            id: timeFontSelector
+                            label: Translation.tr("Time font")
+                            icon: "schedule"
+                            selectedFont: Config.options?.bar?.clock?.timeFontFamily ?? ""
+                            onSelectedFontChanged: Config.setNestedValue("bar.clock.timeFontFamily", selectedFont)
                         }
 
-                        ConfigRow {
-                            uniform: true
+                        ConfigSpinBox {
+                            icon: "format_size"
+                            text: Translation.tr("Time size (px)")
+                            value: Config.options?.bar?.clock?.timePixelSize ?? 0
+                            from: 0
+                            to: 64
+                            stepSize: 1
+                            onValueChanged: Config.setNestedValue("bar.clock.timePixelSize", value)
+                        }
+                    }
 
-                            FontSelector {
-                                id: dateFontSelector
-                                label: Translation.tr("Date font")
-                                icon: "font_download"
-                                selectedFont: Config.options?.bar?.clock?.dateFontFamily ?? ""
-                                onSelectedFontChanged: Config.setNestedValue("bar.clock.dateFontFamily", selectedFont)
-                            }
+                    ConfigRow {
+                        uniform: true
 
-                            ConfigSpinBox {
-                                icon: "format_size"
-                                text: Translation.tr("Date size (px)")
-                                value: Config.options?.bar?.clock?.datePixelSize ?? 0
-                                from: 0
-                                to: 64
-                                stepSize: 1
-                                onValueChanged: Config.setNestedValue("bar.clock.datePixelSize", value)
-                            }
+                        FontSelector {
+                            id: dateFontSelector
+                            label: Translation.tr("Date font")
+                            icon: "font_download"
+                            selectedFont: Config.options?.bar?.clock?.dateFontFamily ?? ""
+                            onSelectedFontChanged: Config.setNestedValue("bar.clock.dateFontFamily", selectedFont)
+                        }
+
+                        ConfigSpinBox {
+                            icon: "format_size"
+                            text: Translation.tr("Date size (px)")
+                            value: Config.options?.bar?.clock?.datePixelSize ?? 0
+                            from: 0
+                            to: 64
+                            stepSize: 1
+                            onValueChanged: Config.setNestedValue("bar.clock.datePixelSize", value)
                         }
                     }
                 }
             }
         }
     }
-    }
+}
 
     SettingsCardSection {
         id: barModulesCard
         Layout.fillWidth: true
-        Layout.fillHeight: true
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignTop
-        Layout.minimumHeight: root.modulesCardMinHeight
+        Layout.minimumHeight: expanded ? root.modulesCardMinHeight : 0
         settingsTaskSection: "modules"
-        visible: root.isIiActive && (!root.abyssContent || root.abyssCardFilter === "modules"
+        visible: root.isIiActive && (!root.abyssContent || root.abyssCardFilter === "modules" || root.abyssCardFilter === "behavior_and_quick_actions"
             || (root.abyssCardFilter === "" && (root.activeSection === "modules" || root.abyssContent)))
         expanded: true
         icon: "widgets"
-        title: Translation.tr("Modules")
+        title: root.abyssContent ? Translation.tr("Quick Actions") : Translation.tr("Modules")
 
         SettingsGroup {
             ContentSubsection {
@@ -686,39 +604,54 @@ ContentPage {
             }
 
             ContentSubsection {
-                title: ""
-                visible: root.abyssContent
-
-                ConfigRow {
-                    uniform: true
-                    SettingsSwitch {
-                        objectName: "abyssSettingsQuickNotesTimersIcon"
-                        buttonIcon: "sticky_note_2"
-                        text: Translation.tr("Show Quick Notes & Timers icon")
-                        autoToggle: false
-                        checked: root.unifiedLauncherIconShown("notesTimers")
-                        // Supersedes legacy abyss.modules.iconVisibility.notesTimers
-                        onToggledByUser: checked =>
-                            Config.setNestedValue("abyss.modules.notesTimersMode",checked ? "module" : "edgebar")
-                    }
-                    SettingsSwitch {
-                        objectName: "abyssSettingsNotificationActivityIcon"
-                        buttonIcon: "notifications"
-                        text: Translation.tr("Show Notifications & Activities icon")
-                        autoToggle: false
-                        checked: root.unifiedLauncherIconShown("notificationActivity")
-                        // Supersedes legacy abyss.modules.iconVisibility.notificationActivity
-                        // Off: remove this module hover and use Corner Edgebar.
-                        onToggledByUser: checked =>
-                            Config.setNestedValue("abyss.modules.notificationActivityMode",checked ? "module" : "edgebar")
-                    }
-                }
-            }
-
-            ContentSubsection {
                 title: Translation.tr("Quick Action Settings")
                 visible: root.abyssContent
                     || (Config.options?.bar?.modules?.utilButtons ?? false)
+
+                RowLayout {
+                    visible: root.abyssContent
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    IconToolbarButton {
+                        id: quickNotesTimersIconToggle
+                        objectName: "abyssSettingsQuickNotesTimersIcon"
+                        implicitWidth: 38
+                        implicitHeight: 38
+                        text: "sticky_note_2"
+                        toggled: root.unifiedLauncherIconShown("notesTimers")
+                        // Supersedes legacy abyss.modules.iconVisibility.notesTimers
+                        onClicked: {
+                            const checked = !quickNotesTimersIconToggle.toggled;
+                            Config.setNestedValue("abyss.modules.notesTimersMode",checked ? "module" : "edgebar");
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("Show Quick Notes & Timers icon")
+                        }
+                    }
+
+                    IconToolbarButton {
+                        id: notificationActivityIconToggle
+                        objectName: "abyssSettingsNotificationActivityIcon"
+                        implicitWidth: 38
+                        implicitHeight: 38
+                        text: "notifications"
+                        toggled: root.unifiedLauncherIconShown("notificationActivity")
+                        // Supersedes legacy abyss.modules.iconVisibility.notificationActivity
+                        // Off: remove this module hover and use Corner Edgebar.
+                        onClicked: {
+                            const checked = !notificationActivityIconToggle.toggled;
+                            Config.setNestedValue("abyss.modules.notificationActivityMode",checked ? "module" : "edgebar");
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("Show Notifications & Activities icon")
+                        }
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                }
 
                 QuickActionSettingsEditor {}
             }
@@ -774,9 +707,25 @@ ContentPage {
                     verticalPreset: root.isVertical
                 }
             }
+        }
+    }
 
+    SettingsCardSection {
+        id: barWidgetsCard
+        Layout.fillWidth: true
+        Layout.preferredWidth: 1
+        Layout.alignment: Qt.AlignTop
+        settingsTaskSection: "modules"
+        visible: root.isIiActive && (!root.abyssContent ? barModulesCard.visible
+            : (root.abyssCardFilter === "modules" || root.abyssCardFilter === "workspaces_and_tray"
+                || (root.abyssCardFilter === "" && (root.activeSection === "modules" || root.abyssContent))))
+        expanded: true
+        icon: "workspaces"
+        title: Translation.tr("Workspaces & Tray")
+
+        SettingsGroup {
             ContentSubsection {
-                title: Translation.tr("Max width (px)")
+                title: Translation.tr("Window & Media")
                 visible: !root.isVertical
 
                 ConfigRow {

@@ -10,6 +10,7 @@ import argparse
 from collections import Counter
 import ipaddress
 import json
+import os
 import re
 import shutil
 import socket
@@ -114,6 +115,21 @@ def displays(payload):
             protocol, state = int(row.get("protocol", 0)), int(row.get("state", 0))
         except (ValueError, TypeError):
             protocol, state = 0, 0
+        try:
+            priority = int(row.get("priority", 0))
+        except (ValueError, TypeError):
+            priority = 0
+        # GNOME Network Displays 0.99.0 shifted NdSinkProtocol enum values to
+        # reserve 1/2 for dummy WFD/CC sinks (priority 0) while real sinks emit:
+        #   NdWFDP2PSink  -> protocol 3, priority 100
+        #   NdWFDMiceSink -> protocol 4, priority 200
+        #   NdCCSink      -> protocol 5, priority 50
+        if protocol == 3 and priority >= 50:
+            protocol = 1
+        elif protocol == 4:
+            protocol = 2
+        elif protocol == 5:
+            protocol = 3
         found.append({"uuid": uid, "name": title[:140],
                       "protocol": PROTOCOLS.get(protocol, "Unknown"),
                       "protocolId": protocol,
@@ -378,9 +394,14 @@ def ensure_daemon():
         return {"ok": False, "code": "daemon_missing",
                 "message": "GNOME Network Displays daemon missing. Install version 0.98+ with the daemon enabled, then Scan again."}
     try:
+        env = dict(os.environ)
+        shim = Path.home() / ".local/lib/alis/libalis_nd_screencast_fix.so"
+        if shim.is_file():
+            existing = env.get("LD_PRELOAD", "").strip()
+            env["LD_PRELOAD"] = f"{shim}:{existing}" if existing else str(shim)
         proc = subprocess.Popen([binary], stdin=subprocess.DEVNULL,
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                start_new_session=True, close_fds=True)
+                                start_new_session=True, close_fds=True, env=env)
     except OSError:
         return {"ok": False, "code": "daemon_launch_failed",
                 "message": "Could not launch Network Displays daemon; check executable and user journal."}
@@ -424,10 +445,11 @@ def valid_unit(value):
 
 
 def stream_binary_available():
-    # Upstream nd-systemd-helpers.c builds ExecStart with this *exact*
-    # absolute location. A package installed under /usr/lib or with
-    # build_daemon=false may support discovery but not native connect.
-    return Path("/usr/libexec/gnome-network-displays-stream").is_file()
+    # Upstream nd-systemd-helpers.c builds ExecStart with the libexec/lib
+    # path configured at compile time (/usr/lib/gnome-network-displays-stream
+    # on Arch Linux, /usr/libexec/gnome-network-displays-stream on Fedora).
+    return (Path("/usr/libexec/gnome-network-displays-stream").is_file()
+            or Path("/usr/lib/gnome-network-displays-stream").is_file())
 
 
 def start(uid):
@@ -460,10 +482,26 @@ def status(unit):
         return {"ok": False, "state": "unknown", "message": "Unable to inspect stream service"}
     active = values.get("ActiveState", "unknown")
     sub = values.get("SubState", "unknown")
-    return {"ok": active in ("active", "activating"), "state": active,
-            "subState": sub, "result": values.get("Result", ""),
-            "message": "Stream process active; verify TV picture and sound."
-            if active == "active" else "TV stream is not active."}
+    sink_state = ""
+    uid = unit.removeprefix("gnome-network-displays-stream-").removesuffix(".service")
+    if IDENTITY.fullmatch(uid):
+        try:
+            for item in displays(bus("get-property", BUS, OBJ, IFACE, "Displays")):
+                if item.get("uuid") == uid:
+                    sink_state = str(item.get("state") or "")
+                    break
+        except Exception:
+            sink_state = ""
+    result = {"ok": active in ("active", "activating") and sink_state != "error",
+              "state": active, "subState": sub,
+              "result": values.get("Result", ""),
+              "message": "TV stream failed. Check receiver, codecs and screencast portal."
+              if sink_state == "error"
+              else "Stream process active; verify TV picture and sound."
+              if active == "active" else "TV stream is not active."}
+    if sink_state:
+        result["sinkState"] = sink_state
+    return result
 
 
 def stop(unit):

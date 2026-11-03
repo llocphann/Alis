@@ -8,7 +8,7 @@ import qs.services
 QtObject {
     id: root
 
-    readonly property int layoutSchemaVersion: 11
+    readonly property int layoutSchemaVersion: 13
     readonly property int retiredTlpPageIndex: 28
     readonly property int overviewPageIndex: 29
 
@@ -60,6 +60,11 @@ QtObject {
         const sourceVersion = Array.isArray(saved) ? 1 : Number(saved?.version ?? 2)
         if (!Array.isArray(saved) && sourceVersion >= root.layoutSchemaVersion)
             return
+
+        if (sourceVersion < 13) {
+            root.reset()
+            return
+        }
 
         const groups = Array.isArray(saved)
             ? saved

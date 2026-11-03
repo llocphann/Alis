@@ -429,10 +429,26 @@ Item {
         const values = [];
         let order = 0;
 
+        function findMatchingRunningKey(pinnedAppId) {
+            const directKey = String(pinnedAppId ?? "").toLowerCase();
+            if (runningAppsMap.has(directKey))
+                return directKey;
+            const pinnedDesktopId = String(AppSearch.lookupDesktopEntry(pinnedAppId)?.id ?? "").trim().toLowerCase();
+            if (pinnedDesktopId.length === 0)
+                return "";
+            for (const [runKey, runEntry] of runningAppsMap) {
+                const runDesktopId = String(AppSearch.lookupDesktopEntry(runEntry.appId)?.id ?? "").trim().toLowerCase();
+                if (runDesktopId.length > 0 && runDesktopId === pinnedDesktopId)
+                    return runKey;
+            }
+            return "";
+        }
+
         if (!separatePinnedFromRunning) {
             for (const appId of visiblePinnedApps) {
                 const lowerAppId = appId.toLowerCase();
-                const runningEntry = runningAppsMap.get(lowerAppId);
+                const matchedRunKey = findMatchingRunningKey(appId);
+                const runningEntry = matchedRunKey.length > 0 ? runningAppsMap.get(matchedRunKey) : null;
                 if (!runningEntry && !AppSearch.lookupDesktopEntry(appId))
                     continue;
                 values.push({
@@ -444,7 +460,8 @@ Item {
                     section: "pinned",
                     order: order++
                 });
-                runningAppsMap.delete(lowerAppId);
+                if (matchedRunKey.length > 0)
+                    runningAppsMap.delete(matchedRunKey);
             }
 
             if (values.length > 0 && runningAppsMap.size > 0) {
@@ -577,6 +594,13 @@ Item {
             root.rebuildDockItems()
         }
         function onIgnoredAppRegexesChanged() {
+            root.rebuildDockItems()
+        }
+    }
+    Connections {
+        target: AppSearch
+        enabled: root.activeModel
+        function onListChanged() {
             root.rebuildDockItems()
         }
     }

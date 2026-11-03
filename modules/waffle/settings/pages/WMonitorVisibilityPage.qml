@@ -10,7 +10,7 @@ import qs.modules.waffle.settings
 
 WSettingsPage {
     id: root
-    settingsPageIndex: 11
+    settingsPageIndex: 10
     pageTitle: Translation.tr("Monitors")
     pageIcon: "desktop"
     pageDescription: Translation.tr("Choose which outputs show Waffle and shared shell surfaces")

@@ -192,8 +192,12 @@ IPC_MAP = {
     ('session', 'toggle'): 'Session dialog',
     ('sidebarLeft', 'toggle'): 'Left sidebar',
     ('sidebarRight', 'toggle'): 'Right sidebar',
-    ('ipc', 'aqua'): 'Companion chat',
-    ('aqua', 'chat'): 'Companion chat',
+    ('ipc', 'aqua'): 'Companion Chatbox',
+    ('aqua', 'chat'): 'Companion Chatbox',
+    ('ipc', 'wull'): 'Companion Chatbox',
+    ('wull', 'chat'): 'Companion Chatbox',
+    ('ipc', 'companion'): 'Companion Chatbox',
+    ('companion', 'chat'): 'Companion Chatbox',
     ('browser', 'open'): 'Browser',
     ('browser', 'new'): 'Browser (new window)',
     ('audio', 'volumeUp'): 'Volume up',
@@ -359,12 +363,12 @@ def categorize_keybind(kb: dict) -> str:
         return 'System'
 
     # Alis Shell
-    if any(x in comment for x in ['alis ', 'clipboard', 'lock screen', 'wallpaper', 'settings', 'cheatsheet', 'panel style', 'left sidebar', 'right sidebar', 'companion chat']):
+    if any(x in comment for x in ['alis ', 'clipboard', 'lock screen', 'wallpaper', 'settings', 'cheatsheet', 'panel style', 'left sidebar', 'right sidebar', 'companion chat', 'companion chatbox']):
         return 'Alis Shell'
     alis_action = parse_alis_action(action)
     if alis_action:
         target, func = alis_action
-        if target in ('overlay', 'overview', 'clipboard', 'lock', 'wallpaperSelector', 'settings', 'cheatsheet', 'panelFamily', 'session', 'sidebarLeft', 'sidebarRight', 'aqua', 'ipc'):
+        if target in ('overlay', 'overview', 'clipboard', 'lock', 'wallpaperSelector', 'settings', 'cheatsheet', 'panelFamily', 'session', 'sidebarLeft', 'sidebarRight', 'aqua', 'wull', 'companion', 'ipc'):
             return 'Alis Shell'
         if target == 'region':
             return 'Screenshots'

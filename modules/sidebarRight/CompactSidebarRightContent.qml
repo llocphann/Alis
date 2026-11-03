@@ -38,7 +38,6 @@ import qs.modules.sidebarRight.nightLight
 import qs.modules.sidebarRight.hotspot
 import qs.modules.sidebarRight.volumeMixer
 import qs.modules.sidebarRight.wifiNetworks
-import qs.modules.sidebarLeft.widgets
 
 import qs.modules.sidebarRight.calendar
 import qs.modules.sidebarRight.todo

@@ -56,9 +56,6 @@ Singleton {
     readonly property string userAvatarSourcePrimary: avatarSourceAt(0)
     property string coverArt: `${Directories.cachePath}/media/coverart`
     property string tempImages: "/tmp/quickshell/media/images"
-    property string booruPreviews: `${Directories.cachePath}/media/boorus`
-    property string booruDownloads: Config.options?.sidebar?.booru?.downloadPath?.sfw || Directories.wallpapersPath
-    property string booruDownloadsNsfw: Config.options?.sidebar?.booru?.downloadPath?.nsfw || `${Directories.wallpapersPath}/🌶️`
     property string latexOutput: `${Directories.cachePath}/media/latex`
     property string shellConfig: `${Directories.configPath}/alis`
     property string shellConfigName: "config.json"
@@ -69,6 +66,7 @@ Singleton {
     property string todoTxtPath: `${Directories.stateUserPath}/todo.txt`
     property string notepadPath: `${Directories.stateUserPath}/notepad.txt`
     property string notesPath: `${Directories.stateUserPath}/notes.txt`
+    property string spacedRepetitionPath: `${Directories.stateUserPath}/spaced-repetition.json`
     property string conflictCachePath: `${Directories.cachePath}/conflict-killer`
     property string notificationsPath: `${Directories.stateUserPath}/notifications.json`
     property string calendarSyncCachePath: `${Directories.stateUserPath}/calendar-sync-cache.json`
@@ -122,10 +120,9 @@ Singleton {
     Component.onCompleted: {
         Quickshell.execDetached([
             "/usr/bin/bash", "-c",
-            "rm -rf -- \"$1\" \"$2\" \"$3\" \"$4\"; " +
-            "mkdir -p -- \"$5\" \"$6\" \"$7\" \"$8\" \"$9\" \"${10}\" \"${11}\" \"${12}\" \"${13}\" \"${14}\"",
+            "rm -rf -- \"$1\" \"$2\" \"$3\"; " +
+            "mkdir -p -- \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9\" \"${10}\" \"${11}\" \"${12}\"",
             "_",
-            booruPreviews,
             latexOutput,
             cliphistDecode,
             tempImages,
@@ -133,7 +130,6 @@ Singleton {
             stateUserPath,
             favicons,
             coverArt,
-            booruPreviews,
             latexOutput,
             cliphistDecode,
             aiChats,

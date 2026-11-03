@@ -6,7 +6,7 @@ import qs.modules.waffle.settings
 
 WSettingsPage {
     id: root
-    settingsPageIndex: 16
+    settingsPageIndex: 14
     pageTitle: Translation.tr("Effects")
     pageIcon: "eye"
     pageDescription: Translation.tr("Blur, glass, motion and rendering policy")

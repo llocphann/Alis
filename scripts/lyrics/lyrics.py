@@ -16,20 +16,26 @@ Supports two modes:
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import zlib
 
 LRCLIB_API = "https://lrclib.net/api"
 NETEASE_SEARCH_API = "https://music.163.com/api/search/get"
 NETEASE_LYRIC_API = "https://music.163.com/api/song/lyric"
+KUGOU_SEARCH_API = "http://lyrics.kugou.com/search"
+KUGOU_DOWNLOAD_API = "http://lyrics.kugou.com/download"
+KUGOU_KRC_KEY = (64, 71, 97, 119, 94, 50, 116, 71, 81, 54, 49, 45, 206, 210, 110, 105)
 TIMEOUT = 10
 REQUEST_DELAY = 0.2
 USER_AGENT = "Alis/2.30 (https://github.com/llocphann/Alis)"
@@ -50,8 +56,11 @@ LATIN_CREDIT_PREFIXES = {
     "lyricsby", "lyricist", "writtenby", "composedby", "composer", "musicby",
     "producedby", "producer", "arrangedby", "arranger", "mixedby", "mixing",
     "masteredby", "mastering", "recordedby", "vocalsby", "publishedby",
-    "copyright", "sángtác", "lời", "nhạc", "hoàâm", "hòaâm", "phốikhí",
-    "biêntập", "thựchiện",
+    "copyright", "artist", "artists", "album", "title", "songtitle", "songstitle",
+    "singer", "vocal", "vocals", "guitar", "bass", "drums", "piano", "keyboard",
+    "strings", "editor", "subtitles", "transcribedby", "syncedby", "lrcby",
+    "sángtác", "lời", "nhạc", "hoàâm", "hòaâm", "phốikhí",
+    "biêntập", "thựchiện", "casĩ", "trìnhbày", "biểudiễn", "thuâm",
 }
 
 
@@ -92,13 +101,18 @@ def is_credit_or_header_line(text: str) -> bool:
     return False
 
 NOISE_PATTERNS = [
-    r"\(\s*(?:official|lyric|lyrics|music|audio|video|mv|visualizer|live|remaster(?:ed)?|hd|4k|hq)[^)]*\)",
-    r"\[\s*(?:official|lyric|lyrics|music|audio|video|mv|visualizer|live|remaster(?:ed)?|hd|4k|hq)[^\]]*\]",
+    r"^\s*\d{1,3}\s*(?:[-._]\s+|\)\s*)",
+    r"\(\s*(?:official|lyric|lyrics|music|audio|video|mv|visualizer|remaster(?:ed)?|deluxe|expanded|full\s+moon|single\s+version|album\s+version|original\s+score|original\s+soundtrack|reveal\s+edition|explicit|bonus\s+track|hd|4k|hq|\d{4})[^)]*\)",
+    r"\[\s*(?:official|lyric|lyrics|music|audio|video|mv|visualizer|remaster(?:ed)?|deluxe|expanded|explicit|hd|4k|hq|\d{4}|[^\]]*歌詞[^\]]*)[^\]]*\]",
     r"\(\s*(?:feat\.?|ft\.?|prod\.?)[^)]*\)",
     r"\[\s*(?:feat\.?|ft\.?|prod\.?)[^\]]*\]",
     r"\b(?:official\s+(?:music\s+)?video|official\s+audio|lyric\s+video|lyrics\s+video|m/v|mv)\b",
 ]
 ARTIST_NOISE_RE = re.compile(r"\s*-\s*topic$|\bvevo$", re.IGNORECASE)
+VERSION_MODIFIER_RE = re.compile(
+    r"\b(live|remix|acoustic|instrumental|karaoke|cover|radio\s+edit|sped\s+up|slowed)\b|伴奏|纯音乐|翻唱",
+    re.IGNORECASE,
+)
 
 # Prosody / vocal expression patterns for living word animations
 REPEAT_VOWEL_RE = re.compile(
@@ -162,7 +176,8 @@ def get_json(url: str, data: bytes | None = None, extra_headers: dict | None = N
 
 
 def clean_title(title: str) -> str:
-    cleaned = title or ""
+    cleaned = (title or "").strip()
+    cleaned = re.sub(r"^\s*\d{1,3}\s*(?:[-._]\s+|\)\s*)", "", cleaned)
     for pattern in NOISE_PATTERNS:
         cleaned = re.sub(pattern, " ", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\s+", " ", cleaned).strip(" -–—|")
@@ -171,7 +186,7 @@ def clean_title(title: str) -> str:
 
 def clean_artist(artist: str) -> str:
     cleaned = ARTIST_NOISE_RE.sub("", artist or "").strip()
-    cleaned = re.sub(r"\s*(?:feat\.?|ft\.?|&|,|x)\s+.*$", "", cleaned, flags=re.IGNORECASE).strip()
+    cleaned = re.sub(r"\s*(?:feat\.?|ft\.?|&|,|;|/|x)\s+.*$", "", cleaned, flags=re.IGNORECASE).strip()
     return cleaned or (artist or "").strip()
 
 
@@ -181,11 +196,14 @@ def split_artist_title(title: str, artist: str) -> tuple[str, str]:
     for sep in (" - ", " – ", " — "):
         if sep in c_title:
             left, right = c_title.split(sep, 1)
-            left, right = left.strip(), right.strip()
+            left = clean_title(left.strip())
+            right = clean_title(right.strip())
             if left and right:
-                if not c_artist or normalize(left) == normalize(c_artist):
-                    return right, (c_artist or left)
-                if normalize(right) == normalize(c_artist):
+                if not c_artist:
+                    return right, clean_artist(left)
+                if normalize(left) == normalize(c_artist) or normalize(c_artist) in normalize(left):
+                    return right, c_artist
+                if normalize(right) == normalize(c_artist) or normalize(c_artist) in normalize(right):
                     return left, c_artist
     return c_title, c_artist
 
@@ -242,22 +260,24 @@ def convert_netease_yrc_to_enhanced_lrc(yrc_text: str) -> str:
             continue
 
         parts: list[str] = [format_lrc_Time(line_start_ms / 1000.0, inline=False)]
-        last_end = (line_start_ms + line_dur_ms) / 1000.0
         clean_grouped = [(ws, we, p.strip()) for ws, we, p in grouped if p.strip()]
+        if not clean_grouped:
+            continue
+        last_end = clean_grouped[-1][1]
         for idx_g, (w_start, w_end, clean_piece) in enumerate(clean_grouped):
             next_ws = clean_grouped[idx_g + 1][0] if idx_g + 1 < len(clean_grouped) else w_end
             if idx_g + 1 < len(clean_grouped) and (next_ws - w_end) > 0.025:
                 parts.append(f"{format_lrc_Time(w_start, inline=True)}{clean_piece}{format_lrc_Time(w_end, inline=True)} ")
             else:
                 parts.append(f"{format_lrc_Time(w_start, inline=True)}{clean_piece} ")
-            last_end = max(last_end, w_end)
+            last_end = w_end
         parts.append(format_lrc_Time(last_end, inline=True))
         out_lines.append("".join(parts).strip())
     return "\n".join(out_lines)
 
 
 def convert_netease_klyric_to_enhanced_lrc(klyric_text: str) -> str:
-    """Convert NetEase klyric format into Enhanced LRC with <mm:ss.xxx> word tags."""
+    """Convert NetEase klyric or Kugou KRC format into Enhanced LRC with <mm:ss.xxx> word tags."""
     out_lines: list[str] = []
     for raw in (klyric_text or "").splitlines():
         line = raw.strip()
@@ -272,28 +292,43 @@ def convert_netease_klyric_to_enhanced_lrc(klyric_text: str) -> str:
         tokens = list(KLYRIC_WORD_RE.finditer(body))
         if not tokens:
             continue
-        parts: list[str] = [format_lrc_Time(line_start_ms / 1000.0, inline=False)]
-        last_end = (line_start_ms + line_dur_ms) / 1000.0
-        parsed_k: list[tuple[float, float, str]] = []
+        grouped: list[tuple[float, float, str]] = []
         for tok in tokens:
             rel_start_ms = int(tok.group(1))
             w_dur_ms = max(20, int(tok.group(2)))
-            piece = tok.group(3).strip()
+            piece = tok.group(3)
             if not piece:
                 continue
             w_start = (line_start_ms + rel_start_ms) / 1000.0
             w_end = w_start + w_dur_ms / 1000.0
-            parsed_k.append((w_start, w_end, piece))
-        full_line_text = " ".join(p for _, _, p in parsed_k if p).strip()
+            if (
+                grouped
+                and not grouped[-1][2].endswith((" ", "\t"))
+                and not piece.startswith((" ", "\t"))
+                and not _has_cjk(grouped[-1][2].strip())
+                and not _has_cjk(piece.strip())
+            ):
+                prev_start, _prev_end, prev_text = grouped[-1]
+                grouped[-1] = (prev_start, w_end, prev_text + piece)
+            else:
+                grouped.append((w_start, w_end, piece))
+
+        clean_grouped = [(ws, we, p.strip()) for ws, we, p in grouped if p.strip()]
+        if not clean_grouped:
+            continue
+        full_line_text = " ".join(p for _, _, p in clean_grouped).strip()
         if not full_line_text or is_credit_or_header_line(full_line_text):
             continue
-        for idx_k, (w_start, w_end, piece) in enumerate(parsed_k):
-            next_ws = parsed_k[idx_k + 1][0] if idx_k + 1 < len(parsed_k) else w_end
-            if idx_k + 1 < len(parsed_k) and (next_ws - w_end) > 0.025:
+
+        parts: list[str] = [format_lrc_Time(line_start_ms / 1000.0, inline=False)]
+        last_end = clean_grouped[-1][1]
+        for idx_k, (w_start, w_end, piece) in enumerate(clean_grouped):
+            next_ws = clean_grouped[idx_k + 1][0] if idx_k + 1 < len(clean_grouped) else w_end
+            if idx_k + 1 < len(clean_grouped) and (next_ws - w_end) > 0.025:
                 parts.append(f"{format_lrc_Time(w_start, inline=True)}{piece}{format_lrc_Time(w_end, inline=True)} ")
             else:
                 parts.append(f"{format_lrc_Time(w_start, inline=True)}{piece} ")
-            last_end = max(last_end, w_end)
+            last_end = w_end
         parts.append(format_lrc_Time(last_end, inline=True))
         out_lines.append("".join(parts).strip())
     return "\n".join(out_lines)
@@ -461,19 +496,16 @@ def parse_inline_words(raw_lyric: str, line_start: float, line_end: float, offse
     for idx, (seg_t, seg_text) in enumerate(timed_segments):
         if not seg_text:
             continue
-        has_explicit_end = idx + 1 < len(timed_segments) and not timed_segments[idx + 1][1]
+        is_last_seg = not any(t_txt for _, t_txt in timed_segments[idx + 1:])
         next_t = timed_segments[idx + 1][0] if idx + 1 < len(timed_segments) else line_end
         if next_t <= seg_t:
             next_t = max(seg_t + 0.18, line_end if idx + 1 == len(timed_segments) else seg_t + 0.28)
         sub_words = seg_text.split()
         if len(sub_words) == 1:
             w_str = sub_words[0]
-            if not has_explicit_end:
+            if is_last_seg and (next_t - seg_t) > 2.4:
                 char_count = max(1, len(re.sub(r"[^\w]+", "", w_str)))
-                clause_pause = w_str.endswith((",", ";", ":", ".", "?", "!", "…"))
-                max_natural = max(0.32, 0.18 + char_count * 0.055) if clause_pause else max(0.55, 0.28 + char_count * 0.075)
-                if (next_t - seg_t) > max_natural * 1.35:
-                    next_t = seg_t + max_natural
+                next_t = seg_t + min(2.2, max(0.85, 0.35 + char_count * 0.11))
             raw_words.append((seg_t, next_t, w_str))
         else:
             weights = [prosodic_word_weight(w, i, len(sub_words))[0] for i, w in enumerate(sub_words)]
@@ -501,7 +533,7 @@ def _estimated_line_vocal_span(clean_text: str) -> float:
     if not tokens or clean_text.strip() == "♪":
         return 1.2
     chars = len(re.sub(r"[^\w]+", "", clean_text))
-    return max(0.95, min(6.2, 0.28 + len(tokens) * 0.24 + chars * 0.036))
+    return max(1.25, min(8.5, 0.42 + len(tokens) * 0.40 + chars * 0.05))
 
 
 def synthesize_prosodic_words(clean_text: str, line_start: float, line_end: float) -> list[dict]:
@@ -620,52 +652,117 @@ def parse_plain(plain: str, duration: float | None = None, key_name: str = "t") 
 
 
 def normalize(value: str) -> str:
-    return re.sub(r"[^\w\s]", " ", (value or "").lower()).strip()
+    return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", " ", (value or "").lower())).strip()
+
+
+TITLE_STOPWORDS = {
+    "the", "and", "for", "you", "with", "from", "into", "out", "are", "was",
+    "not", "all", "can", "one", "this", "that", "your", "our",
+}
+
+
+def has_mismatched_version_modifier(wanted_title: str, cand_title: str) -> bool:
+    wanted_mods = {m.lower() for m in VERSION_MODIFIER_RE.findall(wanted_title or "")}
+    cand_mods = {m.lower() for m in VERSION_MODIFIER_RE.findall(cand_title or "")}
+    for mod in ("live", "remix", "instrumental", "karaoke", "cover", "8-bit"):
+        if mod in cand_mods and mod not in wanted_mods:
+            return True
+    if any(k in (cand_title or "") for k in ("伴奏", "纯音乐", "翻唱")) and not any(
+        k in (wanted_title or "") for k in ("伴奏", "纯音乐", "翻唱")
+    ):
+        return True
+    return False
 
 
 def overlaps(wanted: str, got: str) -> bool:
-    wanted_n, got_n = normalize(wanted), normalize(got)
+    wanted_n = normalize(clean_title(wanted)) or normalize(wanted)
+    got_n = normalize(clean_title(got)) or normalize(got)
     if not wanted_n or not got_n:
         return False
-    if wanted_n in got_n or got_n in wanted_n:
+    if wanted_n == got_n:
         return True
-    wanted_words = {w for w in wanted_n.split() if len(w) > 2}
-    if not wanted_words:
-        wanted_words = set(wanted_n.split())
-    return bool(wanted_words & set(got_n.split()))
+    w_words = wanted_n.split()
+    g_words = got_n.split()
+    if len(w_words) == 1 and len(g_words) == 1:
+        return w_words[0] == g_words[0]
+    if wanted_n in got_n or got_n in wanted_n:
+        shorter = min(len(wanted_n), len(got_n))
+        longer = max(len(wanted_n), len(got_n))
+        if shorter >= 4 and (shorter / max(1, longer)) >= 0.45:
+            return True
+    w_sig = {w for w in w_words if w not in TITLE_STOPWORDS and len(w) >= 2} or set(w_words)
+    g_sig = {w for w in g_words if w not in TITLE_STOPWORDS and len(w) >= 2} or set(g_words)
+    common = w_sig & g_sig
+    if not common:
+        return False
+    return (len(common) / max(1, len(w_sig))) >= 0.6 and (len(common) / max(1, len(g_sig))) >= 0.5
+
+
+def artist_overlaps(wanted_artist: str, got_artist: str) -> bool:
+    if not wanted_artist or not got_artist:
+        return True
+    w_norm = normalize(wanted_artist)
+    g_norm = normalize(got_artist)
+    if not w_norm or not g_norm:
+        return True
+    if w_norm == g_norm or w_norm in g_norm or g_norm in w_norm:
+        return True
+    w_parts = [
+        normalize(p)
+        for p in re.split(r"(?:feat\.?|ft\.?|&|,|;|/|\bx\b)", wanted_artist, flags=re.IGNORECASE)
+        if normalize(p)
+    ]
+    g_parts = [
+        normalize(p)
+        for p in re.split(r"(?:feat\.?|ft\.?|&|,|;|/|\bx\b)", got_artist, flags=re.IGNORECASE)
+        if normalize(p)
+    ]
+    for wp in w_parts:
+        for gp in g_parts:
+            if wp == gp or (len(wp) >= 4 and wp in gp) or (len(gp) >= 4 and gp in wp):
+                return True
+    return False
 
 
 def score_candidate(candidate: dict, title: str, artist: str, duration: float | None) -> float:
     cand_title = str(candidate.get("trackName") or candidate.get("name") or "")
     cand_artist = str(candidate.get("artistName") or "")
-    if not overlaps(title, cand_title):
+    c_title, c_artist = split_artist_title(title, artist)
+    if has_mismatched_version_modifier(title, cand_title):
         return -1.0
-    if artist and cand_artist and not overlaps(artist, cand_artist):
-        c_title, c_artist = split_artist_title(title, artist)
-        if not (overlaps(c_title, cand_title) and (not c_artist or overlaps(c_artist, cand_artist))):
+    if not (overlaps(title, cand_title) or overlaps(c_title, cand_title)):
+        return -1.0
+    if (artist or c_artist) and cand_artist:
+        if not (artist_overlaps(artist, cand_artist) or artist_overlaps(c_artist, cand_artist)):
             return -1.0
 
     score = 0.0
-    if normalize(title) == normalize(cand_title):
-        score += 40.0
-    elif overlaps(title, cand_title):
+    if normalize(clean_title(title)) == normalize(clean_title(cand_title)) or normalize(c_title) == normalize(clean_title(cand_title)):
+        score += 45.0
+    elif overlaps(c_title, cand_title):
         score += 25.0
 
-    if artist and cand_artist:
-        if normalize(artist) == normalize(cand_artist):
+    if (artist or c_artist) and cand_artist:
+        if normalize(clean_artist(artist)) == normalize(clean_artist(cand_artist)) or normalize(c_artist) == normalize(clean_artist(cand_artist)):
             score += 35.0
-        elif overlaps(artist, cand_artist):
-            score += 20.0
+        elif artist_overlaps(artist, cand_artist) or artist_overlaps(c_artist, cand_artist):
+            score += 22.0
 
     if duration and duration > 0:
         cand_dur = candidate.get("duration")
         try:
             diff = abs(float(cand_dur) - float(duration))
-            if diff <= 3:
-                score += 20.0
-            elif diff <= 12:
-                score += 10.0
-            elif diff > 45:
+            if diff <= 1.5:
+                score += 35.0
+            elif diff <= 3.5:
+                score += 25.0
+            elif diff <= 8.0:
+                score += 12.0
+            elif diff <= 18.0:
+                score += 2.0
+            elif diff > 25.0:
+                return -1.0
+            else:
                 score -= 15.0
         except (TypeError, ValueError):
             pass
@@ -674,7 +771,7 @@ def score_candidate(candidate: dict, title: str, artist: str, duration: float | 
     if synced_text:
         score += 30.0
         if INLINE_WORD_STAMP.search(synced_text):
-            score += 25.0
+            score += 30.0
     elif candidate.get("plainLyrics"):
         score += 5.0
     else:
@@ -689,17 +786,17 @@ def fetch_from_lrclib(title: str, artist: str, album: str, duration: float | Non
     c_title, c_artist = split_artist_title(title, artist)
 
     attempts: list[str] = []
-    if album and duration and artist:
+    if album and duration and (artist or c_artist):
         attempts.append(
-            f"{LRCLIB_API}/get?track_name={q(title)}&artist_name={q(artist)}&album_name={q(album)}&duration={int(duration)}"
+            f"{LRCLIB_API}/get?track_name={q(c_title or title)}&artist_name={q(c_artist or artist)}&album_name={q(album)}&duration={int(round(duration))}"
         )
-    if artist:
-        attempts.append(f"{LRCLIB_API}/search?track_name={q(title)}&artist_name={q(artist)}")
-    if (c_title != title or c_artist != artist) and c_title:
-        if c_artist:
-            attempts.append(f"{LRCLIB_API}/search?track_name={q(c_title)}&artist_name={q(c_artist)}")
+    if c_artist or artist:
+        attempts.append(f"{LRCLIB_API}/search?track_name={q(c_title or title)}&artist_name={q(c_artist or artist)}")
+    if (c_title != title or c_artist != artist) and title:
+        if artist:
+            attempts.append(f"{LRCLIB_API}/search?track_name={q(title)}&artist_name={q(artist)}")
         attempts.append(f"{LRCLIB_API}/search?q={q((c_title + ' ' + c_artist).strip())}")
-    attempts.append(f"{LRCLIB_API}/search?q={q((title + ' ' + artist).strip())}")
+    attempts.append(f"{LRCLIB_API}/search?q={q(((c_title or title) + ' ' + (c_artist or artist)).strip())}")
 
     seen_urls: set[str] = set()
     unique_attempts = [u for u in attempts if not (u in seen_urls or seen_urls.add(u))]
@@ -765,49 +862,94 @@ def fetch_from_netease(
     Returns (raw_lrc_text, is_synced, is_word_synced).
     """
     c_title, c_artist = split_artist_title(title, artist)
-    query = f"{c_title} {c_artist}".strip()
-    if not query:
+    queries: list[str] = []
+    if c_title and c_artist:
+        queries.append(f"{c_title} {c_artist}".strip())
+    if title and artist and f"{title} {artist}".strip() not in queries:
+        queries.append(f"{clean_title(title)} {artist}".strip())
+    if c_title and c_title not in queries:
+        queries.append(c_title)
+    if not queries:
         return "", False, False
 
-    form = urllib.parse.urlencode({"s": query, "type": 1, "offset": 0, "limit": 6}).encode("utf-8")
     headers = {
         "Referer": "https://music.163.com",
         "Content-Type": "application/x-www-form-urlencoded",
     }
-    try:
-        search_data = get_json(NETEASE_SEARCH_API, data=form, extra_headers=headers, timeout=timeout)
-    except Exception:
-        return "", False, False
 
-    songs = ((search_data or {}).get("result") or {}).get("songs") or []
-    if not isinstance(songs, list):
-        return "", False, False
+    scored_songs: list[tuple[float, float, dict]] = []
+    seen_ids: set[int] = set()
 
+    for q_idx, query in enumerate(queries[:2]):
+        if q_idx > 0 and scored_songs:
+            break
+        form = urllib.parse.urlencode({"s": query, "type": 1, "offset": 0, "limit": 12}).encode("utf-8")
+        try:
+            search_data = get_json(NETEASE_SEARCH_API, data=form, extra_headers=headers, timeout=timeout)
+        except Exception:
+            continue
+        songs = ((search_data or {}).get("result") or {}).get("songs") or []
+        if not isinstance(songs, list):
+            continue
+
+        for song in songs:
+            if not isinstance(song, dict):
+                continue
+            song_id = song.get("id")
+            if not song_id or int(song_id) in seen_ids:
+                continue
+            seen_ids.add(int(song_id))
+            song_name = str(song.get("name") or "")
+            artists = song.get("artists") or []
+            artist_names = ", ".join(str(a.get("name") or "") for a in artists if isinstance(a, dict))
+            if has_mismatched_version_modifier(title, song_name):
+                continue
+            if not (overlaps(title, song_name) or overlaps(c_title, song_name)):
+                continue
+            if (artist or c_artist) and artist_names:
+                if not (artist_overlaps(artist, artist_names) or artist_overlaps(c_artist, artist_names)):
+                    continue
+
+            dur_diff = 0.0
+            s_score = 0.0
+            if normalize(clean_title(song_name)) == normalize(c_title):
+                s_score += 45.0
+            else:
+                s_score += 22.0
+            if (artist or c_artist) and artist_names:
+                if normalize(clean_artist(artist_names)) == normalize(c_artist):
+                    s_score += 35.0
+                else:
+                    s_score += 20.0
+
+            if duration and duration > 0 and song.get("duration"):
+                try:
+                    song_dur = float(song["duration"]) / 1000.0
+                    dur_diff = abs(song_dur - float(duration))
+                    if dur_diff > 22.0:
+                        continue
+                    if dur_diff <= 1.5:
+                        s_score += 45.0
+                    elif dur_diff <= 3.5:
+                        s_score += 32.0
+                    elif dur_diff <= 7.0:
+                        s_score += 15.0
+                    elif dur_diff <= 14.0:
+                        s_score += 2.0
+                    else:
+                        s_score -= 12.0
+                except (TypeError, ValueError):
+                    pass
+
+            scored_songs.append((s_score, dur_diff, song))
+
+    scored_songs.sort(key=lambda item: (-item[0], item[1]))
     best_line_lrc = ""
 
-    for song in songs:
-        if not isinstance(song, dict):
-            continue
-        song_id = song.get("id")
-        song_name = str(song.get("name") or "")
-        artists = song.get("artists") or []
-        artist_names = " ".join(str(a.get("name") or "") for a in artists if isinstance(a, dict))
-        if not song_id:
-            continue
-        if not (overlaps(title, song_name) or overlaps(c_title, song_name)):
-            continue
-        if c_artist and artist_names and not (overlaps(artist, artist_names) or overlaps(c_artist, artist_names)):
-            continue
-        if duration and duration > 0 and song.get("duration"):
-            try:
-                song_dur = float(song["duration"]) / 1000.0
-                if abs(song_dur - float(duration)) > 35:
-                    continue
-            except (TypeError, ValueError):
-                pass
-
+    for _s_score, dur_diff, song in scored_songs[:5]:
+        song_id = int(song["id"])
         try:
-            lyric_url = f"{NETEASE_LYRIC_API}?id={int(song_id)}&yv=1&lv=1&kv=1&tv=-1"
+            lyric_url = f"{NETEASE_LYRIC_API}?id={song_id}&yv=1&lv=1&kv=1&tv=-1"
             lyric_data = get_json(
                 lyric_url,
                 extra_headers={"Referer": "https://music.163.com"},
@@ -816,25 +958,24 @@ def fetch_from_netease(
         except Exception:
             continue
 
-        # 1. Prefer NetEase YRC verbatim word-synced lyrics
+        # 1. Prefer NetEase YRC verbatim word-synced lyrics (when duration is reasonably close)
         yrc_raw = (((lyric_data or {}).get("yrc") or {}).get("lyric") or "").strip()
-        if yrc_raw:
+        if yrc_raw and dur_diff <= 14.0:
             enhanced = convert_netease_yrc_to_enhanced_lrc(yrc_raw)
             if enhanced and parse_lrc(enhanced):
                 return enhanced, True, True
 
         # 2. Check NetEase klyric word-synced format
         klyric_raw = (((lyric_data or {}).get("klyric") or {}).get("lyric") or "").strip()
-        if klyric_raw:
+        if klyric_raw and dur_diff <= 14.0:
             enhanced = convert_netease_klyric_to_enhanced_lrc(klyric_raw)
             if enhanced and parse_lrc(enhanced):
                 return enhanced, True, True
 
-        if not verbatim_only and not best_line_lrc:
+        if not verbatim_only and not best_line_lrc and dur_diff <= 12.0:
             lrc_text = (((lyric_data or {}).get("lrc") or {}).get("lyric") or "").strip()
             if lrc_text and parse_lrc(lrc_text):
                 best_line_lrc = lrc_text
-                break
 
     if best_line_lrc:
         return best_line_lrc, True, bool(INLINE_WORD_STAMP.search(best_line_lrc))
@@ -842,7 +983,268 @@ def fetch_from_netease(
     return "", False, False
 
 
-def find_lyrics_raw(title: str, artist: str, album: str, duration: float | None) -> tuple[str, bool]:
+def decode_kugou_krc(raw_b64: str) -> str:
+    """Decode base64 + XOR + zlib compressed Kugou KRC verbatim word lyrics."""
+    if not raw_b64:
+        return ""
+    data = bytearray(base64.b64decode(raw_b64))
+    if len(data) <= 4:
+        return ""
+    payload = data[4:]
+    for i in range(len(payload)):
+        payload[i] ^= KUGOU_KRC_KEY[i % 16]
+    return zlib.decompress(bytes(payload)).decode("utf-8", "replace")
+
+
+def fetch_from_kugou(
+    title: str,
+    artist: str,
+    duration: float | None,
+    timeout: float = 4.5,
+) -> tuple[str, bool, bool]:
+    """Fetch verbatim word-synced KRC lyrics from Kugou Music."""
+    c_title, c_artist = split_artist_title(title, artist)
+    if not c_title:
+        return "", False, False
+    keyword = f"{c_artist} - {c_title}".strip(" -") if c_artist else c_title
+    dur_ms = int(round(float(duration) * 1000)) if (duration and duration > 0) else ""
+    search_url = f"{KUGOU_SEARCH_API}?" + urllib.parse.urlencode({
+        "ver": 1,
+        "man": "yes",
+        "client": "pc",
+        "keyword": keyword,
+        "duration": dur_ms,
+        "hash": "",
+    })
+    try:
+        data = get_json(search_url, timeout=timeout)
+    except Exception:
+        return "", False, False
+
+    candidates = (data or {}).get("candidates") or []
+    if not isinstance(candidates, list) or not candidates:
+        return "", False, False
+
+    scored: list[tuple[float, dict]] = []
+    for cand in candidates:
+        if not isinstance(cand, dict):
+            continue
+        cand_id = cand.get("id")
+        accesskey = cand.get("accesskey")
+        cand_song = str(cand.get("song") or "")
+        cand_singer = str(cand.get("singer") or "")
+        if not cand_id or not accesskey:
+            continue
+        if has_mismatched_version_modifier(title, cand_song):
+            continue
+        if not (overlaps(title, cand_song) or overlaps(c_title, cand_song)):
+            continue
+        if (artist or c_artist) and cand_singer:
+            if not (artist_overlaps(artist, cand_singer) or artist_overlaps(c_artist, cand_singer)):
+                continue
+
+        s_score = float(cand.get("score") or 0) * 0.4
+        if normalize(clean_title(cand_song)) == normalize(c_title):
+            s_score += 40.0
+        if (artist or c_artist) and cand_singer and normalize(clean_artist(cand_singer)) == normalize(c_artist):
+            s_score += 35.0
+        if duration and duration > 0 and cand.get("duration"):
+            try:
+                cand_dur = float(cand["duration"]) / 1000.0
+                diff = abs(cand_dur - float(duration))
+                if diff > 16.0:
+                    continue
+                if diff <= 1.5:
+                    s_score += 45.0
+                elif diff <= 3.5:
+                    s_score += 30.0
+                elif diff <= 8.0:
+                    s_score += 12.0
+            except (TypeError, ValueError):
+                pass
+        scored.append((s_score, cand))
+
+    scored.sort(key=lambda item: item[0], reverse=True)
+    for _score, cand in scored[:3]:
+        dl_url = f"{KUGOU_DOWNLOAD_API}?" + urllib.parse.urlencode({
+            "ver": 1,
+            "client": "pc",
+            "id": cand["id"],
+            "accesskey": cand["accesskey"],
+            "fmt": "krc",
+            "charset": "utf8",
+        })
+        try:
+            dl_data = get_json(dl_url, timeout=timeout)
+            krc_text = decode_kugou_krc(str((dl_data or {}).get("content") or ""))
+        except Exception:
+            continue
+        if not krc_text:
+            continue
+        enhanced = convert_netease_klyric_to_enhanced_lrc(krc_text)
+        if enhanced:
+            # Strip Kugou title banner on the first line if it just repeats title/artist at t < 5s
+            lines_raw = enhanced.splitlines()
+            if len(lines_raw) > 2:
+                first_clean = normalize(INLINE_WORD_STAMP.sub(" ", STAMP.sub(" ", lines_raw[0])))
+                if first_clean and (
+                    first_clean == normalize(c_title)
+                    or first_clean == normalize(f"{c_artist} {c_title}")
+                    or first_clean == normalize(f"{c_title} {c_artist}")
+                ):
+                    lines_raw = lines_raw[1:]
+                    enhanced = "\n".join(lines_raw)
+            if parse_lrc(enhanced):
+                return enhanced, True, True
+
+    return "", False, False
+
+
+def _shift_lrc_timestamps(lrc_text: str, delta_sec: float) -> str:
+    if abs(delta_sec) < 0.05:
+        return lrc_text
+
+    def _shift_line_stamp(m: re.Match) -> str:
+        t = int(m.group(1)) * 60.0 + float(m.group(2).replace(":", "."))
+        return format_lrc_Time(max(0.0, t + delta_sec), inline=False)
+
+    def _shift_word_stamp(m: re.Match) -> str:
+        t = int(m.group(1)) * 60.0 + float(m.group(2).replace(":", "."))
+        return format_lrc_Time(max(0.0, t + delta_sec), inline=True)
+
+    shifted_lines: list[str] = []
+    for raw in (lrc_text or "").splitlines():
+        line = STAMP.sub(_shift_line_stamp, raw)
+        line = INLINE_WORD_STAMP.sub(_shift_word_stamp, line)
+        shifted_lines.append(line)
+    return "\n".join(shifted_lines)
+
+
+def align_word_lrc_to_reference(word_lrc: str, ref_lrc: str) -> tuple[str, bool]:
+    """Compare word-synced LRC against a duration-accurate reference LRC (embedded or LRCLIB).
+
+    Returns (aligned_word_lrc, is_compatible).
+    - If matching lines have a consistent lead-in offset (IQR <= 0.75s, 0.12s <= |median| <= 8.0s),
+      shifts all word & line timestamps by +median_offset so Qobuz/Tidal/YouTube Music intros align.
+    - If matching lines diverge strongly (IQR > 2.2s and |median| > 2.5s), marks incompatible.
+    """
+    if not word_lrc or not ref_lrc:
+        return word_lrc, True
+    word_lines = parse_lrc(word_lrc, key_name="t")
+    ref_lines = parse_lrc(ref_lrc, key_name="t")
+    if len(word_lines) < 4 or len(ref_lines) < 4:
+        return word_lrc, True
+
+    ref_by_text: dict[str, list[float]] = {}
+    for item in ref_lines:
+        norm = normalize(str(item.get("text") or ""))
+        if len(norm) >= 4:
+            ref_by_text.setdefault(norm, []).append(float(item["t"]))
+
+    diffs: list[float] = []
+    for item in word_lines:
+        norm = normalize(str(item.get("text") or ""))
+        if len(norm) < 4 or norm not in ref_by_text:
+            continue
+        w_t = float(item["t"])
+        best_r_t = min(ref_by_text[norm], key=lambda rt: abs(rt - w_t))
+        if abs(best_r_t - w_t) <= 12.0:
+            diffs.append(best_r_t - w_t)
+
+    if len(diffs) < 4:
+        return word_lrc, True
+
+    diffs.sort()
+    n = len(diffs)
+    median_diff = diffs[n // 2] if n % 2 == 1 else 0.5 * (diffs[n // 2 - 1] + diffs[n // 2])
+    q1 = diffs[n // 4]
+    q3 = diffs[(3 * n) // 4]
+    iqr = q3 - q1
+
+    if iqr > 2.4 and abs(median_diff) > 2.5:
+        return word_lrc, False
+
+    if iqr <= 0.75 and 0.12 <= abs(median_diff) <= 8.0:
+        return _shift_lrc_timestamps(word_lrc, median_diff), True
+
+    return word_lrc, True
+
+
+def extract_local_audio_info(audio_path: str) -> dict[str, object]:
+    """Read exact duration, tags, and embedded LYRICS from local FLAC/MP3/M4A via ffprobe."""
+    info: dict[str, object] = {
+        "duration": None,
+        "title": "",
+        "artist": "",
+        "album": "",
+        "embedded_lyrics": "",
+        "embedded_synced": False,
+    }
+    if not audio_path or "://" in audio_path:
+        return info
+    path = Path(os.path.expanduser(audio_path))
+    if not path.is_file():
+        return info
+
+    try:
+        out = subprocess.check_output(
+            [
+                "ffprobe",
+                "-v",
+                "quiet",
+                "-show_entries",
+                "format=duration:format_tags",
+                "-of",
+                "json",
+                str(path),
+            ],
+            text=True,
+            timeout=2.5,
+        )
+        fmt = (json.loads(out) or {}).get("format") or {}
+        if fmt.get("duration"):
+            info["duration"] = float(fmt["duration"])
+        tags = fmt.get("tags") or {}
+        if isinstance(tags, dict):
+            lower_tags = {str(k).lower(): str(v) for k, v in tags.items() if v is not None}
+            info["title"] = lower_tags.get("title", "").strip()
+            info["artist"] = (
+                lower_tags.get("artist")
+                or lower_tags.get("album_artist")
+                or lower_tags.get("albumartist")
+                or ""
+            ).strip()
+            info["album"] = lower_tags.get("album", "").strip()
+            for k, v in lower_tags.items():
+                if "lyric" in k and v.strip():
+                    emb = v.strip()
+                    info["embedded_lyrics"] = emb
+                    info["embedded_synced"] = bool(STAMP.search(emb))
+                    break
+    except Exception:
+        pass
+
+    # Infer fallback artist/title from file path (/Music/<Lang>/<Artist>/<Album>/<Track> - <Title>.ext)
+    if not info["artist"]:
+        parent_name = path.parent.name
+        grandparent_name = path.parent.parent.name if path.parent.parent else ""
+        skip_folders = {"music", "mp3", "en", "vn", "cn", "jp", "fr", "de", "soundtrack", "[standalone recordings]"}
+        if grandparent_name and grandparent_name.lower() not in skip_folders:
+            info["artist"] = grandparent_name
+        elif parent_name and parent_name.lower() not in skip_folders:
+            info["artist"] = parent_name
+
+    return info
+
+
+def find_lyrics_raw(
+    title: str,
+    artist: str,
+    album: str,
+    duration: float | None,
+    embedded_lyrics: str = "",
+    embedded_synced: bool = False,
+) -> tuple[str, bool]:
     last_error: Exception | None = None
     try:
         raw_text, is_synced = fetch_from_lrclib(title, artist, album, duration)
@@ -850,27 +1252,57 @@ def find_lyrics_raw(title: str, artist: str, album: str, duration: float | None)
         last_error = exc
         raw_text, is_synced = "", False
 
-    # If LRCLIB already returned word-level Enhanced LRC (<mm:ss.xx>), use it immediately
+    # Reference synced LRC for exact Qobuz/Tidal/YouTube Music intro offset verification
+    ref_synced_lrc = ""
+    if embedded_lyrics and embedded_synced:
+        ref_synced_lrc = embedded_lyrics
+    elif raw_text and is_synced:
+        ref_synced_lrc = raw_text
+
+    # 1. If LRCLIB or embedded lyrics already contain word-level Enhanced LRC (<mm:ss.xx>), use immediately
     if raw_text and is_synced and INLINE_WORD_STAMP.search(raw_text):
         return raw_text, True
+    if embedded_lyrics and embedded_synced and INLINE_WORD_STAMP.search(embedded_lyrics):
+        return embedded_lyrics, True
 
-    # Try NetEase to see if verbatim word-level (YRC/klyric) or fallback synced LRC is available
-    netease_timeout = 3.5 if (raw_text and is_synced) else TIMEOUT
+    # 2. Try NetEase for verbatim word-level (YRC/klyric) or fallback synced LRC
+    word_timeout = 4.0 if ref_synced_lrc else TIMEOUT
     synced_netease, netease_is_synced, netease_word_synced = fetch_from_netease(
         title,
         artist,
         duration,
-        verbatim_only=bool(raw_text and is_synced),
-        timeout=netease_timeout,
+        verbatim_only=bool(ref_synced_lrc),
+        timeout=word_timeout,
     )
     if synced_netease and netease_word_synced:
-        return synced_netease, True
+        aligned, ok = align_word_lrc_to_reference(synced_netease, ref_synced_lrc)
+        if ok:
+            return aligned, True
+
+    # 3. Try Kugou KRC for verbatim word-level lyrics
+    synced_kugou, _kugou_synced, kugou_word_synced = fetch_from_kugou(
+        title,
+        artist,
+        duration,
+        timeout=word_timeout,
+    )
+    if synced_kugou and kugou_word_synced:
+        aligned, ok = align_word_lrc_to_reference(synced_kugou, ref_synced_lrc)
+        if ok:
+            return aligned, True
+
+    # 4. Fall back to embedded synced LRC, LRCLIB synced LRC, or NetEase line-synced LRC
+    if embedded_lyrics and embedded_synced:
+        return embedded_lyrics, True
 
     if raw_text and is_synced:
         return raw_text, True
 
     if synced_netease and netease_is_synced:
         return synced_netease, True
+
+    if embedded_lyrics:
+        return embedded_lyrics, False
 
     if raw_text:
         return raw_text, is_synced
@@ -926,7 +1358,7 @@ def run_save_lrc_mode(args: list[str], upgrade_only: bool = False) -> None:
     duration_str = args[3].strip() if len(args) > 3 else ""
     album = args[4].strip() if len(args) > 4 else ""
 
-    if not audio_path or not title:
+    if not audio_path:
         emit({"status": "not_found", "path": "", "synced": False, "wordSynced": False, "lines": []})
         return
 
@@ -935,16 +1367,61 @@ def run_save_lrc_mode(args: list[str], upgrade_only: bool = False) -> None:
     except ValueError:
         duration = None
 
+    audio_info = extract_local_audio_info(audio_path)
+    if audio_info.get("duration"):
+        duration = float(audio_info["duration"])
+    if not title and audio_info.get("title"):
+        title = str(audio_info["title"])
+    if not artist and audio_info.get("artist"):
+        artist = str(audio_info["artist"])
+    if not album and audio_info.get("album"):
+        album = str(audio_info["album"])
+
+    if not title:
+        emit({"status": "not_found", "path": "", "synced": False, "wordSynced": False, "lines": []})
+        return
+
+    existing_lrc = ""
+    existing_lrc_path = Path(os.path.expanduser(audio_path)).with_suffix(".lrc")
+    if existing_lrc_path.is_file():
+        try:
+            existing_lrc = existing_lrc_path.read_text(encoding="utf-8-sig", errors="replace")
+        except OSError:
+            existing_lrc = ""
+
+    ref_lrc = existing_lrc if (existing_lrc and STAMP.search(existing_lrc)) else (
+        str(audio_info.get("embedded_lyrics") or "") if audio_info.get("embedded_synced") else ""
+    )
+
     try:
         if upgrade_only:
             raw_text, is_synced, is_word_synced = fetch_from_netease(
                 title, artist, duration, verbatim_only=True, timeout=5.0
             )
+            if raw_text and is_word_synced:
+                raw_text, ok = align_word_lrc_to_reference(raw_text, ref_lrc)
+                if not ok:
+                    raw_text, is_word_synced = "", False
+            if not (raw_text and is_word_synced):
+                raw_text, is_synced, is_word_synced = fetch_from_kugou(
+                    title, artist, duration, timeout=5.0
+                )
+                if raw_text and is_word_synced:
+                    raw_text, ok = align_word_lrc_to_reference(raw_text, ref_lrc)
+                    if not ok:
+                        raw_text, is_word_synced = "", False
             if not (raw_text and is_word_synced):
                 emit({"status": "not_found", "path": "", "synced": False, "wordSynced": False, "lines": []})
                 return
         else:
-            raw_text, is_synced = find_lyrics_raw(title, artist, album, duration)
+            raw_text, is_synced = find_lyrics_raw(
+                title,
+                artist,
+                album,
+                duration,
+                embedded_lyrics=str(audio_info.get("embedded_lyrics") or ""),
+                embedded_synced=bool(audio_info.get("embedded_synced")),
+            )
     except Exception as exc:
         emit({"status": "error", "message": str(exc), "path": "", "synced": False, "wordSynced": False, "lines": []})
         return

@@ -117,7 +117,8 @@ Singleton {
         if (savedTheme && String(savedTheme).trim().length > 0) {
             root.currentTheme = String(savedTheme).trim()
             _log("[IconThemeService] Restoring saved icon theme:", root.currentTheme)
-            root._apply(root.currentTheme, true)
+            startupIconApplyTimer.themeName = root.currentTheme
+            startupIconApplyTimer.restart()
         } else {
             currentThemeProc.running = false
             currentThemeProc.running = true
@@ -145,6 +146,7 @@ Singleton {
         _log("[IconThemeService] Setting icon theme:", themeStr)
 
         // Update UI immediately; actual system change follows via gsettings.
+        startupIconApplyTimer.stop()
         root.currentTheme = themeStr
 
         root._apply(themeStr, false)
@@ -171,6 +173,17 @@ Singleton {
             root._restartQueued = false
             _log("[IconThemeService] Restarting shell now...")
             Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")])
+        }
+    }
+
+    Timer {
+        id: startupIconApplyTimer
+        property string themeName: ""
+        interval: 900
+        repeat: false
+        onTriggered: {
+            if (startupIconApplyTimer.themeName.length > 0)
+                root._apply(startupIconApplyTimer.themeName, true)
         }
     }
 

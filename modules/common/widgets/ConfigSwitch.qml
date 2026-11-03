@@ -111,6 +111,8 @@ RippleButton {
                 Layout.fillWidth: true
                 text: root.text
                 font: root.font
+                marquee: true
+                maximumLineCount: 1
                 color: Appearance.colors.colOnSurface
                 opacity: root.enabled ? 1 : 0.4
             }

@@ -27,6 +27,17 @@ Item {
         if (kind === "media" && (!(Config.options?.osd?.mediaEnabled ?? true) || !MprisController.activePlayer)) return
         const compact=["volume","brightness","mic","keyboardLayout"]
         const compactKind=compact.includes(kind)
+        if (compactKind
+                && GlobalStates.abyssOsdKind === kind
+                && GlobalStates.abyssOsdMessage === ""
+                && !GlobalStates.osdMediaOpen
+                && ((kind === "volume" && GlobalStates.osdVolumeOpen)
+                    || (kind === "brightness" && GlobalStates.osdBrightnessOpen)
+                    || (kind === "mic" && GlobalStates.osdMicOpen)
+                    || (kind === "keyboardLayout" && GlobalStates.osdKeyboardLayoutOpen))) {
+            if (autoHide) timeout.restart()
+            return
+        }
         const hoveredOutput = kind === "media" && GlobalStates.abyssOsdKind === "media"
             ? GlobalStates.abyssOsdHoverOutput : ""
 

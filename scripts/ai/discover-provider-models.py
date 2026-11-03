@@ -12,7 +12,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Any
-from local_provider import LocalProviderError, origin as local_origin, request_json as local_json, verify as verify_local, lmstudio_reasoning_off
+from local_provider import LocalProviderError, origin as local_origin, request_json as local_json, verify as verify_local, lmstudio_reasoning_off, lmstudio_reasoning
 
 UNKNOWN = "unknown"
 SUPPORTED = "supported"
@@ -197,7 +197,11 @@ def _normalize_ollama(
             vision=SUPPORTED if any(token in lowered for token in ("vision", "-vl", ":vl")) else UNKNOWN,
             toolCalling=UNKNOWN,
             structuredOutput=UNKNOWN,
-            reasoning=SUPPORTED if any(token in lowered for token in ("reason", "thinking", "deepseek-r1")) else UNKNOWN,
+            reasoning=SUPPORTED if any(token in lowered for token in (
+                "reason", "thinking", "deepseek-r1", "qwen3", "qwq", "gpt-oss",
+                "plusiq", "defiant-fable", "heretic", "cogito", "openthinker",
+                "sky-t1", "exaone-deep", "glm-z1", "marco-o1", "phi-4-reasoning", "hunyuan-t1"
+            )) else UNKNOWN,
         )
         item["free"] = True
         item["sizeBytes"] = int(row.get("size") or 0)
@@ -461,7 +465,32 @@ def main() -> int:
             except LocalProviderError:
                 pass
         verification_deadline = time.monotonic() + min(args.timeout, 8)
+        v0_types = {}
+        if args.local and args.provider_id == "lmstudio" and isinstance(metadata, dict):
+            existing_ids = {str(m.get("remoteId") or "") for m in models}
+            v0_models = _normalize_generic(
+                metadata,
+                args.provider_id,
+                args.chat_endpoint,
+                args.api_format,
+                args.requires_key,
+                args.key_id,
+                args.local,
+            )
+            for vm in v0_models:
+                rid = str(vm.get("remoteId") or "")
+                if rid and rid not in existing_ids:
+                    models.append(vm)
+                    existing_ids.add(rid)
+            for r in metadata.get("data") or []:
+                if isinstance(r, dict) and isinstance(r.get("id"), str):
+                    v0_types[r["id"]] = str(r.get("type") or "")
+        filtered_models = []
         for index, model in enumerate(models):
+            if args.local and args.provider_id == "lmstudio":
+                rid = str(model.get("remoteId") or "")
+                if v0_types.get(rid) in ("embeddings", "embedding") or rid.startswith("text-embedding-"):
+                    continue
             if args.local:
                 model.update(local=False, free=False, localVerified=False, localFingerprint="")
                 try:
@@ -471,14 +500,20 @@ def main() -> int:
                         timeout=max(.1, min(2, verification_deadline-time.monotonic())), payload=metadata)
                     model.update(local=True, free=True, localVerified=True, localFingerprint=verified["fingerprint"])
                     model["quantization"] = verified["quantization"]
-                    if args.provider_id == "lmstudio" and lmstudio_reasoning_off(reasoning_metadata, model["remoteId"], verified):
-                        model["capabilities"]["reasoningOff"] = SUPPORTED
+                    if verified.get("contextTokens"):
+                        model["contextTokens"] = int(verified["contextTokens"])
+                    if args.provider_id == "lmstudio":
+                        if lmstudio_reasoning_off(reasoning_metadata, model["remoteId"], verified):
+                            model["capabilities"]["reasoningOff"] = SUPPORTED
+                        if model["remoteId"] != "fixture" and lmstudio_reasoning(reasoning_metadata, model["remoteId"], verified):
+                            model["capabilities"]["reasoning"] = SUPPORTED
                 except LocalProviderError:
                     pass
             if model.get("authScheme") in (None, "", "strategy"):
                 model["authScheme"] = args.auth_scheme
+            filtered_models.append(model)
         result["ok"] = True
-        result["models"] = models
+        result["models"] = filtered_models
     except LocalProviderError:
         result["error"] = "local-verification-unavailable"
     except urllib.error.HTTPError as error:

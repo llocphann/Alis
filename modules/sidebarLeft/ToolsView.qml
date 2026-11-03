@@ -6,6 +6,7 @@ import Quickshell.Services.UPower
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.abyss.looks
 import qs.services
 import qs.services.deferred
 import "root:"
@@ -18,25 +19,82 @@ Item {
     property bool _showDamage: false
     property bool _opaqueRegions: false
 
+    readonly property bool abyssMode: Config.options?.panelFamily === "abyss"
+    readonly property real edgeOpacity: AbyssStyle.contentOpacity
+    readonly property real edgeHighlight: AbyssStyle.highlightStrength
+    readonly property real edgeLift: AbyssStyle.blurRadius > 0 ? 0.024 : 0
+    readonly property real edgeRadius: Math.max(12, Math.min(26, AbyssStyle.perimeterRadius))
+    readonly property color cloudColor: Qt.rgba(
+        Math.min(1, AbyssStyle.surfaceDeep.r + edgeLift),
+        Math.min(1, AbyssStyle.surfaceDeep.g + edgeLift),
+        Math.min(1, AbyssStyle.surfaceDeep.b + edgeLift),
+        edgeOpacity
+    )
+    readonly property color cloudBorderColor: edgeHighlight > 0.01
+        ? Qt.alpha(AbyssStyle.specular, Math.max(0.08, 0.55 * edgeHighlight))
+        : Qt.alpha(AbyssStyle.textColor, 0.06)
+
+    function edgeSurfaceColor(depthWeight): color {
+        const k = Math.max(0, Math.min(1, depthWeight * 0.38 * root.edgeHighlight))
+        return Qt.rgba(
+            root.cloudColor.r + (AbyssStyle.surfaceRaised.r - root.cloudColor.r) * k,
+            root.cloudColor.g + (AbyssStyle.surfaceRaised.g - root.cloudColor.g) * k,
+            root.cloudColor.b + (AbyssStyle.surfaceRaised.b - root.cloudColor.b) * k,
+            root.edgeOpacity
+        )
+    }
+
     // Style tokens
-    readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText
+    readonly property color colText: root.abyssMode ? AbyssStyle.textColor
+        : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer1
-    readonly property color colTextSecondary: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
-    readonly property color colBg: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    readonly property color colTextSecondary: root.abyssMode ? AbyssStyle.textColorMuted
+        : Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
+    readonly property color colBg: root.abyssMode ? Qt.alpha(AbyssStyle.textColor, 0.04)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.alisEverywhere ? Appearance.alis.colLayer1
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.colors.colLayer1
-    readonly property color colBgHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+    readonly property color colBgHover: root.abyssMode ? Qt.alpha(AbyssStyle.textColor, 0.09)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer1Hover
-    readonly property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    readonly property real radius: root.abyssMode ? 11
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.verysmall
+
+    Rectangle {
+        id: toolsCloudBackground
+        visible: root.abyssMode
+        anchors.fill: parent
+        anchors.margins: 4
+        radius: 14
+        color: root.cloudColor
+        border.width: 1
+        border.color: root.cloudBorderColor
+        gradient: Gradient {
+            orientation: Gradient.Vertical
+            GradientStop { position: 0.0; color: root.edgeSurfaceColor(1.0) }
+            GradientStop { position: 1.0; color: root.edgeSurfaceColor(0.25) }
+        }
+
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: root.edgeRadius * 0.7
+            anchors.rightMargin: root.edgeRadius * 0.7
+            height: 1.5
+            radius: 1
+            color: Qt.alpha(AbyssStyle.accent, 0.45)
+        }
+    }
 
     Flickable {
         id: flickable
         anchors.fill: parent
-        anchors.margins: 8
+        anchors.margins: root.abyssMode ? 12 : 8
         contentHeight: mainColumn.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -347,8 +405,12 @@ Item {
 
         readonly property bool isActive: PowerProfiles.profile === profile
 
-        colBackground: isActive ? Appearance.colors.colPrimary : root.colBg
-        colBackgroundHover: isActive ? Appearance.colors.colPrimaryHover : root.colBgHover
+        colBackground: isActive
+            ? (root.abyssMode ? Qt.alpha(AbyssStyle.accent, 0.22) : Appearance.colors.colPrimary)
+            : root.colBg
+        colBackgroundHover: isActive
+            ? (root.abyssMode ? Qt.alpha(AbyssStyle.accent, 0.30) : Appearance.colors.colPrimaryHover)
+            : root.colBgHover
 
         onClicked: PowerProfiles.profile = profile
 
@@ -362,13 +424,18 @@ Item {
                 iconSize: 20
                 fill: isActive ? 1 : 0
                 animateFill: true
-                color: isActive ? Appearance.colors.colOnPrimary : root.colText
+                color: isActive
+                    ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colOnPrimary)
+                    : root.colText
             }
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 text: label
                 font.pixelSize: Appearance.font.pixelSize.smallest
-                color: isActive ? Appearance.colors.colOnPrimary : root.colTextSecondary
+                font.weight: isActive ? Font.DemiBold : Font.Normal
+                color: isActive
+                    ? (root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnPrimary)
+                    : root.colTextSecondary
             }
         }
 

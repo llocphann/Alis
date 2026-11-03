@@ -10,7 +10,7 @@ import qs.modules.common.widgets
 ContentPage {
     id: modulesPage
     settingsPageIndex: 10
-    settingsPageName: "Shell & interface"
+    settingsPageName: "Shell & Interface"
 
     readonly property bool isIi: (Config.options?.panelFamily ?? "abyss") === "ii"
     readonly property bool isAbyss: Config.options?.panelFamily === "abyss"
@@ -21,13 +21,13 @@ ContentPage {
         "ii": [
             "iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock",
             "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard",
-            "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners",
+            "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners",
             "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar",
             "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard"
         ],
         "waffle": [
             "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wTaskView", "wLock", "wPolkit", "wSessionScreen",
-            "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
+            "iiCheatsheet", "iiOnScreenKeyboard", "iiOverview",
             "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard"
         ]
     })
@@ -87,17 +87,18 @@ ContentPage {
     Component.onCompleted: reconcileActiveSection()
 
     SettingsTaskNavigator {
-        showTabBar: !modulesPage.isAbyss
+        showTabBar: false
+        showIntro: false
         icon: "extension"
-        title: "Shell & interface"
+        title: "Shell & Interface"
         description: Translation.tr("Manage modules, terminals and interface behavior.")
-        summary: Translation.tr("Panels · Modules · Interface")
+        summary: Translation.tr("Panel Style & Settings UI · Alt-Tab Switcher · Modules")
         currentValue: modulesPage.activeSection
         onSelected: value => modulesPage.activeSection = value
         options: [
-            { displayName: Translation.tr("Panels"), icon: "extension", value: "panels" },
-            { displayName: Translation.tr("Modules"), icon: "dashboard", value: "modules" },
-            { displayName: Translation.tr("Interface"), icon: "tune", value: "interface" }
+            { displayName: Translation.tr("Panel Style & Settings UI"), icon: "extension", value: "panels" },
+            { displayName: Translation.tr("Alt-Tab Window Switcher"), icon: "keyboard_tab", value: "interface" },
+            { displayName: Translation.tr("Shell Modules"), icon: "dashboard", value: "modules" }
         ].filter(option => option.value !== "modules" || !modulesPage.isAbyss)
     }
 
@@ -105,21 +106,21 @@ ContentPage {
         id: modulesTwoColumnGrid
         objectName: "modulesTwoColumnGrid"
         Layout.fillWidth: true
-        columns: (modulesPage.isAbyss || modulesPage.activeSection === "panels" || modulesPage.activeSection === "interface") && width >= 620 ? 2 : 1
-        uniformCellWidths: columns === 2
+        columns: 2
+        uniformCellWidths: true
         columnSpacing: 14
         rowSpacing: 14
-        visible: modulesPage.isAbyss || modulesPage.activeSection === "panels" || modulesPage.activeSection === "interface"
+        visible: true
 
         SettingsCardSection {
             id: panelStyleCard
+            _preventBentoReparent: true
             Layout.preferredWidth: 1
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.minimumHeight: modulesTwoColumnGrid.columns === 2
-                ? Math.max(panelStyleCard.implicitHeight, settingsUiCard.implicitHeight) : 0
+            Layout.alignment: Qt.AlignTop
             settingsTaskSection: "panels"
-            visible: modulesPage.isAbyss || modulesPage.activeSection === "panels"
+            visible: true
             expanded: true
             icon: "style"
             title: Translation.tr("Panel Style")
@@ -979,13 +980,13 @@ ContentPage {
 
         SettingsCardSection {
             id: settingsUiCard
+            _preventBentoReparent: true
             Layout.preferredWidth: 1
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.minimumHeight: modulesTwoColumnGrid.columns === 2
-                ? Math.max(panelStyleCard.implicitHeight, settingsUiCard.implicitHeight) : 0
-            settingsTaskSection: "interface"
-            visible: modulesPage.isAbyss || modulesPage.activeSection === "interface"
+            Layout.alignment: Qt.AlignTop
+            settingsTaskSection: "panels"
+            visible: true
             expanded: true
             icon: "web_asset"
             title: Translation.tr("Settings UI")
@@ -1144,10 +1145,22 @@ ContentPage {
         }
     }
 
+    InterfaceConfig {
+        id: embeddedInterfaceSection
+        objectName: "modulesInterfaceSection"
+        embedded: true
+        showAllIiSections: !modulesPage.isAbyss
+        settingsPageIndex: modulesPage.settingsPageIndex
+        activeSection: "tools"
+        visible: true
+        Layout.fillWidth: true
+        Layout.topMargin: 14
+    }
+
     // ==================== MATERIAL II ====================
     SettingsCardSection {
         settingsTaskSection: "modules"
-        visible: modulesPage.isIi && modulesPage.activeSection === "modules"
+        visible: modulesPage.isIi
         expanded: true
         icon: "dashboard"
         title: Translation.tr("Core")
@@ -1166,7 +1179,7 @@ ContentPage {
                 text: Translation.tr("Background")
                 checked: modulesPage.isPanelEnabled("iiBackground")
                 onCheckedChanged: modulesPage.setPanelEnabled("iiBackground", checked)
-                StyledToolTip { text: Translation.tr("Desktop wallpaper with parallax effect and widgets") }
+                StyledToolTip { text: Translation.tr("Desktop wallpaper and widgets") }
             }
 
             SettingsSwitch {
@@ -1183,14 +1196,6 @@ ContentPage {
                 checked: modulesPage.isPanelEnabled("iiOverview")
                 onCheckedChanged: modulesPage.setPanelEnabled("iiOverview", checked)
                 StyledToolTip { text: Translation.tr("App launcher, search and workspace grid (Super+Space)") }
-            }
-
-            SettingsSwitch {
-                buttonIcon: "widgets"
-                text: Translation.tr("Floating tools (Super+G)")
-                checked: modulesPage.isPanelEnabled("iiOverlay")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiOverlay", checked)
-                StyledToolTip { text: Translation.tr("Floating image and widgets panel (Super+G)") }
             }
 
             SettingsSwitch {
@@ -1213,7 +1218,7 @@ ContentPage {
 
     SettingsCardSection {
         settingsTaskSection: "modules"
-        visible: modulesPage.isIi && modulesPage.activeSection === "modules"
+        visible: modulesPage.isIi
         expanded: true
         icon: "notifications"
         title: Translation.tr("Feedback")
@@ -1247,7 +1252,7 @@ ContentPage {
 
     SettingsCardSection {
         settingsTaskSection: "modules"
-        visible: modulesPage.isIi && modulesPage.activeSection === "modules"
+        visible: modulesPage.isIi
         expanded: true
         icon: "build"
         title: Translation.tr("Utilities")
@@ -1329,7 +1334,7 @@ ContentPage {
 
     SettingsCardSection {
         settingsTaskSection: "modules"
-        visible: modulesPage.isIi && modulesPage.activeSection === "modules"
+        visible: modulesPage.isIi
         expanded: true
         icon: "more_horiz"
         title: Translation.tr("Optional")
@@ -1350,21 +1355,13 @@ ContentPage {
                 onCheckedChanged: modulesPage.setPanelEnabled("iiScreenCorners", checked)
                 StyledToolTip { text: Translation.tr("Allow opening sidebars by interacting with screen corners") }
             }
-
-            SettingsSwitch {
-                buttonIcon: "center_focus_strong"
-                text: Translation.tr("Crosshair")
-                checked: false
-                enabled: false
-                StyledToolTip { text: Translation.tr("Gaming crosshair overlay for games without built-in crosshair") }
-            }
         }
     }
 
     // ==================== WAFFLE ====================
     SettingsCardSection {
         settingsTaskSection: "modules"
-        visible: modulesPage.isWaffle && modulesPage.activeSection === "modules"
+        visible: modulesPage.isWaffle
         expanded: true
         icon: "window"
         title: Translation.tr("Waffle Core")
@@ -1438,7 +1435,7 @@ ContentPage {
 
     SettingsCardSection {
         settingsTaskSection: "modules"
-        visible: modulesPage.isWaffle && modulesPage.activeSection === "modules"
+        visible: modulesPage.isWaffle
         expanded: true
         icon: "share"
         title: Translation.tr("Shared Modules")
@@ -1466,14 +1463,6 @@ ContentPage {
                 checked: modulesPage.isPanelEnabled("iiOverview")
                 onCheckedChanged: modulesPage.setPanelEnabled("iiOverview", checked)
                 StyledToolTip { text: Translation.tr("Workspace grid (used by Start Menu)") }
-            }
-
-            SettingsSwitch {
-                buttonIcon: "widgets"
-                text: Translation.tr("Floating tools (Super+G)")
-                checked: modulesPage.isPanelEnabled("iiOverlay")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiOverlay", checked)
-                StyledToolTip { text: Translation.tr("Floating image and widgets panel (Super+G)") }
             }
 
             SettingsSwitch {
@@ -1546,14 +1535,6 @@ ContentPage {
                 checked: modulesPage.isPanelEnabled("iiClipboard")
                 onCheckedChanged: modulesPage.setPanelEnabled("iiClipboard", checked)
                 StyledToolTip { text: Translation.tr("Clipboard manager with history") }
-            }
-
-            SettingsSwitch {
-                buttonIcon: "center_focus_strong"
-                text: Translation.tr("Crosshair")
-                checked: false
-                enabled: false
-                StyledToolTip { text: Translation.tr("Gaming crosshair overlay") }
             }
         }
     }

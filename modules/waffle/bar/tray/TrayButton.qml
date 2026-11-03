@@ -57,13 +57,32 @@ BarIconButton {
         }
     }
 
+    property bool _iconLoadFailed: false
+    readonly property string rawIcon: String(root.item?.icon ?? "")
+    onRawIconChanged: root._iconLoadFailed = false
+    readonly property string resolvedIconSource: {
+        if (!root._iconLoadFailed) {
+            const safe = TrayService.getSafeIcon(root.item)
+            if (safe.length > 0)
+                return safe
+        }
+        const fallbackKey = String(root.item?.id || root.item?.title || root.item?.tooltipTitle || "")
+        if (fallbackKey.length > 0)
+            return AppSearch.getIconSource(fallbackKey, "application-x-executable")
+        return Quickshell.iconPath("application-x-executable", true)
+    }
+
     // Normal icon (no tint)
     IconImage {
         visible: !root.tintIcons
         anchors.centerIn: parent
         width: 16
         height: 16
-        source: root.item?.icon ?? ""
+        source: root.resolvedIconSource
+        onStatusChanged: {
+            if (status === Image.Error && !root._iconLoadFailed)
+                Qt.callLater(() => { root._iconLoadFailed = true })
+        }
     }
 
     // Tinted icon (same style as WAppIcon)
@@ -78,7 +97,11 @@ BarIconButton {
                 id: tintedIcon
                 visible: false
                 anchors.fill: parent
-                source: root.item?.icon ?? ""
+                source: root.resolvedIconSource
+                onStatusChanged: {
+                    if (status === Image.Error && !root._iconLoadFailed)
+                        Qt.callLater(() => { root._iconLoadFailed = true })
+                }
             }
             Desaturate {
                 id: desaturatedIcon

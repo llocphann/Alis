@@ -34,22 +34,24 @@ def main() -> None:
         groups = json.loads(subprocess.check_output(["node", "-e", program], text=True))
         groups = [group for group in groups if group["pages"]]
         labels = [group["label"] for group in groups]
-        assert labels == (["Home", "Abyss"] if family == "abyss" else ["Home"]) + [
-            "Appearance", "Desktop & Layout", "System", "Features & Services", "Advanced & Help"
+        first_label = "Abyss & Bar" if family == "abyss" else "Bar & Shell"
+        assert labels == [
+            first_label, "Appearance", "Panels & Dock", "Display & Windows", "System & Power", "Integrations", "Applications", "Tools & Shortcuts"
         ], labels
         page_indices = [index for group in groups for index in group["pages"]]
         assert len(page_indices) == len(set(page_indices)), "duplicate default page"
         if family == "abyss":
-            excluded = {18, 19, 20, 21, 26, 27, 28, 30, 31, 32, 35, 36}
+            excluded = {0, 5, 8, 13, 16, 17, 18, 19, 20, 21, 26, 27, 28, 29, 30, 31, 32, 34, 35, 36}
             expected = set(range(40)) - excluded
         else:
-            excluded = {18, 19, 20, 21, 27, 28}
-            expected = (set(range(30)) - excluded) | {38, 39}
+            excluded = {0, 5, 8, 13, 16, 17, 18, 19, 20, 21, 27, 28, 29}
+            expected = (set(range(30)) - excluded) | {37, 38, 39}
         assert set(page_indices) == expected
         if family == "abyss":
-            assert next(group for group in groups if group["label"] == "Abyss")["pages"] == [2,34,33,37,22,23,16]
+            assert next(group for group in groups if group["label"] == "Abyss & Bar")["pages"] == [2, 33, 37, 24]
+            assert next(group for group in groups if group["label"] == "Panels & Dock")["pages"] == [22, 23]
 
-    require(arrangement, "layoutSchemaVersion: 11", "navigation migration")
+    require(arrangement, "layoutSchemaVersion: 13", "navigation migration")
     require(arrangement, "const untouchedStock =", "navigation migration")
     require(arrangement, "const defaults = SettingsPageRegistry.defaultCategories", "navigation migration")
     require(arrangement, "sourceVersion < 8 && untouchedStock", "legacy customized navigation migration")
@@ -81,7 +83,7 @@ def main() -> None:
     wkeys = re.findall(r'key: "([^"]+)"', waffle.split("property var pages: [", 1)[1].split(
         "property int currentPage:", 1
     )[0])
-    legacy_waffle_keys = ["quick","system","bar","wallpaper","themes","gowall","panels","modules","waffle-style","shortcuts","about","monitors","autostart","workspace-strip","mascot","ai","effects","shell-layout","power"]
+    legacy_waffle_keys = ["quick","system","bar","wallpaper","themes","gowall","panels","modules","waffle-style","shortcuts","monitors","autostart","workspace-strip","ai","effects","shell-layout","power"]
     assert wkeys == legacy_waffle_keys+["integrations","default-apps"], "Waffle historical page indices must not shift"
     assert len(wkeys) == len(set(wkeys)), "Waffle page keys must be unique"
     wgroups = wcontent.split("readonly property var navigationGroups: [", 1)[1].split(
@@ -124,7 +126,7 @@ def main() -> None:
         forbid(source, token, path)
     # SET-R01 retires visible pure redirects; canonical route/search APIs stay.
     for path, source in (("Quick", quick), ("Modules", modules),
-                         ("System", system), ("Sidebars", sidebars)):
+                         ("Sidebars", sidebars)):
         forbid(source, "SettingsPageRegistry.navigateToKey(", path)
     require(services, 'SettingsPageRegistry.navigateToKey("integrations",section)',
             "legacy Services search delegation")

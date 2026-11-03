@@ -17,7 +17,12 @@ Item {
     id: root
     clip: true
     property real padding: 4
-    property var inputField: messageInputField
+    readonly property bool companionUnifiedActive: AlisCompanion.available
+        && AlisCompanion.chatViewSource.length > 0
+        && companionChatLoader.status === Loader.Ready
+    property var inputField: companionUnifiedActive && companionChatLoader.item?.inputField
+        ? companionChatLoader.item.inputField
+        : messageInputField
     property string commandPrefix: "/"
     property bool historyOpen: false
     // The normal sidebar is the baseline. Extra information is added only
@@ -35,19 +40,33 @@ Item {
         target: VoiceSearch
         function onTranscriptionReady(text) {
             if (VoiceSearch.mode !== "dictate") return;
-            const needsSpace = messageInputField.text.length > 0 && !messageInputField.text.endsWith(" ");
-            messageInputField.insert(messageInputField.length, (needsSpace ? " " : "") + text);
-            messageInputField.forceActiveFocus();
+            const field = root.inputField;
+            if (!field) return;
+            const needsSpace = field.text.length > 0 && !field.text.endsWith(" ");
+            field.insert(field.length, (needsSpace ? " " : "") + text);
+            field.forceActiveFocus();
         }
     }
 
     onFocusChanged: focus => {
-        if (focus) {
+        if (focus && root.inputField) {
             root.inputField.forceActiveFocus();
         }
     }
 
     Keys.onPressed: event => {
+        if (root.companionUnifiedActive) {
+            if ((event.modifiers & Qt.ControlModifier) && (event.modifiers & Qt.ShiftModifier) && event.key === Qt.Key_O) {
+                companionChatLoader.item?.mind?.clearConversation();
+                event.accepted = true;
+                return;
+            }
+            if (companionChatLoader.item?.handleInput)
+                companionChatLoader.item.handleInput(event);
+            else if (root.inputField)
+                root.inputField.forceActiveFocus();
+            return;
+        }
         messageInputField.forceActiveFocus();
         if (event.modifiers === Qt.NoModifier) {
             if (event.key === Qt.Key_PageUp) {
@@ -227,6 +246,11 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
     ]
 
     function handleInput(inputText) {
+        if (root.companionUnifiedActive && companionChatLoader.item?.mind) {
+            const text = String(inputText ?? "").trim();
+            if (text.length === 0) return false;
+            return companionChatLoader.item.mind.sendMessage(text);
+        }
         if (inputText.startsWith(root.commandPrefix)) {
             // Handle special commands
             const command = inputText.split(" ")[0].substring(1);
@@ -303,8 +327,19 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
         color: Appearance.colors.colOutlineVariant
     }
 
+    Loader {
+        id: companionChatLoader
+        objectName: "companionUnifiedChatLoader"
+        anchors.fill: parent
+        anchors.margins: root.padding
+        z: 10
+        active: AlisCompanion.available && AlisCompanion.chatViewSource.length > 0
+        source: active ? AlisCompanion.chatViewSource : ""
+    }
+
     ColumnLayout {
         id: columnLayout
+        visible: !root.companionUnifiedActive
         anchors {
             fill: parent
             margins: root.padding

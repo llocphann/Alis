@@ -363,16 +363,31 @@ fn set_line_in_block(
         regex::escape(key)
     ))?;
 
-    let replacement = |caps: &regex::Captures<'_>| {
+    let replacement = |indent: &str| {
         if rendered_value.is_empty() {
-            format!("{}{}", &caps[1], key)
+            format!("{indent}{key}")
         } else {
-            format!("{}{} {}", &caps[1], key, rendered_value)
+            format!("{indent}{key} {rendered_value}")
         }
     };
 
-    let next_inner = if line_re.is_match(inner) {
-        line_re.replace(inner, replacement).into_owned()
+    let mut matched_span = None;
+    for caps in line_re.captures_iter(inner) {
+        let Some(full) = caps.get(0) else { continue };
+        if brace_depth_before(inner, full.start()) == 0 {
+            let indent = caps.get(1).map_or("", |m| m.as_str()).to_owned();
+            matched_span = Some((full.start(), full.end(), indent));
+            break;
+        }
+    }
+
+    let next_inner = if let Some((start, end, indent)) = matched_span {
+        format!(
+            "{}{}{}",
+            &inner[..start],
+            replacement(&indent),
+            &inner[end..]
+        )
     } else {
         let mut trimmed = inner.trim_end_matches([' ', '\t', '\n', '\r']).to_owned();
         let indent = format!("{}    ", indentation_at(content, block_start));
@@ -410,7 +425,13 @@ fn remove_line_in_block(
         r"(?m)^[ \t]*{}(?:[ \t]+[^\n]*)?[ \t]*\n?",
         regex::escape(key)
     ))?;
-    let next_inner = line_re.replacen(inner, 1, "").into_owned();
+    let mut next_inner = inner.to_owned();
+    for matched in line_re.find_iter(inner) {
+        if brace_depth_before(inner, matched.start()) == 0 {
+            next_inner = format!("{}{}", &inner[..matched.start()], &inner[matched.end()..]);
+            break;
+        }
+    }
     Ok(format!(
         "{}{}{}",
         &content[..inner_start],
@@ -1011,6 +1032,18 @@ fn has_flag(block: &str, key: &str) -> bool {
     .is_ok_and(|regex| regex.is_match(block))
 }
 
+fn has_top_level_flag(block: &str, key: &str) -> bool {
+    let Ok(regex) = Regex::new(&format!(
+        r"(?m)^[ \t]*{}(?:[ \t]+true)?[ \t]*$",
+        regex::escape(key)
+    )) else {
+        return false;
+    };
+    regex
+        .find_iter(block)
+        .any(|matched| brace_depth_before(block, matched.start()) == 0)
+}
+
 fn get_input() -> Result<Outcome> {
     let mut result = json!({
         "keyboard": {
@@ -1018,6 +1051,7 @@ fn get_input() -> Result<Outcome> {
             "repeat_delay": 250, "repeat_rate": 50, "numlock": false
         },
         "touchpad": {
+            "off": false,
             "tap": true, "natural_scroll": false, "dwt": false, "dwtp": false,
             "drag_lock": false, "disabled_on_external_mouse": false, "left_handed": false,
             "middle_emulation": false, "accel_profile": "adaptive", "accel_speed": 0.0,
@@ -1046,8 +1080,9 @@ fn get_input() -> Result<Outcome> {
     let Ok(content) = fs::read_to_string(path) else {
         return Ok(Outcome::ok(result));
     };
-    let input = extract_block(&content, "input", true).unwrap_or_default();
-    let cursor = extract_block(&content, "cursor", true).unwrap_or_default();
+    let clean = strip_line_comments(&content);
+    let input = extract_block(&clean, "input", true).unwrap_or_default();
+    let cursor = extract_block(&clean, "cursor", true).unwrap_or_default();
 
     if let Some(keyboard) = extract_block(&input, "keyboard", true) {
         if let Some(xkb) = extract_block(&keyboard, "xkb", true) {
@@ -1086,6 +1121,7 @@ fn get_input() -> Result<Outcome> {
                 ("tap", "tap"),
                 ("dwt", "dwt"),
                 ("dwtp", "dwtp"),
+                ("off", "off"),
             ] {
                 if result[key].get(json_key).is_some() {
                     result[key][json_key] = json!(has_flag(&block, kdl_key));
@@ -1140,8 +1176,13 @@ fn get_input() -> Result<Outcome> {
     if let Some(caps) = focus_re.captures(&input) {
         result["general"]["focus_follows_mouse"] = json!(true);
         if let Some(value) = caps.get(1) {
-            result["general"]["focus_follows_mouse_max_scroll"] =
-                json!(value.as_str().parse::<i64>().unwrap_or(0));
+            result["general"]["focus_follows_mouse_max_scroll"] = json!(
+                value
+                    .as_str()
+                    .trim_end_matches('%')
+                    .parse::<i64>()
+                    .unwrap_or(0)
+            );
         }
     }
 
@@ -1277,7 +1318,8 @@ fn get_layout() -> Result<Outcome> {
     let Ok(content) = fs::read_to_string(path) else {
         return Ok(Outcome::ok(result));
     };
-    if let Some(layout) = extract_block(&content, "layout", true) {
+    let clean = strip_line_comments(&content);
+    if let Some(layout) = extract_block(&clean, "layout", true) {
         if let Some(value) = numeric_value(&layout, "gaps") {
             result["gaps"] = json!(value as i64);
         }
@@ -1287,8 +1329,9 @@ fn get_layout() -> Result<Outcome> {
         if let Some(value) = quoted_value(&layout, "default-column-display") {
             result["default_column_display"] = json!(value);
         }
+        let center_always = result["center_focused"].as_str() == Some("always");
         result["always_center_single_column"] =
-            json!(has_flag(&layout, "always-center-single-column"));
+            json!(center_always || has_flag(&layout, "always-center-single-column"));
         result["empty_workspace_above_first"] =
             json!(has_flag(&layout, "empty-workspace-above-first"));
 
@@ -1341,7 +1384,7 @@ fn get_layout() -> Result<Outcome> {
             }
         }
     }
-    if let Some(overview) = extract_block(&content, "overview", true)
+    if let Some(overview) = extract_block(&clean, "overview", true)
         && let Some(value) = numeric_value(&overview, "zoom")
     {
         result["overview_zoom"] = json!(value);
@@ -1371,10 +1414,11 @@ fn get_animations() -> Result<Outcome> {
     let Ok(content) = fs::read_to_string(path) else {
         return Ok(Outcome::ok(result));
     };
-    let Some(block) = extract_block(&content, "animations", true) else {
+    let clean = strip_line_comments(&content);
+    let Some(block) = extract_block(&clean, "animations", true) else {
         return Ok(Outcome::ok(result));
     };
-    result["enabled"] = json!(!has_flag(&block, "off"));
+    result["enabled"] = json!(!has_top_level_flag(&block, "off"));
     if let Some(value) = numeric_value(&block, "slowdown") {
         result["slowdown"] = json!(value);
     }
@@ -1420,30 +1464,50 @@ fn get_animations() -> Result<Outcome> {
     Ok(Outcome::ok(result))
 }
 
+fn is_global_window_rule_block(block: &str) -> bool {
+    let clean = strip_line_comments(block);
+    let Ok(match_re) = Regex::new(r"(?m)^[ \t]*(?:match|exclude)\b") else {
+        return false;
+    };
+    !match_re.is_match(&clean)
+}
+
 fn get_window_rules() -> Result<Outcome> {
     let mut result =
         json!({"corner_radius": 16, "clip_to_geometry": true, "inactive_opacity": 0.9});
-    let path = resolve_section_file("config.d/30-window-rules.kdl");
-    let Ok(content) = fs::read_to_string(path) else {
-        return Ok(Outcome::ok(result));
-    };
+    let primary = resolve_section_file("config.d/30-window-rules.kdl");
+    let mut paths = vec![primary.clone()];
+    let extra = config_dir().join("config.d/90-user-extra.kdl");
+    if extra != primary && extra.exists() && root_includes("config.d/90-user-extra.kdl") {
+        paths.push(extra);
+    }
     let regex = Regex::new(r"(?m)^[ \t]*window-rule[ \t]*\{")?;
-    for matched in regex.find_iter(&content) {
-        let opening = content[matched.start()..matched.end()].rfind('{').unwrap() + matched.start();
-        let Some(closing) = matching_brace(&content, opening) else {
+    for path in paths {
+        let Ok(content) = fs::read_to_string(path) else {
             continue;
         };
-        let block = &content[opening + 1..closing];
-        if block.contains("is-active=false") || block.contains("is-active = false") {
-            if let Some(value) = numeric_value(block, "opacity") {
-                result["inactive_opacity"] = json!(value);
+        for matched in regex.find_iter(&content) {
+            if brace_depth_before(&content, matched.start()) != 0 {
+                continue;
             }
-        } else {
-            if let Some(value) = numeric_value(block, "geometry-corner-radius") {
-                result["corner_radius"] = json!(value as i64);
-            }
-            if let Some(value) = bool_line_value(block, "clip-to-geometry") {
-                result["clip_to_geometry"] = json!(value);
+            let opening =
+                content[matched.start()..matched.end()].rfind('{').unwrap() + matched.start();
+            let Some(closing) = matching_brace(&content, opening) else {
+                continue;
+            };
+            let clean_block = strip_line_comments(&content[opening + 1..closing]);
+            if clean_block.contains("is-active=false") || clean_block.contains("is-active = false")
+            {
+                if let Some(value) = numeric_value(&clean_block, "opacity") {
+                    result["inactive_opacity"] = json!(value);
+                }
+            } else if is_global_window_rule_block(&clean_block) {
+                if let Some(value) = numeric_value(&clean_block, "geometry-corner-radius") {
+                    result["corner_radius"] = json!(value as i64);
+                }
+                if let Some(value) = bool_line_value(&clean_block, "clip-to-geometry") {
+                    result["clip_to_geometry"] = json!(value);
+                }
             }
         }
     }
@@ -1950,47 +2014,64 @@ fn set_input(key: &str, value: &str) -> Result<Outcome> {
                 )?;
             }
             "touchpad" | "mouse" | "trackpoint" => {
-                let flag = [
-                    "tap",
-                    "natural-scroll",
-                    "dwt",
-                    "dwtp",
-                    "drag-lock",
-                    "disabled-on-external-mouse",
-                    "left-handed",
-                    "middle-emulation",
-                    "scroll-button-lock",
-                ]
-                .contains(&property);
-                if flag {
-                    content = toggle_nested_flag(
-                        &content,
-                        "input",
-                        section,
-                        property,
-                        value == "on",
-                        true,
-                    )?;
-                } else if [
-                    "accel-profile",
-                    "tap-button-map",
-                    "click-method",
-                    "scroll-method",
-                ]
-                .contains(&property)
-                {
-                    content = set_nested_line(
-                        &content,
-                        "input",
-                        section,
-                        property,
-                        &format!("\"{value}\""),
-                        true,
-                    )?;
-                } else if property == "accel-speed" {
-                    content = set_nested_line(&content, "input", section, property, value, true)?;
+                if ["off", "enabled", "enable"].contains(&property) {
+                    let current_off = extract_block(&content, "input", true)
+                        .and_then(|inp| extract_block(&inp, section, true))
+                        .is_some_and(|blk| has_flag(&blk, "off"));
+                    let next_off = match (property, value) {
+                        ("off", "toggle") | ("enabled", "toggle") | ("enable", "toggle") => {
+                            !current_off
+                        }
+                        ("off", v) => matches!(v, "on" | "true" | "1"),
+                        ("enabled", v) | ("enable", v) => matches!(v, "off" | "false" | "0"),
+                        _ => false,
+                    };
+                    content =
+                        toggle_nested_flag(&content, "input", section, "off", next_off, true)?;
                 } else {
-                    bail!("unknown_{section}_prop:{property}");
+                    let flag = [
+                        "tap",
+                        "natural-scroll",
+                        "dwt",
+                        "dwtp",
+                        "drag-lock",
+                        "disabled-on-external-mouse",
+                        "left-handed",
+                        "middle-emulation",
+                        "scroll-button-lock",
+                    ]
+                    .contains(&property);
+                    if flag {
+                        content = toggle_nested_flag(
+                            &content,
+                            "input",
+                            section,
+                            property,
+                            value == "on",
+                            true,
+                        )?;
+                    } else if [
+                        "accel-profile",
+                        "tap-button-map",
+                        "click-method",
+                        "scroll-method",
+                    ]
+                    .contains(&property)
+                    {
+                        content = set_nested_line(
+                            &content,
+                            "input",
+                            section,
+                            property,
+                            &format!("\"{value}\""),
+                            true,
+                        )?;
+                    } else if property == "accel-speed" {
+                        content =
+                            set_nested_line(&content, "input", section, property, value, true)?;
+                    } else {
+                        bail!("unknown_{section}_prop:{property}");
+                    }
                 }
             }
             "cursor" => {
@@ -2031,11 +2112,33 @@ fn set_layout(key: &str, value: &str) -> Result<Outcome> {
     content = match key {
         "gaps" => set_line_in_block(&content, "layout", "gaps", value, true)?,
         "center-focused-column" => {
-            set_line_in_block(&content, "layout", key, &format!("\"{value}\""), true)?
+            let mut next =
+                set_line_in_block(&content, "layout", key, &format!("\"{value}\""), true)?;
+            if value == "always" {
+                next = toggle_flag(&next, "layout", "always-center-single-column", true, true)?;
+            }
+            next
         }
-        "always-center-single-column" | "empty-workspace-above-first" => {
-            toggle_flag(&content, "layout", key, value == "on", true)?
+        "always-center-single-column" => {
+            let enabled = value == "on";
+            let mut next = toggle_flag(&content, "layout", key, enabled, true)?;
+            if !enabled {
+                let clean = strip_line_comments(&next);
+                if let Some(layout) = extract_block(&clean, "layout", true)
+                    && quoted_value(&layout, "center-focused-column").as_deref() == Some("always")
+                {
+                    next = set_line_in_block(
+                        &next,
+                        "layout",
+                        "center-focused-column",
+                        "\"never\"",
+                        true,
+                    )?;
+                }
+            }
+            next
         }
+        "empty-workspace-above-first" => toggle_flag(&content, "layout", key, value == "on", true)?,
         "default-column-display" => {
             set_line_in_block(&content, "layout", key, &format!("\"{value}\""), true)?
         }
@@ -2119,10 +2222,20 @@ fn set_animations(key: &str, value: &str) -> Result<Outcome> {
                     .replace(type_inner, format!("{indent}spring {next_params}"))
                     .into_owned()
             } else {
+                let defaults = animation_defaults(kind);
+                let mut dr = defaults["damping_ratio"].as_f64().unwrap_or(1.0).to_string();
+                let mut st = (defaults["stiffness"].as_f64().unwrap_or(800.0) as i64).to_string();
+                let mut ep = defaults["epsilon"].as_f64().unwrap_or(0.0001).to_string();
+                match property {
+                    "damping-ratio" => dr = value.to_owned(),
+                    "stiffness" => st = value.to_owned(),
+                    "epsilon" => ep = value.to_owned(),
+                    _ => {}
+                }
                 set_line_in_inner(
                     type_inner,
                     "spring",
-                    &format!("{property}={value}"),
+                    &format!("damping-ratio={dr} stiffness={st} epsilon={ep}"),
                     "        ",
                 )?
             };
@@ -2145,64 +2258,129 @@ fn set_animations(key: &str, value: &str) -> Result<Outcome> {
     write_validated(&path, &content)
 }
 
+fn update_global_window_rule(
+    content: &str,
+    kdl_key: &str,
+    value: &str,
+    create_if_missing: bool,
+) -> Result<(String, bool)> {
+    let rule_re = Regex::new(r"(?m)^[ \t]*window-rule[ \t]*\{")?;
+    let mut first_rule_start = None;
+    for matched in rule_re.find_iter(content).collect::<Vec<_>>() {
+        if brace_depth_before(content, matched.start()) != 0 {
+            continue;
+        }
+        if first_rule_start.is_none() {
+            first_rule_start = Some(matched.start());
+        }
+        let opening =
+            content[matched.start()..matched.end()].rfind('{').unwrap() + matched.start();
+        let Some(closing) = matching_brace(content, opening) else {
+            continue;
+        };
+        let block = &content[opening + 1..closing];
+        if is_global_window_rule_block(block) {
+            let next = set_line_in_inner(block, kdl_key, value, "    ")?;
+            return Ok((
+                format!("{}{}{}", &content[..opening + 1], next, &content[closing..]),
+                true,
+            ));
+        }
+    }
+    if !create_if_missing {
+        return Ok((content.to_owned(), false));
+    }
+    let radius = if kdl_key == "geometry-corner-radius" {
+        value
+    } else {
+        "12"
+    };
+    let clip = if kdl_key == "clip-to-geometry" {
+        value
+    } else {
+        "true"
+    };
+    let global_block = format!(
+        "window-rule {{\n    geometry-corner-radius {radius}\n    clip-to-geometry {clip}\n}}\n\n"
+    );
+    if let Some(pos) = first_rule_start {
+        Ok((
+            format!("{}{global_block}{}", &content[..pos], &content[pos..]),
+            true,
+        ))
+    } else {
+        Ok((format!("{}\n\n{global_block}", content.trim_end()), true))
+    }
+}
+
+fn update_inactive_opacity_rule(
+    content: &str,
+    value: &str,
+    create_if_missing: bool,
+) -> Result<(String, bool)> {
+    let rule_re = Regex::new(r"(?m)^[ \t]*window-rule[ \t]*\{")?;
+    for matched in rule_re.find_iter(content).collect::<Vec<_>>() {
+        if brace_depth_before(content, matched.start()) != 0 {
+            continue;
+        }
+        let opening =
+            content[matched.start()..matched.end()].rfind('{').unwrap() + matched.start();
+        let Some(closing) = matching_brace(content, opening) else {
+            continue;
+        };
+        let block = &content[opening + 1..closing];
+        let clean = strip_line_comments(block);
+        if clean.contains("is-active=false") || clean.contains("is-active = false") {
+            let next = set_line_in_inner(block, "opacity", value, "    ")?;
+            return Ok((
+                format!("{}{}{}", &content[..opening + 1], next, &content[closing..]),
+                true,
+            ));
+        }
+    }
+    if !create_if_missing {
+        return Ok((content.to_owned(), false));
+    }
+    Ok((
+        format!(
+            "{}\n\nwindow-rule {{\n    match is-active=false\n    opacity {value}\n}}\n",
+            content.trim_end()
+        ),
+        true,
+    ))
+}
+
 fn set_window_rules(key: &str, value: &str) -> Result<Outcome> {
     let path = resolve_section_file("config.d/30-window-rules.kdl");
     let mut content = fs::read_to_string(&path).context("window rules config file not found")?;
+    let extra = config_dir().join("config.d/90-user-extra.kdl");
+    let has_extra = extra != path && extra.exists() && root_includes("config.d/90-user-extra.kdl");
     match key {
-        "corner-radius" => {
-            let re = Regex::new(r"geometry-corner-radius[ \t]+[0-9]+")?;
-            if re.is_match(&content) {
-                content = re
-                    .replacen(&content, 1, format!("geometry-corner-radius {value}"))
-                    .into_owned();
-            } else if let Some((_, start, end, _)) =
-                find_block_bounds(&content, "window-rule", true)
-            {
-                let next = set_line_in_inner(
-                    &content[start..end],
-                    "geometry-corner-radius",
-                    value,
-                    "    ",
-                )?;
-                content = format!("{}{}{}", &content[..start], next, &content[end..]);
-            }
-        }
-        "clip-to-geometry" => {
-            let re = Regex::new(r"clip-to-geometry[ \t]+(?:true|false)")?;
-            if re.is_match(&content) {
-                content = re
-                    .replacen(&content, 1, format!("clip-to-geometry {value}"))
-                    .into_owned();
-            } else if let Some((_, start, end, _)) =
-                find_block_bounds(&content, "window-rule", true)
-            {
-                let next =
-                    set_line_in_inner(&content[start..end], "clip-to-geometry", value, "    ")?;
-                content = format!("{}{}{}", &content[..start], next, &content[end..]);
+        "corner-radius" | "clip-to-geometry" => {
+            let kdl_key = if key == "corner-radius" {
+                "geometry-corner-radius"
+            } else {
+                "clip-to-geometry"
+            };
+            let (next, _) = update_global_window_rule(&content, kdl_key, value, true)?;
+            content = next;
+            if has_extra && let Ok(extra_content) = fs::read_to_string(&extra) {
+                let (next_extra, updated) =
+                    update_global_window_rule(&extra_content, kdl_key, value, false)?;
+                if updated {
+                    let _ = write_validated(&extra, &next_extra);
+                }
             }
         }
         "inactive-opacity" => {
-            let rule_re = Regex::new(r"(?m)^[ \t]*window-rule[ \t]*\{")?;
-            let mut replaced = false;
-            for matched in rule_re.find_iter(&content).collect::<Vec<_>>() {
-                let opening =
-                    content[matched.start()..matched.end()].rfind('{').unwrap() + matched.start();
-                let Some(closing) = matching_brace(&content, opening) else {
-                    continue;
-                };
-                let block = &content[opening + 1..closing];
-                if block.contains("is-active=false") || block.contains("is-active = false") {
-                    let next = set_line_in_inner(block, "opacity", value, "    ")?;
-                    content = format!("{}{}{}", &content[..opening + 1], next, &content[closing..]);
-                    replaced = true;
-                    break;
+            let (next, _) = update_inactive_opacity_rule(&content, value, true)?;
+            content = next;
+            if has_extra && let Ok(extra_content) = fs::read_to_string(&extra) {
+                let (next_extra, updated) =
+                    update_inactive_opacity_rule(&extra_content, value, false)?;
+                if updated {
+                    let _ = write_validated(&extra, &next_extra);
                 }
-            }
-            if !replaced {
-                content = format!(
-                    "{}\n\nwindow-rule {{\n    match is-active=false\n    opacity {value}\n}}\n",
-                    content.trim_end()
-                );
             }
         }
         _ => bail!("unknown_window_rules_key:{key}"),

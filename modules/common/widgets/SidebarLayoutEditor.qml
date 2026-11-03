@@ -18,7 +18,7 @@ ColumnLayout {
     property string liftedId: ""
 
     readonly property var rightDefaultOrder: ["system", "sliders", "toggles", "widgets"]
-    readonly property var leftDefaultOrder: ["ai", "translator", "anime", "animeSchedule", "news", "tools"]
+    readonly property var leftDefaultOrder: ["ai", "translator", "news", "tools"]
 
     readonly property var rightDescriptors: ({
         system: { icon: "computer", label: Translation.tr("System") },
@@ -30,8 +30,6 @@ ColumnLayout {
     readonly property var leftDescriptors: ({
         ai: { icon: "neurology", label: Translation.tr("Intelligence") },
         translator: { icon: "translate", label: Translation.tr("Translator") },
-        anime: { icon: "bookmark_heart", label: Translation.tr("Anime") },
-        animeSchedule: { icon: "calendar_month", label: Translation.tr("Schedule") },
         news: { icon: "newspaper", label: Translation.tr("News") },
         tools: { icon: "build", label: Translation.tr("Tools") }
     })

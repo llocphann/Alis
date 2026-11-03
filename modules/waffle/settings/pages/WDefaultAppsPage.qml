@@ -1,3 +1,3 @@
 import QtQuick
 import qs.modules.settings
-DefaultAppsConfig {settingsPageIndex:20;objectName:"waffleDefaultApps"}
+DefaultAppsConfig {settingsPageIndex:18;objectName:"waffleDefaultApps"}

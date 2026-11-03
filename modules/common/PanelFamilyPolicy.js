@@ -11,7 +11,7 @@ var abyssPanels = [
     "abyssSidebarLeft", "abyssSidebarRight", "abyssPopup",
     "abyssNotificationPopup", "abyssNotificationCenter", "abyssOnScreenDisplay",
     "abyssClipboard", "abyssOverview", "abyssLock", "abyssPolkit",
-    "abyssSessionScreen", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay",
+    "abyssSessionScreen", "iiCheatsheet", "iiOnScreenKeyboard",
     "iiControlPanel", "iiDashboard", "iiRegionSelector", "iiTilingOverlay", "iiWallpaperSelector",
     "iiWallpaperLauncher", "iiCoverflowSelector", "iiShellUpdate", "iiRecordingOsd"
 ];
@@ -49,6 +49,7 @@ function settingsRoute(family, index, section) {
     var value = String(section || "");
     if (family !== "abyss") return {pageIndex:index,section:value};
     if (index === 26 || index === 32) return {pageIndex:2,section:value || "surface"};
+    if (index === 37 && value.toLowerCase().trim() === "ai") return {pageIndex:24,section:"ai"};
     var tabs={waves:2,spectrum:2,interaction:2,performance:2,modules:34,bar:34,dock:22,sidebars:23,popups:33};
     if (index === 2 && tabs[value.toLowerCase()])
         return {pageIndex:tabs[value.toLowerCase()],section:value};
@@ -71,7 +72,7 @@ var materialPanelMap = {
     iiMediaControls:"abyssPopup"
 };
 var materialSharedPanels = ["iiBootGreeting","iiCheatsheet","iiControlPanel",
-    "iiOnScreenKeyboard","iiOverlay","iiRegionSelector","iiTilingOverlay",
+    "iiOnScreenKeyboard","iiRegionSelector","iiTilingOverlay",
     "iiWallpaperSelector","iiWallpaperLauncher","iiCoverflowSelector","iiShellUpdate",
     "iiRecordingOsd","iiDashboard","iiClipboard","iiOverview"];
 function migrateMaterial(options) {

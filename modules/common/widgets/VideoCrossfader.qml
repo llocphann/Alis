@@ -80,7 +80,7 @@ Item {
         const inactive = root._inactivePlayer()
         // Loader activation and onSourceChanged can be delivered in either
         // order. onLoaded retries _applySource once both decoders exist.
-        if (!active || !inactive)
+        if (!active || !inactive || !outputALoader.item || !outputBLoader.item)
             return
 
         // Already showing it: drop any pending load rather than letting it land.
@@ -161,61 +161,74 @@ Item {
         interval: Math.max(root.effectiveDuration, 1) + 80
         onTriggered: {
             const stale = root._inactivePlayer()
+            if (!stale) return
             if (root._loadingSource && String(stale.source) === root._loadingSource)
                 return
             stale.source = ""
         }
     }
 
-    VideoOutput {
-        id: outputA
+    Loader {
+        id: outputALoader
         anchors.fill: parent
-        fillMode: root.fillMode
-        visible: opacity > 0
-        opacity: root.activeSlot === 0 ? 1 : 0
-        Behavior on opacity {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation {
-                duration: root.effectiveDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Appearance.animationCurves.standard
+        active: root._decoderActive
+        asynchronous: false
+        onLoaded: root._applySource()
+        sourceComponent: VideoOutput {
+            id: outputA
+            anchors.fill: parent
+            fillMode: root.fillMode
+            visible: opacity > 0
+            opacity: root.activeSlot === 0 ? 1 : 0
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation {
+                    duration: root.effectiveDuration
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Appearance.animationCurves.standard
+                }
+            }
+            Connections {
+                target: outputA.videoSink
+                enabled: !root._slotAHasFrame
+                function onVideoFrameChanged(): void {
+                    const size = outputA.videoSink.videoSize
+                    if (size.width > 0 && size.height > 0)
+                        root._handleFrame(0, root._playerA())
+                }
             }
         }
     }
 
-    VideoOutput {
-        id: outputB
+    Loader {
+        id: outputBLoader
         anchors.fill: parent
-        fillMode: root.fillMode
-        visible: opacity > 0
-        opacity: root.activeSlot === 1 ? 1 : 0
-        Behavior on opacity {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation {
-                duration: root.effectiveDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Appearance.animationCurves.standard
+        active: root._decoderActive
+        asynchronous: false
+        onLoaded: root._applySource()
+        sourceComponent: VideoOutput {
+            id: outputB
+            anchors.fill: parent
+            fillMode: root.fillMode
+            visible: opacity > 0
+            opacity: root.activeSlot === 1 ? 1 : 0
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation {
+                    duration: root.effectiveDuration
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Appearance.animationCurves.standard
+                }
             }
-        }
-    }
-
-    Connections {
-        target: outputA.videoSink
-        enabled: !root._slotAHasFrame
-        function onVideoFrameChanged(): void {
-            const size = outputA.videoSink.videoSize
-            if (size.width > 0 && size.height > 0)
-                root._handleFrame(0, root._playerA())
-        }
-    }
-
-    Connections {
-        target: outputB.videoSink
-        enabled: !root._slotBHasFrame
-        function onVideoFrameChanged(): void {
-            const size = outputB.videoSink.videoSize
-            if (size.width > 0 && size.height > 0)
-                root._handleFrame(1, root._playerB())
+            Connections {
+                target: outputB.videoSink
+                enabled: !root._slotBHasFrame
+                function onVideoFrameChanged(): void {
+                    const size = outputB.videoSink.videoSize
+                    if (size.width > 0 && size.height > 0)
+                        root._handleFrame(1, root._playerB())
+                }
+            }
         }
     }
 
@@ -228,7 +241,7 @@ Item {
         asynchronous: false
         onLoaded: root._applySource()
         sourceComponent: MediaPlayer {
-            videoOutput: outputA
+            videoOutput: outputALoader.item
             loops: MediaPlayer.Infinite
             onSourceChanged: {
                 root._slotAHasFrame = false
@@ -243,7 +256,7 @@ Item {
         asynchronous: false
         onLoaded: root._applySource()
         sourceComponent: MediaPlayer {
-            videoOutput: outputB
+            videoOutput: outputBLoader.item
             loops: MediaPlayer.Infinite
             onSourceChanged: {
                 root._slotBHasFrame = false

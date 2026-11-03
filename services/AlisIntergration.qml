@@ -34,6 +34,7 @@ Singleton {
     readonly property bool tlpEnabled: available && !loadFailed && Config.ready && options?.tlp === true
     readonly property bool thinkfanEnabled: available && !loadFailed && Config.ready && options?.thinkfan === true
     readonly property bool obsidianEnabled: available && !loadFailed && Config.ready && options?.obsidian === true
+    readonly property bool spacedRepetitionEnabled: available && !loadFailed && Config.ready && (options?.spaced_repetition ?? true)
     readonly property bool enabled: tlpEnabled || thinkfanEnabled || obsidianEnabled
     readonly property var session: worker.status === Loader.Ready ? worker.item : null
 
@@ -81,6 +82,14 @@ Singleton {
         if (!available) return ""
         const entry = settingsEntries?.[integration]
         return typeof entry === "string" ? packageRoot + "/" + entry : ""
+    }
+    function spacedRepetitionDashboardSource(): string {
+        if (!spacedRepetitionEnabled || packageRoot.length === 0) return ""
+        return packageRoot + "/modules/dashboard/DashboardSpacedRepetition.qml"
+    }
+    function spacedRepetitionLookupScriptPath(): string {
+        if (!available || packageRoot.length === 0) return ""
+        return packageRoot + "/scripts/integrations/lookup_word_level.py"
     }
     function backendSource(kind): string {
         if (!obsidianEnabled) return ""

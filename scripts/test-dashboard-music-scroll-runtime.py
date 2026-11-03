@@ -122,7 +122,7 @@ ShellRoot {
     tryVerify(()=>{disk.reload();return disk.snapshot?.dashboard?.music?.showScrollbars===false&&disk.snapshot?.dashboard?.music?.enable===false},5000)
     console.info("MUSIC_SCROLL_RESTART_PASS",root.checks,"checks",root.captures,"rendered frames saved OFF, restored selection, disabled page and short/empty lists");Qt.quit();return
    }
-   check(Config.options.dashboard.music.showScrollbars===true,"old config missing scrollbar flag must default ON")
+   check(Config.options.dashboard.music.showScrollbars===false,"old config missing scrollbar flag must default OFF")
    check(findChild(dashboard,"dashboardMusic")===null,"Music unexpectedly allocated before its first visit on a fresh configuration")
    Config.setNestedValues({"performance.reduceAnimations":true,"dashboard.music.enable":true,"dashboard.music.showScrollbars":true,"dashboard.showHeader":true,"dashboard.canvas.widgets":[]})
    GlobalStates.dashboardPage=1
@@ -235,14 +235,11 @@ ShellRoot {
    const settings=Qt.createComponent(Qt.resolvedUrl("modules/settings/DashboardMusicSettings.qml"))
    check(settings.status===Component.Ready,"Music settings failed to compile: "+settings.errorString())
    let page=settings.createObject(window.contentItem,{width:360,x:16,y:16,z:500})
-   const toggles=Array.from(page.contentData).filter(item=>item.text===Translation.tr("Show Music scrollbars"))
-   check(toggles.length===1,"Music settings must contain exactly one preference checkbox")
-   renderFrame(page,"Settings checkbox frame")
-   check(toggles[0].width>0&&toggles[0].height>0,"Music settings checkbox has no input bounds")
-   mouseClick(toggles[0]);check(Config.options.dashboard.music.showScrollbars===false&&!music.showMusicScrollbars,"actual Settings click did not hide chrome")
-   page.destroy();wait(80)
-   page=settings.createObject(window.contentItem,{width:360,x:16,y:16,z:500})
-   check(Array.from(page.contentData).find(item=>item.text===Translation.tr("Show Music scrollbars")).checked===false,"Settings close/reopen lost preference")
+   const toggles=Array.from(page.contentData).filter(item=>item.text===Translation.tr("Show Music scrollbars") || item.text===Translation.tr("Music"))
+   check(toggles.length===0,"Music settings must not expose removed Music or scrollbar toggles")
+   renderFrame(page,"Settings frame")
+   Config.setNestedValue("dashboard.music.showScrollbars",false)
+   check(Config.options.dashboard.music.showScrollbars===false&&!music.showMusicScrollbars,"Music scrollbar setting did not hide chrome")
    page.destroy()
    tryVerify(()=>{disk.reload();return disk.snapshot?.dashboard?.music?.showScrollbars===false&&disk.snapshot?.dashboard?.lastPageId==="music"},5000)
    console.info("MUSIC_SCROLL_PASS",root.checks,"checks",root.captures,"rendered frames six overflow lists, hidden/visible preference, wheel and keyboard")

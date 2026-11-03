@@ -332,6 +332,9 @@ def _populate_library_art(client: MpdClient, tracks: list[dict[str, Any]]) -> No
 
     for group in groups.values():
         representative = group[0]
+        rep_path = str(representative.get("path") or "")
+        if rep_path and "://" not in rep_path and not Path(rep_path).is_file():
+            continue
         payload = _fetch_mpd_art(client, str(representative.get("uri") or ""))
         if payload is None:
             continue
@@ -386,6 +389,24 @@ def _music_root(client: MpdClient, override: str) -> str:
     return os.path.expanduser(config.get("music_directory", ""))
 
 
+def _is_stale_missing_file_error(error_text: str, current: dict[str, Any] | None) -> bool:
+    if "No such file or directory" not in error_text:
+        return False
+    parts = error_text.split('"')
+    for idx in range(1, len(parts), 2):
+        candidate = parts[idx]
+        if candidate.startswith("/") and Path(candidate).is_file():
+            return True
+    if isinstance(current, dict):
+        path = str(current.get("path") or "").strip()
+        uri = str(current.get("uri") or "").strip()
+        if path and "://" not in path and Path(path).is_file() and (
+            path in error_text or (uri and uri in error_text)
+        ):
+            return True
+    return False
+
+
 def _status_payload(client: MpdClient, music_root: str) -> dict[str, Any]:
     status = _pairs(client.command("status"))
     if status.get("consume") == "1":
@@ -397,6 +418,12 @@ def _status_payload(client: MpdClient, music_root: str) -> dict[str, Any]:
     current_records = _records(client.command("currentsong"))
     queue_records = _records(client.command("playlistinfo"))
     current = _track(current_records[0], music_root) if current_records else None
+    if _is_stale_missing_file_error(str(status.get("error") or ""), current):
+        try:
+            client.command("clearerror")
+        except MpdError:
+            pass
+        status.pop("error", None)
     queue = [_track(record, music_root) for record in queue_records]
     return {
         "connected": True,
@@ -560,6 +587,7 @@ ALLOWED_COMMANDS = {
     "delete",
     "deleteid",
     "clear",
+    "clearerror",
 }
 
 

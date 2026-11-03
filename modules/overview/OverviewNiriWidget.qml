@@ -16,6 +16,7 @@ Item {
     required property var panelWindow
     property bool taskViewMode: false
     property bool embeddedSurface: false
+    property bool verticalLayout: false
     property bool presentationActive: GlobalStates.overviewOpen
     // Delay focus-indicator motion until the parent connected popup finishes
     // its reveal. Window previews settle directly from Niri geometry.
@@ -31,8 +32,12 @@ Item {
     }
 
     readonly property var overviewOptions: Config.options?.overview ?? {}
-    readonly property int overviewRows: taskViewMode ? 1 : (overviewOptions.rows ?? 3)
-    readonly property int overviewColumns: taskViewMode ? 3 : (overviewOptions.columns ?? 1)
+    readonly property int _configuredRows: taskViewMode ? 1 : (overviewOptions.rows ?? 3)
+    readonly property int _configuredColumns: taskViewMode ? 3 : (overviewOptions.columns ?? 1)
+    readonly property int overviewRows: verticalLayout && _configuredRows < _configuredColumns
+        ? _configuredColumns : _configuredRows
+    readonly property int overviewColumns: verticalLayout && _configuredRows < _configuredColumns
+        ? _configuredRows : _configuredColumns
     readonly property real overviewScale: taskViewMode ? 0.27 : (overviewOptions.scale ?? 0.17)
     readonly property real overviewMaxPanelWidthRatio: taskViewMode ? 0.92 : (overviewOptions.maxPanelWidthRatio ?? 1.0)
     readonly property int overviewWorkspaceSpacing: taskViewMode ? 18 : (overviewOptions.workspaceSpacing ?? 5)
@@ -124,12 +129,20 @@ Item {
         baseWorkspaceHeight <= 0 || baseWorkspaceWidth <= 0 ? 1 : baseWorkspaceHeight / baseWorkspaceWidth
     property real naturalWorkspaceImplicitWidth: {
         const cols = root.overviewColumns;
+        const rows = root.overviewRows;
         const spacing = root.workspaceSpacing;
         const totalBase = baseWorkspaceWidth * cols + spacing * Math.max(0, cols - 1);
         const maxWidth = (panelWindow ? panelWindow.width : (logicalWidth / logicalScale)) * clampedPanelWidthRatio;
-        if (cols <= 0 || totalBase <= maxWidth)
-            return baseWorkspaceWidth;
-        return (maxWidth - spacing * Math.max(0, cols - 1)) / cols;
+        let w = (cols <= 0 || totalBase <= maxWidth)
+            ? baseWorkspaceWidth
+            : (maxWidth - spacing * Math.max(0, cols - 1)) / cols;
+        if (root.verticalLayout && rows > 0 && workspaceAspectRatio > 0) {
+            const availH = (panelWindow ? panelWindow.height : (logicalHeight / logicalScale)) * Math.min(clampedPanelWidthRatio, 0.82);
+            const maxHPerRow = (availH - spacing * Math.max(0, rows - 1)) / rows;
+            if (maxHPerRow > 0)
+                w = Math.min(w, maxHPerRow / workspaceAspectRatio);
+        }
+        return Math.max(1, w);
     }
     property real naturalWorkspaceImplicitHeight: naturalWorkspaceImplicitWidth * workspaceAspectRatio
     property real workspaceImplicitWidth: {

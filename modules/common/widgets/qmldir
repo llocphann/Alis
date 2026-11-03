@@ -115,11 +115,14 @@ ShellLayoutEditorWindow 1.0 ShellLayoutEditorWindow.qml
 ShellEditResizeHandle 1.0 ShellEditResizeHandle.qml
 ShellEditSizeBadge 1.0 ShellEditSizeBadge.qml
 ShellEditSurfaceFrame 1.0 ShellEditSurfaceFrame.qml
+SettingsBentoGrid 1.0 SettingsBentoGrid.qml
 SettingsCardSection 1.0 SettingsCardSection.qml
 SettingsDivider 1.0 SettingsDivider.qml
+SettingsDrillDownRow 1.0 SettingsDrillDownRow.qml
 SettingsGroup 1.0 SettingsGroup.qml
 SettingsLiveSearchResults 1.0 SettingsLiveSearchResults.qml
 SettingsNote 1.0 SettingsNote.qml
+SettingsSliderRow 1.0 SettingsSliderRow.qml
 ShellDesaturationEffect 1.0 ShellDesaturationEffect.qml
 singleton SettingsMaterialPreset 1.0 SettingsMaterialPreset.qml
 singleton SettingsSearchRegistry 1.0 SettingsSearchRegistry.qml

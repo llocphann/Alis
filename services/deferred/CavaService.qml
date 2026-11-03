@@ -78,14 +78,10 @@ Singleton {
     }
 
     readonly property string playerDesktopEntry: {
-        if (YtMusic.isPlaying)
-            return "mpv ytmusic youtube-music"
         const player = MprisController.activePlayer
         return player?.desktopEntry || player?.identity || "__alis_music_player__"
     }
     readonly property string playerTrackTitle: {
-        if (YtMusic.isPlaying)
-            return YtMusic.currentTitle || ""
         return MprisController.activePlayer?.trackTitle || ""
     }
 
@@ -275,13 +271,6 @@ Singleton {
         }
     }
 
-    Connections {
-        target: YtMusic
-        function onCurrentVideoIdChanged(): void {
-            root._scheduleSourceRefresh()
-        }
-    }
-
     Timer {
         id: sourceRefresh
         interval: 800
@@ -295,7 +284,7 @@ Singleton {
         repeat: false
         onTriggered: {
             root.audioSignalActive = false
-            if (root.active && (MprisController.isPlaying || YtMusic.isPlaying))
+            if (root.active && MprisController.isPlaying)
                 root._scheduleSourceRefresh()
         }
     }

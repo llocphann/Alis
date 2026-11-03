@@ -1,11 +1,14 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Widgets
 import qs.services
 import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
+import qs.modules.settings
 
 ContentPage {
     id: root
@@ -30,6 +33,59 @@ ContentPage {
     property string _statusType: ""   // "saved" | "removed" | "error"
     property bool _statusVisible: false
     property var expandedRows: ({})
+
+    readonly property var defaultRoleShortcuts: [
+        { slotId: "terminal", title: Translation.tr("Default Terminal"), icon: "terminal" },
+        { slotId: "browser", title: Translation.tr("Default Web Browser"), icon: "language" },
+        { slotId: "fileManager", title: Translation.tr("Default File Manager"), icon: "folder_open" },
+        { slotId: "editor", title: Translation.tr("Default Code / Text Editor"), icon: "code" }
+    ]
+
+    readonly property var quickSystemActions: [
+        { label: Translation.tr("App Launcher (Spotlight)"), icon: "apps", action: 'spawn "qs" "-c" "alis" "ipc" "call" "search" "toggle"' },
+        { label: Translation.tr("Open Settings"), icon: "settings", action: 'spawn "qs" "-c" "alis" "ipc" "call" "settings" "open"' },
+        { label: Translation.tr("Region Screenshot"), icon: "screenshot_region", action: 'spawn "qs" "-c" "alis" "ipc" "call" "region" "screenshot"' },
+        { label: Translation.tr("Full Screen Screenshot"), icon: "photo_camera", action: "screenshot-screen" },
+        { label: Translation.tr("Region OCR"), icon: "document_scanner", action: 'spawn "qs" "-c" "alis" "ipc" "call" "region" "ocr"' },
+        { label: Translation.tr("Clipboard History"), icon: "content_paste", action: 'spawn "qs" "-c" "alis" "ipc" "call" "clipboard" "toggle"' },
+        { label: Translation.tr("Toggle Overview"), icon: "grid_view", action: "toggle-overview" },
+        { label: Translation.tr("Close Focused Window"), icon: "close", action: "close-window" },
+        { label: Translation.tr("Maximize Column"), icon: "fullscreen", action: "maximize-column" },
+        { label: Translation.tr("Fullscreen Window"), icon: "aspect_ratio", action: "fullscreen-window" },
+        { label: Translation.tr("Toggle Floating"), icon: "picture_in_picture_alt", action: "toggle-window-floating" },
+        { label: Translation.tr("Lock Screen"), icon: "lock", action: 'spawn "qs" "-c" "alis" "ipc" "call" "lock" "activate"' }
+    ]
+
+    Component.onCompleted: {
+        if (!AppLauncher.discoveryLoaded && !AppLauncher.discoveryLoading)
+            AppLauncher.refreshDiscovery()
+        root._consumePendingShortcut()
+    }
+
+    function _consumePendingShortcut(): void {
+        const pendingAct = String(AppLauncher.pendingShortcutAction ?? "").trim()
+        if (!pendingAct)
+            return
+        addActionBuilder.actionText = pendingAct
+        addActionBuilder.pickerMode = "app"
+        const label = String(AppLauncher.pendingShortcutLabel ?? "").trim()
+        root._statusMsg = label
+            ? (Translation.tr("Selected application for shortcut: ") + label + " — " + Translation.tr("enter a key combination below."))
+            : Translation.tr("Action pre-filled — enter a key combination below.")
+        root._statusType = "saved"
+        root._statusVisible = true
+        AppLauncher.clearPendingShortcut()
+        Qt.callLater(() => {
+            addKeyComboField.forceActiveFocus()
+        })
+    }
+
+    Connections {
+        target: AppLauncher
+        function onPendingShortcutActionChanged() {
+            root._consumePendingShortcut()
+        }
+    }
 
     function toggleRowExpanded(rowIndex: int, nextExpanded: bool): void {
         if ((root.expandedRows[rowIndex] === true) === nextExpanded)
@@ -290,6 +346,7 @@ ContentPage {
 
     // ── Add keybind section ──────────────────────────────────────────────────
     SettingsCardSection {
+        _preventBentoReparent: true
         visible: root.canEdit
         Layout.fillWidth: true
         expanded: true
@@ -305,7 +362,6 @@ ContentPage {
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 2
                     spacing: 4
 
                     StyledText {
@@ -329,70 +385,50 @@ ContentPage {
                     }
                 }
 
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 3
-                    spacing: 4
-
-                    StyledText {
-                        text: Translation.tr("Action")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colSubtext
-                    }
-
-                    MaterialTextField {
-                        id: addActionField
-                        Layout.fillWidth: true
-                        placeholderText: "toggle-overview"
-                        enableSettingsSearch: false
-                    }
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 2
-                    spacing: 4
-
-                    StyledText {
-                        text: Translation.tr("Options")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colSubtext
-                    }
-
-                    MaterialTextField {
-                        id: addOptionsField
-                        Layout.fillWidth: true
-                        placeholderText: Translation.tr("e.g. repeat=false")
-                        enableSettingsSearch: false
-                    }
-                }
-
                 RippleButton {
                     Layout.alignment: Qt.AlignBottom
-                    implicitWidth: 36
+                    implicitWidth: 92
                     implicitHeight: 36
                     buttonRadius: Appearance.rounding.small
-                    enabled: addKeyComboField.text.trim().length > 0 && addActionField.text.trim().length > 0
+                    enabled: addKeyComboField.text.trim().length > 0 && addActionBuilder.actionText.trim().length > 0
                     colBackground: enabled ? Appearance.colors.colPrimary : Appearance.colors.colLayer2
                     colBackgroundHover: enabled ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer2Hover
                     onClicked: {
                         const combo = addKeyComboField.text.trim()
-                        const action = addActionField.text.trim()
+                        const action = addActionBuilder.actionText.trim()
                         if (combo.length > 0 && action.length > 0) {
-                            NiriKeybinds.setBind(combo, action, addOptionsField.text.trim())
+                            NiriKeybinds.setBind(combo, action, addActionBuilder.optionsText.trim())
                             addKeyComboField.text = ""
-                            addActionField.text = ""
-                            addOptionsField.text = ""
+                            addActionBuilder.actionText = ""
+                            addActionBuilder.optionsText = ""
+                            addActionBuilder.pickerMode = "app"
                         }
                     }
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "add"
-                        iconSize: 20
-                        color: parent.enabled ? Appearance.colors.colOnPrimary : Appearance.colors.colSubtext
+                    contentItem: Item {
+                        implicitWidth: addKeybindBtnRow.implicitWidth
+                        implicitHeight: addKeybindBtnRow.implicitHeight
+                        RowLayout {
+                            id: addKeybindBtnRow
+                            anchors.centerIn: parent
+                            spacing: 4
+                            MaterialSymbol {
+                                Layout.alignment: Qt.AlignVCenter
+                                text: "add"
+                                iconSize: 18
+                                color: parent.parent.parent.enabled ? Appearance.colors.colOnPrimary : Appearance.colors.colSubtext
+                            }
+                            StyledText {
+                                Layout.alignment: Qt.AlignVCenter
+                                verticalAlignment: Text.AlignVCenter
+                                text: Translation.tr("Add")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                font.weight: Font.DemiBold
+                                color: parent.parent.parent.enabled ? Appearance.colors.colOnPrimary : Appearance.colors.colSubtext
+                            }
+                        }
                     }
                     StyledToolTip {
-                        text: Translation.tr("Add")
+                        text: Translation.tr("Add keybind")
                     }
                 }
             }
@@ -403,6 +439,11 @@ ContentPage {
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colError
                 wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+            }
+
+            ShortcutActionBuilder {
+                id: addActionBuilder
                 Layout.fillWidth: true
             }
         }
@@ -423,18 +464,15 @@ ContentPage {
             delegate: SettingsCardSection {
                 required property var modelData
                 required property int index
+                _preventBentoReparent: true
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredWidth: 1
 
                 readonly property string catName: modelData?.name ?? ""
                 readonly property var bindIndices: modelData?.binds ?? []
-                readonly property int rowIndex: Math.floor(index / 2)
 
-                expanded: root.expandedRows[rowIndex] === true
-                onExpandedChanged: {
-                    root.toggleRowExpanded(rowIndex, expanded)
-                }
+                expanded: true
 
                 icon: root.getCategoryIcon(catName)
                 title: catName
@@ -486,14 +524,11 @@ ContentPage {
             delegate: SettingsCardSection {
                 required property var modelData
                 required property int index
+                _preventBentoReparent: true
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredWidth: 1
-                readonly property int rowIndex: Math.floor(index / 2)
-                expanded: root.expandedRows[rowIndex] === true
-                onExpandedChanged: {
-                    root.toggleRowExpanded(rowIndex, expanded)
-                }
+                expanded: true
 
                 readonly property var categoryKeybinds: modelData.children?.[0]?.keybinds ?? []
 
@@ -572,6 +607,433 @@ ContentPage {
         }
     }
 
+    // ── ShortcutAppIcon component ────────────────────────────────────────────
+    component ShortcutAppIcon: Rectangle {
+        id: sAppIcon
+        property string iconName: ""
+        property string fallbackSymbol: "apps"
+        property real boxSize: 22
+
+        implicitWidth: boxSize
+        implicitHeight: boxSize
+        radius: Appearance.rounding.small
+        color: Appearance.colors.colSecondaryContainer
+
+        readonly property string resolvedPath: {
+            const raw = String(sAppIcon.iconName ?? "").trim()
+            if (!raw)
+                return ""
+            if (raw.startsWith("file://"))
+                return raw
+            if (raw.startsWith("/"))
+                return "file://" + raw
+            return Quickshell.iconPath(raw, true)
+        }
+
+        IconImage {
+            id: sIconImg
+            anchors.centerIn: parent
+            width: Math.max(14, sAppIcon.boxSize - 6)
+            height: width
+            source: sAppIcon.resolvedPath
+            visible: status === Image.Ready && source.toString() !== ""
+        }
+
+        MaterialSymbol {
+            anchors.centerIn: parent
+            visible: !sIconImg.visible
+            text: sAppIcon.fallbackSymbol
+            iconSize: Math.max(13, sAppIcon.boxSize - 8)
+            color: Appearance.colors.colOnSecondaryContainer
+        }
+    }
+
+    // ── ShortcutActionBuilder component ──────────────────────────────────────
+    component ShortcutActionBuilder: ColumnLayout {
+        id: builder
+        property alias actionText: rawActionInput.text
+        property alias optionsText: rawOptionsInput.text
+        property string pickerMode: "app"   // "app" | "quick" | "manual"
+        property string appSearchQuery: ""
+
+        spacing: 8
+
+        readonly property var resolvedInfo: AppLauncher.resolveShortcutAppInfo(rawActionInput.text)
+        readonly property var filteredApps: {
+            const apps = AppLauncher.discoveredApps ?? []
+            const q = builder.appSearchQuery.trim().toLowerCase()
+            if (!q)
+                return apps.slice(0, 40)
+            const out = []
+            for (let i = 0; i < apps.length; i++) {
+                const a = apps[i]
+                const hay = [a?.name, a?.genericName, a?.id, a?.exec, a?.command].join(" ").toLowerCase()
+                if (hay.indexOf(q) !== -1) {
+                    out.push(a)
+                    if (out.length >= 40)
+                        break
+                }
+            }
+            return out
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+
+            StyledText {
+                text: Translation.tr("Action")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+            }
+
+            // Selected App pill (shows only App icon + App name)
+            Rectangle {
+                visible: builder.resolvedInfo !== null
+                implicitHeight: 24
+                implicitWidth: resolvedBadgeRow.implicitWidth + 14
+                radius: Appearance.rounding.full
+                color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.86)
+
+                RowLayout {
+                    id: resolvedBadgeRow
+                    anchors.centerIn: parent
+                    spacing: 5
+
+                    ShortcutAppIcon {
+                        boxSize: 16
+                        iconName: builder.resolvedInfo?.iconName ?? ""
+                        fallbackSymbol: builder.resolvedInfo?.fallbackSymbol ?? "apps"
+                    }
+
+                    StyledText {
+                        text: builder.resolvedInfo?.displayLabel ?? builder.resolvedInfo?.name ?? ""
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.weight: Font.DemiBold
+                        color: Appearance.colors.colPrimary
+                    }
+                }
+            }
+
+            Item { Layout.fillWidth: true }
+
+            // Mode buttons: Choose App (default) | Quick Action | Manual command
+            RippleButton {
+                implicitHeight: 28
+                implicitWidth: chooseAppBtnRow.implicitWidth + 16
+                buttonRadius: Appearance.rounding.small
+                colBackground: builder.pickerMode === "app"
+                    ? Appearance.colors.colPrimary
+                    : Appearance.colors.colLayer2
+                colBackgroundHover: builder.pickerMode === "app"
+                    ? Appearance.colors.colPrimaryHover
+                    : Appearance.colors.colLayer2Hover
+                onClicked: {
+                    if (!AppLauncher.discoveryLoaded && !AppLauncher.discoveryLoading)
+                        AppLauncher.refreshDiscovery()
+                    builder.pickerMode = "app"
+                }
+                contentItem: Item {
+                    implicitWidth: chooseAppBtnRow.implicitWidth
+                    implicitHeight: chooseAppBtnRow.implicitHeight
+                    RowLayout {
+                        id: chooseAppBtnRow
+                        anchors.centerIn: parent
+                        spacing: 5
+                        MaterialSymbol {
+                            Layout.alignment: Qt.AlignVCenter
+                            text: "apps"
+                            iconSize: 15
+                            color: builder.pickerMode === "app" ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
+                        }
+                        StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            verticalAlignment: Text.AlignVCenter
+                            text: Translation.tr("Choose App")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            font.weight: Font.Medium
+                            color: builder.pickerMode === "app" ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
+                        }
+                    }
+                }
+            }
+
+            RippleButton {
+                implicitHeight: 28
+                implicitWidth: quickActBtnRow.implicitWidth + 16
+                buttonRadius: Appearance.rounding.small
+                colBackground: builder.pickerMode === "quick"
+                    ? Appearance.colors.colPrimary
+                    : Appearance.colors.colLayer2
+                colBackgroundHover: builder.pickerMode === "quick"
+                    ? Appearance.colors.colPrimaryHover
+                    : Appearance.colors.colLayer2Hover
+                onClicked: {
+                    builder.pickerMode = "quick"
+                }
+                contentItem: Item {
+                    implicitWidth: quickActBtnRow.implicitWidth
+                    implicitHeight: quickActBtnRow.implicitHeight
+                    RowLayout {
+                        id: quickActBtnRow
+                        anchors.centerIn: parent
+                        spacing: 5
+                        MaterialSymbol {
+                            Layout.alignment: Qt.AlignVCenter
+                            text: "bolt"
+                            iconSize: 15
+                            color: builder.pickerMode === "quick" ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
+                        }
+                        StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            verticalAlignment: Text.AlignVCenter
+                            text: Translation.tr("Quick Action")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            font.weight: Font.Medium
+                            color: builder.pickerMode === "quick" ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
+                        }
+                    }
+                }
+            }
+
+            RippleButton {
+                implicitHeight: 28
+                implicitWidth: manualCmdBtnRow.implicitWidth + 16
+                buttonRadius: Appearance.rounding.small
+                colBackground: builder.pickerMode === "manual"
+                    ? Appearance.colors.colPrimary
+                    : Appearance.colors.colLayer2
+                colBackgroundHover: builder.pickerMode === "manual"
+                    ? Appearance.colors.colPrimaryHover
+                    : Appearance.colors.colLayer2Hover
+                onClicked: {
+                    builder.pickerMode = "manual"
+                    rawActionInput.forceActiveFocus()
+                }
+                contentItem: Item {
+                    implicitWidth: manualCmdBtnRow.implicitWidth
+                    implicitHeight: manualCmdBtnRow.implicitHeight
+                    RowLayout {
+                        id: manualCmdBtnRow
+                        anchors.centerIn: parent
+                        spacing: 5
+                        MaterialSymbol {
+                            Layout.alignment: Qt.AlignVCenter
+                            text: "terminal"
+                            iconSize: 15
+                            color: builder.pickerMode === "manual" ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
+                        }
+                        StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            verticalAlignment: Text.AlignVCenter
+                            text: Translation.tr("Manual command")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            font.weight: Font.Medium
+                            color: builder.pickerMode === "manual" ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Manual Command + Options Panel (only visible when Manual command is selected) ──
+        RowLayout {
+            visible: builder.pickerMode === "manual"
+            Layout.fillWidth: true
+            spacing: 8
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 3
+                spacing: 4
+
+                StyledText {
+                    text: Translation.tr("Command / Action")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                }
+
+                MaterialTextField {
+                    id: rawActionInput
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("e.g. spawn \"kitty\" or toggle-overview")
+                    enableSettingsSearch: false
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 2
+                spacing: 4
+
+                StyledText {
+                    text: Translation.tr("Options (optional)")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                }
+
+                MaterialTextField {
+                    id: rawOptionsInput
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("e.g. repeat=false")
+                    enableSettingsSearch: false
+                }
+            }
+        }
+
+        // ── App Picker Panel (shown by default) ──────────────────────────────
+        Rectangle {
+            visible: builder.pickerMode === "app"
+            Layout.fillWidth: true
+            implicitHeight: appPickerCol.implicitHeight + 20
+            radius: Appearance.rounding.normal
+            color: Appearance.colors.colLayer1
+            border.width: 1
+            border.color: Appearance.colors.colOutlineVariant
+
+            ColumnLayout {
+                id: appPickerCol
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 10
+                }
+                spacing: 8
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Search applications...")
+                    text: builder.appSearchQuery
+                    enableSettingsSearch: false
+                    onTextChanged: builder.appSearchQuery = text
+                }
+
+                ListView {
+                    id: appPickerList
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.min(220, Math.max(52, contentHeight))
+                    clip: true
+                    spacing: 4
+                    model: builder.filteredApps
+
+                    ScrollBar.vertical: StyledScrollBar {}
+
+                    delegate: RippleButton {
+                        required property var modelData
+                        width: appPickerList.width
+                        implicitHeight: 38
+                        buttonRadius: Appearance.rounding.small
+                        readonly property string candidateAction: AppLauncher.niriSpawnActionForApp(modelData)
+                        readonly property bool isSelected: rawActionInput.text.trim() === candidateAction
+
+                        colBackground: isSelected
+                            ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.84)
+                            : Appearance.colors.colLayer2
+                        colBackgroundHover: Appearance.colors.colLayer2Hover
+                        onClicked: {
+                            rawActionInput.text = candidateAction
+                        }
+
+                        contentItem: RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            spacing: 8
+
+                            ShortcutAppIcon {
+                                boxSize: 22
+                                iconName: modelData?.icon ?? ""
+                                fallbackSymbol: "apps"
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: modelData?.name ?? modelData?.id ?? ""
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.weight: isSelected ? Font.DemiBold : Font.Normal
+                                color: isSelected ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                                elide: Text.ElideRight
+                            }
+
+                            MaterialSymbol {
+                                visible: isSelected
+                                text: "check_circle"
+                                iconSize: 16
+                                color: Appearance.colors.colPrimary
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Quick System / Window Action Picker Panel ────────────────────────
+        Rectangle {
+            visible: builder.pickerMode === "quick"
+            Layout.fillWidth: true
+            implicitHeight: quickPickerFlow.implicitHeight + 20
+            radius: Appearance.rounding.normal
+            color: Appearance.colors.colLayer1
+            border.width: 1
+            border.color: Appearance.colors.colOutlineVariant
+
+            Flow {
+                id: quickPickerFlow
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 10
+                }
+                spacing: 6
+
+                Repeater {
+                    model: root.quickSystemActions
+                    delegate: RippleButton {
+                        required property var modelData
+                        readonly property bool isCurrent: rawActionInput.text.trim() === modelData.action
+                        implicitHeight: 30
+                        implicitWidth: quickChipRow.implicitWidth + 16
+                        buttonRadius: Appearance.rounding.small
+                        colBackground: isCurrent
+                            ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.82)
+                            : Appearance.colors.colLayer2
+                        colBackgroundHover: Appearance.colors.colLayer2Hover
+                        onClicked: {
+                            rawActionInput.text = modelData.action
+                        }
+
+                        contentItem: Item {
+                            implicitWidth: quickChipRow.implicitWidth
+                            implicitHeight: quickChipRow.implicitHeight
+                            RowLayout {
+                                id: quickChipRow
+                                anchors.centerIn: parent
+                                spacing: 6
+
+                                MaterialSymbol {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    text: modelData.icon
+                                    iconSize: 15
+                                    color: isCurrent ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                                }
+
+                                StyledText {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: modelData.label
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    color: isCurrent ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // ── KeyBadge component ───────────────────────────────────────────────────
     component KeyBadge: Rectangle {
         property string keyText: ""
@@ -617,6 +1079,9 @@ ContentPage {
         property string editState: "display"
 
         readonly property bool isExpanded: editState !== "display"
+        readonly property var resolvedAppInfo: kbRow.actionRaw
+            ? AppLauncher.resolveShortcutAppInfo(kbRow.actionRaw)
+            : null
 
         // Drive outer height from inner column
         implicitHeight: kbMainColumn.implicitHeight
@@ -693,15 +1158,33 @@ ContentPage {
                     }
                 }
 
-                // Action description
-                StyledText {
+                // Action description (shows App icon + App name when resolved)
+                RowLayout {
                     Layout.fillWidth: true
-                    text: kbRow.action + (kbRow.isCommented ? "  " + Translation.tr("(disabled)") : "")
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    color: kbRow.isCommented
-                        ? Appearance.colors.colSubtext
-                        : Appearance.colors.colOnLayer1
-                    elide: Text.ElideRight
+                    spacing: 6
+
+                    ShortcutAppIcon {
+                        visible: kbRow.resolvedAppInfo !== null
+                        boxSize: 20
+                        iconName: kbRow.resolvedAppInfo?.iconName ?? ""
+                        fallbackSymbol: kbRow.resolvedAppInfo?.fallbackSymbol ?? "apps"
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: {
+                            const info = kbRow.resolvedAppInfo
+                            const baseLabel = info
+                                ? (info.displayLabel || info.name || kbRow.action)
+                                : kbRow.action
+                            return baseLabel + (kbRow.isCommented ? "  " + Translation.tr("(disabled)") : "")
+                        }
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: kbRow.isCommented
+                            ? Appearance.colors.colSubtext
+                            : Appearance.colors.colOnLayer1
+                        elide: Text.ElideRight
+                    }
                 }
 
                 // Edit / delete icon buttons (enriched mode only, fade in on hover)
@@ -824,43 +1307,14 @@ ContentPage {
                                     }
                                 }
 
-                                // Action field
-                                ColumnLayout {
+                                // Action builder (Choose App by default; Manual command hides/shows Command & Options)
+                                ShortcutActionBuilder {
+                                    id: editActionBuilder
                                     Layout.fillWidth: true
-                                    spacing: 4
-
-                                    StyledText {
-                                        text: Translation.tr("Action")
-                                        font.pixelSize: Appearance.font.pixelSize.smaller
-                                        color: Appearance.colors.colSubtext
-                                    }
-
-                                    MaterialTextField {
-                                        id: editActionField
-                                        Layout.fillWidth: true
-                                        text: kbRow.actionRaw
-                                        placeholderText: "toggle-overview"
-                                        enableSettingsSearch: false
-                                    }
-                                }
-
-                                // Options field
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 4
-
-                                    StyledText {
-                                        text: Translation.tr("Options")
-                                        font.pixelSize: Appearance.font.pixelSize.smaller
-                                        color: Appearance.colors.colSubtext
-                                    }
-
-                                    MaterialTextField {
-                                        id: editOptionsField
-                                        Layout.fillWidth: true
-                                        text: kbRow.optionsStr
-                                        placeholderText: Translation.tr("e.g. repeat=false")
-                                        enableSettingsSearch: false
+                                    Component.onCompleted: {
+                                        actionText = kbRow.actionRaw
+                                        optionsText = kbRow.optionsStr
+                                        pickerMode = "app"
                                     }
                                 }
 
@@ -872,9 +1326,9 @@ ContentPage {
                                         buttonText: Translation.tr("Save")
                                         releaseAction: () => {
                                             const combo = editKeyField.text.trim()
-                                            const act = editActionField.text.trim()
+                                            const act = editActionBuilder.actionText.trim()
                                             if (combo.length > 0 && act.length > 0) {
-                                                NiriKeybinds.setBind(combo, act, editOptionsField.text.trim(), kbRow.keyCombo)
+                                                NiriKeybinds.setBind(combo, act, editActionBuilder.optionsText.trim(), kbRow.keyCombo)
                                                 kbRow.editState = "display"
                                             }
                                         }

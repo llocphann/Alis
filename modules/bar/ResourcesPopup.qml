@@ -81,7 +81,7 @@ StyledPopup {
             horizontalAlignment: resourceItem.valueHorizontalAlignment
             visible: resourceItem.value !== ""
             color: Appearance.colors.colOnSurfaceVariant
-            text: resourceItem.value
+            text: popup.presentationActive ? resourceItem.value : (resourceItem.minimumValueSample || resourceItem.value)
         }
     }
 

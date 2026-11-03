@@ -6,6 +6,51 @@ Text {
     property bool animateChange: false
     property real animationDistanceX: 0
     property real animationDistanceY: 6
+    property bool marquee: false
+    readonly property bool _marqueeCandidate: root.marquee && root.visible && root.wrapMode === Text.NoWrap && root.maximumLineCount <= 1
+    readonly property real _marqueeDistance: (root._marqueeCandidate && root.width > 8 && root.contentWidth > root.width + 1)
+        ? Math.ceil(root.contentWidth - root.width) : 0
+    readonly property bool _marqueeOverflow: root._marqueeDistance > 0
+    property real _marqueeOffset: 0
+
+    leftPadding: root._marqueeOverflow ? -root._marqueeOffset : 0
+    rightPadding: root._marqueeOverflow ? root._marqueeOffset : 0
+    clip: root._marqueeOverflow
+
+    onElideChanged: {
+        if (root.marquee && root.elide !== Text.ElideNone)
+            root.elide = Text.ElideNone
+    }
+    onMarqueeChanged: {
+        if (root.marquee && root.elide !== Text.ElideNone)
+            root.elide = Text.ElideNone
+        if (!root.marquee)
+            root._marqueeOffset = 0
+    }
+    on_MarqueeOverflowChanged: {
+        if (!root._marqueeOverflow)
+            root._marqueeOffset = 0
+    }
+    onTextChanged: root._marqueeOffset = 0
+
+    SequentialAnimation on _marqueeOffset {
+        running: root._marqueeOverflow && (Appearance?.animationsEnabled ?? true)
+        loops: Animation.Infinite
+        PauseAnimation { duration: 1100 }
+        NumberAnimation {
+            from: 0
+            to: root._marqueeDistance
+            duration: Math.max(1200, root._marqueeDistance * 28)
+            easing.type: Easing.InOutSine
+        }
+        PauseAnimation { duration: 900 }
+        NumberAnimation {
+            from: root._marqueeDistance
+            to: 0
+            duration: Math.max(1200, root._marqueeDistance * 28)
+            easing.type: Easing.InOutSine
+        }
+    }
 
     property real _slideX: 0
     property real _slideY: 0

@@ -23,21 +23,21 @@ case_root="$stage/legacy-only"
 mkdir -p "$case_root/illogical-impulse"
 printf 'legacy-data\n' > "$case_root/illogical-impulse/config.json"
 run_with_config_home "$case_root" >/dev/null
-[[ -f "$case_root/inir/config.json" ]] || fail 'legacy-only migration did not preserve config data'
+[[ -f "$case_root/alis/config.json" ]] || fail 'legacy-only migration did not preserve config data'
 [[ -L "$case_root/illogical-impulse" ]] || fail 'legacy-only migration did not create compatibility symlink'
-[[ "$(readlink "$case_root/illogical-impulse")" == "$case_root/inir" ]] \
+[[ "$(readlink "$case_root/illogical-impulse")" == "$case_root/alis" ]] \
   || fail 'legacy-only compatibility symlink points at the wrong target'
 
 # A compatibility link can survive while its canonical directory is removed.
 # The check must keep this migration pending so apply can recreate the target.
 case_root="$stage/dangling-compat-link"
 mkdir -p "$case_root"
-ln -s "$case_root/inir" "$case_root/illogical-impulse"
+ln -s "$case_root/alis" "$case_root/illogical-impulse"
 if ! XDG_CONFIG_HOME="$case_root" migration_check; then
   fail 'migration check skipped a dangling compatibility symlink'
 fi
 run_with_config_home "$case_root" >/dev/null
-[[ -d "$case_root/inir" ]] || fail 'migration did not recreate the canonical config directory'
+[[ -d "$case_root/alis" ]] || fail 'migration did not recreate the canonical config directory'
 if XDG_CONFIG_HOME="$case_root" migration_check; then
   fail 'migration check still reports a repaired compatibility layout as pending'
 fi
@@ -45,13 +45,13 @@ fi
 # Two real config trees are ambiguous. The migration must fail closed and leave
 # both trees untouched instead of merging and deleting the legacy directory.
 case_root="$stage/conflicting-directories"
-mkdir -p "$case_root/inir" "$case_root/illogical-impulse"
-printf 'canonical\n' > "$case_root/inir/config.json"
+mkdir -p "$case_root/alis" "$case_root/illogical-impulse"
+printf 'canonical\n' > "$case_root/alis/config.json"
 printf 'legacy\n' > "$case_root/illogical-impulse/config.json"
 if run_with_config_home "$case_root" >/dev/null 2>&1; then
   fail 'migration accepted conflicting canonical and legacy directories'
 fi
-[[ "$(cat "$case_root/inir/config.json")" == 'canonical' ]] \
+[[ "$(cat "$case_root/alis/config.json")" == 'canonical' ]] \
   || fail 'migration changed canonical data during conflict handling'
 [[ "$(cat "$case_root/illogical-impulse/config.json")" == 'legacy' ]] \
   || fail 'migration changed legacy data during conflict handling'
@@ -85,7 +85,7 @@ grep -Fq 'Migration 019 is intentionally fail-closed' "$repo_root/docs/INSTALL.m
   || fail 'install docs no longer explain fail-closed config migration behavior'
 grep -Fq 'the migration stops and preserves both states unchanged' "$repo_root/docs/INSTALL.md" \
   || fail 'install docs no longer state that conflicting config trees are preserved'
-# Migration 019 is a HISTORICAL iNiR-to-illogical-impulse compatibility
+# Migration 019 is a HISTORICAL Alis-to-illogical-impulse compatibility
 # contract; canonical Alis must not advertise the retired public CLI again.
 grep -Fq 'Migration 019 is historical:' "$repo_root/docs/CONFIG_SYSTEM.md" \
   || fail 'config docs no longer distinguish historical migration 019 from canonical Alis'

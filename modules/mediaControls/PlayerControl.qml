@@ -54,20 +54,9 @@ Item {
     // before the track advances so the cross-slide reads as directed.
     property int slideDirection: 1
     
-    // Use centralized YtMusic detection from MprisController
-    readonly property bool isYtMusicPlayer: {
-        if (!player) return false
-        // Direct match with YtMusic.mpvPlayer
-        if (YtMusic.mpvPlayer && player === YtMusic.mpvPlayer) return true
-        // Use MprisController's detection for consistency
-        return MprisController._isYtMusicMpv(player)
-    }
-    
     function doTogglePlaying(): void {
         if (root.usingPlaybackAdapter) {
             root.playbackAdapter.togglePlaying()
-        } else if (isYtMusicPlayer) {
-            YtMusic.togglePlaying()
         } else {
             player?.togglePlaying()
         }
@@ -96,8 +85,6 @@ Item {
     function doSeek(seconds: real): void {
         if (root.usingPlaybackAdapter)
             root.playbackAdapter.seek(seconds)
-        else if (root.isYtMusicPlayer)
-            YtMusic.seek(seconds)
         else if (root.isMpdPlayer)
             LocalMusic.seek(seconds)
         else if (root.player)
@@ -135,13 +122,13 @@ Item {
 
     readonly property string effectiveArtUrl: root.usingPlaybackAdapter
         ? String(root.playbackAdapter.artUrl ?? "")
-        : (isYtMusicPlayer ? YtMusic.currentThumbnail : MprisController.effectiveArtUrl(player))
+        : MprisController.effectiveArtUrl(player)
     readonly property string effectiveTitle: root.usingPlaybackAdapter
         ? String(root.playbackAdapter.title ?? "")
-        : (isYtMusicPlayer ? YtMusic.currentTitle : (player?.trackTitle ?? ""))
+        : (player?.trackTitle ?? "")
     readonly property string effectiveArtist: root.usingPlaybackAdapter
         ? String(root.playbackAdapter.artist ?? "")
-        : (isYtMusicPlayer ? YtMusic.currentArtist : (player?.trackArtist ?? ""))
+        : (player?.trackArtist ?? "")
     // Only the artwork identity may trigger cover motion. Title/artist often
     // arrive before the real art URL and caused the same cover to slide twice.
     readonly property string mediaTransitionKey: (root.effectiveArtUrl ?? "").split("?")[0].split("#")[0]
@@ -151,21 +138,17 @@ Item {
     property string displayedArtFilePath: ""
     readonly property real _rawEffectiveLength: root.usingPlaybackAdapter
         ? Number(root.playbackAdapter.length ?? 0)
-        : (root.isYtMusicPlayer
-            ? YtMusic.currentDuration
-            : (((root.player?.lengthSupported ?? false) && (root.player?.length ?? 0) > 0)
-                ? (root.player?.length ?? 0)
-                : (root.isMpdPlayer
-                    ? LocalMusic.currentDuration
-                    : MprisController.effectiveLengthForPlayer(root.player))))
+        : (((root.player?.lengthSupported ?? false) && (root.player?.length ?? 0) > 0)
+            ? (root.player?.length ?? 0)
+            : (root.isMpdPlayer
+                ? LocalMusic.currentDuration
+                : MprisController.effectiveLengthForPlayer(root.player)))
     readonly property real effectiveLength: StringUtils.validMediaDuration(root._rawEffectiveLength)
     readonly property real _rawEffectivePosition: root.usingPlaybackAdapter
         ? Number(root.playbackAdapter.position ?? 0)
-        : (root.isYtMusicPlayer
-            ? YtMusic.currentPosition
-            : ((root.isMpdPlayer && (root.player?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
-                ? LocalMusic.lyricsPosition
-                : (root.player?.position ?? 0)))
+        : ((root.isMpdPlayer && (root.player?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
+            ? LocalMusic.lyricsPosition
+            : (root.player?.position ?? 0))
     readonly property real effectivePosition: StringUtils.boundedMediaPosition(
         root._rawEffectivePosition, root.effectiveLength)
     readonly property real effectiveDisplayedPosition: (seekLoader.item?.pressed ?? false)
@@ -173,16 +156,16 @@ Item {
         : root.effectivePosition
     readonly property bool effectiveIsPlaying: root.usingPlaybackAdapter
         ? !!root.playbackAdapter.isPlaying
-        : (root.isYtMusicPlayer ? YtMusic.isPlaying : (root.player?.isPlaying ?? false))
+        : (root.player?.isPlaying ?? false)
     readonly property bool effectiveCanSeek: root.usingPlaybackAdapter
         ? !!root.playbackAdapter.canSeek
-        : (root.isYtMusicPlayer ? YtMusic.canSeek : (root.player?.canSeek ?? false))
+        : (root.player?.canSeek ?? false)
     readonly property bool effectiveCanGoPrevious: root.usingPlaybackAdapter
         ? !!root.playbackAdapter.canGoPrevious
-        : (isYtMusicPlayer ? YtMusic.canGoPrevious : MprisController.canGoPreviousForPlayer(root.player))
+        : MprisController.canGoPreviousForPlayer(root.player)
     readonly property bool effectiveCanGoNext: root.usingPlaybackAdapter
         ? !!root.playbackAdapter.canGoNext
-        : (isYtMusicPlayer ? YtMusic.canGoNext : MprisController.canGoNextForPlayer(root.player))
+        : MprisController.canGoNextForPlayer(root.player)
     readonly property bool effectiveShuffleSupported: root.usingPlaybackAdapter
         ? !!root.playbackAdapter.shuffleSupported
         : MprisController.shuffleSupportedForPlayer(root.player)
@@ -206,8 +189,7 @@ Item {
     Connections {
         target: root.usingPlaybackAdapter ? null : root.player
         function onTrackArtUrlChanged() {
-            if (!root.isYtMusicPlayer)
-                root.checkAndDownloadArt()
+            root.checkAndDownloadArt()
         }
         function onTrackTitleChanged() {
             Qt.callLater(root.checkAndDownloadArt)
@@ -358,7 +340,7 @@ Item {
             iconColor: "transparent"
             opacity: 0.5
             visible: root.displayedArtFilePath !== ""
-            effectEnabled: Appearance.effectsEnabled
+            effectEnabled: root.presentationActive && Appearance.effectsEnabled
             blurEnabled: true
             blur: 0.15
             blurMax: 16
@@ -408,6 +390,7 @@ Item {
                 transitionKey: root.mediaTransitionKey
                 downloaded: root.downloaded
                 slideDirection: root.slideDirection
+                animateChanges: root.presentationActive && Appearance.animationsEnabled
                 placeholderColor: blendedColors?.colLayer1 ?? Appearance.colors.colLayer1
                 iconColor: blendedColors?.colSubtext ?? Appearance.colors.colSubtext
                 iconSize: 32
@@ -435,7 +418,7 @@ Item {
                         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                     }
                     elide: Text.ElideRight
-                    animateChange: true
+                    animateChange: root.presentationActive
                     animationDistanceX: root.slideDirection * 8
                     animationDistanceY: 0
                 }
@@ -452,7 +435,7 @@ Item {
                     }
                     elide: Text.ElideRight
                     visible: text !== ""
-                    animateChange: true
+                    animateChange: root.presentationActive
                     animationDistanceX: root.slideDirection * 8
                     animationDistanceY: 0
                 }
@@ -493,7 +476,7 @@ Item {
                             Accessible.name: Translation.tr("Playback position")
                             configuration: StyledSlider.Configuration.Wavy
                             wavy: root.effectiveIsPlaying
-                            animateWave: root.effectiveIsPlaying
+                            animateWave: root.presentationActive && root.effectiveIsPlaying
                             highlightColor: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
                             trackColor: blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer
                             handleColor: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
@@ -509,7 +492,7 @@ Item {
                         active: !(root.effectiveCanSeek)
                         sourceComponent: StyledProgressBar {
                             wavy: root.effectiveIsPlaying
-                            animateWave: root.effectiveIsPlaying
+                            animateWave: root.presentationActive && root.effectiveIsPlaying
                             highlightColor: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
                             trackColor: blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer
                             value: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0

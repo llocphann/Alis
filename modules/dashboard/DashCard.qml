@@ -22,8 +22,7 @@ Rectangle {
     readonly property bool compact: false
     readonly property real cardOpacity: Math.max(0.3, Math.min(1,
         Config.options?.dashboard?.appearance?.cardOpacity ?? 1))
-    readonly property bool showTitle:
-        Config.options?.dashboard?.appearance?.showCardTitles ?? true
+    readonly property bool showTitle: true
     readonly property real pad: compact ? 8 : 12
 
     // Compatibility properties consumed by a few Dashboard content components.

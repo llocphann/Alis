@@ -1,1 +1,0 @@
-PASS: Clipboard retains its content while retracting, unloads, and preserves closed/open Dashboard state

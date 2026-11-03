@@ -14,6 +14,7 @@ MouseArea {
     property var trayParent: null  // Reference to SysTray for closing other menus
     // The overflow popup shares this component, but keeps its own native size.
     property real sizeScale: Appearance.sizes.barModuleScale
+    property real contentRotation: 0
     readonly property bool useMonochromeIcon: Config.options?.bar?.tray?.monochromeIcons ?? false
     property bool targetMenuOpen: false
     property bool keyboardMenuMode: false
@@ -145,13 +146,33 @@ MouseArea {
         focusVisible: root.activeFocus
     }
 
+    property bool _iconLoadFailed: false
+    readonly property string rawIcon: String(root.item?.icon ?? "")
+    onRawIconChanged: root._iconLoadFailed = false
+    readonly property string resolvedIconSource: {
+        if (!root._iconLoadFailed) {
+            const safe = TrayService.getSafeIcon(root.item)
+            if (safe.length > 0)
+                return safe
+        }
+        const fallbackKey = String(root.item?.id || root.item?.title || root.item?.tooltipTitle || "")
+        if (fallbackKey.length > 0)
+            return AppSearch.getIconSource(fallbackKey, "application-x-executable")
+        return Quickshell.iconPath("application-x-executable", true)
+    }
+
     IconImage {
         id: trayIcon
         visible: !root.useMonochromeIcon
-        source: root.item?.icon ?? ""
+        source: root.resolvedIconSource
         anchors.centerIn: parent
         width: parent.width
         height: parent.height
+        rotation: -root.contentRotation
+        onStatusChanged: {
+            if (status === Image.Error && !root._iconLoadFailed)
+                Qt.callLater(() => { root._iconLoadFailed = true })
+        }
     }
 
     Loader {
@@ -159,12 +180,17 @@ MouseArea {
         anchors.centerIn: parent
         width: root.width
         height: root.height
+        rotation: -root.contentRotation
         sourceComponent: Item {
             IconImage {
                 id: tintedIcon
                 visible: false
                 anchors.fill: parent
-                source: root.item?.icon ?? ""
+                source: root.resolvedIconSource
+                onStatusChanged: {
+                    if (status === Image.Error && !root._iconLoadFailed)
+                        Qt.callLater(() => { root._iconLoadFailed = true })
+                }
             }
             Desaturate {
                 id: desaturatedIcon

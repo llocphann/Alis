@@ -22,6 +22,12 @@ Item {
     property bool presentationActive: GlobalStates.dashboardOpen || GlobalStates.overviewOpen
 
     readonly property bool musicEnabled: Config.options?.dashboard?.music?.enable ?? true
+    readonly property bool spacedRepetitionPluginManaged: AlisIntergration.available
+        && AlisIntergration.installedPlugins.some(plugin => plugin.id === "spaced_repetition")
+    readonly property bool spacedRepetitionEnabled: (spacedRepetitionPluginManaged ? AlisIntergration.spacedRepetitionEnabled : true)
+        && (Config.options?.dashboard?.spacedRepetition?.enable ?? true)
+        && (Config.options?.dashboard?.pageOrderVersion ?? 1) >= 1
+        && Array.from(dashboardCanvas.effectivePageOrder ?? []).includes("spacedRepetition")
     readonly property var customTabs: TabPolicy.tabs(Config.options?.dashboard?.customTabs)
     readonly property var _customPageModelMemo: ({signature:"",tabs:[]})
     readonly property var customPageModel: {
@@ -39,7 +45,7 @@ Item {
     property var _navigationDraftOrder: null
     readonly property var pageIds: PagePolicy.ordered(
         root._navigationDraftOrder ?? dashboardCanvas.effectivePageOrder,
-        TabPolicy.available(root.customTabs, root.musicEnabled))
+        TabPolicy.available(root.customTabs, root.musicEnabled, root.spacedRepetitionEnabled))
     readonly property string currentPageId: pageIds.includes(GlobalStates.dashboardPageId)
         ? GlobalStates.dashboardPageId : pageIds[0]
     readonly property int currentPage: pageIds.indexOf(currentPageId)
@@ -72,6 +78,7 @@ Item {
     property var musicBackend: null
     property bool musicVisited: currentPageId === "music"
     property bool plannerVisited: currentPageId === "weeklyPlanner"
+    property bool spacedRepetitionVisited: currentPageId === "spacedRepetition"
     property string _pendingPageId: ""
     property string _synchronousPageId: ""
     property bool _userPageNavigation: false
@@ -92,6 +99,7 @@ Item {
         if (_pendingPageId === "dashboard") return true
         if (_pendingPageId === "music") return musicPage.status === Loader.Ready
         if (_pendingPageId === "weeklyPlanner") return plannerPage.status === Loader.Ready
+        if (_pendingPageId === "spacedRepetition") return spacedRepetitionPage.status === Loader.Ready
         const index = root.customTabs.findIndex(tab => tab.id === root._pendingPageId)
         return index >= 0 && (customPagesRepeater.itemAt(index)?.pageReady ?? false)
     }
@@ -138,6 +146,11 @@ Item {
             _pendingNewEditId = ""
         if (currentPageId === "music") musicVisited = true
         if (currentPageId === "weeklyPlanner") plannerVisited = true
+        if (currentPageId === "spacedRepetition") {
+            spacedRepetitionVisited = true
+            if (root.presentationActive)
+                Qt.callLater(() => root.focusPrimarySurface())
+        }
     }
 
     readonly property bool navigationAllowed: root.presentationActive && pageIds.length > 1
@@ -380,8 +393,7 @@ Item {
             return true
         }
         // Edit Mode owns the first Escape, regardless of widget selection or
-        // in-progress tab drag. This is the same discard path as Cancel
-        // (generalizes if (dashboardCanvas.editMode) { ... dashboardCanvas.cancelEditMode() }).
+        // in-progress tab drag. This is the same discard path as Cancel.
         if (root.editMode) {
             dashboardHeader.cancelPageDrag()
             root.canvasController?.cancelEditMode()
@@ -396,7 +408,15 @@ Item {
             plannerPage.item.closeInlineEventEditor()
             return true
         }
-        return currentPageId === "music" && (musicPage.item?.restoreBrowserColumns() ?? false)
+        if (currentPageId === "spacedRepetition" && (spacedRepetitionPage.item?.handleEscape() ?? false))
+            return true
+        if (currentPageId === "music" && (musicPage.item?.restoreBrowserColumns() ?? false))
+            return true
+        if (currentPageId === "weeklyPlanner" && (plannerPage.item?.handleEscape() ?? false))
+            return true
+        if (currentPageId === "dashboard" || root.customTabs.some(tab => tab.id === currentPageId))
+            return root.canvasController?.handleEscape() ?? false
+        return false
     }
 
     function openPlannerEventEditor(arg): void {
@@ -428,6 +448,13 @@ Item {
         if (!root._agendaPrefillTime || !root._agendaPrefillDate || !agendaDialogLoader.item) return;
         agendaDialogLoader.item.eventTime = Qt.formatTime(root._agendaPrefillDate,"hh:mm");
         agendaDialogLoader.item.eventEndTime = Qt.formatTime(new Date(root._agendaPrefillDate.getTime()+3600000),"hh:mm");
+    }
+    function focusPrimarySurface(): void {
+        if (root.currentPageId === "spacedRepetition" && spacedRepetitionPage.item && spacedRepetitionPage.visible) {
+            spacedRepetitionPage.item.focusPrimarySurface()
+            return
+        }
+        root.forceActiveFocus()
     }
 
     // Dashboard does not own a separate background renderer. Detached Dashboard
@@ -484,7 +511,20 @@ Item {
                 onDeleteTabRequested: id => root.openCustomTabDialog("delete", id)
                 onPageMoveRequested: (id,target) => root.moveTab(id,target)
                 onHorizontalWheel: event => root.handlePageWheel(event, false)
-                onPageRequested: index => {root.resetPageWheel();root.requestPage(root.pageIds[index])}
+                onPageRequested: index => {
+                    root.resetPageWheel()
+                    const targetId = root.pageIds[index]
+                    if (root.editMode) {
+                        if (targetId && (targetId === "dashboard" || targetId.startsWith("custom-")) && targetId !== root.currentPageId) {
+                            const prevEditor = root.canvasController
+                            prevEditor?.commitEditMode()
+                            root._pendingNewEditId = targetId
+                            root.selectPage(targetId)
+                        }
+                        return
+                    }
+                    root.requestPage(targetId)
+                }
                 editMode: root.editMode
                 onEditModeRequested: {
                     if (root.canvasController?.editMode)
@@ -588,6 +628,25 @@ Item {
                         sourceComponent:DashboardWeeklyPlanner {
                             presentationActive:root.presentationActive && root.currentPageId==="weeklyPlanner"
                             onRequestEventsDialog:event=>root.openPlannerEventEditor(event)
+                        }
+                    }
+                    Loader {
+                        id: spacedRepetitionPage
+                        objectName: "dashboardSpacedRepetitionPageLoader"
+                        asynchronous: root._userPageNavigation && root._synchronousPageId !== "spacedRepetition"
+                        onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("spacedRepetition")
+                        onLoaded: if (root.presentationActive && root.currentPageId === "spacedRepetition") Qt.callLater(() => root.focusPrimarySurface())
+                        onVisibleChanged: if (visible && root.presentationActive && root.currentPageId === "spacedRepetition") Qt.callLater(() => root.focusPrimarySurface())
+                        width: pages.width
+                        height: pages.height
+                        x: root.pageIds.indexOf("spacedRepetition") * pages.width
+                        visible: root.spacedRepetitionEnabled && Math.abs(pages.slideProgress - root.pageIds.indexOf("spacedRepetition")) < 1
+                        enabled: root.currentPageId === "spacedRepetition"
+                        active: root.spacedRepetitionEnabled
+                            && (root.spacedRepetitionVisited || root._pendingPageId === "spacedRepetition")
+                            && (root.presentationActive || root.warmContent)
+                        sourceComponent: DashboardSpacedRepetition {
+                            presentationActive: root.presentationActive && root.currentPageId === "spacedRepetition"
                         }
                     }
                     // Custom canvases have isolated geometry but share the exact

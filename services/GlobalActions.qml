@@ -428,16 +428,7 @@ Singleton {
             execute: () => {
                 root.runLauncher(["cheatsheet", "open"])
             }
-        },
-        {
-            id: "toggle-crosshair",
-            name: Translation.tr("Toggle Crosshair"),
-            description: Translation.tr("Show or hide the screen crosshair overlay"),
-            icon: "my_location",
-            category: "tools",
-            keywords: ["crosshair", "aim", "overlay"],
-            execute: () => { GlobalStates.crosshairOpen = !GlobalStates.crosshairOpen }
-        },
+        }
     ]
 
     // MEDIA: Volume, Mute, Brightness, Playback

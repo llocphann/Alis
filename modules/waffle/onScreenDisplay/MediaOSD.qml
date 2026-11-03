@@ -15,9 +15,9 @@ WBarAttachedPanelContent {
     readonly property string action: GlobalStates.osdMediaAction
     readonly property var player: MprisController.activePlayer
     readonly property bool hasPlayer: player !== null
-    readonly property string effectiveArtUrl: MprisController.isYtMusicActive ? YtMusic.currentThumbnail : (player?.trackArtUrl ?? "")
-    readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (player?.trackTitle ?? "")
-    readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (player?.trackArtist ?? "")
+    readonly property string effectiveArtUrl: player?.trackArtUrl ?? ""
+    readonly property string effectiveTitle: player?.trackTitle ?? ""
+    readonly property string effectiveArtist: player?.trackArtist ?? ""
 
     property Timer timer: Timer {
         id: autoCloseTimer

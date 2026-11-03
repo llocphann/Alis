@@ -480,13 +480,8 @@ func writeThemeFile(themePath string, colors, termColors map[string]string) erro
 	if err != nil {
 		return err
 	}
-	// Atomic write: tmp + rename. VS Code's EventCoalescer normalizes
-	// DELETE+CREATE into UPDATED, so _watch picks this up correctly.
-	tmp := themePath + ".tmp"
-	if err := os.WriteFile(tmp, append(data, '\n'), 0o644); err != nil {
-		return err
-	}
-	return os.Rename(tmp, themePath)
+	// Write in-place so Linux inotify (_watch: true) keeps the same inode and emits UPDATED.
+	return os.WriteFile(themePath, append(data, '\n'), 0o644)
 }
 
 // ── Main ────────────────────────────────────────────────────────────────
@@ -556,10 +551,11 @@ func main() {
 }
 
 func generateAllThemes(colorsPath, terminalJSONPath, scssPath string, forks []string) (map[string]bool, error) {
+	explicitForks := len(forks) > 0
 	selected := forks
-	if len(selected) == 0 {
+	if !explicitForks {
 		for key, name := range vscodeForks {
-			if dirExists(filepath.Dir(getSettingsPath(name))) {
+			if key == "code" || key == "codium" || dirExists(filepath.Dir(getSettingsPath(name))) {
 				selected = append(selected, key)
 			}
 		}
@@ -573,7 +569,13 @@ func generateAllThemes(colorsPath, terminalJSONPath, scssPath string, forks []st
 		}
 		settingsPath := getSettingsPath(forkName)
 		if !dirExists(filepath.Dir(settingsPath)) {
-			continue
+			if explicitForks || forkKey == "code" || forkKey == "codium" || dirExists(filepath.Dir(filepath.Dir(settingsPath))) {
+				if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
+					continue
+				}
+			} else {
+				continue
+			}
 		}
 		ok, err := generateThemeForFork(colorsPath, terminalJSONPath, scssPath, settingsPath, forkKey)
 		if err != nil {

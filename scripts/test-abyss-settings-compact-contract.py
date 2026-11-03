@@ -8,7 +8,8 @@ assert "Layout.minimumWidth: 120" in q
 assert "root.actionIcon(slot.actionId)" in q
 assert "root.actionLabel(slot.actionId)" in q
 assert "id: moduleToggleGrid" in s
-assert "columns: width >= 980 ? 3 : (width >= 620 ? 2 : 1)" in s
+assert "columns: width >= 280 ? 2 : 1" in s
+assert "uniformCellWidths: columns === 2" in s
 assert "Module functionality settings" not in s
 # SET-R04: the removed batch preset must not return. Independent settings
 # remain editable; removing the button must not reset saved appearance state.

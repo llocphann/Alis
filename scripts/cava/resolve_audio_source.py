@@ -65,10 +65,6 @@ PREFERRED_PLAYBACK_TOKENS = (
     "rhythmbox",
     "clementine",
     "haruna",
-    "youtube music",
-    "youtube-music",
-    "youtube_music",
-    "ytmusic",
 )
 
 DESKTOP_ENTRY_BINARIES: dict[str, tuple[str, ...]] = {
@@ -92,10 +88,6 @@ DESKTOP_ENTRY_BINARIES: dict[str, tuple[str, ...]] = {
     "clementine": ("clementine",),
     "haruna": ("haruna",),
     "com.github.thitzekai.Mooz": ("mooz",),
-    "youtube-music": ("youtube-music", "youtube_music", "ytmusic", "mpv"),
-    "youtube_music": ("youtube-music", "youtube_music", "ytmusic", "mpv"),
-    "ytmusic": ("youtube-music", "youtube_music", "ytmusic", "mpv"),
-    "com.github.th_ch.youtube_music": ("youtube-music", "youtube_music", "ytmusic"),
 }
 
 
@@ -230,8 +222,6 @@ def _hint_binaries(desktop_entry: str) -> set[str]:
         hints.update(("chromium", "chrome", "google-chrome", "google-chrome-stable", "brave", "electron"))
     if "firefox" in entry or "zen" in entry:
         hints.update(("firefox", "zen"))
-    if "youtube" in entry or "ytmusic" in entry or "yt-music" in entry:
-        hints.update(("youtube-music", "youtube_music", "ytmusic", "mpv", "electron"))
     return hints
 
 

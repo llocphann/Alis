@@ -1,6 +1,6 @@
 import QtQuick
 AbyssConfig {
     settingsPageIndex: 33
-    settingsPageName: "Popups"
+    settingsPageName: "Notifications & Popups"
     sections: ["popups"]
 }

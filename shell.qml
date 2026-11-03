@@ -3,7 +3,7 @@
 // DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
 //-@ pragma EnableQtWebEngineQuick
 //@ pragma Env QS_NO_RELOAD_POPUP=1
-//@ pragma DefaultEnv QT_LOGGING_RULES=quickshell.dbus.properties=false
+//@ pragma DefaultEnv QT_LOGGING_RULES=quickshell.dbus.properties=false;qt.qpa.wayland.textinput=false
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
 //@ pragma Env QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
 //@ pragma Env QSG_RENDER_LOOP=threaded
@@ -14,7 +14,6 @@
 
 import qs.modules.common
 import "modules/common/PanelFamilyPolicy.js" as FamilyPolicy
-import qs.modules.settings
 
 import QtQuick
 import Quickshell
@@ -380,7 +379,7 @@ ShellRoot {
         function touchpad(state: string): void {
             const normalized = state.trim().toLowerCase()
             if (normalized === "on" || normalized === "off")
-                KeyboardIndicators.showTouchpadPopup(normalized === "on")
+                KeyboardIndicators.syncTouchpadFromIpc(normalized)
         }
     }
     IpcHandler {
@@ -424,10 +423,24 @@ ShellRoot {
 
     IpcHandler {
         target: "sidebarLeft"
-        function toggle(): void { GlobalStates.toggleSidebarLeft("") }
-        function close(): void { GlobalStates.closeSidebarLeft() }
-        function open(): void { GlobalStates.openSidebarLeft("") }
+        function _isWaffle(): bool {
+            return (Config.options?.panelFamily ?? "ii") === "waffle"
+                && !(Config.options?.waffles?.modules?.sidebarLeft ?? false)
+        }
+        function toggle(): void {
+            if (_isWaffle()) { GlobalStates.waffleWidgetsOpen = !GlobalStates.waffleWidgetsOpen; return }
+            GlobalStates.toggleSidebarLeft("")
+        }
+        function close(): void {
+            if (_isWaffle()) { GlobalStates.waffleWidgetsOpen = false; return }
+            GlobalStates.closeSidebarLeft()
+        }
+        function open(): void {
+            if (_isWaffle()) { GlobalStates.waffleWidgetsOpen = true; return }
+            GlobalStates.openSidebarLeft("")
+        }
         function expand(): void {
+            if (_isWaffle()) { GlobalStates.waffleWidgetsOpen = true; return }
             GlobalStates.aiChatDetached = false
             GlobalStates.openSidebarLeft("")
             GlobalStates.sidebarLeftExpanded = true
@@ -435,7 +448,7 @@ ShellRoot {
         function compact(): void { GlobalStates.sidebarLeftExpanded = false }
         function status(): string {
             return JSON.stringify({
-                open: GlobalStates.sidebarLeftOpen,
+                open: _isWaffle() ? GlobalStates.waffleWidgetsOpen : GlobalStates.sidebarLeftOpen,
                 expanded: GlobalStates.sidebarLeftExpanded,
                 detached: GlobalStates.aiChatDetached,
             })
@@ -454,9 +467,22 @@ ShellRoot {
 
     IpcHandler {
         target: "sidebarRight"
-        function toggle(): void { GlobalStates.toggleSidebarRight("") }
-        function close(): void { GlobalStates.closeSidebarRight() }
-        function open(): void { GlobalStates.openSidebarRight("") }
+        function _isWaffle(): bool {
+            return (Config.options?.panelFamily ?? "ii") === "waffle"
+                && !(Config.options?.waffles?.modules?.sidebarRight ?? false)
+        }
+        function toggle(): void {
+            if (_isWaffle()) { GlobalStates.waffleActionCenterOpen = !GlobalStates.waffleActionCenterOpen; return }
+            GlobalStates.toggleSidebarRight("")
+        }
+        function close(): void {
+            if (_isWaffle()) { GlobalStates.waffleActionCenterOpen = false; return }
+            GlobalStates.closeSidebarRight()
+        }
+        function open(): void {
+            if (_isWaffle()) { GlobalStates.waffleActionCenterOpen = true; return }
+            GlobalStates.openSidebarRight("")
+        }
     }
 
     IpcHandler {
@@ -570,23 +596,15 @@ ShellRoot {
 
 
     // IPC for settings - overlay mode or separate window based on config
-    // Note: waffle family ALWAYS uses its own window (waffleSettings.qml), never the Material overlay
     IpcHandler {
         target: "settings"
         function open(): void {
-            const isWaffle = Config.options?.panelFamily === "waffle"
-                && Config.options?.waffles?.settings?.useMaterialStyle !== true
-
-            if (isWaffle) {
-                // Waffle always opens its own Win11-style settings window
-                Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),
-                    "waffle-settings-window"])
-            } else if (Config.options?.panelFamily === "abyss" || (Config.options?.settingsUi?.overlayMode ?? false)) {
-                // ii overlay mode — toggle inline panel
+            if (Config.options?.panelFamily === "abyss" || (Config.options?.settingsUi?.overlayMode ?? false)) {
+                // inline overlay panel
                 GlobalStates.settingsOverlayTargetOutput = GlobalStates.resolveOutputName("",[])
                 GlobalStates.settingsOverlayOpen = !GlobalStates.settingsOverlayOpen
             } else {
-                // ii window mode (default) — launch separate process
+                // window mode (default) — launch separate process
                 Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),
                     "settings-window"])
             }
@@ -623,7 +641,7 @@ ShellRoot {
             && (Config.options?.settingsUi?.overlayMode ?? false)
             && (Config.options?.settingsUi?.overlayStyle ?? "rail") !== "focus"
         active: loaderConfigured
-        component: SettingsOverlay {}
+        source: loaderConfigured ? "modules/settings/SettingsOverlay.qml" : ""
     }
 
     LazyLoader {
@@ -634,7 +652,7 @@ ShellRoot {
             && (Config.options?.settingsUi?.overlayMode ?? false)
             && (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
         active: loaderConfigured
-        component: SettingsFocus {}
+        source: loaderConfigured ? "modules/settings/SettingsFocus.qml" : ""
     }
 
     // === Panel Loaders ===
@@ -658,7 +676,7 @@ ShellRoot {
             && root.activePanelFamily === "ii"
             && !root.iiAltSwitcherNoVisual
         active: loaderConfigured
-        source: "modules/altSwitcher/AltSwitcher.qml"
+        source: loaderConfigured ? "modules/altSwitcher/AltSwitcher.qml" : ""
     }
 
     // Load ONLY the active family panels to reduce startup time.
@@ -695,11 +713,6 @@ ShellRoot {
         function toggle(): void { GlobalStates.oskOpen = !GlobalStates.oskOpen }
         function close(): void { GlobalStates.oskOpen = false }
         function open(): void { GlobalStates.oskOpen = true }
-    }
-
-    IpcHandler {
-        target: "overlay"
-        function toggle(): void { GlobalStates.overlayOpen = !GlobalStates.overlayOpen }
     }
 
     IpcHandler {
@@ -824,7 +837,7 @@ ShellRoot {
     }
     LazyLoader {
         id: abyssDeferredHostLoader
-        readonly property bool enabled: Config.ready && GlobalStates.deferredPanelsReady
+        readonly property bool enabled: Config.ready
             && root.activePanelFamily === "abyss"
             && root.familyMountReady
         loading: enabled
@@ -908,7 +921,7 @@ ShellRoot {
         "ii": [
             "iiBar", "iiBackground", "iiBackdrop", "iiBootGreeting", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock",
             "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard",
-            "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners",
+            "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners",
             "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar",
             "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiRecordingOsd", "iiDashboard"
         ],
@@ -918,7 +931,7 @@ ShellRoot {
             // Shared modules that work with waffle
             // WaffleAltSwitcher is family-local and loaded by ShellWafflePanels;
             // the shared `altSwitcher` target reaches it through the lightweight router.
-            "iiBootGreeting", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
+            "iiBootGreeting", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverview",
             "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard"
         ]
     })

@@ -35,37 +35,35 @@ ContentPage {
 
     SettingsTaskNavigator {
         showTabBar: false
+        showIntro: false
         icon: "settings"
         title: Translation.tr("Services")
-        description: Translation.tr("System, network, search, updates and data sources.")
-        summary: Translation.tr("System · network · search · updates · data")
+        description: Translation.tr("Idle, weather, search and update services.")
+        summary: Translation.tr("Idle & Weather · System & Shell Updates")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
-            { displayName: Translation.tr("System"), icon: "memory", value: "system" },
-            { displayName: Translation.tr("Network"), icon: "cell_tower", value: "network" },
-            { displayName: Translation.tr("Search"), icon: "search", value: "search" },
-            { displayName: Translation.tr("Updates"), icon: "system_update_alt", value: "updates" },
-            { displayName: Translation.tr("Weather"), icon: "cloud", value: "data" }
+            { displayName: Translation.tr("Idle, Weather & Search"), icon: "cloud", value: "system" },
+            { displayName: Translation.tr("System & Shell Updates"), icon: "system_update_alt", value: "updates" }
         ]
     }
 
     GridLayout {
         Layout.fillWidth: true
-        columns: width >= 620 ? 2 : 1
-        uniformCellWidths: columns === 2
+        columns: 2
+        uniformCellWidths: true
         columnSpacing: 14
         rowSpacing: 14
 
     SettingsCardSection {
+        Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        Layout.fillHeight: true
         Layout.preferredWidth: 1
         settingsTaskSection: "system"
         visible: true
         expanded: true
         icon: "bedtime"
-        title: Translation.tr("Idle & Sleep")
+        title: Translation.tr("Idle, Sleep & GPU")
 
         SettingsGroup {
             ConfigSpinBox {
@@ -107,31 +105,35 @@ ContentPage {
                 }
             }
 
-            SettingsSwitch {
-                buttonIcon: "lock_clock"
-                text: Translation.tr("Lock before sleep")
-                checked: Config.options?.idle?.lockBeforeSleep ?? true
-                onCheckedChanged: Config.setNestedValue("idle.lockBeforeSleep", checked)
-                StyledToolTip {
-                    text: Translation.tr("Lock the screen before the system goes to sleep")
+            ConfigRow {
+                uniform: true
+                SettingsSwitch {
+                    buttonIcon: "lock_clock"
+                    text: Translation.tr("Lock before sleep")
+                    checked: Config.options?.idle?.lockBeforeSleep ?? true
+                    onCheckedChanged: Config.setNestedValue("idle.lockBeforeSleep", checked)
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "coffee"
+                    text: Translation.tr("Keep awake (caffeine)")
+                    checked: Idle.inhibit
+                    onCheckedChanged: {
+                        if (checked !== Idle.inhibit) Idle.toggleInhibit()
+                    }
                 }
             }
 
-            // Battery profile is meaningless without a battery.
             SettingsSwitch {
                 visible: Battery.available
                 buttonIcon: "battery_saver"
                 text: Translation.tr("Separate timeouts on battery")
                 checked: Config.options?.idle?.onBattery?.enable ?? false
                 onCheckedChanged: Config.setNestedValue("idle.onBattery.enable", checked)
-                StyledToolTip {
-                    text: Translation.tr("Use shorter idle timeouts while the laptop runs unplugged")
-                }
             }
 
             ConfigSpinBox {
-                visible: Battery.available
-                enabled: Config.options?.idle?.onBattery?.enable ?? false
+                visible: Battery.available && (Config.options?.idle?.onBattery?.enable ?? false)
                 icon: "lock_clock"
                 text: Translation.tr("Battery: screen off") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
                 value: Config.options?.idle?.onBattery?.screenOffTimeout ?? 120
@@ -142,8 +144,7 @@ ContentPage {
             }
 
             ConfigSpinBox {
-                visible: Battery.available
-                enabled: Config.options?.idle?.onBattery?.enable ?? false
+                visible: Battery.available && (Config.options?.idle?.onBattery?.enable ?? false)
                 icon: "lock"
                 text: Translation.tr("Battery: lock") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
                 value: Config.options?.idle?.onBattery?.lockTimeout ?? 300
@@ -154,8 +155,7 @@ ContentPage {
             }
 
             ConfigSpinBox {
-                visible: Battery.available
-                enabled: Config.options?.idle?.onBattery?.enable ?? false
+                visible: Battery.available && (Config.options?.idle?.onBattery?.enable ?? false)
                 icon: "dark_mode"
                 text: Translation.tr("Battery: suspend") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
                 value: Config.options?.idle?.onBattery?.suspendTimeout ?? 600
@@ -165,326 +165,85 @@ ContentPage {
                 onValueChanged: Config.setNestedValue("idle.onBattery.suspendTimeout", value)
             }
 
+            SettingsDivider {}
+
             SettingsSwitch {
-                buttonIcon: "coffee"
-                text: Translation.tr("Keep awake (caffeine)")
-                checked: Idle.inhibit
+                buttonIcon: "memory_alt"
+                text: Translation.tr("GPU usage monitoring")
+                checked: Config.options?.resources?.monitorGpu ?? true
                 onCheckedChanged: {
-                    if (checked !== Idle.inhibit) Idle.toggleInhibit()
+                    Config.setNestedValue("resources.monitorGpu", checked)
                 }
                 StyledToolTip {
-                    text: Translation.tr("Temporarily prevent screen from turning off and system from sleeping")
-                }
-            }
-        }
-    }
-
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        spacing: 14
-
-        SettingsCardSection {
-            Layout.fillWidth: true
-            settingsTaskSection: "network"
-            visible: true
-            expanded: true
-            icon: "cell_tower"
-            title: Translation.tr("Networking")
-
-            SettingsGroup {
-                MaterialTextArea {
-                    Layout.fillWidth: true
-                    placeholderText: Translation.tr("User agent (for services that require it)")
-                    text: Config.options?.networking?.userAgent ?? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-                    wrapMode: TextEdit.Wrap
-                    onTextChanged: {
-                        Config.setNestedValue("networking.userAgent", text)
-                    }
-                }
-            }
-        }
-
-        SettingsCardSection {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            settingsTaskSection: "network"
-            visible: true
-            expanded: true
-            icon: "wifi_tethering"
-            title: Translation.tr("Hotspot")
-
-            SettingsGroup {
-                MaterialTextArea {
-                    Layout.fillWidth: true
-                    placeholderText: Translation.tr("Network name (SSID)")
-                    text: Config.options?.hotspot?.ssid ?? "Alis Hotspot"
-                    wrapMode: TextEdit.Wrap
-                    onTextChanged: Config.setNestedValue("hotspot.ssid", text)
-                    StyledToolTip {
-                        text: Translation.tr("The name your hotspot will broadcast")
-                    }
-                }
-
-                MaterialTextArea {
-                    Layout.fillWidth: true
-                    placeholderText: Translation.tr("Password")
-                    text: Config.options?.hotspot?.password ?? "alishotspot"
-                    wrapMode: TextEdit.Wrap
-                    onTextChanged: Config.setNestedValue("hotspot.password", text)
-                    StyledToolTip {
-                        text: Translation.tr("WPA2 passphrase for the hotspot")
-                    }
-                }
-
-                SettingsSwitch {
-                    text: Translation.tr("Use 5 GHz band")
-                    checked: (Config.options?.hotspot?.band ?? "bg") === "a"
-                    onCheckedChanged: Config.setNestedValue("hotspot.band", checked ? "a" : "bg")
-                    StyledToolTip {
-                        text: Translation.tr("Use 5 GHz (802.11a) instead of 2.4 GHz. Requires adapter support.")
-                    }
+                    text: Translation.tr("On hybrid laptops, GPU polling can wake the dGPU; disabling pins Qt to iGPU after restart.")
                 }
             }
         }
     }
 
     SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
         Layout.preferredWidth: 1
-        settingsTaskSection: "search"
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        settingsTaskSection: "updates"
         visible: true
         expanded: true
-        icon: "search"
-        title: Translation.tr("Search")
+        icon: "system_update_alt"
+        title: Translation.tr("Updates")
 
         SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("Surface style")
-
-                ConfigSelectionArray {
-                    currentValue: Config.options?.search?.style ?? "default"
-                    onSelected: newValue => {
-                        Config.setNestedValue("search.style", newValue);
-                    }
-                    options: [
-                        { displayName: Translation.tr("Default"), icon: "search", value: "default" },
-                        { displayName: Translation.tr("Island"), icon: "blur_on", value: "island" }
-                    ]
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Translation.tr("Island wraps the search in the gradient card look used by the island bar, dock and sidebars.")
-                    color: Appearance.colors.colSubtext
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    wrapMode: Text.WordWrap
-                }
-            }
-
-            SettingsSwitch {
-                text: Translation.tr("Use Levenshtein distance-based algorithm instead of fuzzy")
-                checked: Config.options?.search?.sloppy ?? false
-                onCheckedChanged: {
-                    Config.setNestedValue("search.sloppy", checked)
-                }
+            ConfigSpinBox {
+                icon: "av_timer"
+                text: Translation.tr("Check interval") + ` (${value}m)`
+                value: Config.options?.updates?.checkInterval ?? 120
+                from: 15
+                to: 1440
+                stepSize: 15
+                onValueChanged: Config.setNestedValue("updates.checkInterval", value)
                 StyledToolTip {
-                    text: Translation.tr("Tolerates typos but may misread acronyms (e.g., GIMP).")
+                    text: Translation.tr("How often to check for system updates (in minutes)")
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Prefixes")
-                ConfigRow {
-                    uniform: true
-                    MaterialTextArea {
-                        Layout.fillWidth: true
-                        placeholderText: Translation.tr("Action")
-                        text: Config.options?.search?.prefix?.action ?? "/"
-                        wrapMode: TextEdit.Wrap
-                        onTextChanged: {
-                            Config.setNestedValue("search.prefix.action", text)
-                        }
-                    }
-                    MaterialTextArea {
-                        Layout.fillWidth: true
-                        placeholderText: Translation.tr("Clipboard")
-                        text: Config.options?.search?.prefix?.clipboard ?? ";"
-                        wrapMode: TextEdit.Wrap
-                        onTextChanged: {
-                            Config.setNestedValue("search.prefix.clipboard", text)
-                        }
-                    }
-                    MaterialTextArea {
-                        Layout.fillWidth: true
-                        placeholderText: Translation.tr("Emojis")
-                        text: Config.options?.search?.prefix?.emojis ?? ":"
-                        wrapMode: TextEdit.Wrap
-                        onTextChanged: {
-                            Config.setNestedValue("search.prefix.emojis", text)
-                        }
-                    }
-                }
-
-                ConfigRow {
-                    uniform: true
-                    MaterialTextArea {
-                        Layout.fillWidth: true
-                        placeholderText: Translation.tr("Math")
-                        text: Config.options?.search?.prefix?.math ?? "="
-                        wrapMode: TextEdit.Wrap
-                        onTextChanged: {
-                            Config.setNestedValue("search.prefix.math", text)
-                        }
-                    }
-                    MaterialTextArea {
-                        Layout.fillWidth: true
-                        placeholderText: Translation.tr("Shell command")
-                        text: Config.options?.search?.prefix?.shellCommand ?? "$"
-                        wrapMode: TextEdit.Wrap
-                        onTextChanged: {
-                            Config.setNestedValue("search.prefix.shellCommand", text)
-                        }
-                    }
-                    MaterialTextArea {
-                        Layout.fillWidth: true
-                        placeholderText: Translation.tr("Web search")
-                        text: Config.options?.search?.prefix?.webSearch ?? "?"
-                        wrapMode: TextEdit.Wrap
-                        onTextChanged: {
-                            Config.setNestedValue("search.prefix.webSearch", text)
-                        }
-                    }
+            ConfigSpinBox {
+                icon: "notifications"
+                text: Translation.tr("Show icon threshold")
+                value: Config.options?.updates?.adviseUpdateThreshold ?? 10
+                from: 1
+                to: 200
+                stepSize: 5
+                onValueChanged: Config.setNestedValue("updates.adviseUpdateThreshold", value)
+                StyledToolTip {
+                    text: Translation.tr("Show update icon in bar when available updates exceed this number")
                 }
             }
-            ContentSubsection {
-                title: Translation.tr("Web search")
-                MaterialTextArea {
-                    Layout.fillWidth: true
-                    placeholderText: Translation.tr("Base URL")
-                    text: Config.options?.search?.engineBaseUrl ?? "https://www.google.com/search?q="
-                    wrapMode: TextEdit.Wrap
-                    onTextChanged: {
-                        Config.setNestedValue("search.engineBaseUrl", text)
-                    }
+
+            ConfigSpinBox {
+                icon: "warning"
+                text: Translation.tr("Warning threshold")
+                value: Config.options?.updates?.stronglyAdviseUpdateThreshold ?? 50
+                from: 10
+                to: 500
+                stepSize: 10
+                onValueChanged: Config.setNestedValue("updates.stronglyAdviseUpdateThreshold", value)
+                StyledToolTip {
+                    text: Translation.tr("Show warning color when available updates exceed this number")
                 }
             }
-        }
-    }
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        spacing: 14
-
-        SettingsCardSection {
-            Layout.fillWidth: true
-            settingsTaskSection: "system"
-            visible: true
-            expanded: true
-            icon: "memory"
-            title: Translation.tr("Resources")
-
-            SettingsGroup {
-                ConfigRow {
-                    uniform: true
-
-                    ConfigSpinBox {
-                        icon: "av_timer"
-                        text: Translation.tr("Polling interval (ms)")
-                        value: Config.options?.resources?.updateInterval ?? 3000
-                        from: 100
-                        to: 10000
-                        stepSize: 100
-                        onValueChanged: {
-                            Config.setNestedValue("resources.updateInterval", value)
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("How often to update CPU, RAM, and disk usage stats")
-                        }
-                    }
-
-                    SettingsSwitch {
-                        buttonIcon: "memory_alt"
-                        text: Translation.tr("GPU monitoring")
-                        checked: Config.options?.resources?.monitorGpu ?? true
-                        onCheckedChanged: {
-                            Config.setNestedValue("resources.monitorGpu", checked)
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("On hybrid laptops, GPU polling can wake the dGPU; disabling pins Qt to iGPU after restart.")
-                        }
-                    }
-                }
-            }
-        }
-
-        SettingsCardSection {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            settingsTaskSection: "updates"
-            visible: true
-            expanded: true
-            icon: "system_update_alt"
-            title: Translation.tr("Updates")
-
-            SettingsGroup {
-                ConfigSpinBox {
-                    icon: "av_timer"
-                    text: Translation.tr("Check interval") + ` (${value}m)`
-                    value: Config.options?.updates?.checkInterval ?? 120
-                    from: 15
-                    to: 1440
-                    stepSize: 15
-                    onValueChanged: Config.setNestedValue("updates.checkInterval", value)
-                    StyledToolTip {
-                        text: Translation.tr("How often to check for system updates (in minutes)")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "notifications"
-                    text: Translation.tr("Show icon threshold")
-                    value: Config.options?.updates?.adviseUpdateThreshold ?? 10
-                    from: 1
-                    to: 200
-                    stepSize: 5
-                    onValueChanged: Config.setNestedValue("updates.adviseUpdateThreshold", value)
-                    StyledToolTip {
-                        text: Translation.tr("Show update icon in bar when available updates exceed this number")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "warning"
-                    text: Translation.tr("Warning threshold")
-                    value: Config.options?.updates?.stronglyAdviseUpdateThreshold ?? 50
-                    from: 10
-                    to: 500
-                    stepSize: 10
-                    onValueChanged: Config.setNestedValue("updates.stronglyAdviseUpdateThreshold", value)
-                    StyledToolTip {
-                        text: Translation.tr("Show warning color when available updates exceed this number")
-                    }
-                }
-
-                MaterialTextArea {
-                    Layout.fillWidth: true
-                    placeholderText: Translation.tr("Update command")
-                    text: Config.options?.apps?.update ?? ""
-                    wrapMode: TextEdit.Wrap
-                    onTextChanged: Config.setNestedValue("apps.update", text)
-                }
+            MaterialTextArea {
+                Layout.fillWidth: true
+                placeholderText: Translation.tr("Update command")
+                text: Config.options?.apps?.update ?? ""
+                wrapMode: TextEdit.Wrap
+                onTextChanged: Config.setNestedValue("apps.update", text)
             }
         }
     }
 
     SettingsCardSection {
+        Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        Layout.fillHeight: true
         Layout.preferredWidth: 1
         settingsTaskSection: "updates"
         visible: true
@@ -813,18 +572,22 @@ ContentPage {
                     opacity: enabled ? 1.0 : 0.5
                     onClicked: ShellUpdates.check()
 
-                    contentItem: RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 6
-                        MaterialSymbol {
-                            text: "refresh"
-                            iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colOnSurface
-                        }
-                        StyledText {
-                            text: ShellUpdates.isChecking ? Translation.tr("Checking…") : Translation.tr("Check Now")
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colOnSurface
+                    contentItem: Item {
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 6
+                            MaterialSymbol {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "refresh"
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnSurface
+                            }
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: ShellUpdates.isChecking ? Translation.tr("Checking…") : Translation.tr("Check Now")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.colors.colOnSurface
+                            }
                         }
                     }
                 }
@@ -848,18 +611,22 @@ ContentPage {
                         }
                     }
 
-                    contentItem: RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 6
-                        MaterialSymbol {
-                            text: "open_in_new"
-                            iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colOnSurface
-                        }
-                        StyledText {
-                            text: Translation.tr("Open Details")
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colOnSurface
+                    contentItem: Item {
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 6
+                            MaterialSymbol {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "open_in_new"
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnSurface
+                            }
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: Translation.tr("Open Details")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.colors.colOnSurface
+                            }
                         }
                     }
                 }
@@ -876,25 +643,29 @@ ContentPage {
                     opacity: enabled ? 1.0 : 0.5
                     onClicked: ShellUpdates.performUpdate()
 
-                    contentItem: RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 6
-                        MaterialSymbol {
-                            text: ShellUpdates.isUpdating ? "hourglass_top" : "upgrade"
-                            iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colOnPrimary
-                        }
-                        StyledText {
-                            text: ShellUpdates.isUpdating
-                                ? (ShellUpdates.updateStepMessage.length > 0
-                                    ? Translation.tr(ShellUpdates.updateStepMessage) + "…"
-                                    : Translation.tr("Updating…"))
-                                : Translation.tr("Update Now")
-                            font {
-                                pixelSize: Appearance.font.pixelSize.smaller
-                                weight: Font.DemiBold
+                    contentItem: Item {
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 6
+                            MaterialSymbol {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: ShellUpdates.isUpdating ? "hourglass_top" : "upgrade"
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnPrimary
                             }
-                            color: Appearance.colors.colOnPrimary
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: ShellUpdates.isUpdating
+                                    ? (ShellUpdates.updateStepMessage.length > 0
+                                        ? Translation.tr(ShellUpdates.updateStepMessage) + "…"
+                                        : Translation.tr("Updating…"))
+                                    : Translation.tr("Update Now")
+                                font {
+                                    pixelSize: Appearance.font.pixelSize.smaller
+                                    weight: Font.DemiBold
+                                }
+                                color: Appearance.colors.colOnPrimary
+                            }
                         }
                     }
                 }
@@ -947,44 +718,35 @@ ContentPage {
     }
 
     SettingsCardSection {
+        Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        Layout.fillHeight: true
         Layout.preferredWidth: 1
-        settingsTaskSection: "data"
+        settingsTaskSection: "system"
         visible: true
         expanded: true
         icon: "cloud"
-        title: Translation.tr("Weather")
+        title: Translation.tr("Weather & Search")
 
         SettingsGroup {
-            StyledText {
-                Layout.fillWidth: true
-                text: Translation.tr("Enter city or coordinates; blank uses IP. Weather: wttr.in/Open-Meteo; air quality: Open-Meteo.")
-                color: Appearance.colors.colOnSurfaceVariant
-                font.pixelSize: Appearance.font.pixelSize.small
-                wrapMode: Text.WordWrap
-            }
-
             ConfigRow {
                 uniform: true
 
                 SettingsSwitch {
                     buttonIcon: "toggle_on"
-                    text: Translation.tr("Enable weather service")
+                    text: Translation.tr("Enable weather")
                     checked: Config.options?.bar?.weather?.enable ?? false
                     onCheckedChanged: Config.setNestedValue("bar.weather.enable", checked)
                 }
 
                 SettingsSwitch {
                     buttonIcon: "visibility_off"
-                    text: Translation.tr("Hide weather location")
+                    text: Translation.tr("Hide location")
                     checked: Config.options?.waffles?.widgetsPanel?.weatherHideLocation ?? false
                     onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.weatherHideLocation", checked)
                     enabled: Config.options?.bar?.weather?.enable ?? false
                 }
             }
 
-            // Manual location
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 4
@@ -1014,81 +776,15 @@ ContentPage {
                 }
             }
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 4
-                enabled: Config.options?.bar?.weather?.enable ?? false
-
-                StyledText {
-                    text: Translation.tr("Manual coordinates (optional, overrides city)")
-                    color: Appearance.colors.colOnSurfaceVariant
-                    font.pixelSize: Appearance.font.pixelSize.small
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    MaterialTextField {
-                        id: weatherLatInput
-                        Layout.fillWidth: true
-                        placeholderText: Translation.tr("Latitude (e.g. -34.6037)")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSurface
-                        placeholderTextColor: Appearance.colors.colSubtext
-                        text: {
-                            const v = Config.options?.bar?.weather?.manualLat ?? 0;
-                            return v !== 0 ? String(v) : "";
-                        }
-                        background: Rectangle {
-                            color: Appearance.colors.colLayer1
-                            radius: Appearance.rounding.small
-                            border.width: weatherLatInput.activeFocus ? 2 : 1
-                            border.color: weatherLatInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
-                        }
-                        onTextEdited: {
-                            const num = parseFloat(text);
-                            Config.setNestedValue("bar.weather.manualLat", isNaN(num) ? 0 : num);
-                        }
-                    }
-
-                    MaterialTextField {
-                        id: weatherLonInput
-                        Layout.fillWidth: true
-                        placeholderText: Translation.tr("Longitude (e.g. -58.3816)")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSurface
-                        placeholderTextColor: Appearance.colors.colSubtext
-                        text: {
-                            const v = Config.options?.bar?.weather?.manualLon ?? 0;
-                            return v !== 0 ? String(v) : "";
-                        }
-                        background: Rectangle {
-                            color: Appearance.colors.colLayer1
-                            radius: Appearance.rounding.small
-                            border.width: weatherLonInput.activeFocus ? 2 : 1
-                            border.color: weatherLonInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
-                        }
-                        onTextEdited: {
-                            const num = parseFloat(text);
-                            Config.setNestedValue("bar.weather.manualLon", isNaN(num) ? 0 : num);
-                        }
-                    }
-                }
-            }
-
             ConfigRow {
                 uniform: true
 
                 SettingsSwitch {
                     buttonIcon: "my_location"
-                    text: Translation.tr("Use GPS location (requires geoclue)")
+                    text: Translation.tr("Use GPS location")
                     checked: Config.options?.bar?.weather?.enableGPS ?? false
                     onCheckedChanged: Config.setNestedValue("bar.weather.enableGPS", checked)
                     enabled: Config.options?.bar?.weather?.enable ?? false
-                    StyledToolTip {
-                        text: Translation.tr("Uses GPS when no manual location is set")
-                    }
                 }
 
                 SettingsSwitch {
@@ -1100,26 +796,41 @@ ContentPage {
                 }
             }
 
-            // Current detected location display
-            StyledText {
-                Layout.fillWidth: true
-                visible: (Config.options?.bar?.weather?.enable ?? false) && Weather.location.valid
-                text: Translation.tr("Current location:") + " " + (Weather.location.name || (Weather.location.lat + ", " + Weather.location.lon))
-                color: Appearance.colors.colOnSurfaceVariant
-                font.pixelSize: Appearance.font.pixelSize.small
-                font.italic: true
-                wrapMode: Text.WordWrap
-            }
-
             ConfigSpinBox {
                 icon: "update"
-                text: Translation.tr("Update interval (minutes)")
+                text: Translation.tr("Weather update interval (min)")
                 value: Config.options?.bar?.weather?.fetchInterval ?? 10
                 from: 5
                 to: 60
                 stepSize: 5
                 onValueChanged: Config.setNestedValue("bar.weather.fetchInterval", value)
                 enabled: Config.options?.bar?.weather?.enable ?? false
+            }
+
+            SettingsDivider {}
+
+            ContentSubsection {
+                title: Translation.tr("Search surface & Web engine")
+
+                ConfigSelectionArray {
+                    currentValue: Config.options?.search?.style ?? "default"
+                    onSelected: newValue => {
+                        Config.setNestedValue("search.style", newValue);
+                    }
+                    options: [
+                        { displayName: Translation.tr("Default"), icon: "search", value: "default" },
+                        { displayName: Translation.tr("Island"), icon: "blur_on", value: "island" }
+                    ]
+                }
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Web search base URL")
+                    text: Config.options?.search?.engineBaseUrl ?? "https://www.google.com/search?q="
+                    onEditingFinished: {
+                        Config.setNestedValue("search.engineBaseUrl", text)
+                    }
+                }
             }
         }
     }

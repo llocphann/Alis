@@ -10,6 +10,7 @@ PathView {
     id: root
 
     required property var entries
+    property var fallbackEntries: []
     required property string searchText
     required property string currentWallpaperPath
     required property string monitorName
@@ -29,16 +30,26 @@ PathView {
         const color = selectedColor.trim().toLowerCase()
         if (!query && !color) return entries
         const tagMap = colorTagsByPath ?? {}
-        return entries.filter(entry => {
-            if (query && !entry.relativePath.toLowerCase().includes(query))
-                return false
+        const tokens = query ? query.split(/\s+/).filter(Boolean) : []
+        const matchesEntry = entry => {
+            if (tokens.length > 0) {
+                const haystack = `${entry.relativePath ?? ""} ${entry.name ?? ""} ${entry.kind ?? ""}`.toLowerCase()
+                if (!tokens.every(tok => haystack.includes(tok)))
+                    return false
+            }
             if (color) {
                 const tags = tagMap[entry.path] ?? []
                 if (!Array.isArray(tags) || !tags.includes(color))
                     return false
             }
             return true
-        })
+        }
+        const primary = entries.filter(matchesEntry)
+        if (!query || !fallbackEntries || fallbackEntries.length === 0)
+            return primary
+        const seen = new Set(primary.map(e => e.path))
+        const secondary = fallbackEntries.filter(e => !seen.has(e.path) && matchesEntry(e))
+        return primary.concat(secondary)
     }
     readonly property int visibleItems: {
         let visible = Math.min(maxVisibleItems, filteredEntries.length)

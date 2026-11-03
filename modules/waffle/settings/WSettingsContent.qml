@@ -33,8 +33,8 @@ Item {
         { label: Translation.tr("Appearance"), keys: ["themes", "wallpaper", "gowall", "effects"] },
         { label: Translation.tr("Desktop & Layout"), keys: ["monitors", "shell-layout", "bar", "workspace-strip", "panels", "waffle-style", "modules"] },
         { label: Translation.tr("System"), keys: ["system", "power", "autostart"] },
-        { label: Translation.tr("Features & Services"), keys: ["default-apps", "ai", "mascot", "integrations"] },
-        { label: Translation.tr("Advanced & Help"), keys: ["shortcuts", "about"] }
+        { label: Translation.tr("Features & Services"), keys: ["default-apps", "ai", "integrations"] },
+        { label: Translation.tr("Advanced & Help"), keys: ["shortcuts"] }
     ]
     property var expandedNavGroups: ({})
     function groupExpanded(index, pageIndices): bool {
@@ -76,6 +76,7 @@ Item {
                 const index = root.pages.findIndex(page => page.key === key)
                 if (index < 0 || seen.has(index)) continue
                 seen.add(index)
+                if (key === "autostart") continue
                 entries.push({ type: "page", pageIndex: index,
                     name: root.pages[index].name, icon: root.pages[index].icon })
             }
@@ -108,39 +109,25 @@ Item {
     }
     // Complete search index with all individual options + targetLabel for spotlight
     property var searchIndex: [
-        {pageIndex:20,pageName:"Default Applications",section:"Core Applications",label:"Default applications",targetLabel:"Default Terminal",description:"Preferred terminal, browser, editor, file manager and system utilities",keywords:["apps","applications","terminal","browser","editor","file","manager","flatpak","flathub","default"]},
-        {pageIndex:19,pageName:"Integrations",section:"Obsidian",label:"Obsidian",description:"Vault, theming, notes and tasks",keywords:["obsidian","vault","theme","integrations","tasks"]},
-        {pageIndex:19,pageName:"Integrations",section:"Calendar",label:"External calendars",description:"ICS/iCal sources",keywords:["calendar","ics","ical","integrations"]},
-        { pageIndex: 18, pageName: "Battery", section: "Power management", label: "Battery and TLP settings", targetLabel: "Configuration categories", keywords: ["tlp", "power", "battery", "cpu", "processor", "disk", "pcie", "usb", "radio", "energy", "profile"] },
-        { pageIndex: 18, pageName: "Battery", section: "Battery Care", label: "Charge limit", targetLabel: "Hardware-aware charge care", keywords: ["tlp", "battery", "charge", "limit", "threshold", "thinkpad", "conservation"] },
-        { pageIndex: 17, pageName: "Shell Layout", section: "Live shell layout", label: "Edit live", targetLabel: "Edit live", keywords: ["layout", "move", "position", "taskbar", "output", "edit", "live"] },
-        { pageIndex: 17, pageName: "Shell Layout", section: "Taskbar placement", label: "Current position", targetLabel: "Current position", keywords: ["layout", "taskbar", "top", "bottom", "position", "reset"] },
+        {pageIndex:18,pageName:"Default Applications",section:"Core Applications",label:"Default applications",targetLabel:"Default Terminal",description:"Preferred terminal, browser, editor, file manager and system utilities",keywords:["apps","applications","terminal","browser","editor","file","manager","flatpak","flathub","default"]},
+        {pageIndex:17,pageName:"Integrations",section:"Obsidian",label:"Obsidian",description:"Vault, theming, notes and tasks",keywords:["obsidian","vault","theme","integrations","tasks"]},
+        {pageIndex:17,pageName:"Integrations",section:"Calendar",label:"External calendars",description:"ICS/iCal sources",keywords:["calendar","ics","ical","integrations"]},
+        { pageIndex: 16, pageName: "Battery", section: "Power management", label: "Battery and TLP settings", targetLabel: "Configuration categories", keywords: ["tlp", "power", "battery", "cpu", "processor", "disk", "pcie", "usb", "radio", "energy", "profile"] },
+        { pageIndex: 16, pageName: "Battery", section: "Battery Care", label: "Charge limit", targetLabel: "Hardware-aware charge care", keywords: ["tlp", "battery", "charge", "limit", "threshold", "thinkpad", "conservation"] },
+        { pageIndex: 15, pageName: "Shell Layout", section: "Live shell layout", label: "Edit live", targetLabel: "Edit live", keywords: ["layout", "move", "position", "taskbar", "output", "edit", "live"] },
+        { pageIndex: 15, pageName: "Shell Layout", section: "Taskbar placement", label: "Current position", targetLabel: "Current position", keywords: ["layout", "taskbar", "top", "bottom", "position", "reset"] },
         // === Quick (0) ===
         { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Dark mode", targetLabel: "Dark mode", keywords: ["quick", "dark", "light", "mode", "theme", "scheme"] },
         { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Per-monitor wallpapers", targetLabel: "Per-monitor wallpapers", keywords: ["quick", "wallpaper", "monitor", "display", "multi-monitor", "per-monitor"] },
         { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Colors only mode", targetLabel: "Colors only mode", keywords: ["quick", "wallpaper", "colors", "theme source", "preview", "palette"] },
         { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Color scheme", targetLabel: "Color scheme", keywords: ["quick", "colors", "scheme", "palette", "material", "theme"] },
         { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Color strength", targetLabel: "Color strength", keywords: ["quick", "wallpaper", "color", "strength", "vivid", "accent"] },
-        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Show mascot illustration", targetLabel: "Show mascot illustration", keywords: ["mascot", "cat", "girl", "branding", "illustration", "waifu"] },
-        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Playful companion", targetLabel: "Playful companion", keywords: ["mascot", "companion", "peek", "interactive", "playful", "edge"] },
-        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Companion visit interval", targetLabel: "Companion visit interval", keywords: ["mascot", "companion", "interval", "frequency", "minutes"] },
-        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Visit length", targetLabel: "Visit length", keywords: ["mascot", "companion", "duration", "visible", "seconds", "stay"] },
-        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Slide animation", targetLabel: "Slide animation", keywords: ["mascot", "companion", "animation", "speed", "slide", "appear"] },
-        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Event reactions", targetLabel: "React to music", keywords: ["mascot", "companion", "reactions", "events", "music", "battery", "notifications", "wallpaper", "screenshot", "gaming", "unlock", "react", "snoop"] },
-        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Pose for this event", targetLabel: "Pose for this event", keywords: ["mascot", "pose", "image", "override", "custom", "picker"] },
-        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Only react to real music", targetLabel: "Only react to real music", keywords: ["mascot", "music", "artist", "video", "browser", "detection", "mpris"] },
-        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Chaos mode", targetLabel: "Chaos mode", keywords: ["mascot", "chaos", "romp", "kick", "bonk", "widgets", "rearrange", "tidy", "physics"] },
-        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Peek now", targetLabel: "Peek now", keywords: ["mascot", "test", "preview", "peek", "try"] },
-        { pageIndex: 14, pageName: "Mascot", section: "Mascot surfaces", label: "Mascot surfaces", targetLabel: "Mascot surfaces", keywords: ["mascot", "surfaces", "where", "empty states", "about", "dashboard", "customize"] },
-        { pageIndex: 14, pageName: "Mascot", section: "Mascot surfaces", label: "Dialogs", targetLabel: "Dialogs", keywords: ["mascot", "dialogs", "close", "confirmation", "warning"] },
-        { pageIndex: 14, pageName: "Mascot", section: "Kira collection", label: "Kira collection", targetLabel: "Kira collection", keywords: ["mascot", "kira", "collection", "gallery", "archive", "pose", "full body", "animated", "portrait", "chibi", "editorial"] },
 
-        // === AI (15) ===
-        { pageIndex: 15, pageName: "AI", section: "Providers & models", label: "AI providers", targetLabel: "Add AI provider", keywords: ["ai", "provider", "model", "api", "key", "endpoint", "ollama", "openrouter", "gemini", "groq", "anthropic", "local", "add", "llm"] },
-        { pageIndex: 15, pageName: "AI", section: "Assistant behavior", label: "AI system prompt", targetLabel: "AI system prompt", keywords: ["ai", "prompt", "system", "instructions", "custom", "assistant", "personality"] },
-        { pageIndex: 15, pageName: "AI", section: "Assistant behavior", label: "AI tools", targetLabel: "AI tools", keywords: ["ai", "tool", "functions", "search", "temperature", "creativity"] },
-        { pageIndex: 15, pageName: "AI", section: "Privacy & policy", label: "Allow AI features", targetLabel: "Allow AI features", keywords: ["ai", "privacy", "policy", "local", "allow", "disable"] },
-        { pageIndex: 15, pageName: "AI", section: "Voice input", label: "Voice input", targetLabel: "Voice input", keywords: ["voice", "mic", "microphone", "dictate", "speech", "transcribe", "recording"] },
+        // === AI (13) ===
+        { pageIndex: 13, pageName: "AI", section: "Providers & models", label: "AI providers", targetLabel: "Add AI provider", keywords: ["ai", "provider", "model", "api", "key", "endpoint", "ollama", "openrouter", "gemini", "groq", "anthropic", "local", "add", "llm"] },
+        { pageIndex: 13, pageName: "AI", section: "Assistant behavior", label: "AI system prompt", targetLabel: "AI system prompt", keywords: ["ai", "prompt", "system", "instructions", "custom", "assistant", "personality"] },
+        { pageIndex: 13, pageName: "AI", section: "Assistant behavior", label: "AI tools", targetLabel: "AI tools", keywords: ["ai", "tool", "functions", "search", "temperature", "creativity"] },
+        { pageIndex: 13, pageName: "AI", section: "Voice input", label: "Voice input", targetLabel: "Voice input", keywords: ["voice", "mic", "microphone", "dictate", "speech", "transcribe", "recording"] },
 
         { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Transparency", targetLabel: "Transparency", keywords: ["quick", "transparency", "glass", "blur", "appearance"] },
         { pageIndex: 0, pageName: "Quick", section: "Quick actions", label: "Show reload notifications", targetLabel: "Show reload notifications", keywords: ["quick", "reload", "notifications", "toast", "quickshell", "niri"] },
@@ -161,15 +148,6 @@ Item {
         { pageIndex: 1, pageName: "General", section: "Time & Language", label: "Long date format", targetLabel: "Long date format", keywords: ["date", "format", "long", "weekday", "month", "clock", "taskbar"] },
         { pageIndex: 1, pageName: "General", section: "Time & Language", label: "Short date format", targetLabel: "Short date format", keywords: ["date", "format", "short", "compact", "clock", "calendar"] },
         { pageIndex: 1, pageName: "General", section: "Time & Language", label: "Language", targetLabel: "Language", keywords: ["language", "locale", "translation", "idioma", "español", "english"] },
-        // Keyboard indicators
-        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Keyboard popups", targetLabel: "Keyboard popups", keywords: ["keyboard", "caps", "num", "layout", "language", "popup", "indicator"] },
-        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Layout popup", targetLabel: "Layout popup", keywords: ["keyboard", "layout", "language", "popup", "indicator", "show", "hide"] },
-        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Caps Lock popup", targetLabel: "Caps Lock popup", keywords: ["keyboard", "caps", "capslock", "lock", "popup", "indicator", "show", "hide"] },
-        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Num Lock popup", targetLabel: "Num Lock popup", keywords: ["keyboard", "num", "numlock", "lock", "popup", "indicator", "show", "hide"] },
-        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Keyboard panel indicators", targetLabel: "Keyboard panel indicators", keywords: ["keyboard", "caps", "num", "layout", "language", "bar", "taskbar", "indicator"] },
-        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Layout indicator", targetLabel: "Layout indicator", keywords: ["keyboard", "layout", "language", "indicator", "bar", "taskbar", "show", "hide"] },
-        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Caps Lock indicator", targetLabel: "Caps Lock indicator", keywords: ["keyboard", "caps", "capslock", "lock", "indicator", "bar", "taskbar", "show", "hide"] },
-        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Num Lock indicator", targetLabel: "Num Lock indicator", keywords: ["keyboard", "num", "numlock", "lock", "indicator", "bar", "taskbar", "show", "hide"] },
         // Window Management
         { pageIndex: 1, pageName: "General", section: "Window Management", label: "Confirm before closing", targetLabel: "Confirm before closing", keywords: ["close", "confirm", "window", "dialog", "super+q"] },
         { pageIndex: 1, pageName: "General", section: "Window Management", label: "Auto-expand a single tiling window", targetLabel: "Auto-expand a single tiling window", keywords: ["niri", "window", "tiling", "maximize", "expand", "single", "column"] },
@@ -190,13 +168,13 @@ Item {
         { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Disable Niri animations", targetLabel: "Disable Niri animations", keywords: ["game", "gaming", "niri", "compositor", "animations"] },
         { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Disable Discover overlay", targetLabel: "Disable Discover overlay", keywords: ["game", "gaming", "discover", "overlay", "discord", "performance"] },
         { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Minimal mode", targetLabel: "Minimal mode", keywords: ["game", "gaming", "minimal", "lightweight", "performance", "shell"] },
-        { pageIndex: 16, pageName: "Effects", section: "Blur and glass", label: "Default blur backend", targetLabel: "Default blur backend", keywords: ["effects", "blur", "backend", "wallpaper", "compositor", "style", "glass"] },
-        { pageIndex: 16, pageName: "Effects", section: "Blur and glass", label: "Allow compositor blur", targetLabel: "Allow compositor blur", keywords: ["performance", "native", "blur", "niri", "gpu", "compositor", "glass"] },
-        { pageIndex: 16, pageName: "Effects", section: "Per-area overrides", label: "Bars", targetLabel: "Bars", keywords: ["effects", "bar", "area", "blur"] },
-        { pageIndex: 16, pageName: "Effects", section: "Per-area overrides", label: "Dock", targetLabel: "Dock", keywords: ["effects", "dock", "area", "blur"] },
-        { pageIndex: 16, pageName: "Effects", section: "Per-area overrides", label: "Islands and Ricelin", targetLabel: "Islands and Ricelin", keywords: ["effects", "islands", "ricelin", "pill", "blur"] },
-        { pageIndex: 16, pageName: "Effects", section: "Motion and power", label: "Reduce animations", targetLabel: "Reduce animations", keywords: ["motion", "animation", "reduce", "accessibility", "performance"] },
-        { pageIndex: 16, pageName: "Effects", section: "Motion and power", label: "Notify when a restart would free memory", targetLabel: "Notify when a restart would free memory", keywords: ["performance", "memory", "leak", "notification", "warning", "restart", "watchdog"] },
+        { pageIndex: 14, pageName: "Effects", section: "Blur and glass", label: "Default blur backend", targetLabel: "Default blur backend", keywords: ["effects", "blur", "backend", "wallpaper", "compositor", "style", "glass"] },
+        { pageIndex: 14, pageName: "Effects", section: "Blur and glass", label: "Allow compositor blur", targetLabel: "Allow compositor blur", keywords: ["performance", "native", "blur", "niri", "gpu", "compositor", "glass"] },
+        { pageIndex: 14, pageName: "Effects", section: "Per-area overrides", label: "Bars", targetLabel: "Bars", keywords: ["effects", "bar", "area", "blur"] },
+        { pageIndex: 14, pageName: "Effects", section: "Per-area overrides", label: "Dock", targetLabel: "Dock", keywords: ["effects", "dock", "area", "blur"] },
+        { pageIndex: 14, pageName: "Effects", section: "Per-area overrides", label: "Islands and Ricelin", targetLabel: "Islands and Ricelin", keywords: ["effects", "islands", "ricelin", "pill", "blur"] },
+        { pageIndex: 14, pageName: "Effects", section: "Motion and power", label: "Reduce animations", targetLabel: "Reduce animations", keywords: ["motion", "animation", "reduce", "accessibility", "performance"] },
+        { pageIndex: 14, pageName: "Effects", section: "Motion and power", label: "Notify when a restart would free memory", targetLabel: "Notify when a restart would free memory", keywords: ["performance", "memory", "leak", "notification", "warning", "restart", "watchdog"] },
         { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Suppress notifications", targetLabel: "Suppress notifications", keywords: ["game", "gaming", "notifications", "suppress", "hide", "popup", "silent"] },
         { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Hide reload toasts", targetLabel: "Hide reload toasts", keywords: ["game", "gaming", "reload", "toast", "notifications", "suppress"] },
 
@@ -285,7 +263,6 @@ Item {
         { pageIndex: 6, pageName: "Interface", section: "Notifications", label: "Do Not Disturb", targetLabel: "Do Not Disturb", keywords: ["notification", "dnd", "silent", "mute", "disturb", "quiet"] },
         { pageIndex: 6, pageName: "Interface", section: "On-Screen Display", label: "Media OSD", targetLabel: "Media OSD", keywords: ["osd", "media", "music", "player", "shortcuts", "pill", "track", "game", "automatic", "skip"] },
         { pageIndex: 6, pageName: "Interface", section: "On-Screen Display", label: "OSD timeout", targetLabel: "OSD timeout", keywords: ["osd", "volume", "brightness", "media", "timeout", "duration"] },
-        { pageIndex: 6, pageName: "Interface", section: "Floating tools (Super+G)", label: "Floating tools (Super+G)", targetLabel: "Floating tools (Super+G)", keywords: ["super+g", "super g", "overlay", "floating", "tools", "widgets", "desktop", "notes", "image", "crosshair", "mixer", "resources", "fps", "recorder"] },
         { pageIndex: 6, pageName: "Interface", section: "Screen Recording", label: "Recording audio", targetLabel: "Recording audio", keywords: ["screen", "record", "recording", "video", "capture", "wf-recorder", "audio", "system sound", "desktop audio", "microphone", "mic", "mix", "pipewire"] },
         { pageIndex: 6, pageName: "Interface", section: "Screen Recording", label: "Recordings folder", targetLabel: "Recordings folder", keywords: ["screen", "record", "recording", "video", "save", "folder", "path", "destination"] },
         { pageIndex: 6, pageName: "Interface", section: "Screen Recording", label: "Screenshots folder", targetLabel: "Screenshots folder", keywords: ["screenshot", "snip", "capture", "save", "folder", "path", "destination"] },
@@ -327,16 +304,13 @@ Item {
         // === Shortcuts (9) ===
         { pageIndex: 9, pageName: "Shortcuts", section: "", label: "Keyboard Shortcuts", targetLabel: "", keywords: ["shortcuts", "keybinds", "hotkeys", "keyboard", "niri", "super", "mod"] },
 
-        // === About (10) ===
-        { pageIndex: 10, pageName: "About", section: "", label: "About ii", targetLabel: "", keywords: ["about", "version", "credits", "github", "info"] },
-
-        // === Monitors (11) ===
-        { pageIndex: 11, pageName: "Monitors", section: "Shell visibility", label: "Primary monitor", targetLabel: "Primary monitor", keywords: ["monitor", "screen", "display", "primary", "output", "fallback"] },
-        { pageIndex: 11, pageName: "Monitors", section: "Overview placement", label: "Active screen only", targetLabel: "Active screen only", keywords: ["overview", "monitor", "screen", "focused", "active", "output"] },
-        { pageIndex: 11, pageName: "Monitors", section: "Waffle shell surfaces", label: "Taskbar", targetLabel: "Taskbar", keywords: ["monitor", "screen", "display", "bar", "taskbar", "visibility"] },
-        { pageIndex: 11, pageName: "Monitors", section: "Popups", label: "Notification popups", targetLabel: "Notification popups", keywords: ["monitor", "screen", "display", "notifications", "popups", "visibility"] },
-        { pageIndex: 11, pageName: "Monitors", section: "Desktop widgets", label: "Desktop widgets", targetLabel: "Desktop widgets", keywords: ["monitor", "screen", "display", "desktop", "widgets", "layout", "visibility"] },
-        { pageIndex: 11, pageName: "Monitors", section: "Popups", label: "OSD indicators", targetLabel: "OSD indicators", keywords: ["monitor", "screen", "display", "media", "osd", "volume", "brightness", "visibility"] }
+        // === Monitors (10) ===
+        { pageIndex: 10, pageName: "Monitors", section: "Shell visibility", label: "Primary monitor", targetLabel: "Primary monitor", keywords: ["monitor", "screen", "display", "primary", "output", "fallback"] },
+        { pageIndex: 10, pageName: "Monitors", section: "Overview placement", label: "Active screen only", targetLabel: "Active screen only", keywords: ["overview", "monitor", "screen", "focused", "active", "output"] },
+        { pageIndex: 10, pageName: "Monitors", section: "Waffle shell surfaces", label: "Taskbar", targetLabel: "Taskbar", keywords: ["monitor", "screen", "display", "bar", "taskbar", "visibility"] },
+        { pageIndex: 10, pageName: "Monitors", section: "Popups", label: "Notification popups", targetLabel: "Notification popups", keywords: ["monitor", "screen", "display", "notifications", "popups", "visibility"] },
+        { pageIndex: 10, pageName: "Monitors", section: "Desktop widgets", label: "Desktop widgets", targetLabel: "Desktop widgets", keywords: ["monitor", "screen", "display", "desktop", "widgets", "layout", "visibility"] },
+        { pageIndex: 10, pageName: "Monitors", section: "Popups", label: "OSD indicators", targetLabel: "OSD indicators", keywords: ["monitor", "screen", "display", "media", "osd", "volume", "brightness", "visibility"] }
     ]
 
     function highlightTerms(text: string, terms: list<string>): string {

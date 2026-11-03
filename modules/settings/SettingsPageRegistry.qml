@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import qs
 import qs.services
 import qs.modules.common
 import "../common/PanelFamilyPolicy.js" as FamilyPolicy
@@ -19,7 +20,7 @@ Singleton {
     readonly property int retiredTlpPageIndex: 28
     readonly property int systemPageIndex: 1
     readonly property int barPageIndex: 2
-    readonly property int panelsPageIndex: 5
+    readonly property int panelsPageIndex: 10
 
     // A renderer-specific page is shown only for its active panel family.
     // Keep historical slots in the registry so stored indices remain stable.
@@ -30,19 +31,31 @@ Singleton {
                 || root.isHiddenLegacyIndex(index) || !root.pages[index]) return false
         if (index === 38 || index === 39) return true
         if (root.abyssFamily)
-            return ![11,26,32].includes(index)
+            return ![11,26,32,34].includes(index)
         if (root.waffleFamily)
-            return index !== root.barPageIndex && index !== 16 && index !== 29 && index < 32
+            return ![root.barPageIndex, 14, 16, 22, 23, 29].includes(index) && index < 32
         return index !== 11 && index < 32
     }
 
     // Retired, missing and out-of-range persisted page IDs must not reach a
     // Loader. Use the same live Panels page as the legacy-index migration.
     function safePageIndex(index: int): int {
-        if (root.abyssFamily && (index === 26 || index === 32))
+        if (index === 0)
+            return root.isPageApplicable(root.barPageIndex) ? root.barPageIndex : 4
+        if (root.abyssFamily && (index === 26 || index === 32 || index === 34))
             return root.barPageIndex
+        if (index === 5)
+            return 10
+        if (index === 8)
+            return 25
+        if (index === 16 && root.isPageApplicable(22))
+            return 22
+        if (index === 17)
+            return 39
+        if (index === 29 && root.isPageApplicable(23))
+            return 23
         if (root.isPageApplicable(index)) return index
-        return root.isPageApplicable(root.panelsPageIndex) ? root.panelsPageIndex : 0
+        return root.isPageApplicable(root.barPageIndex) ? root.barPageIndex : 4
     }
 
     // Stable route keys survive page reordering and legacy numeric slot
@@ -52,7 +65,12 @@ Singleton {
     function pageIndexForKey(key: string): int {
         const value = String(key ?? "").trim()
         if (!value) return -1
-        if (root.abyssFamily && ["shell-layout","bar"].includes(value)) return value === "bar" ? 34 : root.barPageIndex
+        if (value === "autostart" || value === "applications") return 39
+        if (value === "advanced") return 25
+        if (value === "panels") return 10
+        if (value === "dashboard") return root.isPageApplicable(22) ? 22 : -1
+        if (value === "overview") return root.isPageApplicable(23) ? 23 : -1
+        if (root.abyssFamily && ["shell-layout","bar"].includes(value)) return root.barPageIndex
         return root.pages.findIndex((page, index) => page?.key === value
             && page?.devNavigationHidden !== true
             && root.isPageApplicable(index))
@@ -87,6 +105,7 @@ Singleton {
     property bool _legacyBarBackgroundMigrationDone: false
     property bool _legacySidebarSurfaceMigrationDone: false
     property bool _legacyScreenEdgeShadowMigrationDone: false
+    property bool _legacyWaffleSettingsStyleMigrationDone: false
 
     readonly property var customPageNames: SettingsPageRegistryData.customPageNames
 
@@ -105,7 +124,7 @@ Singleton {
 
     function isHiddenLegacyIndex(index: int): bool {
         return SettingsPageRegistryData.legacyHiddenIndexes.includes(index)
-            || (root.abyssFamily && (index === 26 || index === 32))
+            || (root.abyssFamily && (index === 26 || index === 32 || index === 34))
     }
 
     readonly property var defaultCategories: SettingsPageRegistryData.defaultCategories.map(category => ({
@@ -114,7 +133,7 @@ Singleton {
 
     readonly property var categories: SettingsPageRegistryData.categories.map(category => ({
         label:category.label,pages:category.pages.filter(index=>root.isPageApplicable(index))
-    })).filter(category=>category.label !== "More" || category.pages.length > 0)
+    })).filter(category=>!["More","Abyss"].includes(category.label) || category.pages.length > 0)
 
     readonly property var hiddenPages: SettingsPageRegistryData.hiddenPages.filter(
         index => !root.isHiddenLegacyIndex(index))
@@ -144,8 +163,32 @@ Singleton {
             return
 
         const current = Number(Persistent.states.settings.iiPage ?? -1)
-        if (root.abyssFamily && (current === 26 || current === 32)) {
+        if (current === 0) {
+            Persistent.states.settings.iiPage = root.isPageApplicable(root.barPageIndex) ? root.barPageIndex : 4
+            return
+        }
+        if (root.abyssFamily && (current === 26 || current === 32 || current === 34)) {
             Persistent.states.settings.iiPage = root.barPageIndex
+            return
+        }
+        if (current === 5) {
+            Persistent.states.settings.iiPage = 10
+            return
+        }
+        if (current === 8) {
+            Persistent.states.settings.iiPage = 25
+            return
+        }
+        if (current === 16) {
+            Persistent.states.settings.iiPage = root.isPageApplicable(22) ? 22 : root.panelsPageIndex
+            return
+        }
+        if (current === 17) {
+            Persistent.states.settings.iiPage = 39
+            return
+        }
+        if (current === 29) {
+            Persistent.states.settings.iiPage = root.isPageApplicable(23) ? 23 : root.panelsPageIndex
             return
         }
         if (current === root.retiredTlpPageIndex) {
@@ -235,6 +278,15 @@ Singleton {
         }
     }
 
+    function _migrateLegacyWaffleSettingsStyle(): void {
+        if (root._legacyWaffleSettingsStyleMigrationDone || !Config.ready)
+            return
+
+        root._legacyWaffleSettingsStyleMigrationDone = true
+        if ((Config.options?.waffles?.settings?.useMaterialStyle ?? false) !== true)
+            Config.setNestedValue("waffles.settings.useMaterialStyle", true)
+    }
+
     function consumeLegacyTlpPowerRedirect(): bool {
         if (!root._legacyTlpPowerRedirectPending)
             return false
@@ -251,6 +303,8 @@ Singleton {
         return SettingsPageRegistryData.searchIndex()
             .filter(entry => !root.isHiddenLegacyIndex(entry.pageIndex))
             .map(entry => {
+                if (root.abyssFamily && entry.pageIndex === 10 && entry.section === Translation.tr("Notifications"))
+                    return Object.assign({}, entry, { pageIndex: 33, pageName: root.pages[33].name })
                 const route = FamilyPolicy.settingsRoute(Config.options?.panelFamily,entry.pageIndex,entry.section)
                 if (route.pageIndex !== entry.pageIndex)
                     return Object.assign({},entry,route,{pageName:"Abyss"})
@@ -268,6 +322,7 @@ Singleton {
         root._migrateLegacyBarBackground()
         root._migrateLegacySidebarSurface()
         root._migrateLegacyScreenEdgeShadow()
+        root._migrateLegacyWaffleSettingsStyle()
     }
 
     Connections {
@@ -288,6 +343,7 @@ Singleton {
                 root._migrateLegacyBarBackground()
                 root._migrateLegacySidebarSurface()
                 root._migrateLegacyScreenEdgeShadow()
+                root._migrateLegacyWaffleSettingsStyle()
             }
         }
     }

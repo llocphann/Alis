@@ -201,7 +201,12 @@ Singleton {
 
     Connections {
         target: DesktopEntries.applications
-        function onValuesChanged() { internal.rebuildTimer.restart() }
+        function onValuesChanged() {
+            if (root._cachedList.length === 0)
+                root._rebuildCache()
+            else
+                internal.rebuildTimer.restart()
+        }
     }
 
     Component.onCompleted: _rebuildCache()
@@ -548,6 +553,7 @@ Singleton {
     // normalization for Electron/AppImage apps whose window appId doesn't match
     // their .desktop file (e.g., "@trezor/suite-desktop" → "trezor-suite.desktop").
     function lookupDesktopEntry(appId) {
+        void root._cacheRevision;
         if (!appId || appId.length === 0) return null;
 
         // 1. Quickshell's built-in heuristic (handles simple cases)
@@ -713,7 +719,10 @@ Singleton {
     }
 
     function guessIcon(str) {
+        void root._cacheRevision;
         if (!str || str.length == 0) return "image-missing";
+        if (str.startsWith("file://")) return str.substring(7);
+        if (str.startsWith("/")) return str;
 
         // Quickshell's desktop entry lookup
         const entry = DesktopEntries.heuristicLookup(str);
@@ -807,10 +816,13 @@ Singleton {
     // Returns a ready-to-use icon source (handles both icon names and absolute paths)
     function getIconSource(str, fallback): string {
         fallback = fallback ?? "image-missing"
+        if (str && (str.startsWith("/") || str.startsWith("file://"))) {
+            return resolveIcon(str, fallback);
+        }
         const icon = guessIcon(str);
         // Absolute path - return as file:// URL
-        if (icon.startsWith("/")) {
-            return "file://" + icon;
+        if (icon.startsWith("/") || icon.startsWith("file://")) {
+            return resolveIcon(icon, fallback);
         }
         // Icon name - resolve via theme
         return Quickshell.iconPath(icon, fallback);

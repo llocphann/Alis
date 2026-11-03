@@ -15,6 +15,8 @@ import Qt5Compat.GraphicalEffects
 Item {
     id: root
     property bool vertical: false
+    property real contentRotation: 0
+    property bool popupVertical: root.vertical
     readonly property string barPosition: root.vertical
         ? ((Config.options?.bar?.bottom ?? false) ? "right" : "left")
         : ((Config.options?.bar?.bottom ?? false) ? "bottom" : "top")
@@ -612,6 +614,7 @@ Item {
                     }
 
                     StyledText { // Workspace number text
+                        rotation: -root.contentRotation
                         opacity: root.showNumbers
                             || ((root.alwaysShowNumbers && (!root.showAppIcons || !workspaceButtonBackground.biggestWindow || root.showNumbers))
                             || (root.showNumbers && !root.showAppIcons)
@@ -643,6 +646,7 @@ Item {
                     }
                     Loader { // Compact workspace marker when no app icon/number is shown
                         id: wsMarker
+                        rotation: -root.contentRotation
                         opacity: (root.alwaysShowNumbers
                             || root.showNumbers
                             || (root.showAppIcons && workspaceButtonBackground.biggestWindow)
@@ -694,6 +698,7 @@ Item {
                     }
                     Item { // Main app icon
                         anchors.centerIn: parent
+                        rotation: -root.contentRotation
                         width: workspaceButtonWidth
                         height: workspaceButtonWidth
                         opacity: !root.showAppIcons ? 0 :
@@ -758,6 +763,7 @@ Item {
         id: workspaceOverviewPopup
         dockHovered: root.workspaceButtonHovered
         barPosition: root.barPosition
+        verticalLayout: root.popupVertical
     }
 
     // Compatibility fallback when workspace Overview hover is disabled.
@@ -765,6 +771,7 @@ Item {
         id: workspacePreviewPopup
         dockHovered: root.workspaceButtonHovered
         barPosition: root.barPosition
+        verticalLayout: root.popupVertical
     }
 
     onColumnModeChanged: {
@@ -902,6 +909,7 @@ Item {
                     // App icon - always visible in column mode
                     Item {
                         anchors.centerIn: parent
+                        rotation: -root.contentRotation
                         width: workspaceButtonWidth
                         height: workspaceButtonWidth
                         opacity: 1

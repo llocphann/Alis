@@ -98,11 +98,8 @@ DEPS_AUDIO_PAVUCONTROL="arch:pavucontrol fedora:pavucontrol debian:pavucontrol u
 DEPS_AUDIO_CAVA="arch:AUR:cava fedora:cava debian:COMPILE:https://github.com/karlstav/cava ubuntu:COMPILE:https://github.com/karlstav/cava opensuse:cava void:cava"
 DEPS_AUDIO_EASYEFFECTS="arch:easyeffects fedora:easyeffects debian:easyeffects ubuntu:easyeffects opensuse:easyeffects void:easyeffects"
 DEPS_AUDIO_MPV="arch:mpv fedora:mpv debian:mpv ubuntu:mpv opensuse:mpv void:mpv"
-DEPS_AUDIO_MPV_MPRIS="arch:mpv-mpris fedora:mpv-mpris debian:mpv-mpris ubuntu:mpv-mpris opensuse:mpv-mpris void:mpv-mpris"
 DEPS_AUDIO_MPD="arch:mpd fedora:mpd debian:mpd ubuntu:mpd opensuse:mpd void:mpd"
 DEPS_AUDIO_MPD_MPRIS="arch:mpd-mpris fedora:- debian:- ubuntu:- opensuse:- void:-"
-DEPS_AUDIO_YTDLP="arch:yt-dlp fedora:yt-dlp debian:yt-dlp ubuntu:yt-dlp opensuse:yt-dlp void:yt-dlp"
-DEPS_AUDIO_YTMUSICAPI="arch:python-ytmusicapi fedora:python3-ytmusicapi debian:python3-ytmusicapi ubuntu:python3-ytmusicapi opensuse:python3-ytmusicapi void:python3-ytmusicapi"
 DEPS_AUDIO_SOCAT="arch:socat fedora:socat debian:socat ubuntu:socat opensuse:socat void:socat"
 
 ###############################################################################

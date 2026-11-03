@@ -15,6 +15,13 @@ SLOT_FALLBACKS = {
     "browser": ["firefox", "zen-browser", "librewolf", "chromium", "google-chrome-stable", "brave-browser", "xdg-open"],
     "editor": ["code", "codium", "zeditor", "zed", "kate", "gnome-text-editor", "gedit", "mousepad", "nvim"],
     "fileManager": ["nautilus", "dolphin", "thunar", "nemo", "pcmanfm-qt", "pcmanfm", "caja", "xdg-open"],
+    "pdfViewer": ["okular", "evince", "papers", "zathura", "sioyek", "qpdfview", "firefox", "zen-browser", "xdg-open"],
+    "officeSuite": ["libreoffice", "soffice", "onlyoffice-desktopeditors", "wps", "abiword", "xdg-open"],
+    "htmlViewer": ["firefox", "zen-browser", "chromium", "google-chrome-stable", "brave-browser", "code", "xdg-open"],
+    "imageViewer": ["loupe", "gwenview", "eog", "imv", "swayimg", "qview", "feh", "nsxiv", "nomacs", "gimp", "xdg-open"],
+    "videoPlayer": ["mpv", "vlc", "celluloid", "haruna", "clapper", "showtime", "totem", "smplayer", "xdg-open"],
+    "audioPlayer": ["amberol", "g4music", "elisa", "rhythmbox", "strawberry", "audacious", "vlc", "mpv", "xdg-open"],
+    "archiveManager": ["file-roller", "ark", "engrampa", "xarchiver", "peazip", "nautilus", "dolphin", "xdg-open"],
     "manageUser": ["kcmshell6 kcm_users", "gnome-control-center user-accounts", "mate-user-admin"],
     "network": ["nm-connection-editor", "kcmshell6 kcm_networkmanagement", "gnome-control-center network"],
     "networkEthernet": ["nm-connection-editor", "kcmshell6 kcm_networkmanagement", "gnome-control-center network"],
@@ -81,6 +88,138 @@ KNOWN_SLOT_KEYWORDS = {
             "org.gnome.Nautilus", "nautilus", "org.kde.dolphin", "dolphin",
             "thunar", "org.xfce.Thunar", "nemo", "pcmanfm-qt", "org.kde.krusader",
             "com.system76.CosmicFiles",
+        },
+    },
+    "pdfViewer": {
+        "categories": set(),
+        "mimes": {"application/pdf"},
+        "bins": {
+            "okular", "evince", "papers", "zathura", "sioyek", "qpdfview",
+            "atril", "xreader", "mupdf", "foliate", "firefox", "zen-browser",
+            "zen", "chromium", "google-chrome", "google-chrome-stable",
+            "brave", "brave-browser", "libreoffice",
+        },
+        "ids": {
+            "org.kde.okular", "okular", "org.gnome.Evince", "evince",
+            "org.gnome.Papers", "org.pwmt.zathura", "com.github.ahrm.sioyek",
+            "com.github.johnfactotum.Foliate", "firefox", "org.mozilla.firefox",
+            "app.zen_browser.zen", "zen",
+        },
+    },
+    "officeSuite": {
+        "categories": {"WordProcessor", "Spreadsheet", "Presentation"},
+        "mimes": {
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/msword",
+            "application/vnd.oasis.opendocument.text",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        },
+        "bins": {
+            "libreoffice", "soffice", "lowriter", "localc", "loimpress",
+            "onlyoffice-desktopeditors", "desktopeditors", "wps", "et", "wpp",
+            "abiword", "calligrawords", "gnumeric",
+        },
+        "ids": {
+            "libreoffice-writer", "libreoffice-calc", "libreoffice-impress",
+            "libreoffice-startcenter", "org.libreoffice.LibreOffice",
+            "org.onlyoffice.desktopeditors", "com.wps.Office", "com.abisource.AbiWord",
+        },
+    },
+    "htmlViewer": {
+        "categories": {"WebBrowser"},
+        "mimes": {"text/html", "application/xhtml+xml"},
+        "bins": {
+            "firefox", "zen-browser", "zen", "librewolf", "chromium",
+            "google-chrome", "google-chrome-stable", "brave", "brave-browser",
+            "vivaldi", "code", "codium", "zed", "zeditor", "nvim", "kate",
+            "gnome-text-editor", "gedit",
+        },
+        "ids": {
+            "firefox", "org.mozilla.firefox", "app.zen_browser.zen", "zen",
+            "io.gitlab.librewolf-community", "librewolf", "org.chromium.Chromium",
+            "chromium", "com.google.Chrome", "google-chrome", "com.brave.Browser",
+            "brave-browser", "code", "com.visualstudio.code", "com.vscodium.codium",
+            "dev.zed.Zed", "org.kde.kate",
+        },
+    },
+    "imageViewer": {
+        "categories": {"ImageViewer", "RasterGraphics", "Photography"},
+        "mimes": {
+            "image/png", "image/jpeg", "image/gif", "image/webp",
+            "image/bmp", "image/svg+xml", "image/tiff", "image/avif",
+        },
+        "bins": {
+            "loupe", "gwenview", "eog", "imv", "swayimg", "feh", "nsxiv",
+            "sxiv", "qview", "nomacs", "viewnior", "ristretto", "pix",
+            "gthumb", "geeqie", "gimp", "inkscape", "krita", "darktable",
+            "rawtherapee", "okular", "oculante", "photoqt",
+        },
+        "ids": {
+            "org.gnome.Loupe", "loupe", "org.kde.gwenview", "gwenview",
+            "org.gnome.eog", "eog", "imv", "swayimg", "com.interversehq.qView",
+            "org.nomacs.ImageLounge", "org.gnome.gThumb", "org.gimp.GIMP",
+            "org.inkscape.Inkscape", "org.kde.krita", "org.darktable.Darktable",
+            "io.github.woelper.Oculante",
+        },
+    },
+    "videoPlayer": {
+        "categories": {"Video"},
+        "mimes": {
+            "video/mp4", "video/x-matroska", "video/webm", "video/quicktime",
+            "video/x-msvideo", "video/mpeg", "video/ogg",
+        },
+        "bins": {
+            "mpv", "vlc", "celluloid", "haruna", "clapper", "showtime",
+            "totem", "smplayer", "dragon", "kodi", "bomi", "mplayer",
+            "ffplay", "parole",
+        },
+        "ids": {
+            "mpv", "io.mpv.Mpv", "vlc", "org.videolan.VLC",
+            "io.github.celluloid_player.Celluloid", "org.kde.haruna",
+            "com.github.rafostar.Clapper", "org.gnome.Showtime",
+            "org.gnome.Totem", "info.smplayer.SMPlayer",
+            "org.kde.dragonplayer", "tv.kodi.Kodi",
+        },
+    },
+    "audioPlayer": {
+        "categories": {"Music"},
+        "mimes": {
+            "audio/mpeg", "audio/flac", "audio/x-flac", "audio/ogg",
+            "audio/x-vorbis+ogg", "audio/wav", "audio/x-wav",
+            "audio/mp4", "audio/aac", "audio/opus",
+        },
+        "bins": {
+            "amberol", "g4music", "elisa", "rhythmbox", "strawberry",
+            "audacious", "clementine", "lollypop", "deadbeef", "qmmp",
+            "pragha", "quodlibet", "tauonmb", "fooyin", "vlc", "mpv",
+            "celluloid", "cmus", "ncmpcpp", "musikcube",
+        },
+        "ids": {
+            "io.bassi.Amberol", "com.github.neithern.g4music",
+            "org.kde.elisa", "org.gnome.Rhythmbox3",
+            "org.strawberrymusicplayer.strawberry", "audacious",
+            "org.clementine_player.Clementine", "org.gnome.Lollypop",
+            "org.fooyin.fooyin", "com.spotify.Client",
+            "vlc", "org.videolan.VLC", "mpv", "io.mpv.Mpv",
+        },
+    },
+    "archiveManager": {
+        "categories": {"Archiving", "Compression"},
+        "mimes": {
+            "application/zip", "application/x-tar", "application/x-compressed-tar",
+            "application/gzip", "application/x-7z-compressed", "application/vnd.rar",
+            "application/x-rar", "application/x-bzip-compressed-tar",
+            "application/x-xz-compressed-tar", "application/zstd",
+        },
+        "bins": {
+            "file-roller", "ark", "engrampa", "xarchiver", "peazip",
+            "lxqt-archiver", "7zfm", "nautilus", "dolphin", "thunar", "nemo",
+        },
+        "ids": {
+            "org.gnome.FileRoller", "file-roller", "org.kde.ark", "ark",
+            "engrampa", "org.mate.engrampa", "xarchiver",
+            "io.github.peazip.PeaZip", "org.lxqt.lxqt-archiver",
         },
     },
     "manageUser": {
@@ -348,10 +487,26 @@ def _candidate_application_dirs() -> list[tuple[Path, str, str, Path | None]]:
     return result
 
 
-def _classify_slots(desktop_id: str, app_id: str, exec_bin: str, categories: set[str], mimes: set[str], exec_str: str) -> list[str]:
+def _classify_slots(
+    desktop_id: str,
+    app_id: str,
+    exec_bin: str,
+    categories: set[str],
+    mimes: set[str],
+    exec_str: str,
+    name: str = "",
+    comment: str = "",
+) -> list[str]:
     slots = []
     stem = desktop_id[:-8] if desktop_id.endswith(".desktop") else desktop_id
+    stem_l = stem.lower()
+    if stem_l.startswith("alis-app-"):
+        stem_l = stem_l[len("alis-app-") :]
     base_bin = os.path.basename(exec_bin).lower()
+    name_l = (name or "").lower()
+    comment_l = (comment or "").lower()
+    combined_tokens = set(re.findall(r"[a-z0-9]+", f"{stem_l} {base_bin} {name_l}"))
+
     for slot_id, rules in KNOWN_SLOT_KEYWORDS.items():
         matched = False
         if rules["categories"] and (categories & rules["categories"]):
@@ -364,7 +519,20 @@ def _classify_slots(desktop_id: str, app_id: str, exec_bin: str, categories: set
                 matched = True
         elif base_bin in {b.lower() for b in rules["bins"]}:
             matched = True
-        elif stem.lower() in {i.lower() for i in rules["ids"]} or (app_id and app_id.lower() in {i.lower() for i in rules["ids"]}):
+        elif stem.lower() in {i.lower() for i in rules["ids"]} or stem_l in {i.lower() for i in rules["ids"]} or (app_id and app_id.lower() in {i.lower() for i in rules["ids"]}):
+            matched = True
+        elif slot_id == "pdfViewer" and ("pdf" in combined_tokens or "pdf" in stem_l or "pdf" in name_l):
+            matched = True
+        elif slot_id == "officeSuite" and (
+            bool(combined_tokens & {"word", "wordcraft", "office", "onlyoffice", "libreoffice", "writer", "docx"})
+            or "word files" in comment_l
+            or "spreadsheet" in comment_l
+        ):
+            matched = True
+        elif slot_id == "editor" and not (("WebBrowser" in categories) or ("FileManager" in categories)) and (
+            bool(combined_tokens & {"codium", "vscodium", "vscode", "antigravity", "zed", "neovim", "nvim", "kate", "gedit"})
+            or "code editing" in comment_l
+        ):
             matched = True
         elif slot_id in ("network", "networkEthernet") and "nmtui" in exec_str:
             matched = True
@@ -377,8 +545,19 @@ def _classify_slots(desktop_id: str, app_id: str, exec_bin: str, categories: set
     return slots
 
 
-def _format_source_badge(is_flatpak: bool, origin: str, installation: str, duplicate_flatpak_installs: bool) -> str:
+def _format_source_badge(
+    is_flatpak: bool,
+    origin: str,
+    installation: str,
+    duplicate_flatpak_installs: bool,
+    desktop_id: str = "",
+    exec_str: str = "",
+) -> str:
     if not is_flatpak:
+        if desktop_id.startswith("alis-app-"):
+            if ".appimage" in (exec_str or "").lower():
+                return "AppImage"
+            return "Portable"
         return "Native"
     orig_clean = (origin or "").strip()
     if orig_clean.lower() == "flathub":
@@ -393,7 +572,102 @@ def _format_source_badge(is_flatpak: bool, origin: str, installation: str, dupli
     return base
 
 
+def _infer_portable_mimes(slug_or_name: str, categories_str: str = "", comment_str: str = "") -> list[str]:
+    text = f"{slug_or_name} {categories_str} {comment_str}".lower()
+    tokens = set(re.findall(r"[a-z0-9]+", text))
+    inferred: list[str] = []
+    if "pdf" in tokens or "pdf" in slug_or_name.lower():
+        inferred.append("application/pdf")
+    if tokens & {"word", "wordcraft", "wordprocessor", "docx", "onlyoffice", "libreoffice"} or "word files" in text:
+        inferred.extend([
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/msword",
+            "application/vnd.oasis.opendocument.text",
+        ])
+    if tokens & {"codium", "vscodium", "vscode", "antigravity", "texteditor"} or "code editing" in text:
+        inferred.append("text/plain")
+    if tokens & {"image", "photo", "gimp", "krita", "inkscape", "oculante", "qview", "loupe", "gwenview"}:
+        inferred.extend(["image/png", "image/jpeg", "image/webp", "image/svg+xml"])
+    if tokens & {"video", "mpv", "vlc", "clapper", "haruna", "smplayer", "celluloid"}:
+        inferred.extend(["video/mp4", "video/x-matroska", "video/webm"])
+    if tokens & {"music", "audio", "amberol", "strawberry", "audacious", "deadbeef", "fooyin", "elisa"}:
+        inferred.extend(["audio/mpeg", "audio/flac", "audio/ogg", "audio/x-wav"])
+    if tokens & {"archive", "peazip", "7zip", "ark", "fileroller"}:
+        inferred.extend(["application/zip", "application/x-compressed-tar", "application/x-7z-compressed"])
+    return inferred
+
+
+def _repair_managed_desktop_entries() -> None:
+    """Ensure ~/.local/share/applications/alis-app-*.desktop files have valid Exec and inferred MimeType."""
+    if os.environ.get("ALIS_DEFAULT_APPS_XDG_DIRS"):
+        return
+    xdg_data_home = Path(os.environ.get("XDG_DATA_HOME") or (Path.home() / ".local" / "share"))
+    apps_dir = xdg_data_home / "applications"
+    if not apps_dir.is_dir():
+        return
+    any_updated = False
+    for dfile in apps_dir.glob("alis-app-*.desktop"):
+        if not dfile.is_file():
+            continue
+        try:
+            raw = dfile.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        new_lines = []
+        changed = False
+        name_val = dfile.stem
+        cat_val = ""
+        comment_val = ""
+        existing_mimes: list[str] = []
+        mime_line_idx = -1
+
+        for idx, line in enumerate(raw.splitlines()):
+            m = re.match(r'^Exec="([^"\s]+)"(\s+.*)?$', line)
+            if m:
+                rest = m.group(2) or ""
+                new_lines.append(f"Exec={m.group(1)}{rest}")
+                changed = True
+                continue
+            if line.startswith("Name="):
+                name_val = line[5:].strip()
+            elif line.startswith("Categories="):
+                cat_val = line[11:].strip()
+            elif line.startswith("Comment="):
+                comment_val = line[8:].strip()
+            elif line.startswith("MimeType="):
+                mime_line_idx = len(new_lines)
+                existing_mimes = [x.strip() for x in line[9:].split(";") if x.strip()]
+            new_lines.append(line)
+
+        inferred = _infer_portable_mimes(f"{dfile.stem} {name_val}", cat_val, comment_val)
+        if inferred:
+            merged_mimes = list(existing_mimes)
+            for im in inferred:
+                if im not in merged_mimes:
+                    merged_mimes.append(im)
+            if merged_mimes != existing_mimes:
+                mime_line = "MimeType=" + ";".join(merged_mimes) + ";"
+                if mime_line_idx >= 0:
+                    new_lines[mime_line_idx] = mime_line
+                else:
+                    new_lines.append(mime_line)
+                changed = True
+
+        if changed:
+            try:
+                dfile.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+                any_updated = True
+            except Exception:
+                pass
+    if any_updated and shutil.which("update-desktop-database"):
+        try:
+            subprocess.run(["update-desktop-database", str(apps_dir)], capture_output=True, timeout=5)
+        except Exception:
+            pass
+
+
 def discover_applications() -> tuple[list[dict], bool]:
+    _repair_managed_desktop_entries()
     fixture_path = os.environ.get("ALIS_DEFAULT_APPS_FIXTURE_JSON")
     if fixture_path and Path(fixture_path).is_file():
         data = json.loads(Path(fixture_path).read_text(encoding="utf-8"))
@@ -478,7 +752,8 @@ def discover_applications() -> tuple[list[dict], bool]:
 
             categories = {c.strip() for c in sec.get("Categories", "").split(";") if c.strip()}
             mimes = {m.strip() for m in sec.get("MimeType", "").split(";") if m.strip()}
-            slots = _classify_slots(desktop_id, app_id, exec_bin, categories, mimes, launch_cmd)
+            comment_str = sec.get("Comment", "").strip()
+            slots = _classify_slots(desktop_id, app_id, exec_bin, categories, mimes, launch_cmd, name=name, comment=comment_str)
             is_terminal_app = sec.get("Terminal", "false").strip().lower() == "true"
 
             raw_entries[identity_key] = {
@@ -487,7 +762,7 @@ def discover_applications() -> tuple[list[dict], bool]:
                 "appId": app_id,
                 "name": name,
                 "genericName": sec.get("GenericName", "").strip(),
-                "comment": sec.get("Comment", "").strip(),
+                "comment": comment_str,
                 "icon": sec.get("Icon", "").strip() or "application-x-executable",
                 "exec": launch_cmd,
                 "execBin": os.path.basename(tokens[0]),
@@ -511,7 +786,12 @@ def discover_applications() -> tuple[list[dict], bool]:
     for item in raw_entries.values():
         dup_fp = item["isFlatpak"] and fp_counts.get(item["appId"], 0) > 1
         item["sourceBadge"] = _format_source_badge(
-            item["isFlatpak"], item["origin"], item["installation"], dup_fp
+            item["isFlatpak"],
+            item["origin"],
+            item["installation"],
+            dup_fp,
+            desktop_id=item["desktopId"],
+            exec_str=item["exec"],
         )
         apps.append(item)
 
@@ -523,16 +803,74 @@ def _run_query(cmd: list[str]) -> tuple[int, str]:
     bin_path = _which(cmd[0])
     if not bin_path:
         return 127, ""
+    env = os.environ.copy()
+    if not os.environ.get("ALIS_DEFAULT_APPS_PATH"):
+        xdg_data_home = Path(env.get("XDG_DATA_HOME") or (Path.home() / ".local" / "share"))
+        extra_dirs = [
+            str(xdg_data_home / "flatpak" / "exports" / "share"),
+            "/var/lib/flatpak/exports/share",
+            "/usr/local/share",
+            "/usr/share",
+        ]
+        cur_dirs = [d for d in (env.get("XDG_DATA_DIRS") or "").split(":") if d.strip()]
+        for ed in extra_dirs:
+            if ed not in cur_dirs:
+                cur_dirs.append(ed)
+        env["XDG_DATA_DIRS"] = ":".join(cur_dirs)
     try:
-        proc = subprocess.run([bin_path] + cmd[1:], text=True, capture_output=True, timeout=3, check=False)
+        proc = subprocess.run([bin_path] + cmd[1:], text=True, capture_output=True, timeout=3, check=False, env=env)
         return proc.returncode, proc.stdout.strip()
     except Exception as exc:
         return 1, str(exc)
 
 
-def query_xdg_defaults() -> dict:
+def _read_user_mimeapps_defaults() -> dict[str, str]:
+    """Read [Default Applications] from user mimeapps.list when running on the real session."""
+    if os.environ.get("ALIS_DEFAULT_APPS_PATH"):
+        return {}
+    xdg_cfg = Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"))
+    mimeapps = xdg_cfg / "mimeapps.list"
+    if not mimeapps.is_file():
+        return {}
+    defaults: dict[str, str] = {}
+    in_default = False
+    try:
+        for raw_line in mimeapps.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith("[") and line.endswith("]"):
+                in_default = line.lower() == "[default applications]"
+                continue
+            if in_default and "=" in line:
+                k, v = line.split("=", 1)
+                first = v.split(";")[0].strip()
+                if k.strip() and first:
+                    defaults[k.strip()] = first
+    except Exception:
+        pass
+    return defaults
+
+
+def query_xdg_defaults(installed_ids: set[str] | None = None) -> dict:
+    _repair_managed_desktop_entries()
     xdg_settings_ok = _which("xdg-settings") is not None
     xdg_mime_ok = _which("xdg-mime") is not None
+
+    if installed_ids is None and not os.environ.get("ALIS_DEFAULT_APPS_PATH"):
+        try:
+            apps, _ = discover_applications()
+            installed_ids = {str(a.get("desktopId") or "") for a in apps if a.get("installed", True)}
+        except Exception:
+            installed_ids = set()
+
+    user_mimeapps = _read_user_mimeapps_defaults()
+
+    def _resolve_mime(mime_type: str, queried: str) -> str:
+        explicit = user_mimeapps.get(mime_type, "")
+        if explicit and installed_ids and explicit in installed_ids:
+            return explicit
+        return queried
 
     _, web_browser = _run_query(["xdg-settings", "get", "default-web-browser"]) if xdg_settings_ok else (127, "")
     _, http_handler = _run_query(["xdg-mime", "query", "default", "x-scheme-handler/http"]) if xdg_mime_ok else (127, "")
@@ -540,6 +878,26 @@ def query_xdg_defaults() -> dict:
     _, html_handler = _run_query(["xdg-mime", "query", "default", "text/html"]) if xdg_mime_ok else (127, "")
     _, dir_handler = _run_query(["xdg-mime", "query", "default", "inode/directory"]) if xdg_mime_ok else (127, "")
     _, text_handler = _run_query(["xdg-mime", "query", "default", "text/plain"]) if xdg_mime_ok else (127, "")
+    _, pdf_handler = _run_query(["xdg-mime", "query", "default", "application/pdf"]) if xdg_mime_ok else (127, "")
+    _, docx_handler = _run_query(["xdg-mime", "query", "default", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]) if xdg_mime_ok else (127, "")
+    _, image_handler = _run_query(["xdg-mime", "query", "default", "image/png"]) if xdg_mime_ok else (127, "")
+    _, video_handler = _run_query(["xdg-mime", "query", "default", "video/mp4"]) if xdg_mime_ok else (127, "")
+    _, audio_handler = _run_query(["xdg-mime", "query", "default", "audio/mpeg"]) if xdg_mime_ok else (127, "")
+    _, archive_handler = _run_query(["xdg-mime", "query", "default", "application/zip"]) if xdg_mime_ok else (127, "")
+
+    http_handler = _resolve_mime("x-scheme-handler/http", http_handler)
+    https_handler = _resolve_mime("x-scheme-handler/https", https_handler)
+    html_handler = _resolve_mime("text/html", html_handler)
+    dir_handler = _resolve_mime("inode/directory", dir_handler)
+    text_handler = _resolve_mime("text/plain", text_handler)
+    pdf_handler = _resolve_mime("application/pdf", pdf_handler)
+    docx_handler = _resolve_mime("application/vnd.openxmlformats-officedocument.wordprocessingml.document", docx_handler)
+    image_handler = _resolve_mime("image/png", image_handler)
+    video_handler = _resolve_mime("video/mp4", video_handler)
+    audio_handler = _resolve_mime("audio/mpeg", audio_handler)
+    archive_handler = _resolve_mime("application/zip", archive_handler)
+    if not web_browser and http_handler and http_handler == https_handler:
+        web_browser = http_handler
 
     browser_vals = [v for v in (web_browser, http_handler, https_handler, html_handler) if v]
     browser_effective = web_browser or http_handler or https_handler or html_handler
@@ -568,12 +926,53 @@ def query_xdg_defaults() -> dict:
             "effectiveDesktopId": text_handler,
             "consistent": bool(text_handler),
         },
+        "pdfViewer": {
+            "applicationPdf": pdf_handler,
+            "effectiveDesktopId": pdf_handler,
+            "consistent": bool(pdf_handler),
+        },
+        "officeSuite": {
+            "docx": docx_handler,
+            "effectiveDesktopId": docx_handler,
+            "consistent": bool(docx_handler),
+        },
+        "htmlViewer": {
+            "textHtml": html_handler,
+            "effectiveDesktopId": html_handler,
+            "consistent": bool(html_handler),
+        },
+        "imageViewer": {
+            "imagePng": image_handler,
+            "effectiveDesktopId": image_handler,
+            "consistent": bool(image_handler),
+        },
+        "videoPlayer": {
+            "videoMp4": video_handler,
+            "effectiveDesktopId": video_handler,
+            "consistent": bool(video_handler),
+        },
+        "audioPlayer": {
+            "audioMpeg": audio_handler,
+            "effectiveDesktopId": audio_handler,
+            "consistent": bool(audio_handler),
+        },
+        "archiveManager": {
+            "applicationZip": archive_handler,
+            "effectiveDesktopId": archive_handler,
+            "consistent": bool(archive_handler),
+        },
     }
 
 
 def apply_xdg_default(slot_id: str, desktop_id: str) -> dict:
     desktop_id = (desktop_id or "").strip()
-    if not desktop_id or "/" in desktop_id or not desktop_id.endswith(".desktop") or not re.match(r"^[A-Za-z0-9_.\-]+\.desktop$", desktop_id):
+    if (
+        not desktop_id
+        or "/" in desktop_id
+        or "\x00" in desktop_id
+        or not desktop_id.endswith(".desktop")
+        or not re.match(r"^[A-Za-z0-9_.\-+@ ]+\.desktop$", desktop_id)
+    ):
         return {
             "ok": False,
             "slotId": slot_id,
@@ -582,6 +981,7 @@ def apply_xdg_default(slot_id: str, desktop_id: str) -> dict:
         }
 
     apps, _ = discover_applications()
+    installed_ids = {str(a.get("desktopId") or "") for a in apps if a.get("installed", True)}
     matched = [a for a in apps if a.get("desktopId") == desktop_id and a.get("installed", True)]
     if not matched:
         return {
@@ -619,10 +1019,64 @@ def apply_xdg_default(slot_id: str, desktop_id: str) -> dict:
         rc, _ = _run_query(["xdg-mime", "default", desktop_id, "text/plain"])
         if rc != 0:
             errors.append(f"xdg-mime default text/plain failed (exit {rc})")
+    elif slot_id == "pdfViewer":
+        if not xdg_mime_bin:
+            return {"ok": False, "slotId": slot_id, "desktopId": desktop_id, "error": "xdg-mime is not available"}
+        rc, _ = _run_query(["xdg-mime", "default", desktop_id, "application/pdf"])
+        if rc != 0:
+            errors.append(f"xdg-mime default application/pdf failed (exit {rc})")
+    elif slot_id == "officeSuite":
+        if not xdg_mime_bin:
+            return {"ok": False, "slotId": slot_id, "desktopId": desktop_id, "error": "xdg-mime is not available"}
+        for mime in (
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/msword",
+            "application/vnd.oasis.opendocument.text",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        ):
+            rc, _ = _run_query(["xdg-mime", "default", desktop_id, mime])
+            if rc != 0:
+                errors.append(f"xdg-mime default {mime} failed (exit {rc})")
+    elif slot_id == "htmlViewer":
+        if not xdg_mime_bin:
+            return {"ok": False, "slotId": slot_id, "desktopId": desktop_id, "error": "xdg-mime is not available"}
+        for mime in ("text/html", "application/xhtml+xml"):
+            rc, _ = _run_query(["xdg-mime", "default", desktop_id, mime])
+            if rc != 0:
+                errors.append(f"xdg-mime default {mime} failed (exit {rc})")
+    elif slot_id == "imageViewer":
+        if not xdg_mime_bin:
+            return {"ok": False, "slotId": slot_id, "desktopId": desktop_id, "error": "xdg-mime is not available"}
+        for mime in ("image/png", "image/jpeg", "image/gif", "image/webp", "image/bmp", "image/svg+xml", "image/tiff"):
+            rc, _ = _run_query(["xdg-mime", "default", desktop_id, mime])
+            if rc != 0:
+                errors.append(f"xdg-mime default {mime} failed (exit {rc})")
+    elif slot_id == "videoPlayer":
+        if not xdg_mime_bin:
+            return {"ok": False, "slotId": slot_id, "desktopId": desktop_id, "error": "xdg-mime is not available"}
+        for mime in ("video/mp4", "video/x-matroska", "video/webm", "video/quicktime", "video/x-msvideo", "video/mpeg"):
+            rc, _ = _run_query(["xdg-mime", "default", desktop_id, mime])
+            if rc != 0:
+                errors.append(f"xdg-mime default {mime} failed (exit {rc})")
+    elif slot_id == "audioPlayer":
+        if not xdg_mime_bin:
+            return {"ok": False, "slotId": slot_id, "desktopId": desktop_id, "error": "xdg-mime is not available"}
+        for mime in ("audio/mpeg", "audio/flac", "audio/x-flac", "audio/ogg", "audio/x-vorbis+ogg", "audio/wav", "audio/x-wav", "audio/mp4", "audio/aac"):
+            rc, _ = _run_query(["xdg-mime", "default", desktop_id, mime])
+            if rc != 0:
+                errors.append(f"xdg-mime default {mime} failed (exit {rc})")
+    elif slot_id == "archiveManager":
+        if not xdg_mime_bin:
+            return {"ok": False, "slotId": slot_id, "desktopId": desktop_id, "error": "xdg-mime is not available"}
+        for mime in ("application/zip", "application/x-tar", "application/x-compressed-tar", "application/gzip", "application/x-7z-compressed", "application/vnd.rar", "application/x-bzip-compressed-tar", "application/x-xz-compressed-tar"):
+            rc, _ = _run_query(["xdg-mime", "default", desktop_id, mime])
+            if rc != 0:
+                errors.append(f"xdg-mime default {mime} failed (exit {rc})")
     else:
         return {"ok": False, "slotId": slot_id, "desktopId": desktop_id, "error": f"Slot {slot_id!r} does not have a system XDG MIME association"}
 
-    readback = query_xdg_defaults().get(slot_id, {})
+    readback = query_xdg_defaults(installed_ids).get(slot_id, {})
     effective = readback.get("effectiveDesktopId", "")
     if slot_id == "browser":
         expected_checks = []
@@ -1091,7 +1545,8 @@ def main() -> int:
     cmd = sys.argv[1] if len(sys.argv) > 1 else "discover"
     if cmd == "discover":
         apps, fp_cli = discover_applications()
-        xdg = query_xdg_defaults()
+        installed_ids = {str(a.get("desktopId") or "") for a in apps if a.get("installed", True)}
+        xdg = query_xdg_defaults(installed_ids)
         out = {
             "apps": apps,
             "xdgDefaults": xdg,

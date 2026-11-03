@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Optional Spaced Repetition integration (`Alis-Intergration`)**: added an optional `spaced_repetition` integration plugin (`DashboardSpacedRepetition.qml`, `DashboardSpacedRepetitionSettings.qml`, `SpacedRepetition.qml`, `SpacedRepetitionEngine.js`, `SpacedRepetitionLexicon.js`, `lookup_word_level.py`) with SM-2/FSRS-inspired scheduling, CEFR A1–C2 vocabulary grading (Cambridge EVP, Oxford, DWDS/Goethe), bilingual English/Vietnamese definitions, automatic IPA/POS/synonyms/antonyms/morphology (root, prefix, suffix) enrichment, hover-expandable vocabulary cards, and Bulk Auto-Syntax / Obsidian Spaced Repetition importer.
+- **Dashboard Custom Tabs (`DashboardHeader`, `DashboardEditToolbar`)**: added `Create`, `Rename`, and `Delete` custom tab controls in Edit Dashboard Layout with per-tab widget arrangement persistence and clean text input focus inside `AbyssPerimeter`.
+
+### Changed
+- **Left Sidebar Abyss surface parity (`SidebarLeftContent`, `Translator`, `Tools`, `NewsPanel`)**: unified Left Sidebar tab surfaces (`Translator`, `Tools`, `News`) with the `Intelligence` tab (`AquaTalkCloud`) using the shared `edgeSurfaceColor(depthWeight)` palette formula (`k = Math.max(0, Math.min(1, depthWeight * 0.38 * edgeHighlight))`).
+- **Agent Behavioral Guidelines (`AGENTS.md`)**: added the 4-part LLM coding behavioral guidelines (*Think Before Coding*, *Simplicity First*, *Surgical Changes*, *Goal-Driven Execution*) across `Alis`, `Alis-Companion`, and `Alis-Intergration`.
+
+### Fixed
+- **Translator action buttons (`TextCanvas`, `Translator`)**: wired `default property alias actionButtons: actions.contentData` in `TextCanvas.qml` and fixed `34x34` `GroupButton` sizing so bottom-right action buttons (`Search`, `Copy`, `Paste`, `Delete`) no longer overlap or clip on the canvas border.
+- **Region Selection (`Super+Shift+S`, `RegionSelection`, `ToolbarTabBar`, `AnimatedTabIndexPair`)**: fixed default active tab background highlight for `Screenshot` and `Rect` on launch, tuned spring animation responsiveness (`idx1Speed`, `idx2Speed`), and isolated post-capture notifications (`Quickshell.execDetached`) from compositor layer teardown to eliminate stutter.
+- **Wallpaper Selector Vim navigation (`WallpaperSelectorContent`)**: restored `h`/`j`/`k`/`l` keyboard navigation across both Grid and Coverflow views while preserving filter input typing when `Ctrl`/`Alt` modifiers are held or typing is active.
+- **AbyssPerimeter text input focus (`AbyssPerimeter`)**: forwarded `focus: root.keyboardInteractive` to the inner `FocusScope` so text fields inside Dashboard (`tabNameInput`, Spaced Repetition inputs) display blinking cursors and accept keystrokes immediately.
+
 ## [1.0.1] - 2026-10-28
 
 A performance and polish release completing the strict-lossless optimization pass across the Abyss layout engine, native Rust theme/MPD daemons, and shared media timeline/duration surfaces.
@@ -719,8 +733,6 @@ Quickshell 0.3 + Qt 6.11.1 compatibility release. Fixes the #1 regression (setti
 ## [2.25.0] - 2026-05-16
 
 2.25 is the desktop widgets release. They finally work — edit mode, custom widgets, resize, persistence, the whole thing. The color pipeline got its biggest architectural change in a while with app-palette, and the shell now actually reads the wallpaper to pick text colors instead of guessing. Also, Steam theming moved to Millennium because Adwaita for Steam is dead.
-
-![Desktop widgets edit mode](docs/assets/desktop-widgets.png)
 
 ### Added
 - **Desktop widgets v2**: complete rewrite of the widget system. Edit mode (shown above) with a manager panel, IPC-driven config persistence, resize handles, zone placement, custom widget pipeline with a real SDK (`setSource` for required props, schema key declaration), and popover chips redesigned with `SelectionGroupButton` + `GridLayout`. Fixed approximately 15 critical bugs along the way — VME segfaults, stale-text config overwrites, loader feedback loops, edit controls eating their own clicks, widgets spawning at top-left, zone placement breaking on resize. The kind of PR that needs therapy afterward.

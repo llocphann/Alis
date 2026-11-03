@@ -14,6 +14,7 @@ Singleton {
     property int _configRevision: 0
     property bool discoveryLoaded: false
     property bool discovering: false
+    readonly property bool discoveryLoading: discovering
     property var discoveredApps: []
     property var xdgDefaults: ({})
     property var toolsAvailable: ({ flatpak: false, xdgSettings: false, xdgMime: false })
@@ -109,6 +110,140 @@ Singleton {
                 { id: "thunar", label: "Thunar", command: "thunar", desktopId: "thunar.desktop" },
                 { id: "nemo", label: "Nemo", command: "nemo", desktopId: "nemo.desktop" },
                 { id: "pcmanfm-qt", label: "PCManFM-Qt", command: "pcmanfm-qt", desktopId: "pcmanfm-qt.desktop" }
+            ]
+        },
+        {
+            id: "pdfViewer",
+            group: "primary",
+            icon: "picture_as_pdf",
+            label: Translation.tr("PDF Documents (.pdf)"),
+            description: Translation.tr("Default viewer for PDF files and documents (application/pdf)."),
+            defaultCommand: "okular",
+            placeholder: "okular",
+            supportsXdgSync: true,
+            xdgTargetLabel: "application/pdf",
+            presets: [
+                { id: "okular", label: "Okular", command: "okular", desktopId: "org.kde.okular.desktop" },
+                { id: "evince", label: "Document Viewer (Evince)", command: "evince", desktopId: "org.gnome.Evince.desktop" },
+                { id: "papers", label: "Papers", command: "papers", desktopId: "org.gnome.Papers.desktop" },
+                { id: "zathura", label: "Zathura", command: "zathura", desktopId: "org.pwmt.zathura.desktop" },
+                { id: "sioyek", label: "Sioyek", command: "sioyek", desktopId: "com.github.ahrm.sioyek.desktop" },
+                { id: "zen", label: "Zen Browser", command: "zen-browser", desktopId: "app.zen_browser.zen.desktop" },
+                { id: "firefox", label: "Firefox", command: "firefox", desktopId: "firefox.desktop" }
+            ]
+        },
+        {
+            id: "officeSuite",
+            group: "primary",
+            icon: "description",
+            label: Translation.tr("Office Documents (.docx, .xlsx, .pptx)"),
+            description: Translation.tr("Default application for Word (.docx, .doc, .odt), Excel (.xlsx), and PowerPoint (.pptx) files."),
+            defaultCommand: "libreoffice",
+            placeholder: "libreoffice",
+            supportsXdgSync: true,
+            xdgTargetLabel: ".docx · .odt · .xlsx · .pptx",
+            presets: [
+                { id: "libreoffice-writer", label: "LibreOffice Writer", command: "libreoffice --writer", desktopId: "libreoffice-writer.desktop" },
+                { id: "libreoffice", label: "LibreOffice", command: "libreoffice", desktopId: "org.libreoffice.LibreOffice.desktop" },
+                { id: "onlyoffice", label: "ONLYOFFICE", command: "onlyoffice-desktopeditors", desktopId: "org.onlyoffice.desktopeditors.desktop" },
+                { id: "wps", label: "WPS Office", command: "wps", desktopId: "com.wps.Office.desktop" },
+                { id: "abiword", label: "AbiWord", command: "abiword", desktopId: "com.abisource.AbiWord.desktop" }
+            ]
+        },
+        {
+            id: "htmlViewer",
+            group: "primary",
+            icon: "html",
+            label: Translation.tr("HTML Files (.html, .htm)"),
+            description: Translation.tr("Default application for opening local .html / .htm documents (text/html)."),
+            defaultCommand: "firefox",
+            placeholder: "firefox",
+            supportsXdgSync: true,
+            xdgTargetLabel: "text/html · application/xhtml+xml",
+            presets: [
+                { id: "firefox", label: "Firefox", command: "firefox", desktopId: "firefox.desktop" },
+                { id: "zen", label: "Zen Browser", command: "zen-browser", desktopId: "app.zen_browser.zen.desktop" },
+                { id: "chromium", label: "Chromium", command: "chromium", desktopId: "chromium.desktop" },
+                { id: "code", label: "Visual Studio Code", command: "code", desktopId: "code.desktop" },
+                { id: "zed", label: "Zed", command: "zeditor", desktopId: "dev.zed.Zed.desktop" }
+            ]
+        },
+        {
+            id: "imageViewer",
+            group: "primary",
+            icon: "image",
+            label: Translation.tr("Images (.png, .jpg, .webp, .svg)"),
+            description: Translation.tr("Default viewer for photos and image files (image/png, image/jpeg, image/webp, image/svg+xml)."),
+            defaultCommand: "loupe",
+            placeholder: "loupe",
+            supportsXdgSync: true,
+            xdgTargetLabel: "image/png · image/jpeg · image/webp · image/svg+xml",
+            presets: [
+                { id: "loupe", label: "Image Viewer (Loupe)", command: "loupe", desktopId: "org.gnome.Loupe.desktop" },
+                { id: "gwenview", label: "Gwenview", command: "gwenview", desktopId: "org.kde.gwenview.desktop" },
+                { id: "eog", label: "Eye of GNOME", command: "eog", desktopId: "org.gnome.eog.desktop" },
+                { id: "imv", label: "imv", command: "imv", desktopId: "imv.desktop" },
+                { id: "swayimg", label: "Swayimg", command: "swayimg", desktopId: "swayimg.desktop" },
+                { id: "qview", label: "qView", command: "qview", desktopId: "com.interversehq.qView.desktop" },
+                { id: "gimp", label: "GIMP", command: "gimp", desktopId: "org.gimp.GIMP.desktop" }
+            ]
+        },
+        {
+            id: "videoPlayer",
+            group: "primary",
+            icon: "movie",
+            label: Translation.tr("Videos (.mp4, .mkv, .webm)"),
+            description: Translation.tr("Default player for video and movie files (video/mp4, video/x-matroska, video/webm)."),
+            defaultCommand: "mpv",
+            placeholder: "mpv",
+            supportsXdgSync: true,
+            xdgTargetLabel: "video/mp4 · video/x-matroska · video/webm",
+            presets: [
+                { id: "mpv", label: "mpv Media Player", command: "mpv", desktopId: "mpv.desktop" },
+                { id: "vlc", label: "VLC Media Player", command: "vlc", desktopId: "vlc.desktop" },
+                { id: "celluloid", label: "Celluloid", command: "celluloid", desktopId: "io.github.celluloid_player.Celluloid.desktop" },
+                { id: "haruna", label: "Haruna", command: "haruna", desktopId: "org.kde.haruna.desktop" },
+                { id: "clapper", label: "Clapper", command: "clapper", desktopId: "com.github.rafostar.Clapper.desktop" },
+                { id: "showtime", label: "Showtime", command: "showtime", desktopId: "org.gnome.Showtime.desktop" },
+                { id: "totem", label: "Videos (Totem)", command: "totem", desktopId: "org.gnome.Totem.desktop" }
+            ]
+        },
+        {
+            id: "audioPlayer",
+            group: "primary",
+            icon: "music_note",
+            label: Translation.tr("Audio & Music (.mp3, .flac, .ogg, .wav)"),
+            description: Translation.tr("Default player for local music and audio tracks (audio/mpeg, audio/flac, audio/ogg, audio/x-wav)."),
+            defaultCommand: "amberol",
+            placeholder: "amberol",
+            supportsXdgSync: true,
+            xdgTargetLabel: "audio/mpeg · audio/flac · audio/ogg · audio/x-wav",
+            presets: [
+                { id: "amberol", label: "Amberol", command: "amberol", desktopId: "io.bassi.Amberol.desktop" },
+                { id: "gapless", label: "Gapless (G4Music)", command: "g4music", desktopId: "com.github.neithern.g4music.desktop" },
+                { id: "elisa", label: "Elisa", command: "elisa", desktopId: "org.kde.elisa.desktop" },
+                { id: "strawberry", label: "Strawberry", command: "strawberry", desktopId: "org.strawberrymusicplayer.strawberry.desktop" },
+                { id: "audacious", label: "Audacious", command: "audacious", desktopId: "audacious.desktop" },
+                { id: "vlc", label: "VLC Media Player", command: "vlc", desktopId: "vlc.desktop" },
+                { id: "mpv", label: "mpv Media Player", command: "mpv", desktopId: "mpv.desktop" }
+            ]
+        },
+        {
+            id: "archiveManager",
+            group: "primary",
+            icon: "folder_zip",
+            label: Translation.tr("Archives (.zip, .tar.gz, .7z, .rar)"),
+            description: Translation.tr("Default archive manager for compressed packages (application/zip, application/x-compressed-tar, application/x-7z-compressed)."),
+            defaultCommand: "file-roller",
+            placeholder: "file-roller",
+            supportsXdgSync: true,
+            xdgTargetLabel: "application/zip · .tar.gz · .7z · .rar",
+            presets: [
+                { id: "file-roller", label: "Archive Manager (File Roller)", command: "file-roller", desktopId: "org.gnome.FileRoller.desktop" },
+                { id: "ark", label: "Ark", command: "ark", desktopId: "org.kde.ark.desktop" },
+                { id: "engrampa", label: "Engrampa", command: "engrampa", desktopId: "engrampa.desktop" },
+                { id: "xarchiver", label: "Xarchiver", command: "xarchiver", desktopId: "xarchiver.desktop" },
+                { id: "peazip", label: "PeaZip", command: "peazip", desktopId: "io.github.peazip.PeaZip.desktop" }
             ]
         },
         {
@@ -374,6 +509,24 @@ Singleton {
                     ?? all.find(a => a.execBin === cmd)
                 if (byBin)
                     return byBin
+            }
+            const slug = cmd.toLowerCase()
+                .replace(/^.*\/+/, "")
+                .replace(/\.(appimage|desktop)$/i, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "")
+            if (slug.length > 0) {
+                const bySlug = all.find(a => {
+                    const did = String(a.desktopId ?? "").toLowerCase()
+                    const nm = String(a.name ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+                    const eb = String(a.execBin ?? "").toLowerCase().replace(/\.(appimage|desktop)$/i, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+                    return did === `alis-app-${slug}.desktop`
+                        || did === `${slug}.desktop`
+                        || nm === slug
+                        || (eb.length > 0 && (eb === slug || eb.startsWith(`${slug}-`)))
+                })
+                if (bySlug)
+                    return bySlug
             }
         }
         return null
@@ -660,6 +813,261 @@ Singleton {
         }
 
         ShellExec.execCmd(command)
+    }
+
+    property string pendingShortcutAction: ""
+    property string pendingShortcutLabel: ""
+    property int _shortcutRequestNonce: 0
+
+    function _escapeKdlToken(tok: string): string {
+        return String(tok ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+    }
+
+    function _splitCommandTokens(cmdStr: string): list<string> {
+        const s = String(cmdStr ?? "").trim()
+        if (!s)
+            return []
+        const tokens = []
+        const re = /"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+)/g
+        let m
+        while ((m = re.exec(s)) !== null) {
+            if (m[1] !== undefined)
+                tokens.push(m[1].replace(/\\(.)/g, "$1"))
+            else if (m[2] !== undefined)
+                tokens.push(m[2])
+            else if (m[3] !== undefined)
+                tokens.push(m[3])
+        }
+        return tokens
+    }
+
+    function niriSpawnActionForSlot(slotId: string, forceNewWindow = false): string {
+        const target = slotId === "fileExplorer" ? "fileManager" : slotId
+        const home = Directories.homePath ?? ""
+        const alisBin = home.length > 0 ? `${home}/.local/bin/alis` : "alis"
+        const suffix = forceNewWindow ? ' "--new"' : ""
+        if (target === "terminal")
+            return `spawn "${root._escapeKdlToken(alisBin)}" "terminal"${suffix}`
+        if (target === "browser")
+            return `spawn "${root._escapeKdlToken(alisBin)}" "browser"${suffix}`
+        if (target === "fileManager")
+            return `spawn "${root._escapeKdlToken(alisBin)}" "files"${suffix}`
+        if (target === "editor")
+            return `spawn "${root._escapeKdlToken(alisBin)}" "editor"${suffix}`
+        const app = root.findDiscoveredAppForSlot(target)
+        if (app)
+            return root.niriSpawnActionForApp(app)
+        const cmd = root.commandFor(target)
+        return root.niriSpawnActionForCommand(cmd)
+    }
+
+    function niriSpawnActionForCommand(cmdStr: string): string {
+        const tokens = root._splitCommandTokens(cmdStr)
+        if (tokens.length === 0)
+            return ""
+        return "spawn " + tokens.map(t => `"${root._escapeKdlToken(t)}"`).join(" ")
+    }
+
+    function niriSpawnActionForApp(appObj: var): string {
+        if (!appObj)
+            return ""
+        if (appObj.isFlatpak && appObj.appId) {
+            if (appObj.installation === "user")
+                return `spawn "flatpak" "run" "--user" "${root._escapeKdlToken(appObj.appId)}"`
+            return `spawn "flatpak" "run" "${root._escapeKdlToken(appObj.appId)}"`
+        }
+        const execStr = String(appObj.exec ?? appObj.execPath ?? "").trim()
+        return root.niriSpawnActionForCommand(execStr)
+    }
+
+    function slotSummary(slotId: string): var {
+        const s = root.selectedAppSummary(slotId)
+        if (!s)
+            return null
+        return Object.assign({}, s, { displayName: s.name })
+    }
+
+    function resolveShortcutAppInfo(actionRaw: string): var {
+        void(root._configRevision)
+        const act = String(actionRaw ?? "").trim()
+        if (!act.startsWith("spawn"))
+            return null
+
+        const tokens = []
+        const re = /"((?:[^"\\]|\\.)*)"/g
+        let m
+        while ((m = re.exec(act)) !== null) {
+            tokens.push(m[1].replace(/\\(.)/g, "$1"))
+        }
+        if (tokens.length === 0)
+            return null
+
+        const t0 = tokens[0]
+        const base0 = t0.includes("/") ? t0.slice(t0.lastIndexOf("/") + 1) : t0
+        const isNewWindow = tokens.indexOf("--new") !== -1 || tokens.indexOf("--new-window") !== -1
+
+        // 1. Check if it routes through `alis` default app role (terminal / browser / files / editor)
+        if (base0 === "alis" && tokens.length >= 2) {
+            const rawRole = tokens[1]
+            if (rawRole === "terminal" || rawRole === "browser" || rawRole === "files" || rawRole === "file-manager" || rawRole === "editor") {
+                const extraArg = tokens.slice(2).find(tok => !tok.startsWith("-")) ?? ""
+                // If `alis terminal <tui-app>` (e.g. `alis terminal yazi`), resolve `<tui-app>` as the target application
+                if (rawRole === "terminal" && extraArg) {
+                    const extraLower = extraArg.toLowerCase()
+                    const allApps = root.discoveredApps ?? []
+                    const tuiMatch = allApps.find(a =>
+                        String(a.execBin ?? "").toLowerCase() === extraLower
+                        || String(a.name ?? "").toLowerCase() === extraLower
+                        || String(a.desktopId ?? "").toLowerCase() === `${extraLower}.desktop`
+                    ) ?? null
+                    const tuiName = tuiMatch?.name ?? (extraArg.charAt(0).toUpperCase() + extraArg.slice(1))
+                    const tuiIcon = tuiMatch?.icon || "terminal"
+                    return {
+                        kind: "app",
+                        slotId: "",
+                        slotLabel: "",
+                        slotTitle: "",
+                        name: tuiName,
+                        appName: tuiName,
+                        displayLabel: tuiName + (isNewWindow ? " (new window)" : ""),
+                        icon: tuiIcon,
+                        iconName: tuiIcon,
+                        fallbackSymbol: "terminal",
+                        sourceBadge: tuiMatch?.sourceBadge ?? "Native",
+                        desktopId: String(tuiMatch?.desktopId ?? ""),
+                        isPortable: false,
+                        badge: tuiName,
+                        badgeText: tuiName
+                    }
+                }
+
+                const slotId = (rawRole === "files" || rawRole === "file-manager") ? "fileManager" : rawRole
+                const def = root.slotDefinition(slotId)
+                const summary = root.selectedAppSummary(slotId)
+                const roleLabel = def?.label ?? slotId
+                const appName = summary?.name || roleLabel
+                const iconVal = summary?.icon ?? (def?.icon ?? "apps")
+                const desktopId = String(summary?.desktopId ?? "")
+                return {
+                    kind: "slot",
+                    slotId: slotId,
+                    slotLabel: roleLabel,
+                    slotTitle: roleLabel,
+                    name: appName,
+                    appName: appName,
+                    displayLabel: appName + (isNewWindow ? " (new window)" : ""),
+                    icon: iconVal,
+                    iconName: iconVal,
+                    fallbackSymbol: def?.icon ?? "apps",
+                    sourceBadge: summary?.sourceBadge ?? "",
+                    desktopId: desktopId,
+                    isPortable: desktopId.startsWith("alis-app-"),
+                    badge: appName,
+                    badgeText: appName
+                }
+            }
+            return null
+        }
+
+        // 2. Check if it launches a discovered application directly
+        if (base0 === "qs" || base0 === "wpctl" || base0 === "brightnessctl" || base0 === "loginctl" || base0 === "systemctl")
+            return null
+
+        const all = root.discoveredApps ?? []
+        let matched = null
+        if (base0 === "flatpak" && tokens.length >= 3 && tokens[1] === "run") {
+            let appId = ""
+            for (let i = 2; i < tokens.length; ++i) {
+                if (!tokens[i].startsWith("-")) {
+                    appId = tokens[i]
+                    break
+                }
+            }
+            if (appId) {
+                matched = all.find(a => a.isFlatpak && a.appId === appId) ?? null
+            }
+        } else {
+            const joined = tokens.join(" ")
+            const base0Lower = base0.toLowerCase()
+            matched = all.find(a =>
+                a.exec === joined
+                || a.exec === t0
+                || (!a.isFlatpak && String(a.execBin ?? "").toLowerCase() === base0Lower)
+                || String(a.desktopId ?? "").toLowerCase() === `${base0Lower}.desktop`
+                || String(a.name ?? "").toLowerCase() === base0Lower
+            ) ?? null
+        }
+
+        if (matched) {
+            const desktopId = String(matched.desktopId ?? matched.id ?? "")
+            const defaultSlots = root.defaultSlotsForDesktopId(desktopId)
+            const firstDefaultSlot = defaultSlots.length > 0 ? defaultSlots[0] : null
+            const isPortable = desktopId.startsWith("alis-app-")
+            const iconVal = matched.icon || "apps"
+            return {
+                kind: "app",
+                slotId: firstDefaultSlot ? firstDefaultSlot.id : "",
+                slotLabel: firstDefaultSlot ? firstDefaultSlot.label : "",
+                slotTitle: firstDefaultSlot ? firstDefaultSlot.label : "",
+                name: matched.name,
+                appName: matched.name,
+                displayLabel: matched.name + (isNewWindow ? " (new window)" : ""),
+                icon: iconVal,
+                iconName: iconVal,
+                fallbackSymbol: "apps",
+                sourceBadge: matched.sourceBadge || (matched.isFlatpak ? "Flatpak" : "Native"),
+                desktopId: desktopId,
+                isPortable: isPortable,
+                badge: matched.name,
+                badgeText: matched.name
+            }
+        }
+        return null
+    }
+
+    function defaultSlotsForDesktopId(desktopId: string): list<var> {
+        void(root._configRevision)
+        const target = String(desktopId ?? "").trim()
+        if (!target)
+            return []
+        const norm = target.endsWith(".desktop") ? target : `${target}.desktop`
+        const matches = []
+        const defs = root.primarySlotDefinitions()
+        for (let i = 0; i < defs.length; ++i) {
+            const slot = defs[i]
+            const sum = root.selectedAppSummary(slot.id)
+            if (sum && sum.desktopId === norm) {
+                matches.push({ id: slot.id, label: slot.label, title: slot.label, icon: slot.icon })
+            }
+        }
+        return matches
+    }
+
+    function clearPendingShortcut(): void {
+        root.pendingShortcutAction = ""
+        root.pendingShortcutLabel = ""
+    }
+
+    function prepareShortcutForSlot(slotId: string): void {
+        const def = root.slotDefinition(slotId)
+        const sum = root.selectedAppSummary(slotId)
+        root.pendingShortcutAction = root.niriSpawnActionForSlot(slotId, false)
+        root.pendingShortcutLabel = def ? `${def.label} (${sum?.name ?? ""})` : slotId
+        root._shortcutRequestNonce++
+    }
+
+    function prepareShortcutForApp(appObj: var): void {
+        if (!appObj)
+            return
+        root.pendingShortcutAction = root.niriSpawnActionForApp(appObj)
+        root.pendingShortcutLabel = String(appObj.name ?? appObj.desktopId ?? appObj.id ?? "")
+        root._shortcutRequestNonce++
+    }
+
+    function prepareShortcutForCommand(execPath: string, appName: string): void {
+        root.pendingShortcutAction = root.niriSpawnActionForCommand(execPath)
+        root.pendingShortcutLabel = appName
+        root._shortcutRequestNonce++
     }
 
     function launchNetworkSettings(useEthernet: bool): void {

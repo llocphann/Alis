@@ -57,15 +57,33 @@ Singleton {
             mistral:mistralApiStrategy, anthropic:anthropicApiStrategy})[format]
         return component ? component.createObject(owner) : null
     }
+    readonly property bool mtpOptimizeEnabled: Config.options?.abyss?.companionMind?.mtpOptimizeEnabled !== false
+    function isMtpModel(model): bool {
+        if (!model) return false
+        const raw = [model.model, model.name, model.gguf_path].map(v => String(v ?? "")).join(" ")
+        return /(?:^|[\s\-_.:/])mtp(?:$|[\s\-_.:/])/i.test(raw)
+    }
     function supportsThinking(model): bool { return Reasoning.supported(model) }
     function supportsInstant(model): bool { return Reasoning.instantEndpoint(model).length>0 }
     function buildChatRequest(model, strategy, messages, prompt, temperature, tools, filePath, effort = "off"): var {
-        return Reasoning.apply(model, strategy.buildRequestData(model, messages, prompt,
-            temperature, tools, filePath), effort)
+        const mtpActive = root.isMtpModel(model) && root.mtpOptimizeEnabled
+        const effectiveTemp = mtpActive
+            ? Math.min(Number.isFinite(Number(temperature)) && Number(temperature) > 0 ? Number(temperature) : 0.7, 0.7)
+            : temperature
+        const data = Reasoning.apply(model, strategy.buildRequestData(model, messages, prompt,
+            effectiveTemp, tools, filePath), effort)
+        if (mtpActive && ["openai", "gguf"].includes(model?.api_format)) {
+            data.repetition_penalty = 1.0
+            data.repeat_penalty = 1.0
+            data.temperature = (Number.isFinite(Number(data.temperature)) && Number(data.temperature) > 0)
+                ? Math.min(Number(data.temperature), 0.7) : 0.7
+        }
+        return data
     }
     function localRequestForModel(model, data, effort = "off"): var {
         return {modelPath:model.gguf_path, runtimePath:model.runtime_path,
-            messages:data.messages, thinkingEffort:root.supportsThinking(model) ? effort : "off"}
+            messages:data.messages, thinkingEffort:root.supportsThinking(model) ? effort : "off",
+            mtpOptimize:root.mtpOptimizeEnabled}
     }
     function textTransport(model, strategy, data, effort = "off"): var {
         if (model.api_format === "gguf") return {
@@ -96,11 +114,9 @@ Singleton {
 
         function ensureInitialized(): void { root.ensureInitialized() }
         function diagnose(): string {
-            const policy = (Config.options?.policies?.ai ?? 0)
             const model = root.models?.[root.currentModelId]
             return JSON.stringify({
                 initialized: root._initialized,
-                policy,
                 currentModelId: root.currentModelId ?? "",
                 currentModelName: model?.name ?? "",
                 currentModelEndpoint: model?.endpoint ?? "",
@@ -130,7 +146,13 @@ Singleton {
 
         function refreshCatalog(): void {
             root.ensureInitialized()
+            LocalModels.refresh()
             AiProviderCatalog.refreshAll()
+        }
+
+        function refreshLocalCatalog(): void {
+            root.ensureInitialized()
+            root.refreshLocalModels()
         }
 
         function catalog(query: string): string {
@@ -314,10 +336,6 @@ Singleton {
     function modelCanRun(model): bool {
         if (!model) return false
         if(model.api_format==="gguf" && !model.runtime_path)return false
-        if ((Config.options?.policies?.ai ?? 0) === 2 && (!model.local
-                || (model.api_format!=="gguf" && (model.local_verified!==true
-                    || !["ollama","lmstudio"].includes(model.provider_id)
-                    || !/^[0-9a-f]{64}$/.test(model.local_fingerprint))))) return false
         return !model.requires_key || root.credentialForModel(model).length > 0
     }
 
@@ -814,7 +832,7 @@ Singleton {
     // - api_format: The API format of the model. Can be "openai" or "gemini". Default is "openai".
     // - extraParams: Extra parameters to be passed to the model. This is a JSON object.
     // Models loaded dynamically from config.json ai.extraModels
-    property var models: (Config.options?.policies?.ai ?? 0) === 2 ? {} : ({})
+    property var models: ({})
     property var modelList: Object.keys(root.models)
     readonly property var runnableModelList: root.modelList.filter(id => root.modelCanRun(root.models[id]))
     readonly property var lockedModelList: root.modelList.filter(id => !root.modelCanRun(root.models[id]))
@@ -834,8 +852,21 @@ Singleton {
     }
 
     function _syncCurrentModel(): void {
+        const saved = String(Persistent.states?.ai?.model ?? "")
         const resolved = root._resolvedCurrentModelId()
         if (resolved !== root.currentModelId) root.currentModelId = resolved
+        if (saved && !root.models[saved] && /^(?:lmstudio-|ollama-|gguf:)/.test(saved) && resolved && Persistent.states?.ai) {
+            Persistent.states.ai.model = resolved
+        }
+    }
+
+    function refreshLocalModels(): void {
+        root.ensureInitialized()
+        LocalModels.refresh()
+        if (typeof AiProviderCatalog.refreshLocalProviders === "function")
+            AiProviderCatalog.refreshLocalProviders()
+        else
+            AiProviderCatalog.refreshAll()
     }
 
     property var apiStrategies: {
@@ -852,19 +883,34 @@ Singleton {
     property var _loadedCatalogModelIds: []
     property var _loadedLocalModelIds: []
     function syncDownloadedModels(): void {
-        const next=Object.assign({},root.models)
-        for(const id of root._loadedLocalModelIds){next[id]?.destroy();delete next[id]}
-        root.models=next;root._loadedLocalModelIds=[]
+        const oldIds = root._loadedLocalModelIds.slice()
+        const oldObjs = {}
+        const next = Object.assign({}, root.models)
+        for (const id of oldIds) {
+            if (next[id]) oldObjs[id] = next[id]
+            delete next[id]
+        }
+        const newIds = []
+        const lmState = AiProviderCatalog.stateFor("lmstudio")?.status
+        const lmstudioActive = (lmState === "ready" || lmState === "loading")
+            && (AiProviderCatalog.modelsFor("lmstudio") ?? []).some(m => m.localVerified === true)
         for(const found of LocalModels.models) {
-            root.addModel(found.id,{name:found.name,model:found.id,icon:"computer",requires_key:false,
+            if (lmstudioActive && found.source === "LM Studio") continue
+            next[found.id] = aiModelComponent.createObject(root, {name:found.name,model:found.id,icon:"computer",requires_key:false,
                 local:true,free:true,provider_id:"local-gguf",api_format:"gguf",gguf_path:found.path,
                 runtime_path:LocalModels.runtimePath,endpoint:"",input_modalities:["text"],context_tokens:2048,
                 max_output_tokens:180,catalog_source:found.source,catalog_status:LocalModels.runtimePath ? "available" : "runtime-unavailable",
                 capabilities:{chat:"supported",vision:"unsupported",toolCalling:"unsupported",webSearch:"unsupported",structuredOutput:"supported",
                     reasoning:found.thinking===true ? "supported" : "unsupported"}})
-            root._loadedLocalModelIds.push(found.id)
+            newIds.push(found.id)
         }
-        root.modelList=Object.keys(root.models);root._syncCurrentModel()
+        root._loadedLocalModelIds = newIds
+        root.models = next
+        root.modelList = Object.keys(root.models)
+        root._syncCurrentModel()
+        Qt.callLater(() => {
+            for (const id of oldIds) oldObjs[id]?.destroy()
+        })
     }
     Connections {target:LocalModels;function onUpdated():void{if(root._initialized)root.syncDownloadedModels()}}
     property string _extraModelsSignature: ""
@@ -882,14 +928,13 @@ Singleton {
 
     function _syncExtraModels() {
         if (!Config.ready) return
-        const policy = Config.options?.policies?.ai ?? 0
         const extraModels = Config.options?.ai?.extraModels ?? []
         const liveProviders = [...new Set((AiProviderCatalog.models ?? [])
             .map(model => model.providerId).filter(id => id && id.length > 0))].sort()
         // onConfigChanged fires on every global save. Rebuilding on each one
         // recreated every AiModel; catalog provider membership matters because
         // a guided connection entry becomes fallback-only once live models load.
-        const signature = policy + "|" + JSON.stringify(extraModels)
+        const signature = JSON.stringify(extraModels)
             + "|" + JSON.stringify(liveProviders)
         if (signature === root._extraModelsSignature) return
         root._extraModelsSignature = signature
@@ -902,7 +947,6 @@ Singleton {
         })
         root._loadedExtraModelIds = []
         extraModels.forEach(model => {
-            if (policy === 2 && !(model?.endpoint ?? "").includes("localhost")) return
             const providerId = model?.provider_id ?? ""
             if (providerId.length > 0 && liveProviders.includes(providerId)) return
 
@@ -931,26 +975,25 @@ Singleton {
     }
 
     function _syncCatalogModels() {
-        const policy = Config.options?.policies?.ai ?? 0
-        root._loadedCatalogModelIds.forEach(id => {
-            const old = root.models[id]
-            if (!old) return
-            delete root.models[id]
-            old.destroy()
-        })
-        root._loadedCatalogModelIds = []
+        const oldIds = root._loadedCatalogModelIds.slice()
+        const oldObjs = {}
+        const next = Object.assign({}, root.models)
+        for (const id of oldIds) {
+            if (next[id]) oldObjs[id] = next[id]
+            delete next[id]
+        }
+        const newIds = []
 
         const providerCounts = ({})
         for (const entry of (AiProviderCatalog.models ?? [])) {
-            if (policy === 2 && !entry.local) continue
             const provider = AiProviderCatalog.providerById(entry.providerId)
             const state = AiProviderCatalog.stateFor(entry.providerId)
             // Public catalogs stay visible even before connection. Runnable
             // state is evaluated separately from catalog visibility.
             const id = root._catalogModelId(entry)
-            if (!id || (root.models[id] && !root._loadedCatalogModelIds.includes(id))) continue
+            if (!id || (next[id] && !newIds.includes(id))) continue
             providerCounts[entry.providerId] = (providerCounts[entry.providerId] ?? 0) + 1
-            root.addModel(id, {
+            next[id] = aiModelComponent.createObject(root, {
                 name: entry.displayName ?? entry.remoteId,
                 icon: provider?.icon ?? root.guessModelLogo(entry.remoteId ?? ""),
                 description: entry.description?.length > 0
@@ -984,12 +1027,17 @@ Singleton {
                 catalog_public: !!provider?.publicCatalog,
                 refreshed_at: state.fetchedAt ?? 0,
             })
-            root._loadedCatalogModelIds.push(id)
+            newIds.push(id)
         }
+        root._loadedCatalogModelIds = newIds
+        root.models = next
         root.modelList = Object.keys(root.models)
         // Prefer the persisted model whenever it becomes runnable, but never
         // rewrite persistence merely because catalog discovery is still racing.
         root._syncCurrentModel()
+        Qt.callLater(() => {
+            for (const id of oldIds) oldObjs[id]?.destroy()
+        })
     }
 
     function _profileAllows(model, profileId) {
@@ -1043,6 +1091,7 @@ Singleton {
         function onCatalogUpdated() {
             root._syncExtraModels()
             root._syncCatalogModels()
+            root.syncDownloadedModels()
         }
     }
 
@@ -1234,13 +1283,6 @@ Singleton {
         }
 
         const model = root.models[modelId]
-        if ((Config.options?.policies?.ai ?? 0) === 2 && !model.local) {
-            if (feedback) root.addMessage(
-                Translation.tr("Online models are disabled by the current AI privacy policy."),
-                root.interfaceRole
-            )
-            return false
-        }
         if (!root.modelCanRun(model)) {
             if (feedback) root.addApiKeyAdvice(model)
             return false

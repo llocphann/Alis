@@ -134,7 +134,20 @@ Singleton {
             const appId = AppSearch.resolveWindowIdentity(toplevel);
             if (appId.length === 0 || ignoredRegexes.some(re => re.test(appId)))
                 continue;
-            const lowerAppId = appId.toLowerCase();
+            let lowerAppId = appId.toLowerCase();
+            if (!map.has(lowerAppId)) {
+                const winDesktopId = String(AppSearch.lookupDesktopEntry(appId)?.id ?? "").trim().toLowerCase();
+                if (winDesktopId.length > 0) {
+                    for (const [pinnedKey] of map) {
+                        if (pinnedKey === "SEPARATOR") continue;
+                        const pinnedDesktopId = String(AppSearch.lookupDesktopEntry(pinnedKey)?.id ?? "").trim().toLowerCase();
+                        if (pinnedDesktopId.length > 0 && pinnedDesktopId === winDesktopId) {
+                            lowerAppId = pinnedKey;
+                            break;
+                        }
+                    }
+                }
+            }
             if (!map.has(lowerAppId)) map.set(lowerAppId, ({
                 pinned: false,
                 toplevels: []

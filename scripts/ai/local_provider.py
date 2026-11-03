@@ -148,6 +148,37 @@ def lmstudio_reasoning_off(payload, model, metadata):
         and isinstance(reasoning.get('default'), str) and reasoning['default'] in options)
 
 
+def lmstudio_reasoning(payload, model, metadata):
+    """Return True when native v1 or verified v0 metadata indicates reasoning support."""
+    arch = str((metadata or {}).get('architecture') or '').lower()
+    if any(k in arch for k in ('qwen3', 'qwq', 'deepseek2', 'deepseek_r1', 'gpt-oss', 'gpt_oss')):
+        return True
+    rows = payload.get('models') if isinstance(payload, dict) else None
+    if not isinstance(rows, list) or len(rows) > 2048:
+        return False
+    matches = []
+    for row in rows:
+        if not isinstance(row, dict): continue
+        instances = row.get('loaded_instances', [])
+        alias = isinstance(instances, list) and any(isinstance(item, dict) and item.get('id') == model for item in instances)
+        if row.get('key') == model or alias: matches.append(row)
+    if len(matches) != 1:
+        return False
+    row = matches[0]
+    capabilities = row.get('capabilities')
+    if remote(row) or row.get('type') not in ('llm', 'vlm') or not isinstance(capabilities, dict):
+        return False
+    reasoning = capabilities.get('reasoning')
+    if reasoning is True:
+        return True
+    if not isinstance(reasoning, dict):
+        return False
+    options = reasoning.get('allowed_options')
+    if isinstance(options, list) and any(opt in ('on', 'low', 'medium', 'high', 'xhigh', 'max') for opt in options):
+        return True
+    return bool(reasoning.get('supported') or reasoning.get('enabled'))
+
+
 def verify_reasoning_off(provider, endpoint, model, metadata, key=''):
     if (provider != 'lmstudio' or not lmstudio_reasoning_off(
             request_json(origin(endpoint)+'/api/v1/models', key), model, metadata)):

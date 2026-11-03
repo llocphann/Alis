@@ -33,7 +33,7 @@ Singleton {
 
     Process {
         id: detectDownloadProc
-        command: ["/usr/bin/pidof", "curl", "wget", "aria2c", "yt-dlp"]
+        command: ["/usr/bin/pidof", "curl", "wget", "aria2c"]
         onExited: (exitCode, exitStatus) => {
             root.downloadRunning = (exitCode === 0);
         }

@@ -42,10 +42,14 @@ Bar.StyledPopup {
     readonly property real requestedPopupHeight: Math.max(260, Math.min(900,
         Config.options?.notificationCenter?.popupHeight ?? 560))
     readonly property var todayUsage: {
+        if (!root.presentationActive || root.selectedTab !== 1)
+            return ({ totalSeconds: 0 })
         const revision = root._screenTimeRevision
         return ScreenTime.getToday()
     }
     readonly property var todayApps: {
+        if (!root.presentationActive || root.selectedTab !== 1)
+            return []
         const revision = root._screenTimeRevision
         return ScreenTime.getAppList(1)
     }
@@ -129,6 +133,7 @@ Bar.StyledPopup {
     // construction never tries to route Connections into popup content.
     property QtObject _screenTimeConnections: Connections {
         target: ScreenTime
+        enabled: root.presentationActive && root.selectedTab === 1
 
         function onDataChanged(): void {
             root._screenTimeRevision++

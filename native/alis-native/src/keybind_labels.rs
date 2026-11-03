@@ -84,8 +84,12 @@ const KB_IPC_MAP: &[((&str, &str), &str)] = &[
     (("session", "toggle"), "Session dialog"),
     (("sidebarLeft", "toggle"), "Left sidebar"),
     (("sidebarRight", "toggle"), "Right sidebar"),
-    (("ipc", "aqua"), "Companion chat"),
-    (("aqua", "chat"), "Companion chat"),
+    (("ipc", "aqua"), "Companion Chatbox"),
+    (("aqua", "chat"), "Companion Chatbox"),
+    (("ipc", "wull"), "Companion Chatbox"),
+    (("wull", "chat"), "Companion Chatbox"),
+    (("ipc", "companion"), "Companion Chatbox"),
+    (("companion", "chat"), "Companion Chatbox"),
     (("browser", "open"), "Browser"),
     (("browser", "new"), "Browser (new window)"),
     (("audio", "volumeUp"), "Volume up"),
@@ -328,6 +332,7 @@ pub(super) fn action_category(description: &str, action: &str) -> &'static str {
             "left sidebar",
             "right sidebar",
             "companion chat",
+            "companion chatbox",
         ],
     ) {
         return "Alis Shell";
@@ -346,6 +351,8 @@ pub(super) fn action_category(description: &str, action: &str) -> &'static str {
             "sidebarLeft",
             "sidebarRight",
             "aqua",
+            "wull",
+            "companion",
             "ipc",
         ]
         .contains(&target.as_str())
@@ -506,6 +513,11 @@ mod tests {
             (
                 "spawn \"alis\" \"ipc\" \"call\" \"clipboard\" \"toggle\"",
                 "Clipboard",
+                "Alis Shell",
+            ),
+            (
+                "spawn \"/home/user/.local/bin/alis\" \"ipc\" \"wull\" \"chat\"",
+                "Companion Chatbox",
                 "Alis Shell",
             ),
             (

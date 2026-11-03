@@ -88,3 +88,13 @@ window-rule {
     match app-id=r#"^niri$"#
     open-focused false
 }
+
+// Keep standalone Alis Settings floating at its requested window size so
+// Window mode matches Overlay mode geometry.
+window-rule {
+    match title=r#"^(alis Settings|Settings — Alis)$"#
+    open-floating true
+    open-maximized false
+    default-column-width {}
+    default-window-height {}
+}

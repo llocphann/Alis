@@ -208,63 +208,67 @@ Variants {
 
             // Keep a live decoder only while animation is enabled, or briefly
             // until the first-frame cache becomes available.
-            Video {
-                id: videoWallpaper
+            Loader {
                 anchors.fill: parent
                 anchors.margins: -parent.blurOverflow
-                visible: backdropWindow.wallpaperIsVideo && !backdropWindow.useFrozenVideoFrame
-                source: {
-                    if (!backdropWindow.wallpaperIsVideo) return "";
-                    const path = backdropWindow.wallpaperPathRaw;
-                    if (!path) return "";
-                    return path.startsWith("file://") ? path : ("file://" + path);
-                }
-                fillMode: VideoOutput.PreserveAspectCrop
-                loops: MediaPlayer.Infinite
-                muted: true
-                autoPlay: true
-
-                readonly property bool shouldPlay: backdropWindow.enableAnimation && !Wallpapers.batteryPauseActive
-
-                function pauseAndShowFirstFrame() {
-                    pause()
-                    seek(0)
-                }
-
-                onPlaybackStateChanged: {
-                    if (playbackState === MediaPlayer.PlayingState && !shouldPlay) {
-                        pauseAndShowFirstFrame()
+                active: backdropWindow.wallpaperIsVideo && !backdropWindow.useFrozenVideoFrame
+                sourceComponent: Video {
+                    id: videoWallpaper
+                    anchors.fill: parent
+                    visible: backdropWindow.wallpaperIsVideo && !backdropWindow.useFrozenVideoFrame
+                    source: {
+                        if (!backdropWindow.wallpaperIsVideo) return "";
+                        const path = backdropWindow.wallpaperPathRaw;
+                        if (!path) return "";
+                        return path.startsWith("file://") ? path : ("file://" + path);
                     }
-                    if (playbackState === MediaPlayer.StoppedState && visible && shouldPlay) {
-                        play()
-                    }
-                }
+                    fillMode: VideoOutput.PreserveAspectCrop
+                    loops: MediaPlayer.Infinite
+                    muted: true
+                    autoPlay: true
 
-                onShouldPlayChanged: {
-                    if (visible && backdropWindow.wallpaperIsVideo) {
-                        if (shouldPlay) play()
-                        else pauseAndShowFirstFrame()
-                    }
-                }
+                    readonly property bool shouldPlay: backdropWindow.enableAnimation && !Wallpapers.batteryPauseActive
 
-                onVisibleChanged: {
-                    if (visible && backdropWindow.wallpaperIsVideo) {
-                        if (shouldPlay) play()
-                        else pauseAndShowFirstFrame()
-                    } else {
+                    function pauseAndShowFirstFrame() {
                         pause()
+                        seek(0)
                     }
-                }
 
-                layer.enabled: visible && Appearance.effectsEnabled
-                    && backdropWindow.enableAnimatedBlur
-                    && backdropWindow.backdropBlurRadius > 0
-                layer.effect: MultiEffect {
-                    blurEnabled: true
-                    blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0
-                    blurMax: 64
-                    saturation: backdropWindow.backdropSaturation
-                    contrast: backdropWindow.backdropContrast
+                    onPlaybackStateChanged: {
+                        if (playbackState === MediaPlayer.PlayingState && !shouldPlay) {
+                            pauseAndShowFirstFrame()
+                        }
+                        if (playbackState === MediaPlayer.StoppedState && visible && shouldPlay) {
+                            play()
+                        }
+                    }
+
+                    onShouldPlayChanged: {
+                        if (visible && backdropWindow.wallpaperIsVideo) {
+                            if (shouldPlay) play()
+                            else pauseAndShowFirstFrame()
+                        }
+                    }
+
+                    onVisibleChanged: {
+                        if (visible && backdropWindow.wallpaperIsVideo) {
+                            if (shouldPlay) play()
+                            else pauseAndShowFirstFrame()
+                        } else {
+                            pause()
+                        }
+                    }
+
+                    layer.enabled: visible && Appearance.effectsEnabled
+                        && backdropWindow.enableAnimatedBlur
+                        && backdropWindow.backdropBlurRadius > 0
+                    layer.effect: MultiEffect {
+                        blurEnabled: true
+                        blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0
+                        blurMax: 64
+                        saturation: backdropWindow.backdropSaturation
+                        contrast: backdropWindow.backdropContrast
+                    }
                 }
             }
 

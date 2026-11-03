@@ -10,6 +10,7 @@ Item {
     property real warningThreshold: 100
     property real cautionThreshold: 0  // 0 = disabled
     property bool shown: true
+    property real contentRotation: 0
     readonly property real normalizedPercentage: Number.isFinite(root.percentage)
         ? Math.max(0, Math.min(1, root.percentage)) : 0
     clip: true
@@ -22,6 +23,7 @@ Item {
     RowLayout {
         id: resourceRowLayout
         spacing: 2 * Appearance.sizes.barModuleScale
+        layoutDirection: root.contentRotation < 0 ? Qt.RightToLeft : Qt.LeftToRight
         x: shown ? 0 : -resourceRowLayout.width
         anchors {
             verticalCenter: parent.verticalCenter
@@ -51,6 +53,7 @@ Item {
                     fill: 1
                     text: iconName
                     iconSize: Math.round(Appearance.font.pixelSize.normal * Appearance.sizes.barModuleScale)
+                    rotation: -root.contentRotation
                     color: Appearance.colors.colOnSurfaceVariant
                 }
             }
@@ -81,6 +84,7 @@ Item {
                 font.family: Appearance.font.family.main
                 font.weight: Font.Normal
                 font.italic: false
+                rotation: -root.contentRotation
                 text: `${Math.round(root.normalizedPercentage * 100).toString()}`
             }
         }

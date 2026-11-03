@@ -33,8 +33,9 @@ Scope {
                 WlrLayershell.layer: WlrLayer.Overlay
                 exclusionMode: ExclusionMode.Ignore
 
-                PolkitContent {
+                Loader {
                     anchors.fill: parent
+                    source: "PolkitContent.qml"
                 }
             }
         }

@@ -1,2 +1,0 @@
-  INFO qml: IPC_CORNER_STATE top false false top left {"edge":"top","content":{"x":40,"y":16,"width":180,"height":0},"surface":{"x":0,"y":0,"width":0,"height":0},"depth":0,"targetDepth":72,"progress":0,"span":204,"along":28} false
- ERROR qml: IPC_CORNER_FAIL real IPC inherits OSD join on top

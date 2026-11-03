@@ -12,25 +12,20 @@ GeneralConfigCore {
         return SettingsPageRegistry.navigateToKey("integrations", "TLP " + String(categoryId ?? ""))
     }
 
-    // Static search entries use human-facing section names while the System
-    // navigator uses stable lowercase task ids. Keep the translation here so
-    // search can land on the correct tab before it scrolls to a control.
     function activateSettingsSearchSection(section: string): void {
         const value = String(section ?? "").toLowerCase()
         if (value.includes("fan") || value.includes("thinkfan")
                 || value.includes("thermal") || value.includes("cooling")) {
             SettingsPageRegistry.navigateToKey("integrations", "Thinkfan")
-        } else if (value.includes("power") || value.includes("battery")
-                || value.includes("charge") || value.includes("tlp")) {
+        } else if (value.includes("tlp")) {
             SettingsPageRegistry.navigateToKey("integrations", "TLP")
-        } else if (value.includes("audio") || value.includes("sound")) {
+        } else if (value.includes("audio") || value.includes("sound")
+                || value.includes("power") || value.includes("battery") || value.includes("charge")) {
             root.activeSection = "audio"
         } else if (value.includes("language") || value.includes("locale")
-                || value.includes("time")) {
+                || value.includes("time") || value.includes("input") || value.includes("keyboard")) {
             root.activeSection = "locale"
-        } else if (value.includes("input") || value.includes("keyboard")) {
-            root.activeSection = "input"
-        } else if (value.includes("safety") || value.includes("polic")) {
+        } else if (value.includes("safety") || value.includes("polic") || value.includes("lock")) {
             root.activeSection = "safety"
         }
     }
@@ -49,13 +44,5 @@ GeneralConfigCore {
             if (Persistent.ready)
                 Qt.callLater(root._consumeLegacyTlpPowerRedirect)
         }
-    }
-
-    // Core battery warnings/suspend remain independent of optional plugins.
-    TlpPowerSettings {
-        id: tlpPowerSettings
-        showIntegrationSettings: false
-        Layout.fillWidth: true
-        visible: root.activeSection === "power"
     }
 }

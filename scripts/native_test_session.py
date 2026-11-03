@@ -31,27 +31,32 @@ def _host_query(niri: str, env: dict, topic: str):
     return json.loads(result.stdout)
 
 
-def _focus_for_capture(niri: str, pid: int, host_env: dict):
+def _focus_for_capture(niri: str, pid: int, host_env: dict, before: dict | None = None):
     """Focus only this private compositor, preserving a known previous target."""
-    before = _host_query(niri, host_env, "focused-window")
-    if not before:
-        raise RuntimeError("Capture focus requires a restorable parent window")
+    if before is None:
+        before = _host_query(niri, host_env, "focused-window")
+    before_id = before.get("id") if isinstance(before, dict) else None
     deadline = time.monotonic() + 3
     while time.monotonic() < deadline:
         windows = _host_query(niri, host_env, "windows")
         owned = [window for window in windows if window.get("pid") == pid]
         if len(owned) == 1:
             target = owned[0]["id"]
+            if before_id == target:
+                others = [w for w in windows if w.get("id") != target]
+                before_id = others[0]["id"] if others else None
             subprocess.run([niri, "msg", "action", "focus-window", "--id", str(target)],
                            env=host_env, capture_output=True, text=True,
                            timeout=3, check=True)
-            return before["id"], target
+            return before_id, target
         time.sleep(.1)
     raise RuntimeError("Capture focus could not identify the private Niri window")
 
 
 def _restore_capture_focus(niri: str, targets: tuple, host_env: dict):
     previous, owned = targets
+    if previous is None:
+        return
     current = _host_query(niri, host_env, "focused-window")
     # A user changing focus during the capture owns that choice.
     if current and current["id"] == owned and any(
@@ -74,7 +79,18 @@ def private_wayland(folder: Path, *, capture_focus: bool = False):
                       'layout {\n background-color "#111820"\n'
                       ' default-column-width { proportion 1.0; }\n}\n'
                       'overview {\n backdrop-color "#111820"\n}\n')
-    env = dict(os.environ, LC_ALL="C.UTF-8", NIRI_CONFIG=str(config), RUST_LOG="niri=info")
+    test_bin = folder / ".test-bin"
+    test_bin.mkdir(exist_ok=True)
+    for mock_cmd, mock_out in (
+        ("wpctl", 'if [ "${1:-}" = "get-volume" ]; then echo "Volume: 0.50"; fi'),
+        ("brightnessctl", 'if [ "${1:-}" = "info" ]; then echo "backlight,backlight,100,50%,200"; elif [ "${1:-}" = "g" ]; then echo "100"; elif [ "${1:-}" = "m" ]; then echo "200"; fi'),
+        ("playerctl", 'if [ "${1:-}" = "status" ]; then echo "Stopped"; fi'),
+    ):
+        mock_path = test_bin / mock_cmd
+        mock_path.write_text(f"#!/bin/sh\n{mock_out}\nexit 0\n")
+        mock_path.chmod(0o755)
+    env = dict(os.environ, LC_ALL="C.UTF-8", NIRI_CONFIG=str(config), RUST_LOG="niri=info",
+               PATH=f"{test_bin}{os.pathsep}{os.environ.get('PATH', '')}")
     env.pop("NIRI_SOCKET", None)
     for kind in ["config", "state", "cache", "data"]:
         env[f"XDG_{kind.upper()}_HOME"] = str(folder / kind)
@@ -83,6 +99,12 @@ def private_wayland(folder: Path, *, capture_focus: bool = False):
     process = None
     capture_targets = None
     host_env = dict(os.environ)
+    initial_focus = None
+    if capture_focus:
+        try:
+            initial_focus = _host_query(niri, host_env, "focused-window")
+        except (RuntimeError, subprocess.SubprocessError):
+            initial_focus = None
     try:
         with log.open("wb") as stream:
             process = subprocess.Popen([niri], env=env, stdout=stream,
@@ -102,7 +124,7 @@ def private_wayland(folder: Path, *, capture_focus: bool = False):
                     for key in ["QS_CONFIG_NAME", "QS_CONFIG_PATH", "QS_MANIFEST"]:
                         env.pop(key, None)
                     if capture_focus:
-                        capture_targets = _focus_for_capture(niri, process.pid, host_env)
+                        capture_targets = _focus_for_capture(niri, process.pid, host_env, initial_focus)
                         (folder / "native-test-capture-focus.json").write_text(json.dumps({
                             "private_pid": process.pid, "previous": capture_targets[0],
                             "owned": capture_targets[1]}, indent=2) + "\n")

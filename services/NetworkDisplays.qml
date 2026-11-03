@@ -185,14 +185,43 @@ Singleton {
     }
 
     Process {
+        id: cleanupProcess
+    }
+
+    Process {
         id: statusProcess
         stdout: StdioCollector { id: statusOutput }
         onExited: exitCode => {
             if (root.phase === "disconnecting" || !root.activeUnit) return
             const data = exitCode === 0 ? root._parse(statusOutput.text) : null
             root._connectChecks++
+            if (data?.sinkState === "error") {
+                const failedUnit = root.activeUnit
+                root.lastError = "TV stream failed. Check receiver, codecs and screencast portal."
+                root._reset("")
+                if (failedUnit && !cleanupProcess.running) {
+                    cleanupProcess.command = ["python3", bridge, "stop", failedUnit]
+                    cleanupProcess.running = true
+                }
+                return
+            }
             if (data?.ok && data.state === "active") {
                 root._inactiveReads = 0
+                if (data.sinkState === "disconnected") {
+                    root.phase = "connecting"
+                    root.statusMessage = "Choose the screen or window in the system sharing dialog."
+                    return
+                }
+                if (data.sinkState === "firewall" || data.sinkState === "p2p") {
+                    root.phase = "connecting"
+                    root.statusMessage = "Connecting Wi-Fi Direct to " + root.activeName + "…"
+                    return
+                }
+                if (data.sinkState === "socket" || data.sinkState === "buffering") {
+                    root.phase = "connecting"
+                    root.statusMessage = "Negotiating video stream with " + root.activeName + "…"
+                    return
+                }
                 root.phase = "service-active"
                 root.statusMessage = "Stream service running. Verify picture and sound on TV."
                 return

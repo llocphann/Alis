@@ -2,16 +2,16 @@
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-style = (root / "modules/abyss/settings/AbyssStyleSettings.qml").read_text()
+style = (root / "modules/settings/SidebarsConfig.qml").read_text()
 positions = (root / "modules/abyss/settings/AbyssPositionSettings.qml").read_text()
 notes = (root / "modules/screenCorners/QuickNotesPopup.qml").read_text()
 center = (root / "modules/notificationCenter/NotificationCenterPopup.qml").read_text()
 
 for needle in [
-    "Quick Notes / Timers Edge Bar size",
+    "Left edgebar",
     'Config.setNestedValue("quickNotes.popupWidth",value)',
     'Config.setNestedValue("quickNotes.popupHeight",value)',
-    "Notifications / Activity Edge Bar size",
+    "Right edgebar",
     'Config.setNestedValue("notificationCenter.popupWidth",value)',
     'Config.setNestedValue("notificationCenter.popupHeight",value)',
 ]:

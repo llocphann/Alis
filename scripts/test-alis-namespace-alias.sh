@@ -14,13 +14,13 @@ if migration_check; then fail 'fresh install unexpectedly pending'; fi
 migration_apply || fail 'empty migration failed'
 [[ ! -e "$XDG_CONFIG_HOME" ]] || fail 'fresh check created config directories'
 for root in "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME"; do
-    mkdir -p "$root/inir"
-    printf 'keep-%s\n' "${root##*/}" > "$root/inir/secret.bin"
+    mkdir -p "$root/alis"
+    printf 'keep-%s\n' "${root##*/}" > "$root/alis/secret.bin"
 done
 migration_check || fail 'existing legacy roots not detected'
 migration_apply || fail 'migration failed on valid roots'
 for root in "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME"; do
-    [[ -L "$root/alis" && "$(readlink -- "$root/alis")" == "$root/inir" ]] || fail "bad link at $root"
+    [[ -L "$root/alis" && "$(readlink -- "$root/alis")" == "$root/alis" ]] || fail "bad link at $root"
     [[ "$(cat "$root/alis/secret.bin")" == "keep-${root##*/}" ]] || fail 'original data mutated'
 done
 if migration_check; then fail 'idempotent migration reports pending'; fi
@@ -31,7 +31,7 @@ printf 'user-data\n' > "$XDG_STATE_HOME/alis/private"
 migration_apply 2>"$case_root/collision.log" || fail 'existing user-owned path must be skipped without abort'
 grep -Fq 'SKIP existing user-owned path' "$case_root/collision.log" || fail 'collision skip not explained'
 for root in "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME"; do
-    [[ -L "$root/alis" && "$(readlink -- "$root/alis")" == "$root/inir" ]] || fail 'safe independent alias not created'
+    [[ -L "$root/alis" && "$(readlink -- "$root/alis")" == "$root/alis" ]] || fail 'safe independent alias not created'
 done
 [[ "$(cat "$XDG_STATE_HOME/alis/private")" == user-data ]] || fail 'foreign directory mutated'
 if migration_check; then fail 'completed partial aliases should not remain pending'; fi
@@ -46,11 +46,11 @@ for root in "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME"; do
     rm -- "$root/alis"
 done
 rm "$XDG_CACHE_HOME/alis"
-ln -s inir "$XDG_CACHE_HOME/alis"
+ln -s alis "$XDG_CACHE_HOME/alis"
 migration_apply || fail 'existing compatible relative link rejected'
-[[ "$(readlink "$XDG_CACHE_HOME/alis")" == inir ]] || fail 'existing relative link rewritten'
+[[ "$(readlink "$XDG_CACHE_HOME/alis")" == alis ]] || fail 'existing relative link rewritten'
 for root in "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME"; do
-    [[ "$(cat "$root/inir/secret.bin")" == "keep-${root##*/}" ]] || fail 'source data changed'
+    [[ "$(cat "$root/alis/secret.bin")" == "keep-${root##*/}" ]] || fail 'source data changed'
 done
 # Real-world collision: an unrelated app owns ~/.cache/alis.
 for root in "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME"; do rm -- "$root/alis"; done

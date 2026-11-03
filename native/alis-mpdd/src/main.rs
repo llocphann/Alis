@@ -434,6 +434,27 @@ fn expand_home(value: &str) -> PathBuf {
     PathBuf::from(value)
 }
 
+fn strip_leading_track_num(stem: &str) -> String {
+    let normalized: String = stem
+        .chars()
+        .map(|c| if ('\u{2010}'..='\u{2015}').contains(&c) { '-' } else { c })
+        .collect();
+    let trimmed = normalized.trim();
+    let digit_len = trimmed.bytes().take_while(|b| b.is_ascii_digit()).count();
+    if (1..=3).contains(&digit_len) {
+        let rest = trimmed[digit_len..].trim_start();
+        for sep in ["-", ".", "_", ")"] {
+            if let Some(after_sep) = rest.strip_prefix(sep) {
+                let cleaned = after_sep.trim();
+                if !cleaned.is_empty() {
+                    return cleaned.to_owned();
+                }
+            }
+        }
+    }
+    trimmed.to_owned()
+}
+
 fn lyrics_candidates(track: &Path) -> Vec<PathBuf> {
     let mut candidates = vec![
         track.with_extension("lrc"),
@@ -441,6 +462,57 @@ fn lyrics_candidates(track: &Path) -> Vec<PathBuf> {
         track.with_extension("txt"),
         PathBuf::from(format!("{}.txt", track.to_string_lossy())),
     ];
+    if let (Some(parent), Some(stem_os)) = (track.parent(), track.file_stem()) {
+        let stem = stem_os.to_string_lossy();
+        let stripped = strip_leading_track_num(&stem);
+        if !stripped.is_empty() && stripped != stem {
+            candidates.insert(2, parent.join(format!("{stripped}.lrc")));
+            candidates.push(parent.join(format!("{stripped}.txt")));
+        }
+        let target_norm = stripped.to_lowercase();
+        let target_primary = target_norm
+            .split_once(" _ ")
+            .map(|(head, _)| head.trim().to_owned())
+            .unwrap_or_else(|| target_norm.clone());
+        if let Ok(entries) = fs::read_dir(parent) {
+            let mut matched_lrcs = Vec::new();
+            let mut matched_txts = Vec::new();
+            for entry in entries.flatten() {
+                let p = entry.path();
+                let Some(ext) = p.extension().and_then(|e| e.to_str()) else {
+                    continue;
+                };
+                let is_lrc = ext.eq_ignore_ascii_case("lrc");
+                let is_txt = ext.eq_ignore_ascii_case("txt");
+                if !is_lrc && !is_txt {
+                    continue;
+                }
+                let Some(c_stem) = p.file_stem().and_then(|s| s.to_str()) else {
+                    continue;
+                };
+                let c_norm = strip_leading_track_num(c_stem).to_lowercase();
+                let c_tail = c_norm
+                    .split_once(" - ")
+                    .map(|(_, tail)| tail.trim())
+                    .unwrap_or(c_norm.as_str());
+                if c_norm == target_norm
+                    || c_norm == target_primary
+                    || c_tail == target_norm
+                    || c_tail == target_primary
+                {
+                    if is_lrc {
+                        matched_lrcs.push(p);
+                    } else {
+                        matched_txts.push(p);
+                    }
+                }
+            }
+            matched_lrcs.sort();
+            matched_txts.sort();
+            candidates.extend(matched_lrcs);
+            candidates.extend(matched_txts);
+        }
+    }
     let mut unique = Vec::with_capacity(candidates.len());
     for path in candidates.drain(..) {
         if !unique.contains(&path) {
@@ -601,6 +673,26 @@ fn is_non_lyric_credit_or_header(text: &str) -> bool {
                 "vocalsby",
                 "publishedby",
                 "copyright",
+                "artist",
+                "artists",
+                "album",
+                "title",
+                "songtitle",
+                "songstitle",
+                "singer",
+                "vocal",
+                "vocals",
+                "guitar",
+                "bass",
+                "drums",
+                "piano",
+                "keyboard",
+                "strings",
+                "editor",
+                "subtitles",
+                "transcribedby",
+                "syncedby",
+                "lrcby",
                 "sángtác",
                 "lời",
                 "nhạc",
@@ -609,6 +701,10 @@ fn is_non_lyric_credit_or_header(text: &str) -> bool {
                 "phốikhí",
                 "biêntập",
                 "thựchiện",
+                "casĩ",
+                "trìnhbày",
+                "biểudiễn",
+                "thuâm",
             ]
             .contains(&compact_lower.as_str())
         {
@@ -713,7 +809,7 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool, bool) {
         let gap = (next_start - line_start).max(0.35);
         let n_words = text.split_whitespace().filter(|t| !t.is_empty()).count();
         let n_chars = text.chars().filter(|c| c.is_alphanumeric()).count();
-        let est_max = (0.28 + n_words as f64 * 0.24 + n_chars as f64 * 0.036).clamp(0.95, 6.2) * 1.15;
+        let est_max = (0.42 + n_words as f64 * 0.40 + n_chars as f64 * 0.05).clamp(1.25, 8.5) * 1.15;
         let vocal_window = (gap - 0.06).max(0.35).min(gap * 0.88).min(est_max);
         let mut line_end = line_start + vocal_window;
 
@@ -771,36 +867,23 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool, bool) {
                 } else {
                     (*raw_t + offset).max(0.0)
                 };
-                let has_explicit_end = inline_segments
-                    .get(seg_idx + 1)
-                    .is_some_and(|(_, nxt_txt)| nxt_txt.is_empty());
+                let is_last_seg = inline_segments
+                    .iter()
+                    .skip(seg_idx + 1)
+                    .all(|(_, nxt_txt)| nxt_txt.is_empty());
                 let mut w_end = inline_segments
                     .get(seg_idx + 1)
                     .map(|(nt, _)| (*nt + offset).max(w_start + 0.08))
                     .unwrap_or_else(|| line_end.max(w_start + 0.2));
-                if w_end > line_end {
-                    line_end = w_end;
-                }
                 let sub_tokens: Vec<&str> = seg_text.split_whitespace().collect();
                 if sub_tokens.len() <= 1 {
                     for sub in sub_tokens {
-                        if !has_explicit_end {
+                        if is_last_seg && (w_end - w_start) > 2.4 {
                             let char_count = sub.chars().filter(|c| c.is_alphanumeric()).count().max(1) as f64;
-                            let clause_pause = sub.ends_with(',')
-                                || sub.ends_with(';')
-                                || sub.ends_with(':')
-                                || sub.ends_with('.')
-                                || sub.ends_with('?')
-                                || sub.ends_with('!')
-                                || sub.ends_with('…');
-                            let max_natural = if clause_pause {
-                                (0.18 + char_count * 0.055).max(0.32)
-                            } else {
-                                (0.28 + char_count * 0.075).max(0.55)
-                            };
-                            if (w_end - w_start) > max_natural * 1.35 {
-                                w_end = w_start + max_natural;
-                            }
+                            w_end = w_start + (0.35 + char_count * 0.11).clamp(0.85, 2.2);
+                        }
+                        if w_end > line_end {
+                            line_end = w_end;
                         }
                         words.push(json!({
                             "text": sub,
@@ -810,6 +893,9 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool, bool) {
                         }));
                     }
                 } else {
+                    if w_end > line_end {
+                        line_end = w_end;
+                    }
                     let span = (w_end - w_start).max(0.08 * sub_tokens.len() as f64);
                     let step = span / sub_tokens.len() as f64;
                     for (sub_i, sub) in sub_tokens.iter().enumerate() {
@@ -1007,31 +1093,29 @@ impl ArtLookup {
             return art.clone();
         }
 
-        let art = fs::read_dir(&directory)
-            .ok()
-            .and_then(|entries| {
-                let mut best: Option<(usize, PathBuf)> = None;
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if !path.is_file() {
-                        continue;
-                    }
-                    let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
-                        continue;
-                    };
-                    let Some(rank) = art_filename_rank(name) else {
-                        continue;
-                    };
-                    if best
-                        .as_ref()
-                        .is_none_or(|(best_rank, _)| rank <= *best_rank)
-                    {
-                        best = Some((rank, path));
-                    }
-                }
-                best.map(|(_, path)| file_url(&path))
-            })
-            .unwrap_or_default();
+        let Ok(entries) = fs::read_dir(&directory) else {
+            return String::new();
+        };
+        let mut best: Option<(usize, PathBuf)> = None;
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+            let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+                continue;
+            };
+            let Some(rank) = art_filename_rank(name) else {
+                continue;
+            };
+            if best
+                .as_ref()
+                .is_none_or(|(best_rank, _)| rank <= *best_rank)
+            {
+                best = Some((rank, path));
+            }
+        }
+        let art = best.map(|(_, path)| file_url(&path)).unwrap_or_default();
 
         self.folders.insert(directory, art.clone());
         art
@@ -1223,6 +1307,36 @@ fn music_root(client: &mut MpdClient, override_root: &str) -> String {
         .unwrap_or_default()
 }
 
+fn is_stale_missing_file_error(error_text: &str, current: &Value) -> bool {
+    if !error_text.contains("No such file or directory") {
+        return false;
+    }
+    let mut rest = error_text;
+    while let Some(start) = rest.find('"') {
+        let after_start = &rest[start + 1..];
+        let Some(end) = after_start.find('"') else {
+            break;
+        };
+        let candidate = &after_start[..end];
+        if candidate.starts_with('/') && Path::new(candidate).is_file() {
+            return true;
+        }
+        rest = &after_start[end + 1..];
+    }
+    if let Some(track) = current.as_object() {
+        let path = track_str(track, "path");
+        let uri = track_str(track, "uri");
+        if !path.is_empty()
+            && !path.contains("://")
+            && Path::new(path).is_file()
+            && (error_text.contains(path) || (!uri.is_empty() && error_text.contains(uri)))
+        {
+            return true;
+        }
+    }
+    false
+}
+
 fn status_payload_mode_with_art(
     client: &mut MpdClient,
     root: &str,
@@ -1242,6 +1356,14 @@ fn status_payload_mode_with_art(
         .first()
         .map(|record| Value::Object(build_track(record, root, art_lookup)))
         .unwrap_or(Value::Null);
+
+    if status
+        .get("error")
+        .is_some_and(|err| is_stale_missing_file_error(err, &current))
+    {
+        let _ = client.command("clearerror", std::iter::empty::<&str>());
+        status.remove("error");
+    }
 
     let mut payload = Map::new();
     payload.insert("connected".into(), json!(true));
@@ -1309,6 +1431,11 @@ fn populate_library_art(
         let Some(&first_index) = indexes.first() else {
             continue;
         };
+        let first_path = track_str(&tracks[first_index], "path");
+        if !first_path.is_empty() && !first_path.contains("://") && !Path::new(first_path).is_file()
+        {
+            continue;
+        }
         let Some((data, mime)) = fetch_mpd_art(client, track_str(&tracks[first_index], "uri"))
         else {
             art_lookup.missing_embedded.insert(key);
@@ -1590,6 +1717,7 @@ fn handle_operation(
             const ALLOWED: &[&str] = &[
                 "next", "previous", "stop", "play", "pause", "seekcur", "setvol", "random",
                 "repeat", "single", "consume", "update", "delete", "deleteid", "clear",
+                "clearerror",
             ];
             let name = param_string(params, "name")?;
             if !ALLOWED.contains(&name.as_str()) {
@@ -2002,6 +2130,7 @@ fn run_compat(args: &[String]) -> i32 {
                 const ALLOWED: &[&str] = &[
                     "next", "previous", "stop", "play", "pause", "seekcur", "setvol", "random",
                     "repeat", "single", "consume", "update", "delete", "deleteid", "clear",
+                    "clearerror",
                 ];
                 let name = &rest[0];
                 if !ALLOWED.contains(&name.as_str()) {

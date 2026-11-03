@@ -14,29 +14,33 @@ import qs.modules.waffle.looks
 Scope {
     id: root
 
-    Connections {
-        target: GlobalStates
-        function onWaffleClipboardOpenChanged() {
-            if (GlobalStates.waffleClipboardOpen) panelLoader.active = true
-        }
-    }
-
     Loader {
         id: panelLoader
         active: GlobalStates.waffleClipboardOpen
         sourceComponent: PanelWindow {
             id: panelWindow
+            visible: GlobalStates.waffleClipboardOpen
             exclusiveZone: 0
             WlrLayershell.namespace: "quickshell:wClipboard"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+            WlrLayershell.keyboardFocus: GlobalStates.waffleClipboardOpen
+                ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             color: "transparent"
+            mask: Region {
+                item: GlobalStates.waffleClipboardOpen ? clickOutsideMouse : emptyPanelInput
+            }
 
             anchors {
                 top: true
                 bottom: true
                 left: true
                 right: true
+            }
+
+            Item {
+                id: emptyPanelInput
+                width: 0
+                height: 0
             }
 
             Connections {
@@ -48,7 +52,9 @@ Scope {
 
             // Click-outside detection
             MouseArea {
+                id: clickOutsideMouse
                 anchors.fill: parent
+                enabled: GlobalStates.waffleClipboardOpen
                 onClicked: mouse => {
                     const localPos = mapToItem(content, mouse.x, mouse.y)
                     const outside = (localPos.x < 0 || localPos.x > content.width
@@ -65,7 +71,6 @@ Scope {
                 anchors.verticalCenterOffset: (Config.options.waffles?.bar?.bottom ?? true) ? -30 : 30
                 onClosed: {
                     GlobalStates.waffleClipboardOpen = false
-                    panelLoader.active = false
                 }
             }
         }

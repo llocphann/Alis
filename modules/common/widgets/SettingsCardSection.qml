@@ -21,9 +21,140 @@ Item {
 
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
+    property bool syncRowExpansion: false
+    property bool _syncingRowExpansion: false
+
+    // Card Sub-Tab state managed by ContentPage
+    property var _topPage: null
+    property Item _initialParent: null
+    property int _declarationOrder: -1
+    property string _cardSubTabKey: ""
+    property bool _cardSubTabActive: true
+    property bool _hasNextActiveCard: false
+    property bool _preventBentoReparent: false
+    property string bentoColumn: ""
+    property bool _consumesBentoExtraHeight: false
+    property real _bentoExtraHeight: 0
+    readonly property real cardImplicitHeight: card.implicitHeight
+    readonly property real naturalCardImplicitHeight: root.cardImplicitHeight
+    readonly property real chromeImplicitHeight: (root.showHeader ? (headerBackground.implicitHeight + SettingsMaterialPreset.groupSpacing) : 0) + SettingsMaterialPreset.cardPadding * 2
+    readonly property real _effectiveCardHeight: card.implicitHeight + Math.max(0, root._bentoExtraHeight)
+    readonly property real _bottomGap: (root._cardSubTabActive && root._hasNextActiveCard)
+        ? SettingsMaterialPreset.pageSpacing
+        : 0
+    readonly property bool effectiveCollapsible: false
+
+    clip: !root._cardSubTabActive
+    opacity: root._cardSubTabActive ? 1 : 0
+    enabled: root._cardSubTabActive
 
     Layout.fillWidth: true
-    implicitHeight: card.implicitHeight
+    Layout.fillHeight: false
+    Layout.alignment: Qt.AlignTop
+    Layout.preferredHeight: root._cardSubTabActive ? (root._effectiveCardHeight + root._bottomGap) : 0
+    Layout.maximumHeight: root._cardSubTabActive
+        ? (root.Layout.fillHeight ? 16777215 : (root._effectiveCardHeight + root._bottomGap))
+        : 0
+    Layout.minimumHeight: root._cardSubTabActive ? (root._effectiveCardHeight + root._bottomGap) : 0
+    implicitHeight: root._cardSubTabActive ? (root._effectiveCardHeight + root._bottomGap) : 0
+
+    function _findTopPage() {
+        var p = root._initialParent ? root._initialParent : root.parent;
+        while (p) {
+            if (p.hasOwnProperty("settingsPageIndex")) {
+                return p;
+            }
+            p = p.parent;
+        }
+        return null;
+    }
+
+    function _ensureTopPage() {
+        if (!root._initialParent && root.parent) {
+            root._initialParent = root.parent;
+        }
+        var found = _findTopPage();
+        if (found !== root._topPage) {
+            if (root._topPage && typeof root._topPage.unregisterCardSection === "function") {
+                root._topPage.unregisterCardSection(root);
+            }
+            root._topPage = found;
+            if (root._topPage && typeof root._topPage.registerCardSection === "function") {
+                root._topPage.registerCardSection(root);
+            }
+        }
+    }
+
+    Timer {
+        id: topPageSyncTimer
+        interval: 0
+        repeat: false
+        onTriggered: {
+            root._ensureTopPage();
+            if (root._topPage && typeof root._topPage.notifyCardEligibilityChanged === "function") {
+                root._topPage.notifyCardEligibilityChanged();
+            }
+        }
+    }
+
+    function isCardEligibleForTabs() {
+        if (!root.showHeader || !root.title || root.title.length === 0)
+            return false;
+        if (!root.visible)
+            return false;
+        if (root.settingsTaskSection && root.settingsTaskSection.length > 0
+                && root._topPage && root._topPage._hasTaskNavigatorTabs
+                && root._topPage.settingsTaskNavigator) {
+            var navOpts = root._topPage.settingsTaskNavigator.options || [];
+            var currentTask = String(root._topPage.settingsTaskNavigator.currentValue ?? "");
+            var matchesNavOption = false;
+            for (var i = 0; i < navOpts.length; i++) {
+                if (String(navOpts[i]?.value ?? "") === root.settingsTaskSection) {
+                    matchesNavOption = true;
+                    break;
+                }
+            }
+            if (matchesNavOption && currentTask.length > 0 && root.settingsTaskSection !== currentTask) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function ensureControlOnActiveSectionSubTab(control) {
+        // Pagination is handled at ContentPage level.
+    }
+
+    function rowPeerSections() {
+        return [root];
+    }
+
+    function setRowExpanded(nextExpanded) {
+        if (root._topPage && root._topPage.hasCardSubTabs) {
+            root.expanded = true;
+            return;
+        }
+        root.expanded = nextExpanded;
+    }
+
+    onVisibleChanged: {
+        topPageSyncTimer.restart();
+        if (root._topPage && !root._topPage._isDestroying && typeof root._topPage.notifyCardEligibilityChanged === "function") {
+            root._topPage.notifyCardEligibilityChanged();
+        }
+    }
+
+    onTitleChanged: {
+        if (root._topPage && !root._topPage._isDestroying && typeof root._topPage.notifyCardEligibilityChanged === "function") {
+            root._topPage.notifyCardEligibilityChanged();
+        }
+    }
+
+    onNaturalCardImplicitHeightChanged: {
+        if (root.visible && root._topPage && !root._topPage._isDestroying && root._topPage._activeLeftBentoCards) {
+            root._topPage._syncBentoColumnHeights(root._topPage._activeLeftBentoCards, root._topPage._activeRightBentoCards);
+        }
+    }
 
     function _findSettingsContext() {
         var page = null;
@@ -39,11 +170,17 @@ Item {
     }
 
     function focusFromSettingsSearch() {
+        if (root._topPage && typeof root._topPage.selectCardSection === "function") {
+            root._topPage.selectCardSection(root);
+        }
         root.expanded = true;
         root.forceActiveFocus();
     }
 
     Component.onCompleted: {
+        root._ensureTopPage();
+        topPageSyncTimer.restart();
+
         if (!enableSettingsSearch || !root.title)
             return;
         if (typeof SettingsSearchRegistry === "undefined")
@@ -68,6 +205,7 @@ Item {
     }
 
     Component.onDestruction: {
+        topPageSyncTimer.stop();
         if (typeof SettingsSearchRegistry !== "undefined") {
             if (SettingsSearchRegistry.unregisterCollapsibleSection) {
                 SettingsSearchRegistry.unregisterCollapsibleSection(root);
@@ -78,7 +216,7 @@ Item {
 
     // Lightweight Material offset shadow avoids a GPU-blurred shadow per card.
     Rectangle {
-        visible: Appearance.effectsEnabled
+        visible: root._cardSubTabActive && Appearance.effectsEnabled
         x: card.x + 0.5
         y: card.y + 1.5
         width: card.width
@@ -91,7 +229,7 @@ Item {
     // Subtle Material left accent bar when expanded.
     Rectangle {
         id: accentBar
-        visible: root.showHeader
+        visible: root._cardSubTabActive && root.showHeader
         anchors {
             left: card.left
             top: card.top
@@ -122,8 +260,12 @@ Item {
 
     Rectangle {
         id: card
+        visible: true
 
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        height: Math.max(implicitHeight, root.height - root._bottomGap)
         implicitHeight: cardColumn.implicitHeight + SettingsMaterialPreset.cardPadding * 2
         radius: SettingsMaterialPreset.cardRadius
         color: SettingsMaterialPreset.cardColor
@@ -149,6 +291,7 @@ Item {
                 left: parent.left
                 right: parent.right
                 top: parent.top
+                bottom: parent.bottom
                 margins: SettingsMaterialPreset.cardPadding
             }
             spacing: SettingsMaterialPreset.groupSpacing
@@ -159,7 +302,7 @@ Item {
                 Layout.fillWidth: true
                 implicitHeight: headerRow.implicitHeight + SettingsMaterialPreset.headerPaddingY * 2
                 radius: SettingsMaterialPreset.headerRadius
-                color: headerMouseArea.containsMouse && root.collapsible
+                color: headerMouseArea.containsMouse && root.effectiveCollapsible
                     ? SettingsMaterialPreset.headerHoverColor
                     : ColorUtils.applyAlpha(SettingsMaterialPreset.headerHoverColor, 0)
 
@@ -186,11 +329,6 @@ Item {
 
                         sourceComponent: Item {
                             id: iconHost
-                            // The cookie badge fills this host, and a scalloped
-                            // polygon inscribed in a box is SMALLER than the box —
-                            // its lobes cut inward. Sized to the glyph, the plate
-                            // came out smaller than the glyph sitting on it, so the
-                            // host has to clear the icon for the badge to contain it.
                             implicitWidth: Appearance.font.pixelSize.larger
                             implicitHeight: implicitWidth
                             readonly property color iconColor: root.expanded
@@ -214,6 +352,8 @@ Item {
                         text: root.title
                         font.pixelSize: Appearance.font.pixelSize.normal
                         font.weight: Font.DemiBold
+                        marquee: true
+                        maximumLineCount: 1
                         color: root.expanded
                             ? SettingsMaterialPreset.titleExpandedColor
                             : SettingsMaterialPreset.titleCollapsedColor
@@ -225,11 +365,10 @@ Item {
                     }
 
                     MaterialSymbol {
-                        visible: root.collapsible
+                        visible: root.effectiveCollapsible
                         text: "expand_more"
                         iconSize: Appearance.font.pixelSize.normal
                         color: Appearance.colors.colSubtext
-                        // One glyph that rotates instead of swapping icons
                         rotation: root.expanded ? 180 : 0
                         Behavior on rotation {
                             enabled: Appearance.animationsEnabled
@@ -242,11 +381,11 @@ Item {
                 MouseArea {
                     id: headerMouseArea
                     anchors.fill: parent
-                    hoverEnabled: root.collapsible
-                    cursorShape: root.collapsible ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    hoverEnabled: root.effectiveCollapsible
+                    cursorShape: root.effectiveCollapsible ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: {
-                        if (root.collapsible) {
-                            root.expanded = !root.expanded;
+                        if (root.effectiveCollapsible) {
+                            root.setRowExpanded(!root.expanded);
                         }
                     }
                 }
@@ -255,27 +394,18 @@ Item {
             Item {
                 id: contentContainer
                 Layout.fillWidth: true
+                Layout.fillHeight: root.expanded
                 implicitHeight: root.expanded ? sectionContent.implicitHeight : 0
                 clip: true
-                // clip only hides rendering — descendants outside the clipped
-                // area still receive input. Without this, every collapsed
-                // card leaves its full set of switches/sliders live and
-                // clickable, stacked invisibly under whatever renders next.
                 enabled: root.expanded
-
-                Behavior on implicitHeight {
-                    animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
-                }
 
                 ColumnLayout {
                     id: sectionContent
+                    objectName: "sectionContent"
                     width: parent.width
+                    height: (root._consumesBentoExtraHeight || root._bentoExtraHeight > 0) ? Math.max(implicitHeight, parent.height) : implicitHeight
                     spacing: SettingsMaterialPreset.groupSpacing
                     opacity: root.expanded ? 1 : 0
-
-                    Behavior on opacity {
-                        animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                    }
                 }
             }
         }

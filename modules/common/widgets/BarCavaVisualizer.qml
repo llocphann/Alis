@@ -358,8 +358,13 @@ Item {
                 1, slot - Math.max(0, root.barSpacing))
             readonly property real centerX: root.edgeInset
                 + index * slot + slot / 2
-            readonly property real rawLevel:
+            readonly property real targetRawLevel:
                 Number(root._levels[index] ?? 0)
+            property real rawLevel: targetRawLevel
+            Behavior on rawLevel {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: 75; easing.type: Easing.OutCubic }
+            }
             readonly property real edge: root._edgeFactor(centerX)
             readonly property real level: rawLevel * edge
             readonly property real topY: root._topAt(centerX)
@@ -445,8 +450,13 @@ Item {
             readonly property real centerY: (topY + bottomY) / 2
             readonly property bool ribbon:
                 root.waveMode === "ribbon" || root.barsOrigin === "mirror"
-            readonly property real rawLevel:
+            readonly property real targetRawLevel:
                 Number(root._levels[index] ?? 0)
+            property real rawLevel: targetRawLevel
+            Behavior on rawLevel {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: 75; easing.type: Easing.OutCubic }
+            }
             readonly property real waveY: root._waveY(index, rawLevel)
             readonly property real lowerWaveY: ribbon
                 ? centerY + Math.max(0, centerY - waveY)
@@ -455,11 +465,17 @@ Item {
                 root._levelCount > 1 ? index / (root._levelCount - 1) : 0.5)
 
             readonly property bool hasNext: index + 1 < root._levelCount
+            readonly property real targetNextRawLevel:
+                hasNext ? Number(root._levels[index + 1] ?? 0) : targetRawLevel
+            property real nextRawLevel: targetNextRawLevel
+            Behavior on nextRawLevel {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: 75; easing.type: Easing.OutCubic }
+            }
             readonly property real nextX: hasNext
                 ? root._waveX(index + 1) : centerX
             readonly property real nextWaveY: hasNext
-                ? root._waveY(index + 1,
-                    Number(root._levels[index + 1] ?? 0))
+                ? root._waveY(index + 1, nextRawLevel)
                 : waveY
             readonly property real nextTopY: hasNext
                 ? root._topAt(nextX) : topY
@@ -562,12 +578,23 @@ Item {
         delegate: Item {
             required property int index
 
+            readonly property real targetLevel0: Number(root._levels[index] ?? 0)
+            readonly property real targetLevel1: Number(root._levels[index + 1] ?? 0)
+            property real level0: targetLevel0
+            property real level1: targetLevel1
+            Behavior on level0 {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: 75; easing.type: Easing.OutCubic }
+            }
+            Behavior on level1 {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: 75; easing.type: Easing.OutCubic }
+            }
+
             readonly property real x0: root._waveX(index)
             readonly property real x1: root._waveX(index + 1)
-            readonly property real y0: root._waveY(
-                index, Number(root._levels[index] ?? 0))
-            readonly property real y1: root._waveY(
-                index + 1, Number(root._levels[index + 1] ?? 0))
+            readonly property real y0: root._waveY(index, level0)
+            readonly property real y1: root._waveY(index + 1, level1)
             readonly property real dx: x1 - x0
             readonly property real dy: y1 - y0
             readonly property real segmentLength: Math.sqrt(dx * dx + dy * dy)

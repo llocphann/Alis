@@ -9,45 +9,48 @@ fail=0
 note() { printf '  - %s\n' "$1"; fail=1; }
 
 # 1. IPC targets: code (services/) vs docs/SERVICES.md — both directions.
-real_ipc=$(grep -rl 'IpcHandler' services/ --include='*.qml' 2>/dev/null \
-  | xargs grep -hoP 'target:\s*"\K[^"]+' 2>/dev/null | sort -u)
-doc_ipc=$(grep -oP 'IPC target: `\K[^`]+' docs/SERVICES.md 2>/dev/null | sort -u)
-echo "[IPC] services/ vs docs/SERVICES.md"
-while read -r t; do [ -n "$t" ] && ! grep -qxF "$t" <<<"$doc_ipc" \
-  && note "IPC '$t' exists in code but is NOT documented in docs/SERVICES.md"; done <<<"$real_ipc"
-while read -r t; do [ -n "$t" ] && ! grep -qxF "$t" <<<"$real_ipc" \
-  && note "IPC '$t' documented in docs/SERVICES.md but NO service exposes it"; done <<<"$doc_ipc"
+if [ -f docs/SERVICES.md ]; then
+  real_ipc=$(grep -rl 'IpcHandler' services/ --include='*.qml' 2>/dev/null \
+    | xargs grep -hoP 'target:\s*"\K[^"]+' 2>/dev/null | sort -u)
+  doc_ipc=$(grep -oP 'IPC target: `\K[^`]+' docs/SERVICES.md 2>/dev/null | sort -u)
+  echo "[IPC] services/ vs docs/SERVICES.md"
+  while read -r t; do [ -n "$t" ] && ! grep -qxF "$t" <<<"$doc_ipc" \
+    && note "IPC '$t' exists in code but is NOT documented in docs/SERVICES.md"; done <<<"$real_ipc"
+  while read -r t; do [ -n "$t" ] && ! grep -qxF "$t" <<<"$real_ipc" \
+    && note "IPC '$t' documented in docs/SERVICES.md but NO service exposes it"; done <<<"$doc_ipc"
+fi
 
 # 2. docs/IPC.md ### headers must each be a real target somewhere in the tree.
 #    (colorpicker etc. are standalone CLI commands documented under their own
 #    heading, so only check headers that sit above the 'Standalone Commands' line.)
-all_ipc=$(grep -rhoP 'target:\s*"\K[^"]+' . --include='*.qml' 2>/dev/null | sort -u)
-standalone_line=$(grep -n 'Standalone Commands' docs/IPC.md | head -1 | cut -d: -f1)
-: "${standalone_line:=999999}"
-echo "[IPC] docs/IPC.md headers vs code"
-while IFS=: read -r ln t; do
-  [ -z "$t" ] && continue
-  [ "$ln" -ge "$standalone_line" ] && continue   # below 'Standalone Commands' = CLI, not IPC
-  grep -qxF "$t" <<<"$all_ipc" || note "docs/IPC.md documents '### $t' but no IpcHandler target '$t' exists"
-done < <(grep -noP '^### \K[a-zA-Z]+' docs/IPC.md 2>/dev/null)
+if [ -f docs/IPC.md ]; then
+  all_ipc=$(grep -rhoP 'target:\s*"\K[^"]+' . --include='*.qml' 2>/dev/null | sort -u)
+  standalone_line=$(grep -n 'Standalone Commands' docs/IPC.md | head -1 | cut -d: -f1)
+  : "${standalone_line:=999999}"
+  echo "[IPC] docs/IPC.md headers vs code"
+  while IFS=: read -r ln t; do
+    [ -z "$t" ] && continue
+    [ "$ln" -ge "$standalone_line" ] && continue   # below 'Standalone Commands' = CLI, not IPC
+    grep -qxF "$t" <<<"$all_ipc" || note "docs/IPC.md documents '### $t' but no IpcHandler target '$t' exists"
+  done < <(grep -noP '^### \K[a-zA-Z]+' docs/IPC.md 2>/dev/null)
+fi
 
 # 3. Backtick-quoted .qml references in docs/*.md must resolve to a real file
 #    (docs cite by basename, so match the file ANYWHERE in the tree).
-echo "[paths] .qml references in docs/*.md"
-while read -r p; do
-  [ -n "$p" ] || continue
-  b=$(basename "$p")
-  find . -name "$b" -not -path './.git/*' -print -quit 2>/dev/null | grep -q . \
-    || note "docs reference '$p' but no file named '$b' exists"
-done < <(
-  for doc in docs/*.md; do
-    # Research snapshots cite other repositories, deleted historical components
-    # and proposed source paths. Keep their evidence literal; active manuals
-    # still require every quoted QML path to resolve in the current tree.
-    head -n 5 "$doc" | grep -q '^<!-- alis-doc-kind: research -->$' && continue
-    grep -hoP '`\K[a-zA-Z0-9_./-]+\.qml(?=`)' "$doc" 2>/dev/null
-  done | sort -u
-)
+if [ -d docs ] && compgen -G "docs/*.md" >/dev/null; then
+  echo "[paths] .qml references in docs/*.md"
+  while read -r p; do
+    [ -n "$p" ] || continue
+    b=$(basename "$p")
+    find . -name "$b" -not -path './.git/*' -print -quit 2>/dev/null | grep -q . \
+      || note "docs reference '$p' but no file named '$b' exists"
+  done < <(
+    for doc in docs/*.md; do
+      head -n 5 "$doc" | grep -q '^<!-- alis-doc-kind: research -->$' && continue
+      grep -hoP '`\K[a-zA-Z0-9_./-]+\.qml(?=`)' "$doc" 2>/dev/null
+    done | sort -u
+  )
+fi
 
 # 4. Relative Markdown links in README/docs must resolve to repository content.
 #    GitHub Wiki exports docs/index.md as Home.md and conventionally links pages
@@ -63,7 +66,17 @@ from urllib.parse import unquote
 
 root = Path.cwd().resolve()
 docs_root = (root / "docs").resolve()
-documents = [Path("README.md"), *sorted(Path("docs").glob("*.md"))]
+documents = [
+    Path("README.md"),
+    Path("AGENTS.md"),
+    Path("ARCHITECTURE.md"),
+    Path("STRUCTURE.md"),
+    Path("CHANGELOG.md"),
+    Path("CONTRIBUTING.md"),
+    Path("SECURITY.md"),
+    Path("CODE_OF_CONDUCT.md"),
+    *sorted(Path("docs").glob("*.md")),
+]
 link_re = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 scheme_re = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 errors = []
@@ -154,21 +167,21 @@ fi
 
 # 7a. The IPC metadata parser must preserve escaped Markdown table pipes and
 #     normalize documented function signatures to their QML function names.
-if command -v python3 >/dev/null 2>&1 && [ -f scripts/test-ipc-registry-generator.py ]; then
-  echo "[IPC] registry Markdown parser"
-  python3 scripts/test-ipc-registry-generator.py \
-    || note "IPC registry Markdown parser regression failed"
-else
-  note "python3 and scripts/test-ipc-registry-generator.py are required for IPC registry parser validation"
-fi
+if [ -f docs/IPC.md ]; then
+  if command -v python3 >/dev/null 2>&1 && [ -f scripts/test-ipc-registry-generator.py ]; then
+    echo "[IPC] registry Markdown parser"
+    python3 scripts/test-ipc-registry-generator.py \
+      || note "IPC registry Markdown parser regression failed"
+  else
+    note "python3 and scripts/test-ipc-registry-generator.py are required for IPC registry parser validation"
+  fi
 
-# 7b. Generated IPC CLI registry must be in sync with docs/IPC.md + QML targets.
-#     A stale scripts/lib/ipc-registry.sh breaks the `alis <target> <fn>` shorthand
-#     even though the IPC itself works — the bug that hid the dashboard target.
-if command -v python3 >/dev/null 2>&1 && [ -f scripts/lib/generate-ipc-registry.py ]; then
-  echo "[IPC] generated CLI registry freshness"
-  python3 scripts/lib/generate-ipc-registry.py --check >/dev/null 2>&1 \
-    || note "scripts/lib/ipc-registry.sh is stale — run: python3 scripts/lib/generate-ipc-registry.py"
+  # 7b. Generated IPC CLI registry must be in sync with docs/IPC.md + QML targets.
+  if command -v python3 >/dev/null 2>&1 && [ -f scripts/lib/generate-ipc-registry.py ]; then
+    echo "[IPC] generated CLI registry freshness"
+    python3 scripts/lib/generate-ipc-registry.py --check >/dev/null 2>&1 \
+      || note "scripts/lib/ipc-registry.sh is stale — run: python3 scripts/lib/generate-ipc-registry.py"
+  fi
 fi
 
 # 8. Installation documentation must not claim Arch-only routing while setup

@@ -27,6 +27,7 @@ Scope {
     // The ordinary Material layer host remains unchanged when this is null.
     property Item embeddedHost: null
     property var pageHost: null
+    property var navEditPane: null
 
     property bool settingsOpen: GlobalStates.settingsOverlayOpen ?? false
     property bool navEditMode: false
@@ -75,6 +76,26 @@ Scope {
     // ── Search system (full, same as settings.qml) ──
     property string overlaySearchText: ""
     property var overlaySearchResults: []
+
+    function handleEscape(): bool {
+        if (root.overlaySearchText.length > 0) {
+            root.openOverlaySearchResult({})
+            return true
+        }
+        if (typeof root.pageHost?.currentItem?.handleEscape === "function"
+                && root.pageHost.currentItem.handleEscape()) {
+            return true
+        }
+        if (root.navEditMode) {
+            if (typeof root.navEditPane?.handleEscape === "function"
+                    && root.navEditPane.handleEscape()) {
+                return true
+            }
+            root.navEditMode = false
+            return true
+        }
+        return false
+    }
 
     // Navigation target for search results (no visual spotlight)
     property var searchTargetControl: null
@@ -433,7 +454,10 @@ Scope {
     Connections {
         target: Config.options ?? null
         function onPanelFamilyChanged() {
-            root._lastFamily = Config.options?.panelFamily ?? "ii";
+            const nextFamily = Config.options?.panelFamily ?? "ii";
+            if (nextFamily === root._lastFamily)
+                return;
+            root._lastFamily = nextFamily;
             root.overlayCurrentPage = 0;
         }
     }
@@ -514,13 +538,13 @@ Scope {
                 }
             }
 
-            // Global Escape key shortcut (works regardless of focus)
+            // Global Escape key shortcut for standalone/native host mode
             Shortcut {
                 sequences: ["Escape"]
+                context: Qt.WindowShortcut
+                enabled: !root.embeddedHost && root.settingsOpen
                 onActivated: {
-                    if (root.overlaySearchText.length > 0) {
-                        root.openOverlaySearchResult({});
-                    } else {
+                    if (!root.handleEscape()) {
                         GlobalStates.settingsOverlayOpen = false;
                     }
                 }
@@ -528,6 +552,7 @@ Scope {
 
             Shortcut {
                 sequences: ["Ctrl+F"]
+                enabled: root.settingsOpen
                 context: Qt.WindowShortcut
                 onActivated: if (typeof overlaySearchField !== "undefined" && overlaySearchField) overlaySearchField.forceActiveFocus()
             }
@@ -592,7 +617,7 @@ Scope {
 // ── Bottom-connected settings popup ──
             ConnectedSurfaceAbyssEdgeSurface {
                 id: settingsAbyssSurface
-                visible: !root.embeddedHost
+                visible: !root.embeddedHost && Config.options?.panelFamily !== "waffle"
                 z: 1
                 anchors.fill: parent
                 edge: "bottom"
@@ -617,27 +642,37 @@ Scope {
                 id: settingsCard
                 parent: root.embeddedHost ?? settingsPanel
 
-                readonly property real maxCardWidth: root.embeddedHost ? root.embeddedHost.width : Math.min(
+                readonly property real waffleBarReserve: (!root.embeddedHost && Config.options?.panelFamily === "waffle"
+                    && (GlobalStates.barOpen ?? true)) ? 48 : 0
+                readonly property real waffleWorkTop: (settingsCard.waffleBarReserve > 0
+                    && !(Config.options?.waffles?.bar?.bottom ?? true)) ? settingsCard.waffleBarReserve : 0
+                readonly property real waffleWorkHeight: Math.max(0, settingsPanel.height - settingsCard.waffleBarReserve)
+
+                readonly property real maxCardWidth: root.embeddedHost ? root.embeddedHost.width : Math.round(Math.min(
                     1600,
                     Math.max(900, settingsPanel.width * 0.90),
-                    Math.max(0, settingsPanel.width - 48))
-                readonly property real maxCardHeight: root.embeddedHost ? root.embeddedHost.height : Math.min(
+                    Math.max(0, settingsPanel.width - 48)))
+                readonly property real maxCardHeight: root.embeddedHost ? root.embeddedHost.height : Math.round(Math.min(
                     1080,
                     Math.max(720, settingsPanel.height * 0.92),
-                    Math.max(0, settingsPanel.height - 24))
+                    Math.max(0, (Config.options?.panelFamily === "waffle"
+                        ? settingsCard.waffleWorkHeight : settingsPanel.height) - 24)))
                 // Structural connected chrome: the same Material surface token as
                 // Screen Edge. Preserve colLayer0's global transparency as-is.
                 readonly property color surfaceFillColor: Appearance.colors.colLayer0
 
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: root.embeddedHost ? 0 : settingsPanel.height - root._screenEdgeThickness - height
-                    + (1 - root._surfaceReveal) * height
+                y: root.embeddedHost ? 0 : (Config.options?.panelFamily === "waffle"
+                    ? settingsCard.waffleWorkTop + Math.round((settingsCard.waffleWorkHeight - height) / 2)
+                    : settingsPanel.height - root._screenEdgeThickness - height
+                        + (1 - root._surfaceReveal) * height)
                 width: maxCardWidth
                 height: maxCardHeight
                 radius: Appearance.rounding.windowRounding
-                bottomLeftRadius: 0
-                bottomRightRadius: 0
-                color: "transparent"
+                bottomLeftRadius: Config.options?.panelFamily === "waffle" ? radius : 0
+                bottomRightRadius: Config.options?.panelFamily === "waffle" ? radius : 0
+                color: (!root.embeddedHost && Config.options?.panelFamily === "waffle")
+                    ? settingsCard.surfaceFillColor : "transparent"
                 clip: true
 
                 border.width: 0
@@ -833,13 +868,14 @@ Scope {
                                     StyledText {
                                         Layout.fillWidth: true
                                         text: Translation.tr("Settings")
+                                        marquee: true
+                                        maximumLineCount: 1
                                         font {
                                             family: Appearance.font.family.title
                                             pixelSize: Appearance.font.pixelSize.title
                                             variableAxes: Appearance.font.variableAxes.title
                                         }
                                         color: Appearance.colors.colOnLayer0
-                                        elide: Text.ElideRight
                                     }
 
                                     StyledText {
@@ -847,7 +883,8 @@ Scope {
                                         text: SystemInfo.displayName || SystemInfo.username
                                         font.pixelSize: Appearance.font.pixelSize.small
                                         color: Appearance.colors.colSubtext
-                                        elide: Text.ElideRight
+                                        marquee: true
+                                        maximumLineCount: 1
                                     }
                                 }
                             }
@@ -968,7 +1005,14 @@ Scope {
                                                 overlayLiveSearch.activateCurrent()
                                                 event.accepted = true
                                             } else if (event.key === Qt.Key_Escape) {
-                                                root.openOverlaySearchResult({})
+                                                if (root.overlaySearchText.length > 0) {
+                                                    root.openOverlaySearchResult({})
+                                                } else {
+                                                    overlaySearchField.focus = false
+                                                    if (!root.handleEscape()) {
+                                                        GlobalStates.settingsOverlayOpen = false
+                                                    }
+                                                }
                                                 event.accepted = true
                                             }
                                         }
@@ -1126,7 +1170,7 @@ Scope {
                                 contentHeight: navCol.implicitHeight
                                 clip: true
                                 boundsBehavior: Flickable.StopAtBounds
-                                interactive: contentHeight > height
+                                interactive: false
 
                                 ScrollBar.vertical: StyledScrollBar {
                                     policy: ScrollBar.AlwaysOff
@@ -1141,7 +1185,7 @@ Scope {
                                         id: navRepeater
                                         model: SettingsPageRegistry.categories
 
-                                        delegate: ColumnLayout {
+                                        delegate: RippleButton {
                                             id: navHeadingGroup
                                             required property int index
                                             required property var modelData
@@ -1150,177 +1194,58 @@ Scope {
                                                 idx => root.overlayPages[idx] && SettingsPageRegistry.isPageApplicable(idx)).map(
                                                 idx => Object.assign({}, root.overlayPages[idx], { realIndex: idx }))
                                             readonly property bool hasActivePage: navHeadingGroup.groupPages.some(item => item.realIndex === root.overlayCurrentPage)
-                                            property bool dropdownOpen: false
+                                            objectName: navHeadingGroup.groupPages.length > 0
+                                                ? ("settingsNav_" + (navHeadingGroup.groupPages[0].key || ""))
+                                                : ("settingsNavGroup_" + index)
                                             visible: navHeadingGroup.groupPages.length > 0
                                             Layout.fillWidth: true
-                                            spacing: 2
-
-                                            HoverHandler {
-                                                id: groupHover
-                                                onHoveredChanged: {
-                                                    if (groupHover.hovered) {
-                                                        collapseDelayTimer.stop()
-                                                        navHeadingGroup.dropdownOpen = true
-                                                    } else {
-                                                        collapseDelayTimer.restart()
+                                            implicitHeight: 36
+                                            rippleEnabled: true
+                                            buttonRadius: Appearance.rounding.small
+                                            toggled: navHeadingGroup.hasActivePage
+                                            colBackground: "transparent"
+                                            colBackgroundHover: Appearance.colors.colLayer1Hover
+                                            colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                                            colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+                                            onClicked: {
+                                                if (navHeadingGroup.groupPages.length > 0) {
+                                                    const hubEntry = root.preferredCategoryEntry(navHeadingGroup.headingTitle, navHeadingGroup.groupPages)
+                                                    if (overlayPagesHost.currentItem && typeof overlayPagesHost.currentItem.exitSubView === "function" && overlayPagesHost.currentItem.isSubViewActive) {
+                                                        overlayPagesHost.currentItem.exitSubView()
+                                                    }
+                                                    if (root.overlayCurrentPage !== hubEntry.realIndex) {
+                                                        root.activateNavigation(hubEntry)
                                                     }
                                                 }
                                             }
 
-                                            Timer {
-                                                id: collapseDelayTimer
-                                                interval: 110
-                                                repeat: false
-                                                onTriggered: {
-                                                    if (!groupHover.hovered)
-                                                        navHeadingGroup.dropdownOpen = false
-                                                }
-                                            }
+                                            contentItem: RowLayout {
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 10
+                                                anchors.rightMargin: 10
+                                                spacing: 9
 
-                                            Rectangle {
-                                                id: headingBar
-                                                Layout.fillWidth: true
-                                                implicitHeight: 36
-                                                radius: Appearance.rounding.small
-                                                color: navHeadingGroup.dropdownOpen
-                                                    ? Appearance.colors.colLayer1Hover
-                                                    : (navHeadingGroup.hasActivePage
-                                                        ? Qt.alpha(Appearance.colors.colPrimaryContainer, 0.48)
-                                                        : "transparent")
-
-                                                Behavior on color {
-                                                    enabled: Appearance.animationsEnabled
-                                                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                                MaterialSymbol {
+                                                    text: navHeadingGroup.groupPages.length > 0
+                                                        ? SettingsPageRegistry.iconForPage(navHeadingGroup.groupPages[0].realIndex)
+                                                        : "folder"
+                                                    iconSize: 18
+                                                    color: SettingsMaterialPreset.navigationIconColor(
+                                                        navHeadingGroup.index,
+                                                        Math.max(1, SettingsPageRegistry.categories.length),
+                                                        navHeadingGroup.hasActivePage)
                                                 }
 
-                                                RowLayout {
-                                                    anchors.fill: parent
-                                                    anchors.leftMargin: 10
-                                                    anchors.rightMargin: 8
-                                                    spacing: 8
-
-                                                    MaterialSymbol {
-                                                        text: navHeadingGroup.groupPages.length > 0
-                                                            ? SettingsPageRegistry.iconForPage(navHeadingGroup.groupPages[0].realIndex)
-                                                            : "folder"
-                                                        iconSize: 17
-                                                        color: SettingsMaterialPreset.navigationIconColor(
-                                                            navHeadingGroup.index,
-                                                            Math.max(1, SettingsPageRegistry.categories.length),
-                                                            navHeadingGroup.hasActivePage || navHeadingGroup.dropdownOpen)
-                                                    }
-
-                                                    StyledText {
-                                                        Layout.fillWidth: true
-                                                        text: navHeadingGroup.headingTitle
-                                                        font.pixelSize: Appearance.font.pixelSize.small
-                                                        font.weight: (navHeadingGroup.hasActivePage || navHeadingGroup.dropdownOpen)
-                                                            ? Font.DemiBold : Font.Medium
-                                                        color: navHeadingGroup.hasActivePage
-                                                            ? Appearance.colors.colOnPrimaryContainer
-                                                            : Appearance.colors.colOnLayer1
-                                                        elide: Text.ElideRight
-                                                    }
-
-                                                    MaterialSymbol {
-                                                        text: "expand_more"
-                                                        iconSize: 17
-                                                        rotation: navHeadingGroup.dropdownOpen ? 180 : 0
-                                                        color: Appearance.colors.colOnSurfaceVariant
-                                                        Behavior on rotation {
-                                                            enabled: Appearance.animationsEnabled
-                                                            NumberAnimation {
-                                                                duration: Appearance.animation.elementMoveFast.duration
-                                                                easing.type: Easing.OutCubic
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-
-                                            Item {
-                                                Layout.fillWidth: true
-                                                implicitHeight: navHeadingGroup.dropdownOpen ? groupPagesCol.implicitHeight : 0
-                                                clip: true
-                                                enabled: navHeadingGroup.dropdownOpen
-
-                                                Behavior on implicitHeight {
-                                                    enabled: Appearance.animationsEnabled
-                                                    NumberAnimation {
-                                                        duration: 210
-                                                        easing.type: Easing.OutCubic
-                                                    }
-                                                }
-
-                                                ColumnLayout {
-                                                    id: groupPagesCol
-                                                    width: parent.width
-                                                    spacing: SettingsMaterialPreset.navItemSpacing
-                                                    opacity: navHeadingGroup.dropdownOpen ? 1 : 0
-
-                                                    Behavior on opacity {
-                                                        enabled: Appearance.animationsEnabled
-                                                        NumberAnimation { duration: 160 }
-                                                    }
-
-                                                    Repeater {
-                                                        model: navHeadingGroup.groupPages
-
-                                                        delegate: RippleButton {
-                                                            id: navBtn
-                                                            required property int index
-                                                            required property var modelData
-                                                            objectName: "settingsNav_" + (modelData.groupKey || modelData.key || "back")
-                                                            Layout.fillWidth: true
-                                                            Layout.leftMargin: 8
-                                                            implicitHeight: SettingsMaterialPreset.navItemHeight
-                                                            rippleEnabled: true
-                                                            buttonRadius: Math.min(width, height) / 2
-                                                            readonly property int pageRealIndex: modelData.realIndex
-                                                            toggled: Hierarchy.selected(modelData, root.overlayPages, root.overlayCurrentPage)
-                                                            colBackground: "transparent"
-                                                            colBackgroundToggled: Appearance.colors.colPrimaryContainer
-                                                            colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
-                                                            colBackgroundHover: Appearance.colors.colLayer1Hover
-                                                            onClicked: root.activateNavigation(modelData)
-
-                                                            contentItem: RowLayout {
-                                                                anchors.fill: parent
-                                                                anchors.leftMargin: 10
-                                                                anchors.rightMargin: 9
-                                                                spacing: 9
-
-                                                                MaterialSymbol {
-                                                                    text: navBtn.modelData.icon || ""
-                                                                    iconSize: 18
-                                                                    color: SettingsMaterialPreset.navigationIconColor(
-                                                                        Math.max(0, root.navPageOrder.indexOf(navBtn.modelData.realIndex)),
-                                                                        Math.max(1, root.navPageOrder.length),
-                                                                        navBtn.toggled)
-                                                                    rotation: navBtn.modelData.iconRotation || 0
-                                                                    Behavior on color {
-                                                                        enabled: Appearance.animationsEnabled
-                                                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                                                                    }
-                                                                }
-
-                                                                StyledText {
-                                                                    Layout.fillWidth: true
-                                                                    text: navBtn.modelData.name || ""
-                                                                    font.pixelSize: Appearance.font.pixelSize.small
-                                                                    font.weight: navBtn.toggled ? Font.DemiBold : Font.Normal
-                                                                    color: navBtn.toggled
-                                                                        ? Appearance.colors.colOnPrimaryContainer
-                                                                        : Appearance.colors.colOnSurfaceVariant
-                                                                    elide: Text.ElideRight
-                                                                    Behavior on color {
-                                                                        enabled: Appearance.animationsEnabled
-                                                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
+                                                StyledText {
+                                                    Layout.fillWidth: true
+                                                    text: navHeadingGroup.headingTitle
+                                                    font.pixelSize: Appearance.font.pixelSize.small
+                                                    font.weight: navHeadingGroup.hasActivePage ? Font.DemiBold : Font.Medium
+                                                    color: navHeadingGroup.hasActivePage
+                                                        ? Appearance.colors.colOnPrimaryContainer
+                                                        : Appearance.colors.colOnLayer1
+                                                    marquee: true
+                                                    maximumLineCount: 1
                                                 }
                                             }
                                         }
@@ -1350,6 +1275,8 @@ Scope {
 
                                 sourceComponent: Component {
                                     SettingsNavEditPane {
+                                        Component.onCompleted: root.navEditPane = this
+                                        Component.onDestruction: if (root.navEditPane === this) root.navEditPane = null
                                         currentPage: overlayCurrentPage
                                         onPageActivated: pageIndex => overlayCurrentPage = pageIndex
                                         onPageHidden: pageIndex => {
@@ -1485,12 +1412,36 @@ Scope {
                             border.color: "transparent"
                             clip: true
 
-                            // ── Page header: icon + name + description ──
-                            // ── Page header: icon + name + description ──
+                            // ── Page header: iOS Breadcrumb (`‹ Back`) + Title + Subtitle ──
                             Item {
                                 id: overlayPageHeader
                                 anchors { top: parent.top; left: parent.left; right: parent.right }
                                 readonly property var meta: root.overlayPages[root.overlayCurrentPage] ?? {}
+                                readonly property var activeCategory: SettingsPageRegistry.categories.find(
+                                    cat => (cat?.pages ?? []).includes(root.overlayCurrentPage)) ?? null
+                                readonly property var groupPages: (activeCategory?.pages ?? []).filter(
+                                    idx => root.overlayPages[idx] && SettingsPageRegistry.isPageApplicable(idx)).map(
+                                    idx => Object.assign({}, root.overlayPages[idx], { realIndex: idx }))
+                                readonly property int hubPageIndex: groupPages.length > 0 ? groupPages[0].realIndex : root.overlayCurrentPage
+                                readonly property Item activePageItem: overlayPagesHost.currentItem
+                                readonly property bool isOnSiblingSubPage: false
+                                readonly property bool isOnInPageSubView: false
+                                readonly property bool isDrilledDown: false
+                                readonly property string backLabel: ""
+                                readonly property string activeTitle: String(activeCategory?.label || meta.name || "")
+                                readonly property string activeIcon: String(meta.icon || "settings")
+
+                                function navigateBack(): void {
+                                    if (overlayPageHeader.isOnInPageSubView && overlayPageHeader.activePageItem
+                                            && typeof overlayPageHeader.activePageItem.exitSubView === "function") {
+                                        overlayPageHeader.activePageItem.exitSubView()
+                                        return
+                                    }
+                                    if (overlayPageHeader.isOnSiblingSubPage && overlayPageHeader.groupPages.length > 0) {
+                                        root.activateNavigation(overlayPageHeader.groupPages[0])
+                                    }
+                                }
+
                                 height: root.overlaySearchText.trim().length > 0 ? 0 : 48
                                 visible: root.overlaySearchText.trim().length === 0
 
@@ -1499,16 +1450,64 @@ Scope {
                                     anchors.fill: parent
                                     anchors.leftMargin: 20
                                     anchors.rightMargin: 20
+                                    anchors.topMargin: 6
+                                    anchors.bottomMargin: 6
                                     spacing: 10
 
+                                    RippleButton {
+                                        id: overlayBackBtn
+                                        objectName: "settingsOverlayHeaderBackButton"
+                                        visible: overlayPageHeader.isDrilledDown
+                                        Layout.alignment: Qt.AlignVCenter
+                                        implicitHeight: 30
+                                        implicitWidth: overlayBackRow.implicitWidth + 18
+                                        buttonRadius: height / 2
+                                        colBackground: Appearance.colors.colPrimaryContainer
+                                        colBackgroundHover: Appearance.colors.colPrimaryContainerHover
+                                        onClicked: overlayPageHeader.navigateBack()
+
+                                        contentItem: Item {
+                                            Row {
+                                                id: overlayBackRow
+                                                anchors.centerIn: parent
+                                                spacing: 4
+
+                                                MaterialSymbol {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: "chevron_left"
+                                                    iconSize: 18
+                                                    color: Appearance.colors.colOnPrimaryContainer
+                                                }
+
+                                                StyledText {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: overlayPageHeader.backLabel
+                                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                                    font.weight: Font.DemiBold
+                                                    color: Appearance.colors.colOnPrimaryContainer
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    MaterialSymbol {
+                                        visible: overlayPageHeader.isDrilledDown
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: "chevron_right"
+                                        iconSize: 16
+                                        color: Appearance.colors.colSubtext
+                                    }
+
                                     MaterialShapeWrappedMaterialSymbol {
-                                        text: overlayPageHeader.meta.icon ?? ""
+                                        text: overlayPageHeader.activeIcon
                                         iconSize: 15
                                         Layout.alignment: Qt.AlignVCenter
                                     }
 
                                     StyledText {
-                                        text: overlayPageHeader.meta.name ?? ""
+                                        text: overlayPageHeader.activeTitle
+                                        marquee: true
+                                        maximumLineCount: 1
                                         font {
                                             family: Appearance.font.family.title
                                             pixelSize: Appearance.font.pixelSize.normal
@@ -1522,7 +1521,8 @@ Scope {
                                         text: overlayPageHeader.meta.desc ?? ""
                                         font.pixelSize: Appearance.font.pixelSize.small
                                         color: Appearance.colors.colSubtext
-                                        elide: Text.ElideRight
+                                        marquee: true
+                                        maximumLineCount: 1
                                         opacity: 0.85
                                     }
                                 }
@@ -1556,6 +1556,7 @@ Scope {
                                 visible: root.overlaySearchText.trim().length === 0
                                 enabled: visible
                                 loadEnabled: Config.ready && root.settingsOpen
+                                onPageNavigationRequested: pageIndex => root.overlayCurrentPage = pageIndex
                             }
 
                             SettingsPageLoadingOverlay {
@@ -1585,9 +1586,7 @@ Scope {
                 // Escape key handler + Ctrl+F
                 Keys.onPressed: (event) => {
                     if (event.key === Qt.Key_Escape) {
-                        if (root.overlaySearchText.length > 0) {
-                            root.openOverlaySearchResult({});
-                        } else {
+                        if (!root.handleEscape()) {
                             GlobalStates.settingsOverlayOpen = false
                         }
                         event.accepted = true
@@ -1605,12 +1604,24 @@ Scope {
                     }
                 }
 
+                Component.onCompleted: {
+                    if (GlobalStates.settingsOverlayOpen) {
+                        Qt.callLater(() => {
+                            if (GlobalStates.settingsOverlayOpen)
+                                settingsCard.forceActiveFocus()
+                        })
+                    }
+                }
+
                 // Grab focus when opened
                 Connections {
                     target: GlobalStates
                     function onSettingsOverlayOpenChanged() {
                         if (GlobalStates.settingsOverlayOpen) {
-                            settingsCard.forceActiveFocus()
+                            Qt.callLater(() => {
+                                if (GlobalStates.settingsOverlayOpen)
+                                    settingsCard.forceActiveFocus()
+                            })
                         }
                     }
                 }
@@ -1625,10 +1636,46 @@ Scope {
     property int _prevPage: 0
     property int _slideDir: 1
 
+    function preferredCategoryEntry(categoryLabel: string, groupPages: var): var {
+        if (!groupPages || groupPages.length === 0)
+            return null
+        if (Persistent.ready && Persistent.states?.settings) {
+            try {
+                const map = JSON.parse(String(Persistent.states.settings.categoryPages || "{}")) || {}
+                const savedIdx = Number(map[categoryLabel] ?? -1)
+                if (savedIdx >= 0) {
+                    const found = groupPages.find(item => item.realIndex === savedIdx)
+                    if (found)
+                        return found
+                }
+            } catch (e) {}
+        }
+        return groupPages[0]
+    }
+
     function _persistOverlayPage(): void {
-        if (root._navigationInitialized && Persistent.ready && Persistent.states?.settings)
-            Persistent.states.settings.iiPage = Math.max(0,
+        if (root._navigationInitialized && Persistent.ready && Persistent.states?.settings) {
+            const pageIdx = Math.max(0,
                 Math.min(root.overlayCurrentPage, root.overlayPages.length - 1))
+            Persistent.states.settings.iiPage = pageIdx
+            const cats = SettingsPageRegistry.categories ?? []
+            for (let i = 0; i < cats.length; i++) {
+                const cat = cats[i]
+                if (cat && Array.isArray(cat.pages) && cat.pages.includes(pageIdx) && cat.label) {
+                    let map = {}
+                    try {
+                        map = JSON.parse(String(Persistent.states.settings.categoryPages || "{}")) || {}
+                    } catch (e) {
+                        map = {}
+                    }
+                    if (map[cat.label] !== pageIdx) {
+                        map[cat.label] = pageIdx
+                        Persistent.states.settings.categoryPages = JSON.stringify(map)
+                    }
+                    break
+                }
+            }
+        }
     }
 
     function initializeNavigation(): void {
@@ -1636,14 +1683,29 @@ Scope {
             return
         const persisted = Persistent.states?.settings?.iiPage ?? 0
         const pending = GlobalStates.settingsOverlayRequestedPage ?? -1
+        const pendingSection = String(GlobalStates.settingsOverlayRequestedSection ?? "").trim()
         const initialPage = root._initialDeepLinkPage >= 0
             ? root._initialDeepLinkPage
             : pending >= 0 ? pending : persisted
+        if (pending >= 0) {
+            GlobalStates.settingsOverlayRequestedPage = -1
+            GlobalStates.settingsOverlayRequestedSection = ""
+        }
         root.overlayCurrentPage = SettingsPageRegistry.safePageIndex(initialPage)
         root._prevPage = root.overlayCurrentPage
+        root.navGroup = Hierarchy.parentKey(root.overlayPages[root.overlayCurrentPage])
         root._navigationInitialized = true
         root._initialDeepLinkPage = -1
         root._persistOverlayPage()
+        if (pending >= 0 && pendingSection.length > 0 && SettingsPageRegistry.isPageApplicable(pending)) {
+            root.openOverlaySearchResult({
+                pageIndex: root.overlayCurrentPage,
+                pageName: "",
+                section: pendingSection,
+                label: pendingSection,
+                isSection: true
+            })
+        }
     }
 
     onOverlayCurrentPageChanged: {

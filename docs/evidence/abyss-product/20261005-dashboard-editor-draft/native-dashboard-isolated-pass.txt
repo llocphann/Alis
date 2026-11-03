@@ -1,1 +1,0 @@
-PASS: both Abyss Dashboard hosts preserve canvas/widget size; external popup sits above, edits drafts, saves/cancels and releases input

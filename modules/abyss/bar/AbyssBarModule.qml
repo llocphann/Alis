@@ -86,10 +86,10 @@ Item {
             : root.kind === "notesTimers" ? notesTimers
             : root.kind === "notificationActivity" ? notificationActivity : taskbar
     }
-    Component { id: resources; Shared.Resources {} }
-    Component { id: clock; Shared.ClockWidget { sharedTypography:true; showDate: Config.options?.bar?.verbose ?? true } }
-    Component { id: media; Shared.Media { edgeHostedExpansion: true } }
-    Component { id: battery; Shared.BatteryIndicator {} }
+    Component { id: resources; Shared.Resources { contentRotation: root.contentRotation } }
+    Component { id: clock; Shared.ClockWidget { sharedTypography:true; showDate: Config.options?.bar?.verbose ?? true; contentRotation: root.contentRotation } }
+    Component { id: media; Shared.Media { edgeHostedExpansion: true; contentRotation: root.contentRotation } }
+    Component { id: battery; Shared.BatteryIndicator { contentRotation: root.contentRotation } }
     // Launcher follows the same ownership model as Battery: the source control
     // owns one mature StyledPopup, and Abyss only rehosts that popup into the
     // output field. No GlobalStates generic-popup handoff is involved.
@@ -105,6 +105,7 @@ Item {
             Shared.DistroIcon {
                 id: distroIcon
                 anchors.fill: parent
+                contentRotation: root.contentRotation
             }
 
             Shared.StyledPopup {
@@ -115,11 +116,12 @@ Item {
             }
         }
     }
-    Component { id: activeWindow; Shared.ActiveWindow {} }
+    Component { id: activeWindow; Shared.ActiveWindow { contentRotation: root.contentRotation } }
     Component {
         id: tray
         Shared.SysTray {
             vertical: false
+            contentRotation: root.contentRotation
             showSeparator: false
             showOverflowMenu: true
             onHoverPopupRequested: kind => root.hoverRequest(kind)
@@ -131,6 +133,7 @@ Item {
         id: utilities
         Shared.UtilButtons {
             vertical: false
+            contentRotation: root.contentRotation
             compactRequested: false
             showUtilitiesLauncher:
                 Config.options?.bar?.utilButtons?.showUtilitiesLauncher ?? true
@@ -243,19 +246,21 @@ Item {
             }
         }
     }
-    Component { id: timer; Shared.TimerIndicator { vertical: false } }
-    Component { id: update; Shared.ShellUpdateIndicator { vertical: false } }
-    Component { id: weather; WeatherBar { vertical: false } }
+    Component { id: timer; Shared.TimerIndicator { vertical: false; contentRotation: root.contentRotation } }
+    Component { id: update; Shared.ShellUpdateIndicator { vertical: false; contentRotation: root.contentRotation } }
+    Component { id: weather; WeatherBar { vertical: false; contentRotation: root.contentRotation } }
     Component {
         id: workspaces
         Shared.Workspaces {
             vertical: false
+            contentRotation: root.contentRotation
+            popupVertical: root.contentVertical
             MouseArea {
                 anchors.fill: parent; acceptedButtons: Qt.RightButton
                 onPressed: GlobalStates.toggleOverview(root.outputName)
             }
         }
     }
-    Component { id: taskbar; Shared.BarTaskbar { vertical: false; barPosition: root.attachedEdge; parentWindow: root.QsWindow.window; slotSize: 32 } }
+    Component { id: taskbar; Shared.BarTaskbar { vertical: false; contentRotation: root.contentRotation; barPosition: root.attachedEdge; parentWindow: root.QsWindow.window; slotSize: 32 } }
 
 }

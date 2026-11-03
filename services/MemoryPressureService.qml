@@ -64,6 +64,8 @@ Singleton {
     }
 
     function getStats(): string {
+        if (root.enabled && root.currentTotalMappings === 0)
+            root._checkMemoryPressure()
         return JSON.stringify({
             deletedMappings: root.currentDeletedMappings,
             totalMappings: root.currentTotalMappings,
@@ -150,9 +152,20 @@ Singleton {
         onTriggered: root._checkMemoryPressure()
     }
 
+    Timer {
+        id: _startupPrimeTimer
+        interval: 8000
+        repeat: false
+        running: root.enabled
+        onTriggered: {
+            gc()
+            root._checkMemoryPressure()
+        }
+    }
+
     onEnabledChanged: {
         if (root.enabled)
-            Qt.callLater(() => root._checkMemoryPressure())
+            _startupPrimeTimer.restart()
     }
 
     // ── Maps reader ───────────────────────────────────────────────────────
@@ -181,10 +194,7 @@ Singleton {
         if (!root.enabled) return
         Qt.callLater(() => {
             _checkTimer.start()
-            // Prime it once: the timer's first tick is a full interval away, so
-            // without this the service reports 0 mappings for the first 5 minutes
-            // after every restart.
-            root._checkMemoryPressure()
+            _startupPrimeTimer.restart()
         })
     }
 }

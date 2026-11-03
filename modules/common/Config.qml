@@ -609,6 +609,14 @@ Singleton {
                 delete root._jsonMirror.musicRecognition;
                 root._styleMigrationWritePending = true;
             }
+            if (root._jsonMirror?.dashboard
+                    && !Object.prototype.hasOwnProperty.call(root._jsonMirror.dashboard, "spacedRepetition")
+                    && (root._jsonMirror.dashboard.pageOrderVersion ?? 1) >= 1
+                    && Array.isArray(root._jsonMirror.dashboard.pageOrder)
+                    && !root._jsonMirror.dashboard.pageOrder.includes("spacedRepetition")) {
+                styleMigration["dashboard.pageOrder"] = root._jsonMirror.dashboard.pageOrder.concat(["spacedRepetition"]);
+                styleMigration["dashboard.spacedRepetition.enable"] = true;
+            }
             if (Object.keys(styleMigration).length) {
                 root._styleMigrationWritePending = true;
                 root.setNestedValues(styleMigration);
@@ -682,6 +690,12 @@ Singleton {
                     property bool aiEnabled: false
                     property string endpoint: "http://127.0.0.1:11434"
                     property string model: ""
+                    property string actionModel: ""
+                    property string thinkingModel: ""
+                    property string modelAliasesJson: "{}"
+                    property bool autoModelRoutingEnabled: true
+                    property bool mtpOptimizeEnabled: true
+                    property int llmIdleUnloadMinutes: 10
                     property string thinkingEffort: "off"
                     property string proactive: "occasional"
                     property bool proactiveEnabled: false
@@ -853,11 +867,6 @@ Singleton {
                     property real surfaceHighlight: 0.45
                     property real shadowStrength: 0.24
                 }
-            }
-
-            property JsonObject policies: JsonObject {
-                property int ai: 0
-                property int weeb: 0
             }
 
             property JsonObject ai: JsonObject {
@@ -1259,7 +1268,6 @@ Singleton {
                 property bool background: true
                 property bool cheatsheet: true
                 property bool clipboard: true
-                property bool crosshair: false
                 property bool dock: true
                 property bool lock: true
                 property bool mediaControls: true
@@ -1267,7 +1275,6 @@ Singleton {
                 property bool onScreenDisplay: true
                 property bool onScreenKeyboard: true
                 property bool overview: true
-                property bool overlay: true
                 property bool polkit: true
                 property bool regionSelector: true
                 property bool reloadPopup: true
@@ -1319,6 +1326,13 @@ Singleton {
                 property string editor: "code"
                 property string fileManager: "nautilus"
                 property string fileExplorer: "nautilus"
+                property string pdfViewer: "okular"
+                property string officeSuite: "libreoffice"
+                property string htmlViewer: "firefox"
+                property string imageViewer: "loupe"
+                property string videoPlayer: "mpv"
+                property string audioPlayer: "amberol"
+                property string archiveManager: "file-roller"
                 property string volumeMixer: "pavucontrol"
                 property string discord: "discord"
                 property string update: "kitty -e sudo pacman -Syu"
@@ -1328,6 +1342,13 @@ Singleton {
                     property string browser: ""
                     property string editor: ""
                     property string fileManager: ""
+                    property string pdfViewer: ""
+                    property string officeSuite: ""
+                    property string htmlViewer: ""
+                    property string imageViewer: ""
+                    property string videoPlayer: ""
+                    property string audioPlayer: ""
+                    property string archiveManager: ""
                     property string manageUser: ""
                     property string network: ""
                     property string networkEthernet: ""
@@ -1960,22 +1981,6 @@ Singleton {
                     property bool useAuroraStyle: false
                     property real auroraOverlayOpacity: 0.38
                 }
-                property JsonObject parallax: JsonObject {
-                    property bool enable: false
-                    property string axis: "vertical"
-                    property bool vertical: false
-                    property bool autoVertical: false
-                    property bool enableWorkspace: true
-                    property real workspaceShift: 1.0
-                    property real workspaceZoom: 1.0
-                    property real zoom: 1.0
-                    property bool enableSidebar: true
-                    property real panelShift: 0.15
-                    property real widgetsFactor: 1.2
-                    property real widgetDepth: 1.2
-                    property bool pauseDuringTransitions: true
-                    property int transitionSettleMs: 220
-                }
                 property JsonObject multiMonitor: JsonObject {
                     property bool enable: false
                 }
@@ -2222,10 +2227,6 @@ Singleton {
                 property bool autoKillTrays: false
             }
 
-            property JsonObject crosshair: JsonObject {
-                property string code: "0;P;d;1;0l;10;0o;2;1b;0"
-            }
-
             property JsonObject display: JsonObject {
                 property string primaryMonitor: ""
             }
@@ -2275,7 +2276,7 @@ Singleton {
 
             property JsonObject dashboard: JsonObject {
                 property int pageOrderVersion: 1
-                property list<string> pageOrder: ["dashboard", "music", "weeklyPlanner"]
+                property list<string> pageOrder: ["dashboard", "music", "weeklyPlanner", "spacedRepetition"]
                 // DASH-F01: explicit JsonAdapter fields are mandatory for
                 // round-trip persistence. Keep per-tab layouts in a list of
                 // JSON records (not dynamically named Qt object properties).
@@ -2287,7 +2288,26 @@ Singleton {
                 property string lastPageId: "dashboard"
                 property JsonObject music: JsonObject {
                     property bool enable: true
-                    property bool showScrollbars: true
+                    property bool showScrollbars: false
+                }
+                property JsonObject spacedRepetition: JsonObject {
+                    property bool enable: true
+                    property int dailyNewLimit: 20
+                    property int dailyReviewLimit: 100
+                    property int baseEase: 250
+                    property int easyBonus: 130
+                    property int hardMultiplier: 120
+                    property int lapseMultiplier: 50
+                    property int maximumInterval: 3650
+                    property bool loadBalance: true
+                    property int leechThreshold: 6
+                    property int boostMultiplier: 100
+                    property string defaultLanguage: "en"
+                    property string studyDirection: "both"
+                    property string prioritizeOrder: "due_first"
+                    property bool autoLookupLevel: true
+                    property bool autoLookupOnline: true
+                    property bool autoCloze: true
                 }
                 property bool keepLoaded: true
                 property bool showHeader: true
@@ -2489,20 +2509,6 @@ Singleton {
                 property bool keepOnTop: false
             }
 
-            property JsonObject overlay: JsonObject {
-                property bool openingZoomAnimation: true
-                property bool darkenScreen: true
-                property real clickthroughOpacity: 0.8
-                property real backgroundOpacity: 0.9
-                property int scrimDim: 35
-                property int animationDurationMs: 180
-                property int scrimAnimationDurationMs: 140
-                property JsonObject floatingImage: JsonObject {
-                    property string imageSource: "https://media.tenor.com/H5U5bJzj3oAAAAAi/kukuru.gif"
-                    property real scale: 0.5
-                }
-            }
-
             // Bottom-left hover Quick Notes. The popup reuses Notepad state,
             // so these values only control presentation/interaction geometry.
             property JsonObject quickNotes: JsonObject {
@@ -2684,47 +2690,13 @@ Singleton {
                 property JsonObject ai: JsonObject {
                     property bool textFadeIn: false
                 }
-                property JsonObject booru: JsonObject {
-                    property bool allowNsfw: false
-                    property string defaultProvider: "yandere"
-                    property int limit: 20
-                    property JsonObject gelbooru: JsonObject {
-                        property string apiKey: ""
-                        property string userId: ""
-                    }
-                    property JsonObject zerochan: JsonObject {
-                        property string username: "[unset]"
-                    }
-                    property JsonObject downloadPath: JsonObject {
-                        property string sfw: ""
-                        property string nsfw: ""
-                    }
-                }
-                property JsonObject wallhaven: JsonObject {
-                    property bool enable: true
-                    property int limit: 24
-                    property string fitMode: "auto"
-                    property string apiKey: ""
-                }
                 property JsonObject news: JsonObject {
                     property bool enable: true
                     property string mode: "local"
                     property string topic: "WORLD"
                 }
-                property JsonObject animeSchedule: JsonObject {
-                    property bool enable: false
-                    property bool showNsfw: false
-                    property string watchSite: ""
-                }
                 property JsonObject tools: JsonObject {
                     property bool enable: false
-                }
-                property JsonObject software: JsonObject {
-                    property bool enable: false
-                }
-                property JsonObject plugins: JsonObject {
-                    property bool enable: false
-                    property string lastActivePlugin: ""
                 }
                 // Canonical local Music frontend. MPD owns the library/queue and
                 // mpd-mpris exposes that same session through the shell's MPRIS path.
@@ -2734,51 +2706,6 @@ Singleton {
                     property string libraryFolder: ""
                     property string mpdHost: "127.0.0.1"
                     property int mpdPort: 6600
-                }
-                property JsonObject ytmusic: JsonObject {
-                    property bool enable: false
-                    property bool autoConnect: true
-                    property bool hideSyncBanner: false
-                    property string browser: "firefox"
-                    property string cookiesPath: ""
-                    property bool useManualCookies: false
-                    property bool connected: false
-                    property string resolvedBrowserArg: ""
-                    property string audioQuality: "best"
-                    property bool normalizeVolume: true
-                    property bool verbose: false
-                    property bool shuffleMode: false
-                    property int repeatMode: 0
-                    property list<string> recentSearches: []
-                    property list<var> queue: []
-                    property list<var> playlists: []
-                    property list<var> liked: []
-                    property string lastLikedSync: ""
-                    property bool upNextNotifications: true
-                    property bool suppressUpNextInFullscreen: true
-                    property int volume: 100
-                    property JsonObject profile: JsonObject {
-                        property string name: ""
-                        property string avatar: ""
-                        property string url: ""
-                    }
-                    property JsonObject cache: JsonObject {
-                        property list<var> playlists: []
-                        property list<var> albums: []
-                        property list<var> liked: []
-                    }
-                    property JsonObject resume: JsonObject {
-                        property string videoId: ""
-                        property string title: ""
-                        property string artist: ""
-                        property string thumbnail: ""
-                        property string url: ""
-                        property real position: 0
-                        property bool wasPlaying: false
-                        property list<var> activePlaylist: []
-                        property int currentIndex: -1
-                        property string activePlaylistSource: ""
-                    }
                 }
                 property JsonObject widgets: JsonObject {
                     property bool enable: true
@@ -2873,7 +2800,7 @@ Singleton {
                     property bool showBrightness: true
                 }
                 property JsonObject left: JsonObject {
-                    property list<string> tabOrder: ["ai", "translator", "anime", "animeSchedule", "news", "tools"]
+                    property list<string> tabOrder: ["ai", "translator", "news", "tools"]
                 }
                 property JsonObject right: JsonObject {
                     property list<string> enabledWidgets: ["calculator", "sysmon"]
@@ -3032,7 +2959,7 @@ Singleton {
 
             property JsonObject waffles: JsonObject {
                 property JsonObject settings: JsonObject {
-                    property bool useMaterialStyle: false
+                    property bool useMaterialStyle: true
                 }
                 property JsonObject modules: JsonObject {
                     property bool sidebarLeft: false
@@ -3103,22 +3030,6 @@ Singleton {
                         property bool vignetteEnabled: false
                         property real vignetteIntensity: 0.5
                         property real vignetteRadius: 0.7
-                    }
-                    property JsonObject parallax: JsonObject {
-                        property bool enable: false
-                        property string axis: "horizontal"
-                        property bool vertical: false
-                        property bool autoVertical: true
-                        property bool enableWorkspace: false
-                        property real workspaceShift: 1.0
-                        property real workspaceZoom: 1.0
-                        property real zoom: 1.0
-                        property bool enableSidebar: false
-                        property real panelShift: 0.12
-                        property real widgetsFactor: 1.0
-                        property real widgetDepth: 1.0
-                        property bool pauseDuringTransitions: true
-                        property int transitionSettleMs: 220
                     }
                     property JsonObject widgets: JsonObject {
                         property JsonObject clock: JsonObject {
@@ -3216,6 +3127,7 @@ Singleton {
                     property bool tlp: false
                     property bool thinkfan: false
                     property bool obsidian: false
+                    property bool spaced_repetition: true
                 }
                 property JsonObject obsidian: JsonObject {
                     property bool autoTheme: false
@@ -3251,18 +3163,6 @@ Singleton {
                     property string vaultPath: ""
                     property string folder: "00_Capture/03_Zettelkasten"
                     property string defaultType: "Fleeting"
-                }
-            }
-
-            property JsonObject workSafety: JsonObject {
-                property JsonObject enable: JsonObject {
-                    property bool wallpaper: false
-                    property bool clipboard: false
-                }
-                property JsonObject triggerCondition: JsonObject {
-                    property list<string> networkNameKeywords: ["airport", "cafe", "college", "company", "eduroam", "free", "guest", "public", "school", "university"]
-                    property list<string> fileKeywords: ["anime", "booru", "ecchi", "hentai", "yande.re", "konachan", "breast", "nipples", "pussy", "nsfw", "spoiler", "girl"]
-                    property list<string> linkKeywords: ["hentai", "porn", "sukebei", "hitomi.la", "rule34", "gelbooru", "fanbox", "dlsite"]
                 }
             }
         }

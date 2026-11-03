@@ -294,7 +294,7 @@ Item {
 
     readonly property string leftAction: Config.options?.bar?.leftScrollAction ?? "brightness"
     readonly property string rightAction: Config.options?.bar?.rightScrollAction ?? "volume"
-    readonly property bool barSpectrumAudioPlaying: MprisController.isPlaying || YtMusic.isPlaying
+    readonly property bool barSpectrumAudioPlaying: MprisController.isPlaying
     readonly property bool barSpectrumOutputEnabled:
         (Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary") === "all"
         || Quickshell.screens.length <= 1

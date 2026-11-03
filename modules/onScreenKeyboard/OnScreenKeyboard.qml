@@ -79,7 +79,6 @@ Scope { // Scope
     // open/close transitions.
     readonly property int _competingStackToken:
           (GlobalStates.overviewOpen          ? (1 <<  0) : 0)
-        + (GlobalStates.overlayOpen           ? (1 <<  1) : 0)
         + (GlobalStates.sidebarLeftOpen       ? (1 <<  2) : 0)
         + (GlobalStates.sidebarRightOpen      ? (1 <<  3) : 0)
         + (GlobalStates.settingsOverlayOpen   ? (1 <<  4) : 0)

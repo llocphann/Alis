@@ -23,6 +23,9 @@ BIN_DIR_FILE="$STATE_DIR/native-bin-dir"
 BIN_DIR="${ALIS_NATIVE_BIN_DIR:-}"
 if [[ -z "$BIN_DIR" && -r "$BIN_DIR_FILE" ]]; then
     IFS= read -r BIN_DIR < "$BIN_DIR_FILE" || true
+    if [[ "$BIN_DIR" == */.debris/* || ! -x "$BIN_DIR/alis-native" ]]; then
+        BIN_DIR=""
+    fi
 fi
 DEFAULT_BIN_DIR="$ROOT_DIR/native/bin"
 if [[ ! -x "$DEFAULT_BIN_DIR/alis-native" && -x "$ROOT_DIR/native/target/release/alis-native" ]]; then

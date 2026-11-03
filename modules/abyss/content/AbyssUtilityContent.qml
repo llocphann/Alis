@@ -15,6 +15,10 @@ Item {
     readonly property real desiredWidth: feature?.desiredWidth ?? 640
     readonly property real desiredHeight: feature?.desiredHeight ?? 700
     signal closeRequested()
+    function focusPrimarySurface(): void {
+        if (feature) feature.forceActiveFocus()
+        else root.forceActiveFocus()
+    }
     Loader {
         id: content
         anchors.fill: parent

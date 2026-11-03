@@ -3,22 +3,28 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.abyss.looks
 import QtQuick
 import QtQuick.Layouts
 
 RippleButton {
     id: root
     property string displayText: ""
-    colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    readonly property bool abyssMode: Config.options?.panelFamily === "abyss"
+    colBackground: root.abyssMode ? Qt.alpha(AbyssStyle.textColor, 0.05)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.alisEverywhere ? Appearance.alis.colLayer2
         : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer2
-    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+    colBackgroundHover: root.abyssMode ? Qt.alpha(AbyssStyle.accent, 0.14)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover
-    colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+    colRipple: root.abyssMode ? Qt.alpha(AbyssStyle.accent, 0.22)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.alisEverywhere ? Appearance.alis.colLayer2Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
-    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    buttonRadius: root.abyssMode ? 12
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.small
 
     implicitWidth: contentItem.implicitWidth + horizontalPadding * 2
@@ -37,14 +43,16 @@ RippleButton {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.leftMargin: 5
                 text: root.displayText
-                color: Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer2
+                color: root.abyssMode ? AbyssStyle.textColor
+                    : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer2
                 font.pixelSize: Appearance.font.pixelSize.small
             }
             MaterialSymbol {
                 Layout.alignment: Qt.AlignVCenter
                 iconSize: Appearance.font.pixelSize.hugeass
                 text: "arrow_drop_down"
-                color: Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer2
+                color: root.abyssMode ? AbyssStyle.textColorMuted
+                    : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer2
             }
         }
     }

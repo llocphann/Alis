@@ -42,15 +42,33 @@ FocusScope {
         list.currentIndex = Math.max(0, Math.min(root.rows.length - 1, list.currentIndex + delta))
         list.positionViewAtIndex(list.currentIndex, ListView.Contain)
     }
-    Component.onCompleted: { Cliphist.refresh(); Qt.callLater(() => root.forceActiveFocus()) }
+    function focusPrimarySurface(): void {
+        search.focus = false
+        root.forceActiveFocus()
+    }
+    Component.onCompleted: { Cliphist.refresh(); Qt.callLater(() => root.focusPrimarySurface()) }
     Connections {
         target: GlobalStates
         function onClipboardOpenChanged(): void {
             if (GlobalStates.clipboardOpen) {
                 Cliphist.refresh()
-                Qt.callLater(() => root.forceActiveFocus())
+                Qt.callLater(() => root.focusPrimarySurface())
             }
         }
+    }
+    function handleEscape(): bool {
+        if (root.confirmClear) {
+            root.confirmClear = false
+            return true
+        }
+        if (search.text.length > 0 || search.activeFocus) {
+            if (search.text.length > 0)
+                search.text = ""
+            search.focus = false
+            root.forceActiveFocus()
+            return true
+        }
+        return false
     }
     Keys.onPressed: event => {
         if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_F) {
@@ -61,9 +79,7 @@ FocusScope {
             root.togglePinRow(root.rows[list.currentIndex])
             event.accepted = true
         } else if (event.key === Qt.Key_Escape) {
-            if (search.activeFocus && search.text.length > 0) {
-                root.forceActiveFocus()
-            } else {
+            if (!root.handleEscape()) {
                 root.closeRequested()
             }
             event.accepted = true
@@ -106,6 +122,7 @@ FocusScope {
                 if (search.text.length > 0) {
                     search.text = ""
                 }
+                search.focus = false
                 root.forceActiveFocus()
             }
             Keys.onPressed: event => {

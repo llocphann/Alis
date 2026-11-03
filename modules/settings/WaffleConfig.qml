@@ -50,6 +50,7 @@ ContentPage {
     }
 
     SettingsTaskNavigator {
+        visible: root.isWaffleActive
         icon: "window"
         title: Translation.tr("Waffle Style")
         description: Translation.tr("Waffle wallpaper, taskbar, themes and switching.")
@@ -391,19 +392,23 @@ ContentPage {
                 colBackgroundHover: Appearance.colors.colLayer1Hover
                 colRipple: Appearance.colors.colLayer1Active
 
-                contentItem: RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 8
+                contentItem: Item {
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 8
 
-                    MaterialSymbol {
-                        text: "restart_alt"
-                        iconSize: Appearance.font.pixelSize.normal
-                        color: Appearance.colors.colOnSurface
-                    }
-                    StyledText {
-                        text: Translation.tr("Reset to defaults")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSurface
+                        MaterialSymbol {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "restart_alt"
+                            iconSize: Appearance.font.pixelSize.normal
+                            color: Appearance.colors.colOnSurface
+                        }
+                        StyledText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: Translation.tr("Reset to defaults")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colOnSurface
+                        }
                     }
                 }
 
@@ -458,7 +463,7 @@ ContentPage {
 
     SettingsCardSection {
         visible: root.isWaffleActive && root.isPanelEnabled("wStartMenu")
-        expanded: false
+        expanded: true
         icon: "grid_view"
         title: Translation.tr("Start Menu")
 
@@ -488,7 +493,7 @@ ContentPage {
 
     SettingsCardSection {
         visible: root.isWaffleActive
-        expanded: false
+        expanded: true
         icon: "tune"
         title: Translation.tr("Tweaks")
 
@@ -511,7 +516,7 @@ ContentPage {
 
     SettingsCardSection {
         visible: root.isWaffleActive && root.isPanelEnabled("wNotificationCenter")
-        expanded: false
+        expanded: true
         icon: "calendar_month"
         title: Translation.tr("Calendar")
 
@@ -527,7 +532,7 @@ ContentPage {
 
     SettingsCardSection {
         visible: root.isWaffleActive
-        expanded: false
+        expanded: true
         icon: "swap_horiz"
         title: Translation.tr("Alt+Tab Switcher")
 
@@ -653,7 +658,7 @@ ContentPage {
 
     SettingsCardSection {
         visible: root.isWaffleActive && root.isPanelEnabled("wWidgets")
-        expanded: false
+        expanded: true
         icon: "widgets"
         title: Translation.tr("Widgets Panel")
 

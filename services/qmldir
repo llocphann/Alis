@@ -1,7 +1,6 @@
 module qs.services
 singleton AwwwBackend 1.0 AwwwBackend.qml
 singleton Ai 1.0 Ai.qml
-singleton AppCatalog 1.0 AppCatalog.qml
 singleton AppLauncher 1.0 AppLauncher.qml
 singleton AppSearch 1.0 AppSearch.qml
 AntiFlashbangSampler 1.0 AntiFlashbangSampler.qml
@@ -9,8 +8,6 @@ singleton Audio 1.0 Audio.qml
 singleton Autostart 1.0 Autostart.qml
 singleton Battery 1.0 Battery.qml
 singleton BluetoothStatus 1.0 BluetoothStatus.qml
-singleton Booru 1.0 Booru.qml
-BooruResponseData 1.0 BooruResponseData.qml
 singleton Brightness 1.0 Brightness.qml
 singleton CalendarSync 1.0 CalendarSync.qml
 singleton CavaTheme 1.0 CavaTheme.qml
@@ -60,6 +57,7 @@ singleton Privacy 1.0 Privacy.qml
 singleton RecorderStatus 1.0 RecorderStatus.qml
 singleton ResourceUsage 1.0 ResourceUsage.qml
 singleton ScreenTime 1.0 ScreenTime.qml
+singleton SpacedRepetition 1.0 SpacedRepetition.qml
 singleton ShellEditSession 1.0 ShellEditSession.qml
 singleton ShellLayoutController 1.0 ShellLayoutController.qml
 singleton ShellUpdates 1.0 ShellUpdates.qml
@@ -75,7 +73,6 @@ singleton Translation 1.0 Translation.qml
 singleton TrayService 1.0 TrayService.qml
 singleton Updates 1.0 Updates.qml
 singleton VoiceSearch 1.0 VoiceSearch.qml
-singleton Wallhaven 1.0 Wallhaven.qml
 singleton WallpaperListener 1.0 WallpaperListener.qml
 singleton Wallpapers 1.0 Wallpapers.qml
 singleton Weather 1.0 Weather.qml
@@ -83,7 +80,6 @@ singleton WidgetPowerManager 1.0 WidgetPowerManager.qml
 singleton WindowPreviewService 1.0 WindowPreviewService.qml
 singleton WorldClock 1.0 WorldClock.qml
 singleton Zettelkasten 1.0 Zettelkasten.qml
-singleton YtMusic 1.0 YtMusic.qml
 singleton AlisCompanion 1.0 AlisCompanion.qml
 singleton ObsidianTheme 1.0 ObsidianTheme.qml
 

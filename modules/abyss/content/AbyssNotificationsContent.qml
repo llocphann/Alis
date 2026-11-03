@@ -149,6 +149,7 @@ Item {
         onLoaded: root.schedulePopupMeasurement()
         sourceComponent: NotificationListView {
             popup: true
+            animatePopupEntrance: false
             clip: true
             // The final live model can become empty while the field is still
             // painting its retract tail. Keep the previous card until the

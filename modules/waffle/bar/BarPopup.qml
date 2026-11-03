@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.perimeter
@@ -21,11 +22,23 @@ Loader {
     property real padding: Looks.radius.large - Looks.radius.medium
     property bool noSmoothClosing:
         !(Config.options?.waffles?.tweaks?.smootherMenuAnimations ?? true)
-    property bool closeOnFocusLost: true
+    property bool closeOnFocusLost: false
     property bool closeOnHoverLost: true
     property int closeOnHoverLostDelay: 300
     property bool anchorHovered: false
     signal focusCleared()
+
+    readonly property bool _anyWafflePanelOpen: GlobalStates.searchOpen
+        || GlobalStates.waffleActionCenterOpen
+        || GlobalStates.waffleNotificationCenterOpen
+        || GlobalStates.waffleWidgetsOpen
+        || GlobalStates.waffleClipboardOpen
+        || GlobalStates.waffleTaskViewOpen
+
+    on_AnyWafflePanelOpenChanged: {
+        if (root._anyWafflePanelOpen && root.active)
+            root.active = false
+    }
 
     property Item anchorItem: parent
     // Optional rect in anchorItem-local coordinates. Ownership/output remains
@@ -122,17 +135,32 @@ Loader {
         WlrLayershell.namespace: "quickshell:waffle-bar-popup"
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus:
-            root.closeOnFocusLost && root.active
+            root.closeOnFocusLost && root.active && !popupWindow.closing
                 ? WlrKeyboardFocus.OnDemand
                 : WlrKeyboardFocus.None
 
         property real revealProgress: 0
+        property bool closing: false
         property bool focusGrabRequested: false
         readonly property bool popupContainsMouse:
             frame.bodyHovered || popupHoverHandler.hovered
         property alias popupHoverArea: popupHoverHandler
 
+        Timer {
+            id: closeFallbackTimer
+            interval: 260
+            repeat: false
+            onTriggered: {
+                if (popupWindow.closing) {
+                    closeAnim.stop()
+                    popupWindow.closing = false
+                    root.active = false
+                }
+            }
+        }
+
         Component.onCompleted: {
+            popupWindow.closing = false
             popupWindow.revealProgress = 0
             openAnim.restart()
         }
@@ -140,9 +168,18 @@ Loader {
         function close() {
             popupWindow.focusGrabRequested = false
             if (root.noSmoothClosing || !Looks.transition.enabled) {
+                closeFallbackTimer.stop()
+                popupWindow.closing = false
                 root.active = false
                 return
             }
+            if (popupWindow.closing) {
+                closeFallbackTimer.restart()
+                return
+            }
+            popupWindow.closing = true
+            openAnim.stop()
+            closeFallbackTimer.restart()
             closeAnim.restart()
         }
 
@@ -176,7 +213,11 @@ Loader {
             }
 
             ScriptAction {
-                script: root.active = false
+                script: {
+                    closeFallbackTimer.stop()
+                    popupWindow.closing = false
+                    root.active = false
+                }
             }
         }
 
@@ -295,7 +336,7 @@ Loader {
             geometry: geometry
             bodyItem: frame.bodyItem
             connectorItem: frame.connectorItem
-            inputEnabled: root.active
+            inputEnabled: root.active && !popupWindow.closing && popupWindow.revealProgress > 0.01
         }
 
         mask: connectedMask
@@ -305,6 +346,7 @@ Loader {
 
             screen: root._anchorScreen
             visible: popupWindow.visible
+                && !popupWindow.closing
                 && CompositorService.isNiri
                 && root.closeOnFocusLost
             color: Qt.rgba(0, 0, 0, 1 / 255)
@@ -313,6 +355,9 @@ Loader {
             WlrLayershell.layer: WlrLayer.Top
             WlrLayershell.namespace:
                 "quickshell:waffle-bar-popup-backdrop"
+            mask: Region {
+                item: clickOutsideBackdrop.visible ? backdropMouseArea : emptyBackdropRegion
+            }
 
             anchors {
                 top: true
@@ -321,8 +366,16 @@ Loader {
                 right: true
             }
 
+            Item {
+                id: emptyBackdropRegion
+                width: 0
+                height: 0
+            }
+
             MouseArea {
+                id: backdropMouseArea
                 anchors.fill: parent
+                enabled: clickOutsideBackdrop.visible
                 onClicked: root.close()
             }
         }

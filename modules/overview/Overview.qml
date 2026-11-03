@@ -405,8 +405,7 @@ Scope {
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape) {
-                        if (dashboardPanel.item?.editing
-                                && dashboardPanel.item?.handleEscape()) {
+                        if (dashboardPanel.item?.handleEscape()) {
                             event.accepted = true
                             return
                         }

@@ -103,6 +103,26 @@ Singleton {
         root._startNext()
     }
 
+    function refreshLocalProviders(): void {
+        if (!root.initialized) {
+            root.ensureInitialized()
+            return
+        }
+        const locals = root.providers.filter(provider => provider.local === true && provider.catalogKind !== "static")
+        if (locals.length === 0) return
+        if (root.refreshing) {
+            for (const p of locals) {
+                const alreadyQueued = root._queue.some(item => item.id === p.id)
+                    || root._activeProvider?.id === p.id
+                if (!alreadyQueued) root._queue = [p, ...root._queue]
+            }
+            return
+        }
+        root._queue = locals
+        root.refreshing = true
+        root._startNext()
+    }
+
     function _setProviderState(providerId: string, patch) {
         const current = root.providerStates[providerId] ?? ({ providerId })
         const next = Object.assign({}, current, patch)
@@ -181,25 +201,38 @@ Singleton {
                     catalogReady: true,
                 })
             } else {
+                const clearStaleLocal = provider.local === true
+                if (clearStaleLocal) {
+                    root._catalogByProvider = Object.assign({}, root._catalogByProvider, {
+                        [provider.id]: [],
+                    })
+                }
+                const retainedCount = clearStaleLocal ? 0 : previous.length
                 root._setProviderState(provider.id, {
                     status: result.error === "missing-key" ? "needs-key" : "unavailable",
-                    modelCount: previous.length,
+                    modelCount: retainedCount,
                     error: result.error ?? "discovery-failed",
                     fetchedAt: root.stateFor(provider.id).fetchedAt ?? 0,
-                    stale: previous.length > 0,
+                    stale: retainedCount > 0,
                     hasKey: root._hasProviderKey(provider),
-                    catalogReady: previous.length > 0,
+                    catalogReady: retainedCount > 0,
                 })
             }
         } catch (error) {
-            const previous = root._catalogByProvider[provider.id] ?? []
+            const clearStaleLocal = provider.local === true
+            if (clearStaleLocal) {
+                root._catalogByProvider = Object.assign({}, root._catalogByProvider, {
+                    [provider.id]: [],
+                })
+            }
+            const retainedCount = clearStaleLocal ? 0 : (root._catalogByProvider[provider.id] ?? []).length
             root._setProviderState(provider.id, {
                 status: "unavailable",
-                modelCount: previous.length,
+                modelCount: retainedCount,
                 error: `invalid-discovery-output: ${error}`,
-                stale: previous.length > 0,
+                stale: retainedCount > 0,
                 hasKey: root._hasProviderKey(provider),
-                catalogReady: previous.length > 0,
+                catalogReady: retainedCount > 0,
             })
         }
     }

@@ -12,17 +12,11 @@ Singleton {
     id: root
 
     readonly property var baseDestinations: [
-        { id: "sidebar-left/widgets", family: "shared", surface: "sidebar-left", view: "widgets", safe: true, settleMs: 350 },
         { id: "sidebar-left/ai", family: "shared", surface: "sidebar-left", view: "ai", safe: true, settleMs: 500 },
         { id: "sidebar-left/translator", family: "shared", surface: "sidebar-left", view: "translator", safe: true, settleMs: 350 },
-        { id: "sidebar-left/anime", family: "shared", surface: "sidebar-left", view: "anime", safe: true, settleMs: 450 },
-        { id: "sidebar-left/anime-schedule", family: "shared", surface: "sidebar-left", view: "anime-schedule", safe: true, settleMs: 500 },
-        { id: "sidebar-left/wallhaven", family: "shared", surface: "sidebar-left", view: "wallhaven", safe: true, settleMs: 450 },
         { id: "sidebar-left/news", family: "shared", surface: "sidebar-left", view: "news", safe: true, settleMs: 500 },
         { id: "sidebar-left/music", family: "ii", surface: "dashboard", view: "music", safe: true, settleMs: 450 },
-        { id: "sidebar-left/ytmusic", family: "ii", surface: "dashboard", view: "music", safe: true, settleMs: 450 },
         { id: "sidebar-left/tools", family: "shared", surface: "sidebar-left", view: "tools", safe: true, settleMs: 350 },
-        { id: "sidebar-left/software", family: "shared", surface: "sidebar-left", view: "software", safe: true, settleMs: 450 },
         { id: "sidebar-right/controls", family: "shared", surface: "sidebar-right", view: "controls", safe: true, settleMs: 350 },
         { id: "sidebar-right/calendar", family: "shared", surface: "sidebar-right", view: "calendar", safe: true, settleMs: 350 },
         { id: "sidebar-right/events", family: "shared", surface: "sidebar-right", view: "events", safe: true, settleMs: 350 },
@@ -73,6 +67,8 @@ Singleton {
     }
 
     function entryFor(destination: string): var {
+        if (destination === "sidebar-left/ytmusic")
+            return destinations.find(entry => entry.id === "sidebar-left/music") ?? null
         return destinations.find(entry => entry.id === destination) ?? null
     }
 
@@ -145,11 +141,6 @@ Singleton {
             GlobalStates.tilingOverlayOsdOpen = entry.view === "osd"
             break
         case "settings":
-            if ((Config.options?.panelFamily ?? "ii") === "waffle"
-                    && Config.options?.waffles?.settings?.useMaterialStyle !== true) {
-                currentDestination = ""
-                return "error:material-settings-page-unavailable-in-waffle"
-            }
             GlobalStates.openSettingsPage(entry.pageIndex ?? -1)
             break
         case "waffle-search":

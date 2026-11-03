@@ -89,7 +89,7 @@ channels = ${CHANNELS}
 mono_option = average
 
 [smoothing]
-noise_reduction = 20
+noise_reduction = 65
 EOF
 
 if [[ "$PRINT_CONFIG" == "--print-config" ]]; then

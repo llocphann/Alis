@@ -8,13 +8,13 @@
 
 MIGRATION_ID="049-native-clipboard-selector"
 MIGRATION_TITLE="Route clipboard history through the native backend selector"
-MIGRATION_DESCRIPTION="Updates an existing wl-paste text watcher to call native-dispatch clipboard-store. Python remains the default and Rust can be enabled or rolled back with INIR_NATIVE_BACKEND."
+MIGRATION_DESCRIPTION="Updates an existing wl-paste text watcher to call native-dispatch clipboard-store. Python remains the default and Rust can be enabled or rolled back with ALIS_NATIVE_BACKEND."
 MIGRATION_TARGET_FILE="~/.config/niri/config.d/50-startup.kdl"
 MIGRATION_REQUIRED=true
 
 _cliphist_startup_file="${HOME}/.config/niri/config.d/50-startup.kdl"
-_old_filter='~/.config/quickshell/inir/scripts/clipboard-store.py'
-_new_filter='~/.config/quickshell/inir/scripts/native-dispatch clipboard-store'
+_old_filter='~/.config/quickshell/alis/scripts/clipboard-store.py'
+_new_filter='~/.config/quickshell/alis/scripts/native-dispatch clipboard-store'
 
 migration_check() {
     [[ -f "$_cliphist_startup_file" ]] || return 1

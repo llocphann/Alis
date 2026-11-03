@@ -10,6 +10,7 @@ Item {
     property var participant: null
     readonly property bool taskView: GlobalStates.overviewMode === "taskview"
     readonly property bool editMode: !taskView && (overview.item?.editing ?? false)
+    readonly property bool tabNamingActive: !taskView && (overview.item?.tabNamingActive ?? false)
     function handleEscape(): bool {
         return !root.taskView && (overview.item?.handleEscape?.() ?? false)
     }
@@ -62,6 +63,14 @@ Item {
                         cancelSearch()
                     }
                 }
+                function onParticipantChanged(): void {
+                    if (popupPresented && !root.editMode && !root.tabNamingActive)
+                        Qt.callLater(focusSearchInput)
+                }
+                function onEnabledChanged(): void {
+                    if (root.enabled && popupPresented && !root.editMode && !root.tabNamingActive)
+                        Qt.callLater(focusSearchInput)
+                }
             }
             onPopupPresentedChanged: {
                 syncReveal()
@@ -86,6 +95,7 @@ Item {
             panelWindow: root.QsWindow.window
             embeddedSurface: true
             taskViewMode: true
+            verticalLayout: root.participant?.edge === "left" || root.participant?.edge === "right"
             presentationActive: root.participant?.open ?? true
             onPresentationCloseRequested: GlobalStates.overviewOpen = false
         }
@@ -96,6 +106,7 @@ Item {
             anchors.centerIn: parent
             panelWindow: root.QsWindow.window
             embeddedSurface: true
+            verticalLayout: root.participant?.edge === "left" || root.participant?.edge === "right"
             presentationActive: root.participant?.open ?? true
             onPresentationCloseRequested: GlobalStates.overviewOpen = false
         }

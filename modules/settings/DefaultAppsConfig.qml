@@ -15,18 +15,36 @@ ContentPage {
     id: root
     objectName: "defaultAppsSettings"
     settingsPageIndex: 39
-    settingsPageName: Translation.tr("Default Applications")
+    settingsPageName: Translation.tr("Applications")
 
     property string activeSection: "primary"
     property string openPickerSlot: ""
     property string openCustomSlot: ""
 
+    onActiveSectionChanged: {
+        if (root.activeSection === "defaults" || root.activeSection === "portable") {
+            root.activeSection = "primary"
+        }
+    }
+
     Component.onCompleted: {
         AppLauncher.refreshDiscovery()
     }
 
+    function handleEscape(): bool {
+        if (root.openPickerSlot.length > 0) {
+            root.openPickerSlot = ""
+            return true
+        }
+        return false
+    }
+
     function activateSettingsSearchSection(section: string): bool {
         const label = String(section ?? "").toLowerCase()
+        if (label.includes("autostart") || label.includes("startup") || label.includes("command") || label.includes("service")) {
+            root.activeSection = "autostart"
+            return true
+        }
         if (label.includes("utilit") || label.includes("network") || label.includes("bluetooth")
                 || label.includes("volume") || label.includes("task") || label.includes("account")
                 || label.includes("user")) {
@@ -42,6 +60,20 @@ ContentPage {
             root.openPickerSlot = "editor"
         else if (label.includes("file"))
             root.openPickerSlot = "fileManager"
+        else if (label.includes("pdf"))
+            root.openPickerSlot = "pdfViewer"
+        else if (label.includes("office") || label.includes("docx") || label.includes("word"))
+            root.openPickerSlot = "officeSuite"
+        else if (label.includes("html"))
+            root.openPickerSlot = "htmlViewer"
+        else if (label.includes("image") || label.includes("photo") || label.includes("picture") || label.includes("png") || label.includes("jpg"))
+            root.openPickerSlot = "imageViewer"
+        else if (label.includes("video") || label.includes("movie") || label.includes("mp4") || label.includes("mkv"))
+            root.openPickerSlot = "videoPlayer"
+        else if (label.includes("audio") || label.includes("music") || label.includes("mp3") || label.includes("flac"))
+            root.openPickerSlot = "audioPlayer"
+        else if (label.includes("archive") || label.includes("zip") || label.includes("rar") || label.includes("7z"))
+            root.openPickerSlot = "archiveManager"
         return true
     }
 
@@ -57,6 +89,10 @@ ContentPage {
             const raw = String(iconRoot.iconName ?? "").trim()
             if (!raw)
                 return ""
+            if (raw.startsWith("file://"))
+                return raw
+            if (raw.startsWith("/"))
+                return "file://" + raw
             return Quickshell.iconPath(raw, true) ?? ""
         }
 
@@ -257,6 +293,58 @@ ContentPage {
                             available: Boolean(slotCard.summary?.installed ?? true)
                         }
 
+                        Rectangle {
+                            visible: String(slotCard.summary?.desktopId ?? "").startsWith("alis-app-")
+                            implicitHeight: 20
+                            implicitWidth: portableBadgeLabel.implicitWidth + 12
+                            radius: Appearance.rounding.full
+                            color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.84)
+                            StyledText {
+                                id: portableBadgeLabel
+                                anchors.centerIn: parent
+                                text: Translation.tr("Portable")
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colPrimary
+                            }
+                        }
+
+                        RippleButton {
+                            readonly property string cleanDesktopId: String(slotCard.summary?.desktopId ?? "").replace(/\.desktop$/i, "")
+                            visible: CompositorService.isNiri && cleanDesktopId.length > 0 && Autostart.isAppEnabled(cleanDesktopId)
+                            implicitHeight: 20
+                            implicitWidth: autostartBadgeRow.implicitWidth + 10
+                            buttonRadius: Appearance.rounding.full
+                            colBackground: Appearance.colors.colSecondaryContainer
+                            colBackgroundHover: Appearance.colors.colLayer2Hover
+                            onClicked: root.activeSection = "autostart"
+                            contentItem: Item {
+                                implicitWidth: autostartBadgeRow.implicitWidth
+                                implicitHeight: autostartBadgeRow.implicitHeight
+                                RowLayout {
+                                    id: autostartBadgeRow
+                                    anchors.centerIn: parent
+                                    spacing: 3
+                                    MaterialSymbol {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: "rocket_launch"
+                                        iconSize: 11
+                                        color: Appearance.colors.colOnSecondaryContainer
+                                    }
+                                    StyledText {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: Translation.tr("Autostart")
+                                        font.pixelSize: Appearance.font.pixelSize.smallest - 1
+                                        color: Appearance.colors.colOnSecondaryContainer
+                                    }
+                                }
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Enabled in Autostart — click to view Autostart settings")
+                            }
+                        }
+
                         MaterialSymbol {
                             objectName: "defaultAppXdgStatus_" + slotCard.slotId
                             visible: Boolean(slotCard.xdgStatus.supported && slotCard.xdgStatus.synced)
@@ -305,6 +393,24 @@ ContentPage {
                         tooltipText: Translation.tr("Custom command")
                         onClicked: {
                             root.openCustomSlot = (root.openCustomSlot === slotCard.slotId) ? "" : slotCard.slotId
+                        }
+                    }
+
+                    SlotIconButton {
+                        objectName: "defaultAppShortcutBtn_" + slotCard.slotId
+                        visible: CompositorService.isNiri
+                        iconName: "keyboard"
+                        tooltipText: Translation.tr("Configure keyboard shortcut in Shortcuts tab")
+                        onClicked: {
+                            if (["terminal", "browser", "fileManager", "editor"].indexOf(slotCard.slotId) !== -1) {
+                                AppLauncher.prepareShortcutForSlot(slotCard.slotId)
+                            } else {
+                                AppLauncher.prepareShortcutForCommand(
+                                    String(slotCard.summary?.command ?? ""),
+                                    String(slotCard.summary?.name ?? slotCard.slotData?.label ?? "")
+                                )
+                            }
+                            SettingsPageRegistry.navigateToKey("shortcuts", "")
                         }
                     }
 
@@ -516,30 +622,35 @@ ContentPage {
 
     SettingsTaskNavigator {
         objectName: "defaultAppsTaskTabs"
-        showTabBar: false
+        showTabBar: true
+        showIntro: false
         icon: "apps"
-        title: Translation.tr("Default Applications")
+        title: Translation.tr("Applications")
         description: ""
-        summary: Translation.tr("Core Applications · System Utilities")
+        summary: Translation.tr("Core Applications · Portable · System Utilities · Autostart")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
-            { displayName: Translation.tr("Core Applications"), icon: "apps", value: "primary" },
-            { displayName: Translation.tr("System Utilities"), icon: "tune", value: "utilities" }
+            { displayName: Translation.tr("Default Apps"), icon: "apps", value: "primary" },
+            { displayName: Translation.tr("System Utilities"), icon: "tune", value: "utilities" },
+            { displayName: Translation.tr("Autostart"), icon: "rocket_launch", value: "autostart" }
         ]
     }
 
     GridLayout {
         objectName: "defaultAppsTwoColumnGrid"
         Layout.fillWidth: true
-        columns: width >= 620 ? 2 : 1
+        visible: root.activeSection === "primary"
+        columns: 2
+        uniformCellWidths: true
         columnSpacing: 14
         rowSpacing: 14
 
         SettingsCardSection {
+            _preventBentoReparent: true
             Layout.fillWidth: true
+            Layout.preferredWidth: 1
             Layout.alignment: Qt.AlignTop
-            settingsTaskSection: "primary"
             visible: true
             expanded: true
             icon: "apps"
@@ -558,18 +669,37 @@ ContentPage {
             }
         }
 
-        SettingsCardSection {
+        ApplicationsConfig {
+            id: portableAppsSection
+            objectName: "defaultAppsPortableSection"
+            embedded: true
+            settingsPageIndex: root.settingsPageIndex
             Layout.fillWidth: true
+            Layout.preferredWidth: 1
             Layout.alignment: Qt.AlignTop
-            settingsTaskSection: "utilities"
-            visible: true
-            expanded: true
-            icon: "tune"
-            title: Translation.tr("System Utilities")
+        }
+    }
 
-            DiscoveryHeaderBar {
-                objectName: "defaultAppsUtilitiesDiscoverySummary"
-            }
+    SettingsCardSection {
+        objectName: "defaultAppsUtilitiesCard"
+        _preventBentoReparent: true
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        visible: root.activeSection === "utilities"
+        expanded: true
+        icon: "tune"
+        title: Translation.tr("System Utilities")
+
+        DiscoveryHeaderBar {
+            objectName: "defaultAppsUtilitiesDiscoverySummary"
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: 2
+            uniformCellWidths: true
+            columnSpacing: 14
+            rowSpacing: 10
 
             Repeater {
                 model: AppLauncher.utilitySlotDefinitions()
@@ -579,5 +709,15 @@ ContentPage {
                 }
             }
         }
+    }
+
+    AutostartConfig {
+        id: autostartSection
+        objectName: "defaultAppsAutostartSection"
+        visible: root.activeSection === "autostart"
+        embedded: true
+        settingsPageIndex: root.settingsPageIndex
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
     }
 }

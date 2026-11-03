@@ -1,6 +1,6 @@
 import QtQuick
 AbyssConfig {
     settingsPageIndex: 34
-    settingsPageName: "Bar modules"
+    settingsPageName: "Bar & Modules"
     sections: ["modules", "bar"]
 }

@@ -166,7 +166,7 @@ Item {
                     y: (playerDelegate.index - root.currentTab)
                         * playerViewport.height
                     enabled: playerDelegate.index === root.currentTab
-                    visible: enabled || tabSlideAnim.running
+                    visible: root.presentationActive && (enabled || tabSlideAnim.running)
                     z: enabled ? 2 : 1
 
                     function focusPrimaryControl(): void {

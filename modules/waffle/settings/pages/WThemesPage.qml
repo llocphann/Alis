@@ -770,11 +770,37 @@ WSettingsPage {
         }
 
         WSettingsSwitch {
-            label: Translation.tr("VSCode editors")
+            label: Translation.tr("VSCode")
             icon: "terminal"
-            description: Translation.tr("Generate theme for VSCode and its forks from wallpaper colors")
-            checked: Config.options?.appearance?.wallpaperTheming?.enableVSCode ?? true
-            onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableVSCode", checked)
+            description: Translation.tr("Generate and auto-apply Material You theme for VSCode")
+            checked: (Config.options?.appearance?.wallpaperTheming?.enableVSCode ?? true)
+                && (Config.options?.appearance?.wallpaperTheming?.vscodeEditors?.code ?? true)
+            onCheckedChanged: {
+                const codiumOn = (Config.options?.appearance?.wallpaperTheming?.enableVSCode ?? true)
+                    && (Config.options?.appearance?.wallpaperTheming?.vscodeEditors?.codium ?? true)
+                Config.setNestedValues({
+                    "appearance.wallpaperTheming.vscodeEditors.code": checked,
+                    "appearance.wallpaperTheming.vscodeEditors.codium": codiumOn,
+                    "appearance.wallpaperTheming.enableVSCode": checked || codiumOn
+                })
+            }
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("VSCodium")
+            icon: "terminal"
+            description: Translation.tr("Generate and auto-apply Material You theme for VSCodium")
+            checked: (Config.options?.appearance?.wallpaperTheming?.enableVSCode ?? true)
+                && (Config.options?.appearance?.wallpaperTheming?.vscodeEditors?.codium ?? true)
+            onCheckedChanged: {
+                const codeOn = (Config.options?.appearance?.wallpaperTheming?.enableVSCode ?? true)
+                    && (Config.options?.appearance?.wallpaperTheming?.vscodeEditors?.code ?? true)
+                Config.setNestedValues({
+                    "appearance.wallpaperTheming.vscodeEditors.codium": checked,
+                    "appearance.wallpaperTheming.vscodeEditors.code": codeOn,
+                    "appearance.wallpaperTheming.enableVSCode": codeOn || checked
+                })
+            }
         }
 
         WSettingsSwitch {

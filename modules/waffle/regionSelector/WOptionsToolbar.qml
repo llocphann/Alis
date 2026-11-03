@@ -11,8 +11,17 @@ import qs.services
 WPane {
     id: root
 
-    property var action
-    property var selectionMode
+    readonly property int actionCopy: 0
+    readonly property int actionEdit: 1
+    readonly property int actionSearch: 2
+    readonly property int actionCharRecognition: 3
+    readonly property int actionRecord: 4
+    readonly property int actionRecordWithSound: 5
+    readonly property int modeRectCorners: 0
+    readonly property int modeCircle: 1
+
+    property int action: root.actionCopy
+    property int selectionMode: root.modeRectCorners
     signal dismiss()
     signal fullscreenRequested()
     signal colorPickerRequested()
@@ -22,16 +31,15 @@ WPane {
     // Check selection mode by comparing numeric values
     readonly property bool isRectMode: {
         const mode = root.selectionMode
-        const rectMode = RegionSelection.SelectionMode.RectCorners
-        return mode === rectMode || mode === 0
+        return mode === root.modeRectCorners || mode === 0
     }
 
     // Persist only explicit toolbar choices; Record never becomes the
     // remembered default (parity with the ii OptionsToolbar).
     function persistSnipChoice() {
         if (!(Config.options?.regionSelector?.rememberSnipChoice ?? true)) return;
-        const isRecord = root.action === RegionSelection.SnipAction.Record
-            || root.action === RegionSelection.SnipAction.RecordWithSound;
+        const isRecord = root.action === root.actionRecord
+            || root.action === root.actionRecordWithSound;
         const updates = { "regionSelector.lastMode": root.selectionMode };
         if (!isRecord) updates["regionSelector.lastAction"] = root.action;
         Config.setNestedValues(updates);
@@ -39,11 +47,11 @@ WPane {
 
     // Region actions selectable in-overlay
     readonly property var actionList: [
-        { "action": RegionSelection.SnipAction.Copy,            "icon": "screenshot",   "name": Translation.tr("Screenshot") },
-        { "action": RegionSelection.SnipAction.Edit,            "icon": "cut",          "name": Translation.tr("Edit") },
-        { "action": RegionSelection.SnipAction.CharRecognition, "icon": "text-font",    "name": Translation.tr("Recognize text") },
-        { "action": RegionSelection.SnipAction.Search,          "icon": "globe-search", "name": Translation.tr("Visual search") },
-        { "action": RegionSelection.SnipAction.Record,          "icon": "record",       "name": Translation.tr("Record") }
+        { "action": root.actionCopy,            "icon": "screenshot",   "name": Translation.tr("Screenshot") },
+        { "action": root.actionEdit,            "icon": "cut",          "name": Translation.tr("Edit") },
+        { "action": root.actionCharRecognition, "icon": "text-font",    "name": Translation.tr("Recognize text") },
+        { "action": root.actionSearch,          "icon": "globe-search", "name": Translation.tr("Visual search") },
+        { "action": root.actionRecord,          "icon": "record",       "name": Translation.tr("Record") }
     ]
 
     contentItem: Item {
@@ -105,7 +113,7 @@ WPane {
                 colBackgroundActive: root.isRectMode ? Looks.colors.accentActive : Looks.colors.bg1Active
 
                 onClicked: {
-                    root.selectionMode = RegionSelection.SelectionMode.RectCorners
+                    root.selectionMode = root.modeRectCorners
                     root.persistSnipChoice()
                 }
 
@@ -133,7 +141,7 @@ WPane {
                 colBackgroundActive: !root.isRectMode ? Looks.colors.accentActive : Looks.colors.bg1Active
 
                 onClicked: {
-                    root.selectionMode = RegionSelection.SelectionMode.Circle
+                    root.selectionMode = root.modeCircle
                     root.persistSnipChoice()
                 }
 

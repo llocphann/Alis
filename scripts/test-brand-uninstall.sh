@@ -9,7 +9,7 @@ export XDG_CACHE_HOME="$root/cache"
 export XDG_STATE_HOME="$root/state"
 export XDG_DATA_HOME="$root/data"
 export XDG_BIN_HOME="$root/bin"
-export DOTS_CORE_CONFDIR="$root/config/inir"
+export DOTS_CORE_CONFDIR="$root/config/alis"
 export REPO_ROOT="$repo"
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 source "$repo/sdata/lib/uninstall.sh"
@@ -20,14 +20,14 @@ cp "$repo/scripts/alis" "$XDG_BIN_HOME/alis"
 cp "$repo/assets/applications/alis.desktop" "$XDG_DATA_HOME/applications/alis.desktop"
 cp "$repo/assets/applications/alis-settings.desktop" "$XDG_DATA_HOME/applications/alis-settings.desktop"
 cp "$repo/assets/icons/desktop-symbolic.svg" "$XDG_DATA_HOME/icons/hicolor/scalable/apps/alis.svg"
-mkdir "$XDG_CONFIG_HOME/inir"
-echo preserve > "$XDG_CONFIG_HOME/inir/preferences"
-ln -s "$XDG_CONFIG_HOME/inir" "$XDG_CONFIG_HOME/alis"
+mkdir "$XDG_CONFIG_HOME/alis"
+echo preserve > "$XDG_CONFIG_HOME/alis/preferences"
+ln -s "$XDG_CONFIG_HOME/alis" "$XDG_CONFIG_HOME/alis"
 uninstall_remove_alis_public_entries
 for target in "$XDG_BIN_HOME/alis" "$XDG_DATA_HOME/applications/alis.desktop" "$XDG_DATA_HOME/applications/alis-settings.desktop" "$XDG_DATA_HOME/icons/hicolor/scalable/apps/alis.svg"; do
     [[ ! -e "$target" ]] || fail "Alis managed artifact remained: $target"
 done
-[[ "$(cat "$XDG_CONFIG_HOME/inir/preferences")" == preserve ]] || fail 'original config was deleted'
+[[ "$(cat "$XDG_CONFIG_HOME/alis/preferences")" == preserve ]] || fail 'original config was deleted'
 [[ -L "$XDG_CONFIG_HOME/alis" ]] || fail 'alias was deleted without explicit owner approval'
 [[ "$(cat "$XDG_STATE_HOME/quickshell/user/notes")" == 'very private notes' ]] ||
     fail 'personal notes/state removed'

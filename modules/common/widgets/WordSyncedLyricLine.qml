@@ -45,15 +45,21 @@ Item {
             return 1.2;
         const words = clean.split(/\s+/).filter(t => t.length > 0);
         const chars = clean.replace(/[^\p{L}\p{N}]+/gu, "").length;
-        return Math.max(0.95, Math.min(6.2, 0.28 + words.length * 0.24 + chars * 0.036));
+        return Math.max(1.25, Math.min(8.5, 0.42 + words.length * 0.40 + chars * 0.05));
     }
 
     readonly property real lineEndTime: {
-        const estMax = root._estimatedLineVocalSpan(root.lineText) * 1.18;
+        const estMax = root._estimatedLineVocalSpan(root.lineText) * 1.22;
         if (root.lineData && typeof root.lineData === "object") {
+            const preWords = Array.isArray(root.lineData.words) ? root.lineData.words : [];
+            if (preWords.length > 0) {
+                const lastWordEnd = Number(preWords[preWords.length - 1]?.end ?? 0);
+                if (Number.isFinite(lastWordEnd) && lastWordEnd > root.lineStartTime + 0.1)
+                    return lastWordEnd;
+            }
             const explicitEnd = Number(root.lineData.endTime ?? 0);
             if (Number.isFinite(explicitEnd) && explicitEnd > root.lineStartTime + 0.15)
-                return Math.min(explicitEnd, root.lineStartTime + Math.max(estMax, 4.5));
+                return explicitEnd;
         }
         if (root.nextLineTime > root.lineStartTime + 0.15) {
             const gap = root.nextLineTime - root.lineStartTime;
@@ -245,43 +251,16 @@ Item {
 
         if (preWords.length > 0) {
             const total = preWords.length;
-            const firstStart = Number(preWords[0]?.start ?? lStart);
-            const lastEnd = Number(preWords[total - 1]?.end ?? lEnd);
-            const rawSpan = Math.max(0.1, lastEnd - firstStart);
-            const estSpan = root._estimatedLineVocalSpan(text);
-            let isContiguousSynthesized = true;
-            for (let i = 0; i + 1 < total; i++) {
-                const curEnd = Number(preWords[i]?.end ?? 0);
-                const nxtStart = Number(preWords[i + 1]?.start ?? 0);
-                if (Math.abs(nxtStart - curEnd) > 0.03) {
-                    isContiguousSynthesized = false;
-                    break;
-                }
-            }
-            const scaleFactor = (isContiguousSynthesized && rawSpan > estSpan * 1.15)
-                ? (estSpan / rawSpan)
-                : 1.0;
-
             let sumDur = 0;
             const adjusted = [];
             for (let i = 0; i < total; i++) {
                 const w = preWords[i];
                 const wTxt = String(w?.text ?? "");
-                let s = Number(w?.start ?? lStart);
+                const s = Number(w?.start ?? lStart);
                 let e = Math.max(s + 0.04, Number(w?.end ?? (s + 0.3)));
-                if (scaleFactor < 0.999) {
-                    s = firstStart + (s - firstStart) * scaleFactor;
-                    e = firstStart + (e - firstStart) * scaleFactor;
-                } else {
-                    const nxtStart = (i + 1 < total) ? Number(preWords[i + 1]?.start ?? e) : e;
-                    const touchesNext = Math.abs(nxtStart - e) <= 0.025;
+                if (i === total - 1 && (e - s) > 2.6) {
                     const charCount = Math.max(1, wTxt.replace(/[^\p{L}\p{N}]+/gu, "").length);
-                    const hasClausePause = /[,;:\.\?\!…]$/.test(wTxt);
-                    const maxNaturalDur = hasClausePause
-                        ? Math.max(0.32, 0.18 + charCount * 0.055)
-                        : Math.max(0.55, 0.28 + charCount * 0.075);
-                    if ((touchesNext || i === total - 1) && (e - s) > maxNaturalDur * 1.35)
-                        e = s + maxNaturalDur;
+                    e = s + Math.min(2.4, Math.max(0.85, 0.35 + charCount * 0.11));
                 }
                 sumDur += Math.max(0.04, e - s);
                 adjusted.push({ raw: w, text: wTxt, start: s, end: e });
@@ -594,7 +573,7 @@ Item {
                         }
                     }
 
-                    // Active word karaoke / Kéo dài (Sustain) / Ngân nga (Vibrato) expressive underline bar
+                    // Active word karaoke / Kéo dài (Sustain) / Ngân nga (Vibrato) expressive underline bar (disabled per user preference)
                     Rectangle {
                         id: sustainBar
                         anchors.left: parent.left
@@ -602,7 +581,7 @@ Item {
                         anchors.bottomMargin: -2
                         height: (wordSlot.vibratoAmt > 0.35 || wordSlot.sustainAmt > 0.35) ? 2.5 : 1.8
                         radius: height / 2
-                        visible: wordSlot.isSinging
+                        visible: false
                         width: Math.max(4, parent.width * wordSlot.progress)
                         color: root.accentColor
                         opacity: (0.45 + 0.45 * Math.max(wordSlot.sustainAmt, wordSlot.vibratoAmt, wordSlot.riseAmt)) * Math.max(0.35, wordSlot.envelope)

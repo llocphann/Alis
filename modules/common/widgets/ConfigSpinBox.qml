@@ -21,6 +21,7 @@ RowLayout {
     property int settingsSearchOptionId: -1
 
     spacing: 8
+    Layout.fillWidth: true
     Layout.leftMargin: 0
     Layout.rightMargin: 0
 
@@ -101,7 +102,7 @@ RowLayout {
             StyledText {
                 id: labelWidget
                 Layout.fillWidth: true
-                elide: Text.ElideRight
+                marquee: true
                 maximumLineCount: 1
                 text: root.text
                 color: Appearance.colors.colOnSurface

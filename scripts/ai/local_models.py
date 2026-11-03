@@ -13,14 +13,16 @@ def roots(extra_root=''):
     override=os.environ.get('ALIS_GGUF_ROOTS', os.environ.get('IN' + 'IR_GGUF_ROOTS'))
     if override is not None:
         standard=[Path(p).expanduser() for p in json.loads(override)[:8]]
+    elif os.environ.get('AI_FIXTURE_URL') or os.environ.get('AQUA_TEST_ENDPOINT'):
+        standard=[]
     else:
         home=Path.home()
         # Match Hub's modern cache precedence; retain the older alias as fallback.
         cache=Path(os.environ.get('XDG_CACHE_HOME',str(home/'.cache'))).expanduser()
         hf_home=Path(os.environ.get('HF_HOME',str(cache/'huggingface'))).expanduser()
         hub=Path(os.environ.get('HF_HUB_CACHE',os.environ.get('HUGGINGFACE_HUB_CACHE',str(hf_home/'hub')))).expanduser()
-        standard=[hub,home/'.unsloth/studio/exports',home/'.unsloth/studio/library',home/'Models',
-            home/'.local/share/alis/models',home/'Downloads']
+        standard=[hub,home/'.lmstudio/models',cache/'lm-studio/models',home/'.unsloth/studio/exports',
+            home/'.unsloth/studio/library',home/'Models',home/'.local/share/alis/models',home/'Downloads']
     if not extra_root:return standard
     if not isinstance(extra_root,str) or len(extra_root)>4096:raise ValueError('Invalid model folder')
     custom=Path(extra_root).expanduser()
@@ -28,15 +30,36 @@ def roots(extra_root=''):
     return [custom]+[p for p in standard if p!=custom]
 
 def runtime():
-    candidates=[shutil.which('llama-server'),str(Path.home()/'.unsloth/llama.cpp/llama-server'),
-        str(Path.home()/'.unsloth/llama.cpp/build/bin/llama-server')]
+    home=Path.home()
+    lms_backends=sorted((home/'.lmstudio/extensions/backends').glob('llama.cpp-*/llama-server'),reverse=True) if os.environ.get('ALIS_GGUF_ROOTS') is None else []
+    candidates=[shutil.which('llama-server'),str(home/'.unsloth/llama.cpp/llama-server'),
+        str(home/'.unsloth/llama.cpp/build/bin/llama-server')]+[str(p) for p in lms_backends]
     for candidate in candidates:
         if candidate and Path(candidate).is_file() and os.access(candidate,os.X_OK):return str(Path(candidate).resolve())
     return ''
 
-def thinking_capable(name):
+def thinking_capable(name, path=None):
     value=str(name).casefold()
-    return bool(re.search(r'(^|[^a-z0-9])qwen3(?:[.\\-_]|$)',value)) or 'gpt-oss' in value or 'deepseek-r1' in value
+    if bool(re.search(r'(^|[^a-z0-9])qwen3(?:[.\\-_:]|$)',value)) or any(
+        k in value for k in (
+            'gpt-oss','deepseek-r1','plusiq','defiant-fable','heretic','qwq',
+            'thinking','reason','cogito','openthinker','sky-t1','exaone-deep',
+            'glm-z1','marco-o1','phi-4-reasoning','hunyuan-t1'
+        )
+    ):
+        return True
+    if path is not None:
+        try:
+            with Path(path).open('rb') as f:
+                head=f.read(4096).decode('latin1',errors='ignore').casefold()
+            if any(k in head for k in (
+                'qwen35','qwen3','deepseek2','gpt-oss','qwq','plusiq',
+                'defiant-fable','heretic','thinking','reasoning','cogito','openthinker'
+            )):
+                return True
+        except OSError:
+            pass
+    return False
 
 def valid_file(path):
     try:
@@ -116,7 +139,10 @@ def inventory(search_roots=None):
                             checkpoints.append({'id':'checkpoint:'+hashlib.sha256(identity.encode()).hexdigest()[:20],
                                 'name':checkpoint_name(link.parent),'format':'safetensors','runnable':False})
                     continue
-                if not name.lower().endswith('.gguf') or name.lower().startswith(('mmproj','ggml-vocab')):continue
+                lower_name=name.lower()
+                if not lower_name.endswith('.gguf') or lower_name.startswith(('mmproj','ggml-vocab')) or any(
+                    tok in lower_name for tok in ('nomic-embed','text-embedding','bge-reranker','bge-m3')
+                ):continue
                 link=Path(directory)/name
                 if not valid_file(link):continue
                 path=link.resolve();identity=str(path)
@@ -124,12 +150,13 @@ def inventory(search_roots=None):
                 seen.add(identity)
                 projector=next((p for p in sorted(link.parent.glob('mmproj*.gguf')) if valid_file(p)),None)
                 quant=re.search(r'(UD-)?(?:IQ|Q|F|BF)\d[\w_]*$',link.stem,re.I)
+                link_lower=str(link).lower()
                 entries.append({'id':'gguf:'+hashlib.sha256(identity.encode()).hexdigest()[:20],
                     'name':link.stem[:160],'path':str(link.absolute()),'size':path.stat().st_size,
                     'quantization':quant[0] if quant else '',
                     'projector':str(projector.absolute()) if projector else '',
-                    'thinking':thinking_capable(link.stem),
-                    'source':'Unsloth' if 'unsloth' in str(link).lower() else 'GGUF'})
+                    'thinking':thinking_capable(link.stem, path),
+                    'source':'Unsloth' if 'unsloth' in link_lower else ('LM Studio' if '.lmstudio' in link_lower or 'lm-studio' in link_lower else 'GGUF')})
                 if len(entries)>=32:break
             if len(entries)>=32:break
         if visited>12000 or len(entries)>=32:break

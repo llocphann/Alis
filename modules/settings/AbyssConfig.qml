@@ -12,8 +12,13 @@ ContentPage {
     settingsPageName: "Surface & Waves"
     readonly property bool twoColumnModulesBar: root.sections.length === 2
         && root.sections.includes("modules") && root.sections.includes("bar")
+    readonly property bool twoColumnPopups: root.sections.length === 1
+        && root.sections[0] === "popups"
     readonly property real sharedModulesHeight: twoColumnGrid.columns === 2
         ? Math.max(controls.modulesCardImplicitHeight, moduleSettings.item?.modulesCardImplicitHeight ?? 0)
+        : 0
+    readonly property real sharedPopupsHeight: twoColumnGrid.columns === 2 && root.twoColumnPopups
+        ? Math.max(controls.popupsCardImplicitHeight, popupNotificationSettings.item?.notificationsCardImplicitHeight ?? 0)
         : 0
     property alias activeSection: controls.activeSection
     function activateSettingsSearchSection(section: string): void {
@@ -40,19 +45,43 @@ ContentPage {
     GridLayout {
         id: twoColumnGrid
         Layout.fillWidth: true
-        columns: root.twoColumnModulesBar && width >= 620 ? 2 : 1
+        columns: (root.twoColumnModulesBar || root.twoColumnPopups) && width >= 620 ? 2 : 1
         uniformCellWidths: columns === 2
         columnSpacing: 14
         rowSpacing: 14
 
-        AbyssStyleSettings {
-            id: controls
+        ColumnLayout {
+            id: leftModulesColumn
             Layout.preferredWidth: 1
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
-            modulesCardMinHeight: root.sharedModulesHeight
-            sections: root.sections
-            activeSection: root.sections[0]
+            spacing: 0
+
+            AbyssStyleSettings {
+                id: controls
+                visible: !root.twoColumnModulesBar
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                modulesCardMinHeight: 0
+                popupsCardMinHeight: root.sharedPopupsHeight
+                sections: root.sections
+                activeSection: root.sections[0]
+            }
+            Loader {
+                id: behaviorSettings
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                Layout.preferredHeight: item?.implicitHeight ?? 0
+                visible: active
+                active: root.twoColumnModulesBar
+                source: "BarConfig.qml"
+                onLoaded: {
+                    item.embedded = true
+                    item.settingsPageIndex = root.settingsPageIndex
+                    item.activeSection = "behavior"
+                    item.abyssCardFilter = "behavior_and_quick_actions"
+                }
+            }
         }
         Loader {
             id: moduleSettings
@@ -67,24 +96,24 @@ ContentPage {
                 item.embedded = true
                 item.settingsPageIndex = root.settingsPageIndex
                 item.activeSection = root.twoColumnModulesBar ? "modules" : root.barSection
-                item.abyssCardFilter = root.twoColumnModulesBar ? "modules" : ""
-                item.modulesCardMinHeight = Qt.binding(() => root.sharedModulesHeight)
+                item.abyssCardFilter = root.twoColumnModulesBar ? "workspaces_and_tray" : ""
+                item.modulesCardMinHeight = 0
             }
         }
         Loader {
-            id: behaviorSettings
-            Layout.columnSpan: twoColumnGrid.columns
+            id: popupNotificationSettings
+            Layout.preferredWidth: 1
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
             Layout.preferredHeight: item?.implicitHeight ?? 0
             visible: active
-            active: root.twoColumnModulesBar
-            source: "BarConfig.qml"
+            active: controls.activeSection === "popups"
+            source: "InterfaceConfig.qml"
             onLoaded: {
                 item.embedded = true
                 item.settingsPageIndex = root.settingsPageIndex
-                item.activeSection = "behavior"
-                item.abyssCardFilter = "behavior"
+                item.activeSection = "notifications"
+                item.notificationsCardMinHeight = Qt.binding(() => root.sharedPopupsHeight)
             }
         }
     }
@@ -104,18 +133,5 @@ ContentPage {
         active: controls.activeSection === "sidebars"
         source: "SidebarsConfig.qml"
         onLoaded: { item.embedded = true; item.activeSection = root.sidebarSection }
-    }
-    Loader {
-        id: popupNotificationSettings
-        Layout.fillWidth: true
-        Layout.preferredHeight: item?.implicitHeight ?? 0
-        visible: active
-        active: controls.activeSection === "popups"
-        source: "InterfaceConfig.qml"
-        onLoaded: {
-            item.embedded = true
-            item.settingsPageIndex = root.settingsPageIndex
-            item.activeSection = "notifications"
-        }
     }
 }

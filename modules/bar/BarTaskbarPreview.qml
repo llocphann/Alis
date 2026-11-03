@@ -19,6 +19,7 @@ StyledPopup {
 
     required property bool dockHovered
     property string barPosition: "top"
+    property bool verticalLayout: false
     property var appEntry
     property Item anchorItem
     property bool previewOpen: false
@@ -27,7 +28,8 @@ StyledPopup {
     property var previewToplevels: []
 
     readonly property bool isVertical:
-        barPosition === "left" || barPosition === "right"
+        verticalLayout || barPosition === "left" || barPosition === "right"
+        || root._attachmentVertical
 
     hoverTarget: root.anchorItem
     hoverActivates: false

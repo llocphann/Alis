@@ -13,7 +13,6 @@ import qs.modules.screenCorners
 import qs.modules.sessionScreen
 import qs.modules.wallpaperSelector
 import qs.modules.wallpaperLauncher
-import qs.modules.ii.overlay
 
 import qs.modules.waffle.actionCenter
 import qs.modules.waffle.looks
@@ -96,6 +95,15 @@ Item {
         activeAsync: enabledPanel && GlobalStates.deferredPanelsReady && resident
     }
 
+    readonly property int wafflePanelCloseGraceMs:
+        Looks.transition.enabled ? Looks.transition.duration.medium + 80 : 60
+
+    Component.onCompleted: {
+        // Clear any stale non-Waffle sidebar states when entering Waffle family
+        GlobalStates.sidebarLeftOpen = false
+        GlobalStates.sidebarRightOpen = false
+    }
+
     // === Immediate feedback panels within the deferred host ===
     // Core Waffle surfaces (bar/background/backdrop) are owned by the critical
     // startup host so they are not delayed by the rest of this module.
@@ -103,10 +111,10 @@ Item {
     PanelLoader { identifier: "wOnScreenDisplay"; component: WaffleOSDModule.WaffleOSD {} }
 
     // === Deferred panels ===
-    OnDemandPanelLoader { identifier: "wStartMenu"; open: GlobalStates.searchOpen; component: WaffleStartMenu {} }
+    OnDemandPanelLoader { identifier: "wStartMenu"; open: GlobalStates.searchOpen; closeGraceMs: root.wafflePanelCloseGraceMs; component: WaffleStartMenu {} }
     OnDemandPanelLoader { identifier: "wActionCenter"; open: GlobalStates.waffleActionCenterOpen; closeGraceMs: Looks.transition.enabled ? Looks.transition.duration.medium + 40 : 40; component: WaffleActionCenter {} }
-    OnDemandPanelLoader { identifier: "wNotificationCenter"; open: GlobalStates.waffleNotificationCenterOpen; component: WaffleNotificationCenter {} }
-    OnDemandPanelLoader { identifier: "wWidgets"; open: GlobalStates.waffleWidgetsOpen && (Config.options?.waffles?.modules?.widgets ?? true); component: WaffleWidgets {} }
+    OnDemandPanelLoader { identifier: "wNotificationCenter"; open: GlobalStates.waffleNotificationCenterOpen; closeGraceMs: root.wafflePanelCloseGraceMs; component: WaffleNotificationCenter {} }
+    OnDemandPanelLoader { identifier: "wWidgets"; open: GlobalStates.waffleWidgetsOpen && (Config.options?.waffles?.modules?.widgets ?? true); closeGraceMs: root.wafflePanelCloseGraceMs; component: WaffleWidgets {} }
     DeferredPanelLoader { identifier: "wLock"; component: Lock {} }
     DeferredPanelLoader { identifier: "wPolkit"; component: Polkit {} }
     OnDemandPanelLoader { identifier: "wSessionScreen"; open: GlobalStates.sessionOpen; component: SessionScreen {} }
@@ -116,7 +124,6 @@ Item {
     DeferredPanelLoader { identifier: "iiBootGreeting"; component: BootGreeting {} }
     OnDemandPanelLoader { identifier: "iiCheatsheet"; open: GlobalStates.cheatsheetOpen; component: Cheatsheet {} }
     OnDemandPanelLoader { identifier: "iiOnScreenKeyboard"; open: GlobalStates.oskOpen; component: OnScreenKeyboard {} }
-    OnDemandPanelLoader { identifier: "iiOverlay"; open: GlobalStates.overlayOpen || OverlayContext.hasPinnedWidgets || OverlayContext.nativeDialogOpen; component: Overlay {} }
     OnDemandPanelLoader { identifier: "iiOverview"; open: GlobalStates.overviewOpen; closeGraceMs: Appearance.animation.elementMoveExit.duration + 80; component: Overview {} }
 
     DeferredPanelLoader { identifier: "iiRegionSelector"; component: RegionSelector {} }

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -774,8 +775,8 @@ Scope {
             readonly property bool editorOpen: GlobalStates.abyssEditing && GlobalStates.abyssEditorTargetOutput === outputName
             onPresentedChanged: if (!presented && editorOpen) GlobalStates.abyssEditing = false
             screen: modelData
-            // Keep the Top surface mapped across fullscreen, preserving stack order.
-            visible: Config.ready && !GlobalStates.screenLocked && !window._probeUnmapped
+            // Keep the Top surface mapped across fullscreen and behind WlSessionLock so cold boot completes while locked.
+            visible: Config.ready && !window._probeUnmapped
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
             exclusiveZone: 0
@@ -789,7 +790,7 @@ Scope {
             WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen ? WlrLayer.Bottom : PolkitService.active ? WlrLayer.Top : (window.physicalOsdResident || (CompositorService.isNiri && window.presented) || window.editorOpen || wallpaperBody.open || (keyboardBody.open && (Config.options?.osk?.keepOnTop ?? false)) || utility.open || liquid.popupsOpen || toastBody.open || dialogBody.open || companionExtension.editing || settings.open || dashboardBody.open || controls.open || (window.fullscreenCovered && window.presented)) ? WlrLayer.Overlay : WlrLayer.Top
             WlrLayershell.keyboardFocus: !window.presented || !field.ready || GlobalStates.regionSelectorOpen || GlobalStates.settingsNativeDialogOpen || PolkitService.active || window.overviewDragging || companionExtension.curiosityOwned
                 ? WlrKeyboardFocus.None
-                : (companionExtension.editing || window.editorOpen || (utility.presented && utility.ready) || liquid.popupExclusiveFocus || (popup.presented && (popup.contentItem.item?.keyboardFocus ?? false)) || (dialogBody.presented && dialogBody.ready) || (aux.presented && aux.ready) || (wallpaperBody.presented && wallpaperBody.ready) || (clipboardBody.presented && clipboardBody.ready) || (settings.presented && settings.ready) || (dashboardBody.presented && dashboardBody.ready) || (controls.presented && controls.ready)) ? WlrKeyboardFocus.Exclusive
+                : (window.editorOpen || (utility.presented && utility.ready) || liquid.popupExclusiveFocus || (popup.presented && (popup.contentItem.item?.keyboardFocus ?? false)) || (dialogBody.presented && dialogBody.ready) || (aux.presented && aux.ready) || (wallpaperBody.presented && wallpaperBody.ready) || (clipboardBody.presented && clipboardBody.ready) || (settings.presented && settings.ready) || (dashboardBody.presented && dashboardBody.ready) || (controls.presented && controls.ready)) ? WlrKeyboardFocus.Exclusive
                 : (companionExtension.editing || liquid.popupOnDemandFocus || (leftPanel.presented && leftPanel.ready) || (rightPanel.presented && rightPanel.ready) || (popup.presented && popup.ready && popup.activeKind !== "dockAppMenu") || (notification.presented && notification.ready && notification.contentKind === "center"))
                     ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
             anchors { top: true; bottom: true; left: true; right: true }
@@ -840,7 +841,7 @@ Scope {
                 Region { x: settings.inputBounds.x; y: settings.inputBounds.y; width: window.presented && field.ready && !GlobalStates.settingsNativeDialogOpen && !PolkitService.active ? settings.inputBounds.width : 0; height: settings.inputBounds.height }
                 Region { x: aux.inputBounds.x; y: aux.inputBounds.y; width: window.presented && field.ready ? aux.inputBounds.width : 0; height: aux.inputBounds.height }
                 Region {x:keyboardBody.inputBounds.x;y:keyboardBody.inputBounds.y;width:window.presented && field.ready ? keyboardBody.inputBounds.width : 0;height:keyboardBody.inputBounds.height}
-                Region { x:wallpaperBody.inputBounds.x;y:wallpaperBody.inputBounds.y;width:window.presented && field.ready ? wallpaperBody.inputBounds.width : 0;height:wallpaperBody.inputBounds.height }
+                Region { x:wallpaperBody.inputBounds.x;y:wallpaperBody.inputBounds.y;width:window.presented && field.ready && !GlobalStates.settingsNativeDialogOpen && !PolkitService.active ? wallpaperBody.inputBounds.width : 0;height:wallpaperBody.inputBounds.height }
                 Region { x: clipboardBody.inputBounds.x; y: clipboardBody.inputBounds.y; width: window.presented && field.ready ? clipboardBody.inputBounds.width : 0; height: clipboardBody.inputBounds.height }
             }
             function closeGenericPopup(expectedKind = ""): void {
@@ -871,12 +872,15 @@ Scope {
             property int dashboardEscapeCancelCount: 0
             property int dashboardEscapeFallbackCount: 0
             property real dashboardEscapeLastCancelMs: 0
+            readonly property Item activeWindowFocusItem: window.contentItem?.Window.activeFocusItem
+                ?? perimeterEscapeFallback.Window.activeFocusItem
+                ?? null
             function dashboardEscapeProbe(): var {
                 return {
                     output: window.outputName,
                     presented: Boolean(window.presented),
                     active: Boolean(window.active),
-                    focusItem: String(window.activeFocusItem?.objectName ?? ""),
+                    focusItem: String(window.activeWindowFocusItem?.objectName ?? ""),
                     fallbackActiveFocus: Boolean(perimeterEscapeFallback.activeFocus),
                     requestedKeyboardFocus: Number(window.WlrLayershell.keyboardFocus),
                     dashboardOpen: Boolean(dashboardBody.open),
@@ -894,8 +898,8 @@ Scope {
                     return true
                 const dashboard = dashboardBody.presented ? dashboardBody.contentItem?.item : null
                 const overview = aux.presented ? aux.contentItem?.item : null
-                const target = dashboard?.editMode ? dashboard
-                    : overview?.editMode ? overview : null
+                const target = (dashboard?.editMode || dashboard?.tabNamingActive) ? dashboard
+                    : (overview?.editMode || overview?.tabNamingActive) ? overview : null
                 if (!target || typeof target.handleEscape !== "function")
                     return false
                 window.dashboardEscapeCancelPending = true
@@ -904,13 +908,92 @@ Scope {
                     window.dashboardEscapeCancelCount++
                     window.dashboardEscapeLastCancelMs = Date.now()
                     // Preserve keyboard ownership for the next physical press.
-                    perimeterEscapeFallback.forceActiveFocus()
+                    window.ensureEscapeFocus()
                     console.info("[DashboardEscape] edit canceled; surface="
                         + (target === dashboard ? "dashboard" : "overview"))
                 } finally {
                     Qt.callLater(() => window.dashboardEscapeCancelPending = false)
                 }
                 return true
+            }
+            readonly property bool anyInteractiveBodyPresented: aux.presented
+                || clipboardBody.presented || leftPanel.presented
+                || rightPanel.presented || popup.presented || dashboardBody.presented
+                || settings.presented || controls.presented || wallpaperBody.presented
+                || utility.presented || dialogBody.presented || window.editorOpen
+            function isFocusInsidePresentedBody(item: Item): bool {
+                if (!item || item === window.contentItem || item === perimeterEscapeFallback)
+                    return false
+                const activeRoots = [
+                    aux.presented ? aux : null,
+                    dashboardBody.presented ? dashboardBody : null,
+                    settings.presented ? settings : null,
+                    controls.presented ? controls : null,
+                    leftPanel.presented ? leftPanel : null,
+                    rightPanel.presented ? rightPanel : null,
+                    clipboardBody.presented ? clipboardBody : null,
+                    wallpaperBody.presented ? wallpaperBody : null,
+                    utility.presented ? utility : null,
+                    dialogBody.presented ? dialogBody : null,
+                    popup.presented ? popup : null,
+                    editor.visible ? editor : null
+                ]
+                let node = item
+                while (node && node !== window.contentItem) {
+                    if (!node.visible || !node.enabled)
+                        return false
+                    if (activeRoots.includes(node)
+                            || (node.objectName === "abyssDashboardEditPopup"
+                                && activeRoots.includes(node.body)))
+                        return true
+                    node = node.parent
+                }
+                return false
+            }
+            function ensureEscapeFocus(): void {
+                if (!window.presented || !field.ready || !window.anyInteractiveBodyPresented)
+                    return
+                if (window.isFocusInsidePresentedBody(window.activeWindowFocusItem))
+                    return
+                if (editor.visible && editor.enabled) {
+                    editor.forceActiveFocus()
+                    if (window.isFocusInsidePresentedBody(window.activeWindowFocusItem))
+                        return
+                }
+                const candidateHosts = [
+                    dialogBody,
+                    utility,
+                    wallpaperBody,
+                    clipboardBody,
+                    aux,
+                    settings,
+                    dashboardBody,
+                    controls,
+                    popup,
+                    leftPanel,
+                    rightPanel
+                ]
+                for (const host of candidateHosts) {
+                    if (!host || !host.presented || !host.acceptsInput || !host.ready)
+                        continue
+                    const item = host.embeddedItem ?? host.contentItem?.item ?? null
+                    if (item && typeof item.focusPrimarySurface === "function") {
+                        item.focusPrimarySurface()
+                    } else if (item && item.visible && item.enabled) {
+                        item.forceActiveFocus()
+                    } else {
+                        host.forceActiveFocus()
+                    }
+                    if (window.isFocusInsidePresentedBody(window.activeWindowFocusItem))
+                        return
+                }
+                perimeterEscapeFallback.forceActiveFocus()
+            }
+            readonly property var currentFocusItem: window.activeWindowFocusItem ?? null
+            onCurrentFocusItemChanged: Qt.callLater(window.ensureEscapeFocus)
+            onAnyInteractiveBodyPresentedChanged: {
+                window.ensureEscapeFocus()
+                Qt.callLater(window.ensureEscapeFocus)
             }
             Shortcut {
                 id: dashboardEditEscapeShortcut
@@ -919,22 +1002,71 @@ Scope {
                 autoRepeat: false
                 enabled: window.presented && field.ready
                     && ((dashboardBody.presented
-                        && (dashboardBody.contentItem?.item?.editMode ?? false))
+                        && ((dashboardBody.contentItem?.item?.editMode ?? false)
+                            || (dashboardBody.contentItem?.item?.tabNamingActive ?? false)))
                         || (aux.presented
-                            && (aux.contentItem?.item?.editMode ?? false)))
+                            && ((aux.contentItem?.item?.editMode ?? false)
+                                || (aux.contentItem?.item?.tabNamingActive ?? false))))
                 onActivated: window.cancelDashboardEditFromEscape()
                 onActivatedAmbiguously: console.warn(
                     "[DashboardEscape] ambiguous Escape shortcut in Abyss output")
             }
+            Shortcut {
+                id: perimeterInteractiveEscapeShortcut
+                sequences: ["Escape"]
+                context: Qt.WindowShortcut
+                autoRepeat: false
+                enabled: window.presented && field.ready
+                    && window.anyInteractiveBodyPresented
+                    && !dashboardEditEscapeShortcut.enabled
+                onActivated: perimeterEscapeFallback.triggerEscape()
+                onActivatedAmbiguously: perimeterEscapeFallback.triggerEscape()
+            }
             Item {
                 id: perimeterEscapeFallback
+                objectName: "perimeterEscapeFallback"
                 anchors.fill: parent
-                focus: aux.presented || clipboardBody.presented || leftPanel.presented
-                    || rightPanel.presented || popup.presented || dashboardBody.presented
+                focus: window.anyInteractiveBodyPresented
                 Keys.onEscapePressed: event => {
+                    perimeterEscapeFallback.triggerEscape(event)
+                }
+                function triggerEscape(event = null): void {
                     window.dashboardEscapeFallbackCount++
                     if (window.cancelDashboardEditFromEscape()) {
-                        event.accepted = true
+                        if (event) event.accepted = true
+                        return
+                    }
+                    if (dashboardBody.presented
+                            && typeof dashboardBody.contentItem?.item?.handleEscape === "function"
+                            && dashboardBody.contentItem.item.handleEscape()) {
+                        if (event) event.accepted = true
+                        window.ensureEscapeFocus()
+                        return
+                    }
+                    if (aux.presented
+                            && typeof aux.contentItem?.item?.handleEscape === "function"
+                            && aux.contentItem.item.handleEscape()) {
+                        if (event) event.accepted = true
+                        window.ensureEscapeFocus()
+                        return
+                    }
+                    if (settings.presented
+                            && typeof settings.contentItem?.item?.handleEscape === "function"
+                            && settings.contentItem.item.handleEscape()) {
+                        if (event) event.accepted = true
+                        window.ensureEscapeFocus()
+                        return
+                    }
+                    if (clipboardBody.presented
+                            && typeof clipboardBody.contentItem?.item?.handleEscape === "function"
+                            && clipboardBody.contentItem.item.handleEscape()) {
+                        if (event) event.accepted = true
+                        window.ensureEscapeFocus()
+                        return
+                    }
+                    if (editor.visible) {
+                        editor.finish(false)
+                        if (event) event.accepted = true
                         return
                     }
                     window.closePopup()
@@ -946,9 +1078,14 @@ Scope {
                     GlobalStates.settingsOverlayOpen = false
                     GlobalStates.clipboardOpen = false
                     GlobalStates.overviewOpen = false
+                    GlobalStates.wallpaperLauncherOpen = false
+                    GlobalStates.oskOpen = false
+                    if (liquid.activeDialog) liquid.activeDialog.dismiss()
                     GlobalStates.closeNotificationCenter()
+                    if (event) event.accepted = true
                 }
             }
+            readonly property alias edgeEditor: editor
             AbyssEdgeEditor {
                 id: editor
                 z: 30
@@ -970,6 +1107,7 @@ Scope {
                 draftPlacements: editor.visible ? editor.draft : null
                 draftOptions: editor.visible ? editor.draftOptions : null
                 visible: window.presented && field.ready && (window.editorOpen || root.barOnOutput(window.outputName))
+                opacity: GlobalStates.abyssColdPerimeterRecreatePending ? 0 : 1
                 anchors.fill: parent
                 HoverHandler { id: barHover; onHoveredChanged: { if (hovered) { barClose.stop(); root.setBarRevealed(window.outputName,true) } else barClose.restart() } }
                 onInteraction: (edge,along,span,strength) => liquid.impulse(edge,along,span,strength)
@@ -1570,7 +1708,7 @@ Scope {
             AbyssBodyHost {
                 id: dock
                 stableContentSize: true
-                residentContent: true
+                residentContent: !GlobalStates.abyssColdPerimeterRecreatePending
                 includeEdgeConnection: true
                 property real cachedSpan: 220
                 readonly property real measuredSpan: contentItem.item?.desiredSpan ?? cachedSpan
@@ -1997,7 +2135,8 @@ Scope {
                 renderScale: window.modelData?.devicePixelRatio ?? 1
                 z: -1
                 anchors.fill: parent
-                visible: window.presented || window.physicalOsdResident
+                visible: window.presented || window.physicalOsdResident || GlobalStates.screenLocked || GlobalStates.abyssColdPerimeterRecreatePending
+                opacity: (GlobalStates.abyssColdPerimeterRecreatePending || GlobalStates.screenLocked) ? 0.001 : 1
                 edgeInsets: window.paintInsets
                 roundZeroCorners: window.presented ? bar.layoutOptions.edgeRoundZeroCorners ?? {} : {}
                 cornerWidthInsets: window.configuredInsets
@@ -2013,6 +2152,7 @@ Scope {
         required property string edge
         readonly property bool horizontal: Geometry.horizontal(edge)
         readonly property bool mapped: Config.ready && !GlobalStates.screenLocked
+            && !GlobalStates.abyssColdPerimeterRecreatePending
             && !GameMode.hasFullscreenOnOutput(modelData?.name ?? "")
         readonly property bool persistentDock: (Config.options?.enabledPanels ?? []).includes("abyssDock")
             && (Config.options?.dock?.enable ?? true) && (Config.options?.dock?.pinnedOnStartup ?? false)

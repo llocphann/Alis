@@ -31,18 +31,16 @@ ContentPage {
 
     SettingsTaskNavigator {
         showTabBar: false
+        showIntro: false
         icon: "neurology"
         title: Translation.tr("AI")
         description: Translation.tr("Choose a provider and opt in to voice or privacy-sensitive features.")
-        summary: Translation.tr("Setup · providers · behavior · privacy · voice")
+        summary: Translation.tr("Providers & Voice · Assistant Behavior")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
-            { displayName: Translation.tr("Setup"), icon: "rocket_launch", value: "setup" },
-            { displayName: Translation.tr("Providers"), icon: "cloud", value: "providers" },
-            { displayName: Translation.tr("Behavior"), icon: "psychology", value: "behavior" },
-            { displayName: Translation.tr("Privacy"), icon: "policy", value: "privacy" },
-            { displayName: Translation.tr("Voice"), icon: "mic", value: "voice" }
+            { displayName: Translation.tr("Providers & Voice Input"), icon: "cloud", value: "setup" },
+            { displayName: Translation.tr("Assistant Prompt & Tool Mode"), icon: "psychology", value: "behavior" }
         ]
     }
 
@@ -52,17 +50,67 @@ ContentPage {
         VoiceSearch.ensureInitialized()
     }
 
+    Loader {
+        id: companionAiSection
+        objectName: "companionAiEmbeddedSection"
+        Layout.fillWidth: true
+        Layout.preferredWidth: 1
+        Layout.alignment: Qt.AlignTop
+        Layout.preferredHeight: item?.implicitHeight ?? 0
+        Layout.bottomMargin: visible ? SettingsMaterialPreset.pageSpacing : 0
+        visible: active
+        active: AlisCompanion.available && AlisCompanion.settingsSource.length > 0
+        onActiveChanged: {
+            if (active && AlisCompanion.settingsSource.length > 0) {
+                setSource(AlisCompanion.settingsSource, {
+                    embedded: true,
+                    activeSection: "ai"
+                })
+            } else {
+                source = ""
+            }
+        }
+        Component.onCompleted: {
+            if (active && status === Loader.Null && AlisCompanion.settingsSource.length > 0) {
+                setSource(AlisCompanion.settingsSource, {
+                    embedded: true,
+                    activeSection: "ai"
+                })
+            }
+        }
+        Connections {
+            target: AlisCompanion
+            function onSettingsSourceChanged(): void {
+                if (companionAiSection.active && AlisCompanion.settingsSource.length > 0) {
+                    companionAiSection.setSource(AlisCompanion.settingsSource, {
+                        embedded: true,
+                        activeSection: "ai"
+                    })
+                }
+            }
+        }
+        Binding { target: companionAiSection.item; property: "embedded"; value: true; when: !!companionAiSection.item }
+        Binding { target: companionAiSection.item; property: "activeSection"; value: "ai"; when: !!companionAiSection.item }
+    }
+
     GridLayout {
         Layout.fillWidth: true
-        columns: width >= 620 ? 2 : 1
-        uniformCellWidths: columns === 2
+        columns: 2
+        uniformCellWidths: true
         columnSpacing: 14
         rowSpacing: 14
 
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.preferredWidth: 1
+        Layout.alignment: Qt.AlignTop
+        spacing: 14
+
     // ── Setup status ─────────────────────────────────────────────
     SettingsCardSection {
+        property bool _preventBentoReparent: true
+        Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        Layout.fillHeight: true
         Layout.preferredWidth: 1
         settingsTaskSection: "setup"
         visible: true
@@ -191,49 +239,162 @@ ContentPage {
                 }
             }
 
+            SettingsDivider {}
+
+            ContentSubsection {
+                title: Translation.tr("Voice dictation backend")
+                tooltip: Translation.tr("Auto prefers local Whisper, then connected online speech providers")
+
+                ConfigSelectionArray {
+                    enableSettingsSearch: false
+                    currentValue: Config.options?.voiceSearch?.provider ?? "auto"
+                    onSelected: newValue => Config.setNestedValue("voiceSearch.provider", newValue)
+                    options: [
+                        { displayName: Translation.tr("Auto"), icon: "auto_awesome", value: "auto" },
+                        { displayName: Translation.tr("Local Whisper"), icon: "shield_lock", value: "local" },
+                        { displayName: "Groq", icon: "bolt", value: "groq" },
+                        { displayName: "Gemini", icon: "auto_awesome", value: "gemini" },
+                        { displayName: "OpenAI", icon: "neurology", value: "openai" }
+                    ]
+                }
+
+                ConfigSpinBox {
+                    id: voiceDurationSpin
+                    property bool _ready: false
+                    Component.onCompleted: _ready = true
+
+                    icon: "timer"
+                    text: Translation.tr("Max recording length (s)")
+                    value: Config.options?.voiceSearch?.duration ?? 5
+                    from: 3
+                    to: 60
+                    stepSize: 1
+                    onValueChanged: {
+                        if (voiceDurationSpin._ready)
+                            Config.setNestedValue("voiceSearch.duration", value)
+                    }
+                }
+            }
+
         }
+    }
+
+    // ── Assistant behavior ───────────────────────────────────────
+    SettingsCardSection {
+        property bool _preventBentoReparent: true
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        Layout.preferredWidth: 1
+        settingsTaskSection: "behavior"
+        visible: true
+        expanded: true
+        icon: "psychology"
+        title: Translation.tr("System Prompt & Temperature")
+
+        SettingsGroup {
+            ContentSubsection {
+                title: Translation.tr("System prompt")
+                tooltip: Translation.tr("Custom instructions the assistant always receives")
+
+                MaterialTextArea {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("System prompt")
+                    text: Config.options?.ai?.systemPrompt ?? ""
+                    wrapMode: TextEdit.Wrap
+                    onTextChanged: {
+                        Qt.callLater(() => {
+                            Config.setNestedValue("ai.systemPrompt", text)
+                        });
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Temperature")
+                tooltip: Translation.tr("Higher = more creative, lower = more predictable. Default 0.5")
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    MaterialSymbol {
+                        text: "device_thermostat"
+                        iconSize: 20
+                        color: Appearance.colors.colOnLayer1
+                    }
+                    StyledSlider {
+                        id: temperatureSlider
+                        Layout.fillWidth: true
+                        from: 0
+                        to: 1
+                        stepSize: 0.05
+                        value: Persistent.states?.ai?.temperature ?? 0.5
+                        configuration: StyledSlider.Configuration.S
+                        tooltipContent: value.toFixed(2)
+                        onMoved: {
+                            if (Persistent.states?.ai) Persistent.states.ai.temperature = Math.round(value * 100) / 100;
+                        }
+                    }
+                    StyledText {
+                        Layout.preferredWidth: 36
+                        horizontalAlignment: Text.AlignRight
+                        text: temperatureSlider.value.toFixed(2)
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.colors.colSubtext
+                    }
+                }
+            }
+        }
+    }
+
+    SettingsCardSection {
+        property bool _preventBentoReparent: true
+        Layout.preferredWidth: 1
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        settingsTaskSection: "behavior"
+        visible: true
+        expanded: true
+        icon: "service_toolbox"
+        title: Translation.tr("Tool Mode & Safety")
+
+        SettingsGroup {
+            ContentSubsection {
+                title: Translation.tr("Default tool mode")
+                tooltip: Translation.tr("What the assistant is allowed to do.")
+
+                ConfigSelectionArray {
+                    enableSettingsSearch: false
+                    currentValue: Config.options?.ai?.tool ?? "search"
+                    onSelected: newValue => {
+                        Config.setNestedValue("ai.tool", newValue);
+                    }
+                    options: [
+                        { displayName: Translation.tr("Shell tools"), icon: "service_toolbox", value: "functions" },
+                        { displayName: Translation.tr("Search"), icon: "search", value: "search" },
+                        { displayName: Translation.tr("Advanced"), icon: "terminal", value: "advanced" },
+                        { displayName: Translation.tr("None"), icon: "block", value: "none" }
+                    ]
+                }
+
+                SettingsNote {
+                    icon: "service_toolbox"
+                    text: Config.options?.ai?.tool === "advanced"
+                        ? Translation.tr("Advanced also exposes raw shell commands. Every command still requires approval.")
+                        : Translation.tr("Shell configuration changes show a typed preview and require approval. Search appears only when the selected provider supports it.")
+                }
+            }
+        }
+    }
     }
 
     // ── Providers ────────────────────────────────────────────────
     SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
+        property bool _preventBentoReparent: true
         Layout.preferredWidth: 1
-        settingsTaskSection: "providers"
-        visible: true
-        expanded: true
-        icon: "computer"
-        title: Translation.tr("Downloaded models")
-        SettingsGroup {
-            MaterialTextField {
-                objectName: "localModelFolder"
-                Layout.fillWidth: true
-                placeholderText: Translation.tr("Model folder")
-                text: Config.options?.ai?.localModelFolder ?? ""
-                onEditingFinished: Config.setNestedValue("ai.localModelFolder", text.trim())
-            }
-            StyledText {
-                objectName: "localCheckpointStatus"
-                Layout.fillWidth: true
-                visible: LocalModels.checkpoints.length > 0
-                text: LocalModels.checkpoints.map(model => Translation.tr("%1 · Safetensors").arg(model.name)).join("\n")
-                textFormat: Text.PlainText
-                color: Appearance.colors.colSubtext
-                wrapMode: Text.WordWrap
-            }
-            StyledText {
-                Layout.fillWidth: true
-                visible: LocalModels.error.length > 0
-                text: LocalModels.error
-                color: Appearance.colors.colError
-                wrapMode: Text.WordWrap
-            }
-        }
-    }
-    SettingsCardSection {
+        Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        Layout.columnSpan: parent.columns
-        settingsTaskSection: "providers"
+        settingsTaskSection: "setup"
         visible: true
         expanded: true
         icon: "cloud"
@@ -275,21 +436,25 @@ ContentPage {
                         providerForm.expanded = true
                     }
 
-                    contentItem: RowLayout {
-                        id: addProviderBtnRow
-                        anchors.centerIn: parent
-                        spacing: 4
+                    contentItem: Item {
+                        Row {
+                            id: addProviderBtnRow
+                            anchors.centerIn: parent
+                            spacing: 4
 
-                        MaterialSymbol {
-                            text: "add"
-                            iconSize: 16
-                            color: Appearance.colors.colPrimary
-                        }
-                        StyledText {
-                            text: Translation.tr("Custom endpoint")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            font.weight: Font.Medium
-                            color: Appearance.colors.colPrimary
+                            MaterialSymbol {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "add"
+                                iconSize: 16
+                                color: Appearance.colors.colPrimary
+                            }
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: Translation.tr("Custom endpoint")
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colPrimary
+                            }
                         }
                     }
                 }
@@ -959,246 +1124,6 @@ ContentPage {
                                 color: Appearance.colors.colOnPrimary
                             }
                         }
-                    }
-                }
-            }
-        }
-    }
-
-    // ── Assistant behavior ───────────────────────────────────────
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "behavior"
-        visible: true
-        expanded: true
-        icon: "psychology"
-        title: Translation.tr("Assistant behavior")
-
-        SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("System prompt")
-                tooltip: Translation.tr("Custom instructions the assistant always receives")
-
-                MaterialTextArea {
-                    Layout.fillWidth: true
-                    placeholderText: Translation.tr("System prompt")
-                    text: Config.options?.ai?.systemPrompt ?? ""
-                    wrapMode: TextEdit.Wrap
-                    onTextChanged: {
-                        Qt.callLater(() => {
-                            Config.setNestedValue("ai.systemPrompt", text)
-                        });
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Default tool mode")
-                tooltip: Translation.tr("What the assistant is allowed to do.")
-
-                ConfigSelectionArray {
-                    enableSettingsSearch: false
-                    currentValue: Config.options?.ai?.tool ?? "search"
-                    onSelected: newValue => {
-                        Config.setNestedValue("ai.tool", newValue);
-                    }
-                    options: [
-                        { displayName: Translation.tr("Shell tools"), icon: "service_toolbox", value: "functions" },
-                        { displayName: Translation.tr("Search"), icon: "search", value: "search" },
-                        { displayName: Translation.tr("Advanced"), icon: "terminal", value: "advanced" },
-                        { displayName: Translation.tr("None"), icon: "block", value: "none" }
-                    ]
-                }
-
-                SettingsNote {
-                    icon: "service_toolbox"
-                    text: Config.options?.ai?.tool === "advanced"
-                        ? Translation.tr("Advanced also exposes raw shell commands. Every command still requires approval.")
-                        : Translation.tr("Shell configuration changes show a typed preview and require approval. Search appears only when the selected provider supports it.")
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Temperature")
-                tooltip: Translation.tr("Higher = more creative, lower = more predictable. Default 0.5")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    MaterialSymbol {
-                        text: "device_thermostat"
-                        iconSize: 20
-                        color: Appearance.colors.colOnLayer1
-                    }
-                    StyledSlider {
-                        id: temperatureSlider
-                        Layout.fillWidth: true
-                        from: 0
-                        to: 1
-                        stepSize: 0.05
-                        value: Persistent.states?.ai?.temperature ?? 0.5
-                        configuration: StyledSlider.Configuration.S
-                        tooltipContent: value.toFixed(2)
-                        onMoved: {
-                            if (Persistent.states?.ai) Persistent.states.ai.temperature = Math.round(value * 100) / 100;
-                        }
-                    }
-                    StyledText {
-                        Layout.preferredWidth: 36
-                        horizontalAlignment: Text.AlignRight
-                        text: temperatureSlider.value.toFixed(2)
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colSubtext
-                    }
-                }
-            }
-        }
-    }
-
-    // ── Voice input + Privacy & policy (stacked right column) ────
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        spacing: 14
-
-        SettingsCardSection {
-            Layout.fillWidth: true
-            settingsTaskSection: "voice"
-            visible: true
-            expanded: true
-            icon: "mic"
-            title: Translation.tr("Voice input")
-
-            SettingsGroup {
-                ContentSubsection {
-                    title: Translation.tr("Transcription backend")
-                    tooltip: Translation.tr("Auto prefers local Whisper, then connected online speech providers")
-
-                    ConfigSelectionArray {
-                        enableSettingsSearch: false
-                        currentValue: Config.options?.voiceSearch?.provider ?? "auto"
-                        onSelected: newValue => Config.setNestedValue("voiceSearch.provider", newValue)
-                        options: [
-                            { displayName: Translation.tr("Auto"), icon: "auto_awesome", value: "auto" },
-                            { displayName: Translation.tr("Local Whisper"), icon: "shield_lock", value: "local" },
-                            { displayName: "Groq", icon: "bolt", value: "groq" },
-                            { displayName: "Gemini", icon: "auto_awesome", value: "gemini" },
-                            { displayName: "OpenAI", icon: "neurology", value: "openai" }
-                        ]
-                    }
-
-                    SettingsNote {
-                        icon: VoiceSearch.hasBackend ? "check_circle" : "info"
-                        text: VoiceSearch.hasBackend
-                            ? Translation.tr("Active backend: %1").arg(VoiceSearch.backendLabel)
-                            : Translation.tr("No backend is ready. Connect Groq, Gemini or OpenAI above, or install whisper.cpp with a local model.")
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        StyledText {
-                            Layout.fillWidth: true
-                            text: VoiceSearch.localAvailable
-                                ? Translation.tr("Local Whisper detected")
-                                : Translation.tr("Local Whisper not detected")
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colSubtext
-                        }
-                        RippleButton {
-                            implicitWidth: 32
-                            implicitHeight: 32
-                            buttonRadius: Appearance.rounding.full
-                            colBackground: Appearance.colors.colLayer2
-                            colBackgroundHover: Appearance.colors.colLayer2Hover
-                            onClicked: VoiceSearch.refreshBackends()
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "refresh"
-                                iconSize: 17
-                                color: Appearance.colors.colOnLayer2
-                            }
-                        }
-                    }
-                }
-
-                ContentSubsection {
-                    title: Translation.tr("Language")
-                    ConfigSelectionArray {
-                        enableSettingsSearch: false
-                        currentValue: Config.options?.voiceSearch?.language ?? "auto"
-                        onSelected: newValue => Config.setNestedValue("voiceSearch.language", newValue)
-                        options: [
-                            { displayName: Translation.tr("Auto detect"), icon: "translate", value: "auto" },
-                            { displayName: Translation.tr("Spanish"), icon: "language", value: "es" },
-                            { displayName: Translation.tr("English"), icon: "language", value: "en" },
-                            { displayName: Translation.tr("Portuguese"), icon: "language", value: "pt" },
-                            { displayName: Translation.tr("French"), icon: "language", value: "fr" },
-                            { displayName: Translation.tr("German"), icon: "language", value: "de" },
-                            { displayName: Translation.tr("Japanese"), icon: "language", value: "ja" }
-                        ]
-                    }
-                }
-
-                ConfigSpinBox {
-                    id: voiceDurationSpin
-                    // Without the guard the spin box writes its own default over the
-                    // user's value while the page is still being created.
-                    property bool _ready: false
-                    Component.onCompleted: _ready = true
-
-                    icon: "timer"
-                    text: Translation.tr("Max recording length (seconds)")
-                    value: Config.options?.voiceSearch?.duration ?? 5
-                    from: 3
-                    to: 60
-                    stepSize: 1
-                    onValueChanged: {
-                        if (voiceDurationSpin._ready)
-                            Config.setNestedValue("voiceSearch.duration", value)
-                    }
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 4
-                    text: Translation.tr("The same backend is used for chat dictation and voice web search. Keys are passed through the process environment and are never written to commands or config files.")
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colSubtext
-                    wrapMode: Text.WordWrap
-                }
-            }
-        }
-
-        // ── Privacy & policy (stacked below Voice input) ─────────
-        SettingsCardSection {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            settingsTaskSection: "privacy"
-            visible: true
-            expanded: true
-            icon: "policy"
-            title: Translation.tr("Privacy & policy")
-
-            SettingsGroup {
-                ContentSubsection {
-                    title: Translation.tr("Allow AI features")
-                    tooltip: Translation.tr("Local only: use on-device models (Ollama, LM Studio).")
-
-                    ConfigSelectionArray {
-                        enableSettingsSearch: false
-                        currentValue: Config.options?.policies?.ai ?? 0
-                        onSelected: newValue => {
-                            Config.setNestedValue("policies.ai", newValue);
-                        }
-                        options: [
-                            { displayName: Translation.tr("No"), icon: "close", value: 0 },
-                            { displayName: Translation.tr("Yes"), icon: "check", value: 1 },
-                            { displayName: Translation.tr("Local only"), icon: "sync_saved_locally", value: 2 }
-                        ]
                     }
                 }
             }

@@ -13,6 +13,7 @@ StyledListView { // Scrollable window
     property bool popup: false
     property string dataMode: popup ? "transient" : "history"
     property bool popupPresentation: popup
+    property bool animatePopupEntrance: true
     // Optional presentation-only closing snapshot. Normal popup, history and
     // Waffle callers leave both null and continue using live Notifications.
     property var transientAppNamesOverride: null
@@ -37,7 +38,7 @@ StyledListView { // Scrollable window
 
     // Popup entrance: opacity fade + horizontal slide (no height change to avoid Wayland stair-stepping)
     add: Transition {
-        enabled: root.popupPresentation || root.animateAppearance
+        enabled: (root.popupPresentation && root.animatePopupEntrance) || root.animateAppearance
         NumberAnimation {
             property: "opacity"
             from: 0; to: 1

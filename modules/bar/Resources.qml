@@ -8,6 +8,7 @@ MouseArea {
     id: root
 
     property bool alwaysShowAllResources: false
+    property real contentRotation: 0
     implicitWidth: rowLayout.implicitWidth + rowLayout.anchors.leftMargin + rowLayout.anchors.rightMargin
     implicitHeight: Appearance.sizes.barHeight
     hoverEnabled: true
@@ -29,6 +30,7 @@ MouseArea {
         id: rowLayout
 
         spacing: 0
+        layoutDirection: root.contentRotation < 0 ? Qt.RightToLeft : Qt.LeftToRight
         anchors.fill: parent
         anchors.leftMargin: 4 * Appearance.sizes.barModuleScale
         anchors.rightMargin: 4 * Appearance.sizes.barModuleScale
@@ -36,6 +38,7 @@ MouseArea {
         Resource {
             iconName: "memory"
             percentage: ResourceUsage.memoryUsedPercentage
+            contentRotation: root.contentRotation
             shown: Config.options?.bar?.resources?.showMemoryIndicator ?? true
             warningThreshold: Config.options?.bar?.resources?.memoryWarningThreshold ?? 90
         }
@@ -43,6 +46,7 @@ MouseArea {
         Resource {
             iconName: "thermostat"
             percentage: ResourceUsage.tempPercentage
+            contentRotation: root.contentRotation
             shown: (Config.options?.bar?.resources?.showTempIndicator ?? true) &&
                 ((Config.options?.bar?.resources?.alwaysShowTemp ?? true) ||
                     !(MprisController.activePlayer?.trackTitle?.length > 0) ||
@@ -55,6 +59,7 @@ MouseArea {
         Resource {
             iconName: "planner_review"
             percentage: ResourceUsage.cpuUsage
+            contentRotation: root.contentRotation
             shown: (Config.options?.bar?.resources?.showCpuIndicator ?? true) &&
                 ((Config.options?.bar?.resources?.alwaysShowCpu ?? true) ||
                     !(MprisController.activePlayer?.trackTitle?.length > 0) ||
@@ -66,6 +71,7 @@ MouseArea {
         Resource {
             iconName: "memory_alt"
             percentage: ResourceUsage.gpuUsage
+            contentRotation: root.contentRotation
             shown: (Config.options?.bar?.resources?.showGpuIndicator ?? true) &&
                 ((Config.options?.bar?.resources?.alwaysShowGpu ?? true) ||
                     !(MprisController.activePlayer?.trackTitle?.length > 0) ||

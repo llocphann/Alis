@@ -16,6 +16,47 @@ Item {
     property bool loadEnabled: true
     property int cacheLimit: 2
 
+    signal pageNavigationRequested(int pageIndex)
+
+    property int _pendingSectionPageIndex: -1
+    property string _pendingSection: ""
+
+    function _activateSectionOnItem(item, sectionValue: string): void {
+        if (!item || !sectionValue || sectionValue.length === 0)
+            return
+        if (item.hasOwnProperty("_persistedSectionRestored"))
+            item._persistedSectionRestored = true
+        if (item.hasOwnProperty("activeSection"))
+            item.activeSection = sectionValue
+        if (item.settingsTaskNavigator && typeof item.settingsTaskNavigator.selected === "function")
+            item.settingsTaskNavigator.selected(sectionValue)
+        if (typeof item._savePersistedSection === "function")
+            item._savePersistedSection()
+        if (typeof item._scheduleCardTabsUpdate === "function")
+            item._scheduleCardTabsUpdate()
+    }
+
+    function _applySectionToPage(targetPageIndex: int, targetSection: string): void {
+        root._pendingSectionPageIndex = targetPageIndex
+        root._pendingSection = targetSection
+        const loader = root._loaderFor(targetPageIndex)
+        if (loader && loader.item) {
+            root._activateSectionOnItem(loader.item, targetSection)
+        }
+    }
+
+    function _siblingPagesForIndex(pageIdx: int): var {
+        const cats = SettingsPageRegistry.categories ?? []
+        for (let i = 0; i < cats.length; i++) {
+            const cPages = (cats[i]?.pages ?? []).filter(
+                idx => root.pages[idx] && SettingsPageRegistry.isPageApplicable(idx))
+            if (cPages.length > 1 && cPages.includes(pageIdx)) {
+                return cPages.map(idx => Object.assign({}, root.pages[idx], { realIndex: idx }))
+            }
+        }
+        return []
+    }
+
     readonly property int currentIndex: _currentIndex
     readonly property bool error: _errorIndex === requestedIndex
     readonly property Item currentItem: {
@@ -282,6 +323,8 @@ Item {
         switchAnimation.start()
     }
 
+    property int _pendingFromSubTabIndex: -1
+
     function _finishSwap() {
         if (_pendingIndex < 0)
             return
@@ -305,6 +348,22 @@ Item {
         _transitionRunning = false
         _retain(_currentIndex)
         _trimCache()
+
+        if (nextIndex === _pendingSectionPageIndex && _pendingSection.length > 0 && nextLoader && nextLoader.item) {
+            _activateSectionOnItem(nextLoader.item, _pendingSection)
+            _pendingSectionPageIndex = -1
+            _pendingSection = ""
+        }
+
+        if (_pendingFromSubTabIndex >= 0 && nextLoader && nextLoader.item && typeof nextLoader.item.animateSubTabFrom === "function") {
+            const fromSubIdx = _pendingFromSubTabIndex
+            _pendingFromSubTabIndex = -1
+            const toSubIdx = nextLoader.item._activeSubTabIndex ?? 0
+            const dir = toSubIdx >= fromSubIdx ? 1 : -1
+            nextLoader.item.animateSubTabFrom(fromSubIdx, dir)
+        } else {
+            _pendingFromSubTabIndex = -1
+        }
 
         if (requestedIndex !== _currentIndex)
             root._scheduleRequestPage()
@@ -339,6 +398,7 @@ Item {
         delegate: Loader {
             id: pageLoader
             required property int index
+            readonly property var hostSiblingPages: root._siblingPagesForIndex(index)
 
             anchors.fill: parent
             // Imperative residency avoids a Loader construction feedback cycle.
@@ -356,6 +416,34 @@ Item {
             // pages remain loaded-hidden; evicted pages become unloaded.
 
             onStatusChanged: root._handleStatus(index, status)
+            onLoaded: {
+                if (item && item.hasOwnProperty("categorySiblingPages")) {
+                    item.categorySiblingPages = Qt.binding(() => pageLoader.hostSiblingPages)
+                }
+                if (pageLoader.index === root._pendingSectionPageIndex && root._pendingSection.length > 0) {
+                    root._activateSectionOnItem(item, root._pendingSection)
+                } else if (item && typeof item._restorePersistedSection === "function") {
+                    item._restorePersistedSection()
+                }
+                if (item && typeof item._updateCardTabs === "function" && !item.embedded) {
+                    item._updateCardTabs()
+                }
+            }
+            Connections {
+                target: pageLoader.item && pageLoader.item.hasOwnProperty("categorySiblingPages") ? pageLoader.item : null
+                ignoreUnknownSignals: true
+                function onPageNavigationRequested(targetPageIndex: int): void {
+                    root._pendingFromSubTabIndex = pageLoader.item ? (pageLoader.item._activeSubTabIndex ?? -1) : -1
+                    root._pendingSectionPageIndex = -1
+                    root._pendingSection = ""
+                    root.pageNavigationRequested(targetPageIndex)
+                }
+                function onPageSectionNavigationRequested(targetPageIndex: int, targetSection: string): void {
+                    root._pendingFromSubTabIndex = pageLoader.item ? (pageLoader.item._activeSubTabIndex ?? -1) : -1
+                    root._applySectionToPage(targetPageIndex, targetSection)
+                    root.pageNavigationRequested(targetPageIndex)
+                }
+            }
             onActiveChanged: {
                 root._statusRevision++
                 if (!active) {

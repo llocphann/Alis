@@ -9,7 +9,7 @@ let
   };
 in
 {
-  imports = [ common.optionsModule (lib.mkAliasOptionModule [ "programs" "inir" ] [ "programs" "alis" ]) ];
+  imports = [ common.optionsModule (lib.mkAliasOptionModule [ "programs" "alis" ] [ "programs" "alis" ]) ];
 
   options.programs.alis.configSymlink = {
     enable = lib.mkOption {

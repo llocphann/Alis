@@ -11,6 +11,7 @@ import http.client
 import json
 import os
 from pathlib import Path
+import re
 import signal
 import socket
 import subprocess
@@ -26,6 +27,8 @@ EFFORTS={
     'low':{'budget':96,'max_tokens':320},
     'medium':{'budget':256,'max_tokens':512},
     'high':{'budget':512,'max_tokens':832},
+    'xhigh':{'budget':768,'max_tokens':1152},
+    'max':{'budget':1024,'max_tokens':1536},
 }
 
 class UnixHTTP(http.client.HTTPConnection):
@@ -81,7 +84,7 @@ def stop(process,pgid=None):
         except subprocess.TimeoutExpired:pass
     if group_alive(group):raise RuntimeErrorLocal('Local model process group did not stop')
 
-def complete(model_path,messages,reply_format=None,server_path=None,thinking_effort='off'):
+def complete(model_path,messages,reply_format=None,server_path=None,thinking_effort='off',mtp_optimize=True):
     effort=str(thinking_effort or 'off').lower()
     if effort not in EFFORTS:raise RuntimeErrorLocal('Invalid thinking effort')
     effort_profile=EFFORTS[effort]
@@ -114,6 +117,8 @@ def complete(model_path,messages,reply_format=None,server_path=None,thinking_eff
                 if ctypes.CDLL(None).prctl(1,signal.SIGTERM)!=0 or os.getppid()!=parent:os._exit(1)
             try:
                 env={k:v for k,v in os.environ.items() if not k.startswith('LLAMA_ARG_')}
+                if (executable.parent/'libllama-server-impl.so').is_file():
+                    env['LD_LIBRARY_PATH']=str(executable.parent)+((':'+env['LD_LIBRARY_PATH']) if env.get('LD_LIBRARY_PATH') else '')
                 command=[str(executable),'-m',str(model), '--host',str(sock),'--no-webui','--no-webui-mcp-proxy',
                     '--alias','aqua-local','-c','2048','-np','1','-t',str(min(4,os.cpu_count() or 1)),
                     '-ngl','0','--reasoning','auto','--poll','0','--jinja']
@@ -129,10 +134,15 @@ def complete(model_path,messages,reply_format=None,server_path=None,thinking_eff
                         except (OSError,ValueError,RuntimeErrorLocal):pass
                     time.sleep(.15)
                 else:raise RuntimeErrorLocal('Local model startup timed out')
+                is_mtp=bool(re.search(r'(?:^|[\s\-_.:/])mtp(?:$|[\s\-_.:/])',model.name,re.I))
                 payload={'model':'aqua-local','messages':bounded,'stream':False,
                     'max_tokens':effort_profile['max_tokens'],'temperature':.7,
                     'thinking_budget_tokens':effort_profile['budget'],
                     'chat_template_kwargs':{'enable_thinking':effort!='off'}}
+                if is_mtp and (mtp_optimize is not False):
+                    payload['repeat_penalty']=1.0
+                    payload['repetition_penalty']=1.0
+                    payload['temperature']=min(float(payload.get('temperature',.7)),.7)
                 if reply_format is not None:payload['response_format']=reply_format
                 result=request(sock,'/v1/chat/completions',payload,timeout=max(1,deadline-time.monotonic()))
                 choice=result.get('choices',[{}])[0]
@@ -150,7 +160,8 @@ if __name__=='__main__':
         if len(raw)>65536:raise RuntimeErrorLocal('Local request exceeded the limit')
         data=json.loads(raw)
         result=complete(data['modelPath'],data['messages'],server_path=data.get('runtimePath'),
-            thinking_effort=data.get('thinkingEffort','off'))
+            thinking_effort=data.get('thinkingEffort','off'),
+            mtp_optimize=data.get('mtpOptimize',True))
         print('data: '+json.dumps({'choices':[{'delta':{'content':result['text']},'finish_reason':'stop'}]}))
         print('data: [DONE]')
     except (RuntimeErrorLocal,ValueError,KeyError,TypeError) as exc:

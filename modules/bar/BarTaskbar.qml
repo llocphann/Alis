@@ -21,6 +21,7 @@ Item {
 
     property var parentWindow: null
     property bool vertical: false
+    property real contentRotation: 0
     // Bar position: "top", "bottom", "left", "right"
     property string barPosition: {
         if (vertical) return (Config.options?.bar?.bottom ?? false) ? "right" : "left"
@@ -226,10 +227,26 @@ Item {
         const values = [];
         let order = 0;
 
+        function findMatchingRunningKey(pinnedAppId) {
+            const directKey = String(pinnedAppId ?? "").toLowerCase();
+            if (runningAppsMap.has(directKey))
+                return directKey;
+            const pinnedDesktopId = String(AppSearch.lookupDesktopEntry(pinnedAppId)?.id ?? "").trim().toLowerCase();
+            if (pinnedDesktopId.length === 0)
+                return "";
+            for (const [runKey, runEntry] of runningAppsMap) {
+                const runDesktopId = String(AppSearch.lookupDesktopEntry(runEntry.appId)?.id ?? "").trim().toLowerCase();
+                if (runDesktopId.length > 0 && runDesktopId === pinnedDesktopId)
+                    return runKey;
+            }
+            return "";
+        }
+
         if (!separate) {
             for (const appId of pinnedApps) {
                 const lowerAppId = appId.toLowerCase();
-                const runningEntry = runningAppsMap.get(lowerAppId);
+                const matchedRunKey = findMatchingRunningKey(appId);
+                const runningEntry = matchedRunKey.length > 0 ? runningAppsMap.get(matchedRunKey) : null;
                 // Skip pinned apps with no desktop entry and no running windows
                 if (!runningEntry && !AppSearch.lookupDesktopEntry(appId))
                     continue;
@@ -239,12 +256,13 @@ Item {
                     toplevels: runningEntry?.toplevels ?? [],
                     pinned: true,
                     running: (runningEntry?.toplevels?.length ?? 0) > 0,
-                    focused: focusedId === lowerAppId,
+                    focused: focusedId === lowerAppId || (matchedRunKey.length > 0 && focusedId === matchedRunKey),
                     originalAppId: appId,
                     section: "pinned",
                     order: order++
                 });
-                runningAppsMap.delete(lowerAppId);
+                if (matchedRunKey.length > 0)
+                    runningAppsMap.delete(matchedRunKey);
             }
 
             if (values.length > 0 && runningAppsMap.size > 0) {
@@ -362,6 +380,10 @@ Item {
         function onIgnoredAppRegexesChanged() { root.rebuildDockItems() }
     }
     Connections {
+        target: AppSearch
+        function onListChanged() { root.rebuildDockItems() }
+    }
+    Connections {
         target: Config.options?.windows
         function onAppIdentityRulesChanged() { root.rebuildDockItems() }
     }
@@ -392,6 +414,7 @@ Item {
         id: listView
         spacing: 2 * Appearance.sizes.barModuleScale
         orientation: root.vertical ? ListView.Vertical : ListView.Horizontal
+        layoutDirection: root.contentRotation < 0 ? Qt.RightToLeft : Qt.LeftToRight
         // Horizontal: align left (next to sidebar button). Vertical: center horizontally, top-align.
         anchors.left: root.vertical ? undefined : parent.left
         anchors.top: root.vertical ? parent.top : undefined
@@ -440,6 +463,7 @@ Item {
             taskbarRoot: root
             iconSize: root.iconSize
             vertical: root.vertical
+            contentRotation: root.contentRotation
             barSize: root.barSize
             barPosition: root.barPosition
         }

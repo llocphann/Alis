@@ -245,9 +245,9 @@ def main() -> None:
     # the next Escape is handled by the pre-existing window dismissal.
     edit_esc = content.split('function handleEscape(): bool {', 1)[1].split(
         'function openPlannerEventEditor', 1)[0]
-    assert edit_esc.index('if (dashboardCanvas.editMode) {') < edit_esc.index(
+    assert edit_esc.index('if (root.editMode) {') < edit_esc.index(
         'if (dashboardHeader.cancelPageDrag()) return true')
-    require(edit_esc, 'dashboardCanvas.cancelEditMode()', "DashboardContent.qml")
+    require(edit_esc, 'root.canvasController?.cancelEditMode()', "DashboardContent.qml")
     # Window owners own the shortcut. Embedded toolbar is not another owner.
     for txt, name in (
         (standalone, "Dashboard.qml"),

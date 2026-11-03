@@ -13,9 +13,52 @@ Rectangle {
     required property var canvasController
     property var tabController: null
     readonly property bool naming: tabController?.tabNamingActive ?? false
+    readonly property string targetCustomTabId: {
+        const cur = String(root.tabController?.currentPageId ?? "")
+        if (cur.startsWith("custom-")) return cur
+        const tabs = root.tabController?.customTabs ?? []
+        return tabs.length > 0 ? String(tabs[tabs.length - 1]?.id ?? "") : ""
+    }
+    function focusTabNameInput(): void {
+        if (!root.naming || !root.visible) return
+        const expected = root.tabController?._customDialogName ?? ""
+        if (tabNameInput.text !== expected)
+            tabNameInput.text = expected
+        tabNameInput.forceActiveFocus()
+        tabNameInput.cursorPosition = tabNameInput.text.length
+    }
     onNamingChanged: if (naming) Qt.callLater(() => {
         if (root.naming) tabNameInput.forceActiveFocus()
+        root.focusTabNameInput()
     })
+    onVisibleChanged: if (root.visible && root.naming) Qt.callLater(root.focusTabNameInput)
+    onEnabledChanged: if (root.enabled && root.naming) Qt.callLater(root.focusTabNameInput)
+    Timer {
+        id: tabNameFocusTimer
+        interval: 35
+        repeat: true
+        running: root.naming && root.visible && !tabNameInput.activeFocus
+        property int attempts: 0
+        onRunningChanged: if (running) attempts = 0
+        onTriggered: {
+            attempts++
+            root.focusTabNameInput()
+            if (tabNameInput.activeFocus || attempts >= 8)
+                stop()
+        }
+    }
+    Connections {
+        target: root.tabController
+        function on_CustomDialogNameChanged(): void {
+            const expected = root.tabController?._customDialogName ?? ""
+            if (tabNameInput.text !== expected)
+                tabNameInput.text = expected
+        }
+        function on_CustomDialogShownChanged(): void {
+            if (root.naming)
+                Qt.callLater(root.focusTabNameInput)
+        }
+    }
     property bool embeddedSurface: false
     readonly property bool editing: root.canvasController?.editMode ?? false
     readonly property var hiddenIds: root.canvasController?.hiddenIds ?? []
@@ -26,9 +69,12 @@ Rectangle {
         ? Math.max(10, AbyssStyle.contentPadding * 0.55) : 7
     readonly property real sectionGap: 8
     readonly property real availableModulesNaturalWidth:
-        root.hiddenIds.length > 0 ? availableModulesRow.implicitWidth : 0
+        root.hiddenIds.length > 0
+            ? Math.max(root.tabController !== null ? 360 : 0, availableModulesRow.implicitWidth)
+            : 0
     readonly property int visibleActionCount:
-        7 + ((root.canvasController?.responsiveWorkspace ?? false) ? 0 : 1)
+        7 + (root.tabController !== null ? 3 : 0)
+            + ((root.canvasController?.responsiveWorkspace ?? false) ? 0 : 1)
             + (root.hiddenIds.length > 0 ? 1 : 0)
     readonly property real toolbarRowNaturalWidth:
         root.visibleActionCount*34 + (root.visibleActionCount-1)*6
@@ -111,6 +157,9 @@ Rectangle {
                 implicitHeight: 40
                 maximumLength: 41
                 hoverEnabled: true
+                focusPolicy: Qt.StrongFocus
+                selectByMouse: true
+                cursorVisible: activeFocus
                 font.pixelSize: Appearance.font.pixelSize.normal
                 verticalAlignment: TextInput.AlignVCenter
                 leftPadding: 14
@@ -127,6 +176,21 @@ Rectangle {
                 text: root.tabController?._customDialogName ?? ""
                 onTextEdited: root.tabController?.setCustomTabName(text)
                 onAccepted: root.tabController?.acceptCustomTabDialog()
+                onPressed: tabNameInput.forceActiveFocus()
+                cursorDelegate: Rectangle {
+                    id: tabNameCursor
+                    width: 2
+                    color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
+                    visible: tabNameInput.activeFocus
+                    SequentialAnimation on opacity {
+                        loops: Animation.Infinite
+                        running: tabNameInput.activeFocus
+                        PropertyAction { value: 1.0 }
+                        PauseAnimation { duration: 530 }
+                        PropertyAction { value: 0.15 }
+                        PauseAnimation { duration: 420 }
+                    }
+                }
                 readonly property bool invalidName:
                     (root.tabController?._customDialogError?.length ?? 0) > 0
 
@@ -318,6 +382,38 @@ Rectangle {
                     onClicked: {
                         if (root.canvasController)
                             root.canvasController.fitAllWidgets()
+                    }
+                }
+
+                EditToolButton {
+                    objectName: "dashboardToolbarActionCreateTab"
+                    visible: root.tabController !== null
+                    iconName: "add"
+                    tooltipText: Translation.tr("Create custom tab")
+                    onClicked: root.tabController?.openCustomTabDialog("create", "")
+                }
+
+                EditToolButton {
+                    objectName: "dashboardToolbarActionRenameTab"
+                    visible: root.tabController !== null
+                    enabled: root.targetCustomTabId.length > 0
+                    iconName: "drive_file_rename_outline"
+                    tooltipText: Translation.tr("Rename custom tab")
+                    onClicked: {
+                        if (root.targetCustomTabId.length > 0)
+                            root.tabController?.openCustomTabDialog("rename", root.targetCustomTabId)
+                    }
+                }
+
+                EditToolButton {
+                    objectName: "dashboardToolbarActionDeleteTab"
+                    visible: root.tabController !== null
+                    enabled: root.targetCustomTabId.length > 0
+                    iconName: "delete_outline"
+                    tooltipText: Translation.tr("Delete custom tab")
+                    onClicked: {
+                        if (root.targetCustomTabId.length > 0)
+                            root.tabController?.openCustomTabDialog("delete", root.targetCustomTabId)
                     }
                 }
             }

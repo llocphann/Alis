@@ -14,6 +14,7 @@ Item {
     id: root
     property bool borderless: Config.options?.bar?.borderless ?? false
     property bool vertical: false
+    property real contentRotation: 0
     property bool compactRequested: false
     property bool pinnedExpanded: false
     // Abyss owns the connected Utilities popup; other families keep the shared
@@ -51,7 +52,7 @@ Item {
     function utilityActive(id): bool {
         switch (id) {
         case "screenSnip": return Config.options?.bar?.utilButtons?.showScreenSnip ?? true
-        case "screenRecord": return Config.options?.bar?.utilButtons?.showScreenRecord ?? false
+        case "screenRecord": return Config.options?.bar?.utilButtons?.showScreenRecord ?? true
         case "colorPicker": return Config.options?.bar?.utilButtons?.showColorPicker ?? false
         case "notepad": return Config.options?.bar?.utilButtons?.showNotepad ?? true
         case "keyboard": return Config.options?.bar?.utilButtons?.showKeyboardToggle ?? true
@@ -97,6 +98,7 @@ Item {
 
         CircleUtilButton {
             id: compactTrigger
+            rotation: -root.contentRotation
             visible: root.compactRequested && root.expandedMainAxisLength > 0
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
             Accessible.name: root.pinnedExpanded
@@ -150,6 +152,7 @@ Item {
             Layout.row: root.vertical ? root.utilityIndex("screenSnip") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("screenSnip")
             sourceComponent: CircleUtilButton {
+                rotation: -root.contentRotation
                 Layout.alignment: Qt.AlignVCenter
                 Accessible.name: Translation.tr("Take screenshot")
                 onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "region", "screenshot"])
@@ -168,74 +171,69 @@ Item {
             visible: active
             Layout.row: root.vertical ? root.utilityIndex("screenRecord") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("screenRecord")
-            sourceComponent: Item {
-                id: recordButtonWrapper
+            sourceComponent: CircleUtilButton {
+                id: screenRecordButton
+                rotation: -root.contentRotation
                 Layout.alignment: Qt.AlignVCenter
-                implicitWidth: screenRecordButton.implicitWidth
-                implicitHeight: screenRecordButton.implicitHeight
 
-                property bool isRecording: RecorderStatus.isRecording
+                readonly property bool isRecording: RecorderStatus.isRecording
 
-                CircleUtilButton {
-                    id: screenRecordButton
+                Accessible.name: screenRecordButton.isRecording
+                    ? Translation.tr("Stop screen recording")
+                    : Translation.tr("Start screen recording")
+
+                onClicked: {
+                    const args = ["/usr/bin/bash", Directories.recordScriptPath]
+                    if (screenRecordButton.isRecording)
+                        args.push("--stop")
+                    else
+                        args.push("--fullscreen", "--sound")
+                    Quickshell.execDetached(args)
+                    RecorderStatus.scheduleQuickCheck()
+                }
+
+                Item {
                     anchors.fill: parent
-                    Accessible.name: recordButtonWrapper.isRecording
-                        ? Translation.tr("Stop screen recording")
-                        : Translation.tr("Start screen recording")
 
-                    onClicked: {
-                        const args = [Directories.recordScriptPath]
-                        if (recordButtonWrapper.isRecording)
-                            args.push("--stop")
-                        else
-                            args.push("--fullscreen", "--sound")
-                        Quickshell.execDetached(args)
-                        RecorderStatus.scheduleQuickCheck()
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        horizontalAlignment: Qt.AlignHCenter
+                        fill: 1
+                        text: "videocam"
+                        iconSize: Math.round(Appearance.font.pixelSize.large * Appearance.sizes.barModuleScale)
+                        color: screenRecordButton.isRecording
+                            ? root.dangerIconColor
+                            : root.neutralIconColor
                     }
 
-                    Item {
-                        anchors.fill: parent
-
-                        MaterialSymbol {
-                            anchors.centerIn: parent
-                            horizontalAlignment: Qt.AlignHCenter
-                            fill: 1
-                            text: "videocam"
-                            iconSize: Math.round(Appearance.font.pixelSize.large * Appearance.sizes.barModuleScale)
-                            color: recordButtonWrapper.isRecording
-                                ? root.dangerIconColor
-                                : root.neutralIconColor
+                    // Pulsating indicator dot when recording
+                    Rectangle {
+                        scale: screenRecordButton.isRecording ? 1 : 0
+                        visible: scale > 0
+                        width: 6 * Appearance.sizes.barModuleScale
+                        height: 6 * Appearance.sizes.barModuleScale
+                        radius: 3 * Appearance.sizes.barModuleScale
+                        color: root.dangerIconColor
+                        anchors {
+                            top: parent.top
+                            right: parent.right
                         }
 
-                        // Pulsating indicator dot when recording
-                        Rectangle {
-                            scale: recordButtonWrapper.isRecording ? 1 : 0
-                            visible: scale > 0
-                            width: 6 * Appearance.sizes.barModuleScale
-                            height: 6 * Appearance.sizes.barModuleScale
-                            radius: 3 * Appearance.sizes.barModuleScale
-                            color: root.dangerIconColor
-                            anchors {
-                                top: parent.top
-                                right: parent.right
+                        Behavior on scale {
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation {
+                                duration: Appearance.animation.elementMoveFast.duration
+                                easing.type: Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
                             }
+                        }
 
-                            Behavior on scale {
-                                enabled: Appearance.animationsEnabled
-                                NumberAnimation {
-                                    duration: Appearance.animation.elementMoveFast.duration
-                                    easing.type: Appearance.animation.elementMoveFast.type
-                                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-                                }
-                            }
-
-                            SequentialAnimation on opacity {
-                                running: recordButtonWrapper.isRecording && root.visible
-                                    && (root.QsWindow.window?.visible ?? true)
-                                loops: Animation.Infinite
-                                NumberAnimation { to: 0.4; duration: Appearance.animation.elementMove.duration * 2 }
-                                NumberAnimation { to: 1.0; duration: Appearance.animation.elementMove.duration * 2 }
-                            }
+                        SequentialAnimation on opacity {
+                            running: screenRecordButton.isRecording && root.visible
+                                && (root.QsWindow.window?.visible ?? true)
+                            loops: Animation.Infinite
+                            NumberAnimation { to: 0.4; duration: Appearance.animation.elementMove.duration * 2 }
+                            NumberAnimation { to: 1.0; duration: Appearance.animation.elementMove.duration * 2 }
                         }
                     }
                 }
@@ -248,6 +246,7 @@ Item {
             Layout.row: root.vertical ? root.utilityIndex("colorPicker") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("colorPicker")
             sourceComponent: CircleUtilButton {
+                rotation: -root.contentRotation
                 Layout.alignment: Qt.AlignVCenter
                 Accessible.name: Translation.tr("Pick color")
                 onClicked: ShellExec.execDetachedArgs(["/usr/bin/hyprpicker", "-a"], "Pick color")
@@ -267,6 +266,7 @@ Item {
             Layout.row: root.vertical ? root.utilityIndex("notepad") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("notepad")
             sourceComponent: CircleUtilButton {
+                rotation: -root.contentRotation
                 Layout.alignment: Qt.AlignVCenter
                 Accessible.name: Translation.tr("Open notepad")
                 onClicked: {
@@ -289,6 +289,7 @@ Item {
             Layout.row: root.vertical ? root.utilityIndex("keyboard") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("keyboard")
             sourceComponent: CircleUtilButton {
+                rotation: -root.contentRotation
                 Layout.alignment: Qt.AlignVCenter
                 Accessible.name: Translation.tr("Toggle on-screen keyboard")
                 onClicked: GlobalStates.oskOpen = !GlobalStates.oskOpen
@@ -309,6 +310,7 @@ Item {
             Layout.row: root.vertical ? root.utilityIndex("keyboardLayout") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("keyboardLayout")
             sourceComponent: CircleUtilButton {
+                rotation: -root.contentRotation
                 Layout.alignment: Qt.AlignVCenter
                 Accessible.name: Translation.tr("Switch keyboard layout")
                 onClicked: NiriService.switchLayout()
@@ -334,6 +336,7 @@ Item {
             Layout.column: root.vertical ? 0 : root.utilityIndex("mic")
             sourceComponent: CircleUtilButton {
                 id: micButton
+                rotation: -root.contentRotation
                 Layout.alignment: Qt.AlignVCenter
 
                 readonly property bool isMuted: Audio.micMuted
@@ -398,6 +401,7 @@ Item {
             Layout.column: root.vertical ? 0 : root.utilityIndex("screenCast")
             sourceComponent: CircleUtilButton {
                 id: screenCastButton
+                rotation: -root.contentRotation
                 Layout.alignment: Qt.AlignVCenter
 
                 readonly property bool isCasting: Persistent.states.screenCast.active
@@ -471,6 +475,7 @@ Item {
             Layout.row: root.vertical ? root.utilityIndex("darkMode") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("darkMode")
             sourceComponent: CircleUtilButton {
+                rotation: -root.contentRotation
                 Layout.alignment: Qt.AlignVCenter
                 Accessible.name: Appearance.m3colors.darkmode
                     ? Translation.tr("Switch to light mode")
@@ -494,6 +499,7 @@ Item {
             Layout.row: root.vertical ? root.utilityIndex("performance") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("performance")
             sourceComponent: CircleUtilButton {
+                rotation: -root.contentRotation
                 Layout.alignment: Qt.AlignVCenter
                 Accessible.name: Translation.tr("Change power profile")
                 onClicked: event => {
@@ -531,6 +537,7 @@ Item {
             Layout.column: root.vertical ? 0 : root.utilityIndex("utilities")
             sourceComponent: CircleUtilButton {
                 id: utilitiesButton
+                rotation: -root.contentRotation
                 Layout.alignment: Qt.AlignVCenter
                 Accessible.name: Translation.tr("Open utilities")
                 onClicked: root.utilitiesRequested()

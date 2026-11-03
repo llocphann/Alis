@@ -215,6 +215,19 @@ Singleton {
         );
     }
 
+    function syncTouchpadFromIpc(state: string): void {
+        const normalized = state.trim().toLowerCase();
+        if (normalized !== "on" && normalized !== "off")
+            return;
+        touchpadConfigView.reload();
+        const nextOff = normalized === "off";
+        if (!root._touchpadStateKnown || root.touchpadOff !== nextOff) {
+            root._touchpadStateKnown = true;
+            root.touchpadOff = nextOff;
+            root.showTouchpadPopup(!nextOff);
+        }
+    }
+
     function _emitLayoutPopup() {
         if (!root.hasMultipleLayouts || !root.currentLayoutName.length)
             return;

@@ -148,6 +148,10 @@ Item {
     property bool snapEnabled: true
     property bool outputOnly: true
     property bool editingPopups: false
+    property string companionDraftEdge: "bottom"
+    property real companionDraftAlong: 0.72
+    property bool _draggingCompanion: false
+    readonly property alias companionMannequinItem: companionMannequin
     readonly property bool expandedControls: true
     property var draftPositions: []
     property var positionEdits: []
@@ -159,9 +163,11 @@ Item {
             previewBody.span,width,height)
     property real lastImpulse: 0
     property var inputRegions: []
-    readonly property string nearbyCorner: Placement.cornerForModule(moduleLayer.layoutRecords,selectedId,width,height)
+    readonly property string nearbyCorner: root.visible && selectedId.length > 0
+        ? Placement.cornerForModule(moduleLayer.layoutRecords,selectedId,width,height) : ""
     readonly property var selected: draft.find(p => p.id === selectedId)
-    readonly property var layoutConflicts: Placement.conflicts(moduleLayer.layoutRecords)
+    readonly property var layoutConflicts: root.visible
+        ? Placement.conflicts(moduleLayer.layoutRecords) : []
     readonly property var draftOptions: Object.assign({},Config.options?.abyss?.modules,{gap:gap,edgeSizes:edgeSizes,size:moduleScale,
         singleModuleExpansion:singleModuleExpansion,edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,edgeRoundZeroCorners:edgeRoundZeroCorners,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius})
 
@@ -198,6 +204,8 @@ Item {
             // intersection with the controls can force a relocation.
             if (previewBody.targetRecord?.content)
                 previewRects = [previewBody.targetRecord.content]
+        } else if (companionMannequin.visible && root._draggingCompanion) {
+            previewRects = [{x: companionMannequin.x, y: companionMannequin.y, width: companionMannequin.width, height: companionMannequin.height}]
         }
         return Placement.toolbarEdgeForRects(toolbarEdge,footprints,
             moduleLayer.layoutRecords,previewRects)
@@ -243,7 +251,8 @@ Item {
             edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,
             edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,edgeRoundZeroCorners:edgeRoundZeroCorners,moduleScale:moduleScale,
             singleModuleExpansion:singleModuleExpansion,outputOnly:outputOnly,
-            draftPositions:draftPositions,positionEdits:positionEdits}))
+            draftPositions:draftPositions,positionEdits:positionEdits,
+            companionDraftEdge:companionDraftEdge,companionDraftAlong:companionDraftAlong}))
     }
     function queueHistory(): void {
         if(!_historyReady || _historyQueued || _dragging)return
@@ -358,6 +367,13 @@ Item {
         guides = []
         draftPositions=JSON.parse(JSON.stringify(Config.options?.abyss?.positions ?? []))
         positionEdits=[];editingPopups=false
+        const companionCfg=Config.options?.abyss?.companion
+        companionDraftEdge=["top","right","bottom","left"].includes(companionCfg?.edge)
+            ? companionCfg.edge
+            : (["top","right","bottom","left"].includes(moduleLayer.edge) ? moduleLayer.edge : "bottom")
+        companionDraftAlong=Number.isFinite(Number(companionCfg?.along))
+            ? Math.max(0.08,Math.min(0.92,Number(companionCfg.along))) : 0.72
+        _draggingCompanion=false
         selectedId = ""
         selectedIds=[];selectionAnchor="";clearDrag()
         refreshHandles()
@@ -375,10 +391,13 @@ Item {
             let positions=Config.options?.abyss?.positions ?? []
             positionEdits.forEach(edit=>positions=Presentation.save(positions,edit.kind,edit.outputName,edit.values))
             if(positionEdits.length) writes["abyss.positions"]=positions
+            writes["abyss.companion.edge"]=companionDraftEdge
+            writes["abyss.companion.along"]=Math.round(companionDraftAlong*1000)/1000
             Config.setNestedValues(writes)
         }
         guides = []
         _historyReady=false
+        _draggingCompanion=false
         clearDrag()
         GlobalStates.abyssEditing = false
     }
@@ -405,6 +424,8 @@ Item {
         guides = []
         selectedId = ""
         selectedIds=[];selectionAnchor=""
+        companionDraftEdge=["top","right","bottom","left"].includes(moduleLayer.edge) ? moduleLayer.edge : "bottom"
+        companionDraftAlong=0.72
         draftPositions=JSON.parse(JSON.stringify(Config.options?.abyss?.positions ?? []));positionEdits=[]
         refreshHandles()
     }
@@ -435,6 +456,20 @@ Item {
         const values=Object.assign({},previewPosition,{edge:location.edge,alignment:"custom",position:ratio})
         const output=outputOnly ? outputName : ""
         editPosition(Presentation.save(draftPositions,previewKind,output,values),previewKind,output,values)
+    }
+    function moveCompanion(x,y): void {
+        const location=Placement.project(x,y,width,height), horizontal=["top","bottom"].includes(location.edge)
+        const length=Math.max(1,horizontal ? width : height), point=horizontal ? x : y
+        const nextAlong=Math.max(0.08,Math.min(0.92,point/length))
+        companionDraftEdge=location.edge
+        companionDraftAlong=nextAlong
+        editingEdge=location.edge
+        root.scheduleToolbarRelocation()
+        const now=Date.now()
+        if (now-lastImpulse>80) {
+            controller.impulse(location.edge,nextAlong*length,84,.28,1,"drag")
+            lastImpulse=now
+        }
     }
     function move(id,x,y,snap = true,reflow=false): void {
         if(!multiSelect)selectedId = id
@@ -484,6 +519,7 @@ Item {
 
     Connections {
         target:root.moduleLayer
+        enabled:root.visible
         function onMeasuredExtentsChanged(){root.reflowGroup()}
         // A module can grow into the controls after its first live measurement.
         function onLayoutRecordsChanged(){root.scheduleToolbarRelocation()}
@@ -539,7 +575,7 @@ Item {
         }
     }
     Repeater {
-        model: root.handles
+        model: root.visible ? root.handles : []
         onItemAdded: (index,item) => root.inputRegions = root.inputRegions.concat([item.inputRegion])
         onItemRemoved: (index,item) => root.inputRegions = root.inputRegions.filter(region => region !== item.inputRegion)
         Item {
@@ -668,7 +704,7 @@ Item {
     // The hint for the Edge that owns the editor must stay outside its body,
     // otherwise it reads like part of the control surface.
     Repeater {
-        model: ["top","right","bottom","left"]
+        model: root.visible ? ["top","right","bottom","left"] : []
         AbyssLabel {
             required property string modelData
             // These decorative hints compete with modules/controls on a tiny
@@ -749,20 +785,139 @@ Item {
             onPositionChanged:mouse=> { if(pressed) { const point=mapToItem(root,mouse.x,mouse.y);root.movePreview(point.x,point.y) } }
         }
     }
+    Item {
+        id:companionMannequin
+        objectName:"abyssCompanionMannequin"
+        z:25
+        visible:root.visible && !root.editingPopups && root.width>=240 && root.height>=200
+        property bool customModelPresent:false
+        readonly property real companionScale:Math.max(0.65,Math.min(1.5,Number(Config.options?.abyss?.companion?.size) || 1))
+        readonly property bool horizontalEdge:["top","bottom"].includes(root.companionDraftEdge)
+        width:(horizontalEdge ? 112 : 98)*companionScale
+        height:(horizontalEdge ? 98 : 112)*companionScale
+        readonly property real axisExtent:Math.max(1,horizontalEdge ? root.width : root.height)
+        readonly property real axisSpan:horizontalEdge ? width : height
+        readonly property real startInset:Math.max(12,((horizontalEdge ? root.edgeInsets?.left : root.edgeInsets?.top) ?? 0)+12)
+        readonly property real endInset:Math.max(12,((horizontalEdge ? root.edgeInsets?.right : root.edgeInsets?.bottom) ?? 0)+12)
+        readonly property real alongCoordinate:Math.max(startInset,Math.min(Math.max(startInset,axisExtent-axisSpan-endInset),axisExtent*root.companionDraftAlong-axisSpan/2))
+        readonly property real normalCoordinate:root.companionDraftEdge==="top"
+            ? Math.max(2,root.edgeInsets?.top ?? 0)
+            : root.companionDraftEdge==="bottom"
+            ? Math.max(2,root.height-(root.edgeInsets?.bottom ?? 0)-height)
+            : root.companionDraftEdge==="left"
+            ? Math.max(2,root.edgeInsets?.left ?? 0)
+            : Math.max(2,root.width-(root.edgeInsets?.right ?? 0)-width)
+        x:horizontalEdge ? alongCoordinate : normalCoordinate
+        y:horizontalEdge ? normalCoordinate : alongCoordinate
+        function invalidateCompanionRegion(): void {if(companionMannequinRegion)companionMannequinRegion.changed()}
+        onXChanged:invalidateCompanionRegion();onYChanged:invalidateCompanionRegion()
+        onWidthChanged:invalidateCompanionRegion();onHeightChanged:invalidateCompanionRegion()
+        onVisibleChanged:invalidateCompanionRegion()
+        Accessible.role:Accessible.Button
+        Accessible.name:"Companion primary position · "+root.companionDraftEdge
+        Rectangle {
+            anchors.fill:parent;anchors.margins:-2
+            radius:14
+            color:Qt.alpha(AbyssStyle.accent,companionDragArea.pressed ? .24 : companionDragArea.containsMouse ? .16 : .09)
+            border.width:companionDragArea.pressed ? 2 : 1
+            border.color:Qt.alpha(AbyssStyle.accent,companionDragArea.pressed ? .92 : .65)
+        }
+        Item {
+            id:companionSilhouette
+            visible:!companionMannequin.customModelPresent
+            anchors.centerIn:parent
+            width:56*companionMannequin.companionScale
+            height:64*companionMannequin.companionScale
+            rotation:root.companionDraftEdge==="top" ? 180 : root.companionDraftEdge==="left" ? 90 : root.companionDraftEdge==="right" ? -90 : 0
+            Rectangle {
+                anchors.horizontalCenter:parent.horizontalCenter
+                anchors.bottom:parent.bottom
+                width:parent.width*.84
+                height:parent.height*.78
+                radius:width*.48
+                color:Qt.alpha(AbyssStyle.accent,.28)
+                border.width:1.5
+                border.color:Qt.alpha(AbyssStyle.accent,.82)
+                Row {
+                    anchors.centerIn:parent
+                    spacing:8*companionMannequin.companionScale
+                    Rectangle { width:5*companionMannequin.companionScale; height:8*companionMannequin.companionScale; radius:width/2; color:AbyssStyle.textColor }
+                    Rectangle { width:5*companionMannequin.companionScale; height:8*companionMannequin.companionScale; radius:width/2; color:AbyssStyle.textColor }
+                }
+            }
+        }
+        Rectangle {
+            z:10
+            anchors.horizontalCenter:parent.horizontalCenter
+            y:root.companionDraftEdge==="top" ? parent.height-height-2 : 2
+            width:companionBadgeRow.implicitWidth+10
+            height:18
+            radius:9
+            color:Qt.alpha(AbyssStyle.surfaceDeep,.88)
+            border.width:1
+            border.color:Qt.alpha(AbyssStyle.accent,.55)
+            Row {
+                id:companionBadgeRow
+                anchors.centerIn:parent
+                spacing:3
+                MaterialSymbol {
+                    anchors.verticalCenter:parent.verticalCenter
+                    text:"open_with"
+                    iconSize:11
+                    color:AbyssStyle.accent
+                }
+                AbyssLabel {
+                    anchors.verticalCenter:parent.verticalCenter
+                    text:"Companion"
+                    font.pixelSize:9*Appearance.fontSizeScale
+                    font.bold:true
+                    color:AbyssStyle.textColor
+                }
+            }
+        }
+        MouseArea {
+            id:companionDragArea
+            z:20
+            objectName:"abyssCompanionMannequinDrag"
+            anchors.fill:parent
+            hoverEnabled:true
+            cursorShape:pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+            onPressed: {
+                root.rememberHistory()
+                root._draggingCompanion=true
+                root.editingEdge=root.companionDraftEdge
+            }
+            onPositionChanged:mouse=> {
+                if(!pressed || !root._draggingCompanion) return
+                const point=mapToItem(root,mouse.x,mouse.y)
+                root.moveCompanion(point.x,point.y)
+            }
+            onReleased: {
+                root._draggingCompanion=false
+                root.queueHistory()
+            }
+            onCanceled: {
+                root._draggingCompanion=false
+                root.queueHistory()
+            }
+        }
+    }
+    readonly property Region companionMannequinRegion: Region {
+        x:Math.floor(companionMannequin.x);y:Math.floor(companionMannequin.y)
+        width:root.editingPopups || !companionMannequin.visible ? 0 : Math.ceil(companionMannequin.x+companionMannequin.width)-Math.floor(companionMannequin.x)
+        height:root.editingPopups || !companionMannequin.visible ? 0 : Math.ceil(companionMannequin.y+companionMannequin.height)-Math.floor(companionMannequin.y)
+    }
     readonly property Region previewRegion: Region { x:previewBody.inputBounds.x;y:previewBody.inputBounds.y;width:previewBody.inputBounds.width;height:previewBody.inputBounds.height }
     readonly property Region toolbarRegion: Region { item: toolbar }
-    readonly property Region ipcKindRegion: Region {
-        item:previewPositions.compactKindCombo.popup.contentItem
-        width:previewPositions.compactKindCombo.popup.visible
-            ? previewPositions.compactKindCombo.popup.contentItem.width : 0
-    }
+    readonly property Region ipcKindRegion: Region { item:previewPositions.compactKindCombo.popup.contentItem; width:previewPositions.compactKindCombo.popup.visible ? previewPositions.compactKindCombo.popup.contentItem.width : 0 }
     readonly property Region ipcOutputRegion: Region { item:ipcOutputChoice.popup.contentItem; width:ipcOutputChoice.popup.visible ? ipcOutputChoice.popup.contentItem.width : 0 }
     readonly property Region paletteRegion: Region { item: palette.popup.contentItem; width: palette.popup.visible ? palette.popup.contentItem.width : 0 }
     readonly property Region edgeRegion: Region { item: edgeChoice.popup.contentItem; width: edgeChoice.popup.visible ? edgeChoice.popup.contentItem.width : 0 }
     readonly property Region alignmentRegion: Region { item: alignmentChoice.popup.contentItem; width: alignmentChoice.popup.visible ? alignmentChoice.popup.contentItem.width : 0 }
-    readonly property var regions: inputRegions.concat([toolbarRegion,paletteRegion,ipcKindRegion,ipcOutputRegion,edgeRegion,alignmentRegion,previewRegion],root.editingPopups ? previewPositions.inputRegions : [])
+    readonly property var regions: inputRegions.concat([toolbarRegion,paletteRegion,ipcKindRegion,ipcOutputRegion,edgeRegion,alignmentRegion,previewRegion,companionMannequinRegion],root.editingPopups ? previewPositions.inputRegions : [])
     Item {
         id: toolbar
+        visible: root.visible
         parent: editorBody.contentParent
         anchors.fill: parent
         implicitWidth: root.toolbarOnHorizontalEdge

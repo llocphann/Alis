@@ -2,6 +2,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.abyss.looks
 import qs.modules.sidebarLeft.translator
 import QtQuick
 import QtQuick.Layouts
@@ -16,6 +17,30 @@ Item {
 
     // Sizes
     property real padding: 4
+    readonly property bool abyssMode: Config.options?.panelFamily === "abyss"
+    readonly property real edgeOpacity: AbyssStyle.contentOpacity
+    readonly property real edgeHighlight: AbyssStyle.highlightStrength
+    readonly property real edgeLift: AbyssStyle.blurRadius > 0 ? 0.024 : 0
+    readonly property real edgeRadius: Math.max(12, Math.min(26, AbyssStyle.perimeterRadius))
+    readonly property color cloudColor: Qt.rgba(
+        Math.min(1, AbyssStyle.surfaceDeep.r + edgeLift),
+        Math.min(1, AbyssStyle.surfaceDeep.g + edgeLift),
+        Math.min(1, AbyssStyle.surfaceDeep.b + edgeLift),
+        edgeOpacity
+    )
+    readonly property color cloudBorderColor: edgeHighlight > 0.01
+        ? Qt.alpha(AbyssStyle.specular, Math.max(0.08, 0.55 * edgeHighlight))
+        : Qt.alpha(AbyssStyle.textColor, 0.06)
+
+    function edgeSurfaceColor(depthWeight): color {
+        const k = Math.max(0, Math.min(1, depthWeight * 0.38 * root.edgeHighlight))
+        return Qt.rgba(
+            root.cloudColor.r + (AbyssStyle.surfaceRaised.r - root.cloudColor.r) * k,
+            root.cloudColor.g + (AbyssStyle.surfaceRaised.g - root.cloudColor.g) * k,
+            root.cloudColor.b + (AbyssStyle.surfaceRaised.b - root.cloudColor.b) * k,
+            root.edgeOpacity
+        )
+    }
 
     // Widgets
     property var inputField: inputCanvas.inputTextArea
@@ -118,20 +143,51 @@ Item {
         Component.onCompleted: running = true
     }
 
+    Rectangle {
+        id: translatorCloudBackground
+        visible: root.abyssMode
+        anchors.fill: parent
+        anchors.margins: root.padding
+        radius: 14
+        color: root.cloudColor
+        border.width: 1
+        border.color: root.cloudBorderColor
+        gradient: Gradient {
+            orientation: Gradient.Vertical
+            GradientStop { position: 0.0; color: root.edgeSurfaceColor(1.0) }
+            GradientStop { position: 1.0; color: root.edgeSurfaceColor(0.25) }
+        }
+
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: root.edgeRadius * 0.7
+            anchors.rightMargin: root.edgeRadius * 0.7
+            height: 1.5
+            radius: 1
+            color: Qt.alpha(AbyssStyle.accent, 0.45)
+        }
+    }
+
     ColumnLayout {
         anchors {
             fill: parent
-            margins: root.padding
+            margins: root.abyssMode ? (root.padding + 10) : root.padding
         }
+        spacing: 8
 
         StyledFlickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            contentWidth: width
             contentHeight: contentColumn.implicitHeight
+            clip: true
 
             ColumnLayout {
                 id: contentColumn
-                anchors.fill: parent
+                width: parent.width
+                spacing: 6
 
                 LanguageSelectorButton { // Target language button
                     id: targetLanguageButton
@@ -149,15 +205,25 @@ Item {
                     text: hasTranslation ? root.translatedText : ""
                     GroupButton {
                         id: copyButton
-                        baseWidth: height
+                        baseWidth: 34
+                        baseHeight: 34
                         buttonRadius: Appearance.rounding.small
                         enabled: outputCanvas.displayedText.trim().length > 0
-                        contentItem: MaterialSymbol {
-                            anchors.centerIn: parent
-                            horizontalAlignment: Text.AlignHCenter
-                            iconSize: Appearance.font.pixelSize.larger
-                            text: "content_copy"
-                            color: copyButton.enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
+                        colBackground: root.abyssMode ? Qt.alpha(AbyssStyle.textColor, 0.05) : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
+                        colBackgroundHover: root.abyssMode ? Qt.alpha(AbyssStyle.accent, 0.14) : Appearance.colors.colLayer1Hover
+                        colBackgroundActive: root.abyssMode ? Qt.alpha(AbyssStyle.accent, 0.22) : Appearance.colors.colLayer1Active
+                        contentItem: Item {
+                            implicitWidth: 20
+                            implicitHeight: 20
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                horizontalAlignment: Text.AlignHCenter
+                                iconSize: Appearance.font.pixelSize.larger
+                                text: "content_copy"
+                                color: copyButton.enabled
+                                    ? (root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1)
+                                    : (root.abyssMode ? Qt.alpha(AbyssStyle.textColorMuted, 0.45) : Appearance.colors.colSubtext)
+                            }
                         }
                         onClicked: {
                             Quickshell.clipboardText = outputCanvas.displayedText
@@ -165,15 +231,25 @@ Item {
                     }
                     GroupButton {
                         id: searchButton
-                        baseWidth: height
+                        baseWidth: 34
+                        baseHeight: 34
                         buttonRadius: Appearance.rounding.small
                         enabled: outputCanvas.displayedText.trim().length > 0
-                        contentItem: MaterialSymbol {
-                            anchors.centerIn: parent
-                            horizontalAlignment: Text.AlignHCenter
-                            iconSize: Appearance.font.pixelSize.larger
-                            text: "travel_explore"
-                            color: searchButton.enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
+                        colBackground: root.abyssMode ? Qt.alpha(AbyssStyle.textColor, 0.05) : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
+                        colBackgroundHover: root.abyssMode ? Qt.alpha(AbyssStyle.accent, 0.14) : Appearance.colors.colLayer1Hover
+                        colBackgroundActive: root.abyssMode ? Qt.alpha(AbyssStyle.accent, 0.22) : Appearance.colors.colLayer1Active
+                        contentItem: Item {
+                            implicitWidth: 20
+                            implicitHeight: 20
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                horizontalAlignment: Text.AlignHCenter
+                                iconSize: Appearance.font.pixelSize.larger
+                                text: "travel_explore"
+                                color: searchButton.enabled
+                                    ? (root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1)
+                                    : (root.abyssMode ? Qt.alpha(AbyssStyle.textColorMuted, 0.45) : Appearance.colors.colSubtext)
+                            }
                         }
                         onClicked: {
                             let url = (Config.options?.search?.engineBaseUrl ?? "https://www.google.com/search?q=") + outputCanvas.displayedText;
@@ -205,14 +281,22 @@ Item {
             }
             GroupButton {
                 id: pasteButton
-                baseWidth: height
+                baseWidth: 34
+                baseHeight: 34
                 buttonRadius: Appearance.rounding.small
-                contentItem: MaterialSymbol {
-                    anchors.centerIn: parent
-                    horizontalAlignment: Text.AlignHCenter
-                    iconSize: Appearance.font.pixelSize.larger
-                    text: "content_paste"
-                    color: deleteButton.enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
+                colBackground: root.abyssMode ? Qt.alpha(AbyssStyle.textColor, 0.05) : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
+                colBackgroundHover: root.abyssMode ? Qt.alpha(AbyssStyle.accent, 0.14) : Appearance.colors.colLayer1Hover
+                colBackgroundActive: root.abyssMode ? Qt.alpha(AbyssStyle.accent, 0.22) : Appearance.colors.colLayer1Active
+                contentItem: Item {
+                    implicitWidth: 20
+                    implicitHeight: 20
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        iconSize: Appearance.font.pixelSize.larger
+                        text: "content_paste"
+                        color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                    }
                 }
                 onClicked: {
                     root.inputField.text = Quickshell.clipboardText
@@ -220,15 +304,25 @@ Item {
             }
             GroupButton {
                 id: deleteButton
-                baseWidth: height
+                baseWidth: 34
+                baseHeight: 34
                 buttonRadius: Appearance.rounding.small
-                enabled: inputCanvas.inputTextArea.text.length > 0
-                contentItem: MaterialSymbol {
-                    anchors.centerIn: parent
-                    horizontalAlignment: Text.AlignHCenter
-                    iconSize: Appearance.font.pixelSize.larger
-                    text: "close"
-                    color: deleteButton.enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
+                enabled: (inputCanvas.inputTextArea?.text?.length ?? 0) > 0
+                colBackground: root.abyssMode ? Qt.alpha(AbyssStyle.textColor, 0.05) : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
+                colBackgroundHover: root.abyssMode ? Qt.alpha(AbyssStyle.accent, 0.14) : Appearance.colors.colLayer1Hover
+                colBackgroundActive: root.abyssMode ? Qt.alpha(AbyssStyle.accent, 0.22) : Appearance.colors.colLayer1Active
+                contentItem: Item {
+                    implicitWidth: 20
+                    implicitHeight: 20
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        iconSize: Appearance.font.pixelSize.larger
+                        text: "close"
+                        color: deleteButton.enabled
+                            ? (root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1)
+                            : (root.abyssMode ? Qt.alpha(AbyssStyle.textColorMuted, 0.45) : Appearance.colors.colSubtext)
+                    }
                 }
                 onClicked: {
                     root.inputField.text = ""

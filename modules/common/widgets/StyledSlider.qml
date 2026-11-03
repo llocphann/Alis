@@ -85,7 +85,10 @@ Slider {
     rightPadding: handleMargins
     property real effectiveDraggingWidth: Math.max(0, width - leftPadding - rightPadding)
 
-    Layout.fillWidth: true
+    property bool _inSettingsPage: false
+    Layout.fillWidth: !root._inSettingsPage
+    Layout.preferredWidth: root._inSettingsPage ? Math.round(190 * Appearance.fontSizeScale) : -1
+    Layout.maximumWidth: root._inSettingsPage ? Math.round(220 * Appearance.fontSizeScale) : -1
     from: 0
     to: 1
 
@@ -123,14 +126,15 @@ Slider {
     }
 
     Component.onCompleted: {
+        var ctx = _findSettingsContext();
+        var page = ctx.page;
+        var pageIndex = page && page.settingsPageIndex !== undefined ? page.settingsPageIndex : -1;
+        root._inSettingsPage = (page !== null);
+
         if (!enableSettingsSearch)
             return;
         if (typeof SettingsSearchRegistry === "undefined")
             return;
-
-        var ctx = _findSettingsContext();
-        var page = ctx.page;
-        var pageIndex = page && page.settingsPageIndex !== undefined ? page.settingsPageIndex : -1;
         if (pageIndex < 0)
             return;
 

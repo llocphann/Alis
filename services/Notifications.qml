@@ -219,11 +219,20 @@ Singleton {
         if (notificationPolicyActive)
             root.timeoutAll()
     }
-    // Debounce timer for group updates - 100ms is sufficient for responsive UI
+    // Debounce timer for group updates - deferred past the popup entrance animation
     Timer {
         id: groupUpdateTimer
-        interval: 100
+        interval: 340
         onTriggered: root._updateGroups()
+    }
+    Timer {
+        id: historySaveTimer
+        interval: 450
+        repeat: false
+        onTriggered: notifFileView.setText(stringifyList(root.list))
+    }
+    function scheduleHistorySave(): void {
+        historySaveTimer.restart()
     }
     Component {
         id: notifComponent
@@ -487,10 +496,12 @@ Singleton {
     }
 
     function _publishNotification(notification, receivedAt): void {
+        const showPopup = !root.popupInhibited;
         const newNotifObject = notifComponent.createObject(root, {
             "notificationId": notification.id + root.idOffset,
             "notification": notification,
             "time": receivedAt,
+            "popup": showPopup,
         });
         if (!newNotifObject) {
             console.warn("[Notifications] Failed to create notification wrapper")
@@ -506,8 +517,11 @@ Singleton {
         }
 
         // Popup
-        if (!root.popupInhibited) {
-            newNotifObject.popup = true;
+        if (showPopup) {
+            const nextPopupList = [...root.popupList.filter(notif => notif && notif.popup), newNotifObject];
+            root.popupList = nextPopupList;
+            root._cachedPopupGroupsByAppName = _groupsForListOptimized(nextPopupList);
+            root._cachedPopupAppNameList = _appNameListForGroups(root._cachedPopupGroupsByAppName);
 
             const timeout = _timeoutForNotification(notification);
             if (timeout !== 0) {
@@ -523,8 +537,7 @@ Singleton {
             }
         }
         root.notify(newNotifObject);
-        // console.log(notifToString(newNotifObject));
-        notifFileView.setText(stringifyList(root.list));
+        root.scheduleHistorySave();
     }
 
     function markAllRead() {

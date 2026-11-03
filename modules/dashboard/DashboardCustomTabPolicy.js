@@ -1,7 +1,7 @@
 // DASH-F01: stable custom-tab identities and inactivity policy.
 // Pure functions: the callers persist only validated, JSON-safe definitions.
 var builtIns = ["dashboard", "music", "weeklyPlanner"];
-var reservedNames = ["dashboard", "music", "weekly planner"];
+var reservedNames = ["dashboard", "music", "weekly planner", "spaced repetition"];
 function tabs(raw) {
     // QML JsonAdapter list<var> may be exposed as an array-like object.
     if (!raw || typeof raw === "string" || typeof raw.length !== "number") return [];
@@ -39,9 +39,10 @@ function nextId(raw) {
     }
     return "";
 }
-function available(raw, musicEnabled) {
-    return (musicEnabled ? builtIns : ["dashboard", "weeklyPlanner"])
-        .concat(tabs(raw).map(function(tab) { return tab.id; }));
+function available(raw, musicEnabled, spacedRepetitionEnabled) {
+    var base = (musicEnabled ? builtIns : ["dashboard", "weeklyPlanner"])
+        .concat(spacedRepetitionEnabled ? ["spacedRepetition"] : []);
+    return base.concat(tabs(raw).map(function(tab) { return tab.id; }));
 }
 function selectAfterInactivity(now, hiddenAt, minutes, preferredId, ids, currentId) {
     var validIds = Array.from(ids || []);

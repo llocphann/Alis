@@ -103,12 +103,17 @@ Item {
     // the whole bar around on every title change.
     implicitWidth: 0
     clip: true
+    property real contentRotation: 0
+    readonly property bool verticalContent: Math.abs(root.contentRotation) === 90
+    readonly property string verticalAppString: Array.from(root.displayAppName).join("\n")
     // Natural content width, exposed so a content-sized host (e.g. a centre
     // pill, which gives no fill slack) can grant a sensible, clamped width.
-    readonly property real contentImplicitWidth: Math.max(
-        appNameText.implicitWidth,
-        titleText.visible ? titleText.implicitWidth : 0
-    )
+    readonly property real contentImplicitWidth: root.verticalContent
+        ? verticalAppText.implicitHeight + 12 * Appearance.sizes.barModuleScale
+        : Math.max(
+            appNameText.implicitWidth,
+            titleText.visible ? titleText.implicitWidth : 0
+        )
 
     readonly property bool showTitle: Config.options?.bar?.activeWindow?.showTitle ?? true
 
@@ -141,8 +146,10 @@ Item {
 
     StyledText {
         id: appNameText
+        visible: !root.verticalContent
         width: root.width
         y: root.appNameBaseline - baselineOffset
+        rotation: root.verticalContent ? 0 : -root.contentRotation
         maximumLineCount: 1
         wrapMode: Text.NoWrap
         font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * Appearance.sizes.barModuleScale)
@@ -155,13 +162,30 @@ Item {
         id: titleText
         width: root.width
         y: root.titleBaseline - baselineOffset
-        visible: root.showTitle
+        visible: root.showTitle && !root.verticalContent
+        rotation: root.verticalContent ? 0 : -root.contentRotation
         maximumLineCount: 1
         wrapMode: Text.NoWrap
         font.pixelSize: Math.round(Appearance.font.pixelSize.small * Appearance.sizes.barModuleScale)
         color: root.titleColor
         elide: Text.ElideRight
         text: root.stableDisplayTitle
+    }
+
+    StyledText {
+        id: verticalAppText
+        visible: root.verticalContent
+        anchors.centerIn: parent
+        width: root.height
+        height: root.width
+        rotation: -root.contentRotation
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+        font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * Appearance.sizes.barModuleScale)
+        lineHeight: 0.82
+        elide: Text.ElideRight
+        color: root.titleColor
+        text: root.verticalAppString
     }
 
 }

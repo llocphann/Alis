@@ -8,6 +8,7 @@ import Quickshell.Io
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.settings
 import qs.modules.sidebarRight.nightLight
@@ -464,13 +465,13 @@ Item {
                     AbyssLabel {
                         Layout.fillWidth: true
                         visible: DisplayMode.lastError.length > 0
-                            || (DisplayMode.currentMode === "mirror" && DisplayMode.statusMessage.length > 0)
-                            || (DisplayMode.applying && DisplayMode.statusMessage.length > 0)
+                            || DisplayMode.statusMessage.length > 0
                         text: DisplayMode.lastError.length > 0
                             ? DisplayMode.lastError : DisplayMode.statusMessage
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         color: DisplayMode.lastError.length > 0
                             ? Appearance.colors.colError : root.utilityMutedInk
+                        wrapMode: Text.WordWrap
                     }
 
                     Rectangle {
@@ -711,7 +712,7 @@ Item {
                     AbyssLabel {
                         Layout.fillWidth: true
                         visible: NetworkDisplays.lastError.length > 0
-                            || (NetworkDisplays.active && NetworkDisplays.statusMessage.length > 0)
+                            || NetworkDisplays.statusMessage.length > 0
                             || (!NetworkDisplays.streamReady && NetworkDisplays.backendAvailable
                                 && NetworkDisplays.displays.length > 0)
                         text: NetworkDisplays.lastError.length > 0
@@ -719,6 +720,7 @@ Item {
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         color: NetworkDisplays.lastError.length > 0
                             ? Appearance.colors.colError : root.utilityMutedInk
+                        wrapMode: Text.WordWrap
                     }
 
                     AbyssButton {
@@ -729,7 +731,7 @@ Item {
                         glyph: "open_in_new"
                         text: "Open Network Displays"
                         font.pixelSize: Appearance.font.pixelSize.smallest
-                        onClicked: Quickshell.execDetached(["gnome-network-displays"])
+                        onClicked: ShellExec.execDetachedArgs(["gnome-network-displays"], "Launch Network Displays")
                     }
                 }
             }

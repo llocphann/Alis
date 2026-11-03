@@ -21,10 +21,8 @@ depends=(
 
   # Media playback
   mpv
-  mpv-mpris
   mpd
   mpd-mpris
-  yt-dlp
 )
 
 optdepends=(

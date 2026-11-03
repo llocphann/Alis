@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.modules.common
 
-ColumnLayout {
+Item {
     id: root
 
     property string icon: "tune"
@@ -12,17 +12,22 @@ ColumnLayout {
     property string description: ""
     property string summary: ""
     property bool showTabBar: true
-    property bool showSummary: root.options.length === 0 || !root.showTabBar
-    // The page header already shows name/description; the intro card is only
-    // worth drawing on pages that need the extra onboarding copy.
-    property bool showIntro: true
+    property bool showSummary: false
+    property bool showIntro: false
     property string currentValue: ""
     property var options: []
     property var searchAliases: ({})
     property bool highContrastSelection: false
+    property bool activeNavigator: true
     readonly property bool abyssTaskStyle: Config.options?.panelFamily === "abyss"
+    readonly property bool _hasVisibleContent: false
 
     signal selected(string value)
+
+    implicitWidth: 0
+    implicitHeight: 0
+    Layout.preferredHeight: 0
+    Layout.maximumHeight: 0
 
     function _normalizeSearchLabel(value): string {
         return String(value || "")
@@ -54,6 +59,10 @@ ColumnLayout {
         if (!value.length)
             return false
         root.selected(value)
+        const page = _findSettingsPage()
+        if (page && typeof page.syncTaskNavigatorSelection === "function") {
+            page.syncTaskNavigatorSelection(value)
+        }
         return true
     }
 
@@ -68,136 +77,40 @@ ColumnLayout {
         return null
     }
 
+    function _notifyPage(): void {
+        const page = _findSettingsPage()
+        if (!page)
+            return
+        if (typeof page.syncTaskNavigatorSelection === "function") {
+            page.syncTaskNavigatorSelection(root.currentValue)
+        }
+        if (typeof page.notifyCardEligibilityChanged === "function") {
+            page.notifyCardEligibilityChanged()
+        }
+    }
+
+    onCurrentValueChanged: root._notifyPage()
+    onOptionsChanged: root._notifyPage()
+    onVisibleChanged: root._notifyPage()
+    onShowTabBarChanged: root._notifyPage()
+
     Component.onCompleted: {
         const page = _findSettingsPage()
-        if (page)
+        if (!page)
+            return
+        const isTopLevel = root.parent === page.pageBodyColumn || root.parent === page.navigatorHeaderHost
+        const current = page.settingsTaskNavigator
+        const currentActive = current && current.visible && current.showTabBar && (current.options?.length ?? 0) > 1
+        const rootActive = root.showTabBar && (root.options?.length ?? 0) > 1
+        if (!current || (isTopLevel && (rootActive || !currentActive))) {
             page.settingsTaskNavigator = root
+        }
+        root._notifyPage()
     }
 
     Component.onDestruction: {
         const page = _findSettingsPage()
         if (page && page.settingsTaskNavigator === root)
             page.settingsTaskNavigator = null
-    }
-
-    Layout.fillWidth: true
-    spacing: 12
-
-    Rectangle {
-        visible: root.showIntro && (root.title.length > 0 || root.description.length > 0)
-        Layout.fillWidth: true
-        implicitHeight: visible ? introColumn.implicitHeight + (root.title.length > 0 ? 24 : 20) : 0
-        radius: Appearance.rounding.normal
-        // Follow upstream Alis's quiet information hierarchy: task context is
-        // a neutral settings plate, while selection is carried by the tabs.
-        color: root.abyssTaskStyle ? SettingsMaterialPreset.cardColor : Appearance.colors.colLayer1
-
-        // Full variant (icon + title + description) for pages that onboard;
-        // compact variant (centered description + summary) when the page header
-        // already carries the name and icon.
-        ColumnLayout {
-            id: introColumn
-            anchors.fill: parent
-            anchors.margins: root.title.length > 0 ? 12 : 10
-            spacing: root.title.length > 0 ? 9 : 4
-
-            RowLayout {
-                Layout.fillWidth: true
-                visible: root.title.length > 0
-                spacing: 10
-
-                Item {
-                    Layout.preferredWidth: 24
-                    Layout.preferredHeight: 24
-                    Layout.alignment: Qt.AlignTop
-                    visible: root.icon.length > 0
-
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: root.icon
-                        iconSize: 22
-                        color: Appearance.colors.colOnLayer1
-                    }
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 1
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: root.title
-                        font.pixelSize: Appearance.font.pixelSize.normal
-                        font.weight: Font.DemiBold
-                        color: Appearance.colors.colOnLayer1
-                        wrapMode: Text.WordWrap
-                    }
-                    StyledText {
-                        Layout.fillWidth: true
-                        visible: root.description.length > 0
-                        text: root.description
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colOnLayer1
-                        opacity: 0.82
-                        wrapMode: Text.WordWrap
-                    }
-                }
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                visible: root.title.length === 0 && root.description.length > 0
-                text: root.description
-                font.pixelSize: Appearance.font.pixelSize.small
-                font.weight: Font.Medium
-                color: Appearance.colors.colOnLayer1
-                opacity: 0.86
-                horizontalAlignment: Text.AlignLeft
-                wrapMode: Text.WordWrap
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                visible: root.showSummary && root.summary.length > 0
-                text: root.summary
-                font.pixelSize: Appearance.font.pixelSize.smallest
-                font.weight: Font.Medium
-                color: Appearance.colors.colOnLayer1
-                opacity: 0.72
-                horizontalAlignment: Text.AlignLeft
-                wrapMode: Text.WordWrap
-            }
-        }
-    }
-
-    Item {
-        visible: root.showTabBar && root.options.length > 0
-        Layout.fillWidth: true
-        implicitWidth: root.width
-        width: root.width
-        implicitHeight: taskOptions.implicitHeight + padding * 2
-        readonly property real padding: root.abyssTaskStyle ? SettingsMaterialPreset.taskTabPadding : 0
-
-        Rectangle {
-            objectName: "settingsTaskRail"
-            anchors.fill: parent
-            visible: root.abyssTaskStyle
-            color: SettingsMaterialPreset.taskRailColor
-            radius: SettingsMaterialPreset.taskRailRadius
-        }
-
-        ConfigSelectionArray {
-            id: taskOptions
-            objectName: "settingsTaskOptions"
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: parent.padding
-            y: parent.padding
-            currentValue: root.currentValue
-            options: root.options
-            taskNavigation: true
-            useAbyssPillShape: false
-            highContrastSelection: root.highContrastSelection
-            onSelected: value => root.selected(value)
-        }
     }
 }

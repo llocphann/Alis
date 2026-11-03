@@ -164,107 +164,117 @@ MouseArea {
     
     // Video wallpaper
     // Shows first frame (paused) when enableAnimation is false, plays when true
-    Video {
-        id: videoWallpaper
+    Loader {
         anchors.fill: parent
-        visible: root.wallpaperIsVideo && !root.useSafeBlurPipeline
-        // source already gates on useSafeBlurPipeline below; layer.enabled
-        // is gated to keep the FastBlur shader from being compiled on Niri.
-        source: {
-            if (!root.wallpaperIsVideo || root.useSafeBlurPipeline || !root._wallpaperSource) return "";
-            const path = root._wallpaperSource;
-            return path.startsWith("file://") ? path : ("file://" + path);
-        }
-        fillMode: VideoOutput.PreserveAspectCrop
-        loops: MediaPlayer.Infinite
-        muted: true
-        autoPlay: true
-
-        readonly property bool shouldPlay: root.enableAnimation && !Wallpapers.batteryPauseActive
-
-        function pauseAndShowFirstFrame() {
-            pause()
-            seek(0)
-        }
-
-        onPlaybackStateChanged: {
-            if (playbackState === MediaPlayer.PlayingState && !shouldPlay)
-                pauseAndShowFirstFrame()
-            if (playbackState === MediaPlayer.StoppedState && visible && shouldPlay)
-                play()
-        }
-
-        onShouldPlayChanged: {
-            if (visible && root.wallpaperIsVideo) {
-                if (shouldPlay) play()
-                else pauseAndShowFirstFrame()
+        active: root.wallpaperIsVideo && !root.useSafeBlurPipeline
+        sourceComponent: Video {
+            id: videoWallpaper
+            anchors.fill: parent
+            visible: root.wallpaperIsVideo && !root.useSafeBlurPipeline
+            // source already gates on useSafeBlurPipeline below; layer.enabled
+            // is gated to keep the FastBlur shader from being compiled on Niri.
+            source: {
+                if (!root.wallpaperIsVideo || root.useSafeBlurPipeline || !root._wallpaperSource) return "";
+                const path = root._wallpaperSource;
+                return path.startsWith("file://") ? path : ("file://" + path);
             }
-        }
-        
-        onVisibleChanged: {
-            if (visible && root.wallpaperIsVideo) {
-                if (shouldPlay) play()
-                else pauseAndShowFirstFrame()
-            } else {
+            fillMode: VideoOutput.PreserveAspectCrop
+            loops: MediaPlayer.Infinite
+            muted: true
+            autoPlay: true
+
+            readonly property bool shouldPlay: root.enableAnimation && !Wallpapers.batteryPauseActive
+
+            function pauseAndShowFirstFrame() {
                 pause()
+                seek(0)
             }
-        }
-        
-        onErrorOccurred: (error, errorString) => {
-            console.error("[LockSurface] Video wallpaper error:", error, errorString, "source:", source)
-        }
-        
-        layer.enabled: root.blurEnabled && !root.useSafeBlurPipeline
-        layer.effect: FastBlur {
-            radius: root.blurRadius
-        }
-        
-        transform: Scale {
-            origin.x: videoWallpaper.width / 2
-            origin.y: videoWallpaper.height / 2
-            xScale: root.blurEnabled ? root.blurZoom : 1
-            yScale: root.blurEnabled ? root.blurZoom : 1
+
+            onPlaybackStateChanged: {
+                if (playbackState === MediaPlayer.PlayingState && !shouldPlay)
+                    pauseAndShowFirstFrame()
+                if (playbackState === MediaPlayer.StoppedState && visible && shouldPlay)
+                    play()
+            }
+
+            onShouldPlayChanged: {
+                if (visible && root.wallpaperIsVideo) {
+                    if (shouldPlay) play()
+                    else pauseAndShowFirstFrame()
+                }
+            }
+            
+            onVisibleChanged: {
+                if (visible && root.wallpaperIsVideo) {
+                    if (shouldPlay) play()
+                    else pauseAndShowFirstFrame()
+                } else {
+                    pause()
+                }
+            }
+            
+            onErrorOccurred: (error, errorString) => {
+                console.error("[LockSurface] Video wallpaper error:", error, errorString, "source:", source)
+            }
+            
+            layer.enabled: root.blurEnabled && !root.useSafeBlurPipeline
+            layer.effect: FastBlur {
+                radius: root.blurRadius
+            }
+            
+            transform: Scale {
+                origin.x: videoWallpaper.width / 2
+                origin.y: videoWallpaper.height / 2
+                xScale: root.blurEnabled ? root.blurZoom : 1
+                yScale: root.blurEnabled ? root.blurZoom : 1
+            }
         }
     }
 
-    Video {
-        id: videoWallpaperSource
+    Loader {
+        id: videoWallpaperSourceLoader
         anchors.fill: parent
         visible: false
         z: -2
-        source: {
-            if (!root.useSafeBlurPipeline || !root.wallpaperIsVideo || !root._wallpaperSource) return "";
-            const path = root._wallpaperSource;
-            return path.startsWith("file://") ? path : ("file://" + path);
-        }
-        fillMode: VideoOutput.PreserveAspectCrop
-        loops: MediaPlayer.Infinite
-        muted: true
-        autoPlay: true
-
-        readonly property bool shouldPlay: root.enableAnimation && !Wallpapers.batteryPauseActive
-
-        function pauseAndShowFirstFrame() {
-            pause()
-            seek(0)
-        }
-
-        onPlaybackStateChanged: {
-            if (playbackState === MediaPlayer.PlayingState && !shouldPlay)
-                pauseAndShowFirstFrame()
-            if (playbackState === MediaPlayer.StoppedState && root.useSafeBlurPipeline && root.wallpaperIsVideo && shouldPlay)
-                play()
-        }
-
-        onShouldPlayChanged: {
-            if (root.useSafeBlurPipeline && root.wallpaperIsVideo) {
-                if (shouldPlay) play()
-                else pauseAndShowFirstFrame()
+        active: root.useSafeBlurPipeline && root.wallpaperIsVideo
+        sourceComponent: Video {
+            id: videoWallpaperSource
+            anchors.fill: parent
+            visible: false
+            source: {
+                if (!root.useSafeBlurPipeline || !root.wallpaperIsVideo || !root._wallpaperSource) return "";
+                const path = root._wallpaperSource;
+                return path.startsWith("file://") ? path : ("file://" + path);
             }
-        }
-        
-        onErrorOccurred: (error, errorString) => {
-            console.error("[LockSurface] Video wallpaper source error:", error, errorString, "source:", source)
+            fillMode: VideoOutput.PreserveAspectCrop
+            loops: MediaPlayer.Infinite
+            muted: true
+            autoPlay: true
+
+            readonly property bool shouldPlay: root.enableAnimation && !Wallpapers.batteryPauseActive
+
+            function pauseAndShowFirstFrame() {
+                pause()
+                seek(0)
+            }
+
+            onPlaybackStateChanged: {
+                if (playbackState === MediaPlayer.PlayingState && !shouldPlay)
+                    pauseAndShowFirstFrame()
+                if (playbackState === MediaPlayer.StoppedState && root.useSafeBlurPipeline && root.wallpaperIsVideo && shouldPlay)
+                    play()
+            }
+
+            onShouldPlayChanged: {
+                if (root.useSafeBlurPipeline && root.wallpaperIsVideo) {
+                    if (shouldPlay) play()
+                    else pauseAndShowFirstFrame()
+                }
+            }
+            
+            onErrorOccurred: (error, errorString) => {
+                console.error("[LockSurface] Video wallpaper source error:", error, errorString, "source:", source)
+            }
         }
     }
 
@@ -272,7 +282,7 @@ MouseArea {
         id: backgroundWallpaperSafe
         anchors.fill: parent
         source: root.wallpaperIsGif ? gifWallpaperSource
-              : root.wallpaperIsVideo ? videoWallpaperSource
+              : root.wallpaperIsVideo ? videoWallpaperSourceLoader.item
               : backgroundWallpaperSource
         visible: root.useSafeBlurPipeline
         z: -1

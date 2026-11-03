@@ -8,17 +8,17 @@
 MIGRATION_ID="039-retired-shell-config"
 MIGRATION_TITLE="Remove retired shell config"
 MIGRATION_DESCRIPTION="Removes orphan config for Mascot, Workspace Strip, Orbit, and retired Bar appearance renderers."
-MIGRATION_TARGET_FILE="~/.config/inir/config.json"
+MIGRATION_TARGET_FILE="~/.config/alis/config.json"
 MIGRATION_REQUIRED=true
 
 _retired_config_path() {
-  if declare -F resolve_inir_config_dir >/dev/null 2>&1; then
-    printf '%s/config.json\n' "$(resolve_inir_config_dir)"
+  if declare -F resolve_alis_config_dir >/dev/null 2>&1; then
+    printf '%s/config.json\n' "$(resolve_alis_config_dir)"
     return
   fi
 
   local xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
-  local config_new="${xdg_config_home}/inir/config.json"
+  local config_new="${xdg_config_home}/alis/config.json"
   local config_legacy="${xdg_config_home}/illogical-impulse/config.json"
 
   if [[ -f "$config_new" ]]; then

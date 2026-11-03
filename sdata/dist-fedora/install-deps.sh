@@ -264,8 +264,6 @@ FEDORA_AUDIO_PKGS=(
   cava
   easyeffects
   mpv
-  yt-dlp
-  python3-ytmusicapi
   socat
 )
 

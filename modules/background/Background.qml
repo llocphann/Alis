@@ -15,23 +15,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
 
-import qs.modules.background.widgets
-import qs.modules.background.widgets.clock
-import qs.modules.background.widgets.mediaControls
-import qs.modules.background.widgets.weather
-import qs.modules.background.widgets.visualizer
-import qs.modules.background.widgets.imageConverter
-import qs.modules.background.widgets.systemMonitor
-import qs.modules.background.widgets.battery
-import qs.modules.background.widgets.notes
-import qs.modules.background.widgets.calendar
-import qs.modules.background.widgets.uptime
-import qs.modules.background.widgets.worldClock
-import qs.modules.background.widgets.userCard
-import qs.modules.background.widgets.newsTicker
-import qs.modules.background.widgets.japaneseTypography
 import qs.modules.background.desktopItems
-import "root:modules/common/functions/parallax.js" as ParallaxMath
 
 Scope {
     id: backgroundScope
@@ -358,11 +342,7 @@ Scope {
                 visible: visible, external: externalMainWallpaperActive,
                 backdrop: backdropActive, wallpaper: wallpaper.renderState()}
         }
-        readonly property var parallaxOptions: backgroundOptions.parallax ?? {}
         readonly property var effectsOptions: backgroundOptions.effects ?? {}
-        readonly property var workSafetyOptions: Config.options?.workSafety ?? {}
-        readonly property var workSafetyEnableOptions: workSafetyOptions.enable ?? {}
-        readonly property var workSafetyTriggerOptions: workSafetyOptions.triggerCondition ?? {}
         readonly property var lockBlurOptions: Config.options?.lock?.blur ?? {}
         readonly property var desktopFreeWorkArea: ShellLayoutController.desktopWorkArea(
             screen?.name ?? "", screen?.width ?? 0, screen?.height ?? 0)
@@ -565,12 +545,6 @@ Scope {
             ? (WallpaperListener.effectivePerMonitor[monitorName] ?? { path: "" })
             : ({ path: "" })
 
-        // Per-monitor workspace range for parallax
-        readonly property bool usePerMonitorRange: _multiMonEnabled &&
-            (wallpaperData.workspaceFirst !== undefined && wallpaperData.workspaceLast !== undefined)
-        readonly property int effectiveWorkspaceFirst: usePerMonitorRange ? wallpaperData.workspaceFirst : 1
-        readonly property int effectiveWorkspaceLast: usePerMonitorRange ? wallpaperData.workspaceLast : (Config.options?.bar?.workspaces?.shown ?? 10)
-
         // Wallpaper — use per-monitor path when multi-monitor enabled, otherwise direct config
         readonly property string wallpaperPathRaw: {
             const configuredPath = (_multiMonEnabled && wallpaperData.path)
@@ -589,14 +563,7 @@ Scope {
         property bool wallpaperIsVideo: wallpaperPathRaw.endsWith(".mp4") || wallpaperPathRaw.endsWith(".webm") || wallpaperPathRaw.endsWith(".mkv") || wallpaperPathRaw.endsWith(".avi") || wallpaperPathRaw.endsWith(".mov")
         property bool wallpaperIsGif: wallpaperPathRaw.toLowerCase().endsWith(".gif")
         property string wallpaperPath: bgRoot.wallpaperPathRaw
-        property bool wallpaperSafetyTriggered: {
-            const enabled = bgRoot.workSafetyEnableOptions.wallpaper ?? false;
-            const fileKeywords = bgRoot.workSafetyTriggerOptions.fileKeywords ?? [];
-            const networkKeywords = bgRoot.workSafetyTriggerOptions.networkNameKeywords ?? [];
-            const sensitiveWallpaper = (CF.StringUtils.stringListContainsSubstring(wallpaperPath.toLowerCase(), fileKeywords));
-            const sensitiveNetwork = (CF.StringUtils.stringListContainsSubstring(Network.networkName.toLowerCase(), networkKeywords));
-            return enabled && sensitiveWallpaper && sensitiveNetwork;
-        }
+        readonly property bool wallpaperSafetyTriggered: false
         readonly property string fillMode: bgRoot.backgroundOptions.fillMode ?? "fill"
         readonly property var panOptions: bgRoot.backgroundOptions.pan ?? {}
         readonly property real panX: bgRoot.panOptions.x ?? 0.0
@@ -604,38 +571,23 @@ Scope {
         readonly property real panZoom: Math.max(1.0, Math.min(3.0, bgRoot.panOptions.zoom ?? 1.0))
         readonly property bool hasPan: bgRoot.panX !== 0.0 || bgRoot.panY !== 0.0 || bgRoot.panZoom !== 1.0
         property string _panReadyWallpaperPath: bgRoot.wallpaperPath
-        readonly property bool parallaxEnabled: bgRoot.parallaxOptions.enable
-            ?? ((bgRoot.parallaxOptions.enableWorkspace ?? false) || (bgRoot.parallaxOptions.enableSidebar ?? false))
-        readonly property bool workspaceParallaxEnabled: bgRoot.parallaxEnabled && (bgRoot.parallaxOptions.enableWorkspace ?? false)
-        readonly property bool sidebarParallaxEnabled: bgRoot.parallaxEnabled && (bgRoot.parallaxOptions.enableSidebar ?? false)
-        readonly property bool dynamicParallaxRequested: bgRoot.workspaceParallaxEnabled || bgRoot.sidebarParallaxEnabled
-        readonly property real parallaxWorkspaceShift: ParallaxMath.resolveWorkspaceShift(bgRoot.parallaxOptions, 1)
-        readonly property real parallaxPanelShift: ParallaxMath.resolvePanelShift(bgRoot.parallaxOptions, 0.15)
-        readonly property real parallaxWidgetDepth: ParallaxMath.resolveWidgetDepth(bgRoot.parallaxOptions, 1.2)
-        readonly property bool pauseParallaxDuringTransitions: bgRoot.parallaxOptions.pauseDuringTransitions ?? true
-        readonly property int parallaxTransitionSettleMs: ParallaxMath.resolveTransitionSettle(bgRoot.parallaxOptions, 220)
-        readonly property bool externalMainWallpaperEligible: !wallpaperSafetyTriggered
-            && !((bgRoot.backgroundOptions.backdrop?.enable ?? false) && (bgRoot.backgroundOptions.backdrop?.hideWallpaper ?? false))
+        readonly property bool externalMainWallpaperEligible: !((bgRoot.backgroundOptions.backdrop?.enable ?? false) && (bgRoot.backgroundOptions.backdrop?.hideWallpaper ?? false))
             && AwwwBackend.supportsVisibleMainWallpaper(
                 bgRoot.wallpaperPathRaw,
                 bgRoot.fillMode,
-                bgRoot.dynamicParallaxRequested,
+                false,
                 bgRoot.effectsOptions.enableAnimatedBlur ?? false
             )
         readonly property bool effectiveHasPan: bgRoot.hasPan
             && (!bgRoot.externalMainWallpaperEligible || bgRoot._panReadyWallpaperPath === bgRoot.wallpaperPath)
         readonly property bool externalMainWallpaperActive: bgRoot.externalMainWallpaperEligible
             && !bgRoot.effectiveHasPan
-        property real preferredWallpaperScale: ParallaxMath.resolveZoom(bgRoot.parallaxOptions, 1.0)
         property real _manualWallpaperScaleOverride: 0
         property int wallpaperWidth: modelData.width
         property int wallpaperHeight: modelData.height
-        readonly property real baseWallpaperScale: ParallaxMath.effectiveScale(
-            wallpaperWidth,
-            wallpaperHeight,
-            screen.width,
-            screen.height,
-            preferredWallpaperScale
+        readonly property real baseWallpaperScale: Math.max(
+            screen.width / Math.max(1, wallpaperWidth),
+            screen.height / Math.max(1, wallpaperHeight)
         )
         readonly property real effectiveWallpaperScale: {
             const overrideScale = Number(bgRoot._manualWallpaperScaleOverride)
@@ -644,29 +596,11 @@ Scope {
         }
         readonly property real scaledWallpaperWidth: bgRoot.wallpaperWidth * bgRoot.effectiveWallpaperScale
         readonly property real scaledWallpaperHeight: bgRoot.wallpaperHeight * bgRoot.effectiveWallpaperScale
-        readonly property real parallaxTotalX: ParallaxMath.parallaxTotalPixels(bgRoot.scaledWallpaperWidth, bgRoot.screen.width)
-        readonly property real parallaxTotalY: ParallaxMath.parallaxTotalPixels(bgRoot.scaledWallpaperHeight, bgRoot.screen.height)
-        readonly property string parallaxAxis: ParallaxMath.resolveAxis(
-            bgRoot.parallaxOptions.axis,
-            bgRoot.parallaxOptions.autoVertical ?? false,
-            bgRoot.parallaxOptions.vertical ?? false,
-            wallpaperWidth,
-            wallpaperHeight
-        )
-        readonly property bool verticalParallax: bgRoot.parallaxAxis === "vertical"
+        readonly property real panTotalX: Math.max(0, bgRoot.scaledWallpaperWidth - bgRoot.screen.width)
+        readonly property real panTotalY: Math.max(0, bgRoot.scaledWallpaperHeight - bgRoot.screen.height)
 
         // Backdrop mode
         readonly property bool backdropActive: (bgRoot.backgroundOptions.backdrop?.enable ?? false) && (bgRoot.backgroundOptions.backdrop?.hideWallpaper ?? false)
-
-        // awww reveal: when parallax is active and awww handles wallpaper,
-        // instantly hide crossfader, let awww transition play, then fade back in.
-        property real _awwwRevealOpacity: 1
-        readonly property bool _awwwParallaxRevealNeeded: AwwwBackend.active
-            && bgRoot.dynamicParallaxRequested
-            && !bgRoot.wallpaperIsGif
-            && !bgRoot.wallpaperIsVideo
-            && !bgRoot.wallpaperSafetyTriggered
-            && !bgRoot.backdropActive
 
         readonly property int _wallpaperTransitionDurationMs: {
             const transitionBaseDuration = Config.options?.background?.transition?.duration ?? 800
@@ -676,75 +610,14 @@ Scope {
             const awwwTransitionDuration = AwwwBackend.active ? AwwwBackend.transitionDurationMs : 0
             return Math.max(qmlTransitionDuration, awwwTransitionDuration)
         }
-        property bool parallaxTransitionActive: false
-        property real parallaxResumeProgress: 1
-        property real parallaxFreezeValueX: 0.5
-        property real parallaxFreezeValueY: 0.5
-        property bool _parallaxWaitingCrossfader: false
-        property string _parallaxTransitionReason: ""
         property string pendingWallpaperMetricsPath: ""
         property string activeWallpaperMetricsPath: ""
-
-        function beginParallaxTransition(waitForCrossfader: bool, reason: string): void {
-            if (!bgRoot.dynamicParallaxRequested || !bgRoot.pauseParallaxDuringTransitions)
-                return
-
-            if (waitForCrossfader && bgRoot.parallaxTransitionActive && bgRoot._parallaxWaitingCrossfader)
-                return
-
-            const currentX = Number(wallpaperContainer ? wallpaperContainer.activeValueX : 0.5)
-            const currentY = Number(wallpaperContainer ? wallpaperContainer.activeValueY : 0.5)
-            bgRoot.parallaxFreezeValueX = Number.isFinite(currentX) ? currentX : 0.5
-            bgRoot.parallaxFreezeValueY = Number.isFinite(currentY) ? currentY : 0.5
-            bgRoot.parallaxTransitionActive = true
-            bgRoot.parallaxResumeProgress = 0
-            bgRoot._parallaxWaitingCrossfader = waitForCrossfader
-            bgRoot._parallaxTransitionReason = String(reason ?? "")
-            parallaxResumeAnimation.stop()
-            parallaxTransitionPauseTimer.stop()
-            parallaxTransitionWatchdog.stop()
-
-            if (!waitForCrossfader) {
-                parallaxTransitionPauseTimer.interval = bgRoot._wallpaperTransitionDurationMs + bgRoot.parallaxTransitionSettleMs
-                parallaxTransitionPauseTimer.restart()
-            } else {
-                parallaxTransitionWatchdog.interval = Math.max(
-                    1000,
-                    bgRoot._wallpaperTransitionDurationMs + bgRoot.parallaxTransitionSettleMs + 500
-                )
-                parallaxTransitionWatchdog.restart()
-            }
-        }
-
-        function settleParallaxAfterTransition(): void {
-            if (!bgRoot.parallaxTransitionActive)
-                return
-            bgRoot._parallaxWaitingCrossfader = false
-            parallaxTransitionWatchdog.stop()
-            parallaxTransitionPauseTimer.interval = bgRoot.parallaxTransitionSettleMs
-            parallaxTransitionPauseTimer.restart()
-        }
-
-        function pauseParallaxForWallpaperTransition(): void {
-            if (!bgRoot.dynamicParallaxRequested || !bgRoot.pauseParallaxDuringTransitions)
-                return
-            if (bgRoot.wallpaperIsGif || bgRoot.wallpaperIsVideo)
-                return
-
-            const crossfaderTransitionsEnabled = !AwwwBackend.active
-                && (Config.options?.background?.transition?.enable ?? true)
-
-            if (!crossfaderTransitionsEnabled && bgRoot._wallpaperTransitionDurationMs <= 0)
-                return
-
-            bgRoot.beginParallaxTransition(crossfaderTransitionsEnabled, "wallpaper")
-        }
 
         function queueWallpaperMetricsUpdate(path: string): void {
             const normalizedPath = String(path ?? "")
             if (!normalizedPath || normalizedPath.length === 0)
                 return
-            if (bgRoot.wallpaperIsVideo || bgRoot.wallpaperSafetyTriggered)
+            if (bgRoot.wallpaperIsVideo)
                 return
 
             bgRoot.pendingWallpaperMetricsPath = normalizedPath
@@ -768,8 +641,7 @@ Scope {
             if (bgRoot.pendingWallpaperMetricsPath.length > 0)
                 bgRoot.startNextWallpaperMetricsRequest()
 
-            // Invariant: never keep manual override after reveal/metrics settle.
-            if (bgRoot.pendingWallpaperMetricsPath.length === 0 && bgRoot._awwwRevealOpacity >= 1)
+            if (bgRoot.pendingWallpaperMetricsPath.length === 0)
                 bgRoot._manualWallpaperScaleOverride = 0
         }
 
@@ -899,22 +771,7 @@ Scope {
                 bgRoot._panReadyWallpaperPath = normalizedPath
                 panActivationTimer.stop()
             }
-            bgRoot.pauseParallaxForWallpaperTransition()
-            if (bgRoot._awwwParallaxRevealNeeded) {
-                // Instantly hide crossfader BEFORE bindings propagate the new source.
-                // The crossfader swaps to the new wallpaper at opacity:0 (invisible).
-                _awwwRevealAnimation.stop()
-                bgRoot._awwwRevealOpacity = 0
-                bgRoot._manualWallpaperScaleOverride = bgRoot.baseWallpaperScale
-                _awwwRevealAnimation.restart()
-                _awwwRevealSafetyTimer.interval = bgRoot._wallpaperTransitionDurationMs + Appearance.calcEffectiveDuration(900)
-                _awwwRevealSafetyTimer.restart()
-            } else {
-                _awwwRevealAnimation.stop()
-                _awwwRevealSafetyTimer.stop()
-                bgRoot._awwwRevealOpacity = 1
-                bgRoot._manualWallpaperScaleOverride = 0
-            }
+            bgRoot._manualWallpaperScaleOverride = 0
             if (!Wallpapers._applyInProgress && bgRoot.blurProgress > 0) {
                 bgRoot.beginBlurSuppression(bgRoot._wallpaperTransitionDurationMs)
             } else {
@@ -931,15 +788,6 @@ Scope {
             bgRoot._panReadyWallpaperPath = String(bgRoot.wallpaperPath ?? "")
             panActivationTimer.stop()
             bgRoot.updateZoomScale()
-        }
-
-        onPreferredWallpaperScaleChanged: {
-            if (!bgRoot._awwwParallaxRevealNeeded) {
-                bgRoot._manualWallpaperScaleOverride = 0
-                return
-            }
-            if (_awwwRevealAnimation.running || bgRoot._awwwRevealOpacity < 1)
-                bgRoot._manualWallpaperScaleOverride = bgRoot.baseWallpaperScale
         }
 
         onPanZoomChanged: {
@@ -963,55 +811,6 @@ Scope {
         }
 
         Timer {
-            id: parallaxTransitionPauseTimer
-            interval: bgRoot._wallpaperTransitionDurationMs + bgRoot.parallaxTransitionSettleMs
-            repeat: false
-            onTriggered: {
-                parallaxTransitionWatchdog.stop()
-                bgRoot._parallaxWaitingCrossfader = false
-                bgRoot._parallaxTransitionReason = ""
-                bgRoot.parallaxTransitionActive = false
-                parallaxResumeAnimation.restart()
-            }
-        }
-
-        Timer {
-            id: parallaxTransitionWatchdog
-            repeat: false
-            onTriggered: {
-                if (!bgRoot.parallaxTransitionActive || !bgRoot._parallaxWaitingCrossfader)
-                    return
-                bgRoot.settleParallaxAfterTransition()
-            }
-        }
-
-        Connections {
-            target: AwwwBackend
-            function onActiveChanged(): void {
-                if (!AwwwBackend.active)
-                    return
-                if (bgRoot._parallaxWaitingCrossfader && bgRoot._parallaxTransitionReason === "wallpaper")
-                    bgRoot.settleParallaxAfterTransition()
-            }
-        }
-
-        Connections {
-            target: GlobalStates
-            function onFamilyTransitionActiveChanged() {
-                if (!bgRoot.dynamicParallaxRequested || !bgRoot.pauseParallaxDuringTransitions)
-                    return
-
-                if (GlobalStates.familyTransitionActive) {
-                    bgRoot.beginParallaxTransition(true, "family")
-                    return
-                }
-
-                if (bgRoot._parallaxWaitingCrossfader && bgRoot._parallaxTransitionReason === "family")
-                    bgRoot.settleParallaxAfterTransition()
-            }
-        }
-
-        Timer {
             id: panActivationTimer
             interval: bgRoot._wallpaperTransitionDurationMs + 120
             repeat: false
@@ -1020,49 +819,6 @@ Scope {
                 bgRoot._panReadyWallpaperPath = normalizedPath
                 if (bgRoot.hasPan)
                     bgRoot.updateZoomScale()
-            }
-        }
-
-        NumberAnimation {
-            id: parallaxResumeAnimation
-            target: bgRoot
-            property: "parallaxResumeProgress"
-            from: 0
-            to: 1
-            duration: Appearance.calcEffectiveDuration(260)
-            easing.type: Easing.OutCubic
-        }
-
-        SequentialAnimation {
-            id: _awwwRevealAnimation
-
-            PauseAnimation {
-                duration: AwwwBackend.transitionDurationMs + 400
-            }
-            NumberAnimation {
-                target: bgRoot
-                property: "_awwwRevealOpacity"
-                to: 1
-                duration: Appearance.calcEffectiveDuration(250)
-                easing.type: Easing.OutQuad
-            }
-            onFinished: {
-                bgRoot._awwwRevealOpacity = 1
-                bgRoot._manualWallpaperScaleOverride = 0
-                _awwwRevealSafetyTimer.stop()
-            }
-            onStopped: {
-                if (!_awwwRevealAnimation.running && bgRoot._awwwRevealOpacity >= 1)
-                    bgRoot._manualWallpaperScaleOverride = 0
-            }
-        }
-        Timer {
-            id: _awwwRevealSafetyTimer
-            interval: bgRoot._wallpaperTransitionDurationMs + Appearance.calcEffectiveDuration(900)
-            repeat: false
-            onTriggered: {
-                bgRoot._awwwRevealOpacity = 1
-                bgRoot._manualWallpaperScaleOverride = 0
             }
         }
 
@@ -1138,56 +894,7 @@ Scope {
             Item {
                 id: wallpaperContainer
                 objectName: "desktopWallpaperContainer"
-                property int chunkSize: bgRoot.usePerMonitorRange ?
-                    (bgRoot.effectiveWorkspaceLast - bgRoot.effectiveWorkspaceFirst + 1) :
-                    (Config?.options?.bar?.workspaces?.shown ?? 10)
-                property int lower: bgRoot.usePerMonitorRange ?
-                    bgRoot.effectiveWorkspaceFirst :
-                    (Math.floor(bgRoot.firstWorkspaceId / chunkSize) * chunkSize)
-                property int upper: bgRoot.usePerMonitorRange ?
-                    bgRoot.effectiveWorkspaceLast :
-                    (Math.ceil(bgRoot.lastWorkspaceId / chunkSize) * chunkSize)
-                property int range: Math.max(1, upper - lower)
-                property int currentWorkspaceId: CompositorService.isNiri ? (NiriService.focusedWorkspaceIndex ?? 1) : (bgRoot.monitor?.activeWorkspace?.id ?? 1)
-                property real workspaceProgress: ParallaxMath.normalizedWorkspaceProgress(currentWorkspaceId, lower, upper)
-                property real valueX: ParallaxMath.axisValue(
-                    "horizontal",
-                    bgRoot.parallaxAxis,
-                    bgRoot.workspaceParallaxEnabled,
-                    workspaceProgress,
-                    bgRoot.parallaxWorkspaceShift,
-                    bgRoot.sidebarParallaxEnabled,
-                    [GlobalStates.sidebarLeftOpen],
-                    [GlobalStates.sidebarRightOpen],
-                    bgRoot.parallaxPanelShift
-                )
-                property real valueY: ParallaxMath.axisValue(
-                    "vertical",
-                    bgRoot.parallaxAxis,
-                    bgRoot.workspaceParallaxEnabled,
-                    workspaceProgress,
-                    bgRoot.parallaxWorkspaceShift,
-                    false,
-                    [],
-                    [],
-                    0
-                )
-                property real effectiveValueX: Math.max(0, Math.min(1, valueX))
-                property real effectiveValueY: Math.max(0, Math.min(1, valueY))
 
-                // A rendered internal wallpaper does not imply that Parallax
-                // is enabled. In Liquid mode awww is deliberately inactive;
-                // without this gate every image gets the 1.02x parallax scale
-                // even with Parallax off. Async wallpaper dimensions then
-                // re-center that oversized container, making the whole image
-                // jump left/right mid-transition.
-                // Manual Pan/Zoom remains independently supported below via
-                // effectiveHasPan and must not re-enable workspace parallax.
-                readonly property bool useParallax: bgRoot.dynamicParallaxRequested
-                    && bgRoot.fillMode === "fill"
-                    && !bgRoot.wallpaperIsGif
-                    && !bgRoot.wallpaperIsVideo
-                    && !bgRoot.externalMainWallpaperActive
                 readonly property bool showInternalStaticWallpaper: !bgRoot.externalMainWallpaperActive
                 readonly property bool localBlurNeedsStaticTexture: Appearance.effectsEnabled
                     && bgRoot.blurProgress > 0
@@ -1200,39 +907,24 @@ Scope {
                     && !bgRoot.wallpaperIsGif && !bgRoot.wallpaperIsVideo
                     && (showInternalStaticWallpaper || localBlurNeedsStaticTexture
                         || lockBlurNeedsStaticTexture)
-                readonly property real panOffsetX: bgRoot.effectiveHasPan ? (bgRoot.panX * (bgRoot.parallaxTotalX / 2)) : 0
-                readonly property real panOffsetY: bgRoot.effectiveHasPan ? (bgRoot.panY * (bgRoot.parallaxTotalY / 2)) : 0
-                readonly property real targetX: useParallax
-                    ? (bgRoot.parallaxTotalX > 0
-                        ? (ParallaxMath.parallaxPosition(bgRoot.parallaxTotalX, activeValueX) + panOffsetX)
-                        : ParallaxMath.centerOffset(bgRoot.scaledWallpaperWidth, bgRoot.screen.width))
-                    : panOffsetX
-                readonly property real targetY: useParallax
-                    ? (bgRoot.parallaxTotalY > 0
-                        ? (ParallaxMath.parallaxPosition(bgRoot.parallaxTotalY, activeValueY) + panOffsetY)
-                        : ParallaxMath.centerOffset(bgRoot.scaledWallpaperHeight, bgRoot.screen.height))
-                    : panOffsetY
-                readonly property real targetWidth: (useParallax || bgRoot.effectiveHasPan) ? bgRoot.scaledWallpaperWidth : bgRoot.screen.width
-                readonly property real targetHeight: (useParallax || bgRoot.effectiveHasPan) ? bgRoot.scaledWallpaperHeight : bgRoot.screen.height
+                readonly property real panOffsetX: bgRoot.effectiveHasPan ? (bgRoot.panX * (bgRoot.panTotalX / 2)) : 0
+                readonly property real panOffsetY: bgRoot.effectiveHasPan ? (bgRoot.panY * (bgRoot.panTotalY / 2)) : 0
+                readonly property real targetX: panOffsetX
+                readonly property real targetY: panOffsetY
+                readonly property real targetWidth: bgRoot.effectiveHasPan ? bgRoot.scaledWallpaperWidth : bgRoot.screen.width
+                readonly property real targetHeight: bgRoot.effectiveHasPan ? bgRoot.scaledWallpaperHeight : bgRoot.screen.height
                 x: targetX
                 y: targetY
                 Behavior on x {
-                    enabled: Appearance.animationsEnabled
-                        && (wallpaperContainer.useParallax || bgRoot.effectiveHasPan)
-                        && ((!bgRoot.parallaxTransitionActive && bgRoot.parallaxResumeProgress >= 1)
-                            || bgRoot._parallaxWaitingCrossfader)
+                    enabled: Appearance.animationsEnabled && bgRoot.effectiveHasPan
                     animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
                 }
                 Behavior on y {
-                    enabled: Appearance.animationsEnabled
-                        && (wallpaperContainer.useParallax || bgRoot.effectiveHasPan)
-                        && ((!bgRoot.parallaxTransitionActive && bgRoot.parallaxResumeProgress >= 1)
-                            || bgRoot._parallaxWaitingCrossfader)
+                    enabled: Appearance.animationsEnabled && bgRoot.effectiveHasPan
                     animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
                 }
                 width: targetWidth
                 height: targetHeight
-                // Animate container resize so it blends with the crossfader transition
                 readonly property int _transitionBaseDuration: Config.options?.background?.transition?.duration ?? 800
                 readonly property int _transitionDur: Appearance.calcEffectiveDuration(_transitionBaseDuration)
                 readonly property var _transitionBezierRaw: Config.options?.background?.transition?.bezier ?? [0.54, 0.0, 0.34, 0.99]
@@ -1248,15 +940,8 @@ Scope {
                         return [0.54, 0.0, 0.34, 0.99, 1, 1]
                     return [x1, y1, x2, y2, 1, 1]
                 }
-                // Container resize is NOT animated during crossfader transitions.
-                // The crossfader handles its own transition visually; animating the
-                // container size simultaneously causes double-image artifacts.
                 Behavior on width {
-                    enabled: Appearance.animationsEnabled
-                        && (wallpaperContainer.useParallax || bgRoot.effectiveHasPan)
-                        && bgRoot._awwwRevealOpacity >= 1
-                        && !bgRoot.parallaxTransitionActive
-                        && bgRoot.parallaxResumeProgress >= 1
+                    enabled: Appearance.animationsEnabled && bgRoot.effectiveHasPan
                     NumberAnimation {
                         duration: wallpaperContainer._transitionDur
                         easing.type: Easing.BezierSpline
@@ -1264,11 +949,7 @@ Scope {
                     }
                 }
                 Behavior on height {
-                    enabled: Appearance.animationsEnabled
-                        && (wallpaperContainer.useParallax || bgRoot.effectiveHasPan)
-                        && bgRoot._awwwRevealOpacity >= 1
-                        && !bgRoot.parallaxTransitionActive
-                        && bgRoot.parallaxResumeProgress >= 1
+                    enabled: Appearance.animationsEnabled && bgRoot.effectiveHasPan
                     NumberAnimation {
                         duration: wallpaperContainer._transitionDur
                         easing.type: Easing.BezierSpline
@@ -1276,35 +957,18 @@ Scope {
                     }
                 }
 
-                readonly property real activeValueX: bgRoot.parallaxTransitionActive
-                    ? bgRoot.parallaxFreezeValueX
-                    : (bgRoot.parallaxFreezeValueX + ((effectiveValueX - bgRoot.parallaxFreezeValueX) * bgRoot.parallaxResumeProgress))
-                readonly property real activeValueY: bgRoot.parallaxTransitionActive
-                    ? bgRoot.parallaxFreezeValueY
-                    : (bgRoot.parallaxFreezeValueY + ((effectiveValueY - bgRoot.parallaxFreezeValueY) * bgRoot.parallaxResumeProgress))
-
                 // Static wallpaper — when awww manages the visible wallpaper
                 // (externalMainWallpaperActive), this is just a hidden texture for blur.
-                // Otherwise (parallax, unsupported fill mode, etc.), this is the visible
-                // renderer and uses the user's transition settings.
                 WallpaperCrossfader {
                     id: wallpaper
                     objectName: "desktopWallpaper"
                     anchors.fill: parent
                     visible: !blurLoader.active && !bgRoot.backdropActive && !bgRoot.wallpaperIsGif && !bgRoot.wallpaperIsVideo
-                    opacity: (wallpaperContainer.showInternalStaticWallpaper ? 1 : 0) * bgRoot._awwwRevealOpacity
-                    // The backdrop replaces the desktop wallpaper outright: this
-                    // crossfader is hidden, blurAlwaysLoader is off, and the lock
-                    // blur cannot see it either (an invisible child never reaches
-                    // the ShaderEffectSource texture). Nothing consumes it, so drop
-                    // the source instead of holding a decoded fullscreen bitmap —
-                    // an Image with a source decodes whether or not it is visible.
+                    opacity: wallpaperContainer.showInternalStaticWallpaper ? 1 : 0
                     layer.enabled: wallpaperContainer.needsStaticTexture
                         && !wallpaperContainer.showInternalStaticWallpaper
-                    source: (bgRoot.wallpaperSafetyTriggered || !wallpaperContainer.needsStaticTexture)
+                    source: !wallpaperContainer.needsStaticTexture
                         ? "" : bgRoot.wallpaperPath
-                    // NEVER use crossfader transitions when awww is active — awww handles all transitions.
-                    // When parallax is on, the crossfader fades out to reveal awww's native transition.
                     enableTransitions: !AwwwBackend.active
                         && (Config.options?.background?.transition?.enable ?? true)
                     transitionType: Config.options?.background?.transition?.type ?? "crossfade"
@@ -1315,30 +979,17 @@ Scope {
                             : bgRoot.fillMode === "center" ? Image.Pad
                             : Image.PreserveAspectCrop
                     sourceSize {
-                        // Decode at screen resolution × monitor DPI scale. Do NOT multiply by
-                        // parallax effectiveWallpaperScale — that causes CPU upscaling which
-                        // produces pixelation. GPU scaling handles the parallax zoom cleanly.
                         width: Math.max(1, Math.round(bgRoot.screen.width * (bgRoot.monitor?.scale ?? 1)))
                         height: Math.max(1, Math.round(bgRoot.screen.height * (bgRoot.monitor?.scale ?? 1)))
                     }
 
                     onTransitionStarted: {
-                        // WallpaperCrossfader emits transitionStarted right after
-                        // its 2 texture-prime swaps complete. Release Auto Theming
-                        // now so colors morph in parallel with the transition.
                         const state = wallpaper.renderState()
                         Wallpapers.liquidWallpaperTransitionFinished(state.pendingSource || state.source)
-                        if (!bgRoot.dynamicParallaxRequested || !bgRoot.pauseParallaxDuringTransitions || AwwwBackend.active)
-                            return
-                        bgRoot.beginParallaxTransition(true, "wallpaper")
                     }
 
                     onTransitionFinished: {
-                        // Wallpaper colors are generated only after the actual
-                        // Liquid frame sequence, never during GPU texture upload.
                         Wallpapers.liquidWallpaperTransitionFinished(wallpaper.renderState().displayedSource)
-                        if (bgRoot._parallaxWaitingCrossfader && bgRoot._parallaxTransitionReason === "wallpaper")
-                            bgRoot.settleParallaxAfterTransition()
                     }
                 }
 
@@ -1726,41 +1377,14 @@ Scope {
                     enabled: Appearance.animationsEnabled
                     animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
-                readonly property bool useParallax: wallpaperContainer.useParallax && !bgRoot.backdropActive
                 anchors {
                     left: parent.left
                     right: parent.right
                     top: parent.top
                     bottom: parent.bottom
                 }
-                // Parallax widget depth: translate the canvas as a whole to create
-                // layered movement relative to the wallpaper.
-                transform: Translate {
-                    x: widgetCanvas._parallaxActive ? (bgRoot.parallaxTotalX * wallpaperContainer.activeValueX * (1 - bgRoot.parallaxWidgetDepth)) : 0
-                    y: widgetCanvas._parallaxActive ? (bgRoot.parallaxTotalY * wallpaperContainer.activeValueY * (1 - bgRoot.parallaxWidgetDepth)) : 0
-                    Behavior on x {
-                        enabled: Appearance.animationsEnabled
-                            && !GlobalStates.widgetEditMode
-                            && ((!bgRoot.parallaxTransitionActive && bgRoot.parallaxResumeProgress >= 1)
-                                || bgRoot._parallaxWaitingCrossfader)
-                        animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
-                    }
-                    Behavior on y {
-                        enabled: Appearance.animationsEnabled
-                            && !GlobalStates.widgetEditMode
-                            && ((!bgRoot.parallaxTransitionActive && bgRoot.parallaxResumeProgress >= 1)
-                                || bgRoot._parallaxWaitingCrossfader)
-                        animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
-                    }
-                }
                 width: parent.width
                 height: parent.height
-                // Static fill/zoom must not move widgets when parallax is off.
-                // Editing uses physical output coordinates for the grid, drag
-                // snapping, native input and the reparented connected toolbar.
-                readonly property bool _parallaxActive: useParallax
-                    && bgRoot.dynamicParallaxRequested && !GlobalStates.widgetEditMode
-                    && !GlobalStates.screenLocked && !bgRoot.wallpaperSafetyTriggered && !bgRoot.backdropActive
 
                 // Managed desktop items are a separate, lightweight canvas model.
                 // The coordinator is deliberately beneath widget receivers so
@@ -2172,9 +1796,9 @@ Scope {
                             }
                         }
                         onVisibleChanged: if (visible && available) requestPaint()
-                        onWidthChanged: if (available) requestPaint()
-                        onHeightChanged: if (available) requestPaint()
-                        Component.onCompleted: requestPaint()
+                        onWidthChanged: if (visible && available) requestPaint()
+                        onHeightChanged: if (visible && available) requestPaint()
+                        Component.onCompleted: if (visible && available) requestPaint()
                         Connections {
                             target: editGridOverlay
                             function onGridSizeChanged() { editGridCanvas.requestPaint() }
@@ -2335,15 +1959,32 @@ Scope {
                         NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
                     }
 
-                    DesktopWidgetEditToolbar {
-                        windowContext: bgRoot
-                        safeBounds: editGridOverlay
-                        manager: widgetManagerPanel
-                        fallbackParent: editControlsOverlay
-                        obstacles: GlobalStates.widgetEditMode
-                            ? widgetCanvas._loadedDesktopWidgets().map(item => ({
-                                key:item.editInstanceKey, x:item.x, y:item.y,
-                                width:item.width, height:item.height})) : []
+                    Loader {
+                        id: editToolbarLoader
+                        active: GlobalStates.widgetEditMode || editControlsOverlay.visible
+                        function _syncToolbar(): void {
+                            if (active) {
+                                if (!item) {
+                                    setSource(Qt.resolvedUrl("widgets/DesktopWidgetEditToolbar.qml"), {
+                                        windowContext: bgRoot,
+                                        safeBounds: editGridOverlay,
+                                        manager: widgetManagerPanel,
+                                        fallbackParent: editControlsOverlay
+                                    })
+                                }
+                            } else if (source.toString().length > 0) {
+                                source = ""
+                            }
+                        }
+                        Component.onCompleted: _syncToolbar()
+                        onActiveChanged: _syncToolbar()
+                        onLoaded: {
+                            if (!item) return
+                            item.obstacles = Qt.binding(() => GlobalStates.widgetEditMode
+                                ? widgetCanvas._loadedDesktopWidgets().map(w => ({
+                                    key: w.editInstanceKey, x: w.x, y: w.y,
+                                    width: w.width, height: w.height})) : [])
+                        }
                     }
 
                     // ── Widget Manager Panel ─────────────────────────
@@ -2376,273 +2017,221 @@ Scope {
                             })
                         }
 
-                        onShownChanged: if (shown) restoreGeometry()
+                        onShownChanged: {
+                            if (shown) {
+                                setSource(Qt.resolvedUrl("widgets/WidgetManagerPanel.qml"), {
+                                    outputName: bgRoot.screen?.name ?? "",
+                                    canvasWidth: widgetManagerPanel.parent?.width ?? 800,
+                                    canvasHeight: widgetManagerPanel.parent?.height ?? 600,
+                                    screenWidth: bgRoot.screen.width,
+                                    screenHeight: bgRoot.screen.height
+                                })
+                                restoreGeometry()
+                            } else {
+                                source = ""
+                            }
+                        }
 
-                        sourceComponent: WidgetManagerPanel {
-                            outputName: bgRoot.screen?.name ?? ""
-                            canvasWidth: widgetManagerPanel.parent?.width ?? 800
-                            canvasHeight: widgetManagerPanel.parent?.height ?? 600
-                            screenWidth: bgRoot.screen.width
-                            screenHeight: bgRoot.screen.height
-                            onCloseRequested: widgetManagerPanel.shown = false
-                            onFocusWidgetRequested: layoutKey => {
+                        onLoaded: restoreGeometry()
+
+                        Connections {
+                            target: widgetManagerPanel.item
+                            function onCloseRequested(): void {
+                                widgetManagerPanel.shown = false
+                            }
+                            function onFocusWidgetRequested(layoutKey: string): void {
                                 GlobalStates.selectDesktopWidget(
                                     bgRoot.screenName + "::" + layoutKey)
                             }
-                            Component.onCompleted: widgetManagerPanel.restoreGeometry()
+                        }
+
+                        Connections {
+                            target: widgetManagerPanel.parent
+                            function onWidthChanged(): void {
+                                if (widgetManagerPanel.item)
+                                    widgetManagerPanel.item.canvasWidth = widgetManagerPanel.parent?.width ?? 800
+                            }
+                            function onHeightChanged(): void {
+                                if (widgetManagerPanel.item)
+                                    widgetManagerPanel.item.canvasHeight = widgetManagerPanel.parent?.height ?? 600
+                            }
+                        }
+
+                        Connections {
+                            target: bgRoot.screen
+                            function onWidthChanged(): void {
+                                if (widgetManagerPanel.item)
+                                    widgetManagerPanel.item.screenWidth = bgRoot.screen.width
+                            }
+                            function onHeightChanged(): void {
+                                if (widgetManagerPanel.item)
+                                    widgetManagerPanel.item.screenHeight = bgRoot.screen.height
+                            }
                         }
                     }
                 }
 
-                FadeLoader {
+                component DesktopWidgetLoader: FadeLoader {
+                    id: dwLoader
+                    required property string widgetSource
+                    required property int widgetIndex
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _dwHitMask : null
+                    Item {
+                        id: _dwHitMask
+                        x: parent?.item?.editInputX ?? -8
+                        y: parent?.item?.editInputY ?? -8
+                        width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16)
+                        height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16)
+                    }
+                    function _syncSource(): void {
+                        if (active) {
+                            if (!item) {
+                                setSource(Qt.resolvedUrl(widgetSource), {
+                                    widgetIndex: dwLoader.widgetIndex,
+                                    outputName: bgRoot.screen?.name ?? "",
+                                    screenWidth: bgRoot.screen.width,
+                                    screenHeight: bgRoot.screen.height,
+                                    scaledScreenWidth: bgRoot.screen.width,
+                                    scaledScreenHeight: bgRoot.screen.height,
+                                    wallpaperScale: 1
+                                })
+                            }
+                        } else if (source.toString().length > 0) {
+                            source = ""
+                        }
+                    }
+                    Component.onCompleted: _syncSource()
+                    onActiveChanged: _syncSource()
+                    Connections {
+                        target: bgRoot.screen
+                        function onWidthChanged(): void {
+                            if (!dwLoader.item) return
+                            dwLoader.item.screenWidth = bgRoot.screen.width
+                            dwLoader.item.scaledScreenWidth = bgRoot.screen.width
+                        }
+                        function onHeightChanged(): void {
+                            if (!dwLoader.item) return
+                            dwLoader.item.screenHeight = bgRoot.screen.height
+                            dwLoader.item.scaledScreenHeight = bgRoot.screen.height
+                        }
+                    }
+                }
+
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("weather", false)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask : null
-                    Item { id: _hitMask; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: WeatherWidget {
-                        widgetIndex: 0
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/weather/WeatherWidget.qml"
+                    widgetIndex: 0
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("customImage", false)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskCustomImage : null
-                    Item { id: _hitMaskCustomImage; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: CustomImageWidget {
-                        widgetIndex: 16
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/CustomImageWidget.qml"
+                    widgetIndex: 16
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("imageConverter", false)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskImageConverter : null
-                    Item { id: _hitMaskImageConverter; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: ImageConverterWidget {
-                        widgetIndex: 17
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/imageConverter/ImageConverterWidget.qml"
+                    widgetIndex: 17
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
+                    id: clockDesktopWidgetLoader
                     shown: bgRoot._widgetEnabled("clock", true)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask2 : null
-                    Item { id: _hitMask2; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: ClockWidget {
-                        widgetIndex: 1
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                        wallpaperSafetyTriggered: bgRoot.wallpaperSafetyTriggered
-                        debugRegionActive: backgroundScope.clockDebugRegionActive
-                        debugRegionColor: backgroundScope.clockDebugRegionColor
-                        debugRegionBrightness: backgroundScope.clockDebugRegionBrightness
-                        debugRegionSpread: backgroundScope.clockDebugRegionSpread
-                        debugQuickControlsOpen: backgroundScope.clockDebugQuickControlsOpen
-                        debugLayoutProbeActive: backgroundScope.clockDebugLayoutProbeActive
-                        debugLayoutProbeX: backgroundScope.clockDebugLayoutProbeX
-                        debugLayoutProbeY: backgroundScope.clockDebugLayoutProbeY
-                        onDebugPaletteReportChanged: backgroundScope.clockDebugPaletteReport = debugPaletteReport
-                        onEditControlsGeometryReportChanged: backgroundScope.clockDebugControlsReport = editControlsGeometryReport
+                    widgetSource: "widgets/clock/ClockWidget.qml"
+                    widgetIndex: 1
+                    onLoaded: {
+                        if (!item) return
+                        item.wallpaperSafetyTriggered = Qt.binding(() => bgRoot.wallpaperSafetyTriggered)
+                        item.debugRegionActive = Qt.binding(() => backgroundScope.clockDebugRegionActive)
+                        item.debugRegionColor = Qt.binding(() => backgroundScope.clockDebugRegionColor)
+                        item.debugRegionBrightness = Qt.binding(() => backgroundScope.clockDebugRegionBrightness)
+                        item.debugRegionSpread = Qt.binding(() => backgroundScope.clockDebugRegionSpread)
+                        item.debugQuickControlsOpen = Qt.binding(() => backgroundScope.clockDebugQuickControlsOpen)
+                        item.debugLayoutProbeActive = Qt.binding(() => backgroundScope.clockDebugLayoutProbeActive)
+                        item.debugLayoutProbeX = Qt.binding(() => backgroundScope.clockDebugLayoutProbeX)
+                        item.debugLayoutProbeY = Qt.binding(() => backgroundScope.clockDebugLayoutProbeY)
+                        backgroundScope.clockDebugPaletteReport = item.debugPaletteReport
+                        backgroundScope.clockDebugControlsReport = item.editControlsGeometryReport
+                    }
+                    Connections {
+                        target: clockDesktopWidgetLoader.item
+                        function onDebugPaletteReportChanged(): void {
+                            if (clockDesktopWidgetLoader.item)
+                                backgroundScope.clockDebugPaletteReport = clockDesktopWidgetLoader.item.debugPaletteReport
+                        }
+                        function onEditControlsGeometryReportChanged(): void {
+                            if (clockDesktopWidgetLoader.item)
+                                backgroundScope.clockDebugControlsReport = clockDesktopWidgetLoader.item.editControlsGeometryReport
+                        }
                     }
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("mediaControls", false)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask3 : null
-                    Item { id: _hitMask3; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: MediaControlsWidget {
-                        widgetIndex: 2
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/mediaControls/MediaControlsWidget.qml"
+                    widgetIndex: 2
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("visualizer", false)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask4 : null
-                    Item { id: _hitMask4; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: VisualizerWidget {
-                        widgetIndex: 3
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/visualizer/VisualizerWidget.qml"
+                    widgetIndex: 3
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("systemMonitor", false)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask5 : null
-                    Item { id: _hitMask5; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: SystemMonitorWidget {
-                        widgetIndex: 4
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/systemMonitor/SystemMonitorWidget.qml"
+                    widgetIndex: 4
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("battery", false) && Battery.available
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask6 : null
-                    Item { id: _hitMask6; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: BatteryWidget {
-                        widgetIndex: 5
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/battery/BatteryWidget.qml"
+                    widgetIndex: 5
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("notes", false)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask7 : null
-                    Item { id: _hitMask7; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: NotesWidget {
-                        widgetIndex: 6
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/notes/NotesWidget.qml"
+                    widgetIndex: 6
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("calendarUpcoming", false)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask8 : null
-                    Item { id: _hitMask8; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: CalendarUpcomingWidget {
-                        widgetIndex: 7
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/calendar/CalendarUpcomingWidget.qml"
+                    widgetIndex: 7
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("uptime", false)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask10 : null
-                    Item { id: _hitMask10; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: UptimeWidget {
-                        widgetIndex: 9
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/uptime/UptimeWidget.qml"
+                    widgetIndex: 9
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("worldClock", false)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask15 : null
-                    Item { id: _hitMask15; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: WorldClockWidget {
-                        widgetIndex: 14
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/worldClock/WorldClockWidget.qml"
+                    widgetIndex: 14
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("userCard", false)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask16 : null
-                    Item { id: _hitMask16; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: UserCardWidget {
-                        widgetIndex: 15
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/userCard/UserCardWidget.qml"
+                    widgetIndex: 15
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("newsTicker", false)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask12 : null
-                    Item { id: _hitMask12; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: NewsTickerWidget {
-                        widgetIndex: 11
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/newsTicker/NewsTickerWidget.qml"
+                    widgetIndex: 11
                 }
 
-                FadeLoader {
+                DesktopWidgetLoader {
                     shown: bgRoot._widgetEnabled("japaneseTypography", false)
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask14 : null
-                    Item { id: _hitMask14; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
-                    sourceComponent: JapaneseTypographyWidget {
-                        widgetIndex: 13
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
+                    widgetSource: "widgets/japaneseTypography/JapaneseTypographyWidget.qml"
+                    widgetIndex: 13
                 }
 
                 // Custom user widgets from ~/.config/alis/widgets/

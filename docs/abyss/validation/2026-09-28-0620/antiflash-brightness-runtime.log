@@ -1,1 +1,0 @@
-PASS: real dimming, unchanged base, lock/sleep cancellation, wake resampling and disable restoration with fake hardware [33, 46, 49, 50, 10, 50, 10, 50, 50, 10, 50]

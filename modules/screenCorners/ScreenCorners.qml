@@ -116,12 +116,10 @@ Scope {
         readonly property bool cornerPopupInteractionBlocked:
             GlobalStates.screenLocked
             || GlobalStates.bootGreetingOpen
-            || GlobalStates.crosshairOpen
             || GlobalStates.sidebarLeftOpen
             || GlobalStates.sidebarRightOpen
             || GlobalStates.mediaControlsOpen
             || GlobalStates.oskOpen
-            || GlobalStates.overlayOpen
             || GlobalStates.overviewOpen
             || GlobalStates.altSwitcherOpen
             || GlobalStates.clipboardOpen
@@ -141,6 +139,11 @@ Scope {
             || GlobalStates.controlPanelOpen
             || GlobalStates.dashboardOpen
             || GlobalStates.searchOpen
+            || GlobalStates.waffleWidgetsOpen
+            || GlobalStates.waffleActionCenterOpen
+            || GlobalStates.waffleNotificationCenterOpen
+            || GlobalStates.waffleClipboardOpen
+            || GlobalStates.waffleTaskViewOpen
         readonly property bool quickNotesInteractionBlocked:
             cornerPanelWindow.cornerPopupInteractionBlocked
             || GlobalStates.notificationCenterOpen
@@ -308,7 +311,9 @@ Scope {
         // Explicit corner features own their physical corner before the legacy
         // sidebar trigger. This lets bottom-left become Quick Notes without
         // deleting the old corner-open compatibility settings.
-        readonly property bool shouldShowSidebarCornerOpen: shouldShowCornerOpen
+        readonly property bool shouldShowSidebarCornerOpen:
+            (Config.options?.panelFamily ?? "ii") !== "waffle"
+            && shouldShowCornerOpen
             && !niriOverviewOwnsCorner
             && !shouldShowQuickNotesCorner
             && !notificationCenterHostNeeded

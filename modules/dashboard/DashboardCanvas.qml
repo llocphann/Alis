@@ -1951,6 +1951,17 @@ Item {
         }
     }
 
+    function handleEscape(): bool {
+        for (let i = 0; i < moduleRepeater.count; i++) {
+            const wrap = moduleRepeater.itemAt(i)
+            if (wrap?.visible && typeof wrap.moduleItem?.handleEscape === "function"
+                    && wrap.moduleItem.handleEscape()) {
+                return true
+            }
+        }
+        return false
+    }
+
     Item {
         id: viewport
         anchors.fill: parent
@@ -1982,6 +1993,7 @@ Item {
         }
 
         Repeater {
+            id: moduleRepeater
             // Keep delegate identity stable for the whole Dashboard lifetime.
             // A JS-array model derived from _preview would recreate delegates
             // during pointer updates and look like cards were blinking/chopping.
@@ -1991,6 +2003,7 @@ Item {
                 id: cardWrap
                 required property var modelData
                 readonly property var px: root._rectPixels(String(modelData))
+                property alias moduleItem: moduleContent.item
                 visible: root.visibleIds.includes(String(modelData))
                 readonly property bool selected:
                     root.editMode && root.selectedId === String(modelData)

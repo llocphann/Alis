@@ -103,11 +103,8 @@ depends=(
   libdbusmenu-gtk3
   pavucontrol
   mpv
-  mpv-mpris
   mpd
   mpd-mpris
-  yt-dlp
-  python-ytmusicapi
 
   #--- Theming ---
   noto-fonts-emoji

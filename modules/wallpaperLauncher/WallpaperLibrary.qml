@@ -69,7 +69,7 @@ Scope {
         root.scanning = true
         colorTagsTimer.restart()
         scanProcess.exec([
-            "find", ...roots, "-type", "f", "(",
+            "find", "-L", ...roots, "-type", "f", "(",
             "-iname", "*.jpg", "-o", "-iname", "*.jpeg", "-o",
             "-iname", "*.png", "-o", "-iname", "*.webp", "-o",
             "-iname", "*.avif", "-o", "-iname", "*.bmp", "-o",

@@ -9,7 +9,7 @@ import qs.modules.waffle.settings
 
 WSettingsPage {
     id: root
-    settingsPageIndex: 18
+    settingsPageIndex: 16
     pageTitle: Translation.tr("Battery")
     pageIcon: "battery-saver"
     pageDescription: Translation.tr("Charge care, power profiles, processor, devices, and the effective TLP configuration")

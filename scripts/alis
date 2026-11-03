@@ -21,11 +21,14 @@ esac
 # Qt requires a UTF-8 process locale. Preserve every already-valid user locale,
 # but repair legacy C/ASCII launch environments before Quickshell starts.
 _alis_ensure_utf8_locale() {
-    local charmap=""
+    local locale_err="" charmap=""
+    locale_err="$(locale 2>&1 >/dev/null || true)"
     charmap="$(locale charmap 2>/dev/null || true)"
-    case "${charmap^^}" in
-        UTF-8|UTF8) return ;;
-    esac
+    if [[ -z "$locale_err" ]]; then
+        case "${charmap^^}" in
+            UTF-8|UTF8) return ;;
+        esac
+    fi
 
     local candidate candidate_map
     for candidate in C.UTF-8 C.utf8; do
@@ -43,7 +46,7 @@ _alis_ensure_utf8_locale
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 for _alis_compat_helper in \
     "$script_dir/lib/brand-env-compat.sh" \
-    "${ALIS_RUNTIME_DIR:-${INIR_RUNTIME_DIR:-}}/scripts/lib/brand-env-compat.sh" \
+    "${ALIS_RUNTIME_DIR:-${ALIS_RUNTIME_DIR:-}}/scripts/lib/brand-env-compat.sh" \
     "$script_dir/../share/quickshell/alis/scripts/lib/brand-env-compat.sh" \
     "${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis/scripts/lib/brand-env-compat.sh" \
     /usr/local/share/quickshell/alis/scripts/lib/brand-env-compat.sh \
@@ -60,6 +63,28 @@ user_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis"
 system_config_dir="${ALIS_SYSTEM_RUNTIME_DIR:-/usr/local/share/quickshell/alis}"
 fallback_system_config_dir="${ALIS_FALLBACK_SYSTEM_RUNTIME_DIR:-/usr/share/quickshell/alis}"
 config_dir="${ALIS_RUNTIME_DIR:-}"
+
+# Fast path for high-frequency hardware media/volume/brightness keys so held
+# key-repeats do not spawn ~15 discovery subprocesses per tick.
+case "${1:-}:${2:-}" in
+    audio:volumeUp|audio:volumeDown|audio:mute|audio:micMute|brightness:increment|brightness:decrement|mpris:playPause|mpris:next|mpris:previous)
+        if [[ $# -eq 2 ]]; then
+            case "${1}:${2}" in
+                audio:volumeUp|audio:volumeDown|brightness:increment|brightness:decrement)
+                    if command -v flock >/dev/null 2>&1; then
+                        exec 9>"${XDG_RUNTIME_DIR:-/tmp}/alis-fast-ipc-${1}-${2}.lock"
+                        flock -n 9 || exit 0
+                    fi
+                    ;;
+            esac
+            _fast_dir="${config_dir:-$user_config_dir}"
+            if [[ -f "$_fast_dir/shell.qml" ]]; then
+                "$qs_bin" -p "$_fast_dir" ipc call "$1" "$2" >/dev/null 2>&1 && exit 0
+            fi
+            unset _fast_dir
+        fi
+        ;;
+esac
 poll_delay="${ALIS_RESTART_POLL_DELAY:-0.1}"
 max_polls="${ALIS_RESTART_MAX_POLLS:-60}"
 max_rapid_restarts="${ALIS_MAX_RAPID_RESTARTS:-5}"
@@ -158,7 +183,7 @@ EOF
 
     cat <<'EOF'
 Runtime:
-  start, stop, run, restart, kill, terminal, browser, close-window, colorpicker
+  start, stop, run, restart, kill, terminal, browser, close-window, colorpicker, touchpad
 
 Maintenance (delegates to setup):
   install, reinstall, update, doctor, status, migrate, rollback, my-changes, uninstall
@@ -1382,6 +1407,28 @@ check_qs_abi() {
     local mismatch_detected=false
     local mismatch_msg=""
 
+    # Fast cache check keyed on binary mtimes to avoid spawning `qs --version`
+    # and `strings` on every startup when neither binary has changed.
+    local abi_cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/alis"
+    local abi_cache_file="$abi_cache_dir/abi-check"
+    local qs_mtime qt_mtime abi_cache_key
+    qs_mtime="$(stat -c %Y "$qs_bin" 2>/dev/null || echo 0)"
+    local qt_lib_path=""
+    if [[ -e /usr/lib/libQt6Core.so.6 ]]; then
+        qt_lib_path="/usr/lib/libQt6Core.so.6"
+    elif [[ -e /usr/lib64/libQt6Core.so.6 ]]; then
+        qt_lib_path="/usr/lib64/libQt6Core.so.6"
+    fi
+    qt_mtime="$(stat -c %Y "$(readlink -f "$qt_lib_path" 2>/dev/null || echo "$qt_lib_path")" 2>/dev/null || echo 0)"
+    # v2 prefix invalidates pre-fix caches that passed under major.minor-only comparison
+    # (those would have wrongly cached a pass for e.g. 6.11.0 -> 6.11.1 patch bumps).
+    abi_cache_key="v2:${qs_mtime}:${qt_mtime}"
+
+    if [[ "$qs_mtime" != "0" && "$qt_mtime" != "0" && -f "$abi_cache_file" ]] && [[ "$(<"$abi_cache_file")" == "$abi_cache_key" ]]; then
+        # Cached pass — same binaries as last successful check
+        return 0
+    fi
+
     # Primary: qs --version may print mismatch warning on stderr
     local qs_output
     qs_output="$("$qs_bin" --version 2>&1 || true)"
@@ -1391,28 +1438,7 @@ check_qs_abi() {
     fi
 
     # Secondary: compare compile-time Qt (from binary strings) vs runtime Qt (from lib symlink).
-    # Cache the result keyed on binary mtimes to avoid re-running `strings` on every start.
     if ! $mismatch_detected && command -v strings >/dev/null 2>&1; then
-        local abi_cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/alis"
-        local abi_cache_file="$abi_cache_dir/abi-check"
-        local qs_mtime qt_mtime abi_cache_key
-        qs_mtime="$(stat -c %Y "$qs_bin" 2>/dev/null || echo 0)"
-        local qt_lib_path=""
-        if [[ -e /usr/lib/libQt6Core.so.6 ]]; then
-            qt_lib_path="/usr/lib/libQt6Core.so.6"
-        elif [[ -e /usr/lib64/libQt6Core.so.6 ]]; then
-            qt_lib_path="/usr/lib64/libQt6Core.so.6"
-        fi
-        qt_mtime="$(stat -c %Y "$(readlink -f "$qt_lib_path" 2>/dev/null || echo "$qt_lib_path")" 2>/dev/null || echo 0)"
-        # v2 prefix invalidates pre-fix caches that passed under major.minor-only comparison
-        # (those would have wrongly cached a pass for e.g. 6.11.0 -> 6.11.1 patch bumps).
-        abi_cache_key="v2:${qs_mtime}:${qt_mtime}"
-
-        if [[ -f "$abi_cache_file" ]] && [[ "$(<"$abi_cache_file")" == "$abi_cache_key" ]]; then
-            # Cached pass — same binaries as last successful check
-            return 0
-        fi
-
         local buildtime_qt=""
         local runtime_qt=""
         buildtime_qt="$(strings "$qs_bin" 2>/dev/null | grep -P '^6\.\d+\.\d+$' | head -1 || true)"
@@ -1428,12 +1454,12 @@ check_qs_abi() {
             mismatch_detected=true
             mismatch_msg="Quickshell built against Qt $buildtime_qt but system has Qt $runtime_qt"
         fi
+    fi
 
-        # Cache successful result so next start skips the expensive strings scan
-        if ! $mismatch_detected; then
-            mkdir -p "$abi_cache_dir" 2>/dev/null || true
-            printf '%s' "$abi_cache_key" > "$abi_cache_file" 2>/dev/null || true
-        fi
+    # Cache successful result so next start skips the expensive qs --version + strings scan
+    if ! $mismatch_detected && [[ "$qs_mtime" != "0" && "$qt_mtime" != "0" ]]; then
+        mkdir -p "$abi_cache_dir" 2>/dev/null || true
+        printf '%s' "$abi_cache_key" > "$abi_cache_file" 2>/dev/null || true
     fi
 
     if ! $mismatch_detected; then
@@ -1634,7 +1660,7 @@ wait_for_wayland_socket() {
     [[ -n "${WAYLAND_DISPLAY:-}" ]] && return 0
 
     local runtime_dir="/run/user/$(id -u)"
-    local max_polls=50  # 50 × 0.2s = 10 seconds max
+    local max_polls=400  # 400 × 0.025s = 10 seconds max
     local i=0
 
     while (( i < max_polls )); do
@@ -1645,7 +1671,7 @@ wait_for_wayland_socket() {
                 return 0
             fi
         done
-        sleep 0.2
+        sleep 0.025
         (( i++ )) || true
     done
 
@@ -1887,23 +1913,27 @@ apply_qt_runtime_env() {
     local _qs_sys_env
     _qs_sys_env="$(_get_systemd_user_env)"
     if [[ -n "$_qs_sys_env" ]]; then
-        local _qs_var _qs_val
-        for _qs_var in XDG_SESSION_TYPE XDG_SESSION_DESKTOP DESKTOP_SESSION \
-                       DISPLAY XCURSOR_THEME XCURSOR_SIZE \
-                       LANG LC_ALL XDG_MENU_PREFIX \
-                       ELECTRON_OZONE_PLATFORM_HINT QT_STYLE_OVERRIDE \
-                       QT_IM_MODULE XMODIFIERS GDK_BACKEND; do
-            if [[ -z "${!_qs_var:-}" ]]; then
-                _qs_val="$(grep "^${_qs_var}=" <<< "$_qs_sys_env" | head -1 | cut -d= -f2- || true)"
-                [[ -n "$_qs_val" ]] && export "${_qs_var}=${_qs_val}"
-            fi
-        done
+        local _qs_var _qs_val _qs_sys_path=""
+        while IFS='=' read -r _qs_var _qs_val; do
+            case "$_qs_var" in
+                XDG_SESSION_TYPE|XDG_SESSION_DESKTOP|DESKTOP_SESSION|\
+                DISPLAY|XCURSOR_THEME|XCURSOR_SIZE|\
+                LANG|LC_ALL|XDG_MENU_PREFIX|\
+                ELECTRON_OZONE_PLATFORM_HINT|QT_STYLE_OVERRIDE|\
+                QT_IM_MODULE|XMODIFIERS|GDK_BACKEND)
+                    if [[ -z "${!_qs_var:-}" && -n "$_qs_val" ]]; then
+                        export "${_qs_var}=${_qs_val}"
+                    fi
+                    ;;
+                PATH)
+                    [[ -z "$_qs_sys_path" ]] && _qs_sys_path="$_qs_val"
+                    ;;
+            esac
+        done <<< "$_qs_sys_env"
         # Use the manager's rich PATH (set by compositor + PAM login) which
         # includes user dirs (~/.local/bin, flatpak exports, nvm, pnpm, etc.)
         # absent from the minimal systemd unit PATH. ShellExec repeats this
         # synchronization at user-app launch time to avoid a stale snapshot.
-        local _qs_sys_path
-        _qs_sys_path="$(grep '^PATH=' <<< "$_qs_sys_env" | head -1 | cut -d= -f2- || true)"
         if [[ -n "$_qs_sys_path" && "$_qs_sys_path" != "$PATH" ]]; then
             local _qs_merged="$_qs_sys_path"
             for _qs_p in /usr/local/bin /usr/bin; do
@@ -1915,6 +1945,7 @@ apply_qt_runtime_env() {
             export PATH="$_qs_merged"
         fi
     fi
+    _alis_ensure_utf8_locale
 
     # Electron Wayland hint for the shell's startup environment and legacy
     # internal child paths. User-facing apps take the live user-manager value
@@ -1939,7 +1970,7 @@ apply_qt_runtime_env() {
 }
 
 apply_qt_logging_rules() {
-    local extra_rules="quickshell.dbus.properties=false;qt.qml.settings.warning=false;qt.core.qsettings.warning=false;kf.xmlgui=false;kf.coreaddons=false;kf.config.core=false;kf.iconthemes=false"
+    local extra_rules="quickshell.dbus.properties=false;qt.qpa.wayland.textinput=false;qt.qml.settings.warning=false;qt.core.qsettings.warning=false;kf.xmlgui=false;kf.coreaddons=false;kf.config.core=false;kf.iconthemes=false"
 
     if [[ -z "${QT_LOGGING_RULES:-}" ]]; then
         export QT_LOGGING_RULES="$extra_rules"
@@ -1947,7 +1978,7 @@ apply_qt_logging_rules() {
     fi
 
     case ";${QT_LOGGING_RULES};" in
-        *";qt.core.qsettings.warning=false;"*)
+        *";qt.qpa.wayland.textinput=false;"*)
             ;;
         *)
             export QT_LOGGING_RULES="${QT_LOGGING_RULES};${extra_rules}"
@@ -3509,21 +3540,13 @@ EOF
                     : ;; # Broad files do not turn a focused audit into an exhaustive one.
                 modules/sidebarLeft/aiChat/*|modules/sidebarLeft/AiChat.qml|modules/sidebarLeft/ApiInputBoxIndicator.qml|services/Ai.qml|services/ai/*)
                     select_prefix "sidebar-left/ai"; select_prefix "settings/ai" ;;
-                modules/sidebarLeft/widgets/*|modules/sidebarLeft/WidgetsView.qml)
-                    select_prefix "sidebar-left/widgets" ;;
                 modules/sidebarLeft/*)
                     area="${changed_path#modules/sidebarLeft/}"
                     area="${area%%/*}"
                     case "$area" in
-                        *AnimeSchedule*) select_prefix "sidebar-left/anime-schedule" ;;
-                        *Anime*) select_prefix "sidebar-left/anime" ;;
                         *News*) select_prefix "sidebar-left/news" ;;
-                        *Software*) select_prefix "sidebar-left/software" ;;
-                        *LocalMusic*) select_prefix "dashboard/music" ;;
-                        *YtMusic*|innertune) select_prefix "dashboard/music" ;;
                         *Translator*) select_prefix "sidebar-left/translator" ;;
-                        *Wallhaven*) select_prefix "sidebar-left/wallhaven" ;;
-                        *Tools*|plugins) select_prefix "sidebar-left/tools" ;;
+                        *Tools*) select_prefix "sidebar-left/tools" ;;
                         *) : ;;
                     esac ;;
                 modules/notificationCenter/*) select_prefix "notification-center" ;;
@@ -3854,7 +3877,7 @@ case "$command_name" in
             check_qs_abi
             wait_for_wayland_socket       # block until compositor socket exists
             apply_qt_runtime_env          # WAYLAND_DISPLAY + platformtheme fallback
-            if has_instances "$config_dir"; then
+            if pgrep -x 'qs|quickshell' >/dev/null 2>&1 && has_instances "$config_dir"; then
                 kill_shell "$config_dir"
                 wait_for_stop "$config_dir" >/dev/null 2>&1 || true
             fi
@@ -4087,6 +4110,60 @@ case "$command_name" in
             exit 1
         fi
         exec /usr/bin/hyprpicker -a
+        ;;
+    touchpad)
+        _tp_action="${1:-toggle}"
+        case "$_tp_action" in
+            -h|--help)
+                echo "Usage: alis touchpad [toggle|on|off|status]" >&2
+                exit 0
+                ;;
+            toggle|on|off|status) ;;
+            *)
+                echo "Unknown touchpad action: $_tp_action (expected toggle, on, off, or status)" >&2
+                exit 1
+                ;;
+        esac
+        resolve_config_dir 2>/dev/null || true
+        _tp_dispatch=""
+        for _cand in \
+            "$script_dir/native-dispatch" \
+            "${config_dir:-}/scripts/native-dispatch" \
+            "$user_config_dir/scripts/native-dispatch" \
+            "$launcher_root/share/quickshell/alis/scripts/native-dispatch" \
+            "$system_config_dir/scripts/native-dispatch" \
+            "$fallback_system_config_dir/scripts/native-dispatch"; do
+            if [[ -n "$_cand" && -x "$_cand" ]]; then
+                _tp_dispatch="$_cand"
+                break
+            fi
+        done
+        if [[ -z "$_tp_dispatch" ]]; then
+            echo "native-dispatch not found" >&2
+            exit 1
+        fi
+        if [[ "$_tp_action" == "status" ]]; then
+            _tp_json="$("$_tp_dispatch" niri get-input 2>/dev/null || true)"
+            if [[ "$_tp_json" == *'"touchpad"'*'"off":true'* ]] || [[ "$_tp_json" == *'"touchpad"'*'"off": true'* ]]; then
+                echo "off"
+            else
+                echo "on"
+            fi
+            exit 0
+        fi
+        case "$_tp_action" in
+            toggle) "$_tp_dispatch" niri set input touchpad.off toggle >/dev/null ;;
+            on)     "$_tp_dispatch" niri set input touchpad.off off >/dev/null ;;
+            off)    "$_tp_dispatch" niri set input touchpad.off on >/dev/null ;;
+        esac
+        _tp_state="on"
+        _tp_file="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.d/10-input-and-cursor.kdl"
+        if [[ -f "$_tp_file" ]] && sed -n '/^[[:space:]]*touchpad[[:space:]]*{/,/^[[:space:]]*}/p' "$_tp_file" | grep -qE '^[[:space:]]*off([[:space:]]+true)?[[:space:]]*$'; then
+            _tp_state="off"
+        fi
+        if find_qs 2>/dev/null && [[ -n "${config_dir:-}" ]]; then
+            "$qs_bin" -p "$config_dir" ipc call osdInput touchpad "$_tp_state" >/dev/null 2>&1 || true
+        fi
         ;;
     ipc)
         require_qs

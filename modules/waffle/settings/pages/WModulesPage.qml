@@ -91,9 +91,8 @@ WSettingsPage {
             description: Translation.tr("Changing this will reload the shell")
             currentValue: Config.options?.panelFamily ?? "waffle"
             options: [
-                { value: "ii", displayName: Translation.tr("Material (ii)") },
-                { value: "waffle", displayName: Translation.tr("Windows 11 (Waffle)") },
-                { value: "abyss", displayName: "Abyss" }
+                { value: "abyss", displayName: "Abyss" },
+                { value: "waffle", displayName: Translation.tr("Windows 11 (Waffle)") }
             ]
             onSelected: newValue => {
                 if (newValue !== Config.options?.panelFamily) {

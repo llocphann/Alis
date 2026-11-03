@@ -4,7 +4,6 @@ import Quickshell
 import Quickshell.Wayland
 import qs
 import qs.modules.common
-import qs.modules.common.widgets
 import qs.modules.common.perimeter
 import qs.services
 
@@ -369,23 +368,30 @@ Scope {
                         Repeater {
                             model: root.toasts
 
-                            delegate: ToastNotification {
+                            delegate: Loader {
+                                id: toastDelegate
                                 required property var modelData
                                 required property int index
-
-                                connectedSurface: true
-                                title: modelData.title
-                                message: modelData.message
-                                icon: modelData.icon
-                                isError: modelData.isError
-                                duration: modelData.duration
-                                source: modelData.source
-                                accentColor: modelData.accentColor
-
-                                opacity: 1
-                                scale: 1
-
+                                property bool connectedSurface: true
+                                signal dismissed()
                                 onDismissed: root.dismissToast(modelData.id)
+
+                                source: "widgets/ToastNotification.qml"
+
+                                onLoaded: {
+                                    if (!item) return
+                                    item.connectedSurface = Qt.binding(() => toastDelegate.connectedSurface)
+                                    item.title = Qt.binding(() => toastDelegate.modelData.title)
+                                    item.message = Qt.binding(() => toastDelegate.modelData.message)
+                                    item.icon = Qt.binding(() => toastDelegate.modelData.icon)
+                                    item.isError = Qt.binding(() => toastDelegate.modelData.isError)
+                                    item.duration = Qt.binding(() => toastDelegate.modelData.duration)
+                                    item.source = Qt.binding(() => toastDelegate.modelData.source)
+                                    item.accentColor = Qt.binding(() => toastDelegate.modelData.accentColor)
+                                    item.opacity = 1
+                                    item.scale = 1
+                                    item.dismissed.connect(toastDelegate.dismissed)
+                                }
                             }
                         }
                     }

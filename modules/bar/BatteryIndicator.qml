@@ -7,6 +7,8 @@ import QtQuick.Layouts
 MouseArea {
     id: root
 
+    property real contentRotation: 0
+    readonly property bool verticalContent: Math.abs(root.contentRotation) === 90
     readonly property bool isCharging: Battery.isCharging
     readonly property real percentage: Battery.percentage
     readonly property bool isLow: percentage <= (Config.options?.battery?.low ?? 20) / 100
@@ -25,9 +27,9 @@ MouseArea {
     ClippedProgressBar {
         id: batteryProgress
         anchors.centerIn: parent
-        valueBarWidth: Math.round(30 * Appearance.sizes.barModuleScale)
-        valueBarHeight: Math.round(18 * Appearance.sizes.barModuleScale)
-        font.pixelSize: Math.round(13 * Appearance.fontSizeScale * Appearance.sizes.barModuleScale)
+        valueBarWidth: Math.round((root.verticalContent ? 34 : 30) * Appearance.sizes.barModuleScale)
+        valueBarHeight: Math.round((root.verticalContent ? 20 : 18) * Appearance.sizes.barModuleScale)
+        font.pixelSize: Math.round((root.verticalContent ? 11 : 13) * Appearance.fontSizeScale * Appearance.sizes.barModuleScale)
         value: percentage
         highlightColor: (isLow && !isCharging)
             ? Appearance.colors.colError
@@ -40,16 +42,18 @@ MouseArea {
 
             RowLayout {
                 anchors.centerIn: parent
-                spacing: 0
+                spacing: root.verticalContent ? 1 : 0
+                layoutDirection: root.contentRotation < 0 ? Qt.RightToLeft : Qt.LeftToRight
 
                 MaterialSymbol {
                     id: boltIcon
                     Layout.alignment: Qt.AlignVCenter
-                    Layout.leftMargin: -2 * Appearance.sizes.barModuleScale
-                    Layout.rightMargin: -2 * Appearance.sizes.barModuleScale
+                    Layout.leftMargin: root.verticalContent ? 0 : -2 * Appearance.sizes.barModuleScale
+                    Layout.rightMargin: root.verticalContent ? 0 : -2 * Appearance.sizes.barModuleScale
                     fill: 1
                     text: "bolt"
                     iconSize: Math.round(Appearance.font.pixelSize.smaller * Appearance.sizes.barModuleScale)
+                    rotation: -root.contentRotation
                     opacity: (isCharging && percentage < 1) ? 1 : 0
                     visible: opacity > 0
                     
@@ -65,6 +69,7 @@ MouseArea {
                 StyledText {
                     Layout.alignment: Qt.AlignVCenter
                     font: batteryProgress.font
+                    rotation: -root.contentRotation
                     text: batteryProgress.text
                 }
             }

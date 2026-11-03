@@ -1,2 +1,0 @@
-PASS: OBSTACLE_ORACLE_PASS cases=2356 reactive_steps=21
-Baseline: 209cd2a21212b3f0d02db9488228d8567558960a; actual bindings, reference identity, read/error order, fresh arrays, QObject dependencies/NOTIFY

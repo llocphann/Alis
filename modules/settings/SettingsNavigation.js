@@ -3,7 +3,7 @@ function arrange(raw, defaults, pageCount, retired) {
     var saved;
     try { saved=typeof raw === "string" && raw ? JSON.parse(raw) : null; } catch(e) {}
     var groups=Array.isArray(saved) ? saved : saved?.groups;
-    if (!Array.isArray(groups) || !groups.length) groups=defaults;
+    if (!Array.isArray(groups) || !groups.length || groups.length > defaults.length) groups=defaults;
     var hidden=Array.from(new Set(Array.from(saved?.hidden || []).filter(
         i=>Number.isInteger(i) && i>=0 && i<pageCount && retired.indexOf(i)<0)));
     var seen=new Set(retired.concat(hidden)),out=[];
@@ -24,6 +24,16 @@ function arrange(raw, defaults, pageCount, retired) {
         var label=home?.label || "More",target=out.find(g=>g.label.toLowerCase()===label.toLowerCase());
         if (!target) { target={label:label,pages:[]};out.push(target); }
         target.pages.push(index);seen.add(index);
+    }
+    var appsGroup=out.find(function(g){return g.pages.indexOf(39)>=0 && g.pages.indexOf(24)>=0;});
+    var compGroup=out.find(function(g){return g.pages.indexOf(37)>=0;});
+    if (appsGroup && compGroup && appsGroup !== compGroup) {
+        appsGroup.pages=appsGroup.pages.filter(function(p){return p!==24;});
+        if (appsGroup.label==="Apps & AI") appsGroup.label="Applications";
+        if (compGroup.pages.indexOf(24)<0) {
+            var cIdx=compGroup.pages.indexOf(37);
+            compGroup.pages.splice(cIdx+1,0,24);
+        }
     }
     var names={};
     if (saved && saved.names && typeof saved.names === "object" && !Array.isArray(saved.names)) {

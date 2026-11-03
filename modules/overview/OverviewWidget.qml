@@ -15,6 +15,7 @@ Item {
     id: root
     required property var panelWindow
     property bool embeddedSurface: false
+    property bool verticalLayout: false
     property bool presentationActive: GlobalStates.overviewOpen
     // Keep local spatial motion static during popup materialization; once fully
     // revealed, later workspace/window changes may animate normally.
@@ -33,7 +34,13 @@ Item {
 
     readonly property HyprlandMonitor monitor: Hyprland.monitorFor(panelWindow.screen)
     readonly property var toplevels: ToplevelManager.toplevels
-    readonly property int workspacesShown: (Config.options?.overview?.rows ?? 2) * (Config.options?.overview?.columns ?? 5)
+    readonly property int _configuredRows: Config.options?.overview?.rows ?? 2
+    readonly property int _configuredColumns: Config.options?.overview?.columns ?? 5
+    readonly property int overviewRows: verticalLayout && _configuredRows < _configuredColumns
+        ? _configuredColumns : _configuredRows
+    readonly property int overviewColumns: verticalLayout && _configuredRows < _configuredColumns
+        ? _configuredRows : _configuredColumns
+    readonly property int workspacesShown: root.overviewRows * root.overviewColumns
     readonly property int presentationWorkspaceId: {
         const preferred = Number(root.preferredWorkspaceId)
         if (isFinite(preferred) && preferred > 0)
@@ -63,13 +70,22 @@ Item {
         ((monitor.width - monitorData?.reserved[1] - monitorData?.reserved[3]) * root.scale / monitor.scale) :
         ((monitor.height - monitorData?.reserved[1] - monitorData?.reserved[3]) * root.scale / monitor.scale)
     property real workspaceImplicitWidth: {
-        const cols = Config.options.overview.columns;
+        const cols = root.overviewColumns;
+        const rows = root.overviewRows;
         const spacing = root.workspaceSpacing;
         const totalBase = baseWorkspaceWidth * cols + spacing * Math.max(0, cols - 1);
         const maxWidth = (panelWindow ? panelWindow.width : baseWorkspaceWidth * cols) * clampedPanelWidthRatio;
-        if (cols <= 0 || totalBase <= maxWidth)
-            return baseWorkspaceWidth;
-        return (maxWidth - spacing * Math.max(0, cols - 1)) / cols;
+        let w = (cols <= 0 || totalBase <= maxWidth)
+            ? baseWorkspaceWidth
+            : (maxWidth - spacing * Math.max(0, cols - 1)) / cols;
+        const aspect = baseWorkspaceHeight <= 0 || baseWorkspaceWidth <= 0 ? 1 : baseWorkspaceHeight / baseWorkspaceWidth;
+        if (root.verticalLayout && rows > 0 && aspect > 0) {
+            const availH = (panelWindow ? panelWindow.height : baseWorkspaceHeight * rows) * Math.min(clampedPanelWidthRatio, 0.82);
+            const maxHPerRow = (availH - spacing * Math.max(0, rows - 1)) / rows;
+            if (maxHPerRow > 0)
+                w = Math.min(w, maxHPerRow / aspect);
+        }
+        return Math.max(1, w);
     }
     property real workspaceImplicitHeight: {
         const aspect = baseWorkspaceHeight <= 0 || baseWorkspaceWidth <= 0 ? 1 : baseWorkspaceHeight / baseWorkspaceWidth;
@@ -155,19 +171,19 @@ Item {
             spacing: workspaceSpacing
             
             Repeater {
-                model: Config.options.overview.rows
+                model: root.overviewRows
                 delegate: Row {
                     id: row
                     required property int index
                     spacing: workspaceSpacing
 
                     Repeater { // Workspace repeater
-                        model: Config.options.overview.columns
+                        model: root.overviewColumns
                         Rectangle { // Workspace
                             id: workspace
                             required property int index
                             property int colIndex: index
-                            property int workspaceValue: root.workspaceGroup * root.workspacesShown + row.index * Config.options.overview.columns + colIndex + 1
+                            property int workspaceValue: root.workspaceGroup * root.workspacesShown + row.index * root.overviewColumns + colIndex + 1
                             property color defaultWorkspaceColor: ColorUtils.mix(
                                 Appearance.colors.colBackgroundSurfaceContainer,
                                 Appearance.colors.colSurfaceContainerHigh, 0.8)
@@ -180,9 +196,9 @@ Item {
                             implicitHeight: root.workspaceImplicitHeight
                             color: hoveredWhileDragging ? hoveredWorkspaceColor : defaultWorkspaceColor
                             property bool workspaceAtLeft: colIndex === 0
-                            property bool workspaceAtRight: colIndex === Config.options.overview.columns - 1
+                            property bool workspaceAtRight: colIndex === root.overviewColumns - 1
                             property bool workspaceAtTop: row.index === 0
-                            property bool workspaceAtBottom: row.index === Config.options.overview.rows - 1
+                            property bool workspaceAtBottom: row.index === root.overviewRows - 1
                             topLeftRadius: (workspaceAtLeft && workspaceAtTop) ? root.largeWorkspaceRadius : root.smallWorkspaceRadius
                             topRightRadius: (workspaceAtRight && workspaceAtTop) ? root.largeWorkspaceRadius : root.smallWorkspaceRadius
                             bottomLeftRadius: (workspaceAtLeft && workspaceAtBottom) ? root.largeWorkspaceRadius : root.smallWorkspaceRadius
@@ -282,8 +298,8 @@ Item {
                     pendingOverviewWorkspace > 0
                         ? pendingOverviewWorkspace
                         : (windowData?.workspace.id ?? 1)
-                property int workspaceColIndex: (effectiveWorkspaceId - 1) % Config.options.overview.columns
-                property int workspaceRowIndex: Math.floor((effectiveWorkspaceId - 1) % root.workspacesShown / Config.options.overview.columns)
+                property int workspaceColIndex: (effectiveWorkspaceId - 1) % root.overviewColumns
+                property int workspaceRowIndex: Math.floor((effectiveWorkspaceId - 1) % root.workspacesShown / root.overviewColumns)
                 xOffset: (root.workspaceImplicitWidth + workspaceSpacing) * workspaceColIndex
                 yOffset: (root.workspaceImplicitHeight + workspaceSpacing) * workspaceRowIndex
                 property real xWithinWorkspaceWidget: Math.max((windowData?.at[0] - (monitor?.x ?? 0) - monitorData?.reserved[0]) * root.scale, 0)
@@ -297,9 +313,9 @@ Item {
                 // Radius
                 property real minRadius: Appearance.rounding.small
                 property bool workspaceAtLeft: workspaceColIndex === 0
-                property bool workspaceAtRight: workspaceColIndex === Config.options.overview.columns - 1
+                property bool workspaceAtRight: workspaceColIndex === root.overviewColumns - 1
                 property bool workspaceAtTop: workspaceRowIndex === 0
-                property bool workspaceAtBottom: workspaceRowIndex === Config.options.overview.rows - 1
+                property bool workspaceAtBottom: workspaceRowIndex === root.overviewRows - 1
                 property bool workspaceAtTopLeft: (workspaceAtLeft && workspaceAtTop) 
                 property bool workspaceAtTopRight: (workspaceAtRight && workspaceAtTop) 
                 property bool workspaceAtBottomLeft: (workspaceAtLeft && workspaceAtBottom) 
