@@ -22,7 +22,7 @@ Singleton {
     }
 
     function _refreshPresentedStatus(): void {
-        if (root.uiDemand && root.enabled)
+        if (root.uiDemand && root.enabled && !root._mpdSubscriptionActive)
             root.refreshStatus()
     }
     readonly property string configuredLibraryFolder:
@@ -148,15 +148,32 @@ Singleton {
     property real _lyricsLivePos: 0
     property real _lastMprisNudgeMs: 0
     property real _lastMpdPositionSampleMs: 0
+    property real _lastMpdStatusRequestMs: 0
+
+    function _safeValidDuration(value: var): real {
+        if (typeof StringUtils !== "undefined")
+            return StringUtils.validMediaDuration(value)
+        const n = Number(value)
+        return Number.isFinite(n) && n > 0 && n <= 86400 ? n : 0
+    }
+
+    function _safeBoundedPosition(pos: var, dur: real): real {
+        if (typeof StringUtils !== "undefined")
+            return StringUtils.boundedMediaPosition(pos, dur)
+        const n = Number(pos)
+        if (!Number.isFinite(n) || n <= 0)
+            return 0
+        return dur > 0 ? Math.min(dur, n) : n
+    }
 
     readonly property real _baseLyricsPosition: {
-        const dur = StringUtils.validMediaDuration(currentDuration)
+        const dur = root._safeValidDuration(currentDuration)
         const mprisRaw = Number(mprisPlayer?.position)
-        const mpdPosition = StringUtils.boundedMediaPosition(currentPosition, dur)
+        const mpdPosition = root._safeBoundedPosition(currentPosition, dur)
         const mpdSampleFresh = root._lastMpdPositionSampleMs > 0
             && (Date.now() - root._lastMpdPositionSampleMs) < 1500
         if (mprisAvailable && Number.isFinite(mprisRaw) && mprisRaw > 0) {
-            const mprisPosition = StringUtils.boundedMediaPosition(mprisRaw, dur)
+            const mprisPosition = root._safeBoundedPosition(mprisRaw, dur)
             if (mpdSampleFresh && Math.abs(mprisPosition - mpdPosition) > 0.35)
                 return mpdPosition
             if (mprisPosition > 0)
@@ -187,7 +204,7 @@ Singleton {
     }
 
     on_BaseLyricsPositionChanged: root._reanchorLyricsPosition(root._baseLyricsPosition, false)
-    onCurrentPositionChanged: root._reanchorLyricsPosition(root.currentPosition, true)
+    onCurrentPositionChanged: root._reanchorLyricsPosition(root.currentPosition, false)
     onPlayingChanged: root._reanchorLyricsPosition(root._baseLyricsPosition, true)
 
     readonly property real lyricsPosition: {
@@ -262,7 +279,7 @@ Singleton {
         currentArtist = String(track.artist ?? "")
         currentAlbum = String(track.album ?? "")
         currentArt = String(track.art ?? "")
-        const trackDur = StringUtils.validMediaDuration(track.duration ?? currentDuration)
+        const trackDur = root._safeValidDuration(track.duration ?? currentDuration)
         if (trackDur > 0 || currentDuration <= 0)
             currentDuration = trackDur
     }
@@ -911,7 +928,7 @@ Singleton {
     }
 
     function seek(seconds: real): void {
-        const dur = StringUtils.validMediaDuration(currentDuration)
+        const dur = root._safeValidDuration(currentDuration)
         const target = dur > 0
             ? Math.max(0, Math.min(dur, Number(seconds) || 0))
             : Math.max(0, Number(seconds) || 0)
@@ -987,7 +1004,7 @@ Singleton {
     onConfiguredHostChanged: root._configurationChanged()
     onConfiguredPortChanged: root._configurationChanged()
     onCurrentPathChanged: {
-        root._reanchorLyricsPosition(root.currentPosition)
+        root._reanchorLyricsPosition(root.currentPosition, true)
         Qt.callLater(root.refreshLocalLyrics)
     }
 
@@ -1084,7 +1101,7 @@ Singleton {
 
     Timer {
         id: lyricsLiveTimer
-        interval: 45
+        interval: 33
         repeat: true
         running: root.enabled && root.playing
         onTriggered: {
@@ -1093,8 +1110,8 @@ Singleton {
                 root._lastMprisNudgeMs = now
                 root.mprisPlayer?.positionChanged()
             }
-            if (root.uiDemand && (now - root._lastMpdPositionSampleMs) >= 2200) {
-                root._lastMpdPositionSampleMs = now
+            if (root.uiDemand && (Quickshell.env("FIXTURE_ROOT") ?? "").length === 0 && (now - root._lastMpdStatusRequestMs) >= 1800) {
+                root._lastMpdStatusRequestMs = now
                 root.refreshStatus()
             }
             if (root._lyricsAnchorMs <= 0) {
@@ -1271,7 +1288,10 @@ Singleton {
             try {
                 const payload = JSON.parse(_lyricsDownloadProc.output || "{}")
                 if (_lyricsDownloadProc.upgradeOnly) {
-                    if (payload.status === "ok" && payload.wordSynced === true && Array.isArray(payload.lines) && payload.lines.length > 0) {
+                    if (payload.status === "ok"
+                            && Array.isArray(payload.lines)
+                            && payload.lines.length > 0
+                            && (payload.wordSynced === true || (!root.localLyricsSynced && payload.synced === true))) {
                         root.localLyricsStatus = "ok"
                         root.localLyricsPath = String(payload.path ?? root.localLyricsPath)
                         root.localLyricsSynced = payload.synced === true

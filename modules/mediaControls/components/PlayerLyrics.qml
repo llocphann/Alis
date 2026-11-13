@@ -153,8 +153,19 @@ Item {
                         : -1
                     active: lyricLine.isActive
                     playing: root.visible && LyricsService.isPlaying
-                    synced: true
-                    position: Number(LyricsService.activePlayer?.position ?? LyricsService.anchorPos ?? 0)
+                    synced: LyricsService.synced
+                    position: {
+                        void LyricsService.anchorMs;
+                        void LyricsService.anchorPos;
+                        return LyricsService.livePosition();
+                    }
+
+                    Timer {
+                        interval: 450
+                        repeat: true
+                        running: root.visible && lyricLine.isActive && LyricsService.isPlaying
+                        onTriggered: LyricsService.activePlayer?.positionChanged()
+                    }
 
                     fontPixelSize: root.baseSize
                     activeFontWeight: Font.DemiBold

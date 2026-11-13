@@ -61,9 +61,10 @@ Item {
         }
     }
     readonly property bool _useOnlineLyrics: root.backend === LocalMusic
-        && !(backend.localLyricsLines ?? []).some(line => String(line.text ?? "").trim().length > 0)
+        && !(Boolean(backend.localLyricsSynced ?? true)
+            && (backend.localLyricsLines ?? []).some(line => String(line.text ?? "").trim().length > 0))
         && MprisController.activePlayer !== null
-        && MprisController.activePlayer !== MprisController.mpdPlayer
+        && (MprisController.activePlayer !== MprisController.mpdPlayer || !(backend.localLyricsSynced ?? true))
         && LyricsService.status === "ok"
         && (LyricsService.lyricsLines ?? []).some(line => String(line.text ?? "").trim().length > 0)
     readonly property var effectiveLyricsLines: root._useOnlineLyrics
@@ -72,14 +73,20 @@ Item {
     readonly property int effectiveLyricsActiveIndex: root._useOnlineLyrics
         ? (LyricsService.activeIndex ?? -1)
         : (backend.localLyricsActiveIndex ?? -1)
-    readonly property real effectiveLyricsPosition: root._useOnlineLyrics
-        ? Number(MprisController.activePlayer?.position ?? LyricsService.anchorPos ?? 0)
-        : Number(backend.lyricsPosition ?? 0)
+    readonly property real effectiveLyricsPosition: {
+        if (!root._useOnlineLyrics)
+            return Number(backend.lyricsPosition ?? 0);
+        if (MprisController.activePlayer === MprisController.mpdPlayer)
+            return Number(backend.lyricsPosition ?? 0);
+        void LyricsService.anchorMs;
+        void LyricsService.anchorPos;
+        return Number(LyricsService.livePosition());
+    }
     readonly property bool effectiveLyricsPlaying: root._useOnlineLyrics
         ? Boolean(MprisController.activePlayer?.isPlaying ?? false)
         : Boolean(backend.playing ?? false)
     readonly property bool effectiveLyricsSynced: root._useOnlineLyrics
-        ? true
+        ? Boolean(LyricsService.synced ?? true)
         : Boolean(backend.localLyricsSynced ?? true)
     readonly property bool hasLyrics: effectiveLyricsLines.some(line => String(line.text ?? "").trim().length > 0)
     onEffectiveLyricsActiveIndexChanged: {
@@ -854,6 +861,10 @@ Item {
                     id: musicPlayer
                     objectName: "musicPlayer"
                     width: parent.width
+                    // Match DashboardMusic Pane surface and radius locally without
+                    // changing DashCard defaults on DashboardCanvas or Widgets.
+                    color: root.surface
+                    radius: root.abyss ? 18 : Appearance.rounding.small
                     // Natural media height includes PlayerControl, LocalMusic
                     // volume and (unless Queue hovered) the shared DSP.
                     // Never stretch the card into a tall empty container.

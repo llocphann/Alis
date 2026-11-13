@@ -450,8 +450,16 @@ Item {
                         : -1
                     active: visible
                     playing: root.presentationActive && root.effectiveIsPlaying
-                    synced: true
-                    position: root.effectivePosition
+                    synced: LyricsService.synced
+                    position: {
+                        if (LyricsService.anchorMs > 0) {
+                            void LyricsService.anchorMs;
+                            void LyricsService.anchorPos;
+                            void root.effectivePosition;
+                            return LyricsService.livePosition();
+                        }
+                        return root.effectivePosition;
+                    }
                     fontPixelSize: Appearance.font.pixelSize.smallest
                     fontItalic: true
                     activeFontWeight: Font.Medium

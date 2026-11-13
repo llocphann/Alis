@@ -160,6 +160,13 @@ ShellRoot {
    const playerPanel=findChild(music,"musicPlayer"), queuePanel=findChild(music,"musicQueuePanel")
    check(playerPanel && queuePanel && playerPanel.parent===queuePanel.parent && playerPanel.height>0 && queuePanel.height>0,
       "Media card and Queue must share one vertical column with real content")
+   const savedCardOpacity=Config.options?.dashboard?.appearance?.cardOpacity
+   Config.setNestedValue("dashboard.appearance.cardOpacity",0.3)
+   renderFrame(dashboard,"cardOpacity parity frame pending")
+   check(String(playerPanel.color)===String(queuePanel.color) && Math.abs(playerPanel.radius-queuePanel.radius)<0.5,
+      "Music module background or radius diverged from Queue pane: "+JSON.stringify({playerColor:String(playerPanel.color),queueColor:String(queuePanel.color),playerRadius:playerPanel.radius,queueRadius:queuePanel.radius}))
+   if(savedCardOpacity!==undefined)
+    Config.setNestedValue("dashboard.appearance.cardOpacity",savedCardOpacity)
    check(playerPanel.height <= Math.ceil(playerPanel.implicitHeight)+1,
       "Media card vertically stretched and left blank space above/below player or DSP")
    check(columns[2].width <= 381,
@@ -177,6 +184,12 @@ ShellRoot {
    check(eq && eq.active && eq.visible && eq.compactLayout,
       "Music tab must show the shared Dashboard EQ when Queue is collapsed")
    const mediaHeight=playerPanel.height
+   const playerSurface=findChild(playerPanel,"musicPlayerSurface")
+   const musicVolume=findChild(playerPanel,"musicVolume")
+   check(playerSurface && musicVolume,"missing musicPlayerSurface or musicVolume")
+   const baseSurfaceY=playerSurface.mapToItem(playerPanel,0,0).y
+   const baseSurfaceH=playerSurface.height
+   const baseVolumeY=musicVolume.mapToItem(playerPanel,0,0).y
    const queueBottom=queuePanel.y+queuePanel.height, queueTop=queuePanel.y
    Config.setNestedValue("performance.reduceAnimations",false)
    mouseMove(queuePanel,queuePanel.width/2,Math.max(8,queuePanel.height/2))
@@ -189,6 +202,10 @@ ShellRoot {
        "Queue bottom moved during upward expansion")
     check(playerPanel.y===0 && queuePanel.y>=playerPanel.y+playerPanel.height+7,
        "Queue animation moved or overlapped the Player")
+    check(Math.abs(playerSurface.mapToItem(playerPanel,0,0).y-baseSurfaceY)<0.5
+       && Math.abs(playerSurface.height-baseSurfaceH)<0.5
+       && Math.abs(musicVolume.mapToItem(playerPanel,0,0).y-baseVolumeY)<0.5,
+       "Player controls or volume shifted vertically when hiding EQ during upward expansion")
     wait(16)
    }
    tryVerify(()=>queuePanel.height>0 && playerPanel.height<mediaHeight,2000)
@@ -201,6 +218,10 @@ ShellRoot {
    for(let frame=0;frame<16;frame++) {
     check(Math.abs(queuePanel.y+queuePanel.height-queueBottom)<.5,
        "Queue bottom moved during downward collapse")
+    check(Math.abs(playerSurface.mapToItem(playerPanel,0,0).y-baseSurfaceY)<0.5
+       && Math.abs(playerSurface.height-baseSurfaceH)<0.5
+       && Math.abs(musicVolume.mapToItem(playerPanel,0,0).y-baseVolumeY)<0.5,
+       "Player controls or volume shifted vertically when showing EQ during collapse")
     wait(16)
    }
    Config.setNestedValue("performance.reduceAnimations",true)

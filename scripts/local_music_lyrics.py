@@ -102,23 +102,43 @@ def _norm_stem(value: str) -> str:
     return re.sub(r"\s+", " ", s).strip().lower()
 
 
+NON_LYRIC_TEXT_NAMES = {
+    "digital booklet.txt",
+    "booklet.txt",
+    "readme.txt",
+    "credits.txt",
+    "tracklist.txt",
+    "info.txt",
+}
+
+
+def _is_non_lyric_text(path: Path) -> bool:
+    name = path.name.lower()
+    return name in NON_LYRIC_TEXT_NAMES or "booklet" in path.stem.lower()
+
+
 def candidates(track: Path) -> list[Path]:
     fallback_dir = Path(
         os.environ.get("XDG_DATA_HOME") or (Path.home() / ".local" / "share")
     ) / "alis" / "lyrics"
     digest = hashlib.sha1(str(track).encode("utf-8", "replace")).hexdigest()[:12]
-    result = [
+    # Always prioritize synced .lrc files (including fallback cache and fuzzy
+    # stem matches) ahead of plain .txt sidecars so upgraded .lrc files win.
+    lrc_paths = [
         track.with_suffix(".lrc"),
         Path(str(track) + ".lrc"),
+    ]
+    txt_paths = [
         track.with_suffix(".txt"),
         Path(str(track) + ".txt"),
-        fallback_dir / f"{track.stem}-{digest}.lrc",
-        fallback_dir / f"{track.stem}-{digest}.txt",
     ]
     stripped = re.sub(r"^\s*\d{1,3}\s*(?:[-._]\s+|\)\s*)", "", track.stem).strip()
     if stripped and stripped != track.stem:
-        result.insert(2, track.with_name(f"{stripped}.lrc"))
-        result.append(track.with_name(f"{stripped}.txt"))
+        lrc_paths.append(track.with_name(f"{stripped}.lrc"))
+        txt_paths.append(track.with_name(f"{stripped}.txt"))
+
+    lrc_paths.append(fallback_dir / f"{track.stem}-{digest}.lrc")
+    txt_paths.append(fallback_dir / f"{track.stem}-{digest}.txt")
 
     parent = track.parent
     if parent.is_dir():
@@ -126,18 +146,24 @@ def candidates(track: Path) -> list[Path]:
         target_primary = target_norm.split(" _ ")[0].strip() if " _ " in target_norm else target_norm
         try:
             for entry in sorted(parent.iterdir()):
-                if entry.suffix.lower() not in (".lrc", ".txt"):
+                suffix = entry.suffix.lower()
+                if suffix not in (".lrc", ".txt"):
+                    continue
+                if suffix == ".txt" and _is_non_lyric_text(entry):
                     continue
                 cand_norm = _norm_stem(entry.stem)
                 cand_tail = cand_norm.split(" - ", 1)[1].strip() if " - " in cand_norm else cand_norm
                 if cand_norm in (target_norm, target_primary) or cand_tail in (target_norm, target_primary):
-                    result.append(entry)
+                    if suffix == ".lrc":
+                        lrc_paths.append(entry)
+                    else:
+                        txt_paths.append(entry)
         except OSError:
             pass
 
     seen: set[str] = set()
     unique: list[Path] = []
-    for path in result:
+    for path in lrc_paths + [p for p in txt_paths if not _is_non_lyric_text(p)]:
         key = str(path)
         if key not in seen:
             seen.add(key)

@@ -19,6 +19,8 @@ Singleton {
     property var lyricsLines: []
     property int activeIndex: -1
     property string status: "idle"
+    property bool synced: true
+    property bool wordSynced: false
 
     readonly property int before: 3
     readonly property int after: 3
@@ -204,19 +206,22 @@ Singleton {
             return true;
         const lower = compactHead.toLowerCase();
         return [
+            "lyrics", "lyric", "music", "vocal", "vocals", "arr", "arrange",
             "lyricsby", "lyricist", "writtenby", "composedby", "composer", "musicby",
             "producedby", "producer", "arrangedby", "arranger", "mixedby", "mixing",
-            "masteredby", "mastering", "recordedby", "vocalsby", "publishedby",
-            "copyright", "sángtác", "lời", "nhạc", "hoàâm", "hòaâm", "phốikhí",
-            "biêntập", "thựchiện"
+            "masteredby", "mastering", "recordedby", "vocalsby", "performedby",
+            "publishedby", "copyright", "sángtác", "lời", "nhạc", "hoàâm", "hòaâm",
+            "phốikhí", "biêntập", "thựchiện"
         ].includes(lower);
     }
 
-    function _publishSuccess(requestId: string, lines: var): void {
+    function _publishSuccess(requestId, lines, isSynced = true, isWordSynced = false): void {
         Qt.callLater(() => {
             if (!root.active || requestId !== root._latestRequestId)
                 return;
 
+            root.synced = isSynced;
+            root.wordSynced = isWordSynced;
             root.lyricsLines = Array.isArray(lines)
                 ? lines.filter(line => !root._isCreditOrHeaderLine(String(line?.text ?? "")))
                 : [];
@@ -275,6 +280,10 @@ Singleton {
         if (!root._playing)
             return root._anchorPos;
         return root._anchorPos + (Date.now() - root._anchorMs) / 1000;
+    }
+
+    function livePosition(): real {
+        return root._estimatedPosition();
     }
 
     function _indexForPosition(position: real): int {
@@ -402,7 +411,7 @@ Singleton {
                     return;
                 }
 
-                root._publishSuccess(requestId, lines);
+                root._publishSuccess(requestId, lines, payload.synced !== false, payload.wordSynced === true);
             }
         }
 

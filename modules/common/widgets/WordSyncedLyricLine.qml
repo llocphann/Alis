@@ -90,11 +90,17 @@ Item {
         }
         const predicted = root._anchorPos + Math.max(0, (now - root._anchorWallMs) / 1000);
         const drift = cleanPos - predicted;
-        if (Math.abs(drift) > 0.32) {
+        if (drift > 0.32 || drift < -1.25) {
             root._anchorPos = cleanPos;
             root._anchorWallMs = now;
             root._livePos = cleanPos;
-        } else if (Math.abs(drift) > 0.02) {
+        } else if (drift < -0.04) {
+            // Softly absorb jittery backward poll lag without rewinding words mid-line
+            const clamped = Math.max(root._livePos - 0.01, predicted + drift * 0.25);
+            root._anchorPos = clamped;
+            root._anchorWallMs = now;
+            root._livePos = clamped;
+        } else if (drift > 0.02) {
             // Softly blend small timing drift so word animations never jump backward
             const blended = predicted + drift * 0.45;
             root._anchorPos = blended;
@@ -439,8 +445,8 @@ Item {
                 // Word progress: 0 = not yet sung, (0..1) = currently being sung, 1 = finished singing
                 readonly property real rawProgress: (root.effectivePosition - wStart) / wDuration
                 readonly property real progress: Math.max(0.0, Math.min(1.0, rawProgress))
-                readonly property bool isSinging: rawProgress >= -0.02 && rawProgress <= 1.04
-                readonly property bool isSung: rawProgress > 1.04
+                readonly property bool isSinging: rawProgress >= -0.01 && rawProgress < 1.0
+                readonly property bool isSung: rawProgress >= 1.0
 
                 // Smooth bell envelope (0 -> 1 -> 0) peaking while the singer is singing the word
                 readonly property real envelope: isSinging

@@ -25,6 +25,7 @@ import re
 import subprocess
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -34,6 +35,7 @@ LRCLIB_API = "https://lrclib.net/api"
 NETEASE_SEARCH_API = "https://music.163.com/api/search/get"
 NETEASE_LYRIC_API = "https://music.163.com/api/song/lyric"
 KUGOU_SEARCH_API = "http://lyrics.kugou.com/search"
+KUGOU_MOBILE_SEARCH_API = "http://mobilecdn.kugou.com/api/v3/search/song"
 KUGOU_DOWNLOAD_API = "http://lyrics.kugou.com/download"
 KUGOU_KRC_KEY = (64, 71, 97, 119, 94, 50, 116, 71, 81, 54, 49, 45, 206, 210, 110, 105)
 TIMEOUT = 10
@@ -154,8 +156,11 @@ FALL_KEYWORDS = {
 def emit(payload: dict, request_id: str = "") -> None:
     if request_id:
         payload["requestId"] = request_id
-    sys.stdout.write(json.dumps(payload, ensure_ascii=False) + "\n")
-    sys.stdout.flush()
+    try:
+        sys.stdout.write(json.dumps(payload, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+    except BrokenPipeError:
+        return
 
 
 def get_json(url: str, data: bytes | None = None, extra_headers: dict | None = None, timeout: float = TIMEOUT):
@@ -187,6 +192,7 @@ def clean_title(title: str) -> str:
 def clean_artist(artist: str) -> str:
     cleaned = ARTIST_NOISE_RE.sub("", artist or "").strip()
     cleaned = re.sub(r"\s*(?:feat\.?|ft\.?|&|,|;|/|x)\s+.*$", "", cleaned, flags=re.IGNORECASE).strip()
+    cleaned = re.sub(r"[\s._·•\-–—]+$", "", cleaned).strip()
     return cleaned or (artist or "").strip()
 
 
@@ -651,8 +657,18 @@ def parse_plain(plain: str, duration: float | None = None, key_name: str = "t") 
     return out
 
 
+_LATIN_TRANS = str.maketrans("đĐłŁøØ", "dDlLoO")
+
+
+def fold_ascii(value: str) -> str:
+    """Fold Latin/Vietnamese diacritics for ASCII-tag comparisons without altering CJK/kana."""
+    folded = unicodedata.normalize("NFKD", (value or "").translate(_LATIN_TRANS))
+    return "".join(ch for ch in folded if not (0x0300 <= ord(ch) <= 0x036F))
+
+
 def normalize(value: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", " ", (value or "").lower())).strip()
+    folded = fold_ascii(value).lower()
+    return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", " ", folded)).strip()
 
 
 TITLE_STOPWORDS = {
@@ -1023,6 +1039,60 @@ def fetch_from_kugou(
 
     candidates = (data or {}).get("candidates") or []
     if not isinstance(candidates, list) or not candidates:
+        candidates = []
+
+    if not candidates:
+        # 2-step mobile search -> hash lookup fallback when direct KRC keyword search misses.
+        mobile_url = f"{KUGOU_MOBILE_SEARCH_API}?" + urllib.parse.urlencode({
+            "format": "json",
+            "keyword": keyword,
+            "page": 1,
+            "pagesize": 8,
+            "showtype": 1,
+        })
+        try:
+            mobile_data = get_json(mobile_url, timeout=min(timeout, 3.5))
+            info_list = ((mobile_data or {}).get("data") or {}).get("info") or []
+        except Exception:
+            info_list = []
+        hash_hits: list[tuple[str, int]] = []
+        for item in info_list:
+            if not isinstance(item, dict):
+                continue
+            item_hash = str(item.get("hash") or "").strip()
+            item_song = str(item.get("songname") or item.get("filename") or "")
+            item_singer = str(item.get("singername") or "")
+            if not item_hash:
+                continue
+            if has_mismatched_version_modifier(title, item_song):
+                continue
+            if not (overlaps(title, item_song) or overlaps(c_title, item_song)):
+                continue
+            if (artist or c_artist) and item_singer:
+                if not (artist_overlaps(artist, item_singer) or artist_overlaps(c_artist, item_singer)):
+                    continue
+            item_dur_ms = int(round(float(item.get("duration") or 0) * 1000)) or (int(dur_ms) if dur_ms else 0)
+            hash_hits.append((item_hash, item_dur_ms))
+            if len(hash_hits) >= 2:
+                break
+        for item_hash, item_dur_ms in hash_hits:
+            hash_url = f"{KUGOU_SEARCH_API}?" + urllib.parse.urlencode({
+                "ver": 1,
+                "man": "yes",
+                "client": "pc",
+                "keyword": keyword,
+                "duration": item_dur_ms or "",
+                "hash": item_hash,
+            })
+            try:
+                h_data = get_json(hash_url, timeout=min(timeout, 3.5))
+                h_cands = (h_data or {}).get("candidates") or []
+                if isinstance(h_cands, list):
+                    candidates.extend(h_cands)
+            except Exception:
+                continue
+
+    if not isinstance(candidates, list) or not candidates:
         return "", False, False
 
     scored: list[tuple[float, dict]] = []
@@ -1381,14 +1451,22 @@ def run_save_lrc_mode(args: list[str], upgrade_only: bool = False) -> None:
         emit({"status": "not_found", "path": "", "synced": False, "wordSynced": False, "lines": []})
         return
 
+    track = Path(os.path.expanduser(audio_path))
+    fallback_dir = Path(
+        os.environ.get("XDG_DATA_HOME") or (Path.home() / ".local" / "share")
+    ) / "alis" / "lyrics"
+    digest = hashlib.sha1(str(track).encode("utf-8", "replace")).hexdigest()[:12]
     existing_lrc = ""
-    existing_lrc_path = Path(os.path.expanduser(audio_path)).with_suffix(".lrc")
-    if existing_lrc_path.is_file():
-        try:
-            existing_lrc = existing_lrc_path.read_text(encoding="utf-8-sig", errors="replace")
-        except OSError:
-            existing_lrc = ""
+    for cand_lrc in (track.with_suffix(".lrc"), fallback_dir / f"{track.stem}-{digest}.lrc"):
+        if cand_lrc.is_file():
+            try:
+                existing_lrc = cand_lrc.read_text(encoding="utf-8-sig", errors="replace")
+                if existing_lrc:
+                    break
+            except OSError:
+                existing_lrc = ""
 
+    existing_is_synced = bool((existing_lrc and STAMP.search(existing_lrc)) or audio_info.get("embedded_synced"))
     ref_lrc = existing_lrc if (existing_lrc and STAMP.search(existing_lrc)) else (
         str(audio_info.get("embedded_lyrics") or "") if audio_info.get("embedded_synced") else ""
     )
@@ -1410,7 +1488,21 @@ def run_save_lrc_mode(args: list[str], upgrade_only: bool = False) -> None:
                     raw_text, ok = align_word_lrc_to_reference(raw_text, ref_lrc)
                     if not ok:
                         raw_text, is_word_synced = "", False
-            if not (raw_text and is_word_synced):
+            if not (raw_text and is_word_synced) and not existing_is_synced:
+                # Track only had unsynced .txt or unsynced embedded lyrics: upgrade
+                # to synced line-level/word-level .lrc when online sources find one.
+                cand_raw, cand_synced = find_lyrics_raw(
+                    title,
+                    artist,
+                    album,
+                    duration,
+                    embedded_lyrics=str(audio_info.get("embedded_lyrics") or ""),
+                    embedded_synced=bool(audio_info.get("embedded_synced")),
+                )
+                if cand_raw and cand_synced:
+                    raw_text, is_synced = cand_raw, True
+                    is_word_synced = bool(INLINE_WORD_STAMP.search(raw_text))
+            if not (raw_text and is_synced and (is_word_synced or not existing_is_synced)):
                 emit({"status": "not_found", "path": "", "synced": False, "wordSynced": False, "lines": []})
                 return
         else:

@@ -37,22 +37,38 @@ DashCard {
     readonly property bool isPlaying: playbackAdapter
         ? Boolean(playbackAdapter.isPlaying) : (root.player?.isPlaying ?? false)
 
+    readonly property real _playerHeight: root.hasPlayer
+        ? Appearance.sizes.mediaControlsHeight : 112
+    readonly property real _volumeHeight: root.mediaBackend !== null
+        ? Math.ceil(volumeRow.implicitHeight) : 0
+
     implicitHeight: root.pad * 2
-        + (root.hasPlayer ? Appearance.sizes.mediaControlsHeight : 112)
-        + (volumeRow.visible ? mediaColumn.spacing + volumeRow.implicitHeight : 0)
+        + root._playerHeight
+        + (volumeRow.visible ? mediaColumn.spacing + root._volumeHeight : 0)
         + (equalizer.visible ? mediaColumn.spacing + equalizer.implicitHeight : 0)
 
-    ColumnLayout {
-        id: mediaColumn
+    // Pin the viewport to fill DashCard's inner ColumnLayout so hiding or
+    // sliding the EQ below never re-centers or shifts playerSurface/volumeRow.
+    Item {
+        id: mediaViewport
         Layout.fillWidth: true
-        spacing: root.compact ? 4 : 6
+        Layout.fillHeight: true
+        clip: true
 
-        Item {
-            id: playerSurface
-            Layout.fillWidth: true
-            Layout.minimumHeight: root.hasPlayer ? 120 : 104
-            Layout.preferredHeight: root.hasPlayer
-                ? Appearance.sizes.mediaControlsHeight : 112
+        ColumnLayout {
+            id: mediaColumn
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            spacing: root.compact ? 4 : 6
+
+            Item {
+                id: playerSurface
+                objectName: "musicPlayerSurface"
+                Layout.fillWidth: true
+                Layout.minimumHeight: root._playerHeight
+                Layout.preferredHeight: root._playerHeight
+                Layout.maximumHeight: root._playerHeight
 
             Loader {
                 id: sharedPlayerLoader
@@ -109,34 +125,37 @@ DashCard {
 
         // MPD volume is needed only in the Music-page instance; the Dashboard
         // card's original playback surface remains unchanged.
-        RowLayout {
-            id: volumeRow
-            visible: root.mediaBackend !== null
-            Layout.fillWidth: true
-            Layout.preferredHeight: visible ? implicitHeight : 0
-            spacing: 6
-            MaterialSymbol {
-                text: "volume_up"
-                color: root.colSubtext
-                iconSize: 18
-            }
-            StyledSlider {
-                objectName: "musicVolume"
+            RowLayout {
+                id: volumeRow
+                visible: root.mediaBackend !== null
                 Layout.fillWidth: true
-                configuration: StyledSlider.Configuration.XS
-                value: root.mediaBackend?.volume ?? 1
-                onMoved: root.mediaBackend?.setVolume(value)
+                Layout.minimumHeight: visible ? implicitHeight : 0
+                Layout.preferredHeight: visible ? implicitHeight : 0
+                Layout.maximumHeight: visible ? implicitHeight : 0
+                spacing: 6
+                MaterialSymbol {
+                    text: "volume_up"
+                    color: root.colSubtext
+                    iconSize: 18
+                }
+                StyledSlider {
+                    objectName: "musicVolume"
+                    Layout.fillWidth: true
+                    configuration: StyledSlider.Configuration.XS
+                    value: root.mediaBackend?.volume ?? 1
+                    onMoved: root.mediaBackend?.setVolume(value)
+                }
             }
-        }
 
-        EqualizerPanel {
-            id: equalizer
-            objectName: root.mediaBackend ? "musicEqualizer" : "dashboardMediaEqualizer"
-            visible: root.showEqualizer
-            Layout.fillWidth: true
-            Layout.preferredHeight: visible ? implicitHeight : 0
-            compactLayout: true
-            active: root.showEqualizer && root.presentationActive && root.visible
+            EqualizerPanel {
+                id: equalizer
+                objectName: root.mediaBackend ? "musicEqualizer" : "dashboardMediaEqualizer"
+                visible: root.showEqualizer
+                Layout.fillWidth: true
+                Layout.preferredHeight: visible ? implicitHeight : 0
+                compactLayout: true
+                active: root.showEqualizer && root.presentationActive && root.visible
+            }
         }
     }
 }

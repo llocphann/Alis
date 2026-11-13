@@ -455,20 +455,120 @@ fn strip_leading_track_num(stem: &str) -> String {
     trimmed.to_owned()
 }
 
+fn sha1_hex_12(input: &[u8]) -> String {
+    let mut h0: u32 = 0x67452301;
+    let mut h1: u32 = 0xEFCDAB89;
+    let mut h2: u32 = 0x98BADCFE;
+    let mut h3: u32 = 0x10325476;
+    let mut h4: u32 = 0xC3D2E1F0;
+
+    let bit_len = (input.len() as u64).wrapping_mul(8);
+    let mut msg = input.to_vec();
+    msg.push(0x80);
+    while (msg.len() % 64) != 56 {
+        msg.push(0);
+    }
+    msg.extend_from_slice(&bit_len.to_be_bytes());
+
+    for chunk in msg.chunks_exact(64) {
+        let mut w = [0u32; 80];
+        for i in 0..16 {
+            w[i] = u32::from_be_bytes([
+                chunk[i * 4],
+                chunk[i * 4 + 1],
+                chunk[i * 4 + 2],
+                chunk[i * 4 + 3],
+            ]);
+        }
+        for i in 16..80 {
+            w[i] = (w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16]).rotate_left(1);
+        }
+        let (mut a, mut b, mut c, mut d, mut e) = (h0, h1, h2, h3, h4);
+        for (i, &wi) in w.iter().enumerate() {
+            let (f, k) = match i {
+                0..=19 => ((b & c) | ((!b) & d), 0x5A827999),
+                20..=39 => (b ^ c ^ d, 0x6ED9EBA1),
+                40..=59 => ((b & c) | (b & d) | (c & d), 0x8F1BBCDC),
+                _ => (b ^ c ^ d, 0xCA62C1D6),
+            };
+            let temp = a
+                .rotate_left(5)
+                .wrapping_add(f)
+                .wrapping_add(e)
+                .wrapping_add(k)
+                .wrapping_add(wi);
+            e = d;
+            d = c;
+            c = b.rotate_left(30);
+            b = a;
+            a = temp;
+        }
+        h0 = h0.wrapping_add(a);
+        h1 = h1.wrapping_add(b);
+        h2 = h2.wrapping_add(c);
+        h3 = h3.wrapping_add(d);
+        h4 = h4.wrapping_add(e);
+    }
+
+    let digest = format!("{h0:08x}{h1:08x}{h2:08x}{h3:08x}{h4:08x}");
+    digest[..12].to_owned()
+}
+
+fn is_non_lyric_text(path: &Path) -> bool {
+    let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+        return false;
+    };
+    let lower_name = name.to_lowercase();
+    if matches!(
+        lower_name.as_str(),
+        "digital booklet.txt" | "booklet.txt" | "readme.txt" | "credits.txt" | "tracklist.txt" | "info.txt"
+    ) {
+        return true;
+    }
+    path.file_stem()
+        .and_then(|s| s.to_str())
+        .map(|s| s.to_lowercase().contains("booklet"))
+        .unwrap_or(false)
+}
+
+fn lyrics_fallback_dir() -> PathBuf {
+    if let Ok(xdg) = std::env::var("XDG_DATA_HOME") {
+        if !xdg.trim().is_empty() {
+            return PathBuf::from(xdg).join("alis").join("lyrics");
+        }
+    }
+    let home = std::env::var("HOME").unwrap_or_default();
+    PathBuf::from(home).join(".local").join("share").join("alis").join("lyrics")
+}
+
 fn lyrics_candidates(track: &Path) -> Vec<PathBuf> {
-    let mut candidates = vec![
+    let digest = sha1_hex_12(track.to_string_lossy().as_bytes());
+    let fallback_dir = lyrics_fallback_dir();
+    let stem = track
+        .file_stem()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_default();
+
+    // Always prioritize synced .lrc files (including fallback cache and fuzzy
+    // stem matches) ahead of plain .txt sidecars so upgraded .lrc files win.
+    let mut lrc_candidates = vec![
         track.with_extension("lrc"),
         PathBuf::from(format!("{}.lrc", track.to_string_lossy())),
+    ];
+    let mut txt_candidates = vec![
         track.with_extension("txt"),
         PathBuf::from(format!("{}.txt", track.to_string_lossy())),
     ];
-    if let (Some(parent), Some(stem_os)) = (track.parent(), track.file_stem()) {
-        let stem = stem_os.to_string_lossy();
+
+    if let Some(parent) = track.parent() {
         let stripped = strip_leading_track_num(&stem);
         if !stripped.is_empty() && stripped != stem {
-            candidates.insert(2, parent.join(format!("{stripped}.lrc")));
-            candidates.push(parent.join(format!("{stripped}.txt")));
+            lrc_candidates.push(parent.join(format!("{stripped}.lrc")));
+            txt_candidates.push(parent.join(format!("{stripped}.txt")));
         }
+        lrc_candidates.push(fallback_dir.join(format!("{stem}-{digest}.lrc")));
+        txt_candidates.push(fallback_dir.join(format!("{stem}-{digest}.txt")));
+
         let target_norm = stripped.to_lowercase();
         let target_primary = target_norm
             .split_once(" _ ")
@@ -485,6 +585,9 @@ fn lyrics_candidates(track: &Path) -> Vec<PathBuf> {
                 let is_lrc = ext.eq_ignore_ascii_case("lrc");
                 let is_txt = ext.eq_ignore_ascii_case("txt");
                 if !is_lrc && !is_txt {
+                    continue;
+                }
+                if is_txt && is_non_lyric_text(&p) {
                     continue;
                 }
                 let Some(c_stem) = p.file_stem().and_then(|s| s.to_str()) else {
@@ -509,12 +612,25 @@ fn lyrics_candidates(track: &Path) -> Vec<PathBuf> {
             }
             matched_lrcs.sort();
             matched_txts.sort();
-            candidates.extend(matched_lrcs);
-            candidates.extend(matched_txts);
+            lrc_candidates.extend(matched_lrcs);
+            txt_candidates.extend(matched_txts);
         }
+    } else {
+        lrc_candidates.push(fallback_dir.join(format!("{stem}-{digest}.lrc")));
+        txt_candidates.push(fallback_dir.join(format!("{stem}-{digest}.txt")));
     }
-    let mut unique = Vec::with_capacity(candidates.len());
-    for path in candidates.drain(..) {
+
+    let mut unique = Vec::with_capacity(lrc_candidates.len() + txt_candidates.len());
+    for path in lrc_candidates.into_iter().chain(txt_candidates.into_iter()) {
+        if path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.eq_ignore_ascii_case("txt"))
+            .unwrap_or(false)
+            && is_non_lyric_text(&path)
+        {
+            continue;
+        }
         if !unique.contains(&path) {
             unique.push(path);
         }
@@ -735,6 +851,55 @@ fn is_non_lyric_credit_or_header(text: &str) -> bool {
     false
 }
 
+fn prosodic_word_weight(word: &str, index: usize, total: usize) -> (f64, f64) {
+    let stripped = word.trim();
+    let core: String = stripped
+        .chars()
+        .skip_while(|c| !c.is_alphanumeric())
+        .collect::<String>()
+        .chars()
+        .rev()
+        .skip_while(|c| !c.is_alphanumeric())
+        .collect::<String>()
+        .chars()
+        .rev()
+        .collect();
+    let core_len = core.chars().count().max(1) as f64;
+    let mut weight = core_len.powf(0.72).max(0.75);
+    let lower = core.to_lowercase();
+    if matches!(
+        lower.as_str(),
+        "a" | "an" | "the" | "to" | "in" | "on" | "of" | "at" | "is" | "it"
+            | "và" | "là" | "của" | "cho" | "với" | "như"
+    ) {
+        weight *= 0.72;
+    }
+    if stripped.contains('~') {
+        weight += 1.55;
+    }
+    let mut post_pause = 0.0;
+    if stripped.ends_with("...") || stripped.ends_with('…') || stripped.ends_with('~') {
+        weight += 0.75;
+        post_pause = 0.16;
+    } else if stripped.ends_with('!') || stripped.ends_with('?') || stripped.ends_with('.') {
+        weight += 0.50;
+        post_pause = 0.14;
+    } else if stripped.ends_with(',')
+        || stripped.ends_with(';')
+        || stripped.ends_with(':')
+        || stripped.ends_with('—')
+        || stripped.ends_with('-')
+    {
+        weight += 0.32;
+        post_pause = 0.09;
+    }
+    if index + 1 == total {
+        weight += 0.70;
+        post_pause = 0.0;
+    }
+    (weight, post_pause)
+}
+
 fn parse_lrc(text: &str) -> (Vec<Value>, bool, bool) {
     let mut offset_ms = 0i64;
     let mut timed: Vec<(f64, String, Vec<(f64, String)>)> = Vec::new();
@@ -819,26 +984,26 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool, bool) {
             if !tokens.is_empty() && text.trim() != "♪" {
                 let total = tokens.len();
                 let mut weights = Vec::with_capacity(total);
+                let mut pauses = Vec::with_capacity(total);
                 let mut total_w = 0.0;
+                let mut raw_pauses = 0.0;
                 for (i, tok) in tokens.iter().enumerate() {
-                    let core_len = tok
-                        .chars()
-                        .filter(|c| c.is_alphanumeric())
-                        .count()
-                        .max(1) as f64;
-                    let mut w = core_len.powf(0.72).max(0.75);
-                    if i + 1 == total {
-                        w += 0.70;
-                    } else if tok.ends_with(',') || tok.ends_with(';') || tok.ends_with('.') || tok.ends_with('!') || tok.ends_with('?') {
-                        w += 0.35;
-                    }
+                    let (w, pause) = prosodic_word_weight(tok, i, total);
                     weights.push(w);
+                    pauses.push(pause);
                     total_w += w;
+                    raw_pauses += pause;
                 }
                 let span = (line_end - line_start).max(0.25);
+                let pause_scale = if raw_pauses > 0.0 {
+                    ((span * 0.22) / raw_pauses).min(1.0)
+                } else {
+                    0.0
+                };
+                let vocal_span = (span - raw_pauses * pause_scale).max(0.15);
                 let mut cursor = line_start;
-                for (tok, w) in tokens.iter().zip(weights.iter()) {
-                    let dur = (span * (w / total_w.max(0.01))).max(0.04);
+                for ((tok, w), p) in tokens.iter().zip(weights.iter()).zip(pauses.iter()) {
+                    let dur = (vocal_span * (w / total_w.max(0.01))).max(0.04);
                     let w_start = cursor;
                     let w_end = cursor + dur;
                     words.push(json!({
@@ -847,7 +1012,7 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool, bool) {
                         "end": (w_end * 1000.0).round() / 1000.0,
                         "duration": (dur * 1000.0).round() / 1000.0
                     }));
-                    cursor = w_end;
+                    cursor = w_end + p * pause_scale;
                 }
             }
             result.push(json!({
@@ -896,10 +1061,18 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool, bool) {
                     if w_end > line_end {
                         line_end = w_end;
                     }
-                    let span = (w_end - w_start).max(0.08 * sub_tokens.len() as f64);
-                    let step = span / sub_tokens.len() as f64;
-                    for (sub_i, sub) in sub_tokens.iter().enumerate() {
-                        let s = w_start + sub_i as f64 * step;
+                    let total_sub = sub_tokens.len();
+                    let sub_weights: Vec<f64> = sub_tokens
+                        .iter()
+                        .enumerate()
+                        .map(|(si, tok)| prosodic_word_weight(tok, si, total_sub).0)
+                        .collect();
+                    let sum_sub_w = sub_weights.iter().sum::<f64>().max(0.01);
+                    let span = (w_end - w_start).max(0.08 * total_sub as f64);
+                    let mut sub_cursor = w_start;
+                    for (sub, w_val) in sub_tokens.iter().zip(sub_weights.iter()) {
+                        let step = span * (w_val / sum_sub_w);
+                        let s = sub_cursor;
                         let e = s + step;
                         words.push(json!({
                             "text": sub,
@@ -907,6 +1080,7 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool, bool) {
                             "end": (e * 1000.0).round() / 1000.0,
                             "duration": (step.max(0.04) * 1000.0).round() / 1000.0
                         }));
+                        sub_cursor = e;
                     }
                 }
             }
