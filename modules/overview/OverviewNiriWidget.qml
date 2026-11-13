@@ -49,8 +49,14 @@ Item {
     readonly property bool overviewKeepOpenOnWindowClick: taskViewMode ? false : (overviewOptions.keepOverviewOpenOnWindowClick ?? true)
     readonly property bool overviewShowWorkspaceNumbers: taskViewMode ? true : (overviewOptions.showWorkspaceNumbers ?? true)
 
-    readonly property string wallpaperPathRaw: Config.options?.background?.wallpaperPath ?? ""
-    readonly property string wallpaperThumbnailPath: Config.options?.background?.thumbnailPath ?? wallpaperPathRaw
+    readonly property string wallpaperPathRaw: {
+        const perMon = WallpaperListener.effectivePerMonitor[root.outputName]?.path ?? ""
+        return perMon || (Config.options?.background?.wallpaperPath ?? "")
+    }
+    readonly property string wallpaperThumbnailPath: {
+        const configuredThumb = Config.options?.background?.thumbnailPath ?? ""
+        return configuredThumb || wallpaperPathRaw
+    }
 
     readonly property int workspacesShown: root.overviewRows * root.overviewColumns
     readonly property string outputName: panelWindow?.screen?.name ?? ""
@@ -104,13 +110,27 @@ Item {
     property bool showWorkspaceNumber: root.overviewShowWorkspaceNumbers
 
     // Wallpaper de fondo a reutilizar en cada workspace
-    property bool wallpaperIsVideo: wallpaperPathRaw.endsWith(".mp4")
-                                    || wallpaperPathRaw.endsWith(".webm")
-                                    || wallpaperPathRaw.endsWith(".mkv")
-                                    || wallpaperPathRaw.endsWith(".avi")
-                                    || wallpaperPathRaw.endsWith(".mov")
-    property string wallpaperPath: wallpaperIsVideo ? wallpaperThumbnailPath
-                                                    : wallpaperPathRaw
+    property bool wallpaperIsVideo: WallpaperListener.isVideoPath(wallpaperPathRaw)
+    property bool wallpaperIsGif: WallpaperListener.isGifPath(wallpaperPathRaw)
+    property string wallpaperPath: {
+        const rawCandidate = wallpaperIsVideo
+            ? (Wallpapers.getVideoFirstFramePath(wallpaperPathRaw)
+                || (Config.options?.background?.thumbnailPath ?? ""))
+            : wallpaperPathRaw
+        const clean = FileUtils.trimFileProtocol(String(rawCandidate ?? ""))
+        if (!clean)
+            return ""
+        return clean.startsWith("/") ? ("file://" + clean) : String(rawCandidate)
+    }
+
+    onWallpaperPathRawChanged: {
+        if (wallpaperIsVideo)
+            Wallpapers.ensureVideoFirstFrame(wallpaperPathRaw)
+    }
+    Component.onCompleted: {
+        if (wallpaperIsVideo)
+            Wallpapers.ensureVideoFirstFrame(wallpaperPathRaw)
+    }
 
     property var outputs: NiriService.outputs
 

@@ -341,6 +341,27 @@ Singleton {
      * @param {number} minRatio - Minimum contrast ratio (default 4.5 for WCAG AA)
      * @returns {color} Adjusted text color with sufficient contrast
      */
+    readonly property var _caches: ({
+        ensureReadable: { map: {}, size: 0 },
+        readableAccentInk: { map: {}, size: 0 },
+        adaptAccent: { map: {}, size: 0 }
+    })
+    readonly property var _ensureReadableCache: _caches.ensureReadable.map
+    readonly property var _readableAccentInkCache: _caches.readableAccentInk.map
+    readonly property var _adaptAccentCache: _caches.adaptAccent.map
+
+    function _storeCacheEntry(bucket, cacheKey, value) {
+        var map = bucket.map;
+        if (bucket.size >= 512) {
+            for (var k in map)
+                delete map[k];
+            bucket.size = 0;
+        }
+        map[cacheKey] = value;
+        bucket.size = (bucket.size || 0) + 1;
+        return value;
+    }
+
     function ensureReadable(textColor, bgColor, minRatio = 4.5) {
         if (textColor === undefined || textColor === null || String(textColor).length === 0)
             textColor = Qt.rgba(1, 1, 1, 1);
@@ -348,10 +369,17 @@ Singleton {
             bgColor = Qt.rgba(0, 0, 0, 1);
         var fg = Qt.color(textColor);
         var bg = Qt.color(bgColor);
+        var cacheKey = String(fg) + "|" + String(bg) + "|" + String(minRatio);
+        var bucket = root._caches.ensureReadable;
+        var cached = bucket.map[cacheKey];
+        if (cached !== undefined)
+            return cached;
+
         var bgLum = relativeLuminance(bg);
         var ratio = _contrastRatioWithLum(fg, bgLum);
         
-        if (ratio >= minRatio) return fg;
+        if (ratio >= minRatio)
+            return _storeCacheEntry(bucket, cacheKey, fg);
 
         // Choose the direction that can actually provide the strongest
         // contrast. A luminance threshold is insufficient here: mid-tone
@@ -365,7 +393,7 @@ Singleton {
         var target = targetLightness > 0.5 ? white : black;
 
         if (Math.max(whiteRatio, blackRatio) < minRatio)
-            return target;
+            return _storeCacheEntry(bucket, cacheKey, target);
 
         // Binary-search the smallest lightness adjustment that reaches the
         // requested ratio while preserving the original hue and saturation.
@@ -380,7 +408,8 @@ Singleton {
             else
                 failingLightness = candidateLightness;
         }
-        return Qt.hsla(fg.hslHue, fg.hslSaturation, passingLightness, fg.a);
+        var result = Qt.hsla(fg.hslHue, fg.hslSaturation, passingLightness, fg.a);
+        return _storeCacheEntry(bucket, cacheKey, result);
     }
 
     /**
@@ -408,9 +437,15 @@ Singleton {
         var bg = Qt.color(bgColor);
         if (!fg.valid || !bg.valid)
             return fg;
+        var cacheKey = String(fg) + "|" + String(bg) + "|" + String(target) + "|" + String(towardColor ?? "");
+        var bucket = root._caches.readableAccentInk;
+        var cached = bucket.map[cacheKey];
+        if (cached !== undefined)
+            return cached;
+
         var bgLum = relativeLuminance(bg);
         if (_contrastRatioWithLum(fg, bgLum) >= target)
-            return fg;
+            return _storeCacheEntry(bucket, cacheKey, fg);
 
         var endpoint = Qt.rgba(0, 0, 0, fg.a);
         if (towardColor !== undefined && towardColor !== null && String(towardColor).length > 0) {
@@ -429,7 +464,7 @@ Singleton {
             endpoint = whiteRatio >= blackRatio ? white : black;
         }
         if (_contrastRatioWithLum(endpoint, bgLum) < target)
-            return endpoint;
+            return _storeCacheEntry(bucket, cacheKey, endpoint);
 
         // retention=1 is the untouched accent (known to fail); retention=0 is
         // the readable endpoint. Find the highest source retention that passes.
@@ -443,7 +478,8 @@ Singleton {
             else
                 failingRetention = retention;
         }
-        return mix(fg, endpoint, passingRetention);
+        var result = mix(fg, endpoint, passingRetention);
+        return _storeCacheEntry(bucket, cacheKey, result);
     }
 
     /**
@@ -459,30 +495,35 @@ Singleton {
             return accentColor;
         var fg = Qt.color(accentColor);
         var bg = Qt.color(bgColor);
-        if (contrastRatio(fg, bg) >= target)
-            return fg;
+        var cacheKey = String(fg) + "|" + String(bg) + "|" + String(target) + "|" + String(minSat) + "|" + String(bandMin) + "|" + String(bandMax);
+        var bucket = root._caches.adaptAccent;
+        var cached = bucket.map[cacheKey];
+        if (cached !== undefined)
+            return cached;
+        var bgLum = relativeLuminance(bg);
+        if (_contrastRatioWithLum(fg, bgLum) >= target)
+            return _storeCacheEntry(bucket, cacheKey, fg);
         var hue = fg.hslHue;
         var sat = Math.max(minSat, fg.hslSaturation);
-        var bgLum = relativeLuminance(bg);
         var regionLight = bgLum >= 0.18;
         var anchorL = regionLight ? 0.42 : 0.70;
         var edgeL = regionLight ? bandMin : bandMax;
         var best = Qt.hsla(hue, sat, anchorL, fg.a);
-        var bestRatio = contrastRatio(best, bg);
+        var bestRatio = _contrastRatioWithLum(best, bgLum);
         var steps = 18;
         for (var i = 0; i <= steps; i++) {
             var L = anchorL + (edgeL - anchorL) * (i / steps);
             var satHere = regionLight ? Math.min(1.0, sat + (anchorL - L) * 0.8) : sat;
             var cand = Qt.hsla(hue, clamp01(satHere), clamp01(L), fg.a);
-            var ratio = contrastRatio(cand, bg);
+            var ratio = _contrastRatioWithLum(cand, bgLum);
             if (ratio >= target)
-                return cand;
+                return _storeCacheEntry(bucket, cacheKey, cand);
             if (ratio > bestRatio) {
                 best = cand;
                 bestRatio = ratio;
             }
         }
-        return best;
+        return _storeCacheEntry(bucket, cacheKey, best);
     }
 
     /**

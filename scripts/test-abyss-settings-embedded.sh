@@ -2,6 +2,10 @@
 # Exercise the real mature card in an embedded surface with deep-link routing.
 set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "${ALIS_SILENT_WL_WRAPPED:-0}" != "1" ]]; then
+    export ALIS_SILENT_WL_WRAPPED=1
+    exec bash "$repo_root/scripts/lib/silent-wayland-run.sh" -- "$0" "$@"
+fi
 if ! command -v qs >/dev/null || [[ -z "${WAYLAND_DISPLAY:-}" ]]; then printf 'SKIP: embedded Settings (Quickshell unavailable)\n'; exit 0; fi
 settings_test_root="$(mktemp -d)"
 trap 'rm -rf -- "$settings_test_root"' EXIT

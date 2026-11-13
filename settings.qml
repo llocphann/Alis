@@ -299,6 +299,9 @@ ApplicationWindow {
         pendingSpotlightIsSection = (entry.optionId === undefined) && (entry.isSection === true);
 
         // Navigate to page (this triggers page load if needed)
+        if (pendingSpotlightSection.length > 0 && pagesStack && typeof pagesStack._applySectionToPage === "function") {
+            pagesStack._applySectionToPage(entry.pageIndex, pendingSpotlightSection);
+        }
         if (currentPage !== entry.pageIndex) {
             currentPage = entry.pageIndex;
         }
@@ -322,8 +325,20 @@ ApplicationWindow {
 
     function trySpotlight() {
         const pageItem = pagesStack.currentItem
-        if (pageItem && pagesStack.currentIndex === pendingSpotlightPageIndex
-                && pendingSpotlightSection.length > 0
+        if (!pageItem || pagesStack.currentIndex !== pendingSpotlightPageIndex) {
+            if (spotlightRetryCount < spotlightMaxRetries) {
+                spotlightRetryCount++;
+                spotlightPageLoadTimer.restart();
+            } else {
+                pendingSpotlightOptionId = -1;
+                pendingSpotlightLabel = "";
+                pendingSpotlightSection = "";
+                pendingSpotlightPageIndex = -1;
+                pendingSpotlightIsSection = false;
+            }
+            return;
+        }
+        if (pendingSpotlightSection.length > 0
                 && typeof pageItem.activateSettingsSearchSection === "function")
             pageItem.activateSettingsSearchSection(pendingSpotlightSection)
 
@@ -431,8 +446,8 @@ ApplicationWindow {
         var controlHeight = control.height;
         var targetScrollY = controlYInContent - (viewportHeight / 2) + (controlHeight / 2);
 
-        // Clamp to valid scroll range
-        var maxScroll = Math.max(0, flick.contentHeight - flick.height);
+        // Clamp to valid scroll range (non-interactive pages must remain at contentY = 0)
+        var maxScroll = flick.interactive ? Math.max(0, flick.contentHeight - flick.height) : 0;
         targetScrollY = Math.max(0, Math.min(targetScrollY, maxScroll));
 
         // Store the target scroll position for later verification
@@ -553,6 +568,12 @@ ApplicationWindow {
         onActivated: settingsSearchField.forceActiveFocus()
     }
 
+    Shortcut {
+        sequence: "Escape"
+        enabled: SettingsLayoutManager.editMode
+        onActivated: SettingsLayoutManager.handleEscape()
+    }
+
     ColumnLayout {
         anchors {
             fill: parent
@@ -565,6 +586,11 @@ ApplicationWindow {
         Behavior on opacity { NumberAnimation { duration: 150 } }
 
         Keys.onPressed: (event) => {
+            if (event.key === Qt.Key_Escape && SettingsLayoutManager.editMode) {
+                SettingsLayoutManager.handleEscape()
+                event.accepted = true
+                return
+            }
             if (event.modifiers === Qt.ControlModifier) {
                 if (event.key === Qt.Key_PageDown || event.key === Qt.Key_Tab) {
                     root.currentPage = root.nextNavPage(root.currentPage)
@@ -902,6 +928,10 @@ ApplicationWindow {
                             settingsSearchField.forceActiveFocus();
                         }
 
+                        StyledToolTip {
+                            text: Translation.tr("Clear search")
+                        }
+
                         contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: "close"
@@ -955,6 +985,39 @@ ApplicationWindow {
                     spacing: 4
 
                     RippleButton {
+                        id: windowEditSettingsLayoutBtn
+                        objectName: "windowEditSettingsLayoutButton"
+                        buttonRadius: Appearance.rounding.full
+                        implicitWidth: 35
+                        implicitHeight: 35
+                        toggled: SettingsLayoutManager.editMode
+                        colBackground: "transparent"
+                        colBackgroundHover: Appearance.colors.colLayer1Hover
+                        colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                        colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+                        onClicked: {
+                            if (SettingsLayoutManager.editMode)
+                                SettingsLayoutManager.commitEditMode()
+                            else
+                                SettingsLayoutManager.beginEditMode()
+                        }
+                        contentItem: MaterialSymbol {
+                            anchors.centerIn: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            text: SettingsLayoutManager.editMode ? "check" : "space_dashboard"
+                            iconSize: 20
+                            color: SettingsLayoutManager.editMode
+                                ? Appearance.colors.colOnPrimaryContainer
+                                : Appearance.colors.colOnSurfaceVariant
+                        }
+                        StyledToolTip {
+                            text: SettingsLayoutManager.editMode
+                                ? Translation.tr("Finish editing Settings layout")
+                                : Translation.tr("Edit Settings layout & cards")
+                        }
+                    }
+
+                    RippleButton {
                         visible:Config.options?.panelFamily === "abyss"
                         buttonRadius:Appearance.rounding.full;implicitWidth:35;implicitHeight:35
                         onClicked:Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),"ipc","call","abyss","editLayout"])
@@ -973,6 +1036,9 @@ ApplicationWindow {
                             text: "lock"
                             iconSize: 20
                         }
+                        StyledToolTip {
+                            text: Translation.tr("Lock session")
+                        }
                     }
 
                     RippleButton {
@@ -985,6 +1051,9 @@ ApplicationWindow {
                             horizontalAlignment: Text.AlignHCenter
                             text: "close"
                             iconSize: 20
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("Close Settings")
                         }
                     }
                 }
@@ -1005,9 +1074,10 @@ ApplicationWindow {
             spacing: 10
             Item {
                 id: navRailWrapper
+                objectName: "settingsWindowNavRail"
                 Layout.fillHeight: true
-                Layout.preferredWidth: root.navEditMode ? 228 : 204
-                implicitWidth: root.navEditMode ? 228 : 204
+                Layout.preferredWidth: 204
+                implicitWidth: 204
 
                 Behavior on Layout.preferredWidth {
                     enabled: Appearance.animationsEnabled
@@ -1027,7 +1097,7 @@ ApplicationWindow {
                     contentHeight: navCol.implicitHeight
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
-                    interactive: false
+                    interactive: contentHeight > height
 
                     ScrollBar.vertical: StyledScrollBar {
                         policy: ScrollBar.AlwaysOff
@@ -1050,7 +1120,13 @@ ApplicationWindow {
                                 readonly property var groupPages: (navHeadingGroup.modelData?.pages ?? []).filter(
                                     idx => root.pages[idx] && SettingsPageRegistry.isPageApplicable(idx)).map(
                                     idx => Object.assign({}, root.pages[idx], { realIndex: idx }))
-                                readonly property bool hasActivePage: navHeadingGroup.groupPages.some(item => item.realIndex === root.currentPage)
+                                readonly property int primaryPageIndex: navHeadingGroup.groupPages.length > 0
+                                    ? navHeadingGroup.groupPages[0].realIndex : -1
+                                readonly property bool hasActivePage: SettingsLayoutManager.activeCustomTabId.length === 0
+                                    && navHeadingGroup.groupPages.some(item => item.realIndex === root.currentPage)
+                                readonly property string dropTargetId: "window-nav-cat:" + navHeadingGroup.index
+                                readonly property bool isDropHovered: SettingsLayoutManager.dragActive
+                                    && SettingsLayoutManager.hoveredDropTargetId === navHeadingGroup.dropTargetId
                                 objectName: navHeadingGroup.groupPages.length > 0
                                     ? ("settingsNav_" + (navHeadingGroup.groupPages[0].key || ""))
                                     : ("settingsNavGroup_" + index)
@@ -1059,12 +1135,33 @@ ApplicationWindow {
                                 implicitHeight: 36
                                 rippleEnabled: true
                                 buttonRadius: Appearance.rounding.small
-                                toggled: navHeadingGroup.hasActivePage
-                                colBackground: "transparent"
+                                toggled: navHeadingGroup.hasActivePage || navHeadingGroup.isDropHovered
+                                colBackground: navHeadingGroup.isDropHovered
+                                    ? Appearance.colors.colSecondaryContainer : "transparent"
                                 colBackgroundHover: Appearance.colors.colLayer1Hover
-                                colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                                colBackgroundToggled: navHeadingGroup.isDropHovered
+                                    ? Appearance.colors.colSecondaryContainer
+                                    : Appearance.colors.colPrimaryContainer
                                 colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+
+                                Component.onCompleted: {
+                                    if (navHeadingGroup.primaryPageIndex >= 0) {
+                                        SettingsLayoutManager.registerDropTarget(navHeadingGroup.dropTargetId, {
+                                            item: navHeadingGroup,
+                                            kind: "sidebar-page",
+                                            pageIndex: navHeadingGroup.primaryPageIndex,
+                                            customTabId: "",
+                                            subTabId: "",
+                                            label: navHeadingGroup.headingTitle
+                                        })
+                                    }
+                                }
+                                Component.onDestruction: {
+                                    SettingsLayoutManager.unregisterDropTarget(navHeadingGroup.dropTargetId)
+                                }
+
                                 onClicked: {
+                                    SettingsLayoutManager.activeCustomTabId = ""
                                     if (navHeadingGroup.groupPages.length > 0) {
                                         const hubEntry = root.preferredCategoryEntry(navHeadingGroup.headingTitle, navHeadingGroup.groupPages)
                                         if (pagesStack.currentItem && typeof pagesStack.currentItem.exitSubView === "function" && pagesStack.currentItem.isSubViewActive) {
@@ -1083,6 +1180,7 @@ ApplicationWindow {
                                     spacing: 9
 
                                     MaterialSymbol {
+                                        Layout.alignment: Qt.AlignVCenter
                                         text: navHeadingGroup.groupPages.length > 0
                                             ? SettingsPageRegistry.iconForPage(navHeadingGroup.groupPages[0].realIndex)
                                             : "folder"
@@ -1094,7 +1192,9 @@ ApplicationWindow {
                                     }
 
                                     StyledText {
+                                        Layout.alignment: Qt.AlignVCenter
                                         Layout.fillWidth: true
+                                        verticalAlignment: Text.AlignVCenter
                                         text: navHeadingGroup.headingTitle
                                         font.pixelSize: Appearance.font.pixelSize.small
                                         font.weight: navHeadingGroup.hasActivePage ? Font.DemiBold : Font.Medium
@@ -1103,6 +1203,166 @@ ApplicationWindow {
                                             : Appearance.colors.colOnLayer1
                                         marquee: true
                                         maximumLineCount: 1
+                                    }
+                                }
+                            }
+                        }
+
+                        // ── User-Created Custom Sidebar Tabs ──
+                        Repeater {
+                            id: windowCustomTabsRepeater
+                            model: SettingsLayoutManager.customTabs
+
+                            delegate: RippleButton {
+                                id: windowCustomNavBtn
+                                required property int index
+                                required property var modelData
+                                readonly property string tabId: String(modelData?.id ?? "")
+                                readonly property string tabLabel: String(modelData?.label ?? "")
+                                readonly property bool isActiveCustomTab: SettingsLayoutManager.activeCustomTabId === tabId
+                                readonly property string dropTargetId: "window-nav-custom:" + tabId
+                                readonly property bool isDropHovered: SettingsLayoutManager.dragActive
+                                    && SettingsLayoutManager.hoveredDropTargetId === dropTargetId
+                                objectName: "settingsCustomNav_" + tabId
+                                Layout.fillWidth: true
+                                implicitHeight: 36
+                                rippleEnabled: true
+                                buttonRadius: Appearance.rounding.small
+                                toggled: isActiveCustomTab || isDropHovered
+                                colBackground: isDropHovered ? Appearance.colors.colSecondaryContainer : "transparent"
+                                colBackgroundHover: Appearance.colors.colLayer1Hover
+                                colBackgroundToggled: isDropHovered
+                                    ? Appearance.colors.colSecondaryContainer
+                                    : Appearance.colors.colPrimaryContainer
+                                colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+
+                                Component.onCompleted: {
+                                    if (tabId.length > 0) {
+                                        SettingsLayoutManager.registerDropTarget(dropTargetId, {
+                                            item: windowCustomNavBtn,
+                                            kind: "sidebar-custom-tab",
+                                            pageIndex: -1,
+                                            customTabId: tabId,
+                                            subTabId: "",
+                                            label: tabLabel
+                                        })
+                                    }
+                                }
+                                Component.onDestruction: {
+                                    SettingsLayoutManager.unregisterDropTarget(dropTargetId)
+                                }
+
+                                onClicked: {
+                                    SettingsLayoutManager.activeCustomTabId = tabId
+                                }
+
+                                contentItem: RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 6
+                                    spacing: 8
+
+                                    MaterialSymbol {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: String(windowCustomNavBtn.modelData?.icon || "dashboard_customize")
+                                        iconSize: 18
+                                        color: windowCustomNavBtn.isActiveCustomTab
+                                            ? Appearance.colors.colOnPrimaryContainer
+                                            : Appearance.colors.colPrimary
+                                    }
+
+                                    StyledText {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        Layout.fillWidth: true
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: windowCustomNavBtn.tabLabel
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                        font.weight: windowCustomNavBtn.isActiveCustomTab ? Font.DemiBold : Font.Medium
+                                        color: windowCustomNavBtn.isActiveCustomTab
+                                            ? Appearance.colors.colOnPrimaryContainer
+                                            : Appearance.colors.colOnLayer1
+                                        elide: Text.ElideRight
+                                    }
+
+                                    RippleButton {
+                                        visible: SettingsLayoutManager.editMode
+                                        Layout.alignment: Qt.AlignVCenter
+                                        implicitWidth: 22
+                                        implicitHeight: 22
+                                        buttonRadius: Appearance.rounding.full
+                                        colBackground: "transparent"
+                                        onClicked: SettingsLayoutManager.moveCustomTab(windowCustomNavBtn.tabId, -1)
+                                        StyledToolTip {
+                                            text: Translation.tr("Move custom sidebar tab up")
+                                        }
+                                        contentItem: MaterialSymbol {
+                                            anchors.centerIn: parent
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                            text: "keyboard_arrow_up"
+                                            iconSize: 14
+                                            color: Appearance.colors.colSubtext
+                                        }
+                                    }
+
+                                    RippleButton {
+                                        visible: SettingsLayoutManager.editMode
+                                        Layout.alignment: Qt.AlignVCenter
+                                        implicitWidth: 22
+                                        implicitHeight: 22
+                                        buttonRadius: Appearance.rounding.full
+                                        colBackground: "transparent"
+                                        onClicked: SettingsLayoutManager.deleteCustomTab(windowCustomNavBtn.tabId)
+                                        StyledToolTip {
+                                            text: Translation.tr("Delete custom sidebar tab")
+                                        }
+                                        contentItem: MaterialSymbol {
+                                            anchors.centerIn: parent
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                            text: "close"
+                                            iconSize: 13
+                                            color: Appearance.colors.colError
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ── Inline "+ New Tab" Button in Edit Mode ──
+                        RippleButton {
+                            visible: SettingsLayoutManager.editMode
+                            Layout.fillWidth: true
+                            implicitHeight: 32
+                            buttonRadius: Appearance.rounding.small
+                            colBackground: Appearance.colors.colLayer1
+                            colBackgroundHover: Appearance.colors.colLayer1Hover
+                            onClicked: {
+                                SettingsLayoutManager.requestInlinePrompt("new-sidebar-tab")
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Create a new custom tab in the Settings sidebar")
+                            }
+                            contentItem: Item {
+                                implicitWidth: windowNewSidebarTabRow.implicitWidth
+                                implicitHeight: windowNewSidebarTabRow.implicitHeight
+                                Row {
+                                    id: windowNewSidebarTabRow
+                                    anchors.centerIn: parent
+                                    spacing: 6
+                                    MaterialSymbol {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "add"
+                                        iconSize: 16
+                                        color: Appearance.colors.colPrimary
+                                    }
+                                    StyledText {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: Translation.tr("New Sidebar Tab")
+                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                        font.weight: Font.DemiBold
+                                        color: Appearance.colors.colPrimary
                                     }
                                 }
                             }
@@ -1155,6 +1415,68 @@ ApplicationWindow {
                     spacing: 2
 
                     RippleButton {
+                        id: windowLayoutEditToggle
+                        objectName: "windowLayoutEditToggle"
+                        readonly property color editSurface: Appearance.colors.colPrimaryContainer
+                        readonly property color editSurfaceHover: Appearance.colors.colPrimaryContainerHover
+                        readonly property color editForeground: Appearance.colors.colOnPrimaryContainer
+                        Layout.fillWidth: true
+                        implicitHeight: 36
+                        buttonRadius: Appearance.rounding.small
+                        toggled: SettingsLayoutManager.editMode
+                        colBackground: "transparent"
+                        colBackgroundHover: Appearance.colors.colLayer1Hover
+                        colBackgroundToggled: editSurface
+                        colBackgroundToggledHover: editSurfaceHover
+                        onClicked: {
+                            if (SettingsLayoutManager.editMode)
+                                SettingsLayoutManager.commitEditMode()
+                            else
+                                SettingsLayoutManager.beginEditMode()
+                        }
+
+                        contentItem: RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 8
+                            spacing: 10
+
+                            MaterialSymbol {
+                                Layout.alignment: Qt.AlignVCenter
+                                text: SettingsLayoutManager.editMode ? "done" : "space_dashboard"
+                                iconSize: 18
+                                color: SettingsLayoutManager.editMode
+                                    ? windowLayoutEditToggle.editForeground
+                                    : Appearance.colors.colOnSurfaceVariant
+                            }
+
+                            StyledText {
+                                Layout.alignment: Qt.AlignVCenter
+                                Layout.fillWidth: true
+                                verticalAlignment: Text.AlignVCenter
+                                text: SettingsLayoutManager.editMode
+                                    ? Translation.tr("Done layout")
+                                    : Translation.tr("Edit layout")
+                                font {
+                                    family: Appearance.font.family.main
+                                    pixelSize: Appearance.font.pixelSize.small
+                                }
+                                color: SettingsLayoutManager.editMode
+                                    ? windowLayoutEditToggle.editForeground
+                                    : Appearance.colors.colOnSurfaceVariant
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        StyledToolTip {
+                            position: "top"
+                            text: SettingsLayoutManager.editMode
+                                ? Translation.tr("Finish editing Settings cards & layout")
+                                : Translation.tr("Resize, arrange, and move Settings cards across tabs")
+                        }
+                    }
+
+                    RippleButton {
                         id: navEditToggle
                         readonly property color editSurface: Appearance.colors.colPrimaryContainer
                         readonly property color editSurfaceHover: Appearance.colors.colPrimaryContainerHover
@@ -1177,6 +1499,7 @@ ApplicationWindow {
                             spacing: 10
 
                             MaterialSymbol {
+                                Layout.alignment: Qt.AlignVCenter
                                 text: root.navEditMode ? "done" : "edit"
                                 iconSize: 18
                                 color: root.navEditMode
@@ -1185,7 +1508,9 @@ ApplicationWindow {
                             }
 
                             StyledText {
+                                Layout.alignment: Qt.AlignVCenter
                                 Layout.fillWidth: true
+                                verticalAlignment: Text.AlignVCenter
                                 text: root.navEditMode
                                     ? Translation.tr("Done")
                                     : Translation.tr("Edit navigation")
@@ -1237,13 +1562,16 @@ ApplicationWindow {
                             spacing: 10
 
                             MaterialSymbol {
+                                Layout.alignment: Qt.AlignVCenter
                                 text: configFileBtn.justCopied ? "check" : "edit"
                                 iconSize: 18
                                 color: Appearance.colors.colOnSurfaceVariant
                             }
 
                             StyledText {
+                                Layout.alignment: Qt.AlignVCenter
                                 Layout.fillWidth: true
+                                verticalAlignment: Text.AlignVCenter
                                 text: configFileBtn.justCopied ? Translation.tr("Path copied") : Translation.tr("Config file")
                                 font {
                                     family: Appearance.font.family.main
@@ -1280,13 +1608,16 @@ ApplicationWindow {
                             spacing: 10
 
                             MaterialSymbol {
+                                Layout.alignment: Qt.AlignVCenter
                                 text: "layers"
                                 iconSize: 18
                                 color: Appearance.colors.colOnSurfaceVariant
                             }
 
                             StyledText {
+                                Layout.alignment: Qt.AlignVCenter
                                 Layout.fillWidth: true
+                                verticalAlignment: Text.AlignVCenter
                                 text: Translation.tr("Overlay")
                                 font {
                                     family: Appearance.font.family.main
@@ -1330,6 +1661,9 @@ ApplicationWindow {
                     id: windowPageHeader
                     anchors { top: parent.top; left: parent.left; right: parent.right }
                     readonly property var meta: root.pages[root.currentPage] ?? {}
+                    readonly property var activeCustomTabObj: SettingsLayoutManager.activeCustomTabId.length > 0
+                        ? (SettingsLayoutManager.customTabs.find(t => t.id === SettingsLayoutManager.activeCustomTabId) ?? null)
+                        : null
                     readonly property var activeCategory: SettingsPageRegistry.categories.find(
                         cat => (cat?.pages ?? []).includes(root.currentPage)) ?? null
                     readonly property var groupPages: (activeCategory?.pages ?? []).filter(
@@ -1341,8 +1675,12 @@ ApplicationWindow {
                     readonly property bool isOnInPageSubView: false
                     readonly property bool isDrilledDown: false
                     readonly property string backLabel: ""
-                    readonly property string activeTitle: String(activeCategory?.label || meta.name || "")
-                    readonly property string activeIcon: String(meta.icon || "settings")
+                    readonly property string activeTitle: activeCustomTabObj
+                        ? String(activeCustomTabObj.label || Translation.tr("Custom Tab"))
+                        : String(activeCategory?.label || meta.name || "")
+                    readonly property string activeIcon: activeCustomTabObj
+                        ? String(activeCustomTabObj.icon || "dashboard_customize")
+                        : String(meta.icon || "settings")
 
                     function navigateBack(): void {
                         if (windowPageHeader.isOnInPageSubView && windowPageHeader.activePageItem
@@ -1360,6 +1698,7 @@ ApplicationWindow {
 
                     RowLayout {
                         id: windowPageHeaderRow
+                        visible: true
                         anchors.fill: parent
                         anchors.leftMargin: 20
                         anchors.rightMargin: 20
@@ -1378,8 +1717,13 @@ ApplicationWindow {
                             colBackground: Appearance.colors.colPrimaryContainer
                             colBackgroundHover: Appearance.colors.colPrimaryContainerHover
                             onClicked: windowPageHeader.navigateBack()
+                            StyledToolTip {
+                                text: Translation.tr("Go back")
+                            }
 
                             contentItem: Item {
+                                implicitWidth: windowBackRow.implicitWidth
+                                implicitHeight: windowBackRow.implicitHeight
                                 Row {
                                     id: windowBackRow
                                     anchors.centerIn: parent
@@ -1394,6 +1738,7 @@ ApplicationWindow {
 
                                     StyledText {
                                         anchors.verticalCenter: parent.verticalCenter
+                                        verticalAlignment: Text.AlignVCenter
                                         text: windowPageHeader.backLabel
                                         font.pixelSize: Appearance.font.pixelSize.smaller
                                         font.weight: Font.DemiBold
@@ -1418,6 +1763,8 @@ ApplicationWindow {
                         }
 
                         StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            verticalAlignment: Text.AlignVCenter
                             text: windowPageHeader.activeTitle
                             marquee: true
                             maximumLineCount: 1
@@ -1430,8 +1777,12 @@ ApplicationWindow {
                         }
 
                         StyledText {
+                            Layout.alignment: Qt.AlignVCenter
                             Layout.fillWidth: true
-                            text: windowPageHeader.meta.desc ?? ""
+                            verticalAlignment: Text.AlignVCenter
+                            text: windowPageHeader.activeCustomTabObj
+                                ? Translation.tr("Custom modular Settings tab")
+                                : (windowPageHeader.meta.desc ?? "")
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: Appearance.colors.colSubtext
                             marquee: true
@@ -1493,5 +1844,29 @@ ApplicationWindow {
 
             }
         }
+    }
+
+    SettingsEditToolbar {
+        id: windowExternalEditToolbar
+        visible: SettingsLayoutManager.editMode && root.uiReady
+        z: 500
+        targetPage: pagesStack.currentItem
+        width: Math.min(implicitWidth, Math.max(320, parent.width - 24))
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+    }
+
+    // Let the current page scroll its last cards clear above the bottom dock.
+    Binding {
+        target: pagesStack.currentItem
+        property: "editBottomScrollReserve"
+        value: windowExternalEditToolbar.visible ? windowExternalEditToolbar.height : 0
+        when: pagesStack.currentItem?.editBottomScrollReserve !== undefined
+        restoreMode: Binding.RestoreBindingOrValue
+    }
+
+    SettingsModuleDragOverlay {
+        anchors.fill: parent
+        z: 99999
     }
 }

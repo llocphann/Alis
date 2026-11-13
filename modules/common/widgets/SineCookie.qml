@@ -23,7 +23,7 @@ Item {
 
     Loader {
         // Only load FrameAnimation when actively rotating AND power is on
-        active: constantlyRotate && root.powerActive
+        active: constantlyRotate && root.powerActive && root.visible && Appearance.animationsEnabled
         sourceComponent: FrameAnimation {
             running: true
             onTriggered: {

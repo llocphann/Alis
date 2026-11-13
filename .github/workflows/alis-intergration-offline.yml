@@ -47,8 +47,8 @@ jobs:
         run: python3 scripts/test-alis-intergration-settings-flow.py
       - name: Validate Polkit elevation and one-click helper installer
         run: python3 scripts/test-alis-intergration-polkit-visibility.py
-      - name: Validate Obsidian host wrapper width
-        run: python3 scripts/test-alis-intergration-obsidian-wrapper.py
+      - name: Validate Nexus host wrapper width
+        run: python3 scripts/test-alis-intergration-nexus-wrapper.py
       - name: Validate root provisioning without root
         run: python3 scripts/test-alis-intergration-system-provision.py
       - name: Validate repo-copy Arch gateway package bootstrap

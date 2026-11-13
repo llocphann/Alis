@@ -54,10 +54,11 @@ Item {
     
     // Filter out invalid items (null or missing id)
     function isValidItem(item) {
-        return item && item.id;
+        return TrayService.isValidItem(item);
     }
     
-    property list<var> itemsInUserList: SystemTray.items.values.filter(i => {
+    readonly property list<var> deduplicatedItems: TrayService.deduplicateItems(SystemTray.items.values)
+    property list<var> itemsInUserList: root.deduplicatedItems.filter(i => {
         if (!isValidItem(i)) return false;
         const id = (i.id || "").toLowerCase();
         const title = (i.title || "").toLowerCase();
@@ -65,7 +66,7 @@ Item {
         return (Config.options?.bar?.tray?.pinnedItems ?? []).includes(i.id)
                 && (!smartTray || i.status !== Status.Passive || isSpotify || TrayService.isAutostartTrayItem(i));
     })
-    property list<var> itemsNotInUserList: SystemTray.items.values.filter(i => {
+    property list<var> itemsNotInUserList: root.deduplicatedItems.filter(i => {
         if (!isValidItem(i)) return false;
         const id = (i.id || "").toLowerCase();
         const title = (i.title || "").toLowerCase();
@@ -223,7 +224,7 @@ Item {
             font.pixelSize: Math.round(Appearance.font.pixelSize.larger * Appearance.sizes.barModuleScale)
             color: Appearance.colors.colSubtext
             text: "•"
-            visible: root.showSeparator && SystemTray.items.values.length > 0
+            visible: root.showSeparator && root.deduplicatedItems.length > 0
         }
 
         BarStatusIndicators {

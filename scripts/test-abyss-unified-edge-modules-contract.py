@@ -184,7 +184,7 @@ assert 'return isUnifiedKind(p.kind) || edgeThickness' in layout
 assert 'root.outputInsets(modelData?.name ?? "",true)[edge]' in perimeter
 
 # Live editor owns position/icon/size, not the source presentation modes.
-settings = read("modules/settings/BarConfig.qml")
+settings = read("modules/settings/BarConfig.qml") + "\n" + read("modules/settings/SidebarsConfig.qml")
 style = read("modules/abyss/settings/AbyssStyleSettings.qml")
 index = read("modules/settings/SettingsPageRegistryData.qml")
 abyss_page = read("modules/settings/AbyssConfig.qml")

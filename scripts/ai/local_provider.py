@@ -87,7 +87,7 @@ def lmstudio_metadata(payload, model):
     row = matches[0]
     if (remote(row) or row.get('type') not in ('llm', 'vlm')
             or row.get('compatibility_type') not in ('gguf', 'mlx')
-            or row.get('state') not in ('loaded', 'not-loaded')
+            or row.get('state') not in ('loaded', 'not-loaded', 'loading')
             or not text(row.get('arch')) or not text(row.get('quantization'), 40)
             or type(row.get('max_context_length')) is not int or not 1 <= row['max_context_length'] <= 10**9):
         raise LocalProviderError('model_unverified')

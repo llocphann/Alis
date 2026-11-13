@@ -348,15 +348,22 @@ switch() {
     # On Niri or other compositors we fall back to centered defaults to avoid
     # spamming errors while still producing valid colors.
     if command -v hyprctl >/dev/null 2>&1; then
-        focused_monitor_info=$(hyprctl monitors -j 2>/dev/null | jq -r '[.[] | select(.focused == true)] | first | if . == null then "" else "\(.scale) \(.x) \(.y) \(.height)" end' 2>/dev/null)
+        focused_monitor_info=$(hyprctl monitors -j 2>/dev/null | python3 -c 'import json,sys
+try:
+ m=next((x for x in json.load(sys.stdin) if x.get("focused")), None)
+ if m: print(f"{m.get(\"scale\",1)} {m.get(\"x\",0)} {m.get(\"y\",0)} {m.get(\"height\",1080)}")
+except Exception: pass' 2>/dev/null)
         if [[ -n "$focused_monitor_info" ]]; then
             read scale screenx screeny screensizey <<< "$focused_monitor_info"
             cursor_json=$(hyprctl cursorpos -j 2>/dev/null)
-            cursorposx=$(printf '%s' "$cursor_json" | jq -r '.x // empty' 2>/dev/null)
-            cursorposy=$(printf '%s' "$cursor_json" | jq -r '.y // empty' 2>/dev/null)
+            read cursorposx cursorposy <<< "$(printf '%s' "$cursor_json" | python3 -c 'import json,sys
+try:
+ c=json.load(sys.stdin)
+ if "x" in c and "y" in c: print(f"{c[\"x\"]} {c[\"y\"]}")
+except Exception: pass' 2>/dev/null)"
             if [[ -n "$cursorposx" && -n "$cursorposy" ]]; then
-                cursorposx=$(bc <<< "scale=0; ($cursorposx - $screenx) * $scale / 1")
-                cursorposy=$(bc <<< "scale=0; ($cursorposy - $screeny) * $scale / 1")
+                cursorposx=$(awk -v cx="$cursorposx" -v sx="$screenx" -v sc="$scale" 'BEGIN { printf "%d", (cx - sx) * sc }')
+                cursorposy=$(awk -v cy="$cursorposy" -v sy="$screeny" -v sc="$scale" 'BEGIN { printf "%d", (cy - sy) * sc }')
             else
                 cursorposx=960
                 cursorposy=540
@@ -856,7 +863,8 @@ main() {
                     [[ "$skip_accent_write" != "1" ]] && set_accent_color ""
                     shift 2
                 else
-                    set_accent_color $(hyprpicker --no-fancy)
+                    picked_color="$("$SHELL_ROOT/scripts/alis" colorpicker --config "$SHELL_ROOT")" || exit 1
+                    set_accent_color "$picked_color"
                     shift
                 fi
                 ;;

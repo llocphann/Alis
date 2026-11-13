@@ -3,6 +3,10 @@
 # output field without dismissing/recreating each other.
 set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "${ALIS_SILENT_WL_WRAPPED:-0}" != "1" ]]; then
+    export ALIS_SILENT_WL_WRAPPED=1
+    exec bash "$repo_root/scripts/lib/silent-wayland-run.sh" -- "$0" "$@"
+fi
 body_host="$repo_root/modules/abyss/AbyssBodyHost.qml"
 for token in \
     'readonly property var visualPlacement:' \

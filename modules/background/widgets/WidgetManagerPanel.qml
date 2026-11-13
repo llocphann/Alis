@@ -15,6 +15,7 @@ Item {
     // Canvas bounds for clamping
     property real canvasWidth: 800
     property real canvasHeight: 600
+    property bool embeddedSurface: false
     required property string outputName
     signal closeRequested()
     signal focusWidgetRequested(string layoutKey)
@@ -142,13 +143,33 @@ Item {
     }
 
     // Size constraints
-    readonly property int _minWidth: 360
+    readonly property int _minWidth: 236
     readonly property int _maxWidth: Math.min(720, Math.max(_minWidth, root.canvasWidth - 24))
     readonly property int _minHeight: 280
     readonly property int _maxHeight: Math.min(820, Math.max(_minHeight, root.canvasHeight - 24))
+    readonly property real desiredDockWidth: Math.max(244, Math.round(284 * Appearance.fontSizeScale))
+    readonly property real desiredDockHeight: Math.max(
+        240,
+        Math.min(Math.round(root.screenHeight * 0.80), Math.round(_header.height + _contentCol.implicitHeight + 24))
+    )
 
-    width: _panelWidth
-    height: _panelHeight
+    width: root.embeddedSurface ? Math.max(236, root.parent?.width ?? 248) : _panelWidth
+    height: root.embeddedSurface ? Math.max(240, root.parent?.height ?? 460) : _panelHeight
+
+    Connections {
+        target: GlobalStates
+        function onDesktopWidgetInspectorSerialChanged(): void {
+            const req = GlobalStates.desktopWidgetInspectorTarget
+            if (!req || !req.layoutKey)
+                return
+            if (req.outputName && req.outputName !== root.outputName)
+                return
+            if (root.searchText.length > 0)
+                root.searchText = ""
+            if (root.filterMode !== "all")
+                root._setFilter("all")
+        }
+    }
 
     property int _panelWidth: Math.max(_minWidth, Math.min(_maxWidth,
         Persistent.states?.desktopWidgets?.managerWidth ?? 440))
@@ -156,7 +177,7 @@ Item {
         Persistent.states?.desktopWidgets?.managerHeight ?? 520))
 
     function persistGeometry(): void {
-        if (!Persistent.states?.desktopWidgets || !root.parent)
+        if (root.embeddedSurface || !Persistent.states?.desktopWidgets || !root.parent)
             return
         const maxX = Math.max(1, root.canvasWidth - root.width)
         const maxY = Math.max(1, root.canvasHeight - root.height)
@@ -169,6 +190,8 @@ Item {
     }
 
     function clampToCanvas(): void {
+        if (root.embeddedSurface)
+            return
         root._panelWidth = Math.max(root._minWidth,
             Math.min(root._maxWidth, root._panelWidth))
         root._panelHeight = Math.max(root._minHeight,
@@ -197,12 +220,13 @@ Item {
     // ── Shadow + Background card ──
     StyledRectangularShadow {
         target: _bgCard
-        visible: !Appearance.zzzEverywhere && !Appearance.auroraEverywhere
+        visible: !root.embeddedSurface && !Appearance.zzzEverywhere && !Appearance.auroraEverywhere
     }
 
     PanelSurface {
         id: _bgCard
         anchors.fill: parent
+        visible: !root.embeddedSurface
         elevation: 1
         wallpaperBackdrop: true
         // mapToItem is a plain call, not a tracked dependency: the panel is
@@ -230,7 +254,7 @@ Item {
     DotGridCanvas {
         anchors.fill: parent
         anchors.margins: 10
-        visible: Appearance.zzzEverywhere
+        visible: !root.embeddedSurface && Appearance.zzzEverywhere
         gridSize: 24
         dotAlpha: 0.07
     }
@@ -245,7 +269,8 @@ Item {
         MouseArea {
             id: _dragArea
             anchors.fill: parent
-            cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+            enabled: !root.embeddedSurface
+            cursorShape: !root.embeddedSurface ? (pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor) : Qt.ArrowCursor
             property real _canvasStartX: 0
             property real _canvasStartY: 0
             property real _parentStartX: 0
@@ -271,7 +296,7 @@ Item {
         }
 
         ColumnLayout {
-            anchors { fill: parent; leftMargin: 14; rightMargin: 10; topMargin: 8; bottomMargin: 8 }
+            anchors { fill: parent; leftMargin: 10; rightMargin: 10; topMargin: 8; bottomMargin: 6 }
             spacing: 6
 
             RowLayout {
@@ -293,34 +318,20 @@ Item {
                         font.pixelSize: Appearance.font.pixelSize.normal
                         font.weight: Font.DemiBold
                         color: Appearance.colors.colOnLayer1
+                        elide: Text.ElideRight
+                        width: parent.width
                     }
                     StyledText {
                         text: Translation.tr("%1 active on this display").arg(root._activeCount)
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.55)
+                        elide: Text.ElideRight
+                        width: parent.width
                     }
                 }
 
                 RippleButton {
-                    width: 30; height: 30
-                    buttonRadius: Appearance.rounding.full
-                    colBackground: "transparent"
-                    colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.06)
-                    colRipple: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.10)
-                    releaseAction: () => {
-                        if (Config.options?.settingsUi?.overlayMode !== false) {
-                            GlobalStates.settingsOverlayRequestedPage = 14
-                            GlobalStates.settingsOverlayOpen = true
-                        } else {
-                            Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=14", Quickshell.shellPath("scripts/alis"), "settings-window"])
-                        }
-                    }
-                    cancelAction: () => {}
-                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: "settings"; iconSize: 17; color: Appearance.colors.colOnLayer1 }
-                    StyledToolTip { text: Translation.tr("Open full widget settings") }
-                }
-
-                RippleButton {
+                    visible: !root.embeddedSurface
                     width: 30; height: 30
                     buttonRadius: Appearance.rounding.full
                     colBackground: "transparent"
@@ -355,9 +366,10 @@ Item {
             }
 
             Row {
+                id: _filterRow
                 Layout.fillWidth: true
                 Layout.preferredHeight: 28
-                spacing: 4
+                spacing: root.width < 300 ? 3 : 4
 
                 Repeater {
                     model: [
@@ -368,9 +380,18 @@ Item {
                     ]
                     RippleButton {
                         id: filterButton
+                        objectName: "widgetManagerFilter_" + modelData.key
                         required property var modelData
-                        width: filterLabel.implicitWidth + 34
+                        readonly property bool compactChip: root.width < 300
+                        width: compactChip
+                            ? Math.max(46, Math.floor((_filterRow.width - _filterRow.spacing * 3) / 4))
+                            : (filterLabel.implicitWidth + 34)
                         height: 28
+                        padding: 0
+                        leftPadding: 0
+                        rightPadding: 0
+                        topPadding: 0
+                        bottomPadding: 0
                         buttonRadius: Appearance.rounding.full
                         toggled: root.filterMode === modelData.key
                         colBackground: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.03)
@@ -379,24 +400,31 @@ Item {
                         colBackgroundToggledHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.20)
                         releaseAction: () => root._setFilter(filterButton.modelData.key)
                         cancelAction: () => {}
-                        contentItem: Row {
-                            anchors.centerIn: parent
-                            spacing: 4
-                            MaterialSymbol {
-                                text: filterButton.modelData.icon
-                                iconSize: 13
-                                color: filterButton.toggled ? Appearance.colors.colPrimary
-                                    : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.58)
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            StyledText {
-                                id: filterLabel
-                                text: filterButton.modelData.label
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                font.weight: filterButton.toggled ? Font.DemiBold : Font.Normal
-                                color: filterButton.toggled ? Appearance.colors.colPrimary
-                                    : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.72)
-                                anchors.verticalCenter: parent.verticalCenter
+                        contentItem: Item {
+                            implicitWidth: filterContentRow.implicitWidth
+                            implicitHeight: filterContentRow.implicitHeight
+                            Row {
+                                id: filterContentRow
+                                anchors.centerIn: parent
+                                spacing: filterButton.compactChip ? 2 : 4
+                                MaterialSymbol {
+                                    text: filterButton.modelData.icon
+                                    iconSize: filterButton.compactChip ? 11 : 13
+                                    color: filterButton.toggled ? Appearance.colors.colPrimary
+                                        : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.58)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                StyledText {
+                                    id: filterLabel
+                                    text: filterButton.modelData.label
+                                    font.pixelSize: filterButton.compactChip
+                                        ? Appearance.font.pixelSize.smallest
+                                        : Appearance.font.pixelSize.smaller
+                                    font.weight: filterButton.toggled ? Font.DemiBold : Font.Normal
+                                    color: filterButton.toggled ? Appearance.colors.colPrimary
+                                        : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.72)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
                             }
                         }
                     }
@@ -416,6 +444,8 @@ Item {
     component ResizeEdge: MouseArea {
         id: rEdge
         z: 30
+        visible: !root.embeddedSurface
+        enabled: !root.embeddedSurface
         property bool resizeLeft: false
         property bool resizeRight: false
         property bool resizeTop: false
@@ -490,6 +520,7 @@ Item {
     // above it, so this adds discoverability without another gesture owner.
     Item {
         z: 29
+        visible: !root.embeddedSurface
         anchors { right: parent.right; bottom: parent.bottom; margins: 5 }
         width: 14; height: 14
         opacity: 0.42
@@ -514,7 +545,14 @@ Item {
 
         Column {
             id: _contentCol
-            anchors { left: parent.left; right: parent.right; top: parent.top; topMargin: 8; leftMargin: 12; rightMargin: 12 }
+            anchors {
+                left: parent.left
+                right: parent.right
+                top: parent.top
+                topMargin: 8
+                leftMargin: root.width < 300 ? 6 : 10
+                rightMargin: root.width < 300 ? 6 : 10
+            }
             spacing: 2
 
             // ── Built-in widgets ──
@@ -603,6 +641,7 @@ Item {
                     defaultEnabled: false
                     isCustom: true
                     customConfigKeys: modelData.configKeys ?? ({})
+                    customManifest: modelData
                 }
             }
 
@@ -669,6 +708,7 @@ Item {
         required property bool defaultEnabled
         property bool isCustom: false
         property var customConfigKeys: ({})
+        property var customManifest: ({})
 
         readonly property string _cfgPrefix: isCustom
             ? ("background.widgets.custom." + widgetKey)
@@ -702,6 +742,23 @@ Item {
         readonly property bool _expanded: card._enabled && _expandToggle
         property bool _expandToggle: false
 
+        Connections {
+            target: GlobalStates
+            function onDesktopWidgetInspectorSerialChanged(): void {
+                const req = GlobalStates.desktopWidgetInspectorTarget
+                if (!req || req.layoutKey !== card._layoutKey)
+                    return
+                if (req.outputName && req.outputName !== root.outputName)
+                    return
+                card._expandToggle = true
+                Qt.callLater(() => {
+                    const pt = card.mapToItem(_contentCol, 0, 0)
+                    const maxY = Math.max(0, _scrollView.contentHeight - _scrollView.height)
+                    _scrollView.contentY = Math.max(0, Math.min(maxY, Math.round(pt.y)))
+                })
+            }
+        }
+
         visible: root._cardVisible(card.widgetLabel, card._enabled, card._locked, card.isCustom)
         width: parent.width
         height: visible ? _cardCol.implicitHeight : 0
@@ -733,14 +790,15 @@ Item {
                     anchors {
                         left: parent.left
                         right: _actionsRow.left
-                        leftMargin: 12
-                        rightMargin: 8
+                        leftMargin: root.width < 300 ? 8 : 12
+                        rightMargin: 4
                         verticalCenter: parent.verticalCenter
                     }
-                    spacing: 10
+                    spacing: root.width < 300 ? 6 : 10
 
                     Rectangle {
-                        width: 30; height: 30
+                        width: root.width < 300 ? 24 : 30
+                        height: width
                         radius: Appearance.rounding.verysmall
                         color: card._enabled
                             ? ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.10)
@@ -750,14 +808,14 @@ Item {
                         MaterialSymbol {
                             anchors.centerIn: parent
                             text: card.widgetIcon
-                            iconSize: 18
+                            iconSize: root.width < 300 ? 15 : 18
                             color: card._enabled ? Appearance.colors.colPrimary : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.4)
                         }
                     }
 
                     Column {
                         id: _labelColumn
-                        width: Math.max(0, _identityRow.width - 40)
+                        width: Math.max(0, _identityRow.width - (root.width < 300 ? 30 : 40))
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 1
                         StyledText {
@@ -800,16 +858,32 @@ Item {
                     }
                 }
 
+                MouseArea {
+                    anchors.fill: _identityRow
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (card._enabled) {
+                            card._expandToggle = !card._expandToggle
+                            root.focusWidgetRequested(card._layoutKey)
+                        } else {
+                            DesktopWidgetLayout.setGloballyEnabled(card._layoutKey, true)
+                            card._expandToggle = true
+                            root.focusWidgetRequested(card._layoutKey)
+                        }
+                    }
+                }
+
                 Row {
                     id: _actionsRow
-                    anchors { right: parent.right; rightMargin: 8; verticalCenter: parent.verticalCenter }
-                    spacing: 3
+                    readonly property int btnSize: root.width < 300 ? 24 : 30
+                    anchors { right: parent.right; rightMargin: root.width < 300 ? 6 : 8; verticalCenter: parent.verticalCenter }
+                    spacing: root.width < 300 ? 1 : 3
 
                     // Locate/select on the actual desktop canvas. This keeps the
                     // manager useful as navigation, not only as a settings list.
                     RippleButton {
-                        visible: card._enabled
-                        width: 30; height: 30
+                        visible: card._enabled && root.width >= 260
+                        width: _actionsRow.btnSize; height: _actionsRow.btnSize
                         buttonRadius: Appearance.rounding.full
                         colBackground: "transparent"
                         colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.08)
@@ -819,7 +893,7 @@ Item {
                         contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: "my_location"
-                            iconSize: 16
+                            iconSize: root.width < 300 ? 14 : 16
                             color: Appearance.colors.colPrimary
                         }
                         StyledToolTip { text: Translation.tr("Select this widget on the desktop") }
@@ -829,7 +903,7 @@ Item {
                     // requires opening a nested settings block just to free it.
                     RippleButton {
                         visible: card._enabled
-                        width: 30; height: 30
+                        width: _actionsRow.btnSize; height: _actionsRow.btnSize
                         buttonRadius: Appearance.rounding.full
                         toggled: card._locked
                         colBackground: "transparent"
@@ -842,7 +916,7 @@ Item {
                         contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: card._locked ? "lock" : "lock_open"
-                            iconSize: 16
+                            iconSize: root.width < 300 ? 14 : 16
                             color: card._locked ? Appearance.colors.colError
                                 : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.62)
                         }
@@ -855,7 +929,7 @@ Item {
                     // Expand button
                     RippleButton {
                         visible: card._enabled
-                        width: 30; height: 30
+                        width: _actionsRow.btnSize; height: _actionsRow.btnSize
                         buttonRadius: Appearance.rounding.full
                         colBackground: "transparent"
                         colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.06)
@@ -865,10 +939,10 @@ Item {
                         contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: card._expandToggle ? "keyboard_arrow_up" : "tune"
-                            iconSize: 18
+                            iconSize: root.width < 300 ? 15 : 18
                             color: card._expandToggle ? Appearance.colors.colPrimary : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.6)
                         }
-                        StyledToolTip { text: card._expandToggle ? Translation.tr("Collapse") : Translation.tr("Quick settings") }
+                        StyledToolTip { text: card._expandToggle ? Translation.tr("Collapse") : Translation.tr("Widget settings") }
                     }
 
                     // Enable switch
@@ -912,7 +986,7 @@ Item {
                         MaterialSymbol { text: "zoom_in"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
                             text: Translation.tr("Scale")
-                            Layout.preferredWidth: 80
+                            Layout.preferredWidth: root.width < 300 ? 58 : 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }
@@ -937,7 +1011,7 @@ Item {
                         MaterialSymbol { text: "opacity"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
                             text: Translation.tr("Opacity")
-                            Layout.preferredWidth: 80
+                            Layout.preferredWidth: root.width < 300 ? 58 : 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }
@@ -960,7 +1034,7 @@ Item {
                         MaterialSymbol { text: "contrast"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
                             text: Translation.tr("Dimming")
-                            Layout.preferredWidth: 80
+                            Layout.preferredWidth: root.width < 300 ? 58 : 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }
@@ -1031,7 +1105,7 @@ Item {
                         MaterialSymbol { text: "opacity"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
                             text: Translation.tr("Background")
-                            Layout.preferredWidth: 80
+                            Layout.preferredWidth: root.width < 300 ? 58 : 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }
@@ -1069,6 +1143,17 @@ Item {
                                     Config.setNestedValue(card._cfgPrefix + ".showBorder", checked)
                             }
                         }
+                    }
+
+                    DesktopWidgetSettingsBody {
+                        outputName: root.outputName
+                        layoutKey: card._layoutKey
+                        widgetKey: card.widgetKey
+                        isCustom: card.isCustom
+                        customManifest: card.customManifest
+                        supportsAppearance: card._supportsAppearance
+                        defaultOn: card.defaultEnabled
+                        configPrefix: card._cfgPrefix
                     }
                 }
             }

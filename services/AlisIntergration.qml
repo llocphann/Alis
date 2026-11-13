@@ -33,10 +33,12 @@ Singleton {
     readonly property var options: Config.options?.integrations?.alisIntergration
     readonly property bool tlpEnabled: available && !loadFailed && Config.ready && options?.tlp === true
     readonly property bool thinkfanEnabled: available && !loadFailed && Config.ready && options?.thinkfan === true
-    readonly property bool obsidianEnabled: available && !loadFailed && Config.ready && options?.obsidian === true
-    readonly property bool spacedRepetitionEnabled: available && !loadFailed && Config.ready && (options?.spaced_repetition ?? true)
-    readonly property bool enabled: tlpEnabled || thinkfanEnabled || obsidianEnabled
+    readonly property bool nexusEnabled: available && !loadFailed && Config.ready && options?.nexus === true
+    readonly property bool spacedRepetitionEnabled: available && !loadFailed && Config.ready && options?.spaced_repetition === true
+    readonly property bool enabled: tlpEnabled || thinkfanEnabled || nexusEnabled || spacedRepetitionEnabled
     readonly property var session: worker.status === Loader.Ready ? worker.item : null
+    readonly property var nexus: session?.nexus ?? null
+    readonly property var spacedRepetition: session?.spacedRepetition ?? null
 
     function pluginEnabled(pluginId): bool {
         return available && !loadFailed && Config.ready && options?.[pluginId] === true
@@ -92,10 +94,14 @@ Singleton {
         return packageRoot + "/scripts/integrations/lookup_word_level.py"
     }
     function backendSource(kind): string {
-        if (!obsidianEnabled) return ""
-        if (kind === "managed") return packageRoot + "/services/ObsidianTodoBackend.qml"
+        if (!nexusEnabled) return ""
+        if (kind === "managed") return packageRoot + "/services/NexusTodoBackend.qml"
         if (kind === "daily") return packageRoot + "/services/DailyNoteTodoBackend.qml"
         return ""
+    }
+    function nexusWorkspaceSource(): string {
+        if (!nexusEnabled || packageRoot.length === 0) return ""
+        return packageRoot + "/modules/nexus/NexusWorkspace.qml"
     }
     function refresh(): void {
         if (probe.running || managerBusy) return
@@ -115,7 +121,7 @@ Singleton {
             managerBusy, authorizationPending, managerError, updateAvailable, canRollback,
             systemProvisionerAvailable, systemHelpersInstalled, systemHelpersDiagnostic,
             gatewayPackageInstalled,
-            integrations:{tlp:tlpEnabled,thinkfan:thinkfanEnabled,obsidian:obsidianEnabled}})
+            integrations:{tlp:tlpEnabled,thinkfan:thinkfanEnabled,nexus:nexusEnabled}})
     }
     Loader {
         id: worker
@@ -181,7 +187,6 @@ Singleton {
         onExited: (exitCode) => {
             managerDeadline.stop()
             root.managerBusy = false
-            let chainHelpersEnsure = false
             try {
                 const result = JSON.parse(String(managerOutput.text ?? "").trim())
                 if (exitCode !== 0 || result.ok !== true) {
@@ -207,8 +212,6 @@ Singleton {
                     } else {
                         root.updateAvailable = false
                         root.canRollback = result.canRollback === true
-                        if (root.managerAction === "install" && !root.systemHelpersInstalled)
-                            chainHelpersEnsure = true
                     }
                 }
             } catch (_error) {
@@ -218,10 +221,6 @@ Singleton {
             if (root._restoreEmbeddedSettings) {
                 root._restoreEmbeddedSettings = false
                 GlobalStates.settingsOverlayOpen = true
-            }
-            if (chainHelpersEnsure) {
-                Qt.callLater(() => root.manage("helpers-ensure"))
-                return
             }
             if (["install","remove","rollback","helpers-install","helpers-remove",
                 "helpers-ensure","gateway-install","gateway-remove"].includes(root.managerAction))
@@ -261,6 +260,15 @@ Singleton {
         target: "alis-intergration"
         function refresh(): void {root.refresh()}
         function status(): string {return root.status()}
+    }
+    IpcHandler {
+        target: "nexus"
+        function toggle(): void { if (root.nexus) root.nexus.toggle() }
+        function open(): void { if (root.nexus) root.nexus.open() }
+        function openOverlay(): void { if (root.nexus) root.nexus.openOverlay() }
+        function openWindow(): void { if (root.nexus) root.nexus.openWindow() }
+        function close(): void { if (root.nexus) root.nexus.close() }
+        function daily(): void { if (root.nexus) { root.nexus.open(); root.nexus.openDailyNote() } }
     }
     Component.onCompleted: {
         root.refresh()

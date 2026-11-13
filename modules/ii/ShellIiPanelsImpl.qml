@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import qs.modules.bootGreeting
-import qs.modules.lock
 import qs.modules.mediaControls
 import qs.modules.notificationPopup
 import qs.modules.onScreenDisplay
@@ -121,7 +120,6 @@ Item {
         keepLoaded: true
         source: "../dashboard/Dashboard.qml"
     }
-    DeferredPanelLoader { identifier: "iiLock"; component: Lock {} }
     DeferredPanelLoader { identifier: "iiMediaControls"; component: MediaControls {} }
     OnDemandPanelLoader { identifier: "iiOnScreenKeyboard"; open: GlobalStates.oskOpen; component: OnScreenKeyboard {} }
     OnDemandPanelLoader { identifier: "iiOverview"; open: GlobalStates.overviewOpen; closeGraceMs: Appearance.animation.elementMoveExit.duration + 80; source: "../overview/Overview.qml" }

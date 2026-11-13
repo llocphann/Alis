@@ -378,12 +378,15 @@ Singleton {
             skipGpu = fileDGpuRuntimeStatus.text().trim() === "suspended";
         }
 
+        const networkDemanded = root._networkConsumers > 0
+            || Date.now() < root._networkTransientUntilMs
+
         // Reload files once their initial FileView read has completed.
         if (fileMeminfo.text() !== "")
             fileMeminfo.reload();
         if (fileStat.text() !== "")
             fileStat.reload();
-        if (fileNetDev.text() !== "")
+        if (networkDemanded && fileNetDev.text() !== "")
             fileNetDev.reload();
         if (root._cpuTempPath !== "" && fileCpuTemp.text() !== "")
             fileCpuTemp.reload();
@@ -424,10 +427,7 @@ Singleton {
         swapTotal = nextSwapTotal
         swapFree = nextSwapFree
 
-        // /proc/net/dev stays cheaply refreshed with the other proc files, but
-        // avoid its split/parse allocations unless a consumer displays throughput.
-        const networkDemanded = root._networkConsumers > 0
-            || Date.now() < root._networkTransientUntilMs
+        // /proc/net/dev is only reloaded and parsed when a consumer displays throughput.
         if (networkDemanded) {
             const textNetDev = fileNetDev.text();
             let totalRx = 0;

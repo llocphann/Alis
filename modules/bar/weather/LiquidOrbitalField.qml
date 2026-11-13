@@ -306,7 +306,7 @@ Item {
     }
 
     function requestPaint(): void {
-        if (liquidCanvas.available)
+        if (liquidCanvas.visible && liquidCanvas.available)
             liquidCanvas.requestPaint()
     }
 
@@ -326,9 +326,10 @@ Item {
         renderStrategy: Canvas.Threaded
         renderTarget: Canvas.Image
 
-        onAvailableChanged: if (available) requestPaint()
-        onWidthChanged: if (available) requestPaint()
-        onHeightChanged: if (available) requestPaint()
+        onVisibleChanged: if (visible && available) requestPaint()
+        onAvailableChanged: if (visible && available) requestPaint()
+        onWidthChanged: if (visible && available) requestPaint()
+        onHeightChanged: if (visible && available) requestPaint()
         onPaint: {
             const ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)

@@ -39,24 +39,34 @@ ContentPage {
 
     Process {
         id: savedThemesProcess
-        command: ["/usr/bin/bash", "-lc", `for f in "${root.savedThemesDir}"/*.json; do [ -f "$f" ] || continue; /usr/bin/jq -c --arg name "$(/usr/bin/basename "$f" .json)" '{id:("saved:" + $name),name:$name,description:"Saved custom theme",tags:["saved"],saved:true,colors:.}' "$f"; done`]
+        property var _stagingSavedThemePresets: []
+        command: [
+            "/usr/bin/python3", "-c",
+            "import glob,json,os,sys\nd=sys.argv[1]\nif os.path.isdir(d):\n for p in sorted(glob.glob(os.path.join(d,'*.json'))):\n  try:\n   with open(p,'r',encoding='utf-8') as f: c=json.load(f)\n   n=os.path.splitext(os.path.basename(p))[0]\n   print(json.dumps({'id':'saved:'+n,'name':n,'description':'Saved custom theme','tags':['saved'],'saved':True,'colors':c}))\n  except Exception: pass",
+            root.savedThemesDir
+        ]
         stdout: SplitParser {
             onRead: data => {
                 try {
                     const preset = JSON.parse(data)
-                    root.savedThemePresets = [...root.savedThemePresets, preset]
+                    savedThemesProcess._stagingSavedThemePresets.push(preset)
                 } catch (e) {
                     console.warn("[ThemesConfig] Skipping invalid saved theme entry:", e)
                 }
             }
         }
-        onStarted: root.savedThemePresets = []
+        onStarted: savedThemesProcess._stagingSavedThemePresets = []
+        onExited: {
+            const next = savedThemesProcess._stagingSavedThemePresets
+            if (JSON.stringify(next) !== JSON.stringify(root.savedThemePresets))
+                root.savedThemePresets = next
+        }
     }
 
     Timer {
         interval: 2000
         repeat: true
-        running: root.visible && customThemeEditorSection.expanded
+        running: Boolean(root.visible && customThemeEditorLoader && customThemeEditorLoader.active)
         triggeredOnStart: true
         onTriggered: root.refreshSavedThemes()
     }
@@ -74,12 +84,27 @@ ContentPage {
     settingsPageName: Translation.tr("Themes")
     property string activeSection: "colors"
 
+    readonly property real effectiveColorsBentoHeight: {
+        const gap = SettingsMaterialPreset.pageSpacing
+        const leftActual = colorThemesCard.cardImplicitHeight + gap + typographyCard.cardImplicitHeight
+        const baseH = (leftActual >= 560 && (colorThemesCard.hasCustomModuleSizing || typographyCard.hasCustomModuleSizing))
+            ? leftActual
+            : SettingsMaterialPreset.standardBentoHeight
+        const availBodyH = root.height >= 800
+            ? Math.max(720, root.height - 20 - (root._subTabItems.length > 1 || SettingsLayoutManager.editMode ? (40 + gap) : 0))
+            : baseH
+        return Math.min(baseH, availBodyH)
+    }
+
     onActiveSectionChanged: {
         // "style", "motion", and "type" are merged into the main "colors" Hub view.
         if (activeSection === "style")
             activeSection = "colors"
         if (activeSection === "motion" || activeSection === "type")
             activeSection = "colors"
+        if (activeSection === "colors" || activeSection === "advanced")
+            root.refreshSavedThemes()
+        root._updateCardTabs()
         root._scheduleCardTabsUpdate()
     }
 
@@ -120,8 +145,9 @@ ContentPage {
 
     readonly property real colorsBentoHeight: {
         const gap = SettingsMaterialPreset.pageSpacing
+        const showMotion = (Config.options?.panelFamily ?? "ii") !== "waffle"
         const rightTotal = schemeVariantCard.naturalCardImplicitHeight
-            + (motionSpeedCard.visible ? (gap + motionSpeedCard.naturalCardImplicitHeight) : 0)
+            + (showMotion ? (gap + motionSpeedCard.naturalCardImplicitHeight) : 0)
             + gap + iconThemeCard.naturalCardImplicitHeight
             + gap + themeSchedulingCard.naturalCardImplicitHeight
         const leftTotal = colorThemesCard.naturalCardImplicitHeight + gap + typographyCard.naturalCardImplicitHeight
@@ -129,19 +155,40 @@ ContentPage {
     }
 
     function _syncStandardBentoHeight(): void {
-        if (root.activeSection === "colors"
+        if (!SettingsLayoutManager.editMode
+                && !root.isCanvasLayoutMode
+                && Math.abs(root.effectiveLeftColumnRatio - 0.5) < 0.01
+                && !colorThemesCard.hasCustomModuleSizing
+                && !schemeVariantCard.hasCustomModuleSizing
+                && root.activeSection === "colors"
                 && root.visible
                 && colorThemesCard._cardSubTabActive
                 && schemeVariantCard._cardSubTabActive
                 && colorThemesCard.width >= 400 && colorThemesCard.width <= 850
                 && schemeVariantCard.width >= 400 && schemeVariantCard.width <= 850
-                && colorsBentoHeight >= 825
-                && Math.abs(SettingsMaterialPreset.standardBentoHeight - colorsBentoHeight) >= 1) {
-            SettingsMaterialPreset.standardBentoHeight = Math.round(colorsBentoHeight)
+                && colorsBentoHeight >= 600) {
+            const scale = Appearance.fontSizeScale ?? 1.0
+            const family = String(Config.options?.panelFamily ?? "abyss")
+            const rounded = Math.round(colorsBentoHeight)
+            if (Math.abs(SettingsMaterialPreset._measuredThemesBentoHeight - rounded) >= 1
+                    || Math.abs(SettingsMaterialPreset._measuredThemesFontScale - scale) >= 0.001
+                    || SettingsMaterialPreset._measuredThemesPanelFamily !== family) {
+                SettingsMaterialPreset._measuredThemesBentoHeight = rounded
+                SettingsMaterialPreset._measuredThemesFontScale = scale
+                SettingsMaterialPreset._measuredThemesPanelFamily = family
+            }
         }
     }
 
-    onColorsBentoHeightChanged: _syncStandardBentoHeight()
+    Connections {
+        target: Appearance
+        function onFontSizeScaleChanged() {
+            SettingsMaterialPreset._measuredThemesFontScale = -1
+            Qt.callLater(() => root._syncStandardBentoHeight())
+        }
+    }
+
+    onColorsBentoHeightChanged: Qt.callLater(() => root._syncStandardBentoHeight())
 
     GridLayout {
         Layout.fillWidth: true
@@ -666,7 +713,15 @@ ContentPage {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.topMargin: 4
-                readonly property real baseGridHeight: themesGroup.filteredBuiltInPresets.length > 0 ? 172 : 96
+                readonly property real baseGridHeight: {
+                    if (themesGroup.filteredBuiltInPresets.length === 0)
+                        return 96
+                    if (quickAccessSection.visible && themesGroup.filteredSavedPresets.length > 0)
+                        return 96
+                    if (quickAccessSection.visible || themesGroup.filteredSavedPresets.length > 0)
+                        return 120
+                    return 146
+                }
                 Layout.minimumHeight: baseGridHeight
                 Layout.preferredHeight: baseGridHeight
                 color: Appearance.colors.colLayer1
@@ -745,6 +800,9 @@ SettingsCardSection {
 
     SettingsGroup {
         ConfigSelectionArray {
+            optionHorizontalPadding: 5
+            optionIconSize: Appearance.font.pixelSize.smaller
+            optionIconSpacing: 4
             currentValue: Config.options?.appearance?.palette?.type ?? "auto"
             onSelected: newValue => {
                 Config.setNestedValue("appearance.palette.type", newValue)
@@ -755,15 +813,15 @@ SettingsCardSection {
                 }
             }
             options: [
-                { "value": "auto", "displayName": Translation.tr("Auto") },
-                { "value": "scheme-content", "displayName": Translation.tr("Content") },
-                { "value": "scheme-expressive", "displayName": Translation.tr("Expressive") },
-                { "value": "scheme-fidelity", "displayName": Translation.tr("Fidelity") },
-                { "value": "scheme-fruit-salad", "displayName": Translation.tr("Fruit Salad") },
-                { "value": "scheme-monochrome", "displayName": Translation.tr("Monochrome") },
-                { "value": "scheme-neutral", "displayName": Translation.tr("Neutral") },
-                { "value": "scheme-rainbow", "displayName": Translation.tr("Rainbow") },
-                { "value": "scheme-tonal-spot", "displayName": Translation.tr("Tonal Spot") }
+                { "value": "auto", "displayName": Translation.tr("Auto"), "icon": "auto_awesome" },
+                { "value": "scheme-content", "displayName": Translation.tr("Content"), "icon": "image" },
+                { "value": "scheme-expressive", "displayName": Translation.tr("Expressive"), "icon": "flare" },
+                { "value": "scheme-fidelity", "displayName": Translation.tr("Fidelity"), "icon": "verified" },
+                { "value": "scheme-fruit-salad", "displayName": Translation.tr("Fruit Salad"), "icon": "local_florist" },
+                { "value": "scheme-monochrome", "displayName": Translation.tr("Monochrome"), "icon": "filter_b_and_w" },
+                { "value": "scheme-neutral", "displayName": Translation.tr("Neutral"), "icon": "tonality" },
+                { "value": "scheme-rainbow", "displayName": Translation.tr("Rainbow"), "icon": "gradient" },
+                { "value": "scheme-tonal-spot", "displayName": Translation.tr("Tonal Spot"), "icon": "palette" }
             ]
         }
 
@@ -1103,16 +1161,22 @@ SettingsCardSection {
             onCheckedChanged: Config.setNestedValue("appearance.themeSchedule.enabled", checked)
         }
 
-        // Day theme selector
+        // Day theme + start time row
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: 6
 
-            MaterialSymbol { text: "light_mode"; iconSize: 18; color: Appearance.colors.colSubtext }
-            StyledText { text: Translation.tr("Day theme"); Layout.fillWidth: true }
+            MaterialSymbol { Layout.alignment: Qt.AlignVCenter; text: "wb_sunny"; iconSize: 18; color: Appearance.colors.colSubtext }
+            StyledText {
+                Layout.alignment: Qt.AlignVCenter
+                verticalAlignment: Text.AlignVCenter
+                text: Translation.tr("Day theme")
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+            }
 
             Item {
-                Layout.preferredWidth: 150
+                Layout.preferredWidth: 124
                 Layout.preferredHeight: 32
 
                 RippleButton {
@@ -1123,16 +1187,18 @@ SettingsCardSection {
 
                     contentItem: RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 8
 
                         StyledText {
+                            Layout.alignment: Qt.AlignVCenter
                             Layout.fillWidth: true
+                            verticalAlignment: Text.AlignVCenter
                             text: ThemePresets.presets.find(p => p.id === (Config.options?.appearance?.themeSchedule?.dayTheme ?? "auto"))?.name ?? "Auto"
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             elide: Text.ElideRight
                         }
-                        MaterialSymbol { text: dayThemePopup.visible ? "expand_less" : "expand_more"; iconSize: 14; color: Appearance.colors.colSubtext }
+                        MaterialSymbol { Layout.alignment: Qt.AlignVCenter; text: dayThemePopup.visible ? "expand_less" : "expand_more"; iconSize: 14; color: Appearance.colors.colSubtext }
                     }
 
                     onClicked: dayThemePopup.visible ? dayThemePopup.close() : dayThemePopup.open()
@@ -1141,7 +1207,7 @@ SettingsCardSection {
                 Popup {
                     id: dayThemePopup
                     y: dayThemeBtn.height + 4
-                    width: parent.width
+                    width: Math.max(150, parent.width)
                     height: Math.min(200, dayThemeList.contentHeight + 16)
                     padding: 8
 
@@ -1181,18 +1247,46 @@ SettingsCardSection {
                     }
                 }
             }
+
+            StyledSpinBox {
+                id: dayHourSpin
+                baseHeight: 32
+                from: 0; to: 23
+                value: parseInt((Config.options?.appearance?.themeSchedule?.dayStart ?? "06:00").split(":")[0]) || 6
+                textFromValue: (v) => v.toString().padStart(2, '0')
+                onValueChanged: Config.setNestedValue("appearance.themeSchedule.dayStart",
+                    `${textFromValue(value)}:${dayMinSpin.textFromValue(dayMinSpin.value)}`)
+                StyledToolTip { text: Translation.tr("Day starts at"); visible: dayHourSpin.hovered }
+            }
+            StyledText { Layout.alignment: Qt.AlignVCenter; verticalAlignment: Text.AlignVCenter; text: ":"; font.pixelSize: Appearance.font.pixelSize.normal; color: Appearance.colors.colSubtext }
+            StyledSpinBox {
+                id: dayMinSpin
+                baseHeight: 32
+                from: 0; to: 59; stepSize: 5
+                value: parseInt((Config.options?.appearance?.themeSchedule?.dayStart ?? "06:00").split(":")[1]) || 0
+                textFromValue: (v) => v.toString().padStart(2, '0')
+                onValueChanged: Config.setNestedValue("appearance.themeSchedule.dayStart",
+                    `${dayHourSpin.textFromValue(dayHourSpin.value)}:${textFromValue(value)}`)
+                StyledToolTip { text: Translation.tr("Day starts at"); visible: dayMinSpin.hovered }
+            }
         }
 
-        // Night theme selector
+        // Night theme + start time row
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: 6
 
-            MaterialSymbol { text: "dark_mode"; iconSize: 18; color: Appearance.colors.colSubtext }
-            StyledText { text: Translation.tr("Night theme"); Layout.fillWidth: true }
+            MaterialSymbol { Layout.alignment: Qt.AlignVCenter; text: "bedtime"; iconSize: 18; color: Appearance.colors.colSubtext }
+            StyledText {
+                Layout.alignment: Qt.AlignVCenter
+                verticalAlignment: Text.AlignVCenter
+                text: Translation.tr("Night theme")
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+            }
 
             Item {
-                Layout.preferredWidth: 150
+                Layout.preferredWidth: 124
                 Layout.preferredHeight: 32
 
                 RippleButton {
@@ -1203,16 +1297,18 @@ SettingsCardSection {
 
                     contentItem: RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 8
 
                         StyledText {
+                            Layout.alignment: Qt.AlignVCenter
                             Layout.fillWidth: true
+                            verticalAlignment: Text.AlignVCenter
                             text: ThemePresets.presets.find(p => p.id === (Config.options?.appearance?.themeSchedule?.nightTheme ?? "auto"))?.name ?? "Auto"
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             elide: Text.ElideRight
                         }
-                        MaterialSymbol { text: nightThemePopup.visible ? "expand_less" : "expand_more"; iconSize: 14; color: Appearance.colors.colSubtext }
+                        MaterialSymbol { Layout.alignment: Qt.AlignVCenter; text: nightThemePopup.visible ? "expand_less" : "expand_more"; iconSize: 14; color: Appearance.colors.colSubtext }
                     }
 
                     onClicked: nightThemePopup.visible ? nightThemePopup.close() : nightThemePopup.open()
@@ -1221,7 +1317,7 @@ SettingsCardSection {
                 Popup {
                     id: nightThemePopup
                     y: nightThemeBtn.height + 4
-                    width: parent.width
+                    width: Math.max(150, parent.width)
                     height: Math.min(200, nightThemeList.contentHeight + 16)
                     padding: 8
 
@@ -1261,58 +1357,27 @@ SettingsCardSection {
                     }
                 }
             }
-        }
-
-        // Time settings
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            MaterialSymbol { text: "wb_sunny"; iconSize: 18; color: Appearance.colors.colSubtext }
-            StyledText { text: Translation.tr("Day starts at"); Layout.fillWidth: true }
-
-            StyledSpinBox {
-                id: dayHourSpin
-                from: 0; to: 23
-                value: parseInt((Config.options?.appearance?.themeSchedule?.dayStart ?? "06:00").split(":")[0]) || 6
-                textFromValue: (v) => v.toString().padStart(2, '0')
-                onValueChanged: Config.setNestedValue("appearance.themeSchedule.dayStart",
-                    `${textFromValue(value)}:${dayMinSpin.textFromValue(dayMinSpin.value)}`)
-            }
-            StyledText { text: ":"; font.pixelSize: Appearance.font.pixelSize.large; color: Appearance.colors.colSubtext }
-            StyledSpinBox {
-                id: dayMinSpin
-                from: 0; to: 59; stepSize: 5
-                value: parseInt((Config.options?.appearance?.themeSchedule?.dayStart ?? "06:00").split(":")[1]) || 0
-                textFromValue: (v) => v.toString().padStart(2, '0')
-                onValueChanged: Config.setNestedValue("appearance.themeSchedule.dayStart",
-                    `${dayHourSpin.textFromValue(dayHourSpin.value)}:${textFromValue(value)}`)
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            MaterialSymbol { text: "bedtime"; iconSize: 18; color: Appearance.colors.colSubtext }
-            StyledText { text: Translation.tr("Night starts at"); Layout.fillWidth: true }
 
             StyledSpinBox {
                 id: nightHourSpin
+                baseHeight: 32
                 from: 0; to: 23
                 value: parseInt((Config.options?.appearance?.themeSchedule?.nightStart ?? "18:00").split(":")[0]) || 18
                 textFromValue: (v) => v.toString().padStart(2, '0')
                 onValueChanged: Config.setNestedValue("appearance.themeSchedule.nightStart",
                     `${textFromValue(value)}:${nightMinSpin.textFromValue(nightMinSpin.value)}`)
+                StyledToolTip { text: Translation.tr("Night starts at"); visible: nightHourSpin.hovered }
             }
-            StyledText { text: ":"; font.pixelSize: Appearance.font.pixelSize.large; color: Appearance.colors.colSubtext }
+            StyledText { Layout.alignment: Qt.AlignVCenter; verticalAlignment: Text.AlignVCenter; text: ":"; font.pixelSize: Appearance.font.pixelSize.normal; color: Appearance.colors.colSubtext }
             StyledSpinBox {
                 id: nightMinSpin
+                baseHeight: 32
                 from: 0; to: 59; stepSize: 5
                 value: parseInt((Config.options?.appearance?.themeSchedule?.nightStart ?? "18:00").split(":")[1]) || 0
                 textFromValue: (v) => v.toString().padStart(2, '0')
                 onValueChanged: Config.setNestedValue("appearance.themeSchedule.nightStart",
                     `${nightHourSpin.textFromValue(nightHourSpin.value)}:${textFromValue(value)}`)
+                StyledToolTip { text: Translation.tr("Night starts at"); visible: nightMinSpin.hovered }
             }
         }
     }
@@ -1322,13 +1387,13 @@ SettingsCardSection {
     // ==================== CUSTOM THEME EDITOR ====================
     SettingsCardSection {
         id: customThemeEditorSection
-        _preventBentoReparent: true
+        bentoColumn: "full"
         showHeader: false
+        allowEditWithoutHeader: true
         Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        Layout.preferredWidth: 1
         settingsTaskSection: "advanced"
-        visible: root.activeSection === "advanced"
+        visible: true
         expanded: true
         icon: "edit"
         title: Translation.tr("Custom Theme Editor")
@@ -1336,12 +1401,22 @@ SettingsCardSection {
         Loader {
             id: customThemeEditorLoader
             Layout.fillWidth: true
-            active: customThemeEditorSection.visible && customThemeEditorSection.expanded
+            readonly property real desiredEditorHeight: Math.max(
+                0,
+                (customThemeEditorSection._effectiveCustomHeight > 0
+                    ? customThemeEditorSection._effectiveCustomHeight
+                    : root.effectiveColorsBentoHeight) - SettingsMaterialPreset.cardPadding * 2
+            )
+            active: Boolean(
+                (root.activeSection === "advanced" || customThemeEditorSection._isForeignHosted || Boolean(customThemeEditorSection.moduleConfig?.targetSubTab))
+                && customThemeEditorSection.visible
+                && customThemeEditorSection.expanded
+            )
             source: "CustomThemeEditor.qml"
             Binding {
                 target: customThemeEditorLoader.item
                 property: "targetEditorHeight"
-                value: Math.max(0, SettingsMaterialPreset.standardBentoHeight - SettingsMaterialPreset.cardPadding * 2)
+                value: customThemeEditorLoader.desiredEditorHeight
                 when: customThemeEditorLoader.status === Loader.Ready && customThemeEditorLoader.item !== null
             }
         }

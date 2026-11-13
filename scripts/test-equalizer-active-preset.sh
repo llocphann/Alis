@@ -254,4 +254,198 @@ if not any(
     raise SystemExit("FAIL: live right Equalizer gain was not updated")
 PY
 
+# Regression 1: A preset whose band0 is Hi-pass/x2 (with daemon reporting band0Type=2)
+# must coerce all 32 graphic bands to Bell / x1 and push band{0..31}Type:1 over socket.
+preset_hipass="$XDG_DATA_HOME/easyeffects/output/HiPassSeed.json"
+cat >"$preset_hipass" <<'JSON'
+{
+    "output": {
+        "plugins_order": ["equalizer#0"],
+        "equalizer#0": {
+            "bypass": false,
+            "mode": "IIR",
+            "num-bands": 1,
+            "split-channels": true,
+            "left": {
+                "band0": {"frequency": 150.0, "gain": 0.0, "mode": "RLC (BT)", "mute": false, "q": 0.707, "slope": "x2", "solo": false, "type": "Hi-pass", "width": 4.0}
+            },
+            "right": {
+                "band0": {"frequency": 150.0, "gain": 0.0, "mode": "RLC (BT)", "mute": false, "q": 0.707, "slope": "x2", "solo": false, "type": "Hi-pass", "width": 4.0}
+            }
+        }
+    }
+}
+JSON
+
+rm -f "$XDG_RUNTIME_DIR/EasyEffectsServer"
+hipass_log="$tmp/hipass.log"
+python3 - "$XDG_RUNTIME_DIR/EasyEffectsServer" "$hipass_log" <<'PY' &
+import pathlib, socket, sys
+sock_path, log_path = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+props = {
+    ("equalizer", "0", None, "numBands"): "1",
+    ("equalizer", "0", None, "splitChannels"): "true",
+    ("equalizer", "0", "left", "band0Gain"): "0.0",
+    ("equalizer", "0", "right", "band0Gain"): "0.0",
+    ("equalizer", "0", "left", "band0Type"): "2",
+}
+commands = []
+s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+s.bind(str(sock_path))
+s.listen(1)
+conn, _ = s.accept()
+with conn:
+    pending = b""
+    while True:
+        chunk = conn.recv(8192)
+        if not chunk:
+            break
+        pending += chunk
+        while b"\n" in pending:
+            raw, pending = pending.split(b"\n", 1)
+            cmd = raw.decode()
+            commands.append(cmd)
+            if cmd == "get_last_loaded_preset:output":
+                conn.sendall(b"HiPassSeed\n")
+            elif cmd.startswith("get_property:"):
+                parts = cmd.split(":")
+                key = (parts[2], parts[3], parts[4], parts[5]) if len(parts) == 6 else (parts[2], parts[3], None, parts[4])
+                conn.sendall((props.get(key, "0") + "\n").encode())
+            elif cmd.startswith("set_property:"):
+                parts = cmd.split(":")
+                key = (parts[2], parts[3], parts[4], parts[5]) if len(parts) == 7 else (parts[2], parts[3], None, parts[4])
+                props[key] = parts[-1]
+log_path.write_text("\n".join(commands) + "\n", encoding="utf-8")
+s.close()
+PY
+server_pid=$!
+for _ in $(seq 1 100); do [[ -S "$XDG_RUNTIME_DIR/EasyEffectsServer" ]] && break; sleep 0.01; done
+"$helper" apply native Flat 0 0 0 0 0 0 0 0 0 0
+wait "$server_pid"
+server_pid=""
+python3 - "$preset_hipass" "$hipass_log" <<'PY'
+import json, pathlib, sys
+doc = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+eq = doc["output"]["equalizer#0"]
+for ch in ("left", "right"):
+    for i in range(32):
+        b = eq[ch][f"band{i}"]
+        if b.get("type") != "Bell" or b.get("slope") != "x1":
+            raise SystemExit(f"FAIL: {ch} band{i} coerced incorrectly: {b}")
+cmds = pathlib.Path(sys.argv[2]).read_text(encoding="utf-8").splitlines()
+if "set_property:output:equalizer:0:left:band31Type:1" not in cmds:
+    raise SystemExit("FAIL: socket did not reset band31Type to Bell (1)")
+PY
+
+# Regression 2: dolby_to_easyeffects.py preset without equalizer#2 must refuse (exit 66)
+# and keep equalizer#0 untouched; with equalizer#2 it must update equalizer#2 only.
+preset_dolby="$XDG_DATA_HOME/easyeffects/output/Dolby-Balanced.json"
+cat >"$preset_dolby" <<'JSON'
+{
+    "_generator": "dolby_to_easyeffects.py v2026.10.1-20-g2180c73",
+    "output": {
+        "plugins_order": ["convolver#0", "equalizer#0", "equalizer#1", "limiter#0"],
+        "equalizer#0": {
+            "bypass": false, "mode": "IIR", "num-bands": 4, "split-channels": true,
+            "left": {"band0": {"frequency": 150.0, "gain": 0.0, "type": "Hi-pass", "slope": "x2"}, "band1": {"frequency": 830.0, "gain": -10.5, "type": "Bell", "slope": "x1"}},
+            "right": {"band0": {"frequency": 150.0, "gain": 0.0, "type": "Hi-pass", "slope": "x2"}, "band1": {"frequency": 830.0, "gain": -10.5, "type": "Bell", "slope": "x1"}}
+        },
+        "equalizer#1": {
+            "bypass": true, "mode": "IIR", "num-bands": 1, "split-channels": false,
+            "left": {"band0": {"frequency": 2500.0, "gain": 1.88, "type": "Bell", "slope": "x1"}},
+            "right": {"band0": {"frequency": 2500.0, "gain": 1.88, "type": "Bell", "slope": "x1"}}
+        }
+    }
+}
+JSON
+
+spawn_dolby_server() {
+    local sock="$1" log="$2"
+    rm -f "$sock"
+    python3 - "$sock" "$log" <<'PY' &
+import pathlib, socket, sys
+sock_path, log_path = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+props = {
+    ("equalizer", "2", None, "numBands"): "32",
+    ("equalizer", "2", None, "splitChannels"): "false",
+    ("equalizer", "2", "left", "band0Gain"): "0",
+    ("equalizer", "2", "right", "band0Gain"): "0",
+    ("equalizer", "2", "left", "band0Type"): "1",
+}
+cmds = []
+s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+s.bind(str(sock_path))
+s.listen(1)
+conn, _ = s.accept()
+with conn:
+    pending = b""
+    while True:
+        chunk = conn.recv(8192)
+        if not chunk:
+            break
+        pending += chunk
+        while b"\n" in pending:
+            raw, pending = pending.split(b"\n", 1)
+            cmd = raw.decode()
+            cmds.append(cmd)
+            if cmd == "get_last_loaded_preset:output":
+                conn.sendall(b"Dolby-Balanced\n")
+            elif cmd.startswith("get_property:"):
+                parts = cmd.split(":")
+                key = (parts[2], parts[3], parts[4], parts[5]) if len(parts) == 6 else (parts[2], parts[3], None, parts[4])
+                conn.sendall((props.get(key, "0") + "\n").encode())
+            elif cmd.startswith("set_property:"):
+                parts = cmd.split(":")
+                key = (parts[2], parts[3], parts[4], parts[5]) if len(parts) == 7 else (parts[2], parts[3], None, parts[4])
+                props[key] = parts[-1]
+log_path.write_text("\n".join(cmds) + "\n", encoding="utf-8")
+s.close()
+PY
+    server_pid=$!
+    for _ in $(seq 1 100); do [[ -S "$sock" ]] && break; sleep 0.01; done
+}
+
+spawn_dolby_server "$XDG_RUNTIME_DIR/EasyEffectsServer" "$tmp/dolby1.log"
+set +e
+"$helper" apply native Flat 0 0 0 0 0 0 0 0 0 0 >/dev/null 2>"$tmp/dolby1.err"
+rc=$?
+set -e
+wait "$server_pid"
+server_pid=""
+[[ "$rc" -eq 66 ]] || { printf 'FAIL: expected exit 66 without equalizer#2, got %s\n' "$rc" >&2; exit 1; }
+python3 - "$preset_dolby" <<'PY'
+import json, pathlib, sys
+doc = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+eq0 = doc["output"]["equalizer#0"]
+if eq0["num-bands"] != 4 or eq0["left"]["band0"]["type"] != "Hi-pass" or eq0["left"]["band1"]["gain"] != -10.5:
+    raise SystemExit("FAIL: equalizer#0 was mutated when equalizer#2 was absent")
+doc["output"]["plugins_order"].insert(3, "equalizer#2")
+doc["output"]["equalizer#2"] = {
+    "bypass": False, "mode": "IIR", "num-bands": 32, "split-channels": False,
+    "left": {"band0": {"frequency": 31, "gain": 0.0, "type": "Bell", "slope": "x1"}},
+    "right": {"band0": {"frequency": 31, "gain": 0.0, "type": "Bell", "slope": "x1"}}
+}
+pathlib.Path(sys.argv[1]).write_text(json.dumps(doc, indent=4) + "\n", encoding="utf-8")
+PY
+
+spawn_dolby_server "$XDG_RUNTIME_DIR/EasyEffectsServer" "$tmp/dolby2.log"
+"$helper" apply native Bass 5 7 5 2 1 0 0 0 1 2
+wait "$server_pid"
+server_pid=""
+python3 - "$preset_dolby" "$tmp/dolby2.log" <<'PY'
+import json, pathlib, sys
+doc = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+eq0 = doc["output"]["equalizer#0"]
+eq2 = doc["output"]["equalizer#2"]
+if eq0["num-bands"] != 4 or eq0["left"]["band0"]["type"] != "Hi-pass" or eq0["left"]["band1"]["gain"] != -10.5:
+    raise SystemExit("FAIL: speaker PEQ equalizer#0 was modified")
+if eq2["left"]["band0"]["gain"] != 5.0 or eq2["right"]["band27"]["gain"] != 2.0:
+    raise SystemExit("FAIL: user graphic EQ equalizer#2 did not persist")
+cmds = pathlib.Path(sys.argv[2]).read_text(encoding="utf-8").splitlines()
+if any(":equalizer:0:" in c for c in cmds):
+    raise SystemExit("FAIL: socket touched equalizer#0 on Dolby preset")
+if "set_property:output:equalizer:2:left:band0Gain:5.0" not in cmds:
+    raise SystemExit("FAIL: socket did not update equalizer#2")
+PY
+
 printf 'PASS: EQ DSP updates the live Equalizer without reloading Convolver -> EQ -> Limiter\n'

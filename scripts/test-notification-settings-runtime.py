@@ -5,6 +5,9 @@ import os
 import shutil
 import subprocess
 import tempfile
+import sys as _silent_sys
+if os.environ.get("ALIS_SILENT_TEST_MODE") != "1":
+    raise SystemExit(subprocess.call([_silent_sys.executable, str(Path(__file__).resolve().parent / "native_test_session.py"), "--", _silent_sys.executable, __file__, *_silent_sys.argv[1:]]))
 
 repo = Path(__file__).resolve().parents[1]
 if not shutil.which("qs") or not os.environ.get("WAYLAND_DISPLAY"):

@@ -232,13 +232,14 @@ for token in (
 # no hover popups for Previous / Play-Pause / Next.
 for token in (
     'buttonText: Translation.tr("Previous")',
-    'buttonText: root.player?.isPlaying ? Translation.tr("Pause") : Translation.tr("Play")',
+    'buttonText: root.effectiveIsPlaying ? Translation.tr("Pause") : Translation.tr("Play")',
     'buttonText: Translation.tr("Next")',
 ):
     require(player, token, "PlayerControl")
 for token in (
     'StyledToolTip { text: Translation.tr("Previous") }',
     'StyledToolTip { text: root.player?.isPlaying ? Translation.tr("Pause") : Translation.tr("Play") }',
+    'StyledToolTip { text: root.effectiveIsPlaying ? Translation.tr("Pause") : Translation.tr("Play") }',
     'StyledToolTip { text: Translation.tr("Next") }',
 ):
     forbid(player, token, "PlayerControl")

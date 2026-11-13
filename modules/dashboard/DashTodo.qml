@@ -145,7 +145,7 @@ DashCard {
                             spacing: 4
 
                             MaterialSymbol {
-                                text: Todo.backend === "obsidian"
+                                text: Todo.backend === "nexus"
                                     ? "description" : "database"
                                 iconSize: Appearance.font.pixelSize.small
                                 color: root.colAccent
@@ -681,7 +681,7 @@ DashCard {
             spacing: root.narrowLayout ? 5 : 7
 
             RippleButton {
-                visible: Todo.backend !== "obsidian"
+                visible: Todo.backend !== "nexus"
                 Layout.preferredWidth: root.actionButtonSize
                 Layout.minimumWidth: root.actionButtonSize
                 Layout.maximumWidth: root.actionButtonSize
@@ -703,7 +703,7 @@ DashCard {
                 }
 
                 StyledToolTip {
-                    text: Translation.tr("Prepare Obsidian")
+                    text: Translation.tr("Prepare Nexus")
                 }
             }
 
@@ -856,7 +856,7 @@ DashCard {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
-                    visible: Todo.backend === "obsidian"
+                    visible: Todo.backend === "nexus"
                         && Todo.useMarkdownNote
 
                     ColumnLayout {

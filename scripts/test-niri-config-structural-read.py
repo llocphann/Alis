@@ -67,7 +67,7 @@ with tempfile.TemporaryDirectory(prefix="alis-niri-read-") as temporary:
         '    Super+Shift+E { spawn "thunar"; }\n'
         '    Super+W { spawn "/home/user/.local/bin/alis" "browser"; }\n'
         '    Super+Shift+W { spawn "/home/user/.local/bin/alis" "browser" "--new"; }\n'
-        '    Super+O { spawn "md.obsidian.Obsidian"; }\n'
+        '    Super+O { spawn "app.alis.Nexus"; }\n'
         "}\n"
     )
     merged = read(module.cmd_get_binds)
@@ -81,7 +81,7 @@ with tempfile.TemporaryDirectory(prefix="alis-niri-read-") as temporary:
         "Super+Shift+E": "File manager",
         "Super+W": "Browser",
         "Super+Shift+W": "Browser (new window)",
-        "Super+O": "Obsidian",
+        "Super+O": "Nexus",
     }, app_binds
 
     # Verify set-bind --replace updates bind in 90-user-extra.kdl in place without leaving old bind active

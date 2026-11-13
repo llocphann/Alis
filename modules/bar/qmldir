@@ -1,6 +1,7 @@
 module qs.modules.bar
 ActiveWindow 1.0 ActiveWindow.qml
 BarContent 1.0 BarContent.qml
+BarCavaEqualizerModule 1.0 BarCavaEqualizerModule.qml
 BarStatusIndicators 1.0 BarStatusIndicators.qml
 BarContextMenu 1.0 BarContextMenu.qml
 BarGroup 1.0 BarGroup.qml

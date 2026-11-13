@@ -231,6 +231,7 @@ Item {
                         SequentialAnimation on opacity {
                             running: screenRecordButton.isRecording && root.visible
                                 && (root.QsWindow.window?.visible ?? true)
+                                && Appearance.animationsEnabled
                             loops: Animation.Infinite
                             NumberAnimation { to: 0.4; duration: Appearance.animation.elementMove.duration * 2 }
                             NumberAnimation { to: 1.0; duration: Appearance.animation.elementMove.duration * 2 }
@@ -249,7 +250,7 @@ Item {
                 rotation: -root.contentRotation
                 Layout.alignment: Qt.AlignVCenter
                 Accessible.name: Translation.tr("Pick color")
-                onClicked: ShellExec.execDetachedArgs(["/usr/bin/hyprpicker", "-a"], "Pick color")
+                onClicked: ColorPickerService.start()
                 MaterialSymbol {
                     horizontalAlignment: Qt.AlignHCenter
                     fill: 1
@@ -383,6 +384,7 @@ Item {
                         SequentialAnimation on opacity {
                             running: micButton.isInUse && !micButton.isMuted && root.visible
                                 && (root.QsWindow.window?.visible ?? true)
+                                && Appearance.animationsEnabled
                             loops: Animation.Infinite
                             NumberAnimation { to: 0.4; duration: Appearance.animation.elementMove.duration * 2 }
                             NumberAnimation { to: 1.0; duration: Appearance.animation.elementMove.duration * 2 }
@@ -460,6 +462,7 @@ Item {
                         SequentialAnimation on opacity {
                             running: screenCastButton.isCasting && root.visible
                                 && (root.QsWindow.window?.visible ?? true)
+                                && Appearance.animationsEnabled
                             loops: Animation.Infinite
                             NumberAnimation { to: 0.4; duration: Appearance.animation.elementMove.duration * 2 }
                             NumberAnimation { to: 1.0; duration: Appearance.animation.elementMove.duration * 2 }

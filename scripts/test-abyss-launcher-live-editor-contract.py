@@ -21,9 +21,9 @@ assert "function canJoin(kind)" in presentation
 assert "function nearbyEdge(" in presentation
 assert "function joinedEdge(" in presentation
 
-# Icon visibility is configured in Settings > Module behavior, not as a
-# module action in the Edit Abyss Layout toolbar.
-settings=(r/"modules/settings/BarConfig.qml").read_text()
+# Icon visibility is configured in Settings > Sidebars & Overview (Left/Right edgebar),
+# not as a module action in the Edit Abyss Layout toolbar.
+settings=(r/"modules/settings/BarConfig.qml").read_text() + "\n" + (r/"modules/settings/SidebarsConfig.qml").read_text()
 layout=(r/"modules/abyss/looks/AbyssLayout.js").read_text()
 defaults=__import__("json").loads((r/"defaults/config.json").read_text())
 assert 'objectName:"abyssUnifiedModuleIconVisibility"' not in editor

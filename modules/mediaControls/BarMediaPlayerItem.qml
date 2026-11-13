@@ -279,7 +279,7 @@ Item { // Player instance - Old style design
                         : blendedColors.colOnLayer0
                     elide: Text.ElideRight
                     text: StringUtils.cleanMusicTitle(root.player?.trackTitle) || "Untitled"
-                    animateChange: true
+                    animateChange: root.presentationActive
                     animationDistanceX: 6
                     animationDistanceY: 0
                 }
@@ -293,7 +293,7 @@ Item { // Player instance - Old style design
                         : blendedColors.colSubtext
                     elide: Text.ElideRight
                     text: root.player?.trackArtist ?? ""
-                    animateChange: true
+                    animateChange: root.presentationActive
                     animationDistanceX: 6
                     animationDistanceY: 0
                 }
@@ -340,6 +340,8 @@ Item { // Player instance - Old style design
                                 active: root.player?.canSeek ?? false
                                 sourceComponent: StyledSlider {
                                     configuration: StyledSlider.Configuration.Wavy
+                                    wavy: root.player?.isPlaying ?? false
+                                    animateWave: root.presentationActive && (root.player?.isPlaying ?? false)
                                     highlightColor: Appearance.alisEverywhere ? Appearance.alis.colPrimary
                                         : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                                         : blendedColors.colPrimary

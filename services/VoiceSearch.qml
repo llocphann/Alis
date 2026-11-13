@@ -24,9 +24,9 @@ Singleton {
     property string searchEngineUrl: Config.options?.search?.engineBaseUrl
         ?? "https://www.google.com/search?q="
 
-    readonly property bool recording: recordProc.running
-    readonly property bool transcribing: transcribeProc.running
-    readonly property bool probing: localProbe.running
+    readonly property bool recording: Boolean(recordProc?.running)
+    readonly property bool transcribing: Boolean(transcribeProc?.running)
+    readonly property bool probing: Boolean(localProbe?.running)
     readonly property bool running: recording || transcribing
 
     property bool localAvailable: false
@@ -60,7 +60,16 @@ Singleton {
 
     function _key(provider: string): string {
         const keys = KeyringStorage.keyringData?.apiKeys ?? {}
-        return keys[provider] ?? ""
+        const direct = String(keys[provider] ?? "").trim()
+        if (direct.length > 0) return direct
+        const prefix = provider + "-"
+        for (const k of Object.keys(keys)) {
+            if (k.startsWith(prefix)) {
+                const candidate = String(keys[k] ?? "").trim()
+                if (candidate.length > 0) return candidate
+            }
+        }
+        return ""
     }
 
     function _resolveProvider(): string {

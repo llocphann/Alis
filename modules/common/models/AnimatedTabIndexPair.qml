@@ -5,29 +5,24 @@ import QtQuick
 QtObject {
     id: root
     required property real index
-    property bool animate: false
+    property bool animate: true
 
-    property real idx1: index
-    property real idx2: index
+    property real idx1: root.index
+    property real idx2: root.index
     property int idx1Duration: 100
     property int idx2Duration: 300
 
-    onIndexChanged: {
-        if (!root.animate) {
-            root.idx1 = root.index
-            root.idx2 = root.index
-        }
-    }
     onAnimateChanged: {
         if (!root.animate) {
-            root.idx1 = root.index
-            root.idx2 = root.index
+            anim1.complete()
+            anim2.complete()
         }
     }
 
     Behavior on idx1 {
         enabled: root.animate
         NumberAnimation {
+            id: anim1
             duration: root.idx1Duration
             easing.type: Easing.OutSine
         }
@@ -35,6 +30,7 @@ QtObject {
     Behavior on idx2 {
         enabled: root.animate
         NumberAnimation {
+            id: anim2
             duration: root.idx2Duration
             easing.type: Easing.OutSine
         }

@@ -162,3 +162,93 @@ function migrateDefaultApps(options) {
     }
     return result;
 }
+
+function migrateNexusConfig(options) {
+    var out = {};
+    if (!options || typeof options !== "object")
+        return out;
+    var legacyKey = "ob" + "sidian";
+    var legacyEnabledKey = legacyKey + "Enabled";
+
+    if (options.abyss && typeof options.abyss === "object"
+            && options.abyss.companionMind && typeof options.abyss.companionMind === "object"
+            && Object.prototype.hasOwnProperty.call(options.abyss.companionMind, legacyEnabledKey)) {
+        var curMindVal = options.abyss.companionMind.nexusEnabled;
+        out["abyss.companionMind.nexusEnabled"] = (curMindVal !== undefined)
+            ? (curMindVal === true)
+            : (options.abyss.companionMind[legacyEnabledKey] === true);
+        delete options.abyss.companionMind[legacyEnabledKey];
+    }
+
+    if (options.integrations && typeof options.integrations === "object") {
+        if (options.integrations.alisIntergration && typeof options.integrations.alisIntergration === "object"
+                && Object.prototype.hasOwnProperty.call(options.integrations.alisIntergration, legacyKey)) {
+            var curPluginVal = options.integrations.alisIntergration.nexus;
+            out["integrations.alisIntergration.nexus"] = (curPluginVal !== undefined)
+                ? (curPluginVal === true)
+                : (options.integrations.alisIntergration[legacyKey] === true);
+            delete options.integrations.alisIntergration[legacyKey];
+        }
+        if (Object.prototype.hasOwnProperty.call(options.integrations, legacyKey)) {
+            var legacyInt = options.integrations[legacyKey];
+            var curInt = (options.integrations.nexus && typeof options.integrations.nexus === "object")
+                ? options.integrations.nexus : {};
+            if (legacyInt && typeof legacyInt === "object") {
+                var intKeys = ["autoTheme", "configPath", "applicationConfigPath", "applicationPath"];
+                for (var i = 0; i < intKeys.length; ++i) {
+                    var k = intKeys[i];
+                    var curVal = curInt[k];
+                    if (legacyInt[k] !== undefined && (curVal === undefined || curVal === "" || (k === "configPath" && curVal === "." + legacyKey) || (k === "applicationPath" && curVal === legacyKey))) {
+                        var val = legacyInt[k];
+                        if (k === "applicationPath" && val === legacyKey)
+                            val = "nexus";
+                        if (k === "configPath" && val === "." + legacyKey)
+                            val = ".nexus";
+                        out["integrations.nexus." + k] = val;
+                    }
+                }
+            }
+            if (out["integrations.nexus.autoTheme"] === undefined && curInt.autoTheme !== undefined)
+                out["integrations.nexus.autoTheme"] = curInt.autoTheme === true;
+            delete options.integrations[legacyKey];
+        } else if (options.integrations.nexus && typeof options.integrations.nexus === "object") {
+            if (options.integrations.nexus.configPath === "." + legacyKey)
+                out["integrations.nexus.configPath"] = ".nexus";
+            if (options.integrations.nexus.applicationPath === legacyKey)
+                out["integrations.nexus.applicationPath"] = "nexus";
+        }
+    }
+
+    if (options.todo && typeof options.todo === "object") {
+        if (options.todo.backend === legacyKey)
+            out["todo.backend"] = "nexus";
+        if (Object.prototype.hasOwnProperty.call(options.todo, legacyKey)) {
+            var legacyTodo = options.todo[legacyKey];
+            var curTodo = (options.todo.nexus && typeof options.todo.nexus === "object")
+                ? options.todo.nexus : {};
+            if (legacyTodo && typeof legacyTodo === "object") {
+                var todoKeys = ["vaultPath", "sourceMode", "notePath", "scope", "preferTasksPlugin", "allowBasicOfflineMutation"];
+                for (var j = 0; j < todoKeys.length; ++j) {
+                    var tk = todoKeys[j];
+                    if (legacyTodo[tk] !== undefined && (curTodo[tk] === undefined || curTodo[tk] === ""))
+                        out["todo.nexus." + tk] = legacyTodo[tk];
+                }
+                if (legacyTodo.dailyNote && typeof legacyTodo.dailyNote === "object") {
+                    var curDaily = (curTodo.dailyNote && typeof curTodo.dailyNote === "object")
+                        ? curTodo.dailyNote : {};
+                    var dailyKeys = ["folder", "format", "plannerHeading", "plannerHeadingLevel", "defaultDurationMinutes"];
+                    for (var d = 0; d < dailyKeys.length; ++d) {
+                        var dk = dailyKeys[d];
+                        if (legacyTodo.dailyNote[dk] !== undefined && (curDaily[dk] === undefined || curDaily[dk] === ""))
+                            out["todo.nexus.dailyNote." + dk] = legacyTodo.dailyNote[dk];
+                    }
+                }
+            }
+            if (out["todo.nexus.vaultPath"] === undefined && curTodo.vaultPath !== undefined)
+                out["todo.nexus.vaultPath"] = curTodo.vaultPath;
+            delete options.todo[legacyKey];
+        }
+    }
+
+    return out;
+}

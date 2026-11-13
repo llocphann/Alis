@@ -144,14 +144,13 @@ check('visible: !root.naming' in toolbar,
       "name input must temporarily replace layout-edit actions")
 # Edit Dashboard Layout is the canonical toolbar size. Create/Rename must
 # not impose the old 390px width or increase the host's native input mask
-# / top reserve height, even while validation text appears.
+# / bottom reserve height, even while validation text appears.
 for token in (
-    "Math.min(760, root.toolbarRowNaturalWidth)",
-    "readonly property real editToolbarHeight:",
-    "toolbarRow.implicitHeight + root.horizontalPadding * 2",
+    "implicitWidth: 1020",
+    "readonly property real editToolbarHeight: dock.implicitHeight",
     "implicitHeight: root.editToolbarHeight",
-    "Layout.preferredHeight: toolbarRow.implicitHeight",
-    "Layout.preferredHeight: Math.min(40, toolbarRow.implicitHeight)",
+    "headerOverlayActive: root.naming",
+    "Layout.preferredHeight: Math.min(40, dock.topBarHeight)",
     "alternativeVisibleCondition: tabNameInput.invalidName",
 ):
     check(token in toolbar, "Create/Rename toolbar diverges from Edit size: " + token)

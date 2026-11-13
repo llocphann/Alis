@@ -18,7 +18,9 @@ Canvas {
     property bool smooth: true
     property var alignment: Graph.Alignment.Left
 
-    onValuesChanged: root.requestPaint()
+    onValuesChanged: if (root.visible && root.available) root.requestPaint()
+    onVisibleChanged: if (root.visible && root.available) root.requestPaint()
+    onAvailableChanged: if (root.visible && root.available) root.requestPaint()
     onPaint: {
         var ctx = getContext("2d")
         ctx.clearRect(0, 0, width, height)

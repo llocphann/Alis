@@ -12,13 +12,11 @@ depends=(
   awww
   
   # Basic utilities
-  bc
   coreutils
   cliphist
   curl
   wget
   ripgrep
-  jq
   python
   cargo
   xdg-user-dirs
@@ -26,7 +24,6 @@ depends=(
   rsync
   git
   wl-clipboard
-  libnotify
   pacman-contrib  # checkupdates for update notifications
   wlsunset
   

@@ -217,13 +217,12 @@ Singleton {
 
     Process {
         id: _searchProc
-        stdout: SplitParser {
-            splitMarker: ""
-            onRead: data => { root._searchStdout += data }
+        stdout: StdioCollector {
+            id: _searchStdoutCollector
         }
         onExited: (exitCode, exitStatus) => {
             const generation = root._activeSearchGeneration
-            const output = root._searchStdout
+            const output = String(_searchStdoutCollector.text ?? "")
             root._activeSearchGeneration = 0
             if (generation === root._requestGeneration) {
                 root.searching = false
@@ -320,13 +319,12 @@ Singleton {
 
     Process {
         id: _installedProc
-        stdout: SplitParser {
-            splitMarker: ""
-            onRead: data => { root._installedStdout += data }
+        stdout: StdioCollector {
+            id: _installedStdoutCollector
         }
         onExited: (exitCode, exitStatus) => {
             const generation = root._activeInstalledGeneration
-            const output = root._installedStdout
+            const output = String(_installedStdoutCollector.text ?? "")
             root._activeInstalledGeneration = 0
             if (generation === root._requestGeneration) {
                 root.searching = false

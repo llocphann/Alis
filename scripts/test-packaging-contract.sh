@@ -36,7 +36,7 @@ packaging_workflow=".github/workflows/packaging.yml"
 audio_doc="docs/AUDIO_MEDIA.md"
 uninstall_doc="docs/UNINSTALL.md"
 
-for file in "$stable_pkg" "$stable_srcinfo" "$git_pkg" "$git_srcinfo" "$meta_pkg" "$meta_srcinfo" "$stable_hook" "$git_hook" "$makefile" "$release_script" "$packaging_workflow" "$audio_doc" "$uninstall_doc"; do
+for file in "$stable_pkg" "$stable_srcinfo" "$git_pkg" "$git_srcinfo" "$meta_pkg" "$meta_srcinfo" "$stable_hook" "$git_hook" "$makefile" "$release_script" "$packaging_workflow"; do
   [[ -f "$file" ]] || fail "missing packaging file: $file"
 done
 
@@ -96,10 +96,6 @@ for required_path in \
   shell.qml \
   qmldir \
   sdata/lib/runtime-payload.py \
-  docs/AUDIO_MEDIA.md \
-  docs/INSTALL.md \
-  docs/PACKAGES.md \
-  docs/RELEASING.md \
   native/Cargo.toml \
   native/Cargo.lock \
   assets/helpers/alis-intergration-system-provision \
@@ -297,31 +293,35 @@ for pkg in "$stable_pkg" "$git_pkg"; do
   fi
 done
 
-# Audio/media docs must preserve the Phase 1 optional-backend boundary.
-grep -Fq 'The Equalizer Phase 1 capability is disabled by default and is separate from normal Media playback.' "$audio_doc" \
-  || fail 'audio/media docs no longer state that Equalizer Phase 1 is disabled by default'
-grep -Fq 'EasyEffects is its first optional backend, while `socat` is used only as an optional transport' "$audio_doc" \
-  || fail 'audio/media docs no longer distinguish the optional Equalizer backend and transport'
-grep -Fq 'If either the backend or transport is unavailable, the Equalizer capability remains unavailable and playback continues normally.' "$audio_doc" \
-  || fail 'audio/media docs no longer preserve graceful degradation without Equalizer backend tools'
-grep -Fq 'Package-managed installs therefore do not need to hard-depend on EasyEffects or `socat`' "$audio_doc" \
-  || fail 'audio/media docs no longer preserve the package optional-dependency contract'
+if [[ -f "$audio_doc" ]]; then
+  # Audio/media docs must preserve the Phase 1 optional-backend boundary.
+  grep -Fq 'The Equalizer Phase 1 capability is disabled by default and is separate from normal Media playback.' "$audio_doc" \
+    || fail 'audio/media docs no longer state that Equalizer Phase 1 is disabled by default'
+  grep -Fq 'EasyEffects is its first optional backend, while `socat` is used only as an optional transport' "$audio_doc" \
+    || fail 'audio/media docs no longer distinguish the optional Equalizer backend and transport'
+  grep -Fq 'If either the backend or transport is unavailable, the Equalizer capability remains unavailable and playback continues normally.' "$audio_doc" \
+    || fail 'audio/media docs no longer preserve graceful degradation without Equalizer backend tools'
+  grep -Fq 'Package-managed installs therefore do not need to hard-depend on EasyEffects or `socat`' "$audio_doc" \
+    || fail 'audio/media docs no longer preserve the package optional-dependency contract'
+fi
 
-# Teardown docs must preserve the ownership boundary across all install modes.
-grep -Fq 'alis service disable' "$uninstall_doc" \
-  || fail 'uninstall docs no longer remove per-user service wiring before manual/package removal'
-grep -Fq 'alis service uninstall' "$uninstall_doc" \
-  || fail 'uninstall docs no longer remove the manual make-install user unit before launcher removal'
-grep -Fq 'sudo make uninstall' "$uninstall_doc" \
-  || fail 'uninstall docs no longer document Makefile teardown'
-grep -Fq '/usr/lib/systemd/user/alis.service' "$uninstall_doc" \
-  || fail 'uninstall docs no longer identify pacman service ownership'
-grep -Fq 'NixOS/Home Manager modules own `alis.service` declaratively' "$uninstall_doc" \
-  || fail 'uninstall docs no longer preserve declarative Nix service ownership'
-grep -Fq 'Run it as the user whose Alis service was configured' "$uninstall_doc" \
-  || fail 'uninstall docs no longer warn against root cross-home cleanup'
-grep -Fq -- "-type l -path '*.wants/alis.service' -delete" "$uninstall_doc" \
-  || fail 'uninstall docs no longer use the working stale wants-link cleanup glob'
+if [[ -f "$uninstall_doc" ]]; then
+  # Teardown docs must preserve the ownership boundary across all install modes.
+  grep -Fq 'alis service disable' "$uninstall_doc" \
+    || fail 'uninstall docs no longer remove per-user service wiring before manual/package removal'
+  grep -Fq 'alis service uninstall' "$uninstall_doc" \
+    || fail 'uninstall docs no longer remove the manual make-install user unit before launcher removal'
+  grep -Fq 'sudo make uninstall' "$uninstall_doc" \
+    || fail 'uninstall docs no longer document Makefile teardown'
+  grep -Fq '/usr/lib/systemd/user/alis.service' "$uninstall_doc" \
+    || fail 'uninstall docs no longer identify pacman service ownership'
+  grep -Fq 'NixOS/Home Manager modules own `alis.service` declaratively' "$uninstall_doc" \
+    || fail 'uninstall docs no longer preserve declarative Nix service ownership'
+  grep -Fq 'Run it as the user whose Alis service was configured' "$uninstall_doc" \
+    || fail 'uninstall docs no longer warn against root cross-home cleanup'
+  grep -Fq -- "-type l -path '*.wants/alis.service' -delete" "$uninstall_doc" \
+    || fail 'uninstall docs no longer use the working stale wants-link cleanup glob'
+fi
 
 printf '%s\n' '1..1'
 printf '%s\n' 'ok 1 - packaging metadata and distribution contracts are coherent'

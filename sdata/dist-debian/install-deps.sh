@@ -72,7 +72,6 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [wl-paste]="wl-clipboard"
     [fuzzel]="fuzzel"
     [gum]="gum"
-    [hyprpicker]="hyprpicker"
     [xwayland-satellite]="xwayland-satellite"
     [missioncenter]="io.missioncenter.MissionCenter"
   )
@@ -948,82 +947,6 @@ if ! command -v awww &>/dev/null; then
   fi
 fi
 
-#####################################################################################
-# Install hyprpicker (Wayland color picker - compile from source)
-#####################################################################################
-tui_info "Installing hyprpicker..."
-
-if ! command -v hyprpicker &>/dev/null; then
-  log_info "hyprpicker not found, compiling from source..."
-
-  # Install build dependencies
-  HYPRPICKER_DEPS=(
-    cmake
-    pkg-config
-    libpango1.0-dev
-    libcairo2-dev
-    libwayland-dev
-    wayland-protocols
-    libxkbcommon-dev
-  )
-
-  # hyprutils is required - check if available
-  if apt_pkg_available libhyprutils-dev; then
-    HYPRPICKER_DEPS+=(libhyprutils-dev)
-  fi
-
-  # hyprwayland-scanner is required for building - need the -dev package for .pc file
-  if apt_pkg_available libhyprwayland-scanner-dev; then
-    HYPRPICKER_DEPS+=(libhyprwayland-scanner-dev)
-  elif apt_pkg_available hyprwayland-scanner; then
-    HYPRPICKER_DEPS+=(hyprwayland-scanner)
-  fi
-
-  sudo apt install $installflags "${HYPRPICKER_DEPS[@]}" 2>/dev/null || true
-
-  # Check if hyprutils is installed (either from package or needs compilation)
-  HYPRUTILS_INSTALLED=false
-  if pkg-config --exists hyprutils 2>/dev/null; then
-    HYPRUTILS_INSTALLED=true
-  fi
-
-  # Compile hyprutils if not available
-  if [[ "$HYPRUTILS_INSTALLED" == "false" ]]; then
-    log_info "hyprutils not found, compiling from source..."
-    HYPRUTILS_BUILD_DIR="/tmp/hyprutils-build-$$"
-
-    if git clone --depth 1 https://github.com/hyprwm/hyprutils.git "$HYPRUTILS_BUILD_DIR" 2>/dev/null; then
-      cd "$HYPRUTILS_BUILD_DIR"
-      if cmake -B build && cmake --build build && sudo cmake --install build; then
-        log_success "hyprutils installed"
-        HYPRUTILS_INSTALLED=true
-      else
-        log_warning "hyprutils build failed"
-      fi
-      cd "${REPO_ROOT}"
-      rm -rf "$HYPRUTILS_BUILD_DIR"
-    fi
-  fi
-
-  # Now compile hyprpicker
-  if [[ "$HYPRUTILS_INSTALLED" == "true" ]]; then
-    HYPRPICKER_BUILD_DIR="/tmp/hyprpicker-build-$$"
-
-    if git clone --depth 1 https://github.com/hyprwm/hyprpicker.git "$HYPRPICKER_BUILD_DIR" 2>/dev/null; then
-      cd "$HYPRPICKER_BUILD_DIR"
-      if cmake -B build && cmake --build build; then
-        sudo cp build/hyprpicker /usr/local/bin/
-        log_success "hyprpicker installed"
-      else
-        log_warning "hyprpicker build failed"
-      fi
-      cd "${REPO_ROOT}"
-      rm -rf "$HYPRPICKER_BUILD_DIR"
-    fi
-  else
-    log_warning "Skipping hyprpicker (hyprutils not available)"
-  fi
-fi
 
 #####################################################################################
 # Install Quickshell (must compile - no prebuilt binaries)
@@ -1368,7 +1291,7 @@ echo "  - WhiteSur, MacTahoe icon themes"
 echo "  - Bibata, Capitaine cursor themes"
 echo ""
 log_info "Compiled from source:"
-echo "  - niri, quickshell, xwayland-satellite, hyprpicker, cava, swappy"
+echo "  - niri, quickshell, xwayland-satellite, cava, swappy"
 echo ""
 
 # Verify critical commands

@@ -11,7 +11,24 @@ QtObject {
 
     // ── Page layout ──
     readonly property int pageSpacing: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : 10) * Appearance.fontSizeScale)
-    property real standardBentoHeight: Math.round(831 * Appearance.fontSizeScale)
+    property real _measuredThemesBentoHeight: 0
+    property real _measuredThemesFontScale: -1
+    property string _measuredThemesPanelFamily: ""
+    readonly property real _estimatedStandardBentoHeight: {
+        const scale = Appearance.fontSizeScale ?? 1.0
+        const isAbyss = (Config.options?.panelFamily ?? "abyss") === "abyss"
+        return Math.round((isAbyss ? 509 : 506) + 306 * scale)
+    }
+    readonly property real standardBentoHeight: {
+        const scale = Appearance.fontSizeScale ?? 1.0
+        const family = String(Config.options?.panelFamily ?? "abyss")
+        if (root._measuredThemesBentoHeight > 0
+                && Math.abs(root._measuredThemesFontScale - scale) < 0.001
+                && root._measuredThemesPanelFamily === family) {
+            return Math.round(root._measuredThemesBentoHeight)
+        }
+        return root._estimatedStandardBentoHeight
+    }
 
     // ── Card (SettingsCardSection) ──
     readonly property int cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal

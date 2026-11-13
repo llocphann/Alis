@@ -31,7 +31,9 @@ Item {
             spacing: 8
 
             StyledText {
+                Layout.alignment: Qt.AlignVCenter
                 Layout.fillWidth: true
+                verticalAlignment: Text.AlignVCenter
                 text: root.currentTheme || (root.mode === "dock" ? Translation.tr("Same as system") : Translation.tr("Select theme..."))
                 font.pixelSize: Appearance.font.pixelSize.small
                 elide: Text.ElideRight
@@ -39,6 +41,7 @@ Item {
             }
 
             MaterialSymbol {
+                Layout.alignment: Qt.AlignVCenter
                 text: popup.visible ? "expand_less" : "expand_more"
                 iconSize: Appearance.font.pixelSize.normal
                 color: Appearance.colors.colSubtext

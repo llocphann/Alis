@@ -56,7 +56,7 @@ Bar.StyledPopup {
     // Keep rows readable in the shared footprint, including a custom short
     // popup. Extra apps are summarized as +N without another scroller.
     readonly property int visibleAppLimit: Math.max(0, Math.min(4,
-        Math.floor((root.requestedPopupHeight - root._contentPadding * 2 - 123) / 39)))
+        Math.floor((root.requestedPopupHeight - root._contentPadding * 2 - 113) / 39)))
     readonly property var visibleApps: root.todayApps.slice(0, root.visibleAppLimit)
     readonly property int hiddenAppCount:
         Math.max(0, root.todayApps.length - root.visibleApps.length)
@@ -269,12 +269,16 @@ Bar.StyledPopup {
 
         ColumnLayout {
             anchors.fill: parent
-            spacing: 10
+            spacing: 6
 
             PillTabBar {
-                Layout.fillWidth: true
+                Layout.fillWidth: false
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: Math.min(276,
+                    Math.max(196, contentRoot.width - 48))
+                width: Layout.preferredWidth
                 currentIndex: root.selectedTab
-                pillHeight: 36
+                pillHeight: 30
                 tabs: [
                     {
                         icon: "notifications",

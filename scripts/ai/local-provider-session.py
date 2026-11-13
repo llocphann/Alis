@@ -29,7 +29,7 @@ def main():
             verify_reasoning_off(os.environ.get('AI_LOCAL_PROVIDER', ''), endpoint, model, metadata, key)
         # The prompt is held in this process until the fresh metadata check.
         request = urllib.request.Request(endpoint, data=json.dumps(body).encode(), headers=headers(key))
-        with client().open(request, timeout=75) as response:
+        with client().open(request, timeout=120) as response:
             count = 0
             while True:
                 line = response.readline(65538)

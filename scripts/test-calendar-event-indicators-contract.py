@@ -4,7 +4,7 @@ from pathlib import Path
 import json
 root=Path(__file__).resolve().parents[1]
 config=json.loads((root/"defaults/config.json").read_text())
-renderer=(root/"modules/common/widgets/ObsidianMonthCalendar.qml").read_text()
+renderer=(root/"modules/common/widgets/NexusMonthCalendar.qml").read_text()
 policy=(root/"modules/common/widgets/CalendarEventDotLayout.js").read_text()
 popup=(root/"modules/bar/ClockCalendarContent.qml").read_text()
 editor=(root/"modules/sidebarRight/events/EventsDialog.qml").read_text()

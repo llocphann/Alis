@@ -9,12 +9,20 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.abyss.settings
+import "../abyss/looks/AbyssLayout.js" as ModuleLayout
 
 ContentPage {
     id: root
 
     function _log(...args): void {
         if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
+    // A launcher icon is a presentation MODE, not a paint-only toggle.
+    // Turning it off unmounts the module and restores the legacy Edgebar.
+    function unifiedLauncherIconShown(kind): bool {
+        return ModuleLayout.unifiedLauncherMode(
+            Config.options?.abyss?.modules,kind)==="module"
     }
 
     settingsPageIndex: embedded ? 2 : 23
@@ -217,6 +225,22 @@ ContentPage {
 
             SettingsGroup {
                 Layout.fillHeight: true
+                SettingsSwitch {
+                    id: quickNotesTimersIconToggle
+                    objectName: "abyssSettingsQuickNotesTimersIcon"
+                    buttonIcon: "sticky_note_2"
+                    text: Translation.tr("Convert to Screen Edge module")
+                    checked: root.unifiedLauncherIconShown("notesTimers")
+                    // Supersedes legacy abyss.modules.iconVisibility.notesTimers
+                    // Off: remove this module hover and use Corner Edgebar.
+                    onCheckedChanged: {
+                        if (checked !== root.unifiedLauncherIconShown("notesTimers"))
+                            Config.setNestedValue("abyss.modules.notesTimersMode",checked ? "module" : "edgebar");
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Show Quick Notes & Timers icon on Screen Edge instead of Left Edgebar hover")
+                    }
+                }
                 ContentSubsection {
                     title: Translation.tr("Left Edgebar size")
                     WindowDialogSlider {
@@ -254,6 +278,22 @@ ContentPage {
 
             SettingsGroup {
                 Layout.fillHeight: true
+                SettingsSwitch {
+                    id: notificationActivityIconToggle
+                    objectName: "abyssSettingsNotificationActivityIcon"
+                    buttonIcon: "notifications"
+                    text: Translation.tr("Convert to Screen Edge module")
+                    checked: root.unifiedLauncherIconShown("notificationActivity")
+                    // Supersedes legacy abyss.modules.iconVisibility.notificationActivity
+                    // Off: remove this module hover and use Corner Edgebar.
+                    onCheckedChanged: {
+                        if (checked !== root.unifiedLauncherIconShown("notificationActivity"))
+                            Config.setNestedValue("abyss.modules.notificationActivityMode",checked ? "module" : "edgebar");
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Show Notifications & Activities icon on Screen Edge instead of Right Edgebar hover")
+                    }
+                }
                 ContentSubsection {
                     title: Translation.tr("Right Edgebar size")
                     WindowDialogSlider {

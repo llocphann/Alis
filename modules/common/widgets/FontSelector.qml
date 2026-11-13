@@ -23,11 +23,14 @@ Item {
         RowLayout {
             spacing: 4
             MaterialSymbol {
+                Layout.alignment: Qt.AlignVCenter
                 text: root.icon
                 iconSize: Appearance.font.pixelSize.small
                 color: Appearance.colors.colSubtext
             }
             StyledText {
+                Layout.alignment: Qt.AlignVCenter
+                verticalAlignment: Text.AlignVCenter
                 text: root.label
                 font.pixelSize: Appearance.font.pixelSize.small
             }
@@ -49,7 +52,9 @@ Item {
                 spacing: 8
 
                 StyledText {
+                    Layout.alignment: Qt.AlignVCenter
                     Layout.fillWidth: true
+                    verticalAlignment: Text.AlignVCenter
                     text: root.selectedFont || "Select font..."
                     font.family: root.selectedFont || Appearance.font.family.main
                     font.pixelSize: Appearance.font.pixelSize.small
@@ -57,6 +62,7 @@ Item {
                 }
 
                 MaterialSymbol {
+                    Layout.alignment: Qt.AlignVCenter
                     text: popup.visible ? "expand_less" : "expand_more"
                     iconSize: Appearance.font.pixelSize.normal
                     color: Appearance.colors.colSubtext

@@ -219,6 +219,11 @@ IPC_MAP = {
     ('launcher', 'editor'): 'Text editor',
     ('launcher', 'editor-new'): 'Text editor (new window)',
     ('launcher', 'close-window'): 'Close window',
+    ('nexus', 'toggle'): 'Nexus',
+    ('nexus', 'open'): 'Nexus',
+    ('nexus', 'openOverlay'): 'Nexus (overlay)',
+    ('nexus', 'openWindow'): 'Nexus (window)',
+    ('nexus', 'daily'): 'Nexus (daily note)',
 }
 
 # App detection
@@ -372,7 +377,7 @@ def categorize_keybind(kb: dict) -> str:
             return 'Alis Shell'
         if target == 'region':
             return 'Screenshots'
-        if target in ('launcher', 'browser') and func != 'close-window':
+        if target in ('launcher', 'browser', 'nexus') and func != 'close-window':
             return 'Applications'
         if target == 'altSwitcher':
             return 'Window Switcher'
@@ -394,7 +399,7 @@ def categorize_keybind(kb: dict) -> str:
         return 'Screenshots'
 
     # Applications
-    if any(x in comment for x in ['terminal', 'file manager', 'browser', 'text editor']):
+    if any(x in comment for x in ['terminal', 'file manager', 'browser', 'text editor', 'nexus']):
         return 'Applications'
     if any(x in action for x in TERMINALS + FILE_MANAGERS + BROWSERS):
         return 'Applications'

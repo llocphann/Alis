@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls as Controls
 import QtQuick.Window
 import Quickshell
 import Quickshell.Io
@@ -105,12 +106,47 @@ Scope {
     }
     Connections {
         target: GlobalStates
-        function onDashboardOpenChanged(): void { if (GlobalStates.dashboardOpen) root.largeTargetOutput = GlobalStates.resolveOutputName("",[]) }
+        function onDashboardOpenChanged(): void {
+            if (GlobalStates.dashboardOpen) {
+                root.largeTargetOutput = GlobalStates.resolveOutputName("",[])
+                if (AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
+                    AlisIntergration.nexus.close()
+            }
+        }
+        function onSettingsOverlayOpenChanged(): void {
+            if (GlobalStates.settingsOverlayOpen && AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
+                AlisIntergration.nexus.close()
+        }
+        function onWallpaperSelectorOpenChanged(): void {
+            if (GlobalStates.wallpaperSelectorOpen && AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
+                AlisIntergration.nexus.close()
+        }
+        function onWallpaperLauncherOpenChanged(): void {
+            if (GlobalStates.wallpaperLauncherOpen && AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
+                AlisIntergration.nexus.close()
+        }
+        function onCoverflowSelectorOpenChanged(): void {
+            if (GlobalStates.coverflowSelectorOpen && AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
+                AlisIntergration.nexus.close()
+        }
         function onControlPanelOpenChanged(): void { if (GlobalStates.controlPanelOpen) root.largeTargetOutput = GlobalStates.resolveOutputName("",[]) }
         function onOverviewOpenChanged(): void { if (GlobalStates.overviewOpen) GlobalStates.clipboardOpen = false }
         function onClipboardOpenChanged(): void {
             if (GlobalStates.clipboardOpen) {
                 GlobalStates.abyssClipboardTargetOutput = GlobalStates.resolveOutputName("",[])
+                GlobalStates.overviewOpen = false
+            }
+        }
+    }
+    Connections {
+        target: AlisIntergration.nexus
+        ignoreUnknownSignals: true
+        function onIsOpenChanged(): void {
+            if (AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true)) {
+                root.largeTargetOutput = GlobalStates.resolveOutputName("",[])
+                GlobalStates.dashboardOpen = false
+                GlobalStates.settingsOverlayOpen = false
+                GlobalStates.controlPanelOpen = false
                 GlobalStates.overviewOpen = false
             }
         }
@@ -210,7 +246,11 @@ Scope {
         }
     }
     Component.onCompleted: {
+        GlobalStates.abyssPerimeterActive = true
         Notifications.ensureInitialized()
+    }
+    Component.onDestruction: {
+        GlobalStates.abyssPerimeterActive = false
     }
     Variants {
         id: outputWindows
@@ -755,7 +795,7 @@ Scope {
             }
             function bodyInsets(edge,along,span,ownLauncherKind = "") {
                 return ModuleLayout.clearanceInsets(nativeInsets,
-                    bar.visible ? bar.deformations : [],edge,along,span,ownLauncherKind)
+                    bar.visible ? bar.clearanceDeformations : [],edge,along,span,ownLauncherKind)
             }
             readonly property bool fullscreenCovered: GameMode.hasFullscreenOnOutput(outputName)
             readonly property bool presented: !GlobalStates.screenLocked
@@ -773,12 +813,345 @@ Scope {
             readonly property var physicalInsets: ({left:0,top:0,right:0,bottom:0})
             readonly property var paintInsets: physicalOsdResident ? physicalInsets : nativeInsets
             readonly property bool editorOpen: GlobalStates.abyssEditing && GlobalStates.abyssEditorTargetOutput === outputName
+            readonly property bool nexusOpen: nexusBody.open
+            readonly property bool dashboardStageEditing: (dashboardBody.open
+                    && ((dashboardBody.contentItem.item?.editMode ?? false)
+                        || (dashboardBody.contentItem.item?.tabNamingActive ?? false)))
+                || (aux.open
+                    && ((aux.contentItem.item?.editMode ?? false)
+                        || (aux.contentItem.item?.tabNamingActive ?? false)))
+            readonly property bool settingsStageEditing: settings.open
+                && (settings.contentItem.item?.editMode ?? false)
+            readonly property bool widgetStageEditing: window.presented && field.ready
+                && GlobalStates.widgetEditMode
+                && DesktopWidgetLayout.outputAllowed(window.outputName)
+            readonly property bool wallpaperLauncherTargetOpen: window.presented && field.ready
+                && GlobalStates.wallpaperLauncherOpen
+                && (Config.options?.enabledPanels ?? []).includes("iiWallpaperSelector")
+                && GlobalStates.resolveOutputName(GlobalStates.wallpaperSelectorTargetMonitor, []) === window.outputName
+            readonly property bool wallpaperStageEditing: window.wallpaperLauncherTargetOpen
+                && DesktopEditStage.wallpaperStageEnabled
+            readonly property string editStageMode: !window.presented || !field.ready || !DesktopEditStage.stageEnabled ? ""
+                : window.editorOpen ? "abyss"
+                : window.settingsStageEditing ? "settings"
+                : window.dashboardStageEditing ? "dashboard"
+                : window.widgetStageEditing ? "widgets"
+                : window.wallpaperStageEditing ? "wallpaper"
+                : ""
+            property string retainedEditStageMode: ""
+            readonly property string displayEditStageMode: window.editStageMode.length > 0
+                ? window.editStageMode : window.retainedEditStageMode
+            readonly property var externalWidgetEditor: GlobalStates.desktopWidgetEditors[window.outputName] ?? null
+            readonly property var activeDashboardEditItem: {
+                if (dashboardBody.open && ((dashboardBody.contentItem.item?.editMode ?? false)
+                        || (dashboardBody.contentItem.item?.tabNamingActive ?? false)))
+                    return dashboardBody.contentItem.item
+                if (aux.open && ((aux.contentItem.item?.editMode ?? false)
+                        || (aux.contentItem.item?.tabNamingActive ?? false)))
+                    return aux.contentItem.item
+                return dashboardBody.contentItem.item ?? aux.contentItem.item ?? null
+            }
+            readonly property real rawStageDockWidth: {
+                const mode = window.displayEditStageMode
+                if (mode === "abyss")
+                    return editor.desiredDockWidth
+                if (mode === "widgets")
+                    return window.externalWidgetEditor?.desiredDockWidth ?? 960
+                if (mode === "dashboard")
+                    return window.activeDashboardEditItem?.editDockWidth ?? 940
+                if (mode === "settings")
+                    return settings.contentItem.item?.editDockWidth ?? 960
+                if (mode === "wallpaper")
+                    return stageWallpaperLoader.item?.desiredDockWidth ?? 980
+                return 960
+            }
+            readonly property real rawStageDockHeight: {
+                const mode = window.displayEditStageMode
+                if (mode === "abyss")
+                    return editor.desiredDockHeight
+                if (mode === "widgets")
+                    return window.externalWidgetEditor?.desiredDockHeight ?? 168
+                if (mode === "dashboard")
+                    return window.activeDashboardEditItem?.editDockHeight ?? 168
+                if (mode === "settings")
+                    return settings.contentItem.item?.editDockHeight ?? 168
+                if (mode === "wallpaper")
+                    return stageWallpaperLoader.item?.desiredDockHeight ?? 176
+                return 168
+            }
+            property real latchedStageDockWidth: 960
+            property real latchedStageDockHeight: 218
+            property real latchedStageLeftDockWidth: 248
+            property real latchedStageLeftDockHeight: 460
+            property real latchedStageRightDockWidth: 248
+            property real latchedStageRightDockHeight: 460
+            readonly property bool widgetManagerRightOpen: window.editStageMode === "widgets"
+            readonly property real rawStageLeftDockWidth: {
+                const mode = window.displayEditStageMode
+                if (mode === "abyss")
+                    return editor.desiredLeftDockWidth
+                if (mode === "dashboard")
+                    return window.activeDashboardEditItem?.editLeftDockWidth ?? 0
+                return 0
+            }
+            readonly property real rawStageLeftDockHeight: {
+                const mode = window.displayEditStageMode
+                if (mode === "abyss")
+                    return editor.desiredLeftDockHeight
+                if (mode === "dashboard")
+                    return window.activeDashboardEditItem?.editLeftDockHeight ?? 0
+                return 0
+            }
+            readonly property real rawStageRightDockWidth: {
+                const mode = window.displayEditStageMode
+                if (mode === "abyss")
+                    return editor.desiredRightDockWidth
+                if (mode === "widgets")
+                    return window.externalWidgetEditor?.desiredRightDockWidth ?? 380
+                if (mode === "dashboard")
+                    return window.activeDashboardEditItem?.editRightDockWidth ?? 0
+                return 0
+            }
+            readonly property real rawStageRightDockHeight: {
+                const mode = window.displayEditStageMode
+                if (mode === "abyss")
+                    return editor.desiredRightDockHeight
+                if (mode === "widgets")
+                    return window.externalWidgetEditor?.desiredRightDockHeight ?? 560
+                if (mode === "dashboard")
+                    return window.activeDashboardEditItem?.editRightDockHeight ?? 0
+                return 0
+            }
+            onRawStageDockWidthChanged: {
+                if (window.editStageMode.length > 0 && window.rawStageDockWidth > 200) {
+                    window.latchedStageDockWidth = Math.round(window.rawStageDockWidth)
+                    if (window.editStageProgress < 0.98)
+                        window.animatedStageDockWidth = window.latchedStageDockWidth
+                }
+            }
+            onRawStageDockHeightChanged: {
+                if (window.editStageMode.length > 0 && window.rawStageDockHeight > 40) {
+                    window.latchedStageDockHeight = Math.round(window.rawStageDockHeight)
+                    if (window.editStageProgress < 0.98)
+                        window.animatedStageDockHeight = window.latchedStageDockHeight
+                }
+            }
+            onRawStageLeftDockWidthChanged: {
+                if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard") && window.rawStageLeftDockWidth > 160) {
+                    window.latchedStageLeftDockWidth = Math.round(window.rawStageLeftDockWidth)
+                    if (window.editStageProgress < 0.98)
+                        window.animatedStageLeftDockWidth = window.latchedStageLeftDockWidth
+                }
+            }
+            onRawStageLeftDockHeightChanged: {
+                if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard") && window.rawStageLeftDockHeight > 120) {
+                    window.latchedStageLeftDockHeight = Math.round(window.rawStageLeftDockHeight)
+                    if (window.editStageProgress < 0.98)
+                        window.animatedStageLeftDockHeight = window.latchedStageLeftDockHeight
+                }
+            }
+            onRawStageRightDockWidthChanged: {
+                if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard" || window.widgetManagerRightOpen) && window.rawStageRightDockWidth > 160) {
+                    window.latchedStageRightDockWidth = Math.round(window.rawStageRightDockWidth)
+                    if (window.editStageProgress < 0.98)
+                        window.animatedStageRightDockWidth = window.latchedStageRightDockWidth
+                }
+            }
+            onRawStageRightDockHeightChanged: {
+                if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard" || window.widgetManagerRightOpen) && window.rawStageRightDockHeight > 120) {
+                    window.latchedStageRightDockHeight = Math.round(window.rawStageRightDockHeight)
+                    if (window.editStageProgress < 0.98)
+                        window.animatedStageRightDockHeight = window.latchedStageRightDockHeight
+                }
+            }
+            property real animatedStageDockWidth: window.latchedStageDockWidth
+            Behavior on animatedStageDockWidth {
+                enabled: AbyssStyle.motionEnabled && window.editStageProgress >= 0.98 && window.editStageMode.length > 0
+                NumberAnimation { duration: AbyssStyle.motionFast; easing.type: Easing.OutCubic }
+            }
+            property real animatedStageDockHeight: window.latchedStageDockHeight
+            Behavior on animatedStageDockHeight {
+                enabled: AbyssStyle.motionEnabled && window.editStageProgress >= 0.98 && window.editStageMode.length > 0
+                NumberAnimation { duration: AbyssStyle.motionFast; easing.type: Easing.OutCubic }
+            }
+            property real animatedStageLeftDockWidth: window.latchedStageLeftDockWidth
+            Behavior on animatedStageLeftDockWidth {
+                enabled: AbyssStyle.motionEnabled && window.editStageProgress >= 0.98 && window.editStageMode.length > 0
+                NumberAnimation { duration: AbyssStyle.motionFast; easing.type: Easing.OutCubic }
+            }
+            property real animatedStageLeftDockHeight: window.latchedStageLeftDockHeight
+            Behavior on animatedStageLeftDockHeight {
+                enabled: AbyssStyle.motionEnabled && window.editStageProgress >= 0.98 && window.editStageMode.length > 0
+                NumberAnimation { duration: AbyssStyle.motionFast; easing.type: Easing.OutCubic }
+            }
+            property real animatedStageRightDockWidth: window.latchedStageRightDockWidth
+            Behavior on animatedStageRightDockWidth {
+                enabled: AbyssStyle.motionEnabled && window.editStageProgress >= 0.98 && window.editStageMode.length > 0
+                NumberAnimation { duration: AbyssStyle.motionFast; easing.type: Easing.OutCubic }
+            }
+            property real animatedStageRightDockHeight: window.latchedStageRightDockHeight
+            Behavior on animatedStageRightDockHeight {
+                enabled: AbyssStyle.motionEnabled && window.editStageProgress >= 0.98 && window.editStageMode.length > 0
+                NumberAnimation { duration: AbyssStyle.motionFast; easing.type: Easing.OutCubic }
+            }
+            property real editStageProgress: window.editStageMode.length > 0 ? 1 : 0
+            Behavior on editStageProgress {
+                enabled: AbyssStyle.motionEnabled
+                NumberAnimation { duration: AbyssStyle.motionNormal; easing.type: Easing.OutCubic }
+            }
+            property real stageRightOpenProgress: (window.editStageMode === "abyss" || window.editStageMode === "dashboard" || window.widgetManagerRightOpen) ? 1 : 0
+            Behavior on stageRightOpenProgress {
+                enabled: AbyssStyle.motionEnabled
+                NumberAnimation { duration: AbyssStyle.motionNormal; easing.type: Easing.OutCubic }
+            }
+            property bool _coalescingStageSync: false
+            function syncDesktopEditStage(): void {
+                if (window._coalescingStageSync)
+                    return
+                if (window.editStageProgress <= 0.0001 && window.editStageMode.length === 0) {
+                    DesktopEditStage.clearStage(window.outputName)
+                    window.retainedEditStageMode = ""
+                    return
+                }
+                if (window.editStageMode.length > 0) {
+                    if (window.rawStageDockWidth > 200)
+                        window.latchedStageDockWidth = Math.round(window.rawStageDockWidth)
+                    if (window.rawStageDockHeight > 40)
+                        window.latchedStageDockHeight = Math.round(window.rawStageDockHeight)
+                    if (window.editStageProgress < 0.98) {
+                        window.animatedStageDockWidth = window.latchedStageDockWidth
+                        window.animatedStageDockHeight = window.latchedStageDockHeight
+                    }
+                    if (window.editStageMode === "abyss" || window.editStageMode === "dashboard") {
+                        if (window.rawStageLeftDockWidth > 160) {
+                            window.latchedStageLeftDockWidth = Math.round(window.rawStageLeftDockWidth)
+                            if (window.editStageProgress < 0.98)
+                                window.animatedStageLeftDockWidth = window.latchedStageLeftDockWidth
+                        }
+                        if (window.rawStageLeftDockHeight > 120) {
+                            window.latchedStageLeftDockHeight = Math.round(window.rawStageLeftDockHeight)
+                            if (window.editStageProgress < 0.98)
+                                window.animatedStageLeftDockHeight = window.latchedStageLeftDockHeight
+                        }
+                        if (window.rawStageRightDockWidth > 160) {
+                            window.latchedStageRightDockWidth = Math.round(window.rawStageRightDockWidth)
+                            if (window.editStageProgress < 0.98)
+                                window.animatedStageRightDockWidth = window.latchedStageRightDockWidth
+                        }
+                        if (window.rawStageRightDockHeight > 120) {
+                            window.latchedStageRightDockHeight = Math.round(window.rawStageRightDockHeight)
+                            if (window.editStageProgress < 0.98)
+                                window.animatedStageRightDockHeight = window.latchedStageRightDockHeight
+                        }
+                    } else if (window.widgetManagerRightOpen) {
+                        if (window.rawStageRightDockWidth > 160)
+                            window.latchedStageRightDockWidth = Math.round(window.rawStageRightDockWidth)
+                        if (window.rawStageRightDockHeight > 120)
+                            window.latchedStageRightDockHeight = Math.round(window.rawStageRightDockHeight)
+                    }
+                }
+                const mode = window.displayEditStageMode
+                const hasLeft = mode === "abyss"
+                    || (mode === "dashboard" && window.rawStageLeftDockWidth > 160)
+                const hasRight = mode === "abyss"
+                    || (mode === "dashboard" && window.rawStageRightDockWidth > 160)
+                    || (mode === "widgets" && (window.widgetManagerRightOpen || window.stageRightOpenProgress > 0.001))
+                const leftProg = hasLeft ? window.editStageProgress : 0
+                const rightProg = (mode === "abyss" || (mode === "dashboard" && hasRight))
+                    ? window.editStageProgress
+                    : (hasRight ? Math.min(window.editStageProgress, window.stageRightOpenProgress) : 0)
+                DesktopEditStage.setStage(
+                    window.outputName,
+                    mode,
+                    window.editStageProgress,
+                    window.animatedStageDockWidth,
+                    window.animatedStageDockHeight,
+                    hasLeft ? window.animatedStageLeftDockWidth : 0,
+                    hasLeft ? window.animatedStageLeftDockHeight : 0,
+                    hasRight ? window.animatedStageRightDockWidth : 0,
+                    hasRight ? window.animatedStageRightDockHeight : 0,
+                    leftProg,
+                    rightProg
+                )
+            }
+            onEditStageModeChanged: {
+                window._coalescingStageSync = true
+                if (window.editStageMode.length > 0) {
+                    window.retainedEditStageMode = window.editStageMode
+                    if (window.rawStageDockWidth > 200) {
+                        window.latchedStageDockWidth = Math.round(window.rawStageDockWidth)
+                        window.animatedStageDockWidth = window.latchedStageDockWidth
+                    }
+                    if (window.rawStageDockHeight > 40) {
+                        window.latchedStageDockHeight = Math.round(window.rawStageDockHeight)
+                        window.animatedStageDockHeight = window.latchedStageDockHeight
+                    }
+                    if (window.rawStageLeftDockWidth > 160) {
+                        window.latchedStageLeftDockWidth = Math.round(window.rawStageLeftDockWidth)
+                        window.animatedStageLeftDockWidth = window.latchedStageLeftDockWidth
+                    }
+                    if (window.rawStageLeftDockHeight > 120) {
+                        window.latchedStageLeftDockHeight = Math.round(window.rawStageLeftDockHeight)
+                        window.animatedStageLeftDockHeight = window.latchedStageLeftDockHeight
+                    }
+                    if (window.rawStageRightDockWidth > 160) {
+                        window.latchedStageRightDockWidth = Math.round(window.rawStageRightDockWidth)
+                        window.animatedStageRightDockWidth = window.latchedStageRightDockWidth
+                    }
+                    if (window.rawStageRightDockHeight > 120) {
+                        window.latchedStageRightDockHeight = Math.round(window.rawStageRightDockHeight)
+                        window.animatedStageRightDockHeight = window.latchedStageRightDockHeight
+                    }
+                }
+                if (window.editStageMode === "widgets" || window.editStageMode === "abyss" || window.editStageMode === "wallpaper")
+                    DesktopEditStage.park(window.outputName)
+                else if (DesktopEditStage.parkedOutput === window.outputName)
+                    DesktopEditStage.unpark()
+                window._coalescingStageSync = false
+                window.syncDesktopEditStage()
+            }
+            onWidgetManagerRightOpenChanged: window.syncDesktopEditStage()
+            onEditStageProgressChanged: window.syncDesktopEditStage()
+            onStageRightOpenProgressChanged: if (window.editStageProgress > 0.0001) window.syncDesktopEditStage()
+            onAnimatedStageDockWidthChanged: if (window.editStageProgress > 0.0001) window.syncDesktopEditStage()
+            onAnimatedStageDockHeightChanged: if (window.editStageProgress > 0.0001) window.syncDesktopEditStage()
+            onAnimatedStageLeftDockWidthChanged: if (window.editStageProgress > 0.0001) window.syncDesktopEditStage()
+            onAnimatedStageLeftDockHeightChanged: if (window.editStageProgress > 0.0001) window.syncDesktopEditStage()
+            onAnimatedStageRightDockWidthChanged: if (window.editStageProgress > 0.0001) window.syncDesktopEditStage()
+            onAnimatedStageRightDockHeightChanged: if (window.editStageProgress > 0.0001) window.syncDesktopEditStage()
+            readonly property var editCard: DesktopEditStage.cardFor(window.outputName, window.width, window.height)
+            readonly property bool editStageVisible: window.editCard.p > 0.001
+            readonly property bool stageCapturesDesktop: window.editStageMode === "abyss"
+                || window.editStageMode === "dashboard"
+                || window.editStageMode === "settings"
+            readonly property bool stageHostActive: window.visible && window.presented && Config.ready && DesktopEditStage.stageEnabled
+            onStageHostActiveChanged: DesktopEditStage.setHost(window.outputName, window.stageHostActive)
+            onOutputNameChanged: {
+                if (window.stageHostActive)
+                    DesktopEditStage.setHost(window.outputName, true)
+            }
+            Component.onCompleted: {
+                window.adoptDesktopStageChildren()
+                DesktopEditStage.setHost(window.outputName, window.stageHostActive)
+            }
+            Component.onDestruction: {
+                DesktopEditStage.setHost(window.outputName, false)
+                DesktopEditStage.clearStage(window.outputName)
+                if (DesktopEditStage.parkedOutput === window.outputName)
+                    DesktopEditStage.unpark()
+            }
+            readonly property Item stageAbyssDockHost: DesktopEditStage.stageEnabled ? stageAbyssDockContainer : null
+            readonly property Item stageDashboardDockHost: DesktopEditStage.stageEnabled ? stageDashboardDockContainer : null
+            readonly property Item stageLeftDashboardDockHost: DesktopEditStage.stageEnabled ? stageLeftDashboardDockContainer : null
+            readonly property Item stageRightDashboardDockHost: DesktopEditStage.stageEnabled ? stageRightDashboardDockContainer : null
+            readonly property Item stageSettingsDockHost: DesktopEditStage.stageEnabled ? stageSettingsDockContainer : null
             onPresentedChanged: if (!presented && editorOpen) GlobalStates.abyssEditing = false
             screen: modelData
             // Keep the Top surface mapped across fullscreen and behind WlSessionLock so cold boot completes while locked.
             visible: Config.ready && !window._probeUnmapped
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
+            readonly property bool hasPerimeterEscapeRouter: true
             exclusiveZone: 0
             WlrLayershell.namespace: "alis:abyss-perimeter"
             // Niri needs a stable overlay for hit-tested Screen Edge modules
@@ -787,11 +1160,11 @@ Scope {
             // switches Top -> Overlay at pointer entry, which can invalidate
             // hover just as the popup begins opening. Keep native-dialog/
             // Polkit overrides and the existing shaped input mask.
-            WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen ? WlrLayer.Bottom : PolkitService.active ? WlrLayer.Top : (window.physicalOsdResident || (CompositorService.isNiri && window.presented) || window.editorOpen || wallpaperBody.open || (keyboardBody.open && (Config.options?.osk?.keepOnTop ?? false)) || utility.open || liquid.popupsOpen || toastBody.open || dialogBody.open || companionExtension.editing || settings.open || dashboardBody.open || controls.open || (window.fullscreenCovered && window.presented)) ? WlrLayer.Overlay : WlrLayer.Top
+            WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen ? WlrLayer.Bottom : PolkitService.active ? WlrLayer.Top : (window.physicalOsdResident || (CompositorService.isNiri && window.presented) || window.editorOpen || Boolean(window.editStageVisible) || wallpaperBody.open || (keyboardBody.open && (Config.options?.osk?.keepOnTop ?? false)) || utility.open || liquid.popupsOpen || toastBody.open || dialogBody.open || companionExtension.editing || settings.open || dashboardBody.open || Boolean(window.nexusOpen) || controls.open || (window.fullscreenCovered && window.presented)) ? WlrLayer.Overlay : WlrLayer.Top
             WlrLayershell.keyboardFocus: !window.presented || !field.ready || GlobalStates.regionSelectorOpen || GlobalStates.settingsNativeDialogOpen || PolkitService.active || window.overviewDragging || companionExtension.curiosityOwned
                 ? WlrKeyboardFocus.None
-                : (window.editorOpen || (utility.presented && utility.ready) || liquid.popupExclusiveFocus || (popup.presented && (popup.contentItem.item?.keyboardFocus ?? false)) || (dialogBody.presented && dialogBody.ready) || (aux.presented && aux.ready) || (wallpaperBody.presented && wallpaperBody.ready) || (clipboardBody.presented && clipboardBody.ready) || (settings.presented && settings.ready) || (dashboardBody.presented && dashboardBody.ready) || (controls.presented && controls.ready)) ? WlrKeyboardFocus.Exclusive
-                : (companionExtension.editing || liquid.popupOnDemandFocus || (leftPanel.presented && leftPanel.ready) || (rightPanel.presented && rightPanel.ready) || (popup.presented && popup.ready && popup.activeKind !== "dockAppMenu") || (notification.presented && notification.ready && notification.contentKind === "center"))
+                : (window.editorOpen || window.wallpaperStageEditing || (utility.presented && utility.ready) || liquid.popupExclusiveFocus || (popup.presented && (popup.contentItem.item?.keyboardFocus ?? false)) || (dialogBody.presented && dialogBody.ready) || (aux.presented && aux.ready) || (wallpaperBody.presented && wallpaperBody.ready) || (clipboardBody.presented && clipboardBody.ready) || (settings.presented && settings.ready) || (dashboardBody.presented && dashboardBody.ready) || (nexusBody.presented && nexusBody.ready) || (controls.presented && controls.ready) || (companionExtension.editing && !companionExtension.keyboardFocusOnDemand)) ? WlrKeyboardFocus.Exclusive
+                : (window.widgetStageEditing || companionExtension.keyboardFocusOnDemand || liquid.popupOnDemandFocus || (leftPanel.presented && leftPanel.ready) || (rightPanel.presented && rightPanel.ready) || (popup.presented && popup.ready && popup.activeKind !== "dockAppMenu") || (notification.presented && notification.ready && notification.contentKind === "center"))
                     ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
             anchors { top: true; bottom: true; left: true; right: true }
             Item { id: emptyInput; width: 0; height: 0 }
@@ -818,6 +1191,7 @@ Scope {
                 Region { regions: companionExtension.inputRegions }
             }
             readonly property Region nativeInputMask: Region {
+                Region { x: window.overlayPopupBounds.x; y: window.overlayPopupBounds.y; width: window.presented && field.ready && window.overlayPopupActive ? window.overlayPopupBounds.width : 0; height: window.overlayPopupBounds.height }
                 Region { regions: window.presented && field.ready && bar.visible ? bar.inputRegions : [] }
                 Region { regions: companionExtension.inputRegions }
                 Region { regions: window.presented && field.ready && editor.visible ? editor.regions : [] }
@@ -829,7 +1203,7 @@ Scope {
                 Region { x: leftPanel.inputBounds.x; y: leftPanel.inputBounds.y; width: window.presented && field.ready ? leftPanel.inputBounds.width : 0; height: leftPanel.inputBounds.height }
                 Region { x: rightPanel.inputBounds.x; y: rightPanel.inputBounds.y; width: window.presented && field.ready ? rightPanel.inputBounds.width : 0; height: rightPanel.inputBounds.height }
                 Region { regions: window.presented && field.ready ? liquid.nativeInputRegions : [] }
-                Region { x: dock.inputBounds.x; y: dock.inputBounds.y; width: window.presented && field.ready ? dock.inputBounds.width : 0; height: dock.inputBounds.height }
+                Region { x: dock.inputBounds.x; y: dock.inputBounds.y; width: window.presented && field.ready && !window.widgetStageEditing ? dock.inputBounds.width : 0; height: dock.inputBounds.height }
                 Region { item:corners.notesAvailable ? corners.notesAnchor : emptyInput }
                 Region { item:corners.centerAvailable ? corners.centerAnchor : emptyInput }
                 Region { regions:corners.sidebarRegions }
@@ -837,12 +1211,24 @@ Scope {
                 Region { x: toastBody.inputBounds.x; y: toastBody.inputBounds.y; width: window.presented && field.ready ? toastBody.inputBounds.width : 0; height: toastBody.inputBounds.height }
                 Region { x: osd.inputBounds.x; y: osd.inputBounds.y; width: (window.presented || window.physicalOsdResident) && field.ready ? osd.inputBounds.width : 0; height: osd.inputBounds.height }
                 Region { x: dashboardBody.inputBounds.x; y: dashboardBody.inputBounds.y; width: window.presented && field.ready ? dashboardBody.inputBounds.width : 0; height: dashboardBody.inputBounds.height }
+                Region { x: nexusBody.inputBounds.x; y: nexusBody.inputBounds.y; width: window.presented && field.ready && !GlobalStates.settingsNativeDialogOpen && !GlobalStates.regionSelectorOpen && !GlobalStates.annotationEditorOpen && !PolkitService.active ? nexusBody.inputBounds.width : 0; height: nexusBody.inputBounds.height }
                 Region { x: controls.inputBounds.x; y: controls.inputBounds.y; width: window.presented && field.ready ? controls.inputBounds.width : 0; height: controls.inputBounds.height }
                 Region { x: settings.inputBounds.x; y: settings.inputBounds.y; width: window.presented && field.ready && !GlobalStates.settingsNativeDialogOpen && !PolkitService.active ? settings.inputBounds.width : 0; height: settings.inputBounds.height }
                 Region { x: aux.inputBounds.x; y: aux.inputBounds.y; width: window.presented && field.ready ? aux.inputBounds.width : 0; height: aux.inputBounds.height }
                 Region {x:keyboardBody.inputBounds.x;y:keyboardBody.inputBounds.y;width:window.presented && field.ready ? keyboardBody.inputBounds.width : 0;height:keyboardBody.inputBounds.height}
                 Region { x:wallpaperBody.inputBounds.x;y:wallpaperBody.inputBounds.y;width:window.presented && field.ready && !GlobalStates.settingsNativeDialogOpen && !PolkitService.active ? wallpaperBody.inputBounds.width : 0;height:wallpaperBody.inputBounds.height }
                 Region { x: clipboardBody.inputBounds.x; y: clipboardBody.inputBounds.y; width: window.presented && field.ready ? clipboardBody.inputBounds.width : 0; height: clipboardBody.inputBounds.height }
+                Region {
+                    readonly property bool morphingStage: window.editStageVisible && window.editStageProgress < 0.999
+                    x: 0; y: 0
+                    width: window.presented && field.ready && window.editStageVisible
+                        ? (morphingStage ? window.width : Math.max(0, Math.ceil(window.editCard.x))) : 0
+                    height: window.height
+                }
+                Region { x: Math.floor(window.editCard.right); y: 0; width: window.presented && field.ready && window.editStageVisible && window.editStageProgress >= 0.999 ? Math.max(0, window.width - Math.floor(window.editCard.right)) : 0; height: window.height }
+                Region { x: 0; y: 0; width: window.presented && field.ready && window.editStageVisible && window.editStageProgress >= 0.999 ? window.width : 0; height: Math.max(0, Math.ceil(window.editCard.y)) }
+                Region { x: 0; y: Math.floor(window.editCard.bottom); width: window.presented && field.ready && window.editStageVisible && window.editStageProgress >= 0.999 ? window.width : 0; height: Math.max(0, window.height - Math.floor(window.editCard.bottom)) }
+                Region { x: Math.floor(window.editCard.x); y: Math.floor(window.editCard.y); width: window.presented && field.ready && window.stageCapturesDesktop && window.editStageProgress >= 0.999 ? Math.ceil(window.editCard.width) : 0; height: Math.ceil(window.editCard.height) }
             }
             function closeGenericPopup(expectedKind = ""): void {
                 const expected = String(expectedKind ?? "")
@@ -919,39 +1305,73 @@ Scope {
             readonly property bool anyInteractiveBodyPresented: aux.presented
                 || clipboardBody.presented || leftPanel.presented
                 || rightPanel.presented || popup.presented || dashboardBody.presented
-                || settings.presented || controls.presented || wallpaperBody.presented
+                || nexusBody.presented || settings.presented || controls.presented || wallpaperBody.presented
+                || window.wallpaperStageEditing
                 || utility.presented || dialogBody.presented || window.editorOpen
-            function isFocusInsidePresentedBody(item: Item): bool {
+                || companionExtension.popupOpen
+            readonly property bool anyBodyVisualResident: aux.visualResident
+                || clipboardBody.visualResident || leftPanel.visualResident
+                || rightPanel.visualResident || popup.visualResident || dashboardBody.visualResident
+                || nexusBody.visualResident || settings.visualResident || controls.visualResident || wallpaperBody.visualResident
+                || window.wallpaperStageEditing
+                || utility.visualResident || dialogBody.visualResident || notification.visualResident || osd.visualResident
+            function presentedBodyHostForItem(item: Item): var {
                 if (!item || item === window.contentItem || item === perimeterEscapeFallback)
-                    return false
+                    return null
+                const popupHosts = ["0", "1", "2", "3"]
+                    .map(k => liquid.popupHosts[k])
+                    .filter(h => Boolean(h && h.presented))
                 const activeRoots = [
                     aux.presented ? aux : null,
                     dashboardBody.presented ? dashboardBody : null,
+                    nexusBody.presented ? nexusBody : null,
                     settings.presented ? settings : null,
                     controls.presented ? controls : null,
                     leftPanel.presented ? leftPanel : null,
                     rightPanel.presented ? rightPanel : null,
                     clipboardBody.presented ? clipboardBody : null,
                     wallpaperBody.presented ? wallpaperBody : null,
+                    window.wallpaperStageEditing ? stageWallpaperDockContainer : null,
                     utility.presented ? utility : null,
                     dialogBody.presented ? dialogBody : null,
                     popup.presented ? popup : null,
-                    editor.visible ? editor : null
-                ]
+                    editor.visible ? editor : null,
+                    window.editStageVisible ? stageEditDock : null,
+                    window.editStageVisible ? stageLeftEditDock : null,
+                    window.editStageVisible ? stageRightEditDock : null,
+                    window.widgetStageEditing ? stageWidgetDockContainer : null,
+                    window.windowOverlay ?? null,
+                    companionExtension.extension ?? null,
+                    companionExtension.talkCloudItem ?? null,
+                    companionExtension.pocketPaneItem ?? null
+                ].concat(popupHosts)
                 let node = item
                 while (node && node !== window.contentItem) {
                     if (!node.visible || !node.enabled)
-                        return false
-                    if (activeRoots.includes(node)
-                            || (node.objectName === "abyssDashboardEditPopup"
-                                && activeRoots.includes(node.body)))
-                        return true
+                        return null
+                    if (activeRoots.includes(node))
+                        return node
+                    if ((node.objectName === "abyssDashboardEditPopup"
+                            || node.objectName === "abyssSettingsEditPopup")
+                            && activeRoots.includes(node.body))
+                        return node.body
+                    if (node.objectName === "abyssEdgeEditorToolbar"
+                            && activeRoots.includes(node.editorOwner))
+                        return node.editorOwner
+                    for (const ph of popupHosts) {
+                        if (ph.embeddedItem === node)
+                            return ph
+                    }
                     node = node.parent
                 }
-                return false
+                return null
+            }
+            function isFocusInsidePresentedBody(item: Item): bool {
+                return window.presentedBodyHostForItem(item) !== null
             }
             function ensureEscapeFocus(): void {
-                if (!window.presented || !field.ready || !window.anyInteractiveBodyPresented)
+                if (!window.presented || !field.ready || !window.anyInteractiveBodyPresented
+                        || GlobalStates.regionSelectorOpen || GlobalStates.annotationEditorOpen)
                     return
                 if (window.isFocusInsidePresentedBody(window.activeWindowFocusItem))
                     return
@@ -960,6 +1380,28 @@ Scope {
                     if (window.isFocusInsidePresentedBody(window.activeWindowFocusItem))
                         return
                 }
+                if (window.wallpaperStageEditing && stageWallpaperLoader.item) {
+                    if (typeof stageWallpaperLoader.item.focusPrimarySurface === "function")
+                        stageWallpaperLoader.item.focusPrimarySurface()
+                    else
+                        stageWallpaperLoader.item.forceActiveFocus()
+                    if (window.isFocusInsidePresentedBody(window.activeWindowFocusItem))
+                        return
+                }
+                if (companionExtension.popupOpen && companionExtension.editing && companionExtension.talkCloudItem) {
+                    if (typeof companionExtension.talkCloudItem.requestKeyboardFocus === "function")
+                        companionExtension.talkCloudItem.requestKeyboardFocus()
+                    if (window.isFocusInsidePresentedBody(window.activeWindowFocusItem))
+                        return
+                }
+                const interactivePopupHosts = ["0", "1", "2", "3"]
+                    .map(k => liquid.popupHosts[k])
+                    .filter(h => Boolean(h && h.presented && h.acceptsInput && h.ready
+                        && ((h.hostedPopup?.keyboardFocus ?? false)
+                            || (h.hostedPopup?.keyboardFocusOnDemand ?? false))))
+                const sidebarAndPopupPeers = interactivePopupHosts
+                    .concat([leftPanel, rightPanel])
+                    .sort((a, b) => Number(b?.activationOrder ?? 0) - Number(a?.activationOrder ?? 0))
                 const candidateHosts = [
                     dialogBody,
                     utility,
@@ -967,12 +1409,11 @@ Scope {
                     clipboardBody,
                     aux,
                     settings,
+                    nexusBody,
                     dashboardBody,
                     controls,
-                    popup,
-                    leftPanel,
-                    rightPanel
-                ]
+                    popup
+                ].concat(sidebarAndPopupPeers)
                 for (const host of candidateHosts) {
                     if (!host || !host.presented || !host.acceptsInput || !host.ready)
                         continue
@@ -990,7 +1431,9 @@ Scope {
                 perimeterEscapeFallback.forceActiveFocus()
             }
             readonly property var currentFocusItem: window.activeWindowFocusItem ?? null
-            onCurrentFocusItemChanged: Qt.callLater(window.ensureEscapeFocus)
+            onCurrentFocusItemChanged: {
+                Qt.callLater(window.ensureEscapeFocus)
+            }
             onAnyInteractiveBodyPresentedChanged: {
                 window.ensureEscapeFocus()
                 Qt.callLater(window.ensureEscapeFocus)
@@ -1017,8 +1460,9 @@ Scope {
                 context: Qt.WindowShortcut
                 autoRepeat: false
                 enabled: window.presented && field.ready
-                    && window.anyInteractiveBodyPresented
+                    && (window.anyInteractiveBodyPresented || window.widgetStageEditing)
                     && !dashboardEditEscapeShortcut.enabled
+                    && !liquid.popupExclusiveFocus
                 onActivated: perimeterEscapeFallback.triggerEscape()
                 onActivatedAmbiguously: perimeterEscapeFallback.triggerEscape()
             }
@@ -1030,8 +1474,30 @@ Scope {
                 Keys.onEscapePressed: event => {
                     perimeterEscapeFallback.triggerEscape(event)
                 }
+                Keys.onPressed: event => {
+                    if (event.key === Qt.Key_Escape && (event.modifiers === Qt.NoModifier || event.modifiers === Qt.KeypadModifier)) {
+                        perimeterEscapeFallback.triggerEscape(event)
+                        return
+                    }
+                    if (nexusBody.presented
+                            && typeof nexusBody.contentItem?.item?.forwardKeyEvent === "function"
+                            && nexusBody.contentItem.item.forwardKeyEvent(event)) {
+                        window.ensureEscapeFocus()
+                        return
+                    }
+                }
                 function triggerEscape(event = null): void {
                     window.dashboardEscapeFallbackCount++
+                    if (window.closeActiveOverlayPopups()) {
+                        if (event) event.accepted = true
+                        window.ensureEscapeFocus()
+                        return
+                    }
+                    if (companionExtension.popupOpen && companionExtension.handleEscape()) {
+                        if (event) event.accepted = true
+                        window.ensureEscapeFocus()
+                        return
+                    }
                     if (window.cancelDashboardEditFromEscape()) {
                         if (event) event.accepted = true
                         return
@@ -1039,6 +1505,13 @@ Scope {
                     if (dashboardBody.presented
                             && typeof dashboardBody.contentItem?.item?.handleEscape === "function"
                             && dashboardBody.contentItem.item.handleEscape()) {
+                        if (event) event.accepted = true
+                        window.ensureEscapeFocus()
+                        return
+                    }
+                    if (nexusBody.presented
+                            && typeof nexusBody.contentItem?.item?.handleEscape === "function"
+                            && nexusBody.contentItem.item.handleEscape()) {
                         if (event) event.accepted = true
                         window.ensureEscapeFocus()
                         return
@@ -1064,8 +1537,25 @@ Scope {
                         window.ensureEscapeFocus()
                         return
                     }
+                    if (window.wallpaperStageEditing
+                            && typeof stageWallpaperLoader.item?.handleEscape === "function"
+                            && stageWallpaperLoader.item.handleEscape()) {
+                        if (event) event.accepted = true
+                        return
+                    }
+                    if (wallpaperBody.presented
+                            && typeof wallpaperBody.contentItem?.item?.handleEscape === "function"
+                            && wallpaperBody.contentItem.item.handleEscape()) {
+                        if (event) event.accepted = true
+                        return
+                    }
                     if (editor.visible) {
                         editor.finish(false)
+                        if (event) event.accepted = true
+                        return
+                    }
+                    if (window.widgetStageEditing) {
+                        GlobalStates.setWidgetEditMode(false)
                         if (event) event.accepted = true
                         return
                     }
@@ -1076,6 +1566,8 @@ Scope {
                     GlobalStates.dashboardOpen = false
                     GlobalStates.controlPanelOpen = false
                     GlobalStates.settingsOverlayOpen = false
+                    if (AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
+                        AlisIntergration.nexus.close()
                     GlobalStates.clipboardOpen = false
                     GlobalStates.overviewOpen = false
                     GlobalStates.wallpaperLauncherOpen = false
@@ -1095,21 +1587,28 @@ Scope {
                 moduleLayer: bar
                 controller: liquid
                 edgeInsets: window.nativeInsets
+                externalDockParent: DesktopEditStage.stageEnabled ? stageAbyssDockContainer : null
+                externalLeftDockParent: DesktopEditStage.stageEnabled ? stageLeftAbyssDockContainer : null
+                externalRightDockParent: DesktopEditStage.stageEnabled ? stageRightAbyssDockContainer : null
             }
             property string transientPopupHoverKind: ""
             AbyssBar {
                 id: bar
                 outputName: window.outputName
                 liquidController: liquid
+                leftSidebarRecord: leftPanel.progress > 0.001 ? leftPanel.record : null
+                rightSidebarRecord: rightPanel.progress > 0.001 ? rightPanel.record : null
+                popupObstacleRects: window.popupObstacleRects
+                basePaintInsets: window.paintInsets
                 edge: root.barEdge
-                editing: editor.visible
+                editing: editor.visible || window.widgetStageEditing
                 draggedIds: editor._dragging ? editor.targetIds : []
                 draftPlacements: editor.visible ? editor.draft : null
                 draftOptions: editor.visible ? editor.draftOptions : null
                 visible: window.presented && field.ready && (window.editorOpen || root.barOnOutput(window.outputName))
                 opacity: GlobalStates.abyssColdPerimeterRecreatePending ? 0 : 1
                 anchors.fill: parent
-                HoverHandler { id: barHover; onHoveredChanged: { if (hovered) { barClose.stop(); root.setBarRevealed(window.outputName,true) } else barClose.restart() } }
+                HoverHandler { id: barHover; blocking: false; onHoveredChanged: { if (hovered) { barClose.stop(); root.setBarRevealed(window.outputName,true) } else barClose.restart() } }
                 onInteraction: (edge,along,span,strength) => liquid.impulse(edge,along,span,strength)
                 onLayoutRepairRequested: GlobalStates.startAbyssEditing(window.outputName)
                 onNotesEditorFocusChanged: (outputName, focused) => root.setQuickNotesEditorOutput(outputName, focused)
@@ -1168,7 +1667,7 @@ Scope {
             }
             Item {
                 id: revealTrigger
-                visible: window.presented && field.ready && (Config.options?.bar?.autoHide?.enable ?? false)
+                visible: window.presented && field.ready && !window.editStageVisible && (Config.options?.bar?.autoHide?.enable ?? false)
                     && GlobalStates.barOpen && (Config.options?.enabledPanels ?? []).includes("abyssBar")
                     && Geometry.targets(window.outputName,Config.options?.bar?.screenList ?? [],Quickshell.screens.map(s => s.name))
                 x: root.barEdge === "right" ? window.width-width : 0
@@ -1210,6 +1709,7 @@ Scope {
                 presentationItem: field
                 dialogHost: dialogBody
                 edgeInsets: window.paintInsets
+                externalBlockers: companionExtension.obstacleRects
                 moduleRecords: bar.visible ? bar.deformations : []
                 cornerWidthInsets: window.configuredInsets
                 roundZeroCorners: bar.layoutOptions.edgeRoundZeroCorners ?? {}
@@ -1229,16 +1729,45 @@ Scope {
                 if (rightVisible) result.push(rightPanel.record)
                 return result
             }
+            readonly property var popupObstacleRects: {
+                const rects = []
+                for (const k of ["0", "1", "2", "3"]) {
+                    const h = liquid.popupHosts[k]
+                    if (h && h.progress > 0.001 && h.record?.surface)
+                        rects.push(h.record.surface)
+                }
+                if (popup.progress > 0.001 && popup.record?.surface)
+                    rects.push(popup.record.surface)
+                if (notification.progress > 0.001 && notification.record?.surface)
+                    rects.push(notification.record.surface)
+                if (aux.progress > 0.001 && aux.record?.surface)
+                    rects.push(aux.record.surface)
+                return rects
+            }
+            function dockBlockedByPopups(dockSurface): bool {
+                if (!dockSurface) return false
+                const genericSurface = popup.targetRecord?.surface ?? popup.record?.surface ?? null
+                if (popup.requestedOpen && popup.activeKind !== "dockAppMenu"
+                        && genericSurface && liquid._rectsOverlap(genericSurface, dockSurface, 10))
+                    return true
+                for (const k of ["0", "1", "2", "3"]) {
+                    const h = liquid.popupHosts[k]
+                    const hostSurface = h?.requestedRecord?.surface ?? h?.targetRecord?.surface ?? h?.record?.surface ?? null
+                    if (h && h.open && hostSurface && liquid._rectsOverlap(hostSurface, dockSurface, 10))
+                        return true
+                }
+                return false
+            }
             AbyssSpectrumController {
                 waves:liquid.waves
                 outputName:window.outputName
                 barEdge:root.barEdge
                 presented:window.presented && field.ready && !window.editorOpen
             }
-            readonly property bool sidebarRevealAvailable: window.presented && field.ready && !window.editorOpen
+            readonly property bool sidebarRevealAvailable: window.presented && field.ready && !window.editorOpen && !window.editStageVisible
                 && (Config.options?.abyss?.sidebars?.hoverEnabled ?? true)
                 && Geometry.targets(window.outputName,Config.options?.sidebar?.screenList ?? [],Quickshell.screens.map(s=>s.name))
-            readonly property bool sidebarOpeningAllowed: !utility.open && !settings.open
+            readonly property bool sidebarOpeningAllowed: !utility.open && !settings.open && !nexusBody.open
                 && !controls.open && !clipboardBody.open && !dialogBody.open && !GlobalStates.settingsNativeDialogOpen
                 && !PolkitService.active && !GlobalStates.regionSelectorOpen
             readonly property bool leftEdgebarPopupOpen: corners.notesOpen
@@ -1303,45 +1832,34 @@ Scope {
                 readonly property bool horizontal: Geometry.horizontal(attachedEdge)
                 readonly property real triggerThickness: Math.max(AbyssStyle.perimeterThickness,
                     Config.options?.sidebar?.edgeOpen?.regionWidth ?? 2)
-                readonly property var closedContent: sidebarBody.requestedRecord.content
                 readonly property var restingContent: sidebarBody.targetRecord.content
-                readonly property real closedSpan: Math.min(180,
-                    (horizontal ? window.width : window.height)*.25,
-                    Math.max(0,horizontal ? closedContent.width : closedContent.height))
-                readonly property real edgeStartInset: horizontal
-                    ? Math.max(window.nativeInsets.left, 16)
-                    : Math.max(window.nativeInsets.top, 16)
-                readonly property real edgeEndInset: horizontal
-                    ? Math.max(window.nativeInsets.right, 16)
-                    : Math.max(window.nativeInsets.bottom, 16)
-                readonly property real fullEdgeSpan: Math.max(closedSpan,
-                    (horizontal ? window.width : window.height) - edgeStartInset - edgeEndInset)
-                readonly property bool expandedEdgeSpan: sidebarBody.open || peerOpen
+                readonly property real axisExtent: horizontal ? window.width : window.height
+                // Closed trigger is strictly a ~180px band (~16.7% of 1080p) at the exact
+                // physical center of the Screen Edge, unaffected by Quick Notes / popups.
+                readonly property real closedSpan: Math.round(Math.min(220,
+                    Math.max(140, axisExtent * (180 / 1080))))
+                readonly property real openStart: horizontal
+                    ? Math.max(0, restingContent.x)
+                    : Math.max(0, restingContent.y)
+                readonly property real openSpan: Math.max(closedSpan,
+                    horizontal ? restingContent.width : restingContent.height)
+                readonly property bool expandedEdgeSpan: sidebarBody.open
                 readonly property real triggerSpan: expandedEdgeSpan
-                    ? fullEdgeSpan
+                    ? openSpan
                     : closedSpan
-                readonly property real triggerCenter: horizontal
-                    ? closedContent.x+closedContent.width/2
-                    : closedContent.y+closedContent.height/2
-                // Follow the rendered panel, including role swaps and saved
-                // Start/End/custom placement. Keep the closed trigger anchored to
-                // unborrowed geometry so VacancyBorrowing cannot shift the trigger
-                // out from under the pointer on open, and expand across the full
-                // safe edge span while open or when a peer/overview is open so
-                // moving along the edge between Sidebar and Edgebar/Overview
-                // never crosses a dead zone.
+                readonly property real triggerCenter: axisExtent / 2
                 x: attachedEdge === "right" ? window.width-width
-                    : horizontal ? (expandedEdgeSpan ? edgeStartInset
-                        : Math.max(0,Math.min(window.width-width,
-                            triggerCenter-width/2))) : 0
+                    : horizontal ? (expandedEdgeSpan
+                        ? Math.max(0, Math.min(window.width-width, openStart))
+                        : Math.max(0, Math.min(window.width-width, triggerCenter-width/2))) : 0
                 y: attachedEdge === "bottom" ? window.height-height
-                    : horizontal ? 0 : (expandedEdgeSpan ? edgeStartInset
-                        : Math.max(0,Math.min(window.height-height,
-                            triggerCenter-height/2)))
+                    : horizontal ? 0 : (expandedEdgeSpan
+                        ? Math.max(0, Math.min(window.height-height, openStart))
+                        : Math.max(0, Math.min(window.height-height, triggerCenter-height/2)))
                 width: horizontal ? triggerSpan : triggerThickness
                 height: horizontal ? triggerThickness : triggerSpan
                 openingAllowed: window.sidebarOpeningAllowed
-                closeBlocked: GlobalStates.activeContextMenuCount>0 || dialogBody.open || dashboardBody.open || aux.open || GlobalStates.settingsNativeDialogOpen
+                closeBlocked: GlobalStates.activeContextMenuCount>0 || dialogBody.open || dashboardBody.open || nexusBody.open || aux.open || GlobalStates.settingsNativeDialogOpen
                 z: 220
             }
             SidebarReveal {
@@ -1374,8 +1892,8 @@ Scope {
                 id:corners;anchors.fill:parent;controller:liquid;outputName:window.outputName
                 attachmentThickness:window.nativeInsets.bottom
                 quickNotesEditorOutput: root.quickNotesEditorOutput
-                presentationEnabled:window.presented && field.ready && !window.editorOpen
-                blocked:settings.open || dashboardBody.open || utility.open || controls.open || aux.open || clipboardBody.open
+                presentationEnabled:window.presented && field.ready && !window.editorOpen && !window.editStageVisible
+                blocked:settings.open || dashboardBody.open || nexusBody.open || utility.open || controls.open || aux.open || clipboardBody.open
                     || GlobalStates.settingsNativeDialogOpen || PolkitService.active || GlobalStates.regionSelectorOpen
                 onQuickNotesEditorLeaseChanged:(outputName,focused)=>
                     root.setQuickNotesEditorOutput(outputName,focused)
@@ -1403,12 +1921,12 @@ Scope {
                 placementCanStackInward: false
                 animatePlacementChanges: false
                 stableContentSize: true
-                open: window.presented && field.ready && embeddedItem !== null && GlobalStates.widgetEditMode
+                open: window.presented && field.ready && embeddedItem !== null && GlobalStates.widgetEditMode && !DesktopEditStage.hosted(window.outputName)
                 Binding {
                     target: widgetEditorBody.embeddedItem
                     property: "abyssHost"
                     value: widgetEditorBody
-                    when: widgetEditorBody.embeddedItem !== null
+                    when: widgetEditorBody.embeddedItem !== null && !DesktopEditStage.hosted(window.outputName)
                     restoreMode: Binding.RestoreBindingOrValue
                 }
             }
@@ -1416,6 +1934,7 @@ Scope {
                 id: leftPanel
                 // Reveal clips a final-size Sidebar; controls never reflow per frame.
                 stableContentSize: true
+                monotonicNotificationReveal: true
                 // Its painted padding/shoulders also retain the hover lease.
                 includeEdgeConnection: true
                 identity: "leftPanel"
@@ -1440,7 +1959,7 @@ Scope {
                 open: window.presented && field.ready && (Config.options?.enabledPanels ?? []).includes("abyssSidebarLeft")
                     && GlobalStates.sidebarLeftOpen && GlobalStates.sidebarLeftPresentationOutput === window.outputName
 
-                edgeInsets: window.bodyInsets(edge,along,span)
+                edgeInsets: window.bodyInsets(edge,along,span,"cava")
                 along: window.sidebarAlong(identity,edge,span)
                 readonly property var sizeState:ShellLayoutController.currentState("featureSidebar",window.outputName)
                 readonly property real bodyWidth:Math.min(window.width*.8,(sizeState.width ?? 460)+(GlobalStates.sidebarLeftExpanded ? 190 : 0))
@@ -1455,6 +1974,7 @@ Scope {
                 id: rightPanel
                 // Reveal clips a final-size Sidebar; controls never reflow per frame.
                 stableContentSize: true
+                monotonicNotificationReveal: true
                 includeEdgeConnection: true
                 identity: "rightPanel"
                 connectionSourceRect: rightReveal.available
@@ -1477,7 +1997,7 @@ Scope {
                 open: window.presented && field.ready && (Config.options?.enabledPanels ?? []).includes("abyssSidebarRight")
                     && GlobalStates.sidebarRightOpen && GlobalStates.sidebarRightPresentationOutput === window.outputName
 
-                edgeInsets: window.bodyInsets(edge,along,span)
+                edgeInsets: window.bodyInsets(edge,along,span,"cava")
                 along: window.sidebarAlong(identity,edge,span)
                 readonly property var sizeState:ShellLayoutController.currentState("systemSidebar",window.outputName)
                 readonly property real bodyWidth:Math.min(window.width*.8,sizeState.width ?? 460)
@@ -1588,11 +2108,9 @@ Scope {
                             || !(window.earliestSidebarOrder > 0
                                 && (styledPopupHost.activationOrder <= 0 || window.earliestSidebarOrder < styledPopupHost.activationOrder))
                             ? 2 : 1)
-                        : vacancyRole === "quickNotes"
-                            ? leftPanel.placementPriority
-                            : vacancyRole === "notificationCenter"
-                                ? rightPanel.placementPriority
-                                : 0
+                        : (vacancyRole === "quickNotes" || vacancyRole === "notificationCenter")
+                            ? 1
+                            : 0
                     vacancyRole: (presentationKind === "quickNotes" || presentationKind === "notesTimers")
                         ? "quickNotes"
                         : ((presentationKind === "notificationCenter" || presentationKind === "notificationActivity")
@@ -1610,6 +2128,8 @@ Scope {
                     // kinds continue to use their established host motion.
                     singleExternalReveal: presentationKind === "notificationCenter"
                         || presentationKind === "notificationActivity"
+                        || presentationKind === "quickNotes"
+                        || presentationKind === "notesTimers"
                     externalProgress: hostedPopup?.revealProgress ?? 0
                     embeddedItem: hostedPopup?.contentItem ?? null
                     // Unified popups originate from local mini-launchers.
@@ -1628,6 +2148,8 @@ Scope {
                     depth: (Geometry.horizontal(edge)
                         ? (embeddedItem?.implicitHeight ?? 1)
                         : (embeddedItem?.implicitWidth ?? 1))+padding*2
+                    minimumSpan: Math.min(span, presentationKind === "workspaces" ? 420 : 240)
+                    minimumDepth: Math.min(depth, presentationKind === "workspaces" ? 140 : 180)
                     largeSurface: depth
                         > (Geometry.horizontal(edge) ? window.height : window.width)*.42
                     readonly property rect anchorBounds:
@@ -1712,33 +2234,52 @@ Scope {
                 includeEdgeConnection: true
                 property real cachedSpan: 220
                 readonly property real measuredSpan: contentItem.item?.desiredSpan ?? cachedSpan
+                readonly property bool _rawRequestDockShow: Boolean(contentItem.item?.requestDockShow)
+                property bool latchedRequestDockShow: false
+                on_RawRequestDockShowChanged: {
+                    if (_rawRequestDockShow === latchedRequestDockShow)
+                        return
+                    const nextReq = _rawRequestDockShow
+                    Qt.callLater(() => { dock.latchedRequestDockShow = nextReq })
+                }
                 readonly property bool attachedPopupHold:
                     liquid.hasPopupAnchoredTo(dock)
-                onMeasuredSpanChanged: if(contentItem.item && measuredSpan>0) cachedSpan=measuredSpan
+                onMeasuredSpanChanged: {
+                    if (contentItem.item && measuredSpan > 0 && Math.abs(cachedSpan - measuredSpan) > 0.5) {
+                        const nextSpan = measuredSpan
+                        Qt.callLater(() => {
+                            if (nextSpan > 0)
+                                dock.cachedSpan = nextSpan
+                        })
+                    }
+                }
+                readonly property rect popupCheckSurface: {
+                    const checkSpan = Math.min((Geometry.horizontal(edge) ? window.width : window.height) - 80,
+                        Math.max(140, cachedSpan))
+                    const checkAlong = (Geometry.horizontal(edge) ? window.width : window.height) / 2 - checkSpan / 2
+                    return Geometry.panel(window.width, window.height, window.nativeInsets,
+                        edge, checkAlong, checkSpan, depth, 1, padding, [], false).surface
+                }
                 identity: "dock"
                 controller: liquid
                 anchors.fill: parent
                 edge: window.dockEdge
                 outputName: window.outputName
-                open: window.presented && field.ready && GlobalStates.shellEntryReady && !GlobalStates.widgetEditMode
+                open: window.presented && field.ready && GlobalStates.shellEntryReady && (!GlobalStates.widgetEditMode || DesktopEditStage.hosted(window.outputName))
                     && (Config.options?.enabledPanels ?? []).includes("abyssDock") && (Config.options?.dock?.enable ?? true)
                     && Geometry.targets(window.outputName,Config.options?.dock?.screenList ?? [],Quickshell.screens.map(s => s.name))
-                    && !window.editorOpen && !settings.open && !dashboardBody.open && !controls.open
+                    && !window.editorOpen && !settings.open && !dashboardBody.open && !nexusBody.open && !controls.open
                     && !aux.open && !clipboardBody.open && !utility.open
                     && (GlobalStates.abyssPopupKind === "dockAppMenu"
                         || popup.activeKind === "dockAppMenu"
                         || attachedPopupHold
-                        || (contentItem.item?.requestDockShow ?? false)
-                        || !liquid.participantOverlapsRect("popup", requestedRecord.surface, 10))
-                    && (GlobalStates.abyssPopupKind === "dockAppMenu"
-                        || popup.activeKind === "dockAppMenu"
-                        || attachedPopupHold
-                        || (contentItem.item?.requestDockShow ?? false)
-                        || !liquid.hasPopupOverlapRect(requestedRecord.surface, 10))
+                        || latchedRequestDockShow
+                        || !window.dockBlockedByPopups(popupCheckSurface))
                     && (((Config.options?.dock?.pinnedOnStartup ?? false) && !(Config.options?.dock?.hoverToReveal ?? false)) || window.dockHovered
                         || (!window.desktopHasApps && companionExtension.dockHeld)
                         || attachedPopupHold
-                        || (contentItem.item?.requestDockShow ?? false)
+                        || latchedRequestDockShow
+                        || (GlobalStates.widgetEditMode && DesktopEditStage.hosted(window.outputName))
                         || ((Config.options?.dock?.showOnDesktop ?? true) && !window.desktopHasApps && !ToplevelManager.activeToplevel?.activated))
                 edgeInsets: window.bodyInsets(edge,along,span)
                 span: Math.min((Geometry.horizontal(edge) ? window.width : window.height)-80,
@@ -1757,7 +2298,7 @@ Scope {
             }
             Item {
                 id: dockTrigger
-                visible: window.presented && field.ready && (Config.options?.dock?.hoverToReveal ?? false)
+                visible: window.presented && field.ready && !window.editStageVisible && (Config.options?.dock?.hoverToReveal ?? false)
                     && (Config.options?.dock?.enable ?? true) && (Config.options?.enabledPanels ?? []).includes("abyssDock")
                     && Geometry.targets(window.outputName,Config.options?.dock?.screenList ?? [],Quickshell.screens.map(s => s.name))
                 width: Geometry.horizontal(window.dockEdge) ? dock.span : AbyssStyle.perimeterThickness
@@ -1815,21 +2356,19 @@ Scope {
             }
             AbyssBodyHost {
                 id:wallpaperBody;identity:"wallpaper"
-                // Reveal clips the carousel instead of resizing its cards and search row.
+                // Reveal clips the customization dock instead of resizing its cards and search row.
                 stableContentSize:true
                 controller:liquid;anchors.fill:parent;outputName:window.outputName
                 edge:window.positionEdge(identity,"bottom")
-                open:window.presented && field.ready && GlobalStates.wallpaperLauncherOpen
-                    && (Config.options?.enabledPanels ?? []).includes("iiWallpaperSelector")
-                    && GlobalStates.resolveOutputName(GlobalStates.wallpaperSelectorTargetMonitor,[])===window.outputName
+                open:window.wallpaperLauncherTargetOpen && !DesktopEditStage.wallpaperStageEnabled
                 edgeInsets:window.bodyInsets(edge,along,span)
-                readonly property real contentWidth:Math.min(1080,window.width*.9)
-                readonly property real contentHeight:Math.min(348,window.height*.66)
+                readonly property real contentWidth:Math.min(1080,window.width*.92)
+                readonly property real contentHeight:Math.min(Math.max(176,(contentItem.item?.desiredDockHeight ?? 176)+padding*2),window.height*.66)
                 span:Geometry.horizontal(edge) ? contentWidth : contentHeight
                 depth:Geometry.horizontal(edge) ? contentHeight : contentWidth
                 along:window.positionAlong(identity,edge,span,(Geometry.horizontal(edge) ? window.width : window.height)/2-span/2)
-                minimumSpan:Math.min(span,420);minimumDepth:Math.min(depth,280)
-                source:"../wallpaperLauncher/WallpaperLauncherContent.qml"
+                minimumSpan:Math.min(span,420);minimumDepth:Math.min(depth,120)
+                source:"content/AbyssWallpaperContent.qml"
                 onReadyChanged:if(ready && contentItem.item)contentItem.item.embedded=true
                 onCloseRequested:GlobalStates.wallpaperLauncherOpen=false
             }
@@ -1861,6 +2400,7 @@ Scope {
                 id: aux
                 stableContentSize: true
                 warmContent: true
+                retainAfterFirstOpen: true
                 identity: "aux"
                 controller: liquid
                 anchors.fill: parent
@@ -1891,6 +2431,9 @@ Scope {
             AbyssBodyHost {
                 id: settings
                 stableContentSize: true
+                warmContent: true
+                retainAfterFirstOpen: true
+                monotonicNotificationReveal: true
                 identity: "settings"
                 controller: liquid
                 anchors.fill: parent
@@ -1910,6 +2453,8 @@ Scope {
                 id: dashboardBody
                 stableContentSize: true
                 warmContent: true
+                retainAfterFirstOpen: true
+                monotonicNotificationReveal: true
                 identity: "dashboard"
                 controller: liquid
                 anchors.fill: parent
@@ -1926,8 +2471,33 @@ Scope {
                 onCloseRequested: GlobalStates.dashboardOpen = false
             }
             AbyssBodyHost {
+                id: nexusBody
+                stableContentSize: true
+                warmContent: Boolean(AlisIntergration.nexusEnabled)
+                retainAfterFirstOpen: Boolean(AlisIntergration.nexusEnabled)
+                monotonicNotificationReveal: true
+                identity: "nexus"
+                controller: liquid
+                anchors.fill: parent
+                edge: window.positionEdge(identity,"bottom")
+                outputName: window.outputName
+                open: window.presented && field.ready
+                    && Boolean(AlisIntergration.nexusEnabled)
+                    && Boolean(AlisIntergration.nexus?.isOpen)
+                    && Boolean(AlisIntergration.nexus?.overlayMode ?? true)
+                    && root.largeTargetOutput === window.outputName
+                largeSurface: true
+                edgeInsets: window.bodyInsets(edge,along,span)
+                span: Geometry.horizontal(edge) ? Math.min(1680,Math.max(960,window.width*.9)) : Math.min(1080,Math.max(720,window.height*.9))
+                along: window.positionAlong(identity,edge,span,((Geometry.horizontal(edge) ? window.width : window.height)-span)/2)
+                depth: Geometry.horizontal(edge) ? Math.min(1080,Math.max(720,window.height*.9)) : Math.min(1680,Math.max(960,window.width*.9))
+                source: "content/AbyssNexusContent.qml"
+                onCloseRequested: if (AlisIntergration.nexus) AlisIntergration.nexus.close()
+            }
+            AbyssBodyHost {
                 id: controls
                 stableContentSize: true
+                retainAfterFirstOpen: true
                 identity: "controls"
                 controller: liquid
                 anchors.fill: parent
@@ -2128,6 +2698,93 @@ Scope {
                 edgeInsets: window.bodyInsets(edge,along,span)
                 onCloseRequested: if (liquid.activeDialog) liquid.activeDialog.dismiss()
             }
+            // Sequential, idle-gated background warmup after startup so the
+            // user's very first open of Dashboard, Settings, Nexus, Sidebars,
+            // Control Panel, Wallpaper Launcher, or Clipboard is instantaneous
+            // without causing any startup or active-interaction frame drops.
+            readonly property bool warmupTargetOutput: window.presented && field.ready
+                && GlobalStates.shellEntryReady && GlobalStates.deferredPanelsReady
+                && !GlobalStates.abyssColdPerimeterRecreatePending
+                && !GlobalStates.screenLocked
+                && root.largeTargetOutput === window.outputName
+            readonly property bool warmupIdle: warmupTargetOutput
+                && !window.anyInteractiveBodyPresented
+                && !window.anyBodyVisualResident
+                && !liquid.popupsOpen
+                && !companionExtension.motionBusy
+            property int _warmupCursor: 0
+            property bool _editStageWarmReady: false
+            readonly property var _warmupQueue: [
+                { host: leftPanel, enabled: (Config.options?.enabledPanels ?? []).includes("abyssSidebarLeft") },
+                { host: rightPanel, enabled: (Config.options?.enabledPanels ?? []).includes("abyssSidebarRight") },
+                { host: dashboardBody, enabled: (Config.options?.enabledPanels ?? []).includes("iiDashboard") },
+                { host: settings, enabled: true },
+                { host: nexusBody, enabled: Boolean(AlisIntergration.nexusEnabled) }
+            ]
+            Connections {
+                target: DesktopEditStage
+                function onWallpaperStageEnabledChanged() {
+                    if (DesktopEditStage.wallpaperStageEnabled)
+                        wallpaperBody.backgroundPreload = false
+                }
+            }
+            Timer {
+                id: backgroundWarmupTimer
+                interval: window._warmupCursor === 0 ? 3200 : 1100
+                repeat: true
+                running: window.warmupIdle && (window._warmupCursor < window._warmupQueue.length || !window._editStageWarmReady)
+                onTriggered: {
+                    if (!window.warmupIdle)
+                        return
+                    while (window._warmupCursor < window._warmupQueue.length) {
+                        const entry = window._warmupQueue[window._warmupCursor]
+                        const host = entry?.host ?? null
+                        if (!host || !entry.enabled) {
+                            window._warmupCursor++
+                            continue
+                        }
+                        if (!host.backgroundPreload) {
+                            host.backgroundPreload = true
+                            return
+                        }
+                        if (host.contentItem.status === Loader.Loading || !host._rawContentReady) {
+                            return
+                        }
+                        window._warmupCursor++
+                        return
+                    }
+                    window._editStageWarmReady = true
+                }
+            }
+            Image {
+                id: stageDesktopWallpaperFallback
+                z: -2
+                anchors.fill: parent
+                visible: window.editStageVisible && !window.widgetStageEditing && !window.wallpaperStageEditing && window.desktopHasApps
+                asynchronous: true
+                smooth: true
+                fillMode: Image.PreserveAspectCrop
+                source: {
+                    if (!visible)
+                        return "";
+                    if (Wallpapers.internalPreviewActive && Wallpapers.internalPreviewPath.length > 0
+                            && (Wallpapers.internalPreviewMonitor.length === 0 || Wallpapers.internalPreviewMonitor === window.outputName)) {
+                        const preview = Wallpapers.internalPreviewPath;
+                        if (Wallpapers.isVideoFile(preview)) {
+                            void Wallpapers.videoFirstFrames;
+                            const ff = Wallpapers.getVideoFirstFramePath(preview);
+                            if (ff)
+                                return (ff.startsWith("file://") ? ff : "file://" + ff) + "?ff=1";
+                            Wallpapers.ensureVideoFirstFrame(preview);
+                            return "";
+                        }
+                        const encoded = preview.split("/").map(seg => encodeURIComponent(seg)).join("/");
+                        return "file://" + encoded;
+                    }
+                    return WallpaperListener.wallpaperUrlForScreen(window.screen);
+                }
+                sourceSize: Qt.size(Math.min(1920, Math.max(1, window.width)), Math.min(1080, Math.max(1, window.height)))
+            }
             AbyssField {
                 id: field
                 boundInterior: true
@@ -2143,6 +2800,313 @@ Scope {
                 records: window.presented ? liquid.records : window.physicalOsdResident ? [osd.record] : []
                 waveTexture: liquid.waves.texture
                 waterLink: companionExtension.waterLink
+            }
+            Item {
+                id: abyssDesktopStage
+                objectName: "abyssDesktopStage"
+                width: window.width
+                height: window.height
+                transform: [
+                    Scale {
+                        xScale: window.editCard.s
+                        yScale: window.editCard.s
+                    },
+                    Translate {
+                        x: window.editCard.x
+                        y: window.editCard.y
+                    }
+                ]
+            }
+            readonly property Item windowOverlay: stageEditDock.Controls.Overlay.overlay ?? null
+            onWindowOverlayChanged: {
+                if (!window.windowOverlay)
+                    return
+                if (window.windowOverlay.parent && window.windowOverlay.parent !== window.contentItem)
+                    window.windowOverlay.parent = window.contentItem
+                if (window.windowOverlay.z < 2000)
+                    window.windowOverlay.z = 2000
+            }
+            property var _activeOverlayPopups: []
+            property int _overlayBoundsEpoch: 0
+            readonly property bool overlayPopupActive: _activeOverlayPopups.length > 0
+            readonly property rect overlayPopupBounds: {
+                void window._overlayBoundsEpoch
+                const entries = window._activeOverlayPopups ?? []
+                let minX = 1e9
+                let minY = 1e9
+                let maxX = -1e9
+                let maxY = -1e9
+                for (let i = 0; i < entries.length; ++i) {
+                    const entry = entries[i]
+                    const popupObj = entry?.popup ?? null
+                    const item = entry?.item ?? null
+                    if (!popupObj || !popupObj.visible || !item || !item.visible
+                            || item.width <= 0 || item.height <= 0)
+                        continue
+                    const tl = item.mapToItem(window.contentItem, 0, 0)
+                    minX = Math.min(minX, tl.x)
+                    minY = Math.min(minY, tl.y)
+                    maxX = Math.max(maxX, tl.x + item.width)
+                    maxY = Math.max(maxY, tl.y + item.height)
+                }
+                if (maxX <= minX || maxY <= minY)
+                    return Qt.rect(0, 0, 0, 0)
+                return Qt.rect(
+                    Math.floor(minX) - 4,
+                    Math.floor(minY) - 4,
+                    Math.ceil(maxX - minX) + 8,
+                    Math.ceil(maxY - minY) + 8
+                )
+            }
+            function bumpOverlayBounds(): void {
+                window._overlayBoundsEpoch++
+            }
+            function registerOverlayPopup(popupObj, popupItem): void {
+                if (!popupObj)
+                    return
+                const next = (window._activeOverlayPopups ?? []).filter(
+                    entry => entry && entry.popup && entry.popup !== popupObj)
+                next.push({ popup: popupObj, item: popupItem ?? popupObj.background ?? popupObj.contentItem ?? null })
+                window._activeOverlayPopups = next
+                window._overlayBoundsEpoch++
+            }
+            function unregisterOverlayPopup(popupObj): void {
+                const cur = window._activeOverlayPopups ?? []
+                const next = cur.filter(entry => entry && entry.popup && entry.popup !== popupObj && entry.popup.visible)
+                if (next.length !== cur.length) {
+                    window._activeOverlayPopups = next
+                    window._overlayBoundsEpoch++
+                }
+            }
+            function closeActiveOverlayPopups(): bool {
+                const entries = (window._activeOverlayPopups ?? []).slice()
+                let closed = false
+                for (let i = 0; i < entries.length; ++i) {
+                    const popupObj = entries[i]?.popup ?? null
+                    if (popupObj && popupObj.visible && typeof popupObj.close === "function") {
+                        popupObj.close()
+                        closed = true
+                    }
+                }
+                if (window.windowOverlay) {
+                    const kids = window.windowOverlay.children ?? []
+                    for (let i = 0; i < kids.length; ++i) {
+                        const kid = kids[i]
+                        if (kid && kid.visible && typeof kid.close === "function") {
+                            kid.close()
+                            closed = true
+                        }
+                    }
+                }
+                if (closed) {
+                    window._activeOverlayPopups = []
+                    window._overlayBoundsEpoch++
+                }
+                return closed
+            }
+            property bool _adoptingStageChildren: false
+            function adoptDesktopStageChildren(): void {
+                if (window._adoptingStageChildren)
+                    return
+                const rootContent = window.contentItem
+                if (!rootContent)
+                    return
+                window._adoptingStageChildren = true
+                const overlay = window.windowOverlay
+                if (overlay) {
+                    if (overlay.parent && overlay.parent !== rootContent)
+                        overlay.parent = rootContent
+                    if (overlay.z < 2000)
+                        overlay.z = 2000
+                }
+                const excluded = [
+                    perimeterEscapeFallback,
+                    abyssDesktopStage,
+                    editStageFrame,
+                    stageEditDock,
+                    stageLeftEditDock,
+                    stageRightEditDock,
+                    overlay
+                ]
+                const kids = Array.from(rootContent.children)
+                for (let i = 0; i < kids.length; ++i) {
+                    const child = kids[i]
+                    if (!child || excluded.includes(child))
+                        continue
+                    if (Number(child.z ?? 0) >= 900 || String(child).startsWith("QQuickOverlay"))
+                        continue
+                    child.parent = abyssDesktopStage
+                }
+                window._adoptingStageChildren = false
+            }
+            Connections {
+                target: window.contentItem
+                function onChildrenChanged() {
+                    window.adoptDesktopStageChildren()
+                }
+            }
+            AbyssEditStageFrame {
+                id: editStageFrame
+                objectName: "abyssEditStageFrame"
+                z: 500
+                anchors.fill: parent
+                card: window.editCard
+                warmBackdrop: window._editStageWarmReady
+            }
+            Item {
+                id: stageLeftEditDock
+                objectName: "abyssStageLeftEditDock"
+                z: 505
+                visible: window.editStageVisible
+                    && window.editCard.leftDockWidth > 0
+                    && window.editCard.leftDockHeight > 0
+                    && window.editCard.leftProgress > 0.001
+                x: window.editCard.leftDockX
+                y: window.editCard.leftDockY
+                width: window.editCard.leftDockWidth
+                height: window.editCard.leftDockHeight
+                clip: true
+                layer.enabled: window.editStageProgress > 0.001 && window.editStageProgress < 0.999
+
+                Item {
+                    id: stageLeftAbyssDockContainer
+                    objectName: "stageLeftAbyssDockHost"
+                    anchors.fill: parent
+                    visible: window.displayEditStageMode === "abyss" && stageLeftEditDock.visible
+                }
+                Item {
+                    id: stageLeftDashboardDockContainer
+                    objectName: "stageLeftDashboardDockHost"
+                    anchors.fill: parent
+                    visible: window.displayEditStageMode === "dashboard" && stageLeftEditDock.visible
+                }
+            }
+            Item {
+                id: stageRightEditDock
+                objectName: "abyssStageRightEditDock"
+                z: 505
+                visible: window.editStageVisible
+                    && window.editCard.rightDockWidth > 0
+                    && window.editCard.rightDockHeight > 0
+                    && window.editCard.rightProgress > 0.001
+                x: window.editCard.rightDockX
+                y: window.editCard.rightDockY
+                width: window.editCard.rightDockWidth
+                height: window.editCard.rightDockHeight
+                clip: true
+                layer.enabled: window.editStageProgress > 0.001 && window.editStageProgress < 0.999
+
+                Item {
+                    id: stageRightAbyssDockContainer
+                    objectName: "stageRightAbyssDockHost"
+                    anchors.fill: parent
+                    visible: window.displayEditStageMode === "abyss" && stageRightEditDock.visible
+                }
+                Item {
+                    id: stageRightDashboardDockContainer
+                    objectName: "stageRightDashboardDockHost"
+                    anchors.fill: parent
+                    visible: window.displayEditStageMode === "dashboard" && stageRightEditDock.visible
+                }
+                Item {
+                    id: stageRightWidgetManagerContainer
+                    objectName: "stageRightWidgetManagerHost"
+                    anchors.fill: parent
+                    visible: window.displayEditStageMode === "widgets" && stageRightEditDock.visible
+                    Binding {
+                        target: window.externalWidgetEditor
+                        property: "abyssRightHost"
+                        value: stageRightWidgetManagerContainer
+                        when: window.externalWidgetEditor !== null && DesktopEditStage.hosted(window.outputName)
+                        restoreMode: Binding.RestoreBindingOrValue
+                    }
+                }
+            }
+            Item {
+                id: stageEditDock
+                objectName: "abyssStageEditDock"
+                z: 505
+                visible: window.editStageVisible
+                x: window.editCard.dockX
+                y: window.editCard.dockY
+                width: window.editCard.dockWidth
+                height: window.editCard.dockHeight
+                clip: true
+                layer.enabled: window.editStageProgress > 0.001 && window.editStageProgress < 0.999
+
+                Item {
+                    id: stageAbyssDockContainer
+                    objectName: "stageAbyssDockHost"
+                    anchors.fill: parent
+                    visible: window.displayEditStageMode === "abyss" && window.editStageVisible
+                }
+                Item {
+                    id: stageWidgetDockContainer
+                    objectName: "stageWidgetDockHost"
+                    anchors.fill: parent
+                    visible: window.displayEditStageMode === "widgets" && window.editStageVisible
+                    QtObject {
+                        id: stageWidgetDockAdapter
+                        readonly property real padding: 4
+                        readonly property Item contentParent: stageWidgetDockContainer
+                        readonly property bool visualResident: stageWidgetDockContainer.visible
+                        readonly property var editorWorkArea: ({
+                            left: 0,
+                            top: 0,
+                            right: Math.max(1, stageWidgetDockContainer.width),
+                            bottom: Math.max(1, stageWidgetDockContainer.height)
+                        })
+                        readonly property var targetRecord: ({
+                            content: Qt.rect(
+                                0,
+                                0,
+                                Math.max(1, stageWidgetDockContainer.width),
+                                Math.max(1, stageWidgetDockContainer.height)
+                            )
+                        })
+                    }
+                    Binding {
+                        target: window.externalWidgetEditor
+                        property: "abyssHost"
+                        value: stageWidgetDockAdapter
+                        when: window.externalWidgetEditor !== null && DesktopEditStage.hosted(window.outputName)
+                        restoreMode: Binding.RestoreBindingOrValue
+                    }
+                }
+                Item {
+                    id: stageDashboardDockContainer
+                    objectName: "stageDashboardDockHost"
+                    anchors.fill: parent
+                    visible: window.displayEditStageMode === "dashboard" && window.editStageVisible
+                }
+                Item {
+                    id: stageSettingsDockContainer
+                    objectName: "stageSettingsDockHost"
+                    anchors.fill: parent
+                    visible: window.displayEditStageMode === "settings" && window.editStageVisible
+                }
+                Item {
+                    id: stageWallpaperDockContainer
+                    objectName: "stageWallpaperDockHost"
+                    anchors.fill: parent
+                    visible: window.displayEditStageMode === "wallpaper" && window.editStageVisible
+                    Loader {
+                        id: stageWallpaperLoader
+                        anchors.fill: parent
+                        active: DesktopEditStage.wallpaperStageEnabled
+                            && (window.wallpaperStageEditing || (window.displayEditStageMode === "wallpaper" && window.editStageVisible))
+                            && GlobalStates.deferredPanelsReady
+                        source: "content/AbyssWallpaperContent.qml"
+                        onLoaded: {
+                            if (item) {
+                                item.embedded = true
+                                item.outputName = Qt.binding(() => window.outputName)
+                                item.closeRequested.connect(() => { GlobalStates.wallpaperLauncherOpen = false })
+                                Qt.callLater(window.ensureEscapeFocus)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

@@ -40,12 +40,25 @@ RowLayout {
 
     StyledSlider {
         id: sliderWidget
-        Layout.fillWidth: !sliderName.visible
-        Layout.preferredWidth: sliderName.visible ? Math.round(185 * Appearance.fontSizeScale) : -1
-        Layout.maximumWidth: sliderName.visible ? Math.round(210 * Appearance.fontSizeScale) : -1
-        Layout.minimumWidth: Math.round(110 * Appearance.fontSizeScale)
+        Layout.fillWidth: !sliderName.visible && !sliderWidget.isVertical && sliderWidget.customLength <= 0
+        Layout.preferredWidth: sliderWidget.isVertical
+            ? sliderWidget.implicitWidth
+            : (sliderWidget.customLength > 0
+                ? sliderWidget.customLength
+                : (sliderName.visible ? Math.round(185 * Appearance.fontSizeScale) : -1))
+        Layout.maximumWidth: sliderWidget.isVertical
+            ? sliderWidget.implicitWidth
+            : (sliderWidget.customLength > 0
+                ? sliderWidget.customLength
+                : (sliderName.visible ? Math.round(210 * Appearance.fontSizeScale) : 16777215))
+        Layout.minimumWidth: sliderWidget.isVertical
+            ? sliderWidget.implicitWidth
+            : Math.min(sliderWidget.customLength > 0 ? sliderWidget.customLength : Math.round(110 * Appearance.fontSizeScale), Math.round(96 * Appearance.fontSizeScale))
+        Layout.preferredHeight: sliderWidget.isVertical ? sliderWidget.implicitHeight : -1
+        Layout.minimumHeight: sliderWidget.isVertical ? sliderWidget.implicitHeight : -1
         Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
         Accessible.name: root.accessibleName
+        settingsSearchLabel: root.text
         configuration: StyledSlider.Configuration.S
         onMoved: root.moved()
     }

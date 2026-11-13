@@ -4,8 +4,10 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import qs
+import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs.modules.abyss.looks
 import qs.modules.abyss.settings
 import "looks/AbyssGeometry.js" as Geometry
@@ -36,6 +38,289 @@ Item {
             useParentHover: false
             externalHoverState: hintHover.hovered
             delay: 500
+        }
+    }
+    component DockTogglePill: Rectangle {
+        id: pillRoot
+        property string icon: ""
+        property string tooltipText: ""
+        property bool active: false
+        readonly property bool checked: active
+        signal clicked()
+
+        implicitWidth: 30
+        implicitHeight: 30
+        width: 30
+        height: 30
+        radius: 15
+        opacity: pillRoot.enabled ? 1.0 : 0.38
+        scale: pillMouse.pressed && pillRoot.enabled ? 0.94 : 1.0
+        color: pillRoot.active
+            ? Qt.alpha(Appearance.colors.colPrimary, pillMouse.containsMouse ? 0.30 : 0.22)
+            : (pillMouse.pressed && pillRoot.enabled
+                ? Appearance.colors.colLayer2Active
+                : (pillMouse.containsMouse && pillRoot.enabled
+                    ? Appearance.colors.colLayer2Hover
+                    : Qt.alpha(Appearance.colors.colLayer2, 0.55)))
+        border.width: 1
+        border.color: pillRoot.active
+            ? Qt.alpha(Appearance.colors.colPrimary, 0.58)
+            : (pillMouse.containsMouse && pillRoot.enabled
+                ? Qt.alpha(Appearance.colors.colOutlineVariant, 0.45)
+                : Qt.alpha(Appearance.colors.colOutlineVariant, 0.22))
+
+        MaterialSymbol {
+            anchors.centerIn: parent
+            text: pillRoot.icon
+            iconSize: 16
+            fill: pillRoot.active ? 1 : 0
+            color: pillRoot.active
+                ? Appearance.colors.colPrimary
+                : Appearance.colors.colOnLayer1
+        }
+
+        MouseArea {
+            id: pillMouse
+            anchors.fill: parent
+            enabled: pillRoot.enabled
+            hoverEnabled: true
+            cursorShape: pillRoot.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: pillRoot.clicked()
+        }
+
+        StyledToolTip {
+            position: "top"
+            extraVisibleCondition: pillMouse.containsMouse && pillRoot.tooltipText.length > 0
+            text: pillRoot.tooltipText
+        }
+    }
+    component ModuleTileArt: Item {
+        id: artRoot
+        property string kind: "widgets"
+        property string glyph: "widgets"
+        property string edge: "top"
+        property bool inDraft: false
+        property bool active: false
+        property bool locked: false
+
+        // Top-left Screen Edge tag pill
+        Rectangle {
+            id: edgeTag
+            anchors.top: parent.top
+            anchors.left: parent.left
+            height: 15
+            width: edgeTagRow.implicitWidth + 8
+            radius: 7.5
+            color: artRoot.inDraft
+                ? Qt.alpha(Appearance.colors.colPrimary, artRoot.active ? 0.22 : 0.12)
+                : Qt.alpha(Appearance.colors.colLayer3, 0.72)
+            border.width: 1
+            border.color: artRoot.inDraft
+                ? Qt.alpha(Appearance.colors.colPrimary, 0.38)
+                : Qt.alpha(Appearance.colors.colOutlineVariant, 0.26)
+
+            Row {
+                id: edgeTagRow
+                anchors.centerIn: parent
+                spacing: 2
+
+                StyledText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: artRoot.inDraft
+                        ? (artRoot.edge === "bottom" ? "BTM" : artRoot.edge.toUpperCase())
+                        : "NEW"
+                    font.pixelSize: 8 * Appearance.fontSizeScale
+                    font.weight: Font.DemiBold
+                    color: artRoot.inDraft
+                        ? Appearance.colors.colPrimary
+                        : Appearance.colors.colSubtext
+                }
+
+                MaterialSymbol {
+                    visible: artRoot.locked
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "lock"
+                    iconSize: 9 * Appearance.fontSizeScale
+                    color: Appearance.colors.colPrimary
+                }
+            }
+        }
+
+        // Centered miniature module preview surface
+        Rectangle {
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: Math.max(22, parent.height - 19)
+            radius: 7
+            color: Qt.alpha(Appearance.colors.colLayer3, 0.58)
+            border.width: 1
+            border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.20)
+
+            // Clock mini readout
+            Row {
+                visible: artRoot.kind === "clock"
+                anchors.centerIn: parent
+                spacing: 4
+                StyledText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "12:45"
+                    font.pixelSize: 11 * Appearance.fontSizeScale
+                    font.weight: Font.DemiBold
+                    color: Appearance.colors.colOnLayer1
+                }
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 5
+                    height: 5
+                    radius: 2.5
+                    color: Appearance.colors.colPrimary
+                }
+            }
+
+            // Workspaces mini pills
+            Row {
+                visible: artRoot.kind === "workspaces"
+                anchors.centerIn: parent
+                spacing: 4
+                Rectangle {
+                    width: 16
+                    height: 6
+                    radius: 3
+                    color: Appearance.colors.colPrimary
+                }
+                Rectangle {
+                    width: 6
+                    height: 6
+                    radius: 3
+                    color: Qt.alpha(Appearance.colors.colOnLayer1, 0.35)
+                }
+                Rectangle {
+                    width: 6
+                    height: 6
+                    radius: 3
+                    color: Qt.alpha(Appearance.colors.colOnLayer1, 0.25)
+                }
+                Rectangle {
+                    width: 6
+                    height: 6
+                    radius: 3
+                    color: Qt.alpha(Appearance.colors.colOnLayer1, 0.20)
+                }
+            }
+
+            // Media / Cava equalizer bars
+            Row {
+                visible: artRoot.kind === "media" || artRoot.kind === "cava"
+                anchors.centerIn: parent
+                height: 16
+                spacing: 3
+                Repeater {
+                    model: (artRoot.kind === "media" || artRoot.kind === "cava") ? [8, 14, 11, 16, 9] : []
+                    delegate: Rectangle {
+                        required property int modelData
+                        y: (16 - modelData) / 2
+                        width: 3
+                        height: modelData
+                        radius: 1.5
+                        color: Appearance.colors.colPrimary
+                    }
+                }
+            }
+
+            // System resources telemetry bars
+            Column {
+                id: resourceBarCol
+                visible: artRoot.kind === "resources"
+                anchors.centerIn: parent
+                spacing: 3
+                width: Math.max(28, parent.width - 20)
+                Repeater {
+                    model: artRoot.kind === "resources" ? [0.72, 0.48, 0.86] : []
+                    delegate: Rectangle {
+                        required property real modelData
+                        width: resourceBarCol.width
+                        height: 3
+                        radius: 1.5
+                        color: Qt.alpha(Appearance.colors.colOnLayer1, 0.16)
+                        Rectangle {
+                            width: parent.width * modelData
+                            height: parent.height
+                            radius: 1.5
+                            color: Appearance.colors.colPrimary
+                        }
+                    }
+                }
+            }
+
+            // Battery mini gauge
+            Row {
+                visible: artRoot.kind === "battery"
+                anchors.centerIn: parent
+                spacing: 2
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 24
+                    height: 11
+                    radius: 3
+                    color: "transparent"
+                    border.width: 1
+                    border.color: Qt.alpha(Appearance.colors.colOnLayer1, 0.55)
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.margins: 2
+                        width: 15
+                        radius: 1.5
+                        color: Appearance.colors.colPrimary
+                    }
+                }
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 2
+                    height: 5
+                    radius: 1
+                    color: Qt.alpha(Appearance.colors.colOnLayer1, 0.55)
+                }
+            }
+
+            // Default module emblem + indicator bars
+            Row {
+                visible: artRoot.kind !== "clock"
+                    && artRoot.kind !== "workspaces"
+                    && artRoot.kind !== "media"
+                    && artRoot.kind !== "cava"
+                    && artRoot.kind !== "resources"
+                    && artRoot.kind !== "battery"
+                anchors.centerIn: parent
+                spacing: 6
+
+                MaterialSymbol {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: artRoot.glyph
+                    iconSize: 15 * Appearance.fontSizeScale
+                    fill: 1
+                    color: Appearance.colors.colPrimary
+                }
+
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 3
+                    Rectangle {
+                        width: 26
+                        height: 3.5
+                        radius: 1.75
+                        color: Qt.alpha(Appearance.colors.colOnLayer1, 0.55)
+                    }
+                    Rectangle {
+                        width: 18
+                        height: 3
+                        radius: 1.5
+                        color: Qt.alpha(Appearance.colors.colPrimary, 0.48)
+                    }
+                }
+            }
         }
     }
     readonly property real editorActionSize: 30 * Appearance.fontSizeScale
@@ -118,13 +403,40 @@ Item {
     property real moduleScale: 1
     property var singleModuleExpansion: ({top:"edge",right:"edge",bottom:"edge",left:"edge"})
     property string editingEdge: "top"
+    property Item externalDockParent: null
+    property Item externalLeftDockParent: null
+    property Item externalRightDockParent: null
+    readonly property bool externallyDocked: externalDockParent !== null
+    readonly property bool splitSideDocks: externallyDocked
+        && externalLeftDockParent !== null
+        && externalRightDockParent !== null
+    readonly property real desiredDockWidth: Math.min(
+        2400,
+        Math.max(680, Math.ceil(horizontalDock.implicitWidth + 12)))
+    readonly property real desiredDockHeight: Math.round(horizontalDock.implicitHeight + 8)
+    readonly property real desiredLeftDockWidth: Math.max(228, Math.round(Math.min(310, Math.max(244 * Appearance.fontSizeScale, previewPositions.compactKindWidth + 44))))
+    readonly property real desiredLeftDockHeight: Math.max(168, Math.round(popupsDockCard.implicitHeight + 12))
+    readonly property real desiredRightDockWidth: Math.max(244, Math.round(262 * Appearance.fontSizeScale))
+    readonly property real desiredRightDockHeight: Math.max(200, Math.round(rightEdgeDockHeader.implicitHeight + rightEdgeDockScrollContent.implicitHeight + 26 * Appearance.fontSizeScale))
     // The editor stays on its current Screen Edge until a module/IPC preview
     // physically overlaps its control surface; selection alone never moves it.
     property string toolbarEdge: "bottom"
     readonly property bool toolbarOnHorizontalEdge:
-        toolbarEdge === "top" || toolbarEdge === "bottom"
-    readonly property bool toolbarWideControls:
-        toolbarOnHorizontalEdge && toolbarScroll.width >= (editingPopups
+        externallyDocked || toolbarEdge === "top" || toolbarEdge === "bottom"
+    readonly property bool useHorizontalDock: (typeof splitSideDocks !== "undefined" && splitSideDocks) || ((typeof externallyDocked !== "undefined" && externallyDocked)
+        ? ((externalDockParent?.width ?? 0) <= 0 || (externalDockParent?.width ?? 0) >= 500)
+        : (toolbarOnHorizontalEdge
+            && (width - 48) >= 700 * Appearance.fontSizeScale
+            && height >= 420 * Appearance.fontSizeScale))
+    property string editorSection: "modules"
+    property string moduleSearchText: ""
+    readonly property string activeDockTab: splitSideDocks
+        ? "modules"
+        : (editingPopups ? "popups" : (editorSection === "edge" ? "edge" : "modules"))
+    readonly property real dockToolbarSpan: Math.min(
+        width - 48, 980 * Appearance.fontSizeScale)
+    readonly property bool toolbarWideControls: !splitSideDocks
+        && toolbarOnHorizontalEdge && toolbarScroll.width >= (editingPopups
             ? ipcSelectorSpan : 520*Appearance.fontSizeScale)
     // The Module side is only as wide as its picker + action icons. The Edge
     // side keeps room for two readable sliders and their value gutters.
@@ -148,8 +460,45 @@ Item {
     property bool snapEnabled: true
     property bool outputOnly: true
     property bool editingPopups: false
+    readonly property var galleryEntries: {
+        const entries = draft.map(p => ({
+            key: p.id,
+            inDraft: true,
+            placementId: p.id,
+            kind: p.kind,
+            title: Placement.label(p.kind),
+            edge: p.edge,
+            enabled: p.enabled !== false,
+            locked: p.locked === true
+        }))
+        for (const kind of Placement.catalog) {
+            if (!draft.some(p => p.kind === kind)) {
+                entries.push({
+                    key: "catalog-" + kind,
+                    inDraft: false,
+                    placementId: "",
+                    kind: kind,
+                    title: Placement.label(kind),
+                    edge: root.editingEdge,
+                    enabled: false,
+                    locked: false
+                })
+            }
+        }
+        return entries
+    }
+    readonly property var filteredGalleryEntries: {
+        const q = moduleSearchText.trim().toLowerCase()
+        if (!q) return galleryEntries
+        return galleryEntries.filter(entry =>
+            entry.title.toLowerCase().includes(q)
+            || entry.kind.toLowerCase().includes(q)
+            || entry.edge.toLowerCase().includes(q))
+    }
     property string companionDraftEdge: "bottom"
     property real companionDraftAlong: 0.72
+    property string _initialCompanionEdge: "bottom"
+    property real _initialCompanionAlong: 0.72
     property bool _draggingCompanion: false
     readonly property alias companionMannequinItem: companionMannequin
     readonly property bool expandedControls: true
@@ -180,20 +529,27 @@ Item {
         const horizontal = edge === "top" || edge === "bottom"
         const length = horizontal ? width : height
         if (length <= 48) return null
+        const horizontalDock = horizontal
+            && (width - 48) >= 700 * Appearance.fontSizeScale
+            && height >= 420 * Appearance.fontSizeScale
+        const pad = horizontalDock ? 8 * Appearance.fontSizeScale : AbyssStyle.contentPadding
         const span = horizontal
-            ? Math.min(width-48,editingPopups ? ipcToolbarSpan : moduleToolbarSpan)
+            ? (horizontalDock
+                ? Math.min(width-48,dockToolbarSpan)
+                : Math.min(width-48,editingPopups ? ipcToolbarSpan : moduleToolbarSpan))
             : Math.min(height-48,Math.max(toolbar.implicitHeight
-                + editorBody.padding*2,height*.72))
+                + pad*2,height*.72))
         const depth = horizontal
             ? Math.min(Math.max(80,height*.65),toolbar.implicitHeight
-                + editorBody.padding*2)
+                + pad*2)
             : Math.min(width-48,260*Appearance.fontSizeScale)
         // Use the same inset/padding/clamping rules as the real BodyHost.
         return Geometry.panel(width,height,edgeInsets,edge,
-            (length-span)/2,span,depth,1,editorBody.padding,[],true).content
+            (length-span)/2,span,depth,1,pad,[],true).content
     }
 
     function bestToolbarEdge(): string {
+        if (externallyDocked) return "bottom"
         if (width<=48 || height<=48) return toolbarEdge
         const footprints = {}
         for (const edge of ["bottom","top","right","left"])
@@ -349,10 +705,20 @@ Item {
             Qt.callLater(()=>settle(2))
         } else {clearDrag();guides=[];queueHistory()}
     }
+    function _clonePlacementItems(sourceList): var {
+        if (!Array.isArray(sourceList))
+            return []
+        const out = new Array(sourceList.length)
+        for (let i = 0; i < sourceList.length; ++i) {
+            const item = sourceList[i]
+            out[i] = item && typeof item === "object" ? Object.assign({}, item) : item
+        }
+        return out
+    }
     function begin(): void {
         _historyReady=false;_dragging=false;feedback=""
-        draft = JSON.parse(JSON.stringify(Placement.resolve(Config.options?.abyss?.modules,outputName,
-            Placement.seed(moduleLayer.zones,moduleLayer.edge,width,height))))
+        draft = _clonePlacementItems(Placement.resolve(Config.options?.abyss?.modules,outputName,
+            Placement.seed(moduleLayer.zones,moduleLayer.edge,width,height)))
         const options = Placement.optionsForOutput(Config.options?.abyss?.modules,outputName)
         gap = options.gap
         edgeSizes = Object.assign({top:1,right:1,bottom:1,left:1},options.edgeSizes)
@@ -365,14 +731,17 @@ Item {
         singleModuleExpansion = Object.assign({top:"edge",right:"edge",bottom:"edge",left:"edge"},options.singleModuleExpansion)
         editingEdge = moduleLayer.edge
         guides = []
-        draftPositions=JSON.parse(JSON.stringify(Config.options?.abyss?.positions ?? []))
+        draftPositions=_clonePlacementItems(Config.options?.abyss?.positions)
         positionEdits=[];editingPopups=false
+        editorSection="modules";moduleSearchText=""
         const companionCfg=Config.options?.abyss?.companion
         companionDraftEdge=["top","right","bottom","left"].includes(companionCfg?.edge)
             ? companionCfg.edge
             : (["top","right","bottom","left"].includes(moduleLayer.edge) ? moduleLayer.edge : "bottom")
         companionDraftAlong=Number.isFinite(Number(companionCfg?.along))
             ? Math.max(0.08,Math.min(0.92,Number(companionCfg.along))) : 0.72
+        _initialCompanionEdge=companionDraftEdge
+        _initialCompanionAlong=companionDraftAlong
         _draggingCompanion=false
         selectedId = ""
         selectedIds=[];selectionAnchor="";clearDrag()
@@ -391,8 +760,10 @@ Item {
             let positions=Config.options?.abyss?.positions ?? []
             positionEdits.forEach(edit=>positions=Presentation.save(positions,edit.kind,edit.outputName,edit.values))
             if(positionEdits.length) writes["abyss.positions"]=positions
-            writes["abyss.companion.edge"]=companionDraftEdge
-            writes["abyss.companion.along"]=Math.round(companionDraftAlong*1000)/1000
+            if(companionDraftEdge!==_initialCompanionEdge || Math.abs(companionDraftAlong-_initialCompanionAlong)>0.0005) {
+                writes["abyss.companion.edge"]=companionDraftEdge
+                writes["abyss.companion.along"]=Math.round(companionDraftAlong*1000)/1000
+            }
             Config.setNestedValues(writes)
         }
         guides = []
@@ -494,9 +865,76 @@ Item {
             lastImpulse = now
         }
     }
+    function moduleGlyph(kind): string {
+        switch (kind) {
+        case "distroIcon": return "apps"
+        case "activeWindow": return "web_asset"
+        case "resources": return "monitoring"
+        case "media": return "music_note"
+        case "cava": return "equalizer"
+        case "workspaces": return "workspaces"
+        case "clock": return "schedule"
+        case "utilButtons": return "tune"
+        case "battery": return "battery_full"
+        case "tray": return "dock_to_bottom"
+        case "timer": return "timer"
+        case "shellUpdate": return "system_update_alt"
+        case "weather": return "partly_cloudy_day"
+        case "taskbar": return "view_week"
+        case "notesTimers": return "sticky_note_2"
+        case "notificationActivity": return "notifications"
+        default: return "widgets"
+        }
+    }
+    function togglePlacementEnabled(id): void {
+        if (_dragging) {
+            feedback = "Finish moving the module group before editing its settings"
+            return
+        }
+        const entry = draft.find(p => p.id === id)
+        if (!entry) return
+        rememberHistory()
+        const nextEnabled = entry.enabled === false
+        const options = Object.assign({}, draftOptions, {extents: moduleLayer.measuredExtents, editing: true})
+        const result = Placement.checkedBatch(draft, [id], "enabled", nextEnabled, width, height, options, Appearance.fontSizeScale, moduleLayer.renderedRecords)
+        feedback = result.rejected || ""
+        if (result.rejected) return
+        draft = result.placements
+        if (nextEnabled)
+            select(id)
+    }
+    function scrollGalleryToSelection(): void {
+        if (!useHorizontalDock || activeDockTab !== "modules" || !selectedId)
+            return
+        const idx = filteredGalleryEntries.findIndex(e => e.inDraft && e.placementId === selectedId)
+        if (idx < 0 || moduleGalleryFlick.width <= 0)
+            return
+        const stride = 118 * Appearance.fontSizeScale + 8 * Appearance.fontSizeScale
+        const left = idx * stride
+        const right = left + 118 * Appearance.fontSizeScale
+        const maxX = Math.max(0, moduleGalleryFlick.contentWidth - moduleGalleryFlick.width)
+        if (left < moduleGalleryFlick.contentX)
+            moduleGalleryFlick.contentX = Math.max(0, left - 8)
+        else if (right > moduleGalleryFlick.contentX + moduleGalleryFlick.width)
+            moduleGalleryFlick.contentX = Math.min(maxX, right - moduleGalleryFlick.width + 8)
+    }
+    function syncPaletteToSelection(): void {
+        const kind = root.selected?.kind ?? ""
+        if (!kind) return
+        const idx = Placement.catalog.indexOf(kind)
+        if (idx >= 0) {
+            if (palette.currentIndex !== idx)
+                palette.currentIndex = idx
+            if (dockPalette.currentIndex !== idx)
+                dockPalette.currentIndex = idx
+        }
+    }
     onSelectedChanged: {
-        if (selected)
+        if (selected) {
             editingEdge = selected.edge
+            root.syncPaletteToSelection()
+            Qt.callLater(() => root.scrollGalleryToSelection())
+        }
         root.scheduleToolbarRelocation()
     }
     onEditingEdgeChanged: root.scheduleToolbarRelocation()
@@ -711,7 +1149,7 @@ Item {
             // output. The toolbar's Edge selector remains available there.
             visible:root.width>=520 && root.height>=420
             readonly property var editorSurface: editorBody.record?.surface ?? null
-            readonly property bool editorEdge: modelData === root.toolbarEdge
+            readonly property bool editorEdge: !root.externallyDocked && modelData === root.toolbarEdge
             text: modelData.toUpperCase()
             opacity: .55
             x: {
@@ -735,13 +1173,14 @@ Item {
                         return Math.max(10,editorSurface.y-height-12)
                 }
                 return modelData === "top" ? 64
-                    : modelData === "bottom" ? root.height-220
+                    : modelData === "bottom" ? (root.externallyDocked ? root.height-height-64 : root.height-220)
                     : (root.height-height)/2
             }
         }
     }
     AbyssBodyHost {
         id: editorBody
+        z: 30
         anchors.fill: parent
         edge: root.toolbarEdge
         identity: "edgeEditor"
@@ -752,13 +1191,17 @@ Item {
         outputName: root.outputName
         controller: root.controller
         edgeInsets: root.edgeInsets
-        open: root.visible
+        open: root.visible && !root.externallyDocked
+        padding: root.useHorizontalDock
+            ? 8 * Appearance.fontSizeScale : AbyssStyle.contentPadding
         // Horizontal Edges use the familiar wide control strip. If both are
         // busy, the same editor can move to a side Edge with a deeper body and
         // a long vertical span instead of covering the module being edited.
         span: root.toolbarOnHorizontalEdge
-            ? Math.min(root.width-48,root.editingPopups
-                ? root.ipcToolbarSpan : root.moduleToolbarSpan)
+            ? (root.useHorizontalDock
+                ? Math.min(root.width-48,root.dockToolbarSpan)
+                : Math.min(root.width-48,root.editingPopups
+                    ? root.ipcToolbarSpan : root.moduleToolbarSpan))
             : Math.min(root.height-48,toolbar.implicitHeight+padding*2)
         along: ((root.toolbarOnHorizontalEdge ? root.width : root.height)-span)/2
         depth: root.toolbarOnHorizontalEdge
@@ -788,7 +1231,7 @@ Item {
     Item {
         id:companionMannequin
         objectName:"abyssCompanionMannequin"
-        z:25
+        z:2
         visible:root.visible && !root.editingPopups && root.width>=240 && root.height>=200
         property bool customModelPresent:false
         readonly property real companionScale:Math.max(0.65,Math.min(1.5,Number(Config.options?.abyss?.companion?.size) || 1))
@@ -826,8 +1269,9 @@ Item {
             id:companionSilhouette
             visible:!companionMannequin.customModelPresent
             anchors.centerIn:parent
-            width:56*companionMannequin.companionScale
-            height:64*companionMannequin.companionScale
+            anchors.verticalCenterOffset:root.companionDraftEdge==="top" ? -9 : 9
+            width:Math.min(56*companionMannequin.companionScale,Math.max(24,companionMannequin.width-12))
+            height:Math.min(64*companionMannequin.companionScale,Math.max(24,companionMannequin.height-26))
             rotation:root.companionDraftEdge==="top" ? 180 : root.companionDraftEdge==="left" ? 90 : root.companionDraftEdge==="right" ? -90 : 0
             Rectangle {
                 anchors.horizontalCenter:parent.horizontalCenter
@@ -914,15 +1358,131 @@ Item {
     readonly property Region paletteRegion: Region { item: palette.popup.contentItem; width: palette.popup.visible ? palette.popup.contentItem.width : 0 }
     readonly property Region edgeRegion: Region { item: edgeChoice.popup.contentItem; width: edgeChoice.popup.visible ? edgeChoice.popup.contentItem.width : 0 }
     readonly property Region alignmentRegion: Region { item: alignmentChoice.popup.contentItem; width: alignmentChoice.popup.visible ? alignmentChoice.popup.contentItem.width : 0 }
-    readonly property var regions: inputRegions.concat([toolbarRegion,paletteRegion,ipcKindRegion,ipcOutputRegion,edgeRegion,alignmentRegion,previewRegion,companionMannequinRegion],root.editingPopups ? previewPositions.inputRegions : [])
+    readonly property Region dockPaletteRegion: Region { item: dockPalette.popup.contentItem; width: dockPalette.popup.visible ? dockPalette.popup.contentItem.width : 0 }
+    readonly property Region dockAlignmentRegion: Region { item: dockAlignmentChoice.popup.contentItem; width: dockAlignmentChoice.popup.visible ? dockAlignmentChoice.popup.contentItem.width : 0 }
+    readonly property Region dockIpcOutputRegion: Region { item: dockIpcOutputChoice.popup.contentItem; width: dockIpcOutputChoice.popup.visible ? dockIpcOutputChoice.popup.contentItem.width : 0 }
+    readonly property var externalPopupRegions: [paletteRegion, ipcKindRegion, ipcOutputRegion, edgeRegion, alignmentRegion, dockPaletteRegion, dockAlignmentRegion, dockIpcOutputRegion]
+    readonly property var regions: inputRegions.concat(root.externallyDocked ? [] : [toolbarRegion], externalPopupRegions, [previewRegion, companionMannequinRegion], (root.editingPopups || root.splitSideDocks) ? previewPositions.inputRegions : [])
+
+    Item {
+        id: leftPopupsDockSurface
+        objectName: "abyssLeftPopupsDock"
+        parent: root.splitSideDocks ? root.externalLeftDockParent : root
+        visible: root.splitSideDocks && (root.visible || (root.externalLeftDockParent?.visible ?? false))
+        enabled: root.visible && root.splitSideDocks
+        x: 0
+        y: 0
+        width: root.splitSideDocks ? (root.externalLeftDockParent?.width ?? root.desiredLeftDockWidth) : 0
+        height: root.splitSideDocks ? (root.externalLeftDockParent?.height ?? root.desiredLeftDockHeight) : 0
+        clip: true
+
+        Flickable {
+            anchors.fill: parent
+            anchors.margins: root.splitSideDocks ? 6 : 10
+            clip: true
+            contentWidth: width
+            contentHeight: leftPopupsDockColumn.implicitHeight
+            flickableDirection: Flickable.VerticalFlick
+            boundsBehavior: Flickable.StopAtBounds
+            interactive: contentHeight > height
+
+            Item {
+                id: leftPopupsDockColumn
+                width: parent.width
+                implicitHeight: popupsDockCard.implicitHeight
+            }
+        }
+    }
+
+    Item {
+        id: rightEdgeDockSurface
+        objectName: "abyssRightEdgeDock"
+        parent: root.splitSideDocks ? root.externalRightDockParent : root
+        visible: root.splitSideDocks && (root.visible || (root.externalRightDockParent?.visible ?? false))
+        enabled: root.visible && root.splitSideDocks
+        x: 0
+        y: 0
+        width: root.splitSideDocks ? (root.externalRightDockParent?.width ?? root.desiredRightDockWidth) : 0
+        height: root.splitSideDocks ? (root.externalRightDockParent?.height ?? root.desiredRightDockHeight) : 0
+        clip: true
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: root.splitSideDocks ? 6 : 10
+            spacing: (root.splitSideDocks ? 6 : 8) * Appearance.fontSizeScale
+
+            RowLayout {
+                id: rightEdgeDockHeader
+                objectName: root.splitSideDocks ? "abyssEditorEdgeMode" : ""
+                Layout.fillWidth: true
+                spacing: 6
+
+                MaterialSymbol {
+                    text: "border_outer"
+                    iconSize: 17 * Appearance.fontSizeScale
+                    color: Appearance.colors.colPrimary
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    text: Translation.tr("Screen Edge")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.weight: Font.DemiBold
+                    color: Appearance.colors.colOnLayer1
+                }
+
+                Rectangle {
+                    implicitHeight: 20
+                    implicitWidth: activeEdgeBadgeLabel.implicitWidth + 10
+                    radius: 10
+                    color: Qt.alpha(Appearance.colors.colPrimary, 0.16)
+                    border.width: 1
+                    border.color: Qt.alpha(Appearance.colors.colPrimary, 0.36)
+
+                    StyledText {
+                        id: activeEdgeBadgeLabel
+                        anchors.centerIn: parent
+                        text: root.editingEdge.toUpperCase()
+                        font.pixelSize: 9 * Appearance.fontSizeScale
+                        font.weight: Font.DemiBold
+                        color: Appearance.colors.colPrimary
+                    }
+                }
+            }
+
+            Flickable {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                contentWidth: width
+                contentHeight: rightEdgeDockScrollContent.implicitHeight
+                flickableDirection: Flickable.VerticalFlick
+                boundsBehavior: Flickable.StopAtBounds
+                interactive: contentHeight > height
+
+                ColumnLayout {
+                    id: rightEdgeDockScrollContent
+                    width: parent.width
+                    spacing: 8 * Appearance.fontSizeScale
+                }
+            }
+        }
+    }
+
     Item {
         id: toolbar
-        visible: root.visible
-        parent: editorBody.contentParent
+        objectName: "abyssEdgeEditorToolbar"
+        readonly property var editorOwner: root
+        visible: root.visible || (root.externallyDocked && (root.externalDockParent?.visible ?? false))
+        enabled: root.visible
+        parent: root.externallyDocked ? root.externalDockParent : editorBody.contentParent
         anchors.fill: parent
         implicitWidth: root.toolbarOnHorizontalEdge
-            ? toolbarColumn.implicitWidth : 260*Appearance.fontSizeScale
-        implicitHeight: toolbarColumn.implicitHeight
+            ? (root.useHorizontalDock ? horizontalDock.implicitWidth : toolbarColumn.implicitWidth)
+            : 260*Appearance.fontSizeScale
+        implicitHeight: root.useHorizontalDock
+            ? horizontalDock.implicitHeight : toolbarColumn.implicitHeight
 
         Flickable {
             id: toolbarScroll
@@ -930,15 +1490,1215 @@ Item {
             anchors.fill: parent
             clip: true
             contentWidth: width
-            contentHeight: toolbarColumn.implicitHeight
+            contentHeight: root.useHorizontalDock
+                ? horizontalDock.implicitHeight : toolbarColumn.implicitHeight
             flickableDirection: Flickable.VerticalFlick
             boundsBehavior: Flickable.StopAtBounds
             // Very small outputs can still clamp the requested depth. Keep
             // all controls reachable on horizontal as well as side Edges.
             interactive: contentHeight > height
 
+            AbyssCustomizationDock {
+                id: horizontalDock
+                objectName: root.useHorizontalDock ? "abyssEdgeEditorDock" : ""
+                visible: root.useHorizontalDock
+                width: toolbarScroll.width
+                embeddedSurface: true
+                horizontalPadding: 4
+                verticalPadding: 6
+                topBarHeight: 38 * Appearance.fontSizeScale
+                trayGap: 6 * Appearance.fontSizeScale
+                trayExpanded: true
+                trayHeight: (152 + (dockFeedbackBanner.visible ? 26 : 0)) * Appearance.fontSizeScale
+                contentPreferredWidth: !root.splitSideDocks && root.activeDockTab === "edge"
+                    ? Math.ceil(edgeCardsGrid.implicitWidth + 16)
+                    : (!root.splitSideDocks && root.activeDockTab === "popups"
+                        ? Math.ceil(popupsCardColumn.implicitWidth + 24)
+                        : Math.max(
+                            Math.ceil(moduleGalleryRow.implicitWidth + 16),
+                            dockModuleInspector.visible
+                                ? Math.ceil(dockModuleInspectorLayout.implicitWidth + 24)
+                                : 0))
+                autoSwitchTab: false
+                activeTab: root.activeDockTab
+                tabs: root.splitSideDocks
+                    ? [
+                        {
+                            key: "modules",
+                            label: Translation.tr("Modules"),
+                            icon: "widgets",
+                            objectName: root.useHorizontalDock ? "abyssEditorModulesMode" : "",
+                            tooltipText: Translation.tr("Screen Edge modules gallery and module inspector")
+                        }
+                    ]
+                    : [
+                        {
+                            key: "modules",
+                            label: Translation.tr("Modules"),
+                            icon: toolbarScroll.width >= 880 * Appearance.fontSizeScale ? "widgets" : "",
+                            objectName: root.useHorizontalDock ? "abyssEditorModulesMode" : "",
+                            tooltipText: Translation.tr("Screen Edge modules gallery and module inspector")
+                        },
+                        {
+                            key: "edge",
+                            label: toolbarScroll.width >= 820 * Appearance.fontSizeScale
+                                ? Translation.tr("Screen Edge") : Translation.tr("Edge"),
+                            icon: toolbarScroll.width >= 880 * Appearance.fontSizeScale ? "border_outer" : "",
+                            objectName: root.useHorizontalDock ? "abyssEditorEdgeMode" : "",
+                            tooltipText: Translation.tr("Configure active Screen Edge thickness, spacing, scale and curvature")
+                        },
+                        {
+                            key: "popups",
+                            label: toolbarScroll.width >= 820 * Appearance.fontSizeScale
+                                ? Translation.tr("Popups & Panels") : Translation.tr("Popups"),
+                            icon: toolbarScroll.width >= 880 * Appearance.fontSizeScale ? "open_in_new" : "",
+                            objectName: root.useHorizontalDock ? "abyssEditorIpcMode" : "",
+                            tooltipText: Translation.tr("Position OSD and IPC indicator surfaces")
+                        }
+                    ]
+                showUndo: true
+                canUndo: root.undoStack.length > 0
+                undoObjectName: root.useHorizontalDock ? "abyssLayoutUndo" : ""
+                showSearch: root.activeDockTab === "modules"
+                searchText: root.moduleSearchText
+                searchPlaceholder: Translation.tr("Search modules...")
+                searchObjectName: root.useHorizontalDock ? "abyssModuleSearchInput" : ""
+                showCancel: true
+                cancelLabel: Translation.tr("Cancel")
+                cancelObjectName: root.useHorizontalDock ? "abyssLayoutCancel" : ""
+                doneLabel: Translation.tr("Done")
+                doneObjectName: root.useHorizontalDock ? "abyssLayoutDone" : ""
+
+                onUndoClicked: root.undo()
+                onSearchEdited: text => root.moduleSearchText = text
+                onCancelClicked: root.finish(false)
+                onDoneClicked: root.finish(true)
+                onTabClicked: key => {
+                    if (key === "popups") {
+                        root.editingPopups = true
+                    } else {
+                        root.editingPopups = false
+                        root.editorSection = key === "edge" ? "edge" : "modules"
+                    }
+                }
+
+                leadingControls: [
+                    DockTogglePill {
+                        objectName: root.useHorizontalDock ? "abyssLayoutReset" : ""
+                        icon: "restart_alt"
+                        active: false
+                        tooltipText: root.editingPopups
+                            ? Translation.tr("Reset selected IPC position")
+                            : Translation.tr("Reset layout draft")
+                        onClicked: root.editingPopups ? root.resetIpcPosition() : root.reset()
+                    }
+                ]
+
+                trailingControls: [
+                    DockTogglePill {
+                        objectName: root.useHorizontalDock ? "abyssDockSnapToggle" : ""
+                        icon: "grid_4x4"
+                        active: root.snapEnabled
+                        tooltipText: root.snapEnabled
+                            ? Translation.tr("Snap to guides · on")
+                            : Translation.tr("Snap to guides · off")
+                        onClicked: root.snapEnabled = !root.snapEnabled
+                    },
+                    DockTogglePill {
+                        objectName: root.useHorizontalDock ? "abyssEditorOutputOnly" : ""
+                        icon: "monitor"
+                        active: root.outputOnly
+                        tooltipText: root.outputOnly
+                            ? Translation.tr("This output only (%1)").arg(root.outputName)
+                            : Translation.tr("All outputs (global)")
+                        onClicked: root.outputOnly = !root.outputOnly
+                    }
+                ]
+
+                ColumnLayout {
+                    id: dockTrayColumn
+                    anchors.fill: parent
+                    spacing: 4 * Appearance.fontSizeScale
+
+                    Rectangle {
+                        id: dockFeedbackBanner
+                        visible: dockFeedbackLabel.text.length > 0
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 22 * Appearance.fontSizeScale
+                        radius: 8
+                        color: Qt.alpha(Appearance.colors.colError, 0.14)
+                        border.width: 1
+                        border.color: Qt.alpha(Appearance.colors.colError, 0.38)
+
+                        AbyssLabel {
+                            id: dockFeedbackLabel
+                            objectName: root.useHorizontalDock ? "abyssLayoutFeedback" : ""
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideRight
+                            text: root.layoutConflicts[0] || root.feedback
+                            font.pixelSize: 11 * Appearance.fontSizeScale
+                            color: Appearance.colors.colError
+                        }
+                    }
+
+                    // Tier 2A: Modules Gallery + Contextual Module Inspector Strip
+                    ColumnLayout {
+                        visible: root.activeDockTab === "modules"
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        spacing: 6 * Appearance.fontSizeScale
+
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: 100 * Appearance.fontSizeScale
+
+                            Flickable {
+                                id: moduleGalleryFlick
+                                objectName: root.useHorizontalDock ? "abyssModuleGallery" : ""
+                                anchors.fill: parent
+                                clip: true
+                                contentWidth: Math.max(width, moduleGalleryRow.implicitWidth)
+                                contentHeight: height
+                                flickableDirection: Flickable.HorizontalFlick
+                                boundsBehavior: Flickable.StopAtBounds
+                                interactive: contentWidth > width
+
+                                WheelHandler {
+                                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                    onWheel: event => {
+                                        if (toolbarScroll.interactive && Math.abs(event.angleDelta.y) > Math.abs(event.angleDelta.x)) {
+                                            event.accepted = false
+                                            return
+                                        }
+                                        const delta = Math.abs(event.angleDelta.x) > Math.abs(event.angleDelta.y)
+                                            ? event.angleDelta.x : event.angleDelta.y
+                                        const maxX = Math.max(0, moduleGalleryFlick.contentWidth - moduleGalleryFlick.width)
+                                        moduleGalleryFlick.contentX = Math.max(0, Math.min(maxX, moduleGalleryFlick.contentX - delta * 0.65))
+                                        event.accepted = true
+                                    }
+                                }
+
+                                Row {
+                                    id: moduleGalleryRow
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 8 * Appearance.fontSizeScale
+
+                                    Repeater {
+                                        model: root.filteredGalleryEntries
+                                        delegate: AbyssCustomizationTile {
+                                            required property var modelData
+                                            objectName: "abyssModuleGalleryTile"
+                                            tileId: String(modelData.key)
+                                            title: String(modelData.title)
+                                            subtitle: modelData.inDraft
+                                                ? (String(modelData.edge).charAt(0).toUpperCase()
+                                                    + String(modelData.edge).slice(1)
+                                                    + (modelData.locked ? " · Locked" : ""))
+                                                : Translation.tr("Available")
+                                            icon: root.moduleGlyph(modelData.kind)
+                                            active: Boolean(modelData.inDraft && modelData.enabled)
+                                            selected: Boolean(modelData.inDraft && root.targetIds.includes(modelData.placementId))
+                                            separateBadgeClick: true
+                                            tileWidth: 118 * Appearance.fontSizeScale
+                                            previewHeight: 58 * Appearance.fontSizeScale
+                                            tooltipText: modelData.inDraft
+                                                ? (modelData.enabled
+                                                    ? Translation.tr("%1 on %2 Edge — click to select, click ✓ to disable").arg(modelData.title).arg(modelData.edge)
+                                                    : Translation.tr("%1 (disabled) — click to select, click + to enable").arg(modelData.title))
+                                                : Translation.tr("Click to add %1 to %2 Edge").arg(modelData.title).arg(root.editingEdge)
+
+                                            onClicked: {
+                                                if (root.splitSideDocks && root.editingPopups)
+                                                    root.editingPopups = false
+                                                if (modelData.inDraft)
+                                                    root.select(modelData.placementId)
+                                                else
+                                                    root.add(modelData.kind)
+                                            }
+                                            onBadgeClicked: {
+                                                if (root.splitSideDocks && root.editingPopups)
+                                                    root.editingPopups = false
+                                                if (modelData.inDraft)
+                                                    root.togglePlacementEnabled(modelData.placementId)
+                                                else
+                                                    root.add(modelData.kind)
+                                            }
+
+                                            ModuleTileArt {
+                                                anchors.fill: parent
+                                                kind: String(modelData.kind)
+                                                glyph: root.moduleGlyph(modelData.kind)
+                                                edge: String(modelData.edge)
+                                                inDraft: Boolean(modelData.inDraft)
+                                                active: Boolean(modelData.enabled)
+                                                locked: Boolean(modelData.locked)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            StyledText {
+                                visible: root.filteredGalleryEntries.length === 0
+                                anchors.centerIn: parent
+                                text: Translation.tr("No modules match \"%1\"").arg(root.moduleSearchText)
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.colors.colSubtext
+                            }
+                        }
+
+                        // Contextual Module Inspector Strip
+                        Rectangle {
+                            id: dockModuleInspector
+                            objectName: root.useHorizontalDock ? "abyssDockModuleInspector" : ""
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 36 * Appearance.fontSizeScale
+                            radius: 11
+                            color: Qt.alpha(Appearance.colors.colLayer2, 0.46)
+                            border.width: 1
+                            border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.22)
+
+                            RowLayout {
+                                id: dockModuleInspectorLayout
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 8
+                                spacing: 4 * Appearance.fontSizeScale
+
+                                StyledComboBox {
+                                    id: dockPalette
+                                    objectName: root.useHorizontalDock ? "abyssModuleDropdown" : ""
+                                    baseHeight: 28 * Appearance.fontSizeScale
+                                    Layout.preferredWidth: (root.multiSelect ? 92 : 112) * Appearance.fontSizeScale
+                                    Layout.maximumWidth: 128 * Appearance.fontSizeScale
+                                    Layout.minimumWidth: 0
+                                    popupMinimumWidth: 168 * Appearance.fontSizeScale
+                                    model: Placement.catalog.map(kind => ({label: Placement.label(kind), kind: kind}))
+                                    textRole: "label"
+                                    valueRole: "kind"
+                                    onActivated: {
+                                        const chosenKind = currentValue
+                                        const match = root.draft.find(p => p.kind === chosenKind && p.enabled)
+                                            ?? root.draft.find(p => p.kind === chosenKind)
+                                        if (match && root.selected?.kind !== chosenKind)
+                                            root.select(match.id)
+                                    }
+                                    Component.onCompleted: root.syncPaletteToSelection()
+                                    StyledToolTip { text: Translation.tr("Select or add module kind") }
+                                }
+
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssEditorConfirmAdd" : ""
+                                    editorSquare: true
+                                    compact: true
+                                    text: "Add module"
+                                    glyph: "add"
+                                    description: "Add selected module"
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    enabled: root.draft.length < 24
+                                    onClicked: root.add(dockPalette.currentValue)
+                                }
+
+                                Rectangle {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    Layout.preferredWidth: 1
+                                    Layout.preferredHeight: 18 * Appearance.fontSizeScale
+                                    color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.30)
+                                }
+
+                                // 4-way Screen Edge move pill group (T / B / L / R)
+                                Rectangle {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    implicitHeight: 28 * Appearance.fontSizeScale
+                                    implicitWidth: dockMoveEdgeRow.implicitWidth + 4
+                                    radius: 9
+                                    opacity: root.targets.length > 0 && !root.anyTargetLocked ? 1.0 : 0.42
+                                    color: Qt.alpha(Appearance.colors.colLayer3, 0.56)
+                                    border.width: 1
+                                    border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.24)
+
+                                    Row {
+                                        id: dockMoveEdgeRow
+                                        anchors.centerIn: parent
+                                        spacing: 2
+
+                                        Repeater {
+                                            model: [
+                                                { key: "top", label: "T", tip: Translation.tr("Move selected module to Top Edge") },
+                                                { key: "bottom", label: "B", tip: Translation.tr("Move selected module to Bottom Edge") },
+                                                { key: "left", label: "L", tip: Translation.tr("Move selected module to Left Edge") },
+                                                { key: "right", label: "R", tip: Translation.tr("Move selected module to Right Edge") }
+                                            ]
+                                            delegate: Rectangle {
+                                                required property var modelData
+                                                readonly property bool isSelectedEdge: root.targets.length > 0
+                                                    && root.targets.every(p => p.edge === modelData.key)
+                                                objectName: root.useHorizontalDock ? ("abyssModuleMoveEdge_" + modelData.key) : ""
+                                                width: 21 * Appearance.fontSizeScale
+                                                height: 24 * Appearance.fontSizeScale
+                                                radius: 7
+                                                color: isSelectedEdge
+                                                    ? ColorUtils.mix(Appearance.colors.colPrimaryContainer, Appearance.colors.colPrimary, 0.68)
+                                                    : (moveEdgeMouse.containsMouse && moveEdgeMouse.enabled
+                                                        ? Qt.alpha(Appearance.colors.colOnLayer1, 0.10)
+                                                        : "transparent")
+
+                                                StyledText {
+                                                    anchors.centerIn: parent
+                                                    text: String(modelData.label)
+                                                    font.pixelSize: 10 * Appearance.fontSizeScale
+                                                    font.weight: isSelectedEdge ? Font.DemiBold : Font.Medium
+                                                    color: isSelectedEdge
+                                                        ? Appearance.colors.colOnPrimaryContainer
+                                                        : Appearance.colors.colSubtext
+                                                }
+
+                                                MouseArea {
+                                                    id: moveEdgeMouse
+                                                    anchors.fill: parent
+                                                    enabled: root.targets.length > 0 && !root.anyTargetLocked
+                                                    hoverEnabled: true
+                                                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                                    onClicked: {
+                                                        root.rememberHistory()
+                                                        root.change("edge", modelData.key)
+                                                        root.editingEdge = modelData.key
+                                                    }
+                                                }
+
+                                                StyledToolTip {
+                                                    position: "top"
+                                                    extraVisibleCondition: moveEdgeMouse.containsMouse
+                                                    text: String(modelData.tip)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                StyledComboBox {
+                                    id: dockAlignmentChoice
+                                    objectName: root.useHorizontalDock ? "abyssModulePositionDropdown" : ""
+                                    baseHeight: 28 * Appearance.fontSizeScale
+                                    Layout.preferredWidth: (root.multiSelect ? 80 : 96) * Appearance.fontSizeScale
+                                    Layout.maximumWidth: 112 * Appearance.fontSizeScale
+                                    Layout.minimumWidth: 0
+                                    popupMinimumWidth: 136 * Appearance.fontSizeScale
+                                    model: [
+                                        {label: "Free position", value: "free"},
+                                        {label: "Align start", value: "start"},
+                                        {label: "Align center", value: "center"},
+                                        {label: "Align end", value: "end"}
+                                    ]
+                                    textRole: "label"
+                                    valueRole: "value"
+                                    currentIndex: Math.max(0, model.findIndex(p => p.value === root.selected?.alignment))
+                                    displayText: root.multiSelect && root.targets.some(p => p.alignment !== root.selected?.alignment)
+                                        ? "Mixed alignment" : currentText
+                                    enabled: root.targets.length > 0 && !root.anyTargetLocked
+                                    onActivated: root.change("alignment", currentValue)
+                                }
+
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssModuleRotate" : ""
+                                    text: root.rotateActionText
+                                    glyph: "rotate_right"
+                                    compact: true
+                                    editorSquare: true
+                                    description: root.rotateActionDescription
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.rotateActionSize
+                                    Layout.maximumHeight: root.rotateActionSize
+                                    enabled: root.canRotateSelection
+                                    Keys.onPressed: event => {
+                                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                            root.rotateSelection()
+                                            event.accepted = true
+                                        }
+                                    }
+                                    onClicked: root.rotateSelection()
+                                }
+
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssModulePositionLock" : ""
+                                    text: root.allTargetsLocked ? "Unlock position" : "Lock position"
+                                    glyph: root.allTargetsLocked ? "lock_open" : "lock"
+                                    compact: true
+                                    editorSquare: true
+                                    description: text
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    enabled: root.targets.length > 0
+                                    Keys.onPressed: event => {
+                                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                            root.lockSelection()
+                                            event.accepted = true
+                                        }
+                                    }
+                                    onClicked: root.lockSelection()
+                                }
+
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssSelectionEnabled" : ""
+                                    text: root.allTargetsDisabled ? "Enable" : "Disable"
+                                    glyph: root.allTargetsDisabled ? "visibility" : "visibility_off"
+                                    compact: true
+                                    editorSquare: true
+                                    description: text
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    enabled: root.targets.length > 0
+                                    onClicked: root.batch("enabled", root.allTargetsDisabled)
+                                }
+
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssModuleJoinCorner" : ""
+                                    text: root.nearbyCorner
+                                        ? "Connect to " + root.nearbyCorner + " corner"
+                                        : "Join nearby corner"
+                                    glyph: "join_inner"
+                                    compact: true
+                                    editorSquare: true
+                                    checkable: true
+                                    description: root.nearbyCorner
+                                        ? "Extend this module's local surface to the corner and attach its popup to both Screen Edges. Module size stays unchanged."
+                                        : "The nearest visible module within 160 px of a corner can connect to it."
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    checked: root.targets.length > 0 && root.targets.every(p => p.joinCorner)
+                                    enabled: root.targets.length > 0 && (root.targets.every(p => !!Placement.cornerForModule(
+                                        root.moduleLayer.layoutRecords, p.id, root.width, root.height)) || checked)
+                                    onToggled: root.change("joinCorner", checked)
+                                }
+
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssSelectionRemove" : ""
+                                    text: "Remove"
+                                    glyph: "delete"
+                                    compact: true
+                                    editorSquare: true
+                                    description: root.multiSelect ? "Remove selected modules" : "Remove selected module"
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    enabled: root.targets.length > 0
+                                    onClicked: root.batch("remove", true)
+                                }
+
+                                Rectangle {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    Layout.preferredWidth: 1
+                                    Layout.preferredHeight: 18 * Appearance.fontSizeScale
+                                    color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.30)
+                                }
+
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssModuleCustomSizeToggle" : ""
+                                    text: "Custom size"
+                                    glyph: "aspect_ratio"
+                                    compact: true
+                                    editorSquare: true
+                                    checkable: true
+                                    description: "Use a custom size for the selected module"
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    checked: root.allTargetsCustom
+                                    enabled: root.targets.length > 0 && !root.anyTargetLocked
+                                    onToggled: root.change("customSize", checked)
+                                }
+
+                                AbyssSlider {
+                                    objectName: root.useHorizontalDock ? "abyssModuleCustomSizeSlider" : ""
+                                    editorCompact: true
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 75 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: 136 * Appearance.fontSizeScale
+                                    from: .6
+                                    to: 1.8
+                                    stepSize: .01
+                                    value: root.selected?.customSize
+                                        ? root.selected.size
+                                        : Placement.edgeSize(
+                                            root.draftOptions,
+                                            root.selected?.edge ?? root.editingEdge)
+                                    enabled: root.allTargetsCustom && !root.anyTargetLocked
+                                    onMoved: root.change("size", value)
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                }
+
+                                AbyssLabel {
+                                    objectName: root.useHorizontalDock ? "abyssSelectionCount" : ""
+                                    visible: root.multiSelect
+                                    text: root.targets.length + " selected · " + root.targets.filter(p => p.locked).length + " locked"
+                                    font.pixelSize: 11 * Appearance.fontSizeScale
+                                    elide: Text.ElideRight
+                                    Layout.maximumWidth: 96 * Appearance.fontSizeScale
+                                }
+
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssSelectionClear" : ""
+                                    visible: root.multiSelect
+                                    compact: true
+                                    editorSquare: true
+                                    text: "Clear selection"
+                                    glyph: "deselect"
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    enabled: root.targetIds.length > 0
+                                    onClicked: root.clearSelection()
+                                }
+                            }
+                        }
+                    }
+
+                    // Tier 2B: Screen Edge Geometry, Spacing, Scale & Curvature Cards
+                    GridLayout {
+                        id: edgeCardsGrid
+                        parent: root.splitSideDocks ? rightEdgeDockScrollContent : dockTrayColumn
+                        columns: root.splitSideDocks ? 1 : 3
+                        visible: root.splitSideDocks || root.activeDockTab === "edge"
+                        Layout.fillWidth: true
+                        Layout.fillHeight: !root.splitSideDocks
+                        rowSpacing: 8 * Appearance.fontSizeScale
+                        columnSpacing: 8 * Appearance.fontSizeScale
+
+                        // Card 1: Active Screen Edge & Physical Thickness
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: !root.splitSideDocks
+                            Layout.preferredWidth: root.splitSideDocks ? -1 : 1
+                            Layout.preferredHeight: root.splitSideDocks ? implicitHeight : -1
+                            implicitHeight: edgeCard1Col.implicitHeight + 16
+                            radius: 12
+                            color: Qt.alpha(Appearance.colors.colLayer2, 0.46)
+                            border.width: 1
+                            border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.22)
+
+                            ColumnLayout {
+                                id: edgeCard1Col
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.bottom: root.splitSideDocks ? undefined : parent.bottom
+                                anchors.margins: 8
+                                spacing: 6 * Appearance.fontSizeScale
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 6
+
+                                    StyledText {
+                                        visible: toolbarScroll.width >= 900 * Appearance.fontSizeScale
+                                        text: Translation.tr("Edge")
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        font.weight: Font.DemiBold
+                                        color: Appearance.colors.colSubtext
+                                    }
+
+                                    Rectangle {
+                                        objectName: root.useHorizontalDock ? "abyssEditingEdgeSelector" : ""
+                                        Layout.fillWidth: true
+                                        implicitHeight: 26 * Appearance.fontSizeScale
+                                        radius: 13
+                                        color: Qt.alpha(Appearance.colors.colLayer3, 0.56)
+                                        border.width: 1
+                                        border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.22)
+
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.margins: 2
+                                            spacing: 2
+
+                                            Repeater {
+                                                model: [
+                                                    { key: "top", label: Translation.tr("Top") },
+                                                    { key: "bottom", label: Translation.tr("Bottom") },
+                                                    { key: "left", label: Translation.tr("Left") },
+                                                    { key: "right", label: Translation.tr("Right") }
+                                                ]
+                                                delegate: Rectangle {
+                                                    required property var modelData
+                                                    readonly property bool isCurrentEdge: root.editingEdge === modelData.key
+                                                    objectName: root.useHorizontalDock ? ("abyssEdgePill_" + modelData.key) : ""
+                                                    Layout.fillWidth: true
+                                                    Layout.fillHeight: true
+                                                    radius: 11
+                                                    color: isCurrentEdge
+                                                        ? ColorUtils.mix(Appearance.colors.colPrimaryContainer, Appearance.colors.colPrimary, 0.70)
+                                                        : (edgePillMouse.containsMouse
+                                                            ? Qt.alpha(Appearance.colors.colOnLayer1, 0.08)
+                                                            : "transparent")
+
+                                                    StyledText {
+                                                        anchors.centerIn: parent
+                                                        text: String(modelData.label)
+                                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                                        font.weight: isCurrentEdge ? Font.DemiBold : Font.Medium
+                                                        color: isCurrentEdge
+                                                            ? Appearance.colors.colOnPrimaryContainer
+                                                            : Appearance.colors.colSubtext
+                                                    }
+
+                                                    MouseArea {
+                                                        id: edgePillMouse
+                                                        anchors.fill: parent
+                                                        hoverEnabled: true
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: root.editingEdge = modelData.key
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
+
+                                    AbyssButton {
+                                        editorSquare: true
+                                        compact: true
+                                        text: "Inherit surface"
+                                        glyph: "layers"
+                                        description: "Inherit the physical surface thickness"
+                                        Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                        Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                        Layout.maximumWidth: root.editorActionSize
+                                        Layout.maximumHeight: root.editorActionSize
+                                        enabled: (root.edgeThicknesses[root.editingEdge] ?? -1) >= 0
+                                        onClicked: root.edgeThicknesses = Object.assign(
+                                            {}, root.edgeThicknesses,
+                                            {[root.editingEdge]: -1})
+                                    }
+
+                                    AbyssButton {
+                                        objectName: root.useHorizontalDock ? "abyssRoundZeroCorners" : ""
+                                        text: "Round inner corners at 0 px"
+                                        glyph: "rounded_corner"
+                                        compact: true
+                                        editorSquare: true
+                                        checkable: true
+                                        description: enabled
+                                            ? "Round the workspace-side inner corners when the physical Edge is 0 px wide."
+                                            : "Set physical Edge width to 0 px to enable inner-corner rounding."
+                                        Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                        Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                        Layout.maximumWidth: root.editorActionSize
+                                        Layout.maximumHeight: root.editorActionSize
+                                        enabled: Placement.edgeThickness(root.draftOptions, root.editingEdge) === 0
+                                        checked: root.edgeRoundZeroCorners[root.editingEdge] === true
+                                        onToggled: root.edgeRoundZeroCorners = Object.assign(
+                                            {}, root.edgeRoundZeroCorners,
+                                            {[root.editingEdge]: checked})
+                                    }
+
+                                    AbyssSlider {
+                                        objectName: root.useHorizontalDock ? "abyssEdgeWidthSlider" : ""
+                                        editorCompact: true
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 75 * Appearance.fontSizeScale
+                                        unit: "px"
+                                        from: 0
+                                        to: 40
+                                        stepSize: 1
+                                        value: Placement.edgeThickness(root.draftOptions, root.editingEdge)
+                                        onMoved: root.edgeThicknesses = Object.assign(
+                                            {}, root.edgeThicknesses,
+                                            {[root.editingEdge]: value})
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
+
+                                    AbyssButton {
+                                        objectName: root.useHorizontalDock ? "abyssScaleModulesToggle" : ""
+                                        editorSquare: true
+                                        compact: true
+                                        checkable: true
+                                        text: "Width affects modules"
+                                        glyph: "width"
+                                        description: "Scale modules: scale inherited modules with this Edge (0px hides them), or change only the bare Edge and retain local module bulges. Custom module sizes stay independent."
+                                        Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                        Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                        Layout.maximumWidth: root.editorActionSize
+                                        Layout.maximumHeight: root.editorActionSize
+                                        checked: root.edgeWidthAffectsModules[root.editingEdge] !== false
+                                        onToggled: root.edgeWidthAffectsModules = Object.assign(
+                                            {}, root.edgeWidthAffectsModules,
+                                            {[root.editingEdge]: checked})
+                                    }
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        text: Translation.tr("Scale modules")
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        color: Appearance.colors.colSubtext
+                                    }
+
+                                    AbyssButton {
+                                        objectName: root.useHorizontalDock ? "abyssExpandWholeEdgeToggle" : ""
+                                        editorSquare: true
+                                        compact: true
+                                        checkable: true
+                                        text: "Expand whole Edge"
+                                        glyph: "fit_screen"
+                                        description: "Expand a single module across the whole Edge; turn off to expand only its local surface."
+                                        Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                        Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                        Layout.maximumWidth: root.editorActionSize
+                                        Layout.maximumHeight: root.editorActionSize
+                                        enabled: root.draft.filter(
+                                            p => p.enabled && p.edge === root.editingEdge && !Placement.isUnifiedKind(p.kind)).length === 1
+                                        checked: root.singleModuleExpansion[root.editingEdge] !== "local"
+                                        onToggled: root.singleModuleExpansion = Object.assign(
+                                            {}, root.singleModuleExpansion,
+                                            {[root.editingEdge]: checked ? "edge" : "local"})
+                                    }
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        text: Translation.tr("Whole edge")
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        color: Appearance.colors.colSubtext
+                                    }
+                                }
+                            }
+                        }
+
+                        // Card 2: Gap, Edge Size & Module Scale
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: !root.splitSideDocks
+                            Layout.preferredWidth: root.splitSideDocks ? -1 : 1
+                            Layout.preferredHeight: root.splitSideDocks ? implicitHeight : -1
+                            implicitHeight: edgeCard2Col.implicitHeight + 16
+                            radius: 12
+                            color: Qt.alpha(Appearance.colors.colLayer2, 0.46)
+                            border.width: 1
+                            border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.22)
+
+                            ColumnLayout {
+                                id: edgeCard2Col
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.bottom: root.splitSideDocks ? undefined : parent.bottom
+                                anchors.margins: 8
+                                spacing: 5 * Appearance.fontSizeScale
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
+                                    MaterialSymbol {
+                                        text: "space_bar"
+                                        iconSize: 15 * Appearance.fontSizeScale
+                                        color: Appearance.colors.colSubtext
+                                    }
+                                    StyledText {
+                                        Layout.preferredWidth: 42 * Appearance.fontSizeScale
+                                        elide: Text.ElideRight
+                                        text: Translation.tr("Gap")
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        color: Appearance.colors.colSubtext
+                                    }
+                                    AbyssSlider {
+                                        objectName: root.useHorizontalDock ? "abyssEdgeGapSlider" : ""
+                                        editorCompact: true
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 75 * Appearance.fontSizeScale
+                                        unit: "px"
+                                        from: 0
+                                        to: 32
+                                        stepSize: 1
+                                        value: root.gap
+                                        onMoved: root.gap = value
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
+                                    MaterialSymbol {
+                                        text: "aspect_ratio"
+                                        iconSize: 15 * Appearance.fontSizeScale
+                                        color: Appearance.colors.colSubtext
+                                    }
+                                    StyledText {
+                                        Layout.preferredWidth: 42 * Appearance.fontSizeScale
+                                        elide: Text.ElideRight
+                                        text: Translation.tr("Span")
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        color: Appearance.colors.colSubtext
+                                    }
+                                    AbyssSlider {
+                                        objectName: root.useHorizontalDock ? "abyssEdgeSizeSlider" : ""
+                                        editorCompact: true
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 75 * Appearance.fontSizeScale
+                                        from: .6
+                                        to: 1.8
+                                        stepSize: .01
+                                        value: Placement.edgeSize(root.draftOptions, root.editingEdge)
+                                        onMoved: root.edgeSizes = Object.assign(
+                                            {}, root.edgeSizes,
+                                            {[root.editingEdge]: value})
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
+                                    MaterialSymbol {
+                                        text: "zoom_out_map"
+                                        iconSize: 15 * Appearance.fontSizeScale
+                                        color: Appearance.colors.colSubtext
+                                    }
+                                    StyledText {
+                                        Layout.preferredWidth: 42 * Appearance.fontSizeScale
+                                        elide: Text.ElideRight
+                                        text: Translation.tr("Scale")
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        color: Appearance.colors.colSubtext
+                                    }
+                                    AbyssSlider {
+                                        objectName: root.useHorizontalDock ? "abyssScaleModulesSlider" : ""
+                                        editorCompact: true
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 75 * Appearance.fontSizeScale
+                                        from: .6
+                                        to: 1.8
+                                        stepSize: .01
+                                        value: root.moduleScale
+                                        onMoved: root.moduleScale = value
+                                        StyledToolTip { text: "Overall module scale" }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Card 3: Module Welding & Corner Radius
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: !root.splitSideDocks
+                            Layout.preferredWidth: root.splitSideDocks ? -1 : 1
+                            Layout.preferredHeight: root.splitSideDocks ? implicitHeight : -1
+                            implicitHeight: edgeCard3Col.implicitHeight + 16
+                            radius: 12
+                            color: Qt.alpha(Appearance.colors.colLayer2, 0.46)
+                            border.width: 1
+                            border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.22)
+
+                            ColumnLayout {
+                                id: edgeCard3Col
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.bottom: root.splitSideDocks ? undefined : parent.bottom
+                                anchors.margins: 8
+                                spacing: 6 * Appearance.fontSizeScale
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 6
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        text: Translation.tr("Welding & Radius")
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        font.weight: Font.DemiBold
+                                        color: Appearance.colors.colOnLayer1
+                                    }
+
+                                    Rectangle {
+                                        implicitHeight: 18
+                                        implicitWidth: edgeCurveStatusText.implicitWidth + 10
+                                        radius: 9
+                                        color: Qt.alpha(Appearance.colors.colLayer3, 0.72)
+
+                                        StyledText {
+                                            id: edgeCurveStatusText
+                                            anchors.centerIn: parent
+                                            text: root.edgeWidthAffectsModules[root.editingEdge] === false
+                                                ? Translation.tr("Local bulge")
+                                                : Translation.tr("Edge-coupled")
+                                            font.pixelSize: 9 * Appearance.fontSizeScale
+                                            color: Appearance.colors.colSubtext
+                                        }
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
+
+                                    AbyssButton {
+                                        objectName: root.useHorizontalDock ? "abyssJoinNearbyModules" : ""
+                                        text: "Join nearby modules"
+                                        glyph: "join_inner"
+                                        compact: true
+                                        editorSquare: true
+                                        checkable: true
+                                        description: "Join nearby modules: connect neighboring module surfaces on this Edge. Distant groups keep their own bulges and module sizes remain unchanged."
+                                        Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                        Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                        Layout.maximumWidth: root.editorActionSize
+                                        Layout.maximumHeight: root.editorActionSize
+                                        checked: root.edgeJoinModules[root.editingEdge] === true
+                                        enabled: root.edgeWidthAffectsModules[root.editingEdge] === false
+                                        onToggled: root.edgeJoinModules = Object.assign(
+                                            {}, root.edgeJoinModules,
+                                            {[root.editingEdge]: checked})
+                                    }
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        text: Translation.tr("Join modules")
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        color: Appearance.colors.colSubtext
+                                    }
+
+                                    AbyssButton {
+                                        objectName: root.useHorizontalDock ? "abyssModuleRoundingAction" : ""
+                                        text: "Inherit rounding"
+                                        glyph: "rounded_corner"
+                                        compact: true
+                                        editorSquare: true
+                                        checkable: true
+                                        description: checked
+                                            ? "Inherited module rounding. Toggle off to use a custom radius."
+                                            : "Custom module rounding. Toggle on to inherit shared curvature."
+                                        Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                        Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                        Layout.maximumWidth: root.editorActionSize
+                                        Layout.maximumHeight: root.editorActionSize
+                                        checked: (root.edgeModuleRadii[root.editingEdge] ?? -1) < 0
+                                        enabled: root.edgeWidthAffectsModules[root.editingEdge] === false
+                                        onToggled: {
+                                            const radius = root.edgeModuleRadii[root.editingEdge] ?? -1
+                                            root.edgeModuleRadii = Object.assign({}, root.edgeModuleRadii, {
+                                                [root.editingEdge]: checked ? -1
+                                                    : (radius >= 0 ? radius : AbyssStyle.neckRadius)
+                                            })
+                                        }
+                                    }
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        text: Translation.tr("Auto radius")
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        color: Appearance.colors.colSubtext
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
+
+                                    StyledText {
+                                        Layout.preferredWidth: 44 * Appearance.fontSizeScale
+                                        elide: Text.ElideRight
+                                        text: Translation.tr("Radius")
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        color: Appearance.colors.colSubtext
+                                    }
+
+                                    AbyssSlider {
+                                        objectName: root.useHorizontalDock ? "abyssModuleRounding" : ""
+                                        editorCompact: true
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 75 * Appearance.fontSizeScale
+                                        enabled: root.edgeWidthAffectsModules[root.editingEdge] === false
+                                        unit: "px"
+                                        from: 0
+                                        to: 64
+                                        stepSize: 1
+                                        value: (root.edgeModuleRadii[root.editingEdge] ?? -1) < 0
+                                            ? AbyssStyle.neckRadius : root.edgeModuleRadii[root.editingEdge]
+                                        onMoved: root.edgeModuleRadii = Object.assign(
+                                            {}, root.edgeModuleRadii,
+                                            {[root.editingEdge]: value})
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Tier 2C: Popups & Panels (IPC / OSD Placement Configurator)
+                    Rectangle {
+                        id: popupsDockCard
+                        parent: root.splitSideDocks ? leftPopupsDockColumn : dockTrayColumn
+                        visible: root.splitSideDocks || root.activeDockTab === "popups"
+                        x: 0
+                        y: 0
+                        width: root.splitSideDocks ? leftPopupsDockColumn.width : undefined
+                        Layout.fillWidth: true
+                        Layout.fillHeight: !root.splitSideDocks
+                        Layout.preferredHeight: root.splitSideDocks ? implicitHeight : -1
+                        implicitHeight: popupsCardColumn.implicitHeight + 20
+                        radius: 12
+                        color: Qt.alpha(Appearance.colors.colLayer2, 0.46)
+                        border.width: 1
+                        border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.22)
+
+                        ColumnLayout {
+                            id: popupsCardColumn
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.bottom: root.splitSideDocks ? undefined : parent.bottom
+                            anchors.margins: root.splitSideDocks ? 6 : 10
+                            spacing: 6 * Appearance.fontSizeScale
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                MaterialSymbol {
+                                    text: "open_in_new"
+                                    iconSize: 16 * Appearance.fontSizeScale
+                                    color: Appearance.colors.colPrimary
+                                }
+
+                                StyledText {
+                                    Layout.fillWidth: root.splitSideDocks
+                                    elide: Text.ElideRight
+                                    text: root.splitSideDocks
+                                        ? Translation.tr("Popups & Panels")
+                                        : Translation.tr("OSD & Indicator Placement")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.weight: Font.DemiBold
+                                    color: Appearance.colors.colOnLayer1
+                                }
+
+                                StyledText {
+                                    visible: !root.splitSideDocks
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                    text: Translation.tr("Drag the live preview on any Screen Edge or choose an alignment below")
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    color: Appearance.colors.colSubtext
+                                }
+
+                                DockTogglePill {
+                                    visible: root.splitSideDocks
+                                    objectName: root.splitSideDocks ? "abyssEditorIpcMode" : ""
+                                    icon: "open_with"
+                                    active: root.editingPopups
+                                    tooltipText: root.editingPopups
+                                        ? Translation.tr("Live OSD drag preview active — click to return to module handles")
+                                        : Translation.tr("Show live OSD preview on Desktop Stage to drag")
+                                    onClicked: root.editingPopups = !root.editingPopups
+                                }
+
+                                DockTogglePill {
+                                    visible: root.splitSideDocks
+                                    icon: "restart_alt"
+                                    active: false
+                                    tooltipText: Translation.tr("Reset selected IPC position")
+                                    onClicked: previewPositions.apply(null)
+                                }
+
+                                StyledText {
+                                    visible: !root.splitSideDocks
+                                    text: Translation.tr("Scope")
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    color: Appearance.colors.colSubtext
+                                }
+
+                                Item {
+                                    id: inlineDockScopeHost
+                                    visible: !root.splitSideDocks
+                                    Layout.preferredWidth: 124 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: 150 * Appearance.fontSizeScale
+                                    implicitWidth: 124 * Appearance.fontSizeScale
+                                    implicitHeight: 28 * Appearance.fontSizeScale
+                                }
+                            }
+
+                            RowLayout {
+                                visible: root.splitSideDocks
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                StyledText {
+                                    text: Translation.tr("Scope")
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    color: Appearance.colors.colSubtext
+                                }
+
+                                Item {
+                                    id: sideDockScopeHost
+                                    Layout.fillWidth: true
+                                    implicitHeight: 28 * Appearance.fontSizeScale
+
+                                    StyledComboBox {
+                                        id: dockIpcOutputChoice
+                                        parent: root.splitSideDocks ? sideDockScopeHost : inlineDockScopeHost
+                                        objectName: root.useHorizontalDock ? "abyssEditorIpcOutput" : ""
+                                        x: 0
+                                        y: 0
+                                        width: root.splitSideDocks ? sideDockScopeHost.width : inlineDockScopeHost.width
+                                        baseHeight: 28 * Appearance.fontSizeScale
+                                        popupMinimumWidth: 150 * Appearance.fontSizeScale
+                                        textRole: "label"
+                                        valueRole: "value"
+                                        model: [
+                                            {label: "All outputs", value: ""},
+                                            {label: root.outputName, value: root.outputName}
+                                        ]
+                                        currentIndex: model.findIndex(option => option.value === (root.outputOnly ? root.outputName : ""))
+                                        onActivated: root.outputOnly = currentValue !== ""
+                                        StyledToolTip { text: Translation.tr("Edit this output or all outputs") }
+                                    }
+                                }
+                            }
+
+                            Item {
+                                id: dockPopupsHost
+                                Layout.fillWidth: true
+                                Layout.fillHeight: !root.splitSideDocks
+                                Layout.preferredHeight: previewPositions.implicitHeight
+                                implicitHeight: previewPositions.implicitHeight
+                            }
+                        }
+                    }
+                }
+            }
+
             ColumnLayout {
                 id: toolbarColumn
+                visible: !root.useHorizontalDock
                 width: toolbarScroll.width
                 spacing: 3
 
@@ -969,7 +2729,7 @@ Item {
                         Layout.maximumHeight:root.editorActionSize
                         Layout.maximumWidth:root.editorActionSize
                         editorSquare:true
-                            objectName:"abyssLayoutUndo"
+                            objectName:!root.useHorizontalDock ? "abyssLayoutUndo" : ""
                             text:"Undo";glyph:"undo";compact:true
                             Layout.preferredWidth:root.headerActionSize;Layout.preferredHeight:root.headerActionSize
                             enabled:root.undoStack.length>0
@@ -979,7 +2739,7 @@ Item {
                         Layout.maximumHeight:root.editorActionSize
                         Layout.maximumWidth:root.editorActionSize
                         editorSquare:true
-                            objectName:"abyssLayoutReset"
+                            objectName:!root.useHorizontalDock ? "abyssLayoutReset" : ""
                             text: "Reset"; glyph: "restart_alt"; compact: true
                             description: root.editingPopups ? "Reset selected IPC position" : "Reset layout draft"
                             Layout.preferredWidth:root.headerActionSize;Layout.preferredHeight:root.headerActionSize
@@ -991,7 +2751,7 @@ Item {
                         Layout.maximumHeight:root.editorActionSize
                         Layout.maximumWidth:root.editorActionSize
                         editorSquare:true
-                            objectName:"abyssLayoutCancel"
+                            objectName:!root.useHorizontalDock ? "abyssLayoutCancel" : ""
                             text: "Cancel"; glyph: "close"; compact: true
                             description: "Cancel editing"
                             Layout.preferredWidth:root.headerActionSize;Layout.preferredHeight:root.headerActionSize
@@ -1001,7 +2761,7 @@ Item {
                         Layout.maximumHeight:root.editorActionSize
                         Layout.maximumWidth:root.editorActionSize
                         editorSquare:true
-                            objectName:"abyssLayoutDone"
+                            objectName:!root.useHorizontalDock ? "abyssLayoutDone" : ""
                             text: "Done"; glyph: "check"; compact: true
                             description: "Save layout changes"
                             Layout.preferredWidth:root.headerActionSize;Layout.preferredHeight:root.headerActionSize
@@ -1012,7 +2772,7 @@ Item {
                 }
 
                 AbyssLabel {
-                    objectName:"abyssLayoutFeedback"
+                    objectName:!root.useHorizontalDock ? "abyssLayoutFeedback" : ""
                     visible:text.length>0
                     text:root.layoutConflicts[0] || root.feedback
                     Layout.fillWidth:true;Layout.minimumWidth:0;wrapMode:Text.WordWrap
@@ -1039,7 +2799,7 @@ Item {
                         Layout.minimumWidth: 0
                         spacing: 4
                         SelectionGroupButton {
-                            objectName:"abyssEditorModulesMode"
+                            objectName:!root.useHorizontalDock ? "abyssEditorModulesMode" : ""
                             buttonIcon:"widgets";buttonText:"Modules";toggled:!root.editingPopups
                             horizontalPadding:4*Appearance.fontSizeScale
                             verticalPadding:2*Appearance.fontSizeScale
@@ -1050,7 +2810,7 @@ Item {
                             onClicked:root.editingPopups=false
                         }
                         SelectionGroupButton {
-                            objectName:"abyssEditorIpcMode"
+                            objectName:!root.useHorizontalDock ? "abyssEditorIpcMode" : ""
                             buttonIcon:"open_in_new";buttonText:"IPC";toggled:root.editingPopups
                             horizontalPadding:4*Appearance.fontSizeScale
                             verticalPadding:2*Appearance.fontSizeScale
@@ -1090,7 +2850,7 @@ Item {
                             rowSpacing: 4
                             StyledComboBox {
                             id:ipcOutputChoice
-                            objectName:"abyssEditorIpcOutput"
+                            objectName:!root.useHorizontalDock ? "abyssEditorIpcOutput" : ""
                             // Shared output scope is useful in both Modules and IPC.
                             visible:true
                             baseHeight:28*Appearance.fontSizeScale
@@ -1113,7 +2873,7 @@ Item {
                             StyledToolTip {text:"Edit this output or all outputs"}
                         }
                         AbyssButton {
-                            objectName:"abyssEditorOutputOnly"
+                            objectName:!root.useHorizontalDock ? "abyssEditorOutputOnly" : ""
                             text:"This output only"
                             glyph:checked ? "check_box" : "check_box_outline_blank"
                             compact:true;editorSquare:true;checkable:true
@@ -1136,8 +2896,15 @@ Item {
                 // position selectors in a separate, top-aligned component.
                 AbyssPositionSettings {
                     id:previewPositions
+                    parent:root.useHorizontalDock ? dockPopupsHost : toolbarColumn
+                    x:0
+                    y:0
+                    width:root.useHorizontalDock ? dockPopupsHost.width : toolbarScroll.width
+                    Layout.fillWidth:true
+                    Layout.minimumWidth:0
+                    Layout.maximumWidth:root.useHorizontalDock ? dockPopupsHost.width : toolbarScroll.width
                     objectName:"abyssEditorIpcPlacement"
-                    visible:root.editingPopups
+                    visible:root.splitSideDocks || root.editingPopups
                     kind:"volume"
                     compactVertical:!root.toolbarWideControls
                     compactSideToolbar:!root.toolbarOnHorizontalEdge
@@ -1155,8 +2922,15 @@ Item {
                     // Popups ("utilities","launcher", etc.) follow their owning Screen Edge modules; only IPC/OSD
                     // indicators have independent positions in this editor.
                     allowedKinds:["osd","volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch"]
-                    onPositionsEdited:(positions,kind,outputName,values)=>
+                    onKindChanged: {
+                        if (root.splitSideDocks && root.visible)
+                            root.editingPopups = true
+                    }
+                    onPositionsEdited:(positions,kind,outputName,values)=> {
+                        if (root.splitSideDocks && root.visible)
+                            root.editingPopups = true
                         root.editPosition(positions,kind,outputName,values)
+                    }
                 }
 
                 // Adaptive field grid: each cell keeps its icon, input and
@@ -1217,12 +2991,18 @@ Item {
                             Layout.fillWidth:false;Layout.minimumWidth:0;
                             
                             id: palette
-                            objectName:"abyssModuleDropdown"
+                            objectName:!root.useHorizontalDock ? "abyssModuleDropdown" : ""
                             StyledToolTip {text:"Module to add"}
                             model: Placement.catalog.map(kind => ({label:Placement.label(kind),kind:kind}))
                             textRole:"label";valueRole:"kind"
-                            
-                            
+                            onActivated: {
+                                const chosenKind = currentValue
+                                const match = root.draft.find(p => p.kind === chosenKind && p.enabled)
+                                    ?? root.draft.find(p => p.kind === chosenKind)
+                                if (match && root.selected?.kind !== chosenKind)
+                                    root.select(match.id)
+                            }
+                            Component.onCompleted: root.syncPaletteToSelection()
                             }
                             AbyssButton {
                             Layout.maximumHeight:root.editorActionSize
@@ -1230,7 +3010,7 @@ Item {
                             editorSquare:true
                             Layout.preferredWidth:root.editorActionSize
                             
-                            objectName:"abyssEditorConfirmAdd"
+                            objectName:!root.useHorizontalDock ? "abyssEditorConfirmAdd" : ""
                             text:"Add module";glyph:"add"
                             compact:true
                             description:"Add selected module"
@@ -1252,7 +3032,7 @@ Item {
                             editorSquare:true
                             Layout.fillWidth:false;Layout.minimumWidth:0
                             
-                            objectName:"abyssModulePositionLock"
+                            objectName:!root.useHorizontalDock ? "abyssModulePositionLock" : ""
                             text:root.allTargetsLocked ? "Unlock position" : "Lock position"
                             glyph:root.allTargetsLocked ? "lock_open" : "lock"
                             compact:true
@@ -1268,7 +3048,7 @@ Item {
                             editorSquare:true
                             Layout.fillWidth:false;Layout.minimumWidth:0
                             
-                            objectName:"abyssSelectionEnabled"
+                            objectName:!root.useHorizontalDock ? "abyssSelectionEnabled" : ""
                             text:root.allTargetsDisabled
                             ? "Enable" : "Disable"
                             glyph:root.allTargetsDisabled
@@ -1287,7 +3067,7 @@ Item {
                             Layout.fillWidth:false;Layout.minimumWidth:0
                             
                             text:"Remove";glyph:"delete"
-                            objectName:"abyssSelectionRemove"
+                            objectName:!root.useHorizontalDock ? "abyssSelectionRemove" : ""
                             compact:true
                             description:root.multiSelect ? "Remove selected modules" : "Remove selected module"
                             enabled:root.targets.length>0
@@ -1295,7 +3075,7 @@ Item {
                             onClicked:root.batch("remove",true)
                             }
                             AbyssButton {
-                            objectName:"abyssModuleJoinCorner"
+                            objectName:!root.useHorizontalDock ? "abyssModuleJoinCorner" : ""
                             text:root.nearbyCorner
                             ? "Connect to "+root.nearbyCorner+" corner"
                             : "Join nearby corner"
@@ -1322,7 +3102,7 @@ Item {
                         Layout.maximumWidth:moduleEditorColumn.controlsSpan
                         spacing:4*Appearance.fontSizeScale
                         AbyssButton {
-                        objectName:"abyssModuleRotate"
+                        objectName:!root.useHorizontalDock ? "abyssModuleRotate" : ""
                         text:root.rotateActionText
                         glyph:"rotate_right"
                         compact:true;editorSquare:true
@@ -1346,7 +3126,7 @@ Item {
                         Layout.fillWidth:true;Layout.minimumWidth:0;
                         
                         id:alignmentChoice
-                        objectName:"abyssModulePositionDropdown"
+                        objectName:!root.useHorizontalDock ? "abyssModulePositionDropdown" : ""
                         visible:true
                         model:[
                         {label:"Free position",value:"free"},
@@ -1368,7 +3148,7 @@ Item {
                         AbyssLabel {
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         
-                        objectName:"abyssSelectionCount"
+                        objectName:!root.useHorizontalDock ? "abyssSelectionCount" : ""
                         visible:root.multiSelect
                         text:root.targets.length+" selected · "+root.targets.filter(p=>p.locked).length+" locked"
                         elide:Text.ElideRight
@@ -1380,7 +3160,7 @@ Item {
                         editorSquare:true
                         Layout.preferredWidth:root.editorActionSize
                         
-                        objectName:"abyssSelectionClear"
+                        objectName:!root.useHorizontalDock ? "abyssSelectionClear" : ""
                         
                         compact:true
                         visible:root.multiSelect
@@ -1405,7 +3185,7 @@ Item {
                             editorSquare:true
                             Layout.preferredWidth:root.editorActionSize
                             
-                            objectName:"abyssModuleRoundingAction"
+                            objectName:!root.useHorizontalDock ? "abyssModuleRoundingAction" : ""
                             text:"Inherit rounding";glyph:"rounded_corner"
                             compact:true;checkable:true
                             description:checked
@@ -1431,7 +3211,7 @@ Item {
                             Layout.minimumWidth:75*Appearance.fontSizeScale
                             
                             
-                            objectName:"abyssModuleRounding"
+                            objectName:!root.useHorizontalDock ? "abyssModuleRounding" : ""
                             enabled:root.edgeWidthAffectsModules[root.editingEdge]===false
                             unit:"px";from:0;to:64;stepSize:1
                             value:(root.edgeModuleRadii[root.editingEdge] ?? -1)<0
@@ -1443,7 +3223,7 @@ Item {
                             id:moduleCustomSizeRow
                             Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2*Appearance.fontSizeScale
                             AbyssButton {
-                            objectName:"abyssModuleCustomSizeToggle"
+                            objectName:!root.useHorizontalDock ? "abyssModuleCustomSizeToggle" : ""
                             text:"Custom size";glyph:"aspect_ratio"
                             compact:true;editorSquare:true;checkable:true
                             description:"Use a custom size for the selected module"
@@ -1465,7 +3245,7 @@ Item {
                             Layout.minimumWidth:75*Appearance.fontSizeScale
                             
                             
-                            objectName:"abyssModuleCustomSizeSlider"
+                            objectName:!root.useHorizontalDock ? "abyssModuleCustomSizeSlider" : ""
                             visible:true
                             from:.6;to:1.8;stepSize:.01
                             value:root.selected?.customSize
@@ -1514,7 +3294,7 @@ Item {
                             Layout.fillWidth:true;Layout.minimumWidth:0;
                             
                             id:edgeChoice
-                            objectName:"abyssEditingEdgeDropdown"
+                            objectName:!root.useHorizontalDock ? "abyssEditingEdgeDropdown" : ""
                             StyledToolTip {text:"Editing Edge"}
                             model:["top","right","bottom","left"]
                             currentIndex:model.indexOf(root.editingEdge)
@@ -1536,7 +3316,7 @@ Item {
                             onToggled:root.snapEnabled=checked
                             }
                             AbyssButton {
-                            objectName:"abyssJoinNearbyModules"
+                            objectName:!root.useHorizontalDock ? "abyssJoinNearbyModules" : ""
                             text:"Join nearby modules";glyph:"join_inner"
                             compact:true;editorSquare:true
                             description:"Join nearby modules: connect neighboring module surfaces on this Edge. Distant groups keep their own bulges and module sizes remain unchanged."
@@ -1574,7 +3354,7 @@ Item {
                             Layout.minimumWidth:75*Appearance.fontSizeScale
                             
                             
-                            objectName:"abyssEdgeGapSlider"
+                            objectName:!root.useHorizontalDock ? "abyssEdgeGapSlider" : ""
                             unit:"px";from:0;to:32;stepSize:1;value:root.gap
                             onMoved:root.gap=value
                             
@@ -1594,7 +3374,7 @@ Item {
                             Layout.minimumWidth:75*Appearance.fontSizeScale
                             
                             
-                            objectName:"abyssEdgeSizeSlider"
+                            objectName:!root.useHorizontalDock ? "abyssEdgeSizeSlider" : ""
                             from:.6;to:1.8;stepSize:.01
                             value:Placement.edgeSize(root.draftOptions,root.editingEdge)
                             
@@ -1630,7 +3410,7 @@ Item {
                             {[root.editingEdge]:-1})
                             }
                             AbyssButton {
-                            objectName:"abyssRoundZeroCorners"
+                            objectName:!root.useHorizontalDock ? "abyssRoundZeroCorners" : ""
                             text:"Round inner corners at 0 px";glyph:"rounded_corner"
                             compact:true;editorSquare:true;checkable:true
                             description:enabled
@@ -1647,7 +3427,7 @@ Item {
                             }
                             AbyssSlider {
                             editorCompact:true
-                            objectName:"abyssEdgeWidthSlider"
+                            objectName:!root.useHorizontalDock ? "abyssEdgeWidthSlider" : ""
                             Layout.fillWidth:true;Layout.preferredWidth:190*Appearance.fontSizeScale
                             Layout.minimumWidth:75*Appearance.fontSizeScale
                             
@@ -1671,7 +3451,7 @@ Item {
                             Layout.alignment:Qt.AlignLeft
                             spacing:2
                             AbyssButton {
-                            objectName:"abyssScaleModulesToggle"
+                            objectName:!root.useHorizontalDock ? "abyssScaleModulesToggle" : ""
                             Layout.maximumHeight:root.editorActionSize
                             Layout.maximumWidth:root.editorActionSize
                             editorSquare:true
@@ -1705,7 +3485,7 @@ Item {
                             }
                             AbyssSlider {
                             editorCompact:true
-                            objectName:"abyssScaleModulesSlider"
+                            objectName:!root.useHorizontalDock ? "abyssScaleModulesSlider" : ""
                             Layout.fillWidth:true;Layout.preferredWidth:190*Appearance.fontSizeScale
                             Layout.minimumWidth:75*Appearance.fontSizeScale
                             

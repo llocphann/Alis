@@ -37,7 +37,7 @@ SYSTEM_PROVISIONER = "/usr/libexec/alis-intergration-system-provision"
 _LEGACY_PREFIX = "".join(("i", "nir"))
 _LEGACY_COMPONENT = "".join(("hada", "lird"))
 _LEGACY_SYSTEM_PROVISIONER = f"/usr/libexec/{_LEGACY_PREFIX}-{_LEGACY_COMPONENT}-system-provision"
-EXECUTABLE = {"assets/helpers/alis-battery-charge-limit", "assets/helpers/alis-thinkfan"}
+EXECUTABLE = {"assets/helpers/alis-battery-charge-limit", "assets/helpers/alis-thinkfan", "assets/bin/alis-nexus"}
 # The separately released Alis-Intergration payload retains its original helper names.
 # Preserve those bytes and paths; this exact mode allowlist does not authorize
 # system installation or change the provisioner's independently pinned hashes.
@@ -68,38 +68,7 @@ def request_bytes(url, limit):
     return data
 
 
-def _local_repo_revision(local_repo):
-    try:
-        out = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=local_repo, text=True, stderr=subprocess.DEVNULL).strip()
-        if SHA.fullmatch(out):
-            return out
-    except (OSError, subprocess.SubprocessError):
-        pass
-    manifest = json.loads((local_repo / "manifest.json").read_text())
-    derived = (manifest.get("derivedFrom") or {}).get("sourceSha", "")
-    if SHA.fullmatch(str(derived)):
-        return str(derived)
-    return hashlib.sha1((local_repo / "manifest.json").read_bytes()).hexdigest()
-
-
-def _pack_local_repo(local_repo):
-    files = {"manifest.json": (local_repo / "manifest.json").read_bytes()}
-    for path in local_repo.rglob("*"):
-        if path.is_symlink() or not path.is_file():
-            continue
-        rel = path.relative_to(local_repo)
-        if ".git" in rel.parts or "__pycache__" in rel.parts:
-            continue
-        name = rel.as_posix()
-        if allowed(name):
-            files[name] = path.read_bytes()
-    return files
-
-
-def latest_sha(shell_root=ROOT):
-    local_repo = discovery.resolve_local_repo_package(shell_root)
-    if local_repo is not None:
-        return _local_repo_revision(local_repo)
+def latest_sha():
     doc = json.loads(request_bytes(API, 256 * 1024))
     revision = doc.get("sha") if isinstance(doc, dict) else None
     if not isinstance(revision, str) or not SHA.fullmatch(revision):
@@ -128,6 +97,10 @@ def unpack(data):
             path = PurePosixPath(*parts[1:])
             if any(p in ("", ".", "..") for p in path.parts):
                 raise ValueError("Unsafe archive path")
+            # GitHub/codeload tarballs contain ordinary directory headers
+            # (e.g. modules/settings/). Directories carry no payload bytes;
+            # never attempt to copy them as regular files. Other nonregular
+            # members, including links and devices, remain forbidden.
             if member.isdir():
                 continue
             name = path.as_posix()
@@ -168,8 +141,8 @@ def assemble(files, revision, target):
         "session": manifest.get("session"),
         "tlpSettings": (manifest.get("settings") or {}).get("tlp"),
         "thinkfanSettings": (manifest.get("settings") or {}).get("thinkfan"),
-        "obsidianSettings": (manifest.get("settings") or {}).get("obsidian"),
-        "obsidianTodoSettings": (manifest.get("settings") or {}).get("obsidianTodo"),
+        "nexusSettings": (manifest.get("settings") or {}).get("nexus"),
+        "nexusTodoSettings": (manifest.get("settings") or {}).get("nexusTodo"),
         "tlpRowSettings": (manifest.get("settings") or {}).get("tlpRow"),
         "tlpWaffleSettings": (manifest.get("settings") or {}).get("tlpWaffle"),
         "tlpWaffleRowSettings": (manifest.get("settings") or {}).get("tlpWaffleRow"),
@@ -239,32 +212,8 @@ def _resolve_system_provisioner():
     return ""
 
 
-def _runtime_helpers_present():
-    battery_ok = any(
-        os.path.isfile(p) and os.access(p, os.X_OK)
-        for p in ("/usr/libexec/alis-battery-charge-limit", f"/usr/libexec/{_LEGACY_PREFIX}-battery-charge-limit")
-    )
-    fan_ok = any(
-        os.path.isfile(p) and os.access(p, os.X_OK)
-        for p in ("/usr/libexec/alis-thinkfan", f"/usr/libexec/{_LEGACY_PREFIX}-thinkfan")
-    )
-    schema_ok = any(
-        os.path.isfile(p)
-        for p in ("/usr/share/alis/tlp-settings-schema.json", f"/usr/share/{_LEGACY_PREFIX}/tlp-settings-schema.json")
-    )
-    return battery_ok and fan_ok and schema_ok
-
-
 def call_system_helper(action, package=None):
     provisioner = _resolve_system_provisioner()
-    if action == "helpers-status" and _runtime_helpers_present():
-        return {
-            "ok": True,
-            "installed": True,
-            "managed": True,
-            "provisionerAvailable": True,
-            "diagnostic": "ready",
-        }
     if not provisioner:
         if action == "helpers-status":
             return {"ok": True, "installed": False, "managed": False,
@@ -316,6 +265,9 @@ def gateway_package(action):
         if not isinstance(payload, dict):
             raise ValueError("Expected JSON object")
     except (ValueError, TypeError) as error:
+        # When the child crashes (e.g. a Python NameError after pacman -U),
+        # propagate a bounded stderr diagnostic and exit status. The user
+        # must check installed package state before re-running the action.
         detail = outcome.stderr.strip()[-700:]
         status = "exit " + str(outcome.returncode)
         if detail:
@@ -328,10 +280,8 @@ def gateway_package(action):
     return payload
 
 
-def operate(action, home, shell_root, revision_fetch=None, archive_fetch=request_bytes,
+def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=request_bytes,
             system_call=call_system_helper, gateway_call=gateway_package):
-    if revision_fetch is None:
-        revision_fetch = lambda: latest_sha(shell_root)
     home.mkdir(parents=True, exist_ok=True)
     bundled = discovery.resolve_bundled_package(shell_root)
     # Bundled distro payload takes precedence in Alis discovery.
@@ -359,6 +309,9 @@ def operate(action, home, shell_root, revision_fetch=None, archive_fetch=request
         if current:
             result["version"] = json.loads((home / "releases" / current / "manifest.json").read_text())["version"]
         if action == "system-status":
+            # Startup/reconciliation is read-only. The full Arch shell can
+            # own the gateway independently of the standalone package, and
+            # non-Arch sessions must still report helper availability.
             try:
                 gateway = gateway_call("gateway-status")
             except (ValueError, OSError):
@@ -366,7 +319,7 @@ def operate(action, home, shell_root, revision_fetch=None, archive_fetch=request
                            "diagnostic": "standalone-package-unavailable"}
             helper = system_call("helpers-status", None)
             result.update(
-                gatewayPackageInstalled=gateway.get("packageInstalled") is True or helper.get("installed") is True,
+                gatewayPackageInstalled=gateway.get("packageInstalled") is True,
                 systemProvisionerAvailable=helper.get("provisionerAvailable") is True
                     or gateway.get("installed") is True,
                 systemHelpersInstalled=helper.get("installed") is True,
@@ -390,27 +343,26 @@ def operate(action, home, shell_root, revision_fetch=None, archive_fetch=request
                 message=str(gateway.get("message") or "System gateway package status refreshed"))
             return result
         if action == "helpers-ensure":
+            # One explicit Settings action: provision the trusted standalone
+            # gateway when absent, then idempotently install verified helpers.
+            # Both privileged stages still require their own Polkit consent.
             active_package = bundled if bundled.is_dir() else home / "current"
             if not active_package.is_dir():
                 raise ValueError("Install Alis-Intergration before system helpers")
             package_dir = active_package.resolve()
             if not package_dir.is_dir():
                 raise ValueError("Invalid Alis-Intergration release")
-            provisioner = system_call("helpers-status", None)
-            if provisioner.get("provisionerAvailable") is True and provisioner.get("installed") is True:
-                result.update(
-                    systemHelpersInstalled=True,
-                    systemProvisionerAvailable=True,
-                    gatewayPackageInstalled=True,
-                    systemHelpersDiagnostic="ready",
-                    message="System helpers ready")
-                return result
             gateway = gateway_call("gateway-status")
+            provisioner = system_call("helpers-status", None)
+            # A full alis-shell Arch package can already own the trusted
+            # provisioner without installing the separate repo-copy package.
             if provisioner.get("provisionerAvailable") is not True:
                 if gateway.get("installed") is not True:
                     gateway = gateway_call("gateway-install")
                     if gateway.get("installed") is not True:
                         raise ValueError("System gateway installation was not confirmed")
+            # Root gateway revalidates its audited allowlist and existing
+            # ownership; never delete helpers merely to reinstall them.
             if provisioner.get("provisionerAvailable") is True and provisioner.get("installed") is True:
                 payload = provisioner
             else:
@@ -434,6 +386,8 @@ def operate(action, home, shell_root, revision_fetch=None, archive_fetch=request
                 package_dir = active_package.resolve()
                 if not package_dir.is_dir():
                     raise ValueError("Invalid Alis-Intergration release")
+                # All bytes must match the system package's root-owned pinned
+                # allowlist. The privileged gateway will re-open and check them.
                 payload = system_call(action, package_dir)
             else:
                 payload = system_call(action, None)
@@ -466,37 +420,32 @@ def operate(action, home, shell_root, revision_fetch=None, archive_fetch=request
             return result
         if action != "install":
             raise ValueError("Unsupported action")
-
-        local_repo = discovery.resolve_local_repo_package(shell_root) if revision_fetch is None or getattr(revision_fetch, "__name__", "") == "<lambda>" else None
         latest = revision_fetch()
         if not SHA.fullmatch(latest):
             raise ValueError("Invalid source revision")
         result["latestSha"] = latest
-        if latest == current and local_repo is None:
+        if latest == current:
             result["message"] = "Already on the latest revision"
             return result
-
         releases = home / "releases"
         releases.mkdir(exist_ok=True)
         candidate = releases / latest
-        if candidate.exists() and local_repo is None:
+        if candidate.exists():
             if not package_good(candidate, latest):
-                shutil.rmtree(candidate, ignore_errors=True)
-        if not candidate.exists() or local_repo is not None:
+                raise ValueError("Existing release bytes differ; preserved unchanged")
+        else:
             with tempfile.TemporaryDirectory(dir=releases, prefix=".stage-") as temporary:
-                bundle = _pack_local_repo(local_repo) if local_repo is not None else unpack(archive_fetch(ARCHIVE + latest, MAX_ARCHIVE))
+                bundle = unpack(archive_fetch(ARCHIVE + latest, MAX_ARCHIVE))
                 payload = Path(temporary) / "payload"
                 assemble(bundle, latest, payload)
                 if not package_good(payload, latest):
                     raise ValueError("Package integrity verification failed")
-                if candidate.exists():
-                    shutil.rmtree(candidate)
                 os.replace(payload, candidate)
         switch(home, latest)
-        if current and current != latest:
+        if current:
             previous_file.write_text(current + "\n")
         result.update(diagnostic="ready", available=True, installedSha=latest,
-                      canRollback=bool(current and current != latest) or result["canRollback"],
+                      canRollback=bool(current) or result["canRollback"],
                       version=json.loads((candidate / "manifest.json").read_text())["version"],
                       message="Installed verified Alis-Intergration release")
         return result

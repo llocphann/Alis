@@ -38,6 +38,7 @@ ShellRoot {
     // Keep fan-profile following alive even when Settings/System Monitor are closed.
     property var _thinkFanService: ThinkFanService
     property var _devNavigationService: DevNavigation
+    property var _colorPickerService: ColorPickerService
     property var _shellEditSessionService: ShellEditSession
     // Acquire org.kde.StatusNotifierWatcher before graphical-session.target
     // releases XDG autostart applications. The systemd unit uses Type=dbus.
@@ -50,7 +51,7 @@ ShellRoot {
     property var _windowPreviewService
     property var _weatherService
     property var _voiceSearchService
-    property var _obsidianThemeService
+    property var _nexusThemeService
     property var _cavaThemeService
     // Screen Time must exist for the whole enabled session so the Material
     // notification-center Activity tab has history before it is first opened.
@@ -81,8 +82,8 @@ ShellRoot {
             return
         if (Config.options?.bar?.weather?.enable ?? false)
             root._weatherService = Weather
-        if (Config.options?.integrations?.obsidian?.autoTheme ?? false)
-            root._obsidianThemeService = ObsidianTheme
+        if (Config.options?.integrations?.nexus?.autoTheme ?? false)
+            root._nexusThemeService = NexusTheme
         // CavaTheme also owns the optional cover-art -> external CAVA config
         // side effect, so keep it resident when that feature is explicitly enabled.
         if (Config.options?.appearance?.wallpaperTheming?.enableCava ?? false)
@@ -99,7 +100,7 @@ ShellRoot {
     }
 
     Connections {
-        target:Config.options?.integrations?.obsidian ?? null
+        target:Config.options?.integrations?.nexus ?? null
         function onAutoThemeChanged():void {root._ensureDeferredFeatureServices()}
     }
 
@@ -419,6 +420,16 @@ ShellRoot {
         function toggle(): void { GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen }
         function close(): void { GlobalStates.dashboardOpen = false }
         function open(): void { GlobalStates.dashboardOpen = true }
+        function openMusic(filesJson: string): string {
+            try {
+                const files = JSON.parse(filesJson)
+                if (!Array.isArray(files) || files.some(path => typeof path !== "string"))
+                    return "error: expected a JSON list of audio paths"
+                return AppLauncher.openLocalMusic(files)
+            } catch (e) {
+                return "error: invalid audio paths"
+            }
+        }
     }
 
     IpcHandler {
@@ -794,9 +805,13 @@ ShellRoot {
         id: iiCriticalHostLoader
         readonly property bool loaderConfigured:
             Config.ready && root.activePanelFamily === "ii" && root.familyMountReady
-        loading: loaderConfigured
-        activeAsync: loaderConfigured
-        source: "modules/ii/critical/ShellIiCriticalPanels.qml"
+        readonly property var target: ({ source: "modules/ii/critical/ShellIiCriticalPanels.qml" })
+        property string latchedSource: ""
+        onLoaderConfiguredChanged: if (loaderConfigured) latchedSource = target.source
+        Component.onCompleted: if (loaderConfigured) latchedSource = target.source
+        loading: loaderConfigured && latchedSource !== ""
+        activeAsync: loaderConfigured && latchedSource !== ""
+        source: loaderConfigured ? target.source : latchedSource
     }
 
     LazyLoader {
@@ -805,18 +820,26 @@ ShellRoot {
             && GlobalStates.deferredPanelsReady
             && root.activePanelFamily === "ii"
             && root.familyMountReady
-        loading: enabled
-        activeAsync: enabled
-        source: "ShellIiPanels.qml"
+        readonly property var target: ({ source: "ShellIiPanels.qml" })
+        property string latchedSource: ""
+        onEnabledChanged: if (enabled) latchedSource = target.source
+        Component.onCompleted: if (enabled) latchedSource = target.source
+        loading: enabled && latchedSource !== ""
+        activeAsync: enabled && latchedSource !== ""
+        source: enabled ? target.source : latchedSource
     }
 
     LazyLoader {
         id: waffleCriticalHostLoader
         readonly property bool loaderConfigured:
             Config.ready && (Config.options?.panelFamily ?? "ii") === "waffle" && root.familyMountReady
-        loading: loaderConfigured
-        activeAsync: loaderConfigured
-        source: "modules/waffle/critical/ShellWaffleCriticalPanels.qml"
+        readonly property var target: ({ source: "modules/waffle/critical/ShellWaffleCriticalPanels.qml" })
+        property string latchedSource: ""
+        onLoaderConfiguredChanged: if (loaderConfigured) latchedSource = target.source
+        Component.onCompleted: if (loaderConfigured) latchedSource = target.source
+        loading: loaderConfigured && latchedSource !== ""
+        activeAsync: loaderConfigured && latchedSource !== ""
+        source: loaderConfigured ? target.source : latchedSource
     }
 
     LazyLoader {
@@ -825,24 +848,52 @@ ShellRoot {
             && GlobalStates.deferredPanelsReady
             && (Config.options?.panelFamily ?? "ii") === "waffle"
             && root.familyMountReady
-        loading: enabled
-        activeAsync: enabled
-        source: "ShellWafflePanels.qml"
+        readonly property var target: ({ source: "ShellWafflePanels.qml" })
+        property string latchedSource: ""
+        onEnabledChanged: if (enabled) latchedSource = target.source
+        Component.onCompleted: if (enabled) latchedSource = target.source
+        loading: enabled && latchedSource !== ""
+        activeAsync: enabled && latchedSource !== ""
+        source: enabled ? target.source : latchedSource
     }
 
     LazyLoader {
         id: abyssCriticalHostLoader
-        active: Config.ready && root.activePanelFamily === "abyss" && root.familyMountReady
-        source: "modules/abyss/critical/ShellAbyssCriticalPanels.qml"
+        readonly property bool loaderConfigured:
+            Config.ready && root.activePanelFamily === "abyss" && root.familyMountReady
+        readonly property var target: ({ source: "modules/abyss/critical/ShellAbyssCriticalPanels.qml" })
+        property string latchedSource: ""
+        onLoaderConfiguredChanged: if (loaderConfigured) latchedSource = target.source
+        Component.onCompleted: if (loaderConfigured) latchedSource = target.source
+        active: loaderConfigured && latchedSource !== ""
+        source: loaderConfigured ? target.source : latchedSource
     }
     LazyLoader {
         id: abyssDeferredHostLoader
         readonly property bool enabled: Config.ready
             && root.activePanelFamily === "abyss"
             && root.familyMountReady
-        loading: enabled
-        activeAsync: enabled
-        source: "ShellAbyssPanels.qml"
+        readonly property var target: ({ source: "ShellAbyssPanels.qml" })
+        property string latchedSource: ""
+        onEnabledChanged: if (enabled) latchedSource = target.source
+        Component.onCompleted: if (enabled) latchedSource = target.source
+        loading: enabled && latchedSource !== ""
+        activeAsync: enabled && latchedSource !== ""
+        source: enabled ? target.source : latchedSource
+    }
+
+    // Boot/session lock must mount immediately at Config.ready rather than
+    // waiting on deferredPanelsReady so launchOnStartup locks before desktop frames.
+    readonly property bool lockPanelEnabled: Config.ready && (
+        root.activePanelFamily === "waffle"
+            ? (Config.options?.enabledPanels ?? []).includes("wLock")
+            : ((Config.options?.enabledPanels ?? []).includes("abyssLock")
+                || (Config.options?.enabledPanels ?? []).includes("iiLock"))
+    )
+    LazyLoader {
+        id: earlyLockLoader
+        active: root.lockPanelEnabled
+        source: "modules/lock/Lock.qml"
     }
 
     // Close confirmation dialog (always loaded, handles IPC)
@@ -904,6 +955,8 @@ ShellRoot {
         GlobalStates.controlPanelOpen = false
         GlobalStates.dashboardOpen = false
         GlobalStates.settingsOverlayOpen = false
+        if (AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
+            AlisIntergration.nexus.close()
         GlobalStates.osdVolumeOpen = false
         GlobalStates.osdBrightnessOpen = false
         GlobalStates.osdMicOpen = false

@@ -16,16 +16,21 @@ class RetiredSettingsRoutesTest(unittest.TestCase):
     def test_removed_qml_has_no_registered_component(self):
         self.assertFalse((ROOT / "modules/settings/AutomationTaskConfig.qml").exists())
         self.assertNotIn("AutomationTaskConfig", source("modules/settings/qmldir"))
+        self.assertFalse((ROOT / "modules/settings/DesktopWidgetsConfig.qml").exists())
+        self.assertNotIn("DesktopWidgetsConfig", source("modules/settings/qmldir"))
 
-    def test_index_35_is_a_migration_gap_not_a_loadable_page(self):
+    def test_index_14_and_35_are_migration_gaps_not_loadable_pages(self):
         data = source("modules/settings/SettingsPageRegistryData.qml")
         registry = source("modules/settings/SettingsPageRegistry.qml")
-        self.assertRegex(data, r"legacyHiddenIndexes:\s*\[[^\]]*\b35\b")
+        self.assertRegex(data, r"legacyHiddenIndexes:\s*\[[^\]]*\b14\b[^\]]*\b35\b")
+        self.assertIn("null, // Index 14: retired Desktop Widgets", data)
+        self.assertNotIn("pageIndex: 14", data)
         self.assertIn("null, // Index 35: retired Automation", data)
         self.assertNotIn('key:"automation"', data)
         self.assertNotIn("pageIndex:35", data)
         self.assertNotIn("pages: [24, 35", data)
         self.assertIn("function safePageIndex(index: int): int", registry)
+        self.assertIn("if (index === 14)", registry)
         self.assertIn("root.isPageApplicable(index)", registry)
         self.assertIn("root.panelsPageIndex", registry)
 

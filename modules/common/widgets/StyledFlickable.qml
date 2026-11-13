@@ -12,8 +12,16 @@ Flickable {
     property real mouseScrollDeltaThreshold: Config?.options.interactions.scrolling.mouseScrollDeltaThreshold ?? 120
     // Accumulated scroll destination so wheel deltas stack while animating
     property real scrollTargetY: 0
+    property bool showVerticalScrollBar: true
+    property bool _clampingScroll: false
+    readonly property alias verticalScrollBar: verticalScrollBarObj
+    readonly property alias scrollAnimation: scrollAnim
 
-    ScrollBar.vertical: StyledScrollBar {}
+    ScrollBar.vertical: StyledScrollBar {
+        id: verticalScrollBarObj
+        policy: (root.interactive && root.showVerticalScrollBar) ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+        visible: root.interactive && root.showVerticalScrollBar
+    }
 
     MouseArea {
         visible: root.interactive && Config?.options.interactions.scrolling.fasterTouchpadScroll
@@ -36,6 +44,7 @@ Flickable {
     }
 
     Behavior on contentY {
+        enabled: root.interactive && !root._clampingScroll
         NumberAnimation {
             id: scrollAnim
             duration: Appearance.animation.scroll.duration
@@ -45,6 +54,7 @@ Flickable {
     }
 
     Behavior on contentX {
+        enabled: root.interactive && !root._clampingScroll
         NumberAnimation {
             id: scrollAnimX
             duration: Appearance.animation.scroll.duration

@@ -265,7 +265,7 @@ ApiStrategy {
             + ' --data-binary "@${IMAGE_PATH}" 2> /dev/null > "${tmp_file_info_file}"'
             + '\n';
 
-        content += `${fileUriVarName}=$(jq -r ".file.uri" "$tmp_file_info_file")\n`
+        content += `${fileUriVarName}=$(python3 -c 'import json,sys; print((json.load(open(sys.argv[1], encoding="utf-8")) or {}).get("file", {}).get("uri", ""))' "$tmp_file_info_file")\n`
         content += `printf "{\\"uploadedFile\\": {\\"uri\\": \\"$${fileUriVarName}\\", \\"mimeType\\": \\"$${fileMimeTypeVarName}\\"}}\\n,\\n"\n`
 
         return content

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
 import qs.modules.common
 import qs.modules.common.functions
 
@@ -22,6 +23,11 @@ ComboBox {
 
     hoverEnabled: true
     opacity: root.enabled ? 1 : 0.4
+
+    HoverHandler {
+        acceptedDevices: PointerDevice.Mouse
+        cursorShape: Qt.PointingHandCursor
+    }
 
     readonly property color _bgColor: abyssStyle ? Qt.alpha(Appearance.colors.colPrimary,.08) : Appearance.colors.colLayer2
     readonly property color _bgHoverColor: abyssStyle ? Qt.alpha(Appearance.colors.colPrimary,.16) : Appearance.colors.colLayer2Hover
@@ -58,7 +64,24 @@ ComboBox {
         StyledText {
             Layout.fillWidth: true
             Layout.leftMargin: 12
-            text: root.displayText
+            text: {
+                const dt = String(root.displayText ?? "").trim();
+                if (dt.length > 0 && !dt.startsWith("[object ") && !dt.startsWith("QObject(") && dt !== "undefined" && dt !== "null")
+                    return dt;
+                if (root.currentIndex >= 0 && root.model) {
+                    // Qt wraps list models as array-like objects, not JavaScript Arrays.
+                    const item = typeof root.model.get === "function"
+                        ? root.model.get(root.currentIndex)
+                        : (root.model.length !== undefined && root.currentIndex < root.model.length
+                            ? root.model[root.currentIndex] : null);
+                    if (item) {
+                        const resolved = root._resolveItemDisplayText(item, root.textRole, root.currentIndex);
+                        if (resolved.length > 0)
+                            return resolved;
+                    }
+                }
+                return "";
+            }
             color: root._textColor
             font.pixelSize: Appearance.font.pixelSize.small
             elide: Text.ElideRight
@@ -94,6 +117,16 @@ ComboBox {
         width: Math.max(root.width,root.popupMinimumWidth)
         implicitHeight: Math.min(contentItem.implicitHeight + 8, 300)
         padding: 4
+        onOpened: {
+            const win = root.QsWindow?.window
+            if (win && typeof win.registerOverlayPopup === "function")
+                win.registerOverlayPopup(root.popup, popupBg)
+        }
+        onClosed: {
+            const win = root.QsWindow?.window
+            if (win && typeof win.unregisterOverlayPopup === "function")
+                win.unregisterOverlayPopup(root.popup)
+        }
 
         // Shared contextual reveal: grow + fade from the field instead of a hard
         // appear. Durations run through calcEffectiveDuration, so animations
@@ -133,6 +166,10 @@ ComboBox {
 
         background: Rectangle {
             id: popupBg
+            onXChanged: if (root.popup.visible) root.QsWindow?.window?.bumpOverlayBounds?.()
+            onYChanged: if (root.popup.visible) root.QsWindow?.window?.bumpOverlayBounds?.()
+            onWidthChanged: if (root.popup.visible) root.QsWindow?.window?.bumpOverlayBounds?.()
+            onHeightChanged: if (root.popup.visible) root.QsWindow?.window?.bumpOverlayBounds?.()
             radius: root.abyssStyle ? 16 : root.radius
             color: root._popupColor
             border.width: root.abyssStyle ? 0 : 1
@@ -158,15 +195,89 @@ ComboBox {
         }
     }
 
+    function _resolveItemDisplayText(item, role, idx): string {
+        if (item === undefined || item === null)
+            return "";
+        if (typeof item !== "object") {
+            const s = String(item).trim();
+            return (!s.startsWith("[object ") && !s.startsWith("QObject(") && s !== "undefined" && s !== "null") ? s : "";
+        }
+        if (role) {
+            try {
+                const t = item[role];
+                if (t !== undefined && t !== null && typeof t !== "object") {
+                    const s = String(t).trim();
+                    if (s.length > 0 && !s.startsWith("[object ") && !s.startsWith("QObject(") && s !== "undefined" && s !== "null")
+                        return s;
+                }
+            } catch (_) {}
+        }
+        const candidates = [
+            item.label,
+            item.rawLabel,
+            item.displayName,
+            item.name,
+            item.title,
+            item.text,
+            (typeof item.model === "string" ? item.model : undefined),
+            (typeof item.id === "string" ? item.id : undefined),
+            (typeof item.value === "string" ? item.value : undefined),
+            (typeof item.key === "string" ? item.key : undefined)
+        ];
+        for (let i = 0; i < candidates.length; ++i) {
+            const c = candidates[i];
+            if (c !== undefined && c !== null && typeof c !== "object") {
+                const s = String(c).trim();
+                if (s.length > 0 && !s.startsWith("[object ") && !s.startsWith("QObject(") && s !== "undefined" && s !== "null")
+                    return s;
+            }
+        }
+        if (typeof item.model === "object" && item.model !== null) {
+            const sub = [
+                item.model.name,
+                item.model.displayName,
+                item.model.label,
+                (typeof item.model.model === "string" ? item.model.model : undefined),
+                (typeof item.model.id === "string" ? item.model.id : undefined)
+            ];
+            for (let i = 0; i < sub.length; ++i) {
+                const sc = sub[i];
+                if (sc !== undefined && sc !== null && typeof sc !== "object") {
+                    const s = String(sc).trim();
+                    if (s.length > 0 && !s.startsWith("[object ") && !s.startsWith("QObject(") && s !== "undefined" && s !== "null")
+                        return s;
+                }
+            }
+        }
+        if (typeof root.textAt === "function" && idx !== undefined && idx >= 0) {
+            try {
+                const at = String(root.textAt(idx) ?? "").trim();
+                if (at.length > 0 && !at.startsWith("[object ") && !at.startsWith("QObject(") && at !== "undefined" && at !== "null")
+                    return at;
+            } catch (_) {}
+        }
+        try {
+            const str = String(item).trim();
+            if (str.length > 0 && !str.startsWith("[object ") && !str.startsWith("QObject(") && str !== "undefined" && str !== "null")
+                return str;
+        } catch (_) {}
+        return "";
+    }
+
     delegate: ItemDelegate {
         id: delegateItem
         required property int index
         required property var modelData
 
-        width: root.popup.width - 8 // popup-aware equivalent of width: root.width - 8
+        width: Math.max(root.width - 8, root.popup.width - 8)
         height: 36
         highlighted: root.highlightedIndex === index
         hoverEnabled: true
+
+        HoverHandler {
+            acceptedDevices: PointerDevice.Mouse
+            cursorShape: Qt.PointingHandCursor
+        }
 
         background: Rectangle {
             radius: Appearance.rounding.unsharpenmore
@@ -179,22 +290,13 @@ ComboBox {
             }
         }
 
-        // Text starts at the same 12px the closed field uses (contentItem above) so the
-        // dropdown lines up with the trigger instead of drifting right. The selected-row
-        // fill (_selectedColor) already marks selection, so the checkmark is a trailing
-        // accent, not a reserved left gutter every row used to pay for.
         contentItem: RowLayout {
             spacing: 6
 
             StyledText {
                 Layout.fillWidth: true
                 Layout.leftMargin: 12
-                text: {
-                    if (typeof delegateItem.modelData === "object" && delegateItem.modelData !== null) {
-                        return delegateItem.modelData[root.textRole] ?? delegateItem.modelData.toString()
-                    }
-                    return delegateItem.modelData?.toString() ?? ""
-                }
+                text: root._resolveItemDisplayText(delegateItem.modelData, root.textRole, delegateItem.index)
                 font.pixelSize: Appearance.font.pixelSize.small
                 color: root._textColor
                 elide: Text.ElideRight
@@ -271,6 +373,9 @@ ComboBox {
     }
 
     Component.onDestruction: {
+        const win = root.QsWindow?.window
+        if (win && typeof win.unregisterOverlayPopup === "function")
+            win.unregisterOverlayPopup(root.popup)
         if (typeof SettingsSearchRegistry !== "undefined") {
             SettingsSearchRegistry.unregisterControl(root);
         }

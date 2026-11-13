@@ -1,8 +1,8 @@
 {
   "id": "editors",
-  "label": "Editors",
+  "label": "Editors & AI Coding Tools",
   "module": "30-editors.sh",
   "category": "editor",
   "inputs": ["app-palette.json", "palette.json", "terminal.json", "material_colors.scss"],
-  "description": "Apply themes for VSCode forks, OpenCode, and Neovim/LazyVim using generated shell and terminal palettes."
+  "description": "Apply themes for VSCode forks (including Antigravity), Codex, Claude, OpenCode, and Neovim/LazyVim using generated shell and terminal palettes."
 }

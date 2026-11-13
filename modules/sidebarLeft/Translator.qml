@@ -85,34 +85,32 @@ Item {
         }
     }
 
+    readonly property string _nativeDispatch: FileUtils.trimFileProtocol(`${Directories.scriptPath}/native-dispatch`)
+
     Process {
         id: translateProc
         command: [
-            "/usr/bin/trans",
-            "-no-theme",
-            "-no-bidi",
-            "-source",
+            root._nativeDispatch,
+            "translate",
+            "--source",
             root.sourceLanguage,
-            "-target",
+            "--target",
             root.targetLanguage,
-            "-no-ansi",
+            "--",
             root.inputField.text.trim()
         ]
         stdout: StdioCollector {
             id: translateCollector
             onStreamFinished: {
-                // Split into sections by double newlines
-                const buffer = translateCollector.text || "";
-                const sections = buffer.trim().split(/\n\s*\n/);
-                // Extract translated text from second section
-                root.translatedText = sections.length > 1 ? sections[1].trim() : "";
+                const buffer = String(translateCollector.text || "").trim();
+                root.translatedText = buffer;
             }
         }
     }
 
     Process {
         id: getLanguagesProc
-        command: ["/usr/bin/trans", "-list-languages", "-no-bidi"]
+        command: [root._nativeDispatch, "translate", "--list-languages"]
         stdout: StdioCollector {
             id: langsCollector
             onStreamFinished: {

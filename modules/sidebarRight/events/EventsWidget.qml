@@ -353,38 +353,4 @@ Item {
         baseSize: root.fabSize
         onClicked: root.openInlineEditor(null)
     }
-
-    // Listen for triggered events and show notifications
-    Connections {
-        target: Events
-
-        function onEventTriggered(event) {
-            const urgency = event.priority === "high" ? 2 : (event.priority === "low" ? 0 : 1)
-            Notifications.notify(
-                event.title,
-                event.description || Translation.tr("Event is now!"),
-                Events.getCategoryIcon(event.category),
-                "event-" + event.id,
-                event.priority === "high" ? 0 : 10000,
-                []
-            )
-        }
-
-        function onReminderTriggered(event, minutesBefore) {
-            const reminderText = minutesBefore >= 1440
-                ? Translation.tr("Tomorrow")
-                : minutesBefore >= 60
-                    ? Translation.tr("In %1 hour(s)").arg(Math.floor(minutesBefore / 60))
-                    : Translation.tr("In %1 minutes").arg(minutesBefore)
-
-            Notifications.notify(
-                Translation.tr("Upcoming: %1").arg(event.title),
-                reminderText + (event.description ? " — " + event.description : ""),
-                "alarm",
-                "event-reminder-" + event.id,
-                8000,
-                []
-            )
-        }
-    }
 }

@@ -1,37 +1,71 @@
 import QtQuick
+import QtQuick.Window
 import Quickshell
 import qs.modules.common
 import qs.modules.dashboard
 import qs.modules.abyss.looks
 
-// Reparent only the controls into the existing output field; the Dashboard
-// canvas retains its full dimensions and object identity throughout editing.
+// Reparent only the customization dock into the output field connected to the
+// physical bottom Screen Edge; the Dashboard canvas retains its object identity.
 Item {
     id: root
     required property var body
     required property var canvasController
     property var tabController: null
-    parent: body?.parent ?? null
+    readonly property Item stageDockParent: body?.hostWindow?.stageDashboardDockHost ?? null
+    readonly property Item stageLeftHost: stageHosted ? (body?.hostWindow?.stageLeftDashboardDockHost ?? null) : null
+    readonly property Item stageRightHost: stageHosted ? (body?.hostWindow?.stageRightDashboardDockHost ?? null) : null
+    readonly property bool stageHosted: stageDockParent !== null
+    parent: stageHosted ? stageDockParent : (body?.parent ?? null)
     objectName: "abyssDashboardEditPopup"
     z: 90
+
+    readonly property real desiredWidth: Math.min(
+        2400,
+        Math.max(680, Math.ceil(toolbar.implicitWidth)))
     readonly property real desiredHeight: toolbar.implicitHeight
+    readonly property real desiredLeftDockWidth: toolbar.desiredLeftDockWidth
+    readonly property real desiredLeftDockHeight: toolbar.desiredLeftDockHeight
+    readonly property real desiredRightDockWidth: toolbar.desiredRightDockWidth
+    readonly property real desiredRightDockHeight: toolbar.desiredRightDockHeight
     readonly property bool editing: canvasController?.editMode ?? false
     readonly property bool naming: tabController?.tabNamingActive ?? false
     readonly property bool controlsVisible: root.editing || root.naming
     readonly property var contentRect: body?.targetRecord?.content
     readonly property bool revealRequested: controlsVisible
-        && (body?.presented ?? false) && (body?.progress ?? 0)>.99
+        && (stageHosted ? (body?.open ?? false)
+            : ((body?.presented ?? false) && (body?.progress ?? 0) > .99))
     property real revealProgress: revealRequested ? 1 : 0
-    readonly property real targetWidth: Math.min(toolbar.implicitWidth,
-        (contentRect?.width ?? 0) > 0 ? contentRect.width : toolbar.implicitWidth,
-        (parent?.width ?? 0) > 24 ? parent.width - 24 : toolbar.implicitWidth)
+
+    readonly property real maxParentWidth: (parent?.width ?? 0) > 24
+        ? parent.width - 24 : toolbar.implicitWidth
+    readonly property real preferredMaxWidth: (contentRect?.width ?? 0) > 0
+        ? Math.max(Math.min(maxParentWidth, 880), contentRect.width)
+        : maxParentWidth
+    readonly property real targetWidth: Math.min(
+        toolbar.implicitWidth, preferredMaxWidth, maxParentWidth)
+    readonly property real targetX: Math.max(12, Math.min(
+        (parent?.width ?? 0) - targetWidth - 12,
+        (contentRect?.width ?? 0) > 0
+            ? (contentRect.x + (contentRect.width - targetWidth) / 2)
+            : (((parent?.width ?? 0) - targetWidth) / 2)))
+    readonly property real bottomInset: {
+        const win = root.QsWindow?.window
+        if (win && typeof win.bodyInsets === "function") {
+            const ins = win.bodyInsets("bottom", root.targetX, root.targetWidth)
+            if (Number.isFinite(Number(ins?.bottom)))
+                return Math.max(0, Number(ins.bottom))
+        }
+        return Math.max(0, Number(root.body?.controller?.edgeInsets?.bottom
+            ?? root.body?.edgeInsets?.bottom ?? 0))
+    }
+    readonly property real targetY: Math.max(8,
+        (parent?.height ?? 0) - bottomInset - desiredHeight)
     readonly property rect targetRect: Qt.rect(
-        Math.max(12, Math.min((parent?.width ?? 0)-targetWidth-12,
-            (contentRect?.x ?? 0)+((contentRect?.width ?? 0)-targetWidth)/2)),
-        Math.max(8, (contentRect?.y ?? 0)-desiredHeight-(body?.padding ?? 14)+6),
-        targetWidth, desiredHeight)
-    // Exiting edit mode releases the body's extra top clearance. Keep the last
-    // toolbar footprint while retracting instead of snapping to that new layout.
+        targetX, targetY, targetWidth, desiredHeight)
+
+    // Exiting edit mode releases the body's bottom clearance. Keep the last
+    // dock footprint while retracting downward instead of snapping early.
     property var retainedRect: null
     readonly property rect presentationRect: revealRequested
         ? targetRect : (retainedRect ?? targetRect)
@@ -46,17 +80,21 @@ Item {
     }
     onTargetRectChanged: root.rememberRequestedRect()
     onRevealRequestedChanged: if (revealRequested) root.rememberRequestedRect()
-    x: presentationRect.x
-    y: presentationRect.y
-    width: presentationRect.width
-    height: presentationRect.height
-    readonly property real slideOffset: height*(1-revealProgress)
-    readonly property real revealedHeight: height*revealProgress
-    visible: revealProgress > 0
+
+    x: stageHosted ? 0 : presentationRect.x
+    y: stageHosted ? 0 : presentationRect.y
+    width: stageHosted ? (stageDockParent?.width ?? toolbar.implicitWidth) : presentationRect.width
+    height: stageHosted ? (stageDockParent?.height ?? desiredHeight) : presentationRect.height
+    readonly property real slideOffset: stageHosted ? 0 : height * (1 - revealProgress)
+    readonly property real revealedHeight: stageHosted ? height : height * revealProgress
+    visible: stageHosted
+        ? (revealRequested || (stageDockParent?.visible ?? false))
+        : (revealProgress > 0)
     enabled: revealRequested && visible && (body?.acceptsInput ?? false)
-    // The toolbar sits above the Dashboard body; the body's pointer mask
-    // never covers it. Publish its own native Region to the Abyss field.
-    readonly property rect toolbarInputBounds: root.enabled
+
+    // The dock sits at the bottom Screen Edge outside the Dashboard body's mask.
+    // Publish its own native Region to the Abyss field when not stage-hosted.
+    readonly property rect toolbarInputBounds: root.enabled && !root.stageHosted
         ? Qt.rect(root.x, root.y + root.slideOffset,
             root.width, root.revealedHeight)
         : Qt.rect(0, 0, 0, 0)
@@ -69,6 +107,7 @@ Item {
             ? Math.ceil(root.toolbarInputBounds.y + root.toolbarInputBounds.height) - y : 0
     }
     clip: true
+
     Behavior on revealProgress {
         enabled: Appearance.animationsEnabled
         NumberAnimation {
@@ -76,20 +115,34 @@ Item {
             easing.type: SurfaceMotion.easingType
         }
     }
+
     AbyssParticipant {
-        identity: (root.body?.identity ?? "dashboard")+"Editor"
+        identity: (root.body?.identity ?? "dashboard") + "Editor"
         controller: root.body?.controller ?? null
-        geometry: root.visible ? ({edge:root.body.edge,
-            surface:{x:root.x-8,y:root.y+root.slideOffset-8,
-                width:root.width+16,height:root.revealedHeight+22},
-            content:{x:root.x,y:root.y+root.slideOffset,
-                width:root.width,height:root.revealedHeight},
-            along:root.x,span:root.width,depth:root.revealedHeight,
-            progress:root.revealProgress}) : null
+        geometry: (!root.stageHosted && root.visible) ? ({
+            edge: "bottom",
+            surface: {
+                x: root.x - 8,
+                y: root.y + root.slideOffset - 8,
+                width: root.width + 16,
+                height: root.revealedHeight + root.bottomInset + 58
+            },
+            content: {
+                x: root.x,
+                y: root.y + root.slideOffset,
+                width: root.width,
+                height: root.revealedHeight
+            },
+            along: root.x,
+            span: root.width,
+            depth: root.revealedHeight,
+            progress: root.revealProgress
+        }) : null
         surfaceSettled: root.revealRequested && root.revealProgress === 1
         inputBounds: root.toolbarInputBounds
         nativeInputRegion: root.toolbarInputRegion
     }
+
     // Escape belongs to the Perimeter PanelWindow, never this reparented
     // editor (delegates onActivated: root.canvasController.cancelEditMode()).
     // Having both WindowShortcuts for Overview makes them ambiguous.
@@ -101,6 +154,10 @@ Item {
         visible: root.visible
         canvasController: root.canvasController
         tabController: root.tabController
+        splitSideDocks: root.stageLeftHost !== null && root.stageRightHost !== null
+        leftDockParent: root.stageLeftHost
+        rightDockParent: root.stageRightHost
         embeddedSurface: true
+        compactHeight: (root.body?.height ?? root.QsWindow?.window?.height ?? 1080) < 720
     }
 }

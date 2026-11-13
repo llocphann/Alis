@@ -56,6 +56,13 @@ Item {
 
     Keys.onPressed: event => {
         if (root.companionUnifiedActive) {
+            if (event.modifiers === Qt.NoModifier && (event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown)) {
+                if (typeof companionChatLoader.item?.scrollByPage === "function"
+                        && companionChatLoader.item.scrollByPage(event.key === Qt.Key_PageDown ? 1 : -1)) {
+                    event.accepted = true;
+                    return;
+                }
+            }
             if ((event.modifiers & Qt.ControlModifier) && (event.modifiers & Qt.ShiftModifier) && event.key === Qt.Key_O) {
                 companionChatLoader.item?.mind?.clearConversation();
                 event.accepted = true;

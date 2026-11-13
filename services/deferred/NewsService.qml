@@ -32,9 +32,21 @@ Singleton {
 
     readonly property var topics: ["WORLD", "NATION", "BUSINESS", "TECHNOLOGY", "ENTERTAINMENT", "SCIENCE", "SPORTS", "HEALTH"]
 
-    // Locale params for Google News. Qt.locale().name is "es_AR"-style.
-    readonly property string _lang: Qt.locale().name.split("_")[0] || "en"
-    readonly property string _country: (Qt.locale().name.split("_")[1] || "US")
+    // Locale params for Google News. Qt.locale().name is "es_AR"-style (guard "C" locale).
+    readonly property string _normalizedLocaleName: {
+        const raw = String(Qt.locale().name || "").trim()
+        if (!raw || raw === "C" || raw.startsWith("C."))
+            return "en_US"
+        return raw
+    }
+    readonly property string _lang: {
+        const lang = _normalizedLocaleName.split(/[_.-]/)[0] || "en"
+        return lang.toLowerCase() === "c" ? "en" : lang
+    }
+    readonly property string _country: {
+        const parts = _normalizedLocaleName.split(/[_.-]/)
+        return (parts.length > 1 && parts[1].length >= 2) ? parts[1].toUpperCase() : "US"
+    }
     readonly property string _localeQuery: `hl=${_lang}&gl=${_country}&ceid=${_country}:${_lang}`
 
     // City for the geo feed, from Weather's already-resolved location.
@@ -49,6 +61,62 @@ Singleton {
         if (mode === "topic" && root.topics.includes(topic))
             return `https://news.google.com/rss/headlines/section/topic/${topic}?${root._localeQuery}`
         return `https://news.google.com/rss?${root._localeQuery}`
+    }
+
+    function localSearchUrl() {
+        return `https://news.google.com/rss/search?q=${encodeURIComponent(root.localCity)}&${root._localeQuery}`
+    }
+
+    function _mergeUniqueArticles(primaryList, supplementList, maxCount = 30) {
+        const merged = []
+        const seenUrls = ({})
+        const seenTitles = ({})
+        const appendFrom = (list) => {
+            if (!Array.isArray(list))
+                return
+            for (let i = 0; i < list.length && merged.length < maxCount; i++) {
+                const item = list[i]
+                if (!item || !item.title || !item.url)
+                    continue
+                const normTitle = String(item.title).trim().toLowerCase()
+                if (seenUrls[item.url] || seenTitles[normTitle])
+                    continue
+                seenUrls[item.url] = true
+                seenTitles[normTitle] = true
+                merged.push(item)
+            }
+        }
+        appendFrom(primaryList)
+        appendFrom(supplementList)
+        return merged
+    }
+
+    function _fetchLocalSearchSupplement(cacheKeyUrl, generation, baseArticles) {
+        const searchUrl = root.localSearchUrl()
+        const xhr = new XMLHttpRequest()
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return
+            if (generation !== root._requestGeneration)
+                return
+            let combined = Array.isArray(baseArticles) ? baseArticles : []
+            if (xhr.status === 200) {
+                const extra = root._parseRss(xhr.responseText)
+                combined = root._mergeUniqueArticles(combined, extra, 30)
+            }
+            if (combined.length === 0) {
+                root.fetch("top", "")
+                return
+            }
+            root._cache[cacheKeyUrl] = combined
+            root._cacheTimestamps[cacheKeyUrl] = Date.now()
+            root.loading = false
+            root.lastError = ""
+            root.articles = combined
+        }
+        xhr.open("GET", searchUrl)
+        xhr.setRequestHeader("User-Agent", Config.options?.networking?.userAgent ?? "Mozilla/5.0")
+        xhr.send()
     }
 
     function fetch(mode, topic) {
@@ -68,6 +136,10 @@ Singleton {
                 return
             if (xhr.status !== 200) {
                 if (generation === root._requestGeneration) {
+                    if (mode === "local" && root.localCity.length > 0) {
+                        root._fetchLocalSearchSupplement(url, generation, [])
+                        return
+                    }
                     root.loading = false
                     root.lastError = "HTTP " + xhr.status
                 }
@@ -76,6 +148,10 @@ Singleton {
             const parsed = root._parseRss(xhr.responseText)
             if (generation !== root._requestGeneration)
                 return
+            if (mode === "local" && root.localCity.length > 0 && parsed.length < 6) {
+                root._fetchLocalSearchSupplement(url, generation, parsed)
+                return
+            }
             root._cache[url] = parsed
             root._cacheTimestamps[url] = Date.now()
             root.loading = false

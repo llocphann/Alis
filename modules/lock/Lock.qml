@@ -108,6 +108,9 @@ Scope {
 
             // Unlock the screen before exiting, or the compositor will display a
             // fallback lock you can't interact with.
+            if (Persistent.ready && Persistent.currentSessionSignature.length > 0) {
+                Persistent.states.unlockedSessionSignature = Persistent.currentSessionSignature;
+            }
             GlobalStates.screenLocked = false;
             
             // Refocus last focused window on unlock (hack)
@@ -166,10 +169,10 @@ Scope {
             // Fallback timer - if lock surface doesn't load properly, use swaylock
             Timer {
                 id: fallbackTimer
-                interval: 2000
+                interval: 6000
                 running: GlobalStates.screenLocked && !lockSurfaceLoader.item
                 onTriggered: {
-                    console.warn("[Lock] Lock surface failed to load after 2s — status:",
+                    console.warn("[Lock] Lock surface failed to load after 6s — status:",
                                  lockSurfaceLoader.status, "active:", lockSurfaceLoader.active,
                                  "Config.ready:", Config.ready, "waffle:", root._cachedUseWaffleLock,
                                  "isNiri:", CompositorService.isNiri)
@@ -180,6 +183,7 @@ Scope {
             Loader {
                 id: lockSurfaceLoader
                 active: GlobalStates.screenLocked && Config.ready
+                asynchronous: !["offscreen", "minimal"].includes((Quickshell.env("QT_QPA_PLATFORM") ?? "").split(":")[0])
                 anchors.fill: parent
                 // Don't animate opacity - causes issues during hot-reload
                 opacity: active ? 1 : 0
@@ -359,12 +363,18 @@ Scope {
     }
 
     function initIfReady() {
-        if (!Config.ready || GlobalStates.startupLockDone)
+        if (!Config.ready || !Persistent.ready || GlobalStates.startupLockDone)
             return;
 
-        if (Config.options?.lock?.launchOnStartup ?? false) {
+        const currentSig = Persistent.currentSessionSignature;
+        const alreadyUnlockedThisSession = currentSig.length > 0
+            && Persistent.states.unlockedSessionSignature === currentSig;
+
+        if ((Config.options?.lock?.launchOnStartup ?? false) && !alreadyUnlockedThisSession) {
             GlobalStates.startupLockDone = true;
             if (Config.options?.lock?.useHyprlock ?? false) {
+                if (currentSig.length > 0)
+                    Persistent.states.unlockedSessionSignature = currentSig;
                 Quickshell.execDetached(["/usr/bin/bash", "-lc", "/usr/bin/pidof hyprlock || /usr/bin/hyprlock"]);
             } else {
                 GlobalStates.screenLocked = true;
@@ -372,10 +382,10 @@ Scope {
             return;
         }
 
-        if (!Persistent.ready)
-            return;
-
         GlobalStates.startupLockDone = true;
+        if (currentSig.length > 0 && Persistent.states.unlockedSessionSignature !== currentSig) {
+            Persistent.states.unlockedSessionSignature = currentSig;
+        }
         KeyringStorage.fetchKeyringData();
     }
 

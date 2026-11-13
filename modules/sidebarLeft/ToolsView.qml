@@ -214,7 +214,10 @@ Item {
                         visible: CompositorService.isNiri
                         tileIcon: "colorize"
                         label: Translation.tr("Color")
-                        onClicked: Quickshell.execDetached(["niri", "msg", "action", "pick-color"])
+                        onClicked: {
+                            GlobalStates.sidebarLeftOpen = false
+                            ColorPickerService.start()
+                        }
                     }
                     ActionTile {
                         visible: CompositorService.isNiri

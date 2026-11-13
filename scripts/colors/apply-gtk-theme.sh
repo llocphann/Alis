@@ -16,7 +16,7 @@ XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 PALETTE_JSON="$XDG_STATE_HOME/quickshell/user/generated/palette.json"
 APP_PALETTE_JSON="$XDG_STATE_HOME/quickshell/user/generated/app-palette.json"
 COLORS_JSON="$XDG_STATE_HOME/quickshell/user/generated/colors.json"
-KDEGLOBALS="$HOME/.config/kdeglobals"
+KDEGLOBALS="$XDG_CONFIG_HOME/kdeglobals"
 DARKLY_COLORS="$XDG_DATA_HOME/color-schemes/Darkly.colors"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 THEME_LOCK="$XDG_STATE_HOME/quickshell/user/generated/app-theme.lock"
@@ -172,6 +172,29 @@ write_if_changed() {
         chmod 0644 "$temp"
     fi
     mv -f "$temp" "$target"
+    return 0
+}
+
+# Write in-place when target exists (and is not a symlink) so Qt/KDE
+# QFileSystemWatcher / KDirWatch inotify descriptors keep watching the same inode.
+write_if_changed_inplace() {
+    local target="$1"
+    mkdir -p "$(dirname "$target")"
+    break_symlink "$target"
+    local temp
+    temp=$(mktemp "${target}.tmp.XXXXXX")
+    cat > "$temp"
+    if [[ -f "$target" ]] && cmp -s "$temp" "$target"; then
+        rm -f "$temp"
+        return 1
+    fi
+    if [[ -f "$target" ]]; then
+        cat "$temp" > "$target"
+        rm -f "$temp"
+    else
+        chmod 0644 "$temp"
+        mv -f "$temp" "$target"
+    fi
     return 0
 }
 
@@ -422,6 +445,7 @@ ForegroundVisited=${PRIMARY}
 
 [General]
 ColorScheme=Darkly
+ColorSchemeHash=${KDE_SCHEME_HASH}
 ${font_name:+fixed=${mono_name:-$font_name},${mono_size:-$font_size},-1,5,50,0,0,0,0,0}
 ${font_name:+font=${font_name},${font_size},-1,5,50,0,0,0,0,0}
 ${font_name:+menuFont=${font_name},${font_size},-1,5,50,0,0,0,0,0}
@@ -641,6 +665,7 @@ ForegroundVisited=${primary_rgb}
 
 [General]
 ColorScheme=Darkly
+ColorSchemeHash=${KDE_SCHEME_HASH}
 Name=Darkly
 shadeSortColumn=true
 
@@ -657,13 +682,29 @@ inactiveForeground=${fg_inactive_rgb}
 EOF
 }
 
+KDE_SCHEME_HASH=$(printf '%s:%s:%s:%s:%s:%s' "$BG" "$FG" "$PRIMARY" "$SURFACE" "$PRIMARY_CONTAINER" "$THEME_MODE" | sha1sum | awk '{print $1}')
+
 # Apply KDE/Qt theming if enabled
 if [[ "$enable_qt_apps" != "false" ]]; then
-    generate_kdeglobals > "$KDEGLOBALS"
-
-    # Generate Darkly color scheme for Qt style
-    mkdir -p "$(dirname "$DARKLY_COLORS")"
-    generate_darkly_colors > "$DARKLY_COLORS"
+    kde_colors_changed=false
+    # Write Darkly.colors FIRST so live KConfigWatcher/QFileSystemWatcher readers
+    # see the updated scheme immediately when kdeglobals changes and D-Bus fires.
+    if generate_darkly_colors | write_if_changed_inplace "$DARKLY_COLORS"; then
+        kde_colors_changed=true
+    fi
+    if generate_kdeglobals | write_if_changed_inplace "$KDEGLOBALS"; then
+        kde_colors_changed=true
+    fi
+    if [[ "$kde_colors_changed" == "true" && -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]] && command -v gdbus &>/dev/null; then
+        gdbus emit --session --object-path /kdeglobals \
+            --signal org.kde.kconfig.notify.ConfigChanged \
+            "{'Colors:View': [b''], 'Colors:Window': [b''], 'Colors:Button': [b''], 'Colors:Selection': [b''], 'Colors:Tooltip': [b''], 'Colors:Complementary': [b''], 'Colors:Header': [b''], 'Colors:Menu': [b''], 'General': [b'ColorScheme', b'ColorSchemeHash'], 'Icons': [b'Theme'], 'KDE': [b'contrast', b'widgetStyle'], 'WM': [b'']}" \
+            >/dev/null 2>&1 || true
+        gdbus emit --session --object-path /KGlobalSettings \
+            --signal org.kde.KGlobalSettings.notifyChange 0 0 >/dev/null 2>&1 || true
+        gdbus emit --session --object-path /KGlobalSettings \
+            --signal org.kde.KGlobalSettings.notifyChange 4 0 >/dev/null 2>&1 || true
+    fi
 fi
 
 # Generate Pywalfox colors for Firefox theming

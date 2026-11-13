@@ -20,6 +20,194 @@ Singleton {
     property int longBreakTime: 900
     property int cyclesBeforeLongBreak: 4
 
+    // Study-Tracker adapted presets & subject tags
+    readonly property var tagColorPalette: [
+        "#f38ba8", "#fab387", "#f9e2af", "#a6e3a1",
+        "#94e2d5", "#89dceb", "#74c7ec", "#89b4fa",
+        "#b4befe", "#cba6f7", "#f5c2e7", "#eba0ac"
+    ]
+
+    readonly property var pomodoroPresets: ({
+        standard: { key: "standard", label: "Standard", focusMinutes: 25, breakMinutes: 5, longBreakMinutes: 15, cycles: 4 },
+        deep: { key: "deep", label: "Deep Work", focusMinutes: 50, breakMinutes: 10, longBreakMinutes: 30, cycles: 4 },
+        ultradian: { key: "ultradian", label: "Ultradian", focusMinutes: 90, breakMinutes: 20, longBreakMinutes: 20, cycles: 1 }
+    })
+
+    readonly property string activePreset: {
+        const f = Math.round(root.focusTime / 60)
+        const b = Math.round(root.breakTime / 60)
+        const l = Math.round(root.longBreakTime / 60)
+        const c = root.cyclesBeforeLongBreak
+        if (f === 25 && b === 5 && l === 15 && c === 4) return "standard"
+        if (f === 50 && b === 10 && l === 30 && c === 4) return "deep"
+        if (f === 90 && b === 20 && (c === 1 || l === 20)) return "ultradian"
+        return "custom"
+    }
+
+    readonly property string activeTag: {
+        const raw = String(Persistent.states?.timer?.pomodoro?.activeTag ?? "Study").trim()
+        return raw.length > 0 ? raw : "Study"
+    }
+
+    readonly property var tags: {
+        const raw = Persistent.states?.timer?.pomodoro?.tags
+        if (Array.isArray(raw) && raw.length > 0) return raw
+        if (raw && raw.length !== undefined && raw.length > 0) {
+            let out = []
+            for (let i = 0; i < raw.length; i++) out.push(String(raw[i]))
+            return out
+        }
+        return ["General", "Study", "Coding", "Reading"]
+    }
+
+    readonly property var archivedTags: {
+        const raw = Persistent.states?.timer?.pomodoro?.archivedTags
+        if (Array.isArray(raw)) return raw
+        if (raw && raw.length !== undefined) {
+            let out = []
+            for (let i = 0; i < raw.length; i++) out.push(String(raw[i]))
+            return out
+        }
+        return []
+    }
+
+    readonly property var tagColors: {
+        const raw = String(Persistent.states?.timer?.pomodoro?.tagColorsJson ?? "{}")
+        try {
+            const parsed = JSON.parse(raw)
+            return (parsed && typeof parsed === "object") ? parsed : ({})
+        } catch (e) {
+            return ({})
+        }
+    }
+
+    function _todayIsoDate(): string {
+        const d = new Date()
+        const y = d.getFullYear()
+        const m = String(d.getMonth() + 1).padStart(2, "0")
+        const day = String(d.getDate()).padStart(2, "0")
+        return `${y}-${m}-${day}`
+    }
+
+    readonly property int todayFocusSeconds: {
+        if (!Persistent.ready) return 0
+        return String(Persistent.states?.timer?.pomodoro?.todayDate ?? "") === root._todayIsoDate()
+            ? Math.max(0, Number(Persistent.states?.timer?.pomodoro?.todayFocusSeconds ?? 0))
+            : 0
+    }
+
+    readonly property int todaySessions: {
+        if (!Persistent.ready) return 0
+        return String(Persistent.states?.timer?.pomodoro?.todayDate ?? "") === root._todayIsoDate()
+            ? Math.max(0, Number(Persistent.states?.timer?.pomodoro?.todaySessions ?? 0))
+            : 0
+    }
+
+    function getTagColor(tagName: string): string {
+        const name = String(tagName || "Study").trim()
+        const map = root.tagColors
+        if (map && map[name]) return String(map[name])
+        let hash = 0
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash)
+        }
+        const idx = Math.abs(hash) % root.tagColorPalette.length
+        return root.tagColorPalette[idx]
+    }
+
+    function setActiveTag(tagName: string): void {
+        if (!Persistent.ready) return
+        const clean = String(tagName || "").trim()
+        if (!clean) return
+        Persistent.states.timer.pomodoro.activeTag = clean
+    }
+
+    function setTagColor(tagName: string, colorHex: string): void {
+        if (!Persistent.ready) return
+        const clean = String(tagName || "").trim()
+        const col = String(colorHex || "").trim()
+        if (!clean || !col) return
+        let next = Object.assign({}, root.tagColors)
+        next[clean] = col
+        Persistent.states.timer.pomodoro.tagColorsJson = JSON.stringify(next)
+    }
+
+    function addTag(tagName: string, colorHex: string): bool {
+        if (!Persistent.ready) return false
+        const clean = String(tagName || "").trim()
+        if (!clean) return false
+        let current = root.tags.slice()
+        const exists = current.some(t => String(t).toLowerCase() === clean.toLowerCase())
+        if (exists) {
+            const match = current.find(t => String(t).toLowerCase() === clean.toLowerCase())
+            Persistent.states.timer.pomodoro.activeTag = match
+            if (colorHex) root.setTagColor(match, colorHex)
+            return true
+        }
+        let archived = root.archivedTags.filter(t => String(t).toLowerCase() !== clean.toLowerCase())
+        current.push(clean)
+        Persistent.states.timer.pomodoro.tags = current
+        Persistent.states.timer.pomodoro.archivedTags = archived
+        if (colorHex) root.setTagColor(clean, colorHex)
+        Persistent.states.timer.pomodoro.activeTag = clean
+        return true
+    }
+
+    function removeTag(tagName: string): void {
+        if (!Persistent.ready) return
+        const clean = String(tagName || "").trim()
+        let current = root.tags.slice()
+        if (current.length <= 1) return
+        const next = current.filter(t => t !== clean)
+        if (next.length === current.length) return
+        let archived = root.archivedTags.slice()
+        if (!archived.includes(clean)) archived.push(clean)
+        Persistent.states.timer.pomodoro.tags = next
+        Persistent.states.timer.pomodoro.archivedTags = archived
+        if (root.activeTag === clean) {
+            Persistent.states.timer.pomodoro.activeTag = next[0] || "General"
+        }
+    }
+
+    function recoverTag(tagName: string): void {
+        if (!Persistent.ready) return
+        const clean = String(tagName || "").trim()
+        if (!clean) return
+        let archived = root.archivedTags.filter(t => t !== clean)
+        let current = root.tags.slice()
+        if (!current.includes(clean)) current.push(clean)
+        Persistent.states.timer.pomodoro.archivedTags = archived
+        Persistent.states.timer.pomodoro.tags = current
+        Persistent.states.timer.pomodoro.activeTag = clean
+    }
+
+    function applyPomodoroPreset(presetKey: string): void {
+        const preset = root.pomodoroPresets[presetKey]
+        if (!preset) return
+        Config.setNestedValues({
+            "time.pomodoro.focus": preset.focusMinutes * 60,
+            "time.pomodoro.breakTime": preset.breakMinutes * 60,
+            "time.pomodoro.longBreak": preset.longBreakMinutes * 60,
+            "time.pomodoro.cyclesBeforeLongBreak": preset.cycles
+        })
+        if (root.pomodoroRunning) {
+            root.resetPomodoro()
+        }
+    }
+
+    function _recordCompletedFocusLap(seconds: int): void {
+        if (!Persistent.ready || seconds <= 0) return
+        const today = root._todayIsoDate()
+        if (String(Persistent.states.timer.pomodoro.todayDate ?? "") !== today) {
+            Persistent.states.timer.pomodoro.todayDate = today
+            Persistent.states.timer.pomodoro.todayFocusSeconds = seconds
+            Persistent.states.timer.pomodoro.todaySessions = 1
+        } else {
+            Persistent.states.timer.pomodoro.todayFocusSeconds = Math.max(0, Number(Persistent.states.timer.pomodoro.todayFocusSeconds ?? 0)) + seconds
+            Persistent.states.timer.pomodoro.todaySessions = Math.max(0, Number(Persistent.states.timer.pomodoro.todaySessions ?? 0)) + 1
+        }
+    }
+
     function _positiveInt(value, fallback: int): int {
         const parsed = Number(value)
         return Number.isFinite(parsed) && parsed > 0 ? Math.max(1, Math.round(parsed)) : fallback
@@ -183,9 +371,14 @@ Singleton {
     function refreshPomodoro() {
         // Work <-> break ?
         if (getCurrentTimeInSeconds() >= Persistent.states.timer.pomodoro.start + pomodoroLapDuration) {
+            const wasBreak = Persistent.states.timer.pomodoro.isBreak;
+            const completedFocusSeconds = wasBreak ? 0 : root.focusTime;
             // Reset counts
-            Persistent.states.timer.pomodoro.isBreak = !Persistent.states.timer.pomodoro.isBreak;
+            Persistent.states.timer.pomodoro.isBreak = !wasBreak;
             Persistent.states.timer.pomodoro.start = getCurrentTimeInSeconds();
+            if (!wasBreak) {
+                root._recordCompletedFocusLap(completedFocusSeconds);
+            }
 
             // Send notification
             let notificationMessage;
@@ -197,7 +390,11 @@ Singleton {
                 notificationMessage = Translation.tr(`🔴 Focus: %1 minutes`).arg(Math.floor(focusTime / 60));
             }
 
-            Quickshell.execDetached(["/usr/bin/notify-send", "Pomodoro", notificationMessage, "-a", "Shell"]);
+            Notifications.sendInternal({
+                summary: "Pomodoro",
+                body: notificationMessage,
+                appName: "Shell",
+            });
             if (Config.options?.sounds?.pomodoro ?? false) {
                 Audio.playEvent("pomodoroDone")
             }
@@ -208,6 +405,19 @@ Singleton {
         }
 
         pomodoroSecondsLeft = pomodoroLapDuration - (getCurrentTimeInSeconds() - Persistent.states.timer.pomodoro.start);
+    }
+
+    function skipPomodoroPhase() {
+        if (!Persistent.ready) return;
+        const wasBreak = Persistent.states.timer.pomodoro.isBreak;
+        Persistent.states.timer.pomodoro.isBreak = !wasBreak;
+        if (wasBreak) {
+            Persistent.states.timer.pomodoro.cycle = (Persistent.states.timer.pomodoro.cycle + 1) % root.cyclesBeforeLongBreak;
+        }
+        Persistent.states.timer.pomodoro.running = false;
+        Persistent.states.timer.pomodoro.paused = false;
+        Persistent.states.timer.pomodoro.start = getCurrentTimeInSeconds();
+        pomodoroSecondsLeft = pomodoroLapDuration;
     }
 
     function refreshSecondTimers(): void {
@@ -346,7 +556,12 @@ Singleton {
         if (countdownSecondsLeft <= 0 && countdownRunning) {
             Persistent.states.timer.countdown.running = false;
             Persistent.states.timer.countdown.paused = false;
-            Quickshell.execDetached(["/usr/bin/notify-send", "Timer", Translation.tr("Time's up!"), "-a", "Shell", "-i", "alarm-symbolic"]);
+            Notifications.sendInternal({
+                summary: "Timer",
+                body: Translation.tr("Time's up!"),
+                appName: "Shell",
+                appIcon: "alarm-symbolic",
+            });
             if (Config.options?.sounds?.timer ?? false) {
                 Audio.playEvent("timerDone");
             }

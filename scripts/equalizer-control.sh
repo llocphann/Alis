@@ -197,10 +197,42 @@ try:
         print("active EasyEffects preset has an invalid plugins_order", file=sys.stderr)
         raise SystemExit(66)
 
-    eq_key = next(
-        (item for item in order if item == "equalizer" or item.startswith("equalizer#")),
-        None,
-    )
+    is_dolby_preset = str(document.get("_generator", "")).startswith("dolby_to_easyeffects.py")
+
+    def is_graphic_eq_stage(candidate: object) -> bool:
+        if not isinstance(candidate, dict):
+            return False
+        for channel in ("left", "right"):
+            bands = candidate.get(channel)
+            if not isinstance(bands, dict):
+                continue
+            for band in bands.values():
+                if isinstance(band, dict) and band.get("type", "Bell") != "Bell":
+                    return False
+        return True
+
+    if is_dolby_preset:
+        eq_key = next(
+            (
+                item
+                for item in order
+                if item.startswith("equalizer#")
+                and item not in {"equalizer#0", "equalizer#1"}
+                and is_graphic_eq_stage(output.get(item))
+            ),
+            None,
+        )
+        if eq_key is None:
+            print(
+                "active Dolby speaker-tuning preset has no dedicated user Equalizer stage",
+                file=sys.stderr,
+            )
+            raise SystemExit(66)
+    else:
+        eq_key = next(
+            (item for item in order if item == "equalizer" or item.startswith("equalizer#")),
+            None,
+        )
     if eq_key is None:
         print(
             "active EasyEffects preset does not contain an Equalizer in plugins_order",
@@ -225,6 +257,8 @@ try:
     require_property(f"get_property:{plugin_prefix}:numBands")
     require_property(f"get_property:{plugin_prefix}:left:band0Gain")
     require_property(f"get_property:{plugin_prefix}:right:band0Gain")
+    band0_type_probe = request(f"get_property:{plugin_prefix}:left:band0Type")
+    supports_band_type = band0_type_probe.isdigit()
 
     # Change only the active Equalizer database. No preset reload occurs, so
     # Convolver/Limiter and any unsaved live pipeline state remain untouched.
@@ -233,6 +267,8 @@ try:
     send(f"set_property:{plugin_prefix}:splitChannels:false")
     for index, (frequency, gain) in enumerate(zip(frequencies, backend_gains)):
         for channel in ("left", "right"):
+            if supports_band_type:
+                send(f"set_property:{plugin_prefix}:{channel}:band{index}Type:1")
             send(f"set_property:{plugin_prefix}:{channel}:band{index}Frequency:{frequency}")
             send(f"set_property:{plugin_prefix}:{channel}:band{index}Gain:{gain}")
 
@@ -262,23 +298,34 @@ try:
             channel_bands = {}
             equalizer[channel] = channel_bands
 
-        template = next((band for band in channel_bands.values() if isinstance(band, dict)), None)
-        if template is None:
-            template = {
-                "mode": "RLC (BT)" if modern_schema else "Bell",
-                "mute": False,
-                "q": 1.0,
-                "solo": False,
-                "width": 1.0,
-                "slope": "x1",
-            }
-            if modern_schema:
-                template["type"] = "Bell"
+        template = {
+            "mode": "RLC (BT)" if modern_schema else "Bell",
+            "mute": False,
+            "q": 1.0,
+            "solo": False,
+            "width": 1.0,
+            "slope": "x1",
+        }
+        if modern_schema:
+            template["type"] = "Bell"
+        first_band = next(
+            (band for band in channel_bands.values() if isinstance(band, dict)),
+            None,
+        )
+        if first_band is not None:
+            candidate = copy.deepcopy(first_band)
+            candidate["slope"] = "x1"
+            if modern_schema or "type" in candidate:
+                candidate["type"] = "Bell"
+            template = candidate
 
         for index, (frequency, gain) in enumerate(zip(frequencies, backend_gains)):
             band_key = f"band{index}"
             existing = channel_bands.get(band_key)
             band = copy.deepcopy(existing if isinstance(existing, dict) else template)
+            band["slope"] = "x1"
+            if modern_schema or "type" in band:
+                band["type"] = "Bell"
             band["frequency"] = frequency
             band["gain"] = gain
             channel_bands[band_key] = band

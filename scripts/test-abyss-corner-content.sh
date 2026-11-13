@@ -2,6 +2,10 @@
 # Exercise mature corner content through the shared Abyss host, without another popup window.
 set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "${ALIS_SILENT_WL_WRAPPED:-0}" != "1" ]]; then
+    export ALIS_SILENT_WL_WRAPPED=1
+    exec bash "$repo_root/scripts/lib/silent-wayland-run.sh" -- "$0" "$@"
+fi
 perimeter="$repo_root/modules/abyss/AbyssPerimeter.qml"
 corners="$repo_root/modules/abyss/AbyssCorners.qml"
 editor="$repo_root/modules/abyss/AbyssEdgeEditor.qml"

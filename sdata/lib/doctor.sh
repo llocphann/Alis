@@ -66,7 +66,6 @@ check_dependencies() {
         "niri:Niri"
         "nmcli:NetworkManager"
         "wpctl:WirePlumber"
-        "jq:jq"
         "rsync:rsync"
         "curl:curl"
         "git:git"
@@ -80,16 +79,10 @@ check_dependencies() {
         "fuzzel:fuzzel"
         "awww:awww"
         "awww-daemon:awww"
-        "hyprpicker:hyprpicker"
-        "playerctl:playerctl"
-        "notify-send:libnotify"
         "flock:util-linux"
-        "go:go"
         "wlsunset:wlsunset"
         "uv:uv"
         "cava:cava"
-        "qalc:qalculate"
-        "brightnessctl:brightnessctl"
         "slurp:slurp"
         "wf-recorder:wf-recorder"
         "ffmpeg:ffmpeg"
@@ -106,7 +99,6 @@ check_dependencies() {
         "mpv:mpv"
         "swaylock:swaylock"
         "swayidle:swayidle"
-        "trans:translate-shell"
     )
 
     # Check required commands
@@ -1324,6 +1316,7 @@ check_conflicting_shells() {
         "caelestia-shell"
         "caelestia-shell-git"
         "bms-shell-bin"
+        "inir-deps"
     )
     local found=()
 

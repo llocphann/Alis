@@ -38,6 +38,7 @@ ContentPage {
         property int pixelSize: Appearance.font.pixelSize.smaller
         property string fontFamily: Appearance.font.family.main
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
         implicitHeight: mqText.implicitHeight
         clip: true
 
@@ -293,6 +294,8 @@ ContentPage {
     GridLayout {
         id: autostartTwoColumnGrid
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.bottomMargin: startupFileCard.visible ? SettingsMaterialPreset.pageSpacing : 0
         columns: 2
         columnSpacing: 14
         rowSpacing: 14
@@ -306,6 +309,8 @@ ContentPage {
             objectName: "autostartAppsCard"
             _preventBentoReparent: true
             Layout.fillWidth: true
+            Layout.preferredWidth: 1
+            Layout.minimumWidth: 0
             Layout.alignment: Qt.AlignTop
             expanded: true
             icon: "apps"
@@ -392,6 +397,7 @@ ContentPage {
 
                     ListView {
                         id: appsListView
+                        objectName: "autostartAppsListView"
                         anchors.fill: parent
                         anchors.margins: 6
                         spacing: 4
@@ -425,6 +431,7 @@ ContentPage {
 
                             width: appsListView.width
                             implicitHeight: 50
+                            clip: true
                             radius: Appearance.rounding.small
                             color: isEnabled
                                 ? ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.55)
@@ -452,18 +459,45 @@ ContentPage {
                                     clip: true
                                     spacing: 1
 
-                                    RowLayout {
+                                    Row {
+                                        id: appTitleBadgeRow
                                         Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
+                                        clip: true
                                         spacing: 6
 
+                                        readonly property real fixedTagsWidth: (portableTagRect.visible ? portableTagRect.width + 6 : 0)
+                                            + (extTagRect.visible ? extTagRect.width + 6 : 0)
+                                        readonly property real minAppNameReserved: Math.min(
+                                            autostartAppNameText.implicitWidth,
+                                            Math.max(68, Math.floor(width * 0.45))
+                                        )
+                                        readonly property real maxRoleBadgeWidth: width > 0
+                                            ? Math.max(48, Math.floor(width - minAppNameReserved - fixedTagsWidth - (defRoleBtn.visible ? 6 : 0)))
+                                            : 120
+                                        readonly property real effectiveRoleBadgeWidth: defRoleBtn.visible
+                                            ? (width > 0 ? Math.min(defRoleBtn.naturalWidth, maxRoleBadgeWidth) : defRoleBtn.naturalWidth)
+                                            : 0
+                                        readonly property real totalBadgesReserved: fixedTagsWidth
+                                            + (defRoleBtn.visible ? effectiveRoleBadgeWidth + 6 : 0)
+                                        readonly property real availableAppNameWidth: width > 0
+                                            ? Math.max(0, width - totalBadgesReserved)
+                                            : autostartAppNameText.implicitWidth
+
                                         StyledText {
-                                            Layout.fillWidth: true
+                                            id: autostartAppNameText
+                                            objectName: "autostartAppName_" + appRow.appId
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: Math.min(implicitWidth, appTitleBadgeRow.availableAppNameWidth)
                                             elide: Text.ElideRight
+                                            maximumLineCount: 1
                                             font.weight: appRow.isEnabled ? Font.DemiBold : Font.Normal
                                             text: appRow.modelData.name || appRow.appId
                                         }
 
                                         Rectangle {
+                                            id: portableTagRect
+                                            anchors.verticalCenter: parent.verticalCenter
                                             visible: appRow.isPortable
                                             radius: Appearance.rounding.full
                                             color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.84)
@@ -479,18 +513,32 @@ ContentPage {
                                         }
 
                                         RippleButton {
+                                            id: defRoleBtn
+                                            objectName: "autostartDefaultBadge_" + appRow.appId
+                                            anchors.verticalCenter: parent.verticalCenter
                                             visible: appRow.linkedSlots.length > 0
+                                            readonly property real naturalWidth: defRoleTag.implicitWidth + 10
                                             implicitHeight: 18
-                                            implicitWidth: defRoleTag.implicitWidth + 10
+                                            implicitWidth: appTitleBadgeRow.effectiveRoleBadgeWidth
+                                            width: appTitleBadgeRow.effectiveRoleBadgeWidth
+                                            clip: true
                                             buttonRadius: Appearance.rounding.full
                                             colBackground: Appearance.colors.colSecondaryContainer
                                             colBackgroundHover: Appearance.colors.colLayer2Hover
                                             onClicked: SettingsPageRegistry.navigateToKey("default-apps", "primary")
                                             contentItem: StyledText {
                                                 id: defRoleTag
-                                                anchors.centerIn: parent
+                                                anchors.left: parent.left
+                                                anchors.right: parent.right
+                                                anchors.leftMargin: 5
+                                                anchors.rightMargin: 5
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                horizontalAlignment: Text.AlignHCenter
+                                                verticalAlignment: Text.AlignVCenter
                                                 font.pixelSize: Appearance.font.pixelSize.smallest - 1
                                                 color: Appearance.colors.colOnSecondaryContainer
+                                                elide: Text.ElideRight
+                                                maximumLineCount: 1
                                                 text: Translation.tr("Default: ") + (appRow.linkedSlots[0]?.title ?? "")
                                             }
                                             StyledToolTip {
@@ -499,6 +547,8 @@ ContentPage {
                                         }
 
                                         Rectangle {
+                                            id: extTagRect
+                                            anchors.verticalCenter: parent.verticalCenter
                                             visible: appRow.isExternal
                                             radius: Appearance.rounding.full
                                             color: Appearance.colors.colTertiaryContainer
@@ -525,6 +575,10 @@ ContentPage {
                                     opacity: rowHover.hovered ? 1.0 : 0.0
                                     implicitWidth: 28
                                     implicitHeight: 28
+                                    Layout.fillWidth: false
+                                    Layout.minimumWidth: implicitWidth
+                                    Layout.preferredWidth: implicitWidth
+                                    Layout.maximumWidth: implicitWidth
                                     buttonRadius: Appearance.rounding.full
                                     colBackground: Appearance.colors.colLayer2
                                     colBackgroundHover: Appearance.colors.colLayer2Hover
@@ -544,6 +598,10 @@ ContentPage {
                                 }
 
                                 StyledSwitch {
+                                    Layout.fillWidth: false
+                                    Layout.minimumWidth: implicitWidth
+                                    Layout.preferredWidth: implicitWidth
+                                    Layout.maximumWidth: implicitWidth
                                     checked: appRow.isEnabled
                                     enabled: !appRow.isExternal && Autostart.ready && !Autostart.busy
                                     onToggled: Autostart.setAppEnabled(appRow.appId, checked)
@@ -563,6 +621,8 @@ ContentPage {
             objectName: "autostartServicesCard"
             _preventBentoReparent: true
             Layout.fillWidth: true
+            Layout.preferredWidth: 1
+            Layout.minimumWidth: 0
             Layout.alignment: Qt.AlignTop
             expanded: true
             icon: "rocket_launch"
@@ -763,7 +823,9 @@ ContentPage {
                                     id: daemonRow
                                     required property var modelData
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     implicitHeight: 50
+                                    clip: true
                                     radius: Appearance.rounding.small
                                     color: modelData.enabled
                                         ? ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.55)
@@ -794,7 +856,9 @@ ContentPage {
 
                                             StyledText {
                                                 Layout.fillWidth: true
+                                                Layout.minimumWidth: 0
                                                 elide: Text.ElideRight
+                                                maximumLineCount: 1
                                                 font.family: Appearance.font.family.monospace
                                                 font.pixelSize: Appearance.font.pixelSize.small
                                                 font.weight: Font.DemiBold
@@ -825,6 +889,10 @@ ContentPage {
                                         RippleButton {
                                             implicitWidth: 28
                                             implicitHeight: 28
+                                            Layout.fillWidth: false
+                                            Layout.minimumWidth: implicitWidth
+                                            Layout.preferredWidth: implicitWidth
+                                            Layout.maximumWidth: implicitWidth
                                             buttonRadius: Appearance.rounding.full
                                             colBackground: "transparent"
                                             colBackgroundHover: Appearance.colors.colErrorContainer
@@ -838,6 +906,10 @@ ContentPage {
                                         }
 
                                         StyledSwitch {
+                                            Layout.fillWidth: false
+                                            Layout.minimumWidth: implicitWidth
+                                            Layout.preferredWidth: implicitWidth
+                                            Layout.maximumWidth: implicitWidth
                                             checked: daemonRow.modelData.enabled
                                             enabled: Autostart.ready && !Autostart.busy
                                             onToggled: Autostart.setEntryEnabled(daemonRow.modelData.entryIndex, checked)
@@ -857,7 +929,9 @@ ContentPage {
                                     readonly property bool canToggle: Boolean(modelData.canToggle)
 
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     implicitHeight: 52
+                                    clip: true
                                     radius: Appearance.rounding.small
                                     color: isEnabled
                                         ? ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.55)
@@ -892,11 +966,15 @@ ContentPage {
 
                                             RowLayout {
                                                 Layout.fillWidth: true
+                                                Layout.minimumWidth: 0
+                                                clip: true
                                                 spacing: 6
 
                                                 StyledText {
                                                     Layout.fillWidth: true
+                                                    Layout.minimumWidth: 0
                                                     elide: Text.ElideRight
+                                                    maximumLineCount: 1
                                                     font.weight: (svcRow.isEnabled || svcRow.isRunning) ? Font.DemiBold : Font.Normal
                                                     text: svcRow.modelData.name || svcRow.modelData.unit
                                                 }
@@ -957,6 +1035,10 @@ ContentPage {
                                         RippleButton {
                                             implicitWidth: 28
                                             implicitHeight: 28
+                                            Layout.fillWidth: false
+                                            Layout.minimumWidth: implicitWidth
+                                            Layout.preferredWidth: implicitWidth
+                                            Layout.maximumWidth: implicitWidth
                                             buttonRadius: Appearance.rounding.full
                                             enabled: !servicesActionProc.running
                                             colBackground: Appearance.colors.colLayer2
@@ -982,6 +1064,10 @@ ContentPage {
 
                                         // Enable / Disable on Autostart switch
                                         StyledSwitch {
+                                            Layout.fillWidth: false
+                                            Layout.minimumWidth: implicitWidth
+                                            Layout.preferredWidth: implicitWidth
+                                            Layout.maximumWidth: implicitWidth
                                             checked: svcRow.isEnabled
                                             enabled: svcRow.canToggle && !servicesActionProc.running
                                             onToggled: root.setServiceAutostart(svcRow.modelData.unit, checked)
@@ -1020,11 +1106,14 @@ ContentPage {
 
                 RowLayout {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     spacing: 8
 
                     StyledText {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         elide: Text.ElideMiddle
+                        maximumLineCount: 1
                         font.family: Appearance.font.family.monospace
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         color: Appearance.colors.colSubtext

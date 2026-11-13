@@ -202,7 +202,7 @@ DockButton {
             root.desktopEntry?.startupClass
         ].map(value => root.normalizedAppKey(value)).filter(value => value.length >= 3)
 
-        return SystemTray.items.values.find(item => {
+        return TrayService.uniqueItems.find(item => {
             // SNI id is application identity; title is descriptive/localizable
             // and must not be used to associate an unrelated tray item.
             const trayKeys = [root.normalizedTrayKey(item?.id)]

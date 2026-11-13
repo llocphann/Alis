@@ -87,7 +87,7 @@ ApiStrategy {
         }
 
         // Handle special cases
-        if (!cleanData || cleanData.startsWith(":")) return {};
+        if (!cleanData || cleanData.startsWith(":") || cleanData.startsWith("event:") || cleanData.startsWith("id:") || cleanData.startsWith("retry:")) return {};
         if (cleanData === "[DONE]") {
             if (hasPendingToolCalls) return Object.assign({ finished: true }, flushPendingToolCall(message));
             return { finished: true };
@@ -166,8 +166,10 @@ ApiStrategy {
 
         } catch (e) {
             console.log("[AI] OpenAI: Could not parse line: ", e);
-            message.rawContent += line;
-            message.content += line;
+            if (!cleanData.startsWith("{") || !cleanData.includes("\"choices\"")) {
+                message.rawContent += line;
+                message.content += line;
+            }
         }
 
         return {};

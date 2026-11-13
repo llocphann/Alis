@@ -1,9 +1,9 @@
 // Persist normalized positions; derive pixel geometry independently per output.
-var catalog = ["distroIcon","activeWindow","resources","media",
+var catalog = ["distroIcon","activeWindow","resources","media","cava",
     "workspaces","clock","utilButtons","battery","tray",
     "timer","shellUpdate","weather","taskbar","notesTimers","notificationActivity"];
 var labels = {distroIcon:"Launcher",activeWindow:"Active window",
-    resources:"System resources",media:"Media",workspaces:"Workspaces",clock:"Clock",
+    resources:"System resources",media:"Media",cava:"Cava Equalizer",workspaces:"Workspaces",clock:"Clock",
     utilButtons:"Quick actions",battery:"Battery",tray:"System tray",
     timer:"Timer",shellUpdate:"Updates",weather:"Weather",taskbar:"Taskbar",
     notesTimers:"QuickNotes & Timers",notificationActivity:"Notifications & Activities"};
@@ -62,7 +62,7 @@ function bounded(value, fallback, low, high) {
 }
 function extent(kind, vertical) {
     var sizes = {utilButtons:36,distroIcon:88,
-        activeWindow:178,resources:178,media:166,workspaces:192,clock:104,battery:72,
+        activeWindow:178,resources:178,media:166,cava:120,workspaces:192,clock:104,battery:72,
         tray:72,timer:68,shellUpdate:86,weather:80,taskbar:40,
         notesTimers:36,notificationActivity:36};
     // A side Edge rotates this same full design, so its along-axis extent
@@ -544,14 +544,15 @@ function edgeInsetsForModules(placements, options, fontScale, thickness, minimum
     return insets;
 }
 function localSurfaces(records, width, height, options, fontScale, minimum) {
-    records=records.filter(function(p) {return !p.capacityConflict && (!isUnifiedKind(p.kind) || (p.showIcon!==false && unifiedLauncherMode(options,p.kind)==="module"));});
+    records=records.filter(function(p) {return !p.capacityConflict && (!isUnifiedKind(p.kind) || options?.editing || unifiedLauncherMode(options,p.kind)==="module");});
     var surfaces=records.filter(function(p) {
-        return isUnifiedKind(p.kind) || edgeThickness(options,p.edge)===0 || options?.edgeWidthAffectsModules?.[p.edge]===false || options?.singleModuleExpansion?.[p.edge]==="local"
+        return isUnifiedKind(p.kind) || edgeThickness(options,p.edge)===0 || Number(p.protrudeOffset)>.5 || options?.edgeWidthAffectsModules?.[p.edge]===false || options?.singleModuleExpansion?.[p.edge]==="local"
             && records.filter(function(other) { return other.edge===p.edge && !isUnifiedKind(other.kind); }).length===1;
     }).map(function(p) {
         // Geometry records express depth in pixels, unlike placement depth's
         // multiplier. Derive the paint extent from the packed foreground.
-        var depth = Math.max(minimum,(p.vertical ? p.content.width : p.content.height)+16);
+        var protrude = Math.max(0, Number(p.protrudeOffset) || 0);
+        var depth = Math.max(minimum,(p.vertical ? p.content.width : p.content.height)+16) + protrude;
         var surface = p.edge==="top" ? {x:p.along-8,y:-50,width:p.span+16,height:depth+50}
             : p.edge==="bottom" ? {x:p.along-8,y:height-depth,width:p.span+16,height:depth+50}
             : p.edge==="left" ? {x:-50,y:p.along-8,width:depth+50,height:p.span+16}
@@ -582,7 +583,6 @@ function localSurfaces(records, width, height, options, fontScale, minimum) {
     surfaces.forEach(function(record) {
         var previous=result[result.length-1];
         if((options?.edgeWidthAffectsModules?.[record.edge]===false || edgeThickness(options,record.edge)===0) && options?.edgeJoinModules?.[record.edge]===true
-                && !isUnifiedKind(previous?.kind) && !isUnifiedKind(record.kind)
                 && previous?.edge===record.edge && record.along-previous.along-previous.span<=nearby) {
             // Only paint is joined. Packed module items and their input bounds
             // keep their identities and dimensions, including mixed depths.

@@ -67,7 +67,7 @@ assert 'Text.ElideNone : Text.ElideRight' in reveal
 assert 'Math.min(textItem.implicitWidth, root.maxTextWidth) : 0' in reveal
 assert 'Accessible.name: modelData.displayName' in choices
 assert 'property date plannerViewMonth: new Date()' in editor
-assert 'ObsidianMonthCalendar {' in editor
+assert 'NexusMonthCalendar {' in editor
 assert 'calendarCells: root.plannerCalendarCells' in editor
 assert 'onDayActivated: (date,modifiers)=>root.choosePlannerDay(date,modifiers)' in editor
 # Selecting Repeat must never discard a multi-date Add Event draft.

@@ -6,7 +6,7 @@ root="$(mktemp -d)"
 trap 'rm -rf -- "$root"' EXIT
 fail() { printf 'FAIL: Alis desktop update: %s\n' "$*" >&2; exit 1; }
 mkdir -p "$root/bin with spaces" "$root/data" "$root/source/assets/applications" "$root/source/assets/icons"
-cp "$repo/assets/applications/alis.desktop" "$repo/assets/applications/alis-settings.desktop" "$root/source/assets/applications/"
+cp "$repo/assets/applications/alis.desktop" "$repo/assets/applications/alis-settings.desktop" "$repo/assets/applications/alis-local-music.desktop" "$root/source/assets/applications/"
 cp "$repo/assets/icons/desktop-symbolic.svg" "$root/source/assets/icons/desktop-symbolic.svg"
 src="$root/source"
 dest="$root/data"
@@ -14,6 +14,9 @@ bash "$runner" "$src" "$root/bin with spaces" "$dest" >/dev/null ||
     fail 'fresh update did not reconcile Alis desktop IDs'
 shell="$dest/applications/alis.desktop"
 settings="$dest/applications/alis-settings.desktop"
+music="$dest/applications/alis-local-music.desktop"
+grep -Fxq "Exec=\"$root/bin with spaces/alis\" local-music -- %U" "$music" || fail 'Music Exec did not preserve URI arguments'
+grep -Fq 'MimeType=audio/mpeg;' "$music" || fail 'Music MIME registration missing'
 icon="$dest/icons/hicolor/scalable/apps/alis.svg"
 [[ -f "$shell" && -f "$settings" && -f "$icon" ]] ||
     fail 'Alis app IDs or icon missing after staged update'

@@ -194,11 +194,14 @@ Scope {
     // output selection, DND, timeout and hover lifetime with ordinary popups.
     // Error toasts retain their copy/dismiss actions in this manager.
     function sendReloadNotification(title, appName, icon): void {
-        Quickshell.execDetached([
-            "notify-send", "-a", appName, "-i", icon, "-t", "2000",
-            "-h", "boolean:transient:true",
-            "-h", "boolean:suppress-sound:true", title
-        ])
+        Notifications.sendInternal({
+            summary: title,
+            appName: appName,
+            appIcon: icon,
+            timeout: 2000,
+            transient: true,
+            suppressSound: true,
+        })
     }
 
     // Show the single pending reload notification.

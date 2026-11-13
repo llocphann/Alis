@@ -3,8 +3,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import Quickshell
+import Quickshell.Io
 
+import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.abyss.looks
 
 Item {
@@ -61,9 +64,14 @@ Item {
     // compile errors and stalled frames fall back to the Ready-slot crossfade.
     // Aliases resolve to one compiled QSB, including shaderRandom.
     readonly property var shaderTransitionTypes: ["alisMelt"]
+    property string _randomPickedType: "wipe"
+    readonly property string _activeConfiguredType: String(transitionType ?? "") === "random"
+        ? _randomPickedType
+        : String(transitionType ?? "crossfade")
     readonly property bool shaderTransitionRequested: Quickshell.env("ALIS_DISABLE_LIQUID_SHADER") !== "1"
-        && (isShaderTransitionType(transitionType)
-            || String(transitionType ?? "") === "shaderRandom")
+        && (isShaderTransitionType(_activeConfiguredType)
+            || isWallfxTransitionType(_activeConfiguredType)
+            || _activeConfiguredType === "shaderRandom")
     readonly property bool transitionBusy: _transitioning
         || internal.pendingSource !== "" || internal.loadingSource !== ""
     readonly property bool shaderTransitionBusy: shaderTransitionRequested && transitionBusy
@@ -105,6 +113,19 @@ Item {
     property string _shaderTexturePrimeSource: ""
     property int _shaderTexturePrimeSwaps: 0
 
+    // Pocket-Dots (`wallfx`) Favourite-only shader state (`contagio` & `perfil`).
+    property string _wallfxTargetSource: ""
+    property bool _wallfxResolvePending: false
+    property bool _wallfxResolvedEligible: false
+    property real _wallfxMode: 0
+    property real _wallfxGlow: 1.0
+    property real _wallfxLineW: 2.2
+    property real _wallfxSdRange: 16.0
+    property real _wallfxSeed: 0.37
+    property vector4d _wallfxMapCrop: Qt.vector4d(0, 0, 1, 1)
+    property color _wallfxEmber: "#ffaa66"
+    property color _wallfxInk: "#f4f4f8"
+
     function _normalizeBezier(raw): list<real> {
         if (!raw || raw.length !== 4)
             return _defaultBezier
@@ -141,6 +162,7 @@ Item {
         case "wipe":
             return _positionCurveFor(type)
         case "zoom":
+        case "zoomOut":
             return Appearance.animationCurves.emphasizedDecel
         case "fadeThrough":
             return Appearance.animationCurves.emphasized
@@ -157,16 +179,128 @@ Item {
 
     function isShaderTransitionType(rawType): bool {
         const value = String(rawType ?? "")
-        return value === "alisMelt" || shaderTransitionTypes.indexOf(value) >= 0
+        return value === "alisMelt" || value === "inirMelt" || shaderTransitionTypes.indexOf(value) >= 0
+    }
+
+    function isWallfxTransitionType(rawType): bool {
+        return String(rawType ?? "") === "wallfx"
     }
 
     function _resolvedShaderName(): string {
-        const raw = String(transitionType ?? "")
+        const raw = root._activeConfiguredType
         if (raw === "shaderRandom") {
             const index = Math.floor(Math.random() * shaderTransitionTypes.length)
             return shaderTransitionTypes[Math.max(0, Math.min(shaderTransitionTypes.length - 1, index))]
         }
         return isShaderTransitionType(raw) ? "alisMelt" : ""
+    }
+
+    function _resetWallfxState(clearMaps = false): void {
+        root._wallfxResolvePending = false
+        root._wallfxResolvedEligible = false
+        root._wallfxTargetSource = ""
+        if (wallfxResolveProc.running)
+            wallfxResolveProc.running = false
+        if (clearMaps) {
+            wallfxFieldImg.source = ""
+            wallfxLineImg.source = ""
+        }
+    }
+
+    function _updateWallfxColorsAndCrop(incomingImg): void {
+        const candidates = [
+            Appearance.colors.colPrimary,
+            Appearance.colors.colSecondary,
+            Appearance.colors.colTertiary,
+            Appearance.m3colors.m3primary,
+            Appearance.m3colors.m3tertiary
+        ]
+        let best = candidates[0]
+        let bestScore = -1
+        for (let i = 0; i < candidates.length; i++) {
+            const c = candidates[i]
+            if (!c) continue
+            const score = Math.max(0, c.hsvSaturation) * (0.55 + 0.45 * Math.max(0, c.hsvValue))
+            if (score > bestScore) {
+                bestScore = score
+                best = c
+            }
+        }
+        const h = (best && best.hsvHue >= 0) ? best.hsvHue : 0.08
+        const s = Math.max(0.45, best ? Math.max(0, best.hsvSaturation) : 0.65)
+        const v = Math.max(0.78, best ? Math.max(0, best.hsvValue) : 0.88)
+        root._wallfxEmber = Qt.hsva(h, s, v, 1.0)
+        root._wallfxInk = Qt.hsva(h, Math.min(0.18, s * 0.25), 0.96, 1.0)
+
+        const iw = Math.max(1, Number(incomingImg?.implicitWidth) || root.width || 1920)
+        const ih = Math.max(1, Number(incomingImg?.implicitHeight) || root.height || 1080)
+        const sw = Math.max(1, root.width || 1920)
+        const sh = Math.max(1, root.height || 1080)
+        const imgAspect = iw / ih
+        const scrAspect = sw / sh
+        if (root.fillMode !== Image.PreserveAspectCrop || Math.abs(imgAspect - scrAspect) < 0.0005) {
+            root._wallfxMapCrop = Qt.vector4d(0, 0, 1, 1)
+        } else if (imgAspect > scrAspect) {
+            const visW = scrAspect / imgAspect
+            root._wallfxMapCrop = Qt.vector4d((1 - visW) * 0.5, 0, visW, 1)
+        } else {
+            const visH = imgAspect / scrAspect
+            root._wallfxMapCrop = Qt.vector4d(0, (1 - visH) * 0.5, 1, visH)
+        }
+    }
+
+    function _startWallfxResolveForSource(sourceUrl: string): void {
+        const clean = FileUtils.trimFileProtocol(String(sourceUrl ?? ""))
+        if (!clean || !root.isWallfxTransitionType(root.transitionType) || !Wallpapers.isFavourite(clean)) {
+            root._resetWallfxState(false)
+            return
+        }
+        if (root._wallfxTargetSource === sourceUrl && (root._wallfxResolvePending || root._wallfxResolvedEligible))
+            return
+        root._resetWallfxState(true)
+        root._wallfxTargetSource = sourceUrl
+        root._wallfxResolvePending = true
+        root._wallfxSeed = Math.random()
+        wallfxResolveProc.targetSource = sourceUrl
+        wallfxResolveProc.command = [
+            "/usr/bin/python3",
+            Wallpapers.wallfxHelperPath,
+            "resolve",
+            clean,
+            "--favourite", "1",
+            "--favourites-file", Wallpapers.favouritesCachePath
+        ]
+        wallfxResolveProc.running = true
+    }
+
+    function _wallfxMapsReady(): bool {
+        return root._wallfxResolvedEligible
+            && String(wallfxFieldImg.source) !== ""
+            && String(wallfxLineImg.source) !== ""
+            && wallfxFieldImg.status === Image.Ready
+            && wallfxLineImg.status === Image.Ready
+    }
+
+    function _onWallfxMapStatusChanged(): void {
+        if (root._transitioning || !root.isWallfxTransitionType(root.transitionType))
+            return
+        if (wallfxFieldImg.status === Image.Error || wallfxLineImg.status === Image.Error) {
+            root._wallfxResolvedEligible = false
+            root._wallfxResolvePending = false
+            const pending = String(internal.pendingSource ?? "")
+            const inactive = internal.inactiveImage()
+            if (pending !== "" && String(inactive.source) === pending && inactive.status === Image.Ready)
+                root._primeShaderTexturesForPending()
+            return
+        }
+        if (root._wallfxMapsReady()) {
+            const pending = String(internal.pendingSource ?? "")
+            const inactive = internal.inactiveImage()
+            if (pending !== "" && pending === root._wallfxTargetSource
+                    && String(inactive.source) === pending && inactive.status === Image.Ready) {
+                root._primeShaderTexturesForPending()
+            }
+        }
     }
 
     function _startShaderTransitionIfReady(): void {
@@ -264,7 +398,31 @@ Item {
             return
         }
 
-        root._activeShader = root._resolvedShaderName()
+        if (root.isWallfxTransitionType(root.transitionType)) {
+            const cleanPending = FileUtils.trimFileProtocol(pending)
+            // Pocket-Dots (`wallfx`) applies strictly to ♥ Favourite wallpapers.
+            // Non-favourite wallpapers fall back immediately to `alisMelt` (`Liquid`)
+            // with zero AI cutout or map resolution overhead.
+            if (!Wallpapers.isFavourite(cleanPending)) {
+                root._resetWallfxState(true)
+                root._activeShader = "alisMelt"
+            } else {
+                if (root._wallfxTargetSource !== pending)
+                    root._startWallfxResolveForSource(pending)
+                if (root._wallfxResolvePending)
+                    return
+                if (root._wallfxResolvedEligible) {
+                    if (!root._wallfxMapsReady())
+                        return
+                    root._updateWallfxColorsAndCrop(inactive)
+                    root._activeShader = "wallfx"
+                } else {
+                    root._activeShader = "alisMelt"
+                }
+            }
+        } else {
+            root._activeShader = root._resolvedShaderName()
+        }
         if (root._activeShader === "") {
             root._cancelShaderTexturePrime()
             internal.performSwitch()
@@ -277,8 +435,13 @@ Item {
     }
 
     function _normalizedTransitionType(rawType: string): string {
-        switch (String(rawType ?? "crossfade")) {
+        const effectiveRaw = String(rawType ?? "crossfade") === "random"
+            ? root._randomPickedType
+            : String(rawType ?? "crossfade")
+        switch (effectiveRaw) {
+        case "wallfx":
         case "alisMelt":
+        case "inirMelt":
         case "shaderRandom":
             return "crossfade"
         case "none":
@@ -296,12 +459,13 @@ Item {
             return "wipe"
         case "grow":
         case "center":
+            return "zoom"
         case "outer":
+            return "zoomOut"
         case "any":
-        case "random":
             return "zoom"
         default:
-            return String(rawType ?? "alisMelt")
+            return effectiveRaw
         }
     }
 
@@ -366,8 +530,10 @@ Item {
         property: "progress"
         from: 0
         to: 1
-        duration: root.transitionDuration
-        easing.type: Easing.BezierSpline
+        duration: root._activeShader === "wallfx"
+            ? Math.max(root.transitionDuration, Appearance.calcEffectiveDuration(root._wallfxMode > 0.5 ? 1850 : 1650))
+            : root.transitionDuration
+        easing.type: root._activeShader === "wallfx" ? Easing.Linear : Easing.BezierSpline
         easing.bezierCurve: root.transitionProgressCurve
         onFinished: root._onTransitionEnd()
     }
@@ -418,6 +584,11 @@ Item {
                 return
             }
 
+            if (String(root.transitionType ?? "") === "random") {
+                const pool = ["alisMelt", "wipe", "slide", "grow", "outer", "blurFade"]
+                const filtered = pool.filter(item => item !== root._randomPickedType)
+                root._randomPickedType = filtered[Math.floor(Math.random() * filtered.length)]
+            }
             pendingSource = newSource
 
             // A newer selection can arrive during a frame lease, before
@@ -462,6 +633,8 @@ Item {
             }
 
             const inactive = inactiveImage()
+            if (root.isWallfxTransitionType(root.transitionType))
+                root._startWallfxResolveForSource(pendingSource)
             // Keep source identity normalized for the same url-vs-string reason as
             // the shader prime guard above. Do not simplify this to `===` on the
             // raw QML url object.
@@ -537,7 +710,7 @@ Item {
             transitionFromIndex = activeIndex
             transitionToIndex = activeIndex === 0 ? 1 : 0
             transitionState.progress = 0
-            transitionDeadline.interval = Math.max(1500, root.transitionDuration + 500)
+            transitionDeadline.interval = Math.max(1500, transitionAnim.duration + 600)
             transitionDeadline.restart()
             if (root._activeShader === "")
                 transitionAnim.restart()
@@ -573,6 +746,7 @@ Item {
         // Only clear when there's no pending source that needs the slot.
         if (internal.pendingSource === "" || internal.pendingSource === internal.displayedSource) {
             internal.inactiveImage().source = ""
+            root._resetWallfxState(true)
         }
 
         _activeShader = ""
@@ -694,12 +868,17 @@ Item {
     }
 
     function _slotVisible(slotIndex: int): bool {
+        if (_shaderTexturePrimePending || _shaderRequestedActive)
+            return internal.slotImage(slotIndex).source !== ""
         if (_transitioning)
             return internal.transitionFromIndex === slotIndex || internal.transitionToIndex === slotIndex
         return internal.activeIndex === slotIndex && internal.slotImage(slotIndex).source !== ""
     }
 
     function _slotOpacity(slotIndex: int): real {
+        if (_shaderTexturePrimePending || _shaderRequestedActive)
+            return 1
+
         if (!_transitioning)
             return internal.activeIndex === slotIndex ? 1 : 0
 
@@ -718,6 +897,7 @@ Item {
         case "wipe":
             return isFrom ? _lerp(1, 0.86, progress) : isTo ? _lerp(0.74, 1, progress) : 0
         case "zoom":
+        case "zoomOut":
             return isFrom ? (1 - progress) : isTo ? progress : 0
         case "blurFade":
             return isFrom ? (1 - progress) : isTo ? _clamp01((progress - 0.08) / 0.92) : 0
@@ -812,14 +992,21 @@ Item {
     }
 
     function _slotZ(slotIndex: int): real {
+        if (_shaderRequestedActive)
+            return internal.transitionFromIndex === slotIndex ? 2 : 1
         if (_transitioning)
             return internal.transitionToIndex === slotIndex ? 2 : internal.transitionFromIndex === slotIndex ? 1 : 0
         return internal.activeIndex === slotIndex ? 1 : 0
     }
 
     function _slotScale(slotIndex: int): real {
+        if (_shaderTexturePrimePending || _shaderRequestedActive)
+            return 1
+
         if (!_transitioning) {
             if (_effectiveType === "zoom")
+                return internal.activeIndex === slotIndex ? 1 : 0.86
+            if (_effectiveType === "zoomOut")
                 return internal.activeIndex === slotIndex ? 1 : _zoomEnterFrom
             return 1
         }
@@ -845,6 +1032,12 @@ Item {
                 return _lerp(1.04, 1, progress)
             return 1
         case "zoom":
+            if (isFrom)
+                return _lerp(1, 1.08, progress)
+            if (isTo)
+                return _lerp(0.86, 1, progress)
+            return 1
+        case "zoomOut":
             if (isFrom)
                 return _lerp(1, _zoomExitTo, progress)
             if (isTo)
@@ -1007,13 +1200,43 @@ Item {
     // ShaderEffect samples Image texture providers without applying Image.fillMode.
     // Render each slot first so shader transitions receive the exact same
     // aspect-correct crop/fit pixels that the user sees before and after them.
-    readonly property bool _shaderTexturesNeeded: root._shaderTexturePrimePending || root._shaderRequestedActive
+    property bool _shaderTexturesWarm: false
+    readonly property bool _shaderTexturesActive: root._shaderTexturePrimePending || root._shaderRequestedActive
+    on_ShaderTexturesActiveChanged: {
+        if (root._shaderTexturesActive) {
+            shaderTextureReleaseTimer.stop()
+            root._shaderTexturesWarm = true
+        } else if (root._shaderTexturesWarm) {
+            shaderTextureReleaseTimer.restart()
+        }
+    }
+    readonly property bool _shaderTexturesNeeded: root._shaderTexturesActive
+        || (root._shaderTexturesWarm && root.shaderTransitionRequested && root._canTransition && root.visible)
+
+    Timer {
+        id: shaderTextureReleaseTimer
+        interval: 2500
+        repeat: false
+        onTriggered: root._shaderTexturesWarm = false
+    }
+
+    function _hideShaderSlotSource(slotIndex: int): bool {
+        if (_shaderRenderActive)
+            return true
+        if (_shaderTexturePrimePending)
+            return slotIndex !== internal.activeIndex
+        if (_shaderRequestedActive)
+            return slotIndex !== internal.transitionFromIndex
+        return false
+    }
 
     ShaderEffectSource {
         id: shaderSlot0Texture
         anchors.fill: parent
         visible: false
+        hideSource: root._hideShaderSlotSource(0)
         live: root._shaderTexturePrimePending
+            || (root._shaderRequestedActive && !shaderTransition.shaderPresented)
         sourceItem: root._shaderTexturesNeeded ? img0 : null
     }
 
@@ -1021,10 +1244,76 @@ Item {
         id: shaderSlot1Texture
         anchors.fill: parent
         visible: false
+        hideSource: root._hideShaderSlotSource(1)
         live: root._shaderTexturePrimePending
+            || (root._shaderRequestedActive && !shaderTransition.shaderPresented)
         sourceItem: root._shaderTexturesNeeded ? img1 : null
     }
 
+
+    Image {
+        id: wallfxFieldImg
+        visible: false
+        cache: false
+        asynchronous: true
+        mipmap: false
+        smooth: root._wallfxMode > 0.5
+        onStatusChanged: root._onWallfxMapStatusChanged()
+    }
+
+    Image {
+        id: wallfxLineImg
+        visible: false
+        cache: false
+        asynchronous: true
+        mipmap: false
+        smooth: false
+        onStatusChanged: root._onWallfxMapStatusChanged()
+    }
+
+    Process {
+        id: wallfxResolveProc
+        property string targetSource: ""
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (wallfxResolveProc.targetSource !== root._wallfxTargetSource)
+                    return
+                root._wallfxResolvePending = false
+                try {
+                    const info = JSON.parse((text ?? "").trim() || "{}")
+                    if (info && info.eligible && info.field && info.line) {
+                        root._wallfxMode = (info.mode === "perfil" || info.mode === 1 || info.modeId === 1) ? 1 : 0
+                        root._wallfxGlow = Number(info.glow ?? 1.0)
+                        root._wallfxLineW = Number(info.lineW ?? 2.2)
+                        root._wallfxSdRange = Number(info.sdRange ?? 16.0)
+                        root._wallfxResolvedEligible = true
+                        const fUrl = String(info.field).startsWith("file://") ? String(info.field) : ("file://" + String(info.field))
+                        const lUrl = String(info.line).startsWith("file://") ? String(info.line) : ("file://" + String(info.line))
+                        wallfxFieldImg.source = fUrl
+                        wallfxLineImg.source = lUrl
+                        if (root._wallfxMapsReady())
+                            root._onWallfxMapStatusChanged()
+                        return
+                    }
+                } catch (e) {}
+                root._wallfxResolvedEligible = false
+                const pending = String(internal.pendingSource ?? "")
+                const inactive = internal.inactiveImage()
+                if (!root._transitioning && pending !== "" && String(inactive.source) === pending && inactive.status === Image.Ready)
+                    root._primeShaderTexturesForPending()
+            }
+        }
+        onExited: (exitCode) => {
+            if (exitCode !== 0 && wallfxResolveProc.targetSource === root._wallfxTargetSource && root._wallfxResolvePending) {
+                root._wallfxResolvePending = false
+                root._wallfxResolvedEligible = false
+                const pending = String(internal.pendingSource ?? "")
+                const inactive = internal.inactiveImage()
+                if (!root._transitioning && pending !== "" && String(inactive.source) === pending && inactive.status === Image.Ready)
+                    root._primeShaderTexturesForPending()
+            }
+        }
+    }
 
     ShaderEffect {
         id: shaderTransition
@@ -1049,6 +1338,22 @@ Item {
         property var source: fromImage
         property var source1: fromImage
         property var source2: toImage
+        property var fieldTex: root._activeShader === "wallfx" && wallfxFieldImg.status === Image.Ready ? wallfxFieldImg : shaderSlot0Texture
+        property var lineTex: root._activeShader === "wallfx" && wallfxLineImg.status === Image.Ready ? wallfxLineImg : shaderSlot0Texture
+        property real wallfxMode: root._wallfxMode
+        property real sw: Math.max(1, width)
+        property real sh: Math.max(1, height)
+        property real fw: Math.max(1, wallfxFieldImg.implicitWidth || 480)
+        property real fh: Math.max(1, wallfxFieldImg.implicitHeight || 270)
+        property real lw: Math.max(1, wallfxLineImg.implicitWidth || 480)
+        property real lh: Math.max(1, wallfxLineImg.implicitHeight || 270)
+        property real wallfxGlow: root._wallfxGlow
+        property real wallfxLineW: root._wallfxLineW
+        property real wallfxSdRange: root._wallfxSdRange
+        property real wallfxSeed: root._wallfxSeed
+        property vector4d mapCrop: root._wallfxMapCrop
+        property color wallfxEmber: root._wallfxEmber
+        property color wallfxInk: root._wallfxInk
         // The Liquid front is the same material as the Abyss Panel shader:
         // the source of these values is precisely AbyssField's surface,
         // raised, rim, shadow and glow, not a second accent-colored palette.
@@ -1061,8 +1366,8 @@ Item {
         property color liquidGlow: AbyssStyle.glow
         property real liquidHighlightStrength: AbyssStyle.highlightStrength
         property real liquidMotionIntensity: AbyssStyle.motionIntensity
-        property real time: 0
         property real progress: root._clamp01(transitionState.progress)
+        property real time: root._shaderRenderActive ? progress * (root.transitionDuration / 1000) : 0
         property real aspectX: width / Math.max(1, height)
         property real aspectY: 1
         property vector2d aspectRatio: Qt.vector2d(aspectX, aspectY)
@@ -1108,7 +1413,6 @@ Item {
         }
         onVisibleChanged: {
             if (!visible) {
-                time = 0
                 shaderReady = false
                 shaderPresented = false
                 return
@@ -1121,13 +1425,6 @@ Item {
                 shaderReady = true
                 Qt.callLater(root._requestShaderPresentationFrame)
             }
-        }
-
-        Timer {
-            interval: 16
-            repeat: true
-            running: root._shaderRenderActive
-            onTriggered: shaderTransition.time += interval / 1000
         }
     }
 

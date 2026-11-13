@@ -1,5 +1,5 @@
 pkgname=alis-shell
-pkgver=1.0.1
+pkgver=1.0.0
 pkgrel=1
 pkgdesc='Alis shell payload, launcher, and user service'
 arch=('x86_64')
@@ -9,7 +9,7 @@ install=alis-shell.install
 # Alis does not publish version tags/releases yet. Keep the non-VCS package
 # reproducible by pinning the reviewed source snapshot; release automation can
 # switch this to a tag once the project publishes one.
-_source_ref="${ALIS_SOURCE_REF:-v1.0.1}"
+_source_ref="${ALIS_SOURCE_REF:-v1.0.0}"
 _default_source_archive="https://github.com/llocphann/Alis/archive/${_source_ref}.tar.gz"
 _source_archive="${ALIS_SOURCE_ARCHIVE:-${_default_source_archive}}"
 _source_dir="${ALIS_SOURCE_DIR:-Alis-${_source_ref}}"
@@ -73,7 +73,6 @@ optdepends=(
   'gnome-keyring: secret storage for API keys and credentials'
   'gowall-bin: wallpaper theme conversion and effects editor'
   'gum: setup TUI helpers'
-  'hyprpicker: color picker support'
   'kde-cli-tools: Dolphin Open With dialog (QT_QPA_PLATFORMTHEME=kde)'
   'imagemagick: image conversion helpers'
   'kconfig: KDE configuration integration'
@@ -248,6 +247,7 @@ PY
 
   install -Dm644 "$srcroot/assets/applications/alis.desktop" "$pkgdir/usr/share/applications/alis.desktop"
   install -Dm644 "$srcroot/assets/applications/alis-settings.desktop" "$pkgdir/usr/share/applications/alis-settings.desktop"
+  install -Dm644 "$srcroot/assets/applications/alis-local-music.desktop" "$pkgdir/usr/share/applications/alis-local-music.desktop"
   install -Dm644 "$srcroot/assets/icons/desktop-symbolic.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/alis.svg"
   install -Dm644 "$srcroot/distro/arch/alis-shell/alis-quickshell-rebuild.hook" \
     "$pkgdir/usr/share/libalpm/hooks/alis-quickshell-rebuild.hook"

@@ -283,10 +283,16 @@ for(const notesChecked of [false,true])for(const notificationsChecked of [false,
         iconVisibility:{notesTimers:"hide",notificationActivity:"hide"}
     };
     const active=layout.livePlacements(twoModules,profile,false);
+    const activeRecords=layout.geometry(active,1920,1080,profile,1);
+    const activeSurfaces=layout.localSurfaces(activeRecords,1920,1080,profile,1,36);
     check(active.some(p=>p.kind==="notesTimers")===notesChecked,
         "Quick Notes Show icon drives actual active module lifecycle");
     check(active.some(p=>p.kind==="notificationActivity")===notificationsChecked,
         "Notifications Show icon drives actual active module lifecycle");
+    check(activeSurfaces.some(p=>p.kind==="notesTimers")===notesChecked,
+        "Quick Notes in module mode always gets Screen Edge localSurface despite legacy showIcon=false");
+    check(activeSurfaces.some(p=>p.kind==="notificationActivity")===notificationsChecked,
+        "Notifications in module mode always gets Screen Edge localSurface despite legacy showIcon=false");
     check(layout.unifiedLauncherMode(profile,"notesTimers")===(notesChecked?"module":"edgebar"),
         "Notes Module Behavior reflects same toggle");
     check(layout.unifiedLauncherMode(profile,"notificationActivity")===(notificationsChecked?"module":"edgebar"),

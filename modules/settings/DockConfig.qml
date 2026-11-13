@@ -40,8 +40,8 @@ ContentPage {
         showIntro: false
         icon: "call_to_action"
         title: Translation.tr("Dock & Dashboard")
-        description: Translation.tr("Dock behavior, window indicators, dashboard hub, local music and Spaced Repetition.")
-        summary: Translation.tr("Dock & Indicators · Dashboard · Spaced Repetition")
+        description: Translation.tr("Dock behavior, window indicators, dashboard hub and local music.")
+        summary: Translation.tr("Dock & Indicators · Dashboard")
     }
 
     GridLayout {
@@ -113,6 +113,33 @@ ContentPage {
                                 { displayName: Translation.tr("Bottom"), icon: "arrow_downward", value: "bottom" },
                                 { displayName: Translation.tr("Right"), icon: "arrow_forward", value: "right" }
                             ]
+                        }
+
+                        ConfigRow {
+                            uniform: true
+                            ConfigSpinBox {
+                                icon: "height"
+                                text: Translation.tr("Dock height (px)")
+                                value: Config.options.dock.height ?? 60
+                                from: 40
+                                to: 100
+                                stepSize: 5
+                                onValueChanged: {
+                                    Config.setNestedValue("dock.height", value);
+                                }
+                            }
+
+                            ConfigSpinBox {
+                                icon: "aspect_ratio"
+                                text: Translation.tr("Icon size (px)")
+                                value: Config.options.dock.iconSize ?? 35
+                                from: 20
+                                to: 60
+                                stepSize: 5
+                                onValueChanged: {
+                                    Config.setNestedValue("dock.iconSize", value);
+                                }
+                            }
                         }
                     }
                     ContentSubsection {
@@ -192,56 +219,22 @@ ContentPage {
                             text: Translation.tr("Show the number of pending notifications on each app icon")
                         }
                     }
-                }
 
-                ContentSubsection {
-                    title: Translation.tr("Dimensions & Window Indicators")
-
-                    ConfigRow {
-                        uniform: true
-                        ConfigSpinBox {
-                            icon: "height"
-                            text: Translation.tr("Dock height (px)")
-                            value: Config.options.dock.height ?? 60
-                            from: 40
-                            to: 100
-                            stepSize: 5
-                            onValueChanged: {
-                                Config.setNestedValue("dock.height", value);
-                            }
-                        }
-
-                        ConfigSpinBox {
-                            icon: "aspect_ratio"
-                            text: Translation.tr("Icon size (px)")
-                            value: Config.options.dock.iconSize ?? 35
-                            from: 20
-                            to: 60
-                            stepSize: 5
-                            onValueChanged: {
-                                Config.setNestedValue("dock.iconSize", value);
-                            }
+                    SettingsSwitch {
+                        buttonIcon: "my_location"
+                        text: Translation.tr("Highlight focused window")
+                        checked: Config.options.dock.smartIndicator !== false
+                        onCheckedChanged: {
+                            Config.setNestedValue("dock.smartIndicator", checked);
                         }
                     }
 
-                    ConfigRow {
-                        uniform: true
-                        SettingsSwitch {
-                            buttonIcon: "my_location"
-                            text: Translation.tr("Highlight focused window")
-                            checked: Config.options.dock.smartIndicator !== false
-                            onCheckedChanged: {
-                                Config.setNestedValue("dock.smartIndicator", checked);
-                            }
-                        }
-
-                        SettingsSwitch {
-                            buttonIcon: "more_horiz"
-                            text: Translation.tr("Dots for inactive apps")
-                            checked: Config.options.dock.showAllWindowDots !== false
-                            onCheckedChanged: {
-                                Config.setNestedValue("dock.showAllWindowDots", checked);
-                            }
+                    SettingsSwitch {
+                        buttonIcon: "more_horiz"
+                        text: Translation.tr("Dots for inactive apps")
+                        checked: Config.options.dock.showAllWindowDots !== false
+                        onCheckedChanged: {
+                            Config.setNestedValue("dock.showAllWindowDots", checked);
                         }
                     }
                 }
@@ -292,33 +285,25 @@ ContentPage {
                         stepSize: 5
                         onValueChanged: Config.setNestedValue("dashboard.appearance.cardOpacity", value / 100)
                     }
-                }
 
-                ContentSubsection {
-                    title: Translation.tr("Panel")
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        text: Translation.tr("% width")
+                        value: Math.round((Config.options?.dashboard?.widthRatio ?? 0.72) * 100)
+                        from: 40
+                        to: 90
+                        stepSize: 2
+                        onValueChanged: Config.setNestedValue("dashboard.widthRatio", value / 100)
+                    }
 
-                    ConfigRow {
-                        uniform: true
-
-                        ConfigSpinBox {
-                            Layout.fillWidth: true
-                            text: Translation.tr("% width")
-                            value: Math.round((Config.options?.dashboard?.widthRatio ?? 0.72) * 100)
-                            from: 40
-                            to: 90
-                            stepSize: 2
-                            onValueChanged: Config.setNestedValue("dashboard.widthRatio", value / 100)
-                        }
-
-                        ConfigSpinBox {
-                            Layout.fillWidth: true
-                            text: Translation.tr("% height")
-                            value: Math.round((Config.options?.dashboard?.heightRatio ?? 0.72) * 100)
-                            from: 45
-                            to: 90
-                            stepSize: 2
-                            onValueChanged: Config.setNestedValue("dashboard.heightRatio", value / 100)
-                        }
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        text: Translation.tr("% height")
+                        value: Math.round((Config.options?.dashboard?.heightRatio ?? 0.72) * 100)
+                        from: 45
+                        to: 90
+                        stepSize: 2
+                        onValueChanged: Config.setNestedValue("dashboard.heightRatio", value / 100)
                     }
                 }
 
@@ -358,21 +343,6 @@ ContentPage {
                 DashboardMusicSettings {
                     Layout.fillWidth: true
                 }
-            }
-        }
-
-        SettingsCardSection {
-            _declarationOrder: 2
-            bentoColumn: "full"
-            Layout.preferredWidth: 1
-            Layout.alignment: Qt.AlignTop
-            Layout.fillWidth: true
-            expanded: true
-            icon: "school"
-            title: Translation.tr("Spaced Repetition")
-
-            DashboardSpacedRepetitionSettings {
-                Layout.fillWidth: true
             }
         }
     }

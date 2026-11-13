@@ -22,6 +22,7 @@ RowLayout {
 
     spacing: 8
     Layout.fillWidth: true
+    Layout.minimumWidth: 0
     Layout.leftMargin: 0
     Layout.rightMargin: 0
 
@@ -89,19 +90,24 @@ RowLayout {
 
     RowLayout {
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
         spacing: 8
         OptionalMaterialSymbol {
+            Layout.fillWidth: false
             icon: root.icon
             iconSize: Appearance.font.pixelSize.large
             opacity: root.enabled ? 1 : 0.4
         }
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            clip: true
             spacing: 1
 
             StyledText {
                 id: labelWidget
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 marquee: true
                 maximumLineCount: 1
                 text: root.text
@@ -112,6 +118,7 @@ RowLayout {
             StyledText {
                 visible: root.description.length > 0
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: root.description
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colSubtext
@@ -124,6 +131,9 @@ RowLayout {
     StyledSpinBox {
         id: spinBoxWidget
         Layout.fillWidth: false
+        Layout.minimumWidth: implicitWidth
+        Layout.preferredWidth: implicitWidth
+        Layout.maximumWidth: implicitWidth
         Accessible.name: root.text
         Accessible.description: root.description
         onValueModified: root.valueModified(value)

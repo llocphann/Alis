@@ -67,7 +67,7 @@ Item {
 
                     // Pulse animation while recording
                     SequentialAnimation on scale {
-                        running: VoiceSearch.recording
+                        running: VoiceSearch.recording && root.visible && Appearance.animationsEnabled
                         loops: Animation.Infinite
                         NumberAnimation { to: 1.15; duration: 400; easing.type: Easing.InOutQuad }
                         NumberAnimation { to: 1.0; duration: 400; easing.type: Easing.InOutQuad }
@@ -100,7 +100,7 @@ Item {
                         color: Appearance.colors.colPrimary
 
                         SequentialAnimation on opacity {
-                            running: VoiceSearch.recording
+                            running: VoiceSearch.recording && root.visible && Appearance.animationsEnabled
                             loops: Animation.Infinite
                             PauseAnimation { duration: index * 150 }
                             NumberAnimation { to: 1; duration: 250 }
@@ -125,7 +125,7 @@ Item {
                     colSecondary: Appearance.colors.colLayer1
 
                     RotationAnimation on rotation {
-                        running: VoiceSearch.transcribing
+                        running: VoiceSearch.transcribing && root.visible && Appearance.animationsEnabled
                         from: 0
                         to: 360
                         duration: 1000

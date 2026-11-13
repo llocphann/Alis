@@ -325,6 +325,14 @@ var legacyExtensionDirs = []string{"alis.alis-theme-1.0.0"}
 
 func getExtensionsDir(forkKey string) string {
 	home, _ := os.UserHomeDir()
+	if forkKey == "antigravity" {
+		e1 := filepath.Join(home, ".antigravity/extensions")
+		e2 := filepath.Join(home, ".antigravity-ide/extensions")
+		if !fileExists(e1) && (fileExists(e2) || dirExists(filepath.Join(home, ".antigravity-ide"))) {
+			return e2
+		}
+		return e1
+	}
 	rel, ok := vscodeExtDirs[forkKey]
 	if !ok {
 		rel = "." + forkKey + "/extensions"
@@ -352,7 +360,7 @@ func cleanLegacyExtensions(forkKey string) {
 // registry if absent. Editors like Cursor/Windsurf only load extensions listed
 // here; physical presence in the directory is not enough.
 func ensureExtensionRegistered(forkKey, extDir string) error {
-	extBase := getExtensionsDir(forkKey)
+	extBase := filepath.Dir(extDir)
 	registryPath := filepath.Join(extBase, "extensions.json")
 
 	var entries []map[string]any
@@ -389,36 +397,43 @@ func ensureExtensionRegistered(forkKey, extDir string) error {
 
 // unregisterExtension removes our entry from extensions.json (companion to ensureExtensionRegistered)
 func unregisterExtension(forkKey string) {
-	registryPath := filepath.Join(getExtensionsDir(forkKey), "extensions.json")
-	data, err := os.ReadFile(registryPath)
-	if err != nil {
-		return
+	registries := []string{filepath.Join(getExtensionsDir(forkKey), "extensions.json")}
+	if forkKey == "antigravity" {
+		home, _ := os.UserHomeDir()
+		alt := filepath.Join(home, ".antigravity-ide", "extensions", "extensions.json")
+		registries = append(registries, alt)
 	}
-	var entries []map[string]any
-	if err := json.Unmarshal(data, &entries); err != nil {
-		return
-	}
-	extID := "alis." + themeExtensionID
-	filtered := entries[:0]
-	for _, e := range entries {
-		ident, _ := e["identifier"].(map[string]any)
-		if id, _ := ident["id"].(string); id == extID {
+	for _, registryPath := range registries {
+		data, err := os.ReadFile(registryPath)
+		if err != nil {
 			continue
 		}
-		filtered = append(filtered, e)
+		var entries []map[string]any
+		if err := json.Unmarshal(data, &entries); err != nil {
+			continue
+		}
+		extID := "alis." + themeExtensionID
+		filtered := entries[:0]
+		for _, e := range entries {
+			ident, _ := e["identifier"].(map[string]any)
+			if id, _ := ident["id"].(string); id == extID {
+				continue
+			}
+			filtered = append(filtered, e)
+		}
+		if len(filtered) == len(entries) {
+			continue
+		}
+		out, err := json.Marshal(filtered)
+		if err != nil {
+			continue
+		}
+		tmp := registryPath + ".tmp"
+		if err := os.WriteFile(tmp, out, 0o644); err != nil {
+			continue
+		}
+		os.Rename(tmp, registryPath)
 	}
-	if len(filtered) == len(entries) {
-		return
-	}
-	out, err := json.Marshal(filtered)
-	if err != nil {
-		return
-	}
-	tmp := registryPath + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o644); err != nil {
-		return
-	}
-	os.Rename(tmp, registryPath)
 }
 
 func writeExtensionManifest(extDir string) error {
@@ -651,17 +666,7 @@ func generateThemeForFork(colorsPath, terminalJSONPath, scssPath, settingsPath, 
 		settingsChanged = true
 	}
 
-	// Clean up old-style injection from previous Alis versions
-	for _, key := range []string{
-		"workbench.colorCustomizations",
-		"editor.tokenColorCustomizations",
-		"editor.semanticTokenColorCustomizations",
-	} {
-		if _, exists := settings[key]; exists {
-			delete(settings, key)
-			settingsChanged = true
-		}
-	}
+	// Customization maps can contain Owner edits and have no ownership marker.
 
 	// Activate our theme if not already active
 	if currentTheme != activeName {
@@ -908,17 +913,7 @@ func stripThemeForFork(settingsPath, forkKey string) bool {
 		changed = true
 	}
 
-	// Clean up legacy injection keys from any previous Alis version
-	for _, key := range []string{
-		"workbench.colorCustomizations",
-		"editor.tokenColorCustomizations",
-		"editor.semanticTokenColorCustomizations",
-	} {
-		if _, ok := settings[key]; ok {
-			delete(settings, key)
-			changed = true
-		}
-	}
+	// Preserve customization maps that are not owned by this extension.
 	if !changed {
 		return true
 	}
@@ -988,6 +983,14 @@ func writeSettings(path string, settings map[string]any) error {
 }
 
 func getSettingsPath(forkName string) string {
+	if forkName == "Antigravity" {
+		p1 := filepath.Join(configDir(), "Antigravity", "User", "settings.json")
+		p2 := filepath.Join(configDir(), "Antigravity IDE", "User", "settings.json")
+		if !fileExists(p1) && (fileExists(p2) || dirExists(filepath.Join(configDir(), "Antigravity IDE"))) {
+			return p2
+		}
+		return p1
+	}
 	return filepath.Join(configDir(), forkName, "User", "settings.json")
 }
 func configDir() string {

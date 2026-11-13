@@ -2,8 +2,8 @@
 // The base allocator remains authoritative; this post-pass may only enlarge
 // already-visible content into geometry proven free on this output.
 var _vacancyPairs = [
-    {role:"featureSidebar", peer:"quickNotes", automatic:"quickNotes"},
-    {role:"systemSidebar", peer:"notificationCenter", automatic:"notificationCenter"},
+    {role:"featureSidebar", peer:"quickNotes", automatic:"quickNotes", newest:true},
+    {role:"systemSidebar", peer:"notificationCenter", automatic:"notificationCenter", newest:true},
     // Controls-owned connectivity dialogs are WindowDialog surfaces, not
     // StyledPopups. They fill the free strip parallel to the logical system
     // sidebar while preserving the already-resolved gap between both bodies.
@@ -207,7 +207,7 @@ function _vacancyMemberForRole(role,metadata,requestById,placements) {
     var meta=list[0], id=String(meta.id);
     return {id:id,role:role,meta:meta,request:requestById[id],placement:placements[id]};
 }
-function _vacancyBestCandidate(owner,peer,placements,width,height,insets,gap,pair) {
+function _vacancyBestCandidate(owner,peer,placements,width,height,insets,gap,pair,externalBlockers) {
     var panel=_vacancyPanelRect(owner.request,owner.placement,width,height,insets);
     var content=_vacancyRect(owner.placement.content);
     var peerContent=_vacancyRect(peer.placement.content);
@@ -252,6 +252,14 @@ function _vacancyBestCandidate(owner,peer,placements,width,height,insets,gap,pai
                     && _vacancyCollides(content,blocker,gap-.01))
                 baseCollision=true;
         }
+        if (max >= .5 && !baseCollision && externalBlockers?.length) {
+            for (var eb=0; eb<externalBlockers.length; eb++) {
+                var ext=_vacancyRect(externalBlockers[eb]);
+                if (ext.width <= 0 || ext.height <= 0) continue;
+                max=Math.min(max,_vacancyBlockerExtent(content,ext,dir,gap));
+                if (max < .5) break;
+            }
+        }
         if (max < .5 || baseCollision) continue;
         var grown=_vacancyGrow(content,dir,max);
         var gain=max*((dir === "top" || dir === "bottom") ? content.width : content.height);
@@ -270,7 +278,7 @@ function _vacancyBestCandidate(owner,peer,placements,width,height,insets,gap,pai
     return best;
 }
 
-function resolve(requests,metadata,placements,width,height,insets,gap) {
+function resolve(requests,metadata,placements,width,height,insets,gap,externalBlockers) {
     if (!placements || !requests?.length || !metadata?.length) return placements;
     if (requests.length < 2) {
         var single=requests[0];
@@ -325,7 +333,7 @@ function resolve(requests,metadata,placements,width,height,insets,gap) {
 
         var choices=[first,second].map(function(owner) {
             var peer=owner.id === first.id ? second : first;
-            var candidate=_vacancyBestCandidate(owner,peer,placements,width,height,insets,gap,pair);
+            var candidate=_vacancyBestCandidate(owner,peer,placements,width,height,insets,gap,pair,externalBlockers);
             return candidate ? {
                 owner:owner,peer:peer,candidate:candidate,
                 requestOrder:_vacancyNumber(owner.request?.order,0)
@@ -344,7 +352,16 @@ function resolve(requests,metadata,placements,width,height,insets,gap) {
         var preferred=choices.find(function(x) {
             return x.owner.role === pair.automatic;
         });
-        if (preferred && !sameEdgeSidebarOuter) ordered.push(preferred);
+        // The last opened Sidebar/Edgebar owns the free strip. The old fixed
+        // Edgebar preference ignored activation order on perpendicular edges.
+        // Keep the connectivity-dialog policy and safe fallback unchanged.
+        if (pair.newest === true) {
+            preferred=choices.slice().sort(function(a,b) {
+                return b.requestOrder-a.requestOrder
+                    || Number(b.owner.role === pair.automatic)-Number(a.owner.role === pair.automatic);
+            })[0];
+        }
+        if (preferred && (pair.newest === true || !sameEdgeSidebarOuter)) ordered.push(preferred);
         choices.slice().sort(function(a,b) {
             return b.requestOrder-a.requestOrder || b.candidate.gain-a.candidate.gain
                 || String(a.owner.id).localeCompare(String(b.owner.id));
@@ -425,6 +442,14 @@ function resolve(requests,metadata,placements,width,height,insets,gap) {
                 if (!op || op.visible === false || !op.content) continue;
                 max=Math.min(max,_vacancyBlockerExtent(content,_vacancyRect(op.content),dir,gap));
                 if (max < .5) break;
+            }
+            if (max >= .5 && externalBlockers?.length) {
+                for (var xb=0; xb<externalBlockers.length; xb++) {
+                    var xrect=_vacancyRect(externalBlockers[xb]);
+                    if (xrect.width <= 0 || xrect.height <= 0) continue;
+                    max=Math.min(max,_vacancyBlockerExtent(content,xrect,dir,gap));
+                    if (max < .5) break;
+                }
             }
             if (max < .5) return;
             var grown=_vacancyGrow(content,dir,max);

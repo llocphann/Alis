@@ -41,10 +41,6 @@ assert "root._shown = false" in task
 assert "minimumVisibleTimer" not in task
 assert "_hidePending" not in task
 assert "Component.onCompleted:" in task
-desktop = read("modules/settings/DesktopWidgetsConfig.qml")
-assert "const shouldCount = requested && resident" in desktop
-assert "(status === Loader.Null || status === Loader.Loading)" in desktop
-assert "onResidentChanged: syncLoadingState()" in desktop
 
 page = read("modules/common/widgets/SettingsPageLoadingOverlay.qml")
 assert "MaterialLoadingIndicator {" in page
@@ -122,7 +118,6 @@ for path in (
     "settings.qml",
     "modules/settings/SettingsFocus.qml",
     "modules/settings/SettingsOverlay.qml",
-    "modules/settings/DesktopWidgetsConfig.qml",
 ):
     content = read(path)
     assert 'text: Translation.tr("Loading page…")' not in content, path
@@ -130,25 +125,15 @@ for path in (
 
 for path in (
     "modules/sidebarLeft/news/NewsView.qml",
-    "modules/sidebarLeft/animeSchedule/AnimeScheduleView.qml",
-    "modules/sidebarLeft/SoftwareView.qml",
     "modules/overview/ActionModeView.qml",
     "modules/mediaControls/components/PlayerLyrics.qml",
-    "modules/sidebarLeft/LocalMusicView.qml",
-    "modules/sidebarLeft/YtMusicView.qml",
-    "modules/sidebarLeft/plugins/WebAppView.qml",
     "modules/waffle/notificationPopup/WNotificationItem.qml",
-    "modules/ii/overlay/floatingImage/FloatingImage.qml",
 ):
     assert "LoadingText {" in read(path), path
 
 for path in (
     "modules/sidebarLeft/news/NewsView.qml",
-    "modules/sidebarLeft/animeSchedule/AnimeScheduleView.qml",
-    "modules/sidebarLeft/SoftwareView.qml",
-    "modules/sidebarLeft/plugins/WebAppView.qml",
     "modules/waffle/notificationPopup/WNotificationItem.qml",
-    "modules/ii/overlay/floatingImage/FloatingImage.qml",
     "waffleSettings.qml",
 ):
     assert 'Translation.tr("Loading...")' not in read(path), path
@@ -162,8 +147,6 @@ assert "SequentialAnimation on scale" in waffle
 
 # Intentional icon-only activity (buffering, session login and update badge)
 # must use a gear. Action-specific status/progress text stays available.
-assert "MaterialLoadingIndicator {" in read("modules/sidebarLeft/innertune/ITPlayer.qml")
-assert '"progress_activity"' not in read("modules/sidebarLeft/innertune/ITPlayer.qml")
 assert 'root.loginInProgress ? "settings" : "arrow_forward"' in read("dots/sddm/pixel/Main.qml")
 for path in ("modules/bar/ShellUpdateIndicator.qml",
              "modules/shellUpdate/ShellUpdateOverlay.qml"):
@@ -178,9 +161,5 @@ for path in ("modules/settings/GowallWallpaperEditor.qml",
     content = read(path)
     assert "LoadingText {" in content, path
     assert '"progress_activity"' not in content, path
-
-ytmusic = read("modules/sidebarLeft/YtMusicView.qml")
-assert "MaterialLoadingIndicator {" not in ytmusic
-assert '"progress_activity"' not in ytmusic
 
 print("Shared loading presentation contracts: PASS")

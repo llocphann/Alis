@@ -110,9 +110,18 @@ Singleton {
                 QSG_ATLAS_WIDTH QSG_ATLAS_HEIGHT QT_LOGGING_RULES \
                 QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE QS_DISABLE_CRASH_HANDLER \
                 ELECTRON_OZONE_PLATFORM_HINT QT_IM_MODULE XMODIFIERS \
-                LD_LIBRARY_PATH QT_PLUGIN_PATH QML_IMPORT_PATH QML2_IMPORT_PATH; do
+                LD_LIBRARY_PATH QT_PLUGIN_PATH QML_IMPORT_PATH QML2_IMPORT_PATH \
+                MALLOC_CONF DRIRC_CONFIGDIR; do
                 restore_from_manager "$_var"
             done
+            if [ "\${_ALIS_ORIG_MALLOC_CONF_SET:-}" = "1" ] && [ -z "\${MALLOC_CONF+x}" ]; then
+                export MALLOC_CONF="\${_ALIS_ORIG_MALLOC_CONF:-}"
+            fi
+            if [ "\${_ALIS_ORIG_DRIRC_CONFIGDIR_SET:-}" = "1" ] && [ -z "\${DRIRC_CONFIGDIR+x}" ]; then
+                export DRIRC_CONFIGDIR="\${_ALIS_ORIG_DRIRC_CONFIGDIR:-}"
+            fi
+            unset _ALIS_ORIG_MALLOC_CONF _ALIS_ORIG_MALLOC_CONF_SET \
+                _ALIS_ORIG_DRIRC_CONFIGDIR _ALIS_ORIG_DRIRC_CONFIGDIR_SET
 
             # The launcher marks exactly which GPU variables Alis injected for
             # the shell. Restore user values (or unset them) before games/apps.

@@ -19,7 +19,7 @@ import qs.modules.common
 Singleton {
     id: root
 
-    readonly property var legacyHiddenIndexes: [0, 5, 8, 13, 16, 17, 18, 19, 20, 21, 27, 28, 29, 30, 31, 32, 34, 35, 36]
+    readonly property var legacyHiddenIndexes: [0, 5, 8, 13, 14, 16, 17, 18, 19, 20, 21, 27, 28, 29, 30, 31, 32, 34, 35, 36]
 
     readonly property var pages: [
         {
@@ -140,14 +140,7 @@ Singleton {
             ]
         },
         null, // Index 13: retired About.
-        {
-            key: "widgets",
-            name: Translation.tr("Desktop Widgets"),
-            icon: "widgets",
-            desc: Translation.tr("Clock, weather, media and custom desktop widgets"),
-            essential: false,
-            component: "modules/settings/DesktopWidgetsConfig.qml"
-        },
+        null, // Index 14: retired Desktop Widgets (moved to Edit Widgets Mode).
         {
             key: "monitors",
             name: Translation.tr("Monitors"),
@@ -180,7 +173,7 @@ Singleton {
             key: "dock",
             name: Translation.tr("Dock & Dashboard"),
             icon: "call_to_action",
-            desc: Translation.tr("Dock, window indicators, dashboard hub, local music and Spaced Repetition"),
+            desc: Translation.tr("Dock, window indicators, dashboard hub and local music"),
             essential: false,
             component: "modules/settings/DockConfig.qml"
         },
@@ -234,7 +227,7 @@ Singleton {
         null, // Index 35: retired Automation. Keep persisted route compatibility.
                 null,
         {key:"companion",name:Translation.tr("Companion"),icon:"water_drop",desc:Translation.tr("Aqua and Octo appearance, personality and movement"),essential:true,component:"modules/settings/CompanionConfig.qml"}
-        ,{key: "integrations",name:Translation.tr("Integrations"),icon:"extension",desc:Translation.tr("Obsidian, calendar and connected applications"),essential:false,component:"modules/settings/IntegrationsConfig.qml"}
+        ,{key: "integrations",name:Translation.tr("Integrations"),icon:"extension",desc:Translation.tr("Nexus, calendar and connected applications"),essential:false,component:"modules/settings/IntegrationsConfig.qml"}
         ,{key: "default-apps",name:Translation.tr("Applications"),icon:"apps",desc:Translation.tr("Default apps, utilities, portable AppImage/tar.gz and startup apps"),essential:true,component:"modules/settings/DefaultAppsConfig.qml",subTabs:[{value:"primary",name:Translation.tr("Default Apps"),icon:"apps"},{value:"utilities",name:Translation.tr("System Utilities"),icon:"tune"},{value:"autostart",name:Translation.tr("Autostart"),icon:"rocket_launch"}]}
     ]
 
@@ -245,7 +238,7 @@ Singleton {
         { label: Config.options?.panelFamily === "abyss" ? Translation.tr("Abyss & Bar") : Translation.tr("Bar & Shell"), pages: Config.options?.panelFamily === "abyss" ? [2, 33, 37, 24] : [2, 26, 37, 24] },
         { label: Translation.tr("Appearance"), pages: [4, 3, 25] },
         { label: Translation.tr("Panels & Dock"), pages: [22, 23] },
-        { label: Translation.tr("Display & Windows"), pages: [15, 12, 14, 10, 11] },
+        { label: Translation.tr("Display & Windows"), pages: [15, 12, 10, 11] },
         { label: Translation.tr("System & Power"), pages: [1, 7] },
         { label: Translation.tr("Integrations"), pages: [38] },
         { label: Translation.tr("Applications"), pages: [39] },
@@ -277,6 +270,13 @@ Singleton {
 
         _staticSearchIndex = [
         {
+            pageIndex: 2, pageName: root.pages[2].name,
+            section: Translation.tr("Customization Stage (Edit Mode)"),
+            label: Translation.tr("Shrink desktop in Edit mode"),
+            description: Translation.tr("Configure desktop stage zoom scale, empty-workspace parking, and Change Wallpaper stage preview"),
+            keywords: ["abyss", "edit mode", "desktop", "shrink", "zoom", "scale", "stage", "customization", "dock", "wallpaper", "widgets", "dashboard", "settings"]
+        },
+        {
             pageIndex: 34, pageName: root.pages[34].name,
             section: Translation.tr("Modules"),
             label: Translation.tr("Quick Notes & Notifications access modes"),
@@ -286,18 +286,18 @@ Singleton {
                 "launcher", "icon", "show", "hide", "mode"]
         },
         {pageIndex:38,pageName:root.pages[38].name,section:"Calendar Sync",label:"External calendars",description:"ICS/iCal sources",keywords:["calendar","ics","ical","integrations"]},
-        {pageIndex:38,pageName:root.pages[38].name,section:"Obsidian",label:"Obsidian theming",description:"Active theme and vault paths",keywords:["obsidian","theme","vault","config","integration"]},
+        {pageIndex:38,pageName:root.pages[38].name,section:"Nexus",label:"Nexus theming",description:"Active theme and vault paths",keywords:["nexus","theme","vault","config","integration"]},
         {pageIndex:37,pageName:root.pages[37].name,section:Translation.tr("Overview"),label:Translation.tr("Enable Companion"),description:Translation.tr("Aqua and Octo appearance, personality and movement"),keywords:["aqua","octo","companion","droplet","pet","mascot","fullscreen","interactive"]},
         {pageIndex:37,pageName:root.pages[37].name,section:Translation.tr("Rendering"),label:Translation.tr("Companion size"),description:Translation.tr("Keep your companion small or give it a little more room."),keywords:["aqua","octo","companion","size","liquid"]},
         {pageIndex:37,pageName:root.pages[37].name,section:Translation.tr("Behavior"),label:Translation.tr("Personality"),description:Translation.tr("Appearance frequency"),keywords:["aqua","octo","companion","calm","balanced","energetic","hyperactive","frequency","visits","animations","reflection","bubbles"]},
         {pageIndex:37,pageName:root.pages[37].name,section:Translation.tr("Rendering"),label:Translation.tr("Rendering quality"),description:Translation.tr("Bubbles and floor reflections"),keywords:["aqua","octo","companion","rendering","performance","balanced","quality","glass","liquid","refraction","reflection","transparency"]},
-        {pageIndex:37,pageName:root.pages[37].name,section:Translation.tr("AI"),label:Translation.tr("Enable local AI"),description:Translation.tr("Check-ins and reminders"),keywords:["aqua","octo","companion","ai","local","llm","ollama","chat","obsidian","mood","energy","schedule"]},
+        {pageIndex:37,pageName:root.pages[37].name,section:Translation.tr("AI"),label:Translation.tr("Enable local AI"),description:Translation.tr("Check-ins and reminders"),keywords:["aqua","octo","companion","ai","local","llm","ollama","chat","nexus","mood","energy","schedule"]},
         {
             pageIndex: 38, pageName: root.pages[38].name,
             section: Translation.tr("To-do & Quick Notes"),
             label: Translation.tr("To-do & Quick Notes"),
             description: Translation.tr("Shared vault for tasks and Zettelkasten notes"),
-            keywords: ["todo", "to-do", "quick notes", "zettelkasten", "obsidian", "tasks", "markdown", "vault", "sync", "data"]
+            keywords: ["todo", "to-do", "quick notes", "zettelkasten", "nexus", "tasks", "markdown", "vault", "sync", "data"]
         },
         {
             pageIndex: 38, pageName: root.pages[38].name,
@@ -1496,33 +1496,17 @@ Singleton {
             description: Translation.tr("Enable or disable individual compositor animations"),
             keywords: ["animation", "toggle", "enable", "disable", "compositor", "transition"]
         },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Edit Mode"), label: Translation.tr("Widget edit mode"), description: Translation.tr("Grid overlay and snap-to-grid for widget placement"), keywords: ["widget", "edit", "grid", "snap", "placement", "drag"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Appearance"), label: Translation.tr("Desktop widgets"), description: Translation.tr("Current Alis palette"), keywords: ["widget", "color", "colour", "palette", "preset", "primary", "secondary", "tertiary", "signal", "surface", "wallpaper"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Desktop clock"), description: Translation.tr("Clock widget on the desktop background"), keywords: ["clock", "widget", "cookie", "digital", "background", "desktop", "wallpaper", "adaptive", "colors"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Clock style"), description: Translation.tr("Cookie, digital or Android stacked clock"), keywords: ["clock", "style", "cookie", "digital", "android", "stacked", "analog", "hands"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Japanese Typography"), label: Translation.tr("Japanese typography widget"), description: Translation.tr("Vertical editorial lettering with layout, font, palette, seal, and footer controls"), keywords: ["japanese", "typography", "vertical", "text", "kanji", "kana", "poster", "magazine", "editorial", "seal", "widget", "font", "mincho", "gothic", "color", "palette", "sumi", "outline"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Weather"), label: Translation.tr("Desktop weather widget"), description: Translation.tr("Weather display on the desktop background"), keywords: ["weather", "widget", "background", "temperature"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Custom image"), label: Translation.tr("Custom media gallery"), description: Translation.tr("Show one image, GIF, or video, or rotate a mixed-media folder"), keywords: ["custom", "image", "photo", "static", "gif", "animated", "video", "movie", "gallery", "folder", "slideshow", "interval", "speed", "random", "sequential", "fit", "shape", "widget", "desktop", "drop"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Image converter"), label: Translation.tr("Image converter"), description: Translation.tr("Convert dropped images to PNG, JPG, WEBP, AVIF, BMP, TIFF or PDF"), keywords: ["image", "convert", "converter", "png", "jpg", "webp", "avif", "bmp", "tiff", "pdf", "drop", "desktop", "widget"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("World clock"), label: Translation.tr("World clock"), description: Translation.tr("Local time and four configurable time zones"), keywords: ["world", "clock", "timezone", "city", "desktop", "widget"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("User card"), label: Translation.tr("User card"), description: Translation.tr("Identity, uptime, weather and session actions"), keywords: ["user", "profile", "uptime", "weather", "lock", "settings", "power", "desktop", "widget"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Media Controls"), label: Translation.tr("Desktop media widget"), description: Translation.tr("Media player controls on the desktop background"), keywords: ["media", "widget", "background", "player", "music", "album"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Visualizer"), label: Translation.tr("Audio visualizer"), description: Translation.tr("Audio visualizer widget on the desktop"), keywords: ["visualizer", "audio", "bars", "wave", "music", "equalizer", "spectrum", "cava", "palette", "gradient", "smoothing", "frequency", "bass", "opacity"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("System Monitor"), label: Translation.tr("System monitor widget"), description: Translation.tr("CPU, RAM, GPU usage on the desktop"), keywords: ["system", "monitor", "cpu", "ram", "gpu", "usage", "performance"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Battery"), label: Translation.tr("Desktop battery widget"), description: Translation.tr("Battery status on the desktop background"), keywords: ["battery", "widget", "background", "charge", "power"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Custom Widgets"), label: Translation.tr("Custom widgets"), description: Translation.tr("Create, install, and manage custom QML widgets"), keywords: ["custom", "widget", "create", "qml", "install", "user", "plugin"] },
         { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Monitor arrangement"), label: Translation.tr("Arrange monitors"), description: Translation.tr("Drag displays to match the physical layout of your desk"), keywords: ["monitor", "display", "arrange", "layout", "position", "drag", "niri", "output", "screen", "snap"] },
         { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Overview placement"), label: Translation.tr("Active screen only"), description: Translation.tr("Open the overview on the monitor where it was invoked"), keywords: ["overview", "monitor", "screen", "focused", "active", "output"] },
         { pageIndex: 33, pageName: root.pages[33].name, section: Translation.tr("Popups"), label: Translation.tr("Notification surfaces and OSD indicators"), description: Translation.tr("Choose which monitors show transient notifications, the notification center and OSD feedback"), keywords: ["monitor", "visibility", "notifications", "center", "history", "osd", "popups", "secondary", "workspace"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Desktop widgets"), label: Translation.tr("Desktop widgets"), description: Translation.tr("Choose widget visibility and layout per monitor"), keywords: ["monitor", "visibility", "desktop", "widgets", "layout", "secondary", "workspace"] },
         { pageIndex: 22, pageName: root.pages[22].name, section: Translation.tr("Dashboard"), label: Translation.tr("Dashboard"), description: Translation.tr("Centered welcome hub panel with configurable widgets"), keywords: ["dashboard", "hub", "welcome", "panel", "home", "greeting"] },
         { pageIndex: 22, pageName: root.pages[22].name, section: Translation.tr("Dashboard"), label: Translation.tr("Panel width"), description: Translation.tr("Dashboard width as a percentage of the screen"), keywords: ["dashboard", "width", "size", "ratio", "screen"] },
         { pageIndex: 22, pageName: root.pages[22].name, section: Translation.tr("Dashboard"), label: Translation.tr("Panel height"), description: Translation.tr("Dashboard height as a percentage of the screen"), keywords: ["dashboard", "height", "size", "ratio", "screen", "scroll"] },
         { pageIndex: 22, pageName: root.pages[22].name, section: Translation.tr("Dashboard"), label: Translation.tr("GitHub username"), description: Translation.tr("GitHub user for the contributions heatmap widget"), keywords: ["dashboard", "github", "contributions", "heatmap", "username", "activity"] },
         { pageIndex: 22, pageName: root.pages[22].name, section: Translation.tr("Dashboard"), label: Translation.tr("Dashboard canvas"), description: Translation.tr("Move and resize Dashboard modules freely with grid snapping"), keywords: ["dashboard", "widgets", "modules", "canvas", "grid", "snap", "resize", "move", "weather", "media", "calendar"] },
         { pageIndex: 22, pageName: root.pages[22].name, section: Translation.tr("Dashboard"), label: Translation.tr("Local Music"), description: Translation.tr("Dashboard music page, MPD connection and library folder"), keywords: ["dashboard", "music", "local", "mpd", "host", "port", "library", "folder", "lyrics", "genre"] },
-        { pageIndex: 22, pageName: root.pages[22].name, section: Translation.tr("Spaced Repetition"), label: Translation.tr("Spaced Repetition"), description: Translation.tr("Vocabulary flashcards, SM-2+ scheduling, daily limits, CEFR extraction and auto-syntax"), keywords: ["dashboard", "spaced", "repetition", "vocabulary", "flashcards", "anki", "obsidian", "cefr", "sm2", "study", "language", "english", "german", "memory"] },
-        { pageIndex: 22, pageName: root.pages[22].name, section: Translation.tr("Spaced Repetition"), label: Translation.tr("Daily limits & queue priority"), description: Translation.tr("Configure daily new cards, review limits and CEFR/due queue order"), keywords: ["spaced", "repetition", "daily", "limit", "new", "review", "queue", "priority", "cefr", "boost", "leech"] },
+        { pageIndex: 38, pageName: root.pages[38].name, section: Translation.tr("Spaced Repetition"), label: Translation.tr("Spaced Repetition"), description: Translation.tr("Vocabulary flashcards, SM-2+ scheduling, daily limits, CEFR extraction and auto-syntax"), keywords: ["dashboard", "spaced", "repetition", "vocabulary", "flashcards", "anki", "nexus", "cefr", "sm2", "study", "language", "english", "german", "memory"] },
+        { pageIndex: 38, pageName: root.pages[38].name, section: Translation.tr("Spaced Repetition"), label: Translation.tr("Daily limits & queue priority"), description: Translation.tr("Configure daily new cards, review limits and CEFR/due queue order"), keywords: ["spaced", "repetition", "daily", "limit", "new", "review", "queue", "priority", "cefr", "boost", "leech"] },
         {
             pageIndex: 39, pageName: root.pages[39].name,
             section: Translation.tr("Portable Applications"),

@@ -128,7 +128,7 @@ Item {
             Layout.preferredWidth: root.paneWidth
             Layout.fillHeight: true
 
-            ObsidianMonthCalendar {
+            NexusMonthCalendar {
                 id: monthView
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter

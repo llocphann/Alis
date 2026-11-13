@@ -134,14 +134,13 @@ Singleton {
     // ─── Battery warnings ───
     onIsLowAndNotChargingChanged: {
         if (!root.available || !isLowAndNotCharging) return;
-        Quickshell.execDetached([
-            "/usr/bin/notify-send", 
-            Translation.tr("Low battery"), 
-            Translation.tr("Consider plugging in your device"), 
-            "-u", "critical",
-            "-a", "Shell",
-            "--hint=int:transient:1",
-        ])
+        Notifications.sendInternal({
+            summary: Translation.tr("Low battery"),
+            body: Translation.tr("Consider plugging in your device"),
+            urgency: "critical",
+            appName: "Shell",
+            transient: true,
+        })
 
         if (root.soundEnabled) Audio.playEvent("batteryLow");
     }
@@ -151,14 +150,13 @@ Singleton {
         const message = root.allowAutomaticSuspend
             ? Translation.tr("Please charge!\nAutomatic suspend triggers at %1%").arg(root.suspendThreshold)
             : Translation.tr("Consider plugging in your device")
-        Quickshell.execDetached([
-            "/usr/bin/notify-send", 
-            Translation.tr("Critically low battery"), 
-            message, 
-            "-u", "critical",
-            "-a", "Shell",
-            "--hint=int:transient:1",
-        ]);
+        Notifications.sendInternal({
+            summary: Translation.tr("Critically low battery"),
+            body: message,
+            urgency: "critical",
+            appName: "Shell",
+            transient: true,
+        });
 
         if (root.soundEnabled) Audio.playEvent("batteryCritical");
     }
@@ -171,13 +169,12 @@ Singleton {
 
     onIsFullAndChargingChanged: {
         if (!root.available || !root.notifyFull || !isFullAndCharging) return;
-        Quickshell.execDetached([
-            "/usr/bin/notify-send",
-            Translation.tr("Battery full"),
-            Translation.tr("Please unplug the charger"),
-            "-a", "Shell",
-            "--hint=int:transient:1",
-        ]);
+        Notifications.sendInternal({
+            summary: Translation.tr("Battery full"),
+            body: Translation.tr("Please unplug the charger"),
+            appName: "Shell",
+            transient: true,
+        });
 
         if (root.soundEnabled) Audio.playEvent("batteryFull");
     }

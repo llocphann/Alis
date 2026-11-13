@@ -12,13 +12,163 @@ Rectangle {
 
     required property var canvasController
     property var tabController: null
+    property bool embeddedSurface: false
+    property bool compactHeight: false
+    property bool splitSideDocks: false
+    property Item leftDockParent: null
+    property Item rightDockParent: null
+    property string activeDockTab: "modules"
+    property string moduleSearchQuery: ""
+
+    readonly property real desiredLeftDockWidth: (root.splitSideDocks && root.tabController !== null)
+        ? Math.ceil(leftTabsDock.implicitWidth) : 0
+    readonly property real desiredLeftDockHeight: (root.splitSideDocks && root.tabController !== null)
+        ? Math.ceil(leftTabsDock.implicitHeight) : 0
+    readonly property real desiredRightDockWidth: (root.splitSideDocks && root.canvasController !== null)
+        ? Math.ceil(rightLayoutDock.implicitWidth) : 0
+    readonly property real desiredRightDockHeight: (root.splitSideDocks && root.canvasController !== null)
+        ? Math.ceil(rightLayoutDock.implicitHeight) : 0
+
+    readonly property bool editing: root.canvasController?.editMode ?? false
     readonly property bool naming: tabController?.tabNamingActive ?? false
+    readonly property var visibleIds: root.canvasController?.visibleIds ?? []
+    readonly property var hiddenIds: root.canvasController?.hiddenIds ?? []
+    readonly property var allModuleIds: {
+        const raw = root.canvasController?._allIds
+        if (raw && raw.length !== undefined && raw.length > 0)
+            return Array.from(raw)
+        const merged = []
+        for (const id of Array.from(root.visibleIds)) {
+            if (merged.indexOf(String(id)) < 0)
+                merged.push(String(id))
+        }
+        for (const id of Array.from(root.hiddenIds)) {
+            if (merged.indexOf(String(id)) < 0)
+                merged.push(String(id))
+        }
+        return merged
+    }
+    readonly property var filteredModuleIds: {
+        const q = root.moduleSearchQuery.trim().toLowerCase()
+        if (q.length === 0)
+            return root.allModuleIds
+        return root.allModuleIds.filter(id => {
+            const key = String(id)
+            const label = String(root.canvasController?._label(key) ?? key).toLowerCase()
+            return key.toLowerCase().indexOf(q) >= 0 || label.indexOf(q) >= 0
+        })
+    }
+    readonly property bool abyssMode:
+        (Config.options?.panelFamily ?? "abyss") === "abyss"
+    readonly property real horizontalPadding: root.abyssMode
+        ? Math.max(10, AbyssStyle.contentPadding * 0.55) : 10
+    readonly property string effectiveDockTab: root.splitSideDocks
+        ? "modules"
+        : (root.tabController === null && root.activeDockTab === "tabs"
+            ? "modules" : root.activeDockTab)
     readonly property string targetCustomTabId: {
         const cur = String(root.tabController?.currentPageId ?? "")
         if (cur.startsWith("custom-")) return cur
         const tabs = root.tabController?.customTabs ?? []
         return tabs.length > 0 ? String(tabs[tabs.length - 1]?.id ?? "") : ""
     }
+    readonly property string statusSubtitle: {
+        const msg = String(root.canvasController?.layoutMessage ?? "")
+        if (msg.length > 0)
+            return msg
+        const overflowCount = Number(root.canvasController?.workspace?.overflow?.length ?? 0)
+        if (overflowCount > 0)
+            return Translation.tr("%1 modules need more space").arg(overflowCount)
+        const sel = String(root.canvasController?.selectedId ?? "")
+        if (sel.length > 0)
+            return Translation.tr("Editing %1").arg(root.canvasController?._label(sel) ?? sel)
+        return Translation.tr("Edit widgets")
+    }
+
+    function isModuleVisible(id): bool {
+        const list = root.visibleIds
+        if (!list) return false
+        for (let i = 0; i < list.length; ++i) {
+            if (String(list[i]) === String(id))
+                return true
+        }
+        return false
+    }
+
+    function moduleAccentColor(id): color {
+        switch (String(id)) {
+            case "clock":
+            case "weather":
+                return root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
+            case "media":
+            case "notes":
+                return Appearance.colors.colSecondary ?? Appearance.colors.colPrimary
+            case "system":
+            case "github":
+                return Appearance.colors.colTertiary ?? Appearance.colors.colPrimary
+            default:
+                return root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
+        }
+    }
+
+    function selectGridStyle(styleKey): void {
+        if (!root.canvasController)
+            return
+        for (let i = 0; i < 4; ++i) {
+            if (String(root.canvasController.gridStyle ?? "dots") === styleKey)
+                return
+            root.canvasController._cycleGridStyle()
+        }
+    }
+
+    function pageTitle(pageId): string {
+        const key = String(pageId)
+        if (key === "dashboard") return Translation.tr("Dashboard")
+        if (key === "weeklyPlanner") return Translation.tr("Planner")
+        if (key === "music") return Translation.tr("Music")
+        if (key === "spacedRepetition") return Translation.tr("Review")
+        const tabs = root.tabController?.customTabs ?? []
+        for (let i = 0; i < tabs.length; ++i) {
+            if (String(tabs[i]?.id ?? "") === key)
+                return String(tabs[i]?.name ?? key)
+        }
+        return key
+    }
+
+    function pageIcon(pageId): string {
+        const key = String(pageId)
+        if (key === "dashboard") return "dashboard"
+        if (key === "weeklyPlanner") return "calendar_view_week"
+        if (key === "music") return "library_music"
+        if (key === "spacedRepetition") return "psychology"
+        return "tab"
+    }
+
+    function switchDashboardTab(pageId): void {
+        if (!root.tabController || pageId === root.tabController.currentPageId)
+            return
+        const editor = root.canvasController
+        if (editor?.editMode) {
+            editor.commitEditMode()
+            if (editor.editMode)
+                return
+        }
+        const editableTarget = pageId === "dashboard" || String(pageId).startsWith("custom-")
+        if (editableTarget)
+            root.tabController._pendingNewEditId = pageId
+        root.tabController.selectPage(pageId)
+        if (pageId === "dashboard") {
+            Qt.callLater(() => {
+                if (root.tabController?.currentPageId === "dashboard"
+                        && root.tabController?.canvasController
+                        && !root.tabController.canvasController.editMode) {
+                    root.tabController._pendingNewEditId = ""
+                    root.tabController.canvasController.beginEditMode()
+                }
+            })
+        }
+    }
+
     function focusTabNameInput(): void {
         if (!root.naming || !root.visible) return
         const expected = root.tabController?._customDialogName ?? ""
@@ -27,12 +177,19 @@ Rectangle {
         tabNameInput.forceActiveFocus()
         tabNameInput.cursorPosition = tabNameInput.text.length
     }
+
     onNamingChanged: if (naming) Qt.callLater(() => {
         if (root.naming) tabNameInput.forceActiveFocus()
         root.focusTabNameInput()
     })
-    onVisibleChanged: if (root.visible && root.naming) Qt.callLater(root.focusTabNameInput)
+    onVisibleChanged: {
+        if (!root.visible && root.moduleSearchQuery.length > 0)
+            root.moduleSearchQuery = ""
+        if (root.visible && root.naming)
+            Qt.callLater(root.focusTabNameInput)
+    }
     onEnabledChanged: if (root.enabled && root.naming) Qt.callLater(root.focusTabNameInput)
+
     Timer {
         id: tabNameFocusTimer
         interval: 35
@@ -47,6 +204,7 @@ Rectangle {
                 stop()
         }
     }
+
     Connections {
         target: root.tabController
         function on_CustomDialogNameChanged(): void {
@@ -59,37 +217,12 @@ Rectangle {
                 Qt.callLater(root.focusTabNameInput)
         }
     }
-    property bool embeddedSurface: false
-    readonly property bool editing: root.canvasController?.editMode ?? false
-    readonly property var hiddenIds: root.canvasController?.hiddenIds ?? []
-    readonly property bool abyssMode:
-        (Config.options?.panelFamily ?? "abyss") === "abyss"
 
-    readonly property real horizontalPadding: root.abyssMode
-        ? Math.max(10, AbyssStyle.contentPadding * 0.55) : 7
-    readonly property real sectionGap: 8
-    readonly property real availableModulesNaturalWidth:
-        root.hiddenIds.length > 0
-            ? Math.max(root.tabController !== null ? 360 : 0, availableModulesRow.implicitWidth)
-            : 0
-    readonly property int visibleActionCount:
-        7 + (root.tabController !== null ? 3 : 0)
-            + ((root.canvasController?.responsiveWorkspace ?? false) ? 0 : 1)
-            + (root.hiddenIds.length > 0 ? 1 : 0)
-    readonly property real toolbarRowNaturalWidth:
-        root.visibleActionCount*34 + (root.visibleActionCount-1)*6
-        + (root.hiddenIds.length > 0
-            ? root.sectionGap + root.availableModulesNaturalWidth : 0)
-    // Preserve the *Edit Dashboard Layout* footprint while Create/Rename
-    // temporarily replaces the actions. Never size the popup from the
-    // naming row or its validation message; the host uses these dimensions
-    // for its reserved space and native input region.
-    implicitWidth: Math.ceil(Math.max(toolbarTitle.implicitWidth,
-        Math.min(760, root.toolbarRowNaturalWidth))
-        + root.horizontalPadding * 2)
-    readonly property real editToolbarHeight: Math.ceil(
-        toolbarTitle.implicitHeight + toolbarColumn.spacing
-        + toolbarRow.implicitHeight + root.horizontalPadding * 2)
+    // Preserve the canonical 2-tier Edit Dashboard Layout footprint while
+    // Create/Rename temporarily overlays the top header bar. Never size the
+    // dock from the naming row or validation message.
+    implicitWidth: root.splitSideDocks ? dock.implicitWidth : 1020
+    readonly property real editToolbarHeight: dock.implicitHeight
     implicitHeight: root.editToolbarHeight
     visible: root.editing || root.naming
     radius: Appearance.rounding.large
@@ -99,223 +232,81 @@ Rectangle {
     bottomRightRadius: root.abyssMode ? radius : 0
     color: root.embeddedSurface ? "transparent" : root.abyssMode
         ? Qt.alpha(AbyssStyle.surfaceDeep,
-            Math.max(0.72, AbyssStyle.contentOpacity))
+            Math.max(0.84, AbyssStyle.contentOpacity))
         : Appearance.colors.colLayer0
     border.width: root.abyssMode && !root.embeddedSurface ? 1 : 0
     border.color: root.abyssMode
-        ? Qt.alpha(AbyssStyle.accent, 0.22) : "transparent"
+        ? Qt.alpha(AbyssStyle.accent, 0.24) : "transparent"
     clip: true
 
-    ColumnLayout {
-        id: toolbarColumn
+    // Flexible content width for Bottom Edit Dashboard Stage (capped <= 80% by stage).
+    AbyssCustomizationDock {
+        id: dock
         anchors.fill: parent
-        anchors.margins: root.horizontalPadding
-        spacing: 5
-
-        StyledText {
-            id: toolbarTitle
-            Layout.fillWidth: true
-            horizontalAlignment: Text.AlignHCenter
-            text: root.naming
-                ? (root.tabController?._customDialogMode === "rename"
-                    ? Translation.tr("Rename custom tab") : Translation.tr("Create custom tab"))
-                : root.canvasController?.layoutMessage
-                || ((root.canvasController?.workspace?.overflow?.length ?? 0) > 0
-                    ? Translation.tr("%1 modules need more space").arg(root.canvasController.workspace.overflow.length)
-                    : root.canvasController?.selectedId?.length > 0
-                        ? Translation.tr("Editing %1").arg(root.canvasController._label(root.canvasController.selectedId))
-                        : Translation.tr("Edit widgets"))
-            font.pixelSize: Appearance.font.pixelSize.small
-            font.weight: Font.DemiBold
-            color: root.abyssMode
-                ? AbyssStyle.textColor : Appearance.colors.colOnLayer0
-            elide: Text.ElideRight
+        embeddedSurface: true
+        horizontalPadding: root.horizontalPadding
+        verticalPadding: root.compactHeight ? 5 : 7
+        topBarHeight: root.compactHeight ? 38 : 40
+        trayGap: root.compactHeight ? 5 : 6
+        trayHeight: root.compactHeight ? 88 : 114
+        contentPreferredWidth: root.splitSideDocks ? Math.ceil(modulesGalleryRow.implicitWidth + 16) : 0
+        canUndo: root.canvasController?.canUndo ?? false
+        undoObjectName: "dashboardEditUndo"
+        cancelObjectName: "dashboardEditCancel"
+        doneObjectName: "dashboardEditDone"
+        headerOverlayActive: root.naming
+        activeTab: root.effectiveDockTab
+        showSearch: root.splitSideDocks || (root.effectiveDockTab === "modules" && root.width >= 820)
+        searchPlaceholder: Translation.tr("Search modules...")
+        searchObjectName: "dashboardModuleSearch"
+        searchText: root.moduleSearchQuery
+        tabs: {
+            const compactLabels = !root.splitSideDocks && root.width < 680
+            const list = [
+                {
+                    key: "modules",
+                    label: Translation.tr("Modules"),
+                    icon: compactLabels ? "" : "widgets",
+                    badge: root.hiddenIds.length > 0 ? String(root.hiddenIds.length) : "",
+                    objectName: "dashboardDockTabModules"
+                }
+            ]
+            if (!root.splitSideDocks) {
+                list.push({
+                    key: "layout",
+                    label: compactLabels ? Translation.tr("Layout") : Translation.tr("Layout & Grid"),
+                    icon: compactLabels ? "" : "grid_view",
+                    objectName: "dashboardDockTabLayout"
+                })
+                if (root.tabController !== null) {
+                    list.push({
+                        key: "tabs",
+                        label: Translation.tr("Tabs"),
+                        icon: compactLabels ? "" : "tab",
+                        badge: (root.tabController?.customTabs?.length ?? 0) > 0
+                            ? String(root.tabController.customTabs.length) : "",
+                        objectName: "dashboardDockTabTabs"
+                    })
+                }
+            }
+            return list
         }
 
-        // Temporarily occupy the original Edit Dashboard Layout bar instead
-        // of opening a modal over the cards. The host reserves the same space.
-        RowLayout {
-            id: tabNamingRow
-            objectName: "dashboardTabNamingToolbar"
-            visible: root.naming
-            Layout.fillWidth: true
-            // Match the height of the original Edit actions, even if some
-            // hidden-module controls make that layout occupy multiple rows.
-            Layout.preferredHeight: toolbarRow.implicitHeight
-            Layout.minimumHeight: 0
-            spacing: 6
-            TextField {
-                id: tabNameInput
-                objectName: "dashboardToolbarTabName"
-                Layout.fillWidth: true
-                Layout.minimumWidth: 160
-                // Retain the 40px natural control while fitting the original
-                // Edit toolbar row's allocated height when it is smaller.
-                Layout.preferredHeight: Math.min(40, toolbarRow.implicitHeight)
-                Layout.minimumHeight: 0
-                Layout.alignment: Qt.AlignVCenter
-                implicitHeight: 40
-                maximumLength: 41
-                hoverEnabled: true
-                focusPolicy: Qt.StrongFocus
-                selectByMouse: true
-                cursorVisible: activeFocus
-                font.pixelSize: Appearance.font.pixelSize.normal
-                verticalAlignment: TextInput.AlignVCenter
-                leftPadding: 14
-                rightPadding: 14
-                topPadding: 6
-                bottomPadding: 6
-                color: root.abyssMode
-                    ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
-                placeholderTextColor: root.abyssMode
-                    ? AbyssStyle.textColorMuted : Appearance.colors.colSubtext
-                selectionColor: Appearance.colors.colPrimaryContainer
-                selectedTextColor: Appearance.colors.colOnPrimaryContainer
-                placeholderText: Translation.tr("Custom tab name")
-                text: root.tabController?._customDialogName ?? ""
-                onTextEdited: root.tabController?.setCustomTabName(text)
-                onAccepted: root.tabController?.acceptCustomTabDialog()
-                onPressed: tabNameInput.forceActiveFocus()
-                cursorDelegate: Rectangle {
-                    id: tabNameCursor
-                    width: 2
-                    color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
-                    visible: tabNameInput.activeFocus
-                    SequentialAnimation on opacity {
-                        loops: Animation.Infinite
-                        running: tabNameInput.activeFocus
-                        PropertyAction { value: 1.0 }
-                        PauseAnimation { duration: 530 }
-                        PropertyAction { value: 0.15 }
-                        PauseAnimation { duration: 420 }
-                    }
-                }
-                readonly property bool invalidName:
-                    (root.tabController?._customDialogError?.length ?? 0) > 0
+        onUndoClicked: root.canvasController?.undoLastEdit()
+        onCancelClicked: root.canvasController?.cancelEditMode()
+        onDoneClicked: root.canvasController?.commitEditMode()
+        onTabClicked: key => root.activeDockTab = key
+        onSearchEdited: text => root.moduleSearchQuery = text
 
-                // Qt's default rectangular focus border doesn't follow our
-                // dashboard palette. Provide a rounded, theme-aware surface
-                // for Abyss and the other Alis panel families.
-                background: Rectangle {
-                    id: tabNameBackground
-                    objectName: "dashboardTabNameBackground"
-                    radius: 12
-                    color: root.abyssMode
-                        ? AbyssStyle.contentLayer : Appearance.colors.colLayer1
-                    border.width: tabNameInput.activeFocus ? 1.5 : 1
-                    border.color: tabNameInput.invalidName
-                        ? Appearance.colors.colError
-                        : tabNameInput.activeFocus
-                            ? (root.abyssMode
-                                ? Qt.alpha(AbyssStyle.accent, 0.85)
-                                : Appearance.colors.colPrimary)
-                            : Qt.alpha(root.abyssMode
-                                ? AbyssStyle.accent : Appearance.colors.colOutline,
-                                tabNameInput.hovered ? 0.52 : 0.30)
-                    Behavior on color {
-                        enabled: Appearance.animationsEnabled
-                        ColorAnimation { duration: AbyssStyle.motionFast }
-                    }
-                    Behavior on border.color {
-                        enabled: Appearance.animationsEnabled
-                        ColorAnimation { duration: AbyssStyle.motionFast }
-                    }
-                    // A subtle inner focus ring gives the field depth without
-                    // the hard blue rectangular outline from the default style.
-                    Rectangle {
-                        anchors.fill: parent
-                        anchors.margins: 3
-                        radius: Math.max(0, tabNameBackground.radius - 3)
-                        color: "transparent"
-                        border.width: 1
-                        border.color: Qt.alpha(tabNameInput.invalidName
-                            ? Appearance.colors.colError
-                            : (root.abyssMode
-                                ? AbyssStyle.accent : Appearance.colors.colPrimary), 0.16)
-                        visible: tabNameInput.activeFocus
-                    }
-                }
-                StyledToolTip {
-                    // A name validation error must not grow or clip the
-                    // shared Edit/Create toolbar. Show it adjacent to the
-                    // focused field in the normal themed tooltip layer.
-                    text: root.tabController?._customDialogError ?? ""
-                    position: "bottom"
-                    useParentHover: false
-                    extraVisibleCondition: tabNameInput.invalidName
-                    alternativeVisibleCondition: tabNameInput.invalidName
-                }
-            }
-            RippleButton {
-                objectName: "dashboardToolbarCreate"
-                implicitWidth: 34
-                implicitHeight: 34
-                buttonRadius: Appearance.rounding.full
-                colBackground: Appearance.colors.colPrimaryContainer
-                onClicked: root.tabController?.acceptCustomTabDialog()
-                contentItem: MaterialSymbol {
-                    anchors.centerIn: parent
-                    text: "check"
-                    color: Appearance.colors.colOnPrimaryContainer
-                    iconSize: Appearance.font.pixelSize.normal
-                }
-                StyledToolTip {
-                    text: root.tabController?._customDialogMode === "rename"
-                        ? Translation.tr("Save name") : Translation.tr("Create tab")
-                }
-            }
-            RippleButton {
-                objectName: "dashboardToolbarCancelCreate"
-                implicitWidth: 34
-                implicitHeight: 34
-                buttonRadius: Appearance.rounding.full
-                colBackground: Appearance.colors.colLayer1
-                onClicked: root.tabController?.cancelCustomTabDialog()
-                contentItem: MaterialSymbol {
-                    anchors.centerIn: parent
-                    text: "close"
-                    color: Appearance.colors.colOnLayer1
-                    iconSize: Appearance.font.pixelSize.normal
-                }
-                StyledToolTip { text: Translation.tr("Cancel") }
-            }
-        }
-        ColumnLayout {
-            id: toolbarRow
-            visible: !root.naming
-            Layout.fillWidth: true
-            spacing: root.sectionGap
-
-            GridLayout {
-                id: editActions
+        trailingControls: [
+            RowLayout {
+                id: quickActionsRow
+                visible: !root.naming && !root.splitSideDocks
                 Layout.alignment: Qt.AlignHCenter
-                columns: Math.max(1,Math.min(root.visibleActionCount,
-                    Math.floor((root.width-root.horizontalPadding*2+6)/40)))
-                rowSpacing: 6
-                columnSpacing: 6
+                spacing: 5
 
                 EditToolButton {
-                    objectName: "dashboardEditDone"
-                    iconName: "done"
-                    tooltipText: Translation.tr("Done editing")
-                    onClicked: root.canvasController?.commitEditMode()
-                }
-                EditToolButton {
-                    objectName: "dashboardEditCancel"
-                    iconName: "close"
-                    tooltipText: Translation.tr("Cancel editing")
-                    onClicked: root.canvasController?.cancelEditMode()
-                }
-                EditToolButton {
-                    objectName: "dashboardEditUndo"
-                    iconName: "undo"
-                    tooltipText: Translation.tr("Undo last layout change")
-                    enabled: root.canvasController?.canUndo ?? false
-                    onClicked: root.canvasController?.undoLastEdit()
-                }
-
-                EditToolButton {
+                    visible: root.width >= 720
                     iconName: root.canvasController?.snapEnabled
                         ? "grid_on" : "grid_off"
                     tooltipText: root.canvasController?.snapEnabled
@@ -329,20 +320,7 @@ Rectangle {
                 }
 
                 EditToolButton {
-                    visible: !(root.canvasController?.responsiveWorkspace ?? false)
-                    iconName: "fit_screen"
-                    tooltipText: root.canvasController?.autoAdjustSizeEnabled
-                        ? Translation.tr("Auto-adjust affected module sizes: on")
-                        : Translation.tr("Auto-adjust affected module sizes: off")
-                    toggled:
-                        root.canvasController?.autoAdjustSizeEnabled ?? true
-                    onClicked: {
-                        if (root.canvasController)
-                            root.canvasController.toggleAutoAdjustSize()
-                    }
-                }
-
-                EditToolButton {
+                    visible: root.width >= 760
                     iconName: root.canvasController?.gridStyle === "lines"
                         ? "grid_4x4"
                         : (root.canvasController?.gridStyle === "cross"
@@ -356,16 +334,30 @@ Rectangle {
                 }
 
                 EditToolButton {
-                    iconName: "grid_view"
-                    tooltipText: Translation.tr("Grid size: %1px — click to cycle")
-                        .arg(root.canvasController?.gridSize ?? 24)
+                    visible: root.width >= 820 && !(root.canvasController?.responsiveWorkspace ?? false)
+                    iconName: "fit_screen"
+                    tooltipText: root.canvasController?.autoAdjustSizeEnabled
+                        ? Translation.tr("Auto-adjust affected module sizes: on")
+                        : Translation.tr("Auto-adjust affected module sizes: off")
+                    toggled: root.canvasController?.autoAdjustSizeEnabled ?? true
                     onClicked: {
                         if (root.canvasController)
-                            root.canvasController._cycleGridSize()
+                            root.canvasController.toggleAutoAdjustSize()
                     }
                 }
 
                 EditToolButton {
+                    visible: root.width >= 760 && root.hiddenIds.length > 0
+                    iconName: "auto_awesome_motion"
+                    tooltipText: Translation.tr("Add all modules and fit them automatically")
+                    onClicked: {
+                        if (root.canvasController)
+                            root.canvasController.fitAllWidgets()
+                    }
+                }
+
+                EditToolButton {
+                    visible: root.width >= 880
                     iconName: "restart_alt"
                     tooltipText: Translation.tr("Reset dashboard layout")
                     onClicked: {
@@ -375,113 +367,880 @@ Rectangle {
                 }
 
                 EditToolButton {
-                    visible: root.hiddenIds.length > 0
-                    iconName: "auto_awesome_motion"
-                    tooltipText: Translation.tr(
-                        "Add all modules and fit them automatically")
-                    onClicked: {
-                        if (root.canvasController)
-                            root.canvasController.fitAllWidgets()
-                    }
-                }
-
-                EditToolButton {
-                    objectName: "dashboardToolbarActionCreateTab"
+                    objectName: root.splitSideDocks ? "" : "dashboardToolbarActionCreateTab"
                     visible: root.tabController !== null
                     iconName: "add"
                     tooltipText: Translation.tr("Create custom tab")
                     onClicked: root.tabController?.openCustomTabDialog("create", "")
                 }
+            }
+        ]
 
-                EditToolButton {
-                    objectName: "dashboardToolbarActionRenameTab"
-                    visible: root.tabController !== null
-                    enabled: root.targetCustomTabId.length > 0
-                    iconName: "drive_file_rename_outline"
-                    tooltipText: Translation.tr("Rename custom tab")
-                    onClicked: {
-                        if (root.targetCustomTabId.length > 0)
-                            root.tabController?.openCustomTabDialog("rename", root.targetCustomTabId)
+        headerOverlay: [
+            RowLayout {
+                id: tabNamingRow
+                objectName: "dashboardTabNamingToolbar"
+                anchors.fill: parent
+                visible: root.naming
+                spacing: 8
+
+                StyledText {
+                    visible: root.width >= 640
+                    Layout.alignment: Qt.AlignVCenter
+                    text: root.tabController?._customDialogMode === "rename"
+                        ? Translation.tr("Rename custom tab")
+                        : Translation.tr("Create custom tab")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.weight: Font.DemiBold
+                    color: root.abyssMode
+                        ? AbyssStyle.textColor : Appearance.colors.colOnLayer0
+                }
+
+                TextField {
+                    id: tabNameInput
+                    objectName: "dashboardToolbarTabName"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 160
+                    Layout.preferredHeight: Math.min(40, dock.topBarHeight)
+                    Layout.minimumHeight: 0
+                    Layout.alignment: Qt.AlignVCenter
+                    implicitHeight: 40
+                    maximumLength: 41
+                    hoverEnabled: true
+                    focusPolicy: Qt.StrongFocus
+                    selectByMouse: true
+                    cursorVisible: activeFocus
+                    font.pixelSize: Appearance.font.pixelSize.normal
+                    verticalAlignment: TextInput.AlignVCenter
+                    leftPadding: 14
+                    rightPadding: 14
+                    topPadding: 6
+                    bottomPadding: 6
+                    color: root.abyssMode
+                        ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                    placeholderTextColor: root.abyssMode
+                        ? AbyssStyle.textColorMuted : Appearance.colors.colSubtext
+                    selectionColor: Appearance.colors.colPrimaryContainer
+                    selectedTextColor: Appearance.colors.colOnPrimaryContainer
+                    placeholderText: Translation.tr("Custom tab name")
+                    text: root.tabController?._customDialogName ?? ""
+                    onTextEdited: root.tabController?.setCustomTabName(text)
+                    onAccepted: root.tabController?.acceptCustomTabDialog()
+                    onPressed: tabNameInput.forceActiveFocus()
+
+                    cursorDelegate: Rectangle {
+                        id: tabNameCursor
+                        width: 2
+                        color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
+                        visible: tabNameInput.activeFocus
+                        SequentialAnimation on opacity {
+                            loops: Animation.Infinite
+                            running: tabNameInput.activeFocus
+                            PropertyAction { value: 1.0 }
+                            PauseAnimation { duration: 530 }
+                            PropertyAction { value: 0.15 }
+                            PauseAnimation { duration: 420 }
+                        }
+                    }
+
+                    readonly property bool invalidName:
+                        (root.tabController?._customDialogError?.length ?? 0) > 0
+
+                    background: Rectangle {
+                        id: tabNameBackground
+                        objectName: "dashboardTabNameBackground"
+                        radius: 12
+                        color: root.abyssMode
+                            ? AbyssStyle.contentLayer : Appearance.colors.colLayer1
+                        border.width: tabNameInput.activeFocus ? 1.5 : 1
+                        border.color: tabNameInput.invalidName
+                            ? Appearance.colors.colError
+                            : tabNameInput.activeFocus
+                                ? (root.abyssMode
+                                    ? Qt.alpha(AbyssStyle.accent, 0.85)
+                                    : Appearance.colors.colPrimary)
+                                : Qt.alpha(root.abyssMode
+                                    ? AbyssStyle.accent : Appearance.colors.colOutline,
+                                    tabNameInput.hovered ? 0.52 : 0.30)
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: AbyssStyle.motionFast }
+                        }
+                        Behavior on border.color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: AbyssStyle.motionFast }
+                        }
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: 3
+                            radius: Math.max(0, tabNameBackground.radius - 3)
+                            color: "transparent"
+                            border.width: 1
+                            border.color: Qt.alpha(tabNameInput.invalidName
+                                ? Appearance.colors.colError
+                                : (root.abyssMode
+                                    ? AbyssStyle.accent : Appearance.colors.colPrimary), 0.16)
+                            visible: tabNameInput.activeFocus
+                        }
+                    }
+
+                    StyledToolTip {
+                        text: root.tabController?._customDialogError ?? ""
+                        position: "top"
+                        useParentHover: false
+                        extraVisibleCondition: tabNameInput.invalidName
+                        alternativeVisibleCondition: tabNameInput.invalidName
                     }
                 }
 
-                EditToolButton {
-                    objectName: "dashboardToolbarActionDeleteTab"
-                    visible: root.tabController !== null
-                    enabled: root.targetCustomTabId.length > 0
-                    iconName: "delete_outline"
-                    tooltipText: Translation.tr("Delete custom tab")
-                    onClicked: {
-                        if (root.targetCustomTabId.length > 0)
-                            root.tabController?.openCustomTabDialog("delete", root.targetCustomTabId)
+                RippleButton {
+                    objectName: "dashboardToolbarCreate"
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    buttonRadius: Appearance.rounding.full
+                    colBackground: Appearance.colors.colPrimaryContainer
+                    onClicked: root.tabController?.acceptCustomTabDialog()
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "check"
+                        color: Appearance.colors.colOnPrimaryContainer
+                        iconSize: Appearance.font.pixelSize.normal
                     }
+                    StyledToolTip {
+                        text: root.tabController?._customDialogMode === "rename"
+                            ? Translation.tr("Save name") : Translation.tr("Create tab")
+                    }
+                }
+
+                RippleButton {
+                    objectName: "dashboardToolbarCancelCreate"
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    buttonRadius: Appearance.rounding.full
+                    colBackground: Appearance.colors.colLayer1
+                    onClicked: root.tabController?.cancelCustomTabDialog()
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "close"
+                        color: Appearance.colors.colOnLayer1
+                        iconSize: Appearance.font.pixelSize.normal
+                    }
+                    StyledToolTip { text: Translation.tr("Cancel") }
                 }
             }
+        ]
+
+        // ── Tier 2A: Modules Gallery ─────────────────────────────────────
+        Item {
+            id: modulesTray
+            anchors.fill: parent
+            visible: root.effectiveDockTab === "modules"
 
             Flickable {
-                id: availableModulesViewport
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                Layout.preferredWidth: root.availableModulesNaturalWidth
-                Layout.preferredHeight: availableModulesRow.implicitHeight
-                visible: root.hiddenIds.length > 0
-                contentWidth: availableModulesRow.implicitWidth
-                contentHeight: availableModulesRow.implicitHeight
+                id: modulesGalleryViewport
+                anchors.fill: parent
+                contentWidth: modulesGalleryRow.implicitWidth
+                contentHeight: height
                 clip: true
                 flickableDirection: Flickable.HorizontalFlick
                 boundsBehavior: Flickable.StopAtBounds
                 interactive: contentWidth > width
 
+                WheelHandler {
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    onWheel: event => {
+                        const maxScroll = Math.max(0, modulesGalleryViewport.contentWidth - modulesGalleryViewport.width)
+                        if (maxScroll <= 0)
+                            return
+                        const delta = event.angleDelta.x !== 0 ? event.angleDelta.x : event.angleDelta.y
+                        modulesGalleryViewport.contentX = Math.max(0,
+                            Math.min(maxScroll, modulesGalleryViewport.contentX - delta * 0.65))
+                        event.accepted = true
+                    }
+                }
+
                 Row {
-                    id: availableModulesRow
-                    spacing: 5
+                    id: modulesGalleryRow
+                    y: Math.max(2, Math.round((modulesGalleryViewport.height - implicitHeight) / 2))
+                    spacing: 10
 
                     Repeater {
-                        model: root.hiddenIds
-                        delegate: RippleButton {
+                        model: root.filteredModuleIds
+                        delegate: AbyssCustomizationTile {
+                            id: moduleTile
                             required property var modelData
-                            implicitHeight: 28
-                            implicitWidth: addRow.implicitWidth + 14
-                            buttonRadius: Appearance.rounding.full
-                            colBackground: root.abyssMode
-                                ? Qt.alpha(AbyssStyle.accent, 0.10)
-                                : Appearance.colors.colLayer1
-                            colBackgroundHover: root.abyssMode
-                                ? Qt.alpha(AbyssStyle.accent, 0.18)
-                                : Appearance.colors.colLayer2
-                            focusPolicy: Qt.StrongFocus
+                            readonly property string moduleId: String(modelData)
+                            readonly property bool moduleVisible: root.isModuleVisible(moduleId)
+                            readonly property bool moduleSelected: moduleVisible
+                                && String(root.canvasController?.selectedId ?? "") === moduleId
+
+                            objectName: "dashboardModuleTile_" + moduleId
+                            tileId: moduleId
+                            title: root.canvasController?._label(moduleId) ?? moduleId
+                            subtitle: root.compactHeight ? ""
+                                : (moduleSelected ? Translation.tr("Selected")
+                                    : (moduleVisible ? Translation.tr("Active") : Translation.tr("Hidden")))
+                            icon: root.canvasController?._icon(moduleId) ?? "widgets"
+                            accentColor: root.moduleAccentColor(moduleId)
+                            active: moduleVisible
+                            selected: moduleSelected
+                            separateBadgeClick: true
+                            tileWidth: root.compactHeight ? 116 : 126
+                            previewHeight: root.compactHeight ? 54 : 66
+                            tooltipText: moduleVisible
+                                ? Translation.tr("%1 — click to select on canvas, click check badge to hide").arg(title)
+                                : Translation.tr("Add %1 to active tab").arg(title)
+
                             onClicked: {
-                                if (root.canvasController)
-                                    root.canvasController.setWidgetVisible(
-                                        String(modelData), true)
+                                if (!root.canvasController)
+                                    return
+                                if (moduleTile.moduleVisible) {
+                                    root.canvasController.selectedId = moduleTile.moduleId
+                                } else {
+                                    root.canvasController.setWidgetVisible(moduleTile.moduleId, true)
+                                    if (root.isModuleVisible(moduleTile.moduleId))
+                                        root.canvasController.selectedId = moduleTile.moduleId
+                                }
                             }
 
-                            RowLayout {
-                                id: addRow
+                            onBadgeClicked: {
+                                if (!root.canvasController)
+                                    return
+                                const nextVisible = !moduleTile.moduleVisible
+                                root.canvasController.setWidgetVisible(moduleTile.moduleId, nextVisible)
+                                if (nextVisible && root.isModuleVisible(moduleTile.moduleId))
+                                    root.canvasController.selectedId = moduleTile.moduleId
+                            }
+
+                            ModuleMiniPreview {
+                                anchors.fill: parent
+                                moduleId: moduleTile.moduleId
+                                accentColor: moduleTile.accentColor
+                                moduleIcon: moduleTile.icon
+                            }
+                        }
+                    }
+                }
+            }
+
+            StyledText {
+                visible: root.filteredModuleIds.length === 0
+                anchors.centerIn: parent
+                horizontalAlignment: Text.AlignHCenter
+                text: Translation.tr("No matching Dashboard modules")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+            }
+        }
+
+        // ── Tier 2B: Layout & Grid Controls ──────────────────────────────
+        Item {
+            id: layoutTray
+            anchors.fill: parent
+            visible: root.effectiveDockTab === "layout"
+
+            Flickable {
+                id: layoutControlsViewport
+                anchors.fill: parent
+                contentWidth: layoutControlsRow.implicitWidth
+                contentHeight: height
+                clip: true
+                flickableDirection: Flickable.HorizontalFlick
+                boundsBehavior: Flickable.StopAtBounds
+                interactive: contentWidth > width
+
+                WheelHandler {
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    onWheel: event => {
+                        const maxScroll = Math.max(0, layoutControlsViewport.contentWidth - layoutControlsViewport.width)
+                        if (maxScroll <= 0)
+                            return
+                        const delta = event.angleDelta.x !== 0 ? event.angleDelta.x : event.angleDelta.y
+                        layoutControlsViewport.contentX = Math.max(0,
+                            Math.min(maxScroll, layoutControlsViewport.contentX - delta * 0.65))
+                        event.accepted = true
+                    }
+                }
+
+                Row {
+                    id: layoutControlsRow
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 10
+
+                    DockControlCard {
+                        objectName: root.splitSideDocks ? "" : "dashboardLayoutSnapCard"
+                        cardHeight: root.compactHeight ? 72 : 90
+                        iconName: root.canvasController?.snapEnabled ? "grid_on" : "grid_off"
+                        titleText: Translation.tr("Snap to Grid")
+                        subtitleText: root.canvasController?.snapEnabled
+                            ? Translation.tr("Enabled") : Translation.tr("Freeform")
+                        toggled: root.canvasController?.snapEnabled ?? false
+                        tooltipText: root.canvasController?.snapEnabled
+                            ? Translation.tr("Snap to grid: on")
+                            : Translation.tr("Snap to grid: off")
+                        onClicked: {
+                            if (root.canvasController)
+                                root.canvasController.toggleSnap()
+                        }
+                    }
+
+                    // Segmented Grid Style Card (Dots / Lines / Cross)
+                    Rectangle {
+                        implicitWidth: styleCardColumn.implicitWidth + 24
+                        implicitHeight: root.compactHeight ? 72 : 90
+                        width: implicitWidth
+                        height: implicitHeight
+                        radius: Math.min(14, Appearance.rounding.normal)
+                        color: Qt.alpha(root.abyssMode
+                            ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
+                        border.width: 1
+                        border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.28)
+
+                        Column {
+                            id: styleCardColumn
+                            anchors.centerIn: parent
+                            spacing: root.compactHeight ? 5 : 8
+
+                            StyledText {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                text: Translation.tr("Grid Style")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                font.weight: Font.DemiBold
+                                color: Appearance.colors.colOnLayer1
+                            }
+
+                            Row {
+                                spacing: 4
+                                Repeater {
+                                    model: [
+                                        { key: "dots", label: Translation.tr("Dots"), icon: "drag_indicator" },
+                                        { key: "lines", label: Translation.tr("Lines"), icon: "grid_4x4" },
+                                        { key: "cross", label: Translation.tr("Cross"), icon: "add" }
+                                    ]
+                                    delegate: RippleButton {
+                                        required property var modelData
+                                        readonly property bool selectedStyle:
+                                            String(root.canvasController?.gridStyle ?? "dots") === modelData.key
+                                        implicitHeight: root.compactHeight ? 26 : 30
+                                        implicitWidth: styleChipRow.implicitWidth + 16
+                                        padding: 0
+                                        leftPadding: 0
+                                        rightPadding: 0
+                                        topPadding: 0
+                                        bottomPadding: 0
+                                        buttonRadius: Appearance.rounding.full
+                                        focusPolicy: Qt.StrongFocus
+                                        toggled: selectedStyle
+                                        colBackground: Qt.alpha(Appearance.colors.colLayer3, 0.55)
+                                        colBackgroundHover: Appearance.colors.colLayer3Hover
+                                        colBackgroundToggled: root.abyssMode
+                                            ? Qt.alpha(AbyssStyle.accent, 0.26)
+                                            : Appearance.colors.colPrimaryContainer
+                                        onClicked: root.selectGridStyle(modelData.key)
+
+                                        contentItem: Item {
+                                            implicitWidth: styleChipRow.implicitWidth
+                                            implicitHeight: styleChipRow.implicitHeight
+                                            Row {
+                                                id: styleChipRow
+                                                anchors.centerIn: parent
+                                                spacing: 4
+                                                MaterialSymbol {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: modelData.icon
+                                                    iconSize: 14
+                                                    color: selectedStyle
+                                                        ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colOnPrimaryContainer)
+                                                        : Appearance.colors.colSubtext
+                                                }
+                                                StyledText {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: modelData.label
+                                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                                    font.weight: selectedStyle ? Font.DemiBold : Font.Medium
+                                                    color: selectedStyle
+                                                        ? (root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnPrimaryContainer)
+                                                        : Appearance.colors.colOnLayer1
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    DockControlCard {
+                        objectName: root.splitSideDocks ? "" : "dashboardLayoutGridSizeCard"
+                        cardHeight: root.compactHeight ? 72 : 90
+                        iconName: "grid_view"
+                        titleText: Translation.tr("Grid Spacing")
+                        subtitleText: Translation.tr("%1 px — click to cycle")
+                            .arg(root.canvasController?.gridSize ?? 24)
+                        tooltipText: Translation.tr("Grid size: %1px — click to cycle")
+                            .arg(root.canvasController?.gridSize ?? 24)
+                        onClicked: {
+                            if (root.canvasController)
+                                root.canvasController._cycleGridSize()
+                        }
+                    }
+
+                    DockControlCard {
+                        visible: !(root.canvasController?.responsiveWorkspace ?? false)
+                        objectName: root.splitSideDocks ? "" : "dashboardLayoutAutoFitCard"
+                        cardHeight: root.compactHeight ? 72 : 90
+                        iconName: "fit_screen"
+                        titleText: Translation.tr("Auto-Adjust Size")
+                        subtitleText: (root.canvasController?.autoAdjustSizeEnabled ?? true)
+                            ? Translation.tr("Responsive") : Translation.tr("Manual")
+                        toggled: root.canvasController?.autoAdjustSizeEnabled ?? true
+                        tooltipText: root.canvasController?.autoAdjustSizeEnabled
+                            ? Translation.tr("Auto-adjust affected module sizes: on")
+                            : Translation.tr("Auto-adjust affected module sizes: off")
+                        onClicked: {
+                            if (root.canvasController)
+                                root.canvasController.toggleAutoAdjustSize()
+                        }
+                    }
+
+                    DockControlCard {
+                        objectName: root.splitSideDocks ? "" : "dashboardLayoutFitAllCard"
+                        cardHeight: root.compactHeight ? 72 : 90
+                        iconName: "auto_awesome_motion"
+                        titleText: Translation.tr("Smart Fit All")
+                        subtitleText: root.hiddenIds.length > 0
+                            ? Translation.tr("Pack %1 hidden").arg(root.hiddenIds.length)
+                            : Translation.tr("All visible")
+                        enabled: root.hiddenIds.length > 0
+                        tooltipText: Translation.tr("Add all modules and fit them automatically")
+                        onClicked: {
+                            if (root.canvasController)
+                                root.canvasController.fitAllWidgets()
+                        }
+                    }
+
+                    DockControlCard {
+                        objectName: root.splitSideDocks ? "" : "dashboardLayoutResetCard"
+                        cardHeight: root.compactHeight ? 72 : 90
+                        iconName: "restart_alt"
+                        titleText: Translation.tr("Reset Layout")
+                        subtitleText: Translation.tr("Restore tab defaults")
+                        tooltipText: Translation.tr("Reset dashboard layout")
+                        onClicked: {
+                            if (root.canvasController)
+                                root.canvasController.resetLayout()
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Tier 2C: Custom Tabs & Quick Switcher ────────────────────────
+        Item {
+            id: tabsTray
+            anchors.fill: parent
+            visible: root.tabController !== null && root.effectiveDockTab === "tabs"
+
+            Flickable {
+                id: tabsControlsViewport
+                anchors.fill: parent
+                contentWidth: tabsControlsRow.implicitWidth
+                contentHeight: height
+                clip: true
+                flickableDirection: Flickable.HorizontalFlick
+                boundsBehavior: Flickable.StopAtBounds
+                interactive: contentWidth > width
+
+                WheelHandler {
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    onWheel: event => {
+                        const maxScroll = Math.max(0, tabsControlsViewport.contentWidth - tabsControlsViewport.width)
+                        if (maxScroll <= 0)
+                            return
+                        const delta = event.angleDelta.x !== 0 ? event.angleDelta.x : event.angleDelta.y
+                        tabsControlsViewport.contentX = Math.max(0,
+                            Math.min(maxScroll, tabsControlsViewport.contentX - delta * 0.65))
+                        event.accepted = true
+                    }
+                }
+
+                Row {
+                    id: tabsControlsRow
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 10
+
+                    DockControlCard {
+                        cardHeight: root.compactHeight ? 72 : 90
+                        iconName: "add"
+                        titleText: Translation.tr("Create Custom Tab")
+                        subtitleText: Translation.tr("New blank canvas")
+                        toggled: true
+                        tooltipText: Translation.tr("Create custom tab")
+                        onClicked: root.tabController?.openCustomTabDialog("create", "")
+                    }
+
+                    DockControlCard {
+                        objectName: root.splitSideDocks ? "" : "dashboardToolbarActionRenameTab"
+                        cardHeight: root.compactHeight ? 72 : 90
+                        enabled: root.targetCustomTabId.length > 0
+                        iconName: "drive_file_rename_outline"
+                        titleText: Translation.tr("Rename Active Tab")
+                        subtitleText: root.targetCustomTabId.length > 0
+                            ? root.pageTitle(root.targetCustomTabId)
+                            : Translation.tr("Select custom tab")
+                        tooltipText: Translation.tr("Rename custom tab")
+                        onClicked: {
+                            if (root.targetCustomTabId.length > 0)
+                                root.tabController?.openCustomTabDialog("rename", root.targetCustomTabId)
+                        }
+                    }
+
+                    DockControlCard {
+                        objectName: root.splitSideDocks ? "" : "dashboardToolbarActionDeleteTab"
+                        cardHeight: root.compactHeight ? 72 : 90
+                        enabled: root.targetCustomTabId.length > 0
+                        iconName: "delete_outline"
+                        titleText: Translation.tr("Delete Active Tab")
+                        subtitleText: root.targetCustomTabId.length > 0
+                            ? root.pageTitle(root.targetCustomTabId)
+                            : Translation.tr("Select custom tab")
+                        tooltipText: Translation.tr("Delete custom tab")
+                        onClicked: {
+                            if (root.targetCustomTabId.length > 0)
+                                root.tabController?.openCustomTabDialog("delete", root.targetCustomTabId)
+                        }
+                    }
+
+                    DockControlCard {
+                        cardHeight: root.compactHeight ? 72 : 90
+                        readonly property bool isDefaultPage:
+                            String(Config.options?.dashboard?.defaultTabId ?? "")
+                            === String(root.tabController?.currentPageId ?? "")
+                        iconName: "push_pin"
+                        titleText: Translation.tr("Default Tab")
+                        subtitleText: isDefaultPage
+                            ? Translation.tr("Pinned startup tab")
+                            : Translation.tr("Set active as default")
+                        toggled: isDefaultPage
+                        tooltipText: Translation.tr("Open this tab after inactivity")
+                        onClicked: {
+                            const cur = String(root.tabController?.currentPageId ?? "")
+                            if (cur.length > 0)
+                                root.tabController?.setDefaultTab(cur)
+                        }
+                    }
+
+                    Rectangle {
+                        visible: (root.tabController?.pageIds?.length ?? 0) > 0
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 1
+                        height: root.compactHeight ? 48 : 60
+                        color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.28)
+                    }
+
+                    Repeater {
+                        model: root.tabController?.pageIds ?? []
+                        delegate: DockControlCard {
+                            required property var modelData
+                            readonly property string pageKey: String(modelData)
+                            readonly property bool current:
+                                String(root.tabController?.currentPageId ?? "") === pageKey
+                            cardHeight: root.compactHeight ? 72 : 90
+                            iconName: root.pageIcon(pageKey)
+                            titleText: root.pageTitle(pageKey)
+                            subtitleText: current
+                                ? Translation.tr("Current tab")
+                                : (pageKey.startsWith("custom-")
+                                    ? Translation.tr("Custom canvas")
+                                    : Translation.tr("Switch tab"))
+                            toggled: current
+                            tooltipText: Translation.tr("Switch to %1").arg(titleText)
+                            onClicked: root.switchDashboardTab(pageKey)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Left Centered Edge Dock: Custom Tabs & Quick Switcher ────────────
+    Rectangle {
+        id: leftTabsDock
+        objectName: "abyssLeftDashboardTabsDock"
+        parent: (root.splitSideDocks && root.leftDockParent !== null && root.tabController !== null)
+            ? root.leftDockParent : root
+        x: 0
+        y: 0
+        width: parent ? parent.width : implicitWidth
+        height: parent ? parent.height : implicitHeight
+        z: 10
+        visible: root.splitSideDocks && root.leftDockParent !== null && root.tabController !== null && root.visible
+        enabled: root.enabled
+        implicitWidth: 276
+        implicitHeight: Math.min(560, leftTabsColumn.implicitHeight + 24)
+        radius: root.abyssMode ? Math.min(AbyssStyle.dockRadius, 18) : Appearance.rounding.large
+        color: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceBase : Appearance.colors.colLayer1, 0.92)
+        border.width: 1
+        border.color: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colOutlineVariant, 0.24)
+        clip: true
+
+        Flickable {
+            anchors.fill: parent
+            anchors.margins: 12
+            contentWidth: width
+            contentHeight: leftTabsColumn.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            interactive: contentHeight > height
+
+            ColumnLayout {
+                id: leftTabsColumn
+                width: parent.width
+                spacing: 8
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    MaterialSymbol {
+                        text: "tab"
+                        iconSize: 16
+                        color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Tabs")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.DemiBold
+                        color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                        elide: Text.ElideRight
+                    }
+
+                    Rectangle {
+                        implicitWidth: tabCountText.implicitWidth + 12
+                        implicitHeight: 20
+                        radius: 10
+                        color: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.14)
+                        StyledText {
+                            id: tabCountText
+                            anchors.centerIn: parent
+                            text: String(root.tabController?.pageIds?.length ?? 0)
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.weight: Font.DemiBold
+                            color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    RippleButton {
+                        Layout.fillWidth: true
+                        implicitHeight: 32
+                        buttonRadius: 10
+                        focusPolicy: Qt.StrongFocus
+                        objectName: root.splitSideDocks ? "dashboardToolbarActionCreateTab" : ""
+                        colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.18)
+                        colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.28)
+                        onClicked: root.tabController?.openCustomTabDialog("create", "")
+
+                        contentItem: Item {
+                            Row {
                                 anchors.centerIn: parent
                                 spacing: 4
                                 MaterialSymbol {
-                                    text: root.canvasController?._icon(
-                                        String(modelData)) ?? "widgets"
-                                    iconSize: Appearance.font.pixelSize.small
-                                    color: root.abyssMode
-                                        ? AbyssStyle.textColor
-                                        : Appearance.colors.colOnLayer1
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "add"
+                                    iconSize: 15
+                                    color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
                                 }
                                 StyledText {
-                                    text: root.canvasController?._label(
-                                        String(modelData)) ?? String(modelData)
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    color: root.abyssMode
-                                        ? AbyssStyle.textColor
-                                        : Appearance.colors.colOnLayer1
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: Translation.tr("New")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.weight: Font.DemiBold
+                                    color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
                                 }
+                            }
+                        }
+                    }
+
+                    RippleButton {
+                        Layout.fillWidth: true
+                        implicitHeight: 32
+                        buttonRadius: 10
+                        focusPolicy: Qt.StrongFocus
+                        objectName: root.splitSideDocks ? "dashboardToolbarActionRenameTab" : ""
+                        enabled: root.targetCustomTabId.length > 0
+                        opacity: enabled ? 1.0 : 0.45
+                        colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
+                        colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.18)
+                        onClicked: {
+                            if (root.targetCustomTabId.length > 0)
+                                root.tabController?.openCustomTabDialog("rename", root.targetCustomTabId)
+                        }
+
+                        contentItem: Item {
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 4
                                 MaterialSymbol {
-                                    text: "add"
-                                    iconSize: Appearance.font.pixelSize.small
-                                    color: root.abyssMode
-                                        ? AbyssStyle.accent
-                                        : Appearance.colors.colPrimary
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "drive_file_rename_outline"
+                                    iconSize: 15
+                                    color: Appearance.colors.colSubtext
+                                }
+                                StyledText {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: Translation.tr("Rename")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.weight: Font.Medium
+                                    color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                                }
+                            }
+                        }
+                    }
+
+                    RippleButton {
+                        Layout.fillWidth: true
+                        implicitHeight: 32
+                        buttonRadius: 10
+                        focusPolicy: Qt.StrongFocus
+                        objectName: root.splitSideDocks ? "dashboardToolbarActionDeleteTab" : ""
+                        enabled: root.targetCustomTabId.length > 0
+                        opacity: enabled ? 1.0 : 0.45
+                        colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
+                        colBackgroundHover: Qt.alpha(Appearance.colors.colError, 0.22)
+                        onClicked: {
+                            if (root.targetCustomTabId.length > 0)
+                                root.tabController?.openCustomTabDialog("delete", root.targetCustomTabId)
+                        }
+
+                        contentItem: Item {
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 4
+                                MaterialSymbol {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "delete_outline"
+                                    iconSize: 15
+                                    color: Appearance.colors.colSubtext
+                                }
+                                StyledText {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: Translation.tr("Delete")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.weight: Font.Medium
+                                    color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                                }
+                            }
+                        }
+                    }
+                }
+
+                RippleButton {
+                    id: defaultTabButton
+                    readonly property bool isDefaultPage:
+                        String(Config.options?.dashboard?.defaultTabId ?? "")
+                        === String(root.tabController?.currentPageId ?? "")
+                    Layout.fillWidth: true
+                    implicitHeight: 32
+                    buttonRadius: 10
+                    focusPolicy: Qt.StrongFocus
+                    toggled: isDefaultPage
+                    colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
+                    colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.16)
+                    colBackgroundToggled: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.24)
+                    onClicked: {
+                        const cur = String(root.tabController?.currentPageId ?? "")
+                        if (cur.length > 0)
+                            root.tabController?.setDefaultTab(cur)
+                    }
+
+                    contentItem: Item {
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 6
+                            MaterialSymbol {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "push_pin"
+                                iconSize: 15
+                                color: defaultTabButton.toggled
+                                    ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary)
+                                    : Appearance.colors.colSubtext
+                            }
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: defaultTabButton.toggled
+                                    ? Translation.tr("Pinned default tab")
+                                    : Translation.tr("Set active as default")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                font.weight: Font.Medium
+                                color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.24)
+                }
+
+                Repeater {
+                    model: root.tabController?.pageIds ?? []
+                    delegate: RippleButton {
+                        required property var modelData
+                        readonly property string pageKey: String(modelData)
+                        readonly property bool current:
+                            String(root.tabController?.currentPageId ?? "") === pageKey
+                        readonly property bool isDefault:
+                            String(Config.options?.dashboard?.defaultTabId ?? "") === pageKey
+
+                        Layout.fillWidth: true
+                        implicitHeight: 34
+                        buttonRadius: 10
+                        focusPolicy: Qt.StrongFocus
+                        toggled: current
+                        colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.56)
+                        colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.15)
+                        colBackgroundToggled: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.24)
+                        onClicked: root.switchDashboardTab(pageKey)
+
+                        contentItem: Item {
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
+                                spacing: 7
+
+                                MaterialSymbol {
+                                    text: root.pageIcon(pageKey)
+                                    iconSize: 16
+                                    color: current
+                                        ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary)
+                                        : Appearance.colors.colSubtext
+                                }
+
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: root.pageTitle(pageKey)
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.weight: current ? Font.DemiBold : Font.Medium
+                                    color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                                    elide: Text.ElideRight
+                                }
+
+                                MaterialSymbol {
+                                    visible: isDefault
+                                    text: "push_pin"
+                                    iconSize: 13
+                                    color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
                                 }
                             }
                         }
@@ -491,14 +1250,681 @@ Rectangle {
         }
     }
 
+    // ── Right Centered Edge Dock: Layout & Grid Inspector ────────────────
+    Rectangle {
+        id: rightLayoutDock
+        objectName: "abyssRightDashboardLayoutDock"
+        parent: (root.splitSideDocks && root.rightDockParent !== null && root.canvasController !== null)
+            ? root.rightDockParent : root
+        x: 0
+        y: 0
+        width: parent ? parent.width : implicitWidth
+        height: parent ? parent.height : implicitHeight
+        z: 10
+        visible: root.splitSideDocks && root.rightDockParent !== null && root.canvasController !== null && root.visible
+        enabled: root.enabled
+        implicitWidth: 288
+        implicitHeight: Math.min(560, rightLayoutColumn.implicitHeight + 24)
+        radius: root.abyssMode ? Math.min(AbyssStyle.dockRadius, 18) : Appearance.rounding.large
+        color: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceBase : Appearance.colors.colLayer1, 0.92)
+        border.width: 1
+        border.color: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colOutlineVariant, 0.24)
+        clip: true
+
+        Flickable {
+            anchors.fill: parent
+            anchors.margins: 12
+            contentWidth: width
+            contentHeight: rightLayoutColumn.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            interactive: contentHeight > height
+
+            ColumnLayout {
+                id: rightLayoutColumn
+                width: parent.width
+                spacing: 9
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    MaterialSymbol {
+                        text: "grid_view"
+                        iconSize: 16
+                        color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Layout & Grid")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.DemiBold
+                        color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                        elide: Text.ElideRight
+                    }
+                }
+
+                RippleButton {
+                    objectName: root.splitSideDocks ? "dashboardLayoutSnapCard" : ""
+                    Layout.fillWidth: true
+                    implicitHeight: 34
+                    buttonRadius: 10
+                    focusPolicy: Qt.StrongFocus
+                    toggled: root.canvasController?.snapEnabled ?? false
+                    colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
+                    colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.16)
+                    colBackgroundToggled: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.24)
+                    onClicked: root.canvasController?.toggleSnap()
+
+                    contentItem: Item {
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 6
+                            MaterialSymbol {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: (root.canvasController?.snapEnabled ?? false) ? "grid_on" : "grid_off"
+                                iconSize: 16
+                                color: (root.canvasController?.snapEnabled ?? false)
+                                    ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary)
+                                    : Appearance.colors.colSubtext
+                            }
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: (root.canvasController?.snapEnabled ?? false)
+                                    ? Translation.tr("Snap to Grid: On")
+                                    : Translation.tr("Snap to Grid: Off")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                font.weight: Font.DemiBold
+                                color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                            }
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 5
+
+                    StyledText {
+                        text: Translation.tr("Grid Style")
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.weight: Font.Medium
+                        color: Appearance.colors.colSubtext
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 5
+
+                        Repeater {
+                            model: [
+                                { key: "dots", label: Translation.tr("Dots"), icon: "drag_indicator" },
+                                { key: "lines", label: Translation.tr("Lines"), icon: "grid_4x4" },
+                                { key: "cross", label: Translation.tr("Cross"), icon: "add" }
+                            ]
+                            delegate: RippleButton {
+                                required property var modelData
+                                readonly property bool selectedStyle:
+                                    String(root.canvasController?.gridStyle ?? "dots") === modelData.key
+                                Layout.fillWidth: true
+                                implicitHeight: 30
+                                buttonRadius: Appearance.rounding.full
+                                focusPolicy: Qt.StrongFocus
+                                toggled: selectedStyle
+                                colBackground: Qt.alpha(Appearance.colors.colLayer3, 0.55)
+                                colBackgroundHover: Appearance.colors.colLayer3Hover
+                                colBackgroundToggled: root.abyssMode
+                                    ? Qt.alpha(AbyssStyle.accent, 0.26)
+                                    : Appearance.colors.colPrimaryContainer
+                                onClicked: root.selectGridStyle(modelData.key)
+
+                                contentItem: Item {
+                                    Row {
+                                        anchors.centerIn: parent
+                                        spacing: 4
+                                        MaterialSymbol {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: modelData.icon
+                                            iconSize: 14
+                                            color: selectedStyle
+                                                ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colOnPrimaryContainer)
+                                                : Appearance.colors.colSubtext
+                                        }
+                                        StyledText {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: modelData.label
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            font.weight: selectedStyle ? Font.DemiBold : Font.Medium
+                                            color: selectedStyle
+                                                ? (root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnPrimaryContainer)
+                                                : Appearance.colors.colOnLayer1
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: Translation.tr("Grid Spacing")
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.weight: Font.Medium
+                            color: Appearance.colors.colSubtext
+                        }
+
+                        RippleButton {
+                            objectName: root.splitSideDocks ? "dashboardLayoutGridSizeCard" : ""
+                            implicitWidth: gridPxText.implicitWidth + 16
+                            implicitHeight: 22
+                            buttonRadius: 11
+                            focusPolicy: Qt.StrongFocus
+                            colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.14)
+                            colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.24)
+                            onClicked: root.canvasController?._cycleGridSize()
+
+                            contentItem: Item {
+                                StyledText {
+                                    id: gridPxText
+                                    anchors.centerIn: parent
+                                    text: Translation.tr("%1 px").arg(root.canvasController?.gridSize ?? 24)
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    font.weight: Font.DemiBold
+                                    color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
+                                }
+                            }
+                        }
+                    }
+
+                    StyledSlider {
+                        Layout.fillWidth: true
+                        from: 8
+                        to: 64
+                        stepSize: 4
+                        value: root.canvasController?.gridSize ?? 24
+                        configuration: StyledSlider.Configuration.S
+                        onMoved: {
+                            if (root.canvasController?.setGridSize)
+                                root.canvasController.setGridSize(value)
+                            else if (root.canvasController)
+                                root.canvasController._cycleGridSize()
+                        }
+                    }
+                }
+
+                RippleButton {
+                    visible: !(root.canvasController?.responsiveWorkspace ?? false)
+                    objectName: root.splitSideDocks ? "dashboardLayoutAutoFitCard" : ""
+                    Layout.fillWidth: true
+                    implicitHeight: 34
+                    buttonRadius: 10
+                    focusPolicy: Qt.StrongFocus
+                    toggled: root.canvasController?.autoAdjustSizeEnabled ?? true
+                    colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
+                    colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.16)
+                    colBackgroundToggled: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.24)
+                    onClicked: root.canvasController?.toggleAutoAdjustSize()
+
+                    contentItem: Item {
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 6
+                            MaterialSymbol {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "fit_screen"
+                                iconSize: 16
+                                color: (root.canvasController?.autoAdjustSizeEnabled ?? true)
+                                    ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary)
+                                    : Appearance.colors.colSubtext
+                            }
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: (root.canvasController?.autoAdjustSizeEnabled ?? true)
+                                    ? Translation.tr("Auto-Adjust: On")
+                                    : Translation.tr("Auto-Adjust: Off")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                font.weight: Font.DemiBold
+                                color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.24)
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    RippleButton {
+                        objectName: root.splitSideDocks ? "dashboardLayoutFitAllCard" : ""
+                        Layout.fillWidth: true
+                        implicitHeight: 34
+                        buttonRadius: 10
+                        focusPolicy: Qt.StrongFocus
+                        enabled: root.hiddenIds.length > 0
+                        opacity: enabled ? 1.0 : 0.45
+                        colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
+                        colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.18)
+                        onClicked: root.canvasController?.fitAllWidgets()
+
+                        contentItem: Item {
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 5
+                                MaterialSymbol {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "auto_awesome_motion"
+                                    iconSize: 15
+                                    color: Appearance.colors.colSubtext
+                                }
+                                StyledText {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: Translation.tr("Smart Fit")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.weight: Font.Medium
+                                    color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                                }
+                            }
+                        }
+                    }
+
+                    RippleButton {
+                        objectName: root.splitSideDocks ? "dashboardLayoutResetCard" : ""
+                        Layout.fillWidth: true
+                        implicitHeight: 34
+                        buttonRadius: 10
+                        focusPolicy: Qt.StrongFocus
+                        colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
+                        colBackgroundHover: Qt.alpha(Appearance.colors.colError, 0.20)
+                        onClicked: root.canvasController?.resetLayout()
+
+                        contentItem: Item {
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 5
+                                MaterialSymbol {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "restart_alt"
+                                    iconSize: 15
+                                    color: Appearance.colors.colSubtext
+                                }
+                                StyledText {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: Translation.tr("Reset")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.weight: Font.Medium
+                                    color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Reusable Miniature Preview Artwork for Dashboard Modules ─────────
+    component ModuleMiniPreview: Rectangle {
+        id: previewRoot
+        property string moduleId: ""
+        property color accentColor: Appearance.colors.colPrimary
+        property string moduleIcon: "widgets"
+
+        radius: 8
+        color: Qt.alpha(previewRoot.accentColor, 0.08)
+        border.width: 1
+        border.color: Qt.alpha(previewRoot.accentColor, 0.20)
+        clip: true
+
+        // Clock miniature
+        Column {
+            visible: previewRoot.moduleId === "clock"
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: 9
+            spacing: 2
+
+            StyledText {
+                text: "12:45"
+                font.pixelSize: Appearance.font.pixelSize.normal
+                font.weight: Font.Bold
+                color: Appearance.colors.colOnLayer1
+            }
+            Rectangle {
+                width: 42
+                height: 4
+                radius: 2
+                color: Qt.alpha(previewRoot.accentColor, 0.65)
+            }
+        }
+
+        // Weather miniature
+        Row {
+            visible: previewRoot.moduleId === "weather"
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: 9
+            spacing: 6
+
+            MaterialSymbol {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "partly_cloudy_day"
+                iconSize: 20
+                fill: 1
+                color: previewRoot.accentColor
+            }
+            Column {
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 2
+                StyledText {
+                    text: "22°"
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.weight: Font.Bold
+                    color: Appearance.colors.colOnLayer1
+                }
+                Rectangle {
+                    width: 34
+                    height: 4
+                    radius: 2
+                    color: Qt.alpha(previewRoot.accentColor, 0.50)
+                }
+            }
+        }
+
+        // System telemetry miniature
+        Row {
+            visible: previewRoot.moduleId === "system"
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 8
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            spacing: 6
+
+            Repeater {
+                model: [0.72, 0.48, 0.86, 0.60]
+                delegate: Rectangle {
+                    required property var modelData
+                    width: 12
+                    height: Math.max(8, Math.round((previewRoot.height - 18) * Number(modelData)))
+                    anchors.bottom: parent.bottom
+                    radius: 3
+                    color: Qt.alpha(previewRoot.accentColor, 0.35 + Number(modelData) * 0.45)
+                }
+            }
+        }
+
+        // Media player miniature
+        Row {
+            visible: previewRoot.moduleId === "media"
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: 8
+            spacing: 7
+
+            Rectangle {
+                width: 28
+                height: 28
+                radius: 7
+                color: Qt.alpha(previewRoot.accentColor, 0.26)
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "music_note"
+                    iconSize: 15
+                    color: previewRoot.accentColor
+                }
+            }
+            Column {
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 4
+                Rectangle {
+                    width: 40
+                    height: 5
+                    radius: 2.5
+                    color: Qt.alpha(Appearance.colors.colOnLayer1, 0.62)
+                }
+                Row {
+                    spacing: 3
+                    Repeater {
+                        model: [8, 13, 6, 11, 7]
+                        delegate: Rectangle {
+                            required property var modelData
+                            width: 4
+                            height: Number(modelData)
+                            anchors.bottom: parent.bottom
+                            radius: 2
+                            color: Qt.alpha(previewRoot.accentColor, 0.72)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Calendar miniature
+        Grid {
+            visible: previewRoot.moduleId === "calendar"
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            columns: 5
+            spacing: 4
+
+            Repeater {
+                model: 15
+                delegate: Rectangle {
+                    required property int index
+                    width: 8
+                    height: 6
+                    radius: 2
+                    color: index === 6
+                        ? previewRoot.accentColor
+                        : Qt.alpha(Appearance.colors.colOnLayer1, index < 5 ? 0.38 : 0.18)
+                }
+            }
+        }
+
+        // GitHub contribution heatmap miniature
+        Grid {
+            visible: previewRoot.moduleId === "github"
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            columns: 6
+            spacing: 3
+
+            Repeater {
+                model: [0.2, 0.75, 0.4, 0.9, 0.2, 0.55, 0.65, 0.2, 0.85, 0.35, 0.7, 0.25, 0.3, 0.9, 0.5, 0.2, 0.8, 0.6]
+                delegate: Rectangle {
+                    required property var modelData
+                    width: 8
+                    height: 8
+                    radius: 2
+                    color: Qt.alpha(previewRoot.accentColor, Number(modelData))
+                }
+            }
+        }
+
+        // Todo / Agenda / Notes / Notifications / Welcome clean structured miniature
+        Row {
+            visible: previewRoot.moduleId !== "clock"
+                && previewRoot.moduleId !== "weather"
+                && previewRoot.moduleId !== "system"
+                && previewRoot.moduleId !== "media"
+                && previewRoot.moduleId !== "calendar"
+                && previewRoot.moduleId !== "github"
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: 8
+            anchors.rightMargin: 24
+            spacing: 7
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 26
+                height: 26
+                radius: previewRoot.moduleId === "welcome" ? 13 : 7
+                color: Qt.alpha(previewRoot.accentColor, 0.22)
+
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: previewRoot.moduleIcon
+                    iconSize: 15
+                    fill: 1
+                    color: previewRoot.accentColor
+                }
+            }
+
+            Column {
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 4
+                width: Math.max(16, parent.width - 34)
+
+                Rectangle {
+                    width: Math.min(parent.width, 46)
+                    height: 5
+                    radius: 2.5
+                    color: Qt.alpha(Appearance.colors.colOnLayer1, 0.58)
+                }
+                Rectangle {
+                    width: Math.min(parent.width, 34)
+                    height: 4
+                    radius: 2
+                    color: Qt.alpha(previewRoot.accentColor, 0.52)
+                }
+                Rectangle {
+                    width: Math.min(parent.width, 40)
+                    height: 4
+                    radius: 2
+                    color: Qt.alpha(Appearance.colors.colSubtext, 0.34)
+                }
+            }
+        }
+    }
+
+    // ── Reusable Abyss Control Card for Layout & Tabs Trays ──────────────
+    component DockControlCard: RippleButton {
+        id: card
+        property string iconName: "tune"
+        property string titleText: ""
+        property string subtitleText: ""
+        property string tooltipText: ""
+        property real cardHeight: 90
+
+        implicitWidth: Math.max(134, cardRow.implicitWidth + 26)
+        implicitHeight: card.cardHeight
+        focusPolicy: Qt.StrongFocus
+        buttonRadius: Math.min(14, Appearance.rounding.normal)
+        opacity: card.enabled ? 1.0 : 0.42
+        colBackground: root.abyssMode
+            ? Qt.alpha(AbyssStyle.surfaceRaised, 0.72)
+            : Qt.alpha(Appearance.colors.colLayer2, 0.76)
+        colBackgroundHover: root.abyssMode
+            ? Qt.alpha(AbyssStyle.accent, 0.16)
+            : Appearance.colors.colLayer2Hover
+        colBackgroundToggled: root.abyssMode
+            ? Qt.alpha(AbyssStyle.accent, 0.24)
+            : Appearance.colors.colPrimaryContainer
+        colBackgroundToggledHover: root.abyssMode
+            ? Qt.alpha(AbyssStyle.accent, 0.32)
+            : Appearance.colors.colPrimaryContainer
+        colRippleToggled: root.abyssMode
+            ? AbyssStyle.accent : Appearance.colors.colPrimary
+
+        contentItem: Item {
+            implicitWidth: card.implicitWidth
+            implicitHeight: card.implicitHeight
+
+            Rectangle {
+                anchors.fill: parent
+                radius: card.buttonRadius
+                color: "transparent"
+                border.width: card.visualFocus ? 2 : 1
+                border.color: card.visualFocus
+                    ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary)
+                    : (card.toggled
+                        ? Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.56)
+                        : Qt.alpha(Appearance.colors.colOutlineVariant, 0.28))
+            }
+
+            Row {
+                id: cardRow
+                anchors.centerIn: parent
+                spacing: 10
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 32
+                    height: 32
+                    radius: 10
+                    color: card.toggled
+                        ? Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.24)
+                        : Qt.alpha(Appearance.colors.colLayer3, 0.72)
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        text: card.iconName
+                        iconSize: 17
+                        fill: card.toggled ? 1 : 0
+                        color: card.toggled
+                            ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colOnPrimaryContainer)
+                            : Appearance.colors.colOnLayer1
+                    }
+                }
+
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+
+                    StyledText {
+                        text: card.titleText
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        font.weight: Font.DemiBold
+                        color: Appearance.colors.colOnLayer1
+                    }
+
+                    StyledText {
+                        visible: card.subtitleText.length > 0
+                        text: card.subtitleText
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        color: card.toggled
+                            ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colOnPrimaryContainer)
+                            : Appearance.colors.colSubtext
+                    }
+                }
+            }
+        }
+
+        StyledToolTip {
+            position: "top"
+            text: card.tooltipText
+        }
+    }
+
+    // ── Compact Circular Quick-Action Icon Button ────────────────────────
     component EditToolButton: RippleButton {
         id: tool
         property alias iconName: toolIcon.text
         property string tooltipText: ""
 
-        implicitWidth: 34
-        implicitHeight: 34
-        // Keep every button (including a wrapped row) geometrically centered.
+        implicitWidth: 32
+        implicitHeight: 32
         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
         focusPolicy: Qt.StrongFocus
         buttonText: tool.tooltipText
@@ -551,6 +1977,9 @@ Rectangle {
             }
         }
 
-        StyledToolTip { text: tool.tooltipText }
+        StyledToolTip {
+            position: "top"
+            text: tool.tooltipText
+        }
     }
 }

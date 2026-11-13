@@ -49,7 +49,7 @@ for token in (
     "readonly property int actionButtonSize:",
     "Layout.leftMargin: root.safeEdgeInset",
     "Layout.rightMargin: root.safeEdgeInset",
-    'Translation.tr("Prepare Obsidian")',
+    'Translation.tr("Prepare Nexus")',
     'Translation.tr("Edit task source")',
     'Translation.tr("Add task")',
 ):

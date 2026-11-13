@@ -178,11 +178,24 @@ ColumnLayout {
             {displayName:"Performance",value:"performance",icon:"speed"}].filter(option=>root.sections.includes(option.value))
     }
 
+    property real hostPageHeight: 0
+    property int hostSubTabCount: 0
+    readonly property real targetBentoHeight: {
+        const gap = SettingsMaterialPreset.pageSpacing
+        const baseH = SettingsMaterialPreset.standardBentoHeight
+        const availBodyH = root.hostPageHeight >= 800
+            ? Math.max(720, root.hostPageHeight - 20 - (root.hostSubTabCount > 1 || SettingsLayoutManager.editMode ? (40 + gap) : 0))
+            : baseH
+        return Math.min(baseH, availBodyH)
+    }
+
     // Left Bento Card: Surface & Performance
     SettingsCardSection {
         id: surfaceCard
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignTop
+        bentoColumn: "left"
+        _consumesBentoExtraHeight: true
         title: "Surface & Performance"
         icon: "opacity"
         showHeader: true
@@ -292,6 +305,18 @@ ColumnLayout {
                     onToggledByUser:checked=>Config.setNestedValue("abyss.content.blurRadius",checked ? -1 : AbyssStyle.configuredContentBlurRadius)
                     onMoved:value=>Config.setNestedValue("abyss.content.blurRadius",value)
                 }
+                CompactSurfacePercent {
+                    objectName:"abyssRimHighlight"
+                    text:"Rim highlight";configKey:"abyss.effects.surfaceHighlight"
+                    fallback:.45;minimum:0;maximum:1
+                    searchKeywords:["rim", "highlight", "specular", "border", "edge"]
+                }
+                CompactSurfacePercent {
+                    objectName:"abyssShadowStrength"
+                    text:"Shadows";configKey:"abyss.effects.shadowStrength"
+                    fallback:.24;minimum:0;maximum:.5
+                    searchKeywords:["shadow", "shadows", "drop shadow", "depth"]
+                }
             }
         }
 
@@ -348,6 +373,7 @@ ColumnLayout {
         id: wavesCard
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignTop
+        bentoColumn: "right"
         title: "Waves & Audio Spectrum"
         icon: "waves"
         showHeader: true
@@ -392,9 +418,12 @@ ColumnLayout {
             AbyssWavePreview {
                 id: wavePreview
                 Layout.fillWidth: true
+                Layout.fillHeight: true
                 implicitHeight: Math.max(
                     wavesCustomGrid.visible ? 56 : 84,
-                    (surfacePerfGroup.implicitHeight + interactionMotionGroup.implicitHeight)
+                    root.targetBentoHeight
+                    - wavesCard.chromeImplicitHeight
+                    - wavesCard.spacing
                     - audioSpectrumGroup.implicitHeight
                     - (SettingsMaterialPreset.groupPadding * 2
                        + wavesHeaderRow.implicitHeight
@@ -815,6 +844,75 @@ ColumnLayout {
             }
         }
     }
+    SettingsCardSection {
+        id: editStageCard
+        objectName: "abyssEditStageSettingsCard"
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        bentoColumn: "left"
+        title: Translation.tr("Customization Stage (Edit Mode)")
+        icon: "picture_in_picture_alt"
+        showHeader: true
+        settingsTaskSection: "surface"
+        visible: surfaceCard.visible || root.activeSection === "editor"
+
+        SettingsGroup {
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 340 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 8
+                rowSpacing: 4
+
+                SettingsSwitch {
+                    objectName: "abyssEditStageEnable"
+                    Layout.fillWidth: true
+                    buttonIcon: "aspect_ratio"
+                    text: Translation.tr("Shrink desktop in Edit mode")
+                    autoToggle: false
+                    checked: Config.options?.abyss?.editStage?.enable ?? true
+                    onToggledByUser: checked => Config.setNestedValue("abyss.editStage.enable", checked)
+                    StyledToolTip { text: Translation.tr("Zoom out the live desktop stage and mount customization docks outside the bottom edge") }
+                }
+
+                SettingsSwitch {
+                    objectName: "abyssEditStageWallpaper"
+                    Layout.fillWidth: true
+                    enabled: Config.options?.abyss?.editStage?.enable ?? true
+                    buttonIcon: "wallpaper"
+                    text: Translation.tr("Stage on Change Wallpaper")
+                    autoToggle: false
+                    checked: Config.options?.abyss?.editStage?.wallpaperPreview ?? true
+                    onToggledByUser: checked => Config.setNestedValue("abyss.editStage.wallpaperPreview", checked)
+                    StyledToolTip { text: Translation.tr("Shrink the desktop stage when previewing wallpapers from the customization dock") }
+                }
+
+                SettingsSwitch {
+                    objectName: "abyssEditStagePark"
+                    Layout.fillWidth: true
+                    enabled: Config.options?.abyss?.editStage?.enable ?? true
+                    buttonIcon: "workspaces"
+                    text: Translation.tr("Park on empty workspace")
+                    autoToggle: false
+                    checked: Config.options?.abyss?.editStage?.parkEmptyWorkspace ?? true
+                    onToggledByUser: checked => Config.setNestedValue("abyss.editStage.parkEmptyWorkspace", checked)
+                    StyledToolTip { text: Translation.tr("Temporarily switch to an empty workspace while editing desktop widgets, edges, or wallpaper") }
+                }
+            }
+
+            CompactSurfacePercent {
+                objectName: "abyssEditStageScale"
+                enabled: Config.options?.abyss?.editStage?.enable ?? true
+                text: Translation.tr("Desktop stage scale")
+                configKey: "abyss.editStage.scale"
+                fallback: 0.83
+                minimum: 0.72
+                maximum: 0.92
+                searchKeywords: ["desktop", "stage", "shrink", "scale", "zoom", "edit mode", "wallpaper", "customization"]
+            }
+        }
+    }
+
     SettingsCardSection {
         title:"Live Editor";icon:"edit";settingsTaskSection:"editor"
         visible:root.activeSection==="editor"

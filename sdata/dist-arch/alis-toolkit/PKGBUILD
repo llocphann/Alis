@@ -10,12 +10,9 @@ depends=(
   ydotool
   python-evdev
   python-pillow
-  hyprpicker
-  translate-shell
   fprintd
 
-  # Backlight control
-  brightnessctl
+  # Backlight control (internal panels use alis-native sysfs/logind; ddcutil for external DDC/CI)
   ddcutil
   geoclue
 
@@ -29,9 +26,6 @@ depends=(
 
   # Image processing
   imagemagick
-
-  # Calculator widget
-  libqalculate
 
   # Bluetooth
   blueman

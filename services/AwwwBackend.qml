@@ -13,15 +13,16 @@ Singleton {
     id: root
 
     readonly property string provider: "awww"
-    // The internal renderer owns both rest and transition frames in liquid mode.
-    readonly property bool enabled: transitionType !== "alisMelt"
+    // The internal renderer owns both rest and transition frames in liquid/wallfx modes.
+    readonly property bool enabled: transitionType !== "alisMelt" && transitionType !== "wallfx"
     readonly property int transitionFps: Config.options?.background?.backend?.awww?.transitionFps ?? 60
     readonly property int simpleStep: Config.options?.background?.backend?.awww?.simpleStep ?? 5
     readonly property int spatialStep: Config.options?.background?.backend?.awww?.spatialStep ?? 30
     readonly property int transitionDurationMs: Config.options?.background?.transition?.duration ?? 800
     readonly property var transitionBezier: Config.options?.background?.transition?.bezier ?? [0.54, 0.0, 0.34, 0.99]
     readonly property bool transitionsEnabled: Config.options?.background?.transition?.enable ?? true
-    readonly property string transitionType: Config.options?.background?.transition?.type ?? "crossfade"
+    readonly property string _rawTransitionType: Config.options?.background?.transition?.type ?? "crossfade"
+    readonly property string transitionType: _rawTransitionType === "inirMelt" ? "alisMelt" : _rawTransitionType
     readonly property string transitionDirection: Config.options?.background?.transition?.direction ?? "right"
     readonly property string fillMode: Config.options?.background?.fillMode ?? "fill"
     readonly property bool animationEnabled: Config.options?.background?.enableAnimation ?? true
@@ -193,6 +194,7 @@ Singleton {
         // Both Liquid aliases use the internal renderer; this mapping only
         // informs duration controls and fallback handling.
         case "alisMelt":
+        case "wallfx":
         case "crossfade":
         case "fadeThrough":
         case "blurFade":

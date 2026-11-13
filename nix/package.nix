@@ -88,7 +88,6 @@ let
     ++ optionalTop "fuzzel"
     ++ optionalTop "geoclue2"
     ++ optionalTop "hyprland"
-    ++ optionalTop "hyprpicker"
     ++ optionalTop "gum"
     ++ optionalTop "imagemagick"
     ++ optionalTop "kitty"
@@ -327,9 +326,12 @@ EOF
       assets/applications/alis.desktop > "$out/share/applications/alis.desktop"
     sed "s|^Exec=alis|Exec=$out/bin/alis|" \
       assets/applications/alis-settings.desktop > "$out/share/applications/alis-settings.desktop"
+    sed "s|^Exec=alis|Exec=$out/bin/alis|" \
+      assets/applications/alis-local-music.desktop > "$out/share/applications/alis-local-music.desktop"
     chmod 0644 \
       "$out/share/applications/alis.desktop" \
-      "$out/share/applications/alis-settings.desktop"
+      "$out/share/applications/alis-settings.desktop" \
+      "$out/share/applications/alis-local-music.desktop"
     install -Dm644 assets/icons/desktop-symbolic.svg \
       "$out/share/icons/hicolor/scalable/apps/alis.svg"
 

@@ -24,6 +24,7 @@ ContentPage {
     function activateSettingsSearchSection(section: string): void {
         const label = String(section).toLowerCase().split(/[·›]/).pop().trim()
         const aliases = {"live editor":"editor", "audio spectrum":"spectrum",
+            "customization stage (edit mode)":"surface", "customization stage":"surface", "edit mode":"surface",
             "appearance & layout":"surface", "sizing & surface":"surface",
             "behavior":"bar", "clock":"bar", "auto hide":"bar", "behavior & clock":"bar", "module behavior":"bar", "media":"bar",
             "system tray":"bar", "workspaces":"bar", "resources":"bar",
@@ -64,6 +65,8 @@ ContentPage {
                 Layout.alignment: Qt.AlignTop
                 modulesCardMinHeight: 0
                 popupsCardMinHeight: root.sharedPopupsHeight
+                hostPageHeight: root.height
+                hostSubTabCount: root._subTabItems.length
                 sections: root.sections
                 activeSection: root.sections[0]
             }

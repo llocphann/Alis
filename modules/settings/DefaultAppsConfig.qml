@@ -119,8 +119,14 @@ ContentPage {
         property bool available: true
         property bool isFlathub: badgeText.toLowerCase().includes("flathub")
         property bool isFlatpak: badgeRoot.badgeText.toLowerCase().includes("flatpak")
+        readonly property real naturalWidth: badgeLabel.implicitWidth + 12
         implicitHeight: 20
-        implicitWidth: badgeLabel.implicitWidth + 12
+        implicitWidth: naturalWidth
+        Layout.fillWidth: false
+        Layout.minimumWidth: Math.min(naturalWidth, 48)
+        Layout.preferredWidth: naturalWidth
+        Layout.maximumWidth: naturalWidth
+        clip: true
         radius: Appearance.rounding.full
         color: !badgeRoot.available
             ? ColorUtils.transparentize(Appearance.colors.colError, 0.84)
@@ -132,10 +138,19 @@ ContentPage {
 
         StyledText {
             id: badgeLabel
-            anchors.centerIn: parent
+            anchors {
+                verticalCenter: parent.verticalCenter
+                left: parent.left
+                right: parent.right
+                leftMargin: 6
+                rightMargin: 6
+            }
+            horizontalAlignment: Text.AlignHCenter
             text: badgeRoot.badgeText
             font.pixelSize: Appearance.font.pixelSize.smallest
             font.weight: Font.Medium
+            elide: Text.ElideRight
+            maximumLineCount: 1
             color: !badgeRoot.available
                 ? Appearance.colors.colError
                 : badgeRoot.isFlathub
@@ -149,8 +164,12 @@ ContentPage {
         property string iconName: "apps"
         property string tooltipText: ""
         property bool activeState: false
-        implicitWidth: 32
-        implicitHeight: 32
+        implicitWidth: 30
+        implicitHeight: 30
+        Layout.fillWidth: false
+        Layout.minimumWidth: implicitWidth
+        Layout.preferredWidth: implicitWidth
+        Layout.maximumWidth: implicitWidth
         buttonRadius: Appearance.rounding.full
         colBackground: btnRoot.activeState
             ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.84)
@@ -160,7 +179,7 @@ ContentPage {
         contentItem: MaterialSymbol {
             anchors.centerIn: parent
             text: btnRoot.iconName
-            iconSize: 18
+            iconSize: 17
             color: !btnRoot.enabled
                 ? Appearance.colors.colSubtext
                 : btnRoot.activeState
@@ -175,16 +194,19 @@ ContentPage {
 
     component DiscoveryHeaderBar: RowLayout {
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
         spacing: 8
 
         StyledText {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             text: AppLauncher.discovering
                 ? Translation.tr("Scanning installed applications…")
                 : Translation.tr("%1 installed applications").arg((AppLauncher.discoveredApps ?? []).length)
             font.pixelSize: Appearance.font.pixelSize.smaller
             color: Appearance.colors.colSubtext
             elide: Text.ElideRight
+            maximumLineCount: 1
         }
 
         SlotIconButton {
@@ -199,6 +221,11 @@ ContentPage {
     component DefaultAppSlotCard: SettingsGroup {
         id: slotCard
         required property var slotData
+        Layout.fillWidth: true
+        Layout.preferredWidth: 1
+        Layout.minimumWidth: 0
+        Layout.alignment: Qt.AlignTop
+        clip: true
         readonly property string slotId: String(slotData?.id ?? "")
         readonly property int _rev: AppLauncher._configRevision
         readonly property var summary: {
@@ -227,9 +254,11 @@ ContentPage {
 
         RowLayout {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             spacing: 8
 
             MaterialSymbol {
+                Layout.fillWidth: false
                 text: slotCard.slotData?.icon ?? "apps"
                 iconSize: Appearance.font.pixelSize.normal
                 color: Appearance.colors.colPrimary
@@ -237,18 +266,22 @@ ContentPage {
 
             StyledText {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: slotCard.slotData?.label ?? ""
                 font.pixelSize: Appearance.font.pixelSize.small
                 font.weight: Font.DemiBold
                 color: Appearance.colors.colOnLayer1
                 elide: Text.ElideRight
+                maximumLineCount: 1
             }
         }
 
         Rectangle {
             objectName: "defaultAppCurrent_" + slotCard.slotId
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             implicitHeight: currentRow.implicitHeight + 14
+            clip: true
             radius: Appearance.rounding.small
             color: Appearance.colors.colLayer1
             border.width: 1
@@ -265,35 +298,76 @@ ContentPage {
                 spacing: 10
 
                 AppIconView {
+                    Layout.fillWidth: false
+                    Layout.minimumWidth: 24
+                    Layout.preferredWidth: 24
+                    Layout.maximumWidth: 24
+                    Layout.alignment: Qt.AlignVCenter
                     iconName: slotCard.summary?.icon ?? (slotCard.slotData?.icon ?? "apps")
                     fallbackSymbol: slotCard.slotData?.icon ?? "apps"
                     iconSize: 24
                 }
 
                 ColumnLayout {
+                    id: currentInfoCol
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.preferredWidth: 1
+                    Layout.alignment: Qt.AlignVCenter
+                    clip: true
                     spacing: 1
 
-                    RowLayout {
+                    Row {
+                        id: titleBadgeRow
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        clip: true
                         spacing: 6
 
+                        readonly property real otherBadgesWidth: (portableBadge.visible ? portableBadge.width + 6 : 0)
+                            + (autostartBadge.visible ? autostartBadge.width + 6 : 0)
+                            + (xdgStatusIcon.visible ? xdgStatusIcon.width + 6 : 0)
+                        readonly property real minNameReserved: Math.min(
+                            appNameText.implicitWidth,
+                            Math.max(48, Math.floor(width * 0.42))
+                        )
+                        readonly property real maxSourceBadgeWidth: width > 0
+                            ? Math.max(36, Math.floor(width - minNameReserved - otherBadgesWidth - (sourceBadge.visible ? 6 : 0)))
+                            : 96
+                        readonly property real effectiveSourceBadgeWidth: sourceBadge.visible
+                            ? (width > 0 ? Math.min(sourceBadge.naturalWidth, maxSourceBadgeWidth) : sourceBadge.naturalWidth)
+                            : 0
+                        readonly property real badgesReservedWidth: (sourceBadge.visible ? effectiveSourceBadgeWidth + 6 : 0)
+                            + otherBadgesWidth
+                        readonly property real availableNameWidth: width > 0
+                            ? Math.max(0, width - badgesReservedWidth)
+                            : appNameText.implicitWidth
+
                         StyledText {
+                            id: appNameText
                             objectName: "defaultAppName_" + slotCard.slotId
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.min(implicitWidth, titleBadgeRow.availableNameWidth)
                             text: slotCard.summary?.name ?? ""
                             font.pixelSize: Appearance.font.pixelSize.normal
                             font.weight: Font.Medium
                             color: Appearance.colors.colOnLayer1
                             elide: Text.ElideRight
+                            maximumLineCount: 1
                         }
 
                         SourceBadgePill {
+                            id: sourceBadge
                             objectName: "defaultAppBadge_" + slotCard.slotId
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: titleBadgeRow.effectiveSourceBadgeWidth
                             badgeText: slotCard.summary?.sourceBadge ?? "Native"
                             available: Boolean(slotCard.summary?.installed ?? true)
                         }
 
                         Rectangle {
+                            id: portableBadge
+                            anchors.verticalCenter: parent.verticalCenter
                             visible: String(slotCard.summary?.desktopId ?? "").startsWith("alis-app-")
                             implicitHeight: 20
                             implicitWidth: portableBadgeLabel.implicitWidth + 12
@@ -310,10 +384,13 @@ ContentPage {
                         }
 
                         RippleButton {
+                            id: autostartBadge
+                            anchors.verticalCenter: parent.verticalCenter
                             readonly property string cleanDesktopId: String(slotCard.summary?.desktopId ?? "").replace(/\.desktop$/i, "")
+                            readonly property bool compactMode: (appNameText.implicitWidth + sourceBadge.naturalWidth) > 150
                             visible: CompositorService.isNiri && cleanDesktopId.length > 0 && Autostart.isAppEnabled(cleanDesktopId)
                             implicitHeight: 20
-                            implicitWidth: autostartBadgeRow.implicitWidth + 10
+                            implicitWidth: autostartBadgeRow.implicitWidth + (compactMode ? 8 : 10)
                             buttonRadius: Appearance.rounding.full
                             colBackground: Appearance.colors.colSecondaryContainer
                             colBackgroundHover: Appearance.colors.colLayer2Hover
@@ -332,6 +409,7 @@ ContentPage {
                                         color: Appearance.colors.colOnSecondaryContainer
                                     }
                                     StyledText {
+                                        visible: !autostartBadge.compactMode
                                         Layout.alignment: Qt.AlignVCenter
                                         verticalAlignment: Text.AlignVCenter
                                         text: Translation.tr("Autostart")
@@ -346,18 +424,19 @@ ContentPage {
                         }
 
                         MaterialSymbol {
+                            id: xdgStatusIcon
                             objectName: "defaultAppXdgStatus_" + slotCard.slotId
+                            anchors.verticalCenter: parent.verticalCenter
                             visible: Boolean(slotCard.xdgStatus.supported && slotCard.xdgStatus.synced)
                             text: "verified"
                             iconSize: 15
                             color: Appearance.colors.colPrimary
                         }
-
-                        Item { Layout.fillWidth: true }
                     }
 
                     StyledText {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         text: {
                             const cmd = String(slotCard.summary?.command ?? "")
                             if (!(slotCard.summary?.installed ?? true))
@@ -370,11 +449,18 @@ ContentPage {
                             ? Appearance.colors.colSubtext
                             : Appearance.colors.colError
                         elide: Text.ElideMiddle
+                        maximumLineCount: 1
                     }
                 }
 
                 RowLayout {
-                    spacing: 6
+                    id: slotActionsRow
+                    Layout.fillWidth: false
+                    Layout.minimumWidth: implicitWidth
+                    Layout.preferredWidth: implicitWidth
+                    Layout.maximumWidth: implicitWidth
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                    spacing: 5
 
                     SlotIconButton {
                         objectName: "defaultAppChooseBtn_" + slotCard.slotId
@@ -431,6 +517,7 @@ ContentPage {
 
         StyledText {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             visible: String(slotCard.xdgStatus.errorText ?? "").length > 0
             text: slotCard.xdgStatus.errorText ?? ""
             font.pixelSize: Appearance.font.pixelSize.smallest
@@ -440,17 +527,20 @@ ContentPage {
 
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             visible: slotCard.pickerOpen
             spacing: 6
 
             RowLayout {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 spacing: 6
 
                 MaterialTextField {
                     id: searchInput
                     objectName: "defaultAppSearch_" + slotCard.slotId
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     placeholderText: Translation.tr("Search installed applications…")
                     text: slotCard.searchQuery
                     onTextChanged: {
@@ -493,6 +583,7 @@ ContentPage {
 
             StyledText {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 visible: slotCard.candidates.length === 0
                 text: AppLauncher.discovering
                     ? Translation.tr("Scanning installed applications…")
@@ -504,6 +595,7 @@ ContentPage {
 
             ColumnLayout {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 spacing: 4
 
                 Repeater {
@@ -515,7 +607,9 @@ ContentPage {
                         required property var modelData
                         objectName: "defaultAppOption_" + slotCard.slotId + "_" + String(modelData.identityKey ?? index)
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         implicitHeight: 42
+                        clip: true
                         buttonRadius: Appearance.rounding.small
                         readonly property bool isCurrent: String(slotCard.summary?.identityKey ?? "") === String(modelData.identityKey ?? "")
                             || (String(slotCard.summary?.identityKey ?? "").length === 0 && String(slotCard.summary?.desktopId ?? "") === String(modelData.desktopId ?? ""))
@@ -540,46 +634,76 @@ ContentPage {
                             spacing: 10
 
                             AppIconView {
+                                Layout.fillWidth: false
+                                Layout.minimumWidth: 20
+                                Layout.preferredWidth: 20
+                                Layout.maximumWidth: 20
+                                Layout.alignment: Qt.AlignVCenter
                                 iconName: candidateRow.modelData.icon || (slotCard.slotData?.icon ?? "apps")
                                 fallbackSymbol: slotCard.slotData?.icon ?? "apps"
                                 iconSize: 20
                             }
 
                             ColumnLayout {
+                                id: candidateInfoCol
                                 Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                Layout.preferredWidth: 1
+                                Layout.alignment: Qt.AlignVCenter
+                                clip: true
                                 spacing: 1
 
-                                RowLayout {
+                                Row {
+                                    id: candidateTitleRow
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    clip: true
                                     spacing: 6
 
+                                    readonly property real maxBadgeWidth: Math.max(48, Math.floor(width * 0.48))
+                                    readonly property real effectiveBadgeWidth: width > 0
+                                        ? Math.min(candidateSourceBadge.naturalWidth, maxBadgeWidth)
+                                        : candidateSourceBadge.naturalWidth
+                                    readonly property real availableNameWidth: width > 0
+                                        ? Math.max(0, width - (effectiveBadgeWidth + 6))
+                                        : candidateNameText.implicitWidth
+
                                     StyledText {
+                                        id: candidateNameText
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: Math.min(implicitWidth, candidateTitleRow.availableNameWidth)
                                         text: candidateRow.modelData.name ?? ""
                                         font.pixelSize: Appearance.font.pixelSize.small
                                         font.weight: candidateRow.isCurrent ? Font.DemiBold : Font.Normal
                                         color: Appearance.colors.colOnLayer1
                                         elide: Text.ElideRight
+                                        maximumLineCount: 1
                                     }
 
                                     SourceBadgePill {
+                                        id: candidateSourceBadge
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: candidateTitleRow.effectiveBadgeWidth
                                         badgeText: candidateRow.modelData.sourceBadge ?? "Native"
                                         available: true
                                     }
-
-                                    Item { Layout.fillWidth: true }
                                 }
 
                                 StyledText {
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     text: candidateRow.modelData.exec ?? ""
                                     font.pixelSize: Appearance.font.pixelSize.smallest
                                     font.family: Appearance.font.family.monospace
                                     color: Appearance.colors.colSubtext
                                     elide: Text.ElideMiddle
+                                    maximumLineCount: 1
                                 }
                             }
 
                             MaterialSymbol {
+                                Layout.fillWidth: false
+                                Layout.alignment: Qt.AlignVCenter
                                 visible: candidateRow.isCurrent
                                 text: "check_circle"
                                 iconSize: Appearance.font.pixelSize.normal
@@ -593,6 +717,7 @@ ContentPage {
 
         RowLayout {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             visible: slotCard.customOpen
             spacing: 6
 
@@ -600,6 +725,7 @@ ContentPage {
                 id: customCmdField
                 objectName: "defaultAppCustomInput_" + slotCard.slotId
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 placeholderText: slotCard.slotData?.placeholder ?? ""
                 text: slotCard.summary?.command ?? ""
                 onAccepted: {
@@ -640,6 +766,7 @@ ContentPage {
     GridLayout {
         objectName: "defaultAppsTwoColumnGrid"
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
         visible: root.activeSection === "primary"
         columns: 2
         uniformCellWidths: true
@@ -650,6 +777,7 @@ ContentPage {
             _preventBentoReparent: true
             Layout.fillWidth: true
             Layout.preferredWidth: 1
+            Layout.minimumWidth: 0
             Layout.alignment: Qt.AlignTop
             visible: true
             expanded: true
@@ -676,6 +804,7 @@ ContentPage {
             settingsPageIndex: root.settingsPageIndex
             Layout.fillWidth: true
             Layout.preferredWidth: 1
+            Layout.minimumWidth: 0
             Layout.alignment: Qt.AlignTop
         }
     }
@@ -684,6 +813,7 @@ ContentPage {
         objectName: "defaultAppsUtilitiesCard"
         _preventBentoReparent: true
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
         Layout.alignment: Qt.AlignTop
         visible: root.activeSection === "utilities"
         expanded: true
@@ -696,8 +826,9 @@ ContentPage {
 
         GridLayout {
             Layout.fillWidth: true
-            columns: 2
-            uniformCellWidths: true
+            Layout.minimumWidth: 0
+            columns: width >= 680 ? 2 : 1
+            uniformCellWidths: columns === 2
             columnSpacing: 14
             rowSpacing: 10
 

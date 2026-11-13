@@ -1,8 +1,11 @@
+mod backlight;
+mod calc;
 mod clipboard;
 mod desktop;
 mod niri;
 mod plugins;
 mod telemetry;
+mod translate;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -17,6 +20,15 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Native sysfs + systemd-logind backlight controller replacing brightnessctl.
+    Backlight {
+        #[command(subcommand)]
+        command: backlight::BacklightCommand,
+    },
+
+    /// Native scientific math and unit evaluator replacing qalc.
+    Calc(calc::CalcArgs),
+
     /// Native parity implementation of scripts/clipboard-store.py.
     ClipboardFilter {
         /// Write the sanitized payload to stdout instead of calling cliphist store.
@@ -44,11 +56,16 @@ enum Command {
 
     /// Native system telemetry reader for CPU, RAM, swap, network, GPU, disk, and temperatures.
     Telemetry(telemetry::TelemetryArgs),
+
+    /// Native translation helper replacing translate-shell (trans).
+    Translate(translate::TranslateArgs),
 }
 
 fn run() -> Result<i32> {
     let args = Args::parse();
     match args.command {
+        Command::Backlight { command } => backlight::run(command),
+        Command::Calc(args) => calc::run(args),
         Command::ClipboardFilter { filter } => clipboard::run(filter),
         Command::Desktop { command } => {
             let value = desktop::run(command)?;
@@ -70,6 +87,7 @@ fn run() -> Result<i32> {
             println!("{}", serde_json::to_string(&value)?);
             Ok(0)
         }
+        Command::Translate(args) => translate::run(args),
     }
 }
 

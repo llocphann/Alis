@@ -163,9 +163,10 @@ ShellRoot {
         data["background"]["wallpaperPath"] = str(folder / "wallpapers/a.png")
         # Exercise an existing user config: legacy melt must remain usable without shader priming.
         data["background"]["transition"]["type"] = "alisMelt"
-        data["background"]["parallax"]["enable"] = False
-        data["background"]["parallax"]["enableWorkspace"] = True
-        data["background"]["parallax"]["enableSidebar"] = True
+        parallax = data["background"].setdefault("parallax", {})
+        parallax["enable"] = False
+        parallax["enableWorkspace"] = True
+        parallax["enableSidebar"] = True
         data["background"]["pan"] = {"x": 0, "y": 0, "zoom": 1}
         data["background"]["effects"]["enableBlur"] = False
         data["background"]["widgets"] = {"clock": {"enable": False}}

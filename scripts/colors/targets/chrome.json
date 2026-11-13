@@ -1,9 +1,9 @@
 {
   "id": "chrome",
-  "label": "Chromium browsers",
+  "label": "Web browsers",
   "module": "40-chrome.sh",
   "category": "browser",
   "inputs": ["app-palette.json", "palette.json"],
-  "description": "Apply generated theme colors to supported Chromium-based browsers.",
-  "configKey": "appearance.wallpaperTheming.enableAppsAndShell"
+  "description": "Apply generated wallpaper colors across Zen Browser, Brave, Vivaldi, Chrome, Chromium, Edge, and Firefox.",
+  "configKey": "appearance.wallpaperTheming.enableChrome"
 }

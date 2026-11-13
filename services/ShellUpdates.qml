@@ -517,6 +517,14 @@ Singleton {
                     if (json.version && json.version !== "0.0.0") {
                         root.localVersion = json.version
                     }
+                    const storedCommit = String(json.commit ?? "").trim()
+                    const storedDate = String(json.installedAt ?? json.installed_at ?? "").trim()
+                    if (storedCommit.length > 0 && root.installedCommit.length === 0) {
+                        root.installedCommit = storedCommit
+                    }
+                    if (storedDate.length > 0 && root.installedDate.length === 0) {
+                        root.installedDate = storedDate
+                    }
                     const storedInstallMode = json.installMode ?? json.install_mode ?? ""
                     const storedUpdateStrategy = json.updateStrategy ?? json.update_strategy ?? ""
                     const storedSource = json.installSource ?? json.install_source ?? json.source ?? ""
@@ -677,28 +685,12 @@ Singleton {
         id: persistRepoPathProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
-            "vfile='" + Directories.shellConfig + "/version.json'; " +
-            "if [[ -s \"$vfile\" ]] && command -v jq &>/dev/null; then " +
-            "  tmp=$(mktemp); " +
-            "  jq --arg p '" + root.repoPath + "' --arg m '" + root.installMode + "' --arg u '" + root.updateStrategy + "' '.repo_path = $p | .repoPath = $p | .install_mode = $m | .installMode = $m | .update_strategy = $u | .updateStrategy = $u' \"$vfile\" > \"$tmp\" && mv \"$tmp\" \"$vfile\" && " +
-            "  echo 'Updated'; " +
-            "elif command -v python3 &>/dev/null; then " +
-            "  tmp=$(mktemp); " +
-            "  python3 -c 'import json,sys; path=sys.argv[1]; repo=sys.argv[2]; " +
-            "\ntry: data=json.load(open(path,\"r\",encoding=\"utf-8\"))" +
-            "\nexcept Exception: data={}" +
-            "\ndata[\"repo_path\"]=repo" +
-            "\ndata[\"repoPath\"]=repo" +
-            "\ndata[\"install_mode\"]=sys.argv[3]" +
-            "\ndata[\"installMode\"]=sys.argv[3]" +
-            "\ndata[\"update_strategy\"]=sys.argv[4]" +
-            "\ndata[\"updateStrategy\"]=sys.argv[4]" +
-            "\njson.dump(data, sys.stdout, ensure_ascii=False, indent=2)' \"$vfile\" '" + root.repoPath + "' '" + root.installMode + "' '" + root.updateStrategy + "' > \"$tmp\" " +
-            "    && mv \"$tmp\" \"$vfile\" && echo 'Updated' || echo 'Skipped'; " +
-            "else " +
-            "  echo 'Skipped'; " +
-            "fi"
+            "/usr/bin/python3", "-c",
+            "import json,os,sys,tempfile\npath,repo,imode,ustrat=sys.argv[1:5]\ntry:\n with open(path,'r',encoding='utf-8') as f: data=json.load(f)\nexcept Exception: data={}\ndata['repo_path']=repo\ndata['repoPath']=repo\ndata['install_mode']=imode\ndata['installMode']=imode\ndata['update_strategy']=ustrat\ndata['updateStrategy']=ustrat\ndirname=os.path.dirname(path) or '.'\nos.makedirs(dirname,exist_ok=True)\nfd,tmp=tempfile.mkstemp(dir=dirname)\nwith os.fdopen(fd,'w',encoding='utf-8') as f: json.dump(data,f,ensure_ascii=False,indent=2)\nos.replace(tmp,path)\nprint('Updated')",
+            Directories.shellConfig + "/version.json",
+            root.repoPath,
+            root.installMode,
+            root.updateStrategy
         ]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -732,6 +724,7 @@ Singleton {
     // Lightweight git command prefix — disables LFS filter and auto-gc to prevent
     // CPU spikes from global git-lfs config on repos with zero LFS objects.
     readonly property var _gitCmd: [
+        "nice", "-n", "19",
         "git",
         "-c", "filter.lfs.process=",
         "-c", "filter.lfs.required=false",
@@ -788,6 +781,17 @@ Singleton {
             } else if (normalized.startsWith("commit: ")) {
                 root.installedCommit = normalized.substring(8).trim()
             }
+        }
+        if (root.installedCommit.length === 0 || root.installedDate.length === 0) {
+            try {
+                versionFile.reload()
+                const vJson = JSON.parse(String(versionFile.text() ?? "") || "{}")
+                if (root.installedCommit.length === 0 && vJson.commit)
+                    root.installedCommit = String(vJson.commit).trim()
+                const fallbackDate = vJson.installedAt ?? vJson.installed_at ?? ""
+                if (root.installedDate.length === 0 && fallbackDate)
+                    root.installedDate = String(fallbackDate).trim()
+            } catch (e) {}
         }
         print("[ShellUpdates] Manifest: commit=" + root.installedCommit + " date=" + root.installedDate)
         recentLocalLogProc.running = true

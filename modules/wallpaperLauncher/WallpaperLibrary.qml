@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import QtQuick
@@ -24,6 +25,7 @@ Scope {
         if (colorTagsProcess.running || root._lastScanRoots.length === 0)
             return
         colorTagsProcess.exec([
+            "/usr/bin/nice", "-n", "19",
             `${Directories.scriptsPath}/native-dispatch`,
             "color-tags",
             "--roots",
@@ -67,6 +69,7 @@ Scope {
         root._scanSignature = signature
         root._lastScanRoots = roots
         root.scanning = true
+        Wallpapers.preloadKnownThumbnails()
         colorTagsTimer.restart()
         scanProcess.exec([
             "find", "-L", ...roots, "-type", "f", "(",
@@ -95,11 +98,15 @@ Scope {
             const isVideo = [".mp4", ".webm", ".mkv", ".avi", ".mov"]
                 .some(extension => lower.endsWith(extension))
             const isGif = lower.endsWith(".gif")
+            const name = FileUtils.fileNameForPath(path)
+            const relativePath = path.startsWith(prefix) ? path.slice(prefix.length) : path
+            const kind = isVideo ? "video" : isGif ? "gif" : "static"
             const entry = {
                 path: path,
-                name: FileUtils.fileNameForPath(path),
-                relativePath: path.startsWith(prefix) ? path.slice(prefix.length) : path,
-                kind: isVideo ? "video" : isGif ? "gif" : "static"
+                name: name,
+                relativePath: relativePath,
+                kind: kind,
+                searchKey: `${relativePath} ${name} ${kind}`.toLowerCase()
             }
             // Animated = anything that moves, wherever it lives. A video outside a
             // conventional folder must not vanish from both lists.
@@ -139,7 +146,7 @@ Scope {
 
     Timer {
         id: colorTagsTimer
-        interval: 600
+        interval: 1800
         repeat: false
         onTriggered: root.ensureColorTags()
     }

@@ -57,19 +57,22 @@ Item {
                 height: root.height
                 clip: true
 
+                readonly property bool tightTab:
+                    tab.width > 0 && tab.width < 90
+
                 // Center icon + label as one visual unit. Optional badges are
                 // anchored independently so their width can never push the tab
                 // title off-center.
                 Row {
                     id: centeredTabLabel
                     anchors.centerIn: parent
-                    spacing: 5
+                    spacing: tab.tightTab ? 3 : (root.pillHeight <= 30 ? 4 : 5)
 
                     MaterialSymbol {
                         visible: tab.hasIcon
                         anchors.verticalCenter: parent.verticalCenter
                         text: tab.modelData.icon ?? ""
-                        iconSize: 17
+                        iconSize: tab.tightTab ? 14 : (root.pillHeight <= 30 ? 15 : 17)
                         color: tab.selected
                             ? Appearance.colors.colOnPrimaryContainer
                             : Appearance.colors.colSubtext
@@ -82,13 +85,16 @@ Item {
                         // while preserving the centered icon+text unit.
                         width: Math.min(implicitWidth, Math.max(0,
                             tab.width
-                                - (tab.hasIcon ? 22 : 0)
-                                - (tab.hasBadge ? 34 : 12)))
+                                - (tab.hasIcon ? (tab.tightTab ? 17 : (root.pillHeight <= 30 ? 19 : 22)) : 0)
+                                - (tab.hasBadge ? (root.pillHeight <= 30 ? 28 : 34) : (tab.tightTab ? 6 : 8))))
                         text: tab.modelData.label ?? ""
                         horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
                         maximumLineCount: 1
-                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.pixelSize: (root.pillHeight <= 30 || root.tabs.length >= 3 || tab.tightTab)
+                            ? Appearance.font.pixelSize.smaller
+                            : Appearance.font.pixelSize.small
                         font.weight: tab.selected ? Font.DemiBold : Font.Normal
                         color: tab.selected
                             ? Appearance.colors.colOnPrimaryContainer
@@ -99,10 +105,10 @@ Item {
                 Rectangle {
                     visible: tab.hasBadge
                     anchors.right: parent.right
-                    anchors.rightMargin: 8
+                    anchors.rightMargin: root.pillHeight <= 30 ? 6 : 8
                     anchors.verticalCenter: parent.verticalCenter
-                    implicitWidth: 20
-                    implicitHeight: 20
+                    implicitWidth: root.pillHeight <= 30 ? 18 : 20
+                    implicitHeight: root.pillHeight <= 30 ? 18 : 20
                     radius: height / 2
                     color: tab.selected
                         ? Appearance.colors.colPrimary

@@ -5,32 +5,28 @@ All notable changes to Alis will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-11-13
+
+Official stable 1.0.0 release introducing the hybrid Rust + pinned Quickshell v0.3.2 architecture, 3-edge Desktop Edit Stages, strict-lossless runtime anti-stutter optimizations, and multi-preset showcase across `Alis`, `Alis-Companion`, and `Alis-Intergration`.
+
+> Designed and engineered with the assistance of Large Language Models (LLMs). Subsequent updates follow a quarterly, semi-annual, or annual release cadence.
 
 ### Added
-- **Optional Spaced Repetition integration (`Alis-Intergration`)**: added an optional `spaced_repetition` integration plugin (`DashboardSpacedRepetition.qml`, `DashboardSpacedRepetitionSettings.qml`, `SpacedRepetition.qml`, `SpacedRepetitionEngine.js`, `SpacedRepetitionLexicon.js`, `lookup_word_level.py`) with SM-2/FSRS-inspired scheduling, CEFR A1–C2 vocabulary grading (Cambridge EVP, Oxford, DWDS/Goethe), bilingual English/Vietnamese definitions, automatic IPA/POS/synonyms/antonyms/morphology (root, prefix, suffix) enrichment, hover-expandable vocabulary cards, and Bulk Auto-Syntax / Obsidian Spaced Repetition importer.
+- **Split 3-Edge Edit Dashboard Stage & Flexible `<= 80%` Docks (`AbyssPerimeter`, `DashboardEditToolbar`, `AbyssCustomizationDock`, `AbyssEdgeEditor`)**: separated Edit Dashboard Mode across Bottom (`Modules`), Left (`Tabs`), and Right (`Layout & Grid`) screen edges while keeping Desktop horizontally centered; added flexible `contentPreferredWidth` expansion up to 80% of shrunk Desktop width.
+- **Redesigned Community `README.md` Showcase (`assets/screenshots/preset-*.png`)**: added 6 multi-preset screenshots rendered silently inside isolated Niri + Quickshell sessions alongside explicit LLM-assisted development and quarterly/semi-annual/annual cadence notes.
+- **Optional Spaced Repetition integration (`Alis-Intergration`)**: added an optional `spaced_repetition` integration plugin (`DashboardSpacedRepetition.qml`, `DashboardSpacedRepetitionSettings.qml`, `SpacedRepetition.qml`, `SpacedRepetitionEngine.js`, `SpacedRepetitionLexicon.js`, `lookup_word_level.py`) with SM-2/FSRS-inspired scheduling, CEFR A1–C2 vocabulary grading (Cambridge EVP, Oxford, DWDS/Goethe), bilingual English/Vietnamese definitions, automatic IPA/POS/synonyms/antonyms/morphology (root, prefix, suffix) enrichment, hover-expandable vocabulary cards, and Bulk Auto-Syntax / Nexus Spaced Repetition importer.
 - **Dashboard Custom Tabs (`DashboardHeader`, `DashboardEditToolbar`)**: added `Create`, `Rename`, and `Delete` custom tab controls in Edit Dashboard Layout with per-tab widget arrangement persistence and clean text input focus inside `AbyssPerimeter`.
-
-### Changed
-- **Left Sidebar Abyss surface parity (`SidebarLeftContent`, `Translator`, `Tools`, `NewsPanel`)**: unified Left Sidebar tab surfaces (`Translator`, `Tools`, `News`) with the `Intelligence` tab (`AquaTalkCloud`) using the shared `edgeSurfaceColor(depthWeight)` palette formula (`k = Math.max(0, Math.min(1, depthWeight * 0.38 * edgeHighlight))`).
-- **Agent Behavioral Guidelines (`AGENTS.md`)**: added the 4-part LLM coding behavioral guidelines (*Think Before Coding*, *Simplicity First*, *Surgical Changes*, *Goal-Driven Execution*) across `Alis`, `Alis-Companion`, and `Alis-Intergration`.
-
-### Fixed
-- **Translator action buttons (`TextCanvas`, `Translator`)**: wired `default property alias actionButtons: actions.contentData` in `TextCanvas.qml` and fixed `34x34` `GroupButton` sizing so bottom-right action buttons (`Search`, `Copy`, `Paste`, `Delete`) no longer overlap or clip on the canvas border.
-- **Region Selection (`Super+Shift+S`, `RegionSelection`, `ToolbarTabBar`, `AnimatedTabIndexPair`)**: fixed default active tab background highlight for `Screenshot` and `Rect` on launch, tuned spring animation responsiveness (`idx1Speed`, `idx2Speed`), and isolated post-capture notifications (`Quickshell.execDetached`) from compositor layer teardown to eliminate stutter.
-- **Wallpaper Selector Vim navigation (`WallpaperSelectorContent`)**: restored `h`/`j`/`k`/`l` keyboard navigation across both Grid and Coverflow views while preserving filter input typing when `Ctrl`/`Alt` modifiers are held or typing is active.
-- **AbyssPerimeter text input focus (`AbyssPerimeter`)**: forwarded `focus: root.keyboardInteractive` to the inner `FocusScope` so text fields inside Dashboard (`tabNameInput`, Spaced Repetition inputs) display blinking cursors and accept keystrokes immediately.
-
-## [1.0.1] - 2026-10-28
-
-A performance and polish release completing the strict-lossless optimization pass across the Abyss layout engine, native Rust theme/MPD daemons, and shared media timeline/duration surfaces.
-
-### Added
 - **Native Rust editor & wallpaper color-tag pipeline (`alis-theme`)**: migrated Zed, VS Code, Terminal, and Cava theme generation plus dominant K-means wallpaper color-tag classification into `alis-theme` (`editors.rs`, `colortags.rs`), eliminating remaining Python/Bash subprocess overhead during wallpaper and palette switches.
 - **Browser & external media duration resolution (`MprisController`)**: automatic duration and position synchronization for Linux browser MPRIS providers (Firefox, Zen Browser, Chromium) that omit or strip `mpris:length` on metadata updates, combining one-shot `Seek(0)` state sync with non-blocking YouTube Innertube (`youtubei/v1/player`) and LRCLIB duration fallback.
 - **Activation-order-aware Abyss popup composition**: `AbyssVacancyBorrowing.js`, `AbyssBodyHost.qml`, and `AbyssPerimeter.qml` now preserve hover focus across paired Edgebar + Sidebar popups and dynamically adapt popup stacking and vacancy borrowing based on activation order (Edgebar-first expands Sidebar downward; Sidebar-first expands Edgebar upward; Dashboard + 1/2 Sidebars narrows sidebars while keeping Dashboard full width; 2 Sidebars + Overview shifts sidebars below Overview).
+- **Pinned Quickshell v0.3.2 builder & ABI isolation**: `scripts/lib/quickshell-pinned-build.sh` and `alis doctor --fix-abi` rebuild Quickshell at the exact pinned `v0.3.2` tag with Alis patches against the host's current Qt6 ABI, while `ShellExec.qml` sanitizes `LD_LIBRARY_PATH`, `QT_PLUGIN_PATH`, `QML_IMPORT_PATH`, and `QML2_IMPORT_PATH` for child applications.
+- **Expanded Rust native backend (`alis-theme`, `alis-native`, `alis-companiond`)**: native Rust wallpaper palette preview (`--preview-options`), least-busy region detection (`--least-busy-region`), WebApp plugin discovery (`plugins scan`), unified system telemetry (`telemetry`), and SQLite Pocket store (`alis-companiond --pocket`).
+- **Bottom-left Quick Notes & Bottom-right Notification Center**: corner quick-note capture without focus stealing and detached bottom-right notification history popup with monitor routing and fullscreen policy controls.
 
 ### Changed
+- **Edit Mode & Transition Anti-Stutter Optimizations (`Background`, `DashboardEditGrid`, `AbyssEditStageFrame`, `AbyssEdgeEditor`, `AbyssPerimeter`)**: batched Edit Grid Canvas painting into chunked single-path primitives, added idle pre-warming for widget toolbars and `warmBackdrop` stage textures, stabilized mid-tween `nativeInputMask` and transient dock `layer.enabled`, and replaced JSON deep-clones in `AbyssEdgeEditor.begin()` with shallow placement helpers.
+- **Left Sidebar Abyss surface parity (`SidebarLeftContent`, `Translator`, `Tools`, `NewsPanel`)**: unified Left Sidebar tab surfaces (`Translator`, `Tools`, `News`) with the `Intelligence` tab (`AquaTalkCloud`) using the shared `edgeSurfaceColor(depthWeight)` palette formula (`k = Math.max(0, Math.min(1, depthWeight * 0.38 * edgeHighlight))`).
+- **Agent Behavioral Guidelines (`AGENTS.md`)**: added the 4-part LLM coding behavioral guidelines (*Think Before Coding*, *Simplicity First*, *Surgical Changes*, *Goal-Driven Execution*) across `Alis`, `Alis-Companion`, and `Alis-Intergration`.
 - **Strict-lossless runtime & scenegraph optimizations**:
   - **Abyss shader & layout solver**: removed unused corner uniforms from `AbyssField.frag` (cutting fragment uniform payload by 33% and GPU math by ~18%), cached placement geometry in `AbyssPlacementMemo.js`, and replaced `QQuickRepeater` overhead in `AbyssCorners.qml` and `AbyssPerimeter.qml` with direct inline surface bindings.
   - **Color solver & desktop entry memoization (`ColorUtils`, `MprisController`)**: memoized iterative WCAG contrast solvers (`ensureReadable`, `readableAccentInk`) with precomputed background luminance and cached `DesktopEntries` hint lookups, turning 20-step binary searches and 1,500-regex desktop scans into $O(1)$ lookups.
@@ -38,18 +34,11 @@ A performance and polish release completing the strict-lossless optimization pas
 
 ### Fixed
 - **Media duration sliders & seeking across all 19 surfaces**: added `liveValue` (`Binding.RestoreBindingOrValue`) and `seekCommitted` to `StyledSlider.qml` so C++ `QQuickSlider::setValue()` during dragging/seeking never breaks live QML progress bindings; added drag-only time tooltips; guarded `player.length` with `player.lengthSupported` across all media widgets; and fixed `LocalMusic` 8-second position snap-back and `alis-mpdd` idle TCP socket reconnect (`Broken pipe`).
-- **Dock drag hover suppression**: prevented Dock app preview popups from flickering open while dragging icons (`DockApps.qml`, `DockAppButton.qml`, `AbyssDockContent.qml`).
-- **Polkit authentication window priority**: ensured Polkit dialogs always render and focus above Settings windows.
-
-## [1.0.0] - 2026-10-27
-
-Official stable 1.0.0 release introducing the hybrid Rust + pinned Quickshell v0.3.2 architecture across `Alis`, `Alis-Companion`, and `Alis-Intergration`.
-
-### Added
-- **Pinned Quickshell v0.3.2 builder & ABI isolation**: `scripts/lib/quickshell-pinned-build.sh` and `alis doctor --fix-abi` rebuild Quickshell at the exact pinned `v0.3.2` tag with Alis patches against the host's current Qt6 ABI, while `ShellExec.qml` sanitizes `LD_LIBRARY_PATH`, `QT_PLUGIN_PATH`, `QML_IMPORT_PATH`, and `QML2_IMPORT_PATH` for child applications.
-- **Expanded Rust native backend (`alis-theme`, `alis-native`, `alis-companiond`)**: native Rust wallpaper palette preview (`--preview-options`), least-busy region detection (`--least-busy-region`), WebApp plugin discovery (`plugins scan`), unified system telemetry (`telemetry`), and SQLite Pocket store (`alis-companiond --pocket`).
-- **Bottom-left Quick Notes**: hovering the physical bottom-left corner reveals the shared Notepad without stealing focus; clicking enters a focused capture mode with Escape/outside-click release, monitor scope and geometry controls, Bar/Screen Edge-aware placement, and Orbit/native hot-corner priority. Sidebar, Dashboard and corner editors share stable tab identities so delayed autosaves cannot land in a different note, and FileView save completion keeps later autosaves from stalling behind the first write.
-- **Bottom-right Notification Center**: notification history is detached from the Right Sidebar into its own Material connected popup at the physical bottom-right corner, with hover/explicit opening, monitor routing, fullscreen policy, read-state behavior, transfer grace and popup geometry controls in Settings. Transient notification toasts remain independently positioned.
+- **Translator action buttons (`TextCanvas`, `Translator`)**: wired `default property alias actionButtons: actions.contentData` in `TextCanvas.qml` and fixed `34x34` `GroupButton` sizing so bottom-right action buttons (`Search`, `Copy`, `Paste`, `Delete`) no longer overlap or clip on the canvas border.
+- **Region Selection (`Super+Shift+S`, `RegionSelection`, `ToolbarTabBar`, `AnimatedTabIndexPair`)**: fixed default active tab background highlight for `Screenshot` and `Rect` on launch, tuned spring animation responsiveness (`idx1Speed`, `idx2Speed`), and isolated post-capture notifications (`Quickshell.execDetached`) from compositor layer teardown to eliminate stutter.
+- **Wallpaper Selector Vim navigation (`WallpaperSelectorContent`)**: restored `h`/`j`/`k`/`l` keyboard navigation across both Grid and Coverflow views while preserving filter input typing when `Ctrl`/`Alt` modifiers are held or typing is active.
+- **AbyssPerimeter text input focus (`AbyssPerimeter`)**: forwarded `focus: root.keyboardInteractive` to the inner `FocusScope` so text fields inside Dashboard (`tabNameInput`, Spaced Repetition inputs) display blinking cursors and accept keystrokes immediately.
+- **Dock drag hover suppression & Polkit focus**: prevented Dock app preview popups from flickering open while dragging icons and ensured Polkit dialogs focus cleanly above Settings windows.
 
 ## [2.29.3] - 2026-08-25
 

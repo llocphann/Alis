@@ -18,7 +18,7 @@ EVENTS_SERVICE = ROOT / "services/Events.qml"
 WINDOW_DIALOG = ROOT / "modules/common/widgets/WindowDialog.qml"
 DATE_PICKER = ROOT / "modules/common/widgets/DatePicker.qml"
 CONFIG_TIME_INPUT = ROOT / "modules/common/widgets/ConfigTimeInput.qml"
-SHARED_MONTH = ROOT / "modules/common/widgets/ObsidianMonthCalendar.qml"
+SHARED_MONTH = ROOT / "modules/common/widgets/NexusMonthCalendar.qml"
 SIDEBAR_CALENDAR = ROOT / "modules/sidebarRight/calendar/CalendarWidget.qml"
 CLOCK_TOOLTIP = ROOT / "modules/bar/ClockWidgetTooltip.qml"
 VERTICAL = ROOT / "modules/verticalBar/VerticalBarContent.qml"
@@ -252,7 +252,7 @@ def main() -> None:
     for token in (
         "property int monthShift: 0",
         "for (let i = 0; i < 42; ++i)",
-        "ObsidianMonthCalendar {",
+        "NexusMonthCalendar {",
         "property bool eventDateSelectionEnabled: false",
         "property var selectedEventDate: null",
         "id: eventsPane",
@@ -333,10 +333,10 @@ def main() -> None:
         'iconName: "chevron_right"',
         "opacity: dayCell.modelData?.currentMonth === false\n                            && !dayCell.selected ? 0.25 : 1",
     ):
-        require(shared_month, token, "ObsidianMonthCalendar.qml")
+        require(shared_month, token, "NexusMonthCalendar.qml")
 
     for token in (
-        "ObsidianMonthCalendar {",
+        "NexusMonthCalendar {",
         "calendarCells: root.monthCells",
         "Layout.fillWidth: true",
         "responsive: true",
@@ -352,7 +352,7 @@ def main() -> None:
 
     forbid(shared_month,
            "todayButton.opacity < 1 ? root.colMuted : root.colAccent",
-           "ObsidianMonthCalendar.qml")
+           "NexusMonthCalendar.qml")
 
     for token in (
         "CalendarDayButton {",

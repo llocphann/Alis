@@ -33,6 +33,7 @@ for patch in ({'remote_model':'cloud'},{'remote_host':'remote.test'},{'details':
     except local.LocalProviderError:pass
     else:raise AssertionError('Ollama relay accepted')
 assert len(local.fingerprint(local.lmstudio_metadata({'data':[row]},'fixture')))==64
+assert len(local.fingerprint(local.lmstudio_metadata({'data':[{**row,'state':'loading'}]},'fixture')))==64
 assert local.ollama_metadata(ollama,'fixture')['provider']=='ollama'
 
 native={'key':'fixture','type':'llm','format':'gguf','architecture':'qwen35',
@@ -104,7 +105,7 @@ try:
         '--provider-id','lmstudio','--kind','openai-compatible','--models-url',base+'/v1/models',
         '--chat-endpoint',base+'/v1/chat/completions','--local'],capture_output=True,text=True,timeout=8)
     item=json.loads(result.stdout)['models'][0]
-    assert item['local'] and item['localVerified'] and item['localFingerprint']==expected
+    assert item['local'] and item['localVerified'] and item['localFingerprint']==expected and item.get('state')=='loaded'
     assert item['capabilities']['reasoningOff']=='supported' and item['capabilities']['reasoning']=='unknown'
     state['row']={**row,'type':'cloud'}
     result=subprocess.run(result.args,capture_output=True,text=True,timeout=8)

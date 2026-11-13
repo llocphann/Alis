@@ -2,6 +2,10 @@
 # Exercise actual screen captures and process cancellation without hardware writes.
 set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "${ALIS_SILENT_WL_WRAPPED:-0}" != "1" ]]; then
+    export ALIS_SILENT_WL_WRAPPED=1
+    exec bash "$repo_root/scripts/lib/silent-wayland-run.sh" --need-niri -- "$0" "$@"
+fi
 if ! command -v qs >/dev/null || ! command -v grim >/dev/null || ! command -v magick >/dev/null || [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
     printf 'SKIP: anti-flashbang capture runtime (Quickshell/Wayland/grim/magick unavailable)\n'
     exit 0

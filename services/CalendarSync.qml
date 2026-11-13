@@ -172,12 +172,8 @@ Singleton {
     Process {
         id: fetchProc
         running: false
-        stdout: SplitParser {
-            splitMarker: ""
-            onRead: (data) => {
-                // Accumulate raw ICS data
-                fetchProc._rawData += data
-            }
+        stdout: StdioCollector {
+            id: fetchStdoutCollector
         }
         property string _rawData: ""
         property bool startObserved: false
@@ -214,7 +210,8 @@ Singleton {
                 return
             }
 
-            if (code !== 0 || fetchProc._rawData.trim() === "") {
+            const rawBody = String(fetchStdoutCollector.text ?? "")
+            if (code !== 0 || rawBody.trim() === "") {
                 const errMsg = code !== 0 ? `curl exited with code ${code}` : "Empty response"
                 root._fetchHadError = true
                 _log("Error fetching", source.name, ":", errMsg)
@@ -222,7 +219,7 @@ Singleton {
                 root.sourceError(source.id, errMsg)
             } else {
                 try {
-                    const parsed = IcsParser.parseICS(fetchProc._rawData, source.id, source.name, source.color)
+                    const parsed = IcsParser.parseICS(rawBody, source.id, source.name, source.color)
                     root._fetchedEvents = root._fetchedEvents.concat(parsed)
                     root._updateSourceStatus(source.id, {
                         error: "",

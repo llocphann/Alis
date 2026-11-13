@@ -33,9 +33,9 @@ Canvas {
             }
         }
     }
-    onWidthChanged: if (available) requestPaint()
-    onHeightChanged: if (available) requestPaint()
-    onDotColorChanged: if (available) requestPaint()
+    onWidthChanged: if (visible && available) requestPaint()
+    onHeightChanged: if (visible && available) requestPaint()
+    onDotColorChanged: if (visible && available) requestPaint()
     onVisibleChanged: if (visible && available) requestPaint()
-    Component.onCompleted: requestPaint()
+    Component.onCompleted: if (visible && available) requestPaint()
 }

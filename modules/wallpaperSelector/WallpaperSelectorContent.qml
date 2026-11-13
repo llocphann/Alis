@@ -612,9 +612,21 @@ MouseArea {
                             clip: true
                             font.pixelSize: Appearance.font.pixelSize.small
 
+                            Timer {
+                                id: gridSearchDebounce
+                                interval: 80
+                                repeat: false
+                                onTriggered: Wallpapers.searchQuery = filterField.text
+                            }
+
                             // Search
                             onTextChanged: {
-                                Wallpapers.searchQuery = text;
+                                if (text.trim().length === 0) {
+                                    gridSearchDebounce.stop();
+                                    Wallpapers.searchQuery = "";
+                                } else {
+                                    gridSearchDebounce.restart();
+                                }
                             }
 
                             Keys.onPressed: event => {

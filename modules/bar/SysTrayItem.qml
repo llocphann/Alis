@@ -165,6 +165,7 @@ MouseArea {
         id: trayIcon
         visible: !root.useMonochromeIcon
         source: root.resolvedIconSource
+        implicitSize: Math.max(1, Math.min(128, Math.round(Math.max(parent.width, parent.height, 16))))
         anchors.centerIn: parent
         width: parent.width
         height: parent.height
@@ -186,6 +187,7 @@ MouseArea {
                 id: tintedIcon
                 visible: false
                 anchors.fill: parent
+                implicitSize: Math.max(1, Math.min(128, Math.round(Math.max(root.width, root.height, 16))))
                 source: root.resolvedIconSource
                 onStatusChanged: {
                     if (status === Image.Error && !root._iconLoadFailed)

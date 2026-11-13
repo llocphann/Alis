@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[1]
 with tempfile.TemporaryDirectory(prefix='alis-settings-hierarchy-') as name:
  folder=Path(name)
  for entry in ['modules','services','GlobalStates.qml','qmldir','assets','scripts','defaults','translations','settings.qml','waffleSettings.qml']:(folder/entry).symlink_to(ROOT/entry)
- vault=folder/'vault/.obsidian';vault.mkdir(parents=True)
+ vault=folder/'vault/.nexus';vault.mkdir(parents=True)
  (vault/'appearance.json').write_text(json.dumps({'cssTheme':'Border','enabledCssSnippets':['user-snippet'],'ownerSetting':42}))
  (folder/'shell.qml').write_text(r"""
 import QtQuick
@@ -71,10 +71,10 @@ Window {
    tryVerify(()=>overlay.pageHost?.currentIndex===38 && overlay.pageHost?.currentItem?.activePlugin==="management",7000)
    overlay.pageHost.currentItem.activateSettingsSearchSection("To-do & Quick Notes")
    check(overlay.pageHost.currentItem.activePlugin==="management","legacy data search lost its destination")
-   Config.setNestedValues({"todo.obsidian.vaultPath":Quickshell.env("OBSIDIAN_VAULT"),"integrations.obsidian.autoTheme":true})
+   Config.setNestedValues({"todo.nexus.vaultPath":Quickshell.env("NEXUS_VAULT"),"integrations.nexus.autoTheme":true})
    // Actual theme apply/restore and vault fields belong to Alis-Intergration's native
    // suite. Core navigation must work without activating a missing package.
-   check(!AlisIntergration.obsidianEnabled && !ObsidianTheme.enabled && !ObsidianTheme.busy,
+   check(!AlisIntergration.nexusEnabled && !NexusTheme.enabled && !NexusTheme.busy,
          "missing optional integration activated a worker")
    overlay.navEditMode=true;wait(100)
    check(overlay.visibleNavItems.length===overlay.navPageOrder.length,"navigation editor lost full page order")
@@ -110,7 +110,7 @@ Window {
   if env is None:print('SKIP: Settings native navigation requires private Niri');raise SystemExit(0)
   conf=folder/'config/alis';conf.mkdir(parents=True,exist_ok=True)
   value=json.loads((ROOT/'defaults/config.json').read_text());value['panelFamily']='abyss';(conf/'config.json').write_text(json.dumps(value))
-  env.update(QT_QUICK_BACKEND='software',OBSIDIAN_VAULT=str(vault.parent))
+  env.update(QT_QUICK_BACKEND='software',NEXUS_VAULT=str(vault.parent))
   result=run_qs(folder,env,timeout=40);output=result.stdout
   if result.returncode or 'SETTINGS_HIERARCHY_NATIVE_PASS' not in output or any(e in output for e in ['SETTINGS_HIERARCHY_NATIVE_FAIL','ReferenceError:','TypeError:','Unable to assign','Binding loop','Failed to load configuration']):print(output);raise SystemExit(1)
   final=json.loads((vault/'appearance.json').read_text());assert final=={'cssTheme':'Border','enabledCssSnippets':['user-snippet'],'ownerSetting':42},'core changed a vault without its optional integration'

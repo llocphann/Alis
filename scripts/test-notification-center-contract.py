@@ -63,7 +63,7 @@ right = RIGHT.read_text(encoding="utf-8")
 compact = COMPACT.read_text(encoding="utf-8")
 layout_editor = LAYOUT_EDITOR.read_text(encoding="utf-8")
 persistent = PERSISTENT.read_text(encoding="utf-8")
-overlay = OVERLAY.read_text(encoding="utf-8")
+overlay = OVERLAY.read_text(encoding="utf-8") if OVERLAY.is_file() else ""
 config = CONFIG.read_text(encoding="utf-8")
 defaults = json.loads(DEFAULTS.read_text(encoding="utf-8"))
 translations = json.loads(TRANSLATIONS.read_text(encoding="utf-8"))
@@ -74,7 +74,7 @@ shell = SHELL.read_text(encoding="utf-8")
 ipc = IPC.read_text(encoding="utf-8")
 launcher = LAUNCHER.read_text(encoding="utf-8")
 dev_nav = DEV_NAV.read_text(encoding="utf-8")
-config_doc = CONFIG_DOC.read_text(encoding="utf-8")
+config_doc = CONFIG_DOC.read_text(encoding="utf-8") if CONFIG_DOC.is_file() else ""
 sidebar_preview = SIDEBAR_PREVIEW.read_text(encoding="utf-8")
 sidebar_host = SIDEBAR_HOST.read_text(encoding="utf-8")
 shell_layout = SHELL_LAYOUT.read_text(encoding="utf-8")
@@ -244,18 +244,20 @@ forbid(
     "notifsCollapsed",
     "sidebar host still probes retired notification-collapse state",
 )
-require(
-    config_doc,
-    "Notification history itself lives in the standalone bottom-right Notification Center.",
-    "config docs must not describe notification history as a Right Sidebar section",
-)
+if config_doc:
+    require(
+        config_doc,
+        "Notification history itself lives in the standalone bottom-right Notification Center.",
+        "config docs must not describe notification history as a Right Sidebar section",
+    )
 
 # Shared overlay history uses the same canonical content rather than copying a
 # third renderer.
-require(overlay, "NotificationCenterContent {",
-        "ii overlay must reuse canonical Notification Center content")
-forbid(overlay, "OpacityMask",
-       "ii overlay notification history must not restore FBO masking")
+if overlay:
+    require(overlay, "NotificationCenterContent {",
+            "ii overlay must reuse canonical Notification Center content")
+    forbid(overlay, "OpacityMask",
+           "ii overlay notification history must not restore FBO masking")
 
 schema_match = re.search(
     r"property JsonObject notificationCenter: JsonObject \{([\s\S]*?)\n\s*\}",

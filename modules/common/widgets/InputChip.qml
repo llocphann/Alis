@@ -83,6 +83,7 @@ Item {
 
             // Optional leading icon
             Item {
+                Layout.alignment: Qt.AlignVCenter
                 implicitWidth: root.chipIcon.length > 0 ? leadingIcon.implicitWidth : 0
                 implicitHeight: leadingIcon.implicitHeight
                 opacity: root.chipIcon.length > 0 ? 1 : 0
@@ -110,6 +111,8 @@ Item {
             }
 
             StyledText {
+                Layout.alignment: Qt.AlignVCenter
+                verticalAlignment: Text.AlignVCenter
                 text: root.text
                 font.pixelSize: Appearance.font.pixelSize.smallest
                 font.family: root.monospace ? Appearance.font.family.monospace : Appearance.font.family.main
@@ -120,6 +123,7 @@ Item {
 
             // Close icon
             Item {
+                Layout.alignment: Qt.AlignVCenter
                 visible: opacity > 0
                 opacity: root.removable ? 1 : 0
                 implicitWidth: root.removable ? 16 : 0

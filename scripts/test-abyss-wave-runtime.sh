@@ -2,6 +2,10 @@
 # Render production wave texture and field; prove finite motion and rest.
 set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "${ALIS_SILENT_WL_WRAPPED:-0}" != "1" ]]; then
+    export ALIS_SILENT_WL_WRAPPED=1
+    exec bash "$repo_root/scripts/lib/silent-wayland-run.sh" -- "$0" "$@"
+fi
 if ! command -v qs >/dev/null || [[ -z "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]]; then
     printf 'SKIP: Abyss wave rendering (Quickshell/display unavailable)\n'
     exit 0

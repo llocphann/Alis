@@ -323,7 +323,7 @@ Singleton {
             category: "tools",
             keywords: ["color", "picker", "eyedropper", "hex"],
             execute: () => {
-                ShellExec.execDetachedArgs(["/usr/bin/hyprpicker", "-a"], "Pick color")
+                ColorPickerService.start()
             }
         },
         {

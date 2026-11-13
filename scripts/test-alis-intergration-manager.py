@@ -20,8 +20,8 @@ manifest = {
     "settings": {
         "tlp": manager.discovery.ENTRYPOINTS["tlpSettings"],
         "thinkfan": manager.discovery.ENTRYPOINTS["thinkfanSettings"],
-        "obsidian": manager.discovery.ENTRYPOINTS["obsidianSettings"],
-        "obsidianTodo": manager.discovery.ENTRYPOINTS["obsidianTodoSettings"],
+        "nexus": manager.discovery.ENTRYPOINTS["nexusSettings"],
+        "nexusTodo": manager.discovery.ENTRYPOINTS["nexusTodoSettings"],
         "tlpRow": manager.discovery.ENTRYPOINTS["tlpRowSettings"],
         "tlpWaffle": manager.discovery.ENTRYPOINTS["tlpWaffleSettings"],
         "tlpWaffleRow": manager.discovery.ENTRYPOINTS["tlpWaffleRowSettings"],

@@ -27,7 +27,7 @@ Item {
             }
             return root.source
         }
-        implicitSize: root.height
+        implicitSize: Math.max(1, Math.min(128, Math.round(root.height)))
     }
 
     Loader {

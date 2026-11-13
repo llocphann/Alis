@@ -104,8 +104,8 @@ Singleton {
         "jetbrains-datagrip": "datagrip",
         
         // Electron apps - common patterns
-        "obsidian": "obsidian",
-        "Obsidian": "obsidian",
+        "nexus": "nexus",
+        "Nexus": "nexus",
         "notion-app": "notion-app",
         "Notion": "notion-app",
         "figma-linux": "figma",

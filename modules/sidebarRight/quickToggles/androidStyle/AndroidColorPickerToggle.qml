@@ -17,15 +17,7 @@ AndroidQuickToggleButton {
 
     mainAction: () => {
         GlobalStates.sidebarRightOpen = false;
-        delayedActionTimer.start()
-    }
-    Timer {
-        id: delayedActionTimer
-        interval: 300
-        repeat: false 
-        onTriggered: {
-            ShellExec.execDetachedArgs(["/usr/bin/hyprpicker", "-a"], "Pick color")
-        }
+        ColorPickerService.start()
     }
 
     StyledToolTip {

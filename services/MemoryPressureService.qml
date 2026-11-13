@@ -38,13 +38,12 @@ Singleton {
 
     function restart(): void {
         _log("user requested restart")
-        Quickshell.execDetached([
-            "/usr/bin/notify-send",
-            "Alis",
-            Translation.tr("Restarting shell..."),
-            "-a", "Shell",
-            "--hint=int:transient:1",
-        ])
+        Notifications.sendInternal({
+            summary: "Alis",
+            body: Translation.tr("Restarting shell..."),
+            appName: "Shell",
+            transient: true,
+        })
         // Small delay so notification shows
         Qt.callLater(() => {
             Quickshell.execDetached(["systemctl", "--user", "restart", "alis.service"])
@@ -133,13 +132,12 @@ Singleton {
         root.notificationShown = true
         const mbEstimate = Math.round(root.currentDeletedMappings * 0.5)  // ~0.5 MB per mapping
 
-        Quickshell.execDetached([
-            "/usr/bin/notify-send",
-            "Alis",
-            Translation.tr("Memory usage is high (~%1 MB accumulated). A restart would free it. Run: alis memory restart").arg(mbEstimate),
-            "-u", "critical",
-            "-a", "Shell",
-        ])
+        Notifications.sendInternal({
+            summary: "Alis",
+            body: Translation.tr("Memory usage is high (~%1 MB accumulated). A restart would free it. Run: alis memory restart").arg(mbEstimate),
+            urgency: "critical",
+            appName: "Shell",
+        })
         _log("notified user, estimated leak:", mbEstimate, "MB")
     }
 

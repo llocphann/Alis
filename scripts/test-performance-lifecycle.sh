@@ -29,9 +29,6 @@ advanced="$repo_root/modules/settings/AdvancedConfig.qml"
 waffle_themes="$repo_root/modules/waffle/settings/pages/WThemesPage.qml"
 theme_service="$repo_root/services/ThemeService.qml"
 media_section="$repo_root/modules/controlPanel/MediaSection.qml"
-sidebar_media="$repo_root/modules/sidebarLeft/widgets/MediaPlayerWidget.qml"
-crypto_widget="$repo_root/modules/sidebarLeft/widgets/CryptoWidget.qml"
-it_thumbnail="$repo_root/modules/sidebarLeft/innertune/ITThumbnail.qml"
 screen_edges="$repo_root/modules/screenCorners/ScreenEdges.qml"
 screen_edge_fallback="$repo_root/modules/screenCorners/ScreenEdgeLegacyFallback.qml"
 alt_switcher="$repo_root/modules/altSwitcher/AltSwitcher.qml"
@@ -46,7 +43,6 @@ tlp_caps="$repo_root/services/TlpRuntimeCapabilities.qml"
 tlp_settings="$repo_root/services/TlpSettingsService.qml"
 power_profiles="$repo_root/services/PowerProfilePersistence.qml"
 world_clock="$repo_root/services/WorldClock.qml"
-sidebar_world_clock="$repo_root/modules/sidebarLeft/widgets/WorldClockWidget.qml"
 game_mode="$repo_root/services/GameMode.qml"
 directories="$repo_root/modules/common/Directories.qml"
 conflict_killer="$repo_root/services/ConflictKiller.qml"
@@ -60,10 +56,6 @@ vertical_bar_resources="$repo_root/modules/verticalBar/Resources.qml"
 recorder_status="$repo_root/services/RecorderStatus.qml"
 local_music="$repo_root/services/LocalMusic.qml"
 mpris_controller="$repo_root/services/MprisController.qml"
-recorder_overlay_widget="$repo_root/modules/ii/overlay/recorder/Recorder.qml"
-overlay_taskbar="$repo_root/modules/ii/overlay/OverlayTaskbar.qml"
-overlay_floating_image="$repo_root/modules/ii/overlay/floatingImage/FloatingImage.qml"
-overlay_resources="$repo_root/modules/ii/overlay/resources/Resources.qml"
 waffle_widgets_content="$repo_root/modules/waffle/widgets/WidgetsContent.qml"
 control_panel_media="$repo_root/modules/controlPanel/MediaSection.qml"
 date_time_header="$repo_root/modules/controlPanel/DateTimeHeader.qml"
@@ -74,16 +66,10 @@ lock_surface="$repo_root/modules/lock/LockSurface.qml"
 waffle_lock="$repo_root/modules/waffle/lock/WaffleLockSurface.qml"
 waffle_lock_safe="$repo_root/modules/waffle/lock/WaffleLockSurfaceSafe.qml"
 weather="$repo_root/services/Weather.qml"
-wallhaven_service="$repo_root/services/Wallhaven.qml"
 keyboard_indicators="$repo_root/services/KeyboardIndicators.qml"
 icon_theme_service="$repo_root/services/IconThemeService.qml"
 icon_theme_selector="$repo_root/modules/common/widgets/IconThemeSelector.qml"
-sidebar_anime="$repo_root/modules/sidebarLeft/Anime.qml"
-sidebar_wallhaven="$repo_root/modules/sidebarLeft/WallhavenView.qml"
 sidebar_ai="$repo_root/modules/sidebarLeft/AiChat.qml"
-sidebar_quick_wallpaper="$repo_root/modules/sidebarLeft/widgets/QuickWallpaper.qml"
-booru_image="$repo_root/modules/sidebarLeft/anime/BooruImage.qml"
-booru_response="$repo_root/modules/sidebarLeft/anime/BooruResponse.qml"
 ai_think_block="$repo_root/modules/sidebarLeft/aiChat/MessageThinkBlock.qml"
 sidebar_right_tasks="$repo_root/modules/sidebarRight/todo/TaskList.qml"
 sidebar_right_notifications="$repo_root/modules/sidebarRight/notifications/NotificationList.qml"
@@ -104,7 +90,6 @@ wallpaper_launcher="$repo_root/modules/wallpaperLauncher/WallpaperLauncher.qml"
 wallpaper_coverflow="$repo_root/modules/wallpaperSelector/WallpaperCoverflow.qml"
 dashboard_settings="$repo_root/modules/settings/DashboardConfig.qml"
 screen_time="$repo_root/services/ScreenTime.qml"
-ytmusic="$repo_root/services/YtMusic.qml"
 directory_icon="$repo_root/modules/common/widgets/DirectoryIcon.qml"
 sysmon_widget="$repo_root/modules/sidebarRight/sysmon/SysMonWidget.qml"
 timer_service="$repo_root/services/TimerService.qml"
@@ -135,7 +120,6 @@ player_base="$repo_root/modules/mediaControls/components/PlayerBase.qml"
 player_progress="$repo_root/modules/mediaControls/components/PlayerProgress.qml"
 bar_media="$repo_root/modules/bar/Media.qml"
 vertical_bar_media="$repo_root/modules/verticalBar/VerticalMedia.qml"
-volume_mixer="$repo_root/modules/ii/overlay/volumeMixer/VolumeMixer.qml"
 
 require "$config" 'property int framerate: 30' 'Cava schema default must remain 30 fps'
 require "$defaults" '"framerate": 30' 'persisted Cava default must remain 30 fps'
@@ -234,18 +218,10 @@ require "$theme_service" 'onScheduleDayStartChanged: scheduleRefreshTimer.restar
 require "$theme_service" 'onScheduleNightStartChanged: scheduleRefreshTimer.restart()' 'scheduled theme timer must re-arm when the night boundary changes'
 reject "$theme_service" 'interval: 60000  // Check every minute' 'scheduled themes must not poll once per minute'
 require "$media_section" 'root.effectiveIsPlaying && GlobalStates.controlPanelOpen' 'Control Panel Cava must stop while playback is paused'
-require "$sidebar_media" 'root.QsWindow.window?.visible ?? false' 'Sidebar media position ticker must sleep with its presentation window'
-require "$sidebar_media" 'triggeredOnStart: true' 'Sidebar media position ticker must prime on reopen'
 require "$bar_media" 'root.QsWindow.window?.visible ?? false' 'Bar media position ticker must sleep with its presentation window'
 require "$bar_media" 'triggeredOnStart: true' 'Bar media position ticker must prime on remap'
 require "$vertical_bar_media" 'root.QsWindow.window?.visible ?? false' 'Vertical Bar media ticker must sleep with its presentation window'
 require "$vertical_bar_media" 'triggeredOnStart: true' 'Vertical Bar media ticker must prime on remap'
-require "$volume_mixer" 'SwipeView.isCurrentItem' 'Volume Mixer media ticker must sleep outside the Music tab'
-require "$volume_mixer" 'root.QsWindow.window?.visible ?? false' 'Volume Mixer media ticker must sleep with the Overlay window'
-require "$volume_mixer" 'triggeredOnStart: true' 'Volume Mixer media ticker must prime when presented'
-require "$sidebar_media" 'root.effectiveIsPlaying && GlobalStates.sidebarLeftOpen' 'Sidebar Cava must stop while playback is paused'
-require "$sidebar_media" 'layer.enabled: root.visible && GlobalStates.sidebarLeftOpen' 'Sidebar media mask must release its FBO while the sidebar is closed'
-require "$sidebar_media" 'sourceSize.width: Math.max(1, Math.ceil(card.width * root._dpr))' 'Sidebar blurred artwork decode must remain bounded to the displayed card'
 require "$control_panel_media" 'layer.enabled: root.visible && GlobalStates.controlPanelOpen' 'Control Panel media masks must release their FBOs while closed'
 require "$control_panel_media" 'readonly property bool positionTickerActive:' 'Control Panel must expose the position-ticker lifecycle'
 require "$video_crossfader" 'readonly property bool _decoderActive: root.source !== ""' 'video wallpaper decoders must sleep while no video source is requested'
@@ -275,18 +251,6 @@ require "$control_panel_media" 'sourceSize.width: Math.max(1, Math.ceil(card.wid
 require "$control_panel_media" 'mipmap: false' 'Control Panel artwork must not generate unused mipmaps'
 
 require "$config" 'property int refreshInterval: 300' 'Crypto refresh schema default must remain five minutes'
-require "$crypto_widget" 'Config.options?.sidebar?.widgets?.crypto_settings?.refreshInterval ?? 300' 'Crypto runtime fallback must remain five minutes'
-require "$crypto_widget" 'readonly property bool presentationActive: GlobalStates.sidebarLeftOpen && root.visible' 'Crypto network refresh must be presentation-gated'
-require "$crypto_widget" 'running: root.presentationActive && root.coins.length > 0 && Config.ready' 'Crypto periodic refresh must sleep with the sidebar'
-require "$crypto_widget" 'root._cacheTimestamp = Number(cached.timestamp) || 0' 'Crypto cache freshness must survive shell restarts'
-require "$crypto_widget" 'function _startNextSparkline(): void' 'Crypto sparklines must use a serialized request queue'
-require "$crypto_widget" 'if (!root.presentationActive || sparklineProcess.running || root._sparklineIdx >= root.coins.length)' 'Crypto sparkline requests must not overlap or continue hidden'
-require "$crypto_widget" 'sparklineTimer.restart()' 'Crypto sparkline queue must schedule bounded one-shot work'
-reject "$crypto_widget" 'sparklineTimer.start()' 'Crypto sparklines must not restore the recurring timer-driven queue'
-
-require "$it_thumbnail" 'ClippingRectangle {' 'InnerTune thumbnails must use scene-graph clipping'
-reject "$it_thumbnail" 'GE.OpacityMask' 'InnerTune list thumbnails must not allocate an OpacityMask layer'
-require "$it_thumbnail" 'GlobalStates.sidebarLeftOpen' 'InnerTune decorative equalizer must stop with the sidebar'
 
 require "$screen_edges" 'updatesEnabled: mapped && !fullscreenCovered' 'Covered Screen Edge frame must suspend scenegraph updates without unmapping'
 require "$screen_edges" 'updatesEnabled: mapped && workspaceOverviewEdgeSupportEnabled' 'Transparent Screen Edge reservations must sleep rendering unless top-edge hover support needs updates'
@@ -355,10 +319,6 @@ reject "$world_clock" 'interval: 1000' 'WorldClock must not restore a 1 Hz backg
 require "$world_clock" 'printf '\''%(%z)T\\n'\'' -1' 'WorldClock offset refresh must use one shell process with builtin timezone formatting'
 reject "$world_clock" 'date +%z' 'WorldClock must not spawn one date child per timezone'
 reject "$world_clock" 'environment: ({ TZ:' 'WorldClock must not restore one date process per timezone'
-require "$sidebar_world_clock" 'printf '\''%s|%(' 'Sidebar World Clock must format zones with Bash builtin printf'
-require "$sidebar_world_clock" 'command.push(String(tzs[i]))' 'Sidebar World Clock must pass timezone names as argv'
-reject "$sidebar_world_clock" ' date '\''+' 'Sidebar World Clock must not spawn one date child per timezone'
-require "$sidebar_world_clock" 'root._formatOffset(rest[1])' 'Sidebar World Clock must preserve colonized UTC offsets'
 require "$game_mode" 'Math.max(10000, Math.round(configured))' 'GameMode fallback polling must remain low cadence'
 require "$game_mode" 'readonly property string _stateFile: Directories.stateUserPath + "/gamemode_active"' 'GameMode state must use the shared state directory'
 require "$game_mode" 'id: stateWriter' 'GameMode state persistence must stay in-process'
@@ -369,8 +329,8 @@ reject "$game_mode" 'Quickshell.execDetached(["/usr/bin/mkdir"' 'GameMode must n
 
 require "$directories" 'Quickshell.execDetached([' 'directory bootstrap must remain asynchronous'
 require "$directories" '"/usr/bin/bash", "-c"' 'directory bootstrap must consolidate startup filesystem work'
-require "$directories" 'rm -rf -- \"$1\" \"$2\" \"$3\" \"$4\"' 'directory bootstrap must clean transient trees before recreation'
-require "$directories" 'mkdir -p -- \"$5\" \"$6\" \"$7\" \"$8\" \"$9\" \"${10}\" \"${11}\" \"${12}\" \"${13}\" \"${14}\"' 'directory bootstrap must recreate every required state/cache directory in one batch'
+require "$directories" 'rm -rf -- \"$1\" \"$2\" \"$3\";' 'directory bootstrap must clean transient trees before recreation'
+require "$directories" 'mkdir -p -- \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9\" \"${10}\" \"${11}\" \"${12}\"' 'directory bootstrap must recreate every required state/cache directory in one batch'
 directories_exec_count="$(grep -Fc 'Quickshell.execDetached([' "$directories")"
 [[ "$directories_exec_count" -eq 1 ]] || fail "Directories startup must use exactly one detached bootstrap command (found $directories_exec_count)"
 
@@ -446,30 +406,10 @@ require "$recorder_status" 'running: Config.ready && !root.isRecording && !root.
 require "$recorder_status" 'id: fastPollTimer' 'RecorderStatus must expose a separate demand-driven fast poll'
 require "$recorder_status" 'interval: 1000' 'RecorderStatus visible-UI reconciliation must use a 1 second cadence'
 require "$recorder_status" '&& !quickCheckTimer.running' 'RecorderStatus demand polling must yield to bounded action quick checks'
-require "$recorder_overlay_widget" 'RecorderStatus.setFastStatusDemand("ii-overlay-recorder", wanted)' 'ii Recorder widget must own fast status demand only while visible'
-require "$recorder_overlay_widget" 'if (root._statusDemandRegistered)' 'ii Recorder widget must release its fast-demand lease on destruction'
-require "$recorder_overlay_widget" 'running: RecorderStatus.isRecording && root.visible' 'retained ii Recorder pulse must sleep while the widget is hidden'
-require "$overlay_taskbar" 'readonly property bool presentationActive:' 'retained Overlay taskbar must expose fade-aware presentation state'
-require "$overlay_taskbar" 'layer.enabled: Appearance.angelEverywhere && root.presentationActive' 'Overlay taskbar mask FBO must sleep after its exit fade'
-require "$overlay_taskbar" 'visible: Appearance.angelEverywhere && root.presentationActive' 'Overlay Angel wallpaper source must unload after the taskbar fade'
-require "$overlay_taskbar" 'layer.enabled: Appearance.effectsEnabled && Appearance.angelEverywhere && root.presentationActive' 'Overlay Angel blur FBO must sleep while the taskbar is hidden'
-require "$overlay_floating_image" 'layer.enabled: root.visible && (root.QsWindow.window?.visible ?? false)' 'retained Floating Image mask FBO must sleep while hidden'
-require "$overlay_floating_image" 'playing: root.visible && (root.QsWindow.window?.visible ?? false)' 'retained Floating Image animation decoder must pause while hidden'
-require "$overlay_resources" 'layer.enabled: root.visible && (root.QsWindow.window?.visible ?? false)' 'retained Overlay resource graph mask must sleep while hidden'
 require "$waffle_widgets_content" 'RecorderStatus.setFastStatusDemand("waffle-widgets-recorder", wanted)' 'Waffle recorder quick action must own fast status demand only while its panel is open'
 require "$weather" 'readonly property int _clockMinute: root.enabled ? DateTime.clock.minutes : -1' 'Weather live sun/moon context must reuse the shared minute clock only while enabled'
 reject "$weather" 'id: clockTickTimer' 'Weather must not own a duplicate minute timer'
 reject "$weather" 'interval: 60000' 'Weather must not add a private 60-second wakeup for sun/moon context'
-require "$wallhaven_service" 'function _schedulePendingSearch(): void' 'Wallhaven pending search retries must use deadline scheduling'
-require "$wallhaven_service" '_pendingSearchTimer.interval = Math.max(1, Math.round(due - now))' 'Wallhaven pending search timer must target the exact retry deadline'
-require "$wallhaven_service" 'repeat: false' 'Wallhaven pending search retry must stay one-shot'
-reject "$wallhaven_service" 'property Timer pendingSearchTimer: Timer {' 'Wallhaven must not restore the 300 ms pending-search polling timer'
-reject "$wallhaven_service" 'property Timer wallhavenClock: Timer {' 'Wallhaven must not restore the dead 500 ms clock'
-require "$wallhaven_service" 'function _scheduleTagCount(): void' 'Wallhaven tag-count queue must use one-shot deadline scheduling'
-require "$wallhaven_service" '_tagCountTimer.interval = root._tagDelayMs()' 'Wallhaven tag-count timer must target the next allowed deadline'
-require "$wallhaven_service" 'function _scheduleTagDetail(): void' 'Wallhaven tag-detail queue must use one-shot deadline scheduling'
-require "$wallhaven_service" 'tagQueueTimer.interval = root._tagDelayMs()' 'Wallhaven tag-detail timer must target the next allowed deadline'
-reject "$wallhaven_service" 'interval: 350' 'Wallhaven tag queues must not restore 350 ms polling'
 require "$keyboard_indicators" 'readonly property int ledDiscoveryIntervalMs: root.hasKnownLedPaths' 'keyboard sysfs discovery must adapt to stable watched paths'
 require "$keyboard_indicators" '? ((Config.options?.performance?.lowPower ?? false) ? 600000 : 300000)' 'stable keyboard LED paths must use sparse safety discovery'
 require "$keyboard_indicators" ': ((Config.options?.performance?.lowPower ?? false) ? 120000 : 30000)' 'missing keyboard LED paths must retain responsive discovery'
@@ -478,12 +418,7 @@ require "$keyboard_indicators" 'Qt.callLater(() => root.refreshLedPaths())' 'los
 require "$icon_theme_service" 'function ensureThemesLoaded(force = false)' 'icon theme enumeration must be demand-driven'
 require "$icon_theme_service" 'if (root._themesLoaded && !force)' 'icon theme enumeration must be cached after first demand'
 require "$icon_theme_selector" 'IconThemeService.ensureThemesLoaded()' 'icon theme selector must trigger enumeration only when opened'
-require "$sidebar_anime" 'layer.enabled: root.visible && GlobalStates.sidebarLeftOpen' 'Anime list mask must sleep with the sidebar'
-require "$sidebar_wallhaven" 'layer.enabled: root.visible && GlobalStates.sidebarLeftOpen' 'Wallhaven list mask must sleep with the sidebar'
 require "$sidebar_ai" 'layer.enabled: root.visible && GlobalStates.sidebarLeftOpen' 'AI history mask must sleep with the sidebar'
-require "$sidebar_quick_wallpaper" 'layer.enabled: root.visible && GlobalStates.sidebarLeftOpen' 'Quick Wallpaper masks must sleep with the sidebar'
-require "$booru_image" 'layer.enabled: root.visible && GlobalStates.sidebarLeftOpen' 'Booru image masks must sleep with the sidebar'
-require "$booru_response" 'layer.enabled: root.visible && GlobalStates.sidebarLeftOpen' 'Booru tag masks must sleep with the sidebar'
 require "$ai_think_block" 'layer.enabled: root.visible && GlobalStates.sidebarLeftOpen' 'AI think-block masks must sleep with the sidebar'
 require "$sidebar_right_tasks" '(GlobalStates.sidebarRightOpen || GlobalStates.dashboardOpen || GlobalStates.overviewOpen)' 'To-do list mask must remain active in right-sidebar, dashboard, and Overview hosts'
 reject "$sidebar_right_notifications" 'layer.effect: OpacityMask' 'rectangular notification clipping must not allocate an OpacityMask FBO'
@@ -541,10 +476,6 @@ reject "$dashboard_settings" 'Preload Dashboard' 'Dashboard preload is always en
 
 require "$screen_time" 'target: CompositorService.isNiri ? NiriService : null' 'Screen Time must use Niri focus events'
 require "$screen_time" 'interval: CompositorService.isNiri' 'Screen Time must keep only a coarse Niri heartbeat'
-require "$ytmusic" 'id: _ipcStateProc' 'YT Music fallback must batch mpv IPC state queries'
-reject "$ytmusic" 'id: _ipcQueryProc' 'YT Music must not restore separate time-position subprocess polling'
-reject "$ytmusic" 'id: _ipcPauseQueryProc' 'YT Music must not restore separate pause subprocess polling'
-reject "$ytmusic" 'id: _ipcEofQueryProc' 'YT Music must not restore separate EOF subprocess polling'
 reject "$directory_icon" 'command: ["file", "--mime"' 'DirectoryIcon must not spawn one MIME process per item'
 reject "$sysmon_widget" 'command: ["/usr/bin/cat", "/proc/net/dev"]' 'SysMon must reuse shared ResourceUsage network telemetry'
 require "$sysmon_widget" 'ResourceUsage.networkRxBytesPerSec' 'SysMon network receive rate must come from ResourceUsage'

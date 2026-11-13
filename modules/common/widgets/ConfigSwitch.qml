@@ -17,6 +17,7 @@ RippleButton {
     signal toggledByUser(bool checked)
 
     Layout.fillWidth: true
+    Layout.minimumWidth: 0
     // Settings rows inherit the enclosing panel fill, like sliders and labels.
     colBackground: "transparent"
     implicitHeight: contentItem.implicitHeight + 6 * 2
@@ -98,17 +99,21 @@ RippleButton {
         spacing: 8
         OptionalMaterialSymbol {
             id: iconWidget
+            Layout.fillWidth: false
             icon: root.buttonIcon
             opacity: root.enabled ? 1 : 0.4
             iconSize: Appearance.font.pixelSize.large
         }
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            clip: true
             spacing: 1
 
             StyledText {
                 id: labelWidget
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: root.text
                 font: root.font
                 marquee: true
@@ -120,6 +125,7 @@ RippleButton {
             StyledText {
                 visible: root.description.length > 0
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: root.description
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colSubtext
@@ -132,6 +138,9 @@ RippleButton {
             down: root.down
             scale: 0.6
             Layout.fillWidth: false
+            Layout.minimumWidth: implicitWidth
+            Layout.preferredWidth: implicitWidth
+            Layout.maximumWidth: implicitWidth
             checkable: false
             focusPolicy: Qt.NoFocus
             checked: root.checked

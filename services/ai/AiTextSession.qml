@@ -96,7 +96,11 @@ QtObject {
             else if (exitCode !== 0 && !error) error = "AI request could not finish."
             else if (!String(message?.content ?? "").trim() && !error) error = "The model returned no text."
         }
-        const result = String(message?.content ?? "").slice(0,6000)
+        const rawContentText = String(message?.content ?? "")
+        const strippedResult = (rawContentText.length > 6000 && /<\/think(?:ing)?>/i.test(rawContentText))
+            ? rawContentText.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>\s*/gi, "")
+            : rawContentText
+        const result = (strippedResult.trim().length > 0 ? strippedResult : rawContentText).slice(0,6000)
         const requestToken = token
         const ignored = cancelled
         busy = false; payload = null
@@ -118,11 +122,13 @@ QtObject {
         stdout: SplitParser {
             onRead: line => {
                 if (root.cancelled || !root.busy || !line) return
+                deadline.restart()
                 if (line.startsWith("__ALIS_HTTP_STATUS__:")) {
                     root.httpStatus = Number(line.slice(21).trim()) || 0
                     return
                 }
-                if (line.length > 65536 || root.message.rawContent.length > 16000) {
+                const maxRawLen = root.message.rawContent.includes("<think") ? 65536 : 16000
+                if (line.length > 65536 || root.message.rawContent.length > maxRawLen) {
                     root.error = "AI reply exceeded the conversation limit."
                     transport.signal(15); return
                 }

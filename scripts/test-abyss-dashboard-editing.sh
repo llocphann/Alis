@@ -2,6 +2,10 @@
 # Exercise shared widget resize/hide/restore through both Abyss Dashboard hosts.
 set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "${ALIS_SILENT_WL_WRAPPED:-0}" != "1" ]]; then
+    export ALIS_SILENT_WL_WRAPPED=1
+    exec bash "$repo_root/scripts/lib/silent-wayland-run.sh" -- "$0" "$@"
+fi
 if ! command -v qs >/dev/null || [[ -z "${WAYLAND_DISPLAY:-}" ]];then printf 'SKIP: Abyss Dashboard editing (Quickshell/Wayland unavailable)\n';exit 0;fi
 dashboard_test_root="$(mktemp -d)"
 trap 'rm -rf -- "$dashboard_test_root"' EXIT
@@ -35,11 +39,20 @@ ShellRoot {
         return null
     }
     FloatingWindow {
+        id: testWindow
         color: "#111820"
-        visible:true;implicitWidth:1100;implicitHeight:800
-        AbyssBodyHost {
-            id: body;anchors.fill:parent;edge:"bottom";open:true;animatePresentation:false
-            span:1060;depth:730;padding:20;largeSurface:true;stableContentSize:true
+        visible:true;implicitWidth:1100;implicitHeight:940
+        Item {
+            id: fieldHost;anchors.fill:parent
+            AbyssSurfaceController {
+                id: liquid;outputWidth:fieldHost.width;outputHeight:fieldHost.height
+                presentationItem:fieldHost;edgeInsets:({top:8,left:8,right:8,bottom:8})
+            }
+            AbyssBodyHost {
+                id: body;anchors.fill:parent;controller:liquid;identity:"dashboard";edge:"bottom";open:true
+                animatePresentation:false;animatePlacementChanges:false;edgeInsets:liquid.edgeInsets
+                along:20;span:1060;depth:730;padding:20;largeSurface:true;stableContentSize:true
+            }
         }
     }
     Timer {
@@ -52,6 +65,7 @@ ShellRoot {
                 body.source=Qt.resolvedUrl("modules/abyss/content/"+(root.hostIndex===0 ? "AbyssDashboardContent" : "AbyssOverviewContent")+".qml")
             }
             else if(root.step===3) {
+                if(!body.contentItem.item) return
                 root.canvas=root.find(body.contentItem.item,item=>typeof item.beginResize==="function")
                 if(!root.check(root.canvas!==null,"mature canvas loaded")) return
                 if(!root.check(!root.canvas._layoutHasOverlap(root.canvas._snapshotVisibleRects()),"default minimum-size cards project without overlap")) return
@@ -71,7 +85,7 @@ ShellRoot {
                 root.toolbar=root.find(body.parent,item=>item.objectName==="abyssDashboardEditPopup" && item.canvasController===root.canvas)
                 if(!root.check(root.toolbar!==null && root.toolbar.visible && root.toolbar.width>200 && root.toolbar.height>20,"editing toolbar has usable dimensions")) return
                 const p=root.toolbar.mapToItem(body.contentItem,0,0)
-                if(!root.check(p.x>=0 && p.y+root.toolbar.height<=0 && p.x+root.toolbar.width<=body.contentItem.width+.5,"toolbar is above Dashboard, outside its canvas clip: "+JSON.stringify([p.x,p.y,root.toolbar.width,root.toolbar.height]))) return
+                if(!root.check(p.x>=-.5 && p.y>=body.contentItem.height-.5 && p.x+root.toolbar.width<=body.contentItem.width+.5 && liquid.participants.dashboardEditor?.geometry?.edge==="bottom","toolbar is bottom-connected below Dashboard, outside its canvas clip: "+JSON.stringify([p.x,p.y,root.toolbar.width,root.toolbar.height,body.contentItem.height]))) return
                 if(!root.check(root.canvas.width===root.canvasSize[0] && root.canvas.height===root.canvasSize[1],"Edit preserves the widget workspace dimensions")) return
                 root.before=root.canvas._rectPixels("notes")
                 const end={x:root.before.x+root.before.width,y:root.before.y+root.before.height}
@@ -124,5 +138,5 @@ dbus-run-session -- env -u QS_CONFIG_NAME -u QS_CONFIG_PATH -u QS_MANIFEST \
 # An early crash/exit is a failure even if a success marker was emitted.
 if [[ "$runtime_status" != 124 ]]; then cat "$dashboard_test_root/runtime.log";exit 1;fi
 if ! rg -q DASHBOARD_EDIT_PASS "$dashboard_test_root/runtime.log" || rg -q 'DASHBOARD_EDIT_FAIL|ReferenceError:|TypeError:|Binding loop|Unable to assign|is not a type|Type .* unavailable' "$dashboard_test_root/runtime.log";then cat "$dashboard_test_root/runtime.log";exit 1;fi
-printf 'PASS: both Abyss Dashboard hosts preserve workspace sizes with controls above the canvas and empty-layout restore\n'
-python3 "$repo_root/scripts/test-dashboard-editor-field-runtime.py"
+printf 'PASS: both Abyss Dashboard hosts preserve workspace sizes with bottom-connected customization dock and empty-layout restore\n'
+env -u ALIS_TEST_WAYLAND_SOCKET -u WAYLAND_DISPLAY -u DISPLAY python3 "$repo_root/scripts/test-dashboard-editor-field-runtime.py"

@@ -46,7 +46,7 @@ FocusScope {
         search.focus = false
         root.forceActiveFocus()
     }
-    Component.onCompleted: { Cliphist.refresh(); Qt.callLater(() => root.focusPrimarySurface()) }
+    Component.onCompleted: if (GlobalStates.clipboardOpen) { Cliphist.refresh(); Qt.callLater(() => root.focusPrimarySurface()) }
     Connections {
         target: GlobalStates
         function onClipboardOpenChanged(): void {

@@ -34,7 +34,7 @@ Singleton {
     readonly property real shadowStrength: quality === "performance" || !Appearance.effectsEnabled ? 0 : Math.max(0, Math.min(0.5, options?.effects?.shadowStrength ?? 0.24))
     readonly property real refractionStrength: quality !== "quality" || !Appearance.effectsEnabled || !(options?.effects?.refraction?.enabled ?? false) ? 0 : Math.max(0, Math.min(16, options?.effects?.refraction?.strength ?? 6))
     readonly property bool materialEffects: surfaceOpacity < .999 || contentOpacity < .999 || blurRadius > 0 || contentBlurRadius > 0 || refractionStrength > 0 || (options?.waves?.enabled ?? false)
-    readonly property real highlightStrength: !materialEffects ? 0 : Math.max(0, Math.min(1, options?.effects?.surfaceHighlight ?? 0.45))
+    readonly property real highlightStrength: quality === "performance" || !Appearance.effectsEnabled ? 0 : Math.max(0, Math.min(1, options?.effects?.surfaceHighlight ?? 0.45))
     readonly property real glowStrength: !materialEffects ? 0 : quality === "performance" || !Appearance.effectsEnabled ? 0 : Math.max(0, Math.min(0.3, options?.effects?.glow?.strength ?? 0.08))
     readonly property real motionIntensity: Math.max(0,Math.min(1,options?.motion?.intensity ?? 0.6))
     readonly property bool motionEnabled: Appearance.animationsEnabled && motionIntensity > 0

@@ -376,11 +376,11 @@ Item { // Wrapper
 
     Process {
         id: mathProcess
-        property list<string> baseCommand: ["/usr/bin/qalc", "-t"]
+        property list<string> baseCommand: [FileUtils.trimFileProtocol(`${Directories.scriptPath}/native-dispatch`), "calc"]
         function calculateExpression(expression) {
             root.mathResult = "";
             mathProcess.running = false;
-            mathProcess.command = baseCommand.concat(expression);
+            mathProcess.command = baseCommand.concat(["--", expression]);
             mathProcess.running = true;
         }
         stdout: SplitParser {

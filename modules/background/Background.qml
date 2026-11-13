@@ -336,6 +336,8 @@ Scope {
         property int firstWorkspaceId: relevantWindows[0]?.workspace.id || 1
         property int lastWorkspaceId: relevantWindows[relevantWindows.length - 1]?.workspace.id || 10
         readonly property string screenName: screen?.name ?? ""
+        readonly property var editCard: DesktopEditStage.cardFor(bgRoot.screenName, bgRoot.width, bgRoot.height)
+        readonly property bool editStageVisible: editCard.p > 0.001
         readonly property var backgroundOptions: Config.options?.background ?? {}
         function wallpaperRenderState(): var {
             return {output: monitorName, configuredPath: wallpaperPathRaw,
@@ -696,11 +698,10 @@ Scope {
         property real _blurTransitionFactor: 1
         property int _blurHoldDurationMs: 0
         function beginBlurSuppression(totalTransitionMs: int): void {
-            if (bgRoot.blurProgress <= 0)
+            if (!bgRoot.blurRequestedByWorkspace)
                 return
             const holdMs = Math.max(0, totalTransitionMs)
             _blurTransitionAnimation.stop()
-            bgRoot._blurTransitionFactor = 1
             bgRoot._blurHoldDurationMs = holdMs
             _blurTransitionAnimation.restart()
             _blurTransitionSafetyTimer.interval = holdMs + Appearance.calcEffectiveDuration(800)
@@ -710,7 +711,7 @@ Scope {
             id: _blurTransitionAnimation
             NumberAnimation {
                 target: bgRoot; property: "_blurTransitionFactor"
-                to: 0; duration: Appearance.calcEffectiveDuration(200); easing.type: Easing.OutQuad
+                to: 0; duration: Math.round(Appearance.calcEffectiveDuration(200) * bgRoot._blurTransitionFactor); easing.type: Easing.OutQuad
             }
             PauseAnimation {
                 duration: bgRoot._blurHoldDurationMs
@@ -727,9 +728,13 @@ Scope {
             onTriggered: bgRoot._blurTransitionFactor = 1
         }
 
-        property real blurProgress: {
+        readonly property bool blurRequestedByWorkspace: {
             const effects = bgRoot.effectsOptions;
-            if (!(effects?.enableBlur && (effects?.blurRadius ?? 0) > 0)) return 0;
+            return Boolean(effects?.enableBlur && (effects?.blurRadius ?? 0) > 0 && bgRoot.focusPresenceProgress > 0);
+        }
+
+        property real blurProgress: {
+            if (!bgRoot.blurRequestedByWorkspace) return 0;
             return focusPresenceProgress * _blurTransitionFactor;
         }
 
@@ -772,22 +777,26 @@ Scope {
                 panActivationTimer.stop()
             }
             bgRoot._manualWallpaperScaleOverride = 0
-            if (!Wallpapers._applyInProgress && bgRoot.blurProgress > 0) {
-                bgRoot.beginBlurSuppression(bgRoot._wallpaperTransitionDurationMs)
-            } else {
-                _blurTransitionAnimation.stop()
-                _blurTransitionSafetyTimer.stop()
-                bgRoot._blurTransitionFactor = 1
+            if (!Wallpapers._applyInProgress) {
+                if (bgRoot.blurRequestedByWorkspace) {
+                    bgRoot.beginBlurSuppression(bgRoot._wallpaperTransitionDurationMs)
+                } else {
+                    _blurTransitionAnimation.stop()
+                    _blurTransitionSafetyTimer.stop()
+                    bgRoot._blurTransitionFactor = 1
+                }
             }
             bgRoot.updateZoomScale()
         }
 
         onHasPanChanged: {
-            if (bgRoot.hasPan)
+            if (bgRoot.hasPan) {
+                bgRoot.updateZoomScale()
                 return
+            }
             bgRoot._panReadyWallpaperPath = String(bgRoot.wallpaperPath ?? "")
             panActivationTimer.stop()
-            bgRoot.updateZoomScale()
+            wallpaperSizeDebounce.stop()
         }
 
         onPanZoomChanged: {
@@ -795,7 +804,7 @@ Scope {
             if (!bgRoot.hasPan) {
                 bgRoot._panReadyWallpaperPath = normalizedPath
                 panActivationTimer.stop()
-                bgRoot.updateZoomScale()
+                wallpaperSizeDebounce.stop()
                 return
             }
 
@@ -807,6 +816,10 @@ Scope {
         }
 
         function updateZoomScale(): void {
+            if (!bgRoot.hasPan) {
+                wallpaperSizeDebounce.stop()
+                return
+            }
             wallpaperSizeDebounce.restart()
         }
 
@@ -831,6 +844,7 @@ Scope {
             interval: 80
             repeat: false
             onTriggered: {
+                if (!bgRoot.hasPan) return;
                 if (!bgRoot.wallpaperPath || bgRoot.wallpaperPath.length === 0) return;
                 if (bgRoot.wallpaperIsVideo) return;
                 if (bgRoot.wallpaperSafetyTriggered) return;
@@ -890,17 +904,38 @@ Scope {
         Item {
             anchors.fill: parent
 
+            Rectangle {
+                anchors.fill: parent
+                z: -5
+                visible: bgRoot.editStageVisible && (wallpaper.ready || bgRoot.wallpaperIsGif || bgRoot.wallpaperIsVideo)
+                color: Qt.rgba(0.025, 0.035, 0.05, 0.92 * bgRoot.editCard.p)
+            }
+
+            Item {
+                id: desktopStage
+                objectName: "backgroundDesktopStage"
+                width: parent.width
+                height: parent.height
+                transform: [
+                    Scale {
+                        xScale: bgRoot.editCard.s
+                        yScale: bgRoot.editCard.s
+                    },
+                    Translate {
+                        x: bgRoot.editCard.x
+                        y: bgRoot.editCard.y
+                    }
+                ]
+
             // Wallpaper container - used as reference for blur and widgets
             Item {
                 id: wallpaperContainer
                 objectName: "desktopWallpaperContainer"
 
-                readonly property bool showInternalStaticWallpaper: !bgRoot.externalMainWallpaperActive
+                readonly property bool showInternalStaticWallpaper: !bgRoot.externalMainWallpaperActive || bgRoot.editStageVisible
                 readonly property bool localBlurNeedsStaticTexture: Appearance.effectsEnabled
-                    && bgRoot.blurProgress > 0
-                    && (bgRoot.effectsOptions.enableBlur ?? false)
+                    && bgRoot.blurRequestedByWorkspace
                     && !Config.options?.performance?.lowPower
-                    && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
                 readonly property bool lockBlurNeedsStaticTexture: (bgRoot.lockBlurOptions.enable ?? false)
                     && (GlobalStates.screenLocked || scaleAnim.running)
                 readonly property bool needsStaticTexture: !bgRoot.backdropActive
@@ -969,7 +1004,7 @@ Scope {
                         && !wallpaperContainer.showInternalStaticWallpaper
                     source: !wallpaperContainer.needsStaticTexture
                         ? "" : bgRoot.wallpaperPath
-                    enableTransitions: !AwwwBackend.active
+                    enableTransitions: (!AwwwBackend.active || wallpaperContainer.showInternalStaticWallpaper)
                         && (Config.options?.background?.transition?.enable ?? true)
                     transitionType: Config.options?.background?.transition?.type ?? "crossfade"
                     transitionDirection: Config.options?.background?.transition?.direction ?? "right"
@@ -998,7 +1033,7 @@ Scope {
                 AnimatedImage {
                     id: gifWallpaper
                     anchors.fill: parent
-                    visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive && bgRoot.wallpaperIsGif && !bgRoot.externalMainWallpaperActive
+                    visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive && bgRoot.wallpaperIsGif && (!bgRoot.externalMainWallpaperActive || bgRoot.editStageVisible)
                     opacity: (status === AnimatedImage.Ready && bgRoot.wallpaperIsGif) ? 1 : 0
                     Behavior on opacity {
                         enabled: Appearance.animationsEnabled
@@ -1007,7 +1042,9 @@ Scope {
                     cache: false
                     playing: visible && bgRoot.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
                     asynchronous: true
-                    source: (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsGif || bgRoot.backdropActive) ? "" : bgRoot.wallpaperPathRaw
+                    source: (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsGif || bgRoot.backdropActive || !bgRoot.wallpaperPathRaw)
+                        ? ""
+                        : (bgRoot.wallpaperPathRaw.startsWith("/") ? ("file://" + bgRoot.wallpaperPathRaw) : bgRoot.wallpaperPathRaw)
                     fillMode: Image.PreserveAspectCrop
                     // No sourceSize for GIFs - let Qt handle native size for performance
 
@@ -1071,14 +1108,13 @@ Scope {
                 id: blurAlwaysLoader
                 z: 1
                 active: Appearance.effectsEnabled
-                        && (bgRoot.blurProgress > 0)
-                        && (bgRoot.effectsOptions.enableBlur ?? false)
+                        && bgRoot.blurRequestedByWorkspace
                         && !Config.options?.performance?.lowPower
-                        && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
                         && !blurLoader.active
                         && !bgRoot.backdropActive
                         && !bgRoot.wallpaperIsGif
                         && !bgRoot.wallpaperIsVideo
+                visible: bgRoot.blurProgress > 0
                 anchors.fill: wallpaperContainer
                 sourceComponent: Item {
                     anchors.fill: parent
@@ -1250,6 +1286,7 @@ Scope {
                     desktopContextMenu.requestOpenAt(point.x, point.y)
                 }
             }
+            }
 
             Item {
                 id: desktopMenuAnchor
@@ -1284,8 +1321,6 @@ Scope {
                 cursorSlide: true
                 scaleContent: false
                 model: GlobalStates.widgetEditMode ? [
-                    { text: Translation.tr("Manage widgets"), iconName: "tune", monochromeIcon: true,
-                        action: () => { widgetManagerPanel.shown = true } },
                     { text: Config.getNestedValue("background.widgets.editGrid.snap", true)
                             ? Translation.tr("Disable grid snap") : Translation.tr("Enable grid snap"),
                         iconName: "grid_3x3", monochromeIcon: true,
@@ -1302,16 +1337,6 @@ Scope {
                                 sizes[(index + 1) % sizes.length])
                         } },
                     { type: "separator" },
-                    { text: Translation.tr("Widget settings"), iconName: "settings", monochromeIcon: true,
-                        action: () => {
-                            if (Config.options?.settingsUi?.overlayMode !== false) {
-                                GlobalStates.settingsOverlayRequestedPage = 14
-                                GlobalStates.settingsOverlayOpen = true
-                            } else {
-                                Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=14",
-                                    Quickshell.shellPath("scripts/alis"), "settings-window"])
-                            }
-                        } },
                     { text: Translation.tr("Done editing"), iconName: "check", monochromeIcon: true,
                         action: () => { widgetManagerPanel.shown = false; GlobalStates.setWidgetEditMode(false) } }
                 ] : [
@@ -1364,7 +1389,18 @@ Scope {
 
             WidgetCanvas {
                 id: widgetCanvas
+                objectName: "backgroundWidgetCanvas"
                 z: 20
+                transform: [
+                    Scale {
+                        xScale: bgRoot.editCard.s
+                        yScale: bgRoot.editCard.s
+                    },
+                    Translate {
+                        x: bgRoot.editCard.x
+                        y: bgRoot.editCard.y
+                    }
+                ]
                 visible: !GlobalStates.shellLayoutEditMode
                     && DesktopWidgetLayout.outputAllowed(modelData?.name ?? "")
                 enabled: visible && !GlobalStates.screenLocked  // Disable all widget input during lock
@@ -1762,37 +1798,47 @@ Scope {
                             const ctx = getContext("2d");
                             ctx.clearRect(0, 0, width, height);
                             if (width <= 0 || height <= 0) return;
-                            const gs = editGridOverlay.gridSize;
+                            const gs = Math.max(8, editGridOverlay.gridSize);
                             const dotColor = editGridOverlay.gridColor;
                             const custom = editGridOverlay.gridNonDefault;
                             const alpha = custom ? 0.18 : 0.10;
-                            const dotR = custom ? 1.8 : 1.4;
-                            ctx.fillStyle = Qt.rgba(dotColor.r, dotColor.g, dotColor.b, alpha);
+                            const dotSize = custom ? 3.2 : 2.6;
+                            const halfDot = dotSize * 0.5;
                             const cols = Math.floor(width / gs) + 1;
                             const rows = Math.floor(height / gs) + 1;
+                            // Batch dots in chunked single-path rect primitives (avoids O(rows*cols) draw calls)
+                            ctx.fillStyle = Qt.rgba(dotColor.r, dotColor.g, dotColor.b, alpha);
+                            let batchOps = 0;
+                            ctx.beginPath();
                             for (let r = 0; r < rows; ++r) {
+                                const y = r * gs - halfDot;
                                 for (let c = 0; c < cols; ++c) {
-                                    ctx.beginPath();
-                                    ctx.arc(c * gs, r * gs, dotR, 0, 2 * Math.PI);
-                                    ctx.fill();
+                                    ctx.rect(c * gs - halfDot, y, dotSize, dotSize);
+                                    if (++batchOps >= 512) {
+                                        ctx.fill();
+                                        ctx.beginPath();
+                                        batchOps = 0;
+                                    }
                                 }
                             }
-                            // Subtle grid lines for non-default sizes
+                            if (batchOps > 0)
+                                ctx.fill();
+                            // Subtle grid lines in one batched stroke path
                             if (custom) {
                                 ctx.strokeStyle = Qt.rgba(dotColor.r, dotColor.g, dotColor.b, 0.05);
                                 ctx.lineWidth = 0.5;
+                                ctx.beginPath();
                                 for (let c = 0; c < cols; ++c) {
-                                    ctx.beginPath();
-                                    ctx.moveTo(c * gs, 0);
-                                    ctx.lineTo(c * gs, height);
-                                    ctx.stroke();
+                                    const x = c * gs;
+                                    ctx.moveTo(x, 0);
+                                    ctx.lineTo(x, height);
                                 }
                                 for (let r = 0; r < rows; ++r) {
-                                    ctx.beginPath();
-                                    ctx.moveTo(0, r * gs);
-                                    ctx.lineTo(width, r * gs);
-                                    ctx.stroke();
+                                    const y = r * gs;
+                                    ctx.moveTo(0, y);
+                                    ctx.lineTo(width, y);
                                 }
+                                ctx.stroke();
                             }
                         }
                         onVisibleChanged: if (visible && available) requestPaint()
@@ -1959,9 +2005,20 @@ Scope {
                         NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
                     }
 
+                    property bool _warmWidgetsReady: false
+                    Timer {
+                        id: widgetStageWarmupTimer
+                        interval: 2600
+                        repeat: false
+                        running: !editControlsOverlay._warmWidgetsReady
+                            && GlobalStates.deferredPanelsReady
+                            && !GlobalStates.screenLocked
+                        onTriggered: editControlsOverlay._warmWidgetsReady = true
+                    }
+
                     Loader {
                         id: editToolbarLoader
-                        active: GlobalStates.widgetEditMode || editControlsOverlay.visible
+                        active: GlobalStates.widgetEditMode || editControlsOverlay.visible || bgRoot.editStageVisible || editControlsOverlay._warmWidgetsReady
                         function _syncToolbar(): void {
                             if (active) {
                                 if (!item) {
@@ -1972,7 +2029,7 @@ Scope {
                                         fallbackParent: editControlsOverlay
                                     })
                                 }
-                            } else if (source.toString().length > 0) {
+                            } else if (source.toString().length > 0 && !editControlsOverlay._warmWidgetsReady) {
                                 source = ""
                             }
                         }
@@ -1990,19 +2047,56 @@ Scope {
                     // ── Widget Manager Panel ─────────────────────────
                     Loader {
                         id: widgetManagerPanel
+                        objectName: "desktopWidgetManagerLoader"
                         property bool shown: false
-                        active: shown
-                        visible: shown
+                        property Item externalDockParent: null
+                        readonly property bool externallyDocked: externalDockParent !== null
+                        readonly property real desiredDockWidth: item?.desiredDockWidth ?? Math.round(284 * Appearance.fontSizeScale)
+                        readonly property real desiredDockHeight: item?.desiredDockHeight ?? Math.round(520 * Appearance.fontSizeScale)
+                        parent: externallyDocked ? externalDockParent : editControlsOverlay
+                        active: shown || editControlsOverlay._warmWidgetsReady || (externallyDocked && GlobalStates.widgetEditMode && (externalDockParent?.visible ?? false))
+                        visible: shown || (externallyDocked && GlobalStates.widgetEditMode && (externalDockParent?.visible ?? false))
+                        Connections {
+                            target: GlobalStates
+                            function onDesktopWidgetInspectorSerialChanged(): void {
+                                if (!widgetManagerPanel.externallyDocked && GlobalStates.desktopWidgetInspectorTarget.length > 0)
+                                    widgetManagerPanel.shown = true
+                            }
+                        }
                         z: 150
-                        x: 0
-                        y: 0
+                        x: externallyDocked ? 0 : _floatingX
+                        y: externallyDocked ? 0 : _floatingY
+                        width: externallyDocked ? (externalDockParent?.width ?? 380) : (item?.width ?? 440)
+                        height: externallyDocked ? (externalDockParent?.height ?? 560) : (item?.height ?? 520)
+                        property real _floatingX: 0
+                        property real _floatingY: 0
+
+                        function _syncManagerSource(): void {
+                            if (widgetManagerPanel.active) {
+                                if (!widgetManagerPanel.item) {
+                                    setSource(Qt.resolvedUrl("widgets/WidgetManagerPanel.qml"), {
+                                        outputName: bgRoot.screen?.name ?? "",
+                                        embeddedSurface: widgetManagerPanel.externallyDocked,
+                                        canvasWidth: widgetManagerPanel.parent?.width ?? 800,
+                                        canvasHeight: widgetManagerPanel.parent?.height ?? 600,
+                                        screenWidth: bgRoot.screen.width,
+                                        screenHeight: bgRoot.screen.height
+                                    })
+                                } else {
+                                    widgetManagerPanel.item.embeddedSurface = widgetManagerPanel.externallyDocked
+                                }
+                                restoreGeometry()
+                            } else if (source.toString().length > 0) {
+                                source = ""
+                            }
+                        }
 
                         function restoreGeometry(): void {
-                            if (!widgetManagerPanel.shown)
+                            if (!widgetManagerPanel.shown || widgetManagerPanel.externallyDocked)
                                 return
                             Qt.callLater(() => {
                                 const panel = widgetManagerPanel.item
-                                if (!panel)
+                                if (!panel || widgetManagerPanel.externallyDocked)
                                     return
                                 const maxX = Math.max(0,
                                     (widgetManagerPanel.parent?.width ?? 0) - panel.width)
@@ -2012,27 +2106,20 @@ Scope {
                                     Number(Persistent.states?.desktopWidgets?.managerXRatio ?? 0.76)))
                                 const ry = Math.max(0, Math.min(1,
                                     Number(Persistent.states?.desktopWidgets?.managerYRatio ?? 0.42)))
-                                widgetManagerPanel.x = Math.round(maxX * rx)
-                                widgetManagerPanel.y = Math.round(maxY * ry)
+                                widgetManagerPanel._floatingX = Math.round(maxX * rx)
+                                widgetManagerPanel._floatingY = Math.round(maxY * ry)
                             })
                         }
 
-                        onShownChanged: {
-                            if (shown) {
-                                setSource(Qt.resolvedUrl("widgets/WidgetManagerPanel.qml"), {
-                                    outputName: bgRoot.screen?.name ?? "",
-                                    canvasWidth: widgetManagerPanel.parent?.width ?? 800,
-                                    canvasHeight: widgetManagerPanel.parent?.height ?? 600,
-                                    screenWidth: bgRoot.screen.width,
-                                    screenHeight: bgRoot.screen.height
-                                })
-                                restoreGeometry()
-                            } else {
-                                source = ""
-                            }
-                        }
+                        onActiveChanged: _syncManagerSource()
+                        onShownChanged: _syncManagerSource()
+                        onExternallyDockedChanged: _syncManagerSource()
 
-                        onLoaded: restoreGeometry()
+                        onLoaded: {
+                            if (widgetManagerPanel.item)
+                                widgetManagerPanel.item.embeddedSurface = Qt.binding(() => widgetManagerPanel.externallyDocked)
+                            restoreGeometry()
+                        }
 
                         Connections {
                             target: widgetManagerPanel.item

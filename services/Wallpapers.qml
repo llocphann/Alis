@@ -66,8 +66,14 @@ Singleton {
         MaterialThemeLoader.previewWallpaperColors(normalizedPath,
             root._videoThumbDir + "/" + MD5.hash(normalizedPath) + ".jpg",
             root._shouldDeferThemeForLiquid(normalizedPath))
-        // No-op for videos, GIFs, and when awww is not running.
-        AwwwBackend.previewImage(normalizedPath, monitorName)
+        // When Abyss DesktopEditStage owns the shrunk Change Wallpaper preview,
+        // Background.qml's WallpaperCrossfader renders the live transition inside
+        // the Desktop Stage; avoid driving a hidden 4K awww transition underneath.
+        const stageOwnsPreview = (Config.options?.panelFamily === "abyss")
+            && DesktopEditStage.wallpaperStageEnabled
+            && GlobalStates.wallpaperLauncherOpen
+        if (!stageOwnsPreview)
+            AwwwBackend.previewImage(normalizedPath, monitorName)
     }
 
     // Restore whatever the config says without repainting through a different
@@ -393,11 +399,46 @@ Singleton {
     readonly property bool thumbnailGenerationRunning: thumbgenProc.running
     property real thumbnailGenerationProgress: 0
     property var _knownThumbnailOutputs: ({})
+    property bool _knownThumbnailsPreloaded: false
 
     signal changed()
     signal folderChanged()
     signal thumbnailGenerated(directory: string)
     signal thumbnailGeneratedFile(filePath: string)
+
+    function preloadKnownThumbnails(): void {
+        if (root._knownThumbnailsPreloaded || _preloadThumbnailsProc.running)
+            return
+        const cacheRoot = FileUtils.trimFileProtocol(String(Directories.genericCache ?? "")) + "/thumbnails"
+        if (!cacheRoot || cacheRoot === "/thumbnails")
+            return
+        _preloadThumbnailsProc.command = ["/usr/bin/find", cacheRoot, "-type", "f", "-name", "*.png", "-print"]
+        _preloadThumbnailsProc.running = true
+    }
+
+    Timer {
+        id: _preloadThumbnailsBootTimer
+        interval: 650
+        running: true
+        repeat: false
+        onTriggered: root.preloadKnownThumbnails()
+    }
+
+    Process {
+        id: _preloadThumbnailsProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const map = Object.assign({}, root._knownThumbnailOutputs ?? {})
+                for (const rawLine of String(text ?? "").split("\n")) {
+                    const clean = rawLine.trim()
+                    if (clean.length > 0)
+                        map[clean] = true
+                }
+                root._knownThumbnailOutputs = map
+                root._knownThumbnailsPreloaded = true
+            }
+        }
+    }
 
     function hasKnownThumbnail(outputPath: string): bool {
         const normalizedPath = FileUtils.trimFileProtocol(String(outputPath ?? ""))
@@ -407,17 +448,13 @@ Singleton {
     function rememberThumbnail(outputPath: string): void {
         const normalizedPath = FileUtils.trimFileProtocol(String(outputPath ?? ""))
         if (!normalizedPath || root._knownThumbnailOutputs[normalizedPath]) return
-        const nextKnown = Object.assign({}, root._knownThumbnailOutputs)
-        nextKnown[normalizedPath] = true
-        root._knownThumbnailOutputs = nextKnown
+        root._knownThumbnailOutputs[normalizedPath] = true
     }
 
     function forgetThumbnail(outputPath: string): void {
         const normalizedPath = FileUtils.trimFileProtocol(String(outputPath ?? ""))
         if (!normalizedPath || !root._knownThumbnailOutputs[normalizedPath]) return
-        const nextKnown = Object.assign({}, root._knownThumbnailOutputs)
-        delete nextKnown[normalizedPath]
-        root._knownThumbnailOutputs = nextKnown
+        delete root._knownThumbnailOutputs[normalizedPath]
     }
 
     function load() {}
@@ -558,7 +595,7 @@ Singleton {
 
     function _shouldDeferThemeForLiquid(path: string): bool {
         const type = String(Config.options?.background?.transition?.type ?? "")
-        return (type === "alisMelt")
+        return (type === "alisMelt" || type === "inirMelt" || type === "wallfx")
             && !AwwwBackend.active
             && (Config.options?.background?.transition?.enable ?? true)
             && Appearance.animationsEnabled
@@ -583,8 +620,11 @@ Singleton {
             MaterialThemeLoader.previewWallpaperPresented(rendered)
 
         const pending = root._pendingLiquidThemePath
-        if (!pending || rendered !== pending)
+        if (!pending || rendered !== pending) {
+            MaterialThemeLoader.notifyWallpaperTransitionFinished()
             return
+        }
+        MaterialThemeLoader.notifyWallpaperTransitionFinished()
         // One-frame margin after prime/swap; rapid requests reset the deadline.
         liquidThemeDeadline.interval = 16
         liquidThemeDeadline.restart()
@@ -763,6 +803,18 @@ Singleton {
         if (monitorName === "")
             MaterialThemeLoader.themeProfileStage("qml_wallpaper_request", 0)
         root.requestWallpaperBlurTransition(monitorName)
+        MaterialThemeLoader.notifyWallpaperTransitionStarted(root._wallpaperTransitionSettleMs())
+
+        const lowerPath = normalizedPath.toLowerCase()
+        const isVideo = root.isVideoFile(normalizedPath)
+        const isGif = lowerPath.endsWith(".gif")
+        const resolvedThumbnailPath = isVideo
+            ? (root._videoThumbDir + "/" + MD5.hash(normalizedPath) + ".jpg")
+            : (isGif ? root.getExpectedThumbnailPath(normalizedPath, "large") : "")
+        if (isVideo)
+            root.ensureVideoFirstFrame(normalizedPath)
+        else if (isGif)
+            root.ensureThumbnailForPath(normalizedPath, "large")
 
         if (monitorName !== "") {
             // Per-monitor: update config directly in QML to avoid race condition
@@ -778,7 +830,7 @@ Singleton {
 
         if (root.awwwBackendEnabled && AwwwBackend.supportsMainWallpaper(normalizedPath)) {
             Config.setNestedValue("background.wallpaperPath", normalizedPath)
-            Config.setNestedValue("background.thumbnailPath", "")
+            Config.setNestedValue("background.thumbnailPath", resolvedThumbnailPath)
             root._queueWallpaperScript(normalizedPath, darkMode, false)
             root.changed()
             return
@@ -788,7 +840,7 @@ Singleton {
         // Liquid owns its own compositor frames. A concurrent switchwall.sh run
         // performs CPU-heavy color extraction and can stall texture upload.
         Config.setNestedValue("background.wallpaperPath", normalizedPath)
-        Config.setNestedValue("background.thumbnailPath", "")
+        Config.setNestedValue("background.thumbnailPath", resolvedThumbnailPath)
         if (root._shouldDeferThemeForLiquid(normalizedPath)) {
             root._deferLiquidTheme(normalizedPath, darkMode)
         } else {
@@ -1092,9 +1144,7 @@ Singleton {
 
         const key = `still:${clean}`
         if (root._singleThumbPending[key]) return
-        const pending = Object.assign({}, root._singleThumbPending)
-        pending[key] = true
-        root._singleThumbPending = pending
+        root._singleThumbPending[key] = true
         root._singleThumbQueue.push({ key: key, filePath: clean, size: "large", outputPath: outputPath })
         if (!_singleThumbProc.running)
             _processNextSingleThumb()
@@ -1111,9 +1161,7 @@ Singleton {
         const key = `${size}:${normalizedPath}`
         if (root._singleThumbPending[key]) return
 
-        const pending = Object.assign({}, root._singleThumbPending)
-        pending[key] = true
-        root._singleThumbPending = pending
+        root._singleThumbPending[key] = true
         root._singleThumbQueue.push({ key: key, filePath: normalizedPath, size: size, outputPath: outputPath })
 
         if (!_singleThumbProc.running)
@@ -1135,10 +1183,10 @@ Singleton {
             + "tmp=$(mktemp " + quote(item.outputPath + ".XXXXXX") + ") || exit 2; "
             + "trap 'rm -f -- \"$tmp\"' EXIT; "
             + (root.isVideoFile(item.filePath)
-                ? "ffmpeg -y -i " + quote(item.filePath)
+                ? "nice -n 19 ffmpeg -y -i " + quote(item.filePath)
                     + " -vf " + quote(`thumbnail=n=100,scale='min(${maxSize},iw)':'min(${maxSize},ih)':force_original_aspect_ratio=decrease`)
                     + " -frames:v 1 -f image2 -vcodec png \"$tmp\""
-                : "magick " + quote(item.filePath + "[0]")
+                : "nice -n 19 magick " + quote(item.filePath + "[0]")
                     + " -resize " + `${maxSize}x${maxSize}` + " png:\"$tmp\"")
             + " >/dev/null 2>&1 && [ -s \"$tmp\" ] && mv -- \"$tmp\" " + output + " && exit 1; exit 2"
 
@@ -1151,9 +1199,7 @@ Singleton {
     }
 
     function _finishSingleThumb(key: string) {
-        const pending = Object.assign({}, root._singleThumbPending)
-        delete pending[key]
-        root._singleThumbPending = pending
+        delete root._singleThumbPending[key]
     }
 
     Timer {
@@ -1163,7 +1209,7 @@ Singleton {
             if (thumbgenProc.running) return
             thumbgenProc.directory = root._pendingThumbnailDir
             thumbgenProc._size = root._pendingThumbnailSize
-            thumbgenProc.command = [thumbgenScriptPath, "--size", root._pendingThumbnailSize, "--workers", "4", "--machine_progress", "-d", root._pendingThumbnailDir]
+            thumbgenProc.command = ["/usr/bin/nice", "-n", "19", thumbgenScriptPath, "--size", root._pendingThumbnailSize, "--workers", "4", "--machine_progress", "-d", root._pendingThumbnailDir]
             root.thumbnailGenerationProgress = 0
             thumbgenProc.running = true
         }
@@ -1187,7 +1233,7 @@ Singleton {
         }
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
-                thumbgenFallbackProc.command = [generateThumbnailsMagickScriptPath, "--size", thumbgenProc._size, "-d", FileUtils.trimFileProtocol(thumbgenProc.directory)]
+                thumbgenFallbackProc.command = ["/usr/bin/nice", "-n", "19", generateThumbnailsMagickScriptPath, "--size", thumbgenProc._size, "-d", FileUtils.trimFileProtocol(thumbgenProc.directory)]
                 thumbgenFallbackProc.running = true
                 return
             }
@@ -1288,4 +1334,192 @@ Singleton {
         onTriggered: root._pickRandomAndApply()
     }
     // ── End auto wallpaper cycling ──────────────────────────────────────
+
+    // ── Shared Favourites & Pocket-Dots (`wallfx`) Favourite-Only Helpers ──
+    readonly property string favouritesCachePath: `${FileUtils.trimFileProtocol(Directories.stateUserPath)}/wallpaper-selector/favourites.json`
+    readonly property string wallfxHelperPath: Quickshell.shellPath("scripts/wallfx/wallfx_helper.py")
+    readonly property string wallfxInstallScriptPath: Quickshell.shellPath("scripts/wallfx/install-wallfx-ai.sh")
+    property var favouritesDb: ({})
+    property int favouritesRevision: 0
+    readonly property int favouriteCount: {
+        void root.favouritesRevision
+        const db = root.favouritesDb ?? {}
+        const seen = new Set()
+        for (const k of Object.keys(db)) {
+            if (!db[k]) continue
+            const base = k.includes("/") ? k.substring(k.lastIndexOf("/") + 1) : k
+            seen.add(base)
+        }
+        return seen.size
+    }
+
+    property bool wallfxAiAvailable: false
+    property bool wallfxAiInstalling: false
+    property bool wallfxBakingFavourites: false
+    property int wallfxPerfilCached: 0
+    property int wallfxSpreadReady: 0
+    property string wallfxStatusMessage: ""
+
+    function isFavourite(path: string): bool {
+        void root.favouritesRevision
+        const clean = FileUtils.trimFileProtocol(String(path ?? ""))
+        if (!clean) return false
+        const base = clean.includes("/") ? clean.substring(clean.lastIndexOf("/") + 1) : clean
+        const db = root.favouritesDb ?? {}
+        return Boolean(db[clean] || db[base])
+    }
+
+    function toggleFavourite(path: string): bool {
+        const clean = FileUtils.trimFileProtocol(String(path ?? ""))
+        if (!clean) return false
+        const base = clean.includes("/") ? clean.substring(clean.lastIndexOf("/") + 1) : clean
+        const nextDb = Object.assign({}, root.favouritesDb ?? {})
+        const currentlyFav = Boolean(nextDb[clean] || nextDb[base])
+        if (currentlyFav) {
+            delete nextDb[clean]
+            delete nextDb[base]
+        } else {
+            nextDb[clean] = true
+            nextDb[base] = true
+        }
+        root.favouritesDb = nextDb
+        root.favouritesRevision++
+        _saveSharedFavouritesDebounce.restart()
+        if (!currentlyFav && !root.isVideoFile(clean) && !clean.toLowerCase().endsWith(".gif")) {
+            if (root.wallfxAiAvailable || (Config.options?.background?.transition?.type === "wallfx"))
+                root._bakeSingleFavouriteAsync(clean)
+        }
+        return !currentlyFav
+    }
+
+    property string _lastSavedFavouritesPayload: ""
+
+    FileView {
+        id: sharedFavouritesFileView
+        path: Qt.resolvedUrl("file://" + root.favouritesCachePath)
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                const raw = String(sharedFavouritesFileView.text() ?? "").trim()
+                if (raw.length > 0) {
+                    if (raw === root._lastSavedFavouritesPayload)
+                        return
+                    const parsed = JSON.parse(raw)
+                    if (parsed && typeof parsed === "object") {
+                        root._lastSavedFavouritesPayload = raw
+                        root.favouritesDb = parsed
+                        root.favouritesRevision++
+                    }
+                }
+            } catch (e) {}
+        }
+    }
+
+    Timer {
+        id: _saveSharedFavouritesDebounce
+        interval: 180
+        repeat: false
+        onTriggered: {
+            const payload = JSON.stringify(root.favouritesDb ?? {})
+            root._lastSavedFavouritesPayload = payload
+            const dirPath = FileUtils.parentDirectory(root.favouritesCachePath)
+            const q = value => "'" + StringUtils.shellSingleQuoteEscape(String(value)) + "'"
+            _saveSharedFavouritesProc.command = [
+                "/usr/bin/bash", "-c",
+                "mkdir -p -- " + q(dirPath) + " && tmp=$(mktemp " + q(root.favouritesCachePath + ".XXXXXX") + ") && printf '%s' " + q(payload) + " > \"$tmp\" && mv -- \"$tmp\" " + q(root.favouritesCachePath)
+            ]
+            _saveSharedFavouritesProc.running = true
+        }
+    }
+
+    Process {
+        id: _saveSharedFavouritesProc
+    }
+
+    function _bakeSingleFavouriteAsync(cleanPath: string): void {
+        if (!cleanPath) return
+        Quickshell.execDetached([
+            "/usr/bin/nice", "-n", "19", "/usr/bin/python3",
+            root.wallfxHelperPath, "resolve", cleanPath,
+            "--favourite", "1", "--favourites-file", root.favouritesCachePath
+        ])
+    }
+
+    function refreshWallfxStatus(): void {
+        if (_wallfxStatusProc.running) return
+        _wallfxStatusProc.command = ["/usr/bin/python3", root.wallfxHelperPath, "status"]
+        _wallfxStatusProc.running = true
+    }
+
+    function installWallfxAi(): void {
+        if (root.wallfxAiInstalling) return
+        root.wallfxAiInstalling = true
+        root.wallfxStatusMessage = Translation.tr("Installing AI cutout environment & BiRefNet-Lite model...")
+        _wallfxInstallProc.command = ["/usr/bin/bash", root.wallfxInstallScriptPath]
+        _wallfxInstallProc.running = true
+    }
+
+    function bakeFavouriteWallpapers(): void {
+        if (root.wallfxBakingFavourites) return
+        root.wallfxBakingFavourites = true
+        root.wallfxStatusMessage = Translation.tr("Baking character outlines for Favourite wallpapers...")
+        const wpRoot = FileUtils.trimFileProtocol(Config.options?.wallpapers?.directory || Directories.wallpapersPath)
+        _wallfxBakeAllProc.command = [
+            "/usr/bin/nice", "-n", "19", "/usr/bin/python3",
+            root.wallfxHelperPath, "bake-favourites",
+            root.favouritesCachePath, wpRoot
+        ]
+        _wallfxBakeAllProc.running = true
+    }
+
+    Process {
+        id: _wallfxStatusProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const info = JSON.parse((text ?? "").trim() || "{}")
+                    root.wallfxAiAvailable = Boolean(info.aiAvailable)
+                    root.wallfxPerfilCached = Number(info.perfilCached ?? 0)
+                    root.wallfxSpreadReady = Number(info.spreadReady ?? 0)
+                } catch (e) {}
+            }
+        }
+    }
+
+    Process {
+        id: _wallfxInstallProc
+        onExited: (exitCode) => {
+            root.wallfxAiInstalling = false
+            if (exitCode === 0) {
+                root.wallfxStatusMessage = Translation.tr("AI cutout ready. Baking Favourite wallpapers...")
+                root.refreshWallfxStatus()
+                root.bakeFavouriteWallpapers()
+            } else {
+                root.wallfxStatusMessage = Translation.tr("Failed to install AI cutout environment (check uv / network).")
+                root.refreshWallfxStatus()
+            }
+        }
+    }
+
+    Process {
+        id: _wallfxBakeAllProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const res = JSON.parse((text ?? "").trim() || "{}")
+                    root.wallfxStatusMessage = `${res.perfilReady ?? 0}/${res.favouritesTotal ?? 0} Favourite outlines ready`
+                } catch (e) {}
+            }
+        }
+        onExited: () => {
+            root.wallfxBakingFavourites = false
+            root.refreshWallfxStatus()
+        }
+    }
+
+    Component.onCompleted: {
+        Qt.callLater(root.refreshWallfxStatus)
+    }
 }

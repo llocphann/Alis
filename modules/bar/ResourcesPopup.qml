@@ -45,9 +45,52 @@ StyledPopup {
         active: popup.presentationActive
     }
 
+    property int userSelectedLevel: -1
+    readonly property bool followPowerProfileActive:
+        ThinkFanService.profileFanControlEnabled
+        || (Config.options?.powerProfiles?.fanControl?.enabled === true)
+
+    readonly property int hardwareManualLevel: {
+        const lvl = String(ThinkFanService.fanLevel ?? "").trim().toLowerCase()
+        if (lvl === "" || lvl === "auto") return 0
+        if (lvl === "full-speed" || lvl === "disengaged") return 7
+        const num = Number(lvl)
+        return isFinite(num) ? Math.max(0, Math.min(7, Math.round(num))) : 0
+    }
+
+    readonly property int effectiveManualLevel:
+        popup.userSelectedLevel >= 0 ? popup.userSelectedLevel : popup.hardwareManualLevel
+
+    function selectManualFanLevel(level: int): void {
+        const clamped = Math.max(0, Math.min(7, Math.round(level)))
+        popup.userSelectedLevel = clamped
+        const target = clamped === 0 ? "auto" : String(clamped)
+        if (popup.thinkFanManaged && popup.thinkFanCanApply) {
+            ThinkFanService.applyProfile("firmware")
+        }
+        if (ThinkFanService.directControlAvailable && !popup.thinkFanManaged) {
+            ThinkFanService.applyFanLevel(target)
+        }
+    }
+
+    property Timer fanRefreshTimer: Timer {
+        interval: 2000
+        repeat: true
+        running: popup.presentationActive
+        onTriggered: ThinkFanService.refresh()
+    }
+
+    property Connections fanLevelConn: Connections {
+        target: ThinkFanService
+        function onFanLevelChanged() {
+            popup.userSelectedLevel = -1
+        }
+    }
+
     onPresentationActiveChanged: {
-        if (popup.presentationActive)
+        if (popup.presentationActive) {
             ThinkFanService.refresh()
+        }
     }
 
     component ResourceItem: RowLayout {
@@ -210,26 +253,36 @@ StyledPopup {
             opacity: 0.65
         }
 
-        Row {
-            id: fanMetricsRow
+        ColumnLayout {
+            id: fanCompactSection
+            objectName: "fanCompactSection"
             Layout.alignment: Qt.AlignHCenter
-            spacing: resourcesRow.spacing
+            Layout.preferredWidth: resourcesRow.implicitWidth
+            spacing: 8
 
+            // Hidden geometry references preserving column-width layout contract
             Item {
-                width: ramColumn.width
-                height: fanControlRow.implicitHeight
+                visible: false
+                width: thermalColumn.width
+                height: 0
+                Item { width: cpuColumn.width; height: 0 }
+            }
+
+            // 1. Header: Fan icon + Fan | RPM readout
+            Item {
+                Layout.fillWidth: true
+                implicitHeight: 22
+                height: 22
 
                 RowLayout {
-                    id: fanControlRow
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 4
+                    anchors.fill: parent
+                    spacing: 6
 
                     MaterialSymbol {
                         text: "mode_fan"
-                        fill: popup.thinkFanManaged ? 1 : 0
+                        fill: (ThinkFanService.fanRpm > 0 || popup.thinkFanManaged) ? 1 : 0
                         iconSize: Appearance.font.pixelSize.large
-                        color: popup.thinkFanManaged
+                        color: (ThinkFanService.fanRpm > 0 || popup.thinkFanManaged)
                             ? Appearance.colors.colPrimary
                             : Appearance.colors.colOnSurfaceVariant
                         Layout.alignment: Qt.AlignVCenter
@@ -237,92 +290,271 @@ StyledPopup {
 
                     StyledText {
                         text: Translation.tr("Fan")
-                        font.weight: Font.Medium
+                        font.weight: Font.DemiBold
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSurfaceVariant
-                        verticalAlignment: Text.AlignVCenter
+                        color: Appearance.colors.colOnSurface
+                        Layout.alignment: Qt.AlignVCenter
                     }
 
-                    StyledSwitch {
-                        id: thinkFanProfileSwitch
-                        checked: popup.thinkFanManaged
-                        enabled: popup.thinkFanCanApply
-                        activeFocusOnTab: true
-                        Accessible.name: Translation.tr("Use ThinkFan managed fan control")
-
-                        onToggled: {
-                            const requestedManaged = checked
-                            ThinkFanService.applyProfile(
-                                requestedManaged ? "managed" : "firmware")
-                            checked = Qt.binding(() => popup.thinkFanManaged)
-                        }
-                    }
-                }
-            }
-
-            Item {
-                width: thermalColumn.width
-                height: speedRow.implicitHeight
-
-                RowLayout {
-                    id: speedRow
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 4
+                    Item { Layout.fillWidth: true }
 
                     MaterialSymbol {
                         text: "speed"
-                        iconSize: Appearance.font.pixelSize.large
+                        iconSize: Appearance.font.pixelSize.small
                         color: Appearance.colors.colOnSurfaceVariant
+                        opacity: 0.75
                         Layout.alignment: Qt.AlignVCenter
                     }
 
                     StyledText {
                         text: Translation.tr("RPM:")
-                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.pixelSize: Appearance.font.pixelSize.smallest
                         color: Appearance.colors.colOnSurfaceVariant
+                        opacity: 0.75
+                        Layout.alignment: Qt.AlignVCenter
                     }
 
-                    StyledText {
-                        text: ThinkFanService.fanRpm >= 0
-                            ? String(ThinkFanService.fanRpm)
-                            : "—"
-                        font.weight: Font.Medium
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSurface
+                    Item {
+                        Layout.preferredWidth: rpmSampleText.implicitWidth
+                        Layout.preferredHeight: 22
+                        Layout.alignment: Qt.AlignVCenter
+
+                        StyledText {
+                            id: rpmSampleText
+                            visible: false
+                            text: "9999"
+                            font.weight: Font.Bold
+                            font.pixelSize: Appearance.font.pixelSize.normal
+                        }
+
+                        StyledText {
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: (popup.presentationActive && ThinkFanService.fanRpm >= 0)
+                                ? String(ThinkFanService.fanRpm)
+                                : "—"
+                            font.weight: Font.Bold
+                            font.pixelSize: Appearance.font.pixelSize.normal
+                            color: Appearance.colors.colOnSurface
+                        }
                     }
                 }
             }
 
+            // 2. Manual Fan Controls (Hidden when Follow power profile is active)
             Item {
-                width: cpuColumn.width
-                height: levelRow.implicitHeight
+                id: manualFanControlsCol
+                objectName: "manualFanControlsCol"
+                visible: !popup.followPowerProfileActive
+                Layout.fillWidth: true
+                implicitHeight: !popup.followPowerProfileActive ? 50 : 0
+                Layout.preferredHeight: !popup.followPowerProfileActive ? 50 : 0
+                Layout.maximumHeight: !popup.followPowerProfileActive ? 50 : 0
+                clip: true
+
+                // Thinking-Effort-Style Fan Level Slider (Auto, 1..7)
+                Item {
+                    x: 0
+                    y: 0
+                    width: parent.width
+                    height: 16
+
+                    RowLayout {
+                        anchors.fill: parent
+                        spacing: 4
+
+                        MaterialSymbol {
+                            text: "tune"
+                            iconSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colOnSurfaceVariant
+                        }
+
+                        StyledText {
+                            text: Translation.tr("Level:")
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            color: Appearance.colors.colOnSurfaceVariant
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        StyledText {
+                            text: popup.effectiveManualLevel === 0
+                                ? Translation.tr("Auto")
+                                : `L${popup.effectiveManualLevel}`
+                            font.weight: Font.DemiBold
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            color: Appearance.colors.colPrimary
+                        }
+                    }
+                }
+
+                Item {
+                    id: fanEffortSlider
+                    objectName: "fanEffortSlider"
+                    x: 0
+                    y: 18
+                    width: parent.width
+                    height: 32
+
+                    readonly property var levelModel: [
+                        { value: 0, label: "Auto" },
+                        { value: 1, label: "1" },
+                        { value: 2, label: "2" },
+                        { value: 3, label: "3" },
+                        { value: 4, label: "4" },
+                        { value: 5, label: "5" },
+                        { value: 6, label: "6" },
+                        { value: 7, label: "7" }
+                    ]
+                    readonly property int stepCount: 8
+                    readonly property real stepSlotWidth: Math.max(16, width / stepCount)
+                    readonly property int activeStepIndex: popup.effectiveManualLevel
+                    property real animatedStepIndex: activeStepIndex
+
+                    Behavior on animatedStepIndex {
+                        enabled: popup.presentationActive
+                        NumberAnimation {
+                            duration: 140
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    function applyLevelAtX(localX: real): void {
+                        if (width <= 0) return
+                        const pad = stepSlotWidth * 0.5
+                        const trackW = Math.max(1, width - stepSlotWidth)
+                        const ratio = Math.max(0, Math.min(1, (localX - pad) / trackW))
+                        const idx = Math.max(0, Math.min(stepCount - 1, Math.round(ratio * (stepCount - 1))))
+                        popup.selectManualFanLevel(idx)
+                    }
+
+                    Rectangle {
+                        id: fanEffortTrackBg
+                        x: Math.round(fanEffortSlider.stepSlotWidth * 0.5)
+                        y: 9
+                        width: Math.max(0, fanEffortSlider.width - fanEffortSlider.stepSlotWidth)
+                        height: 4
+                        radius: 2
+                        color: Qt.alpha(Appearance.colors.colOnSurfaceVariant, 0.16)
+                    }
+
+                    Rectangle {
+                        id: fanEffortTrackFill
+                        x: fanEffortTrackBg.x
+                        y: fanEffortTrackBg.y
+                        width: Math.round(fanEffortTrackBg.width * (fanEffortSlider.animatedStepIndex / (fanEffortSlider.stepCount - 1)))
+                        height: 4
+                        radius: 2
+                        color: Appearance.colors.colPrimary
+                    }
+
+                    Rectangle {
+                        id: fanEffortThumb
+                        objectName: "fanEffortThumb"
+                        z: 5
+                        width: 12
+                        height: 12
+                        radius: 6
+                        x: Math.round((fanEffortSlider.animatedStepIndex + 0.5) * fanEffortSlider.stepSlotWidth - width / 2)
+                        y: 5
+                        color: Appearance.colors.colPrimary
+                        border.width: 2
+                        border.color: Appearance.colors.colOnPrimary
+                    }
+
+                    Repeater {
+                        id: fanEffortRepeater
+                        model: fanEffortSlider.levelModel
+
+                        delegate: RippleButton {
+                            id: fanEffortStep
+                            required property var modelData
+                            required property int index
+                            readonly property bool isSelected: index === fanEffortSlider.activeStepIndex
+                            x: Math.round(index * fanEffortSlider.stepSlotWidth)
+                            y: 0
+                            width: Math.max(16, Math.round(fanEffortSlider.stepSlotWidth))
+                            height: 32
+                            implicitWidth: 24
+                            implicitHeight: 32
+                            buttonRadius: 7
+                            colBackground: "transparent"
+                            colBackgroundHover: Qt.alpha(Appearance.colors.colPrimary, 0.10)
+                            moveAction: event => {
+                                if (fanEffortStep.down) {
+                                    fanEffortStep.suppressClickOnRelease = true
+                                    fanEffortSlider.applyLevelAtX(fanEffortStep.x + event.x)
+                                }
+                            }
+                            onClicked: popup.selectManualFanLevel(modelData.value)
+
+                            contentItem: Item {
+                                Rectangle {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    y: 7
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    visible: !fanEffortStep.isSelected
+                                    color: fanEffortStep.index <= fanEffortSlider.activeStepIndex
+                                        ? Qt.alpha(Appearance.colors.colPrimary, 0.68)
+                                        : Appearance.colors.colLayer2
+                                    border.width: 1
+                                    border.color: Qt.alpha(Appearance.colors.colOnSurfaceVariant, 0.28)
+                                }
+
+                                StyledText {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    y: 18
+                                    height: 12
+                                    text: fanEffortStep.modelData.label
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    font.pixelSize: Appearance.font.pixelSize.smallest - 2
+                                    font.weight: fanEffortStep.isSelected ? Font.DemiBold : Font.Normal
+                                    color: fanEffortStep.isSelected
+                                        ? Appearance.colors.colPrimary
+                                        : Appearance.colors.colOnSurfaceVariant
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. Follow power profile row (aligned left-to-right, no Auto toggle)
+            Item {
+                Layout.fillWidth: true
+                implicitHeight: 24
+                height: 24
 
                 RowLayout {
-                    id: levelRow
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 4
+                    anchors.fill: parent
+                    spacing: 8
 
-                    MaterialSymbol {
-                        text: "tune"
-                        iconSize: Appearance.font.pixelSize.large
+                    StyledText {
+                        text: Translation.tr("Follow power profile")
+                        font.pixelSize: Appearance.font.pixelSize.small
                         color: Appearance.colors.colOnSurfaceVariant
                         Layout.alignment: Qt.AlignVCenter
                     }
 
-                    StyledText {
-                        text: Translation.tr("Level:")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSurfaceVariant
-                    }
+                    Item { Layout.fillWidth: true }
 
-                    StyledText {
-                        text: ThinkFanService.fanLevel.length > 0
-                            ? ThinkFanService.fanLevel : "—"
-                        font.weight: Font.Medium
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSurface
+                    StyledSwitch {
+                        id: followProfileSwitch
+                        checked: popup.followPowerProfileActive
+                        enabled: Config.ready
+                        Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                        onToggled: {
+                            const nextEnabled = checked
+                            Config.setNestedValue("powerProfiles.fanControl.enabled", nextEnabled)
+                            ThinkFanService.setProfileFanControlEnabled(nextEnabled)
+                            if (!nextEnabled && popup.thinkFanManaged && popup.thinkFanCanApply) {
+                                ThinkFanService.applyProfile("firmware")
+                            }
+                            checked = Qt.binding(() => popup.followPowerProfileActive)
+                        }
                     }
                 }
             }

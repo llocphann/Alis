@@ -31,6 +31,129 @@ Item {
     })
     property var draggedIds: []
     property var liquidController: null
+    property var leftSidebarRecord: null
+    property var rightSidebarRecord: null
+    property var popupObstacleRects: []
+    property var basePaintInsets: ({left:0,top:0,right:0,bottom:0})
+    function cavaAdjustedGeometry(rec): var {
+        const baseAlong = Number(rec?.along ?? 0)
+        const baseSpan = Number(rec?.span ?? 0)
+        if (root.editing || !rec || rec.kind !== "cava")
+            return { protrudeOffset: 0, along: baseAlong, span: baseSpan }
+        if ((rec.edge !== "left" && rec.edge !== "right") || baseSpan <= 0)
+            return { protrudeOffset: 0, along: baseAlong, span: baseSpan }
+        let matchedSb = null
+        let offset = 0
+        let bandLeft = 0
+        let bandRight = 0
+        for (const sb of [root.leftSidebarRecord, root.rightSidebarRecord]) {
+            if (!sb || sb.edge !== rec.edge || !sb.surface)
+                continue
+            if (sb.surface.width <= 0 || sb.surface.height <= 0)
+                continue
+            if (sb.progress !== undefined && sb.progress <= 0.001)
+                continue
+            const sbTop = Number(sb.surface.y ?? 0)
+            const sbBottom = sbTop + Number(sb.surface.height ?? 0)
+            if (baseAlong + baseSpan <= sbTop + 8 || baseAlong >= sbBottom - 8)
+                continue
+            const progressClamp = (sb.progress !== undefined && sb.progress > 1.0) ? (1.0 / sb.progress) : 1.0
+            if (rec.edge === "left") {
+                const innerRight = Number(sb.surface.x ?? 0) + Number(sb.surface.width ?? 0)
+                const cand = (innerRight - Number(root.basePaintInsets?.left ?? 0)) * progressClamp
+                if (cand > offset) {
+                    offset = cand
+                    matchedSb = sb
+                    bandLeft = innerRight - 6
+                    bandRight = innerRight + 58
+                }
+            } else {
+                const innerLeft = Number(sb.surface.x ?? root.width)
+                const cand = ((root.width - Number(root.basePaintInsets?.right ?? 0)) - innerLeft) * progressClamp
+                if (cand > offset) {
+                    offset = cand
+                    matchedSb = sb
+                    bandLeft = innerLeft - 58
+                    bandRight = innerLeft + 6
+                }
+            }
+        }
+        if (!(offset > 0) || !matchedSb)
+            return { protrudeOffset: 0, along: baseAlong, span: baseSpan }
+
+        const minY = Number(matchedSb.surface.y ?? 0) + 16
+        const maxY = Number(matchedSb.surface.y ?? 0) + Number(matchedSb.surface.height ?? 0) - 16
+        if (maxY - minY < 72)
+            return { protrudeOffset: 0, along: baseAlong, span: baseSpan }
+
+        const blockers = []
+        const obsList = root.popupObstacleRects ?? []
+        for (let i = 0; i < obsList.length; ++i) {
+            const obs = obsList[i]
+            if (!obs || !(obs.width > 0 && obs.height > 0))
+                continue
+            const ox1 = Number(obs.x ?? 0)
+            const ox2 = ox1 + Number(obs.width ?? 0)
+            if (ox2 <= bandLeft || ox1 >= bandRight)
+                continue
+            const oy1 = Math.max(minY, Number(obs.y ?? 0) - 14)
+            const oy2 = Math.min(maxY, Number(obs.y ?? 0) + Number(obs.height ?? 0) + 14)
+            if (oy2 > oy1)
+                blockers.push([oy1, oy2])
+        }
+        if (blockers.length === 0)
+            return { protrudeOffset: offset, along: baseAlong, span: baseSpan }
+
+        blockers.sort((a, b) => a[0] - b[0])
+        const freeSegs = []
+        let cursor = minY
+        for (let i = 0; i < blockers.length; ++i) {
+            const bStart = blockers[i][0]
+            const bEnd = blockers[i][1]
+            if (bStart > cursor + 0.5)
+                freeSegs.push([cursor, bStart])
+            cursor = Math.max(cursor, bEnd)
+        }
+        if (maxY > cursor + 0.5)
+            freeSegs.push([cursor, maxY])
+
+        for (let i = 0; i < freeSegs.length; ++i) {
+            if (baseAlong >= freeSegs[i][0] - 0.5 && baseAlong + baseSpan <= freeSegs[i][1] + 0.5)
+                return { protrudeOffset: offset, along: baseAlong, span: baseSpan }
+        }
+
+        let bestFull = null
+        let bestDist = Infinity
+        let largestSeg = null
+        let largestLen = 0
+        for (let i = 0; i < freeSegs.length; ++i) {
+            const s0 = freeSegs[i][0]
+            const s1 = freeSegs[i][1]
+            const len = s1 - s0
+            if (len > largestLen) {
+                largestLen = len
+                largestSeg = freeSegs[i]
+            }
+            if (len >= baseSpan) {
+                const candidateAlong = Math.max(s0, Math.min(s1 - baseSpan, baseAlong))
+                const dist = Math.abs(candidateAlong - baseAlong)
+                if (dist < bestDist) {
+                    bestDist = dist
+                    bestFull = { protrudeOffset: offset, along: candidateAlong, span: baseSpan }
+                }
+            }
+        }
+        if (bestFull)
+            return bestFull
+        if (largestSeg && largestLen >= 96)
+            return { protrudeOffset: offset, along: largestSeg[0], span: largestLen }
+        return { protrudeOffset: 0, along: baseAlong, span: baseSpan }
+    }
+    function cavaProtrusionForRecord(rec): real {
+        if (root.editing || !rec || rec.kind !== "cava")
+            return 0
+        return root.cavaAdjustedGeometry(rec).protrudeOffset
+    }
     property var measuredExtents: ({})
     readonly property var configuredLayoutOptions: Object.assign({},launcherModes,draftOptions ?? Layout.optionsForOutput(Config.options?.abyss?.modules,outputName),{extents:measuredExtents,editing:editing,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius})
     readonly property var layoutOptions: Object.assign({},configuredLayoutOptions,
@@ -124,10 +247,31 @@ Item {
         placements,launcherModes,editing)
     readonly property var fallbackLayoutRecords: Layout.geometry(activePlacements,width,height,configuredLayoutOptions,Appearance.fontSizeScale)
     readonly property var layoutRecords: targetFrame?.records ?? fallbackLayoutRecords
+    readonly property var baseRenderedRecords: {
+        const revision=root.revision
+        return presentedLayoutRecords.map(record=>{
+            if(!root.editing && record.kind==="cava")return record
+            const item=itemForId(record.id)
+            if(!item)return record
+            return Object.assign({},record,{along:record.vertical ? item.y : item.x,
+                content:{x:item.x,y:item.y,width:item.width,height:item.height}})
+        })
+    }
     readonly property var renderedRecords: {
         const revision=root.revision
         return presentedLayoutRecords.map(record=>{
             const item=itemForId(record.id)
+            if(!root.editing && record.kind==="cava") {
+                const adj=root.cavaAdjustedGeometry(record)
+                const along=item ? (record.vertical ? item.y : item.x) : adj.along
+                const span=item ? (record.vertical ? item.height : item.width) : adj.span
+                const content=item
+                    ? {x:item.x,y:item.y,width:item.width,height:item.height}
+                    : Object.assign({},record.content,record.vertical ? {y:adj.along,height:adj.span} : {x:adj.along,width:adj.span})
+                return adj.protrudeOffset > 0
+                    ? Object.assign({},record,{along:along,span:span,content:content,protrudeOffset:adj.protrudeOffset})
+                    : Object.assign({},record,{along:along,span:span,content:content})
+            }
             if(!item)return record
             return Object.assign({},record,{along:record.vertical ? item.y : item.x,
                 content:{x:item.x,y:item.y,width:item.width,height:item.height}})
@@ -137,6 +281,7 @@ Item {
     property int revision: 0
     // Optional local expansion shares the output field; it has no extra painter.
     readonly property var capacityNotices: editing ? [] : Layout.capacityNotices(layoutRecords,width,height,Appearance.fontSizeScale)
+    readonly property var clearanceDeformations: widthMorphActive ? presentedFrame.deformations : Layout.localSurfaces(baseRenderedRecords.concat(capacityNotices),width,height,targetFrame?.options ?? configuredLayoutOptions,Appearance.fontSizeScale,AbyssStyle.barThickness)
     readonly property var deformations: widthMorphActive ? presentedFrame.deformations : Layout.localSurfaces(renderedRecords.concat(capacityNotices),width,height,targetFrame?.options ?? configuredLayoutOptions,Appearance.fontSizeScale,AbyssStyle.barThickness)
 
     property var moduleIds: []
@@ -267,12 +412,18 @@ Item {
             onLayoutHeightChanged:settleDimensionChange()
             onAttachedEdgeChanged:settleDimensionChange()
             onModuleRotationChanged:settleDimensionChange()
-            readonly property bool animatePlacement: !root.widthMorphActive && motionReady && motionEdge===attachedEdge && motionWidth===width && motionHeight===height && Appearance.animationsEnabled
+            readonly property var cavaAdjusted: module.kind === "cava" ? root.cavaAdjustedGeometry(geometry) : null
+            readonly property real cavaProtrusion: cavaAdjusted?.protrudeOffset ?? 0
+            readonly property real cavaShiftX: module.attachedEdge === "left" ? cavaProtrusion
+                : module.attachedEdge === "right" ? -cavaProtrusion : 0
+            readonly property bool animatePlacement: !root.widthMorphActive && motionReady && motionEdge===attachedEdge && motionWidth===width && Appearance.animationsEnabled
                 && !placement?.locked && !root.draggedIds.includes(modelData)
-            Behavior on x { enabled:module.animatePlacement; NumberAnimation { id:xMotion;duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }
-            Behavior on y { enabled:module.animatePlacement; NumberAnimation { id:yMotion;duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }
-            x: geometry?.content.x ?? 0; y: geometry?.content.y ?? 0
-            width: geometry?.content.width ?? 0; height: geometry?.content.height ?? 0
+            Behavior on x { enabled:module.animatePlacement && module.motionHeight===module.height && module.cavaProtrusion < 0.01; NumberAnimation { id:xMotion;duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }
+            Behavior on y { enabled:module.animatePlacement && (module.motionHeight===module.height || module.kind==="cava"); NumberAnimation { id:yMotion;duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }
+            x: (geometry?.content.x ?? 0) + cavaShiftX
+            y: module.kind === "cava" && module.vertical && cavaAdjusted ? cavaAdjusted.along : (geometry?.content.y ?? 0)
+            width: geometry?.content.width ?? 0
+            height: module.kind === "cava" && module.vertical && cavaAdjusted ? cavaAdjusted.span : (geometry?.content.height ?? 0)
             onInteraction: strength => { if (geometry) root.interaction(geometry.edge,geometry.along+geometry.span/2,geometry.span,strength*geometry.influence) }
             Loader {
                 anchors.right:parent.right;anchors.top:parent.top

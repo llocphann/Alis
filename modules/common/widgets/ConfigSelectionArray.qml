@@ -37,6 +37,9 @@ Flow {
     // icon + text for every choice, with stable widths and multi-row Flow.
     property bool activeLabelOnly: false
     property bool wrapFullLabels: false
+    property real optionHorizontalPadding: -1
+    property real optionIconSize: -1
+    property real optionIconSpacing: -1
     // Center each naturally wrapped row without changing any non-Planner
     // selector or adding duplicate option widgets.
     property bool centerWrappedRows: false
@@ -223,6 +226,8 @@ Flow {
             leftmost: index === 0
             rightmost: index === root.options.length - 1
             buttonIcon: modelData.icon || ""
+            customIconSize: root.optionIconSize
+            customIconSpacing: root.optionIconSpacing
             buttonPreviewKind: modelData.previewKind || ""
             // Stable source text: SelectionGroupButton owns the clipping
             // animation, so quick selection changes cannot lose the label.
@@ -243,11 +248,13 @@ Flow {
             enabled: modelData?.enabled !== false
             // Five buttons fit one row even at narrow Planner panel widths.
             // Reserve fixed icon-only slots before allocating selected text.
-            horizontalPadding: root.wrapFullLabels
-                ? Math.max(4,5 * Appearance.fontSizeScale)
-                : root.activeLabelOnly
-                    ? Math.max(5,6 * Appearance.fontSizeScale)
-                    : (root.taskNavigation ? 14 * Appearance.fontSizeScale : 11)
+            horizontalPadding: root.optionHorizontalPadding >= 0
+                ? root.optionHorizontalPadding
+                : (root.wrapFullLabels
+                    ? Math.max(4,5 * Appearance.fontSizeScale)
+                    : root.activeLabelOnly
+                        ? Math.max(5,6 * Appearance.fontSizeScale)
+                        : (root.taskNavigation ? 14 * Appearance.fontSizeScale : 11))
             maxTextWidth: root.taskNavigation
                 ? (root.width > 0
                     ? Math.max(0, root.width - horizontalPadding * 2

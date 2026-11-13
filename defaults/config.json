@@ -270,6 +270,8 @@
                 "omp": true
             },
             "enableOpenCode": false,
+            "enableCodex": true,
+            "enableClaude": true,
             "vscodeEditors": {
                 "code": true,
                 "codium": true,
@@ -838,9 +840,17 @@
         "media": {
             "width": 180
         },
+        "cava": {
+            "width": 120,
+            "height": 22,
+            "barSpacing": 2,
+            "barRadius": 2,
+            "mirror": true
+        },
         "modules": {
             "activeWindow": true,
             "battery": true,
+            "cava": false,
             "clock": true,
             "distroIcon": true,
             "leftSidebarButton": true,
@@ -1102,7 +1112,9 @@
             "prioritizeOrder": "due_first",
             "autoLookupLevel": true,
             "autoLookupOnline": true,
-            "autoCloze": true
+            "autoCloze": true,
+            "dailyGoalCards": 20,
+            "weekendsEnabled": true
         },
         "keepLoaded": true,
         "showHeader": true,
@@ -1228,6 +1240,7 @@
         "overlayStyle": "rail",
         "categories": "",
         "chromeLayout": "",
+        "moduleLayout": "",
         "overlayAppearance": {
             "scrimDim": 35,
             "backgroundOpacity": 1,
@@ -2077,6 +2090,8 @@
             "modelAliasesJson": "{}",
             "autoModelRoutingEnabled": true,
             "mtpOptimizeEnabled": true,
+            "llmIdleUnloadMinutes": 10,
+            "screenshotRetentionDays": 30,
             "thinkingEffort": "off",
             "proactive": "occasional",
             "proactiveEnabled": false,
@@ -2093,8 +2108,10 @@
             "bondEnabled": false,
             "dialogueTone": "gentle",
             "familiarity": "neutral",
-            "obsidianEnabled": false,
-            "referenceVault": ""
+            "nexusEnabled": false,
+            "referenceVault": "",
+            "voiceAutoSend": true,
+            "voiceTtsEnabled": false
         },
         "companion": {
             "enabled": false,
@@ -2138,6 +2155,12 @@
             "thickness": 16,
             "radius": 34,
             "visibleInFullscreen": false
+        },
+        "editStage": {
+            "enable": true,
+            "scale": 0.83,
+            "parkEmptyWorkspace": true,
+            "wallpaperPreview": true
         },
         "surface": {
             "opacity": 0.78,
@@ -2287,19 +2310,19 @@
         "alisIntergration": {
             "tlp": false,
             "thinkfan": false,
-            "obsidian": false,
-            "spaced_repetition": true
+            "nexus": false,
+            "spaced_repetition": false
         },
-        "obsidian": {
+        "nexus": {
             "autoTheme": false,
             "configPath": "",
             "applicationConfigPath": "",
-            "applicationPath": "obsidian"
+            "applicationPath": "nexus"
         }
     },
     "todo": {
         "backend": "internal",
-        "obsidian": {
+        "nexus": {
             "vaultPath": "",
             "sourceMode": "markdown-note",
             "notePath": "Alis/Todo.md",

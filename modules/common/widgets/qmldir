@@ -1,4 +1,6 @@
 AbyssChoiceFace 1.0 AbyssChoiceFace.qml
+AbyssCustomizationDock 1.0 AbyssCustomizationDock.qml
+AbyssCustomizationTile 1.0 AbyssCustomizationTile.qml
 AddressBar 1.0 AddressBar.qml
 AddressBreadcrumb 1.0 AddressBreadcrumb.qml
 AgendaTodoLink 1.0 AgendaTodoLink.qml
@@ -86,7 +88,7 @@ NotificationTimeoutHold 1.0 NotificationTimeoutHold.qml
 NotificationItem 1.0 NotificationItem.qml
 NotificationListView 1.0 NotificationListView.qml
 OptionalMaterialSymbol 1.0 OptionalMaterialSymbol.qml
-ObsidianMonthCalendar 1.0 ObsidianMonthCalendar.qml
+NexusMonthCalendar 1.0 NexusMonthCalendar.qml
 PagePlaceholder 1.0 PagePlaceholder.qml
 PanelSurface 1.0 PanelSurface.qml
 PillTabBar 1.0 PillTabBar.qml
@@ -124,6 +126,11 @@ SettingsLiveSearchResults 1.0 SettingsLiveSearchResults.qml
 SettingsNote 1.0 SettingsNote.qml
 SettingsSliderRow 1.0 SettingsSliderRow.qml
 ShellDesaturationEffect 1.0 ShellDesaturationEffect.qml
+singleton SettingsLayoutManager 1.0 SettingsLayoutManager.qml
+SettingsInnerReorderOverlay 1.0 SettingsInnerReorderOverlay.qml
+SettingsEditToolbar 1.0 SettingsEditToolbar.qml
+SettingsModuleDragOverlay 1.0 SettingsModuleDragOverlay.qml
+SettingsModulePickerPopover 1.0 SettingsModulePickerPopover.qml
 singleton SettingsMaterialPreset 1.0 SettingsMaterialPreset.qml
 singleton SettingsSearchRegistry 1.0 SettingsSearchRegistry.qml
 SettingsSwitch 1.0 SettingsSwitch.qml

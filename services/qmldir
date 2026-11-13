@@ -11,6 +11,9 @@ singleton BluetoothStatus 1.0 BluetoothStatus.qml
 singleton Brightness 1.0 Brightness.qml
 singleton CalendarSync 1.0 CalendarSync.qml
 singleton CavaTheme 1.0 CavaTheme.qml
+singleton ColorPickerService 1.0 ColorPickerService.qml
+ColorPickerOverlay 1.0 ColorPickerOverlay.qml
+ColorPickerSampler 1.0 ColorPickerSampler.qml
 singleton CompositorService 1.0 CompositorService.qml
 CompanionContext 1.0 CompanionContext.qml
 singleton ConflictKiller 1.0 ConflictKiller.qml
@@ -20,6 +23,7 @@ singleton DateTime 1.0 DateTime.qml
 singleton DeviceStatePersistence 1.0 DeviceStatePersistence.qml
 singleton DisplayMode 1.0 DisplayMode.qml
 singleton DesktopItems 1.0 DesktopItems.qml
+singleton DesktopEditStage 1.0 DesktopEditStage.qml
 singleton DesktopWidgetLayout 1.0 DesktopWidgetLayout.qml
 singleton DevNavigation 1.0 DevNavigation.qml
 singleton Events 1.0 Events.qml
@@ -66,7 +70,7 @@ singleton TaskbarApps 1.0 TaskbarApps.qml
 singleton ThemeService 1.0 ThemeService.qml
 singleton TimerService 1.0 TimerService.qml
 InternalTodoBackend 1.0 InternalTodoBackend.qml
-ObsidianTodoBackend 1.0 ObsidianTodoBackend.qml
+NexusTodoBackend 1.0 NexusTodoBackend.qml
 DailyNoteTodoBackend 1.0 DailyNoteTodoBackend.qml
 singleton Todo 1.0 Todo.qml
 singleton Translation 1.0 Translation.qml
@@ -81,6 +85,6 @@ singleton WindowPreviewService 1.0 WindowPreviewService.qml
 singleton WorldClock 1.0 WorldClock.qml
 singleton Zettelkasten 1.0 Zettelkasten.qml
 singleton AlisCompanion 1.0 AlisCompanion.qml
-singleton ObsidianTheme 1.0 ObsidianTheme.qml
+singleton NexusTheme 1.0 NexusTheme.qml
 
 singleton AlisIntergration 1.0 AlisIntergration.qml

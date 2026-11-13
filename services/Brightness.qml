@@ -99,23 +99,38 @@ Singleton {
         return monitors.find(m => m.screen === screen);
     }
 
+    function _targetMonitor(): var {
+        const focusedName = CompositorService.isNiri
+            ? (NiriService.currentOutput || GlobalStates.primaryScreen?.name || "")
+            : (Hyprland.focusedMonitor?.name || GlobalStates.primaryScreen?.name || "");
+        if (focusedName) {
+            const matched = monitors.find(m => focusedName === m.screen?.name);
+            if (matched)
+                return matched;
+        }
+        return monitors.length > 0 ? monitors[0] : null;
+    }
+
     function increaseBrightness(): void {
-        const focusedName = CompositorService.isNiri ? NiriService.currentOutput : Hyprland.focusedMonitor?.name;
-        if (!focusedName) return;
-        const monitor = monitors.find(m => focusedName === m.screen.name);
-        if (monitor)
-            monitor.setBrightness(monitor.brightness + 0.05);
+        const monitor = root._targetMonitor();
+        if (!monitor) return;
+        if (!monitor.ready)
+            monitor.initialize();
+        const cur = Number.isFinite(monitor.brightness) ? monitor.brightness : 0.5;
+        monitor.setBrightness(cur + 0.05);
     }
 
     function decreaseBrightness(): void {
-        const focusedName = CompositorService.isNiri ? NiriService.currentOutput : Hyprland.focusedMonitor?.name;
-        if (!focusedName) return;
-        const monitor = monitors.find(m => focusedName === m.screen.name);
-        if (monitor)
-            monitor.setBrightness(monitor.brightness - 0.05);
+        const monitor = root._targetMonitor();
+        if (!monitor) return;
+        if (!monitor.ready)
+            monitor.initialize();
+        const cur = Number.isFinite(monitor.brightness) ? monitor.brightness : 0.5;
+        monitor.setBrightness(cur - 0.05);
     }
 
     reloadableId: "brightness"
+    readonly property string _nativeDispatch: FileUtils.trimFileProtocol(`${Directories.scriptPath}/native-dispatch`)
 
     property var _ddcNext: []
 
@@ -130,7 +145,7 @@ Singleton {
         id: backlightDetectProc
         property bool timedOut: false
         property bool startObserved: false
-        command: ["brightnessctl", "-l", "-m", "-c", "backlight"]
+        command: [root._nativeDispatch, "backlight", "list"]
         onRunningChanged: {
             if (backlightDetectProc.running) {
                 backlightDetectProc.startObserved = false
@@ -357,13 +372,7 @@ Singleton {
             } else if (!root.backlightDetectionReady) {
                 return
             } else if (root.backlightDevice.length > 0) {
-                // Pass the device as a positional shell argument instead of
-                // interpolating it into the command string.
-                initProc.command = [
-                    "/bin/sh", "-c",
-                    "printf '%s %s\\n' \"$(brightnessctl -d \"$1\" g)\" \"$(brightnessctl -d \"$1\" m)\"",
-                    "_", root.backlightDevice
-                ]
+                initProc.command = [root._nativeDispatch, "backlight", "get", root.backlightDevice]
             } else {
                 const screenName = monitor.screen?.name ?? ""
                 const lastGood = root.lastValidBrightness[screenName]
@@ -484,8 +493,9 @@ Singleton {
                     return
                 Quickshell.execDetached(["ddcutil", "-b", busNum, "setvcp", "10", `${rawValueRounded}`]);
             } else if (root.backlightDevice.length > 0) {
-                Quickshell.execDetached(["brightnessctl", "-d", root.backlightDevice,
-                    "s", `${rawValueRounded}`, "--quiet"]);
+                Quickshell.execDetached([
+                    root._nativeDispatch, "backlight", "set", `${rawValueRounded}`, "--device", root.backlightDevice
+                ]);
             }
         }
 

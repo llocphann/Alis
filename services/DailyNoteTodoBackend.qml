@@ -24,7 +24,7 @@ Scope {
     readonly property var documentMeta: root.implementation?.documentMeta ?? (({}))
     readonly property var managedMeta: root.implementation?.managedMeta ?? (({}))
     readonly property var migrationPreview: root.implementation?.migrationPreview ?? (null)
-    readonly property var capabilities: root.implementation?.capabilities ?? (({backend:"obsidian",noteReadable:false,noteWritable:false,richMutationAvailable:false,lastError:root.missingOperationError}))
+    readonly property var capabilities: root.implementation?.capabilities ?? (({backend:"nexus",noteReadable:false,noteWritable:false,richMutationAvailable:false,lastError:root.missingOperationError}))
     readonly property bool configured: root.implementation?.configured ?? (false)
     readonly property string helperPath: root.implementation?.helperPath ?? ("")
     readonly property string watchPath: root.implementation?.watchPath ?? ("")
@@ -97,7 +97,7 @@ Scope {
     }
     Loader {
         id: backendLoader
-        active: root.active && AlisIntergration.obsidianEnabled
+        active: root.active && AlisIntergration.nexusEnabled
         function syncSource(): void {
             if (active && String(source).length === 0)
                 setSource(AlisIntergration.backendSource("daily"), {active:root.active, vaultPath:root.vaultPath, folder:root.folder, noteFormat:root.noteFormat, plannerHeading:root.plannerHeading, plannerHeadingLevel:root.plannerHeadingLevel, defaultDurationMinutes:root.defaultDurationMinutes})

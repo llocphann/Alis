@@ -249,7 +249,7 @@ def test_p6_p8_nested_spans_and_ranking_and_redaction() -> None:
         "configPath": "/home/alice/.config/alis",
         "notification_body": "Secret OTP 998877",
         "clipboard": "my-bank-password",
-        "window_title": "Private Document - Obsidian",
+        "window_title": "Private Document - Nexus",
         "ssid": "HomeWiFi-5G",
         "authHeader": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
         "ghToken": "ghp_1234567890abcdefghijklmnopqrstuv",

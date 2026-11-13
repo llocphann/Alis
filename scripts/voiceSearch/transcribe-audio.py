@@ -96,66 +96,79 @@ def _openai_compatible(
 
 
 def _gemini(file_path: Path, model: str, key: str) -> str:
+    import base64
+
     mime = mimetypes.guess_type(file_path.name)[0] or "audio/wav"
-    size = file_path.stat().st_size
-    start_request = urllib.request.Request(
-        "https://generativelanguage.googleapis.com/upload/v1beta/files",
-        data=json.dumps({"file": {"display_name": "Alis voice"}}).encode(),
-        headers={
-            "x-goog-api-key": key,
-            "X-Goog-Upload-Protocol": "resumable",
-            "X-Goog-Upload-Command": "start",
-            "X-Goog-Upload-Header-Content-Length": str(size),
-            "X-Goog-Upload-Header-Content-Type": mime,
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-    with urllib.request.urlopen(start_request, timeout=30) as response:
-        upload_url = response.headers.get("X-Goog-Upload-URL", "")
-    if not upload_url:
-        raise RuntimeError("Gemini did not return an upload URL")
-
-    upload_request = urllib.request.Request(
-        upload_url,
-        data=file_path.read_bytes(),
-        headers={
-            "x-goog-api-key": key,
-            "Content-Length": str(size),
-            "X-Goog-Upload-Offset": "0",
-            "X-Goog-Upload-Command": "upload, finalize",
-            "Content-Type": mime,
-        },
-        method="POST",
-    )
-    with urllib.request.urlopen(upload_request, timeout=60) as response:
-        upload_result = json.loads(response.read().decode("utf-8"))
-    file_uri = upload_result.get("file", {}).get("uri", "")
-    if not file_uri:
-        raise RuntimeError("Gemini upload did not return a file URI")
-
+    raw_bytes = file_path.read_bytes()
+    size = len(raw_bytes)
     generation_url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
         + urllib.parse.quote(model, safe="-._")
         + ":generateContent?key="
         + urllib.parse.quote(key)
     )
-    payload = {
+    prompt_text = (
+        "Transcribe this audio accurately. Output only the exact spoken words "
+        "and nothing else. If it is empty, silent, or unclear, output nothing."
+    )
+    if size <= 18 * 1024 * 1024:
+        audio_part: dict[str, Any] = {
+            "inline_data": {
+                "mime_type": mime,
+                "data": base64.b64encode(raw_bytes).decode("ascii"),
+            }
+        }
+    else:
+        start_request = urllib.request.Request(
+            "https://generativelanguage.googleapis.com/upload/v1beta/files",
+            data=json.dumps({"file": {"display_name": "Alis voice"}}).encode(),
+            headers={
+                "x-goog-api-key": key,
+                "X-Goog-Upload-Protocol": "resumable",
+                "X-Goog-Upload-Command": "start",
+                "X-Goog-Upload-Header-Content-Length": str(size),
+                "X-Goog-Upload-Header-Content-Type": mime,
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(start_request, timeout=30) as response:
+            upload_url = response.headers.get("X-Goog-Upload-URL", "")
+        if not upload_url:
+            raise RuntimeError("Gemini did not return an upload URL")
+
+        upload_request = urllib.request.Request(
+            upload_url,
+            data=raw_bytes,
+            headers={
+                "x-goog-api-key": key,
+                "Content-Length": str(size),
+                "X-Goog-Upload-Offset": "0",
+                "X-Goog-Upload-Command": "upload, finalize",
+                "Content-Type": mime,
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(upload_request, timeout=60) as response:
+            upload_result = json.loads(response.read().decode("utf-8"))
+        file_uri = upload_result.get("file", {}).get("uri", "")
+        if not file_uri:
+            raise RuntimeError("Gemini upload did not return a file URI")
+        audio_part = {"file_data": {"mime_type": mime, "file_uri": file_uri}}
+
+    payload: dict[str, Any] = {
         "contents": [
             {
                 "parts": [
-                    {"file_data": {"mime_type": mime, "file_uri": file_uri}},
-                    {
-                        "text": (
-                            "Transcribe this audio exactly. Output only the "
-                            "transcription. If it is empty or unclear, output nothing."
-                        )
-                    },
+                    audio_part,
+                    {"text": prompt_text},
                 ]
             }
         ],
         "generationConfig": {"temperature": 0},
     }
+    if "2.5" in model or "thinking" in model:
+        payload["generationConfig"]["thinkingConfig"] = {"thinkingBudget": 0}
     result = _json_request(
         generation_url,
         headers={"Content-Type": "application/json", "User-Agent": "Alis/Voice"},
@@ -166,7 +179,12 @@ def _gemini(file_path: Path, model: str, key: str) -> str:
     if not candidates:
         return ""
     parts = candidates[0].get("content", {}).get("parts") or []
-    return "".join(str(part.get("text") or "") for part in parts).strip()
+    non_thought = [
+        str(part.get("text") or "").strip()
+        for part in parts
+        if not part.get("thought") and str(part.get("text") or "").strip()
+    ]
+    return " ".join(non_thought).strip()
 
 
 def _candidate_local_models(explicit: str) -> list[Path]:

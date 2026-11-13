@@ -258,23 +258,6 @@ ContentPage {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
-            settingsTaskSection: "general"
-            visible: root.isIiActive
-            expanded: true
-            icon: "school"
-            title: Translation.tr("Spaced Repetition")
-
-            DashboardSpacedRepetitionSettings {
-                Layout.fillWidth: true
-            }
-        }
-
-        SettingsCardSection {
-            _preventBentoReparent: true
-            Layout.preferredWidth: 1
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.alignment: Qt.AlignTop
             settingsTaskSection: "overview"
             visible: root.isIiActive
             expanded: true

@@ -187,6 +187,8 @@ Button {
 
     contentItem: StyledText {
         text: root.buttonText
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
         color: Appearance.colors.colOnLayer0
         Behavior on color {
             enabled: Appearance.animationsEnabled

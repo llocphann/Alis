@@ -5,6 +5,9 @@ import os
 import shutil
 import subprocess
 import tempfile
+import sys as _silent_sys
+if os.environ.get("ALIS_SILENT_TEST_MODE") != "1":
+    raise SystemExit(subprocess.call([_silent_sys.executable, str(Path(__file__).resolve().parent / "native_test_session.py"), "--", _silent_sys.executable, __file__, *_silent_sys.argv[1:]]))
 
 if os.environ.get("ALIS_SCREEN_EDGE_PERCEPTUAL") != "1":
     print("SKIP: Screen Edge perceptual A/B requires ALIS_SCREEN_EDGE_PERCEPTUAL=1")

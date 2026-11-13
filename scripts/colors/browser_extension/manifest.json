@@ -1,0 +1,26 @@
+{
+  "manifest_version": 2,
+  "name": "Alis Live Theme",
+  "version": "1.0.0",
+  "description": "Applies Alis Material You wallpaper colors to Zen Browser and Firefox live without restarting.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "alis-browser-theme@alis.local",
+      "strict_min_version": "115.0"
+    }
+  },
+  "icons": {
+    "48": "icon.svg",
+    "96": "icon.svg"
+  },
+  "permissions": [
+    "theme",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": true
+  }
+}

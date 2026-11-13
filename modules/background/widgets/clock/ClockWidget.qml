@@ -127,6 +127,7 @@ AbstractBackgroundWidget {
     property bool showSeconds: Config.getNestedValue("background.widgets.clock.showSeconds", false)
     readonly property bool cookieNeedsSeconds: root.clockStyle === "cookie"
         && String(root._readConfigKey("cookie.secondHandStyle") ?? "hide") !== "hide"
+        && String(root._readConfigKey("cookie.secondHandStyle") ?? "hide") !== "none"
     property bool showDate: Config.getNestedValue("background.widgets.clock.showDate", true)
     property string dateStyle: Config.getNestedValue("background.widgets.clock.dateStyle", "long")
     property int timeScale: Number(root._readConfigKey("timeScale") ?? 100)

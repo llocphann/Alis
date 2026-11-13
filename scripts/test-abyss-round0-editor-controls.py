@@ -128,7 +128,7 @@ ShellRoot {
    check(field.grabToImage(result=>{check(result.saveToFile(Quickshell.env("ROUND0_CONTROL_OUTPUT")+"/"+label+".png"),"save actual image");done=true;root.frames++}),"capture refused")
    tryVerify(()=>done,5000)
   }
-  function open(edge){GlobalStates.abyssEditing=true;tryCompare(editor,"visible",true,1000);wait(100);editor.editingEdge=edge;editor.selectedId="reported"}
+  function open(edge){GlobalStates.abyssEditing=true;tryCompare(editor,"visible",true,1000);wait(100);editor.editingPopups=false;editor.editorSection="edge";editor.selectedId="reported";editor.editingEdge=edge;wait(60)}
   function configured(){return JSON.stringify(Config.options.abyss.modules)}
   function run(){try{
    tryCompare(Config,"ready",true,6000)

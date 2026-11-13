@@ -2,7 +2,7 @@
 
 > A complete desktop shell built on [Quickshell](https://quickshell.org/) for the [Niri](https://github.com/YaLTeR/niri) Wayland compositor.
 
-**Version**: 1.0.1 · **Stack**: QML (Quickshell), Rust, Bash, Python
+**Version**: 1.0.0 · **Stack**: QML (Quickshell), Rust, Bash, Python
 
 Originally forked from [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) (illogical-impulse). Secondary Hyprland support is maintained.
 
@@ -174,7 +174,7 @@ Waffle is a panel family, not a Dock style, and must not be folded into Dock sty
 | `DesktopWidgetLayout` | Per-output desktop-widget layout |
 | `LyricsService` | Synchronized media lyrics |
 | `AlisCompanion` | Optional [Alis-Companion](https://github.com/llocphann/Alis-Companion) package loader & Host API 1 bridge |
-| `AlisIntergration` | Optional [Alis-Intergration](https://github.com/llocphann/Alis-Intergration) plugin loader (`tlp`, `thinkfan`, `obsidian`, `spaced_repetition`) |
+| `AlisIntergration` | Optional [Alis-Intergration](https://github.com/llocphann/Alis-Intergration) plugin loader (`tlp`, `thinkfan`, `nexus`, `spaced_repetition`) |
 | `SpacedRepetition` | Spaced Repetition proxy/bridge delegating to the optional `spaced_repetition` plugin when enabled |
 
 Wallpaper pickers apply through `Wallpapers.applySelectionTarget()`. Live preview goes through `Wallpapers.previewWallpaper()` and does not write config or regenerate colors. `modules/background/Background.qml` owns the per-output desktop surface; desktop widget instances are mapped through `Config.options.background.widgets.outputOverrides`, `screenList`, and `layerOrder`.

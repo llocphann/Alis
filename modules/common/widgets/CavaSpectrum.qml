@@ -584,7 +584,7 @@ Canvas {
     }
 
     function _queuePaint(): void {
-        if (root.available)
+        if (root.visible && root.available)
             root.requestPaint()
     }
 

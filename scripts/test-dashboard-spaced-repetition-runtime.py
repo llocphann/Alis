@@ -96,7 +96,150 @@ Window {
                     "All 78 imported vocabulary cards must be under 'English Vocabulary' with both English definitionEn + Vietnamese meaningVi and fresh review state");
                 check(SpacedRepetition.hasActiveCard, "Study queue should have an active card");
 
-                // 1. Reveal & Rate & Undo flow
+                // 0a. Verify Reverse Flashcard & Reverse Multiple Choice are removed, and Smart Mix starts in an active mode (not Flashcard)
+                check(findChild(srView, "srStudyMode-reverse") === null && findChild(srView, "srStudyMode-rmc") === null,
+                    "Reverse Flashcard and Reverse Multiple Choice mode buttons must be removed");
+                check(!!findChild(srView, "srStudyMode-smart")
+                    && !!findChild(srView, "srStudyMode-matching")
+                    && !!findChild(srView, "srStudyMode-mc")
+                    && !!findChild(srView, "srStudyMode-cloze")
+                    && !!findChild(srView, "srStudyMode-flashcard"),
+                    "Smart Mix, Matching, Multiple Choice, Cloze Reading, and Flashcard mode pills must exist");
+                check(SpacedRepetition.smartMixEnabled === true && ["matching", "mc", "cloze"].includes(SpacedRepetition.studyMode),
+                    "When multiple cards are due today, Smart Mix must select one of [matching, mc, cloze], keeping flashcard as last resort; got: " + SpacedRepetition.studyMode);
+
+                // 0b. Verify Analytics column inner cards are darker than colSurfaceElevated, >= Analytics column luminance, and bound to Appearance.colors
+                const analyticsCol = findChild(srView, "srStudyTrackerAnalyticsColumn");
+                const consistencyCard = findChild(srView, "srConsistencyCard");
+                const heatmapCard = findChild(srView, "srActivityHeatmapCard");
+                const breakdownCard = findChild(srView, "srAnalyticsBreakdownCard");
+                const forecastCard = findChild(srView, "srAnalyticsForecastCard");
+                const reviewsTile = findChild(srView, "srAnalyticsReviewsTile");
+                const maturityTrack = findChild(srView, "srAnalyticsMaturityTrack");
+                check(!!analyticsCol && !!consistencyCard && !!heatmapCard && !!breakdownCard && !!forecastCard && !!reviewsTile && !!maturityTrack,
+                    "Analytics column or inner cards/tiles missing");
+                const lumCol = srView.relativeLuminance(analyticsCol.color);
+                const lumCard = srView.relativeLuminance(consistencyCard.color);
+                const lumSubBox = srView.relativeLuminance(reviewsTile.color);
+                const lumOldElevated = srView.relativeLuminance(srView.colSurfaceElevated);
+                check(lumCard >= lumCol && lumSubBox >= lumCard && lumCard < lumOldElevated,
+                    `Analytics luminance hierarchy violated: col=${lumCol.toFixed(4)}, card=${lumCard.toFixed(4)}, subBox=${lumSubBox.toFixed(4)}, oldElevated=${lumOldElevated.toFixed(4)}`);
+                // Verify Analytics luminance hierarchy also holds in Light Mode (Appearance.m3colors.darkmode === false)
+                Appearance.m3colors.darkmode = false;
+                wait(20);
+                const lumColLight = srView.relativeLuminance(analyticsCol.color);
+                const lumCardLight = srView.relativeLuminance(consistencyCard.color);
+                const lumSubBoxLight = srView.relativeLuminance(reviewsTile.color);
+                check(lumCardLight >= lumColLight && lumSubBoxLight >= lumCardLight,
+                    `Analytics Light Mode luminance hierarchy violated: col=${lumColLight.toFixed(4)}, card=${lumCardLight.toFixed(4)}, subBox=${lumSubBoxLight.toFixed(4)}`);
+                Appearance.m3colors.darkmode = true;
+                wait(20);
+
+                // 0c. Verify Matching Mode (2 columns: 5 words on left, 6 definitions on right with 1 distractor)
+                SpacedRepetition.smartMixEnabled = false;
+                SpacedRepetition.studyMode = "matching";
+                srView.resetCardInteraction(true);
+                wait(60);
+                const matchingBoard = findChild(srView, "srMatchingBoard");
+                const matchingLeftCol = findChild(srView, "srMatchingLeftColumn");
+                const matchingCorridor = findChild(srView, "srMatchingCorridor");
+                const matchingRightCol = findChild(srView, "srMatchingRightColumn");
+                const matchingLinesCanvas = findChild(srView, "srMatchingLinesCanvas");
+                check(!!matchingBoard && matchingBoard.visible && !!matchingLeftCol && !!matchingCorridor && !!matchingRightCol && !!matchingLinesCanvas && matchingLinesCanvas.visible,
+                    "Matching board, left column, middle corridor, right column, and lines canvas must be visible in Matching mode");
+                check(srView.matchingLeftWords.length === 5 && srView.matchingRightDefs.length === 6,
+                    `Matching mode must render 5 left words and 6 right definitions, got ${srView.matchingLeftWords.length} and ${srView.matchingRightDefs.length}`);
+                check(srView.matchingRightDefs.filter(d => d.isDistractor).length === 1,
+                    "Matching mode right column must contain exactly 1 distractor definition");
+                const leftRightEdgeX = matchingLeftCol.mapToItem(srView, matchingLeftCol.width, 0).x;
+                const rightLeftEdgeX = matchingRightCol.mapToItem(srView, 0, 0).x;
+                const matchingHorizontalGap = rightLeftEdgeX - leftRightEdgeX;
+                check(matchingLeftCol.width < matchingRightCol.width,
+                    `Matching mode left vocabulary column (${matchingLeftCol.width}px) must be more compact than right definition column (${matchingRightCol.width}px)`);
+                check(matchingHorizontalGap >= 60,
+                    `Matching mode must leave a middle corridor >= 60px for connecting lines, got ${matchingHorizontalGap}px`);
+
+                // Verify changing filter (CEFR C1) while in Matching mode immediately rebuilds the Matching board
+                SpacedRepetition.selectedCefrLevel = "C1";
+                wait(40);
+                check(srView.matchingLeftWords.length === 5 && srView.matchingLeftWords.filter(w => w.inQueue).every(w => w.cefrLevel === "C1"),
+                    "Selecting CEFR C1 filter in Matching mode must rebuild the board with C1 due cards");
+
+                // Verify selecting an empty filter (CEFR A1, 0 cards) in Matching mode clears the board and hides showStudyArenaCard
+                SpacedRepetition.selectedCefrLevel = "A1";
+                wait(40);
+                check(srView.matchingLeftWords.length === 0 && srView.showStudyArenaCard === false,
+                    "Selecting empty filter (A1) in Matching mode must clear matchingLeftWords and hide showStudyArenaCard so caught-up screen appears");
+
+                // Restore all filter in Matching mode
+                SpacedRepetition.selectedCefrLevel = "all";
+                wait(40);
+                check(srView.matchingLeftWords.length === 5 && srView.showStudyArenaCard === true,
+                    "Restoring filter in Matching mode must rebuild the 5-word Matching board");
+
+                // Test mismatch first on word 0, then match all 5 pairs
+                const w0 = srView.matchingLeftWords[0];
+                const wrongRightIdx = srView.matchingRightDefs.findIndex(d => d.targetCardId !== w0.id);
+                mouseClick(findChild(srView, "srMatchingLeftWord-0"));
+                mouseClick(findChild(srView, "srMatchingRightDef-" + wrongRightIdx));
+                wait(40);
+                check(srView.matchingLeftWords[0].mistakeCount === 1 && srView.matchingLeftWords[0].matched === false && matchingLinesCanvas.hasMismatchLine === true,
+                    "Selecting a wrong definition in Matching mode must increment mistakeCount, keep word unmatched, and show mismatch line");
+
+                // Match word 0, then test clicking top-bar srUndoButton resets the Matching board UI
+                const rightIdx0 = srView.matchingRightDefs.findIndex(d => !d.isDistractor && d.targetCardId === w0.id);
+                mouseClick(findChild(srView, "srMatchingLeftWord-0"));
+                mouseClick(findChild(srView, "srMatchingRightDef-" + rightIdx0));
+                wait(50);
+                check(srView.matchingMatchedCount === 1 && SpacedRepetition.todayReviewedCount === 1 && matchingLinesCanvas.matchedLinesCount === 1,
+                    "Matching 1 word must increment matchingMatchedCount, todayReviewedCount, and matchedLinesCount");
+                mouseClick(findChild(srView, "srUndoButton"));
+                wait(50);
+                check(SpacedRepetition.todayReviewedCount === 0 && srView.matchingMatchedCount === 0 && srView.matchingLeftWords.every(w => !w.matched) && matchingLinesCanvas.matchedLinesCount === 0,
+                    "Clicking srUndoButton in Matching mode must undo the review and reset the Matching board");
+
+                for (let li = 0; li < 5; li++) {
+                    const lw = srView.matchingLeftWords[li];
+                    const ri = srView.matchingRightDefs.findIndex(d => !d.isDistractor && d.targetCardId === lw.id);
+                    check(ri >= 0, "Could not find matching definition for left word index " + li);
+                    mouseClick(findChild(srView, "srMatchingLeftWord-" + li));
+                    mouseClick(findChild(srView, "srMatchingRightDef-" + ri));
+                    wait(25);
+                }
+                tryVerify(() => matchingLinesCanvas.matchedLinesCount === 5 && matchingLinesCanvas.paintedMatchedLinesCount === 5 && matchingLinesCanvas.paintedSegments.length === 5, 1000);
+                // Verify resizing the window updates paintedSegments to stay aligned with card ports
+                const segBeforeResize = matchingLinesCanvas.paintedSegments[0];
+                root.width = 980;
+                wait(80);
+                const leftBtn0After = findChild(srView, "srMatchingLeftWord-0");
+                const rightBtnAfter = findChild(srView, "srMatchingRightDef-" + segBeforeResize.rightIndex);
+                const expectedP1After = leftBtn0After.mapToItem(matchingLinesCanvas, leftBtn0After.width, leftBtn0After.height * 0.5);
+                const expectedP2After = rightBtnAfter.mapToItem(matchingLinesCanvas, 0, rightBtnAfter.height * 0.5);
+                const segAfterResize = matchingLinesCanvas.paintedSegments[0];
+                check(matchingLeftCol.width < matchingRightCol.width && (matchingRightCol.mapToItem(srView, 0, 0).x - matchingLeftCol.mapToItem(srView, matchingLeftCol.width, 0).x) >= 60,
+                    "Matching mode compact left column and >=60px corridor must hold after window resize");
+                check(Math.abs(segAfterResize.x1 - expectedP1After.x) <= 2 && Math.abs(segAfterResize.x2 - expectedP2After.x) <= 2,
+                    `Matching mode painted line endpoints must realign after resize: got (${segAfterResize.x1}, ${segAfterResize.x2}) vs expected (${expectedP1After.x}, ${expectedP2After.x})`);
+                root.width = 1240;
+                wait(60);
+                check(srView.matchingRoundComplete === true && srView.matchingMatchedCount === 5,
+                    "Matching all 5 words must mark matchingRoundComplete === true");
+                check(srView.matchingRightDefs.filter(d => !d.matched && d.isDistractor).length === 1,
+                    "After matching all 5 words, only the 1 distractor definition should remain unmatched");
+                tryCompare(SpacedRepetition, "todayReviewedCount", 5, 2000);
+                const matchingContBtn = findChild(srView, "srMatchingContinueButton");
+                check(!!matchingContBtn && matchingContBtn.visible, "Matching continue button must appear when round completes");
+                // Undo the 5 matching reviews so subsequent tests start from clean todayReviewedCount === 0
+                for (let u = 0; u < 5; u++) {
+                    SpacedRepetition.undoLastReview();
+                }
+                tryCompare(SpacedRepetition, "todayReviewedCount", 0, 2000);
+
+                // 1. Reveal & Rate & Undo flow (in Flashcard mode)
+                SpacedRepetition.smartMixEnabled = false;
+                SpacedRepetition.studyMode = "flashcard";
+                srView.resetCardInteraction(true);
+                wait(40);
                 const firstCardId = SpacedRepetition.currentCard.id;
                 const revealBtn = findChild(srView, "srRevealButton");
                 check(!!revealBtn && revealBtn.visible, "Reveal button not visible");
@@ -146,9 +289,13 @@ Window {
 
                 // Verify Cloze mode target check against {{c1::...}} target and prefix guard
                 SpacedRepetition.studyMode = "cloze";
+                srView.resetCardInteraction();
+                wait(40);
                 const clozeInput = findChild(srView, "srClozeInput");
                 const checkClozeBtn = findChild(srView, "srCheckClozeButton");
                 check(!!clozeInput && !!checkClozeBtn, "Cloze input or check button missing");
+                check(srView.selectClozeChoice(99) === false && srView.answerRevealed === false,
+                    "Out-of-bounds selectClozeChoice(99) must return false without revealing the card");
                 const expectedClozeTarget = SpacedRepetition.extractClozeTarget(SpacedRepetition.currentCard);
                 clozeInput.text = expectedClozeTarget.slice(0, 1);
                 mouseClick(checkClozeBtn);
@@ -157,6 +304,55 @@ Window {
                 clozeInput.text = expectedClozeTarget;
                 mouseClick(checkClozeBtn);
                 check(srView.clozeCheckState === "exact", "Exact {{c1::...}} cloze target did not match as exact");
+
+                // Verify Cloze Reading shortcuts 0, 1, 2, 3, 4 in Smart Mix across natural mode transitions, rapid <40ms keypresses, and focused srClozeInput
+                SpacedRepetition.smartMixEnabled = true;
+                // Simulate transitioning from MC into Cloze Reading without manual srView.resetCardInteraction()
+                SpacedRepetition.studyMode = "mc";
+                clozeInput.focus = true;
+                wait(30);
+                SpacedRepetition.studyMode = "cloze";
+                wait(60);
+                const clozeStartReviewed = SpacedRepetition.todayReviewedCount;
+                check(srView.isClozeMode === true && srView.answerRevealed === false && clozeInput.focus === false && srView.multipleChoiceOptions.length === 4,
+                    "Natural Smart Mix transition to Cloze mode must clear clozeInput.focus, keep answerRevealed === false, and populate 4 Cloze options");
+                // Test rapid <40ms two-key sequence: '0' (cloze-reveal) immediately followed by '4' (rate easy) without wait between them
+                keyClick(Qt.Key_0);
+                keyClick(Qt.Key_4);
+                wait(60);
+                check(SpacedRepetition.todayReviewedCount === clozeStartReviewed + 1,
+                    "Rapid back-to-back '0' (reveal) + '4' (rate easy) in Cloze mode must execute both distinct actions without dropping the second key");
+                // Test focused srClozeInput + '1' (pick option 0) and '0' after reveal (rate again), plus focused empty srClozeInput + Space reveal
+                SpacedRepetition.studyMode = "cloze";
+                wait(50);
+                mouseClick(clozeInput);
+                wait(40);
+                check(clozeInput.activeFocus === true, "Clicking srClozeInput should focus it");
+                keyClick(Qt.Key_1);
+                wait(50);
+                check(srView.answerRevealed === true && srView.selectedChoiceIndex === 0 && clozeInput.activeFocus === false && clozeInput.readOnly === true && clozeInput.text !== "1",
+                    "Pressing '1' in Cloze Reading while srClozeInput is focused must select option 0, mark clozeInput readOnly, & reveal answer without typing '1'");
+                keyClick(Qt.Key_2);
+                wait(50);
+                check(SpacedRepetition.todayReviewedCount === clozeStartReviewed + 2,
+                    "Pressing '2' after reveal in Cloze Reading must submit 'good' rating");
+                // Test keys '2', '3', '4' before reveal and '0', '1', '3' after reveal
+                SpacedRepetition.studyMode = "cloze";
+                wait(40);
+                keyClick(Qt.Key_3);
+                wait(40);
+                check(srView.answerRevealed === true && srView.selectedChoiceIndex === 2,
+                    "Pressing '3' before reveal in Cloze Reading must select option 2 (index 2) and reveal");
+                keyClick(Qt.Key_1);
+                wait(40);
+                check(SpacedRepetition.todayReviewedCount === clozeStartReviewed + 3,
+                    "Pressing '1' after reveal in Cloze Reading must submit 'hard' rating");
+                // Undo the 3 Cloze shortcut reviews so todayReviewedCount returns to 1
+                SpacedRepetition.undoLastReview();
+                SpacedRepetition.undoLastReview();
+                SpacedRepetition.undoLastReview();
+                tryCompare(SpacedRepetition, "todayReviewedCount", 1, 2000);
+                SpacedRepetition.smartMixEnabled = false;
                 SpacedRepetition.studyMode = "flashcard";
                 srView.resetCardInteraction();
 
@@ -332,9 +528,9 @@ Window {
                     "Pressing Ctrl+Z in Study mode must undo last review");
                 keyClick(Qt.Key_M);
                 wait(60);
-                check(SpacedRepetition.studyMode === "reverse", "Pressing 'M' in Study mode must cycle studyMode to 'reverse'");
+                check(SpacedRepetition.studyMode === "matching", "Pressing 'M' in Study mode from flashcard must cycle studyMode to 'matching'");
 
-                // Verify Multiple Choice ('mc') & Reverse Multiple Choice ('rmc') modes (4 options, reveal all 4 answers after selection)
+                // Verify Multiple Choice ('mc') mode (4 options, reveal all 4 answers after selection)
                 SpacedRepetition.studyMode = "mc";
                 srView.resetCardInteraction();
                 wait(60);
@@ -388,33 +584,23 @@ Window {
                     }
                 }
 
+                // Verify legacy 'rmc' and 'reverse' studyMode values normalize automatically to 'matching'
                 SpacedRepetition.studyMode = "rmc";
-                srView.resetCardInteraction();
-                wait(60);
-                const rmcOpt1 = findChild(srView, "srMcOption-1");
-                const rmcTerm1 = findChild(srView, "srMcOptionTerm-1");
-                const rmcDef1 = findChild(srView, "srMcOptionDef-1");
-                check(srView.multipleChoiceOptions.length === 4 && rmcTerm1.visible === true && rmcDef1.visible === false,
-                    "Before selecting an option in Reverse Multiple Choice mode, options must show terms and hide definitions");
-                mouseClick(rmcOpt1);
-                wait(60);
-                check(srView.answerRevealed === true && srView.selectedChoiceIndex === 1,
-                    "Clicking an option in RMC mode must reveal the answer");
-                for (let idx = 0; idx < 4; idx++) {
-                    const optBtn = findChild(srView, "srMcOption-" + idx);
-                    const tItem = findChild(srView, "srMcOptionTerm-" + idx);
-                    const dItem = findChild(srView, "srMcOptionDef-" + idx);
-                    check(!!tItem && tItem.visible,
-                        "After selecting an option in RMC mode, all 4 options must show their term (failed at index " + idx + ")");
-                    if (optBtn.isRight || optBtn.isChosen) {
-                        check(optBtn.detailsExpanded === true && dItem.visible === true,
-                            "Chosen and correct options in RMC mode must show their definition by default");
-                    } else {
-                        check(optBtn.detailsExpanded === false && dItem.visible === false,
-                            "Unchosen distractor options in RMC mode must keep their definition hidden until hovered");
-                    }
-                }
+                wait(30);
+                check(SpacedRepetition.studyMode === "matching",
+                    "Setting legacy studyMode 'rmc' must normalize to 'matching', got: " + SpacedRepetition.studyMode);
+                SpacedRepetition.studyMode = "reverse";
+                wait(30);
+                check(SpacedRepetition.studyMode === "matching",
+                    "Setting legacy studyMode 'reverse' must normalize to 'matching', got: " + SpacedRepetition.studyMode);
 
+                // Verify Smart Mix mode button re-enables random rotation across [matching, mc, cloze]
+                mouseClick(findChild(srView, "srStudyMode-smart"));
+                wait(40);
+                check(SpacedRepetition.smartMixEnabled === true && ["matching", "mc", "cloze"].includes(SpacedRepetition.studyMode),
+                    "Clicking Smart Mix must enable smartMixEnabled and select an active mode");
+
+                SpacedRepetition.smartMixEnabled = false;
                 SpacedRepetition.studyMode = "flashcard";
                 srView.resetCardInteraction();
 
@@ -482,6 +668,22 @@ ShellRoot {
                 wait(150);
                 // Verify Study shortcuts work inside AbyssPerimeter after switching to Spaced Repetition tab
                 srView.subTab = "study";
+                SpacedRepetition.smartMixEnabled = true;
+                SpacedRepetition.studyMode = "cloze";
+                srView.resetCardInteraction();
+                wait(80);
+                const beforePerimeterClozeRev = SpacedRepetition.todayReviewedCount;
+                keyClick(Qt.Key_2);
+                wait(80);
+                check(srView.answerRevealed === true && srView.selectedChoiceIndex === 1,
+                    "Pressing '2' in Cloze Reading inside AbyssPerimeter Smart Mix must select option 1 and reveal answer");
+                keyClick(Qt.Key_3);
+                wait(80);
+                check(SpacedRepetition.todayReviewedCount === beforePerimeterClozeRev + 1,
+                    "Pressing '3' after reveal in Cloze Reading inside AbyssPerimeter Smart Mix must submit rating");
+                SpacedRepetition.undoLastReview();
+                SpacedRepetition.smartMixEnabled = false;
+                SpacedRepetition.studyMode = "flashcard";
                 srView.resetCardInteraction();
                 wait(80);
                 keyClick(Qt.Key_Space);

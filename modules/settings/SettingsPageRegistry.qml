@@ -48,6 +48,8 @@ Singleton {
             return 10
         if (index === 8)
             return 25
+        if (index === 14)
+            return 15
         if (index === 16 && root.isPageApplicable(22))
             return 22
         if (index === 17)
@@ -67,6 +69,7 @@ Singleton {
         if (!value) return -1
         if (value === "autostart" || value === "applications") return 39
         if (value === "advanced") return 25
+        if (value === "widgets") return 15
         if (value === "panels") return 10
         if (value === "dashboard") return root.isPageApplicable(22) ? 22 : -1
         if (value === "overview") return root.isPageApplicable(23) ? 23 : -1
@@ -80,7 +83,7 @@ Singleton {
         // deep link must not depend on that page's retired search controls.
         const label = String(section ?? "").toLowerCase()
         const integration = key === "services" && (label.includes("todo")
-            || label.includes("to-do") || label.includes("obsidian")
+            || label.includes("to-do") || label.includes("nexus")
             || label.includes("zettelkasten") || label.includes("quick note")
             || label.includes("calendar"))
         const optionalPower = key === "system" && (label.includes("tlp") || label.includes("fan")
@@ -177,6 +180,10 @@ Singleton {
         }
         if (current === 8) {
             Persistent.states.settings.iiPage = 25
+            return
+        }
+        if (current === 14) {
+            Persistent.states.settings.iiPage = 15
             return
         }
         if (current === 16) {

@@ -763,6 +763,22 @@ Scope {
                 Qt.quit()
                 return
             }
+            const musicPreset = AppLauncher.presetOptions("audioPlayer").find(p => p.value === "alis-local-music")
+            if (!musicPreset) { console.error("SET_F01_LOCAL_MUSIC_PRESET_FAIL"); Qt.quit(); return }
+            // Installed desktop Exec is absolute; the built-in preset must
+            // still retain its canonical command and selected preset after save.
+            const discoveredBeforeMusic = AppLauncher.discoveredApps
+            AppLauncher.discoveredApps = discoveredBeforeMusic.concat([{
+                desktopId: "alis-local-music.desktop", identityKey: "native:alis-local-music.desktop",
+                name: "Local Music (MPD)", exec: "/opt/alis/bin/alis local-music --",
+                execBin: "/opt/alis/bin/alis", installed: true, isFlatpak: false
+            }])
+            AppLauncher.applyPreset("audioPlayer", "alis-local-music")
+            const musicSummary = AppLauncher.selectedAppSummary("audioPlayer")
+            if (Config.options.apps.audioPlayer !== "alis local-music" || AppLauncher.presetIdFor("audioPlayer") !== "alis-local-music" || !musicSummary.installed || musicSummary.name !== "Local Music (MPD)") {
+                console.error("SET_F01_LOCAL_MUSIC_SELECTION_FAIL", JSON.stringify(musicSummary)); Qt.quit(); return
+            }
+            AppLauncher.discoveredApps = discoveredBeforeMusic
             AppLauncher.selectDiscoveredApp("browser", flatpakApp)
             AppLauncher.setCustomCommand("editor", "zed --new")
             const browserSpawn = AppLauncher.niriSpawnActionForSlot("browser", false)
@@ -774,7 +790,6 @@ Scope {
                 return
             }
             AppLauncher.prepareShortcutForSlot("browser")
-            page.activeSection = "autostart"
             function findObj(node, name) {
                 if (!node) return null
                 if (node.objectName === name) return node
@@ -785,6 +800,41 @@ Scope {
                 }
                 return null
             }
+            const browserCur = findObj(page, "defaultAppCurrent_browser")
+            const browserName = findObj(page, "defaultAppName_browser")
+            const browserBadge = findObj(page, "defaultAppBadge_browser")
+            const browserChoose = findObj(page, "defaultAppChooseBtn_browser")
+            const browserSync = findObj(page, "defaultAppSyncXdgBtn_browser")
+            if (!browserCur || !browserName || !browserBadge || !browserChoose || !browserSync) {
+                console.error("SET_F01_SLOT_ELEMENTS_FAIL")
+                Qt.quit()
+                return
+            }
+            const syncBox = browserSync.mapToItem(browserCur, 0, 0)
+            const badgeBox = browserBadge.mapToItem(browserCur, 0, 0)
+            const chooseBox = browserChoose.mapToItem(browserCur, 0, 0)
+            if ((syncBox.x + browserSync.width) > (browserCur.width - 5.5) || (badgeBox.x + browserBadge.width) > (chooseBox.x - 4.0)) {
+                console.error("SET_F01_SLOT_OVERFLOW_FAIL", syncBox.x + browserSync.width, browserCur.width, badgeBox.x + browserBadge.width, chooseBox.x)
+                Qt.quit()
+                return
+            }
+            const twoColGrid = findObj(page, "defaultAppsTwoColumnGrid")
+            const primaryDisc = findObj(page, "defaultAppsDiscoverySummary")
+            const portableSec = findObj(page, "defaultAppsPortableSection")
+            if (!twoColGrid || !primaryDisc || !portableSec || !twoColGrid.uniformCellWidths || Math.abs(primaryDisc.width - (portableSec.width - 22)) > 2) {
+                console.error("SET_F01_PRIMARY_WIDTH_FAIL", twoColGrid ? twoColGrid.width : null, primaryDisc ? primaryDisc.width : null, portableSec ? portableSec.width : null)
+                Qt.quit()
+                return
+            }
+            page.activeSection = "utilities"
+            const utilCard = findObj(page, "defaultAppsUtilitiesCard")
+            const utilDisc = findObj(page, "defaultAppsUtilitiesDiscoverySummary")
+            if (!utilCard || !utilCard.visible || utilCard.naturalCardImplicitHeight < 300 || !utilDisc) {
+                console.error("SET_F01_UTILITIES_WIDTH_FAIL", utilCard ? utilCard.visible : null, utilCard ? utilCard.naturalCardImplicitHeight : null, Boolean(utilDisc))
+                Qt.quit()
+                return
+            }
+            page.activeSection = "autostart"
             const autostartSec = findObj(page, "defaultAppsAutostartSection")
             const appsCard = findObj(page, "autostartAppsCard")
             const servicesCard = findObj(page, "autostartServicesCard")
@@ -851,8 +901,43 @@ Scope {
         assert saved["apps"]["browser"] == "flatpak run --user org.mozilla.firefox"
         assert saved["apps"]["desktopIds"]["browser"] == "flatpak:user:org.mozilla.firefox"
         assert saved["apps"]["editor"] == "zed --new"
+        assert saved["apps"]["audioPlayer"] == "alis local-music"
+        assert saved["apps"]["desktopIds"]["audioPlayer"] == "native:alis-local-music.desktop"
         assert saved["apps"]["fileManager"] == "thunar"
         assert saved["apps"]["fileExplorer"] == "thunar"
+
+
+def test_local_music_desktop_launch() -> None:
+    """The actual desktop entry is discoverable and retains file URI argv."""
+    with tempfile.TemporaryDirectory(prefix="alis-local-music-default-") as tmp:
+        folder = Path(tmp)
+        bins, apps = folder / "bin", folder / "applications"
+        apps.mkdir()
+        _make_executable(bins, "alis")
+        (apps / "alis-local-music.desktop").write_text(
+            (ROOT / "assets/applications/alis-local-music.desktop").read_text())
+        config = folder / "config.json"
+        original = {"apps": {"audioPlayer": "alis local-music", "desktopIds": {
+            "audioPlayer": "native:alis-local-music.desktop"}}, "owner": "preserve"}
+        config.write_text(json.dumps(original))
+        env = dict(os.environ, ALIS_DEFAULT_APPS_PATH=str(bins),
+                   ALIS_DEFAULT_APPS_XDG_DIRS=str(apps),
+                   ALIS_DEFAULT_APPS_USER_FLATPAK_DIR=str(folder / "no-fp"),
+                   ALIS_DEFAULT_APPS_SYSTEM_FLATPAK_DIR=str(folder / "no-fp"))
+        def helper(*args):
+            result = subprocess.run(["python3", str(HELPER), *args], env=env,
+                                    text=True, capture_output=True, timeout=10, check=True)
+            return json.loads(result.stdout)
+        discovery = helper("discover")
+        app = next(a for a in discovery["apps"] if a["desktopId"] == "alis-local-music.desktop")
+        assert app["installed"] and "audioPlayer" in app["slots"]
+        files = ["file:///tmp/A%20%23.wav", "/tmp/Unicode 音楽.flac"]
+        launch = helper("resolve-launch", "audioPlayer", str(config), "--", *files)
+        import shlex
+        desktop_exec = next(line[5:] for line in (apps / "alis-local-music.desktop").read_text().splitlines() if line.startswith("Exec="))
+        executable = shlex.split(desktop_exec)[0]
+        assert launch["argv"] == [executable, "local-music", "--", *files], launch
+        assert json.loads(config.read_text()) == original
 
 
 def main() -> None:
@@ -877,6 +962,7 @@ def main() -> None:
     test_manual_xdg_sync()
     test_legacy_migration_and_deeplinks()
     test_quickshell_runtime_default_apps()
+    test_local_music_desktop_launch()
     print("SET_F01_PASS discovery, launch resolution, manual XDG sync, legacy migration, compact icon UI and Quickshell runtime verified")
 
 

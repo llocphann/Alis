@@ -294,6 +294,7 @@ Item {
     }
 
     function doUpdateWorkspaceOccupied() {
+        let nextOccupied
         if (CompositorService.isNiri) {
             const wsList = root.outputWorkspaces || []
             const windows = NiriService.windows || []
@@ -306,16 +307,20 @@ Item {
                 if (wsId !== undefined && wsId !== null) occupiedWorkspaceIds.add(wsId)
             }
 
-            workspaceOccupied = Array.from({ length: root.workspacesShown }, (_, i) => {
+            nextOccupied = Array.from({ length: root.workspacesShown }, (_, i) => {
                 const targetNumber = base + i + 1
                 const ws = root.workspaceForSlot(targetNumber)
                 if (!ws) return false
                 return occupiedWorkspaceIds.has(ws.id)
             })
         } else {
-            workspaceOccupied = Array.from({ length: root.workspacesShown }, (_, i) => {
+            nextOccupied = Array.from({ length: root.workspacesShown }, (_, i) => {
                 return Hyprland.workspaces.values.some(ws => ws.id === workspaceGroup * root.workspacesShown + i + 1);
             })
+        }
+        const cur = root.workspaceOccupied || []
+        if (cur.length !== nextOccupied.length || nextOccupied.some((v, idx) => v !== cur[idx])) {
+            workspaceOccupied = nextOccupied
         }
     }
 
@@ -606,12 +611,14 @@ Item {
                             return HyprlandData.biggestWindowForWorkspace(button.workspaceValue)
                         }
                     }
-                    property var mainAppIconSource: {
-                        const appClass = CompositorService.isNiri 
-                            ? (biggestWindow?.app_id || biggestWindow?.appId) 
-                            : biggestWindow?.class
-                        return AppSearch.getIconSource(appClass)
-                    }
+                    readonly property string biggestWindowAppClass: !biggestWindow
+                        ? ""
+                        : (CompositorService.isNiri
+                            ? String(biggestWindow.app_id || biggestWindow.appId || "")
+                            : String(biggestWindow.class || ""))
+                    property var mainAppIconSource: biggestWindowAppClass.length > 0
+                        ? AppSearch.getIconSource(biggestWindowAppClass)
+                        : ""
 
                     StyledText { // Workspace number text
                         rotation: -root.contentRotation

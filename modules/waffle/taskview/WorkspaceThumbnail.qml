@@ -105,11 +105,29 @@ Item {
         }
     }
 
-    readonly property string wallpaperPath: {
+    readonly property string wallpaperPathRaw: {
         const wBg = Config.options?.waffles?.background ?? {}
         if (wBg.useMainWallpaper ?? true)
             return Config.options?.background?.wallpaperPath ?? ""
-        return wBg.wallpaperPath ?? Config.options?.background?.wallpaperPath ?? ""
+        return (wBg.wallpaperPath || (Config.options?.background?.wallpaperPath ?? ""))
+    }
+    readonly property bool wallpaperIsVideo: WallpaperListener.isVideoPath(wallpaperPathRaw)
+    readonly property string wallpaperPath: {
+        if (!wallpaperIsVideo)
+            return FileUtils.trimFileProtocol(wallpaperPathRaw)
+        const wBg = Config.options?.waffles?.background ?? {}
+        const fallbackThumb = (wBg.useMainWallpaper ?? true)
+            ? (Config.options?.background?.thumbnailPath ?? "")
+            : (wBg.thumbnailPath || (Config.options?.background?.thumbnailPath ?? ""))
+        return FileUtils.trimFileProtocol(Wallpapers.getVideoFirstFramePath(wallpaperPathRaw) || fallbackThumb)
+    }
+    onWallpaperPathRawChanged: {
+        if (wallpaperIsVideo)
+            Wallpapers.ensureVideoFirstFrame(wallpaperPathRaw)
+    }
+    Component.onCompleted: {
+        if (wallpaperIsVideo)
+            Wallpapers.ensureVideoFirstFrame(wallpaperPathRaw)
     }
 
     readonly property string workspaceName: {

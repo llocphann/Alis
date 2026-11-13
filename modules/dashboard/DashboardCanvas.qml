@@ -20,6 +20,14 @@ Item {
     property bool editMode: false
     property bool presentationActive: true
     property bool warmContent: false
+    readonly property bool widgetsReady: {
+        for (let i = 0; i < moduleRepeater.count; ++i) {
+            const w = moduleRepeater.itemAt(i)
+            if (w && w.moduleLoading)
+                return false
+        }
+        return true
+    }
     // One rendering/editing implementation per tab; only layout state differs.
     property string customTabId: ""
     readonly property var layoutOptions: {
@@ -1884,7 +1892,11 @@ Item {
         const current = root.gridSize
         let index = sizes.indexOf(current)
         index = index < 0 ? 0 : (index + 1) % sizes.length
-        const next = sizes[index]
+        root.setGridSize(sizes[index])
+    }
+
+    function setGridSize(value) {
+        const next = Math.max(8, Math.min(64, Math.round(Number(value) || 24)))
         if (root.editMode)
             root._draftGridSize = next
         else
@@ -1894,7 +1906,13 @@ Item {
     function _cycleGridStyle() {
         const styles = ["dots", "lines", "cross"]
         const current = styles.indexOf(root.gridStyle)
-        const next = styles[(current < 0 ? 0 : current + 1) % styles.length]
+        root.setGridStyle(styles[(current < 0 ? 0 : current + 1) % styles.length])
+    }
+
+    function setGridStyle(styleKey) {
+        const next = String(styleKey ?? "dots")
+        if (!["dots", "lines", "cross"].includes(next))
+            return
         if (root.editMode)
             root._draftGridStyle = next
         else
@@ -2004,6 +2022,7 @@ Item {
                 required property var modelData
                 readonly property var px: root._rectPixels(String(modelData))
                 property alias moduleItem: moduleContent.item
+                readonly property bool moduleLoading: moduleContent.active && moduleContent.status === Loader.Loading
                 visible: root.visibleIds.includes(String(modelData))
                 readonly property bool selected:
                     root.editMode && root.selectedId === String(modelData)
@@ -2107,6 +2126,7 @@ Item {
                         x: (cardViewport.width - width * fittingScale) / 2
                         y: (cardViewport.height - height * fittingScale) / 2
                         sourceComponent: root._widgetMap[String(cardWrap.modelData)] ?? null
+                        asynchronous: !root.presentationActive
                         active: cardWrap.visible || root.warmContent
                             && root.visibleIds.includes(String(cardWrap.modelData))
                         enabled: !root.editMode

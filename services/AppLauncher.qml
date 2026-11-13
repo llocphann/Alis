@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs
 import qs.modules.common
 import qs.modules.common.functions
 import qs.services
@@ -219,6 +220,7 @@ Singleton {
             supportsXdgSync: true,
             xdgTargetLabel: "audio/mpeg · audio/flac · audio/ogg · audio/x-wav",
             presets: [
+                { id: "alis-local-music", label: "Local Music (MPD)", command: "alis local-music", desktopId: "alis-local-music.desktop", builtin: true },
                 { id: "amberol", label: "Amberol", command: "amberol", desktopId: "io.bassi.Amberol.desktop" },
                 { id: "gapless", label: "Gapless (G4Music)", command: "g4music", desktopId: "com.github.neithern.g4music.desktop" },
                 { id: "elisa", label: "Elisa", command: "elisa", desktopId: "org.kde.elisa.desktop" },
@@ -404,6 +406,24 @@ Singleton {
                 root.xdgDefaults = payload.xdgDefaults ?? {}
                 root.toolsAvailable = payload.toolsAvailable ?? { flatpak: false, xdgSettings: false, xdgMime: false }
                 root.discoveryLoaded = true
+                const updates = {}
+                let hasUpdates = false
+                const defs = root._slotDefinitions ?? []
+                for (let i = 0; i < defs.length; ++i) {
+                    const slotId = defs[i].id
+                    const idKey = root.configuredDesktopId(slotId)
+                    if (!idKey || !idKey.includes("alis-app-"))
+                        continue
+                    const matched = payload.apps.find(a => a && (a.identityKey === idKey || a.desktopId === idKey))
+                    if (matched && matched.exec && matched.exec !== root.configuredCommand(slotId)) {
+                        updates[`apps.${slotId}`] = matched.exec
+                        if (slotId === "fileManager")
+                            updates["apps.fileExplorer"] = matched.exec
+                        hasUpdates = true
+                    }
+                }
+                if (hasUpdates)
+                    Config.setNestedValues(updates)
                 root._configRevision++
             }
         } catch (e) {
@@ -557,6 +577,14 @@ Singleton {
         }
 
         const preset = (def?.presets ?? []).find(p => p.command === cmd)
+        if (preset?.builtin) {
+            return {
+                name: preset.label, icon: def.icon, sourceBadge: "Alis",
+                desktopId: preset.desktopId, appId: "", identityKey: idKey,
+                command: cmd, installed: true, isCustom: false,
+                isFlatpak: false, installation: "native", origin: ""
+            }
+        }
         if (idKey.startsWith("flatpak:") || cmd.startsWith("flatpak run")) {
             const parts = idKey.split(":")
             const appId = parts.length >= 3 ? parts.slice(2).join(":") : cmd.replace(/^flatpak\s+run\s+(--user\s+|--system\s+)?/, "").trim()
@@ -593,18 +621,24 @@ Singleton {
             }
         }
 
+        const fallbackDesktopId = idKey.endsWith(".desktop")
+            ? idKey
+            : (idKey.startsWith("native:") && idKey.length > 7
+                ? (idKey.slice(7).endsWith(".desktop") ? idKey.slice(7) : `${idKey.slice(7)}.desktop`)
+                : "")
+
         return {
             name: cmd || (def?.label ?? slotId),
             icon: def?.icon ?? "terminal",
             sourceBadge: Translation.tr("Custom command"),
-            desktopId: "",
+            desktopId: fallbackDesktopId,
             appId: "",
-            identityKey: "",
+            identityKey: idKey,
             command: cmd,
             installed: cmd.length > 0,
-            isCustom: true,
+            isCustom: fallbackDesktopId.length === 0,
             isFlatpak: false,
-            installation: "custom",
+            installation: fallbackDesktopId.length > 0 ? "native" : "custom",
             origin: ""
         }
     }
@@ -736,7 +770,7 @@ Singleton {
             || (!a.isFlatpak && a.execBin === preset.command)
         )
         const updates = {}
-        updates[`apps.${definition.id}`] = matched ? matched.exec : preset.command
+        updates[`apps.${definition.id}`] = preset.builtin ? preset.command : (matched ? matched.exec : preset.command)
         updates[`apps.desktopIds.${definition.id}`] = matched ? matched.identityKey : (preset.desktopId ? `native:${preset.desktopId}` : "")
         if (definition.id === "fileManager") {
             updates["apps.fileExplorer"] = matched ? matched.exec : preset.command
@@ -769,6 +803,11 @@ Singleton {
         const targetSlot = slotId === "fileExplorer" ? "fileManager" : slotId
         const matched = root.findDiscoveredAppForSlot(targetSlot)
         const argsList = Array.isArray(extraArgs) ? extraArgs : (extraArgs ? [String(extraArgs)] : [])
+
+        if (targetSlot === "audioPlayer" && root.commandFor(targetSlot) === "alis local-music") {
+            root.openLocalMusic(argsList)
+            return
+        }
 
         if (matched && argsList.length === 0 && !matched.isFlatpak && matched.desktopId) {
             const stem = matched.desktopId.endsWith(".desktop") ? matched.desktopId.slice(0, -8) : matched.desktopId
@@ -803,16 +842,25 @@ Singleton {
         }
 
         if (argsList.length > 0) {
-            const helperCmd = ["/usr/bin/python3", root._helperScript, "resolve-launch", targetSlot, Config.filePath, "--"].concat(argsList.map(a => String(a)))
             Quickshell.execDetached(["/usr/bin/python3", "-c",
-                "import json, subprocess, sys; from default_apps_helper import resolve_launch_argv; " +
-                "argv = resolve_launch_argv(sys.argv[1], sys.argv[2], sys.argv[3:]); " +
-                "sys.exit(subprocess.Popen(argv).pid if argv else 1)",
-                targetSlot, Config.filePath].concat(argsList.map(a => String(a))))
+                "import runpy, subprocess, sys; helper = runpy.run_path(sys.argv[1]); " +
+                "argv = helper['resolve_launch_argv'](sys.argv[2], sys.argv[3], sys.argv[4:]); " +
+                "subprocess.Popen(argv) if argv else sys.exit(1)",
+                root._helperScript, targetSlot, Config.filePath].concat(argsList.map(a => String(a))))
             return
         }
 
         ShellExec.execCmd(command)
+    }
+
+    function openLocalMusic(files): string {
+        if (!(Config.options?.dashboard?.music?.enable ?? true))
+            return "error: Local Music is disabled in Dashboard settings"
+        GlobalStates.dashboardSelectionRestored = true
+        GlobalStates.dashboardPageId = "music"
+        GlobalStates.dashboardPage = 1
+        GlobalStates.dashboardOpen = true
+        return LocalMusic.openExternalFiles(files)
     }
 
     property string pendingShortcutAction: ""
@@ -861,10 +909,37 @@ Singleton {
         return root.niriSpawnActionForCommand(cmd)
     }
 
-    function niriSpawnActionForCommand(cmdStr: string): string {
-        const tokens = root._splitCommandTokens(cmdStr)
+    readonly property var tuiAppBins: [
+        "yazi", "ranger", "lf", "nnn", "vifm", "mc",
+        "nvim", "vim", "vi", "nano", "hx", "helix", "micro", "kak",
+        "btop", "htop", "top", "nvtop", "nmtui", "pulsemixer", "alsamixer", "lazygit"
+    ]
+
+    function _isTuiBin(binStr: string): bool {
+        const clean = String(binStr ?? "").trim()
+        if (!clean)
+            return false
+        const base = clean.includes("/") ? clean.slice(clean.lastIndexOf("/") + 1) : clean
+        return root.tuiAppBins.includes(base.toLowerCase())
+    }
+
+    function _stripDesktopFieldCodes(execStr: string): string {
+        return String(execStr ?? "")
+            .replace(/(?:^|\s)%[fFuUdDnNickvm](?=\s|$)/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+    }
+
+    function niriSpawnActionForCommand(cmdStr: string, forceTerminal = false): string {
+        const cleaned = root._stripDesktopFieldCodes(cmdStr)
+        const tokens = root._splitCommandTokens(cleaned)
         if (tokens.length === 0)
             return ""
+        if (forceTerminal || root._isTuiBin(tokens[0])) {
+            const home = Directories.homePath ?? ""
+            const alisBin = home.length > 0 ? `${home}/.local/bin/alis` : "alis"
+            return `spawn "${root._escapeKdlToken(alisBin)}" "terminal" "-e" ` + tokens.map(t => `"${root._escapeKdlToken(t)}"`).join(" ")
+        }
         return "spawn " + tokens.map(t => `"${root._escapeKdlToken(t)}"`).join(" ")
     }
 
@@ -876,8 +951,36 @@ Singleton {
                 return `spawn "flatpak" "run" "--user" "${root._escapeKdlToken(appObj.appId)}"`
             return `spawn "flatpak" "run" "${root._escapeKdlToken(appObj.appId)}"`
         }
-        const execStr = String(appObj.exec ?? appObj.execPath ?? "").trim()
-        return root.niriSpawnActionForCommand(execStr)
+        const needsTerminal = Boolean(appObj.terminal) || root._isTuiBin(String(appObj.execBin ?? ""))
+        const execStr = root._stripDesktopFieldCodes(String(appObj.exec ?? appObj.execPath ?? ""))
+        return root.niriSpawnActionForCommand(execStr, needsTerminal)
+    }
+
+    function normalizeNiriBindAction(rawAction: string): string {
+        let trimmed = String(rawAction ?? "").trim()
+        if (trimmed.endsWith(";"))
+            trimmed = trimmed.slice(0, -1).trim()
+        if (!trimmed)
+            return ""
+        if (!trimmed.startsWith("spawn ") && !trimmed.startsWith("spawn\t"))
+            return trimmed
+        const rest = trimmed.slice(5).trim()
+        let tokens = root._splitCommandTokens(rest)
+        if (tokens.length === 0)
+            return trimmed
+        if (tokens.length === 1 && /\s/.test(tokens[0]) && !tokens[0].startsWith("/")) {
+            const sub = root._splitCommandTokens(tokens[0])
+            if (sub.length >= 2) {
+                const sub0 = sub[0].includes("/") ? sub[0].slice(sub[0].lastIndexOf("/") + 1).toLowerCase() : sub[0].toLowerCase()
+                if (sub.length === 2 && (sub0 === "kitty" || sub0 === "foot" || sub0 === "alacritty") && root._isTuiBin(sub[1]))
+                    tokens = [sub[0], "-e", sub[1]]
+                else
+                    tokens = sub
+            }
+        }
+        if (tokens.length === 1 && root._isTuiBin(tokens[0]))
+            return root.niriSpawnActionForCommand(tokens[0], true)
+        return "spawn " + tokens.map(t => `"${root._escapeKdlToken(t)}"`).join(" ")
     }
 
     function slotSummary(slotId: string): var {
@@ -989,12 +1092,22 @@ Singleton {
         } else {
             const joined = tokens.join(" ")
             const base0Lower = base0.toLowerCase()
+            const terminalBins = ["kitty", "foot", "ghostty", "alacritty", "wezterm", "konsole", "xterm"]
+            let lookupToken = t0
+            let lookupLower = base0Lower
+            if (terminalBins.includes(base0Lower) && tokens.length >= 2) {
+                const tuiArg = tokens.slice(1).find(tok => !tok.startsWith("-") && root._isTuiBin(tok)) ?? ""
+                if (tuiArg) {
+                    lookupToken = tuiArg
+                    lookupLower = (tuiArg.includes("/") ? tuiArg.slice(tuiArg.lastIndexOf("/") + 1) : tuiArg).toLowerCase()
+                }
+            }
             matched = all.find(a =>
                 a.exec === joined
-                || a.exec === t0
-                || (!a.isFlatpak && String(a.execBin ?? "").toLowerCase() === base0Lower)
-                || String(a.desktopId ?? "").toLowerCase() === `${base0Lower}.desktop`
-                || String(a.name ?? "").toLowerCase() === base0Lower
+                || a.exec === lookupToken
+                || (!a.isFlatpak && String(a.execBin ?? "").toLowerCase() === lookupLower)
+                || String(a.desktopId ?? "").toLowerCase() === `${lookupLower}.desktop`
+                || String(a.name ?? "").toLowerCase() === lookupLower
             ) ?? null
         }
 
@@ -1092,4 +1205,437 @@ Singleton {
             .join(" || ")
         ShellExec.execCmd(sh)
     }
+
+    // -------------------------------------------------------------------------
+    // Persistent Portable Applications State & Process Execution
+    // -------------------------------------------------------------------------
+    readonly property string portableManageScript: Quickshell.shellPath("scripts/apps/manage-portable-apps.py")
+    property var apps: []
+    readonly property var managedApps: apps
+    readonly property var portableApps: apps
+    property bool portableAppsLoaded: false
+    property bool _manualAppsOverride: false
+
+    property bool busy: false
+    property string busyAction: ""
+    property string busyAppId: ""
+    property bool checkingUpdates: false
+    property string updatingAppId: ""
+    property int progressPercent: -1
+    property string progressDetail: ""
+    property string progressStage: ""
+    property bool pickerActive: false
+    property string statusMessage: ""
+    property string statusError: ""
+
+    property string _lastPortableAction: ""
+    property bool _refreshAppLauncherAfterAction: false
+    property string _portableStdoutBuffer: ""
+    property bool _portableStdoutDone: false
+    property bool _portableProcExited: false
+    property int _portableLastExitCode: 0
+    property bool _portableCommandActive: false
+
+    readonly property int updatesAvailableCount: {
+        let count = 0
+        const list = root.apps || []
+        for (let i = 0; i < list.length; ++i) {
+            if (list[i] && list[i].updateAvailable)
+                count++
+        }
+        return count
+    }
+
+    function setManagedAppsManual(list: var): void {
+        root._manualAppsOverride = true
+        root.apps = Array.isArray(list) ? list : []
+        root.portableAppsLoaded = true
+    }
+
+    readonly property bool portableProcessRunning: Boolean(root._portableCommandActive || portableManageProc?.running || portableFinalizeFallbackTimer?.running)
+    readonly property bool portableAppsBusy: root.busy && root.portableProcessRunning
+
+    function _setNativePickerDialogVisible(visible: bool): void {
+        try {
+            if (typeof GlobalStates !== "undefined" && GlobalStates && typeof GlobalStates.setSettingsNativeDialogVisible === "function") {
+                GlobalStates.setSettingsNativeDialogVisible("applicationsFilePicker", visible)
+            }
+        } catch (e) {
+        }
+    }
+
+    function _releasePortablePickerLock(): void {
+        if (root.pickerActive || Boolean(typeof GlobalStates !== "undefined" && GlobalStates?._settingsNativeDialogs?.applicationsFilePicker)) {
+            root.pickerActive = false
+            root._setNativePickerDialogVisible(false)
+        }
+    }
+
+    function _recoverStalePortableBusyIfIdle(): void {
+        if (!portableManageProc.running && !portableFinalizeFallbackTimer.running) {
+            root._portableCommandActive = false
+            root._releasePortablePickerLock()
+            if (root.busy) {
+                root.busy = false
+                root.busyAction = ""
+                root.busyAppId = ""
+                root.checkingUpdates = false
+                root.updatingAppId = ""
+                root.progressPercent = -1
+                root.progressDetail = ""
+                root.progressStage = ""
+            }
+        }
+    }
+
+    function _handlePortableProgressEvent(ev: var): void {
+        if (!ev)
+            return
+        const act = String(ev.action ?? "").trim()
+        if (act.length > 0) {
+            root.busyAction = act
+            root._lastPortableAction = act
+            root.checkingUpdates = (act === "check-updates")
+        }
+        const aid = String(ev.appId ?? "").trim()
+        if (aid.length > 0) {
+            root.busyAppId = aid
+            if (root.busyAction === "update")
+                root.updatingAppId = aid
+        } else if (root.busyAction === "update" && !root.updatingAppId) {
+            root.updatingAppId = "__all__"
+        }
+        if (typeof ev.percent === "number" && ev.percent >= 0) {
+            root.progressPercent = Math.max(0, Math.min(100, Math.round(ev.percent)))
+        }
+        const det = String(ev.detail ?? "").trim()
+        if (det.length > 0) {
+            root.progressDetail = det
+            root.statusMessage = det
+            root.statusError = ""
+        }
+        const stg = String(ev.stage ?? "").trim()
+        if (stg.length > 0) {
+            root.progressStage = stg
+            if (stg === "installing" && root.pickerActive) {
+                root._releasePortablePickerLock()
+            }
+        }
+        if (Array.isArray(ev.apps) && !root._manualAppsOverride) {
+            root.apps = ev.apps
+            root.portableAppsLoaded = true
+        }
+    }
+
+    function _applyPortableResult(parsed: var): void {
+        if (!parsed)
+            return
+        if (Array.isArray(parsed.apps)) {
+            if (!(root._manualAppsOverride && root._lastPortableAction === "list")) {
+                root.apps = parsed.apps
+                root.portableAppsLoaded = true
+            }
+        }
+        if (parsed.added || parsed.removed || (Array.isArray(parsed.updated) && parsed.updated.length > 0)) {
+            root._refreshAppLauncherAfterAction = true
+        }
+        if (parsed.cancelled) {
+            root.statusError = ""
+            root.statusMessage = ""
+            return
+        }
+        if (parsed.ok === false) {
+            root.statusError = String(parsed.error || Translation.tr("Operation failed."))
+            root.statusMessage = payloadHasUpdatesApplied(parsed.updated)
+                ? Translation.tr("Updated %1 application(s).").arg(parsed.updated.length)
+                : ""
+            return
+        }
+        const chkErrs = Array.isArray(parsed.checkErrors) ? parsed.checkErrors : []
+        if (chkErrs.length > 0) {
+            root.statusError = String(parsed.error || chkErrs.join("; "))
+        } else if (root._lastPortableAction !== "list" || Array.isArray(parsed.updated) || Array.isArray(parsed.checked)) {
+            root.statusError = ""
+        }
+        if (Array.isArray(parsed.updated)) {
+            if (payloadHasUpdatesApplied(parsed.updated)) {
+                root.statusMessage = Translation.tr("Updated %1 application(s).").arg(parsed.updated.length)
+                root._refreshAppLauncherAfterAction = true
+            } else {
+                root.statusMessage = Translation.tr("Application is already up to date.")
+            }
+        } else if (Array.isArray(parsed.checked)) {
+            const avail = Number(parsed.updatesAvailable ?? 0)
+            if (avail > 0)
+                root.statusMessage = Translation.tr("%1 update(s) available.").arg(avail)
+            else if (chkErrs.length === 0)
+                root.statusMessage = Translation.tr("All supported applications are up to date.")
+            else
+                root.statusMessage = ""
+        } else if (root._lastPortableAction === "add" || root._lastPortableAction === "pick-and-add") {
+            const addedCount = Array.isArray(parsed.added) ? parsed.added.length : 0
+            if (addedCount > 0) {
+                root.statusMessage = Translation.tr("Installed %1 portable application(s) into ~/.local/share/alis/applications.").arg(addedCount)
+                root._refreshAppLauncherAfterAction = true
+            } else if (parsed.error) {
+                root.statusError = String(parsed.error)
+            }
+        } else if (root._lastPortableAction === "remove") {
+            root.statusMessage = Translation.tr("Removed application and cleaned up desktop entry.")
+            root._refreshAppLauncherAfterAction = true
+        } else if (root._lastPortableAction === "set-update-source") {
+            root.statusMessage = Translation.tr("Saved update source.")
+        }
+    }
+
+    function payloadHasUpdatesApplied(updatedArr: var): bool {
+        return Array.isArray(updatedArr) && updatedArr.length > 0
+    }
+
+    function _finalizePortableCommandIfReady(): void {
+        if (!root._portableProcExited || !root._portableStdoutDone)
+            return
+        portableFinalizeFallbackTimer.stop()
+        root._releasePortablePickerLock()
+        if (root._lastPortableAction !== "list") {
+            root.statusMessage = ""
+        }
+        const raw = root._portableStdoutBuffer
+        if (raw.length > 0) {
+            try {
+                const parsed = JSON.parse(raw)
+                root._applyPortableResult(parsed)
+            } catch (e) {
+                root.statusError = String(e)
+                root.statusMessage = ""
+            }
+        }
+        if (root._portableLastExitCode !== 0 && root.statusError.length === 0) {
+            root.statusError = Translation.tr("Command exited with code %1").arg(root._portableLastExitCode)
+            root.statusMessage = ""
+        }
+        const shouldRefreshDiscovery = root._refreshAppLauncherAfterAction
+        root._refreshAppLauncherAfterAction = false
+        root._portableCommandActive = false
+        root.busy = false
+        root.busyAction = ""
+        root.busyAppId = ""
+        root.checkingUpdates = false
+        root.updatingAppId = ""
+        root.progressPercent = -1
+        root.progressDetail = ""
+        root.progressStage = ""
+        if (shouldRefreshDiscovery) {
+            root.refreshDiscovery()
+            Autostart.refresh()
+        }
+    }
+
+    function _startPortableCommand(args: var, actionTag: string, targetAppId = ""): void {
+        root._recoverStalePortableBusyIfIdle()
+        if (root.busy || portableManageProc.running)
+            return
+        root._lastPortableAction = actionTag
+        root.busy = true
+        root.busyAction = actionTag
+        root.busyAppId = String(targetAppId ?? "")
+        root.checkingUpdates = (actionTag === "check-updates")
+        root.updatingAppId = (actionTag === "update") ? (String(targetAppId ?? "") || "__all__") : ""
+        if (actionTag === "pick-and-add") {
+            root.pickerActive = true
+            root._setNativePickerDialogVisible(true)
+        } else {
+            root.pickerActive = false
+        }
+        root._portableStdoutBuffer = ""
+        root._portableStdoutDone = false
+        root._portableProcExited = false
+        root._portableLastExitCode = 0
+
+        if (actionTag === "update") {
+            root.progressPercent = 2
+            root.progressStage = "preparing"
+            root.progressDetail = targetAppId && targetAppId !== "__all__"
+                ? Translation.tr("Updating %1…").arg(targetAppId)
+                : Translation.tr("Updating portable applications…")
+            root.statusError = ""
+            root.statusMessage = root.progressDetail
+        } else if (actionTag === "check-updates") {
+            root.progressPercent = 5
+            root.progressStage = "checking"
+            root.progressDetail = Translation.tr("Checking for updates…")
+            root.statusError = ""
+            root.statusMessage = root.progressDetail
+        } else {
+            root.progressPercent = -1
+            root.progressStage = ""
+            root.progressDetail = ""
+            if (actionTag !== "list") {
+                root.statusError = ""
+                root.statusMessage = ""
+            }
+        }
+
+        portableManageProc.command = ["python3", "-B", root.portableManageScript].concat(args)
+        root._portableCommandActive = true
+        portableManageProc.running = true
+    }
+
+    function refreshList(forceAppLauncherDiscovery = false): void {
+        root._recoverStalePortableBusyIfIdle()
+        if (forceAppLauncherDiscovery) {
+            root._manualAppsOverride = false
+            root._refreshAppLauncherAfterAction = true
+            root.statusError = ""
+            root.statusMessage = ""
+        }
+        if (root.busy || portableManageProc.running)
+            return
+        root._startPortableCommand(["list", "--attach-running"], "list", "")
+    }
+
+    function list(forceAppLauncherDiscovery = false): void {
+        root.refreshList(forceAppLauncherDiscovery)
+    }
+
+    function checkForUpdates(appId = ""): void {
+        root._recoverStalePortableBusyIfIdle()
+        if (root.busy || portableManageProc.running)
+            return
+        root._manualAppsOverride = false
+        const target = String(appId ?? "").trim()
+        const args = target.length > 0
+            ? ["--bg-survive", "check-updates", target]
+            : ["--bg-survive", "check-updates", "--all"]
+        root._startPortableCommand(args, "check-updates", target)
+    }
+
+    function checkUpdates(appId = ""): void {
+        root.checkForUpdates(appId)
+    }
+
+    function updateApplication(appId: string): void {
+        root._recoverStalePortableBusyIfIdle()
+        const target = String(appId ?? "").trim()
+        if (!target || root.busy || portableManageProc.running)
+            return
+        root._manualAppsOverride = false
+        root._startPortableCommand(["--bg-survive", "update", target], "update", target)
+    }
+
+    function updateAllApplications(): void {
+        root._recoverStalePortableBusyIfIdle()
+        if (root.busy || portableManageProc.running)
+            return
+        root._manualAppsOverride = false
+        root._startPortableCommand(["--bg-survive", "update", "--all"], "update", "__all__")
+    }
+
+    function update(appId = ""): void {
+        const target = String(appId ?? "").trim()
+        if (!target || target === "--all" || target === "all")
+            root.updateAllApplications()
+        else
+            root.updateApplication(target)
+    }
+
+    function pickAndAddApplications(): void {
+        root._recoverStalePortableBusyIfIdle()
+        if (root.busy || portableManageProc.running)
+            return
+        root._manualAppsOverride = false
+        root._startPortableCommand(["pick-and-add"], "pick-and-add", "")
+    }
+
+    function pickAndAddPortableApplications(): void {
+        root.pickAndAddApplications()
+    }
+
+    function addApplicationPaths(paths: var): void {
+        root._recoverStalePortableBusyIfIdle()
+        if (root.busy || portableManageProc.running)
+            return
+        const clean = []
+        for (let i = 0; i < (paths ? paths.length : 0); ++i) {
+            const p = String(paths[i] ?? "").trim()
+            if (p.length > 0)
+                clean.push(p)
+        }
+        if (clean.length === 0)
+            return
+        root._manualAppsOverride = false
+        root._startPortableCommand(["add"].concat(clean), "add", "")
+    }
+
+    function register(paths: var): void {
+        root.addApplicationPaths(paths)
+    }
+
+    function removeApplication(appId: string): void {
+        root._recoverStalePortableBusyIfIdle()
+        const target = String(appId ?? "").trim()
+        if (!target || root.busy || portableManageProc.running)
+            return
+        root._manualAppsOverride = false
+        root._startPortableCommand(["remove", target], "remove", target)
+    }
+
+    function remove(appId: string): void {
+        root.removeApplication(appId)
+    }
+
+    function setUpdateSource(appId: string, source: string): void {
+        root._recoverStalePortableBusyIfIdle()
+        const target = String(appId ?? "").trim()
+        if (!target || root.busy || portableManageProc.running)
+            return
+        root._manualAppsOverride = false
+        root._startPortableCommand(["set-update-source", target, String(source ?? "").trim()], "set-update-source", target)
+    }
+
+    Timer {
+        id: portableFinalizeFallbackTimer
+        interval: 60
+        repeat: false
+        onTriggered: {
+            root._portableStdoutDone = true
+            root._finalizePortableCommandIfReady()
+        }
+    }
+
+    Process {
+        id: portableManageProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root._portableStdoutBuffer = (this.text ?? "").trim()
+                root._portableStdoutDone = true
+                root._finalizePortableCommandIfReady()
+            }
+        }
+        stderr: SplitParser {
+            onRead: line => {
+                const trimmed = String(line ?? "").trim()
+                if (!trimmed.startsWith("ALIS_PROGRESS:"))
+                    return
+                const jsonPart = trimmed.slice("ALIS_PROGRESS:".length).trim()
+                if (!jsonPart)
+                    return
+                try {
+                    const ev = JSON.parse(jsonPart)
+                    root._handlePortableProgressEvent(ev)
+                } catch (e) {
+                }
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            root._portableProcExited = true
+            root._portableLastExitCode = exitCode
+            if (root._portableStdoutDone) {
+                root._finalizePortableCommandIfReady()
+            } else {
+                portableFinalizeFallbackTimer.restart()
+            }
+        }
+    }
 }
+

@@ -58,7 +58,7 @@ const fall=ranges(["2026-10-31","2026-11-01"],"00:00","00:00",true);
 assert.equal((new Date(fall[1].endDate)-new Date(fall[1].startDate))/3600000,25,
   "Fall-back duration must be 25 hours");
 const dialog=read("modules/sidebarRight/events/EventsDialog.qml");
-const calendar=read("modules/common/widgets/ObsidianMonthCalendar.qml");
+const calendar=read("modules/common/widgets/NexusMonthCalendar.qml");
 const service=read("services/Events.qml");
 const occurrences=read("services/EventOccurrences.js");
 assert.match(calendar,/signal dayActivated\(var date, int modifiers\)/);

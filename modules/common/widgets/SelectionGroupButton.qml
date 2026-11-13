@@ -21,6 +21,8 @@ GroupButton {
     property bool useAbyssPillShape: true
     waveFace: !root.abyssTaskNavigation && root.useAbyssPillShape && Config.options?.panelFamily === "abyss"
     property string buttonIcon
+    property real customIconSize: -1
+    property real customIconSpacing: -1
     // Opt-in high contrast for compact category tabs on dense Settings pages.
     property bool highContrastSelection: false
     selectionOutlineWidth: root.abyssTaskNavigation && root.visualFocus ? 1
@@ -86,7 +88,7 @@ GroupButton {
             // Keep the icon fixed at the leading edge while the clipped text
             // viewport slides open from left to right (and retracts from the right).
             spacing: root.buttonIcon?.length > 0 && root.buttonText?.length > 0
-                && root.labelExpanded ? 6 : 0
+                && root.labelExpanded ? (root.customIconSpacing >= 0 ? root.customIconSpacing : 6) : 0
 
             Behavior on spacing {
                 enabled: Appearance.animationsEnabled && root.enableImplicitWidthAnimation
@@ -116,7 +118,7 @@ GroupButton {
                     anchors.centerIn: parent
                     verticalAlignment: Text.AlignVCenter
                     text: root.buttonIcon
-                    iconSize: Appearance.font.pixelSize.normal
+                    iconSize: root.customIconSize > 0 ? root.customIconSize : Appearance.font.pixelSize.normal
                     color: root.abyssTaskNavigation
                         ? (root.toggled ? SettingsMaterialPreset.taskTabSelectedInk : SettingsMaterialPreset.taskTabInk)
                         : root.toggled

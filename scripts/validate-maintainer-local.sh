@@ -317,6 +317,11 @@ run_check 'Abyss Notification closing content snapshot regression' node scripts/
 run_check 'Notification closing frame/model fast path regression' node scripts/test-notification-close-fastpath.mjs
 run_check 'Recording/Notification stable allocator priority' node scripts/test-abyss-recording-notification-placement.mjs
 run_check 'Recording-fixed Notification Pyramid visual origin' node scripts/test-abyss-recording-pyramid-anchor.mjs
+run_check 'Sidebar/Edgebar vacancy follows open order' python3 scripts/test-abyss-vacancy-open-order.py
+run_check 'Native Sidebar/Edgebar content expansion and close' python3 scripts/test-abyss-vacancy-open-order-runtime.py
+run_check 'Default apps including Local Music selection and desktop URI launch' python3 scripts/test-set-f01-default-apps.py
+run_check 'Local Music real Process queue and external paths' python3 scripts/test-local-music-mutation-runtime.py
+run_check 'Local Music actual CLI typed IPC JSON transport' python3 scripts/test-local-music-ipc-runtime.py
 run_check 'Abyss disabled Waves mass-update regression' node scripts/test-abyss-wave-idle-policy.mjs
 run_check 'Abyss hover scene geometry diagnostic regression' node scripts/test-abyss-hover-geometry-probe.mjs
 run_check 'Abyss frame activity diagnostic regression' node scripts/test-abyss-frame-activity-probe.mjs

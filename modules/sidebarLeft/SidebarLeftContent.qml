@@ -84,6 +84,15 @@ Item {
     }
     property string selectedTabId: ""
     property bool tabEditMode: false
+    property int _prewarmCount: 0
+
+    Timer {
+        id: tabPrewarmTimer
+        interval: 85
+        repeat: true
+        running: root.panelVisible && root._prewarmCount < (root.tabButtonList?.length ?? 0)
+        onTriggered: root._prewarmCount++
+    }
 
     // Enabled tabs rendered in the user's stable-id order.
     property var tabButtonList: {
@@ -116,10 +125,41 @@ Item {
         Config.setNestedValue("sidebar.left.tabOrder", order)
     }
 
+    function syncSwipeItemsOrder(): void {
+        const expected = root.tabButtonList ?? []
+        let writePos = 0
+        for (let i = 0; i < expected.length; i++) {
+            const targetId = expected[i]?.id ?? ""
+            if (!targetId) continue
+            let foundIdx = -1
+            for (let j = writePos; j < swipeView.count; j++) {
+                const item = swipeView.itemAt(j)
+                if (item && item.tabId === targetId) {
+                    foundIdx = j
+                    break
+                }
+            }
+            if (foundIdx >= 0) {
+                if (foundIdx !== writePos)
+                    swipeView.moveItem(foundIdx, writePos)
+                writePos++
+            }
+        }
+    }
+
     function syncSelectedTabIndex(): void {
-        if (!root.selectedTabId) return
-        const index = root.tabButtonList.findIndex(tab => tab.id === root.selectedTabId)
-        if (index >= 0 && swipeView.currentIndex !== index) swipeView.currentIndex = index
+        root.syncSwipeItemsOrder()
+        let index = root.selectedTabId
+            ? root.tabButtonList.findIndex(tab => tab.id === root.selectedTabId)
+            : -1
+        if (index < 0 && root.tabButtonList.length > 0)
+            index = Math.max(0, Math.min(swipeView.currentIndex, root.tabButtonList.length - 1))
+        if (index >= 0) {
+            if (swipeView.currentIndex !== index)
+                swipeView.currentIndex = index
+            tabBar.setCurrentIndex(index)
+            root.selectedTabId = root.tabButtonList[index]?.id ?? ""
+        }
     }
 
     function ensureActiveTabReady(): void {
@@ -195,7 +235,9 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        readonly property real naturalFitHeight: contentColumn.implicitHeight
+        readonly property real naturalFitHeight: (toolbarContainer.visible
+                ? toolbarContainer.implicitHeight + contentColumn.spacing : 0)
+            + Math.max(0, Math.round(root.activeTabContentHeight))
             + contentColumn.anchors.topMargin + root.sidebarPadding
         height: root.fitToContent
             ? SidebarGeometry.leftFitHeight(parent.height, naturalFitHeight)
@@ -268,7 +310,10 @@ Item {
                     reorderEnabled: root.tabEditMode
                     onReorderRequested: (fromIndex, toIndex) => root.persistTabMove(fromIndex, toIndex)
                     // Don't bind to swipeView - let tabBar be the source of truth
-                    onCurrentIndexChanged: swipeView.currentIndex = currentIndex
+                    onCurrentIndexChanged: {
+                        if (swipeView.currentIndex !== currentIndex)
+                            swipeView.currentIndex = currentIndex
+                    }
                 }
 
                 ToolbarButton {
@@ -276,13 +321,17 @@ Item {
                     Layout.preferredWidth: 38
                     visible: root.tabButtonList.length > 1
                     toggled: root.tabEditMode
+                    colBackground: "transparent"
+                    colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.92)
+                    colBackgroundToggled: Appearance.colors.colSecondaryContainer
+                    colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
                     downAction: () => root.tabEditMode = !root.tabEditMode
                     contentItem: MaterialSymbol {
                         anchors.centerIn: parent
                         text: root.tabEditMode ? "done" : "edit"
                         iconSize: 19
                         color: tabEditButton.toggled
-                            ? Appearance.colors.colOnPrimary
+                            ? Appearance.colors.colOnSecondaryContainer
                             : Appearance.colors.colOnLayer2
                     }
                     StyledToolTip {
@@ -326,10 +375,21 @@ Item {
                     spacing: 10
                     // Sync back to tabBar when swiping
                     onCurrentIndexChanged: {
-                        tabBar.setCurrentIndex(currentIndex)
+                        if (tabBar.currentIndex !== currentIndex)
+                            tabBar.setCurrentIndex(currentIndex)
                         const currentTab = root.tabButtonList[currentIndex]
                         root.selectedTabId = currentTab?.id ?? ""
                         root.ensureActiveTabReady()
+                    }
+                    Component.onCompleted: {
+                        if (contentItem) {
+                            if (contentItem.highlightMoveVelocity !== undefined)
+                                contentItem.highlightMoveVelocity = -1
+                            if (contentItem.highlightMoveDuration !== undefined)
+                                contentItem.highlightMoveDuration = Qt.binding(() => Appearance.animationsEnabled ? 200 : 0)
+                            if (contentItem.cacheBuffer !== undefined)
+                                contentItem.cacheBuffer = Qt.binding(() => Math.max(0, Math.round(swipeView.width * 4)))
+                        }
                     }
                     interactive: !root.tabEditMode
                         && !(currentItem?.item?.editMode ?? false)
@@ -337,6 +397,7 @@ Item {
 
                     clip: true
                     layer.enabled: root.panelVisible && !Appearance.gameModeMinimal
+                        && Boolean(swipeView.contentItem?.moving)
                     layer.smooth: false
                     layer.mipmap: false
                     layer.effect: GE.OpacityMask {
@@ -351,21 +412,46 @@ Item {
                         }
                     }
 
-                    Repeater {
+                    Instantiator {
                         model: root.tabButtonList
                         delegate: Loader {
+                            id: tabLoader
                             required property var modelData
                             required property int index
-                            active: SwipeView.isCurrentItem || SwipeView.isNextItem || SwipeView.isPreviousItem
+                            readonly property string tabId: String(modelData?.id ?? "")
+                            property bool everLoaded: false
+                            readonly property bool shouldActivate: SwipeView.isCurrentItem
+                                || swipeView.currentIndex === index
+                                || (tabLoader.tabId !== "ai" && (index < root._prewarmCount
+                                    || (root.panelVisible && (SwipeView.isNextItem || SwipeView.isPreviousItem))))
+                            onShouldActivateChanged: {
+                                if (shouldActivate && !everLoaded)
+                                    everLoaded = true
+                            }
+                            Component.onCompleted: {
+                                if (shouldActivate)
+                                    everLoaded = true
+                            }
+                            active: everLoaded || shouldActivate
                             sourceComponent: {
-                                switch (modelData.icon) {
-                                    case "neurology": return aiChatComp
-                                    case "translate": return translatorComp
-                                    case "newspaper": return newsComp
-                                    case "build": return toolsComp
+                                switch (tabLoader.tabId) {
+                                    case "ai": return aiChatComp
+                                    case "translator": return translatorComp
+                                    case "news": return newsComp
+                                    case "tools": return toolsComp
                                     default: return null
                                 }
                             }
+                        }
+                        onObjectAdded: (index, object) => {
+                            swipeView.insertItem(Math.min(index, swipeView.count), object)
+                            root.syncSwipeItemsOrder()
+                            Qt.callLater(root.syncSelectedTabIndex)
+                        }
+                        onObjectRemoved: (index, object) => {
+                            swipeView.removeItem(object)
+                            root.syncSwipeItemsOrder()
+                            Qt.callLater(root.syncSelectedTabIndex)
                         }
                     }
                 }

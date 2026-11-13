@@ -237,6 +237,8 @@ fn main() -> Result<()> {
             "--vscode-theme" => return editors::run_vscode_theme(&raw_args[2..]),
             "--opencode-theme" => return editors::run_opencode_theme(&raw_args[2..]),
             "--zed-theme" => return editors::run_zed_theme(&raw_args[2..]),
+            "--codex-theme" => return editors::run_codex_theme(&raw_args[2..]),
+            "--claude-theme" => return editors::run_claude_theme(&raw_args[2..]),
             _ => {}
         }
     }

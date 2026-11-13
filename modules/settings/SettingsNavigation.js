@@ -3,7 +3,7 @@ function arrange(raw, defaults, pageCount, retired) {
     var saved;
     try { saved=typeof raw === "string" && raw ? JSON.parse(raw) : null; } catch(e) {}
     var groups=Array.isArray(saved) ? saved : saved?.groups;
-    if (!Array.isArray(groups) || !groups.length || groups.length > defaults.length) groups=defaults;
+    if (!Array.isArray(groups) || !groups.length) groups=defaults;
     var hidden=Array.from(new Set(Array.from(saved?.hidden || []).filter(
         i=>Number.isInteger(i) && i>=0 && i<pageCount && retired.indexOf(i)<0)));
     var seen=new Set(retired.concat(hidden)),out=[];

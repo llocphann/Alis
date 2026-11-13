@@ -41,7 +41,7 @@ Item {
     }
 
     // Shared month presentation is Material-only and owned by
-    // ObsidianMonthCalendar. CalendarWidget keeps only event data/state.
+    // NexusMonthCalendar. CalendarWidget keeps only event data/state.
     readonly property color colPrimary: Appearance.colors.colPrimary
 
     property var locale: {
@@ -195,7 +195,7 @@ Item {
                 anchors.right: parent.right
                 spacing: 8
 
-                ObsidianMonthCalendar {
+                NexusMonthCalendar {
                     id: sharedMonthCalendar
                     Layout.fillWidth: true
                     Layout.leftMargin: 8

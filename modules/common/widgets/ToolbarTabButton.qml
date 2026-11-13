@@ -16,20 +16,20 @@ RippleButton {
 
     implicitHeight: 40
     readonly property real _iconOnlyImplicitWidth: icon.implicitWidth + horizontalPadding * 2
-    implicitWidth: root.showLabel ? (implicitContentWidth + horizontalPadding * 2) : root._iconOnlyImplicitWidth
+    implicitWidth: contentRow.implicitWidth + horizontalPadding * 2
     buttonRadius: height / 2
 
     // Material is the only shell-wide Global Theme. Keep the existing terminal
     // Material interaction path without retaining unreachable style faces.
     cookieMorphing: false
     toggled: root.current
-    colBackgroundToggled: Appearance.colors.colPrimaryContainer
-    colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+    colBackgroundToggled: "transparent"
+    colBackgroundToggledHover: ColorUtils.transparentize(Appearance.colors.colOnSecondaryContainer, 0.92)
 
     colBackground: "transparent"
-    colBackgroundHover: current ? Appearance.colors.colPrimaryContainerHover
+    colBackgroundHover: current ? ColorUtils.transparentize(Appearance.colors.colOnSecondaryContainer, 0.92)
         : ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.95)
-    colRipple: current ? Appearance.colors.colPrimaryContainerActive
+    colRipple: current ? Appearance.colors.colSecondaryContainerActive
         : ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.95)
 
     contentItem: Item {
@@ -43,7 +43,7 @@ RippleButton {
 
             Behavior on spacing {
                 enabled: Appearance.animationsEnabled
-                animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+                animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
             }
 
             MaterialSymbol {
@@ -52,7 +52,7 @@ RippleButton {
                 iconSize: 22
                 text: root.materialSymbol
 
-                color: root.current ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
+                color: root.current ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnSurface
             }
             Item {
                 id: labelReveal
@@ -61,12 +61,12 @@ RippleButton {
                 implicitWidth: width
                 implicitHeight: labelText.implicitHeight
                 opacity: root.showLabel ? 1 : 0
-                visible: opacity > 0
+                visible: width > 0.5 || opacity > 0
                 clip: true
 
                 Behavior on width {
                     enabled: Appearance.animationsEnabled
-                    animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled
@@ -81,7 +81,7 @@ RippleButton {
                     text: root.text
                     font.family: Appearance.font.family.main
                     font.weight: root.current ? Font.Medium : Font.Normal
-                    color: root.current ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
+                    color: root.current ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnSurface
                 }
             }
         }

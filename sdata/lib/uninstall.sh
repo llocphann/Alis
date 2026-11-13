@@ -360,7 +360,8 @@ uninstall_remove_alis_public_entries() {
     local desktop
     for desktop in \
         "${XDG_DATA_HOME}/applications/alis.desktop" \
-        "${XDG_DATA_HOME}/applications/alis-settings.desktop"; do
+        "${XDG_DATA_HOME}/applications/alis-settings.desktop" \
+        "${XDG_DATA_HOME}/applications/alis-local-music.desktop"; do
         if [[ -f "$desktop" && ! -L "$desktop" ]] &&
             grep -Fxq 'X-Alis-Managed=true' "$desktop"; then
             rm -f -- "$desktop"

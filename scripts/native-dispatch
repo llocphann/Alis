@@ -80,7 +80,7 @@ rust_ready() {
 
 cmd="${1:-}"
 [[ -n "$cmd" ]] || {
-    echo "usage: native-dispatch <input-lock|input-keys|niri|clipboard-store|mpd|mpd-daemon|mpd-subscribe|lyrics|theme|theme-preview|least-busy-region|scan-plugins|telemetry|desktop-icons|companion|backend-info> [args...]" >&2
+    echo "usage: native-dispatch <input-lock|input-keys|niri|clipboard-store|mpd|mpd-daemon|mpd-subscribe|lyrics|theme|theme-preview|least-busy-region|scan-plugins|telemetry|desktop-icons|backlight|calc|translate|companion|backend-info> [args...]" >&2
     exit 64
 }
 shift
@@ -89,9 +89,9 @@ if [[ "$MODE" == rust && "$STRICT" == 1 ]]; then
     required_binary=""
     case "$cmd" in
         input-lock|input-keys) required_binary=alis-inputd ;;
-        niri|clipboard-store|desktop-icons|scan-plugins|telemetry) required_binary=alis-native ;;
+        niri|clipboard-store|desktop-icons|scan-plugins|telemetry|backlight|calc|translate) required_binary=alis-native ;;
         mpd|mpd-daemon|mpd-subscribe|lyrics) required_binary=alis-mpdd ;;
-        theme|theme-preview|least-busy-region) required_binary=alis-theme ;;
+        theme|theme-preview|least-busy-region|vscode-theme|opencode-theme|zed-theme|codex-theme|claude-theme) required_binary=alis-theme ;;
     esac
     if [[ -n "$required_binary" ]] && ! rust_ready "$required_binary"; then
         echo "[native-dispatch] missing Rust binary: $BIN_DIR/$required_binary" >&2
@@ -297,6 +297,28 @@ case "$cmd" in
         exit 69
         ;;
 
+    codex-theme)
+        if want_rust && rust_ready alis-theme; then
+            "$BIN_DIR/alis-theme" --codex-theme "$@"
+            rc=$?
+            if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
+            echo "[native-dispatch] Rust codex-theme failed ($rc), falling back to Python" >&2
+        fi
+        py="$(python_bin)"
+        exec "$py" "$ROOT_DIR/scripts/colors/codex/theme_generator.py" "$@"
+        ;;
+
+    claude-theme)
+        if want_rust && rust_ready alis-theme; then
+            "$BIN_DIR/alis-theme" --claude-theme "$@"
+            rc=$?
+            if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
+            echo "[native-dispatch] Rust claude-theme failed ($rc), falling back to Python" >&2
+        fi
+        py="$(python_bin)"
+        exec "$py" "$ROOT_DIR/scripts/colors/claude/theme_generator.py" "$@"
+        ;;
+
     scan-plugins)
         if want_rust && rust_ready alis-native; then
             "$BIN_DIR/alis-native" plugins scan --shell-root "$ROOT_DIR" "$@"
@@ -323,6 +345,90 @@ case "$cmd" in
         fi
         echo "[native-dispatch] desktop-icons native path requested while backend is not Rust" >&2
         exit 64
+        ;;
+
+    backlight)
+        if want_rust; then
+            if rust_ready alis-native; then
+                "$BIN_DIR/alis-native" backlight "$@" 2>/dev/null
+                rc=$?
+                if (( rc != 2 )); then exit "$rc"; fi
+            fi
+            if [[ "$BIN_DIR" != "$DEFAULT_BIN_DIR" && -x "$DEFAULT_BIN_DIR/alis-native" ]]; then
+                exec "$DEFAULT_BIN_DIR/alis-native" backlight "$@"
+            fi
+        fi
+        sub="${1:-list}"
+        shift || true
+        case "$sub" in
+            list) command -v brightnessctl >/dev/null 2>&1 && exec brightnessctl -l -m -c backlight ;;
+            get)
+                dev="${1:-}"
+                if command -v brightnessctl >/dev/null 2>&1; then
+                    if [[ -n "$dev" ]]; then
+                        printf '%s %s\n' "$(brightnessctl -d "$dev" g)" "$(brightnessctl -d "$dev" m)"
+                    else
+                        printf '%s %s\n' "$(brightnessctl -c backlight g)" "$(brightnessctl -c backlight m)"
+                    fi
+                    exit 0
+                fi
+                ;;
+            set)
+                target="${1:-}"
+                shift || true
+                dev=""
+                min_v="1"
+                while (($#)); do
+                    case "$1" in
+                        -d|--device) dev="${2:-}"; shift 2 ;;
+                        --min-value) min_v="${2:-1}"; shift 2 ;;
+                        *) shift ;;
+                    esac
+                done
+                if command -v brightnessctl >/dev/null 2>&1; then
+                    if [[ -n "$dev" ]]; then
+                        exec brightnessctl -d "$dev" --min-value="$min_v" s "$target" --quiet
+                    else
+                        exec brightnessctl -c backlight --min-value="$min_v" s "$target" --quiet
+                    fi
+                fi
+                ;;
+        esac
+        exit 127
+        ;;
+
+    calc)
+        if want_rust; then
+            if rust_ready alis-native; then
+                "$BIN_DIR/alis-native" calc "$@" 2>/dev/null
+                rc=$?
+                if (( rc != 2 )); then exit "$rc"; fi
+            fi
+            if [[ "$BIN_DIR" != "$DEFAULT_BIN_DIR" && -x "$DEFAULT_BIN_DIR/alis-native" ]]; then
+                exec "$DEFAULT_BIN_DIR/alis-native" calc "$@"
+            fi
+        fi
+        command -v qalc >/dev/null 2>&1 && exec qalc -t "$*"
+        exit 127
+        ;;
+
+    translate)
+        if want_rust; then
+            if rust_ready alis-native; then
+                "$BIN_DIR/alis-native" translate "$@" 2>/dev/null
+                rc=$?
+                if (( rc != 2 )); then exit "$rc"; fi
+            fi
+            if [[ "$BIN_DIR" != "$DEFAULT_BIN_DIR" && -x "$DEFAULT_BIN_DIR/alis-native" ]]; then
+                exec "$DEFAULT_BIN_DIR/alis-native" translate "$@"
+            fi
+        fi
+        if [[ "${1:-}" == "--list-languages" ]]; then
+            printf 'auto\nen\nvi\nja\nko\nzh-CN\nzh-TW\nfr\nde\nes\nru\n'
+            exit 0
+        fi
+        command -v trans >/dev/null 2>&1 && exec trans -b -no-theme -no-bidi -no-ansi "$@"
+        exit 127
         ;;
 
     *)

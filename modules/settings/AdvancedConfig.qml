@@ -49,6 +49,8 @@ ContentPage {
             "appearance.cava.framerate": 30,
             "appearance.cava.stereo": true,
             "appearance.cava.waveOpacity": 30,
+            "bar.cava.width": 120,
+            "bar.cava.barSpacing": 2,
         })
         colorRegenTimer.restart()
     }
@@ -82,12 +84,16 @@ ContentPage {
             SettingsGroup {
                 GridLayout {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     columns: width >= 360 ? 2 : 1
+                    uniformCellWidths: columns > 1
                     columnSpacing: 10
                     rowSpacing: 4
 
                     SettingsSwitch {
                         Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
                         buttonIcon: "hardware"
                         text: Translation.tr("Shell & utilities")
                         checked: Config.options?.appearance?.wallpaperTheming?.enableAppsAndShell ?? true
@@ -101,6 +107,8 @@ ContentPage {
                     }
                     SettingsSwitch {
                         Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
                         buttonIcon: "tv_options_input_settings"
                         text: Translation.tr("Qt apps")
                         checked: Config.options?.appearance?.wallpaperTheming?.enableQtApps ?? true
@@ -114,6 +122,8 @@ ContentPage {
                     }
                     SettingsSwitch {
                         Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
                         buttonIcon: "chat"
                         text: Translation.tr("Vesktop/Discord")
                         checked: Config.options?.appearance?.wallpaperTheming?.enableVesktop ?? true
@@ -127,6 +137,8 @@ ContentPage {
                     }
                     SettingsSwitch {
                         Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
                         buttonIcon: "music_note"
                         text: Translation.tr("Spotify (Spicetify)")
                         checked: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
@@ -219,15 +231,55 @@ ContentPage {
                     }
                     SettingsSwitch {
                         Layout.fillWidth: true
+                        buttonIcon: "code"
+                        text: Translation.tr("Antigravity")
+                        checked: (Config.options?.appearance?.wallpaperTheming?.enableVSCode ?? true)
+                            && (Config.options?.appearance?.wallpaperTheming?.vscodeEditors?.antigravity ?? true)
+                        onCheckedChanged: {
+                            Config.setNestedValue("appearance.wallpaperTheming.vscodeEditors.antigravity", checked);
+                            colorRegenTimer.restart();
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("Generate and auto-apply Material theme for Antigravity editor")
+                        }
+                    }
+                    SettingsSwitch {
+                        Layout.fillWidth: true
+                        buttonIcon: "code"
+                        text: Translation.tr("OpenAI Codex")
+                        checked: Config.options?.appearance?.wallpaperTheming?.enableCodex ?? true
+                        onCheckedChanged: {
+                            Config.setNestedValue("appearance.wallpaperTheming.enableCodex", checked);
+                            colorRegenTimer.restart();
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("Generate and auto-apply theme for OpenAI Codex CLI")
+                        }
+                    }
+                    SettingsSwitch {
+                        Layout.fillWidth: true
+                        buttonIcon: "code"
+                        text: Translation.tr("Claude (CLI & Desktop)")
+                        checked: Config.options?.appearance?.wallpaperTheming?.enableClaude ?? true
+                        onCheckedChanged: {
+                            Config.setNestedValue("appearance.wallpaperTheming.enableClaude", checked);
+                            colorRegenTimer.restart();
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("Generate and auto-apply theme for Claude Code CLI and Claude Desktop")
+                        }
+                    }
+                    SettingsSwitch {
+                        Layout.fillWidth: true
                         buttonIcon: "language"
-                        text: Translation.tr("Chrome / Chromium")
+                        text: Translation.tr("Web browsers")
                         checked: Config.options?.appearance?.wallpaperTheming?.enableChrome ?? true
                         onCheckedChanged: {
                             Config.setNestedValue("appearance.wallpaperTheming.enableChrome", checked);
                             colorRegenTimer.restart();
                         }
                         StyledToolTip {
-                            text: Translation.tr("Apply wallpaper-derived colors to Chrome and Chromium browser")
+                            text: Translation.tr("Auto-apply wallpaper Material You colors to Zen Browser, Brave, Vivaldi, Chrome, Chromium, Edge, and Firefox (live Zen/Firefox extension available at http://127.0.0.1:43821)")
                         }
                     }
                     SettingsSwitch {
@@ -468,6 +520,38 @@ ContentPage {
                             "appearance.cava.waveOpacity", value, false)
                         StyledToolTip {
                             text: Translation.tr("Shared wave fill opacity; bar spectrum has its own setting.")
+                        }
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+
+                    ConfigSpinBox {
+                        icon: "width_normal"
+                        text: Translation.tr("Equalizer width")
+                        value: Config.options?.bar?.cava?.width ?? 120
+                        from: 48
+                        to: 360
+                        stepSize: 8
+                        onValueChanged: root.setCavaValue(
+                            "bar.cava.width", value, false)
+                        StyledToolTip {
+                            text: Translation.tr("Width of the Cava Equalizer module on the Bar / Screen Edge (px)")
+                        }
+                    }
+
+                    ConfigSpinBox {
+                        icon: "space_bar"
+                        text: Translation.tr("Bar spacing")
+                        value: Config.options?.bar?.cava?.barSpacing ?? 2
+                        from: 1
+                        to: 6
+                        stepSize: 1
+                        onValueChanged: root.setCavaValue(
+                            "bar.cava.barSpacing", value, false)
+                        StyledToolTip {
+                            text: Translation.tr("Gap between equalizer bars inside the module (px)")
                         }
                     }
                 }

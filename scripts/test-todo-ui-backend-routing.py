@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Guard Todo UI routing across internal and Obsidian backends."""
+"""Guard Todo UI routing across internal and Nexus backends."""
 
 from pathlib import Path
 
@@ -10,7 +10,7 @@ task_list = (ROOT / "modules" / "sidebarRight" / "todo" / "TaskList.qml").read_t
 assert 'onClicked: Todo.openSource("")' in widget
 assert '["xdg-open", Directories.todoTxtPath]' not in widget
 
-assert 'if (Todo.backend === "obsidian")' in task_list
+assert 'if (Todo.backend === "nexus")' in task_list
 assert "actionTimer.start()" in task_list
 assert "enabled: !Todo.busy" in task_list
 assert task_list.count("enabled: !Todo.busy") >= 2

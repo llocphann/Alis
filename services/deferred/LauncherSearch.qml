@@ -71,10 +71,10 @@ Singleton {
 
     Process {
         id: mathProc
-        property list<string> baseCommand: ["qalc", "-t"]
+        property list<string> baseCommand: [FileUtils.trimFileProtocol(`${Directories.scriptPath}/native-dispatch`), "calc"]
         function calculateExpression(expression: string): void {
             mathProc.running = false
-            mathProc.command = baseCommand.concat(expression)
+            mathProc.command = baseCommand.concat(["--", expression])
             mathProc.running = true
         }
         stdout: SplitParser {

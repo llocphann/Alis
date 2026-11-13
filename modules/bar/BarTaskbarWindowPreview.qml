@@ -161,7 +161,7 @@ Button {
                     }
 
                     SequentialAnimation on x {
-                        running: shimmerBg.visible
+                        running: shimmerBg.visible && root.visible && Appearance.animationsEnabled
                         loops: Animation.Infinite
                         NumberAnimation {
                             from: -shimmer.width

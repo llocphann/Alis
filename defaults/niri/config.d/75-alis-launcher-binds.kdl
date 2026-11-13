@@ -33,19 +33,20 @@ binds {
     Super+Shift+E { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "files" "--new"; }
     Super+W { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "browser"; }
     Super+Shift+W { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "browser" "--new"; }
+    Super+O { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "nexus" "toggle"; }
     Mod+Q repeat=false { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "close-window"; }
     Mod+Shift+R { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "region" "recordWithSound"; }
 
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "audio" "volumeUp"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "audio" "volumeDown"; }
-    XF86AudioMute allow-when-locked=true { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "audio" "mute"; }
-    XF86AudioMicMute allow-when-locked=true { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "audio" "micMute"; }
-    XF86MonBrightnessUp allow-when-locked=true { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "brightness" "increment"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "brightness" "decrement"; }
-    XF86AudioPlay { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "mpris" "playPause"; }
-    XF86AudioPause { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "mpris" "playPause"; }
-    XF86AudioNext { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "mpris" "next"; }
-    XF86AudioPrev { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "mpris" "previous"; }
+    XF86AudioRaiseVolume allow-when-locked=true allow-inhibiting=false cooldown-ms=50 { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "audio" "volumeUp"; }
+    XF86AudioLowerVolume allow-when-locked=true allow-inhibiting=false cooldown-ms=50 { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "audio" "volumeDown"; }
+    XF86AudioMute allow-when-locked=true allow-inhibiting=false { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "audio" "mute"; }
+    XF86AudioMicMute allow-when-locked=true allow-inhibiting=false { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "audio" "micMute"; }
+    XF86MonBrightnessUp allow-when-locked=true allow-inhibiting=false cooldown-ms=50 { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "brightness" "increment"; }
+    XF86MonBrightnessDown allow-when-locked=true allow-inhibiting=false cooldown-ms=50 { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "brightness" "decrement"; }
+    XF86AudioPlay allow-inhibiting=false { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "mpris" "playPause"; }
+    XF86AudioPause allow-inhibiting=false { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "mpris" "playPause"; }
+    XF86AudioNext allow-inhibiting=false { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "mpris" "next"; }
+    XF86AudioPrev allow-inhibiting=false { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "mpris" "previous"; }
     Ctrl+Mod+Space { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "mpris" "playPause"; }
     Mod+Alt+N { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "mpris" "next"; }
     Mod+Alt+P { spawn "/bin/sh" "-c" "PATH=\"${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH\"; exec alis \"$@\"" "alis-keybind" "mpris" "previous"; }

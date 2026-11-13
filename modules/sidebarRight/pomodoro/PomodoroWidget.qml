@@ -89,9 +89,12 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 // Compact corner mode gets enough width for Pomodoro/Timer/
                 // Stopwatch without changing the popup's outer dimensions.
+                readonly property real _baseMaxWidth: root.compactMode ? 296 : 260
+                readonly property real _pinnedAvailableWidth:
+                    parent.width - (pinButton.width + 6) * 2
                 width: Math.max(root.compactMode ? 210 : 150, Math.min(
-                    root.compactMode ? 296 : 260,
-                    parent.width - (pinButton.width + 6) * 2))
+                    _baseMaxWidth + (root.showPinButton ? 12 : 16),
+                    root.showPinButton ? _pinnedAvailableWidth : parent.width))
                 pillHeight: root.compactMode ? 28 : 30
                 currentIndex: root.currentTab
                 tabs: root.tabButtonList.map(item => ({

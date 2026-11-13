@@ -176,7 +176,9 @@ with tempfile.TemporaryDirectory(prefix='local-model-formats-') as temporary:
     log=private/'qml.log'
     compositor=private/'compositor';compositor.mkdir()
     with private_wayland(compositor) as display:
-        for key in ('WAYLAND_DISPLAY','XDG_RUNTIME_DIR','NIRI_SOCKET'):env[key]=display[key]
+        for key in ('WAYLAND_DISPLAY','XDG_RUNTIME_DIR','NIRI_SOCKET'):
+            if display and key in display:
+                env[key]=display[key]
         with log.open('w') as output:
             process=subprocess.Popen(['dbus-run-session','--','qs','--path',str(shell/'shell.qml'),'--no-color'],env=env,
                                      stdout=output,stderr=subprocess.STDOUT,start_new_session=True)

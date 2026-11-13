@@ -279,7 +279,7 @@ case "${SKIP_QUICKSHELL}" in
 
     # One managed public entry per role; never overwrite foreign entries.
     local _alis_entry _alis_src _alis_command
-    for _alis_command in "alis.desktop:service restart" "alis-settings.desktop:settings"; do
+    for _alis_command in "alis.desktop:service restart" "alis-settings.desktop:settings" "alis-local-music.desktop:local-music -- %U"; do
       _alis_entry="${_alis_command%%:*}"
       _alis_src="${REPO_ROOT}/assets/applications/${_alis_entry}"
       _alis_command="${_alis_command#*:}"

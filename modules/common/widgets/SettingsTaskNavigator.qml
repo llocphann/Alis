@@ -26,8 +26,11 @@ Item {
 
     implicitWidth: 0
     implicitHeight: 0
+    Layout.fillWidth: true
     Layout.preferredHeight: 0
     Layout.maximumHeight: 0
+    opacity: 0
+    clip: true
 
     function _normalizeSearchLabel(value): string {
         return String(value || "")
@@ -112,5 +115,37 @@ Item {
         const page = _findSettingsPage()
         if (page && page.settingsTaskNavigator === root)
             page.settingsTaskNavigator = null
+    }
+
+    Item {
+        visible: root.options.length > 0
+        implicitWidth: root.width
+        width: root.width
+        implicitHeight: taskOptions.implicitHeight + padding * 2
+        readonly property real padding: root.abyssTaskStyle ? SettingsMaterialPreset.taskTabPadding : 0
+        readonly property color introCardColor: root.abyssTaskStyle ? SettingsMaterialPreset.cardColor : Appearance.colors.colLayer1
+
+        Rectangle {
+            objectName: "settingsTaskRail"
+            anchors.fill: parent
+            visible: root.abyssTaskStyle
+            color: SettingsMaterialPreset.taskRailColor
+            radius: SettingsMaterialPreset.taskRailRadius
+        }
+
+        ConfigSelectionArray {
+            id: taskOptions
+            objectName: "settingsTaskOptions"
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: parent.padding
+            y: parent.padding
+            currentValue: root.currentValue
+            options: root.options
+            taskNavigation: true
+            useAbyssPillShape: false
+            highContrastSelection: root.highContrastSelection
+            onSelected: value => root.selected(value)
+        }
     }
 }

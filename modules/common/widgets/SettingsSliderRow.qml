@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.services
 
 RowLayout {
     id: root
@@ -30,14 +31,17 @@ RowLayout {
     signal seekCommitted(real value)
 
     Layout.fillWidth: true
+    Layout.minimumWidth: 0
     spacing: 10
     implicitHeight: Math.max(labelColumn.implicitHeight, sliderWidget.implicitHeight)
 
     RowLayout {
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
         spacing: 8
 
         OptionalMaterialSymbol {
+            Layout.fillWidth: false
             icon: root.icon
             iconSize: Appearance.font.pixelSize.large
             opacity: root.enabled ? 1 : 0.4
@@ -46,10 +50,13 @@ RowLayout {
         ColumnLayout {
             id: labelColumn
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            clip: true
             spacing: 1
 
             StyledText {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: root.text
                 font.pixelSize: Appearance.font.pixelSize.small
                 color: Appearance.colors.colOnSurface
@@ -61,6 +68,7 @@ RowLayout {
             StyledText {
                 visible: root.description.length > 0
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: root.description
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colSubtext
@@ -74,9 +82,17 @@ RowLayout {
     StyledSlider {
         id: sliderWidget
         Layout.fillWidth: false
-        Layout.preferredWidth: root.sliderWidth
-        Layout.maximumWidth: Math.round(220 * Appearance.fontSizeScale)
-        Layout.minimumWidth: Math.round(120 * Appearance.fontSizeScale)
+        Layout.preferredWidth: sliderWidget.isVertical
+            ? sliderWidget.implicitWidth
+            : (sliderWidget.customLength > 0 ? sliderWidget.customLength : root.sliderWidth)
+        Layout.maximumWidth: sliderWidget.isVertical
+            ? sliderWidget.implicitWidth
+            : (sliderWidget.customLength > 0 ? sliderWidget.customLength : Math.round(220 * Appearance.fontSizeScale))
+        Layout.minimumWidth: sliderWidget.isVertical
+            ? sliderWidget.implicitWidth
+            : Math.min(sliderWidget.customLength > 0 ? sliderWidget.customLength : Math.round(96 * Appearance.fontSizeScale), Math.round(96 * Appearance.fontSizeScale))
+        Layout.preferredHeight: sliderWidget.isVertical ? sliderWidget.implicitHeight : -1
+        Layout.minimumHeight: sliderWidget.isVertical ? sliderWidget.implicitHeight : -1
         Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
         configuration: StyledSlider.Configuration.S
         tooltipContent: root.valueText

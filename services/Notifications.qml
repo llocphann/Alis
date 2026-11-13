@@ -484,15 +484,95 @@ Singleton {
         }
     }
 
+    property int _nextInternalId: 1000000
+
     function _finishHistory(maxId): void {
         if (root._historyReady) return
         root.idOffset = maxId
+        if (maxId >= root._nextInternalId)
+            root._nextInternalId = maxId + 1000
         root._historyReady = true
         const pending = root._pendingIngress
         root._pendingIngress = []
-        for (const entry of pending)
-            if (entry.notification) root._publishNotification(entry.notification, entry.receivedAt)
+        for (const entry of pending) {
+            if (entry.notification)
+                root._publishNotification(entry.notification, entry.receivedAt)
+            else if (entry.internalOpts)
+                root._publishInternalNotification(entry.internalOpts, entry.receivedAt)
+        }
         root.initDone()
+    }
+
+    function sendInternal(opts): void {
+        if (!opts) return
+        const receivedAt = Date.now()
+        if (!root._historyReady) {
+            root._pendingIngress = root._pendingIngress.concat([{ internalOpts: opts, receivedAt }])
+            root.ensureInitialized()
+            return
+        }
+        root._publishInternalNotification(opts, receivedAt)
+    }
+
+    function _publishInternalNotification(opts, receivedAt): void {
+        const showPopup = !root.popupInhibited
+        root._nextInternalId += 1
+        const urgencyStr = String(opts.urgency ?? "normal").toLowerCase()
+        const isCrit = urgencyStr === "critical"
+        const isTransient = Boolean(opts.transient ?? false)
+        const suppressSound = Boolean(opts.suppressSound ?? false)
+        const newNotifObject = notifComponent.createObject(root, {
+            "notificationId": root._nextInternalId,
+            "summary": String(opts.summary ?? ""),
+            "body": String(opts.body ?? ""),
+            "appName": String(opts.appName || "Shell"),
+            "appIcon": String(opts.appIcon ?? ""),
+            "urgency": urgencyStr,
+            "isTransient": isTransient,
+            "time": receivedAt,
+            "popup": showPopup,
+        })
+        if (!newNotifObject) {
+            console.warn("[Notifications] Failed to create internal notification wrapper")
+            return
+        }
+        root.list = [...root.list, newNotifObject]
+
+        if ((Config.options?.sounds?.notifications ?? true) && !root.silent && !suppressSound) {
+            Audio.playEvent(isCrit ? "notificationCritical" : "notification")
+        }
+
+        if (showPopup) {
+            const nextPopupList = [...root.popupList.filter(notif => notif && notif.popup), newNotifObject]
+            root.popupList = nextPopupList
+            root._cachedPopupGroupsByAppName = _groupsForListOptimized(nextPopupList)
+            root._cachedPopupAppNameList = _appNameListForGroups(root._cachedPopupGroupsByAppName)
+
+            const explicitTimeout = Number(opts.timeout ?? -1)
+            const maxLifetime = Config.options?.notifications?.maxPopupLifetime ?? 30000
+            let timeout = Config.options?.notifications?.timeoutNormal ?? 7000
+            if (Number.isFinite(explicitTimeout) && explicitTimeout >= 0) {
+                timeout = explicitTimeout === 0 ? maxLifetime : explicitTimeout
+            } else if (urgencyStr === "low") {
+                timeout = Config.options?.notifications?.timeoutLow ?? 5000
+            } else if (isCrit) {
+                const critTimeout = Config.options?.notifications?.timeoutCritical ?? 0
+                timeout = (critTimeout === 0 && maxLifetime > 0) ? maxLifetime : critTimeout
+            }
+            if (timeout !== 0) {
+                newNotifObject.timer = notifTimerComponent.createObject(root, {
+                    "notificationId": newNotifObject.notificationId,
+                    "interval": timeout,
+                })
+            }
+
+            if (Config.options?.notifications?.useLegacyCounter ?? false) {
+                root._manualUnreadCounter++
+            }
+        }
+        root.notify(newNotifObject)
+        if (!isTransient)
+            root.scheduleHistorySave()
     }
 
     function _publishNotification(notification, receivedAt): void {
@@ -779,14 +859,13 @@ Singleton {
 
         for (let i = 0; i < tests.length; ++i) {
             const t = tests[i];
-            Quickshell.execDetached([
-                "/usr/bin/notify-send",
-                "-h", "int:transient:1",
-                "-a", "Quickshell ii",
-                "-i", t.icon,
-                t.summary,
-                t.body,
-            ]);
+            root.sendInternal({
+                summary: t.summary,
+                body: t.body,
+                appName: "Alis",
+                appIcon: t.icon,
+                transient: true,
+            });
         }
     }
 
@@ -795,6 +874,16 @@ Singleton {
 
         function test(): void {
             root.sendTestNotifications()
+        }
+
+        function push(summary: string, body: string, appName: string, appIcon: string, urgency: string): void {
+            root.sendInternal({
+                summary: summary,
+                body: body,
+                appName: appName || "Shell",
+                appIcon: appIcon || "",
+                urgency: urgency || "normal",
+            })
         }
 
         function clearAll(): void {
@@ -861,8 +950,8 @@ Singleton {
                 const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'))
                 Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
                 root.list = []
-                notifFileView.setText(stringifyList(root.list));
                 root._finishHistory(0)
+                root.scheduleHistorySave()
             } else {
                 console.log("[Notifications] Error loading file: " + error)
                 root._finishHistory(0)

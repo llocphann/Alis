@@ -63,11 +63,11 @@ Item {
                     }
 
                     function startAction() {
-                        // Obsidian mutations are asynchronous and can fail
+                        // Nexus mutations are asynchronous and can fail
                         // closed after capability/CAS validation. Do not
                         // optimistically collapse the delegate or a rejected
                         // mutation would leave a phantom-disappeared task.
-                        if (Todo.backend === "obsidian") {
+                        if (Todo.backend === "nexus") {
                             actionTimer.start()
                             return
                         }

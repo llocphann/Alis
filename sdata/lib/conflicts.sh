@@ -52,6 +52,8 @@ check_conflicts() {
     conflict_map["caelestia-shell-git"]="Quickshell Shell (Caelestia)"
     # BMS
     conflict_map["bms-shell-bin"]="Quickshell Shell (BMS)"
+    # Legacy iNiR dependency tracker (superseded by alis-deps)
+    conflict_map["inir-deps"]="Legacy Dependency Tracker (replaced by alis-deps)"
 
     # Packages that are critical conflicts — they break Alis at the package
     # level (provide/replace quickshell, or own overlapping config paths).
@@ -66,6 +68,7 @@ check_conflicts() {
     critical_map["caelestia-shell"]=1
     critical_map["caelestia-shell-git"]=1
     critical_map["bms-shell-bin"]=1
+    critical_map["inir-deps"]=1
 
     # Check for installed conflicts
     for pkg in "${!conflict_map[@]}"; do
@@ -114,7 +117,7 @@ check_conflicts() {
                 # On Arch, offer to remove critical conflicts now.
                 # Removal order matters: meta-packages first, then shells, then runtimes.
                 local ordered_remove=()
-                for pkg in cachyos-niri-noctalia noctalia-shell noctalia-qs noctalia-qs-git \
+                for pkg in inir-deps cachyos-niri-noctalia noctalia-shell noctalia-qs noctalia-qs-git \
                            dms-shell dms-shell-git caelestia-shell caelestia-shell-git bms-shell-bin; do
                     for cpkg in "${critical_conflicts[@]}"; do
                         if [[ "$pkg" == "$cpkg" ]]; then

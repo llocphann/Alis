@@ -31,6 +31,8 @@ import glob
 import json
 import os
 import re
+import shlex
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -2620,6 +2622,11 @@ _KB_IPC_MAP = {
     ("launcher", "editor"): "Text editor",
     ("launcher", "editor-new"): "Text editor (new window)",
     ("launcher", "close-window"): "Close window",
+    ("nexus", "toggle"): "Nexus",
+    ("nexus", "open"): "Nexus",
+    ("nexus", "openOverlay"): "Nexus (overlay)",
+    ("nexus", "openWindow"): "Nexus (window)",
+    ("nexus", "daily"): "Nexus (daily note)",
 }
 
 _KB_TERMINALS = [
@@ -2785,7 +2792,7 @@ def _kb_categorize(description: str, action: str) -> str:
             return "Alis Shell"
         if target == "region":
             return "Screenshots"
-        if target in ("launcher", "browser") and fn != "close-window":
+        if target in ("launcher", "browser", "nexus") and fn != "close-window":
             return "Applications"
         if target == "altSwitcher":
             return "Window Switcher"
@@ -2804,7 +2811,7 @@ def _kb_categorize(description: str, action: str) -> str:
         return "Window Switcher"
     if any(x in desc for x in ["screenshot", "ocr", "image search", "snip menu", "record region"]):
         return "Screenshots"
-    if any(x in desc for x in ["terminal", "file manager", "browser", "text editor"]):
+    if any(x in desc for x in ["terminal", "file manager", "browser", "text editor", "nexus"]):
         return "Applications"
     if any(x in act for x in _KB_TERMINALS + _KB_FILE_MANAGERS + _KB_BROWSERS):
         return "Applications"
@@ -3169,6 +3176,40 @@ def _kb_find_any_span(block_lines: list, combo: str, check_commented: bool = Fal
     return span
 
 
+_TUI_APP_BINS = {
+    "yazi", "ranger", "lf", "nnn", "vifm", "mc",
+    "nvim", "vim", "vi", "nano", "hx", "helix", "micro", "kak",
+    "btop", "htop", "top", "nvtop", "nmtui", "pulsemixer", "alsamixer", "lazygit",
+}
+
+
+def _normalize_kdl_bind_action(action: str) -> str:
+    """Normalize accidental single-string multi-word or bare TUI `spawn` KDL actions."""
+    text = str(action or "").strip()
+    if text.endswith(";"):
+        text = text[:-1].strip()
+    m = re.match(r'^spawn\s+"([^"]+)"$', text)
+    if not m:
+        return text
+    inner = m.group(1).strip()
+    if not inner:
+        return text
+    if any(ch.isspace() for ch in inner) and not Path(inner).exists():
+        try:
+            parts = shlex.split(inner)
+        except ValueError:
+            parts = inner.split()
+        if len(parts) >= 2 and shutil.which(parts[0]):
+            if len(parts) == 2 and Path(parts[0]).name in {"kitty", "foot", "alacritty"} and Path(parts[1]).name.lower() in _TUI_APP_BINS:
+                parts = [parts[0], "-e", parts[1]]
+            return "spawn " + " ".join(json.dumps(p) for p in parts)
+    elif Path(inner).name.lower() in _TUI_APP_BINS:
+        local_alis = Path.home() / ".local/bin/alis"
+        alis_bin = str(local_alis) if local_alis.exists() else "alis"
+        return f'spawn {json.dumps(alis_bin)} "terminal" "-e" {json.dumps(inner)}'
+    return text
+
+
 def cmd_set_bind(args):
     """Add or update a keybind in 70-binds.kdl or 90-user-extra.kdl (surgical edit).
 
@@ -3191,7 +3232,7 @@ def cmd_set_bind(args):
         return 1
 
     key_combo = args[0]
-    action = args[1]
+    action = _normalize_kdl_bind_action(args[1])
     options = ""
     replace_combo = ""
     idx = 2

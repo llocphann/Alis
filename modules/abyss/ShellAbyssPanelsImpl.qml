@@ -18,10 +18,6 @@ Item {
         source: Qt.resolvedUrl(targetSource)
     }
     LazyLoader {
-        active: Config.ready && (Config.options?.enabledPanels ?? []).includes("abyssLock")
-        source: "../lock/Lock.qml"
-    }
-    LazyLoader {
         active: Config.ready && (Config.options?.enabledPanels ?? []).includes("abyssPolkit")
         source: "../polkit/Polkit.qml"
     }

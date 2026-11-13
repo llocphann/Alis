@@ -881,7 +881,7 @@ def _ensure_extension_registered(fork_key: str, ext_dir: Path) -> None:
     These editors only load extensions listed in this registry; physical
     presence in the directory is not enough.
     """
-    registry = _get_ext_dir(fork_key) / "extensions.json"
+    registry = ext_dir.parent / "extensions.json"
     entries = []
     if registry.exists():
         try:
@@ -909,22 +909,27 @@ def _ensure_extension_registered(fork_key: str, ext_dir: Path) -> None:
 
 def _unregister_extension(fork_key: str) -> None:
     """Remove our entry from extensions.json (companion to _ensure_extension_registered)."""
-    registry = _get_ext_dir(fork_key) / "extensions.json"
-    if not registry.exists():
-        return
-    try:
-        with open(registry) as f:
-            entries = json.load(f)
-    except (json.JSONDecodeError, OSError):
-        return
-    ext_id = f"alis.{THEME_EXTENSION_ID}"
-    filtered = [e for e in entries if e.get("identifier", {}).get("id") != ext_id]
-    if len(filtered) == len(entries):
-        return
-    tmp = registry.with_suffix(".json.tmp")
-    with open(tmp, "w") as f:
-        json.dump(filtered, f)
-    tmp.rename(registry)
+    registries = [_get_ext_dir(fork_key) / "extensions.json"]
+    if fork_key == "antigravity":
+        alt = Path.home() / ".antigravity-ide/extensions/extensions.json"
+        if alt not in registries:
+            registries.append(alt)
+    for registry in registries:
+        if not registry.exists():
+            continue
+        try:
+            with open(registry) as f:
+                entries = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            continue
+        ext_id = f"alis.{THEME_EXTENSION_ID}"
+        filtered = [e for e in entries if e.get("identifier", {}).get("id") != ext_id]
+        if len(filtered) == len(entries):
+            continue
+        tmp = registry.with_suffix(".json.tmp")
+        with open(tmp, "w") as f:
+            json.dump(filtered, f)
+        tmp.rename(registry)
 
 
 def generate_vscode_theme(colors_json_path, scss_path, settings_path, fork_key=""):
@@ -980,15 +985,8 @@ def generate_vscode_theme(colors_json_path, scss_path, settings_path, fork_key="
         settings[PREV_THEME_KEY] = current_theme
         changed = True
 
-    # Remove legacy injection keys from previous Alis versions
-    for key in [
-        "workbench.colorCustomizations",
-        "editor.tokenColorCustomizations",
-        "editor.semanticTokenColorCustomizations",
-    ]:
-        if key in settings:
-            del settings[key]
-            changed = True
+    # Color customization maps may contain Owner edits. Without provenance,
+    # previous generated values cannot be distinguished from personal settings.
 
     # Activate our theme if not already active
     if current_theme != THEME_NAME:
@@ -1023,8 +1021,14 @@ VSCODE_FORKS = {
 
 def get_settings_path(fork_name: str) -> Path:
     """Get the settings.json path for a VSCode fork."""
-    config_dir = os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
-    return Path(config_dir) / fork_name / "User" / "settings.json"
+    config_dir = Path(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")))
+    if fork_name == "Antigravity":
+        p1 = config_dir / "Antigravity" / "User" / "settings.json"
+        p2 = config_dir / "Antigravity IDE" / "User" / "settings.json"
+        if not p1.exists() and (p2.exists() or (config_dir / "Antigravity IDE").is_dir()):
+            return p2
+        return p1
+    return config_dir / fork_name / "User" / "settings.json"
 
 
 THEME_NAME = "Alis Material"
@@ -1053,6 +1057,12 @@ VSCODE_EXT_DIRS = {
 
 def _get_ext_dir(fork_key: str) -> Path:
     home = Path.home()
+    if fork_key == "antigravity":
+        e1 = home / ".antigravity/extensions"
+        e2 = home / ".antigravity-ide/extensions"
+        if not e1.exists() and (e2.exists() or (home / ".antigravity-ide").is_dir()):
+            return e2
+        return e1
     rel = VSCODE_EXT_DIRS.get(fork_key, f".{fork_key}/extensions")
     return home / rel
 
@@ -1091,15 +1101,7 @@ def strip_vscode_theme(settings_path: str, fork_key: str = "") -> bool:
         changed = True
     settings.pop(PREV_THEME_KEY, None)
 
-    # Clean up all injection keys from any previous version
-    for key in [
-        "workbench.colorCustomizations",
-        "editor.tokenColorCustomizations",
-        "editor.semanticTokenColorCustomizations",
-    ]:
-        if key in settings:
-            del settings[key]
-            changed = True
+    # Preserve color customization maps; they are not owned by this extension.
 
     if changed:
         try:

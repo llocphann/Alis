@@ -20,6 +20,28 @@ StyledImage {
     property bool thumbnailAvailable: false
     property string resolvedThumbnailSource: ""
     property string _queuedThumbnailCheck: ""
+
+    function _toFileUrl(rawPath: string): string {
+        let clean = FileUtils.trimFileProtocol(String(rawPath ?? ""))
+        if (!clean) return ""
+        if (!clean.startsWith("/"))
+            clean = Quickshell.env("PWD") + "/" + clean
+        const encoded = clean.split("/").map(part => encodeURIComponent(part)).join("/")
+        return "file://" + encoded
+    }
+
+    function _fallbackDirectSource(): string {
+        const clean = FileUtils.trimFileProtocol(String(root.sourcePath ?? ""))
+        if (!clean) return ""
+        if (root.isVideo) {
+            const ff = Wallpapers.getVideoFirstFramePath(clean)
+            if (ff) return root._toFileUrl(ff)
+            Wallpapers.ensureVideoFirstFrame(clean)
+            return ""
+        }
+        return root._toFileUrl(clean)
+    }
+
     property string thumbnailPath: {
         if (sourcePath.length === 0) return ""
 
@@ -58,8 +80,6 @@ StyledImage {
     function _ensureThumbnail() {
         if (!root.generateThumbnail) return
         if (!root.sourcePath || root.sourcePath.length === 0) return
-        // Batch generator already running — it will emit thumbnailGeneratedFile
-        if (Wallpapers.thumbnailGenerationRunning) return
         Wallpapers.ensureThumbnailForPath(root.sourcePath, root.thumbnailSizeName)
     }
 
@@ -88,21 +108,34 @@ StyledImage {
         if (Wallpapers.hasKnownThumbnail(normalizedThumbnailPath)) {
             root._queuedThumbnailCheck = ""
             root.thumbnailAvailable = true
-            root.resolvedThumbnailSource = root.thumbnailPath
+            root.resolvedThumbnailSource = root._toFileUrl(normalizedThumbnailPath)
             return
         }
 
-        root._clearResolvedThumbnail()
+        root.thumbnailAvailable = false
+        const directUrl = root._fallbackDirectSource()
+        if (directUrl.length > 0 && root.resolvedThumbnailSource !== directUrl)
+            root.resolvedThumbnailSource = directUrl
+        else if (directUrl.length === 0)
+            root._clearResolvedThumbnail()
+
         root._queuedThumbnailCheck = normalizedThumbnailPath
         root._startThumbnailCheck()
     }
 
     onStatusChanged: {
         if (status === Image.Ready) {
-            Wallpapers.rememberThumbnail(root.thumbnailPath)
+            if (root.thumbnailAvailable)
+                Wallpapers.rememberThumbnail(root.thumbnailPath)
         } else if (status === Image.Error && root.resolvedThumbnailSource.length > 0) {
-            Wallpapers.forgetThumbnail(root.thumbnailPath)
-            root.reloadThumbnail()
+            if (root.thumbnailAvailable) {
+                Wallpapers.forgetThumbnail(root.thumbnailPath)
+                root.thumbnailAvailable = false
+                const directUrl = root._fallbackDirectSource()
+                root.resolvedThumbnailSource = directUrl
+            } else {
+                root._clearResolvedThumbnail()
+            }
         }
     }
 
@@ -123,13 +156,19 @@ StyledImage {
         target: Wallpapers
         function onThumbnailGenerated(directory) {
             if (!root.sourcePath || root.sourcePath.length === 0) return
-            if (FileUtils.parentDirectory(root.sourcePath) !== directory) return
+            if (FileUtils.trimFileProtocol(FileUtils.parentDirectory(root.sourcePath)) !== FileUtils.trimFileProtocol(String(directory ?? ""))) return
             root.reloadThumbnail()
         }
         function onThumbnailGeneratedFile(filePath) {
             if (!root.sourcePath || root.sourcePath.length === 0) return
-            if (String(Qt.resolvedUrl(root.sourcePath)) !== String(Qt.resolvedUrl(filePath))) return
+            if (FileUtils.trimFileProtocol(String(root.sourcePath)) !== FileUtils.trimFileProtocol(String(filePath ?? ""))) return
             root.reloadThumbnail()
+        }
+        function onVideoFirstFramesChanged() {
+            if (!root.isVideo || root.thumbnailAvailable || !root.sourcePath) return
+            const directUrl = root._fallbackDirectSource()
+            if (directUrl.length > 0 && root.resolvedThumbnailSource !== directUrl)
+                root.resolvedThumbnailSource = directUrl
         }
     }
 
@@ -143,10 +182,13 @@ StyledImage {
             if (checkedPath === currentThumbnailPath && exitCode === 0) {
                 Wallpapers.rememberThumbnail(currentThumbnailPath)
                 root.thumbnailAvailable = true
-                root.resolvedThumbnailSource = root.thumbnailPath
+                root.resolvedThumbnailSource = root._toFileUrl(currentThumbnailPath)
             } else if (checkedPath === currentThumbnailPath) {
                 Wallpapers.forgetThumbnail(currentThumbnailPath)
-                root._clearResolvedThumbnail()
+                root.thumbnailAvailable = false
+                const directUrl = root._fallbackDirectSource()
+                if (directUrl.length > 0 && root.resolvedThumbnailSource !== directUrl)
+                    root.resolvedThumbnailSource = directUrl
                 root._ensureThumbnail()
             }
 

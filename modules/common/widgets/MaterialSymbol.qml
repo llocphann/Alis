@@ -28,7 +28,7 @@ Item {
     readonly property string jpGlyph: useJp ? text.slice(3) : ""
     
     // Nerd fonts need slightly larger size to match Material Symbols visually
-    readonly property real effectiveFontSize: (useNerd && hasNerdGlyph) ? iconSize * 1.1 : iconSize
+    readonly property real effectiveFontSize: Math.max(1, Math.round((useNerd && hasNerdGlyph) ? iconSize * 1.1 : iconSize))
     readonly property real effectiveSize: (useNerd && hasNerdGlyph) ? iconSize * 1.1 : iconSize
     
     // Use iconSize for consistent sizing regardless of font metrics
@@ -36,9 +36,11 @@ Item {
     implicitHeight: effectiveSize
     
     readonly property real clampedFill: Math.max(0, Math.min(1, fill))
-    readonly property real effectiveFill: animateFill
-        ? (clampedFill < 0.01 ? 0 : (clampedFill > 0.99 ? 1 : clampedFill))
-        : Math.round(clampedFill)
+    readonly property real effectiveFill: Math.round(clampedFill)
+    readonly property bool _variableFillIcon: !useJp && !(useNerd && hasNerdGlyph)
+    readonly property bool _crossfadeFillActive: animateFill && _variableFillIcon
+        && clampedFill > 0.01 && clampedFill < 0.99
+    readonly property int _baseDiscreteFill: _crossfadeFillActive ? 0 : (clampedFill >= 0.5 ? 1 : 0)
     // Material Symbols variable font axis range is 20..48; keeping it in-range avoids distorted fill at small icon sizes.
     readonly property real effectiveOpsz: 24
     
@@ -50,6 +52,7 @@ Item {
         text: root.useJp ? root.jpGlyph
             : (root.useNerd && root.hasNerdGlyph) ? root.nerdGlyph : root.text
         color: root.color
+        opacity: root._crossfadeFillActive ? (1 - root.clampedFill) : 1
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
 
@@ -60,12 +63,39 @@ Item {
                 : (root.useNerd && root.hasNerdGlyph)
                 ? (Appearance?.font.family.monospace ?? "JetBrainsMono Nerd Font")
                 : (Appearance?.font.family.iconMaterial ?? "Material Symbols Rounded")
-            pixelSize: root.useJp ? root.iconSize * 0.92 : root.effectiveFontSize
+            pixelSize: root.useJp ? Math.max(1, Math.round(root.iconSize * 0.92)) : root.effectiveFontSize
             weight: root.useJp ? Font.Medium : Font.Normal
-            variableAxes: (root.useJp || (root.useNerd && root.hasNerdGlyph)) ? ({}) : ({
-                "FILL": root.effectiveFill,
+            variableAxes: !root._variableFillIcon ? ({}) : ({
+                "FILL": root._baseDiscreteFill,
                 "opsz": root.effectiveOpsz,
             })
+        }
+    }
+
+    Loader {
+        anchors.centerIn: parent
+        width: root.effectiveSize
+        height: root.effectiveSize
+        active: root._crossfadeFillActive
+        sourceComponent: Text {
+            text: root.text
+            color: root.color
+            opacity: root.clampedFill
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            renderType: root.textRenderType
+            style: iconText.style
+            styleColor: iconText.styleColor
+            font {
+                hintingPreference: Font.PreferNoHinting
+                family: Appearance?.font.family.iconMaterial ?? "Material Symbols Rounded"
+                pixelSize: root.effectiveFontSize
+                weight: Font.Normal
+                variableAxes: ({
+                    "FILL": 1,
+                    "opsz": root.effectiveOpsz,
+                })
+            }
         }
     }
 

@@ -261,6 +261,37 @@ Singleton {
 
     signal reminderTriggered(var event, int minutesBefore)
 
+    onEventTriggered: event => {
+        if (!event) return
+        const urgency = event.priority === "high" ? "critical" : (event.priority === "low" ? "low" : "normal")
+        const timeout = event.priority === "high" ? 0 : 10000
+        Notifications.sendInternal({
+            appName: "Alis Events",
+            urgency: urgency,
+            timeout: timeout,
+            appIcon: root.getCategoryIcon(event.category),
+            summary: String(event.title || Translation.tr("Event")),
+            body: String(event.description || Translation.tr("Event is now!")),
+        })
+    }
+
+    onReminderTriggered: (event, minutesBefore) => {
+        if (!event) return
+        const reminderText = minutesBefore >= 1440
+            ? Translation.tr("Tomorrow")
+            : minutesBefore >= 60
+                ? Translation.tr("In %1 hour(s)").arg(Math.floor(minutesBefore / 60))
+                : Translation.tr("In %1 minutes").arg(minutesBefore)
+        Notifications.sendInternal({
+            appName: "Alis Events",
+            urgency: "normal",
+            timeout: 8000,
+            appIcon: "alarm",
+            summary: Translation.tr("Upcoming: %1").arg(event.title),
+            body: reminderText + (event.description ? " — " + event.description : ""),
+        })
+    }
+
     function checkDueEvents() {
         if (!root.ready || root._checkingDue) return
         root._checkingDue=true

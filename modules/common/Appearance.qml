@@ -393,8 +393,9 @@ Singleton {
         // Layer 0
         property color colLayer0Base: m3colors.transparent
             ? "transparent"
-            : ColorUtils.mix(m3colors.m3background, m3colors.m3primary,
-                Config?.options?.appearance?.extraBackgroundTint ? 0.99 : 1)
+            : (Config?.options?.appearance?.extraBackgroundTint
+                ? ColorUtils.mix(m3colors.m3background, m3colors.m3primary, 0.99)
+                : m3colors.m3background)
         property color colLayer0: ColorUtils.transparentize(colLayer0Base, root.backgroundTransparency)
         property color colOnLayer0: ColorUtils.ensureReadable(_baseOnSurface, colLayer0Base, 4.5)
         property color colLayer0Hover: ColorUtils.transparentize(

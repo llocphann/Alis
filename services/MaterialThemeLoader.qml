@@ -116,6 +116,9 @@ Singleton {
     property var _previewPending: null
     property bool _previewWaitingForPresentation: false
     property bool _previewExternalDeferred: false
+    property var _previewPaletteCache: ({})
+    property var _previewPaletteCacheOrder: []
+    property var _m3KeyMap: ({})
 
     function _snapshotColors(): var {
         const result = {}
@@ -153,15 +156,19 @@ Singleton {
             term_fg_boost: generation?.termFgBoost ?? .35,
             soften: settings?.softenColors ?? false, "invert-hue": settings?.colorInvert ?? false
         }
+        const cacheKey = `${path}\n${options.mode}|${options.scheme}|${options["color-strength"]}|${options.soften}|${options["invert-hue"]}|${options.term_saturation}|${options.term_brightness}|${options.harmony}|${options.term_bg_brightness}|${options.harmonize_threshold}|${options.term_fg_boost}`
         root.previewPath = path
         // Generating palette colors decodes the source and launches a native
         // process. When Liquid is revealing this wallpaper, do not compete
         // with its GPU upload. A deadline still handles hidden/no-frame previews.
         root._previewWaitingForPresentation = Boolean(deferUntilPresented)
-        root._previewPending = {serial: ++root._previewSerial, command: ["/usr/bin/nice", "-n", "10",
+        root._previewPending = {serial: ++root._previewSerial, cacheKey: cacheKey, command: ["/usr/bin/nice", "-n", "10",
             Quickshell.shellPath("scripts/native-dispatch"), "theme-preview", path, JSON.stringify(options)]}
         if (root._previewWaitingForPresentation) {
             previewFrameDeadline.interval = 32
+            previewFrameDeadline.restart()
+        } else if (root._previewPaletteCache[cacheKey]) {
+            previewFrameDeadline.interval = 16
             previewFrameDeadline.restart()
         } else {
             previewFrameDeadline.stop()
@@ -190,23 +197,53 @@ Singleton {
     }
 
     function _startNextPreview(): void {
+        if (!root._previewWaitingForPresentation && root._previewPending?.cacheKey) {
+            const cached = root._previewPaletteCache[root._previewPending.cacheKey]
+            if (cached) {
+                const cachedReq = root._previewPending
+                root._previewPending = null
+                if (root.previewActive && cachedReq.serial === root._previewSerial) {
+                    root._previewPalette = cached
+                    root._applyPalette(cached)
+                }
+                return
+            }
+        }
         if (root._previewWaitingForPresentation || previewProcess.running || !root._previewPending) return
         const request = root._previewPending
         root._previewPending = null
         previewProcess.serial = request.serial
+        previewProcess.cacheKey = request.cacheKey ?? ""
         previewProcess.command = request.command
         previewProcess.running = true
     }
 
     function _finishPreview(code: int): void {
-        if (code === 0 && root.previewActive && previewProcess.serial === root._previewSerial) {
+        let parsedPalette = null
+        if (code === 0) {
             try {
-                const palette = JSON.parse(previewProcess.output)
-                if (palette?.background && palette?.primary) {
-                    root._previewPalette = palette
-                    root._applyPalette(palette)
+                const candidate = JSON.parse(previewProcess.output)
+                if (candidate?.background && candidate?.primary) {
+                    parsedPalette = candidate
+                    const cKey = previewProcess.cacheKey
+                    if (cKey) {
+                        if (!root._previewPaletteCache[cKey]) {
+                            root._previewPaletteCacheOrder.push(cKey)
+                            if (root._previewPaletteCacheOrder.length > 64) {
+                                const oldest = root._previewPaletteCacheOrder.shift()
+                                delete root._previewPaletteCache[oldest]
+                            }
+                        }
+                        root._previewPaletteCache[cKey] = candidate
+                    }
                 }
             } catch (error) { root._log("[MaterialThemeLoader] invalid preview:", error) }
+        }
+        if (code === 0 && root.previewActive && previewProcess.serial === root._previewSerial) {
+            if (parsedPalette) {
+                root._previewPalette = parsedPalette
+                root._applyPalette(parsedPalette)
+            }
         } else if (root.previewActive && previewProcess.serial === root._previewSerial) {
             root._previewPalette = null
             root._restorePreviewBaseline()
@@ -233,6 +270,13 @@ Singleton {
 
     function commitColorPreview(path = ""): void {
         if (!root.previewActive) return
+        if (root._previewPending?.cacheKey) {
+            const cached = root._previewPaletteCache[root._previewPending.cacheKey]
+            if (cached && root._previewPending.serial === root._previewSerial) {
+                root._previewPalette = cached
+                root._applyPalette(cached)
+            }
+        }
         const target = String(path ?? "")
         const keepPreviewPalette = root._previewPalette !== null
             && (target.length === 0 || target === root.previewPath)
@@ -250,13 +294,27 @@ Singleton {
     }
 
     function _restorePreviewBaseline(): void {
-        for (const key of Object.keys(root._previewBaseline ?? {}))
-            Appearance.m3colors[key] = root._previewBaseline[key]
+        const baseline = root._previewBaseline ?? {}
+        if (baseline.darkmode !== undefined && Appearance.m3colors.darkmode !== baseline.darkmode)
+            Appearance.m3colors.darkmode = baseline.darkmode
+        for (const key of Object.keys(baseline)) {
+            if (key === "darkmode")
+                continue
+            const currentVal = Appearance.m3colors[key]
+            const nextVal = baseline[key]
+            if (typeof currentVal === "boolean") {
+                if (currentVal !== nextVal)
+                    Appearance.m3colors[key] = nextVal
+            } else if (String(currentVal).toLowerCase() !== String(nextVal).toLowerCase()) {
+                Appearance.m3colors[key] = nextVal
+            }
+        }
     }
 
     Process {
         id: previewProcess
         property int serial: 0
+        property string cacheKey: ""
         property string output: ""
         property bool started: false
         stdout: StdioCollector { onStreamFinished: previewProcess.output = text }
@@ -299,11 +357,12 @@ Singleton {
     }
 
     function themeExternalCommand(command) {
+        const nicePrefix = ["/usr/bin/nice", "-n", "19"]
         if (!root.themeProfileEnabled)
-            return command
+            return nicePrefix.concat(command)
         return ["/usr/bin/env", "ALIS_THEME_PROFILE=1",
             "ALIS_THEME_PROFILE_LOG=" + root.themeProfileLogPath,
-            "ALIS_THEME_PROFILE_SOURCE=qml-external"].concat(command)
+            "ALIS_THEME_PROFILE_SOURCE=qml-external"].concat(nicePrefix).concat(command)
     }
 
     function reapplyTheme() {
@@ -454,23 +513,43 @@ Singleton {
     }
 
     function _applyPalette(json): void {
+        let nextDarkmode = Appearance.m3colors.darkmode
+        if (typeof json.darkmode === "boolean") {
+            nextDarkmode = json.darkmode
+        } else if (typeof json.darkmode === "string") {
+            nextDarkmode = json.darkmode === "true"
+        } else if (json.background !== undefined) {
+            nextDarkmode = (Qt.color(json.background).hslLightness < 0.5)
+        } else {
+            nextDarkmode = (Appearance.m3colors.m3background.hslLightness < 0.5)
+        }
+        if (Appearance.m3colors.darkmode !== nextDarkmode)
+            Appearance.m3colors.darkmode = nextDarkmode
+
+        const keyMap = root._m3KeyMap
         for (const key in json) {
             if (json.hasOwnProperty(key)) {
-                const camelCaseKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase())
-                const noPrefix = camelCaseKey.startsWith("term") || camelCaseKey === "darkmode" || camelCaseKey === "transparent"
-                const m3Key = noPrefix ? camelCaseKey : `m3${camelCaseKey}`
-                if (Appearance.m3colors[m3Key] === undefined)
+                if (key === "darkmode")
                     continue
-                Appearance.m3colors[m3Key] = json[key]
+                let m3Key = keyMap[key]
+                if (m3Key === undefined) {
+                    const camelCaseKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase())
+                    const noPrefix = camelCaseKey.startsWith("term") || camelCaseKey === "darkmode" || camelCaseKey === "transparent"
+                    m3Key = noPrefix ? camelCaseKey : `m3${camelCaseKey}`
+                    keyMap[key] = m3Key
+                }
+                const currentVal = Appearance.m3colors[m3Key]
+                if (currentVal === undefined)
+                    continue
+                const nextVal = json[key]
+                if (typeof currentVal === "boolean") {
+                    const boolVal = typeof nextVal === "boolean" ? nextVal : nextVal === "true"
+                    if (currentVal !== boolVal)
+                        Appearance.m3colors[m3Key] = boolVal
+                } else if (String(currentVal).toLowerCase() !== String(nextVal).toLowerCase()) {
+                    Appearance.m3colors[m3Key] = nextVal
+                }
             }
-        }
-
-        if (typeof json.darkmode === "boolean") {
-            Appearance.m3colors.darkmode = json.darkmode
-        } else if (typeof json.darkmode === "string") {
-            Appearance.m3colors.darkmode = json.darkmode === "true"
-        } else {
-            Appearance.m3colors.darkmode = (Appearance.m3colors.m3background.hslLightness < 0.5)
         }
         _log("[MaterialThemeLoader] Colors applied successfully, darkmode:", Appearance.m3colors.darkmode)
     }
@@ -571,16 +650,16 @@ Singleton {
         if (root.themeProfileEnabled) {
             root.themeProfileExternalRequestedMs = Date.now()
             // Fixed allowlist: expose only caller identity in sanitized traces.
-            const source = generationReady ? "ready"
-                : (["preview-cancel", "generator-exit", "global-style",
-                    "file-fallback", "loaded-fallback", "theme-service"].includes(reason)
-                    ? reason : "other")
+            const source = ["preview-cancel", "generator-exit", "global-style",
+                    "file-fallback", "loaded-fallback", "theme-service", "post-transition"].includes(reason)
+                    ? reason
+                    : (generationReady ? "ready" : "other")
             root.themeProfileStage("qml_external_request_" + source, 0)
         }
-        // Fast only after a validated generation-ready token and a successful
-        // QML palette apply. All other callers retain the original 600ms
+        // Fast only after a validated generation-ready token, post-transition handoff,
+        // or a successful QML palette apply. All other callers retain the original 600ms
         // coalescing/recovery behavior.
-        if (generationReady) {
+        if (generationReady || reason === "post-transition") {
             delayedExternalApply.interval = 45
             delayedExternalApply.restart()
         } else if (!(delayedExternalApply.running && delayedExternalApply.interval === 45)) {
@@ -599,6 +678,41 @@ Singleton {
                 root.themeProfileStage("qml_external_debounce",
                     Date.now() - root.themeProfileExternalRequestedMs)
             root._applyExternalTheming()
+        }
+    }
+
+    property bool transitionActive: false
+    property bool _transitionExternalDeferred: false
+
+    function notifyWallpaperTransitionStarted(settleMs = 800): void {
+        root.transitionActive = true
+        transitionSettleTimer.interval = Math.max(300, settleMs + 50)
+        transitionSettleTimer.restart()
+    }
+
+    function notifyWallpaperTransitionFinished(): void {
+        transitionSettleTimer.stop()
+        if (root.transitionActive) {
+            root.transitionActive = false
+            if (root._transitionExternalDeferred) {
+                root._transitionExternalDeferred = false
+                root.requestExternalApply(true, "post-transition")
+            }
+        }
+    }
+
+    Timer {
+        id: transitionSettleTimer
+        repeat: false
+        interval: 850
+        onTriggered: {
+            if (root.transitionActive) {
+                root.transitionActive = false
+                if (root._transitionExternalDeferred) {
+                    root._transitionExternalDeferred = false
+                    root.requestExternalApply(true, "post-transition")
+                }
+            }
         }
     }
 
@@ -725,6 +839,10 @@ Singleton {
             root._previewExternalDeferred = true
             return
         }
+        if (root.transitionActive) {
+            root._transitionExternalDeferred = true
+            return
+        }
         const applyColorPath = Directories.scriptsPath + "/colors/applycolor.sh"
         const overlay = root._styleAppPaletteOverlay()
         if (!overlay) {
@@ -735,12 +853,25 @@ Singleton {
         // app-palette.json between the generator's write and the style overlay.
         // No `set -e` — a failed merge still has to fall through to the run.
         const script = `p=${_shq(Directories.generatedAppPalettePath)}
-if command -v jq >/dev/null 2>&1 && [ -s "$p" ]; then
-  printf '%s' ${_shq(JSON.stringify(overlay))} > "$p.style"
-  if jq -s '.[0] * .[1]' "$p" "$p.style" > "$p.merged" 2>/dev/null; then
-    mv -f "$p.merged" "$p"
-  fi
-  rm -f "$p.style" "$p.merged"
+if [ -s "$p" ] && command -v python3 >/dev/null 2>&1; then
+  python3 - "$p" ${_shq(JSON.stringify(overlay))} <<'PY' 2>/dev/null || true
+import json, os, sys
+p, ov_raw = sys.argv[1], sys.argv[2]
+def deep_merge(a, b):
+    for k, v in b.items():
+        if isinstance(v, dict) and isinstance(a.get(k), dict):
+            deep_merge(a[k], v)
+        else:
+            a[k] = v
+    return a
+with open(p, "r", encoding="utf-8") as f:
+    base = json.load(f)
+merged = deep_merge(base, json.loads(ov_raw))
+tmp = p + ".merged"
+with open(tmp, "w", encoding="utf-8") as f:
+    json.dump(merged, f, ensure_ascii=False, indent=2)
+os.replace(tmp, p)
+PY
 fi
 exec /usr/bin/bash ${_shq(applyColorPath)}
 `

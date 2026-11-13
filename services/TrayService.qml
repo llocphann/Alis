@@ -154,11 +154,208 @@ Singleton {
 
     // Filter out invalid items (null or missing id)
     function isValidItem(item) {
-        return item && item.id;
+        return Boolean(item && String(item.id ?? "").trim().length > 0);
     }
 
     function _normalizeTrayMatchKey(value): string {
-        return String(value ?? "").toLowerCase().replace(/\.desktop$/i, "").replace(/[^a-z0-9]+/g, "")
+        const raw = String(value ?? "").trim().toLowerCase().replace(/\.desktop$/i, "")
+        const stripped = /^chrome[_.-]?status[_.-]?icon/i.test(raw)
+            ? raw
+            : raw.replace(/^(.+?)(?:[_.-]+status[_.-]?icon[_.-]?\d+)$/i, "$1")
+        return stripped.replace(/[^a-z0-9]+/g, "")
+    }
+
+    function _isGenericTrayId(idKey): bool {
+        if (!idKey)
+            return true
+        return idKey.startsWith("chromestatusicon")
+            || idKey.startsWith("statusicon")
+            || idKey.startsWith("sniqt")
+            || idKey.startsWith("xembed")
+            || idKey.startsWith("statusnotifieritem")
+            || idKey.startsWith("ayatana")
+            || idKey === "systemtray"
+            || idKey === "trayicon"
+    }
+
+    function getItemDedupKey(item): string {
+        if (!isValidItem(item))
+            return ""
+        const appInfo = getProblematicAppInfo(item)
+        if (appInfo && appInfo.launch)
+            return "app:" + String(appInfo.launch).toLowerCase()
+
+        const idKey = _normalizeTrayMatchKey(item.id)
+        const titleKey = _normalizeTrayMatchKey(item.title)
+        const tooltipKey = _normalizeTrayMatchKey(item.tooltipTitle)
+        const rawIcon = String(item.icon ?? "").trim().toLowerCase()
+        const iconKey = rawIcon.startsWith("image://") ? "" : rawIcon
+
+        if (!_isGenericTrayId(idKey))
+            return "id:" + idKey
+        if (titleKey.length > 0)
+            return "title:" + titleKey
+        if (tooltipKey.length > 0)
+            return "tooltip:" + tooltipKey
+        if (iconKey.length > 0)
+            return "icon:" + iconKey
+        return "id:" + (idKey || String(item.id ?? "").trim().toLowerCase())
+    }
+
+    function _getItemAliasKeys(item): var {
+        if (!isValidItem(item))
+            return []
+        const keys = []
+        const pushUnique = key => {
+            if (key.length > 0 && !keys.includes(key))
+                keys.push(key)
+        }
+
+        const primary = getItemDedupKey(item)
+        pushUnique(primary)
+
+        const idKey = _normalizeTrayMatchKey(item.id)
+        if (!_isGenericTrayId(idKey) && idKey.length >= 3) {
+            pushUnique("id:" + idKey)
+            pushUnique("key:" + idKey)
+        }
+
+        const titleKey = _normalizeTrayMatchKey(item.title)
+        if (titleKey.length >= 3 && !_isGenericTrayId(titleKey)) {
+            pushUnique("title:" + titleKey)
+            pushUnique("key:" + titleKey)
+        }
+
+        const tooltipKey = _normalizeTrayMatchKey(item.tooltipTitle)
+        if (tooltipKey.length >= 3 && !_isGenericTrayId(tooltipKey)) {
+            pushUnique("tooltip:" + tooltipKey)
+            pushUnique("key:" + tooltipKey)
+        }
+
+        const rawIcon = String(item.icon ?? "").trim().toLowerCase()
+        const iconKey = rawIcon.startsWith("image://") ? "" : rawIcon
+        const labelKey = titleKey || tooltipKey
+        if (labelKey.length >= 3 && iconKey.length > 0)
+            pushUnique("visual:" + labelKey + "|" + iconKey)
+
+        return keys
+    }
+
+    function _getItemDedupRank(item): int {
+        if (!isValidItem(item))
+            return -1
+        let rank = 0
+        if (item.status !== undefined && item.status !== null && item.status !== Status.Passive)
+            rank += 32
+        const idKey = _normalizeTrayMatchKey(item.id)
+        if (!_isGenericTrayId(idKey))
+            rank += 16
+        if (Array.isArray(root._pinnedItems) && root._pinnedItems.includes(item.id))
+            rank += 8
+        if (item.hasMenu)
+            rank += 4
+        if (String(item.icon ?? "").trim().length > 0)
+            rank += 2
+        if (String(item.tooltipTitle || item.title || "").trim().length > 0)
+            rank += 1
+        return rank
+    }
+
+    function _canMergeTrayEntries(existing, candidate): bool {
+        if (!existing || !candidate)
+            return false
+        if (existing.primaryKey === candidate.primaryKey && existing.primaryKey.length > 0)
+            return true
+        if (existing.isGenericId || candidate.isGenericId)
+            return true
+        if (existing.idKey === candidate.idKey && existing.idKey.length > 0)
+            return true
+        if (existing.idKey.length >= 3 && candidate.idKey.length >= 3
+                && (existing.idKey.endsWith(candidate.idKey) || candidate.idKey.endsWith(existing.idKey)))
+            return true
+        if (existing.idKey.length >= 3
+                && (existing.idKey === candidate.titleKey || existing.idKey === candidate.tooltipKey))
+            return true
+        if (candidate.idKey.length >= 3
+                && (candidate.idKey === existing.titleKey || candidate.idKey === existing.tooltipKey))
+            return true
+        return false
+    }
+
+    function deduplicateItems(items): var {
+        if (!items || typeof items.length !== "number")
+            return []
+        const result = []
+        const seenByKey = {}
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i]
+            if (!isValidItem(item))
+                continue
+
+            const aliasKeys = _getItemAliasKeys(item)
+            if (aliasKeys.length === 0)
+                continue
+
+            const idKey = _normalizeTrayMatchKey(item.id)
+            const candidateMeta = {
+                primaryKey: getItemDedupKey(item),
+                idKey: idKey,
+                isGenericId: _isGenericTrayId(idKey),
+                titleKey: _normalizeTrayMatchKey(item.title),
+                tooltipKey: _normalizeTrayMatchKey(item.tooltipTitle)
+            }
+
+            let existing = null
+            for (let k = 0; k < aliasKeys.length; k++) {
+                const found = seenByKey[aliasKeys[k]]
+                if (found !== undefined && _canMergeTrayEntries(found, candidateMeta)) {
+                    existing = found
+                    break
+                }
+            }
+
+            const candidateRank = _getItemDedupRank(item)
+            if (!existing) {
+                const entry = {
+                    index: result.length,
+                    rank: candidateRank,
+                    item: item,
+                    primaryKey: candidateMeta.primaryKey,
+                    idKey: candidateMeta.idKey,
+                    isGenericId: candidateMeta.isGenericId,
+                    titleKey: candidateMeta.titleKey,
+                    tooltipKey: candidateMeta.tooltipKey
+                }
+                result.push(item)
+                for (let k = 0; k < aliasKeys.length; k++) {
+                    if (seenByKey[aliasKeys[k]] === undefined)
+                        seenByKey[aliasKeys[k]] = entry
+                }
+                continue
+            }
+
+            if (candidateRank >= existing.rank) {
+                existing.item = item
+                existing.rank = candidateRank
+                result[existing.index] = item
+                if (!candidateMeta.isGenericId) {
+                    existing.idKey = candidateMeta.idKey
+                    existing.isGenericId = false
+                    existing.primaryKey = candidateMeta.primaryKey
+                }
+                if (candidateMeta.titleKey.length > 0)
+                    existing.titleKey = candidateMeta.titleKey
+                if (candidateMeta.tooltipKey.length > 0)
+                    existing.tooltipKey = candidateMeta.tooltipKey
+            }
+            for (let k = 0; k < aliasKeys.length; k++) {
+                if (seenByKey[aliasKeys[k]] === undefined || seenByKey[aliasKeys[k]] === existing)
+                    seenByKey[aliasKeys[k]] = existing
+            }
+        }
+
+        return result
     }
 
     function isAutostartTrayItem(item): bool {
@@ -192,9 +389,10 @@ Singleton {
         const value = Config.options?.bar?.tray?.pinnedItems ?? Config.options?.tray?.pinnedItems
         return Array.isArray(value) ? value : []
     }
-    property list<var> itemsInUserList: SystemTray.items.values.filter(i =>
+    readonly property list<var> uniqueItems: deduplicateItems(SystemTray.items.values)
+    property list<var> itemsInUserList: root.uniqueItems.filter(i =>
         isValidItem(i) && _pinnedItems.includes(i.id))
-    property list<var> itemsNotInUserList: SystemTray.items.values.filter(i =>
+    property list<var> itemsNotInUserList: root.uniqueItems.filter(i =>
         isValidItem(i) && !_pinnedItems.includes(i.id)
         && (!smartTray || i.status !== Status.Passive || isAutostartTrayItem(i)))
 

@@ -6,12 +6,14 @@
 # Safe to remove with: sudo pacman -R alis-deps
 
 pkgname=alis-deps
-pkgver=1.0.1
+pkgver=1.0.2
 pkgrel=1
 pkgdesc='Alis desktop shell - dependency tracker (meta-package)'
 url='https://github.com/llocphann/Alis'
 arch=(any)
 license=('GPL-3.0-only')
+conflicts=('inir-deps')
+replaces=('inir-deps')
 
 # Dependency candidates tracked when already installed. setup stages this recipe
 # and filters depends to packages present in pacman's database before building,
@@ -60,20 +62,17 @@ depends=(
   niri
 
   #--- Core utilities ---
-  bc
   coreutils
   cliphist
   curl
   wget
   ripgrep
-  jq
   python
   rsync
   git
   fish
   gum
   wl-clipboard
-  libnotify
   pacman-contrib
   xdg-user-dirs
   xdg-utils
@@ -99,7 +98,6 @@ depends=(
   pipewire-pulse
   pipewire-alsa
   wireplumber
-  playerctl
   libdbusmenu-gtk3
   pavucontrol
   mpv
@@ -136,7 +134,6 @@ depends=(
   upower
   wtype
   ydotool
-  brightnessctl
   ddcutil
   geoclue
   fprintd
@@ -148,7 +145,6 @@ depends=(
   ffmpeg
   tesseract
   tesseract-data-eng
-  libqalculate
 
   #--- Login manager ---
   sddm
@@ -163,8 +159,11 @@ optdepends=(
   'cava: audio visualizer for bar'
   'easyeffects: optional audio effects and equalizer backend'
   'socat: optional EasyEffects control transport for equalizer'
-  'translate-shell: translation widget'
-  'hyprpicker: color picker'
+  'brightnessctl: optional fallback CLI for backlight control (handled natively by alis-native)'
+  'libqalculate: optional symbolic math fallback for calculator (handled natively by alis-native)'
+  'translate-shell: optional offline/CLI fallback for translation widget (handled natively by alis-native)'
+  'libnotify: optional notify-send CLI for external scripts (internal notifications handled natively)'
+  'playerctl: optional MPRIS CLI utility (handled natively via Quickshell MPRIS and D-Bus)'
   'alis-workflow-parser: native QML parser capability for Code Workflow'
   'python-evdev: input device access'
   'python-pillow: image processing in scripts'

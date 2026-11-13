@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 events = (ROOT / "modules/sidebarRight/events/EventsWidget.qml").read_text()
 card = (ROOT / "modules/sidebarRight/events/EventCard.qml").read_text()
-month = (ROOT / "modules/common/widgets/ObsidianMonthCalendar.qml").read_text()
+month = (ROOT / "modules/common/widgets/NexusMonthCalendar.qml").read_text()
 popup = (ROOT / "modules/bar/ClockCalendarContent.qml").read_text()
 
 def require(ok, reason):

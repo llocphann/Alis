@@ -571,7 +571,14 @@ Singleton {
             for (const id of captureProcess.idsToCapture)
                 root._publishCapturedPreview(id)
         } else {
-            console.warn("[WindowPreviewService] capture process failed", exitCode, exitStatus)
+            const openIds = new Set((NiriService.windows ?? []).map(w => Number(w?.id ?? 0)))
+            const missingOpenWindow = (captureProcess.idsToCapture ?? []).some(
+                id => openIds.has(Number(id)) && !(captureProcess.publishedIds ?? []).includes(Number(id))
+            )
+            if (missingOpenWindow)
+                console.warn("[WindowPreviewService] capture process failed", exitCode, exitStatus)
+            else
+                root._log("[WindowPreviewService] capture skipped closed window", exitCode, exitStatus)
         }
         capturing = false
         captureProcess.idsToCapture = []

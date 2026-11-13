@@ -77,6 +77,7 @@ Item {
         sourceComponent: root.kind === "resources" ? resources
             : root.kind === "clock" ? clock
             : root.kind === "media" ? media
+            : root.kind === "cava" ? cava
             : root.kind === "battery" ? battery
             : root.kind === "workspaces" ? workspaces : root.kind === "distroIcon" ? distro
             : root.kind === "activeWindow" ? activeWindow : root.kind === "tray" ? tray
@@ -89,6 +90,7 @@ Item {
     Component { id: resources; Shared.Resources { contentRotation: root.contentRotation } }
     Component { id: clock; Shared.ClockWidget { sharedTypography:true; showDate: Config.options?.bar?.verbose ?? true; contentRotation: root.contentRotation } }
     Component { id: media; Shared.Media { edgeHostedExpansion: true; contentRotation: root.contentRotation } }
+    Component { id: cava; Shared.BarCavaEqualizerModule { vertical: false; contentRotation: root.contentRotation } }
     Component { id: battery; Shared.BatteryIndicator { contentRotation: root.contentRotation } }
     // Launcher follows the same ownership model as Battery: the source control
     // owns one mature StyledPopup, and Abyss only rehosts that popup into the
@@ -176,9 +178,9 @@ Item {
                 width: 30*Appearance.fontSizeScale
                 height: width
                 radius: width/2
-                color: Appearance.colors.colLayer1
-                border.width: 1
-                border.color: Appearance.colors.colLayer2
+                color: hit.containsMouse ? Appearance.colors.colLayer1Hover : "transparent"
+                border.width: 0
+                border.color: "transparent"
                 visible: hit.parent.moduleRoot.showIcon
                 MaterialSymbol {
                     anchors.centerIn: parent

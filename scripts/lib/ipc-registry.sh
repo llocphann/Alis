@@ -3,7 +3,7 @@
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
 # IPC.md metadata: docs/IPC.md
-# Targets: 67
+# Targets: 68
 
 declare -gA IPC_TARGET_DESC=(
   [abyss]="Edit the Abyss module layout on the focused output. The editor uses a draft: Done saves its changes; Cancel or Escape restores the saved layout. These methods apply while Abyss is active."
@@ -32,13 +32,14 @@ declare -gA IPC_TARGET_DESC=(
   [dev]="Development navigation for loading lazy surfaces and internal views without automating pointer or keyboard input. Destination identifiers are stable and returned as JSON by \`list\`."
   [gamemode]="Performance mode for gaming. Auto-detects fullscreen apps and disables animations/effects. Can also be toggled manually for those stubborn games that don't go fullscreen properly."
   [globalActions]="Command palette / action registry. Search and execute shell actions from scripts or keybinds."
-  [integrations]="Alis-Intergration: optional TLP, Thinkfan and Obsidian package discovery. Integration selections remain under Settings → Integrations; discovery does not install or enable a package."
+  [integrations]="Alis-Intergration: optional TLP, Thinkfan and Nexus package discovery. Integration selections remain under Settings → Integrations; discovery does not install or enable a package."
   [keyboard]="Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info."
   [lock]="Lock screen. For when you need to pretend you're working."
   [mediaControls]="Floating media controls panel."
   [memory]="Memory pressure monitoring for JSGCHeap accumulation (Qt V4 memfd leak). Notifies user when memory is high, lets them decide when to restart."
   [minimize]="Window minimization (Niri workaround - moves windows to hidden workspace)."
   [mpris]="Media player control. Automatically detects and uses YtMusic controls when active, otherwise uses the active MPRIS player."
+  [nexus]="Alis Nexus native knowledge-base workspace. Open, toggle, or jump to today's daily journal note in overlay or window mode."
   [notificationCenter]="Family-aware notification history surface. On Material ii this opens the standalone bottom-right Notification Center; on Waffle it routes to the native Waffle notification center. The CLI alias is \`notification-center\`."
   [notifications]="Notification management."
   [osd]="Shared on-screen display router for the active family. Material, Waffle and Abyss consume internal signals; only the root registers this target."
@@ -109,6 +110,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [memory]="shared"
   [minimize]="shared"
   [mpris]="shared"
+  [nexus]="shared"
   [notificationCenter]="shared"
   [notifications]="shared"
   [osd]="shared"
@@ -167,7 +169,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [controlPanel]="toggle close open"
   [coverflowSelector]="toggle open close"
   [customWidgets]="reload list create remove"
-  [dashboard]="toggle close open"
+  [dashboard]="toggle close open openMusic"
   [dashboardEscProbe]="snapshot"
   [dev]="list open close current"
   [gamemode]="toggle activate deactivate status"
@@ -179,6 +181,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [memory]="collect stats restart dismiss reset"
   [minimize]="minimize minimizeId restore restoreOriginal"
   [mpris]="pauseAll playPause previous next"
+  [nexus]="toggle open openOverlay openWindow close daily"
   [notificationCenter]="toggle close open status"
   [notifications]="test clearAll toggleSilent"
   [osd]="trigger"
@@ -308,6 +311,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["dashboard:toggle"]="Open/close dashboard"
   ["dashboard:close"]="Close dashboard"
   ["dashboard:open"]="Open dashboard"
+  ["dashboard:openMusic"]="Open Local Music and enqueue JSON audio paths"
   ["dashboardEscProbe:snapshot"]="Return timestamp, active panel family and per-output Dashboard Escape state as JSON"
   ["dev:list"]="Return the destination inventory as JSON"
   ["dev:open"]="Open a destination by semantic identifier"
@@ -348,6 +352,12 @@ declare -gA IPC_FUNCTION_DESC=(
   ["mpris:playPause"]="Toggle play/pause (uses YtMusic if active)"
   ["mpris:previous"]="Previous track (uses YtMusic if active)"
   ["mpris:next"]="Next track (uses YtMusic if active)"
+  ["nexus:toggle"]="Toggle the Alis Nexus workspace"
+  ["nexus:open"]="Open the Alis Nexus workspace"
+  ["nexus:openOverlay"]="Open the Alis Nexus workspace in fullscreen overlay mode"
+  ["nexus:openWindow"]="Open the Alis Nexus workspace in standalone window mode"
+  ["nexus:close"]="Close the Alis Nexus workspace"
+  ["nexus:daily"]="Open today's daily journal note in Alis Nexus"
   ["notificationCenter:toggle"]="Open/close notification history"
   ["notificationCenter:close"]="Close notification history"
   ["notificationCenter:open"]="Open notification history"
@@ -572,8 +582,8 @@ bind "Ctrl+Alt+A" { spawn "alis" "wallpaperSelector" "openLauncher" "animated"; 
   [ytmusic]='bind "Mod+M+Space" { spawn "alis" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(abyss abyssHostProbe abyssHoverProbe ai alis-intergration alisCompanion altSwitcher appCatalog aqua audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dashboardEscProbe dev gamemode globalActions integrations keyboard lock mediaControls memory minimize mpris notificationCenter notifications osd osdInput osdVolume osk overlay overview packageSearch panelFamily perfProbe recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetpower wnotificationCenter wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(abyss abyssHostProbe abyssHoverProbe ai alis-intergration alisCompanion altSwitcher appCatalog aqua audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dashboardEscProbe dev gamemode globalActions integrations keyboard lock mediaControls memory minimize mpris notificationCenter notifications osd osdInput osdVolume osk overlay overview packageSearch panelFamily perfProbe region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wallpaperLauncher wallpaperSelector ytmusic zoom)
+IPC_ALL_TARGETS=(abyss abyssHostProbe abyssHoverProbe ai alis-intergration alisCompanion altSwitcher appCatalog aqua audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dashboardEscProbe dev gamemode globalActions integrations keyboard lock mediaControls memory minimize mpris nexus notificationCenter notifications osd osdInput osdVolume osk overlay overview packageSearch panelFamily perfProbe recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetpower wnotificationCenter wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(abyss abyssHostProbe abyssHoverProbe ai alis-intergration alisCompanion altSwitcher appCatalog aqua audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dashboardEscProbe dev gamemode globalActions integrations keyboard lock mediaControls memory minimize mpris nexus notificationCenter notifications osd osdInput osdVolume osk overlay overview packageSearch panelFamily perfProbe region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wallpaperLauncher wallpaperSelector ytmusic zoom)
 IPC_II_TARGETS=()
 IPC_WAFFLE_TARGETS=(autostart customWidgets recordingOsd search wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 

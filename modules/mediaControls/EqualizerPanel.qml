@@ -177,15 +177,18 @@ Item {
 
     Connections {
         target: EqualizerService
+        enabled: root.active
 
         function onDspBandsChanged(): void {
-            analyzerCanvas.requestPaint()
+            if (analyzerCanvas.visible && analyzerCanvas.available)
+                analyzerCanvas.requestPaint()
         }
     }
 
     Component.onCompleted: {
         root.syncRegistration()
-        analyzerCanvas.requestPaint()
+        if (root.active && analyzerCanvas.visible && analyzerCanvas.available)
+            analyzerCanvas.requestPaint()
     }
 
     Component.onDestruction: {
@@ -310,9 +313,9 @@ Item {
                         onTriggered: analyzerCanvas.requestPaint()
                     }
 
-                    onWidthChanged: requestPaint()
-                    onHeightChanged: requestPaint()
-                    onVisibleChanged: if (visible) requestPaint()
+                    onWidthChanged: if (root.active && visible && available) requestPaint()
+                    onHeightChanged: if (root.active && visible && available) requestPaint()
+                    onVisibleChanged: if (visible && available) requestPaint()
 
                     onPaint: {
                         const ctx = getContext("2d")
@@ -633,11 +636,11 @@ Item {
 
                                 Connections {
                                     target: EqualizerService
+                                    enabled: root.active
                                     function onDspBandsChanged(): void {
                                         if (!bandSlider.pressed)
                                             bandSlider.value =
                                                 bandDelegate.backendGain
-                                        analyzerCanvas.requestPaint()
                                     }
                                 }
 

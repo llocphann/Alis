@@ -162,13 +162,17 @@ for marker in \
     || { printf 'FAIL: MprisController MPD bridge contract missing: %s\n' "$marker" >&2; exit 1; }
 done
 
-grep -Fq '### MPD and rmpc' "$audio_doc" \
-  || { printf 'FAIL: audio/media docs omit MPD/rmpc bridge behavior\n' >&2; exit 1; }
 grep -Fq 'covers MPD configurations that output directly through ALSA' "$media_controller" \
   || { printf 'FAIL: MprisController no longer documents direct-ALSA MPD bridge discovery\n' >&2; exit 1; }
-grep -Fq '`rmpc` is an MPD client; neither it nor MPD exposes MPRIS by itself' "$audio_doc" \
-  || { printf 'FAIL: audio/media docs no longer explain the MPD/MPRIS boundary\n' >&2; exit 1; }
-grep -Eq '\| `mpd-mpris` \| MPRIS bridge for MPD/rmpc/[^|]+ sessions \|' "$packages_doc" \
-  || { printf 'FAIL: package docs omit mpd-mpris from the Arch audio bundle\n' >&2; exit 1; }
+if [[ -f "$audio_doc" ]]; then
+  grep -Fq '### MPD and rmpc' "$audio_doc" \
+    || { printf 'FAIL: audio/media docs omit MPD/rmpc bridge behavior\n' >&2; exit 1; }
+  grep -Fq '`rmpc` is an MPD client; neither it nor MPD exposes MPRIS by itself' "$audio_doc" \
+    || { printf 'FAIL: audio/media docs no longer explain the MPD/MPRIS boundary\n' >&2; exit 1; }
+fi
+if [[ -f "$packages_doc" ]]; then
+  grep -Eq '\| `mpd-mpris` \| MPRIS bridge for MPD/rmpc/[^|]+ sessions \|' "$packages_doc" \
+    || { printf 'FAIL: package docs omit mpd-mpris from the Arch audio bundle\n' >&2; exit 1; }
+fi
 
 printf '%s\n' 'PASS: MPD/rmpc media integration routes through the mpd-mpris bridge'

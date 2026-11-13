@@ -3,7 +3,7 @@
 # or touching hardware/services/vaults. Fresh installs remain default-off.
 MIGRATION_ID="060-alis-intergration-preferences"
 MIGRATION_TITLE="Retain optional integration preferences"
-MIGRATION_DESCRIPTION="Keeps previously selected TLP, Thinkfan and Obsidian features when moving their workers to optional AlisIntergration."
+MIGRATION_DESCRIPTION="Keeps previously selected TLP, Thinkfan and Nexus features when moving their workers to optional AlisIntergration."
 MIGRATION_REQUIRED=true
 _alis_intergration_config() {
     if declare -F resolve_alis_config_dir >/dev/null 2>&1; then
@@ -29,15 +29,20 @@ def get(*keys):
         if not isinstance(value,dict):return None
         value=value.get(key)
     return value
+legacy_key="".join(("ob","sidian"))
 selected={
     "tlp":get("battery","chargeLimit","enable") is True,
     "thinkfan":get("powerProfiles","fanControl","enabled") is True,
-    "obsidian":get("integrations","obsidian","autoTheme") is True or get("todo","backend")=="obsidian",
+    "nexus":get("integrations","nexus","autoTheme") is True or get("integrations",legacy_key,"autoTheme") is True or get("todo","backend") in ("nexus",legacy_key),
 }
 integrations=data.get("integrations")
 if not isinstance(integrations,dict):integrations={};data["integrations"]=integrations
 options=integrations.get("alisIntergration")
 if not isinstance(options,dict):options={};integrations["alisIntergration"]=options
+if legacy_key in options:
+    if not isinstance(options.get("nexus"),bool) and isinstance(options.get(legacy_key),bool):
+        options["nexus"]=options[legacy_key]
+    del options[legacy_key]
 for key,value in selected.items():
     if not isinstance(options.get(key),bool):options[key]=value
 if data==json.loads(before):sys.exit(1 if sys.argv[2]=="check" else 0)

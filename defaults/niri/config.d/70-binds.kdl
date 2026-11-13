@@ -73,6 +73,7 @@ binds {
     Super+Shift+E { spawn "alis" "files" "--new"; }
     Super+W { spawn "alis" "browser"; }
     Super+Shift+W { spawn "alis" "browser" "--new"; }
+    Super+O { spawn "alis" "nexus" "toggle"; }
 
     // ═══════════════════════════════════════════════════════════════════════
     // Window management
@@ -245,23 +246,23 @@ binds {
     // ═══════════════════════════════════════════════════════════════════════
 
     // Touchpad toggle.
-    XF86Favorites allow-when-locked=true { spawn "alis" "touchpad" "toggle"; }
+    XF86Favorites allow-when-locked=true allow-inhibiting=false { spawn "alis" "touchpad" "toggle"; }
 
     // Volume (routed through Alis for OSD + EasyEffects-aware sink resolution).
-    XF86AudioRaiseVolume allow-when-locked=true cooldown-ms=50 { spawn "alis" "audio" "volumeUp"; }
-    XF86AudioLowerVolume allow-when-locked=true cooldown-ms=50 { spawn "alis" "audio" "volumeDown"; }
-    XF86AudioMute        allow-when-locked=true { spawn "alis" "audio" "mute"; }
-    XF86AudioMicMute     allow-when-locked=true { spawn "alis" "audio" "micMute"; }
+    XF86AudioRaiseVolume allow-when-locked=true allow-inhibiting=false cooldown-ms=50 { spawn "alis" "audio" "volumeUp"; }
+    XF86AudioLowerVolume allow-when-locked=true allow-inhibiting=false cooldown-ms=50 { spawn "alis" "audio" "volumeDown"; }
+    XF86AudioMute        allow-when-locked=true allow-inhibiting=false { spawn "alis" "audio" "mute"; }
+    XF86AudioMicMute     allow-when-locked=true allow-inhibiting=false { spawn "alis" "audio" "micMute"; }
 
     // Brightness.
-    XF86MonBrightnessUp   allow-when-locked=true cooldown-ms=50 { spawn "alis" "brightness" "increment"; }
-    XF86MonBrightnessDown allow-when-locked=true cooldown-ms=50 { spawn "alis" "brightness" "decrement"; }
+    XF86MonBrightnessUp   allow-when-locked=true allow-inhibiting=false cooldown-ms=50 { spawn "alis" "brightness" "increment"; }
+    XF86MonBrightnessDown allow-when-locked=true allow-inhibiting=false cooldown-ms=50 { spawn "alis" "brightness" "decrement"; }
 
     // Media playback (MPRIS — works with any player: Spotify, Firefox, mpv…).
-    XF86AudioPlay  { spawn "alis" "mpris" "playPause"; }
-    XF86AudioPause { spawn "alis" "mpris" "playPause"; }
-    XF86AudioNext  { spawn "alis" "mpris" "next"; }
-    XF86AudioPrev  { spawn "alis" "mpris" "previous"; }
+    XF86AudioPlay  allow-inhibiting=false { spawn "alis" "mpris" "playPause"; }
+    XF86AudioPause allow-inhibiting=false { spawn "alis" "mpris" "playPause"; }
+    XF86AudioNext  allow-inhibiting=false { spawn "alis" "mpris" "next"; }
+    XF86AudioPrev  allow-inhibiting=false { spawn "alis" "mpris" "previous"; }
 
     // Keyboard shortcuts for media (when no media keys are available).
     Ctrl+Mod+Space { spawn "alis" "mpris" "playPause"; }

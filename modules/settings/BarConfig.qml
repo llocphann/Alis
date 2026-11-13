@@ -518,6 +518,12 @@ SettingsCardSection {
                         opacity: enabled ? 1 : 0.5
                         onCheckedChanged: Config.setNestedValue("bar.modules.activeWindow", checked)
                     }
+                    SettingsSwitch {
+                        buttonIcon: "equalizer"
+                        text: Translation.tr("Cava Equalizer")
+                        checked: Config.options?.bar?.modules?.cava ?? false
+                        onCheckedChanged: Config.setNestedValue("bar.modules.cava", checked)
+                    }
                 }
 
                 ConfigRow {
@@ -607,51 +613,6 @@ SettingsCardSection {
                 title: Translation.tr("Quick Action Settings")
                 visible: root.abyssContent
                     || (Config.options?.bar?.modules?.utilButtons ?? false)
-
-                RowLayout {
-                    visible: root.abyssContent
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    IconToolbarButton {
-                        id: quickNotesTimersIconToggle
-                        objectName: "abyssSettingsQuickNotesTimersIcon"
-                        implicitWidth: 38
-                        implicitHeight: 38
-                        text: "sticky_note_2"
-                        toggled: root.unifiedLauncherIconShown("notesTimers")
-                        // Supersedes legacy abyss.modules.iconVisibility.notesTimers
-                        onClicked: {
-                            const checked = !quickNotesTimersIconToggle.toggled;
-                            Config.setNestedValue("abyss.modules.notesTimersMode",checked ? "module" : "edgebar");
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("Show Quick Notes & Timers icon")
-                        }
-                    }
-
-                    IconToolbarButton {
-                        id: notificationActivityIconToggle
-                        objectName: "abyssSettingsNotificationActivityIcon"
-                        implicitWidth: 38
-                        implicitHeight: 38
-                        text: "notifications"
-                        toggled: root.unifiedLauncherIconShown("notificationActivity")
-                        // Supersedes legacy abyss.modules.iconVisibility.notificationActivity
-                        // Off: remove this module hover and use Corner Edgebar.
-                        onClicked: {
-                            const checked = !notificationActivityIconToggle.toggled;
-                            Config.setNestedValue("abyss.modules.notificationActivityMode",checked ? "module" : "edgebar");
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("Show Notifications & Activities icon")
-                        }
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                    }
-                }
 
                 QuickActionSettingsEditor {}
             }

@@ -23,14 +23,13 @@ Item {
 
         RowLayout { // Elapsed
             id: elapsedIndicator
-            
+
             anchors {
                 top: stopwatchTab.centerMode ? undefined : parent.top
                 topMargin: stopwatchTab.centerMode ? 0 : 6
                 verticalCenter: stopwatchTab.centerMode ? parent.verticalCenter : undefined
                 verticalCenterOffset: stopwatchTab.centerMode ? -(controlButtons.height / 2 + 12) : 0
-                left: controlButtons.left
-                leftMargin: 6
+                horizontalCenter: parent.horizontalCenter
             }
 
             states: State {
@@ -40,7 +39,7 @@ Item {
                     target: elapsedIndicator
                     anchors.top: parent.top
                     anchors.verticalCenter: undefined
-                    anchors.left: controlButtons.left
+                    anchors.horizontalCenter: parent.horizontalCenter
                 }
             }
 
@@ -52,10 +51,12 @@ Item {
                 }
             }
 
-            spacing: 0
+            spacing: 2
             StyledText {
-                // Layout.preferredWidth: elapsedIndicator.width * 0.6 // Prevent shakiness
+                Layout.alignment: Qt.AlignBaseline
                 font.pixelSize: Math.round(40 * Appearance.fontSizeScale)
+                font.family: Appearance.font.family.numbers
+                font.weight: Font.Medium
                 color: Appearance.colors.colOnSurface
                 text: {
                     let totalSeconds = Math.floor(TimerService.stopwatchTime) / 100
@@ -65,12 +66,12 @@ Item {
                 }
             }
             StyledText {
-                Layout.fillWidth: true
-                font.pixelSize: Math.round(40 * Appearance.fontSizeScale)
+                Layout.alignment: Qt.AlignBaseline
+                font.pixelSize: Math.round(24 * Appearance.fontSizeScale)
+                font.family: Appearance.font.family.numbers
+                font.weight: Font.Medium
                 color: Appearance.colors.colSubtext
-                text: {
-                    return `:<sub>${(Math.floor(TimerService.stopwatchTime) % 100).toString().padStart(2, '0')}</sub>`
-                }
+                text: `.${(Math.floor(TimerService.stopwatchTime) % 100).toString().padStart(2, '0')}`
             }
         }
 
@@ -185,7 +186,7 @@ Item {
                 }
             }
 
-            spacing: 4
+            spacing: 8
 
             RippleButton {
                 Layout.preferredHeight: 35
@@ -209,6 +210,8 @@ Item {
 
                 contentItem: StyledText {
                     horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    font.weight: Font.Medium
                     color: (TimerService.stopwatchRunning && !TimerService.stopwatchPaused)
                         ? Appearance.colors.colOnSecondaryContainer
                         : Appearance.colors.colOnPrimary
@@ -222,8 +225,10 @@ Item {
             }
 
             RippleButton {
+                id: stopwatchResetButton
                 implicitHeight: 35
                 implicitWidth: 90
+                buttonRadius: Appearance.rounding.full
                 font.pixelSize: Appearance.font.pixelSize.larger
 
                 onClicked: {
@@ -238,10 +243,21 @@ Item {
                 colBackgroundHover: Appearance.colors.colLayer2Hover
                 colRipple: Appearance.colors.colLayer2Active
 
-                contentItem: StyledText {
-                    horizontalAlignment: Text.AlignHCenter
-                    text: (TimerService.stopwatchRunning && !TimerService.stopwatchPaused) ? Translation.tr("Lap") : Translation.tr("Reset")
-                    color: Appearance.colors.colOnLayer2
+                contentItem: Item {
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: stopwatchResetButton.buttonRadius
+                        visible: !stopwatchResetButton.enabled
+                        color: Appearance.colors.colLayer2
+                    }
+                    StyledText {
+                        anchors.fill: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.weight: Font.Medium
+                        text: (TimerService.stopwatchRunning && !TimerService.stopwatchPaused) ? Translation.tr("Lap") : Translation.tr("Reset")
+                        color: Appearance.colors.colOnLayer2
+                    }
                 }
             }
         }

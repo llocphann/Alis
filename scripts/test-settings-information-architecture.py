@@ -41,10 +41,10 @@ def main() -> None:
         page_indices = [index for group in groups for index in group["pages"]]
         assert len(page_indices) == len(set(page_indices)), "duplicate default page"
         if family == "abyss":
-            excluded = {0, 5, 8, 13, 16, 17, 18, 19, 20, 21, 26, 27, 28, 29, 30, 31, 32, 34, 35, 36}
+            excluded = {0, 5, 8, 13, 14, 16, 17, 18, 19, 20, 21, 26, 27, 28, 29, 30, 31, 32, 34, 35, 36}
             expected = set(range(40)) - excluded
         else:
-            excluded = {0, 5, 8, 13, 16, 17, 18, 19, 20, 21, 27, 28, 29}
+            excluded = {0, 5, 8, 13, 14, 16, 17, 18, 19, 20, 21, 27, 28, 29}
             expected = (set(range(30)) - excluded) | {37, 38, 39}
         assert set(page_indices) == expected
         if family == "abyss":
@@ -116,6 +116,7 @@ def main() -> None:
     forbid(data, 'key: "automation"', "retired Automation route")
     forbid(data, 'key: "arrange"', "duplicate Arrange route")
     forbid(data, "ArrangeConfig.qml", "duplicate Arrange component")
+    forbid(data, "DesktopWidgetsConfig.qml", "retired Desktop Widgets component")
     for path, source, token in (
         ("Modules", modules, 'Config.setNestedValue("appearance.typography.sizeScale"'),
         ("System", system, 'Config.setNestedValue("policies.ai"'),

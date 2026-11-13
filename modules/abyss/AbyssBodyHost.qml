@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQml.Models
 import Quickshell
 import qs
@@ -21,6 +22,7 @@ Item {
     property string identity: ""
     property var controller: null
     readonly property var liquidController: controller
+    readonly property var hostWindow: QsWindow.window ?? Window.window
     // Presentation-only semantic metadata for vacancy borrowing.
     property string vacancyRole: ""
     property bool vacancyHovered: root.vacancyRole.length > 0
@@ -47,12 +49,22 @@ Item {
     // Warm content is hidden and has no input after the final closing pixel.
     property bool warmContent: false
     property bool warmHeld: false
+    // Lazy until first open, then retained hidden/idle across close and suspend/resume
+    // so heavy workspaces (e.g. Nexus) reopen instantaneously without cold-boot cost.
+    property bool retainAfterFirstOpen: false
+    property bool openedOnce: false
+    // Idle-gated staggered warmup after startup: activates the Loader with
+    // asynchronous: true while closed so the first open never stutters.
+    property bool backgroundPreload: false
+    onRetainAfterFirstOpenChanged: if (!retainAfterFirstOpen) openedOnce = false
     onWarmContentChanged: if (!warmContent) { warmExpiry.stop(); warmHeld=false }
     onVisualResidentChanged: {
-        if (visualResident) warmExpiry.stop()
-        else {
+        if (visualResident) {
+            warmExpiry.stop()
+            if (retainAfterFirstOpen) openedOnce = true
+        } else {
             if (!semanticOpen && !open) activationOrder = 0
-            if (warmHeld) warmExpiry.restart()
+            if (warmHeld && !retainAfterFirstOpen && !backgroundPreload) warmExpiry.restart()
         }
     }
     Timer {
@@ -66,15 +78,28 @@ Item {
     property bool animatePlacementChanges:
         identity !== "dock" && identity !== "edgeEditor" && identity !== "editorPreview"
     property bool largeSurface: false
-    // Content may place a compact control surface above itself. Top-attached
-    // bodies move inward; side-attached bodies move along their physical Edge.
-    // Both leave the widget canvas dimensions unchanged during editing.
-    readonly property real minimumInward: edge === "top"
-        && ((contentItem.item?.editMode ?? false) || (contentItem.item?.tabNamingActive ?? false))
-        ? Math.max(0, Number(contentItem.item?.topControlReserve ?? 0)) : 0
-    readonly property real requestedAlong: !Geometry.horizontal(edge)
-        && ((contentItem.item?.editMode ?? false) || (contentItem.item?.tabNamingActive ?? false))
-        ? Math.max(along, Number(contentItem.item?.topControlReserve ?? 0)) : along
+    // Content may place a compact control surface above or below itself.
+    // Top/bottom-attached bodies move inward; side-attached bodies move along
+    // their physical Edge. Both leave widget canvas dimensions unchanged when
+    // room permits.
+    readonly property bool _editingReserveActive:
+        (contentItem.item?.editMode ?? false) || (contentItem.item?.tabNamingActive ?? false)
+    readonly property real minimumInward: !_editingReserveActive ? 0
+        : edge === "top" ? Math.max(0, Number(contentItem.item?.topControlReserve ?? 0))
+        : edge === "bottom" ? Math.max(0, Number(contentItem.item?.bottomControlReserve ?? 0))
+        : 0
+    readonly property real oppositeClearance: !_editingReserveActive ? 0
+        : edge === "top" ? Math.max(0, Number(contentItem.item?.bottomControlReserve ?? 0))
+        : edge === "bottom" ? Math.max(0, Number(contentItem.item?.topControlReserve ?? 0))
+        : 0
+    readonly property real requestedAlong: !Geometry.horizontal(edge) && _editingReserveActive
+        ? (Number(contentItem.item?.topControlReserve ?? 0) > 0
+            ? Math.max(along, Number(contentItem.item?.topControlReserve ?? 0))
+            : (Number(contentItem.item?.bottomControlReserve ?? 0) > 0
+                ? Math.min(along, Math.max(Math.max(0, (edgeInsets?.top ?? 0) - padding),
+                    height - (edgeInsets?.bottom ?? 0) - Number(contentItem.item?.bottomControlReserve ?? 0) - span))
+                : along))
+        : along
     // Keep Dock/icon geometry fixed, but let panel content reflow before any
     // lower-priority body is evicted. These are panel dimensions including
     // padding; hosts may raise them for feature-specific readability.
@@ -115,7 +140,7 @@ Item {
     property bool preserveAspect: false
     readonly property bool contentFocused: contentFrame.activeFocus
     property int placementPriority: identity === "dialog" ? 4
-        : ["dashboard","utility","edgeEditor","settings"].includes(identity) ? 3
+        : ["dashboard","utility","edgeEditor","settings","nexus"].includes(identity) ? 3
         : ["leftPanel","rightPanel"].includes(identity) ? 2
         : identity === "dock" ? -1 : 0
     readonly property var placementMemo: ({})
@@ -255,7 +280,28 @@ Item {
                 ? obstacles : null),
         largeSurface,layoutPlacement)
     readonly property Item contentItem: content
-    readonly property bool ready: embeddedItem !== null || content.status === Loader.Ready
+    readonly property bool _rawContentReady: embeddedItem !== null
+        || (content.status === Loader.Ready && (content.item?.contentReady ?? true))
+    property bool _coldRevealSettled: false
+    property int _coldSettleGen: 0
+    function _syncColdRevealSettle(): void {
+        const gen = ++root._coldSettleGen
+        if (!root._rawContentReady) {
+            root._coldRevealSettled = false
+            return
+        }
+        if (root.embeddedItem !== null || !root.largeSurface
+                || !AbyssStyle.motionEnabled || root._coldRevealSettled) {
+            root._coldRevealSettled = true
+            return
+        }
+        Qt.callLater(() => {
+            if (gen === root._coldSettleGen && root._rawContentReady)
+                root._coldRevealSettled = true
+        })
+    }
+    on_RawContentReadyChanged: root._syncColdRevealSettle()
+    readonly property bool ready: root._rawContentReady && root._coldRevealSettled
     readonly property Item contentParent: contentCanvas
     readonly property Item hoverParent: root.includeEdgeConnection ? inputFrame : contentCanvas
     // Placement clearance includes module depth; the painted field's actual
@@ -263,7 +309,9 @@ Item {
     readonly property var connectionInsets: root.controller?.edgeInsets ?? root.edgeInsets
     readonly property rect inputBounds: {
         if (!root.acceptsInput || !root.ready) return Qt.rect(0,0,0,0)
-        const c=root.record.content
+        const c=(root.largeSurface && !root.includeEdgeConnection && root.semanticOpen)
+            ? root.targetRecord.content
+            : root.record.content
         const contentRect=Qt.rect(c.x,c.y,c.width,c.height)
         if (!root.includeEdgeConnection) return contentRect
         const region=Geometry.popupInput(contentRect,root.width,root.height,
@@ -374,6 +422,7 @@ Item {
                 minSpan:root.minimumSpan,minDepth:root.minimumDepth,
                 allowInward:root.placementCanStackInward,
                 minimumInward:root.minimumInward,
+                oppositeClearance:root.oppositeClearance,
                 stackPolicy:root.stackPolicy,
                 pyramidAnchor:root.pyramidAnchor,
                 stackProximity:root.stackProximity,
@@ -395,6 +444,15 @@ Item {
         }
         if (controller?.nextPresentationOrder && (forceNewOrder || activationOrder <= 0))
             activationOrder = controller.nextPresentationOrder()
+    }
+    function promoteInteractionOrder(fromHover = false): void {
+        if (!root.semanticOpen || !root.presented || !root.ready)
+            return
+        if (fromHover && !participant.surfaceSettled)
+            return
+        if (root.controller?.nextPresentationOrder
+                && root.activationOrder < root.controller.presentationOrder)
+            root.activationOrder = root.controller.nextPresentationOrder()
     }
     function refreshVacancyInteraction(): void {
         if (!root.vacancyHovered || root.vacancyRole.length === 0) {
@@ -558,6 +616,7 @@ Item {
     }
     Component.onCompleted: {
         initialized = true
+        root._syncColdRevealSettle()
         markOpened()
         root.refreshVacancyInteraction()
         if (semanticOpen) {
@@ -590,6 +649,14 @@ Item {
         }
         root.closeRequested()
         event.accepted = true
+    }
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Escape && (event.modifiers === Qt.NoModifier || event.modifiers === Qt.KeypadModifier))
+            return
+        if (typeof content.item?.forwardKeyEvent === "function"
+                && content.item.forwardKeyEvent(event)) {
+            event.accepted = true
+        }
     }
     Behavior on visualPlacementAlong {
         enabled: root.animatePlacementChanges && root.placementMotionReady
@@ -724,7 +791,7 @@ Item {
         // content remains full-size behind a moving clip; it never fades/shrinks.
         // Transient notifications slide under the Edge clip without the
         // separate end-loaded fade (previously ~70ms at default settings).
-        opacity: root.pyramidPresentationActive || root.monotonicNotificationReveal
+        opacity: root.pyramidPresentationActive || root.monotonicNotificationReveal || root.largeSurface
             ? 1 : Math.min(1,root.progress*1.5)
         enabled: root.acceptsInput
 
@@ -754,6 +821,11 @@ Item {
             height: root.pyramidPresentationActive
                 ? fullRect.height : (root.stableContentSize
                     ? root.targetRecord.content.height : contentFrame.height)
+            layer.enabled: root.largeSurface
+                && (Quickshell.env("QT_QUICK_BACKEND") !== "software")
+                && GraphicsInfo.api !== GraphicsInfo.Software
+                && root.progress > 0.001 && root.progress < 0.999
+            layer.smooth: true
         }
     }
     Loader {
@@ -773,9 +845,14 @@ Item {
         // A space-constrained body retains drafts/focus state while hidden. It
         // unloads only after a semantic close and completion of the reveal.
         active: !root.embeddedItem
-            && (root.residentContent || root.visualResident || root.warmHeld)
+            && (root.residentContent || root.visualResident || root.warmHeld || root.backgroundPreload
+                || (root.retainAfterFirstOpen === true && root.openedOnce === true))
             && GlobalStates.deferredPanelsReady
         source: root.source
+        asynchronous: (Quickshell.env("QT_QUICK_BACKEND") !== "software")
+            && status !== Loader.Ready
+            && !root.residentContent
+            && (root.backgroundPreload || root.largeSurface)
         clip: true
         opacity: 1
         enabled: root.acceptsInput

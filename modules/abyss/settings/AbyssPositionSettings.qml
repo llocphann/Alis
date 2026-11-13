@@ -129,7 +129,7 @@ ColumnLayout {
                 {label:"Brightness OSD",value:"brightness"},{label:"Microphone OSD",value:"mic"},
                 {label:"Media OSD",value:"mediaOsd"},{label:"Keyboard OSD",value:"keyboardLayout"},
                 {label:"Voice Search OSD",value:"voiceSearch"},{label:"Settings",value:"settings"},
-                {label:"Dashboard",value:"dashboard"},{label:"Overview",value:"overview"},
+                {label:"Dashboard",value:"dashboard"},{label:"Nexus",value:"nexus"},{label:"Overview",value:"overview"},
                 {label:"Clipboard",value:"clipboard"},{label:"Controls",value:"controls"},
                 {label:"Left sidebar",value:"leftPanel"},{label:"Right sidebar",value:"rightPanel"},
                 {label:"Quick Notes / Timers Edge Bar",value:"quickNotes"},{label:"Notifications / Activity Edge Bar",value:"notificationCenter"},{label:"Notification popups",value:"notifications"},

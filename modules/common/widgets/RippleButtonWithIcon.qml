@@ -23,6 +23,7 @@ RippleButton {
             // past the button/pane boundary when the text is wider than it.
             elide: Text.ElideRight
             maximumLineCount: 1
+            verticalAlignment: Text.AlignVCenter
             clip: true
             font.pixelSize: Appearance.font.pixelSize.small
             color: buttonWithIconRoot.contentColor

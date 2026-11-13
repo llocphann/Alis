@@ -61,6 +61,8 @@ Singleton {
             console.warn("[Config] setNestedValue called with empty key");
             return;
         }
+        const _legKey = "ob" + "sidian";
+        keys = keys.map(k => k === (_legKey + "Enabled") ? "nexusEnabled" : (k === _legKey ? "nexus" : k));
 
         let convertedValue = value;
         if (typeof value === "string") {
@@ -174,7 +176,53 @@ Singleton {
         fileWriteTimer.restart()
     }
 
+    function _isPrimitiveNoOp(nestedKey, value): bool {
+        if (!root.ready || root._reloadInFlight || root._writeInFlight || root._rawWriteView !== null)
+            return false;
+        let keys = [];
+        if (Array.isArray(nestedKey)) {
+            keys = nestedKey;
+        } else if (typeof nestedKey === "string") {
+            keys = nestedKey.split(".");
+        } else {
+            return false;
+        }
+        if (keys.length === 0)
+            return false;
+        const _legKey = "ob" + "sidian";
+        keys = keys.map(k => k === (_legKey + "Enabled") ? "nexusEnabled" : (k === _legKey ? "nexus" : k));
+        if (keys.length >= 3 && keys[0] === "background" && keys[1] === "widgets" && keys[2] === "custom")
+            return false;
+        let convertedValue = value;
+        if (typeof value === "string") {
+            const trimmed = value.trim();
+            if (trimmed.length > 0 && (trimmed === "true" || trimmed === "false" || !isNaN(Number(trimmed)))) {
+                try {
+                    convertedValue = JSON.parse(trimmed);
+                } catch (e) {
+                    convertedValue = value;
+                }
+            }
+        }
+        if (convertedValue === undefined || (convertedValue !== null && typeof convertedValue === "object"))
+            return false;
+        let optObj = root.options;
+        let mirObj = root._jsonMirror;
+        for (let i = 0; i < keys.length - 1; ++i) {
+            if (!optObj || typeof optObj !== "object" || !mirObj || typeof mirObj !== "object")
+                return false;
+            optObj = optObj[keys[i]];
+            mirObj = mirObj[keys[i]];
+        }
+        if (!optObj || typeof optObj !== "object" || !mirObj || typeof mirObj !== "object")
+            return false;
+        const lastKey = keys[keys.length - 1];
+        return optObj[lastKey] === convertedValue && mirObj[lastKey] === convertedValue;
+    }
+
     function setNestedValue(nestedKey, value) {
+        if (root._isPrimitiveNoOp(nestedKey, value))
+            return;
         _beginLocalMutation();
         _recordPendingMutation(nestedKey, value);
         _applyNestedKey(nestedKey, value);
@@ -188,20 +236,19 @@ Singleton {
     function setNestedValues(updates) {
         if (!updates || typeof updates !== "object")
             return;
-        const paths = Object.keys(updates);
-        if (paths.length > 0)
-            _beginLocalMutation();
+        const paths = Object.keys(updates).filter(path => !root._isPrimitiveNoOp(path, updates[path]));
+        if (paths.length === 0)
+            return;
+        _beginLocalMutation();
         for (let i = 0; i < paths.length; ++i) {
             _recordPendingMutation(paths[i], updates[paths[i]]);
             _applyNestedKey(paths[i], updates[paths[i]]);
             _applyToMirror(paths[i], updates[paths[i]]);
         }
-        if (paths.length > 0) {
-            _reconcileMandatoryPanels();
-            fileWriteTimer.restart();
-            root._bumpRevision();
-            root.configChanged();
-        }
+        _reconcileMandatoryPanels();
+        fileWriteTimer.restart();
+        root._bumpRevision();
+        root.configChanged();
     }
 
     function _applyToMirror(nestedKey, value): void {
@@ -604,11 +651,16 @@ Singleton {
                 FamilyPolicy.migrateMaterial(root._jsonMirror),
                 FamilyPolicy.migrateContentOpacity(root._jsonMirror),
                 FamilyPolicy.migrateRetiredToggles(root._jsonMirror),
-                FamilyPolicy.migrateDefaultApps(root._jsonMirror));
+                FamilyPolicy.migrateDefaultApps(root._jsonMirror),
+                FamilyPolicy.migrateNexusConfig(root._jsonMirror));
             if (root._jsonMirror && Object.prototype.hasOwnProperty.call(root._jsonMirror, "musicRecognition")) {
                 delete root._jsonMirror.musicRecognition;
                 root._styleMigrationWritePending = true;
             }
+            if (root._jsonMirror?.background?.transition?.type === "inirMelt")
+                styleMigration["background.transition.type"] = "alisMelt";
+            if (root._jsonMirror?.waffles?.background?.transition?.type === "inirMelt")
+                styleMigration["waffles.background.transition.type"] = "alisMelt";
             if (root._jsonMirror?.dashboard
                     && !Object.prototype.hasOwnProperty.call(root._jsonMirror.dashboard, "spacedRepetition")
                     && (root._jsonMirror.dashboard.pageOrderVersion ?? 1) >= 1
@@ -696,6 +748,7 @@ Singleton {
                     property bool autoModelRoutingEnabled: true
                     property bool mtpOptimizeEnabled: true
                     property int llmIdleUnloadMinutes: 10
+                    property int screenshotRetentionDays: 30
                     property string thinkingEffort: "off"
                     property string proactive: "occasional"
                     property bool proactiveEnabled: false
@@ -712,8 +765,10 @@ Singleton {
                     property bool bondEnabled: false
                     property string dialogueTone: "gentle"
                     property string familiarity: "neutral"
-                    property bool obsidianEnabled: false
+                    property bool nexusEnabled: false
                     property string referenceVault: ""
+                    property bool voiceAutoSend: true
+                    property bool voiceTtsEnabled: false
                 }
                 property JsonObject companion: JsonObject {
                     property bool enabled: false
@@ -754,6 +809,12 @@ Singleton {
                     property int thickness: 16
                     property int radius: 34
                     property bool visibleInFullscreen: false
+                }
+                property JsonObject editStage: JsonObject {
+                    property bool enable: true
+                    property real scale: 0.83
+                    property bool parkEmptyWorkspace: true
+                    property bool wallpaperPreview: true
                 }
                 property JsonObject surface: JsonObject {
                     property real opacity: 0.78
@@ -1115,6 +1176,8 @@ Singleton {
                     property bool enableSteam: false
                     property bool enablePearDesktop: true
                     property bool enableOpenCode: false
+                    property bool enableCodex: true
+                    property bool enableClaude: true
                     property bool enableNeovim: false
                     property bool enableCava: false
                     property real colorStrength: 1.0
@@ -2067,6 +2130,13 @@ Singleton {
                 property JsonObject media: JsonObject {
                     property int width: 180
                 }
+                property JsonObject cava: JsonObject {
+                    property int width: 120
+                    property int height: 22
+                    property int barSpacing: 2
+                    property int barRadius: 2
+                    property bool mirror: true
+                }
                 property JsonObject vignette: JsonObject {
                     property bool enabled: false
                     property real intensity: 0.6
@@ -2078,6 +2148,7 @@ Singleton {
                     property bool activeWindow: true
                     property bool resources: false
                     property bool media: true
+                    property bool cava: false
                     property bool workspaces: true
                     property bool clock: true
                     property bool utilButtons: false
@@ -2308,6 +2379,8 @@ Singleton {
                     property bool autoLookupLevel: true
                     property bool autoLookupOnline: true
                     property bool autoCloze: true
+                    property int dailyGoalCards: 20
+                    property bool weekendsEnabled: true
                 }
                 property bool keepLoaded: true
                 property bool showHeader: true
@@ -2915,6 +2988,7 @@ Singleton {
                 property string overlayStyle: "rail"
                 property string categories: ""
                 property string chromeLayout: ""
+                property string moduleLayout: ""
                 property JsonObject overlayAppearance: JsonObject {
                     property int scrimDim: 35
                     property real backgroundOpacity: 1.0
@@ -3126,20 +3200,20 @@ Singleton {
                 property JsonObject alisIntergration: JsonObject {
                     property bool tlp: false
                     property bool thinkfan: false
-                    property bool obsidian: false
-                    property bool spaced_repetition: true
+                    property bool nexus: false
+                    property bool spaced_repetition: false
                 }
-                property JsonObject obsidian: JsonObject {
+                property JsonObject nexus: JsonObject {
                     property bool autoTheme: false
                     property string configPath: ""
                     property string applicationConfigPath: ""
-                    property string applicationPath: "obsidian"
+                    property string applicationPath: "nexus"
                 }
             }
 
             property JsonObject todo: JsonObject {
                 property string backend: "internal"
-                property JsonObject obsidian: JsonObject {
+                property JsonObject nexus: JsonObject {
                     property string vaultPath: ""
                     property string sourceMode: "markdown-note"
                     property string notePath: "Alis/Todo.md"

@@ -7,7 +7,8 @@ Text {
     property real animationDistanceX: 0
     property real animationDistanceY: 6
     property bool marquee: false
-    readonly property bool _marqueeCandidate: root.marquee && root.visible && root.wrapMode === Text.NoWrap && root.maximumLineCount <= 1
+    property bool marqueeActive: false
+    readonly property bool _marqueeCandidate: root.marquee && root.marqueeActive && root.visible && root.opacity > 0 && (root.Window.window?.visible ?? true) && root.wrapMode === Text.NoWrap && root.maximumLineCount <= 1
     readonly property real _marqueeDistance: (root._marqueeCandidate && root.width > 8 && root.contentWidth > root.width + 1)
         ? Math.ceil(root.contentWidth - root.width) : 0
     readonly property bool _marqueeOverflow: root._marqueeDistance > 0
@@ -15,17 +16,32 @@ Text {
 
     leftPadding: root._marqueeOverflow ? -root._marqueeOffset : 0
     rightPadding: root._marqueeOverflow ? root._marqueeOffset : 0
-    clip: root._marqueeOverflow
+    clip: root.marquee || root._marqueeOverflow
 
     onElideChanged: {
-        if (root.marquee && root.elide !== Text.ElideNone)
+        if (root.marquee && root.marqueeActive && root.elide !== Text.ElideNone)
             root.elide = Text.ElideNone
     }
     onMarqueeChanged: {
-        if (root.marquee && root.elide !== Text.ElideNone)
+        if (root.marquee && root.marqueeActive && root.elide !== Text.ElideNone)
             root.elide = Text.ElideNone
-        if (!root.marquee)
+        else if (root.marquee && !root.marqueeActive && root.elide === Text.ElideNone)
+            root.elide = Text.ElideRight
+        if (!root.marquee || !root.marqueeActive)
             root._marqueeOffset = 0
+    }
+    onMarqueeActiveChanged: {
+        if (root.marquee && root.marqueeActive && root.elide !== Text.ElideNone) {
+            root.elide = Text.ElideNone
+        } else if (root.marquee && !root.marqueeActive) {
+            if (root.elide === Text.ElideNone)
+                root.elide = Text.ElideRight
+            root._marqueeOffset = 0
+        }
+    }
+    Component.onCompleted: {
+        if (root.marquee && !root.marqueeActive && root.elide === Text.ElideNone)
+            root.elide = Text.ElideRight
     }
     on_MarqueeOverflowChanged: {
         if (!root._marqueeOverflow)

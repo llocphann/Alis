@@ -596,7 +596,7 @@ Item {
                     ? ""
                     : Zettelkasten.ready
                         ? Translation.tr("Save as Zettelkasten quick note")
-                        : Translation.tr("Configure an Obsidian vault to enable Zettelkasten")
+                        : Translation.tr("Configure a Nexus vault to enable Zettelkasten")
                 enabled: root.canSaveZettel
                 onClicked: root.saveAsZettel()
             }

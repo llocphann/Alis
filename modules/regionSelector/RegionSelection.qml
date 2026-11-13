@@ -4,6 +4,7 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.perimeter
 import qs.modules.common.widgets
+import qs.modules.abyss.looks
 import qs.modules.waffle.regionSelector as WaffleRegion
 import qs.services
 import QtQuick
@@ -197,7 +198,7 @@ PanelWindow {
         })
     }
     readonly property list<var> layerRegions: {
-        if (root.useNiri)
+        if (root.useNiri || !root.hyprlandMonitor)
             return [];
 
         const layersOfThisMonitor = root.layers[root.hyprlandMonitor.name]
@@ -310,6 +311,41 @@ PanelWindow {
     property real regionHeight: Math.abs(draggingY - dragStartY)
     property real regionX: Math.min(dragStartX, draggingX)
     property real regionY: Math.min(dragStartY, draggingY)
+
+    readonly property bool useStageMode: (Config.options?.panelFamily ?? "abyss") === "abyss"
+        && DesktopEditStage.stageEnabled
+    property real screenshotStageProgress: (root.useStageMode && root.visible && root.screenshotReady) ? 1 : 0
+    Behavior on screenshotStageProgress {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+    }
+    readonly property real desiredStageDockWidth: Math.max(420, Math.round(regionSelectionControls.implicitWidth + 16))
+    readonly property real desiredStageDockHeight: Math.max(54, Math.round(regionSelectionControls.implicitHeight + 6))
+    readonly property var stageCard: root.useStageMode
+        ? DesktopEditStage.cardForGeometry(
+            root.width,
+            root.height,
+            "screenshot",
+            root.screenshotStageProgress,
+            root.desiredStageDockWidth,
+            root.desiredStageDockHeight,
+            0, 0, 0, 0, 0, 0
+        )
+        : null
+
+    function toStageX(mx: real): real {
+        if (!root.useStageMode || !root.stageCard || !(root.stageCard.s > 0.01))
+            return mx;
+        const mapped = (mx - root.stageCard.x) / root.stageCard.s;
+        return Math.max(0, Math.min(root.width, mapped));
+    }
+
+    function toStageY(my: real): real {
+        if (!root.useStageMode || !root.stageCard || !(root.stageCard.s > 0.01))
+            return my;
+        const mapped = (my - root.stageCard.y) / root.stageCard.s;
+        return Math.max(0, Math.min(root.height, mapped));
+    }
 
     Component.onCompleted: {
         root.screenshotReady = false
@@ -489,13 +525,6 @@ PanelWindow {
         anchors.fill: parent
         color: "transparent"
 
-        Image {
-            anchors.fill: parent
-            source: root.visible && root.screenshotReady ? `file://${root.screenshotPath}` : ""
-            fillMode: Image.PreserveAspectFit
-            cache: false
-        }
-
         focus: root.visible
         Keys.onPressed: (event) => { // Esc to close
             if (event.key === Qt.Key_Escape) {
@@ -503,76 +532,38 @@ PanelWindow {
             }
         }
 
-        MouseArea {
-            id: mouseArea
-            anchors.fill: parent
-            cursorShape: Qt.CrossCursor
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            hoverEnabled: true
+        Item {
+            id: screenshotStageViewport
+            objectName: "screenshotStageViewport"
+            width: root.width
+            height: root.height
+            transform: [
+                Scale {
+                    xScale: root.useStageMode && root.stageCard ? root.stageCard.s : 1
+                    yScale: root.useStageMode && root.stageCard ? root.stageCard.s : 1
+                },
+                Translate {
+                    x: root.useStageMode && root.stageCard ? root.stageCard.x : 0
+                    y: root.useStageMode && root.stageCard ? root.stageCard.y : 0
+                }
+            ]
 
-            // Controls
-            onPressed: (mouse) => {
-                if (imageDetectionProcess.running) imageDetectionProcess.running = false;
-                root.dragStartX = mouse.x;
-                root.dragStartY = mouse.y;
-                root.draggingX = mouse.x;
-                root.draggingY = mouse.y;
-                root.dragging = true;
-                root.mouseButton = mouse.button;
-            }
-            onReleased: (mouse) => {
-                // Detect if it was a click -> Try to select targeted region
-                if (root.draggingX === root.dragStartX && root.draggingY === root.dragStartY) {
-                    if (root.targetedRegionValid()) {
-                        root.setRegionToTargeted();
-                    }
-                }
-                // Circle dragging?
-                else if (root.selectionMode === RegionSelection.SelectionMode.Circle) {
-                    const padding = (Config.options?.regionSelector?.circle?.padding ?? 10) + (Config.options?.regionSelector?.circle?.strokeWidth ?? 2) / 2;
-                    const dragPoints = (root.points.length > 0) ? root.points : [{ x: mouseArea.mouseX, y: mouseArea.mouseY }];
-                    const xValues = dragPoints.map(p => p.x);
-                    const maxX = Math.max(...xValues);
-                    const minX = Math.min(...xValues);
-                    const yValues = dragPoints.map(p => p.y);
-                    const maxY = Math.max(...yValues);
-                    const minY = Math.min(...yValues);
-                    root.regionX = minX - padding;
-                    root.regionY = minY - padding;
-                    root.regionWidth = maxX - minX + padding * 2;
-                    root.regionHeight = maxY - minY + padding * 2;
-                }
-                root.snip();
-            }
-            onPositionChanged: (mouse) => {
-                if (!root.dragging) {
-                    root.updateTargetedRegion(mouse.x, mouse.y);
-                    return;
-                }
-                root.draggingX = mouse.x;
-                root.draggingY = mouse.y;
-                root.dragDiffX = mouse.x - root.dragStartX;
-                root.dragDiffY = mouse.y - root.dragStartY;
-                if (root.selectionMode === RegionSelection.SelectionMode.Circle) {
-                    root.points.push({ x: mouse.x, y: mouse.y });
-                }
+            Image {
+                anchors.fill: parent
+                source: root.visible && root.screenshotReady ? `file://${root.screenshotPath}` : ""
+                fillMode: Image.PreserveAspectFit
+                cache: false
             }
 
             // Clip only the dim/selection-guide rendering to the workspace
-            // interior. The MouseArea and snip coordinates remain full-output,
-            // so Bar/Screen Edge pixels stay visually unchanged without
-            // changing what the user can select or capture.
+            // interior in full-output mode; in stage mode cover the full shrunk desktop.
             Item {
                 id: selectionVisualViewport
                 z: 2
-                x: root.screenshotLeftOwnerInset
-                y: root.screenshotTopOwnerInset
-                width: Math.max(0, mouseArea.width
-                    - root.screenshotLeftOwnerInset
-                    - root.screenshotRightOwnerInset)
-                height: Math.max(0, mouseArea.height
-                    - root.screenshotTopOwnerInset
-                    - root.screenshotBottomOwnerInset)
+                x: root.useStageMode ? 0 : root.screenshotLeftOwnerInset
+                y: root.useStageMode ? 0 : root.screenshotTopOwnerInset
+                width: Math.max(0, root.width - (root.useStageMode ? 0 : (root.screenshotLeftOwnerInset + root.screenshotRightOwnerInset)))
+                height: Math.max(0, root.height - (root.useStageMode ? 0 : (root.screenshotTopOwnerInset + root.screenshotBottomOwnerInset)))
                 clip: true
                 // Keep layer.enabled off during interactive region selection so
                 // full-screen FBO + OpacityMask re-renders do not stall every
@@ -582,16 +573,16 @@ PanelWindow {
                 Loader {
                     x: -selectionVisualViewport.x
                     y: -selectionVisualViewport.y
-                    width: mouseArea.width
-                    height: mouseArea.height
+                    width: root.width
+                    height: root.height
                     active: root.selectionMode === RegionSelection.SelectionMode.RectCorners
                     sourceComponent: RectCornersSelectionDetails {
                         regionX: root.regionX
                         regionY: root.regionY
                         regionWidth: root.regionWidth
                         regionHeight: root.regionHeight
-                        mouseX: mouseArea.mouseX
-                        mouseY: mouseArea.mouseY
+                        mouseX: root.toStageX(mouseArea.mouseX)
+                        mouseY: root.toStageY(mouseArea.mouseY)
                         color: root.selectionBorderColor
                         overlayColor: root.overlayColor
                     }
@@ -600,8 +591,8 @@ PanelWindow {
                 Loader {
                     x: -selectionVisualViewport.x
                     y: -selectionVisualViewport.y
-                    width: mouseArea.width
-                    height: mouseArea.height
+                    width: root.width
+                    height: root.height
                     active: root.selectionMode === RegionSelection.SelectionMode.Circle
                     sourceComponent: CircleSelectionDetails {
                         color: root.selectionBorderColor
@@ -667,145 +658,232 @@ PanelWindow {
                     text: Translation.tr("Content region")
                 }
             }
+        }
+
+        AbyssEditStageFrame {
+            id: screenshotEditStageFrame
+            objectName: "screenshotEditStageFrame"
+            z: 50
+            visible: root.useStageMode && Boolean(root.stageCard?.active)
+            anchors.fill: parent
+            card: root.stageCard ?? ({ p: 0 })
+        }
+
+        MouseArea {
+            id: mouseArea
+            z: 60
+            anchors.fill: parent
+            cursorShape: Qt.CrossCursor
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            hoverEnabled: true
 
             // Controls
-            // Material ii uses one connected Abyss body that grows directly from
-            // the physical bottom Screen Edge. The toolbar and close action are
-            // content inside that single body instead of separate floating cards.
-            ConnectedSurfaceAbyssEdgeSurface {
-                id: regionControlsAbyss
-                z: 9998
-                anchors.fill: parent
-                visible: !regionSelectionControls.useWaffle
-                edge: "bottom"
-                ownerThickness: root.screenEdgeThickness
-                // Same raster seam treatment as the now-validated Sidebar
-                // attachment: only Abyss paint overlaps the physical owner;
-                // toolbar layout/input still stop at the real boundary.
-                paintOverlap: Math.min(
-                    PerimeterTokens.seamOverlap,
-                    Math.max(0, root.screenEdgeThickness - 1))
-                outputRect: Qt.rect(0, 0, width, height)
-                bodyRect: Qt.rect(
-                    regionSelectionControls.x,
-                    regionSelectionControls.y,
-                    regionSelectionControls.width,
-                    regionSelectionControls.height)
-                bodyRadius: PerimeterTokens.popupRadius
-                fillColor: Appearance.colors.colLayer0
-                borderColor: Appearance.colors.colLayer0Border
-                borderWidth: 0
-                progress: 1
-                shadowEnabled: root.screenEdgeShadowEnabled
-                    && root.screenEdgeShadowSize > 0
-                    && root.screenEdgeShadowOpacity > 0
-                shadowExtent: root.screenEdgeShadowSize
-                shadowColor: root.screenEdgeShadowColor
+            onPressed: (mouse) => {
+                if (imageDetectionProcess.running) imageDetectionProcess.running = false;
+                const sx = root.toStageX(mouse.x);
+                const sy = root.toStageY(mouse.y);
+                root.dragStartX = sx;
+                root.dragStartY = sy;
+                root.draggingX = sx;
+                root.draggingY = sy;
+                root.dragDiffX = 0;
+                root.dragDiffY = 0;
+                root.points = [];
+                root.dragging = true;
+                root.mouseButton = mouse.button;
+            }
+            onReleased: (mouse) => {
+                root.dragging = false;
+                // Detect if it was a click -> Try to select targeted region
+                if (root.draggingX === root.dragStartX && root.draggingY === root.dragStartY) {
+                    if (root.targetedRegionValid()) {
+                        root.setRegionToTargeted();
+                    }
+                }
+                // Circle dragging?
+                else if (root.selectionMode === RegionSelection.SelectionMode.Circle) {
+                    const padding = (Config.options?.regionSelector?.circle?.padding ?? 10) + (Config.options?.regionSelector?.circle?.strokeWidth ?? 2) / 2;
+                    const sx = root.toStageX(mouseArea.mouseX);
+                    const sy = root.toStageY(mouseArea.mouseY);
+                    const dragPoints = (root.points.length > 0) ? root.points : [{ x: sx, y: sy }];
+                    const xValues = dragPoints.map(p => p.x);
+                    const maxX = Math.max(...xValues);
+                    const minX = Math.min(...xValues);
+                    const yValues = dragPoints.map(p => p.y);
+                    const maxY = Math.max(...yValues);
+                    const minY = Math.min(...yValues);
+                    root.regionX = minX - padding;
+                    root.regionY = minY - padding;
+                    root.regionWidth = maxX - minX + padding * 2;
+                    root.regionHeight = maxY - minY + padding * 2;
+                }
+                root.snip();
+            }
+            onPositionChanged: (mouse) => {
+                const sx = root.toStageX(mouse.x);
+                const sy = root.toStageY(mouse.y);
+                if (!root.dragging) {
+                    root.updateTargetedRegion(sx, sy);
+                    return;
+                }
+                root.draggingX = sx;
+                root.draggingY = sy;
+                root.dragDiffX = sx - root.dragStartX;
+                root.dragDiffY = sy - root.dragStartY;
+                if (root.selectionMode === RegionSelection.SelectionMode.Circle) {
+                    root.points.push({ x: sx, y: sy });
+                }
+            }
+        }
+
+        // Material ii fallback uses one connected Abyss body that grows directly from
+        // the physical bottom Screen Edge when stage mode is inactive.
+        ConnectedSurfaceAbyssEdgeSurface {
+            id: regionControlsAbyss
+            z: 9998
+            anchors.fill: parent
+            visible: !regionSelectionControls.useWaffle && !root.useStageMode
+            edge: "bottom"
+            ownerThickness: root.screenEdgeThickness
+            paintOverlap: Math.min(
+                PerimeterTokens.seamOverlap,
+                Math.max(0, root.screenEdgeThickness - 1))
+            outputRect: Qt.rect(0, 0, width, height)
+            bodyRect: Qt.rect(
+                regionSelectionControls.x,
+                regionSelectionControls.y,
+                regionSelectionControls.width,
+                regionSelectionControls.height)
+            bodyRadius: PerimeterTokens.popupRadius
+            fillColor: Appearance.colors.colLayer0
+            borderColor: Appearance.colors.colLayer0Border
+            borderWidth: 0
+            progress: 1
+            shadowEnabled: root.screenEdgeShadowEnabled
+                && root.screenEdgeShadowSize > 0
+                && root.screenEdgeShadowOpacity > 0
+            shadowExtent: root.screenEdgeShadowSize
+            shadowColor: root.screenEdgeShadowColor
+        }
+
+        Item {
+            id: regionSelectionControls
+            objectName: "regionSelectionControls"
+            z: 9999
+            readonly property bool useWaffle: Config.options?.panelFamily === "waffle"
+            readonly property real shellPadding: useWaffle ? 0 : (root.useStageMode ? 4 : 8)
+            implicitWidth: controlsLoader.implicitWidth + shellPadding * 2
+            implicitHeight: controlsLoader.implicitHeight + shellPadding * 2
+            visible: root.useStageMode ? (root.screenshotStageProgress > 0.001) : true
+            opacity: root.useStageMode ? 1 : fallbackOpacity
+            property real fallbackOpacity: 0
+
+            x: root.useStageMode && root.stageCard
+                ? root.stageCard.dockX
+                : Math.round((parent.width - width) / 2)
+            y: root.useStageMode && root.stageCard
+                ? root.stageCard.dockY
+                : (useWaffle ? fallbackTopMargin : (parent.height - height - fallbackBottomMargin))
+            width: root.useStageMode && root.stageCard && root.stageCard.dockWidth > 0
+                ? root.stageCard.dockWidth
+                : implicitWidth
+            height: root.useStageMode && root.stageCard && root.stageCard.dockHeight > 0
+                ? root.stageCard.dockHeight
+                : implicitHeight
+
+            property real fallbackTopMargin: -implicitHeight
+            property real fallbackBottomMargin: -implicitHeight
+
+            function triggerFallbackReveal(): void {
+                if (root.useStageMode || !root.visible)
+                    return;
+                if (regionSelectionControls.useWaffle) {
+                    regionSelectionControls.fallbackTopMargin = 16;
+                } else {
+                    regionSelectionControls.fallbackBottomMargin = root.screenEdgeThickness;
+                }
+                regionSelectionControls.fallbackOpacity = 1;
             }
 
-            Item {
-                id: regionSelectionControls
-                z: 9999
-                readonly property bool useWaffle: Config.options?.panelFamily === "waffle"
-                readonly property real shellPadding: useWaffle ? 0 : 8
-                implicitWidth: controlsLoader.implicitWidth + shellPadding * 2
-                implicitHeight: controlsLoader.implicitHeight + shellPadding * 2
-                opacity: 0
+            Component.onCompleted: Qt.callLater(regionSelectionControls.triggerFallbackReveal)
 
-                // Position: waffle = top center, material = connected to bottom Screen Edge
-                anchors {
-                    horizontalCenter: parent.horizontalCenter
-                    top: useWaffle ? parent.top : undefined
-                    bottom: useWaffle ? undefined : parent.bottom
-                    topMargin: useWaffle ? -height : 0
-                    bottomMargin: useWaffle ? 0 : -height
+            Connections {
+                target: root
+                function onVisibleChanged() {
+                    regionSelectionControls.triggerFallbackReveal();
                 }
+            }
+            Behavior on fallbackOpacity {
+                animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+            Behavior on fallbackTopMargin {
+                animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
+            }
+            Behavior on fallbackBottomMargin {
+                animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
+            }
 
-                Connections {
-                    target: root
-                    function onVisibleChanged() {
-                        if (!visible) return;
-                        if (regionSelectionControls.useWaffle) {
-                            regionSelectionControls.anchors.topMargin = 16;
-                        } else {
-                            regionSelectionControls.anchors.bottomMargin = root.screenEdgeThickness;
-                        }
-                        regionSelectionControls.opacity = 1;
-                    }
-                }
-                Behavior on opacity {
-                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                }
-                Behavior on anchors.topMargin {
-                    animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
-                }
-                Behavior on anchors.bottomMargin {
-                    animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
-                }
+            Loader {
+                id: controlsLoader
+                anchors.centerIn: parent
+                sourceComponent: regionSelectionControls.useWaffle ? waffleControls : materialControls
+            }
 
-                Loader {
-                    id: controlsLoader
-                    anchors.centerIn: parent
-                    sourceComponent: regionSelectionControls.useWaffle ? waffleControls : materialControls
-                }
+            // Material ii / Abyss stage controls
+            Component {
+                id: materialControls
+                Row {
+                    spacing: 4
 
-                // Material ii controls
-                Component {
-                    id: materialControls
-                    Row {
-                        spacing: 4
-
-                        OptionsToolbar {
-                            enableShadow: false
-                            transparent: true
-                            action: root.action
-                            selectionMode: root.selectionMode
-                            onActionChanged: if (action !== undefined && root.action !== action) root.action = action
-                            onSelectionModeChanged: if (selectionMode !== undefined && root.selectionMode !== selectionMode) root.selectionMode = selectionMode
-                            onDismiss: root.dismiss();
-                            onFullscreenRequested: root.snipFullscreen()
-                            onColorPickerRequested: {
-                                // Dismiss first so hyprpicker grabs the live desktop, not this overlay.
-                                root.dismiss();
-                                ShellExec.execDetachedArgs(["/usr/bin/bash", "-c", "sleep 0.3; /usr/bin/hyprpicker -a"], "Pick color");
-                            }
-                        }
-
-                        FloatingActionButton {
-                            id: closeFab
-                            anchors.verticalCenter: parent.verticalCenter
-                            baseSize: 40
-                            iconText: "close"
-                            onClicked: root.dismiss();
-                            StyledToolTip {
-                                text: Translation.tr("Close")
-                            }
-                            colBackground: Appearance.colors.colTertiaryContainer
-                            colBackgroundHover: Appearance.colors.colTertiaryContainerHover
-                            colRipple: Appearance.colors.colTertiaryContainerActive
-                            colOnBackground: Appearance.colors.colOnTertiaryContainer
-                        }
-                    }
-                }
-
-                // Waffle (Windows 11) controls
-                Component {
-                    id: waffleControls
-                    WaffleRegion.WOptionsToolbar {
+                    OptionsToolbar {
+                        enableShadow: false
+                        transparent: true
                         action: root.action
                         selectionMode: root.selectionMode
                         onActionChanged: if (action !== undefined && root.action !== action) root.action = action
                         onSelectionModeChanged: if (selectionMode !== undefined && root.selectionMode !== selectionMode) root.selectionMode = selectionMode
-                        onDismiss: root.dismiss()
+                        onDismiss: root.dismiss();
                         onFullscreenRequested: root.snipFullscreen()
                         onColorPickerRequested: {
+                            // Dismiss before the Alis picker captures the desktop.
                             root.dismiss();
-                            ShellExec.execDetachedArgs(["/usr/bin/bash", "-c", "sleep 0.3; /usr/bin/hyprpicker -a"], "Pick color");
+                            ColorPickerService.start();
                         }
+                    }
+
+                    FloatingActionButton {
+                        id: closeFab
+                        anchors.verticalCenter: parent.verticalCenter
+                        baseSize: 40
+                        iconText: "close"
+                        onClicked: root.dismiss();
+                        StyledToolTip {
+                            text: Translation.tr("Close")
+                        }
+                        colBackground: Appearance.colors.colTertiaryContainer
+                        colBackgroundHover: Appearance.colors.colTertiaryContainerHover
+                        colRipple: Appearance.colors.colTertiaryContainerActive
+                        colOnBackground: Appearance.colors.colOnTertiaryContainer
                     }
                 }
             }
 
+            // Waffle (Windows 11) controls
+            Component {
+                id: waffleControls
+                WaffleRegion.WOptionsToolbar {
+                    action: root.action
+                    selectionMode: root.selectionMode
+                    onActionChanged: if (action !== undefined && root.action !== action) root.action = action
+                    onSelectionModeChanged: if (selectionMode !== undefined && root.selectionMode !== selectionMode) root.selectionMode = selectionMode
+                    onDismiss: root.dismiss()
+                    onFullscreenRequested: root.snipFullscreen()
+                    onColorPickerRequested: {
+                        root.dismiss();
+                        ColorPickerService.start();
+                    }
+                }
+            }
         }
     }
 }

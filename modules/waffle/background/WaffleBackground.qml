@@ -115,11 +115,10 @@ Variants {
 
         property int _blurHoldDurationMs: 0
         function beginBlurSuppression(totalTransitionMs: int): void {
-            if (panelRoot.blurProgress <= 0)
+            if (!panelRoot.blurRequestedByWorkspace)
                 return
             const holdMs = Math.max(0, totalTransitionMs)
             _blurTransitionAnimation.stop()
-            panelRoot._blurTransitionFactor = 1
             panelRoot._blurHoldDurationMs = holdMs
             _blurTransitionAnimation.restart()
             _blurTransitionSafetyTimer.interval = holdMs + (Looks.transition.enabled ? Looks.transition.duration.slow + 600 : 900)
@@ -127,7 +126,7 @@ Variants {
         }
 
         onWallpaperSourceChanged: {
-            if (!Wallpapers._applyInProgress && panelRoot.blurProgress > 0)
+            if (!Wallpapers._applyInProgress && panelRoot.blurRequestedByWorkspace)
                 panelRoot.beginBlurSuppression(panelRoot._wallpaperTransitionDurationMs)
         }
 
@@ -173,7 +172,7 @@ Variants {
             id: _blurTransitionAnimation
             NumberAnimation {
                 target: panelRoot; property: "_blurTransitionFactor"
-                to: 0; duration: Looks.transition.enabled ? 140 : 0; easing.type: Easing.OutQuad
+                to: 0; duration: Looks.transition.enabled ? Math.round(140 * panelRoot._blurTransitionFactor) : 0; easing.type: Easing.OutQuad
             }
             PauseAnimation {
                 duration: panelRoot._blurHoldDurationMs
@@ -198,11 +197,15 @@ Variants {
             }
         }
 
-        // Blur progress — blur activates only when windows are present on the current workspace
-        property real blurProgress: {
+        readonly property bool blurRequestedByWorkspace: {
             const blurEnabled = wEffects.enableBlur ?? false;
             const blurRadius = wEffects.blurRadius ?? 0;
-            if (!blurEnabled || blurRadius <= 0) return 0;
+            return Boolean(blurEnabled && blurRadius > 0 && panelRoot.focusPresenceProgress > 0);
+        }
+
+        // Blur progress — blur activates only when windows are present on the current workspace
+        property real blurProgress: {
+            if (!panelRoot.blurRequestedByWorkspace) return 0;
             return focusPresenceProgress * _blurTransitionFactor;
         }
 
@@ -216,7 +219,7 @@ Variants {
                 readonly property bool localBlurNeedsStaticTexture:
                     panelRoot.visible
                     && Looks.effectsEnabled
-                    && panelRoot.blurProgress > 0
+                    && panelRoot.blurRequestedByWorkspace
                     && !panelRoot.wallpaperIsGif
                     && !panelRoot.wallpaperIsVideo
                 readonly property bool needsStaticTexture:

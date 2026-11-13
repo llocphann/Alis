@@ -134,7 +134,7 @@ Item {
     readonly property bool _drawFaceDirectly: Appearance.zzzEverywhere || !Appearance.effectsEnabled
     property real faceRotation: 0
     RotationAnimation on faceRotation {
-        running: root.constantlyRotate && root.powerActive
+        running: root.constantlyRotate && root.powerActive && root.visible && Appearance.animationsEnabled
         duration: 30000
         easing.type: Easing.Linear
         loops: Animation.Infinite
@@ -264,7 +264,7 @@ Item {
     FadeLoader {
         id: secondHandLoader
         z: root.secondHandStyle === "line" ? 2 : 3
-        shown: root.secondHandStyle !== "hide"
+        shown: root.secondHandStyle !== "hide" && root.secondHandStyle !== "none"
         anchors.fill: parent
         sourceComponent: SecondHand {
             id: secondHand

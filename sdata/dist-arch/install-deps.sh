@@ -39,7 +39,6 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [fuzzel]="fuzzel"
     [awww]="awww"
     [awww-daemon]="awww"
-    [hyprpicker]="hyprpicker"
     [playerctl]="playerctl"
     [notify-send]="libnotify"
     [flock]="util-linux"
@@ -256,6 +255,8 @@ _qs_shell_conflicts=(
   caelestia-shell-git
   # BMS
   bms-shell-bin
+  # Legacy iNiR dependency tracker — replaced by alis-deps
+  inir-deps
 )
 
 _qs_shell_found=false
@@ -510,7 +511,7 @@ tui_info "Registering dependencies with pacman..."
 
 _meta_dir="./sdata/dist-arch/alis-deps"
 if [[ -f "$_meta_dir/PKGBUILD" ]]; then
-  _alis_ver="$(cat ./VERSION 2>/dev/null || echo '1.0.1')"
+  _alis_ver="$(cat ./VERSION 2>/dev/null || echo '1.0.0')"
   _meta_build_dir="$(mktemp -d)"
 
   # Build from a staged recipe so setup never rewrites a tracked PKGBUILD just
@@ -570,6 +571,10 @@ PY
       if makepkg -dfC 2>/dev/null; then
         local_pkg=(*.pkg.tar.zst)
         if [[ -f "${local_pkg[0]}" ]]; then
+          if pacman -Qi inir-deps &>/dev/null 2>&1; then
+            pkg_sudo pacman -Rdd --noconfirm inir-deps 2>/dev/null \
+              || pkg_sudo pacman -R --noconfirm inir-deps 2>/dev/null || true
+          fi
           # Reinstall even at the same pkgver/pkgrel so changing --no-* choices
           # refreshes the dependency metadata recorded by pacman.
           if pkg_sudo pacman -U --noconfirm "${local_pkg[0]}" 2>/dev/null; then

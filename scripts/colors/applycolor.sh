@@ -115,9 +115,9 @@ main() {
       _perf_module="$(date +%s%N)"
     fi
     if command -v ionice >/dev/null 2>&1; then
-      ionice -c 3 nice -n 10 bash "$module_path" || result=$?
+      ionice -c 3 nice -n 19 bash "$module_path" || result=$?
     else
-      nice -n 10 bash "$module_path" || result=$?
+      nice -n 19 bash "$module_path" || result=$?
     fi
     if [[ -n "$_perf_module" ]]; then
       theme_perf_stage applycolor "$(basename "$module_path" .sh)" "$_perf_module"

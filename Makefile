@@ -175,7 +175,7 @@ install-icon:
 
 install-desktop:
 	@mkdir -p "$(DESTDIR)$(APPLICATIONS_DIR)"
-	@for app in alis.desktop alis-settings.desktop; do \
+	@for app in alis.desktop alis-settings.desktop alis-local-music.desktop; do \
 		target="$(DESTDIR)$(APPLICATIONS_DIR)/$$app"; \
 		if [ -L "$$target" ] || { [ -e "$$target" ] && ! grep -Fxq "X-Alis-Managed=true" "$$target"; }; then \
 			printf "Refusing to overwrite user-owned Alis desktop entry: %s\n" "$$target" >&2; exit 1; \
@@ -183,7 +183,8 @@ install-desktop:
 	done
 	@sed 's|^Exec=alis|Exec=$(BINDIR)/alis|' assets/applications/alis.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/alis.desktop"
 	@sed 's|^Exec=alis|Exec=$(BINDIR)/alis|' assets/applications/alis-settings.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/alis-settings.desktop"
-	@chmod 644 "$(DESTDIR)$(APPLICATIONS_DIR)/alis.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/alis-settings.desktop"
+	@sed 's|^Exec=alis|Exec=$(BINDIR)/alis|' assets/applications/alis-local-music.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/alis-local-music.desktop"
+	@chmod 644 "$(DESTDIR)$(APPLICATIONS_DIR)/alis.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/alis-settings.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/alis-local-music.desktop"
 	@if [ -z "$(DESTDIR)" ]; then update-desktop-database -q "$(APPLICATIONS_DIR)" 2>/dev/null || true; fi
 
 install-docs:
@@ -227,7 +228,7 @@ uninstall-icon:
 	@if [ -z "$(DESTDIR)" ]; then gtk-update-icon-cache -q "$(SHAREDIR)/icons/hicolor" 2>/dev/null || true; fi
 
 uninstall-desktop:
-	@for app in alis.desktop alis-settings.desktop; do \
+	@for app in alis.desktop alis-settings.desktop alis-local-music.desktop; do \
 		target="$(DESTDIR)$(APPLICATIONS_DIR)/$$app"; \
 		if [ -f "$$target" ] && [ ! -L "$$target" ] && grep -Fxq "X-Alis-Managed=true" "$$target"; then \
 			rm -f "$$target"; \

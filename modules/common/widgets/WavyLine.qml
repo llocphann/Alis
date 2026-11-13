@@ -70,10 +70,18 @@ Item {
             loops: Animation.Infinite
             running: root.animate && root.visible
                 && (root.Window.window?.visible ?? true)
+                && Appearance.animationsEnabled
                 && root.width > 0 && root.height > 0 && root.frequency > 0
             easing.type: Easing.Linear
         }
     }
+
+    function _scheduleWavePaint() {
+        if (root.visible && (root.Window.window?.visible ?? true) && waveCanvas.available)
+            waveCanvas.requestPaint()
+    }
+
+    onVisibleChanged: root._scheduleWavePaint()
 
     onAnimateChanged: {
         if (!root.animate)
@@ -82,17 +90,17 @@ Item {
 
     Connections {
         target: root
-        function onAmplitudeMultiplierChanged() { waveCanvas.requestPaint() }
+        function onAmplitudeMultiplierChanged() { root._scheduleWavePaint() }
         function onFrequencyChanged() {
             waveCanvas.x = 0
-            waveCanvas.requestPaint()
+            root._scheduleWavePaint()
         }
-        function onColorChanged() { waveCanvas.requestPaint() }
-        function onLineWidthChanged() { waveCanvas.requestPaint() }
+        function onColorChanged() { root._scheduleWavePaint() }
+        function onLineWidthChanged() { root._scheduleWavePaint() }
         function onFullLengthChanged() {
             waveCanvas.x = 0
-            waveCanvas.requestPaint()
+            root._scheduleWavePaint()
         }
-        function onHeightChanged() { waveCanvas.requestPaint() }
+        function onHeightChanged() { root._scheduleWavePaint() }
     }
 }

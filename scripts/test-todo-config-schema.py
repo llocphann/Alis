@@ -11,7 +11,7 @@ defaults = json.loads((ROOT / "defaults" / "config.json").read_text(encoding="ut
 required_qml = [
     "property JsonObject todo: JsonObject {",
     'property string backend: "internal"',
-    "property JsonObject obsidian: JsonObject {",
+    "property JsonObject nexus: JsonObject {",
     'property string vaultPath: ""',
     'property string sourceMode: "markdown-note"',
     'property string notePath: "Alis/Todo.md"',
@@ -30,7 +30,7 @@ for snippet in required_qml:
 
 expected = {
     "backend": "internal",
-    "obsidian": {
+    "nexus": {
         "vaultPath": "",
         "sourceMode": "markdown-note",
         "notePath": "Alis/Todo.md",
@@ -47,6 +47,6 @@ expected = {
     },
 }
 assert defaults.get("todo") == expected, "defaults/config.json Todo defaults drifted"
-assert defaults["todo"]["backend"] == "internal", "Obsidian must remain opt-in"
+assert defaults["todo"]["backend"] == "internal", "Nexus must remain opt-in"
 
 print("Todo backend config schema contract: PASS")

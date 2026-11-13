@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Local Music (MPD)
+Comment=Play audio in Alis Dashboard Local Music
+Exec=alis local-music -- %U
+Icon=alis
+Terminal=false
+Categories=AudioVideo;Audio;Player;
+MimeType=audio/mpeg;audio/flac;audio/x-flac;audio/ogg;audio/x-vorbis+ogg;audio/wav;audio/x-wav;audio/mp4;audio/aac;
+X-Alis-Managed=true

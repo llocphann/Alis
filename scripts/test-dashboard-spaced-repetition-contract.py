@@ -142,7 +142,7 @@ const suppressedLevelCard = sandbox.normalizeCard({
 }, Date.UTC(2026, 10, 2, 12, 0, 0), { autoLookupLevel: false, autoCloze: true });
 assert.strictEqual(suppressedLevelCard.cefrLevel, "");
 
-// 4. Test Zero-Markup Natural Input & Legacy Obsidian SR Parser
+// 4. Test Zero-Markup Natural Input & Legacy Nexus SR Parser
 const batchInput = [
     "# Sample comment line ignored",
     "ubiquitous - present, appearing, or found everywhere // Smartphones have become ubiquitous.",
@@ -173,7 +173,7 @@ assert.strictEqual(parsed[5].clozeText, "The mitochondrion is the {{c1::powerhou
 assert.strictEqual(parsed[6].dueDate, "2026-11-20");
 assert.strictEqual(parsed[6].interval, 15);
 assert.strictEqual(parsed[6].ease, 270);
-assert.ok(!parsed[6].back.includes("<!--SR:"), "Obsidian HTML comment must be stripped from visible back");
+assert.ok(!parsed[6].back.includes("<!--SR:"), "Nexus HTML comment must be stripped from visible back");
 assert.strictEqual(parsed[7].front, "Multi-line question");
 
 const multiline = sandbox.parseQuickInput("Explain spaced repetition\n?\nReviewing at expanding intervals.", "Default", "en", "knowledge");
@@ -393,7 +393,7 @@ const heuristicDe = sandbox.analyzeTerm("Freundlichkeit", "de");
 assert.ok(heuristicDe.morphologyText.includes("freund") && heuristicDe.morphologyText.includes("-lichkeit"),
     `Expected heuristic morphology for Freundlichkeit, got: ${heuristicDe.morphologyText}`);
 
-// 10. Test Obsidian Unit Markdown Bulk Parser (ignores exercises & reading comprehension)
+// 10. Test Nexus Unit Markdown Bulk Parser (ignores exercises & reading comprehension)
 const sampleUnitMd = [
     "---",
     "Date: 2026-09-12",
@@ -435,6 +435,207 @@ assert.strictEqual(parsedUnitCards[0].interval, 0);
 assert.strictEqual(parsedUnitCards[0].ease, 250);
 assert.strictEqual(parsedUnitCards[0].collocations.length, 2);
 assert.ok(parsedUnitCards[0].clozeText.includes("{{c1::microbiology::noun — ngành vi sinh vật học}}"));
+
+// 11. Test Legacy Mode Normalization (Reverse Flashcard & Reverse Multiple Choice -> Matching)
+for (const legacy of ["reverse", "reverse_flashcard", "reverseFlashcard", "rmc", "reverse_mcq", "reverseMultipleChoice", "matching"]) {
+    assert.strictEqual(sandbox.normalizeStudyMode(legacy), "matching", `Expected '${legacy}' to normalize to 'matching'`);
+}
+assert.strictEqual(sandbox.normalizeStudyMode("mcq"), "mc");
+assert.strictEqual(sandbox.normalizeStudyMode("cloze"), "cloze");
+assert.strictEqual(sandbox.normalizeStudyMode("flashcard"), "flashcard");
+
+const migratedLegacyMode = sandbox.migrateStorage({
+    schemaVersion: 4,
+    reviewMode: "reverse_mcq",
+    studyMode: "reverse_flashcard",
+    cards: freshMigrated.cards.slice(0, 6)
+}, nowMs);
+assert.strictEqual(migratedLegacyMode.retainedStorageFields.reviewMode, "matching");
+assert.strictEqual(migratedLegacyMode.retainedStorageFields.studyMode, "matching");
+assert.strictEqual(sandbox.normalizeOptions({ studyDirection: "reverse_mcq" }).studyDirection, "matching");
+assert.strictEqual(sandbox.normalizeOptions({ studyDirection: "reverse_flashcard" }).studyDirection, "matching");
+
+// 12. Test Smart Mode Rotation (Combines Matching, Multiple Choice, Cloze Reading; Flashcard as Last Resort)
+const sixDueCards = freshMigrated.cards.slice(0, 6);
+let smartState = { bag: [], lastMode: "" };
+const seenActiveModes = new Set();
+for (let i = 0; i < 12; i++) {
+    const res = sandbox.selectNextStudyMode(sixDueCards, freshMigrated.cards, smartState);
+    smartState = res.state;
+    assert.ok(["matching", "mc", "cloze"].includes(res.mode), `Expected one of matching/mc/cloze when multiple cards are due, got ${res.mode}`);
+    assert.notStrictEqual(res.mode, "flashcard", "Flashcard must not be chosen when active modes are available");
+    seenActiveModes.add(res.mode);
+}
+assert.strictEqual(seenActiveModes.size, 3, "Smart Mix must combine all 3 active modes (matching, mc, cloze) over a multi-card session");
+
+// Fallback to Flashcard as last resort when only 1 card exists in the entire deck without cloze/example
+const singleBareCard = [{
+    id: "bare-1",
+    term: "isolated",
+    front: "isolated",
+    meaning: "alone",
+    back: "alone",
+    definitionEn: "alone",
+    example: "",
+    clozeText: ""
+}];
+const fallbackPick = sandbox.selectNextStudyMode(singleBareCard, singleBareCard, { bag: [], lastMode: "" });
+assert.strictEqual(fallbackPick.mode, "flashcard", "Flashcard must be selected as last resort when neither matching, mc, nor cloze can be constructed");
+
+// 13. Test Matching Round Builder (5 Left Words + 6 Right Definitions with 1 Distractor + Padding when <5 Due)
+const roundFull = sandbox.buildMatchingRound(sixDueCards, freshMigrated.cards);
+assert.strictEqual(roundFull.leftWords.length, 5, "Matching round must have 5 vocabulary words on the left");
+assert.strictEqual(roundFull.rightDefinitions.length, 6, "Matching round must have 6 definitions on the right");
+assert.strictEqual(roundFull.leftWords.filter(w => w.inQueue).length, 5, "All 5 left words should come from due queue when >= 5 cards are due");
+assert.strictEqual(roundFull.rightDefinitions.filter(d => d.isDistractor).length, 1, "Right column must contain exactly 1 distractor definition");
+for (const w of roundFull.leftWords) {
+    assert.ok(roundFull.rightDefinitions.some(d => !d.isDistractor && d.pairId === w.id), `Missing matching definition for left word ${w.term}`);
+}
+
+const twoDueCards = freshMigrated.cards.slice(0, 2);
+const roundPadded = sandbox.buildMatchingRound(twoDueCards, freshMigrated.cards);
+assert.strictEqual(roundPadded.leftWords.length, 5, "Matching round must pad to 5 left words from the deck when only 2 cards are due");
+assert.strictEqual(roundPadded.leftWords.filter(w => w.inQueue).length, 2, "Exactly 2 left words should be marked inQueue");
+assert.strictEqual(roundPadded.leftWords.filter(w => !w.inQueue).length, 3, "Remaining 3 left words should be padded from the deck");
+assert.strictEqual(roundPadded.rightDefinitions.length, 6, "Padded matching round must still have 6 definitions on the right");
+assert.strictEqual(roundPadded.rightDefinitions.filter(d => d.isDistractor).length, 1, "Padded matching round must have 1 distractor definition");
+
+const roundEmpty = sandbox.buildMatchingRound([], freshMigrated.cards);
+assert.strictEqual(roundEmpty.leftWords.length, 0, "Empty studyQueue must return empty leftWords so caught-up screen appears");
+assert.strictEqual(roundEmpty.rightDefinitions.length, 0, "Empty studyQueue must return empty rightDefinitions");
+
+// 14. Regression: Cards reviewed yesterday with Hard (1d), Normal/Good (2d), or Easy (3d) must respect scheduled intervals
+const day0EveningMs = new Date(2026, 10, 7, 22, 0, 0).getTime(); // 2026-11-07 22:00 local
+const day1MorningMs = new Date(2026, 10, 8, 8, 30, 0).getTime(); // 2026-11-08 08:30 local (next morning)
+const day1EveningMs = new Date(2026, 10, 8, 22, 30, 0).getTime(); // 2026-11-08 22:30 local (next evening)
+const day2MorningMs = new Date(2026, 10, 9, 9, 0, 0).getTime();  // 2026-11-09 09:00 local (+2 days)
+const day3MorningMs = new Date(2026, 10, 10, 9, 0, 0).getTime(); // 2026-11-10 09:00 local (+3 days)
+
+const baseCardA = Object.assign({}, freshMigrated.cards[0], { id: "rev-hard", dueAt: day0EveningMs, dueDate: "2026-11-07" });
+const baseCardB = Object.assign({}, freshMigrated.cards[1], { id: "rev-normal", dueAt: day0EveningMs, dueDate: "2026-11-07" });
+const baseCardC = Object.assign({}, freshMigrated.cards[2], { id: "rev-easy", dueAt: day0EveningMs, dueDate: "2026-11-07" });
+
+const ratedHard = sandbox.scheduleReview(baseCardA, "hard", day0EveningMs, baseOpts, {}).card;
+const ratedNormal = sandbox.scheduleReview(baseCardB, "normal", day0EveningMs, baseOpts, {}).card;
+const ratedEasy = sandbox.scheduleReview(baseCardC, "easy", day0EveningMs, baseOpts, {}).card;
+const ratedZero = sandbox.scheduleReview(baseCardA, 0, day0EveningMs, baseOpts, {}).card;
+
+assert.strictEqual(ratedHard.interval, 1);
+assert.strictEqual(ratedHard.dueDate, "2026-11-08");
+assert.strictEqual(ratedNormal.interval, 2);
+assert.strictEqual(ratedNormal.dueDate, "2026-11-09");
+assert.strictEqual(ratedEasy.interval, 3);
+assert.strictEqual(ratedEasy.dueDate, "2026-11-10");
+assert.strictEqual(ratedZero.state, "learning", "Numeric rating 0 must be treated as Again, not Good");
+assert.strictEqual(ratedZero.reps, 0);
+
+// Same day after review: none of Hard/Normal/Easy may reappear
+const sameDayQueue = sandbox.buildStudyQueue([ratedHard, ratedNormal, ratedEasy], { options: baseOpts }, day0EveningMs + 60000);
+assert.strictEqual(sameDayQueue.length, 0, "Cards rated Hard/Normal/Easy must not reappear on the same day");
+
+// Next day (2026-11-08) morning & evening: ONLY Hard (1d) is due; Normal (2d) and Easy (3d) must NOT reappear next day
+for (const checkMs of [day1MorningMs, day1EveningMs]) {
+    const nextDayQueue = sandbox.buildStudyQueue([ratedHard, ratedNormal, ratedEasy], { options: baseOpts }, checkMs);
+    assert.strictEqual(JSON.stringify(nextDayQueue.map(c => c.id)), JSON.stringify(["rev-hard"]),
+        `On 2026-11-08, only Hard (1d) card should be due; Normal (2d) and Easy (3d) must not reappear next day`);
+    const nextDayAnalytics = sandbox.computeAnalytics([ratedHard, ratedNormal, ratedEasy], {}, checkMs, baseOpts);
+    assert.strictEqual(nextDayAnalytics.dueToday, 1, "computeAnalytics.dueToday on next morning must match civil dueDate");
+}
+
+// Day +2 (2026-11-09): Normal (2d) becomes due
+const day2Queue = sandbox.buildStudyQueue([ratedNormal, ratedEasy], { options: baseOpts }, day2MorningMs);
+assert.strictEqual(JSON.stringify(day2Queue.map(c => c.id)), JSON.stringify(["rev-normal"]));
+
+// Day +3 (2026-11-10): Easy (3d) becomes due
+const day3Queue = sandbox.buildStudyQueue([ratedEasy], { options: baseOpts }, day3MorningMs);
+assert.strictEqual(JSON.stringify(day3Queue.map(c => c.id)), JSON.stringify(["rev-easy"]));
+
+// Sub-day learning card (<10m) rated Again must go to the end of the queue behind other due/new cards
+const learningAgain = Object.assign({}, ratedZero, { level: "A1", cefrLevel: "A1" });
+const newC1Card = Object.assign({}, freshMigrated.cards[5], { id: "new-c1", level: "C1", cefrLevel: "C1", state: "new", reps: 0 });
+const orderedWithLearning = sandbox.buildStudyQueue([learningAgain, newC1Card], { options: baseOpts }, day0EveningMs + 1000);
+assert.strictEqual(JSON.stringify(orderedWithLearning.map(c => c.id)), JSON.stringify(["new-c1", learningAgain.id]),
+    "In-session <10m learning card with dueAt > now must wait behind other due/new cards instead of jumping to index 0");
+
+// Smart Mix must NOT select 5-word Matching mode when < 5 cards remain in studyQueue and MC/Cloze are available
+const threeRemainingQueue = freshMigrated.cards.slice(0, 3);
+let tailState = { bag: ["matching", "mc", "cloze"], lastMode: "" };
+for (let i = 0; i < 8; i++) {
+    const pick = sandbox.selectNextStudyMode(threeRemainingQueue, freshMigrated.cards, tailState);
+    tailState = pick.state;
+    assert.ok(["mc", "cloze"].includes(pick.mode),
+        `When < 5 cards remain in studyQueue, Smart Mix must use mc/cloze instead of 5-word matching, got ${pick.mode}`);
+}
+
+// When Matching is explicitly built with < 5 due cards, padding must prefer unreviewed cards over yesterday's reviewed cards
+const deckWithReviewedAndNew = [
+    ratedNormal,
+    ratedEasy,
+    ...freshMigrated.cards.slice(10, 16)
+];
+const paddedRound = sandbox.buildMatchingRound(freshMigrated.cards.slice(10, 12), deckWithReviewedAndNew);
+assert.strictEqual(paddedRound.leftWords.length, 5);
+assert.ok(!paddedRound.leftWords.some(w => w.id === "rev-normal" || w.id === "rev-easy"),
+    "Padded Matching left column must prefer unreviewed cards over cards reviewed yesterday");
+
+// Schema migration must preserve user-reviewed sr-unit* cards (lastReviewedAt > 0)
+const v3ReviewedUnit = sandbox.migrateStorage({
+    schemaVersion: 3,
+    nextId: 210,
+    cards: [{
+        id: "sr-unit01-1-allot",
+        deck: "English Vocabulary",
+        category: "vocabulary",
+        language: "en",
+        term: "allot",
+        front: "allot",
+        meaning: "to give a particular share of time, money, or resources to someone or something",
+        back: "to give a particular share of time, money, or resources to someone or something",
+        state: "young",
+        reps: 2,
+        interval: 5,
+        ease: 265,
+        dueAt: day2MorningMs,
+        dueDate: "2026-11-09",
+        lastReviewedAt: day0EveningMs
+    }]
+}, day1MorningMs);
+const migratedReviewedAllot = v3ReviewedUnit.cards.find(c => c.id === "sr-unit01-1-allot");
+assert.strictEqual(migratedReviewedAllot.reps, 2, "User-reviewed unit card (lastReviewedAt > 0) must keep its reps across migration");
+assert.strictEqual(migratedReviewedAllot.interval, 5, "User-reviewed unit card must keep its interval across migration");
+assert.strictEqual(migratedReviewedAllot.dueDate, "2026-11-09", "User-reviewed unit card must keep its scheduled dueDate across migration");
+
+// 15. Regression: buildStudyQueue must sort before slicing to dailyNewLimit/dailyReviewLimit so cohort order is stable as cards are reviewed
+const quotaPool = [
+    Object.assign({}, freshMigrated.cards[0], { id: "new-c2-1", level: "C2", cefrLevel: "C2", state: "new", reps: 0, dueAt: 1000 }),
+    Object.assign({}, freshMigrated.cards[1], { id: "new-c1-2", level: "C1", cefrLevel: "C1", state: "new", reps: 0, dueAt: 2000 }),
+    Object.assign({}, freshMigrated.cards[2], { id: "new-b1-3", level: "B1", cefrLevel: "B1", state: "new", reps: 0, dueAt: 3000 }),
+    Object.assign({}, freshMigrated.cards[3], { id: "new-a2-4", level: "A2", cefrLevel: "A2", state: "new", reps: 0, dueAt: 4000 })
+];
+const quotaOpts = Object.assign({}, baseOpts, { dailyNewLimit: 2, prioritizeOrder: "level_asc" });
+const initialQuotaQueue = sandbox.buildStudyQueue(quotaPool, { statsToday: { newStudied: 0, reviewsDone: 0 }, options: quotaOpts }, day1MorningMs);
+assert.strictEqual(JSON.stringify(initialQuotaQueue.map(c => c.id)), JSON.stringify(["new-a2-4", "new-b1-3"]),
+    "buildStudyQueue must sort all new cards by CEFR level before slicing to dailyNewLimit");
+const afterFirstReviewedPool = [
+    quotaPool[0],
+    quotaPool[1],
+    quotaPool[2],
+    sandbox.scheduleReview(quotaPool[3], "good", day1MorningMs, quotaOpts, {}).card
+];
+const nextQuotaQueue = sandbox.buildStudyQueue(afterFirstReviewedPool, { statsToday: { newStudied: 1, reviewsDone: 0 }, options: quotaOpts }, day1MorningMs + 5000);
+assert.strictEqual(JSON.stringify(nextQuotaQueue.map(c => c.id)), JSON.stringify(["new-b1-3"]),
+    "After reviewing 1 of 2 daily new cards, the remaining card in today's cohort must stay 'new-b1-3'");
+
+// 16. Regression: Card rated Again (<10m) at 23:55 local time must keep its 10-minute dueAt across normalizeCard and remain in today's session queue at 23:56
+const lateNightMs = new Date(2026, 10, 7, 23, 55, 0).getTime(); // 2026-11-07 23:55 local
+const lateAgainCard = sandbox.scheduleReview(baseCardA, "again", lateNightMs, baseOpts, {}).card;
+assert.strictEqual(lateAgainCard.dueDate, "2026-11-07", "Sub-day <10m learning card rated at 23:55 must keep today's civil dueDate");
+assert.strictEqual(lateAgainCard.dueAt, lateNightMs + 10 * 60000, "Sub-day <10m learning card must be due in 10 minutes (00:05 next day)");
+const normalizedLateAgain = sandbox.normalizeCard(lateAgainCard, 1, lateNightMs + 60000, baseOpts, null);
+assert.strictEqual(normalizedLateAgain.dueAt, lateNightMs + 10 * 60000, "normalizeCard must not overwrite sub-day <10m dueAt when dueAt crosses midnight");
+const lateQueueBeforeMidnight = sandbox.buildStudyQueue([normalizedLateAgain], { options: baseOpts }, lateNightMs + 60000);
+assert.strictEqual(lateQueueBeforeMidnight.length, 1, "Sub-day learning card rated at 23:55 must remain in session queue at 23:56");
+
 console.log("SR_ENGINE_UNIT_PASS");
 """
     res = subprocess.run(["node", "-e", node_script], cwd=ROOT, capture_output=True, text=True, check=False)
@@ -567,6 +768,27 @@ def verify_qml_and_config_contracts() -> None:
         'objectName: "srSubTabLibrary"',
         'objectName: "srBoostToggleButton"',
         'objectName: "srRevealButton"',
+        'objectName: "srMatchingBoard"',
+        'objectName: "srMatchingLeftColumn"',
+        'objectName: "srMatchingCorridor"',
+        'objectName: "srMatchingRightColumn"',
+        'objectName: "srMatchingLinesCanvas"',
+        'objectName: "srMatchingContinueButton"',
+        'objectName: "srClozeWordBank"',
+        'objectName: "srStudyMode-smart"',
+        'objectName: "srStudyMode-" + modelData.id',
+        '{ id: "matching",',
+        '{ id: "mc",',
+        '{ id: "cloze",',
+        '{ id: "flashcard",',
+        'objectName: "srStudyTrackerAnalyticsColumn"',
+        'objectName: "srConsistencyCard"',
+        'objectName: "srActivityHeatmapCard"',
+        'objectName: "srAnalyticsBreakdownCard"',
+        'objectName: "srAnalyticsForecastCard"',
+        'readonly property color colAnalyticsColumnBg:',
+        'readonly property color colAnalyticsCardBg:',
+        'readonly property color colAnalyticsSubBoxBg:',
         '"srRateAgain"',
         '"srRateHard"',
         '"srRateGood"',
@@ -595,6 +817,13 @@ def verify_qml_and_config_contracts() -> None:
     ):
         assert token in sr_qml, f"Missing token {token} in DashboardSpacedRepetition.qml"
 
+    for removed_token in (
+        'objectName: "srStudyMode-reverse"',
+        'objectName: "srStudyMode-rmc"',
+        'Translation.tr("Reverse MC")',
+    ):
+        assert removed_token not in sr_qml, f"Removed mode token {removed_token} must not remain in DashboardSpacedRepetition.qml"
+
     for token in (
         "dashboard.spacedRepetition.enable",
         "dashboard.spacedRepetition.dailyNewLimit",
@@ -609,12 +838,12 @@ def verify_qml_and_config_contracts() -> None:
     ):
         assert token in sr_settings, f"Missing config binding {token} in DashboardSpacedRepetitionSettings.qml"
 
-    assert "DashboardSpacedRepetitionSettings {" in dash_config
+    assert "DashboardSpacedRepetitionSettings {" not in dash_config
     dock_config = (ROOT / "modules" / "settings" / "DockConfig.qml").read_text(encoding="utf-8")
     registry_data = (ROOT / "modules" / "settings" / "SettingsPageRegistryData.qml").read_text(encoding="utf-8")
     integration_plugins = json.loads((ROOT / "defaults" / "integration-plugins.json").read_text(encoding="utf-8"))
     alis_intergration_qml = (ROOT / "services" / "AlisIntergration.qml").read_text(encoding="utf-8")
-    assert "DashboardSpacedRepetitionSettings {" in dock_config
+    assert "DashboardSpacedRepetitionSettings {" not in dock_config
     assert 'value:"spacedRepetition"' in dock_config
     assert 'section: Translation.tr("Spaced Repetition")' in registry_data
     assert "spaced_repetition" in integration_plugins["integrations"]
@@ -636,7 +865,14 @@ def verify_qml_and_config_contracts() -> None:
     assert "GlobalStates.overviewOpen = false;" in dash_header
     assert "root.forceActiveFocus()" in sr_qml
     assert "readonly property bool studyShortcutsActive:" in sr_qml
-    assert "function triggerStudyShortcut(action): bool" in sr_qml
+    assert "readonly property bool studyDigitShortcutsActive:" in sr_qml
+    assert "readonly property bool clozeNumericTypingActive:" in sr_qml
+    assert "property string _lastShortcutAction: \"\"" in sr_qml
+    assert "readonly property color matchedStrokeColor: ColorUtils.mix(Appearance.colors.colPrimary, \"#10b981\", 0.45)" in sr_qml
+    assert "readonly property color mismatchStrokeColor: Appearance.colors.colError" in sr_qml
+    assert "readOnly: root.answerRevealed" in sr_qml
+    assert "function selectClozeChoice(index: int): bool" in sr_qml
+    assert "function triggerStudyShortcut(action, allowFromClozeInput = false): bool" in sr_qml
     assert 'sequences: ["Space"]' in sr_qml
     assert "function focusPrimarySurface(): void" in sr_qml
     assert "function focusPrimarySurface(): void" in dash_content
@@ -651,4 +887,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 

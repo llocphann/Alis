@@ -54,7 +54,7 @@ Canvas {
     // hover/selected colours while every rectangular surface in the shell eased
     // into them. Match the shell.
     Behavior on color {
-        enabled: Appearance.animationsEnabled
+        enabled: Appearance.animationsEnabled && root.visible
         animation: ColorAnimation {
             duration: Appearance.animation.elementMoveFast.duration
             easing.type: Appearance.animation.elementMoveFast.type
@@ -62,10 +62,17 @@ Canvas {
         }
     }
 
-    onProgressChanged: requestPaint()
-    onColorChanged: requestPaint()
-    onStrokeColorChanged: requestPaint()
-    onStrokeWidthChanged: requestPaint()
+    function _schedulePaint() {
+        if (root.visible && root.available)
+            root.requestPaint()
+    }
+
+    onVisibleChanged: root._schedulePaint()
+    onAvailableChanged: root._schedulePaint()
+    onProgressChanged: root._schedulePaint()
+    onColorChanged: root._schedulePaint()
+    onStrokeColorChanged: root._schedulePaint()
+    onStrokeWidthChanged: root._schedulePaint()
     onPaint: {
         var ctx = getContext("2d")
         ctx.fillStyle = root.color

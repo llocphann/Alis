@@ -58,6 +58,7 @@ Item {
 
     // ─── Favourites ───
     property var _favouritesDb: ({})
+    property int _favouritesRevision: 0
     property bool _favouritesLoaded: false
     property bool favouriteFilterActive: false
     readonly property string _favouritesCachePath: `${FileUtils.trimFileProtocol(Directories.stateUserPath)}/wallpaper-selector/favourites.json`
@@ -70,18 +71,21 @@ Item {
     property int _flippedImageIndex: -1
 
     function _isFavourite(fileName: string): bool {
-        return !!((_favouritesDb ?? {})[fileName])
+        void _favouritesRevision
+        void Wallpapers.favouritesRevision
+        return Boolean((_favouritesDb ?? {})[fileName] || (Wallpapers.favouritesDb ?? {})[fileName])
     }
 
     function _toggleFavourite(fileName: string): void {
-        let db = _favouritesDb
-        if (db[fileName])
+        const db = _favouritesDb ?? {}
+        if (db[fileName] || (Wallpapers.favouritesDb ?? {})[fileName])
             delete db[fileName]
         else
             db[fileName] = true
-        _favouritesDb = undefined  // force change signal
         _favouritesDb = db
+        _favouritesRevision++
         _saveFavouritesDebounce.restart()
+        Wallpapers.toggleFavourite(fileName)
         if (favouriteFilterActive)
             _rebuildIndexMaps()
     }
@@ -129,6 +133,8 @@ Item {
     function _rebuildIndexMaps(): void {
         const imgMap = []
         const folders = []
+        const favDb = favouriteFilterActive ? (_favouritesDb ?? {}) : null
+        const sharedFavDb = favouriteFilterActive ? (Wallpapers.favouritesDb ?? {}) : null
         for (let i = 0; i < totalCount; i++) {
             const isDir = folderModel.get(i, "fileIsDir") ?? false
             if (isDir) {
@@ -151,7 +157,7 @@ Item {
                     if (hue !== colorFilter) continue
                 }
                 // Favourites filter
-                if (favouriteFilterActive && !_isFavourite(fname))
+                if (favouriteFilterActive && !favDb[fname] && !sharedFavDb[fname])
                     continue
                 imgMap.push(i)
             }
@@ -1018,10 +1024,10 @@ Item {
                 Timer {
                     id: shadowRepaintDebounce
                     interval: 50
-                    onTriggered: parent.requestPaint()
+                    onTriggered: if (parent.visible && parent.available) parent.requestPaint()
                 }
-                onWidthChanged: shadowRepaintDebounce.restart()
-                onHeightChanged: shadowRepaintDebounce.restart()
+                onWidthChanged: if (visible) shadowRepaintDebounce.restart()
+                onHeightChanged: if (visible) shadowRepaintDebounce.restart()
                 onVisibleChanged: if (visible) shadowRepaintDebounce.restart()
                 onPaint: {
                     const ctx = getContext("2d")
@@ -1384,8 +1390,9 @@ Item {
                                         property color fillColor: isOn
                                             ? root.accentColor
                                             : ColorUtils.applyAlpha(root.textColor, 0.15)
-                                        onFillColorChanged: requestPaint()
-                                        onIsOnChanged: requestPaint()
+                                        onVisibleChanged: if (visible && available) requestPaint()
+                                        onFillColorChanged: if (visible && available) requestPaint()
+                                        onIsOnChanged: if (visible && available) requestPaint()
                                         onPaint: {
                                             const ctx = getContext("2d")
                                             ctx.clearRect(0, 0, width, height)
@@ -1416,7 +1423,8 @@ Item {
                                         property color knobColor: favToggle.checked
                                             ? ColorUtils.contrastColor(root.accentColor)
                                             : root.textColor
-                                        onKnobColorChanged: requestPaint()
+                                        onVisibleChanged: if (visible && available) requestPaint()
+                                        onKnobColorChanged: if (visible && available) requestPaint()
                                         onPaint: {
                                             const ctx = getContext("2d")
                                             ctx.clearRect(0, 0, width, height)
@@ -2257,7 +2265,20 @@ Item {
             implicitHeight: 38
             placeholderText: activeFocus ? Translation.tr("Search wallpapers") : Translation.tr("Hit \"/\" to search")
             text: Wallpapers.searchQuery
-            onTextChanged: Wallpapers.searchQuery = text
+            Timer {
+                id: skewSearchDebounce
+                interval: 80
+                repeat: false
+                onTriggered: Wallpapers.searchQuery = searchField.text
+            }
+            onTextChanged: {
+                if (text.trim().length === 0) {
+                    skewSearchDebounce.stop()
+                    Wallpapers.searchQuery = ""
+                } else {
+                    skewSearchDebounce.restart()
+                }
+            }
             onActiveFocusChanged: if (activeFocus) root.showKeyboardGuide = false
         }
 

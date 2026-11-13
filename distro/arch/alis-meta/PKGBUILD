@@ -1,5 +1,5 @@
 pkgname=alis-meta
-pkgver=1.0.1
+pkgver=1.0.0
 pkgrel=1
 pkgdesc='Full Alis desktop experience meta-package'
 arch=(any)
@@ -31,7 +31,6 @@ depends=(
   gowall-bin
   gum
   hicolor-icon-theme
-  hyprpicker
   imagemagick
   alis-shell
   kconfig

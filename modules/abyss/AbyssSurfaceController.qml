@@ -42,9 +42,10 @@ QtObject {
         }))
     readonly property var baseBodyPlacements: BodyPlacement.arrange(
         placementRequests,outputWidth,outputHeight,edgeInsets)
+    property var externalBlockers: []
     readonly property var bodyPlacements: VacancyBorrowing.resolve(
         placementRequests,vacancyParticipants,baseBodyPlacements,
-        outputWidth,outputHeight,edgeInsets,24)
+        outputWidth,outputHeight,edgeInsets,24,externalBlockers)
     property real outputWidth: 1920
     property real outputHeight: 1080
     property bool presented: true

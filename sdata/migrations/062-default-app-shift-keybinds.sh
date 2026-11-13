@@ -47,6 +47,12 @@ if has_active_bind(combined, r"(?:Mod|Super)\+Return") and not has_active_bind(c
 if has_active_bind(combined, r"(?:Mod|Super)\+W") and not has_active_bind(combined, r"Super\+Shift\+W"):
     sys.exit(0)
 
+# Needs migration if Super+O / Mod+O is bound to Obsidian or missing alongside Super+W
+if re.search(r'^[ \t]*(?:Mod|Super)\+O\b[^\n]*(?i:obsidian)', combined, re.MULTILINE):
+    sys.exit(0)
+if has_active_bind(combined, r"(?:Mod|Super)\+W") and not has_active_bind(combined, r"(?:Mod|Super)\+O"):
+    sys.exit(0)
+
 sys.exit(1)
 PY
 }
@@ -58,6 +64,8 @@ migration_preview() {
     echo -e "${STY_GREEN}+ Mod+Shift+T { spawn \"alis\" \"terminal\" \"--new\"; }${STY_RST}"
     echo -e "${STY_GREEN}+ Mod+Shift+Return { spawn \"alis\" \"terminal\" \"--new\"; }${STY_RST}"
     echo -e "${STY_GREEN}+ Super+Shift+W { spawn \"alis\" \"browser\" \"--new\"; }${STY_RST}"
+    echo -e "${STY_RED}- Super+O { spawn \"Obsidian\"; }${STY_RST}"
+    echo -e "${STY_GREEN}+ Super+O { spawn \"alis\" \"nexus\" \"toggle\"; }${STY_RST}"
 }
 
 migration_apply() {
@@ -82,11 +90,28 @@ extra_text = extra_path.read_text(encoding="utf-8") if extra_path.is_file() else
 def has_active_combo(text: str, combo_regex: str) -> bool:
     return re.search(rf"^[ \t]*{combo_regex}\b", text, re.MULTILINE) is not None
 
+def detect_alis_cmd(text: str) -> str:
+    m = re.search(r'spawn[ \t]+("[^"]*alis"|alis)(?=[ \t;])', text)
+    if m:
+        raw = m.group(1)
+        return raw if raw.startswith('"') else f'"{raw}"'
+    return '"alis"'
+
 def inject_shift_variants(text: str, all_text: str) -> str:
     # 1. Move Mod+Shift+W panelFamily cycle to Mod+Alt+W
     text = re.sub(
         r'^([ \t]*)Mod\+Shift\+W(\b[^\n]*"panelFamily"[ \t]+"cycle")',
         r'\1Mod+Alt+W\2',
+        text,
+        flags=re.MULTILINE,
+    )
+
+    alis_cmd = detect_alis_cmd(text if "alis" in text else all_text)
+
+    # 2. Replace any active Super+O / Mod+O Obsidian bind in-place with Alis Nexus toggle
+    text = re.sub(
+        r'^([ \t]*)(Mod|Super)\+O([ \t]+(?:\{[ \t]*spawn[ \t]+[^\n]*?(?i:obsidian)[^\n]*?\}))',
+        rf'\1\2+O {{ spawn {alis_cmd} "nexus" "toggle"; }}',
         text,
         flags=re.MULTILINE,
     )
@@ -115,12 +140,24 @@ def inject_shift_variants(text: str, all_text: str) -> str:
             all_text += f"\n{mod}+Shift+Return"
             continue
 
-        # Super+W -> Super+Shift+W
+        # Super+W -> Super+Shift+W (and Super+O if missing)
         m_w = re.match(r'^([ \t]*)(Mod|Super)\+W([ \t]+\{[ \t]*spawn[ \t]+("[^"]+"|[^\s;]+)[ \t]+"browser")[ \t]*;[ \t]*\}', line)
-        if m_w and not has_active_combo(all_text, r"Super\+Shift\+W"):
-            indent, mod, prefix = m_w.group(1), m_w.group(2), m_w.group(3)
-            out.append(f'{indent}{mod}+Shift+W{prefix} "--new"; }}\n')
-            all_text += f"\n{mod}+Shift+W"
+        if m_w:
+            indent, mod, prefix, cmd_token = m_w.group(1), m_w.group(2), m_w.group(3), m_w.group(4)
+            if not has_active_combo(all_text, r"Super\+Shift\+W"):
+                out.append(f'{indent}{mod}+Shift+W{prefix} "--new"; }}\n')
+                all_text += f"\n{mod}+Shift+W"
+            if not has_active_combo(all_text, r"(?:Mod|Super)\+O"):
+                out.append(f'{indent}Super+O {{ spawn {cmd_token} "nexus" "toggle"; }}\n')
+                all_text += "\nSuper+O"
+            continue
+
+        # Super+Shift+W -> Super+O if Super+Shift+W was already present
+        m_sw = re.match(r'^([ \t]*)(Mod|Super)\+Shift\+W[ \t]+\{[ \t]*spawn[ \t]+("[^"]+"|[^\s;]+)[ \t]+"browser"[ \t]+"--new"[ \t]*;[ \t]*\}', line)
+        if m_sw and not has_active_combo(all_text, r"(?:Mod|Super)\+O"):
+            indent, cmd_token = m_sw.group(1), m_sw.group(3)
+            out.append(f'{indent}Super+O {{ spawn {cmd_token} "nexus" "toggle"; }}\n')
+            all_text += "\nSuper+O"
             continue
 
         # Super+E -> Super+Shift+E (only if neither Mod+Shift+E nor Super+Shift+E is bound)

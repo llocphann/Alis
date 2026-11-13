@@ -19,6 +19,7 @@ Singleton {
     // session should perform the empirically validated perimeter recreation.
     // Cleared before the recreation, and on manual family changes.
     property bool abyssColdPerimeterRecreatePending: false
+    property bool abyssPerimeterActive: false
     // Startup lifecycle — singleton preserves one-shot state across hot reloads.
     property bool bootGreetingOpen: false
     property bool bootGreetingDone: false
@@ -150,6 +151,8 @@ Singleton {
         root.coverflowSelectorOpen = false
         root.settingsOverlayOpen = false
         root.dashboardOpen = false
+        if (AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
+            AlisIntergration.nexus.close()
         root.controlPanelOpen = false
         root.overviewOpen = false
         root.clipboardOpen = false
@@ -288,6 +291,8 @@ Singleton {
     property string selectedDesktopWidget: ""
     property string selectedDesktopItem: ""
     property string desktopWidgetQuickControls: ""
+    property string desktopWidgetInspectorTarget: ""
+    property int desktopWidgetInspectorSerial: 0
     property bool shellLayoutEditMode: false
 
     // Per-output controls retain their Background context while the existing
@@ -314,6 +319,7 @@ Singleton {
             selectedDesktopWidget = ""
             selectedDesktopItem = ""
             desktopWidgetQuickControls = ""
+            desktopWidgetInspectorTarget = ""
         }
         widgetEditMode = enabled
     }
@@ -346,6 +352,16 @@ Singleton {
         const key = String(instanceKey ?? "")
         selectedDesktopWidget = key
         desktopWidgetQuickControls = key
+    }
+
+    function requestDesktopWidgetInspector(outputName: string, layoutKey: string): void {
+        if (!widgetEditMode)
+            setWidgetEditMode(true)
+        const key = String(outputName ?? "") + "::" + String(layoutKey ?? "")
+        selectedDesktopWidget = key
+        selectedDesktopItem = ""
+        desktopWidgetInspectorTarget = key
+        desktopWidgetInspectorSerial += 1
     }
 
     function setShellLayoutEditMode(enabled: bool): void {

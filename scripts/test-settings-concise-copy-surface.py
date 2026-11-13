@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 README = (ROOT / "README.md").read_text(encoding="utf-8")
 INTEGRATIONS = (ROOT / "modules" / "settings" / "IntegrationsConfig.qml").read_text(encoding="utf-8")
-OBSIDIAN = (ROOT / "modules" / "settings" / "ObsidianThemeSettings.qml").read_text(encoding="utf-8")
+NEXUS = (ROOT / "modules" / "settings" / "NexusThemeSettings.qml").read_text(encoding="utf-8")
 SERVICES = (ROOT / "modules" / "settings" / "ServicesConfig.qml").read_text(encoding="utf-8")
 OVERLAY = (ROOT / "modules" / "settings" / "SettingsOverlay.qml").read_text(encoding="utf-8")
 FOCUS = (ROOT / "modules" / "settings" / "SettingsFocus.qml").read_text(encoding="utf-8")
@@ -22,8 +22,8 @@ assert "paragraph-length explanation" in README
 
 # Alis-Intergration tests its owned vault labels/help and native field behavior. Core
 # must retain the disabled-by-default wrapper instead of a duplicate editor.
-assert 'active: AlisIntergration.obsidianEnabled' in OBSIDIAN
-assert 'source: AlisIntergration.settingsSource("obsidian")' in OBSIDIAN
+assert 'active: AlisIntergration.nexusEnabled' in NEXUS
+assert 'source: AlisIntergration.settingsSource("nexus")' in NEXUS
 
 overlay_start = OVERLAY.index("id: overlayContentContainer")
 overlay_end = OVERLAY.index("// ── Page header", overlay_start)
@@ -97,7 +97,7 @@ SIDEBARS = (ROOT / "modules" / "settings" / "SidebarsConfig.qml").read_text(enco
 EN_US = json.loads((ROOT / "translations" / "en_US.json").read_text(encoding="utf-8"))
 assert "Why this is cool:" not in SIDEBARS
 for hint in (
-    "Sidebar layout, widgets, media and edge behavior.",
+    "Sidebar layout, edgebars and workspace overview.",
 ):
     assert hint in SIDEBARS, hint
     assert EN_US.get(hint) == hint, hint
@@ -148,9 +148,7 @@ SHARED_SETTINGS_HELP = {
         "Shared wave fill opacity; bar spectrum has its own setting.",
     ),
     "SidebarsConfig.qml": (
-        "Sidebar content stays loaded between openings.",
-        "Sidebar layout, widgets, media and edge behavior.",
-        "Open sidebars from screen corners.",
+        "Sidebar layout, edgebars and workspace overview.",
     ),
     "BackgroundConfig.qml": (
         "Choose wallpaper reveal direction.",
@@ -278,13 +276,6 @@ TOOLS_WIDGET_HELP = {
         "Load grid on demand; full selector remains available.",
         "Show reload notices; errors always appear.",
     ),
-    "DesktopWidgetsConfig.qml": (
-        "Keep widget in its selected screen zone as dimensions change.",
-        "Adapt widget text to wallpaper; off keeps colors stable when moved.",
-        "Custom QML widgets: ~/.config/alis/widgets/ (widget.json and .qml required).",
-        "Use one wallpaper palette for built-in widgets; individual overrides remain.",
-        "Create an editable .qml template with imports and sample layout.",
-    ),
     "MonitorVisibilityConfig.qml": (
         "Primary monitor sets the fallback output; display controls are in Compositor.",
     ),
@@ -318,8 +309,8 @@ for page, hints in WAFFLE_LATE_HELP.items():
 # Optional plugin wrappers retain loader/retry behavior while help is localized.
 OPTIONAL_SETTINGS_HELP = {
     "CompanionConfig.qml": ("Companion unavailable. Run ./setup update, then Recheck Companion.", "Recheck Companion",),
-    "ObsidianThemeSettings.qml": ("Install Alis-Intergration; enable this integration in Settings → Integrations.",),
-    "ObsidianTodoSettings.qml": ("Install Alis-Intergration; enable Obsidian in Settings → Integrations.",),
+    "NexusThemeSettings.qml": ("Install Alis-Intergration; enable this integration in Settings → Integrations.",),
+    "NexusTodoSettings.qml": ("Install Alis-Intergration; enable Nexus in Settings → Integrations.",),
     "ThinkfanSettings.qml": ("Install Alis-Intergration; enable Thinkfan in Settings → Integrations.",),
 }
 for page, hints in OPTIONAL_SETTINGS_HELP.items():
@@ -333,8 +324,8 @@ assert "source: AlisCompanion.settingsSource" in companion_source
 assert "onClicked: AlisCompanion.refresh()" in companion_source
 for name, dynamic_source in (
     ("ThinkfanSettings.qml", 'AlisIntergration.settingsSource("thinkfan")'),
-    ("ObsidianThemeSettings.qml", 'AlisIntergration.settingsSource("obsidian")'),
-    ("ObsidianTodoSettings.qml", 'AlisIntergration.settingsSource("obsidianTodo")'),
+    ("NexusThemeSettings.qml", 'AlisIntergration.settingsSource("nexus")'),
+    ("NexusTodoSettings.qml", 'AlisIntergration.settingsSource("nexusTodo")'),
 ):
     source = (ROOT / "modules/settings" / name).read_text(encoding="utf-8")
     assert dynamic_source in source, name

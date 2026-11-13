@@ -77,6 +77,30 @@ fn user_home() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("/tmp"))
 }
 
+fn xdg_state_dir() -> PathBuf {
+    if let Some(xdg) = std::env::var_os("XDG_STATE_HOME")
+        && !xdg.is_empty()
+    {
+        return PathBuf::from(xdg);
+    }
+    user_home().join(".local/state")
+}
+
+/// Write `bytes` to `path` in-place (preserving inode for inotify watchers)
+/// ONLY if the existing file content differs. Returns `Ok(true)` if written.
+fn write_if_changed_bytes(path: &Path, bytes: &[u8]) -> Result<bool> {
+    if let Ok(existing) = fs::read(path)
+        && existing == bytes
+    {
+        return Ok(false);
+    }
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(path, bytes)?;
+    Ok(true)
+}
+
 pub fn run_opencode_theme(args: &[String]) -> Result<()> {
     let home = user_home();
     let scss_path = args
@@ -334,11 +358,10 @@ pub fn run_opencode_theme(args: &[String]) -> Result<()> {
         }
     });
 
-    fs::create_dir_all(&output_dir)?;
     let output_path = output_dir.join("alis.json");
     let mut data = serde_json::to_vec_pretty(&payload)?;
     data.push(b'\n');
-    fs::write(&output_path, data)?;
+    write_if_changed_bytes(&output_path, &data)?;
     println!("[opencode] Theme generated: {}", output_path.display());
     Ok(())
 }
@@ -596,6 +619,14 @@ fn xdg_config_dir() -> PathBuf {
 }
 
 fn vscode_ext_base(fork_key: &str) -> PathBuf {
+    if fork_key == "antigravity" {
+        let e1 = user_home().join(".antigravity/extensions");
+        let e2 = user_home().join(".antigravity-ide/extensions");
+        if !e1.exists() && (e2.exists() || user_home().join(".antigravity-ide").is_dir()) {
+            return e2;
+        }
+        return e1;
+    }
     let rel = VSCODE_FORKS
         .iter()
         .find(|&&(k, _, _)| k == fork_key)
@@ -605,11 +636,22 @@ fn vscode_ext_base(fork_key: &str) -> PathBuf {
 }
 
 fn vscode_settings_path(fork_name: &str) -> PathBuf {
+    if fork_name == "Antigravity" {
+        let p1 = xdg_config_dir().join("Antigravity").join("User/settings.json");
+        let p2 = xdg_config_dir().join("Antigravity IDE").join("User/settings.json");
+        if !p1.exists() && (p2.exists() || xdg_config_dir().join("Antigravity IDE").is_dir()) {
+            return p2;
+        }
+        return p1;
+    }
     xdg_config_dir().join(fork_name).join("User/settings.json")
 }
 
 fn ensure_vscode_registered(fork_key: &str, ext_dir: &Path) -> Result<()> {
-    let ext_base = vscode_ext_base(fork_key);
+    let ext_base = ext_dir
+        .parent()
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| vscode_ext_base(fork_key));
     fs::create_dir_all(&ext_base)?;
     let registry_path = ext_base.join("extensions.json");
     let mut entries: Vec<Value> = fs::read_to_string(&registry_path)
@@ -640,32 +682,40 @@ fn ensure_vscode_registered(fork_key: &str, ext_dir: &Path) -> Result<()> {
 }
 
 fn unregister_vscode_extension(fork_key: &str) {
-    let registry_path = vscode_ext_base(fork_key).join("extensions.json");
-    let Ok(text) = fs::read_to_string(&registry_path) else {
-        return;
-    };
-    let Ok(entries) = serde_json::from_str::<Vec<Value>>(&text) else {
-        return;
-    };
-    let ext_id = format!("alis.{VSCODE_EXTENSION_ID}");
-    let orig_len = entries.len();
-    let filtered: Vec<Value> = entries
-        .into_iter()
-        .filter(|e| {
-            e.get("identifier")
-                .and_then(|id| id.get("id"))
-                .and_then(Value::as_str)
-                != Some(ext_id.as_str())
-        })
-        .collect();
-    if filtered.len() == orig_len {
-        return;
+    let mut registries = vec![vscode_ext_base(fork_key).join("extensions.json")];
+    if fork_key == "antigravity" {
+        let alt = user_home().join(".antigravity-ide/extensions/extensions.json");
+        if !registries.contains(&alt) {
+            registries.push(alt);
+        }
     }
-    let tmp = registry_path.with_extension("json.tmp");
-    if let Ok(bytes) = serde_json::to_vec(&filtered)
-        && fs::write(&tmp, bytes).is_ok()
-    {
-        let _ = fs::rename(&tmp, &registry_path);
+    for registry_path in registries {
+        let Ok(text) = fs::read_to_string(&registry_path) else {
+            continue;
+        };
+        let Ok(entries) = serde_json::from_str::<Vec<Value>>(&text) else {
+            continue;
+        };
+        let ext_id = format!("alis.{VSCODE_EXTENSION_ID}");
+        let orig_len = entries.len();
+        let filtered: Vec<Value> = entries
+            .into_iter()
+            .filter(|e| {
+                e.get("identifier")
+                    .and_then(|id| id.get("id"))
+                    .and_then(Value::as_str)
+                    != Some(ext_id.as_str())
+            })
+            .collect();
+        if filtered.len() == orig_len {
+            continue;
+        }
+        let tmp = registry_path.with_extension("json.tmp");
+        if let Ok(bytes) = serde_json::to_vec(&filtered)
+            && fs::write(&tmp, bytes).is_ok()
+        {
+            let _ = fs::rename(&tmp, &registry_path);
+        }
     }
 }
 
@@ -1209,6 +1259,9 @@ fn load_vscode_settings(path: &Path) -> Result<Map<String, Value>> {
     match fs::read(path) {
         Ok(data) => {
             let stripped = strip_jsonc_comments(&data);
+            if stripped.trim_ascii().is_empty() {
+                return Ok(Map::new());
+            }
             let Value::Object(map) = serde_json::from_slice(&stripped)? else {
                 return Err(anyhow!("settings.json is not an object"));
             };
@@ -1320,20 +1373,34 @@ pub fn run_vscode_theme(raw_args: &[String]) -> Result<()> {
                     if settings.remove(VSCODE_PREV_KEY).is_some() {
                         changed = true;
                     }
-                    for key in [
-                        "workbench.colorCustomizations",
-                        "editor.tokenColorCustomizations",
-                        "editor.semanticTokenColorCustomizations",
-                    ] {
-                        if settings.remove(key).is_some() {
-                            changed = true;
-                        }
-                    }
+                    // Customization maps may contain Owner edits and have no
+                    // ownership marker. Stripping our extension must retain them.
                     if changed && write_vscode_settings(&settings_path, &settings).is_err() {
                         ok = false;
                     }
                 } else {
                     ok = false;
+                }
+            }
+            if *fork_key == "antigravity" {
+                let alt_settings = xdg_config_dir().join("Antigravity IDE/User/settings.json");
+                if alt_settings.is_file() {
+                    if let Ok(mut s) = load_vscode_settings(&alt_settings) {
+                        let curr = s.get("workbench.colorTheme").and_then(Value::as_str);
+                        if curr == Some(VSCODE_THEME_NAME) || curr == Some(VSCODE_THEME_NAME_LIGHT) {
+                            if let Some(prev) = s.get(VSCODE_PREV_KEY).and_then(Value::as_str).filter(|p| !p.is_empty()).map(str::to_owned) {
+                                s.insert("workbench.colorTheme".into(), Value::String(prev));
+                            } else {
+                                s.remove("workbench.colorTheme");
+                            }
+                            s.remove(VSCODE_PREV_KEY);
+                            let _ = write_vscode_settings(&alt_settings, &s);
+                        }
+                    }
+                }
+                let alt_ext = user_home().join(".antigravity-ide/extensions").join(VSCODE_EXTENSION_ID);
+                if alt_ext.is_dir() {
+                    let _ = fs::remove_dir_all(&alt_ext);
                 }
             }
             if ok {
@@ -1389,6 +1456,9 @@ pub fn run_vscode_theme(raw_args: &[String]) -> Result<()> {
                         .parent()
                         .and_then(Path::parent)
                         .is_some_and(Path::is_dir)
+                    || vscode_ext_base(key)
+                        .parent()
+                        .is_some_and(Path::is_dir)
             })
             .map(|&(k, n, _)| (k, n))
             .collect()
@@ -1413,6 +1483,7 @@ pub fn run_vscode_theme(raw_args: &[String]) -> Result<()> {
                     || *fork_key == "code"
                     || *fork_key == "codium"
                     || parent.parent().is_some_and(Path::is_dir)
+                    || vscode_ext_base(fork_key).parent().is_some_and(Path::is_dir)
                 {
                     if fs::create_dir_all(parent).is_err() {
                         continue;
@@ -1441,9 +1512,9 @@ pub fn run_vscode_theme(raw_args: &[String]) -> Result<()> {
         }
         let _ = ensure_vscode_registered(fork_key, &ext_dir);
 
-        // Write both theme files in-place to preserve inode for Linux inotify (_watch: true)
+        // Write both theme files in-place only when changed to preserve inode and avoid no-op inotify wakeups
         let theme_path = ext_dir.join("themes").join(active_file);
-        if fs::write(&theme_path, &theme_bytes).is_err() {
+        if write_if_changed_bytes(&theme_path, &theme_bytes).is_err() {
             continue;
         }
         let other_file = if active_file == VSCODE_FILE_DARK {
@@ -1452,7 +1523,7 @@ pub fn run_vscode_theme(raw_args: &[String]) -> Result<()> {
             VSCODE_FILE_DARK
         };
         let other_path = ext_dir.join("themes").join(other_file);
-        let _ = fs::write(&other_path, &theme_bytes);
+        let _ = write_if_changed_bytes(&other_path, &theme_bytes);
 
         if let Ok(mut settings) = load_vscode_settings(&settings_path) {
             let current_theme = settings
@@ -1468,15 +1539,8 @@ pub fn run_vscode_theme(raw_args: &[String]) -> Result<()> {
                 settings.insert(VSCODE_PREV_KEY.into(), Value::String(current_theme.clone()));
                 changed = true;
             }
-            for key in [
-                "workbench.colorCustomizations",
-                "editor.tokenColorCustomizations",
-                "editor.semanticTokenColorCustomizations",
-            ] {
-                if settings.remove(key).is_some() {
-                    changed = true;
-                }
-            }
+            // Preserve personal customization maps; the extension owns only its
+            // selected theme and the previous-theme restoration key.
             if current_theme != active_name {
                 settings.insert(
                     "workbench.colorTheme".into(),
@@ -1486,6 +1550,36 @@ pub fn run_vscode_theme(raw_args: &[String]) -> Result<()> {
             }
             if changed && write_vscode_settings(&settings_path, &settings).is_err() {
                 continue;
+            }
+            if *fork_key == "antigravity" {
+                let alt_settings = xdg_config_dir().join("Antigravity IDE/User/settings.json");
+                if alt_settings.parent().is_some_and(Path::is_dir) {
+                    if let Ok(mut s) = load_vscode_settings(&alt_settings) {
+                        let mut ch = false;
+                        let curr = s.get("workbench.colorTheme").and_then(Value::as_str).unwrap_or_default().to_owned();
+                        if !curr.is_empty() && curr != VSCODE_THEME_NAME && curr != VSCODE_THEME_NAME_LIGHT {
+                            s.insert(VSCODE_PREV_KEY.into(), Value::String(curr.clone()));
+                            ch = true;
+                        }
+                        if curr != active_name {
+                            s.insert("workbench.colorTheme".into(), Value::String(active_name.to_owned()));
+                            ch = true;
+                        }
+                        if ch {
+                            let _ = write_vscode_settings(&alt_settings, &s);
+                        }
+                    }
+                }
+                let alt_ext = user_home().join(".antigravity-ide/extensions");
+                if alt_ext.parent().is_some_and(Path::is_dir) {
+                    let alt_theme_dir = alt_ext.join(VSCODE_EXTENSION_ID).join("themes");
+                    if fs::create_dir_all(&alt_theme_dir).is_ok() {
+                        let _ = write_vscode_manifest(&alt_ext.join(VSCODE_EXTENSION_ID));
+                        let _ = write_if_changed_bytes(&alt_theme_dir.join(active_file), &theme_bytes);
+                        let _ = write_if_changed_bytes(&alt_theme_dir.join(other_file), &theme_bytes);
+                        let _ = ensure_vscode_registered("antigravity", &alt_ext.join(VSCODE_EXTENSION_ID));
+                    }
+                }
             }
             success += 1;
             println!("  ✓ {fork_name}");
@@ -2219,8 +2313,779 @@ pub fn run_zed_theme(raw_args: &[String]) -> Result<()> {
     }
     let mut data = serde_json::to_vec_pretty(&theme_data)?;
     data.push(b'\n');
-    fs::write(&output_path, data)?;
+    write_if_changed_bytes(&output_path, &data)?;
     println!("✓ Generated Zed theme");
+    Ok(())
+}
+
+// ── Codex (.tmTheme + config.toml) Theme Generator ─────────────────────
+
+const CODEX_THEME_SLUG: &str = "alis";
+const CODEX_THEME_FILE: &str = "alis.tmTheme";
+const CODEX_PREV_THEME_STATE: &str = "codex_prev_theme.txt";
+
+fn codex_home_dir() -> PathBuf {
+    if let Some(dir) = std::env::var_os("CODEX_HOME")
+        && !dir.is_empty()
+    {
+        return PathBuf::from(dir);
+    }
+    let p1 = user_home().join(".codex");
+    let p2 = xdg_config_dir().join("codex");
+    if !p1.exists() && (p2.exists() || p2.is_dir()) {
+        return p2;
+    }
+    p1
+}
+
+fn load_merged_theme_inputs(
+    colors_path: &Path,
+    terminal_path: &Path,
+    scss_path: &Path,
+) -> Result<(HashMap<String, String>, HashMap<String, String>)> {
+    let mut colors = parse_scss(scss_path).unwrap_or_default();
+    if let Ok(pal) = read_string_map_json(colors_path) {
+        colors.extend(pal);
+    }
+    if colors.is_empty() {
+        return Err(anyhow!(
+            "Failed to load theme colors from {} or {}",
+            colors_path.display(),
+            scss_path.display()
+        ));
+    }
+    let mut term_colors = parse_scss(scss_path).unwrap_or_default();
+    if let Ok(explicit) = read_string_map_json(terminal_path) {
+        term_colors.extend(explicit);
+    }
+    Ok((colors, term_colors))
+}
+
+fn xml_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+}
+
+pub fn build_codex_tmtheme(
+    colors: &HashMap<String, String>,
+    term_colors: &HashMap<String, String>,
+) -> String {
+    let bg = pick(colors, "background", pick(colors, "surface", "#0f1417"));
+    let dark = hex_to_hsl_deg(bg).l < 0.5;
+    let primary = pick(colors, "primary", "#7aa2f7");
+    let secondary = pick(colors, "secondary", "#bb9af7");
+    let tertiary = pick(colors, "tertiary", "#9ece6a");
+    let on_surface = pick(colors, "on_surface", pick(colors, "onSurface", "#dfe3e7"));
+    let on_surface_variant = pick(
+        colors,
+        "on_surface_variant",
+        pick(colors, "onSurfaceVariant", "#c1c7ce"),
+    );
+    let surface_container = pick(
+        colors,
+        "surface_container",
+        pick(colors, "surfaceContainer", "#1c2024"),
+    );
+    let surface_container_low = pick(
+        colors,
+        "surface_container_low",
+        pick(colors, "surfaceContainerLow", "#181c1f"),
+    );
+    let outline = pick(colors, "outline", "#8b9298");
+    let outline_variant = pick(
+        colors,
+        "outline_variant",
+        pick(colors, "outlineVariant", "#41484d"),
+    );
+    let tertiary_container = pick(
+        colors,
+        "tertiary_container",
+        pick(colors, "tertiaryContainer", tertiary),
+    );
+    let on_tertiary_container = pick(
+        colors,
+        "on_tertiary_container",
+        pick(colors, "onTertiaryContainer", on_surface),
+    );
+    let error_col = with_contrast(
+        &saturate_color(pick(colors, "error", "#ffb4ab"), 1.3, 0.50),
+        bg,
+        4.5,
+        dark,
+    );
+
+    let col_keyword = syntax_color(term_colors, primary, bg, 5);
+    let col_string = syntax_color(term_colors, primary, bg, 2);
+    let col_function = syntax_color(term_colors, primary, bg, 4);
+    let col_type = syntax_color(term_colors, primary, bg, 6);
+    let col_constant = syntax_color(term_colors, primary, bg, 3);
+    let col_tag = syntax_color(term_colors, primary, bg, 1);
+    let col_property = with_contrast(&blend(&col_function, &col_type, 0.5), bg, 4.5, dark);
+    let comment_aa = muted_ink(on_surface_variant, bg, 0xaa, dark);
+    let selection = blend(bg, primary, if dark { 0.28 } else { 0.22 });
+
+    let scopes: &[(&str, &str, &str, Option<&str>)] = &[
+        ("Comment", "comment, punctuation.definition.comment", &comment_aa, Some("italic")),
+        ("Keyword", "keyword, storage, storage.type, storage.modifier, keyword.control, keyword.operator", &col_keyword, None),
+        ("Constant", "constant, constant.numeric, constant.language, constant.character, keyword.other.unit", &col_constant, None),
+        ("String", "string, string.quoted, string.template, punctuation.definition.string", &col_string, None),
+        ("Escape & Regexp", "string.regexp, constant.character.escape, string.escape", &col_tag, None),
+        ("Function", "entity.name.function, support.function, meta.function-call, entity.name.function.call", &col_function, None),
+        ("Type & Class", "entity.name.type, entity.name.class, support.type, support.class, entity.other.inherited-class", &col_type, None),
+        ("Variable", "variable, variable.other, variable.parameter", on_surface, None),
+        ("Language Variable", "variable.language", &col_tag, Some("italic")),
+        ("Property & Attribute", "variable.other.property, support.variable.property, entity.other.attribute-name, meta.object-literal.key, support.type.property-name", &col_property, None),
+        ("Tag", "entity.name.tag, punctuation.definition.tag", &col_tag, None),
+        ("Punctuation", "punctuation, punctuation.separator, punctuation.terminator", on_surface_variant, None),
+        ("Markdown Heading", "markup.heading, entity.name.section", &col_function, Some("bold")),
+        ("Markdown Bold", "markup.bold", on_surface, Some("bold")),
+        ("Markdown Italic", "markup.italic", on_surface, Some("italic")),
+        ("Markdown Link", "markup.underline.link, string.other.link", &col_function, Some("underline")),
+        ("Markdown Code", "markup.inline.raw, markup.fenced_code, markup.raw", &col_string, None),
+        ("Markdown Quote", "markup.quote", on_surface_variant, Some("italic")),
+        ("Markdown List", "markup.list", &col_keyword, None),
+        ("Diff Inserted", "markup.inserted, diff.inserted", &col_string, None),
+        ("Diff Deleted", "markup.deleted, diff.deleted", &error_col, None),
+        ("Diff Changed", "markup.changed, diff.changed", &col_constant, None),
+        ("Diff Header", "meta.diff, meta.diff.header", secondary, None),
+        ("Invalid", "invalid, invalid.deprecated", &error_col, None),
+    ];
+
+    let mut rules_xml = String::new();
+    for (name, scope, fg, font_style) in scopes {
+        rules_xml.push_str("    <dict>\n");
+        rules_xml.push_str(&format!("      <key>name</key>\n      <string>{}</string>\n", xml_escape(name)));
+        rules_xml.push_str(&format!("      <key>scope</key>\n      <string>{}</string>\n", xml_escape(scope)));
+        rules_xml.push_str("      <key>settings</key>\n      <dict>\n");
+        rules_xml.push_str(&format!("        <key>foreground</key>\n        <string>{}</string>\n", xml_escape(fg)));
+        if let Some(style) = font_style {
+            rules_xml.push_str(&format!("        <key>fontStyle</key>\n        <string>{}</string>\n", xml_escape(style)));
+        }
+        rules_xml.push_str("      </dict>\n    </dict>\n");
+    }
+
+    format!(
+        r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>name</key>
+  <string>Alis Material</string>
+  <key>settings</key>
+  <array>
+    <dict>
+      <key>settings</key>
+      <dict>
+        <key>background</key>
+        <string>{bg}</string>
+        <key>foreground</key>
+        <string>{on_surface}</string>
+        <key>caret</key>
+        <string>{primary}</string>
+        <key>selection</key>
+        <string>{selection}</string>
+        <key>selectionForeground</key>
+        <string>{on_surface}</string>
+        <key>lineHighlight</key>
+        <string>{surface_container}</string>
+        <key>findHighlight</key>
+        <string>{tertiary_container}</string>
+        <key>findHighlightForeground</key>
+        <string>{on_tertiary_container}</string>
+        <key>gutter</key>
+        <string>{surface_container_low}</string>
+        <key>gutterForeground</key>
+        <string>{outline}</string>
+        <key>activeGuide</key>
+        <string>{primary}</string>
+        <key>guide</key>
+        <string>{outline_variant}</string>
+      </dict>
+    </dict>
+{rules_xml}  </array>
+</dict>
+</plist>
+"#
+    )
+}
+
+fn parse_toml_string_value(raw_val: &str) -> Option<String> {
+    let trimmed = raw_val.split('#').next().unwrap_or(raw_val).trim();
+    if (trimmed.starts_with('"') && trimmed.ends_with('"') && trimmed.len() >= 2)
+        || (trimmed.starts_with('\'') && trimmed.ends_with('\'') && trimmed.len() >= 2)
+    {
+        Some(trimmed[1..trimmed.len() - 1].to_owned())
+    } else {
+        None
+    }
+}
+
+fn is_toml_section_header(line: &str) -> Option<&str> {
+    let trimmed = line.split('#').next().unwrap_or(line).trim();
+    if trimmed.starts_with('[') && trimmed.ends_with(']') && !trimmed.starts_with("[[") {
+        Some(trimmed[1..trimmed.len() - 1].trim())
+    } else {
+        None
+    }
+}
+
+/// Non-destructively set `[tui]` `theme = "alis"` in `config.toml` content.
+/// Returns `(updated_toml, previous_non_alis_theme)`.
+pub fn update_codex_config_toml(existing: &str, theme_slug: &str) -> (String, Option<String>) {
+    if existing.trim().is_empty() {
+        return (format!("[tui]\ntheme = \"{theme_slug}\"\n"), None);
+    }
+
+    let lines: Vec<&str> = existing.lines().collect();
+    let mut out_lines: Vec<String> = Vec::with_capacity(lines.len() + 4);
+    let mut prev_theme: Option<String> = None;
+
+    // Locate `[tui]` section if present
+    let mut tui_start: Option<usize> = None;
+    let mut tui_end: usize = lines.len();
+    for (idx, line) in lines.iter().enumerate() {
+        if let Some(sec) = is_toml_section_header(line) {
+            if tui_start.is_some() {
+                tui_end = idx;
+                break;
+            }
+            if sec == "tui" {
+                tui_start = Some(idx);
+            }
+        }
+    }
+
+    if let Some(start) = tui_start {
+        let mut found_theme_key = false;
+        for (idx, &line) in lines.iter().enumerate() {
+            if idx > start && idx < tui_end && !found_theme_key {
+                let code_part = line.split('#').next().unwrap_or(line);
+                if let Some((k, v)) = code_part.split_once('=')
+                    && k.trim() == "theme"
+                {
+                    if let Some(old) = parse_toml_string_value(v)
+                        && old != theme_slug
+                    {
+                        prev_theme = Some(old);
+                    }
+                    let indent: String = line.chars().take_while(|c| c.is_whitespace()).collect();
+                    out_lines.push(format!("{indent}theme = \"{theme_slug}\""));
+                    found_theme_key = true;
+                    continue;
+                }
+            }
+            out_lines.push(line.to_owned());
+            if idx == start {
+                // Check if `[tui]` already has `theme = ...` later in the section
+                let has_later = lines[start + 1..tui_end].iter().any(|l| {
+                    l.split('#')
+                        .next()
+                        .unwrap_or(l)
+                        .split_once('=')
+                        .is_some_and(|(k, _)| k.trim() == "theme")
+                });
+                if !has_later {
+                    out_lines.push(format!("theme = \"{theme_slug}\""));
+                    found_theme_key = true;
+                }
+            }
+        }
+    } else {
+        // Check if top-level `tui.theme = ...` exists before the first section header
+        let first_sec = lines
+            .iter()
+            .position(|l| is_toml_section_header(l).is_some())
+            .unwrap_or(lines.len());
+        let mut updated_dotted = false;
+        for (idx, &line) in lines.iter().enumerate() {
+            if idx < first_sec && !updated_dotted {
+                let code_part = line.split('#').next().unwrap_or(line);
+                if let Some((k, v)) = code_part.split_once('=')
+                    && k.trim() == "tui.theme"
+                {
+                    if let Some(old) = parse_toml_string_value(v)
+                        && old != theme_slug
+                    {
+                        prev_theme = Some(old);
+                    }
+                    let indent: String = line.chars().take_while(|c| c.is_whitespace()).collect();
+                    out_lines.push(format!("{indent}tui.theme = \"{theme_slug}\""));
+                    updated_dotted = true;
+                    continue;
+                }
+            }
+            out_lines.push(line.to_owned());
+        }
+        if !updated_dotted {
+            if !out_lines.last().is_none_or(|l| l.trim().is_empty()) {
+                out_lines.push(String::new());
+            }
+            out_lines.push("[tui]".to_owned());
+            out_lines.push(format!("theme = \"{theme_slug}\""));
+        }
+    }
+
+    let mut result = out_lines.join("\n");
+    if !result.ends_with('\n') {
+        result.push('\n');
+    }
+    (result, prev_theme)
+}
+
+/// Strip `theme = "alis"` from `config.toml` content, restoring `restore_theme` if provided.
+pub fn strip_codex_config_toml(
+    existing: &str,
+    theme_slug: &str,
+    restore_theme: Option<&str>,
+) -> String {
+    if existing.trim().is_empty() {
+        return existing.to_owned();
+    }
+    let lines: Vec<&str> = existing.lines().collect();
+    let mut out_lines: Vec<String> = Vec::with_capacity(lines.len());
+    let mut in_tui = false;
+
+    for &line in &lines {
+        if let Some(sec) = is_toml_section_header(line) {
+            in_tui = sec == "tui";
+            out_lines.push(line.to_owned());
+            continue;
+        }
+        let code_part = line.split('#').next().unwrap_or(line);
+        if let Some((k, v)) = code_part.split_once('=') {
+            let key = k.trim();
+            if (in_tui && key == "theme") || (!in_tui && key == "tui.theme") {
+                if parse_toml_string_value(v).as_deref() == Some(theme_slug) {
+                    if let Some(prev) = restore_theme.filter(|s| !s.is_empty()) {
+                        let indent: String =
+                            line.chars().take_while(|c| c.is_whitespace()).collect();
+                        out_lines.push(format!("{indent}{key} = \"{prev}\""));
+                    }
+                    continue;
+                }
+            }
+        }
+        out_lines.push(line.to_owned());
+    }
+
+    let mut result = out_lines.join("\n");
+    if !result.is_empty() && !result.ends_with('\n') {
+        result.push('\n');
+    }
+    result
+}
+
+pub fn run_codex_theme(raw_args: &[String]) -> Result<()> {
+    let home = user_home();
+    let state_gen = xdg_state_dir().join("quickshell/user/generated");
+    let mut colors_path = state_gen.join("palette.json");
+    let mut terminal_path = state_gen.join("terminal.json");
+    let mut scss_path = state_gen.join("material_colors.scss");
+    let mut strip_mode = false;
+
+    let mut i = 0;
+    while i < raw_args.len() {
+        match raw_args[i].as_str() {
+            "--colors" if i + 1 < raw_args.len() => {
+                colors_path = PathBuf::from(&raw_args[i + 1]);
+                i += 2;
+            }
+            "--terminal-json" if i + 1 < raw_args.len() => {
+                terminal_path = PathBuf::from(&raw_args[i + 1]);
+                i += 2;
+            }
+            "--scss" if i + 1 < raw_args.len() => {
+                scss_path = PathBuf::from(&raw_args[i + 1]);
+                i += 2;
+            }
+            "--strip" => {
+                strip_mode = true;
+                i += 1;
+            }
+            _ => i += 1,
+        }
+    }
+
+    let codex_dir = codex_home_dir();
+    let theme_path = codex_dir.join("themes").join(CODEX_THEME_FILE);
+    let config_path = codex_dir.join("config.toml");
+    let prev_state_path = state_gen.join(CODEX_PREV_THEME_STATE);
+
+    if strip_mode {
+        if theme_path.is_file() {
+            let _ = fs::remove_file(&theme_path);
+        }
+        let restore_theme = fs::read_to_string(&prev_state_path)
+            .ok()
+            .map(|s| s.trim().to_owned())
+            .filter(|s| !s.is_empty());
+        if prev_state_path.is_file() {
+            let _ = fs::remove_file(&prev_state_path);
+        }
+        if config_path.is_file()
+            && let Ok(existing) = fs::read_to_string(&config_path)
+        {
+            let updated =
+                strip_codex_config_toml(&existing, CODEX_THEME_SLUG, restore_theme.as_deref());
+            let _ = write_if_changed_bytes(&config_path, updated.as_bytes());
+        }
+        println!("[codex] Stripped Alis theme");
+        return Ok(());
+    }
+
+    if !colors_path.is_file() {
+        let fallback = home.join(".local/state/quickshell/user/generated/colors.json");
+        if fallback.is_file() {
+            colors_path = fallback;
+        }
+    }
+
+    let (colors, term_colors) = load_merged_theme_inputs(&colors_path, &terminal_path, &scss_path)?;
+    let tmtheme_xml = build_codex_tmtheme(&colors, &term_colors);
+    write_if_changed_bytes(&theme_path, tmtheme_xml.as_bytes())?;
+
+    let existing_toml = fs::read_to_string(&config_path).unwrap_or_default();
+    let (updated_toml, prev_theme) = update_codex_config_toml(&existing_toml, CODEX_THEME_SLUG);
+    if let Some(prev) = prev_theme {
+        let _ = write_if_changed_bytes(&prev_state_path, format!("{prev}\n").as_bytes());
+    }
+    write_if_changed_bytes(&config_path, updated_toml.as_bytes())?;
+    println!("[codex] Theme generated: {}", theme_path.display());
+    Ok(())
+}
+
+// ── Claude Code & Claude Desktop Theme Generator ───────────────────────
+
+const CLAUDE_THEME_SLUG: &str = "alis";
+const CLAUDE_THEME_REF: &str = "custom:alis";
+const CLAUDE_THEME_FILE: &str = "alis.json";
+const CLAUDE_PREV_THEME_STATE: &str = "claude_prev_theme.txt";
+const CLAUDE_DESKTOP_PREV_THEME_STATE: &str = "claude_desktop_prev_theme.txt";
+
+fn claude_config_dir() -> PathBuf {
+    if let Some(dir) = std::env::var_os("CLAUDE_CONFIG_DIR")
+        && !dir.is_empty()
+    {
+        return PathBuf::from(dir);
+    }
+    user_home().join(".claude")
+}
+
+fn claude_desktop_config_dir() -> PathBuf {
+    if let Some(dir) = std::env::var_os("CLAUDE_DESKTOP_CONFIG_DIR")
+        && !dir.is_empty()
+    {
+        return PathBuf::from(dir);
+    }
+    xdg_config_dir().join("Claude")
+}
+
+pub fn build_claude_theme_json(
+    colors: &HashMap<String, String>,
+    term_colors: &HashMap<String, String>,
+) -> (Value, bool) {
+    let bg = pick(colors, "background", pick(colors, "surface", "#0f1417"));
+    let dark = hex_to_hsl_deg(bg).l < 0.5;
+    let base = if dark { "dark" } else { "light" };
+
+    let primary = pick(colors, "primary", "#7aa2f7");
+    let secondary = pick(colors, "secondary", "#bb9af7");
+    let tertiary = pick(colors, "tertiary", "#9ece6a");
+    let on_surface = pick(colors, "on_surface", pick(colors, "onSurface", "#dfe3e7"));
+    let on_surface_variant = pick(
+        colors,
+        "on_surface_variant",
+        pick(colors, "onSurfaceVariant", "#c1c7ce"),
+    );
+    let inverse_on_surface = pick(
+        colors,
+        "inverse_on_surface",
+        pick(colors, "inverseOnSurface", "#1a1c1e"),
+    );
+    let surface_container = pick(
+        colors,
+        "surface_container",
+        pick(colors, "surfaceContainer", "#1c2024"),
+    );
+    let surface_container_low = pick(
+        colors,
+        "surface_container_low",
+        pick(colors, "surfaceContainerLow", "#181c1f"),
+    );
+    let surface_container_high = pick(
+        colors,
+        "surface_container_high",
+        pick(colors, "surfaceContainerHigh", "#262b2e"),
+    );
+    let surface_container_highest = pick(
+        colors,
+        "surface_container_highest",
+        pick(colors, "surfaceContainerHighest", "#313539"),
+    );
+    let outline = pick(colors, "outline", "#8b9298");
+    let outline_variant = pick(
+        colors,
+        "outline_variant",
+        pick(colors, "outlineVariant", "#41484d"),
+    );
+    let error_col = with_contrast(
+        &saturate_color(pick(colors, "error", "#ffb4ab"), 1.3, 0.50),
+        bg,
+        4.5,
+        dark,
+    );
+
+    let col_keyword = syntax_color(term_colors, primary, bg, 5);
+    let col_string = syntax_color(term_colors, primary, bg, 2);
+    let col_function = syntax_color(term_colors, primary, bg, 4);
+    let col_type = syntax_color(term_colors, primary, bg, 6);
+    let col_constant = syntax_color(term_colors, primary, bg, 3);
+    let col_property = with_contrast(&blend(&col_function, &col_type, 0.5), bg, 4.5, dark);
+
+    let primary_shimmer = blend(primary, on_surface, 0.35);
+    let warning_shimmer = blend(&col_type, on_surface, 0.30);
+    let fast_shimmer = blend(&col_constant, on_surface, 0.35);
+    let diff_added = blend(surface_container, &col_string, if dark { 0.22 } else { 0.18 });
+    let diff_removed = blend(surface_container, &error_col, if dark { 0.22 } else { 0.18 });
+    let diff_added_dim = blend(surface_container, &col_string, 0.12);
+    let diff_removed_dim = blend(surface_container, &error_col, 0.12);
+    let diff_added_word = blend(surface_container, &col_string, if dark { 0.42 } else { 0.32 });
+    let diff_removed_word = blend(surface_container, &error_col, if dark { 0.42 } else { 0.32 });
+    let selection_bg = blend(bg, primary, if dark { 0.30 } else { 0.22 });
+
+    let payload = json!({
+        "name": "Alis Material",
+        "base": base,
+        "overrides": {
+            "background": bg,
+            "text": on_surface,
+            "inverseText": inverse_on_surface,
+            "claude": primary,
+            "claudeShimmer": primary_shimmer,
+            "claudeBlue_FOR_SYSTEM_SPINNER": primary,
+            "claudeBlueShimmer_FOR_SYSTEM_SPINNER": primary_shimmer,
+            "autoAccept": tertiary,
+            "skill": secondary,
+            "bashBorder": primary,
+            "permission": primary,
+            "permissionShimmer": primary_shimmer,
+            "planMode": secondary,
+            "ide": tertiary,
+            "promptBorder": outline_variant,
+            "promptBorderShimmer": outline,
+            "inactive": outline,
+            "inactiveShimmer": on_surface_variant,
+            "subtle": outline_variant,
+            "suggestion": primary,
+            "remember": tertiary,
+            "success": col_string,
+            "error": error_col,
+            "warning": col_type,
+            "warningShimmer": warning_shimmer,
+            "merged": col_keyword,
+            "diffAdded": diff_added,
+            "diffRemoved": diff_removed,
+            "diffAddedDimmed": diff_added_dim,
+            "diffRemovedDimmed": diff_removed_dim,
+            "diffAddedWord": diff_added_word,
+            "diffRemovedWord": diff_removed_word,
+            "userMessageBackground": surface_container_high,
+            "userMessageBackgroundHover": surface_container_highest,
+            "composerSidebarBackground": surface_container_low,
+            "selectionBg": selection_bg,
+            "bashMessageBackgroundColor": surface_container,
+            "memoryBackgroundColor": surface_container_high,
+            "rate_limit_fill": primary,
+            "rate_limit_empty": surface_container_highest,
+            "fastMode": col_constant,
+            "fastModeShimmer": fast_shimmer,
+            "effortUltra": col_keyword,
+            "briefLabelYou": col_function,
+            "briefLabelClaude": primary,
+            "professionalBlue": col_function,
+            "chromeYellow": col_type,
+            "clawd_body": primary,
+            "clawd_background": bg,
+            "red_FOR_SUBAGENTS_ONLY": error_col,
+            "blue_FOR_SUBAGENTS_ONLY": col_function,
+            "green_FOR_SUBAGENTS_ONLY": col_string,
+            "yellow_FOR_SUBAGENTS_ONLY": col_type,
+            "purple_FOR_SUBAGENTS_ONLY": col_keyword,
+            "orange_FOR_SUBAGENTS_ONLY": col_constant,
+            "pink_FOR_SUBAGENTS_ONLY": secondary,
+            "cyan_FOR_SUBAGENTS_ONLY": col_property,
+            "rainbow_red": error_col,
+            "rainbow_orange": col_constant,
+            "rainbow_yellow": col_type,
+            "rainbow_green": col_string,
+            "rainbow_blue": col_function,
+            "rainbow_indigo": primary,
+            "rainbow_violet": col_keyword,
+            "rainbow_red_shimmer": blend(&error_col, on_surface, 0.35),
+            "rainbow_orange_shimmer": blend(&col_constant, on_surface, 0.35),
+            "rainbow_yellow_shimmer": blend(&col_type, on_surface, 0.35),
+            "rainbow_green_shimmer": blend(&col_string, on_surface, 0.35),
+            "rainbow_blue_shimmer": blend(&col_function, on_surface, 0.35),
+            "rainbow_indigo_shimmer": primary_shimmer,
+            "rainbow_violet_shimmer": blend(&col_keyword, on_surface, 0.35)
+        }
+    });
+
+    (payload, dark)
+}
+
+fn command_exists_in_path(cmd: &str) -> bool {
+    if let Some(path_var) = std::env::var_os("PATH") {
+        for dir in std::env::split_paths(&path_var) {
+            let full = dir.join(cmd);
+            if full.is_file() {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn write_claude_json(path: &Path, value: &Value) -> Result<()> {
+    let mut bytes = serde_json::to_vec_pretty(value)?;
+    bytes.push(b'\n');
+    if fs::read(path).ok().as_deref() == Some(bytes.as_slice()) {
+        return Ok(());
+    }
+    fs::create_dir_all(path.parent().ok_or_else(|| anyhow!("Missing settings parent"))?)?;
+    let temp = path.with_extension(format!("alis-{}.tmp", std::process::id()));
+    fs::write(&temp, bytes)?;
+    if let Ok(metadata) = fs::metadata(path) {
+        fs::set_permissions(&temp, metadata.permissions())?;
+    }
+    fs::rename(&temp, path)?;
+    Ok(())
+}
+
+fn manage_claude_setting(path: &Path, legacy: &Path, key: &str, desired: Option<&str>) -> Result<()> {
+    let journal = legacy.with_extension("json");
+    let mut settings = load_vscode_settings(path)?;
+    let current = json!({"present": settings.contains_key(key), "value": settings.get(key)});
+    let state: Option<Value> = if journal.is_file() {
+        Some(serde_json::from_slice(&fs::read(&journal)?)?)
+    } else { None };
+    if let Some(s) = &state {
+        if s["version"] != 1 || s["path"] != path.to_string_lossy().as_ref() || s["key"] != key {
+            return Err(anyhow!("Unsupported theme recovery state: {}", journal.display()));
+        }
+    }
+    if let Some(value) = desired {
+        let mut previous = match &state {
+            Some(s) if current == s["applied"] => s["previous"].clone(),
+            _ => current.clone(),
+        };
+        if state.is_none() && key == "theme" && current["value"] == CLAUDE_THEME_REF && legacy.is_file() {
+            previous = json!({"present": true, "value": fs::read_to_string(legacy)?.trim()});
+        }
+        let applied = json!({"present": true, "value": value});
+        write_claude_json(&journal, &json!({"version":1,"path":path,"key":key,"previous":previous,"applied":applied}))?;
+        settings.insert(key.into(), Value::String(value.into()));
+    } else if let Some(s) = &state {
+        if current != s["applied"] {
+            fs::remove_file(&journal)?;
+            return Ok(());
+        }
+        if s["previous"]["present"] == true {
+            settings.insert(key.into(), s["previous"]["value"].clone());
+        } else {
+            settings.remove(key);
+        }
+    } else if key == "theme" && current["value"] == CLAUDE_THEME_REF {
+        let old = if legacy.is_file() { fs::read_to_string(legacy)?.trim().to_owned() } else { String::new() };
+        if old.is_empty() { settings.remove(key); } else { settings.insert(key.into(), Value::String(old)); }
+    } else {
+        // Legacy Desktop metadata has no last-applied value; preserve unknown ownership.
+        return Ok(());
+    }
+    write_claude_json(path, &Value::Object(settings))?;
+    if desired.is_none() {
+        if journal.is_file() { fs::remove_file(&journal)?; }
+        if key == "theme" && legacy.is_file() { fs::remove_file(legacy)?; }
+    }
+    Ok(())
+}
+
+pub fn run_claude_theme(raw_args: &[String]) -> Result<()> {
+    let home = user_home();
+    let state_gen = xdg_state_dir().join("quickshell/user/generated");
+    let mut colors_path = state_gen.join("palette.json");
+    let mut terminal_path = state_gen.join("terminal.json");
+    let mut scss_path = state_gen.join("material_colors.scss");
+    let mut strip_mode = false;
+
+    let mut i = 0;
+    while i < raw_args.len() {
+        match raw_args[i].as_str() {
+            "--colors" if i + 1 < raw_args.len() => {
+                colors_path = PathBuf::from(&raw_args[i + 1]);
+                i += 2;
+            }
+            "--terminal-json" if i + 1 < raw_args.len() => {
+                terminal_path = PathBuf::from(&raw_args[i + 1]);
+                i += 2;
+            }
+            "--scss" if i + 1 < raw_args.len() => {
+                scss_path = PathBuf::from(&raw_args[i + 1]);
+                i += 2;
+            }
+            "--strip" => {
+                strip_mode = true;
+                i += 1;
+            }
+            _ => i += 1,
+        }
+    }
+
+    let claude_dir = claude_config_dir();
+    let theme_path = claude_dir.join("themes").join(CLAUDE_THEME_FILE);
+    let settings_path = claude_dir.join("settings.json");
+    let prev_state_path = state_gen.join(CLAUDE_PREV_THEME_STATE);
+
+    let desktop_dir = claude_desktop_config_dir();
+    let desktop_config_path = desktop_dir.join("config.json");
+    let prev_desktop_state_path = state_gen.join(CLAUDE_DESKTOP_PREV_THEME_STATE);
+
+    if strip_mode {
+        manage_claude_setting(&settings_path, &prev_state_path, "theme", None)?;
+        manage_claude_setting(&desktop_config_path, &prev_desktop_state_path, "userThemeMode", None)?;
+        if theme_path.is_file() { fs::remove_file(&theme_path)?; }
+        println!("[claude] Stripped Alis theme ({CLAUDE_THEME_SLUG})");
+        return Ok(());
+    }
+
+    if !colors_path.is_file() {
+        let fallback = home.join(".local/state/quickshell/user/generated/colors.json");
+        if fallback.is_file() {
+            colors_path = fallback;
+        }
+    }
+
+    let (colors, term_colors) = load_merged_theme_inputs(&colors_path, &terminal_path, &scss_path)?;
+    let (payload, is_dark) = build_claude_theme_json(&colors, &term_colors);
+    let mut theme_bytes = serde_json::to_vec_pretty(&payload)?;
+    theme_bytes.push(b'\n');
+
+    let claude_cli_targetable = claude_dir.is_dir()
+        || settings_path.is_file()
+        || command_exists_in_path("claude")
+        || (!desktop_dir.is_dir() && !desktop_config_path.is_file());
+
+    if claude_cli_targetable {
+        manage_claude_setting(&settings_path, &prev_state_path, "theme", Some(CLAUDE_THEME_REF))?;
+        write_if_changed_bytes(&theme_path, &theme_bytes)?;
+    }
+    if desktop_dir.is_dir() || desktop_config_path.is_file() {
+        manage_claude_setting(&desktop_config_path, &prev_desktop_state_path, "userThemeMode", Some(if is_dark { "dark" } else { "light" }))?;
+    }
+
+    println!("[claude] Theme generated: {}", theme_path.display());
     Ok(())
 }
 
@@ -2239,5 +3104,74 @@ mod tests {
         let parsed: Value = serde_json::from_slice(&stripped).expect("valid JSON after strip");
         assert_eq!(parsed["workbench.colorTheme"], "Alis Material");
         assert_eq!(parsed["arr"], json!([1, 2]));
+    }
+
+    #[test]
+    fn codex_config_toml_preserves_existing_content_and_restores_on_strip() {
+        let initial = r#"# User Codex config
+model = "gpt-5"
+
+[tui]
+# Keep user comment
+notifications = true
+theme = "dracula"
+
+[mcp_servers.demo]
+command = "demo"
+"#;
+        let (updated, prev) = update_codex_config_toml(initial, "alis");
+        assert_eq!(prev.as_deref(), Some("dracula"));
+        assert!(updated.contains("model = \"gpt-5\""));
+        assert!(updated.contains("# Keep user comment"));
+        assert!(updated.contains("notifications = true"));
+        assert!(updated.contains("theme = \"alis\""));
+        assert!(updated.contains("[mcp_servers.demo]"));
+
+        let restored = strip_codex_config_toml(&updated, "alis", prev.as_deref());
+        assert_eq!(restored, initial);
+    }
+
+    #[test]
+    fn codex_config_toml_inserts_tui_section_when_missing() {
+        let initial = "model = \"o3\"\n";
+        let (updated, prev) = update_codex_config_toml(initial, "alis");
+        assert!(prev.is_none());
+        assert!(updated.contains("model = \"o3\""));
+        assert!(updated.contains("[tui]\ntheme = \"alis\"\n"));
+
+        let stripped = strip_codex_config_toml(&updated, "alis", None);
+        assert!(!stripped.contains("theme = \"alis\""));
+        assert!(stripped.contains("model = \"o3\""));
+    }
+
+    #[test]
+    fn claude_and_codex_theme_builders_produce_valid_dark_and_light_outputs() {
+        let mut dark_colors = HashMap::new();
+        dark_colors.insert("background".into(), "#101418".into());
+        dark_colors.insert("surface".into(), "#101418".into());
+        dark_colors.insert("on_surface".into(), "#e0e3e8".into());
+        dark_colors.insert("primary".into(), "#8ab4f8".into());
+
+        let term_colors = HashMap::new();
+        let (claude_dark, is_dark) = build_claude_theme_json(&dark_colors, &term_colors);
+        assert!(is_dark);
+        assert_eq!(claude_dark["base"], "dark");
+        assert_eq!(claude_dark["name"], "Alis Material");
+        assert_eq!(claude_dark["overrides"]["background"], "#101418");
+
+        let tmtheme = build_codex_tmtheme(&dark_colors, &term_colors);
+        assert!(tmtheme.contains("<plist version=\"1.0\">"));
+        assert!(tmtheme.contains("<string>Alis Material</string>"));
+        assert!(tmtheme.contains("<string>#101418</string>"));
+
+        let mut light_colors = HashMap::new();
+        light_colors.insert("background".into(), "#f8f9fa".into());
+        light_colors.insert("surface".into(), "#f8f9fa".into());
+        light_colors.insert("on_surface".into(), "#1b1c1e".into());
+        light_colors.insert("primary".into(), "#1a73e8".into());
+
+        let (claude_light, is_dark_light) = build_claude_theme_json(&light_colors, &term_colors);
+        assert!(!is_dark_light);
+        assert_eq!(claude_light["base"], "light");
     }
 }

@@ -42,7 +42,7 @@ ShellRoot {
  }
  FloatingWindow {
   visible:true;implicitWidth:420;implicitHeight:450;color:"#18282b"
-  ObsidianMonthCalendar {
+  NexusMonthCalendar {
    id:calendar;x:16;y:16;width:implicitWidth;height:implicitHeight
    viewingDate:new Date(2026,9,1);today:new Date(2026,9,4)
    calendarCells:root.cells

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import qs.modules.bootGreeting
 import qs.modules.cheatsheet
-import qs.modules.lock
 import qs.modules.onScreenKeyboard
 import qs.modules.recordingOsd
 import qs.modules.tilingOverlay
@@ -115,7 +114,6 @@ Item {
     OnDemandPanelLoader { identifier: "wActionCenter"; open: GlobalStates.waffleActionCenterOpen; closeGraceMs: Looks.transition.enabled ? Looks.transition.duration.medium + 40 : 40; component: WaffleActionCenter {} }
     OnDemandPanelLoader { identifier: "wNotificationCenter"; open: GlobalStates.waffleNotificationCenterOpen; closeGraceMs: root.wafflePanelCloseGraceMs; component: WaffleNotificationCenter {} }
     OnDemandPanelLoader { identifier: "wWidgets"; open: GlobalStates.waffleWidgetsOpen && (Config.options?.waffles?.modules?.widgets ?? true); closeGraceMs: root.wafflePanelCloseGraceMs; component: WaffleWidgets {} }
-    DeferredPanelLoader { identifier: "wLock"; component: Lock {} }
     DeferredPanelLoader { identifier: "wPolkit"; component: Polkit {} }
     OnDemandPanelLoader { identifier: "wSessionScreen"; open: GlobalStates.sessionOpen; component: SessionScreen {} }
     OnDemandPanelLoader { identifier: "wTaskView"; open: GlobalStates.waffleTaskViewOpen; component: WaffleTaskViewModule.WaffleTaskView {} }

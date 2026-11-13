@@ -266,6 +266,8 @@ Button {
 
     contentItem: StyledText {
         text: root.buttonText
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
         color: Appearance.colors.colOnLayer0
     }
 }

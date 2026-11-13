@@ -74,6 +74,8 @@ Singleton {
         if (!root.available) return
         root.active = true
         if (root.nativeInstalled) {
+            if (!nativeUnbypassProc.running)
+                nativeUnbypassProc.running = true
             // AUDIO-I01: owner A/B confirmed stable quantum and no online-clip pops.
             // Apply only when Alis starts a native EasyEffects process.
             // Set ALIS_AUDIO_I01_LOCK_QUANTUM=0 before Quickshell starts to opt out.
@@ -187,10 +189,47 @@ Singleton {
     Process {
         id: nativeStatusProc
         running: false
-        command: ["/usr/bin/env", "pgrep", "-x", "easyeffects"]
+        command: [
+            "/usr/bin/python3",
+            "-c",
+            "import os, socket, subprocess, sys\n"
+            + "if subprocess.run(['pgrep', '-x', 'easyeffects'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:\n"
+            + "    sys.exit(1)\n"
+            + "sock_path = os.path.join(os.environ.get('XDG_RUNTIME_DIR', ''), 'EasyEffectsServer')\n"
+            + "if sock_path != 'EasyEffectsServer' and os.path.exists(sock_path):\n"
+            + "    try:\n"
+            + "        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:\n"
+            + "            s.settimeout(0.5)\n"
+            + "            s.connect(sock_path)\n"
+            + "            s.sendall(b'get_global_bypass\\n')\n"
+            + "            if s.recv(64).decode('utf-8', 'ignore').strip() == '1':\n"
+            + "                sys.exit(1)\n"
+            + "    except OSError:\n"
+            + "        pass\n"
+            + "sys.exit(0)\n"
+        ]
         onExited: (exitCode, _exitStatus) => {
             root.active = (exitCode === 0)
         }
+    }
+
+    Process {
+        id: nativeUnbypassProc
+        running: false
+        command: [
+            "/usr/bin/python3",
+            "-c",
+            "import os, socket\n"
+            + "sock_path = os.path.join(os.environ.get('XDG_RUNTIME_DIR', ''), 'EasyEffectsServer')\n"
+            + "if sock_path != 'EasyEffectsServer' and os.path.exists(sock_path):\n"
+            + "    try:\n"
+            + "        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:\n"
+            + "            s.settimeout(0.5)\n"
+            + "            s.connect(sock_path)\n"
+            + "            s.sendall(b'global_bypass:0\\n')\n"
+            + "    except OSError:\n"
+            + "        pass\n"
+        ]
     }
 
     Process {

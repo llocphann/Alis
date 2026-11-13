@@ -169,6 +169,7 @@ StyledPopup {
         // assign Connections objects to contentItem.
         Connections {
             target: ToplevelManager.toplevels
+            enabled: root.previewOpen
             function onValuesChanged(): void {
                 root._refreshPreviewToplevels()
             }
@@ -176,6 +177,7 @@ StyledPopup {
 
         Connections {
             target: CompositorService
+            enabled: root.previewOpen
             function onSortedToplevelsChanged(): void {
                 if (root.previewMode === "app")
                     root._refreshAppToplevels()
@@ -184,7 +186,7 @@ StyledPopup {
 
         Connections {
             target: NiriService
-            enabled: CompositorService.isNiri
+            enabled: root.previewOpen && CompositorService.isNiri
             function onWindowsChanged(): void {
                 root._refreshWorkspaceToplevels()
             }
@@ -195,7 +197,7 @@ StyledPopup {
 
         Connections {
             target: Hyprland.toplevels
-            enabled: CompositorService.isHyprland
+            enabled: root.previewOpen && CompositorService.isHyprland
             function onValuesChanged(): void {
                 root._refreshWorkspaceToplevels()
             }

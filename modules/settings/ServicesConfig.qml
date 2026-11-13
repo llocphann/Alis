@@ -17,7 +17,7 @@ ContentPage {
     function activateSettingsSearchSection(section: string): bool {
         const parts = String(section ?? "").toLowerCase().split(/[·›]/)
         const label = parts[parts.length - 1].trim()
-        if (label.includes("todo") || label.includes("to-do") || label.includes("obsidian")
+        if (label.includes("todo") || label.includes("to-do") || label.includes("nexus")
                 || label.includes("zettelkasten") || label.includes("quick note")
                 || label.includes("calendar") || label === "data") {
             if(label === "data")root.activeSection="data"

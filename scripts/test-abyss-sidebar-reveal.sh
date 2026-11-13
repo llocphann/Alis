@@ -2,6 +2,10 @@
 # Execute the real hover lease across handoff, explicit opens and teardown gates.
 set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "${ALIS_SILENT_WL_WRAPPED:-0}" != "1" ]]; then
+    export ALIS_SILENT_WL_WRAPPED=1
+    exec bash "$repo_root/scripts/lib/silent-wayland-run.sh" -- "$0" "$@"
+fi
 if ! command -v qs >/dev/null; then printf 'SKIP: sidebar reveal (Quickshell unavailable)\n'; exit 0; fi
 sidebar_test_root="$(mktemp -d)"
 trap 'rm -rf -- "$sidebar_test_root"' EXIT

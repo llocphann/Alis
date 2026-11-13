@@ -377,6 +377,58 @@ QtObject {
         return true
     }
 
+    function createCategory(label: string): bool {
+        const nextLabel = String(label ?? "").trim()
+        if (!nextLabel)
+            return false
+        const state = root.snapshot()
+        const duplicate = state.groups.some(g => String(g?.label ?? "").toLowerCase() === nextLabel.toLowerCase())
+        if (duplicate)
+            return false
+        state.groups.push({ label: nextLabel, pages: [] })
+        root.save(state)
+        return true
+    }
+
+    function deleteCategory(categoryIndex: int): bool {
+        const state = root.snapshot()
+        if (categoryIndex < 0 || categoryIndex >= state.groups.length || state.groups.length <= 1)
+            return false
+        const removed = state.groups.splice(categoryIndex, 1)[0]
+        const orphanPages = Array.isArray(removed?.pages) ? removed.pages : []
+        if (orphanPages.length > 0) {
+            const targetIdx = Math.max(0, Math.min(categoryIndex - 1, state.groups.length - 1))
+            for (const p of orphanPages) {
+                if (!state.groups[targetIdx].pages.includes(p))
+                    state.groups[targetIdx].pages.push(p)
+            }
+        }
+        root.save(state)
+        return true
+    }
+
+    function movePageToCategory(pageIdx: int, targetCategoryIndex: int, targetPosition: int): bool {
+        const state = root.snapshot()
+        if (targetCategoryIndex < 0 || targetCategoryIndex >= state.groups.length)
+            return false
+        const source = root._locationInSnapshot(state, pageIdx)
+        let moved = -1
+        if (source) {
+            moved = root.removePage(state, source.categoryIndex, source.pageIndex, pageIdx)
+        } else {
+            moved = root.removePage(state, -1, -1, pageIdx)
+        }
+        if (moved < 0)
+            return false
+        const destPages = state.groups[targetCategoryIndex].pages
+        const insertAt = targetPosition >= 0 && targetPosition <= destPages.length
+            ? targetPosition
+            : destPages.length
+        destPages.splice(insertAt, 0, moved)
+        root.save(state)
+        return true
+    }
+
     function reset(): void {
         Config.setNestedValue("settingsUi.categories", "")
     }

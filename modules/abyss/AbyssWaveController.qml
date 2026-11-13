@@ -120,24 +120,40 @@ Item {
         id: samples
         width: root.sampleCount; height: 1
         renderTarget: Canvas.Image
+        property var _imageData: null
+        property int _imageDataWidth: 0
         onAvailableChanged: if (available) requestPaint()
         onPainted: textureSource.scheduleUpdate()
         onPaint: {
-            if (!root.simulation) return
+            if (!root.simulation || width <= 0) return
             root.crestPeak = Wave.projectCrests(root.simulation,Appearance.effectsEnabled && AbyssStyle.quality !== "performance")
             const ctx = getContext("2d")
-            ctx.fillStyle = "#000000"
-            ctx.fillRect(0, 0, width, height)
-            if (root.crestPeak <= 0) return
+            if (!samples._imageData || samples._imageDataWidth !== width) {
+                samples._imageData = ctx.createImageData(width, 1)
+                samples._imageDataWidth = width
+            }
+            const buf = samples._imageData.data
+            if (root.crestPeak <= 0) {
+                for (let i = 0, p = 0; i < width; i++, p += 4) {
+                    buf[p] = 0
+                    buf[p + 1] = 0
+                    buf[p + 2] = 0
+                    buf[p + 3] = 255
+                }
+                ctx.putImageData(samples._imageData, 0, 0)
+                return
+            }
             const crests = root.simulation.crests
             const whitewater = root.simulation.whitewater
-            for (let i = 0; i < width; i++) {
+            for (let i = 0, p = 0; i < width; i++, p += 4) {
                 const value = Math.round(crests[i] / 256 * 65535)
                 const foam = Math.round(whitewater[i] * 255)
-                if (value === 0 && foam === 0) continue
-                ctx.fillStyle = "rgb(" + (value >> 8) + "," + (value & 255) + "," + foam + ")"
-                ctx.fillRect(i, 0, 1, 1)
+                buf[p] = (value >> 8) & 255
+                buf[p + 1] = value & 255
+                buf[p + 2] = foam & 255
+                buf[p + 3] = 255
             }
+            ctx.putImageData(samples._imageData, 0, 0)
         }
     }
     ShaderEffectSource {

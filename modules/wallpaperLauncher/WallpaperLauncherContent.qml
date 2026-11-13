@@ -19,6 +19,7 @@ FocusScope {
     property bool embedded:false
     property string browseFolder:Config.options?.wallpapers?.directory ?? ""
     property string selectedColor:""
+    property bool favouritesOnly:false
     readonly property var colorPalette:[
         {id:"",label:"All",swatch:"transparent"},
         {id:"red",label:"Red",swatch:"#ef4444"},
@@ -80,7 +81,7 @@ FocusScope {
         if(!["static","animated"].includes(nextMode))return
         GlobalStates.wallpaperLauncherMode=nextMode
         GlobalStates.wallpaperLauncherSearchText=""
-        root.focusPrimarySurface()
+        if(typeof root!=="undefined")root.focusPrimarySurface()
         Qt.callLater(carousel.syncCurrentIndexAndPreview)
     }
     function focusPrimarySurface():void {
@@ -117,7 +118,7 @@ FocusScope {
     onBrowseFolderChanged:if(GlobalStates.wallpaperLauncherOpen)refreshLibrary(true)
     onVisibleChanged:if(visible)Qt.callLater(root.focusPrimarySurface)
     onEnabledChanged:if(enabled)Qt.callLater(root.focusPrimarySurface)
-    Component.onCompleted:{if(GlobalStates.wallpaperLauncherOpen)refreshLibrary(true);Qt.callLater(()=>{root.focusPrimarySurface();carousel.syncCurrentIndexAndPreview()})}
+    Component.onCompleted:{if(GlobalStates.wallpaperLauncherOpen){refreshLibrary(true);Qt.callLater(()=>{root.focusPrimarySurface();carousel.syncCurrentIndexAndPreview()})}}
     Component.onDestruction:GlobalStates.setSettingsNativeDialogVisible("wallpaperLauncherFolder",false)
     Connections {
         target:GlobalStates
@@ -209,7 +210,7 @@ FocusScope {
                 anchors.centerIn:parent;anchors.verticalCenterOffset:12;width:parent.width;height:implicitHeight
                 cardWidth:Math.min(288,Math.max(150,parent.width/4.2))
                 maxVisibleItems:Math.max(1,Math.min(5,Math.floor(parent.width/(cardWidth*.8))))
-                entries:root.entries;fallbackEntries:(Config.options?.background?.enableAnimation ?? true) ? (root.mode==="animated" ? library.staticEntries : library.animatedEntries) : [];searchText:search.text;selectedColor:root.selectedColor;colorTagsByPath:library.colorTagsByPath;currentWallpaperPath:root.currentWallpaperPath;monitorName:root.selectionMonitorName
+                entries:root.entries;fallbackEntries:(Config.options?.background?.enableAnimation ?? true) ? (root.mode==="animated" ? library.staticEntries : library.animatedEntries) : [];searchText:search.text;selectedColor:root.selectedColor;favouritesOnly:root.favouritesOnly;colorTagsByPath:library.colorTagsByPath;currentWallpaperPath:root.currentWallpaperPath;monitorName:root.selectionMonitorName
                 onApplyRequested:path=>root.applyPath(path)
             }
             LoadingText {anchors.centerIn:parent;visible:carousel.count===0 && root.loading}
@@ -239,6 +240,7 @@ FocusScope {
                         }
                     }
                 }
+                AbyssButton {objectName:"wallpaperFavouritesFilter";outlined:root.favouritesOnly;glyph:"favorite";description:root.favouritesOnly ? "Show all wallpapers" : "Show favourite wallpapers";onClicked:{root.favouritesOnly=!root.favouritesOnly;root.focusPrimarySurface()}}
                 AbyssButton {objectName:"wallpaperMode";outlined:false;glyph:root.mode==="static" ? "image" : "movie";description:root.mode==="static" ? "Show animated wallpapers" : "Show images";onClicked:root.setMode(root.mode==="static" ? "animated" : "static")}
                 AbyssButton {objectName:"wallpaperFolder";outlined:false;glyph:"folder_open";description:root.browseFolder.length > 0 ? FileUtils.folderNameForPath(root.browseFolder) : "Choose wallpaper folder";onClicked:folderPicker.open()}
                 AbyssButton {objectName:"wallpaperRefresh";outlined:false;glyph:"refresh";description:"Refresh wallpapers";enabled:!root.loading;onClicked:root.refreshLibrary(true)}
@@ -248,40 +250,48 @@ FocusScope {
 
     }
     Keys.onPressed:event=>{
+        {
         const ctrl = (event.modifiers & Qt.ControlModifier) !== 0
         const alt = (event.modifiers & Qt.AltModifier) !== 0
         const keyText = String(event.text ?? "").toLowerCase()
         if (event.key === Qt.Key_Escape) {
             if (search.activeFocus && search.text.length > 0) {
                 search.text = ""
-                root.focusPrimarySurface()
+                if (typeof root !== "undefined") root.focusPrimarySurface()
             } else {
-                root.focusPrimarySurface()
+                if (typeof root !== "undefined") root.focusPrimarySurface()
                 GlobalStates.wallpaperLauncherOpen = false
             }
             event.accepted = true
-        } else if ((ctrl && (event.key === Qt.Key_F || keyText === "f"))
-                || (!search.activeFocus && !ctrl && !alt && (event.key === Qt.Key_Slash || event.text === "/"))) {
+        } else if ((ctrl && ((Qt.Key_F !== undefined && event.key === Qt.Key_F) || keyText === "f"))
+                || (!search.activeFocus && !ctrl && !alt && ((Qt.Key_Slash !== undefined && event.key === Qt.Key_Slash) || event.text === "/"))) {
             search.forceActiveFocus()
+            event.accepted = true
+        } else if (ctrl && ((Qt.Key_D !== undefined && event.key === Qt.Key_D) || keyText === "d")) {
+            if (typeof root !== "undefined" && root.selectedPath)
+                Wallpapers.toggleFavourite(root.selectedPath)
             event.accepted = true
         } else if (!search.activeFocus && !ctrl && !alt
                 && (event.key === Qt.Key_Left || event.key === Qt.Key_Up
-                    || event.key === Qt.Key_H || event.key === Qt.Key_K
-                    || keyText === "h" || keyText === "k")) {
-            root.moveSelection(-1)
+                    || (Qt.Key_H !== undefined && (event.key === Qt.Key_H || event.key === Qt.Key_K)))) {
+            moveSelection(-1)
             event.accepted = true
         } else if (!search.activeFocus && !ctrl && !alt
                 && (event.key === Qt.Key_Right || event.key === Qt.Key_Down
-                    || event.key === Qt.Key_L || event.key === Qt.Key_J
-                    || keyText === "l" || keyText === "j")) {
-            root.moveSelection(1)
+                    || (Qt.Key_L !== undefined && (event.key === Qt.Key_L || event.key === Qt.Key_J)))) {
+            moveSelection(1)
             event.accepted = true
         } else if (!search.activeFocus && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)) {
-            root.activateCurrent()
+            activateCurrent()
             event.accepted = true
         } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
-            root.setMode(root.mode === "static" ? "animated" : "static")
+            setMode(GlobalStates.wallpaperLauncherMode === "static" ? "animated" : "static")
             event.accepted = true
+        } else if (!search.activeFocus && !ctrl && !alt && event.text && event.text.length === 1 && event.text >= " ") {
+            search.forceActiveFocus()
+            search.text += event.text
+            event.accepted = true
+        }
         }
     }
 }

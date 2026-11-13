@@ -380,8 +380,8 @@ Scope {
         if (flick) {
             var posInContent = control.mapToItem(flick.contentItem, 0, 0);
             var target = posInContent.y - (flick.height / 2) + (control.height / 2);
-            flick.contentY = Math.max(0, Math.min(target,
-                Math.max(0, flick.contentHeight - flick.height)));
+            var maxScroll = flick.interactive ? Math.max(0, flick.contentHeight - flick.height) : 0;
+            flick.contentY = Math.max(0, Math.min(target, maxScroll));
         }
 
         root._pendingOptionId = -1;

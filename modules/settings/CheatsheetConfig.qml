@@ -43,6 +43,7 @@ ContentPage {
 
     readonly property var quickSystemActions: [
         { label: Translation.tr("App Launcher (Spotlight)"), icon: "apps", action: 'spawn "qs" "-c" "alis" "ipc" "call" "search" "toggle"' },
+        { label: Translation.tr("Alis Nexus"), icon: "hub", action: 'spawn "alis" "nexus" "toggle"' },
         { label: Translation.tr("Open Settings"), icon: "settings", action: 'spawn "qs" "-c" "alis" "ipc" "call" "settings" "open"' },
         { label: Translation.tr("Region Screenshot"), icon: "screenshot_region", action: 'spawn "qs" "-c" "alis" "ipc" "call" "region" "screenshot"' },
         { label: Translation.tr("Full Screen Screenshot"), icon: "photo_camera", action: "screenshot-screen" },
@@ -284,6 +285,7 @@ ContentPage {
     Rectangle {
         visible: root._statusVisible
         Layout.fillWidth: true
+        Layout.bottomMargin: visible ? SettingsMaterialPreset.pageSpacing : 0
         implicitHeight: statusBarRow.implicitHeight + 16
         radius: Appearance.rounding.small
         color: root._statusType === "error"
@@ -395,7 +397,7 @@ ContentPage {
                     colBackgroundHover: enabled ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer2Hover
                     onClicked: {
                         const combo = addKeyComboField.text.trim()
-                        const action = addActionBuilder.actionText.trim()
+                        const action = AppLauncher.normalizeNiriBindAction(addActionBuilder.actionText.trim())
                         if (combo.length > 0 && action.length > 0) {
                             NiriKeybinds.setBind(combo, action, addActionBuilder.optionsText.trim())
                             addKeyComboField.text = ""
@@ -453,6 +455,7 @@ ContentPage {
     GridLayout {
         visible: root.hasEnrichedData
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
         columns: width >= 620 ? 2 : 1
         uniformCellWidths: columns === 2
         columnSpacing: 14
@@ -468,6 +471,7 @@ ContentPage {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredWidth: 1
+                Layout.minimumWidth: 0
 
                 readonly property string catName: modelData?.name ?? ""
                 readonly property var bindIndices: modelData?.binds ?? []
@@ -513,6 +517,7 @@ ContentPage {
     GridLayout {
         visible: !root.hasEnrichedData
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
         columns: width >= 620 ? 2 : 1
         uniformCellWidths: columns === 2
         columnSpacing: 14
@@ -528,6 +533,7 @@ ContentPage {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredWidth: 1
+                Layout.minimumWidth: 0
                 expanded: true
 
                 readonly property var categoryKeybinds: modelData.children?.[0]?.keybinds ?? []
@@ -926,6 +932,7 @@ ContentPage {
                         buttonRadius: Appearance.rounding.small
                         readonly property string candidateAction: AppLauncher.niriSpawnActionForApp(modelData)
                         readonly property bool isSelected: rawActionInput.text.trim() === candidateAction
+                            || (builder.resolvedInfo?.kind === "app" && Boolean(modelData?.desktopId) && builder.resolvedInfo?.desktopId === modelData.desktopId)
 
                         colBackground: isSelected
                             ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.84)
@@ -1161,6 +1168,8 @@ ContentPage {
                 // Action description (shows App icon + App name when resolved)
                 RowLayout {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    clip: true
                     spacing: 6
 
                     ShortcutAppIcon {
@@ -1172,6 +1181,7 @@ ContentPage {
 
                     StyledText {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         text: {
                             const info = kbRow.resolvedAppInfo
                             const baseLabel = info
@@ -1184,12 +1194,17 @@ ContentPage {
                             ? Appearance.colors.colSubtext
                             : Appearance.colors.colOnLayer1
                         elide: Text.ElideRight
+                        maximumLineCount: 1
                     }
                 }
 
                 // Edit / delete icon buttons (enriched mode only, fade in on hover)
                 Row {
                     visible: kbRow.canEdit && kbRow.editState === "display"
+                    Layout.fillWidth: false
+                    Layout.minimumWidth: implicitWidth
+                    Layout.preferredWidth: implicitWidth
+                    Layout.maximumWidth: implicitWidth
                     spacing: 2
                     opacity: kbRowHover.hovered ? 1.0 : 0.0
 
@@ -1326,7 +1341,7 @@ ContentPage {
                                         buttonText: Translation.tr("Save")
                                         releaseAction: () => {
                                             const combo = editKeyField.text.trim()
-                                            const act = editActionBuilder.actionText.trim()
+                                            const act = AppLauncher.normalizeNiriBindAction(editActionBuilder.actionText.trim())
                                             if (combo.length > 0 && act.length > 0) {
                                                 NiriKeybinds.setBind(combo, act, editActionBuilder.optionsText.trim(), kbRow.keyCombo)
                                                 kbRow.editState = "display"

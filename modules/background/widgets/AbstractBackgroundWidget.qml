@@ -889,6 +889,11 @@ AbstractWidget {
                 id: snapZoneBtn
                 visible: !root.locked
                 width: placementStateRow.implicitWidth + 16; height: 32
+                padding: 0
+                leftPadding: 0
+                rightPadding: 0
+                topPadding: 0
+                bottomPadding: 0
                 buttonRadius: Appearance.rounding.full
                 toggled: root._isZonePlacement
                 colBackground: "transparent"
@@ -899,22 +904,26 @@ AbstractWidget {
                 colRippleToggled: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
                 downAction: () => { root._toggleZonePlacement() }
                 altAction: () => { root._cycleSnapZone() }
-                contentItem: Row {
-                    id: placementStateRow
-                    anchors.centerIn: parent
-                    spacing: 4
-                    MaterialSymbol {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: root._isZonePlacement ? "grid_on" : "open_with"
-                        iconSize: 16
-                        color: root._isZonePlacement ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
-                    }
-                    StyledText {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: root._isZonePlacement ? Translation.tr("Zone") : Translation.tr("Free")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        font.weight: Font.Medium
-                        color: root._isZonePlacement ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
+                contentItem: Item {
+                    implicitWidth: placementStateRow.implicitWidth
+                    implicitHeight: placementStateRow.implicitHeight
+                    Row {
+                        id: placementStateRow
+                        anchors.centerIn: parent
+                        spacing: 4
+                        MaterialSymbol {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root._isZonePlacement ? "grid_on" : "open_with"
+                            iconSize: 16
+                            color: root._isZonePlacement ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
+                        }
+                        StyledText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root._isZonePlacement ? Translation.tr("Zone") : Translation.tr("Free")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            font.weight: Font.Medium
+                            color: root._isZonePlacement ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
+                        }
                     }
                 }
                 StyledToolTip { text: root._isZonePlacement ? Translation.tr("Zone placement active — click for free placement, right-click to cycle") : Translation.tr("Attach this widget to the nearest screen zone") }
@@ -996,12 +1005,7 @@ AbstractWidget {
                 colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.08)
                 colRipple: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
                 downAction: () => {
-                    if (Config.options?.settingsUi?.overlayMode !== false) {
-                        GlobalStates.settingsOverlayRequestedPage = 14
-                        GlobalStates.settingsOverlayOpen = true
-                    } else {
-                        Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=14", Quickshell.shellPath("scripts/alis"), "settings-window"])
-                    }
+                    GlobalStates.requestDesktopWidgetInspector(root.outputName, root.configEntryName)
                 }
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent

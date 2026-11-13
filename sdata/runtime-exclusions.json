@@ -127,6 +127,8 @@
     "scripts/test-update-lifecycle.sh",
     "scripts/test-update-service-guards.sh",
     "scripts/lib/generate-ipc-registry.py",
+    "scripts/lib/silent-wayland-run.sh",
+    "scripts/native_test_session.py",
     "scripts/quickshell-webengine",
     "scripts/setup/_template.sh.example",
     "scripts/setup/README.md",

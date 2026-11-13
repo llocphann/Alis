@@ -49,7 +49,7 @@ Item {
         if (Zettelkasten.ready)
             return Translation.tr("%1 note · draft stays in Notepad")
                 .arg(Zettelkasten.defaultType)
-        return Translation.tr("Configure an Obsidian vault to capture notes")
+        return Translation.tr("Configure a Nexus vault to capture notes")
     }
 
     function openZettelkastenSettings(): void {
@@ -156,7 +156,7 @@ Item {
                     text: Zettelkasten.ready
                         ? Translation.tr("Create a %1 Zettelkasten note while keeping the Notepad draft unchanged.")
                             .arg(Zettelkasten.defaultType)
-                        : Translation.tr("Configure an Obsidian vault to enable Zettelkasten")
+                        : Translation.tr("Configure a Nexus vault to enable Zettelkasten")
                 }
             }
         }

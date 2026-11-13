@@ -1891,7 +1891,7 @@ Item {
                 label: Translation.tr("Color Picker")
                 onClicked: {
                     GlobalStates.sidebarRightOpen = false
-                    Qt.callLater(() => ShellExec.execDetachedArgs(["/usr/bin/hyprpicker", "-a"], "Pick color"))
+                    ColorPickerService.start()
                 }
             }
 

@@ -14,6 +14,19 @@ Singleton {
     property bool ready: false
     property string previousHyprlandInstanceSignature: ""
     property bool isNewHyprlandInstance: previousHyprlandInstanceSignature !== states.hyprlandInstanceSignature
+    readonly property string currentSessionSignature: {
+        const niri = Quickshell.env("NIRI_SOCKET") || ""
+        if (niri.length > 0)
+            return "niri:" + niri
+        const hypr = Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") || ""
+        if (hypr.length > 0)
+            return "hypr:" + hypr
+        const xdg = Quickshell.env("XDG_SESSION_ID") || ""
+        const wl = Quickshell.env("WAYLAND_DISPLAY") || ""
+        if (xdg.length > 0 || wl.length > 0)
+            return "wl:" + xdg + ":" + wl
+        return ""
+    }
 
     onReadyChanged: {
         root.previousHyprlandInstanceSignature = root.states.hyprlandInstanceSignature
@@ -24,9 +37,13 @@ Singleton {
     // so reload() doesn't drop the in-flight write operation.
     property bool _writeInFlight: false
     property bool _pendingReload: false
+    property double _suppressSelfReloadUntilMs: 0
 
     function _completeWrite(): void {
         root._writeInFlight = false;
+        if (root.ready) {
+            root._suppressSelfReloadUntilMs = Date.now() + 250;
+        }
         if (root._pendingReload) {
             root._pendingReload = false;
             fileReloadTimer.restart();
@@ -38,7 +55,7 @@ Singleton {
         interval: 100
         repeat: false
         onTriggered: {
-            if (root._writeInFlight) {
+            if (root._writeInFlight || (root.ready && fileWriteTimer.running)) {
                 root._pendingReload = true;
                 return;
             }
@@ -52,6 +69,9 @@ Singleton {
         repeat: false
         onTriggered: {
             root._writeInFlight = true;
+            if (root.ready) {
+                root._suppressSelfReloadUntilMs = Date.now() + 500;
+            }
             fileReloadTimer.stop();
             persistentStatesFileView.writeAdapter()
         }
@@ -62,7 +82,12 @@ Singleton {
         path: root.filePath
 
         watchChanges: true
-        onFileChanged: fileReloadTimer.restart()
+        onFileChanged: {
+            if (root.ready && (root._writeInFlight || fileWriteTimer.running || Date.now() < root._suppressSelfReloadUntilMs)) {
+                return;
+            }
+            fileReloadTimer.restart();
+        }
         onAdapterUpdated: fileWriteTimer.restart()
         onSaved: {
             // FileView starts without a watched inode on a fresh installation.
@@ -91,12 +116,15 @@ Singleton {
             id: persistentStatesJsonAdapter
 
             property string hyprlandInstanceSignature: ""
+            property string unlockedSessionSignature: ""
 
             property JsonObject ai: JsonObject {
                 property string model: "gemini-2.5-flash"
                 property real temperature: 0.5
                 property string promptName: ""
                 property string modelAliasesJson: "{}"
+                property string companionSystemPrompt: ""
+                property string companionRulesText: ""
             }
 
             property JsonObject aquaCheckIn: JsonObject {
@@ -169,6 +197,13 @@ Singleton {
                     property int start: 0
                     property bool isBreak: false
                     property int cycle: 0
+                    property string activeTag: "Study"
+                    property list<string> tags: ["General", "Study", "Coding", "Reading"]
+                    property list<string> archivedTags: []
+                    property string tagColorsJson: "{}"
+                    property string todayDate: ""
+                    property int todayFocusSeconds: 0
+                    property int todaySessions: 0
                 }
                 property JsonObject stopwatch: JsonObject {
                     property bool running: false

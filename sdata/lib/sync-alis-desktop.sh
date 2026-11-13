@@ -15,7 +15,7 @@ app_dir="$data_home/applications"
 icon_dir="$data_home/icons/hicolor/scalable/apps"
 
 # Verify all source artifacts before changing the destination.
-for entry in alis.desktop alis-settings.desktop; do
+for entry in alis.desktop alis-settings.desktop alis-local-music.desktop; do
     src="$repo/assets/applications/$entry"
     [[ -f "$src" ]] || { printf 'Alis desktop source missing: %s\n' "$src" >&2; exit 1; }
     grep -Fxq 'X-Alis-Managed=true' "$src" ||
@@ -71,6 +71,7 @@ sync_entry() {
 
 sync_entry alis.desktop 'service restart'
 sync_entry alis-settings.desktop settings
+sync_entry alis-local-music.desktop 'local-music -- %U'
 
 icon_target="$icon_dir/alis.svg"
 if [[ -e "$icon_target" || -L "$icon_target" ]]; then

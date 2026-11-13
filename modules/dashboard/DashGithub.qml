@@ -214,10 +214,12 @@ DashCard {
                         ? Appearance.angel.colGlassCardHover
                         : Appearance.colors.colLayer2
 
-                onCellColorChanged: requestPaint()
-                onEmptyColorChanged: requestPaint()
-                onWidthChanged: requestPaint()
-                onHeightChanged: requestPaint()
+                onVisibleChanged: if (visible && available) requestPaint()
+                onAvailableChanged: if (visible && available) requestPaint()
+                onCellColorChanged: if (visible && available) requestPaint()
+                onEmptyColorChanged: if (visible && available) requestPaint()
+                onWidthChanged: if (visible && available) requestPaint()
+                onHeightChanged: if (visible && available) requestPaint()
 
                 onPaint: {
                     const ctx = getContext("2d")

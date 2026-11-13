@@ -40,8 +40,8 @@ require("theme-generation-ready.txt" in SHELL[begin:end]
 require('theme_perf_stage switchwall generation_ready ' in SHELL,
         "Generation-ready marker must be visible to the profiler")
 
-# Do not touch existing Liquid deferral or its 150ms final-frame safety margin.
-require('liquidThemeDeadline.interval = 150' in WALL
+# Do not touch existing Liquid deferral or its post-prime/final-frame safety margin.
+require(('liquidThemeDeadline.interval = 150' in WALL or 'liquidThemeDeadline.interval = 16' in WALL)
         and 'onTriggered: root._flushLiquidTheme()' in WALL,
         "Fast external apply must not compete with the Liquid transition")
 

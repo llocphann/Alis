@@ -20,6 +20,7 @@ Item {
     property bool embeddedSurface: false
     property bool warmContent: false
     property bool presentationActive: GlobalStates.dashboardOpen || GlobalStates.overviewOpen
+    readonly property bool contentReady: dashboardCanvas.widgetsReady
 
     readonly property bool musicEnabled: Config.options?.dashboard?.music?.enable ?? true
     readonly property bool spacedRepetitionPluginManaged: AlisIntergration.available
@@ -242,8 +243,11 @@ Item {
         target: Config
         function onReadyChanged() {
             if (!Config.ready) return
-            root.restoreLastPage()
-            if (root.presentationActive) root.sessionShown()
+            Qt.callLater(() => {
+                if (!Config.ready) return
+                root.restoreLastPage()
+                if (root.presentationActive) root.sessionShown()
+            })
         }
     }
     function restoreLastPage(): void {
@@ -285,8 +289,12 @@ Item {
     onPageIdsChanged: {
         if (root._pendingPageId.length && !root.pageIds.includes(root._pendingPageId))
             root._pendingPageId = ""
-        if (!root.pageIds.includes(GlobalStates.dashboardPageId))
-            GlobalStates.dashboardPageId = root.pageIds[0]
+        if (!root.pageIds.includes(GlobalStates.dashboardPageId)) {
+            Qt.callLater(() => {
+                if (root.pageIds.length > 0 && !root.pageIds.includes(GlobalStates.dashboardPageId))
+                    GlobalStates.dashboardPageId = root.pageIds[0]
+            })
+        }
     }
     Component.onCompleted: {
         if (Config.ready) root.restoreLastPage()
@@ -295,6 +303,12 @@ Item {
             root.selectPage(root.pageIds.includes(legacy) ? legacy : root.pageIds[0])
         }
         if (root.presentationActive) root.sessionShown()
+    }
+    Component.onDestruction: {
+        if (root._sessionWasVisible) {
+            root.flushPageSelection()
+            root.sessionHidden()
+        }
     }
 
     function setDefaultTab(id): void {

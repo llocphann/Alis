@@ -2,6 +2,10 @@
 # Exercise the Utilities popup host without changing displays, audio devices or light state.
 set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "${ALIS_SILENT_WL_WRAPPED:-0}" != "1" ]]; then
+    export ALIS_SILENT_WL_WRAPPED=1
+    exec bash "$repo_root/scripts/lib/silent-wayland-run.sh" -- "$0" "$@"
+fi
 layout="$repo_root/modules/abyss/looks/AbyssLayout.js"
 quick_actions="$repo_root/modules/bar/UtilButtons.qml"
 module="$repo_root/modules/abyss/bar/AbyssBarModule.qml"

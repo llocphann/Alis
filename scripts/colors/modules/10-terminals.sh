@@ -83,7 +83,7 @@ apply_term_sequences() {
   mv "$sequences_tmp" "$sequences_file"
 
   local shell_pids
-  shell_pids=$(pgrep -x 'fish|bash|zsh|nu|elvish|xonsh' 2>/dev/null || true)
+  shell_pids=$(pgrep -x 'fish|bash|zsh|nu|elvish|xonsh|codex|claude|nvim' 2>/dev/null || true)
   [[ -n "$shell_pids" ]] || return 0
 
   # Collect pts numbers grouped by their terminal emulator.

@@ -66,7 +66,7 @@ MaterialShape { // App icon
         anchors.centerIn: parent
         sourceComponent: IconImage {
             id: appIconImage
-            implicitSize: root.appIconSize
+            implicitSize: Math.max(1, Math.min(128, Math.round(root.appIconSize)))
             asynchronous: true
             source: Quickshell.iconPath(root.effectiveAppIcon, "image-missing")
         }
@@ -121,7 +121,7 @@ MaterialShape { // App icon
                 anchors.bottom: parent.bottom
                 anchors.right: parent.right
                 sourceComponent: IconImage {
-                    implicitSize: root.smallAppIconSize
+                    implicitSize: Math.max(1, Math.min(128, Math.round(root.smallAppIconSize)))
                     asynchronous: true
                     source: Quickshell.iconPath(root.appIcon, "image-missing")
                 }

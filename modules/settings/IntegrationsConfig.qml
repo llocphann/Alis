@@ -22,13 +22,14 @@ ContentPage {
         icon: "extension",
         value: "management"
     }].concat(AlisIntergration.installedPlugins.map(plugin => ({
-        displayName: plugin.name,
-        icon: plugin.icon,
+        displayName: plugin.id === "nexus" ? "Nexus" : plugin.name,
+        icon: plugin.id === "nexus" ? "hub" : plugin.icon,
         value: plugin.id
     })))
     readonly property var selectedPlugin: AlisIntergration.installedPlugins.find(plugin => plugin.id === root.activePlugin) ?? null
     readonly property var capabilityTabs: (selectedPlugin?.capabilities ?? []).map(capability => ({
-        displayName: capability.name, value: capability.id
+        displayName: (selectedPlugin?.id === "nexus" && capability.id === "theming") ? "Nexus & Vault" : capability.name,
+        value: capability.id
     }))
     readonly property var selectedCapability: selectedPlugin?.capabilities.find(capability =>
         capability.id === root.capabilitySelections[root.activePlugin]) ?? selectedPlugin?.capabilities[0] ?? null
@@ -41,19 +42,16 @@ ContentPage {
     }
     function activateSettingsSearchSection(section: string): bool {
         const label = String(section ?? "").toLowerCase()
-        const wanted = /to-do|todo|quick note|zettelkasten/.test(label) ? "obsidian"
+        const wanted = /nexus|vault|outliner|graph|to-do|todo|quick note|zettelkasten/.test(label) ? "nexus"
             : /fan|cooling|thermal/.test(label) ? "thinkfan"
             : /spaced repetition|vocabulary|flashcard|cefr|sm-2/.test(label) ? "spaced_repetition" : label
         const plugin = AlisIntergration.installedPlugins.find(item => wanted.includes(item.id) || wanted.includes(item.name.toLowerCase()))
         if (plugin) {
             activePlugin = plugin.id
-            if (plugin.id === "obsidian") {
-                selectCapability("theming")
-            } else {
-                const capability = /todo|to-do/.test(label) ? "todo"
-                    : /quick note|zettelkasten/.test(label) ? "quicknotes" : ""
-                if (capability) selectCapability(capability)
-            }
+            const capability = /todo|to-do/.test(label) ? "todo"
+                : /quick note|zettelkasten/.test(label) ? "quicknotes"
+                : plugin.id === "nexus" ? "theming" : ""
+            if (capability) selectCapability(capability)
             return true
         }
         activePlugin = "management"
@@ -128,7 +126,7 @@ ContentPage {
             }
             DialogButton {
                 objectName: "integrationRestoreInternalTodos"
-                visible: Todo.backend === "obsidian" && !AlisIntergration.obsidianEnabled
+                visible: Todo.backend === "nexus" && !AlisIntergration.nexusEnabled
                 enabled: !Todo.internalPersistenceBusy
                 buttonText: Translation.tr("Use Alis tasks")
                 onClicked: Todo.reactivateInternal()
@@ -204,8 +202,8 @@ ContentPage {
                     objectName: "integrationToggle_" + catalogCard.modelData.id
                     Layout.preferredWidth: 1
                     Layout.fillWidth: true
-                    buttonIcon: catalogCard.modelData.icon
-                    text: catalogCard.modelData.name
+                    buttonIcon: catalogCard.modelData.id === "nexus" ? "hub" : catalogCard.modelData.icon
+                    text: catalogCard.modelData.id === "nexus" ? "Nexus" : catalogCard.modelData.name
                     autoToggle: false
                     checked: AlisIntergration.options?.[catalogCard.modelData.id] === true
                     enabled: AlisIntergration.available && !AlisIntergration.managerBusy
@@ -222,7 +220,6 @@ ContentPage {
         visible: root.selectedPlugin !== null
         SettingsTaskNavigator {
             objectName: "integrationCapabilityTabs"
-            visible: false
             showTabBar: false
             showIntro: false
             options: root.capabilityTabs
@@ -258,15 +255,15 @@ ContentPage {
             onCapabilityViewChanged: reload()
         }
         Loader {
-            id: obsidianCombinedTodoSettings
-            objectName: "integrationObsidianTodoSettings"
+            id: nexusCombinedTodoSettings
+            objectName: "integrationNexusTodoSettings"
             Layout.fillWidth: true
             Layout.preferredHeight: item?.implicitHeight ?? 0
             visible: active
-            active: root.visible && root.activePlugin === "obsidian"
-                && AlisIntergration.pluginEnabled("obsidian")
+            active: root.visible && root.activePlugin === "nexus"
+                && AlisIntergration.pluginEnabled("nexus")
                 && (root.selectedCapability?.id ?? "theming") === "theming"
-            source: active ? AlisIntergration.settingsSource("obsidianTodo") : ""
+            source: active ? AlisIntergration.settingsSource("nexusTodo") : ""
             onLoaded: {
                 if (item && item.hasOwnProperty("settingsView"))
                     item.settingsView = "all"
@@ -377,10 +374,12 @@ ContentPage {
                     required property var modelData
                     required property int index
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     implicitHeight: sourceRow.implicitHeight + 12
 
                     Rectangle {
                         anchors.fill: parent
+                        clip: true
                         radius: Appearance.rounding.small
                         color: sourceMA.containsMouse ? Appearance.colors.colLayer1Hover : "transparent"
                         Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
@@ -402,22 +401,29 @@ ContentPage {
                             // Name and URL
                             ColumnLayout {
                                 Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                Layout.preferredWidth: 1
+                                clip: true
                                 spacing: 1
 
                                 StyledText {
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     text: sourceItem.modelData?.name ?? Translation.tr("Unnamed")
                                     font.pixelSize: Appearance.font.pixelSize.normal
                                     color: Appearance.colors.colOnLayer1
                                     elide: Text.ElideRight
+                                    maximumLineCount: 1
                                 }
 
                                 StyledText {
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     text: sourceItem.modelData?.url ?? ""
                                     font.pixelSize: Appearance.font.pixelSize.smallest
                                     color: Appearance.colors.colSubtext
                                     elide: Text.ElideMiddle
+                                    maximumLineCount: 1
                                 }
                             }
 
@@ -655,6 +661,8 @@ ContentPage {
                             contentItem: StyledText {
                                 id: cancelLabel
                                 anchors.centerIn: parent
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
                                 text: Translation.tr("Cancel")
                                 font.pixelSize: Appearance.font.pixelSize.small
                                 color: Appearance.colors.colOnLayer1
@@ -683,6 +691,8 @@ ContentPage {
                             contentItem: StyledText {
                                 id: addLabel
                                 anchors.centerIn: parent
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
                                 text: Translation.tr("Add")
                                 font.pixelSize: Appearance.font.pixelSize.small
                                 font.weight: Font.Medium

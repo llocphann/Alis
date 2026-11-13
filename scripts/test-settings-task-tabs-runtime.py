@@ -51,7 +51,7 @@ Window {
     ["Outputs","ii surfaces","Desktop widgets","Popups"],
     ["Colors","Type","Motion","Advanced"],
     ["Overview","Behavior","Rendering","AI"],
-    ["Obsidian","Calendar","Applications"],
+    ["Nexus","Calendar","Applications"],
     ["Waves","Spectrum","Interaction","A very long integration subsection label that must fit"]
    ]
    const icons=["monitor","tune","dashboard","animation","rule","security"]

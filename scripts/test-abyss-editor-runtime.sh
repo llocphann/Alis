@@ -2,6 +2,10 @@
 # Exercise editor draft/cancel/save against actual QML Config and placement bindings.
 set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "${ALIS_SILENT_WL_WRAPPED:-0}" != "1" ]]; then
+    export ALIS_SILENT_WL_WRAPPED=1
+    exec bash "$repo_root/scripts/lib/silent-wayland-run.sh" -- "$0" "$@"
+fi
 if ! command -v qs >/dev/null || [[ -z "${WAYLAND_DISPLAY:-}" ]]; then printf 'SKIP: Abyss editor (Quickshell unavailable)\n'; exit 0; fi
 abyss_editor_test="$(mktemp -d)"
 trap 'rm -rf -- "$abyss_editor_test"' EXIT
@@ -114,12 +118,15 @@ ShellRoot {
                     editor.edgeWidthAffectsModules=Object.assign({},editor.edgeWidthAffectsModules,{[edge]:false})
                     editor.edgeThicknesses=Object.assign({},editor.edgeThicknesses,{[edge]:0})
                     editor.move("clock",edge==="left"?10:edge==="right"?editor.width-10:40,edge==="top"?10:edge==="bottom"?editor.height-10:40,false)
+                    editor.editorSection="modules"
                     if(!root.settleControls()) return
                     const corner=driver.findChild(editor,"abyssModuleJoinCorner")
                     if(!root.check(corner?.enabled && !!editor.nearbyCorner,"nearest module exposes corner control on "+edge)) return
                     if(!root.clickControl(corner)) return
                     if(!root.check(editor.selected.joinCorner && layer.deformations[0].along===0,"corner checkbox extends the actual local paint on "+edge)) return
                     if(!root.clickControl(corner)) return
+                    editor.editorSection="edge"
+                    if(!root.settleControls()) return
                     const rounding=driver.findChild(editor,"abyssModuleRounding")
                     if(!root.check(rounding?.visible,"edge-only policy exposes rounding on "+edge)) return
                     rounding.value=0;rounding.moved()
@@ -129,6 +136,7 @@ ShellRoot {
                     editor.move("clock",x,y,false)
                     if(!root.check(editor.edgeInsets[edge]===0 && layer.layoutRecords.length===1 && layer.deformations.length===1,"zero bare "+edge+" retains independent module and backing")) return
                     editor.add("battery")
+                    editor.editingEdge=edge
                     if(!root.settleControls()) return
                     const join=driver.findChild(editor,"abyssJoinNearbyModules")
                     const beforeJoin=layer.itemForId("clock")
@@ -137,6 +145,7 @@ ShellRoot {
                     if(!root.check(editor.edgeJoinModules[edge] && layer.deformations.length===1 && layer.layoutRecords.length===2 && layer.itemForId("clock")===beforeJoin,"actual checkbox joins local paint while preserving modules on "+edge)) return
                     if(!root.clickControl(join)) return
                     if(!root.check(!editor.edgeJoinModules[edge] && layer.deformations.length===2,"unchecking restores individual backing")) return
+                    editor.editorSection="modules"
                     editor.draft=editor.draft.filter(p=>p.id==="clock");editor.selectedId="clock";editor.refreshHandles()
                     root.originalModule=layer.itemForId("clock")
                     editor.edgeThicknesses=Object.assign({},editor.edgeThicknesses,{[edge]:32})

@@ -265,6 +265,7 @@ binds {
     Mod+Return { spawn "bash" "-c" "$HOME/.config/quickshell/alis/scripts/launch-terminal.sh"; }
     Super+E { spawn "nautilus"; }
     Super+W { spawn "bash" "-c" "xdg-open https://"; }
+    Super+O { spawn "qs" "-c" "alis" "ipc" "call" "nexus" "toggle"; }
 
     // Window management
     Mod+Q repeat=false { spawn "bash" "-c" "$HOME/.config/quickshell/alis/scripts/close-window.sh"; }

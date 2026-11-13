@@ -65,7 +65,9 @@ fallback_system_config_dir="${ALIS_FALLBACK_SYSTEM_RUNTIME_DIR:-/usr/share/quick
 config_dir="${ALIS_RUNTIME_DIR:-}"
 
 # Fast path for high-frequency hardware media/volume/brightness keys so held
-# key-repeats do not spawn ~15 discovery subprocesses per tick.
+# key-repeats do not spawn ~15 discovery subprocesses per tick, never hang
+# holding flock if Quickshell is busy/restarting, and fall back directly to
+# hardware tools (wpctl / brightnessctl / playerctl) when IPC is unavailable.
 case "${1:-}:${2:-}" in
     audio:volumeUp|audio:volumeDown|audio:mute|audio:micMute|brightness:increment|brightness:decrement|mpris:playPause|mpris:next|mpris:previous)
         if [[ $# -eq 2 ]]; then
@@ -78,10 +80,73 @@ case "${1:-}:${2:-}" in
                     ;;
             esac
             _fast_dir="${config_dir:-$user_config_dir}"
+            if [[ ! -f "$_fast_dir/shell.qml" ]]; then
+                if [[ -f "$system_config_dir/shell.qml" ]]; then
+                    _fast_dir="$system_config_dir"
+                elif [[ -f "$fallback_system_config_dir/shell.qml" ]]; then
+                    _fast_dir="$fallback_system_config_dir"
+                fi
+            fi
             if [[ -f "$_fast_dir/shell.qml" ]]; then
-                "$qs_bin" -p "$_fast_dir" ipc call "$1" "$2" >/dev/null 2>&1 && exit 0
+                if command -v timeout >/dev/null 2>&1; then
+                    timeout 0.35s "$qs_bin" -p "$_fast_dir" ipc call "$1" "$2" >/dev/null 2>&1 && exit 0
+                else
+                    "$qs_bin" -p "$_fast_dir" ipc call "$1" "$2" >/dev/null 2>&1 && exit 0
+                fi
             fi
             unset _fast_dir
+            case "${1}:${2}" in
+                audio:volumeUp)
+                    command -v wpctl >/dev/null 2>&1 && wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 2%+ >/dev/null 2>&1
+                    exit 0
+                    ;;
+                audio:volumeDown)
+                    command -v wpctl >/dev/null 2>&1 && wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%- >/dev/null 2>&1
+                    exit 0
+                    ;;
+                audio:mute)
+                    command -v wpctl >/dev/null 2>&1 && wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle >/dev/null 2>&1
+                    exit 0
+                    ;;
+                audio:micMute)
+                    command -v wpctl >/dev/null 2>&1 && wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle >/dev/null 2>&1
+                    exit 0
+                    ;;
+                brightness:increment)
+                    _nd="${config_dir:-$user_config_dir}/scripts/native-dispatch"
+                    [[ -x "$_nd" ]] || _nd="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/native-dispatch"
+                    if [[ -x "$_nd" ]]; then
+                        "$_nd" backlight set "+5%" >/dev/null 2>&1 && exit 0
+                    fi
+                    command -v brightnessctl >/dev/null 2>&1 && brightnessctl -c backlight set +5% --quiet >/dev/null 2>&1
+                    exit 0
+                    ;;
+                brightness:decrement)
+                    _nd="${config_dir:-$user_config_dir}/scripts/native-dispatch"
+                    [[ -x "$_nd" ]] || _nd="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/native-dispatch"
+                    if [[ -x "$_nd" ]]; then
+                        "$_nd" backlight set "-5%" --min-value 1 >/dev/null 2>&1 && exit 0
+                    fi
+                    command -v brightnessctl >/dev/null 2>&1 && brightnessctl -c backlight --min-value=1 set 5%- --quiet >/dev/null 2>&1
+                    exit 0
+                    ;;
+                mpris:playPause|mpris:next|mpris:previous)
+                    _mpris_method="PlayPause"
+                    [[ "$2" == "next" ]] && _mpris_method="Next"
+                    [[ "$2" == "previous" ]] && _mpris_method="Previous"
+                    if command -v busctl >/dev/null 2>&1; then
+                        _mpris_dest="$(busctl --user list --no-pager --no-legend 2>/dev/null | awk '$1 ~ /^org\.mpris\.MediaPlayer2\./ && $1 !~ /^org\.mpris\.MediaPlayer2\.playerctld/ { print $1; exit }')"
+                        if [[ -n "$_mpris_dest" ]]; then
+                            busctl --user call "$_mpris_dest" /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player "$_mpris_method" >/dev/null 2>&1 && exit 0
+                        fi
+                    fi
+                    _pctl_cmd="play-pause"
+                    [[ "$2" == "next" ]] && _pctl_cmd="next"
+                    [[ "$2" == "previous" ]] && _pctl_cmd="previous"
+                    command -v playerctl >/dev/null 2>&1 && playerctl "$_pctl_cmd" >/dev/null 2>&1
+                    exit 0
+                    ;;
+            esac
         fi
         ;;
 esac
@@ -1820,6 +1885,55 @@ apply_qt_runtime_env() {
     [[ -z "${QSG_ATLAS_WIDTH:-}" ]] && export QSG_ATLAS_WIDTH=1024
     [[ -z "${QSG_ATLAS_HEIGHT:-}" ]] && export QSG_ATLAS_HEIGHT=1024
 
+    # jemalloc heap tuning for Quickshell (/usr/bin/quickshell links libjemalloc.so.2).
+    if [[ -z "${_ALIS_ORIG_MALLOC_CONF_SET+x}" ]]; then
+        if [[ -n "${MALLOC_CONF+x}" ]]; then
+            export _ALIS_ORIG_MALLOC_CONF="$MALLOC_CONF"
+            export _ALIS_ORIG_MALLOC_CONF_SET=1
+        else
+            export _ALIS_ORIG_MALLOC_CONF_SET=0
+        fi
+    fi
+    export MALLOC_CONF="background_thread:true,metadata_thp:auto,dirty_decay_ms:5000,muzzy_decay_ms:5000"
+
+    # Per-executable Mesa drirc profile to disable glthread for Quickshell
+    # without spamming "Mesa: Notice:env var override" across child processes.
+    if [[ -z "${_ALIS_ORIG_DRIRC_CONFIGDIR_SET+x}" ]]; then
+        if [[ -n "${DRIRC_CONFIGDIR+x}" ]]; then
+            export _ALIS_ORIG_DRIRC_CONFIGDIR="$DRIRC_CONFIGDIR"
+            export _ALIS_ORIG_DRIRC_CONFIGDIR_SET=1
+        else
+            export _ALIS_ORIG_DRIRC_CONFIGDIR_SET=0
+        fi
+    fi
+    local _drirc_dir="${XDG_RUNTIME_DIR:-/tmp}/alis/drirc.d"
+    if mkdir -p "$_drirc_dir" 2>/dev/null; then
+        local _sys_drirc
+        for _sys_drirc in /usr/share/drirc.d/*.conf; do
+            [[ -e "$_sys_drirc" ]] || continue
+            ln -sfn "$_sys_drirc" "$_drirc_dir/$(basename "$_sys_drirc")" 2>/dev/null || true
+        done
+        if [[ "${_ALIS_ORIG_DRIRC_CONFIGDIR_SET:-0}" == "1" && -n "${_ALIS_ORIG_DRIRC_CONFIGDIR:-}" && -d "${_ALIS_ORIG_DRIRC_CONFIGDIR}" && "${_ALIS_ORIG_DRIRC_CONFIGDIR}" != "$_drirc_dir" ]]; then
+            for _sys_drirc in "${_ALIS_ORIG_DRIRC_CONFIGDIR}"/*.conf; do
+                [[ -e "$_sys_drirc" ]] || continue
+                ln -sfn "$_sys_drirc" "$_drirc_dir/$(basename "$_sys_drirc")" 2>/dev/null || true
+            done
+        fi
+        cat > "$_drirc_dir/99-alis-no-glthread.conf" <<'EOF'
+<driconf>
+  <device>
+    <application name="quickshell" executable="qs">
+      <option name="mesa_glthread_app_profile" value="0"/>
+    </application>
+    <application name="quickshell-bin" executable="quickshell">
+      <option name="mesa_glthread_app_profile" value="0"/>
+    </application>
+  </device>
+</driconf>
+EOF
+        export DRIRC_CONFIGDIR="$_drirc_dir"
+    fi
+
     # Ensure WAYLAND_DISPLAY is set — required for Qt to select the wayland
     # platform backend.  When systemd starts alis.service at boot, the
     # compositor may not have exported WAYLAND_DISPLAY into the user manager
@@ -2324,7 +2438,7 @@ cleanup_service_processes() {
     while IFS= read -r pid; do
         alis_cleanup_owns_pid "$pid" "$service_group" || continue
         kill "$pid" 2>/dev/null || true
-    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|/alis-inputd([[:space:]]|$)|nmcli monitor|/usr/bin/swayidle -w' 2>/dev/null || true)
+    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|/alis-inputd([[:space:]]|$)|nmcli monitor|/usr/bin/swayidle -w|scripts/keyring/try_lookup\.sh|secret-tool lookup' 2>/dev/null || true)
 
     local thumb_pattern='scripts/thumbnails/(thumbgen-venv\.sh|thumbgen\.py|generate-thumbnails-magick\.sh)'
     local thumb_pids=()
@@ -4072,6 +4186,24 @@ case "$command_name" in
         echo "No editor found" >&2
         exit 1
         ;;
+    local-music)
+        _music_files=()
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                -c|--config) parse_config_flag "$@"; shift 2 ;;
+                -h|--help) echo 'Usage: alis local-music [-c PATH] [--] [AUDIO_FILE_OR_URI ...]'; exit 0 ;;
+                --) shift; _music_files+=("$@"); break ;;
+                *) _music_files+=("$1"); shift ;;
+            esac
+        done
+        _music_json="$(python3 -c 'import json, pathlib, sys; print(" " + json.dumps([p if "://" in p else str(pathlib.Path(p).absolute()) for p in sys.argv[1:]]))' "${_music_files[@]}")"
+        _music_result="$(run_ipc_target_command dashboard openMusic "$_music_json")"
+        if [[ "$_music_result" == error:* ]]; then
+            printf '%s\n' "$_music_result" >&2
+            exit 1
+        fi
+        printf '%s\n' "$_music_result"
+        ;;
     close-window)
         while [[ $# -gt 0 ]]; do
             case "$1" in
@@ -4095,8 +4227,12 @@ case "$command_name" in
     colorpicker)
         while [[ $# -gt 0 ]]; do
             case "$1" in
+                -c|--config)
+                    parse_config_flag "$@"
+                    shift 2
+                    ;;
                 -h|--help)
-                    echo "Usage: alis colorpicker" >&2
+                    echo "Usage: alis colorpicker [-c PATH]" >&2
                     exit 0
                     ;;
                 *)
@@ -4105,11 +4241,27 @@ case "$command_name" in
                     ;;
             esac
         done
-        if ! command -v hyprpicker >/dev/null 2>&1; then
-            echo "hyprpicker not found — install it to use colorpicker" >&2
+        require_qs
+        resolve_config_dir
+        if ! ensure_running_instance_for_ipc "$config_dir" "start"; then
+            echo "Timed out waiting for Alis to start" >&2
             exit 1
         fi
-        exec /usr/bin/hyprpicker -a
+        picker_ticket="$("$qs_bin" -p "$config_dir" ipc call colorpicker start)" || exit 1
+        [[ "$picker_ticket" =~ ^[0-9]+$ ]] || { echo "Invalid Alis Color Picker response" >&2; exit 1; }
+        trap '"$qs_bin" -p "$config_dir" ipc call colorpicker cancel "$picker_ticket" >/dev/null 2>&1 || true; exit 130' INT TERM
+        while true; do
+            picker_result="$("$qs_bin" -p "$config_dir" ipc call colorpicker status "$picker_ticket")" || exit 1
+            case "$picker_result" in
+                pending) sleep 0.1 ;;
+                \#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F])
+                    printf '%s\n' "$picker_result"
+                    exit 0
+                    ;;
+                cancelled) exit 1 ;;
+                *) echo "Alis Color Picker could not capture the screen" >&2; exit 1 ;;
+            esac
+        done
         ;;
     touchpad)
         _tp_action="${1:-toggle}"

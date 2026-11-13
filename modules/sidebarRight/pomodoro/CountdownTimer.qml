@@ -42,7 +42,7 @@ Item {
             id: timerDeck
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredHeight: root.compactMode ? 126 : 138
+            Layout.preferredHeight: root.compactMode ? 108 : 138
 
             readonly property real progress:
                 TimerService.countdownDuration > 0
@@ -67,7 +67,7 @@ Item {
             ColumnLayout {
                 anchors.centerIn: parent
                 width: Math.min(parent.width - 24, 310)
-                spacing: 5
+                spacing: root.compactMode ? 4 : 5
 
                 // Editable time display with separate minutes and seconds.
                 RowLayout {
@@ -85,7 +85,7 @@ Item {
 
                     Rectangle {
                         width: 52
-                        height: 50
+                        height: root.compactMode ? 44 : 50
                         color: minutesInput.activeFocus
                             ? ColorUtils.transparentize(root._colAccent, 0.82)
                             : "transparent"
@@ -101,10 +101,11 @@ Item {
                                 TimerService.countdownDuration / 60)
                                 .toString().padStart(2, '0')
                             font.pixelSize: Math.round(
-                                36 * Appearance.fontSizeScale)
+                                (root.compactMode ? 33 : 36) * Appearance.fontSizeScale)
                             font.family: Appearance.font.family.numbers
                             color: root._colText
                             horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: TextInput.AlignVCenter
                             validator: IntValidator { bottom: 0; top: 99 }
                             selectByMouse: true
                             onEditingFinished: {
@@ -137,16 +138,19 @@ Item {
                     }
 
                     StyledText {
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.bottomMargin: 3
                         text: ":"
                         font.pixelSize: Math.round(
-                            34 * Appearance.fontSizeScale)
+                            (root.compactMode ? 31 : 34) * Appearance.fontSizeScale)
                         font.family: Appearance.font.family.numbers
+                        verticalAlignment: Text.AlignVCenter
                         color: root._colSubtext
                     }
 
                     Rectangle {
                         width: 52
-                        height: 50
+                        height: root.compactMode ? 44 : 50
                         color: secondsInput.activeFocus
                             ? ColorUtils.transparentize(root._colAccent, 0.82)
                             : "transparent"
@@ -162,10 +166,11 @@ Item {
                                 TimerService.countdownDuration % 60)
                                 .toString().padStart(2, '0')
                             font.pixelSize: Math.round(
-                                36 * Appearance.fontSizeScale)
+                                (root.compactMode ? 33 : 36) * Appearance.fontSizeScale)
                             font.family: Appearance.font.family.numbers
                             color: root._colText
                             horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: TextInput.AlignVCenter
                             validator: IntValidator { bottom: 0; top: 59 }
                             selectByMouse: true
                             onEditingFinished: {
@@ -202,6 +207,8 @@ Item {
 
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                     opacity: !root.editMode ? 1 : 0
                     visible: opacity > 0
                     text: {
@@ -214,7 +221,7 @@ Item {
                         return `${minutes}:${seconds}`
                     }
                     font.pixelSize: Math.round(
-                        (root.compactMode ? 39 : 42)
+                        (root.compactMode ? 37 : 42)
                             * Appearance.fontSizeScale)
                     font.weight: Font.Medium
                     font.family: Appearance.font.family.numbers
@@ -233,7 +240,7 @@ Item {
                 Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 8
-                    Layout.topMargin: 5
+                    Layout.topMargin: root.compactMode ? 3 : 5
 
                     Row {
                         id: segmentRow
@@ -298,7 +305,7 @@ Item {
 
         Row {
             Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 10
+            Layout.topMargin: root.compactMode ? 4 : 10
             spacing: 6
             opacity: root.editMode ? 1 : 0
             visible: opacity > 0
@@ -318,7 +325,7 @@ Item {
 
                 RippleButton {
                     required property var modelData
-                    implicitHeight: 30
+                    implicitHeight: root.compactMode ? 28 : 30
                     implicitWidth: 45
                     buttonRadius: Appearance.rounding.small
                     colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
@@ -333,10 +340,11 @@ Item {
                     onClicked: TimerService.setCountdownDuration(modelData.seconds)
 
                     contentItem: StyledText {
-                        anchors.centerIn: parent
                         horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
                         text: modelData.label
                         font.pixelSize: Appearance.font.pixelSize.smaller
+                        font.weight: Font.Medium
                         color: Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer2
                     }
                 }
@@ -345,7 +353,7 @@ Item {
 
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: root.editMode ? 8 : 0
+            Layout.topMargin: root.editMode ? (root.compactMode ? 6 : 8) : 0
             spacing: 10
 
             RippleButton {
@@ -375,6 +383,8 @@ Item {
 
                 contentItem: StyledText {
                     horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    font.weight: Font.Medium
                     color: TimerService.countdownRunning
                         ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker
                             : Appearance.angelEverywhere ? Appearance.angel.colText
@@ -390,8 +400,10 @@ Item {
             }
 
             RippleButton {
+                id: countdownResetButton
                 Layout.preferredHeight: 35
                 Layout.preferredWidth: 90
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                 onClicked: TimerService.resetCountdown()
                 enabled: TimerService.countdownSecondsLeft < TimerService.countdownDuration || TimerService.countdownRunning
                 colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
@@ -407,13 +419,29 @@ Item {
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
                     : Appearance.colors.colErrorContainerActive
 
-                contentItem: StyledText {
-                    horizontalAlignment: Text.AlignHCenter
-                    text: Translation.tr("Reset")
-                    color: Appearance.angelEverywhere ? Appearance.angel.colText
-                        : Appearance.alisEverywhere ? Appearance.alis.colText
-                        : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2
-                        : Appearance.colors.colOnErrorContainer
+                contentItem: Item {
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: countdownResetButton.buttonRadius
+                        visible: !countdownResetButton.enabled
+                        color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                            : Appearance.alisEverywhere ? Appearance.alis.colLayer2
+                            : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                            : Appearance.colors.colLayer2
+                    }
+                    StyledText {
+                        anchors.fill: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.weight: Font.Medium
+                        text: Translation.tr("Reset")
+                        color: !countdownResetButton.enabled
+                            ? root._colText
+                            : Appearance.angelEverywhere ? Appearance.angel.colText
+                                : Appearance.alisEverywhere ? Appearance.alis.colText
+                                : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2
+                                : Appearance.colors.colOnErrorContainer
+                    }
                 }
             }
         }

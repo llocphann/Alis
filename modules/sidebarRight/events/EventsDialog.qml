@@ -708,7 +708,7 @@ WindowDialog {
                 }
 
                 // Exact shared visual component from Calendar Popup.
-                ObsidianMonthCalendar {
+                NexusMonthCalendar {
                     id: plannerMonthCalendar
                     visible: root.plannerPresentation
                     // Direct width avoids a responsive implicitWidth cycle.

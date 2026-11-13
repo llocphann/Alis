@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 
 import qs.modules.common
 import qs.modules.common.widgets
@@ -14,7 +15,21 @@ Item {
     required property var pages
     required property int requestedIndex
     property bool loadEnabled: true
+    property bool backgroundWarmup: false
     property int cacheLimit: 2
+
+    function _syncAvailablePages(): void {
+        SettingsLayoutManager.availablePages = root.pages ?? []
+        const navIndices = SettingsPageRegistry.navigationPageIndexes(false) ?? []
+        SettingsLayoutManager.availableNavigationPages = navIndices.map(idx => ({
+            index: idx,
+            pageIndex: idx,
+            name: root.pages?.[idx]?.name ?? ("Page " + idx),
+            icon: root.pages?.[idx]?.icon ?? "settings"
+        }))
+    }
+
+    onPagesChanged: root._syncAvailablePages()
 
     signal pageNavigationRequested(int pageIndex)
 
@@ -26,12 +41,21 @@ Item {
             return
         if (item.hasOwnProperty("_persistedSectionRestored"))
             item._persistedSectionRestored = true
-        if (item.hasOwnProperty("activeSection"))
+        if (item.hasOwnProperty("customActiveSubTab")) {
+            const isCustom = sectionValue.startsWith("subtab-")
+                || Boolean(item.effectiveSubTabSpecs && item.effectiveSubTabSpecs.some(s => s && s.key === sectionValue && s.custom))
+            item.customActiveSubTab = isCustom ? sectionValue : ""
+        }
+        if (typeof item.activateSettingsSearchSection === "function")
+            item.activateSettingsSearchSection(sectionValue)
+        else if (item.hasOwnProperty("activeSection"))
             item.activeSection = sectionValue
         if (item.settingsTaskNavigator && typeof item.settingsTaskNavigator.selected === "function")
             item.settingsTaskNavigator.selected(sectionValue)
         if (typeof item._savePersistedSection === "function")
             item._savePersistedSection()
+        if (typeof item._updateCardTabs === "function" && !item.embedded)
+            item._updateCardTabs()
         if (typeof item._scheduleCardTabsUpdate === "function")
             item._scheduleCardTabsUpdate()
     }
@@ -57,14 +81,24 @@ Item {
         return []
     }
 
+    readonly property bool showingCustomTab: SettingsLayoutManager.activeCustomTabId.length > 0
+    readonly property var _donorIndices: SettingsLayoutManager.getDonorPageIndexes(
+        root.showingCustomTab ? -1 : root._currentIndex,
+        SettingsLayoutManager.activeCustomTabId
+    )
+
     readonly property int currentIndex: _currentIndex
-    readonly property bool error: _errorIndex === requestedIndex
+    readonly property bool error: !showingCustomTab && _errorIndex === requestedIndex
     readonly property Item currentItem: {
         void(_statusRevision)
+        if (root.showingCustomTab && customTabLoader.item)
+            return customTabLoader.item
         const loader = _loaderFor(_currentIndex)
         return loader?.item ?? null
     }
     readonly property bool loading: {
+        if (typeof showingCustomTab !== "undefined" && showingCustomTab)
+            return false
         return PageLoadState.shouldShow(
             loadEnabled, requestedIndex, pages.length,
             _sourceFor(requestedIndex) !== "",
@@ -88,6 +122,14 @@ Item {
 
     clip: _transitionRunning
 
+    on_DonorIndicesChanged: Qt.callLater(root._syncResidency)
+    onShowingCustomTabChanged: {
+        if (!root.showingCustomTab && customTabLoader.item && typeof customTabLoader.item._returnAllForeignCardsToOrigin === "function") {
+            customTabLoader.item._returnAllForeignCardsToOrigin()
+        }
+        root._syncResidency()
+    }
+
     function _sourceFor(index) {
         if (index < 0 || index >= pages.length)
             return ""
@@ -108,14 +150,22 @@ Item {
     }
 
     function _syncResidency() {
+        if (!root.showingCustomTab && customTabLoader.item && typeof customTabLoader.item._returnAllForeignCardsToOrigin === "function") {
+            customTabLoader.item._returnAllForeignCardsToOrigin()
+        }
+        const donors = root._donorIndices ?? []
         for (let index = 0; index < pageRepeater.count; index++) {
             const loader = pageRepeater.itemAt(index)
             if (!loader)
                 continue
             const shouldBeActive = loadEnabled
-                && _retainedIndices.indexOf(index) >= 0
-            if (loader.active !== shouldBeActive)
+                && (_retainedIndices.indexOf(index) >= 0 || donors.indexOf(index) >= 0)
+            if (loader.active !== shouldBeActive) {
+                if (!shouldBeActive && loader.item && typeof loader.item._returnAllForeignCardsToOrigin === "function") {
+                    loader.item._returnAllForeignCardsToOrigin()
+                }
                 loader.active = shouldBeActive
+            }
         }
     }
 
@@ -136,7 +186,8 @@ Item {
     }
 
     function _trimCache() {
-        const limit = Math.max(2, cacheLimit)
+        const donors = root._donorIndices ?? []
+        const limit = Math.max(2, cacheLimit) + donors.length
         let retained = _retainedIndices.slice()
         let lru = _lruIndices.slice()
 
@@ -146,7 +197,8 @@ Item {
                 const candidate = lru[i]
                 if (candidate !== _currentIndex
                         && candidate !== _pendingIndex
-                        && candidate !== requestedIndex) {
+                        && candidate !== requestedIndex
+                        && donors.indexOf(candidate) < 0) {
                     evictIndex = candidate
                     lru.splice(i, 1)
                     break
@@ -167,6 +219,9 @@ Item {
         _requestGeneration++
         switchAnimation.stop()
         _transitionRunning = false
+        if (customTabLoader.item && typeof customTabLoader.item._returnAllForeignCardsToOrigin === "function") {
+            customTabLoader.item._returnAllForeignCardsToOrigin()
+        }
         _currentIndex = -1
         _pendingIndex = -1
         _retainedIndices = []
@@ -370,6 +425,8 @@ Item {
     }
 
     onRequestedIndexChanged: {
+        if (SettingsLayoutManager.activeCustomTabId.length > 0)
+            SettingsLayoutManager.activeCustomTabId = ""
         root._scheduleRequestPage()
     }
     onLoadEnabledChanged: {
@@ -380,6 +437,7 @@ Item {
     }
     onCacheLimitChanged: _trimCache()
     Component.onCompleted: {
+        root._syncAvailablePages()
         SettingsArrangement.migrateLegacyPageIndices()
         root._scheduleRequestPage()
     }
@@ -388,6 +446,20 @@ Item {
         function onReadyChanged(): void {
             if (Config.ready)
                 SettingsArrangement.migrateLegacyPageIndices()
+        }
+    }
+
+    Loader {
+        id: customTabLoader
+        anchors.fill: parent
+        active: root.loadEnabled && root.showingCustomTab
+        visible: active && root.showingCustomTab
+        z: 5
+        sourceComponent: CustomSettingsTabPage {}
+        onActiveChanged: {
+            root._statusRevision++
+            if (active)
+                root._syncResidency()
         }
     }
 
@@ -404,9 +476,11 @@ Item {
             // Imperative residency avoids a Loader construction feedback cycle.
             active: false
             source: root._sourceFor(index)
-            asynchronous: index !== root._currentIndex
-            visible: active && (index === root._currentIndex || index === root._pendingIndex)
-            enabled: index === root._currentIndex
+            asynchronous: index !== root._currentIndex || root.backgroundWarmup
+                || ((Quickshell.env("QT_QUICK_BACKEND") !== "software") && status === Loader.Loading)
+            visible: active && !root.showingCustomTab && (index === root._currentIndex || index === root._pendingIndex)
+            enabled: !root.showingCustomTab
+                && index === root._currentIndex
                 && root._pendingIndex < 0
                 && !root._transitionRunning
             z: index === root._pendingIndex ? 1 : 0
@@ -428,6 +502,9 @@ Item {
                 if (item && typeof item._updateCardTabs === "function" && !item.embedded) {
                     item._updateCardTabs()
                 }
+                if (root.currentItem && root.currentItem !== item && typeof root.currentItem._scheduleCardTabsUpdate === "function") {
+                    root.currentItem._scheduleCardTabsUpdate()
+                }
             }
             Connections {
                 target: pageLoader.item && pageLoader.item.hasOwnProperty("categorySiblingPages") ? pageLoader.item : null
@@ -436,6 +513,12 @@ Item {
                     root._pendingFromSubTabIndex = pageLoader.item ? (pageLoader.item._activeSubTabIndex ?? -1) : -1
                     root._pendingSectionPageIndex = -1
                     root._pendingSection = ""
+                    const targetLoader = root._loaderFor(targetPageIndex)
+                    if (targetLoader && targetLoader.item && targetLoader.item.hasOwnProperty("customActiveSubTab") && targetLoader.item.customActiveSubTab.length > 0) {
+                        targetLoader.item.customActiveSubTab = ""
+                        if (typeof targetLoader.item._updateCardTabs === "function" && !targetLoader.item.embedded)
+                            targetLoader.item._updateCardTabs()
+                    }
                     root.pageNavigationRequested(targetPageIndex)
                 }
                 function onPageSectionNavigationRequested(targetPageIndex: int, targetSection: string): void {
@@ -454,8 +537,9 @@ Item {
         }
 
         onItemAdded: (index, item) => {
+            const donors = root._donorIndices ?? []
             item.active = root.loadEnabled
-                && root._retainedIndices.indexOf(index) >= 0
+                && (root._retainedIndices.indexOf(index) >= 0 || donors.indexOf(index) >= 0)
         }
     }
 

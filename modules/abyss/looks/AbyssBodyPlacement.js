@@ -28,7 +28,7 @@ function _steps(full, minimum, extra) {
 }
 function _blockerFitSteps(request, fullSpan, fullDepth, minSpan, minDepth, accepted, gap, width, height, insets) {
     var extraSpans = [], extraDepths = [];
-    if (!request || !request.record || !accepted || !accepted.length)
+    if (!request || !request.record)
         return {spans: extraSpans, depths: extraDepths};
     var record = request.record, edge = record.edge;
     var horizontal = edge === "top" || edge === "bottom";
@@ -37,6 +37,19 @@ function _blockerFitSteps(request, fullSpan, fullDepth, minSpan, minDepth, accep
     var padding = Math.max(0, _number(request.padding, inferredPadding));
     var anchorCenter = record.along + record.span / 2;
     var minimumInward = Math.max(0, _number(request.minimumInward, 0));
+    var oppositeClearance = Math.max(0, _number(request.oppositeClearance, 0));
+    if (minimumInward > 0 || oppositeClearance > 0) {
+        var viewportFitDepth = (horizontal
+            ? height - insets.top - insets.bottom
+            : width - insets.left - insets.right) - minimumInward - oppositeClearance;
+        if (viewportFitDepth >= minDepth && viewportFitDepth <= fullDepth) {
+            extraDepths.push(viewportFitDepth);
+            if (request.preserveAspect === true && fullDepth > 0)
+                extraSpans.push(Math.max(minSpan, Math.min(fullSpan, fullSpan * (viewportFitDepth / fullDepth))));
+        }
+    }
+    if (!accepted || !accepted.length)
+        return {spans: extraSpans, depths: extraDepths};
     accepted.forEach(function(other) {
         var maxContentDepth;
         if (horizontal) {
@@ -118,6 +131,25 @@ function _within(rect, width, height, insets) {
         && rect.x >= insets.left-.01 && rect.y >= insets.top-.01
         && rect.x+rect.width <= width-insets.right+.01
         && rect.y+rect.height <= height-insets.bottom+.01;
+}
+function _withinOpposite(rect, request, depth, width, height, insets) {
+    var oppositeClearance = Math.max(0, _number(request && request.oppositeClearance, 0));
+    if (oppositeClearance <= 0) return true;
+    var record = request.record, edge = record.edge;
+    var horizontal = edge === "top" || edge === "bottom";
+    var fullContentSpan = horizontal ? record.content.width : record.content.height;
+    var inferredPadding = Math.max(0, (record.span - fullContentSpan) / 2);
+    var padding = Math.max(0, _number(request.padding, inferredPadding));
+    var crossPadding = Math.min(padding, depth / 2);
+    if (edge === "top")
+        return rect.y + rect.height + crossPadding <= height - insets.bottom - oppositeClearance + .01;
+    if (edge === "bottom")
+        return rect.y - crossPadding >= insets.top + oppositeClearance - .01;
+    if (edge === "left")
+        return rect.x + rect.width + crossPadding <= width - insets.right - oppositeClearance + .01;
+    if (edge === "right")
+        return rect.x - crossPadding >= insets.left + oppositeClearance - .01;
+    return true;
 }
 function _collides(rect, accepted, gap) {
     return accepted.some(function(other) {
@@ -269,7 +301,7 @@ function arrange(requests, width, height, insets, gap) {
         var placement = null;
         var minimumInward = Math.max(0,_number(request.minimumInward,0));
         var baseRect = _contentRect(request,fullSpan,fullDepth,minimumInward,width,height,insets);
-        if (_within(baseRect,width,height,insets) && !_collides(baseRect,accepted,gap)) {
+        if (_within(baseRect,width,height,insets) && _withinOpposite(baseRect,request,fullDepth,width,height,insets) && !_collides(baseRect,accepted,gap)) {
             var baseCenter = record.along+record.span/2;
             placement = {
                 visible:true,
@@ -293,7 +325,7 @@ function arrange(requests, width, height, insets, gap) {
                 for (var t=0; t<tiers.length && !placement; t++) {
                     var rect = _contentRect(request,size.span,size.depth,tiers[t],
                         width,height,insets);
-                    if (!_within(rect,width,height,insets) || _collides(rect,accepted,gap))
+                    if (!_within(rect,width,height,insets) || !_withinOpposite(rect,request,size.depth,width,height,insets) || _collides(rect,accepted,gap))
                         continue;
                     var anchorCenter = record.along+record.span/2;
                     placement = {

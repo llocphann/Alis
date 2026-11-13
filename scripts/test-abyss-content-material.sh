@@ -2,6 +2,10 @@
 # GPU pixel evidence for independent body opacity/blur in the one field pass.
 set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "${ALIS_SILENT_WL_WRAPPED:-0}" != "1" ]]; then
+    export ALIS_SILENT_WL_WRAPPED=1
+    exec bash "$repo_root/scripts/lib/silent-wayland-run.sh" -- "$0" "$@"
+fi
 if ! command -v qs >/dev/null || [[ -z "${WAYLAND_DISPLAY:-}" ]];then printf 'SKIP: content material (Quickshell/Wayland unavailable)\n';exit 0;fi
 material_test_root="$(mktemp -d)"
 trap 'rm -rf -- "$material_test_root"' EXIT

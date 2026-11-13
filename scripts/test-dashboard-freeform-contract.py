@@ -35,7 +35,7 @@ def main() -> None:
     weather = read("modules/dashboard/DashWeather.qml")
     orbital = read("modules/bar/weather/OrbitalWeather.qml")
     calendar = read("modules/dashboard/DashCalendar.qml")
-    month = read("modules/common/widgets/ObsidianMonthCalendar.qml")
+    month = read("modules/common/widgets/NexusMonthCalendar.qml")
     media = read("modules/dashboard/DashMedia.qml")
     welcome = read("modules/dashboard/DashWelcome.qml")
     todo = read("modules/dashboard/DashTodo.qml")
@@ -198,36 +198,32 @@ def main() -> None:
 
     for token in (
         "required property var canvasController",
-        "visible: root.editing",
+        "visible: root.editing || root.naming",
         "bottomLeftRadius: root.abyssMode ? radius : 0",
         "bottomRightRadius: root.abyssMode ? radius : 0",
         'Translation.tr("Edit widgets")',
-        "id: editActions",
+        "AbyssCustomizationDock {",
+        "AbyssCustomizationTile {",
+        "id: modulesGalleryViewport",
+        "id: modulesGalleryRow",
         "horizontalAlignment: Text.AlignHCenter",
         "focusPolicy: Qt.StrongFocus",
         "root.canvasController.toggleAutoAdjustSize()",
         "border.width: tool.visualFocus ? 2 : (tool.toggled ? 1 : 0)",
-        "id: toolbarRow",
-        "id: editActions",
-        "id: availableModulesViewport",
-        "id: availableModulesRow",
-        "readonly property real toolbarRowNaturalWidth:",
-        "root.availableModulesNaturalWidth",
-        "Layout.preferredWidth: root.availableModulesNaturalWidth",
         "flickableDirection: Flickable.HorizontalFlick",
         "interactive: contentWidth > width",
-        "implicitWidth: Math.ceil(Math.max(",
-        "toolbarTitle.implicitWidth",
-        "root.toolbarRowNaturalWidth",
+        "readonly property real editToolbarHeight: dock.implicitHeight",
+        "implicitHeight: root.editToolbarHeight",
         "readonly property real horizontalPadding: root.abyssMode",
     ):
         require(toolbar, token, "DashboardEditToolbar.qml")
     forbid(toolbar, "Flow {", "DashboardEditToolbar.qml")
 
-    # Edit toolbar is above the Abyss body and must register a native region:
-    # painting the buttons alone is insufficient with a masked PanelWindow.
+    # Edit customization dock connects to the bottom Abyss Screen Edge and
+    # registers its own native input region on the masked PanelWindow.
     for token in (
         'import Quickshell',
+        'edge: "bottom"',
         'readonly property rect toolbarInputBounds: root.enabled',
         'readonly property Region toolbarInputRegion: Region {',
         'nativeInputRegion: root.toolbarInputRegion',
@@ -235,6 +231,8 @@ def main() -> None:
         'onActivated: root.canvasController.cancelEditMode()',
     ):
         require(abyss_toolbar_host, token, "AbyssDashboardEditPopup.qml")
+    require(abyss_content, 'readonly property real bottomControlReserve:',
+            "AbyssDashboardContent.qml")
     require(abyss_controller, 'participants[key]?.nativeInputRegion',
             "AbyssSurfaceController.qml")
     require(abyss_perimeter,
@@ -265,11 +263,10 @@ def main() -> None:
     require(abyss_perimeter, 'window.cancelDashboardEditFromEscape()',
             "AbyssPerimeter.qml")
 
-    # Icon/button centering and the occasional ninth button must not overflow
-    # an eighth-column-only layout.
+    # Quick-action icon alignment and 2-tier dock sizing must stay centered
+    # without feeding child layout width back into the outer dock width.
     for token in (
-        "readonly property int visibleActionCount:",
-        "Math.min(root.visibleActionCount,",
+        "headerOverlayActive: root.naming",
         "Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter",
         "implicitWidth: tool.implicitWidth",
         "implicitHeight: tool.implicitHeight",
@@ -278,9 +275,8 @@ def main() -> None:
     ):
         require(toolbar, token, "DashboardEditToolbar.qml")
 
-    # The adaptive GridLayout is assigned the toolbar's width; feeding its
-    # implicit width back into that same width creates a sizing cycle.
     forbid(toolbar, "editActions.implicitWidth", "Dashboard toolbar width dependency")
+    forbid(toolbar, "implicitWidth: dock.implicitWidth", "Dashboard toolbar width dependency")
     for source, text in (
         ("Dashboard.qml", standalone),
         ("OverviewDashboard.qml", overview),
@@ -353,7 +349,7 @@ def main() -> None:
         "CalendarWidget.qml")
     require(month,
         "? Math.max(root.implicitWidth, root.width)",
-        "ObsidianMonthCalendar.qml")
+        "NexusMonthCalendar.qml")
 
     for token in (
         "radius: Appearance.rounding.small",
@@ -385,7 +381,7 @@ def main() -> None:
         "function isoWeekNumber(value): int",
         'text: Translation.tr("WK")',
     ):
-        require(month, token, "ObsidianMonthCalendar.qml")
+        require(month, token, "NexusMonthCalendar.qml")
 
     require(media, "import qs.modules.mediaControls", "DashMedia.qml")
     require(media, "EqualizerPanel {", "DashMedia.qml")

@@ -53,6 +53,36 @@ Singleton {
     readonly property bool mprisAvailable: mprisPlayer !== null
     property bool mpdConnected: false
     readonly property bool available: mpdConnected
+    property var _pendingExternalFiles: []
+    onAvailableChanged: if (available) Qt.callLater(root._flushExternalFiles)
+
+    function openExternalFiles(files): string {
+        if (!root.enabled) return "error: Local Music is unavailable"
+        if (!Array.isArray(files)) return "error: expected audio paths"
+        if (files.length === 0) return "ok"
+        root._pendingExternalFiles = root._pendingExternalFiles.concat(files)
+        if (root.available) Qt.callLater(root._flushExternalFiles)
+        else root.rescan()
+        return "ok: queued audio paths"
+    }
+
+    function _flushExternalFiles(): void {
+        if (!root.available || root._pendingExternalFiles.length === 0) return
+        const files = root._pendingExternalFiles
+        root._pendingExternalFiles = []
+        const prefix = root.libraryFolder.replace(/\/+$/, "") + "/"
+        files.forEach((raw, index) => {
+            let path = String(raw)
+            if (path.startsWith("file://")) {
+                try { path = decodeURIComponent(path.slice(7)) } catch (e) {}
+            }
+            // MPD library members use relative database URIs; external local
+            // files use MPD's file URI support and retain its failure receipt.
+            const uri = path.startsWith(prefix) ? path.slice(prefix.length)
+                : path.startsWith("/") ? "file://" + path : path
+            root.enqueueTrack({uri: uri}, index === 0)
+        })
+    }
 
     property bool scanning: false
     property string error: ""

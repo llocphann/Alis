@@ -12,7 +12,6 @@ depends=(
   wireplumber
 
   # Media control
-  playerctl
   libdbusmenu-gtk3
   pavucontrol
 
@@ -28,4 +27,5 @@ depends=(
 optdepends=(
   'easyeffects: optional audio effects and equalizer backend'
   'socat: optional EasyEffects control transport for equalizer'
+  'playerctl: optional MPRIS CLI utility'
 )

@@ -409,7 +409,8 @@ Singleton {
                 { mods: ["Super"], key: "E", comment: "File manager" },
                 { mods: ["Super", "Shift"], key: "E", comment: "File manager (new window)" },
                 { mods: ["Super"], key: "W", comment: "Browser" },
-                { mods: ["Super", "Shift"], key: "W", comment: "Browser (new window)" }
+                { mods: ["Super", "Shift"], key: "W", comment: "Browser (new window)" },
+                { mods: ["Super"], key: "O", comment: "Nexus" }
             ]}]
         },
         {

@@ -11,8 +11,8 @@ todo_service = (ROOT / "services/Todo.qml").read_text(encoding="utf-8")
 dash = (ROOT / "modules/dashboard/DashNotes.qml").read_text(encoding="utf-8")
 quick_notes = (ROOT / "modules/sidebarRight/notepad/QuickNotesView.qml").read_text(encoding="utf-8")
 settings = (ROOT / "modules" / "settings" / "IntegrationsConfig.qml").read_text(encoding="utf-8")
-obsidian_settings = (ROOT / "modules" / "settings" / "ObsidianThemeSettings.qml").read_text(encoding="utf-8")
-shared_settings = settings + obsidian_settings
+nexus_settings = (ROOT / "modules" / "settings" / "NexusThemeSettings.qml").read_text(encoding="utf-8")
+shared_settings = settings + nexus_settings
 system_services = (ROOT / "modules" / "settings" / "ServicesConfig.qml").read_text(encoding="utf-8")
 assert 'title: Translation.tr("To-do & Quick Notes")' not in system_services
 qmldir = (ROOT / "services/qmldir").read_text(encoding="utf-8")
@@ -88,15 +88,15 @@ assert 'text: Translation.tr("Capture")' not in dash
 
 # Generic shared-vault resolution and optional routing remain host-owned.
 assert "readonly property string sharedVaultPath:" in todo_service
-assert 'Config.options?.todo?.obsidian?.vaultPath ?? ""' in todo_service
+assert 'Config.options?.todo?.nexus?.vaultPath ?? ""' in todo_service
 assert 'Config.options?.notes?.zettelkasten?.vaultPath ?? ""' in todo_service
 assert todo_service.count("vaultPath: root.sharedVaultPath") == 2
 assert "notes.zettelkasten.vaultPath" not in service
 assert 'GlobalStates.openSettingsSection(7, "To-do & Quick Notes")' in quick_notes
 
-# The optional package owns the shared Obsidian path editor. Core owns only
+# The optional package owns the shared Nexus path editor. Core owns only
 # navigation metadata and a selected/disposable settings loader.
-assert 'active: AlisIntergration.obsidianEnabled' in obsidian_settings
-assert 'source: AlisIntergration.settingsSource("obsidian")' in obsidian_settings
-assert 'property string settingsTaskSection:' in obsidian_settings
-assert 'id: todoObsidianVaultPath' not in settings
+assert 'active: AlisIntergration.nexusEnabled' in nexus_settings
+assert 'source: AlisIntergration.settingsSource("nexus")' in nexus_settings
+assert 'property string settingsTaskSection:' in nexus_settings
+assert 'id: todoNexusVaultPath' not in settings

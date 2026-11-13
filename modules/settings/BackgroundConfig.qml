@@ -23,7 +23,7 @@ ContentPage {
         return Math.max(leftH, rightH)
     }
     readonly property real targetScalingCardHeight: Math.max(
-        420,
+        240,
         SettingsMaterialPreset.standardBentoHeight - SettingsMaterialPreset.pageSpacing - root.bottomBentoHeight
     )
 
@@ -1078,13 +1078,17 @@ SettingsCardSection {
             title: Translation.tr("Transition style")
 
             ConfigSelectionArray {
-                currentValue: ["alisMelt"].includes(Config.options?.background?.transition?.type) ? "alisMelt"
+                currentValue: ["alisMelt", "inirMelt"].includes(Config.options?.background?.transition?.type) ? "alisMelt"
+                    : Config.options?.background?.transition?.type === "wallfx" ? "wallfx"
                     : AwwwBackend.normalizedAwwwTransitionType(Config.options?.background?.transition?.type ?? "alisMelt",Config.options?.background?.transition?.direction ?? "right")
                 onSelected: newValue => {
                     Config.setNestedValue("background.transition.type", newValue);
+                    if (newValue === "wallfx")
+                        Wallpapers.refreshWallfxStatus()
                 }
                 options: [
                     { displayName:Translation.tr("Liquid"),icon:"water",value:"alisMelt" },
+                    { displayName: Translation.tr("Outline (Favourites)"), icon: "draw", value: "wallfx" },
                     { displayName: Translation.tr("Fade"), icon: "motion_photos_on", value: "fade" },
                     { displayName: Translation.tr("From left"), icon: "west", value: "left" },
                     { displayName: Translation.tr("From right"), icon: "east", value: "right" },
@@ -1097,6 +1101,50 @@ SettingsCardSection {
                     { displayName: Translation.tr("Outer"), icon: "blur_circular", value: "outer" },
                     { displayName: Translation.tr("Random"), icon: "casino", value: "random" }
                 ]
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: 6
+                spacing: 6
+                visible: Config.options?.background?.transition?.type === "wallfx"
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Wallpapers.wallfxStatusMessage.length > 0
+                            ? Wallpapers.wallfxStatusMessage
+                            : (Wallpapers.wallfxAiAvailable
+                                ? `${Wallpapers.favouriteCount} ♥ Favourites · ${Wallpapers.wallfxPerfilCached} character outlines cached`
+                                : `${Wallpapers.favouriteCount} ♥ Favourites · Using cellular contagion spread (AI character cutout optional)`)
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.colors.colOnLayer1
+                        wrapMode: Text.WordWrap
+                    }
+
+                    RippleButtonWithIcon {
+                        visible: !Wallpapers.wallfxAiAvailable
+                        enabled: !Wallpapers.wallfxAiInstalling
+                        materialIcon: "downloading"
+                        mainText: Wallpapers.wallfxAiInstalling
+                            ? Translation.tr("Installing...")
+                            : Translation.tr("Install AI Cutout")
+                        onClicked: Wallpapers.installWallfxAi()
+                    }
+
+                    RippleButtonWithIcon {
+                        visible: Wallpapers.wallfxAiAvailable
+                        enabled: !Wallpapers.wallfxBakingFavourites
+                        materialIcon: "auto_fix_high"
+                        mainText: Wallpapers.wallfxBakingFavourites
+                            ? Translation.tr("Baking...")
+                            : Translation.tr("Bake Favourites")
+                        onClicked: Wallpapers.bakeFavouriteWallpapers()
+                    }
+                }
             }
         }
 
@@ -1164,10 +1212,10 @@ SettingsCardSection {
                 id: scalingSettingsColumn
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.preferredWidth: 32
-                Layout.maximumWidth: 340
+                Layout.preferredWidth: 42
+                Layout.maximumWidth: 400
                 Layout.alignment: Qt.AlignTop
-                spacing: SettingsMaterialPreset.groupSpacing
+                spacing: Math.max(4, SettingsMaterialPreset.groupSpacing - 1)
 
                 ContentSubsection {
                     title: Translation.tr("Fill crops, Fit shows bars")

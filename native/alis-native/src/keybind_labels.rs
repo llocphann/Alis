@@ -111,6 +111,11 @@ const KB_IPC_MAP: &[((&str, &str), &str)] = &[
     (("launcher", "editor"), "Text editor"),
     (("launcher", "editor-new"), "Text editor (new window)"),
     (("launcher", "close-window"), "Close window"),
+    (("nexus", "toggle"), "Nexus"),
+    (("nexus", "open"), "Nexus"),
+    (("nexus", "openOverlay"), "Nexus (overlay)"),
+    (("nexus", "openWindow"), "Nexus (window)"),
+    (("nexus", "daily"), "Nexus (daily note)"),
 ];
 
 const KB_TERMINALS: &[&str] = &[
@@ -362,7 +367,9 @@ pub(super) fn action_category(description: &str, action: &str) -> &'static str {
         if target == "region" {
             return "Screenshots";
         }
-        if (target == "launcher" || target == "browser") && function != "close-window" {
+        if (target == "launcher" || target == "browser" || target == "nexus")
+            && function != "close-window"
+        {
             return "Applications";
         }
         if target == "altSwitcher" {
@@ -390,7 +397,10 @@ pub(super) fn action_category(description: &str, action: &str) -> &'static str {
     ) {
         return "Screenshots";
     }
-    if contains_any(&desc, &["terminal", "file manager", "browser", "text editor"]) {
+    if contains_any(
+        &desc,
+        &["terminal", "file manager", "browser", "text editor", "nexus"],
+    ) {
         return "Applications";
     }
     if KB_TERMINALS
@@ -519,6 +529,11 @@ mod tests {
                 "spawn \"/home/user/.local/bin/alis\" \"ipc\" \"wull\" \"chat\"",
                 "Companion Chatbox",
                 "Alis Shell",
+            ),
+            (
+                "spawn \"alis\" \"nexus\" \"toggle\"",
+                "Nexus",
+                "Applications",
             ),
             (
                 "spawn \"wpctl\" \"set-volume\" \"@DEFAULT_AUDIO_SINK@\" \"5%+\"",

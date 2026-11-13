@@ -480,6 +480,7 @@ Item {
         "activeWindow": activeWindowComponent,
         "resources": resourcesModuleComponent,
         "media": mediaModuleComponent,
+        "cava": cavaModuleComponent,
         "workspaces": workspacesModuleComponent,
         "clock": clockModuleComponent,
         "utilButtons": utilButtonsModuleComponent,
@@ -1282,6 +1283,18 @@ Item {
             visible: active
             sourceComponent: BarGroup {
                 WeatherBar {}
+            }
+        }
+    }
+    Component {
+        id: cavaModuleComponent
+        Loader {
+            active: root._moduleVisible("cava")
+            visible: active
+            sourceComponent: BarGroup {
+                BarCavaEqualizerModule {
+                    vertical: false
+                }
             }
         }
     }

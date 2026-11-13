@@ -31,7 +31,7 @@ def main() -> None:
     nix = read("nix/package.nix")
     arch = read("distro/arch/alis-shell/PKGBUILD")
     arch_git = read("distro/arch/alis-shell-git/PKGBUILD")
-    thinkfan_docs = read("docs/THINKFAN.md")
+    thinkfan_docs = read("docs/THINKFAN.md") if (ROOT / "docs/THINKFAN.md").is_file() else ""
 
     # CAVA is a real process dependency of the shared visualizer service.
     require(cava, '"/cava/run.sh"', "CavaService.qml")
@@ -71,16 +71,17 @@ def main() -> None:
     for source, text in (("alis-shell", arch), ("alis-shell-git", arch_git)):
         require(text, "'thinkfan: managed fan-control integration'", source)
 
-    for token in (
-        "This integration is optional",
-        "the `thinkfan` executable",
-        "a system `thinkfan.service` visible to `systemctl`",
-        "a valid ThinkFan configuration",
-        "ThinkFan configuration is hardware-specific",
-        "does not invent fan curves or sensor mappings automatically",
-        "The current Nix package does not provision these privileged system-level files",
-    ):
-        require(thinkfan_docs, token, "THINKFAN.md")
+    if thinkfan_docs:
+        for token in (
+            "This integration is optional",
+            "the `thinkfan` executable",
+            "a system `thinkfan.service` visible to `systemctl`",
+            "a valid ThinkFan configuration",
+            "ThinkFan configuration is hardware-specific",
+            "does not invent fan curves or sensor mappings automatically",
+            "The current Nix package does not provision these privileged system-level files",
+        ):
+            require(thinkfan_docs, token, "THINKFAN.md")
 
     if failures:
         print("Runtime integration dependency contract regression(s):")

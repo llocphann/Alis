@@ -127,11 +127,11 @@ retired_integrations=(
   assets/polkit/org.alis.battery-charge-limit.policy
   assets/polkit/org.alis.thinkfan.policy
   assets/tlp/tlp-settings-schema.json
-  scripts/integrations/obsidian_theme.py
+  scripts/integrations/nexus_theme.py
   scripts/notes/zettelkasten.py
-  scripts/todo/obsidian_todo.py
-  scripts/todo/obsidian_daily_todo.py
-  scripts/todo/obsidian_tasks.py
+  scripts/todo/nexus_todo.py
+  scripts/todo/nexus_daily_todo.py
+  scripts/todo/nexus_tasks.py
 )
 for relative in "${retired_integrations[@]}"; do
   [[ ! -e "$runtime_dir/$relative" ]] || { printf 'FAIL: duplicate optional payload installed in core: %s\n' "$relative" >&2; exit 1; }

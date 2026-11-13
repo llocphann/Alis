@@ -2,15 +2,21 @@
 # Integrate the real service/pixel pipeline with isolated fake brightness devices.
 set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "${ALIS_SILENT_WL_WRAPPED:-0}" != "1" ]]; then
+    export ALIS_SILENT_WL_WRAPPED=1
+    exec bash "$repo_root/scripts/lib/silent-wayland-run.sh" --need-niri -- "$0" "$@"
+fi
 if ! command -v qs >/dev/null || ! command -v grim >/dev/null || ! command -v magick >/dev/null || [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
     printf 'SKIP: anti-flashbang brightness integration (desktop capture unavailable)\n';exit 0
 fi
 brightness_test_root="$(mktemp -d)"
 trap 'rm -rf -- "$brightness_test_root"' EXIT
-for entry in modules services GlobalStates.qml qmldir assets scripts defaults translations; do
+for entry in modules services GlobalStates.qml qmldir assets scripts defaults translations native; do
     ln -s "$repo_root/$entry" "$brightness_test_root/$entry"
 done
-mkdir -p "$brightness_test_root/config/illogical-impulse" "$brightness_test_root/bin"
+mkdir -p "$brightness_test_root/config/illogical-impulse" "$brightness_test_root/bin" "$brightness_test_root/sysfs/test-backlight"
+printf '50\n' > "$brightness_test_root/sysfs/test-backlight/brightness"
+printf '100\n' > "$brightness_test_root/sysfs/test-backlight/max_brightness"
 cp "$repo_root/defaults/config.json" "$brightness_test_root/config/illogical-impulse/config.json"
 cat > "$brightness_test_root/bin/brightnessctl" <<'PY'
 #!/usr/bin/env python3
@@ -110,6 +116,7 @@ QML
 status=0
 env -u QS_CONFIG_PATH -u QS_CONFIG_NAME -u QS_MANIFEST QT_QPA_PLATFORM=wayland \
     PATH="$brightness_test_root/bin:$PATH" ANTI_TEST_WRITES="$brightness_test_root/writes" \
+    ALIS_BACKLIGHT_SYSFS_DIR="$brightness_test_root/sysfs" ALIS_BACKLIGHT_WRITE_LOG="$brightness_test_root/writes" \
     ANTI_TEST_FRAME="$brightness_test_root/fixture.png" ANTI_TEST_REAL_GRIM="$real_grim" \
     XDG_CONFIG_HOME="$brightness_test_root/config" XDG_STATE_HOME="$brightness_test_root/state" \
     XDG_CACHE_HOME="$brightness_test_root/cache" timeout 20s qs -p "$brightness_test_root" --no-color \

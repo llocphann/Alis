@@ -33,7 +33,7 @@ def main() -> None:
     uninstall_lib = read("sdata/lib/uninstall.sh")
     migration_engine = read("sdata/lib/migrations.sh")
     setup_entrypoint = read("setup")
-    thinkfan_docs = read("docs/THINKFAN.md")
+    thinkfan_docs = read("docs/THINKFAN.md") if (ROOT / "docs/THINKFAN.md").is_file() else ""
 
     for token in (
         "ThinkFanService.refresh()",
@@ -262,7 +262,13 @@ def main() -> None:
 
     check("AlisIntergration.session?.thinkfan" in thinkfan_service, "fan facade lost its optional owner")
     check("Process {" not in thinkfan_service and "Timer {" not in thinkfan_service, "fan facade retained duplicate polling")
-    check("[Alis-Intergration](https://github.com/llocphann/Alis-Intergration)" in thinkfan_docs, "fan documentation must identify the official optional owner")
+    check("fanEffortSlider" in resources_popup and 'Translation.tr("Follow power profile")' in resources_popup,
+          "System Monitor popup must keep the manual fan slider and Follow power profile switch")
+    for pruned in ("fanSparklineCanvas", "presetRow", 'Translation.tr("Quiet")', 'Translation.tr("Performance")'):
+        check(pruned not in resources_popup,
+              f"Streamlined System Monitor popup must not retain retired graph/preset buttons: {pruned}")
+    if thinkfan_docs:
+        check("[Alis-Intergration](https://github.com/llocphann/Alis-Intergration)" in thinkfan_docs, "fan documentation must identify the official optional owner")
 
     if failures:
         print("ThinkFan/System Monitor contract regression(s):")

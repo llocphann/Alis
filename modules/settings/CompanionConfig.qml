@@ -18,6 +18,12 @@ Item {
     signal pageNavigationRequested(int targetPageIndex)
     signal pageSectionNavigationRequested(int targetPageIndex, string targetSection)
 
+    function refreshCompanionModels(): void {
+        if (settingsLoader.item && typeof settingsLoader.item.refreshCompanionModels === "function") {
+            settingsLoader.item.refreshCompanionModels()
+        }
+    }
+
     Loader {
         id: settingsLoader
         anchors.fill: parent

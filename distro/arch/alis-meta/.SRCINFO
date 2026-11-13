@@ -1,6 +1,6 @@
 pkgbase = alis-meta
 	pkgdesc = Full Alis desktop experience meta-package
-	pkgver = 1.0.1
+	pkgver = 1.0.0
 	pkgrel = 1
 	url = https://github.com/llocphann/Alis
 	arch = any
@@ -28,7 +28,6 @@ pkgbase = alis-meta
 	depends = gowall-bin
 	depends = gum
 	depends = hicolor-icon-theme
-	depends = hyprpicker
 	depends = imagemagick
 	depends = alis-shell
 	depends = kconfig

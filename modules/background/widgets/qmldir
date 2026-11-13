@@ -5,3 +5,4 @@ CustomImageWidget 1.0 CustomImageWidget.qml
 ManifestPopover 1.0 ManifestPopover.qml
 WidgetManagerPanel 1.0 WidgetManagerPanel.qml
 WidgetSurface 1.0 WidgetSurface.qml
+DesktopWidgetSettingsBody 1.0 DesktopWidgetSettingsBody.qml

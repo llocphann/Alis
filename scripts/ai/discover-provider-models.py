@@ -466,6 +466,7 @@ def main() -> int:
                 pass
         verification_deadline = time.monotonic() + min(args.timeout, 8)
         v0_types = {}
+        v0_states = {}
         if args.local and args.provider_id == "lmstudio" and isinstance(metadata, dict):
             existing_ids = {str(m.get("remoteId") or "") for m in models}
             v0_models = _normalize_generic(
@@ -485,12 +486,15 @@ def main() -> int:
             for r in metadata.get("data") or []:
                 if isinstance(r, dict) and isinstance(r.get("id"), str):
                     v0_types[r["id"]] = str(r.get("type") or "")
+                    v0_states[r["id"]] = str(r.get("state") or "").strip().lower()
         filtered_models = []
         for index, model in enumerate(models):
             if args.local and args.provider_id == "lmstudio":
                 rid = str(model.get("remoteId") or "")
                 if v0_types.get(rid) in ("embeddings", "embedding") or rid.startswith("text-embedding-"):
                     continue
+                if rid in v0_states:
+                    model["state"] = v0_states[rid]
             if args.local:
                 model.update(local=False, free=False, localVerified=False, localFingerprint="")
                 try:
@@ -512,6 +516,9 @@ def main() -> int:
             if model.get("authScheme") in (None, "", "strategy"):
                 model["authScheme"] = args.auth_scheme
             filtered_models.append(model)
+        if args.local and args.provider_id == "lmstudio":
+            state_rank = {"loaded": 0, "loading": 1}
+            filtered_models.sort(key=lambda m: state_rank.get(str(m.get("state") or ""), 2))
         result["ok"] = True
         result["models"] = filtered_models
     except LocalProviderError:

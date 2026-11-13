@@ -804,6 +804,33 @@ WSettingsPage {
         }
 
         WSettingsSwitch {
+            label: Translation.tr("Antigravity")
+            icon: "terminal"
+            description: Translation.tr("Generate and auto-apply Material theme for Antigravity editor")
+            checked: (Config.options?.appearance?.wallpaperTheming?.enableVSCode ?? true)
+                && (Config.options?.appearance?.wallpaperTheming?.vscodeEditors?.antigravity ?? true)
+            onCheckedChanged: {
+                Config.setNestedValue("appearance.wallpaperTheming.vscodeEditors.antigravity", checked)
+            }
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("OpenAI Codex")
+            icon: "terminal"
+            description: Translation.tr("Generate and auto-apply theme for OpenAI Codex CLI")
+            checked: Config.options?.appearance?.wallpaperTheming?.enableCodex ?? true
+            onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableCodex", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Claude (CLI & Desktop)")
+            icon: "terminal"
+            description: Translation.tr("Generate and auto-apply theme for Claude Code CLI and Claude Desktop")
+            checked: Config.options?.appearance?.wallpaperTheming?.enableClaude ?? true
+            onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableClaude", checked)
+        }
+
+        WSettingsSwitch {
             label: Translation.tr("Chrome / Chromium")
             icon: "globe-search"
             description: Translation.tr("Apply wallpaper-derived colors to Chrome and Chromium browser")

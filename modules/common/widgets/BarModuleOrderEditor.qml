@@ -53,9 +53,9 @@ ColumnLayout {
     readonly property var _defaultLayout: root.verticalPreset
         ? root._verticalDefaultLayout : root._horizontalDefaultLayout
     readonly property var _knownIds: root.verticalPreset
-        ? ["leftSidebarButton", "distroIcon", "activeWindow", "taskbar", "resources", "media", "workspaces",
+        ? ["leftSidebarButton", "distroIcon", "activeWindow", "taskbar", "resources", "media", "cava", "workspaces",
            "clock", "utilButtons", "battery", "rightSidebarButton", "tray", "timer", "shellUpdate", "spacer", "weather"]
-        : ["leftSidebarButton", "distroIcon", "activeWindow", "resources", "media", "workspaces",
+        : ["leftSidebarButton", "distroIcon", "activeWindow", "resources", "media", "cava", "workspaces",
            "clock", "utilButtons", "battery", "rightSidebarButton", "tray", "timer", "shellUpdate", "spacer", "weather"]
     readonly property var _zones: root.verticalPreset
         ? ["top", "centerTop", "center", "centerBottom", "bottom"]
@@ -63,7 +63,7 @@ ColumnLayout {
     readonly property var _visKeys: ({
         leftSidebarButton: "leftSidebarButton", distroIcon: "distroIcon", activeWindow: "activeWindow",
         taskbar: "taskbar",
-        resources: "resources", media: "media", workspaces: "workspaces", clock: "clock",
+        resources: "resources", media: "media", cava: "cava", workspaces: "workspaces", clock: "clock",
         utilButtons: "utilButtons", battery: "battery", rightSidebarButton: "rightSidebarButton",
         tray: "sysTray", weather: "weather",
     })
@@ -71,7 +71,7 @@ ColumnLayout {
     function _metaIcon(id) {
         return ({ leftSidebarButton: "side_navigation", distroIcon: "computer", activeWindow: "window",
             taskbar: "dock_to_bottom",
-            resources: "memory", media: "music_note", workspaces: "workspaces", clock: "schedule",
+            resources: "memory", media: "music_note", cava: "equalizer", workspaces: "workspaces", clock: "schedule",
             utilButtons: "build", battery: "battery_full", rightSidebarButton: "call_to_action",
             tray: "shelf_auto_hide", timer: "timer", shellUpdate: "system_update", spacer: "space_bar",
             weather: "cloud" })[id] || "widgets"
@@ -79,7 +79,7 @@ ColumnLayout {
     function _metaLabel(id) {
         return ({ leftSidebarButton: Translation.tr("Left sidebar"), distroIcon: Translation.tr("Distro icon"), activeWindow: Translation.tr("Active window"),
             taskbar: Translation.tr("Taskbar"),
-            resources: Translation.tr("Resources"), media: Translation.tr("Media"),
+            resources: Translation.tr("Resources"), media: Translation.tr("Media"), cava: Translation.tr("Cava Equalizer"),
             workspaces: Translation.tr("Workspaces"), clock: Translation.tr("Clock"), utilButtons: Translation.tr("Utility buttons"),
             battery: Translation.tr("Battery"), rightSidebarButton: Translation.tr("Right sidebar"), tray: Translation.tr("System tray"),
             timer: Translation.tr("Timer"), shellUpdate: Translation.tr("Shell update"), spacer: Translation.tr("Flexible spacer"),

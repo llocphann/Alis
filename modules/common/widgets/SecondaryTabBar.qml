@@ -23,9 +23,11 @@ TabBar {
     background: Item {
         WheelHandler {
             enabled: root.wheelNavigationEnabled
+            orientation: Qt.Horizontal
             onWheel: (event) => {
-                if (event.angleDelta.y < 0) root.incrementCurrentIndex();
-                else if (event.angleDelta.y > 0) root.decrementCurrentIndex();
+                if (Math.abs(event.angleDelta.x) <= Math.abs(event.angleDelta.y)) return;
+                if (event.angleDelta.x < 0) root.incrementCurrentIndex();
+                else if (event.angleDelta.x > 0) root.decrementCurrentIndex();
             }
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         }

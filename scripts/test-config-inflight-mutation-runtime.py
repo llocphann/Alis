@@ -28,22 +28,22 @@ ShellRoot {
                     const older = [{id: "notes", visible: true, x: .1, y: .1, w: .3, h: .4}]
                     const newer = [{id: "notes", visible: false, x: .2, y: .3, w: .4, h: .5}]
                     Config.setNestedValues({"dashboard.canvas.widgets": older,
-                        "todo.obsidian.vaultPath": "old-" + round,
-                        "abyss.companionMind.obsidianEnabled": false})
+                        "todo.nexus.vaultPath": "old-" + round,
+                        "abyss.companionMind.nexusEnabled": false})
                     Config.flushWrites()
                     check(Config._writeInFlight, "test did not overlap an asynchronous save")
                     Config.setNestedValues({"dashboard.canvas.widgets": newer,
-                        "todo.obsidian.vaultPath": "new-" + round,
-                        "abyss.companionMind.obsidianEnabled": true})
+                        "todo.nexus.vaultPath": "new-" + round,
+                        "abyss.companionMind.nexusEnabled": true})
                     if (round % 2) Config.flushWrites()
                     wait(200)
                     tryVerify(() => !Config._writeInFlight && !Config._pendingWrite, 3000)
                     const actual = Config.options.dashboard.canvas.widgets
                     check(actual.length === newer.length && Object.keys(newer[0]).every(key => actual[0][key] === newer[0][key]),
                         "older save restored the Dashboard layout, round " + round + ": " + JSON.stringify(actual))
-                    check(Config.options.todo.obsidian.vaultPath === "new-" + round
-                        && Config.options.abyss.companionMind.obsidianEnabled,
-                        "older save restored the Obsidian context, round " + round)
+                    check(Config.options.todo.nexus.vaultPath === "new-" + round
+                        && Config.options.abyss.companionMind.nexusEnabled,
+                        "older save restored the Nexus context, round " + round)
                 }
                 console.info("CONFIG_WRITE_RACE_PASS four overlapping saves: debounce and explicit flush; layout and journal context")
             } catch (e) { console.error("CONFIG_WRITE_RACE_FAIL", e.message, e.stack) }
@@ -68,7 +68,7 @@ ShellRoot {
         print(result.stdout)
         raise SystemExit(1)
     saved = json.loads(config.read_text())
-    assert saved["todo"]["obsidian"]["vaultPath"] == "new-3"
-    assert saved["abyss"]["companionMind"]["obsidianEnabled"] is True
+    assert saved["todo"]["nexus"]["vaultPath"] == "new-3"
+    assert saved["abyss"]["companionMind"]["nexusEnabled"] is True
     assert saved["dashboard"]["canvas"]["widgets"][0]["visible"] is False
     print("CONFIG_WRITE_RACE_PASS in-memory and persisted state survive all four overlapping saves")

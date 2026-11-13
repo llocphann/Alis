@@ -52,7 +52,6 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [wl-paste]="wl-clipboard"
     [fuzzel]="fuzzel"
     [gum]="gum"
-    [hyprpicker]="hyprpicker"
     [xwayland-satellite]="xwayland-satellite"
     [missioncenter]="io.missioncenter.MissionCenter"
   )
@@ -281,7 +280,6 @@ FEDORA_TOOLKIT_PKGS=(
   swaylock
   grim
   slurp
-  hyprpicker
   ImageMagick
   libqalculate
   blueman
@@ -739,7 +737,7 @@ echo "  - quickshell (errornointernet/quickshell)"
 echo "  - niri (yalter/niri)"
 echo ""
 log_info "Installed from repos:"
-echo "  - gum, cliphist, xwayland-satellite, hyprpicker, swappy"
+echo "  - gum, cliphist, xwayland-satellite, swappy"
 echo ""
 log_info "Installed from GitHub releases:"
 echo "  - darkly, starship, eza"

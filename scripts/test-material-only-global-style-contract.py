@@ -2275,7 +2275,7 @@ console.log('Onscreen keyboard palette and key shape: PASS (12 cases)');
         "Network.rescanWifi()", "Bluetooth.defaultAdapter.discovering = true",
         "function doReload()", "function doSettings()",
         '"region", "screenshot"', '"region", "record"', '"region", "ocr"', '"region", "search"',
-        '"/usr/bin/hyprpicker"', '["xdg-open", Quickshell.env("HOME")]',
+        'ColorPickerService.start()', '["xdg-open", Quickshell.env("HOME")]',
     ):
         require(compact_sidebar_right_content, token, "sidebarRight/CompactSidebarRightContent.qml")
 

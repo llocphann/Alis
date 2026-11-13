@@ -19,7 +19,7 @@ SettingsGroup {
     property string saveStatus: "" // "", "saving", "saved", "error"
     property bool detailedColorsExpanded: false
     property string _harmonyScheme: "complementary"
-    property real targetEditorHeight: 0
+    property real targetEditorHeight: (parent && parent.desiredEditorHeight !== undefined) ? parent.desiredEditorHeight : 0
     readonly property real targetGridHeight: Math.max(0, root.targetEditorHeight - SettingsMaterialPreset.groupPadding * 2)
     readonly property real bottomRowsHeight: {
         const row1H = Math.max(secondaryCard.implicitHeight, tertiaryCard.implicitHeight)
@@ -27,7 +27,10 @@ SettingsGroup {
         const row3H = Math.max(bordersShadowsCard.implicitHeight, statusColorsCard.implicitHeight)
         const dialogsH = (exportDialog.visible ? (exportDialog.implicitHeight + mainGrid.rowSpacing) : 0)
             + (importDialog.visible ? (importDialog.implicitHeight + mainGrid.rowSpacing) : 0)
-        return row1H + row2H + row3H + mainGrid.rowSpacing * 3 + dialogsH
+        const gridH = bottomCardsGrid.implicitHeight > 0
+            ? (bottomCardsGrid.implicitHeight + mainGrid.rowSpacing)
+            : (row1H + row2H + row3H + mainGrid.rowSpacing * 3)
+        return gridH + dialogsH
     }
     readonly property real rightTopNaturalHeight: quickAdjustCard.implicitHeight + harmonyCard.implicitHeight + accentColorsCard.implicitHeight + rightTopColumn.spacing * 2
     readonly property real targetRow0Height: mainGrid.columns === 2 && root.targetGridHeight > 0
@@ -342,13 +345,22 @@ SettingsGroup {
     }
 
     // Compact 2-column dashboard layout (no vertical scrolling needed)
+    Item {
+        id: editorBody
+        Layout.fillWidth: true
+        implicitHeight: mainGrid.implicitHeight > 0
+            ? (root.targetGridHeight > 0 ? Math.max(root.targetGridHeight, mainGrid.implicitHeight) : mainGrid.implicitHeight)
+            : root.targetGridHeight
+
     GridLayout {
         id: mainGrid
-        Layout.fillWidth: true
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
         columns: width >= 580 ? 2 : 1
         uniformCellWidths: columns === 2
-        columnSpacing: 12
-        rowSpacing: 10
+        columnSpacing: Math.round(12 * (Appearance.fontSizeScale ?? 1.0))
+        rowSpacing: Math.round(10 * (Appearance.fontSizeScale ?? 1.0))
 
         // ── LEFT COLUMN: LIVE PREVIEW + PRESETS & SAVED THEMES ──────────────
         ColumnLayout {
@@ -356,19 +368,21 @@ SettingsGroup {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.preferredWidth: 1
-            spacing: 10
+            spacing: Math.round(10 * (Appearance.fontSizeScale ?? 1.0))
 
             // Live Preview Card (expands to match right column height and Themes & Style height)
             Rectangle {
                 id: livePreviewCard
+                readonly property string title: Translation.tr("Live Preview")
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                readonly property real minPreviewHeight: Math.round(108 * Math.min(1.0, Appearance.fontSizeScale ?? 1.0))
                 readonly property real chromeHeight: previewHeaderRow.implicitHeight
                     + (lightModeWarningRow.visible ? (lightModeWarningRow.implicitHeight + previewColumn.spacing) : 0)
                     + paletteStripRow.implicitHeight
                     + previewColumn.spacing * 2 + 20
                 readonly property real targetCardHeight: root.targetRow0Height > 0
-                    ? Math.max(chromeHeight + 108, root.targetRow0Height - presetsSaveCard.implicitHeight - leftTopColumn.spacing)
+                    ? Math.max(chromeHeight + minPreviewHeight, root.targetRow0Height - presetsSaveCard.implicitHeight - leftTopColumn.spacing)
                     : (chromeHeight + 144)
                 implicitHeight: targetCardHeight
                 Layout.minimumHeight: targetCardHeight
@@ -484,7 +498,7 @@ SettingsGroup {
                         id: miniUiPreview
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        readonly property real targetPreviewHeight: Math.max(108, livePreviewCard.targetCardHeight - livePreviewCard.chromeHeight)
+                        readonly property real targetPreviewHeight: Math.max(livePreviewCard.minPreviewHeight, livePreviewCard.targetCardHeight - livePreviewCard.chromeHeight)
                         Layout.minimumHeight: targetPreviewHeight
                         Layout.preferredHeight: targetPreviewHeight
                         Layout.maximumHeight: targetPreviewHeight
@@ -732,6 +746,7 @@ SettingsGroup {
             // Combined Base Preset + Export/Import + Saved Themes Card
             Rectangle {
                 id: presetsSaveCard
+                readonly property string title: Translation.tr("Presets & Saved Themes")
                 Layout.fillWidth: true
                 implicitHeight: presetSaveColumn.implicitHeight + 20
                 radius: Appearance.rounding.normal
@@ -833,12 +848,14 @@ SettingsGroup {
                                     spacing: 6
 
                                     MaterialSymbol {
+                                        Layout.alignment: Qt.AlignVCenter
                                         text: "palette"
                                         iconSize: 15
                                         color: Appearance.colors.colSubtext
                                     }
 
                                     Row {
+                                        Layout.alignment: Qt.AlignVCenter
                                         spacing: 3
                                         visible: root.selectedPresetName !== ""
                                         Repeater {
@@ -848,6 +865,7 @@ SettingsGroup {
                                             }
                                             Rectangle {
                                                 required property string modelData
+                                                anchors.verticalCenter: parent.verticalCenter
                                                 width: 10
                                                 height: 10
                                                 radius: 5
@@ -857,7 +875,9 @@ SettingsGroup {
                                     }
 
                                     StyledText {
+                                        Layout.alignment: Qt.AlignVCenter
                                         Layout.fillWidth: true
+                                        verticalAlignment: Text.AlignVCenter
                                         text: root.selectedPresetName || Translation.tr("Base Preset...")
                                         font.pixelSize: Appearance.font.pixelSize.smaller
                                         elide: Text.ElideRight
@@ -865,6 +885,7 @@ SettingsGroup {
                                     }
 
                                     MaterialSymbol {
+                                        Layout.alignment: Qt.AlignVCenter
                                         text: presetPopup.visible ? "expand_less" : "expand_more"
                                         iconSize: Appearance.font.pixelSize.normal
                                         color: Appearance.colors.colSubtext
@@ -939,11 +960,13 @@ SettingsGroup {
                                                 spacing: 8
 
                                                 Row {
+                                                    Layout.alignment: Qt.AlignVCenter
                                                     spacing: 3
                                                     Repeater {
                                                         model: [modelData.colors.m3primary, modelData.colors.m3secondary, modelData.colors.m3tertiary]
                                                         Rectangle {
                                                             required property string modelData
+                                                            anchors.verticalCenter: parent.verticalCenter
                                                             width: 12
                                                             height: 12
                                                             radius: 6
@@ -953,7 +976,9 @@ SettingsGroup {
                                                 }
 
                                                 StyledText {
+                                                    Layout.alignment: Qt.AlignVCenter
                                                     Layout.fillWidth: true
+                                                    verticalAlignment: Text.AlignVCenter
                                                     text: modelData.name
                                                     font.pixelSize: Appearance.font.pixelSize.smaller
                                                     elide: Text.ElideRight
@@ -983,6 +1008,8 @@ SettingsGroup {
                             onClicked: exportDialog.open()
 
                             contentItem: Item {
+                                implicitWidth: exportBtnRow.implicitWidth
+                                implicitHeight: exportBtnRow.implicitHeight
                                 Row {
                                     id: exportBtnRow
                                     anchors.centerIn: parent
@@ -995,6 +1022,7 @@ SettingsGroup {
                                     }
                                     StyledText {
                                         anchors.verticalCenter: parent.verticalCenter
+                                        verticalAlignment: Text.AlignVCenter
                                         text: Translation.tr("Export")
                                         font.pixelSize: Appearance.font.pixelSize.smaller
                                     }
@@ -1011,6 +1039,8 @@ SettingsGroup {
                             onClicked: importDialog.open()
 
                             contentItem: Item {
+                                implicitWidth: importBtnRow.implicitWidth
+                                implicitHeight: importBtnRow.implicitHeight
                                 Row {
                                     id: importBtnRow
                                     anchors.centerIn: parent
@@ -1023,6 +1053,7 @@ SettingsGroup {
                                     }
                                     StyledText {
                                         anchors.verticalCenter: parent.verticalCenter
+                                        verticalAlignment: Text.AlignVCenter
                                         text: Translation.tr("Import")
                                         font.pixelSize: Appearance.font.pixelSize.smaller
                                     }
@@ -1130,35 +1161,40 @@ SettingsGroup {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.preferredWidth: 1
-            spacing: 10
+            readonly property real compactScale: Math.min(1.0, Appearance.fontSizeScale ?? 1.0)
+            spacing: Math.round(10 * rightTopColumn.compactScale)
 
             // Quick Adjustments - Global sliders for the entire palette
             Rectangle {
                 id: quickAdjustCard
+                readonly property string title: Translation.tr("Quick Adjustments")
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                implicitHeight: quickAdjustColumn.implicitHeight + 20
+                implicitHeight: quickAdjustColumn.implicitHeight + Math.round(20 * rightTopColumn.compactScale)
                 radius: Appearance.rounding.normal
                 color: Appearance.colors.colLayer1
 
                 ColumnLayout {
                     id: quickAdjustColumn
                     anchors.fill: parent
-                    anchors.margins: 10
-                    spacing: 6
+                    anchors.margins: Math.round(10 * rightTopColumn.compactScale)
+                    spacing: Math.round(6 * rightTopColumn.compactScale)
 
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 6
 
                         MaterialSymbol {
+                            Layout.alignment: Qt.AlignVCenter
                             text: "tune"
                             iconSize: 18
                             color: Appearance.colors.colPrimary
                         }
 
                         StyledText {
+                            Layout.alignment: Qt.AlignVCenter
                             Layout.fillWidth: true
+                            verticalAlignment: Text.AlignVCenter
                             text: Translation.tr("Quick Adjustments")
                             font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.Medium
@@ -1172,8 +1208,10 @@ SettingsGroup {
                             colBackground: Appearance.colors.colLayer2
                             colBackgroundHover: Appearance.colors.colLayer2Hover
 
-                            MaterialSymbol {
+                            contentItem: MaterialSymbol {
                                 anchors.centerIn: parent
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
                                 text: "restart_alt"
                                 iconSize: 15
                                 color: Appearance.colors.colOnLayer2
@@ -1195,12 +1233,15 @@ SettingsGroup {
                         spacing: 6
 
                         MaterialSymbol {
+                            Layout.alignment: Qt.AlignVCenter
                             text: "palette"
                             iconSize: 15
                             color: Appearance.colors.colSubtext
                         }
 
                         StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            verticalAlignment: Text.AlignVCenter
                             text: Translation.tr("Saturation")
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: Appearance.colors.colSubtext
@@ -1222,6 +1263,8 @@ SettingsGroup {
                         }
 
                         StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            verticalAlignment: Text.AlignVCenter
                             text: Math.round(saturationSlider.value) + "%"
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             font.family: Appearance.font.family.monospace
@@ -1237,12 +1280,15 @@ SettingsGroup {
                         spacing: 6
 
                         MaterialSymbol {
+                            Layout.alignment: Qt.AlignVCenter
                             text: "brightness_6"
                             iconSize: 15
                             color: Appearance.colors.colSubtext
                         }
 
                         StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            verticalAlignment: Text.AlignVCenter
                             text: Translation.tr("Brightness")
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: Appearance.colors.colSubtext
@@ -1264,6 +1310,8 @@ SettingsGroup {
                         }
 
                         StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            verticalAlignment: Text.AlignVCenter
                             text: (brightnessSlider.value >= 0 ? "+" : "") + Math.round(brightnessSlider.value)
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             font.family: Appearance.font.family.monospace
@@ -1279,12 +1327,15 @@ SettingsGroup {
                         spacing: 6
 
                         MaterialSymbol {
+                            Layout.alignment: Qt.AlignVCenter
                             text: "thermostat"
                             iconSize: 15
                             color: Appearance.colors.colSubtext
                         }
 
                         StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            verticalAlignment: Text.AlignVCenter
                             text: Translation.tr("Temperature")
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: Appearance.colors.colSubtext
@@ -1306,6 +1357,8 @@ SettingsGroup {
                         }
 
                         StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            verticalAlignment: Text.AlignVCenter
                             text: temperatureSlider.value > 0 ? Translation.tr("Warm") : (temperatureSlider.value < 0 ? Translation.tr("Cool") : "0")
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             font.family: Appearance.font.family.monospace
@@ -1317,35 +1370,46 @@ SettingsGroup {
                         }
                     }
                 }
+
+                SettingsInnerReorderOverlay {
+                    anchors.fill: quickAdjustColumn
+                    containerId: "p4:custom-theme-editor:quick-adjust"
+                    targetLayout: quickAdjustColumn
+                    activeInSettings: true
+                }
             }
 
             // Color Harmony - Compact card with inline preview & Apply in header
             Rectangle {
                 id: harmonyCard
+                readonly property string title: Translation.tr("Color Harmony")
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                implicitHeight: harmonyColumn.implicitHeight + 20
+                implicitHeight: harmonyColumn.implicitHeight + Math.round(20 * rightTopColumn.compactScale)
                 radius: Appearance.rounding.normal
                 color: Appearance.colors.colLayer1
 
                 ColumnLayout {
                     id: harmonyColumn
                     anchors.fill: parent
-                    anchors.margins: 10
-                    spacing: 8
+                    anchors.margins: Math.round(10 * rightTopColumn.compactScale)
+                    spacing: Math.round(8 * rightTopColumn.compactScale)
 
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 6
 
                         MaterialSymbol {
+                            Layout.alignment: Qt.AlignVCenter
                             text: "auto_fix"
                             iconSize: 18
                             color: Appearance.colors.colPrimary
                         }
 
                         StyledText {
+                            Layout.alignment: Qt.AlignVCenter
                             Layout.fillWidth: true
+                            verticalAlignment: Text.AlignVCenter
                             text: Translation.tr("Color Harmony")
                             font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.Medium
@@ -1354,6 +1418,7 @@ SettingsGroup {
 
                         // Primary (source)
                         Rectangle {
+                            Layout.alignment: Qt.AlignVCenter
                             width: 18
                             height: 18
                             radius: 9
@@ -1365,6 +1430,7 @@ SettingsGroup {
                         }
 
                         MaterialSymbol {
+                            Layout.alignment: Qt.AlignVCenter
                             text: "arrow_forward"
                             iconSize: 12
                             color: Appearance.colors.colSubtext
@@ -1373,6 +1439,7 @@ SettingsGroup {
                         // Generated secondary
                         Rectangle {
                             id: previewSecondary
+                            Layout.alignment: Qt.AlignVCenter
                             width: 18
                             height: 18
                             radius: 9
@@ -1384,6 +1451,7 @@ SettingsGroup {
                         // Generated tertiary
                         Rectangle {
                             id: previewTertiary
+                            Layout.alignment: Qt.AlignVCenter
                             width: 18
                             height: 18
                             radius: 9
@@ -1393,6 +1461,7 @@ SettingsGroup {
                         }
 
                         RippleButton {
+                            Layout.alignment: Qt.AlignVCenter
                             implicitWidth: applyRow.implicitWidth + 16
                             implicitHeight: 26
                             buttonRadius: 13
@@ -1401,6 +1470,8 @@ SettingsGroup {
                             onClicked: root.applyHarmonyColors()
 
                             contentItem: Item {
+                                implicitWidth: applyRow.implicitWidth
+                                implicitHeight: applyRow.implicitHeight
                                 Row {
                                     id: applyRow
                                     anchors.centerIn: parent
@@ -1415,6 +1486,7 @@ SettingsGroup {
 
                                     StyledText {
                                         anchors.verticalCenter: parent.verticalCenter
+                                        verticalAlignment: Text.AlignVCenter
                                         text: Translation.tr("Apply")
                                         font.pixelSize: Appearance.font.pixelSize.smallest
                                         color: Appearance.colors.colOnPrimary
@@ -1429,7 +1501,7 @@ SettingsGroup {
                         columns: 2
                         uniformCellWidths: true
                         columnSpacing: 6
-                        rowSpacing: 6
+                        rowSpacing: Math.round(6 * rightTopColumn.compactScale)
 
                         Repeater {
                             model: [
@@ -1444,7 +1516,7 @@ SettingsGroup {
                                 required property int index
 
                                 Layout.fillWidth: true
-                                implicitHeight: 34
+                                implicitHeight: Math.round(34 * rightTopColumn.compactScale)
                                 buttonRadius: Appearance.rounding.small
                                 toggled: root._harmonyScheme === modelData.id
                                 colBackground: toggled ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer2
@@ -1452,7 +1524,10 @@ SettingsGroup {
                                 onClicked: root._harmonyScheme = modelData.id
 
                                 contentItem: Item {
+                                    implicitWidth: harmonySchemeRow.implicitWidth
+                                    implicitHeight: harmonySchemeRow.implicitHeight
                                     Row {
+                                        id: harmonySchemeRow
                                         anchors.centerIn: parent
                                         spacing: 5
 
@@ -1465,6 +1540,7 @@ SettingsGroup {
 
                                         StyledText {
                                             anchors.verticalCenter: parent.verticalCenter
+                                            verticalAlignment: Text.AlignVCenter
                                             text: modelData.name
                                             font.pixelSize: Appearance.font.pixelSize.smaller
                                             font.weight: Font.Medium
@@ -1524,13 +1600,16 @@ SettingsGroup {
                     spacing: 8
 
                     MaterialSymbol {
+                        Layout.alignment: Qt.AlignVCenter
                         text: "upload"
                         iconSize: 18
                         color: Appearance.colors.colPrimary
                     }
 
                     StyledText {
+                        Layout.alignment: Qt.AlignVCenter
                         Layout.fillWidth: true
+                        verticalAlignment: Text.AlignVCenter
                         text: Translation.tr("Export Theme")
                         font.pixelSize: Appearance.font.pixelSize.small
                         font.weight: Font.Medium
@@ -1538,6 +1617,7 @@ SettingsGroup {
                     }
 
                     MaterialSymbol {
+                        Layout.alignment: Qt.AlignVCenter
                         text: "close"
                         iconSize: 18
                         color: Appearance.colors.colSubtext
@@ -1585,12 +1665,15 @@ SettingsGroup {
                         spacing: 6
 
                         MaterialSymbol {
+                            Layout.alignment: Qt.AlignVCenter
                             text: exportDialog.exportCopied ? "check" : "content_copy"
                             iconSize: 16
                             color: exportDialog.exportCopied ? Appearance.colors.colOnSuccessContainer : Appearance.colors.colOnPrimary
                         }
 
                         StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            verticalAlignment: Text.AlignVCenter
                             text: exportDialog.exportCopied ? Translation.tr("Copied to clipboard!") : Translation.tr("Copy to Clipboard")
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: exportDialog.exportCopied ? Appearance.colors.colOnSuccessContainer : Appearance.colors.colOnPrimary
@@ -1635,13 +1718,16 @@ SettingsGroup {
                     spacing: 8
 
                     MaterialSymbol {
+                        Layout.alignment: Qt.AlignVCenter
                         text: "download"
                         iconSize: 18
                         color: Appearance.colors.colSecondary
                     }
 
                     StyledText {
+                        Layout.alignment: Qt.AlignVCenter
                         Layout.fillWidth: true
+                        verticalAlignment: Text.AlignVCenter
                         text: Translation.tr("Import Theme")
                         font.pixelSize: Appearance.font.pixelSize.small
                         font.weight: Font.Medium
@@ -1649,6 +1735,7 @@ SettingsGroup {
                     }
 
                     MaterialSymbol {
+                        Layout.alignment: Qt.AlignVCenter
                         text: "close"
                         iconSize: 18
                         color: Appearance.colors.colSubtext
@@ -1709,12 +1796,15 @@ SettingsGroup {
                             spacing: 6
 
                             MaterialSymbol {
+                                Layout.alignment: Qt.AlignVCenter
                                 text: "content_paste"
                                 iconSize: 16
                                 color: Appearance.colors.colOnLayer2
                             }
 
                             StyledText {
+                                Layout.alignment: Qt.AlignVCenter
+                                verticalAlignment: Text.AlignVCenter
                                 text: Translation.tr("Paste from Clipboard")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: Appearance.colors.colOnLayer2
@@ -1739,12 +1829,15 @@ SettingsGroup {
                             spacing: 6
 
                             MaterialSymbol {
+                                Layout.alignment: Qt.AlignVCenter
                                 text: "check"
                                 iconSize: 16
                                 color: importTextArea.text.trim() ? Appearance.colors.colOnPrimary : Appearance.colors.colSubtext
                             }
 
                             StyledText {
+                                Layout.alignment: Qt.AlignVCenter
+                                verticalAlignment: Text.AlignVCenter
                                 text: Translation.tr("Apply Theme")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: importTextArea.text.trim() ? Appearance.colors.colOnPrimary : Appearance.colors.colSubtext
@@ -1765,6 +1858,15 @@ SettingsGroup {
                 }
             }
         }
+
+        GridLayout {
+            id: bottomCardsGrid
+            Layout.fillWidth: true
+            Layout.columnSpan: mainGrid.columns
+            columns: mainGrid.columns
+            uniformCellWidths: mainGrid.uniformCellWidths
+            columnSpacing: mainGrid.columnSpacing
+            rowSpacing: mainGrid.rowSpacing
 
         ColorPaletteCard {
             id: secondaryCard
@@ -1814,18 +1916,20 @@ SettingsGroup {
         // Surface Containers (collapsible)
         Rectangle {
             id: surfaceContainersCard
+            readonly property string title: Translation.tr("Surface Containers")
             visible: true
             Layout.fillWidth: true
             Layout.fillHeight: true
-            implicitHeight: surfaceContainersColumn.implicitHeight + 16
+            readonly property real compactScale: Math.min(1.0, Appearance.fontSizeScale ?? 1.0)
+            implicitHeight: surfaceContainersColumn.implicitHeight + Math.round(16 * compactScale)
             radius: Appearance.rounding.normal
             color: Appearance.colors.colLayer1
 
             ColumnLayout {
                 id: surfaceContainersColumn
                 anchors.fill: parent
-                anchors.margins: 8
-                spacing: 8
+                anchors.margins: Math.round(8 * surfaceContainersCard.compactScale)
+                spacing: Math.round(8 * surfaceContainersCard.compactScale)
 
                 RowLayout {
                     id: surfaceContainersHeader
@@ -1840,6 +1944,7 @@ SettingsGroup {
                     }
 
                     Rectangle {
+                        Layout.alignment: Qt.AlignVCenter
                         width: 28
                         height: 28
                         radius: Appearance.rounding.small
@@ -1854,7 +1959,9 @@ SettingsGroup {
                     }
 
                     StyledText {
+                        Layout.alignment: Qt.AlignVCenter
                         Layout.fillWidth: true
+                        verticalAlignment: Text.AlignVCenter
                         text: Translation.tr("Surface Containers")
                         font.pixelSize: Appearance.font.pixelSize.small
                         font.weight: Font.Medium
@@ -1862,6 +1969,7 @@ SettingsGroup {
                     }
 
                     MaterialSymbol {
+                        Layout.alignment: Qt.AlignVCenter
                         text: surfaceContainersHeader.surfaceContainersExpanded
                             ? "expand_less" : "expand_more"
                         iconSize: 20
@@ -1886,7 +1994,7 @@ SettingsGroup {
                             required property var modelData
                             required property int index
                             Layout.fillWidth: true
-                            implicitHeight: 32
+                            implicitHeight: Math.round(32 * surfaceContainersCard.compactScale)
                             radius: index === 0 ? Appearance.rounding.small : (index === 4 ? Appearance.rounding.small : 0)
                             color: Config.options.appearance.customTheme?.[modelData.key] ?? Appearance.colors.colOutline
 
@@ -1902,7 +2010,9 @@ SettingsGroup {
 
                 GridLayout {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     columns: 2
+                    uniformCellWidths: true
                     columnSpacing: 8
                     rowSpacing: 4
                     visible: surfaceContainersHeader.surfaceContainersExpanded
@@ -1922,6 +2032,8 @@ SettingsGroup {
                         ColorPickerRow {
                             required property var modelData
                             Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            Layout.minimumWidth: 0
                             label: modelData.label
                             colorKey: modelData.key
                             onColorChanged: root.applyToShell()
@@ -1960,6 +2072,41 @@ SettingsGroup {
                 { label: "Success Text", key: "m3onSuccess", tip: "Text on success backgrounds" }
             ]
         }
+        }
+    }
+
+        SettingsInnerReorderOverlay {
+            x: leftTopColumn.x
+            y: leftTopColumn.y
+            width: leftTopColumn.width
+            height: leftTopColumn.height
+            containerId: "p4:custom-theme-editor:left-col"
+            targetLayout: leftTopColumn
+            activeInSettings: true
+            activeInBentoEditMode: true
+        }
+
+        SettingsInnerReorderOverlay {
+            x: rightTopColumn.x
+            y: rightTopColumn.y
+            width: rightTopColumn.width
+            height: rightTopColumn.height
+            containerId: "p4:custom-theme-editor:right-col"
+            targetLayout: rightTopColumn
+            activeInSettings: true
+            activeInBentoEditMode: true
+        }
+
+        SettingsInnerReorderOverlay {
+            x: bottomCardsGrid.x
+            y: bottomCardsGrid.y
+            width: bottomCardsGrid.width
+            height: bottomCardsGrid.height
+            containerId: "p4:custom-theme-editor:bottom-grid"
+            targetLayout: bottomCardsGrid
+            activeInSettings: true
+            activeInBentoEditMode: true
+        }
     }
 
     // Color palette card component - with inline color picker
@@ -1970,17 +2117,18 @@ SettingsGroup {
         property string description: ""
         required property string accentKey
         required property var colors
+        readonly property real compactScale: Math.min(1.0, Appearance.fontSizeScale ?? 1.0)
 
         Layout.fillWidth: true
-        implicitHeight: paletteColumn.implicitHeight + 16
+        implicitHeight: paletteColumn.implicitHeight + Math.round(16 * paletteCard.compactScale)
         radius: Appearance.rounding.normal
         color: Appearance.colors.colLayer1
 
         ColumnLayout {
             id: paletteColumn
             anchors.fill: parent
-            anchors.margins: 8
-            spacing: 6
+            anchors.margins: Math.round(8 * paletteCard.compactScale)
+            spacing: Math.round(6 * paletteCard.compactScale)
 
             // Header with description
             RowLayout {
@@ -1988,6 +2136,7 @@ SettingsGroup {
                 spacing: 8
 
                 MaterialCookie {
+                    Layout.alignment: Qt.AlignVCenter
                     width: 24
                     height: 24
                     implicitSize: 24
@@ -2005,6 +2154,7 @@ SettingsGroup {
                 }
 
                 ColumnLayout {
+                    Layout.alignment: Qt.AlignVCenter
                     Layout.fillWidth: true
                     spacing: 1
 
@@ -2056,6 +2206,8 @@ SettingsGroup {
                                 spacing: 4
 
                                 StyledText {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    verticalAlignment: Text.AlignVCenter
                                     text: modelData.label
                                     font.pixelSize: Appearance.font.pixelSize.smallest
                                     color: Appearance.colors.colSubtext
@@ -2064,6 +2216,7 @@ SettingsGroup {
                                 // Contrast badge
                                 Rectangle {
                                     id: contrastBadgeFrame
+                                    Layout.alignment: Qt.AlignVCenter
                                     visible: swatchItem.showContrast
                                     implicitWidth: contrastBadge.implicitWidth + 6
                                     implicitHeight: 14
@@ -2076,12 +2229,15 @@ SettingsGroup {
                                         spacing: 2
 
                                         MaterialSymbol {
+                                            Layout.alignment: Qt.AlignVCenter
                                             text: swatchItem.ratio >= 4.5 ? "check" : "warning"
                                             iconSize: 8
                                             color: swatchItem.ratio >= 4.5 ? Appearance.colors.colOnSuccessContainer : swatchItem.ratio >= 3 ? Appearance.colors.colOnWarningContainer : Appearance.colors.colOnErrorContainer
                                         }
 
                                         StyledText {
+                                            Layout.alignment: Qt.AlignVCenter
+                                            verticalAlignment: Text.AlignVCenter
                                             text: swatchItem.ratio.toFixed(1)
                                             font.pixelSize: 8
                                             font.family: Appearance.font.family.monospace
@@ -2103,7 +2259,7 @@ SettingsGroup {
                             RippleButton {
                                 id: swatchButton
                                 Layout.fillWidth: true
-                                implicitHeight: 32
+                                implicitHeight: Math.round(32 * paletteCard.compactScale)
                                 colBackground: Appearance.colors.colLayer2
                                 colBackgroundHover: Appearance.colors.colLayer2Hover
                                 colRipple: Appearance.colors.colLayer2Active
@@ -2116,6 +2272,7 @@ SettingsGroup {
 
                                     // Color preview circle
                                     MaterialCookie {
+                                        Layout.alignment: Qt.AlignVCenter
                                         width: 16
                                         height: 16
                                         implicitSize: 16
@@ -2125,7 +2282,9 @@ SettingsGroup {
 
                                     // Hex value
                                     StyledText {
+                                        Layout.alignment: Qt.AlignVCenter
                                         Layout.fillWidth: true
+                                        verticalAlignment: Text.AlignVCenter
                                         text: (Config.options.appearance.customTheme?.[modelData.key] ?? Appearance.colors.colOutline).toString().toUpperCase().substring(0, 7)
                                         font.pixelSize: Appearance.font.pixelSize.smallest
                                         font.family: Appearance.font.family.monospace
@@ -2134,6 +2293,7 @@ SettingsGroup {
 
                                     // Edit icon (only visible on hover)
                                     MaterialSymbol {
+                                        Layout.alignment: Qt.AlignVCenter
                                         text: "edit"
                                         iconSize: Appearance.font.pixelSize.small
                                         color: Appearance.colors.colSubtext

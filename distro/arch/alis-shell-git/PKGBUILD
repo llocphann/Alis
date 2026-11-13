@@ -1,5 +1,5 @@
 pkgname=alis-shell-git
-pkgver=1.0.1.r0.g0000000
+pkgver=1.0.0.r0.g0000000
 pkgrel=1
 pkgdesc='Alis shell payload, launcher, and user service (git)'
 arch=('x86_64')
@@ -64,7 +64,6 @@ optdepends=(
   'gnome-keyring: secret storage for API keys and credentials'
   'gowall-bin: wallpaper theme conversion and effects editor'
   'gum: setup TUI helpers'
-  'hyprpicker: color picker support'
   'kde-cli-tools: Dolphin Open With dialog (QT_QPA_PLATFORMTHEME=kde)'
   'imagemagick: image conversion helpers'
   'kconfig: KDE configuration integration'
@@ -249,6 +248,7 @@ PY
 
   install -Dm644 "$srcroot/assets/applications/alis.desktop" "$pkgdir/usr/share/applications/alis.desktop"
   install -Dm644 "$srcroot/assets/applications/alis-settings.desktop" "$pkgdir/usr/share/applications/alis-settings.desktop"
+  install -Dm644 "$srcroot/assets/applications/alis-local-music.desktop" "$pkgdir/usr/share/applications/alis-local-music.desktop"
   install -Dm644 "$srcroot/assets/icons/desktop-symbolic.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/alis.svg"
   install -Dm644 "$srcroot/distro/arch/alis-shell/alis-quickshell-rebuild.hook" \
     "$pkgdir/usr/share/libalpm/hooks/alis-quickshell-rebuild.hook"

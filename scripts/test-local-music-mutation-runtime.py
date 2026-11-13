@@ -71,6 +71,8 @@ with tempfile.TemporaryDirectory(prefix="alis-music-mutation-") as name:
                 state["playlists"].setdefault(args[0], []).append(args[1])
             elif cmd == "listplaylists":
                 return ["playlist: " + entry for entry in state["playlists"]]
+            elif cmd == "listplaylistinfo":
+                return ["file: " + uri for uri in state["playlists"].get(args[0], [])]
             elif cmd in ["currentsong", "playlistinfo"]:
                 indices = range(len(state["queue"])) if cmd == "playlistinfo" else [state["song"]]
                 lines = []
@@ -142,7 +144,8 @@ QtObject {readonly property string scriptsPath:Quickshell.env("FIXTURE_ROOT")+"/
  readonly property string stateUserPath:Quickshell.env("FIXTURE_ROOT")+"/state"
  readonly property string music:Quickshell.env("FIXTURE_ROOT")+"/music"}
 ''')
-    write("modules/common/functions/qmldir", "module qs.modules.common.functions\nsingleton FileUtils 1.0 FileUtils.qml\n")
+    write("modules/common/functions/qmldir", "module qs.modules.common.functions\nsingleton FileUtils 1.0 FileUtils.qml\nsingleton StringUtils 1.0 StringUtils.qml\n")
+    write("modules/common/functions/StringUtils.qml", (ROOT / "modules/common/functions/StringUtils.qml").read_text())
     write("modules/common/functions/FileUtils.qml", r'''pragma Singleton
 import QtQuick
 QtObject {function trimFileProtocol(value){return String(value).replace(/^file:\/\//,"")}}
@@ -170,6 +173,7 @@ import QtTest
 import Quickshell
 import Quickshell.Io
 import qs.services
+import qs.modules.common
 ShellRoot {
  FileView {id:server;path:Quickshell.env("FIXTURE_ROOT")+"/server.json";blockLoading:true}
  Process {id:filesystem}
@@ -214,6 +218,16 @@ ShellRoot {
    const saved=read()
    check(saved.queue.join(",")==="b.wav,b.wav,b.wav" && saved.playlists.Fixture.join(",")==="a.wav,b.wav,a.wav,b.wav",
      "repeated bulk/saved-playlist payloads failed or reordered")
+   check(LocalMusic.openExternalFiles(["a.wav"]).startsWith("error:"),"disabled music accepted file launch")
+   Config.options={dashboard:{music:{enable:true}},sidebar:{music:{mpdHost:"127.0.0.1",mpdPort:Number(Quickshell.env("FIXTURE_PORT")),libraryFolder:Quickshell.env("FIXTURE_ROOT")+"/music"}}}
+   check(LocalMusic.openExternalFiles([])==="ok","empty launch should only open the UI")
+   LocalMusic.mpdConnected=false
+   check(LocalMusic.openExternalFiles(["file://"+Quickshell.env("FIXTURE_ROOT")+"/music/A%20%23.wav",Quickshell.env("FIXTURE_ROOT")+"/music/b.wav"]).startsWith("ok:"),"cold launch paths rejected")
+   LocalMusic.mpdConnected=true
+   tryVerify(()=>LocalMusic._pendingExternalFiles.length===0 && !LocalMusic.mpdMutationPending,5000)
+   const external=read()
+   check(external.queue.slice(-2).join(",")==="A #.wav,b.wav","external URI decoding/library mapping changed paths: "+external.queue)
+   check(external.song===3 && external.state==="play","external first file did not start in existing queue")
    console.info("LOCAL_MUSIC_MUTATION_PASS queued payload then Play, command ACK visible, connection retained")
   }catch(e){console.error("LOCAL_MUSIC_MUTATION_FAIL",e.message,e.stack)}Qt.quit()}
  }
