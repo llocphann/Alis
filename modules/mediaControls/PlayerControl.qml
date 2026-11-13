@@ -138,17 +138,11 @@ Item {
     property string displayedArtFilePath: ""
     readonly property real _rawEffectiveLength: root.usingPlaybackAdapter
         ? Number(root.playbackAdapter.length ?? 0)
-        : (((root.player?.lengthSupported ?? false) && (root.player?.length ?? 0) > 0)
-            ? (root.player?.length ?? 0)
-            : (root.isMpdPlayer
-                ? LocalMusic.currentDuration
-                : MprisController.effectiveLengthForPlayer(root.player)))
+        : MprisController.effectiveLengthForPlayer(root.player)
     readonly property real effectiveLength: StringUtils.validMediaDuration(root._rawEffectiveLength)
     readonly property real _rawEffectivePosition: root.usingPlaybackAdapter
         ? Number(root.playbackAdapter.position ?? 0)
-        : ((root.isMpdPlayer && (root.player?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
-            ? LocalMusic.lyricsPosition
-            : (root.player?.position ?? 0))
+        : MprisController.effectivePositionForPlayer(root.player, root.effectiveLength)
     readonly property real effectivePosition: StringUtils.boundedMediaPosition(
         root._rawEffectivePosition, root.effectiveLength)
     readonly property real effectiveDisplayedPosition: (seekLoader.item?.pressed ?? false)

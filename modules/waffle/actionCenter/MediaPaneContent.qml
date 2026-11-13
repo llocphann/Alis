@@ -21,15 +21,9 @@ Rectangle {
         && activePlayer === MprisController.mpdPlayer
     readonly property string effectiveTitle: activePlayer?.trackTitle ?? ""
     readonly property string effectiveArtist: activePlayer?.trackArtist ?? ""
-    readonly property real _rawEffectiveLength: ((activePlayer?.lengthSupported ?? false) && (activePlayer?.length ?? 0) > 0)
-        ? activePlayer.length
-        : (isMpdPlayer
-            ? LocalMusic.currentDuration
-            : MprisController.effectiveLengthForPlayer(root.activePlayer))
+    readonly property real _rawEffectiveLength: MprisController.effectiveLengthForPlayer(root.activePlayer)
     readonly property real effectiveLength: StringUtils.validMediaDuration(root._rawEffectiveLength)
-    readonly property real _rawEffectivePosition: (isMpdPlayer && (activePlayer?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
-        ? LocalMusic.lyricsPosition
-        : (activePlayer?.position ?? 0)
+    readonly property real _rawEffectivePosition: MprisController.effectivePositionForPlayer(root.activePlayer, root.effectiveLength)
     readonly property real effectivePosition: StringUtils.boundedMediaPosition(
         root._rawEffectivePosition, root.effectiveLength)
     readonly property bool effectiveCanSeek: (activePlayer?.canSeek ?? false)

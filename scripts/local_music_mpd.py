@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import socket
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -212,6 +214,51 @@ def _number(value: Any, fallback: float = 0.0) -> float:
         return fallback
 
 
+def _duration_number(record: dict[str, Any]) -> float:
+    explicit = _first(record, "duration")
+    if explicit:
+        val = _number(explicit, 0.0)
+        if math.isfinite(val) and val > 0.0:
+            return val
+    time_val = _first(record, "time")
+    if not time_val:
+        return 0.0
+    part = time_val.split(":", 1)[1] if ":" in time_val else time_val
+    try:
+        val = float(part.strip())
+        return val if math.isfinite(val) and val > 0.0 else 0.0
+    except ValueError:
+        return 0.0
+
+
+def _probe_local_duration(path_text: str) -> float:
+    if not path_text or "://" in path_text or not Path(path_text).is_file():
+        return 0.0
+    try:
+        proc = subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "default=nw=1:nk=1",
+                "--",
+                path_text,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=2.0,
+        )
+        if proc.returncode != 0:
+            return 0.0
+        val = float(proc.stdout.strip())
+        return round(val, 3) if math.isfinite(val) and 0.0 < val <= 86400.0 else 0.0
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return 0.0
+
+
 def _int_prefix(value: Any) -> int:
     try:
         return int(str(value or "0").split("/", 1)[0])
@@ -354,7 +401,7 @@ def _track(record: dict[str, Any], music_root: str) -> dict[str, Any]:
     title = _first(record, "title") or Path(uri).stem.replace("_", " ").strip()
     artist = _first(record, "artist", "albumartist")
     album = _first(record, "album")
-    duration = _number(_first(record, "duration", "time"))
+    duration = _duration_number(record)
     folder = str(Path(uri).parent)
     if folder == ".":
         folder = ""
@@ -418,13 +465,30 @@ def _status_payload(client: MpdClient, music_root: str) -> dict[str, Any]:
     current_records = _records(client.command("currentsong"))
     queue_records = _records(client.command("playlistinfo"))
     current = _track(current_records[0], music_root) if current_records else None
+    queue = [_track(record, music_root) for record in queue_records]
+    if current is None and status.get("song") is not None:
+        try:
+            song_idx = int(str(status.get("song", "")).strip())
+        except ValueError:
+            song_idx = -1
+        if 0 <= song_idx < len(queue):
+            current = dict(queue[song_idx])
+    if isinstance(current, dict) and float(current.get("duration") or 0) <= 0:
+        probed = _probe_local_duration(str(current.get("path") or ""))
+        if probed > 0:
+            current["duration"] = probed
+    if _number(status.get("duration")) <= 0:
+        resolved_status_dur = _duration_number(status)
+        if resolved_status_dur <= 0 and isinstance(current, dict):
+            resolved_status_dur = float(current.get("duration") or 0)
+        if resolved_status_dur > 0:
+            status["duration"] = f"{resolved_status_dur:.3f}"
     if _is_stale_missing_file_error(str(status.get("error") or ""), current):
         try:
             client.command("clearerror")
         except MpdError:
             pass
         status.pop("error", None)
-    queue = [_track(record, music_root) for record in queue_records]
     return {
         "connected": True,
         "status": status,

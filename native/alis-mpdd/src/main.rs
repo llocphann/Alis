@@ -410,6 +410,64 @@ fn number(value: &str) -> f64 {
         .unwrap_or(0.0)
 }
 
+fn duration_number(record: &Record) -> f64 {
+    let explicit = first(record, &["duration"]);
+    if !explicit.is_empty() {
+        let val = number(&explicit);
+        if val > 0.0 && val.is_finite() {
+            return val;
+        }
+    }
+    let time_val = first(record, &["time"]);
+    if time_val.is_empty() {
+        return 0.0;
+    }
+    // MPD uses integer `Time: 199` in track records and `time: elapsed:total` in status.
+    let part = time_val
+        .split_once(':')
+        .map(|(_, total)| total)
+        .unwrap_or(time_val.as_str());
+    let val = part.trim().parse::<f64>().unwrap_or(0.0);
+    if val > 0.0 && val.is_finite() {
+        val
+    } else {
+        0.0
+    }
+}
+
+fn probe_local_audio_duration(path_text: &str) -> f64 {
+    if path_text.is_empty() || path_text.contains("://") || !Path::new(path_text).is_file() {
+        return 0.0;
+    }
+    let Ok(output) = std::process::Command::new("ffprobe")
+        .args([
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=nw=1:nk=1",
+            "--",
+            path_text,
+        ])
+        .output()
+    else {
+        return 0.0;
+    };
+    if !output.status.success() {
+        return 0.0;
+    }
+    let parsed = String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .parse::<f64>()
+        .unwrap_or(0.0);
+    if parsed.is_finite() && parsed > 0.0 && parsed <= 86400.0 {
+        (parsed * 1000.0).round() / 1000.0
+    } else {
+        0.0
+    }
+}
+
 fn int_prefix(value: &str) -> i64 {
     value
         .split('/')
@@ -1187,6 +1245,7 @@ struct ArtLookup {
     cached: HashMap<String, String>,
     missing_embedded: HashSet<String>,
     cache_indexed: bool,
+    probed_durations: HashMap<String, f64>,
 }
 
 impl Default for ArtLookup {
@@ -1197,6 +1256,7 @@ impl Default for ArtLookup {
             cached: HashMap::new(),
             missing_embedded: HashSet::new(),
             cache_indexed: false,
+            probed_durations: HashMap::new(),
         }
     }
 }
@@ -1306,6 +1366,18 @@ impl ArtLookup {
         }
         self.cached.insert(key, String::new());
         String::new()
+    }
+
+    fn probe_duration(&mut self, path_text: &str) -> f64 {
+        if path_text.is_empty() || path_text.contains("://") {
+            return 0.0;
+        }
+        if let Some(&cached) = self.probed_durations.get(path_text) {
+            return cached;
+        }
+        let probed = probe_local_audio_duration(path_text);
+        self.probed_durations.insert(path_text.to_owned(), probed);
+        probed
     }
 }
 
@@ -1442,7 +1514,7 @@ fn build_track(
     track.insert("albumArtist".into(), json!(first(record, &["albumartist"])));
     track.insert(
         "duration".into(),
-        json!((number(&first(record, &["duration", "time"])) * 1000.0).round() / 1000.0),
+        json!((duration_number(record) * 1000.0).round() / 1000.0),
     );
     track.insert(
         "track".into(),
@@ -1526,10 +1598,54 @@ fn status_payload_mode_with_art(
         &client.command("currentsong", std::iter::empty::<&str>())?,
         "file",
     );
-    let current = current_records
+    let mut current = current_records
         .first()
         .map(|record| Value::Object(build_track(record, root, art_lookup)))
         .unwrap_or(Value::Null);
+
+    if current.is_null()
+        && let Some(song_idx) = status
+            .get("song")
+            .and_then(|value| value.trim().parse::<usize>().ok())
+        && let Ok(lines) = client.command("playlistinfo", [song_idx.to_string()])
+        && let Some(record) = records(&lines, "file").first()
+    {
+        current = Value::Object(build_track(record, root, art_lookup));
+    }
+
+    if let Value::Object(ref mut obj) = current {
+        let dur = obj.get("duration").and_then(Value::as_f64).unwrap_or(0.0);
+        if dur <= 0.0 {
+            let path = obj
+                .get("path")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_owned();
+            let probed = art_lookup.probe_duration(&path);
+            if probed > 0.0 {
+                obj.insert("duration".into(), json!(probed));
+            }
+        }
+    }
+
+    if status.get("duration").map(|v| number(v)).unwrap_or(0.0) <= 0.0 {
+        let time_total = status
+            .get("time")
+            .and_then(|value| value.split_once(':').map(|(_, total)| total).or(Some(value.as_str())))
+            .map(number)
+            .filter(|&val| val > 0.0 && val.is_finite())
+            .unwrap_or(0.0);
+        let current_dur = current
+            .as_object()
+            .and_then(|obj| obj.get("duration"))
+            .and_then(Value::as_f64)
+            .filter(|&val| val > 0.0 && val.is_finite())
+            .unwrap_or(0.0);
+        let resolved = if time_total > 0.0 { time_total } else { current_dur };
+        if resolved > 0.0 {
+            status.insert("duration".into(), format!("{resolved:.3}"));
+        }
+    }
 
     if status
         .get("error")
@@ -2656,8 +2772,9 @@ mod tests {
 
     use super::{
         ART_EXTENSIONS, MpdClient, MpdManager, art_cache_key, art_filename_rank, broadcast,
-        casefold_key, legacy_request, lrc_stamp_seconds, pairs, parse_lrc, prepare_socket, quote,
-        records, status_payload_mode, status_payload_mode_with_art, unique_trimmed_uris,
+        casefold_key, duration_number, legacy_request, lrc_stamp_seconds, pairs, parse_lrc,
+        prepare_socket, quote, records, status_payload_mode, status_payload_mode_with_art,
+        unique_trimmed_uris,
     };
     use serde_json::{Value, json};
 
@@ -3321,5 +3438,74 @@ mod tests {
                 borrowed.expect("serialize borrowed daemon result")
             );
         }
+    }
+
+    #[test]
+    fn duration_parser_prefers_float_duration_and_total_side_of_time_pair() {
+        let with_float = records(
+            &[
+                "file: a.flac".into(),
+                "Time: 199".into(),
+                "duration: 198.545".into(),
+            ],
+            "file",
+        );
+        assert_eq!(duration_number(&with_float[0]), 198.545);
+
+        let with_colon_time = records(
+            &[
+                "file: b.flac".into(),
+                "time: 113:199".into(),
+            ],
+            "file",
+        );
+        assert_eq!(duration_number(&with_colon_time[0]), 199.0);
+    }
+
+    #[test]
+    fn stopped_status_resolves_current_from_playlistinfo_index() {
+        let listener = TcpListener::bind(("127.0.0.1", 0)).expect("bind stopped fake MPD");
+        let port = listener.local_addr().expect("stopped fake MPD addr").port();
+
+        let handle = thread::spawn(move || {
+            let (stream, _) = listener.accept().expect("accept stopped fake MPD");
+            let mut reader = BufReader::new(stream);
+            reader
+                .get_mut()
+                .write_all(b"OK MPD 0.23.15\n")
+                .expect("write greeting");
+            reader.get_mut().flush().expect("flush greeting");
+            loop {
+                let mut line = String::new();
+                if reader.read_line(&mut line).expect("read cmd") == 0 {
+                    break;
+                }
+                let cmd = line.trim_end_matches(['\r', '\n']);
+                let reply = if cmd == "status" {
+                    "state: stop\nsong: 1\nOK\n"
+                } else if cmd == "currentsong" {
+                    "OK\n"
+                } else if cmd.starts_with("playlistinfo") {
+                    "file: https://example.invalid/b.flac\nTitle: StoppedTrack\nduration: 215.42\nPos: 1\nId: 22\nOK\n"
+                } else {
+                    "OK\n"
+                };
+                reader
+                    .get_mut()
+                    .write_all(reply.as_bytes())
+                    .expect("write reply");
+                reader.get_mut().flush().expect("flush reply");
+            }
+        });
+
+        let mut client = MpdClient::connect("127.0.0.1", port).expect("connect stopped fake MPD");
+        let payload = status_payload_mode(&mut client, "", false).expect("stopped status");
+        drop(client);
+        handle.join().expect("join stopped fake MPD");
+
+        assert_eq!(payload["status"]["state"], "stop");
+        assert_eq!(payload["current"]["title"], "StoppedTrack");
+        assert_eq!(payload["current"]["duration"], 215.42);
+        assert_eq!(payload["status"]["duration"], "215.420");
     }
 }

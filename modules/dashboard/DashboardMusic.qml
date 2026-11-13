@@ -45,7 +45,10 @@ Item {
     readonly property var folders: Library.roots(tracks)
     property bool _lyricsSubscribed: false
     function _syncOnlineLyricsSubscription(): void {
-        const want = root.presentationActive && root.backend === LocalMusic
+        const want = root.presentationActive
+            && root.backend === LocalMusic
+            && MprisController.activePlayer !== null
+            && MprisController.activePlayer === MprisController.mpdPlayer
         if (want === root._lyricsSubscribed)
             return
         root._lyricsSubscribed = want
@@ -60,11 +63,18 @@ Item {
             LyricsService.unsubscribe()
         }
     }
+    Connections {
+        target: MprisController
+        function onActivePlayerChanged(): void {
+            root._syncOnlineLyricsSubscription()
+        }
+    }
     readonly property bool _useOnlineLyrics: root.backend === LocalMusic
         && !(Boolean(backend.localLyricsSynced ?? true)
             && (backend.localLyricsLines ?? []).some(line => String(line.text ?? "").trim().length > 0))
         && MprisController.activePlayer !== null
-        && (MprisController.activePlayer !== MprisController.mpdPlayer || !(backend.localLyricsSynced ?? true))
+        && MprisController.activePlayer === MprisController.mpdPlayer
+        && !(backend.localLyricsSynced ?? true)
         && LyricsService.status === "ok"
         && (LyricsService.lyricsLines ?? []).some(line => String(line.text ?? "").trim().length > 0)
     readonly property var effectiveLyricsLines: root._useOnlineLyrics

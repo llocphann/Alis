@@ -543,7 +543,78 @@ Singleton {
 	property var _resolvedTrackLengths: ({})
 	property var _pendingLengthLookups: ({})
 	property int _resolvedTrackLengthsVersion: 0
+	property int _playerMetaVersion: 0
 	property var _browserPositionSyncKeys: ({})
+	property var _playerTrackSignatures: ({})
+	property var _playerStaleLengths: ({})
+	property var _playerTransitionUntilMs: ({})
+
+	function _playerIdKey(player): string {
+		if (!player) return "";
+		return String(player.dbusName ?? player.identity ?? player.uniqueId ?? "");
+	}
+
+	function _playerIdentityKey(player): string {
+		if (!player) return "";
+		const rawUrl = String(player.metadata?.["xesam:url"] ?? "").trim();
+		const title = root._normTitle(player.trackTitle);
+		const artist = root._normTitle(player.trackArtist);
+		return `${rawUrl}|${title}|${artist}`;
+	}
+
+	function _markPlayerTrackTransition(player): void {
+		if (!player) return;
+		const pid = root._playerIdKey(player);
+		if (!pid) return;
+		const sig = root._playerIdentityKey(player);
+		const prevSig = String(root._playerTrackSignatures[pid] ?? "");
+		if (prevSig === sig)
+			return;
+		if (prevSig.length > 0 && sig.length > 0) {
+			const prevLen = StringUtils.validMediaDuration(player.length);
+			if (prevLen > 0) {
+				const nextStale = Object.assign({}, root._playerStaleLengths);
+				nextStale[pid] = prevLen;
+				root._playerStaleLengths = nextStale;
+			}
+			const nextUntil = Object.assign({}, root._playerTransitionUntilMs);
+			nextUntil[pid] = Date.now() + 1800;
+			root._playerTransitionUntilMs = nextUntil;
+			_transitionExpiryTimer.restart();
+		}
+		const nextSigs = Object.assign({}, root._playerTrackSignatures);
+		nextSigs[pid] = sig;
+		root._playerTrackSignatures = nextSigs;
+		root._playerMetaVersion++;
+	}
+
+	function _isPlayerTransitionLengthStale(player, candidateLen: real): bool {
+		if (!player || candidateLen <= 0) return false;
+		const pid = root._playerIdKey(player);
+		if (!pid) return false;
+		const until = Number(root._playerTransitionUntilMs[pid] ?? 0);
+		if (Date.now() >= until)
+			return false;
+		const staleLen = Number(root._playerStaleLengths[pid] ?? 0);
+		return staleLen > 0 && Math.abs(candidateLen - staleLen) <= 0.5;
+	}
+
+	function _clearPlayerTransitionState(player): void {
+		if (!player) return;
+		const pid = root._playerIdKey(player);
+		if (!pid) return;
+		if (root._playerTransitionUntilMs[pid] !== undefined) {
+			const nextUntil = Object.assign({}, root._playerTransitionUntilMs);
+			delete nextUntil[pid];
+			root._playerTransitionUntilMs = nextUntil;
+		}
+		if (root._playerStaleLengths[pid] !== undefined) {
+			const nextStale = Object.assign({}, root._playerStaleLengths);
+			delete nextStale[pid];
+			root._playerStaleLengths = nextStale;
+		}
+		root._playerMetaVersion++;
+	}
 
 	function _durationCacheKeysForPlayer(player): var {
 		if (!player) return [];
@@ -583,8 +654,12 @@ Singleton {
 	function _rememberPlayerLength(player): void {
 		if (!player || !(player.lengthSupported ?? false))
 			return;
+		if (player === root.mpdPlayer && !LocalMusic.mprisMatchesCurrentTrack())
+			return;
 		const valid = StringUtils.validMediaDuration(player.length);
 		if (valid <= 0)
+			return;
+		if (root._isPlayerTransitionLengthStale(player, valid))
 			return;
 		root._rememberLengthForKeys(root._durationCacheKeysForPlayer(player), valid);
 	}
@@ -664,7 +739,7 @@ Singleton {
 			root._pendingLengthLookups = nextPending;
 
 			const xhr = new XMLHttpRequest();
-			const queryUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(rawTitle)}&artist_name=${encodeURIComponent(rawArtist)}`;
+			const queryUrl = `https://lrclib.net/api/search?track_name=${encodeURIComponent(rawTitle)}&artist_name=${encodeURIComponent(rawArtist)}`;
 			xhr.open("GET", queryUrl);
 			xhr.onreadystatechange = function() {
 				if (xhr.readyState !== XMLHttpRequest.DONE)
@@ -675,7 +750,8 @@ Singleton {
 				if (xhr.status >= 200 && xhr.status < 300) {
 					try {
 						const resp = JSON.parse(xhr.responseText);
-						const len = StringUtils.validMediaDuration(Number(resp?.duration ?? 0));
+						const item = Array.isArray(resp) ? resp[0] : resp;
+						const len = StringUtils.validMediaDuration(Number(item?.duration ?? 0));
 						if (len > 0) {
 							const latestKeys = keys.concat(root._durationCacheKeysForPlayer(player));
 							root._rememberLengthForKeys(latestKeys, len);
@@ -713,19 +789,21 @@ Singleton {
 	}
 
 	function effectiveLengthForPlayer(player): real {
-		const _ = root._resolvedTrackLengthsVersion;
+		const _ = root._resolvedTrackLengthsVersion + root._playerMetaVersion;
 		if (!player) {
 			return 0;
-		}
-		if (player.lengthSupported ?? false) {
-			const directLen = StringUtils.validMediaDuration(player.length);
-			if (directLen > 0)
-				return directLen;
 		}
 		if (player === root.mpdPlayer) {
 			const mpdLen = StringUtils.validMediaDuration(LocalMusic.currentDuration);
 			if (mpdLen > 0)
 				return mpdLen;
+			if (!LocalMusic.mprisMatchesCurrentTrack())
+				return 0;
+		}
+		if (player.lengthSupported ?? false) {
+			const directLen = StringUtils.validMediaDuration(player.length);
+			if (directLen > 0 && !root._isPlayerTransitionLengthStale(player, directLen))
+				return directLen;
 		}
 		const resolved = root._lookupResolvedTrackLength(player);
 		if (resolved > 0)
@@ -735,6 +813,7 @@ Singleton {
 	}
 
 	function effectivePositionForPlayer(player, effectiveLength = -1): real {
+		const _ = root._playerMetaVersion;
 		const len = effectiveLength >= 0
 			? StringUtils.validMediaDuration(effectiveLength)
 			: root.effectiveLengthForPlayer(player);
@@ -742,10 +821,27 @@ Singleton {
 			return 0;
 		}
 		const isMpd = player === root.mpdPlayer;
-		const rawPos = (isMpd && (player.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
-			? LocalMusic.lyricsPosition
-			: (player.position ?? 0);
+		if (isMpd) {
+			const mpdPos = (LocalMusic.hasCurrentTrack || LocalMusic.currentDuration > 0 || !LocalMusic.mprisMatchesCurrentTrack())
+				? LocalMusic.lyricsPosition
+				: (player.position ?? 0);
+			return StringUtils.boundedMediaPosition(mpdPos, len);
+		}
+		const rawPos = Number(player.position ?? 0);
+		const pid = root._playerIdKey(player);
+		if (pid && Date.now() < Number(root._playerTransitionUntilMs[pid] ?? 0)) {
+			const staleLen = Number(root._playerStaleLengths[pid] ?? 0);
+			if (staleLen > 0 && rawPos > 5 && Math.abs(rawPos - staleLen) < 15)
+				return 0;
+		}
 		return StringUtils.boundedMediaPosition(rawPos, len);
+	}
+
+	Timer {
+		id: _transitionExpiryTimer
+		interval: 1850
+		repeat: false
+		onTriggered: root._playerMetaVersion++
 	}
 
 	function _hasActiveYoutubeSessionMetadata(player): bool {
@@ -1208,7 +1304,7 @@ Singleton {
 			
 			// Rebuild when track title changes (affects isRealPlayer filter)
 			function onTrackTitleChanged() {
-				root._rememberPlayerLength(modelData);
+				root._markPlayerTrackTransition(modelData);
 				root._syncBrowserPlayerPositionAndLength(modelData);
 				root._rebuildPlayerList();
 			}
@@ -1218,15 +1314,25 @@ Singleton {
 			}
 
 			function onMetadataChanged() {
-				root._rememberPlayerLength(modelData);
+				root._markPlayerTrackTransition(modelData);
 				root._syncBrowserPlayerPositionAndLength(modelData);
 			}
 
 			function onLengthChanged() {
+				const validLen = StringUtils.validMediaDuration(modelData?.length);
+				if (validLen > 0 && !root._isPlayerTransitionLengthStale(modelData, validLen))
+					root._clearPlayerTransitionState(modelData);
+				else
+					root._playerMetaVersion++;
 				root._rememberPlayerLength(modelData);
 			}
 
 			function onLengthSupportedChanged() {
+				const validLen = StringUtils.validMediaDuration(modelData?.length);
+				if (validLen > 0 && !root._isPlayerTransitionLengthStale(modelData, validLen))
+					root._clearPlayerTransitionState(modelData);
+				else
+					root._playerMetaVersion++;
 				root._rememberPlayerLength(modelData);
 				if (!(modelData.lengthSupported ?? false))
 					root._syncBrowserPlayerPositionAndLength(modelData);

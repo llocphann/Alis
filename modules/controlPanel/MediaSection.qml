@@ -37,15 +37,9 @@ Item {
     readonly property string effectiveArtist: player?.trackArtist ?? ""
     readonly property bool effectiveIsPlaying: player?.isPlaying ?? false
     readonly property bool effectiveCanSeek: player?.canSeek ?? false
-    readonly property real _rawEffectiveLength: ((player?.lengthSupported ?? false) && (player?.length ?? 0) > 0)
-        ? (player?.length ?? 0)
-        : (isMpdPlayer
-            ? LocalMusic.currentDuration
-            : MprisController.effectiveLengthForPlayer(root.player))
+    readonly property real _rawEffectiveLength: MprisController.effectiveLengthForPlayer(root.player)
     readonly property real effectiveLength: StringUtils.validMediaDuration(root._rawEffectiveLength)
-    readonly property real _rawEffectivePosition: (isMpdPlayer && (player?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
-        ? LocalMusic.lyricsPosition
-        : (player?.position ?? 0)
+    readonly property real _rawEffectivePosition: MprisController.effectivePositionForPlayer(root.player, root.effectiveLength)
     readonly property real effectivePosition: StringUtils.boundedMediaPosition(
         root._rawEffectivePosition, root.effectiveLength)
     readonly property real effectiveDisplayedPosition: (seekLoader.item?.pressed ?? false)
@@ -297,7 +291,13 @@ Item {
                             liveValue: root.effectiveLength > 0
                                 ? root.effectivePosition / root.effectiveLength : 0
                             tooltipContent: StringUtils.friendlyTimeForSeconds(value * root.effectiveLength)
-                            onMoved: root.player.position = value * root.player.length
+                            onMoved: {
+                                const target = value * root.effectiveLength
+                                if (root.isMpdPlayer)
+                                    LocalMusic.seek(target)
+                                else if (root.player)
+                                    root.player.position = target
+                            }
                             onSeekCommitted: (val) => {
                                 const target = val * root.effectiveLength
                                 if (root.isMpdPlayer)

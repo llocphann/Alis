@@ -27,15 +27,9 @@ Item { // Player instance - Old style design
     property color artDominantColor: ColorUtils.mix((colorQuantizer?.colors[0] ?? Appearance.colors.colPrimary), Appearance.colors.colPrimaryContainer, 0.8) || Appearance.colors.colSecondaryContainer
     readonly property bool downloaded: artworkResolver.ready
     readonly property bool isMpdPlayer: player !== null && player === MprisController.mpdPlayer
-    readonly property real _rawEffectiveLength: ((player?.lengthSupported ?? false) && (player?.length ?? 0) > 0)
-        ? (player?.length ?? 0)
-        : (isMpdPlayer
-            ? LocalMusic.currentDuration
-            : MprisController.effectiveLengthForPlayer(root.player))
+    readonly property real _rawEffectiveLength: MprisController.effectiveLengthForPlayer(root.player)
     readonly property real effectiveLength: StringUtils.validMediaDuration(root._rawEffectiveLength)
-    readonly property real _rawEffectivePosition: (isMpdPlayer && (player?.position ?? 0) <= 0 && LocalMusic.lyricsPosition > 0)
-        ? LocalMusic.lyricsPosition
-        : (player?.position ?? 0)
+    readonly property real _rawEffectivePosition: MprisController.effectivePositionForPlayer(root.player, root.effectiveLength)
     readonly property real effectivePosition: StringUtils.boundedMediaPosition(
         root._rawEffectivePosition, root.effectiveLength)
     readonly property real effectiveDisplayedPosition: (sliderLoader.item?.pressed ?? false)

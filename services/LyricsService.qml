@@ -38,9 +38,12 @@ Singleton {
     property string _latestRequestId: ""
     property string _latestTrackKey: ""
     property string _publishedTrackKey: ""
+    property string _publishedIdentityKey: ""
     property var _pendingRequest: null
+    property string _pendingIdentityKey: ""
     property string _runningRequestId: ""
     property string _runningTrackKey: ""
+    property string _latestIdentityKey: ""
 
     function subscribe(): void {
         root.subscribers++;
@@ -68,6 +71,7 @@ Singleton {
         root.activeIndex = -1;
         root.slots = ["", "", "", "", "", "", ""];
         root._publishedTrackKey = "";
+        root._publishedIdentityKey = "";
         root._lastReported = -1;
         root._reanchor(0);
     }
@@ -78,6 +82,13 @@ Singleton {
         const artist = player?.trackArtist ?? "";
         const album = player?.trackAlbum ?? "";
         const duration = MprisController.effectiveLengthForPlayer(player);
+        const identityKey = JSON.stringify([
+            player?.dbusName ?? "",
+            player?.uniqueId ?? 0,
+            title,
+            artist,
+            album
+        ]);
         const key = JSON.stringify([
             player?.dbusName ?? "",
             player?.uniqueId ?? 0,
@@ -88,6 +99,7 @@ Singleton {
         ]);
         return {
             key: key,
+            identityKey: identityKey,
             title: title,
             artist: artist,
             album: album,
@@ -123,22 +135,25 @@ Singleton {
         if (snapshot.key === root._latestTrackKey && (settled || inFlight))
             return;
 
-        if (snapshot.key !== root._publishedTrackKey)
+        if (snapshot.identityKey !== root._publishedIdentityKey)
             root._clearPublished();
 
         root._requestSerial++;
         const requestId = String(root._requestSerial);
         root._latestRequestId = requestId;
         root._latestTrackKey = snapshot.key;
+        root._latestIdentityKey = snapshot.identityKey;
 
         if (!snapshot.title) {
             root._pendingRequest = null;
+            root._pendingIdentityKey = "";
             if (lyricsProc.running)
                 lyricsProc.running = false;
             root._publishFailure(requestId, "no_info");
             return;
         }
 
+        root._pendingIdentityKey = snapshot.identityKey;
         root._pendingRequest = {
             requestId: requestId,
             trackKey: snapshot.key,
@@ -228,9 +243,10 @@ Singleton {
             root.activeIndex = -1;
             root.slots = root.buildSlots(-1);
             root._lastReported = -1;
-            const reported = root.activePlayer?.position ?? 0;
+            const reported = MprisController.effectivePositionForPlayer(root.activePlayer);
             root._reanchor(reported);
             root._publishedTrackKey = root._latestTrackKey;
+            root._publishedIdentityKey = root._latestIdentityKey;
             root.status = "ok";
             root._syncLyricsPosition();
         });
@@ -318,7 +334,7 @@ Singleton {
         if (!root.active || root.status !== "ok" || root.lyricsLines.length === 0)
             return;
 
-        const reported = root.activePlayer?.position ?? 0;
+        const reported = MprisController.effectivePositionForPlayer(root.activePlayer);
         if (Math.abs(reported - root._lastReported) > 0.001 || root._anchorMs <= 0) {
             root._lastReported = reported;
             root._reanchor(Math.max(0, reported));
@@ -455,6 +471,20 @@ Singleton {
 
         function onLengthChanged(): void {
             root.scheduleRefresh();
+        }
+    }
+
+    Connections {
+        target: MprisController
+
+        function on_PlayerMetaVersionChanged(): void {
+            if (root.active)
+                root.scheduleRefresh();
+        }
+
+        function on_ResolvedTrackLengthsVersionChanged(): void {
+            if (root.active)
+                root.scheduleRefresh();
         }
     }
 }

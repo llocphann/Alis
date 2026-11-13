@@ -22,7 +22,10 @@ Singleton {
     }
 
     function _refreshPresentedStatus(): void {
-        if (root.uiDemand && root.enabled && !root._mpdSubscriptionActive)
+        if (!root.uiDemand || !root.enabled)
+            return
+        const isFixture = (Quickshell.env("FIXTURE_ROOT") ?? "").length > 0
+        if (!root._mpdSubscriptionActive || !isFixture)
             root.refreshStatus()
     }
     readonly property string configuredLibraryFolder:
@@ -97,6 +100,7 @@ Singleton {
     property var activeQueue: []
     property string activeQueueName: ""
     property int currentIndex: -1
+    property int currentQueueId: -1
     property int resumeIndex: -1
     property string currentPath: ""
     property string currentUri: ""
@@ -143,12 +147,20 @@ Singleton {
     property bool localLyricsSynced: false
     property string _pendingLyricsPath: ""
     property var _wordSyncUpgradedPaths: ({})
+    property var _probedDurations: ({})
+    property var _durationRefetchKeys: ({})
     property real _lyricsAnchorPos: 0
     property real _lyricsAnchorMs: 0
     property real _lyricsLivePos: 0
     property real _lastMprisNudgeMs: 0
     property real _lastMpdPositionSampleMs: 0
     property real _lastMpdStatusRequestMs: 0
+    property real _ignoreMprisUntilMs: 0
+    property int _mprisGateVersion: 0
+    property bool _statusRefreshQueued: false
+    property var _deferredSubscriptionPayload: null
+    property real _lyricsFetchedDurationSec: 0
+    property string _lyricsFetchedPath: ""
 
     function _safeValidDuration(value: var): real {
         if (typeof StringUtils !== "undefined")
@@ -166,13 +178,88 @@ Singleton {
         return dur > 0 ? Math.min(dur, n) : n
     }
 
+    function _normalizedTrackName(value: string): string {
+        return String(value ?? "").trim().toLowerCase()
+    }
+
+    function mprisMatchesCurrentTrack(): bool {
+        void root._mprisGateVersion
+        if (!mprisAvailable || !mprisPlayer)
+            return false
+        if (Date.now() < root._ignoreMprisUntilMs)
+            return false
+        const meta = mprisPlayer.metadata ?? ({})
+        const rawUrl = String(meta["xesam:url"] ?? "").trim()
+        if (rawUrl.length > 0) {
+            const cleanUrl = FileUtils.trimFileProtocol(rawUrl)
+            const localPath = String(currentPath ?? "").trim()
+            const localUri = String(currentUri ?? "").trim()
+            if (localPath.length > 0 || localUri.length > 0) {
+                const matchesPath = localPath.length > 0 && cleanUrl === localPath
+                const matchesUri = localUri.length > 0 && (cleanUrl === localUri || cleanUrl.endsWith("/" + localUri))
+                if (!matchesPath && !matchesUri)
+                    return false
+            }
+        }
+        const mprisTitle = root._normalizedTrackName(mprisPlayer.trackTitle ?? "")
+        const localTitle = root._normalizedTrackName(currentTitle ?? "")
+        if (mprisTitle.length > 0 && localTitle.length > 0 && mprisTitle !== localTitle)
+            return false
+        return true
+    }
+
+    function _beginTrackTransition(nextTrack = null, nextIndex = -1): void {
+        const now = Date.now()
+        root._ignoreMprisUntilMs = now + 1800
+        mprisGateExpiryTimer.restart()
+        root._lastMpdPositionSampleMs = now
+        root.currentPosition = 0
+        if (nextIndex >= 0) {
+            root.currentIndex = nextIndex
+            root.resumeIndex = nextIndex
+        }
+        if (nextTrack) {
+            root._applyCurrentTrack(nextTrack, true)
+        } else {
+            root.currentDuration = 0
+        }
+        root._reanchorLyricsPosition(0, true)
+    }
+
+    function _probeCurrentDuration(path: string): void {
+        const target = String(path ?? "").trim()
+        if (!target || target.includes("://") || !target.startsWith("/"))
+            return
+        if ((Quickshell.env("FIXTURE_ROOT") ?? "").length > 0)
+            return
+        if (Number(root._probedDurations[target] ?? 0) > 0) {
+            if (root.currentPath === target && root.currentDuration <= 0)
+                root.currentDuration = root._probedDurations[target]
+            return
+        }
+        if (_durationProbeProc.running && _durationProbeProc.targetPath === target)
+            return
+        if (_durationProbeProc.running)
+            _durationProbeProc.running = false
+        _durationProbeProc.targetPath = target
+        _durationProbeProc.output = ""
+        _durationProbeProc.command = [
+            "ffprobe", "-v", "error",
+            "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            target
+        ]
+        _durationProbeProc.running = true
+    }
+
     readonly property real _baseLyricsPosition: {
         const dur = root._safeValidDuration(currentDuration)
         const mprisRaw = Number(mprisPlayer?.position)
         const mpdPosition = root._safeBoundedPosition(currentPosition, dur)
         const mpdSampleFresh = root._lastMpdPositionSampleMs > 0
             && (Date.now() - root._lastMpdPositionSampleMs) < 1500
-        if (mprisAvailable && Number.isFinite(mprisRaw) && mprisRaw > 0) {
+        const mprisMatched = root.mprisMatchesCurrentTrack()
+        if (mprisMatched && Number.isFinite(mprisRaw) && mprisRaw > 0) {
             const mprisPosition = root._safeBoundedPosition(mprisRaw, dur)
             if (mpdSampleFresh && Math.abs(mprisPosition - mpdPosition) > 0.35)
                 return mpdPosition
@@ -264,24 +351,36 @@ Singleton {
         return null
     }
 
-    function _applyCurrentTrack(track): void {
+    function _applyCurrentTrack(track, forceResetDuration = false): void {
         if (!track) {
             currentTitle = currentPath.length > 0
                 ? currentPath.substring(currentPath.lastIndexOf("/") + 1) : ""
             currentArtist = ""
             currentAlbum = ""
             currentArt = ""
+            if (forceResetDuration)
+                currentDuration = 0
             return
         }
-        currentUri = String(track.uri ?? "")
-        currentPath = String(track.path ?? track.uri ?? "")
+        const nextUri = String(track.uri ?? "")
+        const nextPath = String(track.path ?? track.uri ?? "")
+        const trackChanged = forceResetDuration
+            || (nextUri.length > 0 && nextUri !== currentUri)
+            || (nextPath.length > 0 && nextPath !== currentPath)
+        currentUri = nextUri
+        currentPath = nextPath
         currentTitle = String(track.title ?? "")
         currentArtist = String(track.artist ?? "")
         currentAlbum = String(track.album ?? "")
         currentArt = String(track.art ?? "")
-        const trackDur = root._safeValidDuration(track.duration ?? currentDuration)
-        if (trackDur > 0 || currentDuration <= 0)
-            currentDuration = trackDur
+        const probedDur = nextPath.length > 0 ? root._safeValidDuration(root._probedDurations[nextPath] ?? 0) : 0
+        const trackDur = root._safeValidDuration(track.duration ?? 0)
+        const resolvedDur = trackDur > 0 ? trackDur : probedDur
+        if (trackChanged) {
+            currentDuration = resolvedDur
+        } else if (resolvedDur > 0 || currentDuration <= 0) {
+            currentDuration = resolvedDur
+        }
     }
 
     function _applyPayload(payload, includeLibrary = false): void {
@@ -310,21 +409,19 @@ Singleton {
         // successful socket poll as successful audio decoding.
         error = String(status.error ?? "").trim()
         mpdState = String(status.state ?? "stop")
+        const prevUri = currentUri
+        const prevPath = currentPath
+        const prevIndex = currentIndex
+        const prevQueueId = currentQueueId
+        const prevDuration = root._safeValidDuration(currentDuration)
         currentIndex = Number(status.song ?? -1)
+        currentQueueId = Number(status.songid ?? -1)
         if (currentIndex >= 0)
             resumeIndex = currentIndex
         _lastMpdPositionSampleMs = Date.now()
         currentPosition = Math.max(0, Number(status.elapsed ?? 0) || 0)
         const rawStatusDur = Number(status.duration ?? 0) || 0
-        const statusDur = typeof StringUtils !== "undefined"
-            ? StringUtils.validMediaDuration(rawStatusDur)
-            : Math.max(0, rawStatusDur)
-        const fallbackDur = statusDur > 0
-            ? statusDur
-            : (typeof StringUtils !== "undefined" && typeof mprisAvailable !== "undefined" && mprisAvailable
-                ? StringUtils.validMediaDuration(mprisPlayer?.length ?? 0)
-                : 0)
-        currentDuration = fallbackDur
+        const statusDur = root._safeValidDuration(rawStatusDur)
         const mpdVolume = Number(status.volume)
         if (Number.isFinite(mpdVolume) && mpdVolume >= 0)
             volume = Math.max(0, Math.min(1, mpdVolume / 100))
@@ -338,7 +435,32 @@ Singleton {
                 ? activeQueue[currentIndex] : null
         )
         if (current) {
-            _applyCurrentTrack(current)
+            const nextUri = String(current.uri ?? "")
+            const nextPath = String(current.path ?? current.uri ?? "")
+            const trackChanged = (nextUri.length > 0 && nextUri !== prevUri)
+                || (nextPath.length > 0 && nextPath !== prevPath)
+                || (currentQueueId >= 0 && prevQueueId >= 0 && currentQueueId !== prevQueueId)
+                || (currentIndex >= 0 && prevIndex >= 0 && currentIndex !== prevIndex)
+            if (trackChanged) {
+                root._ignoreMprisUntilMs = Date.now() + 1800
+                mprisGateExpiryTimer.restart()
+                root._reanchorLyricsPosition(currentPosition, true)
+            }
+            _applyCurrentTrack(current, trackChanged)
+            const curTrackDur = root._safeValidDuration(current.duration ?? 0)
+            const probedDur = nextPath.length > 0
+                ? root._safeValidDuration(root._probedDurations[nextPath] ?? 0)
+                : 0
+            let resolvedDur = statusDur > 0 ? statusDur
+                : (curTrackDur > 0 ? curTrackDur
+                    : (probedDur > 0 ? probedDur : 0))
+            if (resolvedDur <= 0 && !trackChanged && prevDuration > 0)
+                resolvedDur = prevDuration
+            if (resolvedDur <= 0 && root.mprisMatchesCurrentTrack())
+                resolvedDur = root._safeValidDuration(mprisPlayer?.length ?? 0)
+            currentDuration = resolvedDur
+            if (currentDuration <= 0 && nextPath.length > 0)
+                root._probeCurrentDuration(nextPath)
         } else {
             const resumable = mpdState === "stop"
                 && resumeIndex >= 0 && resumeIndex < activeQueue.length
@@ -346,9 +468,25 @@ Singleton {
             if (resumable) {
                 currentIndex = resumeIndex
                 currentPosition = 0
-                _applyCurrentTrack(resumable)
+                const resumableChanged = String(resumable.path ?? "") !== prevPath
+                    || String(resumable.uri ?? "") !== prevUri
+                _applyCurrentTrack(resumable, resumableChanged)
+                const resumableDur = root._safeValidDuration(resumable.duration ?? 0)
+                const probedDur = currentPath.length > 0
+                    ? root._safeValidDuration(root._probedDurations[currentPath] ?? 0)
+                    : 0
+                const fallbackDur = statusDur > 0 ? statusDur
+                    : (resumableDur > 0 ? resumableDur
+                        : (probedDur > 0 ? probedDur
+                            : (root.mprisMatchesCurrentTrack()
+                                ? root._safeValidDuration(mprisPlayer?.length ?? 0)
+                                : 0)))
+                currentDuration = fallbackDur
+                if (currentDuration <= 0 && currentPath.length > 0)
+                    root._probeCurrentDuration(currentPath)
             } else {
                 currentIndex = -1
+                currentQueueId = -1
                 currentUri = ""
                 currentPath = ""
                 currentTitle = ""
@@ -513,9 +651,11 @@ Singleton {
 
         if (event.payload && typeof event.payload === "object") {
             if (root.mpdMutationPending) {
+                root._deferredSubscriptionPayload = event.payload
                 statusRefreshTimer.restart()
                 return
             }
+            root._deferredSubscriptionPayload = null
             root._applyPayload(event.payload, false)
             return
         }
@@ -552,7 +692,13 @@ Singleton {
     }
 
     function refreshStatus(): void {
-        if (!enabled || _statusProc.running || _scanProc.running) return
+        if (!enabled) return
+        if (_scanProc.running) {
+            root._statusRefreshQueued = true
+            return
+        }
+        if (_statusProc.running) return
+        root._statusRefreshQueued = false
         if (error.length > 0 && mpdConnected) {
             error = ""
             _sendMpd("clearerror", [])
@@ -596,6 +742,8 @@ Singleton {
         const uri = String(track?.uri ?? track?.path ?? "").trim()
         if (uri.length === 0) return
 
+        if (playNow === true)
+            root._beginTrackTransition(track)
         _enqueueRequests = [..._enqueueRequests, {
             uri: uri,
             playNow: playNow === true
@@ -731,11 +879,7 @@ Singleton {
         index = Math.max(0, Math.min(valid.length - 1, Number(index) || 0))
         activeQueue = valid
         activeQueueName = String(name ?? "")
-        currentIndex = index
-        resumeIndex = index
-        _applyCurrentTrack(valid[index])
-        root._lastMpdPositionSampleMs = Date.now()
-        currentPosition = 0
+        root._beginTrackTransition(valid[index], index)
         error = ""
 
         _queueRequests = [..._queueRequests, {
@@ -819,6 +963,11 @@ Singleton {
 
     function _finishMpdMutation(): void {
         _activeMpdMutation = ""
+        if (_mpdMutationKinds.length === 0 && _deferredSubscriptionPayload) {
+            const deferred = _deferredSubscriptionPayload
+            _deferredSubscriptionPayload = null
+            Qt.callLater(() => root._applyPayload(deferred, false))
+        }
         Qt.callLater(root._drainMpdMutations)
     }
 
@@ -882,6 +1031,17 @@ Singleton {
     }
 
     function next(): void {
+        let predictedIdx = -1
+        let predictedTrack = null
+        if (!shuffleMode && activeQueue.length > 0 && currentIndex >= 0) {
+            if (currentIndex + 1 < activeQueue.length)
+                predictedIdx = currentIndex + 1
+            else if (repeatMode === 2)
+                predictedIdx = 0
+            if (predictedIdx >= 0)
+                predictedTrack = activeQueue[predictedIdx]
+        }
+        root._beginTrackTransition(predictedTrack, predictedIdx)
         const player = mprisPlayer
         if (!mpdMutationPending && player && MprisController.canGoNextForPlayer(player)) {
             MprisController.nextForPlayer(player, false)
@@ -896,6 +1056,17 @@ Singleton {
             seek(0)
             return
         }
+        let predictedIdx = -1
+        let predictedTrack = null
+        if (!shuffleMode && activeQueue.length > 0 && currentIndex >= 0) {
+            if (currentIndex > 0)
+                predictedIdx = currentIndex - 1
+            else if (repeatMode === 2)
+                predictedIdx = activeQueue.length - 1
+            if (predictedIdx >= 0)
+                predictedTrack = activeQueue[predictedIdx]
+        }
+        root._beginTrackTransition(predictedTrack, predictedIdx)
         const player = mprisPlayer
         if (!mpdMutationPending && player && MprisController.canGoPreviousForPlayer(player)) {
             MprisController.previousForPlayer(player, false)
@@ -907,7 +1078,7 @@ Singleton {
 
     function jumpTo(index: int): void {
         if (index >= 0 && index < activeQueue.length) {
-            resumeIndex = index
+            root._beginTrackTransition(activeQueue[index], index)
             _sendMpd("play", [index])
         }
     }
@@ -986,6 +1157,8 @@ Singleton {
         if (enabled) {
             MprisController.ensureMpdMprisBridge(mpdHost, mpdPort)
             _probeNativeMpd()
+            if ((Quickshell.env("FIXTURE_ROOT") ?? "").length === 0)
+                root.refreshStatus()
             Qt.callLater(root.rescan)
         }
     }
@@ -994,6 +1167,8 @@ Singleton {
         if (enabled) {
             MprisController.ensureMpdMprisBridge(mpdHost, mpdPort)
             _probeNativeMpd()
+            if ((Quickshell.env("FIXTURE_ROOT") ?? "").length === 0)
+                root.refreshStatus()
             Qt.callLater(root.rescan)
         } else {
             _stopNativeMpdBridge()
@@ -1005,7 +1180,36 @@ Singleton {
     onConfiguredPortChanged: root._configurationChanged()
     onCurrentPathChanged: {
         root._reanchorLyricsPosition(root.currentPosition, true)
+        root._lyricsFetchedPath = ""
+        root._lyricsFetchedDurationSec = 0
         Qt.callLater(root.refreshLocalLyrics)
+    }
+
+    onCurrentDurationChanged: {
+        const dur = root._safeValidDuration(root.currentDuration)
+        const path = root.currentPath
+        if (dur < 1 || !path || path.includes("://"))
+            return
+        if ((Quickshell.env("FIXTURE_ROOT") ?? "").length > 0)
+            return
+        const sameLyricsPath = root._lyricsFetchedPath === path
+        const prevDur = sameLyricsPath ? root._lyricsFetchedDurationSec : 0
+        const needsSyncRetry = !root.localLyricsSynced || root.localLyricsStatus === "not_found"
+        const durDiffers = prevDur <= 0 || Math.abs(dur - prevDur) >= 2
+        if (needsSyncRetry && durDiffers && root.localLyricsStatus !== "loading") {
+            const refetchKey = path + "::" + String(Math.round(dur))
+            if (!root._durationRefetchKeys[refetchKey]) {
+                const nextKeys = Object.assign({}, root._durationRefetchKeys)
+                nextKeys[refetchKey] = true
+                root._durationRefetchKeys = nextKeys
+                if (root._wordSyncUpgradedPaths[path]) {
+                    const nextMap = Object.assign({}, root._wordSyncUpgradedPaths)
+                    delete nextMap[path]
+                    root._wordSyncUpgradedPaths = nextMap
+                }
+                Qt.callLater(root.refreshLocalLyrics)
+            }
+        }
     }
 
     Process {
@@ -1127,6 +1331,13 @@ Singleton {
     }
 
     Timer {
+        id: mprisGateExpiryTimer
+        interval: 1850
+        repeat: false
+        onTriggered: root._mprisGateVersion++
+    }
+
+    Timer {
         id: statusRefreshTimer
         interval: 180
         repeat: false
@@ -1214,6 +1425,8 @@ Singleton {
                             && (Quickshell.env("FIXTURE_PORT") ?? "").length === 0
                         if (root.localLyricsStatus === "not_found" && canFetchOnline) {
                             root.localLyricsStatus = "loading"
+                            root._lyricsFetchedPath = requestedPath
+                            root._lyricsFetchedDurationSec = Math.round(root.currentDuration || 0)
                             if (_lyricsDownloadProc.running)
                                 _lyricsDownloadProc.running = false
                             _lyricsDownloadProc.upgradeOnly = false
@@ -1237,6 +1450,8 @@ Singleton {
                             const nextMap = Object.assign({}, root._wordSyncUpgradedPaths)
                             nextMap[requestedPath] = true
                             root._wordSyncUpgradedPaths = nextMap
+                            root._lyricsFetchedPath = requestedPath
+                            root._lyricsFetchedDurationSec = Math.round(root.currentDuration || 0)
                             if (_lyricsDownloadProc.running)
                                 _lyricsDownloadProc.running = false
                             _lyricsDownloadProc.upgradeOnly = true
@@ -1311,6 +1526,29 @@ Singleton {
     }
 
     Process {
+        id: _durationProbeProc
+        property string targetPath: ""
+        property string output: ""
+        stdout: StdioCollector {
+            onStreamFinished: _durationProbeProc.output = text ?? ""
+        }
+        onStarted: _durationProbeProc.output = ""
+        onExited: (code, _status) => {
+            const path = _durationProbeProc.targetPath
+            if (code !== 0 || !path)
+                return
+            const dur = root._safeValidDuration(parseFloat(_durationProbeProc.output.trim()))
+            if (dur <= 0)
+                return
+            const nextMap = Object.assign({}, root._probedDurations)
+            nextMap[path] = dur
+            root._probedDurations = nextMap
+            if (root.currentPath === path && root._safeValidDuration(root.currentDuration) <= 0)
+                root.currentDuration = dur
+        }
+    }
+
+    Process {
         id: _scanProc
         property string output: ""
         stdout: StdioCollector {
@@ -1327,12 +1565,20 @@ Singleton {
                 } catch (e) {
                     root.error = "mpd_unavailable"
                 }
+                if (root._statusRefreshQueued) {
+                    root._statusRefreshQueued = false
+                    Qt.callLater(root.refreshStatus)
+                }
                 return
             }
             try {
                 root._applyPayload(JSON.parse(_scanProc.output || "{}"), true)
             } catch (e) {
                 root.error = "mpd_snapshot_parse_failed"
+            }
+            if (root._statusRefreshQueued) {
+                root._statusRefreshQueued = false
+                Qt.callLater(root.refreshStatus)
             }
         }
     }
