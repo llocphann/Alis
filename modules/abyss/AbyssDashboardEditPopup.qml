@@ -13,16 +13,19 @@ Item {
     required property var canvasController
     property var tabController: null
     readonly property Item stageDockParent: body?.hostWindow?.stageDashboardDockHost ?? null
-    readonly property Item stageLeftHost: stageHosted ? (body?.hostWindow?.stageLeftDashboardDockHost ?? null) : null
-    readonly property Item stageRightHost: stageHosted ? (body?.hostWindow?.stageRightDashboardDockHost ?? null) : null
     readonly property bool stageHosted: stageDockParent !== null
-    parent: stageHosted ? stageDockParent : (body?.parent ?? null)
+    property bool _stageSessionActive: false
+    readonly property bool stageDockVisible: Boolean(stageDockParent?.visible ?? false)
+    readonly property bool stageOwnerActive: stageHosted && ((body?.open ?? false) || _stageSessionActive)
+    readonly property Item stageLeftHost: stageOwnerActive ? (body?.hostWindow?.stageLeftDashboardDockHost ?? null) : null
+    readonly property Item stageRightHost: stageOwnerActive ? (body?.hostWindow?.stageRightDashboardDockHost ?? null) : null
+    parent: stageOwnerActive ? stageDockParent : (body?.parent ?? null)
     objectName: "abyssDashboardEditPopup"
     z: 90
 
     readonly property real desiredWidth: Math.min(
         2400,
-        Math.max(680, Math.ceil(toolbar.implicitWidth)))
+        Math.max(620, Math.ceil(toolbar.desiredBottomDockWidth)))
     readonly property real desiredHeight: toolbar.implicitHeight
     readonly property real desiredLeftDockWidth: toolbar.desiredLeftDockWidth
     readonly property real desiredLeftDockHeight: toolbar.desiredLeftDockHeight
@@ -79,16 +82,28 @@ Item {
             root.retainedRect = root.targetRect
     }
     onTargetRectChanged: root.rememberRequestedRect()
-    onRevealRequestedChanged: if (revealRequested) root.rememberRequestedRect()
+    onRevealRequestedChanged: {
+        if (revealRequested) {
+            if (stageHosted)
+                root._stageSessionActive = true
+            root.rememberRequestedRect()
+        } else if (!root.stageDockVisible) {
+            root._stageSessionActive = false
+        }
+    }
+    onStageDockVisibleChanged: {
+        if (!root.stageDockVisible && !root.revealRequested)
+            root._stageSessionActive = false
+    }
 
     x: stageHosted ? 0 : presentationRect.x
     y: stageHosted ? 0 : presentationRect.y
-    width: stageHosted ? (stageDockParent?.width ?? toolbar.implicitWidth) : presentationRect.width
+    width: stageHosted ? (stageDockParent?.width ?? toolbar.desiredBottomDockWidth) : presentationRect.width
     height: stageHosted ? (stageDockParent?.height ?? desiredHeight) : presentationRect.height
     readonly property real slideOffset: stageHosted ? 0 : height * (1 - revealProgress)
     readonly property real revealedHeight: stageHosted ? height : height * revealProgress
     visible: stageHosted
-        ? (revealRequested || (stageDockParent?.visible ?? false))
+        ? (revealRequested || (root._stageSessionActive && root.stageDockVisible))
         : (revealProgress > 0)
     enabled: revealRequested && visible && (body?.acceptsInput ?? false)
 

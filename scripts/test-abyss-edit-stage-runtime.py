@@ -275,6 +275,25 @@ ShellRoot {
             }
 
             AbyssBodyHost {
+                id: auxBody
+                stableContentSize: true
+                warmContent: true
+                retainAfterFirstOpen: true
+                identity: "aux"
+                controller: liquid
+                anchors.fill: parent
+                edge: "bottom"
+                outputName: win.outputName
+                open: false
+                largeSurface: true
+                edgeInsets: win.nativeInsets
+                span: win.width * 0.72 + 40
+                along: (win.width - span) / 2
+                depth: win.height * 0.72 + 40
+                source: "content/AbyssOverviewContent.qml"
+            }
+
+            AbyssBodyHost {
                 id: dashboardBody
                 stableContentSize: true
                 identity: "dashboard"
@@ -690,16 +709,23 @@ ShellRoot {
                         "Edit Dashboard bottom dock sizes flexibly within 80% desktop cap & keeps Desktop centered"))
                     return;
                 if (!root.check(Boolean(leftTabsDock) && leftTabsDock.visible && stageLeftEditDock.visible
+                        && leftTabsDock.color.a === 0 && leftTabsDock.border.width === 0
                         && stageLeftEditDock.width >= 200
                         && stageLeftEditDock.height <= Math.round(win.editCard.height * 0.80) + 1
                         && (stageLeftEditDock.x + stageLeftEditDock.width) <= win.editCard.x + 1,
-                        "Edit Dashboard Tabs dock mounts on LEFT outside shrunk Desktop Stage"))
+                        "Edit Dashboard Tabs dock mounts framelessly in Abyss Panel Style on LEFT outside shrunk Desktop Stage"))
                     return;
                 if (!root.check(Boolean(rightLayoutDock) && rightLayoutDock.visible && stageRightEditDock.visible
+                        && rightLayoutDock.color.a === 0 && rightLayoutDock.border.width === 0
                         && stageRightEditDock.width >= 200
                         && stageRightEditDock.height <= Math.round(win.editCard.height * 0.80) + 1
                         && stageRightEditDock.x >= win.editCard.right - 1,
-                        "Edit Dashboard Layout & Grid dock mounts on RIGHT outside shrunk Desktop Stage"))
+                        "Edit Dashboard Layout & Grid dock mounts framelessly in Abyss Panel Style on RIGHT outside shrunk Desktop Stage"))
+                    return;
+                const visibleBottomPopups = Array.from(stageDashboardDockContainer.children ?? [])
+                    .filter(ch => ch && ch.objectName === "abyssDashboardEditPopup" && ch.visible);
+                if (!root.check(visibleBottomPopups.length === 1,
+                        "warmed auxBody must not double-mount into stageDashboardDockContainer (visible=" + visibleBottomPopups.length + ")"))
                     return;
                 dashPopup.canvasController.cancelEditMode();
                 GlobalStates.dashboardOpen = false;

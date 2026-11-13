@@ -221,7 +221,9 @@ Rectangle {
     // Preserve the canonical 2-tier Edit Dashboard Layout footprint while
     // Create/Rename temporarily overlays the top header bar. Never size the
     // dock from the naming row or validation message.
-    implicitWidth: root.splitSideDocks ? dock.implicitWidth : 1020
+    implicitWidth: 1020
+    readonly property real desiredBottomDockWidth: root.splitSideDocks ? dock.implicitWidth : root.implicitWidth
+    readonly property bool stageSideHosted: root.splitSideDocks && root.embeddedSurface
     readonly property real editToolbarHeight: dock.implicitHeight
     implicitHeight: root.editToolbarHeight
     visible: root.editing || root.naming
@@ -964,6 +966,135 @@ Rectangle {
         }
     }
 
+    // ── Abyss Panel Style Side Dock Primitives ──────────────────────────
+    component AbyssSideCard: Rectangle {
+        Layout.fillWidth: true
+        radius: 12
+        color: Qt.alpha(Appearance.colors.colLayer2, 0.46)
+        border.width: 1
+        border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.22)
+    }
+
+    component AbyssSidePillButton: Rectangle {
+        id: pillRoot
+        property string iconName: ""
+        property string labelText: ""
+        property bool active: false
+        property bool accentIdle: false
+        property bool destructive: false
+        property string tooltipText: ""
+        signal clicked()
+
+        activeFocusOnTab: true
+        implicitHeight: Math.round(30 * Appearance.fontSizeScale)
+        implicitWidth: Math.max(44, pillContentRow.implicitWidth + 16)
+        height: implicitHeight
+        radius: Math.round(implicitHeight / 2)
+        opacity: pillRoot.enabled ? 1.0 : 0.42
+        scale: pillMouse.pressed && pillRoot.enabled ? 0.96 : 1.0
+
+        color: pillRoot.active
+            ? ColorUtils.mix(Appearance.colors.colPrimaryContainer, Appearance.colors.colPrimary, 0.68)
+            : (pillRoot.accentIdle
+                ? Qt.alpha(Appearance.colors.colPrimary, pillMouse.containsMouse && pillRoot.enabled ? 0.26 : 0.16)
+                : (pillMouse.containsMouse && pillRoot.enabled
+                    ? (pillRoot.destructive
+                        ? Qt.alpha(Appearance.colors.colError, 0.18)
+                        : Qt.alpha(Appearance.colors.colOnLayer1, 0.10))
+                    : Qt.alpha(Appearance.colors.colLayer3, 0.56)))
+        border.width: 1
+        border.color: pillRoot.activeFocus
+            ? Appearance.colors.colPrimary
+            : (pillRoot.active
+                ? Qt.alpha(Appearance.colors.colPrimary, 0.44)
+                : (pillRoot.accentIdle
+                    ? Qt.alpha(Appearance.colors.colPrimary, 0.36)
+                    : (pillRoot.destructive && pillMouse.containsMouse && pillRoot.enabled
+                        ? Qt.alpha(Appearance.colors.colError, 0.40)
+                        : Qt.alpha(Appearance.colors.colOutlineVariant, 0.22))))
+
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: 120; easing.type: Easing.OutCubic }
+        }
+        Behavior on scale {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+        }
+
+        Keys.onReturnPressed: event => {
+            if (pillRoot.enabled) {
+                pillRoot.clicked()
+                event.accepted = true
+            }
+        }
+        Keys.onEnterPressed: event => {
+            if (pillRoot.enabled) {
+                pillRoot.clicked()
+                event.accepted = true
+            }
+        }
+        Keys.onSpacePressed: event => {
+            if (pillRoot.enabled) {
+                pillRoot.clicked()
+                event.accepted = true
+            }
+        }
+
+        Row {
+            id: pillContentRow
+            anchors.centerIn: parent
+            spacing: 4
+
+            MaterialSymbol {
+                visible: pillRoot.iconName.length > 0
+                anchors.verticalCenter: parent.verticalCenter
+                text: pillRoot.iconName
+                iconSize: 14 * Appearance.fontSizeScale
+                fill: pillRoot.active ? 1 : 0
+                color: pillRoot.active
+                    ? Appearance.colors.colOnPrimaryContainer
+                    : (pillRoot.accentIdle
+                        ? Appearance.colors.colPrimary
+                        : (pillRoot.destructive && pillMouse.containsMouse && pillRoot.enabled
+                            ? Appearance.colors.colError
+                            : Appearance.colors.colSubtext))
+            }
+
+            StyledText {
+                visible: pillRoot.labelText.length > 0
+                anchors.verticalCenter: parent.verticalCenter
+                text: pillRoot.labelText
+                width: Math.min(implicitWidth, Math.max(0, pillRoot.width - (pillRoot.iconName.length > 0 ? 26 : 12)))
+                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                font.pixelSize: Appearance.font.pixelSize.smallest
+                font.weight: (pillRoot.active || pillRoot.accentIdle) ? Font.DemiBold : Font.Medium
+                color: pillRoot.active
+                    ? Appearance.colors.colOnPrimaryContainer
+                    : (pillRoot.destructive && pillMouse.containsMouse && pillRoot.enabled
+                        ? Appearance.colors.colError
+                        : Appearance.colors.colOnLayer1)
+            }
+        }
+
+        MouseArea {
+            id: pillMouse
+            anchors.fill: parent
+            enabled: pillRoot.enabled
+            hoverEnabled: true
+            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: pillRoot.clicked()
+        }
+
+        StyledToolTip {
+            position: "top"
+            extraVisibleCondition: pillMouse.containsMouse && pillRoot.tooltipText.length > 0
+            text: pillRoot.tooltipText
+        }
+    }
+
     // ── Left Centered Edge Dock: Custom Tabs & Quick Switcher ────────────
     Rectangle {
         id: leftTabsDock
@@ -977,270 +1108,292 @@ Rectangle {
         z: 10
         visible: root.splitSideDocks && root.leftDockParent !== null && root.tabController !== null && root.visible
         enabled: root.enabled
-        implicitWidth: 276
-        implicitHeight: Math.min(560, leftTabsColumn.implicitHeight + 24)
-        radius: root.abyssMode ? Math.min(AbyssStyle.dockRadius, 18) : Appearance.rounding.large
-        color: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceBase : Appearance.colors.colLayer1, 0.92)
-        border.width: 1
-        border.color: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colOutlineVariant, 0.24)
+        implicitWidth: Math.round(268 * Appearance.fontSizeScale)
+        implicitHeight: Math.min(560, Math.ceil(leftTabsHeader.implicitHeight + 6 * Appearance.fontSizeScale + leftTabsScrollContent.implicitHeight + 16))
+        radius: root.stageSideHosted ? 0 : (root.abyssMode ? AbyssStyle.perimeterRadius : Appearance.rounding.large)
+        color: root.stageSideHosted
+            ? "transparent"
+            : (root.abyssMode
+                ? Qt.alpha(AbyssStyle.surfaceDeep, Math.max(0.84, AbyssStyle.contentOpacity))
+                : Appearance.colors.colLayer1)
+        border.width: root.stageSideHosted ? 0 : 1
+        border.color: root.stageSideHosted
+            ? "transparent"
+            : (root.abyssMode
+                ? Qt.alpha(AbyssStyle.specular, 0.34 * AbyssStyle.highlightStrength)
+                : Qt.alpha(Appearance.colors.colOutlineVariant, 0.28))
         clip: true
 
-        Flickable {
+        ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 12
-            contentWidth: width
-            contentHeight: leftTabsColumn.implicitHeight
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-            interactive: contentHeight > height
+            anchors.margins: 8
+            spacing: 6 * Appearance.fontSizeScale
 
-            ColumnLayout {
-                id: leftTabsColumn
-                width: parent.width
-                spacing: 8
+            RowLayout {
+                id: leftTabsHeader
+                Layout.fillWidth: true
+                spacing: 6
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    MaterialSymbol {
-                        text: "tab"
-                        iconSize: 16
-                        color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
-                    }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: Translation.tr("Tabs")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.DemiBold
-                        color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
-                        elide: Text.ElideRight
-                    }
-
-                    Rectangle {
-                        implicitWidth: tabCountText.implicitWidth + 12
-                        implicitHeight: 20
-                        radius: 10
-                        color: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.14)
-                        StyledText {
-                            id: tabCountText
-                            anchors.centerIn: parent
-                            text: String(root.tabController?.pageIds?.length ?? 0)
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.weight: Font.DemiBold
-                            color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
-                        }
-                    }
+                MaterialSymbol {
+                    text: "tab"
+                    iconSize: 17 * Appearance.fontSizeScale
+                    color: Appearance.colors.colPrimary
                 }
 
-                RowLayout {
+                StyledText {
                     Layout.fillWidth: true
-                    spacing: 6
-
-                    RippleButton {
-                        Layout.fillWidth: true
-                        implicitHeight: 32
-                        buttonRadius: 10
-                        focusPolicy: Qt.StrongFocus
-                        objectName: root.splitSideDocks ? "dashboardToolbarActionCreateTab" : ""
-                        colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.18)
-                        colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.28)
-                        onClicked: root.tabController?.openCustomTabDialog("create", "")
-
-                        contentItem: Item {
-                            Row {
-                                anchors.centerIn: parent
-                                spacing: 4
-                                MaterialSymbol {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "add"
-                                    iconSize: 15
-                                    color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
-                                }
-                                StyledText {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: Translation.tr("New")
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    font.weight: Font.DemiBold
-                                    color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
-                                }
-                            }
-                        }
-                    }
-
-                    RippleButton {
-                        Layout.fillWidth: true
-                        implicitHeight: 32
-                        buttonRadius: 10
-                        focusPolicy: Qt.StrongFocus
-                        objectName: root.splitSideDocks ? "dashboardToolbarActionRenameTab" : ""
-                        enabled: root.targetCustomTabId.length > 0
-                        opacity: enabled ? 1.0 : 0.45
-                        colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
-                        colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.18)
-                        onClicked: {
-                            if (root.targetCustomTabId.length > 0)
-                                root.tabController?.openCustomTabDialog("rename", root.targetCustomTabId)
-                        }
-
-                        contentItem: Item {
-                            Row {
-                                anchors.centerIn: parent
-                                spacing: 4
-                                MaterialSymbol {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "drive_file_rename_outline"
-                                    iconSize: 15
-                                    color: Appearance.colors.colSubtext
-                                }
-                                StyledText {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: Translation.tr("Rename")
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    font.weight: Font.Medium
-                                    color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
-                                }
-                            }
-                        }
-                    }
-
-                    RippleButton {
-                        Layout.fillWidth: true
-                        implicitHeight: 32
-                        buttonRadius: 10
-                        focusPolicy: Qt.StrongFocus
-                        objectName: root.splitSideDocks ? "dashboardToolbarActionDeleteTab" : ""
-                        enabled: root.targetCustomTabId.length > 0
-                        opacity: enabled ? 1.0 : 0.45
-                        colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
-                        colBackgroundHover: Qt.alpha(Appearance.colors.colError, 0.22)
-                        onClicked: {
-                            if (root.targetCustomTabId.length > 0)
-                                root.tabController?.openCustomTabDialog("delete", root.targetCustomTabId)
-                        }
-
-                        contentItem: Item {
-                            Row {
-                                anchors.centerIn: parent
-                                spacing: 4
-                                MaterialSymbol {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "delete_outline"
-                                    iconSize: 15
-                                    color: Appearance.colors.colSubtext
-                                }
-                                StyledText {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: Translation.tr("Delete")
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    font.weight: Font.Medium
-                                    color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
-                                }
-                            }
-                        }
-                    }
-                }
-
-                RippleButton {
-                    id: defaultTabButton
-                    readonly property bool isDefaultPage:
-                        String(Config.options?.dashboard?.defaultTabId ?? "")
-                        === String(root.tabController?.currentPageId ?? "")
-                    Layout.fillWidth: true
-                    implicitHeight: 32
-                    buttonRadius: 10
-                    focusPolicy: Qt.StrongFocus
-                    toggled: isDefaultPage
-                    colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
-                    colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.16)
-                    colBackgroundToggled: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.24)
-                    onClicked: {
-                        const cur = String(root.tabController?.currentPageId ?? "")
-                        if (cur.length > 0)
-                            root.tabController?.setDefaultTab(cur)
-                    }
-
-                    contentItem: Item {
-                        Row {
-                            anchors.centerIn: parent
-                            spacing: 6
-                            MaterialSymbol {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: "push_pin"
-                                iconSize: 15
-                                color: defaultTabButton.toggled
-                                    ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary)
-                                    : Appearance.colors.colSubtext
-                            }
-                            StyledText {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: defaultTabButton.toggled
-                                    ? Translation.tr("Pinned default tab")
-                                    : Translation.tr("Set active as default")
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                font.weight: Font.Medium
-                                color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
-                            }
-                        }
-                    }
+                    Layout.minimumWidth: 0
+                    elide: Text.ElideRight
+                    text: Translation.tr("Tabs")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.weight: Font.DemiBold
+                    color: Appearance.colors.colOnLayer1
                 }
 
                 Rectangle {
-                    Layout.fillWidth: true
-                    height: 1
-                    color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.24)
+                    implicitHeight: 20
+                    implicitWidth: tabCountText.implicitWidth + 12
+                    radius: 10
+                    color: Qt.alpha(Appearance.colors.colPrimary, 0.16)
+                    border.width: 1
+                    border.color: Qt.alpha(Appearance.colors.colPrimary, 0.36)
+
+                    StyledText {
+                        id: tabCountText
+                        anchors.centerIn: parent
+                        text: String(root.tabController?.pageIds?.length ?? 0)
+                        font.pixelSize: 9 * Appearance.fontSizeScale
+                        font.weight: Font.DemiBold
+                        color: Appearance.colors.colPrimary
+                    }
                 }
+            }
 
-                Repeater {
-                    model: root.tabController?.pageIds ?? []
-                    delegate: RippleButton {
-                        required property var modelData
-                        readonly property string pageKey: String(modelData)
-                        readonly property bool current:
-                            String(root.tabController?.currentPageId ?? "") === pageKey
-                        readonly property bool isDefault:
-                            String(Config.options?.dashboard?.defaultTabId ?? "") === pageKey
+            Flickable {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                contentWidth: width
+                contentHeight: leftTabsScrollContent.implicitHeight
+                flickableDirection: Flickable.VerticalFlick
+                boundsBehavior: Flickable.StopAtBounds
+                interactive: contentHeight > height
 
-                        Layout.fillWidth: true
-                        implicitHeight: 34
-                        buttonRadius: 10
-                        focusPolicy: Qt.StrongFocus
-                        toggled: current
-                        colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.56)
-                        colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.15)
-                        colBackgroundToggled: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.24)
-                        onClicked: root.switchDashboardTab(pageKey)
+                ColumnLayout {
+                    id: leftTabsScrollContent
+                    width: parent.width
+                    spacing: 8 * Appearance.fontSizeScale
 
-                        contentItem: Item {
+                    AbyssSideCard {
+                        implicitHeight: leftActionsCol.implicitHeight + 16
+
+                        ColumnLayout {
+                            id: leftActionsCol
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: 8
+                            spacing: 6 * Appearance.fontSizeScale
+
                             RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 10
-                                anchors.rightMargin: 10
-                                spacing: 7
+                                Layout.fillWidth: true
+                                spacing: 4
 
-                                MaterialSymbol {
-                                    text: root.pageIcon(pageKey)
-                                    iconSize: 16
-                                    color: current
-                                        ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary)
-                                        : Appearance.colors.colSubtext
+                                AbyssSidePillButton {
+                                    objectName: root.splitSideDocks ? "dashboardToolbarActionCreateTab" : ""
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    iconName: "add"
+                                    labelText: Translation.tr("New")
+                                    accentIdle: true
+                                    tooltipText: Translation.tr("Create custom tab")
+                                    onClicked: root.tabController?.openCustomTabDialog("create", "")
                                 }
+
+                                AbyssSidePillButton {
+                                    objectName: root.splitSideDocks ? "dashboardToolbarActionRenameTab" : ""
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    iconName: "drive_file_rename_outline"
+                                    labelText: Translation.tr("Rename")
+                                    enabled: root.targetCustomTabId.length > 0
+                                    tooltipText: Translation.tr("Rename custom tab")
+                                    onClicked: {
+                                        if (root.targetCustomTabId.length > 0)
+                                            root.tabController?.openCustomTabDialog("rename", root.targetCustomTabId)
+                                    }
+                                }
+
+                                AbyssSidePillButton {
+                                    objectName: root.splitSideDocks ? "dashboardToolbarActionDeleteTab" : ""
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    iconName: "delete_outline"
+                                    labelText: Translation.tr("Delete")
+                                    destructive: true
+                                    enabled: root.targetCustomTabId.length > 0
+                                    tooltipText: Translation.tr("Delete custom tab")
+                                    onClicked: {
+                                        if (root.targetCustomTabId.length > 0)
+                                            root.tabController?.openCustomTabDialog("delete", root.targetCustomTabId)
+                                    }
+                                }
+                            }
+
+                            AbyssSidePillButton {
+                                id: defaultTabButton
+                                readonly property bool isDefaultPage:
+                                    String(Config.options?.dashboard?.defaultTabId ?? "")
+                                    === String(root.tabController?.currentPageId ?? "")
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                active: isDefaultPage
+                                iconName: "push_pin"
+                                labelText: isDefaultPage
+                                    ? Translation.tr("Default tab")
+                                    : Translation.tr("Pin default")
+                                tooltipText: Translation.tr("Open this tab after inactivity")
+                                onClicked: {
+                                    const cur = String(root.tabController?.currentPageId ?? "")
+                                    if (cur.length > 0)
+                                        root.tabController?.setDefaultTab(cur)
+                                }
+                            }
+                        }
+                    }
+
+                    AbyssSideCard {
+                        implicitHeight: leftPagesCol.implicitHeight + 16
+
+                        ColumnLayout {
+                            id: leftPagesCol
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: 8
+                            spacing: 5 * Appearance.fontSizeScale
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
 
                                 StyledText {
                                     Layout.fillWidth: true
-                                    text: root.pageTitle(pageKey)
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    font.weight: current ? Font.DemiBold : Font.Medium
-                                    color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                                    Layout.minimumWidth: 0
                                     elide: Text.ElideRight
+                                    text: Translation.tr("Pages")
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    font.weight: Font.DemiBold
+                                    color: Appearance.colors.colOnLayer1
                                 }
 
-                                MaterialSymbol {
-                                    visible: isDefault
-                                    text: "push_pin"
-                                    iconSize: 13
-                                    color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
+                                Rectangle {
+                                    implicitHeight: 18
+                                    implicitWidth: pageScopeLabel.implicitWidth + 10
+                                    radius: 9
+                                    color: Qt.alpha(Appearance.colors.colLayer3, 0.72)
+
+                                    StyledText {
+                                        id: pageScopeLabel
+                                        anchors.centerIn: parent
+                                        text: String(root.tabController?.currentPageId ?? "").startsWith("custom-")
+                                            ? Translation.tr("Custom")
+                                            : Translation.tr("Built-in")
+                                        font.pixelSize: 9 * Appearance.fontSizeScale
+                                        color: Appearance.colors.colSubtext
+                                    }
+                                }
+                            }
+
+                            Repeater {
+                                model: root.tabController?.pageIds ?? []
+                                delegate: Rectangle {
+                                    id: pagePill
+                                    required property var modelData
+                                    readonly property string pageKey: String(modelData)
+                                    readonly property bool current:
+                                        String(root.tabController?.currentPageId ?? "") === pageKey
+                                    readonly property bool isDefault:
+                                        String(Config.options?.dashboard?.defaultTabId ?? "") === pageKey
+
+                                    Layout.fillWidth: true
+                                    implicitHeight: Math.round(30 * Appearance.fontSizeScale)
+                                    radius: 10
+                                    activeFocusOnTab: true
+                                    color: current
+                                        ? ColorUtils.mix(Appearance.colors.colPrimaryContainer, Appearance.colors.colPrimary, 0.68)
+                                        : (pagePillMouse.containsMouse
+                                            ? Qt.alpha(Appearance.colors.colOnLayer1, 0.08)
+                                            : Qt.alpha(Appearance.colors.colLayer3, 0.46))
+                                    border.width: 1
+                                    border.color: pagePill.activeFocus
+                                        ? Appearance.colors.colPrimary
+                                        : (current
+                                            ? Qt.alpha(Appearance.colors.colPrimary, 0.44)
+                                            : Qt.alpha(Appearance.colors.colOutlineVariant, 0.20))
+
+                                    Behavior on color {
+                                        enabled: Appearance.animationsEnabled
+                                        ColorAnimation { duration: 120; easing.type: Easing.OutCubic }
+                                    }
+
+                                    Keys.onReturnPressed: event => {
+                                        root.switchDashboardTab(pagePill.pageKey)
+                                        event.accepted = true
+                                    }
+                                    Keys.onEnterPressed: event => {
+                                        root.switchDashboardTab(pagePill.pageKey)
+                                        event.accepted = true
+                                    }
+                                    Keys.onSpacePressed: event => {
+                                        root.switchDashboardTab(pagePill.pageKey)
+                                        event.accepted = true
+                                    }
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 9
+                                        anchors.rightMargin: 9
+                                        spacing: 6
+
+                                        MaterialSymbol {
+                                            text: root.pageIcon(pagePill.pageKey)
+                                            iconSize: 15 * Appearance.fontSizeScale
+                                            fill: pagePill.current ? 1 : 0
+                                            color: pagePill.current
+                                                ? Appearance.colors.colOnPrimaryContainer
+                                                : Appearance.colors.colSubtext
+                                        }
+
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
+                                            text: root.pageTitle(pagePill.pageKey)
+                                            font.pixelSize: Appearance.font.pixelSize.smaller
+                                            font.weight: pagePill.current ? Font.DemiBold : Font.Medium
+                                            color: pagePill.current
+                                                ? Appearance.colors.colOnPrimaryContainer
+                                                : Appearance.colors.colOnLayer1
+                                            elide: Text.ElideRight
+                                        }
+
+                                        MaterialSymbol {
+                                            visible: pagePill.isDefault
+                                            text: "push_pin"
+                                            iconSize: 13 * Appearance.fontSizeScale
+                                            color: pagePill.current
+                                                ? Appearance.colors.colOnPrimaryContainer
+                                                : Appearance.colors.colPrimary
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: pagePillMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.switchDashboardTab(pagePill.pageKey)
+                                    }
                                 }
                             }
                         }
@@ -1263,312 +1416,338 @@ Rectangle {
         z: 10
         visible: root.splitSideDocks && root.rightDockParent !== null && root.canvasController !== null && root.visible
         enabled: root.enabled
-        implicitWidth: 288
-        implicitHeight: Math.min(560, rightLayoutColumn.implicitHeight + 24)
-        radius: root.abyssMode ? Math.min(AbyssStyle.dockRadius, 18) : Appearance.rounding.large
-        color: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceBase : Appearance.colors.colLayer1, 0.92)
-        border.width: 1
-        border.color: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colOutlineVariant, 0.24)
+        implicitWidth: Math.round(284 * Appearance.fontSizeScale)
+        implicitHeight: Math.min(560, Math.ceil(rightLayoutHeader.implicitHeight + 6 * Appearance.fontSizeScale + rightLayoutScrollContent.implicitHeight + 16))
+        radius: root.stageSideHosted ? 0 : (root.abyssMode ? AbyssStyle.perimeterRadius : Appearance.rounding.large)
+        color: root.stageSideHosted
+            ? "transparent"
+            : (root.abyssMode
+                ? Qt.alpha(AbyssStyle.surfaceDeep, Math.max(0.84, AbyssStyle.contentOpacity))
+                : Appearance.colors.colLayer1)
+        border.width: root.stageSideHosted ? 0 : 1
+        border.color: root.stageSideHosted
+            ? "transparent"
+            : (root.abyssMode
+                ? Qt.alpha(AbyssStyle.specular, 0.34 * AbyssStyle.highlightStrength)
+                : Qt.alpha(Appearance.colors.colOutlineVariant, 0.28))
         clip: true
 
-        Flickable {
+        ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 12
-            contentWidth: width
-            contentHeight: rightLayoutColumn.implicitHeight
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-            interactive: contentHeight > height
+            anchors.margins: 8
+            spacing: 6 * Appearance.fontSizeScale
 
-            ColumnLayout {
-                id: rightLayoutColumn
-                width: parent.width
-                spacing: 9
+            RowLayout {
+                id: rightLayoutHeader
+                Layout.fillWidth: true
+                spacing: 6
 
-                RowLayout {
+                MaterialSymbol {
+                    text: "grid_view"
+                    iconSize: 17 * Appearance.fontSizeScale
+                    color: Appearance.colors.colPrimary
+                }
+
+                StyledText {
                     Layout.fillWidth: true
-                    spacing: 6
+                    Layout.minimumWidth: 0
+                    elide: Text.ElideRight
+                    text: Translation.tr("Layout & Grid")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.weight: Font.DemiBold
+                    color: Appearance.colors.colOnLayer1
+                }
 
-                    MaterialSymbol {
-                        text: "grid_view"
-                        iconSize: 16
-                        color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
-                    }
+                Rectangle {
+                    implicitHeight: 20
+                    implicitWidth: snapBadgeLabel.implicitWidth + 10
+                    radius: 10
+                    color: Qt.alpha(Appearance.colors.colPrimary, (root.canvasController?.snapEnabled ?? false) ? 0.16 : 0.08)
+                    border.width: 1
+                    border.color: Qt.alpha(Appearance.colors.colPrimary, (root.canvasController?.snapEnabled ?? false) ? 0.36 : 0.20)
 
                     StyledText {
-                        Layout.fillWidth: true
-                        text: Translation.tr("Layout & Grid")
-                        font.pixelSize: Appearance.font.pixelSize.small
+                        id: snapBadgeLabel
+                        anchors.centerIn: parent
+                        text: (root.canvasController?.snapEnabled ?? false)
+                            ? Translation.tr("SNAP")
+                            : Translation.tr("FREE")
+                        font.pixelSize: 9 * Appearance.fontSizeScale
                         font.weight: Font.DemiBold
-                        color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
-                        elide: Text.ElideRight
+                        color: (root.canvasController?.snapEnabled ?? false)
+                            ? Appearance.colors.colPrimary
+                            : Appearance.colors.colSubtext
                     }
                 }
+            }
 
-                RippleButton {
-                    objectName: root.splitSideDocks ? "dashboardLayoutSnapCard" : ""
-                    Layout.fillWidth: true
-                    implicitHeight: 34
-                    buttonRadius: 10
-                    focusPolicy: Qt.StrongFocus
-                    toggled: root.canvasController?.snapEnabled ?? false
-                    colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
-                    colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.16)
-                    colBackgroundToggled: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.24)
-                    onClicked: root.canvasController?.toggleSnap()
-
-                    contentItem: Item {
-                        Row {
-                            anchors.centerIn: parent
-                            spacing: 6
-                            MaterialSymbol {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: (root.canvasController?.snapEnabled ?? false) ? "grid_on" : "grid_off"
-                                iconSize: 16
-                                color: (root.canvasController?.snapEnabled ?? false)
-                                    ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary)
-                                    : Appearance.colors.colSubtext
-                            }
-                            StyledText {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: (root.canvasController?.snapEnabled ?? false)
-                                    ? Translation.tr("Snap to Grid: On")
-                                    : Translation.tr("Snap to Grid: Off")
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                font.weight: Font.DemiBold
-                                color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
-                            }
-                        }
-                    }
-                }
+            Flickable {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                contentWidth: width
+                contentHeight: rightLayoutScrollContent.implicitHeight
+                flickableDirection: Flickable.VerticalFlick
+                boundsBehavior: Flickable.StopAtBounds
+                interactive: contentHeight > height
 
                 ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 5
+                    id: rightLayoutScrollContent
+                    width: parent.width
+                    spacing: 8 * Appearance.fontSizeScale
 
-                    StyledText {
-                        text: Translation.tr("Grid Style")
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.weight: Font.Medium
-                        color: Appearance.colors.colSubtext
-                    }
+                    AbyssSideCard {
+                        implicitHeight: gridCardCol.implicitHeight + 16
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 5
+                        ColumnLayout {
+                            id: gridCardCol
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: 8
+                            spacing: 6 * Appearance.fontSizeScale
 
-                        Repeater {
-                            model: [
-                                { key: "dots", label: Translation.tr("Dots"), icon: "drag_indicator" },
-                                { key: "lines", label: Translation.tr("Lines"), icon: "grid_4x4" },
-                                { key: "cross", label: Translation.tr("Cross"), icon: "add" }
-                            ]
-                            delegate: RippleButton {
-                                required property var modelData
-                                readonly property bool selectedStyle:
-                                    String(root.canvasController?.gridStyle ?? "dots") === modelData.key
+                            Rectangle {
                                 Layout.fillWidth: true
-                                implicitHeight: 30
-                                buttonRadius: Appearance.rounding.full
-                                focusPolicy: Qt.StrongFocus
-                                toggled: selectedStyle
-                                colBackground: Qt.alpha(Appearance.colors.colLayer3, 0.55)
-                                colBackgroundHover: Appearance.colors.colLayer3Hover
-                                colBackgroundToggled: root.abyssMode
-                                    ? Qt.alpha(AbyssStyle.accent, 0.26)
-                                    : Appearance.colors.colPrimaryContainer
-                                onClicked: root.selectGridStyle(modelData.key)
+                                implicitHeight: Math.round(28 * Appearance.fontSizeScale)
+                                radius: Math.round(implicitHeight / 2)
+                                color: Qt.alpha(Appearance.colors.colLayer3, 0.56)
+                                border.width: 1
+                                border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.22)
 
-                                contentItem: Item {
-                                    Row {
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 2
+                                    spacing: 2
+
+                                    Repeater {
+                                        model: [
+                                            { key: "dots", label: Translation.tr("Dots"), icon: "drag_indicator" },
+                                            { key: "lines", label: Translation.tr("Lines"), icon: "grid_4x4" },
+                                            { key: "cross", label: Translation.tr("Cross"), icon: "add" }
+                                        ]
+                                        delegate: Rectangle {
+                                            id: stylePill
+                                            required property var modelData
+                                            readonly property bool selectedStyle:
+                                                String(root.canvasController?.gridStyle ?? "dots") === modelData.key
+
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            radius: 12
+                                            color: selectedStyle
+                                                ? ColorUtils.mix(Appearance.colors.colPrimaryContainer, Appearance.colors.colPrimary, 0.70)
+                                                : (styleMouse.containsMouse
+                                                    ? Qt.alpha(Appearance.colors.colOnLayer1, 0.08)
+                                                    : "transparent")
+
+                                            Row {
+                                                anchors.centerIn: parent
+                                                spacing: 4
+
+                                                MaterialSymbol {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: stylePill.modelData.icon
+                                                    iconSize: 13 * Appearance.fontSizeScale
+                                                    color: stylePill.selectedStyle
+                                                        ? Appearance.colors.colOnPrimaryContainer
+                                                        : Appearance.colors.colSubtext
+                                                }
+
+                                                StyledText {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: stylePill.modelData.label
+                                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                                    font.weight: stylePill.selectedStyle ? Font.DemiBold : Font.Medium
+                                                    color: stylePill.selectedStyle
+                                                        ? Appearance.colors.colOnPrimaryContainer
+                                                        : Appearance.colors.colSubtext
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                id: styleMouse
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: root.selectGridStyle(stylePill.modelData.key)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 5
+
+                                MaterialSymbol {
+                                    text: "space_bar"
+                                    iconSize: 15 * Appearance.fontSizeScale
+                                    color: Appearance.colors.colSubtext
+                                }
+
+                                StyledText {
+                                    Layout.minimumWidth: 0
+                                    elide: Text.ElideRight
+                                    text: Translation.tr("Spacing")
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    color: Appearance.colors.colSubtext
+                                }
+
+                                StyledSlider {
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 72 * Appearance.fontSizeScale
+                                    from: 8
+                                    to: 64
+                                    stepSize: 4
+                                    value: root.canvasController?.gridSize ?? 24
+                                    configuration: StyledSlider.Configuration.S
+                                    onMoved: {
+                                        if (root.canvasController?.setGridSize)
+                                            root.canvasController.setGridSize(value)
+                                        else if (root.canvasController)
+                                            root.canvasController._cycleGridSize()
+                                    }
+                                }
+
+                                Rectangle {
+                                    objectName: root.splitSideDocks ? "dashboardLayoutGridSizeCard" : ""
+                                    implicitHeight: 22
+                                    implicitWidth: gridPxText.implicitWidth + 12
+                                    radius: 11
+                                    activeFocusOnTab: true
+                                    color: gridPxMouse.containsMouse
+                                        ? Qt.alpha(Appearance.colors.colPrimary, 0.22)
+                                        : Qt.alpha(Appearance.colors.colLayer3, 0.72)
+                                    border.width: 1
+                                    border.color: gridPxMouse.containsMouse
+                                        ? Qt.alpha(Appearance.colors.colPrimary, 0.40)
+                                        : Qt.alpha(Appearance.colors.colOutlineVariant, 0.24)
+
+                                    StyledText {
+                                        id: gridPxText
                                         anchors.centerIn: parent
-                                        spacing: 4
-                                        MaterialSymbol {
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: modelData.icon
-                                            iconSize: 14
-                                            color: selectedStyle
-                                                ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colOnPrimaryContainer)
-                                                : Appearance.colors.colSubtext
-                                        }
-                                        StyledText {
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: modelData.label
-                                            font.pixelSize: Appearance.font.pixelSize.smallest
-                                            font.weight: selectedStyle ? Font.DemiBold : Font.Medium
-                                            color: selectedStyle
-                                                ? (root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnPrimaryContainer)
-                                                : Appearance.colors.colOnLayer1
-                                        }
+                                        text: Translation.tr("%1 px").arg(root.canvasController?.gridSize ?? 24)
+                                        font.pixelSize: 9 * Appearance.fontSizeScale
+                                        font.weight: Font.DemiBold
+                                        color: Appearance.colors.colPrimary
+                                    }
+
+                                    MouseArea {
+                                        id: gridPxMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.canvasController?._cycleGridSize()
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 5
+
+                                AbyssSidePillButton {
+                                    objectName: root.splitSideDocks ? "dashboardLayoutSnapCard" : ""
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    iconName: (root.canvasController?.snapEnabled ?? false) ? "grid_on" : "grid_off"
+                                    labelText: Translation.tr("Snap")
+                                    active: root.canvasController?.snapEnabled ?? false
+                                    tooltipText: active
+                                        ? Translation.tr("Snap to grid: on")
+                                        : Translation.tr("Snap to grid: off")
+                                    onClicked: root.canvasController?.toggleSnap()
+                                }
+
+                                AbyssSidePillButton {
+                                    visible: !(root.canvasController?.responsiveWorkspace ?? false)
+                                    objectName: root.splitSideDocks ? "dashboardLayoutAutoFitCard" : ""
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    iconName: "fit_screen"
+                                    labelText: Translation.tr("Auto-fit")
+                                    active: root.canvasController?.autoAdjustSizeEnabled ?? true
+                                    tooltipText: active
+                                        ? Translation.tr("Auto-adjust affected module sizes: on")
+                                        : Translation.tr("Auto-adjust affected module sizes: off")
+                                    onClicked: {
+                                        if (root.canvasController)
+                                            root.canvasController.toggleAutoAdjustSize()
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 4
+                    AbyssSideCard {
+                        implicitHeight: canvasActionsCol.implicitHeight + 16
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
+                        ColumnLayout {
+                            id: canvasActionsCol
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: 8
+                            spacing: 6 * Appearance.fontSizeScale
 
-                        StyledText {
-                            Layout.fillWidth: true
-                            text: Translation.tr("Grid Spacing")
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.weight: Font.Medium
-                            color: Appearance.colors.colSubtext
-                        }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
 
-                        RippleButton {
-                            objectName: root.splitSideDocks ? "dashboardLayoutGridSizeCard" : ""
-                            implicitWidth: gridPxText.implicitWidth + 16
-                            implicitHeight: 22
-                            buttonRadius: 11
-                            focusPolicy: Qt.StrongFocus
-                            colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.14)
-                            colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.24)
-                            onClicked: root.canvasController?._cycleGridSize()
-
-                            contentItem: Item {
                                 StyledText {
-                                    id: gridPxText
-                                    anchors.centerIn: parent
-                                    text: Translation.tr("%1 px").arg(root.canvasController?.gridSize ?? 24)
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    elide: Text.ElideRight
+                                    text: Translation.tr("Canvas")
                                     font.pixelSize: Appearance.font.pixelSize.smallest
                                     font.weight: Font.DemiBold
-                                    color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
+                                    color: Appearance.colors.colOnLayer1
+                                }
+
+                                Rectangle {
+                                    implicitHeight: 18
+                                    implicitWidth: hiddenCountLabel.implicitWidth + 10
+                                    radius: 9
+                                    color: Qt.alpha(Appearance.colors.colLayer3, 0.72)
+
+                                    StyledText {
+                                        id: hiddenCountLabel
+                                        anchors.centerIn: parent
+                                        text: root.hiddenIds.length > 0
+                                            ? Translation.tr("%1 hidden").arg(root.hiddenIds.length)
+                                            : Translation.tr("All placed")
+                                        font.pixelSize: 9 * Appearance.fontSizeScale
+                                        color: Appearance.colors.colSubtext
+                                    }
                                 }
                             }
-                        }
-                    }
 
-                    StyledSlider {
-                        Layout.fillWidth: true
-                        from: 8
-                        to: 64
-                        stepSize: 4
-                        value: root.canvasController?.gridSize ?? 24
-                        configuration: StyledSlider.Configuration.S
-                        onMoved: {
-                            if (root.canvasController?.setGridSize)
-                                root.canvasController.setGridSize(value)
-                            else if (root.canvasController)
-                                root.canvasController._cycleGridSize()
-                        }
-                    }
-                }
-
-                RippleButton {
-                    visible: !(root.canvasController?.responsiveWorkspace ?? false)
-                    objectName: root.splitSideDocks ? "dashboardLayoutAutoFitCard" : ""
-                    Layout.fillWidth: true
-                    implicitHeight: 34
-                    buttonRadius: 10
-                    focusPolicy: Qt.StrongFocus
-                    toggled: root.canvasController?.autoAdjustSizeEnabled ?? true
-                    colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
-                    colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.16)
-                    colBackgroundToggled: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.24)
-                    onClicked: root.canvasController?.toggleAutoAdjustSize()
-
-                    contentItem: Item {
-                        Row {
-                            anchors.centerIn: parent
-                            spacing: 6
-                            MaterialSymbol {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: "fit_screen"
-                                iconSize: 16
-                                color: (root.canvasController?.autoAdjustSizeEnabled ?? true)
-                                    ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary)
-                                    : Appearance.colors.colSubtext
-                            }
-                            StyledText {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: (root.canvasController?.autoAdjustSizeEnabled ?? true)
-                                    ? Translation.tr("Auto-Adjust: On")
-                                    : Translation.tr("Auto-Adjust: Off")
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                font.weight: Font.DemiBold
-                                color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
-                            }
-                        }
-                    }
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 1
-                    color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.24)
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    RippleButton {
-                        objectName: root.splitSideDocks ? "dashboardLayoutFitAllCard" : ""
-                        Layout.fillWidth: true
-                        implicitHeight: 34
-                        buttonRadius: 10
-                        focusPolicy: Qt.StrongFocus
-                        enabled: root.hiddenIds.length > 0
-                        opacity: enabled ? 1.0 : 0.45
-                        colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
-                        colBackgroundHover: Qt.alpha(root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary, 0.18)
-                        onClicked: root.canvasController?.fitAllWidgets()
-
-                        contentItem: Item {
-                            Row {
-                                anchors.centerIn: parent
+                            RowLayout {
+                                Layout.fillWidth: true
                                 spacing: 5
-                                MaterialSymbol {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "auto_awesome_motion"
-                                    iconSize: 15
-                                    color: Appearance.colors.colSubtext
-                                }
-                                StyledText {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: Translation.tr("Smart Fit")
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    font.weight: Font.Medium
-                                    color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
-                                }
-                            }
-                        }
-                    }
 
-                    RippleButton {
-                        objectName: root.splitSideDocks ? "dashboardLayoutResetCard" : ""
-                        Layout.fillWidth: true
-                        implicitHeight: 34
-                        buttonRadius: 10
-                        focusPolicy: Qt.StrongFocus
-                        colBackground: Qt.alpha(root.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.72)
-                        colBackgroundHover: Qt.alpha(Appearance.colors.colError, 0.20)
-                        onClicked: root.canvasController?.resetLayout()
-
-                        contentItem: Item {
-                            Row {
-                                anchors.centerIn: parent
-                                spacing: 5
-                                MaterialSymbol {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "restart_alt"
-                                    iconSize: 15
-                                    color: Appearance.colors.colSubtext
+                                AbyssSidePillButton {
+                                    objectName: root.splitSideDocks ? "dashboardLayoutFitAllCard" : ""
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    iconName: "auto_awesome_motion"
+                                    labelText: Translation.tr("Smart Fit")
+                                    enabled: root.hiddenIds.length > 0
+                                    tooltipText: Translation.tr("Add all modules and fit them automatically")
+                                    onClicked: root.canvasController?.fitAllWidgets()
                                 }
-                                StyledText {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: Translation.tr("Reset")
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    font.weight: Font.Medium
-                                    color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+
+                                AbyssSidePillButton {
+                                    objectName: root.splitSideDocks ? "dashboardLayoutResetCard" : ""
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    iconName: "restart_alt"
+                                    labelText: Translation.tr("Reset")
+                                    destructive: true
+                                    tooltipText: Translation.tr("Reset dashboard layout")
+                                    onClicked: root.canvasController?.resetLayout()
                                 }
                             }
                         }
