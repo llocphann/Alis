@@ -49,6 +49,13 @@ Rectangle {
 
         model: [
             {
+                iconName: "apps",
+                text: Translation.tr("Dashboard"),
+                action: () => {
+                    WaffleNavigation.toggleDashboard()
+                }
+            },
+            {
                 iconName: "pulse",
                 text: Translation.tr("Task Manager"),
                 action: () => {
@@ -112,6 +119,7 @@ Rectangle {
         StartButton {}
         SearchButton {}
         TaskViewButton {}
+        DashboardButton {}
         WTaskbarSeparator { }
         Tasks {}
     }

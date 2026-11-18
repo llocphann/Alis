@@ -3,7 +3,8 @@
     "tlp",
     "thinkfan",
     "nexus",
-    "spaced_repetition"
+    "spaced_repetition",
+    "exercises_tracker"
   ],
   "dependencies": {
     "nexus": {
@@ -27,6 +28,19 @@
       "helpers": [],
       "setupCommand": "",
       "note": "User-space plugin (no system dependencies or root helpers needed)."
+    },
+    "exercises_tracker": {
+      "userSpace": true,
+      "requiresSystemHelpers": false,
+      "packages": [
+        "python3"
+      ],
+      "binaries": [
+        "python3"
+      ],
+      "helpers": [],
+      "setupCommand": "",
+      "note": "User-space plugin (requires Python 3 for safe photo import; no root helpers needed)."
     },
     "tlp": {
       "userSpace": false,
@@ -71,7 +85,8 @@
     "tlpWaffle": "modules/waffle/settings/WTlpPowerSettings.qml",
     "tlpWaffleRow": "modules/waffle/settings/WTlpSettingRow.qml",
     "thinkfan": "modules/settings/ThinkfanSettings.qml",
-    "spacedRepetition": "modules/settings/DashboardSpacedRepetitionSettings.qml"
+    "spacedRepetition": "modules/settings/DashboardSpacedRepetitionSettings.qml",
+    "exercisesTracker": "modules/settings/DashboardExercisesTrackerSettings.qml"
   },
   "plugins": [
     {
@@ -132,6 +147,18 @@
           "id": "vocabulary",
           "name": "Vocabulary & Cards",
           "settings": "spacedRepetition"
+        }
+      ]
+    },
+    {
+      "id": "exercises_tracker",
+      "name": "Exercises Tracker",
+      "icon": "fitness_center",
+      "capabilities": [
+        {
+          "id": "workouts",
+          "name": "Workouts & Body Tracker",
+          "settings": "exercisesTracker"
         }
       ]
     }

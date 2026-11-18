@@ -47,14 +47,12 @@ Singleton {
     readonly property bool thinkfanEnabled: isPluginInstalled("thinkfan") && Config.ready && options?.thinkfan === true
     readonly property bool nexusEnabled: isPluginInstalled("nexus") && Config.ready && options?.nexus === true
     readonly property bool spacedRepetitionEnabled: isPluginInstalled("spaced_repetition") && Config.ready && options?.spaced_repetition === true
-    property bool _hasExplicitExercisesTrackerPref: false
+    property bool _pendingLegacyPrefsSync: false
     property bool _explicitExercisesTrackerEnabled: false
     readonly property string exercisesTrackerPrefsPath: `${Directories.stateUserPath}/exercises-tracker/prefs.json`
     readonly property bool exercisesTrackerAvailable: available && !loadFailed && packageRoot.length > 0
-    readonly property bool exercisesTrackerEnabled: exercisesTrackerAvailable && Config.ready
-        && (_hasExplicitExercisesTrackerPref ? _explicitExercisesTrackerEnabled : (nexusEnabled || spacedRepetitionEnabled))
-    readonly property bool enabled: tlpEnabled || thinkfanEnabled || nexusEnabled || spacedRepetitionEnabled
-        || (_hasExplicitExercisesTrackerPref && _explicitExercisesTrackerEnabled && exercisesTrackerAvailable && Config.ready)
+    readonly property bool exercisesTrackerEnabled: isPluginInstalled("exercises_tracker") && Config.ready && options?.exercises_tracker === true
+    readonly property bool enabled: tlpEnabled || thinkfanEnabled || nexusEnabled || spacedRepetitionEnabled || exercisesTrackerEnabled
     readonly property var session: worker.status === Loader.Ready ? worker.item : null
     readonly property var nexus: session?.nexus ?? null
     readonly property var spacedRepetition: session?.spacedRepetition ?? null
@@ -71,7 +69,7 @@ Singleton {
         const entry = pluginDependenciesMap?.[pluginId]
         if (entry && typeof entry === "object")
             return entry
-        const userSpace = pluginId === "nexus" || pluginId === "spaced_repetition"
+        const userSpace = pluginId === "nexus" || pluginId === "spaced_repetition" || pluginId === "exercises_tracker"
         return {
             userSpace: userSpace,
             requiresSystemHelpers: !userSpace,
@@ -79,7 +77,7 @@ Singleton {
             binariesReady: true,
             helpersReady: userSpace,
             provisionerReady: systemProvisionerAvailable,
-            packages: userSpace ? (pluginId === "nexus" ? ["python3"] : []) : [pluginId, "alis-deps"],
+            packages: userSpace ? (pluginId === "spaced_repetition" ? [] : ["python3"]) : [pluginId, "alis-deps"],
             binaries: [],
             helpers: [],
             missing: [],
@@ -92,8 +90,13 @@ Singleton {
         return isPluginInstalled(pluginId) && Config.ready && options?.[pluginId] === true
     }
     function setPluginEnabled(pluginId, value): void {
-        if (!managerBusy && isPluginInstalled(pluginId))
+        if (!managerBusy && isPluginInstalled(pluginId)) {
+            if (pluginId === "exercises_tracker") {
+                setExercisesTrackerEnabled(value)
+                return
+            }
             Config.setNestedValue("integrations.alisIntergration." + pluginId, value === true)
+        }
     }
     function installPlugin(pluginId): void {
         if (typeof pluginId !== "string" || pluginId.length === 0)
@@ -171,18 +174,35 @@ Singleton {
         if (!available || packageRoot.length === 0) return ""
         return packageRoot + "/scripts/integrations/exercises_tracker.py"
     }
-    function setExercisesTrackerEnabled(value): void {
-        if (managerBusy)
-            return
-        const nextVal = value === true
-        root._hasExplicitExercisesTrackerPref = true
-        root._explicitExercisesTrackerEnabled = nextVal
-        exercisesPrefsDirProc.pendingPayload = JSON.stringify({ schemaVersion: 1, enabled: nextVal }, null, 2) + "\n"
+    function _writeExercisesPrefs(enabledValue): void {
+        exercisesPrefsDirProc.pendingPayload = JSON.stringify({
+            schemaVersion: 2,
+            enabled: enabledValue === true,
+            migratedToConfig: true
+        }, null, 2) + "\n"
         const dirPath = `${Directories.stateUserPath}/exercises-tracker`
         if (!exercisesPrefsDirProc.running) {
             exercisesPrefsDirProc.command = ["/usr/bin/mkdir", "-p", dirPath]
             exercisesPrefsDirProc.running = true
         }
+    }
+    function _syncLegacyExercisesPrefs(): void {
+        if (!root._pendingLegacyPrefsSync || !Config.ready)
+            return
+        root._pendingLegacyPrefsSync = false
+        Config.setNestedValue("integrations.alisIntergration.exercises_tracker", root._explicitExercisesTrackerEnabled)
+        root._writeExercisesPrefs(root._explicitExercisesTrackerEnabled)
+    }
+    function setExercisesTrackerEnabled(value): void {
+        if (managerBusy)
+            return
+        const nextVal = value === true
+        root._pendingLegacyPrefsSync = false
+        root._explicitExercisesTrackerEnabled = nextVal
+        Config.setNestedValue("integrations.alisIntergration.exercises_tracker", nextVal)
+        if (nextVal && (Config.options?.dashboard?.exercisesTracker?.enable ?? true) === false)
+            Config.setNestedValue("dashboard.exercisesTracker.enable", true)
+        root._writeExercisesPrefs(nextVal)
     }
     function backendSource(kind): string {
         if (!nexusEnabled) return ""
@@ -378,6 +398,13 @@ Singleton {
         target: "exercises-tracker"
         function open(): void { if (root.exercisesTracker) root.exercisesTracker.openDashboardTracker("") }
     }
+    Connections {
+        target: Config
+        function onReadyChanged(): void {
+            if (Config.ready)
+                root._syncLegacyExercisesPrefs()
+        }
+    }
     FileView {
         id: exercisesPrefsFileView
         path: "file://" + root.exercisesTrackerPrefsPath
@@ -388,8 +415,11 @@ Singleton {
             try {
                 const doc = JSON.parse(exercisesPrefsFileView.text() || "")
                 if (doc && typeof doc.enabled === "boolean") {
-                    root._hasExplicitExercisesTrackerPref = true
                     root._explicitExercisesTrackerEnabled = doc.enabled
+                    if (doc.migratedToConfig !== true) {
+                        root._pendingLegacyPrefsSync = true
+                        root._syncLegacyExercisesPrefs()
+                    }
                 }
             } catch (_e) {}
         }

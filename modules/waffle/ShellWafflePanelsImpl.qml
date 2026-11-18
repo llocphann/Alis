@@ -121,6 +121,38 @@ Item {
     // Shared modules that work with waffle
     DeferredPanelLoader { identifier: "iiBootGreeting"; component: BootGreeting {} }
     OnDemandPanelLoader { identifier: "iiCheatsheet"; open: GlobalStates.cheatsheetOpen; component: Cheatsheet {} }
+    LazyLoader {
+        id: waffleDashboardLoader
+        objectName: "waffleDashboardLoader"
+        property bool dashboardMounted: false
+        readonly property bool wantOpen: GlobalStates.dashboardOpen
+        onWantOpenChanged: {
+            if (wantOpen) {
+                dashboardMounted = true
+                if (!(Config.options?.waffles?.behavior?.allowMultiplePanels ?? false)) {
+                    GlobalStates.searchOpen = false
+                    GlobalStates.waffleActionCenterOpen = false
+                    GlobalStates.waffleNotificationCenterOpen = false
+                    GlobalStates.waffleWidgetsOpen = false
+                    GlobalStates.waffleClipboardOpen = false
+                    GlobalStates.waffleTaskViewOpen = false
+                }
+            }
+        }
+        loading: Config.ready && Config.options?.panelFamily === "waffle" && (wantOpen || dashboardMounted)
+        activeAsync: Config.ready && GlobalStates.deferredPanelsReady
+            && Config.options?.panelFamily === "waffle" && (wantOpen || dashboardMounted)
+        source: "../dashboard/Dashboard.qml"
+    }
+    Connections {
+        target: GlobalStates
+        enabled: !(Config.options?.waffles?.behavior?.allowMultiplePanels ?? false)
+        function onSearchOpenChanged(): void { if (GlobalStates.searchOpen) GlobalStates.dashboardOpen = false }
+        function onWaffleActionCenterOpenChanged(): void { if (GlobalStates.waffleActionCenterOpen) GlobalStates.dashboardOpen = false }
+        function onWaffleNotificationCenterOpenChanged(): void { if (GlobalStates.waffleNotificationCenterOpen) GlobalStates.dashboardOpen = false }
+        function onWaffleWidgetsOpenChanged(): void { if (GlobalStates.waffleWidgetsOpen) GlobalStates.dashboardOpen = false }
+        function onWaffleTaskViewOpenChanged(): void { if (GlobalStates.waffleTaskViewOpen) GlobalStates.dashboardOpen = false }
+    }
     OnDemandPanelLoader { identifier: "iiOnScreenKeyboard"; open: GlobalStates.oskOpen; component: OnScreenKeyboard {} }
     OnDemandPanelLoader { identifier: "iiOverview"; open: GlobalStates.overviewOpen; closeGraceMs: Appearance.animation.elementMoveExit.duration + 80; component: Overview {} }
 

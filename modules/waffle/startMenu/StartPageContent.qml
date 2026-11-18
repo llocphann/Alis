@@ -288,6 +288,23 @@ WPanelPageColumn {
             spacing: 4
 
             WBorderlessButton {
+                objectName: "waffleStartDashboardButton"
+                implicitWidth: 40
+                implicitHeight: 40
+                onClicked: WaffleNavigation.toggleDashboard()
+
+                contentItem: Item {
+                    FluentIcon {
+                        anchors.centerIn: parent
+                        icon: "apps"
+                        implicitSize: 20
+                    }
+                }
+
+                WToolTip { text: Translation.tr("Dashboard") }
+            }
+
+            WBorderlessButton {
                 objectName: "waffleStartSettingsButton"
                 implicitWidth: 40
                 implicitHeight: 40

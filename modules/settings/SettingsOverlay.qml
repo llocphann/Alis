@@ -958,9 +958,10 @@ Scope {
                                 SettingsLayoutManager.beginEditMode()
                         }
                         onSwitchModeRequested: {
-                            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings-window"])
+                            Config.setNestedValue("waffles.settings.windowMode", true)
                             Config.setNestedValue("settingsUi.overlayMode", false)
                             GlobalStates.settingsOverlayOpen = false
+                            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings-window"])
                         }
                         onLockRequested: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "lock", "activate"])
                         onCloseRequested: GlobalStates.settingsOverlayOpen = false

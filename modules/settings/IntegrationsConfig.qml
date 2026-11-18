@@ -85,7 +85,7 @@ ContentPage {
         value: plugin.id
     })))
     readonly property var catalog: {
-        const order = ["nexus", "spaced_repetition", "tlp", "thinkfan"]
+        const order = ["nexus", "spaced_repetition", "exercises_tracker", "tlp", "thinkfan"]
         const merged = []
         const sources = AlisIntergration.pluginCatalog.concat(AlisIntergration.installedPlugins)
         for (const item of sources) {
@@ -168,6 +168,7 @@ ContentPage {
         const wanted = /nexus|vault|outliner|graph|to-do|todo|quick note|zettelkasten/.test(label) ? "nexus"
             : /fan|cooling|thermal/.test(label) ? "thinkfan"
             : /spaced repetition|vocabulary|flashcard|cefr|sm-2/.test(label) ? "spaced_repetition"
+            : /exercises?[\s_-]*tracker|workout|body tracker|fitness/.test(label) ? "exercises_tracker"
             : /\btlp\b|power|battery/.test(label) ? "tlp" : label
         const plugin = root.catalog.find(item => wanted === item.id || wanted.includes(item.id) || wanted.includes(item.name.toLowerCase()))
             ?? AlisIntergration.installedPlugins.find(item => wanted.includes(item.id) || wanted.includes(item.name.toLowerCase()))

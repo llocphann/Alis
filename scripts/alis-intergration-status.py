@@ -187,6 +187,16 @@ _DEFAULT_DEPENDENCIES = {
         "helpersCommand": "",
         "note": "User-space plugin (no system dependencies or root helpers needed).",
     },
+    "exercises_tracker": {
+        "userSpace": True,
+        "requiresSystemHelpers": False,
+        "packages": ["python3"],
+        "binaries": ["python3"],
+        "helpers": [],
+        "setupCommand": "",
+        "helpersCommand": "",
+        "note": "User-space plugin (requires Python 3 for safe photo import; no root helpers needed).",
+    },
     "tlp": {
         "userSpace": False,
         "requiresSystemHelpers": True,

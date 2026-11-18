@@ -41,6 +41,13 @@ AppButton {
         model: [
             {
                 iconName: "apps",
+                text: Translation.tr("Dashboard"),
+                action: () => {
+                    WaffleNavigation.toggleDashboard()
+                }
+            },
+            {
+                iconName: "apps",
                 text: Translation.tr("Installed apps"),
                 action: () => {
                     WaffleNavigation.openSettings("applications", "")

@@ -4,7 +4,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs
+import qs.services
 import qs.modules.common
+import qs.modules.settings
 
 Singleton {
     id: root
@@ -15,6 +17,24 @@ Singleton {
         GlobalStates.waffleNotificationCenterOpen = false
         GlobalStates.waffleWidgetsOpen = false
         GlobalStates.waffleClipboardOpen = false
+        GlobalStates.waffleTaskViewOpen = false
+        GlobalStates.dashboardOpen = false
+    }
+
+    function toggleDashboard(pageId = ""): void {
+        const nextOpen = !GlobalStates.dashboardOpen
+        if (nextOpen) {
+            GlobalStates.searchOpen = false
+            GlobalStates.waffleActionCenterOpen = false
+            GlobalStates.waffleNotificationCenterOpen = false
+            GlobalStates.waffleWidgetsOpen = false
+            GlobalStates.waffleClipboardOpen = false
+            GlobalStates.waffleTaskViewOpen = false
+            GlobalStates.settingsOverlayOpen = false
+            if (String(pageId ?? "").trim().length > 0)
+                GlobalStates.dashboardPageId = String(pageId).trim()
+        }
+        GlobalStates.dashboardOpen = nextOpen
     }
 
     function openSettings(pageKey = "", section = ""): void {
@@ -28,7 +48,7 @@ Singleton {
                 return
             }
         }
-        if (Config.options?.settingsUi?.overlayMode ?? false) {
+        if (GlobalStates.useSettingsOverlay()) {
             GlobalStates.settingsOverlayTargetOutput = GlobalStates.resolveOutputName("", [])
             GlobalStates.settingsOverlayOpen = true
         } else {

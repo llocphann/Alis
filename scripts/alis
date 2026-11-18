@@ -2653,6 +2653,7 @@ open_detached_qml_window() {
         fi
     fi
 
+    apply_shell_scale
     apply_qt_runtime_env
     apply_qt_logging_rules
     exec 9>&-

@@ -8,6 +8,7 @@ BarMenu 1.0 BarMenu.qml
 BarPopup 1.0 BarPopup.qml
 BarToolTip 1.0 BarToolTip.qml
 DesktopPeekButton 1.0 DesktopPeekButton.qml
+DashboardButton 1.0 DashboardButton.qml
 SearchButton 1.0 SearchButton.qml
 StartButton 1.0 StartButton.qml
 SystemButton 1.0 SystemButton.qml

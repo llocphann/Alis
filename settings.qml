@@ -772,6 +772,7 @@ ApplicationWindow {
                     SettingsLayoutManager.beginEditMode()
             }
             onSwitchModeRequested: {
+                Config.setNestedValue("waffles.settings.windowMode", false)
                 Config.setNestedValue("settingsUi.overlayMode", true)
                 settingsRestartTimer.restart()
             }

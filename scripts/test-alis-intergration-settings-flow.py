@@ -160,51 +160,54 @@ with tempfile.TemporaryDirectory(prefix="alis-plugin-flow-") as tmp:
     insp = status_mod.inspect(shell, data_home)
     assert insp["available"] and insp["installedPluginIds"] == ["nexus"]
     assert [p["id"] for p in insp["plugins"]] == ["nexus"]
-    assert len(insp["catalog"]) == 4
+    assert len(insp["catalog"]) == 5
     assert insp["dependencies"]["nexus"]["userSpace"] is True
     assert insp["dependencies"]["spaced_repetition"]["userSpace"] is True
+    assert insp["dependencies"]["exercises_tracker"]["userSpace"] is True
     assert insp["dependencies"]["tlp"]["requiresSystemHelpers"] is True
     assert insp["dependencies"]["tlp"]["setupCommand"] == "./setup install-deps"
     assert insp["dependencies"]["thinkfan"]["helpersCommand"] == "./setup integrations"
 
-    # Add second user-space plugin independently.
+    # Add second and third user-space plugins independently.
     res2 = manager_mod.operate("install-plugin", home, shell, plugin_id="spaced_repetition")
     assert res2["installedPluginIds"] == ["nexus", "spaced_repetition"]
+    res2b = manager_mod.operate("install-plugin", home, shell, plugin_id="exercises_tracker")
+    assert res2b["installedPluginIds"] == ["nexus", "spaced_repetition", "exercises_tracker"]
     insp2 = status_mod.inspect(shell, data_home)
-    assert insp2["installedPluginIds"] == ["nexus", "spaced_repetition"]
+    assert insp2["installedPluginIds"] == ["nexus", "spaced_repetition", "exercises_tracker"]
 
-    # Remove one plugin keeps the other installed.
+    # Remove one plugin keeps the others installed.
     res3 = manager_mod.operate("remove-plugin", home, shell, plugin_id="nexus")
-    assert res3["installedPluginIds"] == ["spaced_repetition"]
+    assert res3["installedPluginIds"] == ["spaced_repetition", "exercises_tracker"]
     insp3 = status_mod.inspect(shell, data_home)
-    assert [p["id"] for p in insp3["plugins"]] == ["spaced_repetition"]
+    assert [p["id"] for p in insp3["plugins"]] == ["spaced_repetition", "exercises_tracker"]
 
-    # Legacy compatibility: removing installed-plugins.json while current symlink exists treats all 4 installed.
+    # Legacy compatibility: removing installed-plugins.json while current symlink exists treats all 5 installed.
     (home / "installed-plugins.json").unlink()
     legacy_insp = status_mod.inspect(shell, data_home)
-    assert [p["id"] for p in legacy_insp["plugins"]] == ["tlp", "thinkfan", "nexus", "spaced_repetition"]
+    assert [p["id"] for p in legacy_insp["plugins"]] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker"]
     assert legacy_insp["pluginSelectionExplicit"] is False
 
-    # Removing one plugin from legacy setup migrates remaining 3 into installed-plugins.json.
+    # Removing one plugin from legacy setup migrates remaining 4 into installed-plugins.json.
     rem_legacy = manager_mod.operate("remove-plugin", home, shell, plugin_id="tlp")
-    assert rem_legacy["installedPluginIds"] == ["thinkfan", "nexus", "spaced_repetition"]
+    assert rem_legacy["installedPluginIds"] == ["thinkfan", "nexus", "spaced_repetition", "exercises_tracker"]
 
-    # Partial selection -> install-all on the SAME revision restores all 4 plugins.
+    # Partial selection -> install-all on the SAME revision restores all 5 plugins.
     all_from_partial = manager_mod.operate(
         "install-all", home, shell,
         revision_fetch=lambda: rev,
         archive_fetch=lambda _u, _l: (_ for _ in ()).throw(AssertionError("should reuse already-current release")),
     )
-    assert all_from_partial["ok"] and all_from_partial["installedPluginIds"] == ["tlp", "thinkfan", "nexus", "spaced_repetition"]
-    assert [p["id"] for p in status_mod.inspect(shell, data_home)["plugins"]] == ["tlp", "thinkfan", "nexus", "spaced_repetition"]
+    assert all_from_partial["ok"] and all_from_partial["installedPluginIds"] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker"]
+    assert [p["id"] for p in status_mod.inspect(shell, data_home)["plugins"]] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker"]
 
-    # Empty selection [] while current symlink exists -> install-all restores all 4 plugins.
-    for pid in ("tlp", "thinkfan", "nexus", "spaced_repetition"):
+    # Empty selection [] while current symlink exists -> install-all restores all 5 plugins.
+    for pid in ("tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker"):
         manager_mod.operate("remove-plugin", home, shell, plugin_id=pid)
     assert status_mod.inspect(shell, data_home)["installedPluginIds"] == []
     all_from_empty = manager_mod.operate("install-all", home, shell, revision_fetch=lambda: rev)
-    assert all_from_empty["ok"] and all_from_empty["installedPluginIds"] == ["tlp", "thinkfan", "nexus", "spaced_repetition"]
-    assert [p["id"] for p in status_mod.inspect(shell, data_home)["plugins"]] == ["tlp", "thinkfan", "nexus", "spaced_repetition"]
+    assert all_from_empty["ok"] and all_from_empty["installedPluginIds"] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker"]
+    assert [p["id"] for p in status_mod.inspect(shell, data_home)["plugins"]] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker"]
 
     # Legacy /usr/libexec/<legacy>-thinkfan helper fallback:
     # satisfies thinkfan dependency when canonical alis-thinkfan is absent,

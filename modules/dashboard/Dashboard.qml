@@ -52,11 +52,15 @@ Scope {
         Appearance.sizes.hyprlandGapsOut * 2,
         Math.round(Math.min(screenWidth, screenHeight) * 0.02)
     )
-    readonly property real barReservedSpace: Appearance.sizes.baseBarHeight + Appearance.sizes.hyprlandGapsOut * 2
+    readonly property bool isWaffle: Config.options?.panelFamily === "waffle"
+    readonly property bool barAtBottom: isWaffle
+        ? (Config.options?.waffles?.bar?.bottom ?? false)
+        : (Config.options?.bar?.bottom ?? false)
+    readonly property real barReservedSpace: (isWaffle ? 48 : Appearance.sizes.baseBarHeight) + Appearance.sizes.hyprlandGapsOut * 2
     readonly property real topReservedSpace: safePadding
-        + (!(Config.options?.bar?.bottom ?? false) ? barReservedSpace : 0)
+        + (!barAtBottom ? barReservedSpace : 0)
     readonly property real bottomReservedSpace: safePadding
-        + ((Config.options?.bar?.bottom ?? false) ? barReservedSpace : 0)
+        + (barAtBottom ? barReservedSpace : 0)
     readonly property real availablePanelHeight: Math.max(360, screenHeight - topReservedSpace - bottomReservedSpace)
     readonly property real availablePanelWidth: Math.max(480, screenWidth - safePadding * 2)
     readonly property real widthRatio: Math.min(0.9, Math.max(0.4, Config.options?.dashboard?.widthRatio ?? 0.72))

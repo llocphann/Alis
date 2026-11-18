@@ -610,7 +610,7 @@ ShellRoot {
     IpcHandler {
         target: "settings"
         function open(): void {
-            if (Config.options?.panelFamily === "abyss" || (Config.options?.settingsUi?.overlayMode ?? false)) {
+            if (GlobalStates.useSettingsOverlay()) {
                 // inline overlay panel
                 GlobalStates.settingsOverlayTargetOutput = GlobalStates.resolveOutputName("",[])
                 GlobalStates.settingsOverlayOpen = !GlobalStates.settingsOverlayOpen
@@ -649,7 +649,7 @@ ShellRoot {
         readonly property bool loaderConfigured:
             Config.ready
             && Config.options?.panelFamily !== "abyss"
-            && (Config.options?.settingsUi?.overlayMode ?? false)
+            && GlobalStates.useSettingsOverlay()
             && (Config.options?.settingsUi?.overlayStyle ?? "rail") !== "focus"
         active: loaderConfigured
         source: loaderConfigured ? "modules/settings/SettingsOverlay.qml" : ""
@@ -660,7 +660,7 @@ ShellRoot {
         readonly property bool loaderConfigured:
             Config.ready
             && Config.options?.panelFamily !== "abyss"
-            && (Config.options?.settingsUi?.overlayMode ?? false)
+            && GlobalStates.useSettingsOverlay()
             && (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
         active: loaderConfigured
         source: loaderConfigured ? "modules/settings/SettingsFocus.qml" : ""
@@ -984,8 +984,8 @@ ShellRoot {
             // Shared modules that work with waffle
             // WaffleAltSwitcher is family-local and loaded by ShellWafflePanels;
             // the shared `altSwitcher` target reaches it through the lightweight router.
-            "iiBootGreeting", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverview",
-            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard"
+            "iiBootGreeting", "iiCheatsheet", "iiDashboard", "iiOnScreenKeyboard", "iiOverview",
+            "iiRecordingOsd", "iiRegionSelector", "iiScreenCorners", "iiTilingOverlay", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard"
         ]
     })
 

@@ -308,7 +308,7 @@ def _known_plugin_ids(shell_root, package_dir=None):
             pass
     doc = _catalog_doc(shell_root)
     ids = [plugin["id"] for plugin in discovery.plugin_metadata(doc)]
-    return ids or ["tlp", "thinkfan", "nexus", "spaced_repetition"]
+    return ids or ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker"]
 
 
 def _install_release(home, current, previous_file, revision_fetch, archive_fetch):

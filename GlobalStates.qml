@@ -211,6 +211,14 @@ Singleton {
         || (NiriService.polkitDialogWindowOpen ?? false)
         || (AlisIntergration.authorizationPending ?? false)
 
+    function useSettingsOverlay(): bool {
+        if (Config.options?.panelFamily === "abyss")
+            return true
+        if (Config.options?.panelFamily === "waffle")
+            return !(Config.options?.waffles?.settings?.windowMode ?? false)
+        return Config.options?.settingsUi?.overlayMode ?? false
+    }
+
     function openSettingsPage(index: int): void {
         root.openSettingsSection(index, "")
     }
@@ -219,7 +227,7 @@ Singleton {
         const route = FamilyPolicy.settingsRoute(Config.options?.panelFamily,index,section)
         index = route.pageIndex
         const targetSection = route.section.trim()
-        if (Config.options?.panelFamily === "abyss" || (Config.options?.settingsUi?.overlayMode ?? false)) {
+        if (root.useSettingsOverlay()) {
             root.settingsOverlayTargetOutput = root.resolveOutputName("",[])
             root.settingsOverlayRequestedSection = targetSection
             root.settingsOverlayRequestedPage = index

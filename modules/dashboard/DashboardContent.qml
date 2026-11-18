@@ -30,6 +30,7 @@ Item {
         && (Config.options?.dashboard?.pageOrderVersion ?? 1) >= 1
         && Array.from(dashboardCanvas.effectivePageOrder ?? []).includes("spacedRepetition")
     readonly property bool exercisesTrackerEnabled: AlisIntergration.exercisesTrackerEnabled
+        && (Config.options?.dashboard?.exercisesTracker?.enable ?? true)
         && AlisIntergration.exercisesTrackerDashboardSource().length > 0
     readonly property var customTabs: TabPolicy.tabs(Config.options?.dashboard?.customTabs)
     readonly property var _customPageModelMemo: ({signature:"",tabs:[]})

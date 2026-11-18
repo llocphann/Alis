@@ -80,6 +80,8 @@ Item {
             opacity = 1
             entryTranslate.y = 0
         }
+        if (wallpaperIsVideo)
+            Wallpapers.ensureVideoFirstFrame(wallpaperPathRaw)
     }
     
     SequentialAnimation {
@@ -122,10 +124,6 @@ Item {
         return FileUtils.trimFileProtocol(Wallpapers.getVideoFirstFramePath(wallpaperPathRaw) || fallbackThumb)
     }
     onWallpaperPathRawChanged: {
-        if (wallpaperIsVideo)
-            Wallpapers.ensureVideoFirstFrame(wallpaperPathRaw)
-    }
-    Component.onCompleted: {
         if (wallpaperIsVideo)
             Wallpapers.ensureVideoFirstFrame(wallpaperPathRaw)
     }

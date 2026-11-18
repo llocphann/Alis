@@ -1116,6 +1116,9 @@
             "dailyGoalCards": 20,
             "weekendsEnabled": true
         },
+        "exercisesTracker": {
+            "enable": true
+        },
         "keepLoaded": true,
         "showHeader": true,
         "showPowerButtons": true,
@@ -1886,7 +1889,8 @@
     },
     "waffles": {
         "settings": {
-            "useMaterialStyle": true
+            "useMaterialStyle": true,
+            "windowMode": false
         },
         "modules": {
             "sidebarLeft": false,
@@ -2311,7 +2315,8 @@
             "tlp": false,
             "thinkfan": false,
             "nexus": false,
-            "spaced_repetition": false
+            "spaced_repetition": false,
+            "exercises_tracker": false
         },
         "nexus": {
             "autoTheme": false,

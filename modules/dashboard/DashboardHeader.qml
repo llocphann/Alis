@@ -181,7 +181,7 @@ Item {
         HeaderButton {
             objectName: "dashboardEditLayoutButton"
             enabled: root.pageIds[root.currentPage] === "dashboard"
-                || root.pageIds[root.currentPage]?.startsWith("custom-")
+                || (root.pageIds[root.currentPage]?.startsWith("custom-") ?? false)
             iconName: root.editMode ? "done" : "edit"
             tooltip: root.editMode ? Translation.tr("Done editing") : Translation.tr("Edit widgets")
             toggled: root.editMode

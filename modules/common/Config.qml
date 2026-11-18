@@ -669,6 +669,15 @@ Singleton {
                 styleMigration["dashboard.pageOrder"] = root._jsonMirror.dashboard.pageOrder.concat(["spacedRepetition"]);
                 styleMigration["dashboard.spacedRepetition.enable"] = true;
             }
+            if (!wasReload
+                    && root._jsonMirror?.integrations?.alisIntergration
+                    && !Object.prototype.hasOwnProperty.call(root._jsonMirror.integrations.alisIntergration, "exercises_tracker")) {
+                const legacyExercisesActive = root._jsonMirror.integrations.alisIntergration.nexus === true
+                    || root._jsonMirror.integrations.alisIntergration.spaced_repetition === true;
+                root._jsonMirror.integrations.alisIntergration.exercises_tracker = legacyExercisesActive;
+                if (legacyExercisesActive)
+                    styleMigration["integrations.alisIntergration.exercises_tracker"] = true;
+            }
             if (Object.keys(styleMigration).length) {
                 root._styleMigrationWritePending = true;
                 root.setNestedValues(styleMigration);
@@ -2382,6 +2391,9 @@ Singleton {
                     property int dailyGoalCards: 20
                     property bool weekendsEnabled: true
                 }
+                property JsonObject exercisesTracker: JsonObject {
+                    property bool enable: true
+                }
                 property bool keepLoaded: true
                 property bool showHeader: true
                 property bool showPowerButtons: true
@@ -3034,6 +3046,7 @@ Singleton {
             property JsonObject waffles: JsonObject {
                 property JsonObject settings: JsonObject {
                     property bool useMaterialStyle: true
+                    property bool windowMode: false
                 }
                 property JsonObject modules: JsonObject {
                     property bool sidebarLeft: false
@@ -3202,6 +3215,7 @@ Singleton {
                     property bool thinkfan: false
                     property bool nexus: false
                     property bool spaced_repetition: false
+                    property bool exercises_tracker: false
                 }
                 property JsonObject nexus: JsonObject {
                     property bool autoTheme: false
