@@ -34,6 +34,7 @@ WTextButton {
         WText {
             id: buttonText
             anchors.fill: parent
+            verticalAlignment: Text.AlignVCenter
             color: root.fgColor
             text: root.text
             font.pixelSize: Looks.font.pixelSize.large

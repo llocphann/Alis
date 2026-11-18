@@ -117,9 +117,10 @@ for token in (
     require(service, token, "EqualizerService")
 
 # Helper updates the active Equalizer database directly and persists the same
-# Equalizer fields into the active preset file. It must never reload the preset,
-# because reloading rebuilds the whole pipeline and can discard unsaved
-# Convolver/Limiter state.
+# Equalizer fields into the active preset file. During steady-state tuning it
+# never reloads the preset; a one-time reload happens only inside the gated
+# `needs_topology_reload` branch when a speaker-tuning preset needs its
+# dedicated user Equalizer stage provisioned or reordered cleanly.
 for token in (
     "slider_map = {",
     "0: 0,",
@@ -139,15 +140,25 @@ for token in (
     'send(f"set_property:{plugin_prefix}:numBands:32")',
     'send(f"set_property:{plugin_prefix}:{channel}:band{index}Frequency:{frequency}")',
     'send(f"set_property:{plugin_prefix}:{channel}:band{index}Gain:{gain}")',
-    'equalizer["num-bands"] = 32',
-    'equalizer["split-channels"] = False',
+    'equalizer_dict["num-bands"] = 32',
+    'equalizer_dict["split-channels"] = False',
     'atomic_text_write(preset_path, json.dumps(document, indent=4) + "\\n")',
     'mv -f "$state_candidate" "$state_file"',
+    "if not (preset_topology_changed or not is_live_pipeline_valid()):",
+    "reload_preset_pipeline(target_preset_name, plugin_prefix)",
 ):
     require(helper, token, "equalizer-control.sh")
 
+reload_fn_pos = helper.index("def reload_preset_pipeline(")
+main_try_pos = helper.index("try:\n    client.connect(socket_path)")
+main_body = helper[main_try_pos:]
+if "load_preset:output:" in main_body:
+    raise SystemExit("FAIL: equalizer-control.sh calls load_preset directly outside reload_preset_pipeline")
+
+gated_call = "    def reload_topology_if_needed() -> bool:\n        if not (preset_topology_changed or not is_live_pipeline_valid()):\n            return False\n        apply_eq_fields_to_stage(equalizer, eq_key)\n        write_preset_document(preset_path, document)\n        sync_sibling_speaker_presets()\n        reload_preset_pipeline(target_preset_name, plugin_prefix)"
+require(main_body, gated_call, "equalizer-control.sh gated topology reload")
+
 for token in (
-    "load_preset:output:",
     "alis_live_eq",
     "socat",
 ):

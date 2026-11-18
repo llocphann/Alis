@@ -64,7 +64,7 @@ AbstractBackgroundWidget {
         function onEventsUpdated() { root._refreshTrigger++ }
     }
 
-    readonly property string _todayKey: Qt.formatDate(DateTime.clock.date, "yyyy-MM-dd")
+    readonly property string _todayKey: Qt.formatDate(DateTime.todayDate, "yyyy-MM-dd")
 
     // ── Merged + sorted upcoming events ───────────────────────
     readonly property var upcomingEvents: {

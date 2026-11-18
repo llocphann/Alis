@@ -630,6 +630,101 @@ Item {
                 }
             }
 
+            // Create custom widget card (moved from bottom dock to avoid duplicate Custom tab)
+            Rectangle {
+                id: customCreateCard
+                visible: (root.filterMode === "all" && root.searchText.length === 0)
+                    || root.filterMode === "custom" || root._customVisibleCount > 0
+                width: parent.width
+                height: visible ? customCreateRow.implicitHeight + 16 : 0
+                radius: Appearance.rounding.normal
+                color: ColorUtils.applyAlpha(Appearance.colors.colLayer2, 0.45)
+                border.width: 1
+                border.color: ColorUtils.applyAlpha(Appearance.colors.colOutlineVariant, 0.22)
+
+                property string newCustomWidgetName: ""
+
+                RowLayout {
+                    id: customCreateRow
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 6
+
+                    MaterialTextField {
+                        id: customWidgetCreateInput
+                        objectName: "widgetDockCustomCreateInput"
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        height: 32
+                        enableSettingsSearch: false
+                        placeholderText: Translation.tr("Widget name...")
+                        text: customCreateCard.newCustomWidgetName
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        onTextChanged: {
+                            if (customCreateCard.newCustomWidgetName !== text)
+                                customCreateCard.newCustomWidgetName = text
+                        }
+                        onAccepted: {
+                            const name = customCreateCard.newCustomWidgetName.trim()
+                            if (name.length > 0) {
+                                CustomWidgets.create(name)
+                                CustomWidgets.reload()
+                                customCreateCard.newCustomWidgetName = ""
+                            }
+                        }
+                    }
+
+                    RippleButton {
+                        id: customWidgetCreateBtn
+                        objectName: "widgetDockCustomCreateButton"
+                        padding: 0
+                        leftPadding: 0
+                        rightPadding: 0
+                        topPadding: 0
+                        bottomPadding: 0
+                        implicitWidth: customCreateBtnRow.implicitWidth + 16
+                        implicitHeight: 32
+                        buttonRadius: Appearance.rounding.full
+                        enabled: customCreateCard.newCustomWidgetName.trim().length > 0
+                        opacity: enabled ? 1.0 : 0.45
+                        colBackground: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
+                        colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.26)
+                        colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.18)
+                        downAction: () => {
+                            const name = customCreateCard.newCustomWidgetName.trim()
+                            if (name.length > 0) {
+                                CustomWidgets.create(name)
+                                CustomWidgets.reload()
+                                customCreateCard.newCustomWidgetName = ""
+                            }
+                        }
+                        contentItem: Item {
+                            implicitWidth: customCreateBtnRow.implicitWidth
+                            implicitHeight: customCreateBtnRow.implicitHeight
+                            Row {
+                                id: customCreateBtnRow
+                                anchors.centerIn: parent
+                                spacing: 4
+                                MaterialSymbol {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "add"
+                                    iconSize: 15
+                                    color: Appearance.colors.colPrimary
+                                }
+                                StyledText {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: Translation.tr("Create")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.weight: Font.DemiBold
+                                    color: Appearance.colors.colPrimary
+                                }
+                            }
+                        }
+                        StyledToolTip { text: Translation.tr("Create editable custom QML widget template") }
+                    }
+                }
+            }
+
             // Custom widget cards
             Repeater {
                 model: CustomWidgets.ready ? CustomWidgets.widgets : []

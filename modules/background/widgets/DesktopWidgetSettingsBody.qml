@@ -101,10 +101,23 @@ Column {
     }
 
     function _customConfigSpecs(): var {
-        if (!root.isCustom || !root.customManifest?.config) return [];
-        const cfg = root.customManifest.config;
+        if (!root.isCustom) return [];
+        const cfg = root.customManifest?.configKeys ?? root.customManifest?.config ?? null;
+        if (!cfg || typeof cfg !== "object") return [];
+        if (Array.isArray(cfg)) {
+            if ((cfg?.length ?? 0) === 0) return [];
+            const arrOut = [];
+            for (let i = 0; i < (cfg?.length ?? 0); ++i) {
+                const entry = cfg[i];
+                if (entry && entry.key)
+                    arrOut.push({ key: entry.key, spec: entry });
+            }
+            return arrOut;
+        }
+        const keys = Object.keys(cfg);
+        if ((keys?.length ?? 0) === 0) return [];
         const out = [];
-        for (const k of Object.keys(cfg))
+        for (const k of keys)
             out.push({ key: k, spec: cfg[k] ?? ({}) });
         return out;
     }
@@ -460,7 +473,7 @@ Column {
 
     // ── Reset Position Action ────────────────────────────────────────────
     RippleButton {
-        visible: root.outputName.length > 0 && DesktopWidgetLayout.hasOverrides(root.outputName, root.layoutKey)
+        visible: root.outputName.length > 0 && DesktopWidgetLayout.widgetOverride(root.outputName, root.layoutKey) !== null
         width: parent.width
         height: 26
         buttonRadius: Appearance.rounding.small

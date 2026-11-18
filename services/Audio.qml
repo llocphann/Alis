@@ -129,6 +129,76 @@ Singleton {
     readonly property list<var> outputDevices: root.devices(true)
     readonly property list<var> inputDevices: root.devices(false)
 
+    function _isExcludedVisualizerNode(node): bool {
+        if (!node || Boolean(node.audio?.muted))
+            return true
+        const props = node.properties ?? {}
+        if (String(props["pulse.corked"] ?? "").toLowerCase() === "true")
+            return true
+        const binary = String(props["application.process.binary"] ?? "").toLowerCase()
+        const appName = String(props["application.name"] ?? "").toLowerCase()
+        const nodeName = String(props["node.name"] ?? node.name ?? "").toLowerCase()
+        const appId = String(props["application.id"] ?? props["pipewire.access.portal.app_id"] ?? "").toLowerCase()
+        const mediaRole = String(props["media.role"] ?? "").toLowerCase()
+
+        const excludedApps = [
+            "cava", "pavucontrol", "pwvucontrol", "helvum", "qpwgraph", "carla",
+            "easyeffects", "jamesdsp", "sonusmix", "quickshell", "qs",
+            "discord", "vesktop", "webrtc", "teams", "zoom", "slack",
+            "telegram-desktop", "element", "speech-dispatcher", "sd_dummy"
+        ]
+        for (let i = 0; i < excludedApps.length; ++i) {
+            const tok = excludedApps[i]
+            if (binary === tok || appName === tok || nodeName === tok
+                    || appName.indexOf(tok) >= 0)
+                return true
+        }
+        if (appId === "com.github.wwmm.easyeffects" || appId === "me.timschneeberger.jdsp4linux")
+            return true
+        if (["event", "notification", "bell", "alert", "a11y", "test", "communication", "phone"].includes(mediaRole))
+            return true
+        return false
+    }
+
+    readonly property var activeOutputAppNodes: {
+        const nodes = root.outputAppNodes ?? []
+        const links = Pipewire.links?.values ?? []
+        const active = []
+        for (let i = 0; i < nodes.length; ++i) {
+            const node = nodes[i]
+            if (root._isExcludedVisualizerNode(node))
+                continue
+            let linked = false
+            for (let j = 0; j < links.length; ++j) {
+                const link = links[j]
+                if (!link || link.source !== node || link.state !== PwLinkState.Active)
+                    continue
+                const targetName = String(link.target?.name ?? "").toLowerCase()
+                const targetBin = String(link.target?.properties?.["application.process.binary"] ?? "").toLowerCase()
+                if (targetName === "cava" || targetBin === "cava")
+                    continue
+                linked = true
+                break
+            }
+            if (linked)
+                active.push(node)
+        }
+        return active
+    }
+    readonly property bool hasActivePlayback: (root.activeOutputAppNodes?.length ?? 0) > 0
+    readonly property string activePlaybackSignature: {
+        const nodes = root.activeOutputAppNodes ?? []
+        if (nodes.length === 0)
+            return ""
+        const keys = []
+        for (let i = 0; i < nodes.length; ++i) {
+            const n = nodes[i]
+            keys.push(String(n?.id ?? 0) + ":" + String(n?.properties?.["object.serial"] ?? ""))
+        }
+        keys.sort()
+        return keys.join(",")
+    }
+
     // Signals
     signal sinkProtectionTriggered(string reason);
     // Immediate IPC/slider feedback even when PipeWire omits a volume event.
@@ -456,6 +526,12 @@ Singleton {
             const inputNodes = root.inputAppNodes ?? []
             for (let i = 0; i < inputNodes.length; i++)
                 nodes.push(inputNodes[i])
+            const links = Pipewire.links?.values ?? []
+            for (let i = 0; i < links.length; i++) {
+                const link = links[i]
+                if (link?.source?.isStream && link?.source?.isSink)
+                    nodes.push(link)
+            }
 
             let writeCount = 0
             for (let i = 0; i < nodes.length; i++) {

@@ -14,10 +14,12 @@ import Qt5Compat.GraphicalEffects
 import Quickshell
 import qs.services
 import qs.modules.settings
+import qs.modules.settings.iris
 import "modules/settings/SettingsHierarchy.js" as Hierarchy
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions as CF
+import qs.modules.waffle.settings as WaffleSettings
 
 ApplicationWindow {
     id: root
@@ -38,6 +40,119 @@ ApplicationWindow {
     property int _requestedStartPage: -1
     property string _requestedStartSection: ""
     property bool _navigationInitialized: false
+
+    property bool showingHome: false
+    property var _historyStack: []
+    property int _historyIndex: -1
+    property bool _historyNavigating: false
+    readonly property bool canGoBack: root._historyIndex > 0
+    readonly property bool canGoForward: root._historyIndex >= 0 && root._historyIndex + 1 < root._historyStack.length
+    property int settingsSearchSelectedIndex: 0
+
+    function _pushHistoryEntry(isHome: bool, pageIdx: int): void {
+        if (root._historyNavigating)
+            return
+        const cur = root._historyIndex >= 0 && root._historyIndex < root._historyStack.length
+            ? root._historyStack[root._historyIndex]
+            : null
+        if (cur && Boolean(cur.home) === isHome && (isHome || Number(cur.pageIndex) === pageIdx))
+            return
+        const next = root._historyStack.slice(0, root._historyIndex + 1)
+        next.push({ home: isHome, pageIndex: pageIdx })
+        if (next.length > 32)
+            next.shift()
+        root._historyStack = next
+        root._historyIndex = next.length - 1
+    }
+
+    function showHomeView(): void {
+        SettingsLayoutManager.activeCustomTabId = ""
+        if (root.settingsSearchText.length > 0) {
+            root.settingsSearchText = ""
+            root.settingsSearchResults = []
+            if (settingsSearchField)
+                settingsSearchField.text = ""
+            if (waffleWindowRailHeader.searchField)
+                waffleWindowRailHeader.searchField.text = ""
+        }
+        root.showingHome = true
+        root._pushHistoryEntry(true, root.currentPage)
+    }
+
+    function navigateToArea(pageIndex: int): void {
+        SettingsLayoutManager.activeCustomTabId = ""
+        if (root.settingsSearchText.length > 0) {
+            root.settingsSearchText = ""
+            root.settingsSearchResults = []
+            if (settingsSearchField)
+                settingsSearchField.text = ""
+            if (waffleWindowRailHeader.searchField)
+                waffleWindowRailHeader.searchField.text = ""
+        }
+        const safe = SettingsPageRegistry.safePageIndex(pageIndex)
+        root.showingHome = false
+        if (pagesStack?.currentItem
+                && typeof pagesStack.currentItem.exitSubView === "function"
+                && Boolean(pagesStack.currentItem.isSubViewActive)
+                && root.currentPage === safe) {
+            pagesStack.currentItem.exitSubView()
+        }
+        if (root.currentPage !== safe) {
+            root.currentPage = safe
+        } else {
+            root._pushHistoryEntry(false, safe)
+            IrisState.recordVisit(safe)
+        }
+    }
+
+    function goBack(): void {
+        if (!root.canGoBack)
+            return
+        root._historyNavigating = true
+        root._historyIndex = Math.max(0, root._historyIndex - 1)
+        const entry = root._historyStack[root._historyIndex]
+        SettingsLayoutManager.activeCustomTabId = ""
+        if (entry?.home) {
+            root.showingHome = true
+        } else if (entry) {
+            root.showingHome = false
+            root.currentPage = SettingsPageRegistry.safePageIndex(Number(entry.pageIndex ?? 2))
+        }
+        root._historyNavigating = false
+    }
+
+    function goForward(): void {
+        if (!root.canGoForward)
+            return
+        root._historyNavigating = true
+        root._historyIndex = Math.min(root._historyStack.length - 1, root._historyIndex + 1)
+        const entry = root._historyStack[root._historyIndex]
+        SettingsLayoutManager.activeCustomTabId = ""
+        if (entry?.home) {
+            root.showingHome = true
+        } else if (entry) {
+            root.showingHome = false
+            root.currentPage = SettingsPageRegistry.safePageIndex(Number(entry.pageIndex ?? 2))
+        }
+        root._historyNavigating = false
+    }
+
+    function moveSettingsSearchSelection(delta: int): void {
+        const count = root.settingsSearchResults?.length ?? 0
+        if (count <= 0) {
+            root.settingsSearchSelectedIndex = 0
+            return
+        }
+        root.settingsSearchSelectedIndex = Math.max(0, Math.min(count - 1, root.settingsSearchSelectedIndex + delta))
+    }
+
+    function acceptSettingsSearchSelection(): void {
+        const count = root.settingsSearchResults?.length ?? 0
+        if (count > 0) {
+            const idx = Math.max(0, Math.min(count - 1, root.settingsSearchSelectedIndex))
+            root.openSearchResult(root.settingsSearchResults[idx])
+        }
+    }
 
     function preferredCategoryEntry(categoryLabel: string, groupPages: var): var {
         if (!groupPages || groupPages.length === 0)
@@ -92,6 +207,9 @@ ApplicationWindow {
                 && !SettingsPageRegistry.isPageApplicable(root._requestedStartPage))
             root._requestedStartSection = ""
         root._navigationInitialized = true
+        root._historyStack = [{ home: false, pageIndex: root.currentPage }]
+        root._historyIndex = 0
+        IrisState.recordVisit(root.currentPage)
         root._persistCurrentPage()
         if (root._requestedStartSection.length > 0) {
             root.pendingSpotlightSection = root._requestedStartSection
@@ -105,6 +223,11 @@ ApplicationWindow {
         if (safe !== root.currentPage) {
             root.currentPage = safe
             return
+        }
+        if (root._navigationInitialized && !root._historyNavigating) {
+            root.showingHome = false
+            root._pushHistoryEntry(false, root.currentPage)
+            IrisState.recordVisit(root.currentPage)
         }
         root._persistCurrentPage()
         root.navGroup=Hierarchy.parentKey(root.pages[root.currentPage])
@@ -282,6 +405,9 @@ ApplicationWindow {
         settingsSearchText = "";
         if (settingsSearchField) {
             settingsSearchField.text = "";
+        }
+        if (waffleWindowRailHeader.searchField) {
+            waffleWindowRailHeader.searchField.text = "";
         }
 
         // Reset existing search target state
@@ -543,10 +669,21 @@ ApplicationWindow {
         1600,
         Math.max(900, (Screen.width > 0 ? Screen.width : 1920) * 0.90),
         Math.max(750, (Screen.width > 0 ? Screen.width : 1920) - 48)))
-    readonly property real targetWindowHeight: Math.round(Math.min(
-        1080,
-        Math.max(720, (Screen.height > 0 ? Screen.height : 1200) * 0.92),
-        Math.max(500, ((Screen.height > 0 ? Screen.height : 1200) - root.waffleBarReserve) - 24)))
+    readonly property real _screenAvailHeight: Math.max(0, (Screen.height > 0 ? Screen.height : 1200) - root.waffleBarReserve)
+    readonly property real targetWindowHeight: Math.round(Math.max(560, Math.min(
+        Math.round(1280 * Math.max(1, Appearance.fontSizeScale)),
+        Math.round(root._screenAvailHeight * 0.92),
+        Math.max(500, root._screenAvailHeight - 40))))
+
+    function handleEscape(): bool {
+        if (SettingsLayoutManager.editMode)
+            return SettingsLayoutManager.handleEscape()
+        if (typeof pagesStack?.currentItem?.handleEscape === "function"
+                && pagesStack.currentItem.handleEscape()) {
+            return true
+        }
+        return false
+    }
 
     minimumWidth: 750
     minimumHeight: 500
@@ -560,34 +697,41 @@ ApplicationWindow {
         id: windowBaseSurface
         anchors.fill: parent
         z: 0
+        visible: !SettingsMaterialPreset.waffle
         color: root.uiReady ? Appearance.colors.colLayer0 : "transparent"
     }
 
     Shortcut {
         sequences: [StandardKey.Find]
-        onActivated: settingsSearchField.forceActiveFocus()
+        onActivated: {
+            if (SettingsMaterialPreset.waffle)
+                waffleWindowRailHeader.focusSearch()
+            else
+                settingsSearchField.forceActiveFocus()
+        }
     }
 
     Shortcut {
         sequence: "Escape"
-        enabled: SettingsLayoutManager.editMode
-        onActivated: SettingsLayoutManager.handleEscape()
+        enabled: !settingsSearchField.activeFocus
+            && !waffleWindowRailHeader.searchField.activeFocus
+            && (SettingsLayoutManager.editMode || typeof pagesStack?.currentItem?.handleEscape === "function")
+        onActivated: root.handleEscape()
     }
 
-    ColumnLayout {
-        anchors {
-            fill: parent
-            margins: 16
-        }
-        spacing: 0
+    Rectangle {
+        id: windowMainFrame
+        anchors.fill: parent
         z: 2
+        color: (SettingsMaterialPreset.waffle && root.uiReady)
+            ? SettingsMaterialPreset.windowColor
+            : "transparent"
         visible: root.uiReady
         opacity: visible ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 150 } }
 
         Keys.onPressed: (event) => {
-            if (event.key === Qt.Key_Escape && SettingsLayoutManager.editMode) {
-                SettingsLayoutManager.handleEscape()
+            if (event.key === Qt.Key_Escape && root.handleEscape()) {
                 event.accepted = true
                 return
             }
@@ -603,16 +747,52 @@ ApplicationWindow {
             }
         }
 
+        WaffleSettings.WWin11SettingsTitleBar {
+            id: waffleWindowTitleBar
+            visible: SettingsMaterialPreset.waffle && (Config.options?.windows?.showTitlebar ?? true)
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+            }
+            embedded: false
+            isOverlay: false
+            canGoBack: root.canGoBack || root.settingsSearchText.length > 0
+            editButtonObjectName: SettingsMaterialPreset.waffle ? "windowEditSettingsLayoutButton" : ""
+            onBackRequested: {
+                if (root.settingsSearchText.length > 0)
+                    root.openSearchResult({})
+                else
+                    root.goBack()
+            }
+            onToggleEditLayout: {
+                if (SettingsLayoutManager.editMode)
+                    SettingsLayoutManager.commitEditMode()
+                else
+                    SettingsLayoutManager.beginEditMode()
+            }
+            onSwitchModeRequested: {
+                Config.setNestedValue("settingsUi.overlayMode", true)
+                settingsRestartTimer.restart()
+            }
+            onLockRequested: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "lock", "activate"])
+            onCloseRequested: root.close()
+        }
+
         Item { // Titlebar with integrated search
             id: settingsHeader
-            visible: Config.options?.windows?.showTitlebar ?? true
-            Layout.fillWidth: true
-            Layout.preferredHeight: root.navEditMode ? 58 : 44
-            Layout.leftMargin: 4
-            Layout.rightMargin: 4
-            Layout.bottomMargin: 12
+            visible: !SettingsMaterialPreset.waffle && (Config.options?.windows?.showTitlebar ?? true)
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+                topMargin: 16
+                leftMargin: 20
+                rightMargin: 20
+            }
+            height: root.navEditMode ? 58 : 44
 
-            Behavior on Layout.preferredHeight {
+            Behavior on height {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation { duration: Appearance.animation.elementResize.duration }
             }
@@ -812,12 +992,12 @@ ApplicationWindow {
                 anchors.fill: parent
                 anchors.topMargin: root.navEditMode ? 8 : 6
                 anchors.bottomMargin: root.navEditMode ? 8 : 6
-                radius: Appearance.rounding.full
-                color: settingsSearchField.activeFocus
+                radius: SettingsMaterialPreset.searchRadius
+                color: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.searchColor : settingsSearchField.activeFocus
                     ? Appearance.colors.colLayer1
                     : Appearance.colors.colLayer0
                 border.width: settingsSearchField.activeFocus ? 2 : 1
-                border.color: settingsSearchField.activeFocus
+                border.color: SettingsMaterialPreset.waffle ? (settingsSearchField.activeFocus ? SettingsMaterialPreset.accentColor : SettingsMaterialPreset.cardBorderColor) : settingsSearchField.activeFocus
                     ? Appearance.colors.colPrimary
                     : Appearance.m3colors.m3outlineVariant
 
@@ -986,7 +1166,7 @@ ApplicationWindow {
 
                     RippleButton {
                         id: windowEditSettingsLayoutBtn
-                        objectName: "windowEditSettingsLayoutButton"
+                        objectName: SettingsMaterialPreset.waffle ? "" : "windowEditSettingsLayoutButton"
                         buttonRadius: Appearance.rounding.full
                         implicitWidth: 35
                         implicitHeight: 35
@@ -1069,15 +1249,29 @@ ApplicationWindow {
         }
 
         RowLayout { // Window content with navigation rail and content pane
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            spacing: 10
+            id: windowBodyRow
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+                bottom: parent.bottom
+                topMargin: waffleWindowTitleBar.visible
+                    ? waffleWindowTitleBar.height
+                    : (settingsHeader.visible ? (16 + settingsHeader.height + 12) : (SettingsMaterialPreset.waffle ? 8 : 16))
+                leftMargin: SettingsMaterialPreset.waffle ? 14 : 16
+                rightMargin: SettingsMaterialPreset.waffle ? 0 : 16
+                bottomMargin: SettingsMaterialPreset.waffle ? 10 : 16
+            }
+            spacing: SettingsMaterialPreset.waffle ? 8 : 10
             Item {
                 id: navRailWrapper
                 objectName: "settingsWindowNavRail"
                 Layout.fillHeight: true
-                Layout.preferredWidth: 204
-                implicitWidth: 204
+                readonly property real targetRailWidth: SettingsMaterialPreset.waffle
+                    ? Math.min(SettingsMaterialPreset.waffleRailWidth, Math.max(216, Math.round(windowMainFrame.width * 0.24)))
+                    : 204
+                Layout.preferredWidth: targetRailWidth
+                implicitWidth: targetRailWidth
 
                 Behavior on Layout.preferredWidth {
                     enabled: Appearance.animationsEnabled
@@ -1088,12 +1282,40 @@ ApplicationWindow {
                     }
                 }
 
+                WaffleSettings.WWin11SettingsRailHeader {
+                    id: waffleWindowRailHeader
+                    visible: SettingsMaterialPreset.waffle
+                    anchors {
+                        top: parent.top
+                        left: parent.left
+                        right: parent.right
+                        margins: 2
+                    }
+                    searchQuery: root.settingsSearchText
+                    resultCount: root.settingsSearchResults.length
+                    onAccountClicked: root.navigateToArea(1)
+                    onSearchTextEdited: query => {
+                        root.settingsSearchText = query
+                        root.recomputeSettingsSearchResults()
+                    }
+                    onFocusResultsRequested: settingsLiveSearch.focusResults()
+                    onAcceptCurrentResultRequested: settingsLiveSearch.activateCurrent()
+                    onClearSearchRequested: root.openSearchResult({})
+                }
+
                 Flickable {
                     id: navRailFlickable
                     visible: !root.navEditMode || navEditLoader.status !== Loader.Ready
-                    anchors.fill: parent
-                    anchors.margins: 2
-                    anchors.bottomMargin: navBottomActions.height + 6
+                    anchors {
+                        top: SettingsMaterialPreset.waffle ? waffleWindowRailHeader.bottom : parent.top
+                        left: parent.left
+                        right: parent.right
+                        bottom: parent.bottom
+                        topMargin: SettingsMaterialPreset.waffle ? 8 : 2
+                        leftMargin: 2
+                        rightMargin: 2
+                        bottomMargin: navBottomActions.height + 6
+                    }
                     contentHeight: navCol.implicitHeight
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
@@ -1106,7 +1328,7 @@ ApplicationWindow {
                     ColumnLayout {
                         id: navCol
                         width: parent.width
-                        spacing: 4
+                        spacing: SettingsMaterialPreset.waffle ? 3 : 4
 
                         Repeater {
                             id: navRepeater
@@ -1132,17 +1354,17 @@ ApplicationWindow {
                                     : ("settingsNavGroup_" + index)
                                 visible: navHeadingGroup.groupPages.length > 0
                                 Layout.fillWidth: true
-                                implicitHeight: 36
+                                implicitHeight: SettingsMaterialPreset.waffle ? Math.round(38 * Appearance.fontSizeScale) : 36
                                 rippleEnabled: true
-                                buttonRadius: Appearance.rounding.small
+                                buttonRadius: SettingsMaterialPreset.navItemRadius
                                 toggled: navHeadingGroup.hasActivePage || navHeadingGroup.isDropHovered
                                 colBackground: navHeadingGroup.isDropHovered
                                     ? Appearance.colors.colSecondaryContainer : "transparent"
-                                colBackgroundHover: Appearance.colors.colLayer1Hover
+                                colBackgroundHover: SettingsMaterialPreset.navHoverColor
                                 colBackgroundToggled: navHeadingGroup.isDropHovered
                                     ? Appearance.colors.colSecondaryContainer
-                                    : Appearance.colors.colPrimaryContainer
-                                colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+                                    : SettingsMaterialPreset.navSelectedColor
+                                colBackgroundToggledHover: SettingsMaterialPreset.navSelectedHoverColor
 
                                 Component.onCompleted: {
                                     if (navHeadingGroup.primaryPageIndex >= 0) {
@@ -1173,6 +1395,16 @@ ApplicationWindow {
                                     }
                                 }
 
+                                Rectangle {
+                                    objectName: "waffleSettingsSelectionIndicator"
+                                    visible: SettingsMaterialPreset.waffle && navHeadingGroup.hasActivePage
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 2
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 3; height: 16; radius: 1.5
+                                    color: SettingsMaterialPreset.accentColor
+                                }
+
                                 contentItem: RowLayout {
                                     anchors.fill: parent
                                     anchors.leftMargin: 10
@@ -1196,11 +1428,12 @@ ApplicationWindow {
                                         Layout.fillWidth: true
                                         verticalAlignment: Text.AlignVCenter
                                         text: navHeadingGroup.headingTitle
+                                        font.family: SettingsMaterialPreset.fontFamily
                                         font.pixelSize: Appearance.font.pixelSize.small
                                         font.weight: navHeadingGroup.hasActivePage ? Font.DemiBold : Font.Medium
                                         color: navHeadingGroup.hasActivePage
-                                            ? Appearance.colors.colOnPrimaryContainer
-                                            : Appearance.colors.colOnLayer1
+                                            ? SettingsMaterialPreset.navSelectedTextColor
+                                            : SettingsMaterialPreset.textColor
                                         marquee: true
                                         maximumLineCount: 1
                                     }
@@ -1373,10 +1606,11 @@ ApplicationWindow {
                 Loader {
                     id: navEditLoader
                     anchors {
-                        top: parent.top
+                        top: SettingsMaterialPreset.waffle ? waffleWindowRailHeader.bottom : parent.top
                         left: parent.left
                         right: parent.right
                         bottom: navBottomActions.top
+                        topMargin: SettingsMaterialPreset.waffle ? 8 : 0
                         bottomMargin: 8
                     }
                     active: root.navEditMode
@@ -1417,15 +1651,15 @@ ApplicationWindow {
                     RippleButton {
                         id: windowLayoutEditToggle
                         objectName: "windowLayoutEditToggle"
-                        readonly property color editSurface: Appearance.colors.colPrimaryContainer
-                        readonly property color editSurfaceHover: Appearance.colors.colPrimaryContainerHover
-                        readonly property color editForeground: Appearance.colors.colOnPrimaryContainer
+                        readonly property color editSurface: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedColor : Appearance.colors.colPrimaryContainer
+                        readonly property color editSurfaceHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedHoverColor : Appearance.colors.colPrimaryContainerHover
+                        readonly property color editForeground: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.textColor : Appearance.colors.colOnPrimaryContainer
                         Layout.fillWidth: true
                         implicitHeight: 36
-                        buttonRadius: Appearance.rounding.small
+                        buttonRadius: SettingsMaterialPreset.navItemRadius
                         toggled: SettingsLayoutManager.editMode
                         colBackground: "transparent"
-                        colBackgroundHover: Appearance.colors.colLayer1Hover
+                        colBackgroundHover: SettingsMaterialPreset.navHoverColor
                         colBackgroundToggled: editSurface
                         colBackgroundToggledHover: editSurfaceHover
                         onClicked: {
@@ -1447,7 +1681,7 @@ ApplicationWindow {
                                 iconSize: 18
                                 color: SettingsLayoutManager.editMode
                                     ? windowLayoutEditToggle.editForeground
-                                    : Appearance.colors.colOnSurfaceVariant
+                                    : SettingsMaterialPreset.secondaryTextColor
                             }
 
                             StyledText {
@@ -1458,12 +1692,12 @@ ApplicationWindow {
                                     ? Translation.tr("Done layout")
                                     : Translation.tr("Edit layout")
                                 font {
-                                    family: Appearance.font.family.main
+                                    family: SettingsMaterialPreset.fontFamily
                                     pixelSize: Appearance.font.pixelSize.small
                                 }
                                 color: SettingsLayoutManager.editMode
                                     ? windowLayoutEditToggle.editForeground
-                                    : Appearance.colors.colOnSurfaceVariant
+                                    : SettingsMaterialPreset.secondaryTextColor
                                 elide: Text.ElideRight
                             }
                         }
@@ -1478,15 +1712,15 @@ ApplicationWindow {
 
                     RippleButton {
                         id: navEditToggle
-                        readonly property color editSurface: Appearance.colors.colPrimaryContainer
-                        readonly property color editSurfaceHover: Appearance.colors.colPrimaryContainerHover
-                        readonly property color editForeground: Appearance.colors.colOnPrimaryContainer
+                        readonly property color editSurface: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedColor : Appearance.colors.colPrimaryContainer
+                        readonly property color editSurfaceHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedHoverColor : Appearance.colors.colPrimaryContainerHover
+                        readonly property color editForeground: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.textColor : Appearance.colors.colOnPrimaryContainer
                         Layout.fillWidth: true
                         implicitHeight: 36
-                        buttonRadius: Appearance.rounding.small
+                        buttonRadius: SettingsMaterialPreset.navItemRadius
                         toggled: root.navEditMode
                         colBackground: "transparent"
-                        colBackgroundHover: Appearance.colors.colLayer1Hover
+                        colBackgroundHover: SettingsMaterialPreset.navHoverColor
                         colBackgroundToggled: editSurface
                         colBackgroundToggledHover: editSurfaceHover
                         onClicked: root.navEditMode = !root.navEditMode
@@ -1504,7 +1738,7 @@ ApplicationWindow {
                                 iconSize: 18
                                 color: root.navEditMode
                                     ? navEditToggle.editForeground
-                                    : Appearance.colors.colOnSurfaceVariant
+                                    : SettingsMaterialPreset.secondaryTextColor
                             }
 
                             StyledText {
@@ -1515,12 +1749,12 @@ ApplicationWindow {
                                     ? Translation.tr("Done")
                                     : Translation.tr("Edit navigation")
                                 font {
-                                    family: Appearance.font.family.main
+                                    family: SettingsMaterialPreset.fontFamily
                                     pixelSize: Appearance.font.pixelSize.small
                                 }
                                 color: root.navEditMode
                                     ? navEditToggle.editForeground
-                                    : Appearance.colors.colOnSurfaceVariant
+                                    : SettingsMaterialPreset.secondaryTextColor
                                 elide: Text.ElideRight
                             }
                         }
@@ -1538,9 +1772,9 @@ ApplicationWindow {
                         property bool justCopied: false
                         Layout.fillWidth: true
                         implicitHeight: 36
-                        buttonRadius: Appearance.rounding.small
+                        buttonRadius: SettingsMaterialPreset.navItemRadius
                         colBackground: "transparent"
-                        colBackgroundHover: Appearance.colors.colLayer1Hover
+                        colBackgroundHover: SettingsMaterialPreset.navHoverColor
 
                         onClicked: Qt.openUrlExternally(`${Directories.config}/alis/config.json`)
                         altAction: () => {
@@ -1565,7 +1799,7 @@ ApplicationWindow {
                                 Layout.alignment: Qt.AlignVCenter
                                 text: configFileBtn.justCopied ? "check" : "edit"
                                 iconSize: 18
-                                color: Appearance.colors.colOnSurfaceVariant
+                                color: SettingsMaterialPreset.secondaryTextColor
                             }
 
                             StyledText {
@@ -1574,10 +1808,10 @@ ApplicationWindow {
                                 verticalAlignment: Text.AlignVCenter
                                 text: configFileBtn.justCopied ? Translation.tr("Path copied") : Translation.tr("Config file")
                                 font {
-                                    family: Appearance.font.family.main
+                                    family: SettingsMaterialPreset.fontFamily
                                     pixelSize: Appearance.font.pixelSize.small
                                 }
-                                color: Appearance.colors.colOnSurfaceVariant
+                                color: SettingsMaterialPreset.secondaryTextColor
                                 elide: Text.ElideRight
                             }
                         }
@@ -1592,9 +1826,9 @@ ApplicationWindow {
                         id: overlayToggleBtn
                         Layout.fillWidth: true
                         implicitHeight: 36
-                        buttonRadius: Appearance.rounding.small
+                        buttonRadius: SettingsMaterialPreset.navItemRadius
                         colBackground: "transparent"
-                        colBackgroundHover: Appearance.colors.colLayer1Hover
+                        colBackgroundHover: SettingsMaterialPreset.navHoverColor
 
                         onClicked: {
                             Config.setNestedValue("settingsUi.overlayMode", true)
@@ -1611,7 +1845,7 @@ ApplicationWindow {
                                 Layout.alignment: Qt.AlignVCenter
                                 text: "layers"
                                 iconSize: 18
-                                color: Appearance.colors.colOnSurfaceVariant
+                                color: SettingsMaterialPreset.secondaryTextColor
                             }
 
                             StyledText {
@@ -1620,10 +1854,10 @@ ApplicationWindow {
                                 verticalAlignment: Text.AlignVCenter
                                 text: Translation.tr("Overlay")
                                 font {
-                                    family: Appearance.font.family.main
+                                    family: SettingsMaterialPreset.fontFamily
                                     pixelSize: Appearance.font.pixelSize.small
                                 }
-                                color: Appearance.colors.colOnSurfaceVariant
+                                color: SettingsMaterialPreset.secondaryTextColor
                                 elide: Text.ElideRight
                             }
                         }
@@ -1693,12 +1927,29 @@ ApplicationWindow {
                         }
                     }
 
-                    height: root.settingsSearchText.trim().length > 0 ? 0 : 48
+                    height: root.settingsSearchText.trim().length > 0
+                        ? 0
+                        : (SettingsMaterialPreset.waffle ? 56 : 48)
                     visible: root.settingsSearchText.trim().length === 0
+
+                    WaffleSettings.WWin11SettingsBreadcrumb {
+                        id: waffleWindowBreadcrumb
+                        visible: SettingsMaterialPreset.waffle
+                        anchors.fill: parent
+                        categoryTitle: windowPageHeader.activeTitle
+                        hasSubTabs: Boolean(windowPageHeader.activePageItem?._subTabItems?.length > 1)
+                        subPageTitle: String(windowPageHeader.activePageItem?.activeSubTabLabel ?? "")
+                        contentLeftMargin: Number(windowPageHeader.activePageItem?._horizontalMargin ?? 28)
+                        onCategoryRootClicked: {
+                            const items = windowPageHeader.activePageItem?._subTabItems ?? []
+                            if (items.length > 0 && typeof windowPageHeader.activePageItem?.activateSubTabItem === "function")
+                                windowPageHeader.activePageItem.activateSubTabItem(items[0])
+                        }
+                    }
 
                     RowLayout {
                         id: windowPageHeaderRow
-                        visible: true
+                        visible: !SettingsMaterialPreset.waffle
                         anchors.fill: parent
                         anchors.leftMargin: 20
                         anchors.rightMargin: 20
@@ -1801,6 +2052,7 @@ ApplicationWindow {
                     }
 
                     Rectangle {
+                        visible: !SettingsMaterialPreset.waffle
                         anchors { bottom: parent.bottom; left: parent.left; right: parent.right; leftMargin: 16; rightMargin: 16 }
                         height: 1
                         color: Appearance.m3colors.m3outlineVariant
@@ -1836,7 +2088,7 @@ ApplicationWindow {
                     z: 20
                     query: root.settingsSearchText
                     results: root.settingsSearchResults
-                    searchField: settingsSearchField
+                    searchField: SettingsMaterialPreset.waffle ? waffleWindowRailHeader.searchField : settingsSearchField
                     iconForPage: index => SettingsPageRegistry.iconForPage(index)
                     onActivated: entry => root.openSearchResult(entry)
                     onCloseRequested: root.openSearchResult({})

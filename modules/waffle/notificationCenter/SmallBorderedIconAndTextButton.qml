@@ -24,20 +24,27 @@ AcrylicButton {
     implicitWidth: focusButtonContent.implicitWidth + leftPadding + rightPadding
     implicitHeight: 24
 
-    contentItem: Row {
-        id: focusButtonContent
-        spacing: 4
+    contentItem: Item {
+        implicitWidth: focusButtonContent.implicitWidth
+        implicitHeight: focusButtonContent.implicitHeight
 
-        FluentIcon {
-            visible: root.iconVisible
-            icon: root.iconName
-            filled: root.iconFilled
-            implicitSize: 14
-            anchors.verticalCenter: parent.verticalCenter
-        }
-        WText {
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.text
+        Row {
+            id: focusButtonContent
+            anchors.centerIn: parent
+            spacing: 4
+
+            FluentIcon {
+                visible: root.iconVisible
+                icon: root.iconName
+                filled: root.iconFilled
+                implicitSize: 14
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            WText {
+                anchors.verticalCenter: parent.verticalCenter
+                verticalAlignment: Text.AlignVCenter
+                text: root.text
+            }
         }
     }
 }

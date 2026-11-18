@@ -5,41 +5,47 @@ import QtQuick
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.abyss.looks
+import qs.modules.waffle.looks as Waffle
 
 QtObject {
     id: root
 
-    // ── Page layout ──
-    readonly property int pageSpacing: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : 10) * Appearance.fontSizeScale)
+    readonly property bool waffle: Config.options?.panelFamily === "waffle"
+    readonly property string fontFamily: waffle ? Waffle.Looks.font.family.ui : Appearance.font.family.main
+    readonly property color textColor: waffle ? Waffle.Looks.colors.fg : Appearance.colors.colOnLayer1
+    readonly property color secondaryTextColor: waffle ? Waffle.Looks.colors.subfg : Appearance.colors.colSubtext
+    readonly property color windowColor: waffle
+        ? (Waffle.Looks.useMaterial ? Appearance.colors.colLayer0
+            : Waffle.Looks.applyBackgroundTransparency(Qt.tint(Waffle.Looks.dark ? "#202020" : "#f3f3f3", Qt.alpha(Waffle.Looks.colors.accent, 0.035))))
+        : Appearance.colors.colLayer0
+    readonly property color navSelectedColor: waffle ? Qt.alpha(Waffle.Looks.colors.fg, 0.065) : Appearance.colors.colPrimaryContainer
+    readonly property color navHoverColor: waffle ? Qt.alpha(Waffle.Looks.colors.fg, 0.045) : Appearance.colors.colLayer1Hover
+    readonly property color navSelectedHoverColor: waffle ? Qt.alpha(Waffle.Looks.colors.fg, 0.09) : Appearance.colors.colPrimaryContainerHover
+    readonly property color navSelectedTextColor: waffle ? Waffle.Looks.colors.fg : Appearance.colors.colOnPrimaryContainer
+    readonly property int navItemRadius: waffle ? 6 : Appearance.rounding.small
+    readonly property int waffleRailWidth: 280
+    readonly property int searchRadius: waffle ? 4 : Appearance.rounding.full
+    readonly property color searchColor: waffle ? cardColor : Appearance.colors.colLayer0
+    readonly property color searchBottomLineColor: Waffle.Looks.dark ? "#8a8a8a" : "#868686"
+
+    // ── Page layout (iRiS single-column plate cadence / Win11 4px card stack) ──
+    readonly property int pageSpacing: Math.round((waffle ? 4 : Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : 16) * Appearance.fontSizeScale)
+    // Legacy compatibility no-ops (Bento forced-height equalization retired in favor of iRiS single-column plates)
     property real _measuredThemesBentoHeight: 0
     property real _measuredThemesFontScale: -1
     property string _measuredThemesPanelFamily: ""
-    readonly property real _estimatedStandardBentoHeight: {
-        const scale = Appearance.fontSizeScale ?? 1.0
-        const isAbyss = (Config.options?.panelFamily ?? "abyss") === "abyss"
-        return Math.round((isAbyss ? 509 : 506) + 306 * scale)
-    }
-    readonly property real standardBentoHeight: {
-        const scale = Appearance.fontSizeScale ?? 1.0
-        const family = String(Config.options?.panelFamily ?? "abyss")
-        if (root._measuredThemesBentoHeight > 0
-                && Math.abs(root._measuredThemesFontScale - scale) < 0.001
-                && root._measuredThemesPanelFamily === family) {
-            return Math.round(root._measuredThemesBentoHeight)
-        }
-        return root._estimatedStandardBentoHeight
-    }
+    readonly property real standardBentoHeight: 0
 
-    // ── Card (SettingsCardSection) ──
-    readonly property int cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+    // ── Card / Form Plate (SettingsCardSection) ──
+    readonly property int cardRadius: waffle ? 8 : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.regaliaEverywhere ? Appearance.regalia.roundNormal
         : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius + 1
         : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
         : Appearance.rounding.normal
-    readonly property int cardPadding: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tilePadding : 11) * Appearance.fontSizeScale)
+    readonly property int cardPadding: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tilePadding : 14) * Appearance.fontSizeScale)
 
     // ── Card header ──
-    readonly property int headerRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    readonly property int headerRadius: waffle ? 4 : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
         : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
         : Appearance.alisEverywhere ? Appearance.alis.roundingSmall
@@ -48,7 +54,7 @@ QtObject {
     readonly property int headerPaddingY: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingVertical : 4) * Appearance.fontSizeScale)
 
     // ── Group (SettingsGroup) ──
-    readonly property int groupRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    readonly property int groupRadius: waffle ? 4 : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
         : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
         : Appearance.alisEverywhere ? Appearance.alis.roundingSmall
@@ -59,7 +65,7 @@ QtObject {
     // ── Colors ──
     // In angel/aurora, cards are more transparent to let the content area's
     // GlassBackground blur show through (like Overlay widgets do).
-    readonly property color cardColor: Config.options?.panelFamily === "abyss" ? AbyssStyle.contentLayer : Appearance.angelEverywhere
+    readonly property color cardColor: waffle ? (Waffle.Looks.useMaterial ? Appearance.colors.colLayer1 : Waffle.Looks.applyBackgroundTransparency(Waffle.Looks.dark ? "#2b2b2b" : "#fbfbfb")) : Config.options?.panelFamily === "abyss" ? AbyssStyle.contentLayer : Appearance.angelEverywhere
         ? ColorUtils.transparentize(Appearance.colors.colLayer1Base, Appearance.angel.cardTransparentize * 0.7)
         // bg3 (not tile): the content field sits at bg2 now, so cards must lift a
         // clear step above it instead of matching it — depth by layer, not stroke.
@@ -71,15 +77,22 @@ QtObject {
         : Appearance.alisEverywhere ? Appearance.alis.colLayer1
         : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer1Base, 0.85)
         : Appearance.colors.colLayer1
-    readonly property color cardBorderColor: Appearance.angelEverywhere
+    readonly property color cardBorderColor: waffle
+        ? (Waffle.Looks.useMaterial ? Qt.alpha(Appearance.colors.colOutlineVariant, 0.36) : (Waffle.Looks.dark ? "#353535" : "#e5e5e5"))
+        : Config.options?.panelFamily === "abyss"
+        ? Qt.alpha(Appearance.colors.colOutlineVariant, 0.34)
+        : Appearance.angelEverywhere
         ? Appearance.angel.colCardBorder
         : Appearance.regaliaEverywhere ? "transparent"
         : Appearance.zzzEverywhere ? Appearance.zzz.hairline
         : Appearance.alisEverywhere ? Appearance.alis.colBorder
         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
-        : Appearance.colors.colLayer0Border
+        : Qt.alpha(Appearance.colors.colOutlineVariant, 0.36)
+    readonly property color plateDividerColor: waffle
+        ? (Waffle.Looks.useMaterial ? Qt.alpha(Appearance.colors.colOutlineVariant, 0.24) : (Waffle.Looks.dark ? "#353535" : "#e5e5e5"))
+        : Qt.alpha(Appearance.colors.colOutlineVariant, 0.24)
 
-    readonly property color groupColor: Config.options?.panelFamily === "abyss" ? Qt.alpha(Appearance.colors.colLayer2Base,AbyssStyle.contentOpacity*.55) : Appearance.angelEverywhere
+    readonly property color groupColor: waffle ? "transparent" : Config.options?.panelFamily === "abyss" ? Qt.alpha(Appearance.colors.colLayer2Base,AbyssStyle.contentOpacity*.55) : Appearance.angelEverywhere
         ? ColorUtils.transparentize(Appearance.colors.colLayer2Base, Appearance.angel.popupTransparentize * 0.6)
         : Appearance.regaliaEverywhere ? "transparent"
         : Appearance.zzzEverywhere ? "transparent"
@@ -95,7 +108,7 @@ QtObject {
         : Appearance.colors.colLayer0Border
 
     // ── Header hover ──
-    readonly property color headerHoverColor: Appearance.angelEverywhere
+    readonly property color headerHoverColor: waffle ? Qt.alpha(Waffle.Looks.colors.fg, 0.04) : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardHover
         : Appearance.regaliaEverywhere ? Appearance.regalia.surfacePlateHover
         : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
@@ -104,7 +117,7 @@ QtObject {
         : Appearance.colors.colLayer1Hover
 
     // ── Accent bar (left edge on expanded section) ──
-    readonly property color accentColor: Appearance.angelEverywhere
+    readonly property color accentColor: waffle ? Waffle.Looks.colors.accent : Appearance.angelEverywhere
         ? Appearance.angel.colPrimary
         : Appearance.regaliaEverywhere ? Appearance.regalia.onColor
         : Appearance.zzzEverywhere ? Appearance.zzz.accent
@@ -112,13 +125,13 @@ QtObject {
         : Appearance.colors.colPrimary
 
     // ── Section title colors ──
-    readonly property color titleExpandedColor: Appearance.angelEverywhere
+    readonly property color titleExpandedColor: waffle ? Waffle.Looks.colors.fg : Appearance.angelEverywhere
         ? Appearance.angel.colText
         : Appearance.regaliaEverywhere ? Appearance.regalia.onColor
         : Appearance.zzzEverywhere ? Appearance.zzz.onColor
         : Appearance.alisEverywhere ? Appearance.alis.colText
-        : Appearance.colors.colOnSecondaryContainer
-    readonly property color titleCollapsedColor: Appearance.angelEverywhere
+        : Appearance.colors.colOnLayer0
+    readonly property color titleCollapsedColor: waffle ? Waffle.Looks.colors.subfg : Appearance.angelEverywhere
         ? Appearance.angel.colTextSecondary
         : Appearance.regaliaEverywhere ? Appearance.regalia.onMuted
         : Appearance.zzzEverywhere ? Appearance.colors.colOnLayer1
@@ -130,13 +143,13 @@ QtObject {
     // expanded, secondary when collapsed); the INK on that plate must be the
     // corresponding on-plate ink, not a raw accent (which can compute near-
     // black on a low-chroma wallpaper and render as a black glyph).
-    readonly property color iconExpandedColor: Appearance.angelEverywhere
+    readonly property color iconExpandedColor: waffle ? Waffle.Looks.colors.accent : Appearance.angelEverywhere
         ? Appearance.angel.colPrimary
         : Appearance.regaliaEverywhere ? Appearance.regalia.hardwarePrimary
         : Appearance.zzzEverywhere ? Appearance.zzz.onSticker
         : Appearance.alisEverywhere ? Appearance.alis.colAccent
         : Appearance.colors.colPrimary
-    readonly property color iconCollapsedColor: Appearance.angelEverywhere
+    readonly property color iconCollapsedColor: waffle ? Waffle.Looks.colors.subfg : Appearance.angelEverywhere
         ? Appearance.angel.colTextMuted
         : Appearance.regaliaEverywhere ? Appearance.regalia.hardwareSecondary
         : Appearance.zzzEverywhere ? Appearance.zzz.onSecondary
@@ -147,18 +160,18 @@ QtObject {
     // One quiet shared rail; native rectangles need no per-tab texture/blur.
     readonly property real taskTabPadding: 6 * Appearance.fontSizeScale
     readonly property real taskTabHeight: 40 * Appearance.fontSizeScale
-    readonly property real taskTabRadius: 16 * Appearance.fontSizeScale
-    readonly property real taskRailRadius: 22 * Appearance.fontSizeScale
-    readonly property color taskRailBase: Appearance.colors.colLayer2Base
-    readonly property color taskRailColor: Qt.alpha(taskRailBase, AbyssStyle.contentOpacity * .72)
-    readonly property color taskTabSelectedBase: ColorUtils.mix(AbyssStyle.accent,
+    readonly property real taskTabRadius: (waffle ? 4 : 16) * Appearance.fontSizeScale
+    readonly property real taskRailRadius: (waffle ? 6 : 22) * Appearance.fontSizeScale
+    readonly property color taskRailBase: waffle ? Waffle.Looks.colors.bg0 : Appearance.colors.colLayer2Base
+    readonly property color taskRailColor: waffle ? "transparent" : Qt.alpha(taskRailBase, AbyssStyle.contentOpacity * .72)
+    readonly property color taskTabSelectedBase: waffle ? Waffle.Looks.colors.bg2Base : ColorUtils.mix(AbyssStyle.accent,
         Appearance.colors.colLayer1Base, .26)
-    readonly property color taskTabSelectedColor: Qt.alpha(taskTabSelectedBase, AbyssStyle.contentOpacity)
-    readonly property color taskTabHoverColor: Qt.alpha(AbyssStyle.accent, AbyssStyle.contentOpacity * .16)
-    readonly property color taskTabPressedColor: Qt.alpha(AbyssStyle.accent, AbyssStyle.contentOpacity * .24)
-    readonly property color taskTabInk: ColorUtils.ensureReadable(Appearance.colors.colOnLayer1, taskRailBase)
-    readonly property color taskTabSelectedInk: ColorUtils.ensureReadable(Appearance.colors.colOnPrimaryContainer, taskTabSelectedBase)
-    readonly property color taskTabFocusColor: ColorUtils.ensureReadable(AbyssStyle.accent, taskRailBase, 3)
+    readonly property color taskTabSelectedColor: waffle ? taskTabSelectedBase : Qt.alpha(taskTabSelectedBase, AbyssStyle.contentOpacity)
+    readonly property color taskTabHoverColor: waffle ? navHoverColor : Qt.alpha(AbyssStyle.accent, AbyssStyle.contentOpacity * .16)
+    readonly property color taskTabPressedColor: waffle ? navSelectedHoverColor : Qt.alpha(AbyssStyle.accent, AbyssStyle.contentOpacity * .24)
+    readonly property color taskTabInk: waffle ? Waffle.Looks.colors.fg : ColorUtils.ensureReadable(Appearance.colors.colOnLayer1, taskRailBase)
+    readonly property color taskTabSelectedInk: waffle ? Waffle.Looks.colors.fg : ColorUtils.ensureReadable(Appearance.colors.colOnPrimaryContainer, taskTabSelectedBase)
+    readonly property color taskTabFocusColor: waffle ? Waffle.Looks.colors.accent : ColorUtils.ensureReadable(AbyssStyle.accent, taskRailBase, 3)
 
     // ── Navigation rail ──
     readonly property int navWidth: 180
@@ -169,6 +182,8 @@ QtObject {
     // One continuous theme-derived gradient across the flat Settings list.
     // No page owns a hard-coded icon color.
     function navigationIconColor(position: int, count: int, selected = false): color {
+        if (waffle && !Waffle.Looks.useMaterial)
+            return selected ? Waffle.Looks.colors.accent : Waffle.Looks.colors.fg
         const t = count <= 1 ? 0 : Math.max(0, Math.min(1, position / (count - 1)))
         const base = t <= 0.5
             ? ColorUtils.mix(Appearance.colors.colPrimary,

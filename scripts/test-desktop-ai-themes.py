@@ -53,6 +53,9 @@ def main():
         assert c['desktop']['appearanceDarkChromeTheme']['surface'] == '#101416'
         assert c['desktop']['appearanceDarkChromeTheme']['fonts']['ui'] == 'Owner Font'
         assert c['desktop']['appearanceDarkChromeTheme']['contrast'] == 61
+        assert c['desktop']['appearanceDarkChromeTheme']['opaqueWindows'] is True
+        assert c['desktop']['appearanceDarkChromeTheme']['semanticColors'] == {
+            'diffAdded': '#40c977', 'diffRemoved': '#fa423e', 'skill': '#ad7bf9'}
         a = json.loads(anti.read_text())
         assert a['userSettings']['themeMode'] == 'THEME_MODE_DARK'
         assert a['userSettings']['customThemeSeedsDark']['primary'] == '#83d3e3'
@@ -84,6 +87,7 @@ def main():
         assert restored['desktop']['appearanceTheme'] == 'system'
         dark = restored['desktop']['appearanceDarkChromeTheme']
         assert dark['accent'] == '#123456' and 'surface' not in dark
+        assert 'opaqueWindows' not in dark and 'semanticColors' not in dark
         assert dark['fonts']['ui'] == 'Owner Font'
         a = json.loads(anti.read_text())
         assert a['userSettings']['themeMode'] == 'THEME_MODE_INHERIT'
@@ -170,6 +174,134 @@ def main():
                                  '--colors', str(palette)], env=env, capture_output=True, text=True)
         assert result.returncode != 0
         assert claude.read_text() == '{ malformed personal permissions'
+
+        # Fresh empty config.toml receives complete ChatGPT Zod schema + opaqueWindows
+        # (including `fonts = {}`, int `contrast`, bool `opaqueWindows`, `[...semanticColors]`)
+        # and strips back cleanly on `--codex false`, working offline without IPC socket.
+        codex_journal = home / '.local/state/quickshell/user/generated/codex_desktop_theme_state.json'
+        if codex_journal.exists():
+            codex_journal.unlink()
+        (home / '.config/ChatGPT').mkdir(parents=True, exist_ok=True)
+        anti_journal = home / '.local/state/quickshell/user/generated/antigravity_app_theme_state.json'
+        if anti_journal.exists():
+            anti_journal.unlink()
+        if anti.exists():
+            anti.unlink()
+        palette.write_text(json.dumps({'background': '#121009', 'on_surface': '#b1ab99', 'primary': '#dbc66e'}))
+        codex.write_text('')
+        ino_fresh = codex.stat().st_ino
+        run('true', 'false')
+        assert codex.stat().st_ino == ino_fresh
+        fresh_toml = codex.read_text()
+        assert 'fonts = {}' in fresh_toml and '[desktop.appearanceDarkChromeTheme.semanticColors]' in fresh_toml
+        fresh_cfg = tomllib.loads(fresh_toml)
+        assert fresh_cfg['desktop']['appearanceTheme'] == 'dark'
+        assert fresh_cfg['desktop']['appearanceDarkChromeTheme'] == {
+            'accent': '#dbc66e',
+            'accentSource': 'custom',
+            'contrast': 60,
+            'fonts': {},
+            'ink': '#b1ab99',
+            'opaqueWindows': True,
+            'semanticColors': {'diffAdded': '#40c977', 'diffRemoved': '#fa423e', 'skill': '#ad7bf9'},
+            'surface': '#121009',
+        }
+        first_fresh = codex.read_bytes()
+        run('true', 'false')
+        assert codex.read_bytes() == first_fresh, 'fresh empty config repeat apply not idempotent'
+        palette.write_text(json.dumps({'background': '#f8f6f0', 'on_surface': '#1c1b18', 'primary': '#7c5800'}))
+        run('true', 'false')
+        light_cfg = tomllib.loads(codex.read_text())['desktop']['appearanceLightChromeTheme']
+        assert light_cfg['contrast'] == 45 and light_cfg['fonts'] == {} and light_cfg['opaqueWindows'] is True
+        assert light_cfg['semanticColors'] == {'diffAdded': '#00a240', 'diffRemoved': '#ba2623', 'skill': '#924ff7'}
+        run('false', 'false')
+        assert codex.read_text() == '' and not codex_journal.exists()
+
+        # Pre-existing real ChatGPT config (`[...fonts]` empty sub-table, `[...semanticColors]`,
+        # `opaqueWindows = false`) + legacy 5-leaf v1 journal + active IPC socket notice.
+        real_pre = (
+            '[desktop]\n'
+            'appearanceTheme = "dark"\n\n'
+            '[desktop.appearanceDarkChromeTheme]\n'
+            'accent = "#dbc66e"\n'
+            'accentSource = "custom"\n'
+            'contrast = 60\n'
+            'ink = "#b1ab99"\n'
+            'opaqueWindows = false\n'
+            'surface = "#121009"\n\n'
+            '[desktop.appearanceDarkChromeTheme.fonts]\n\n'
+            '[desktop.appearanceDarkChromeTheme.semanticColors]\n'
+            'diffAdded = "#00a240"\n'
+            'diffRemoved = "#e02e2a"\n'
+            'skill = "#b06dff"\n'
+        )
+        legacy_journal = {
+            'version': 1,
+            'path': str(codex),
+            'leaves': {
+                'desktop.appearanceTheme': {
+                    'keys': ['desktop', 'appearanceTheme'],
+                    'previous': {'present': True, 'value': 'system'},
+                    'applied': {'present': True, 'value': 'dark'},
+                },
+                'desktop.appearanceDarkChromeTheme.accent': {
+                    'keys': ['desktop', 'appearanceDarkChromeTheme', 'accent'],
+                    'previous': {'present': True, 'value': '#0169cc'},
+                    'applied': {'present': True, 'value': '#dbc66e'},
+                },
+                'desktop.appearanceDarkChromeTheme.accentSource': {
+                    'keys': ['desktop', 'appearanceDarkChromeTheme', 'accentSource'],
+                    'previous': {'present': True, 'value': 'custom'},
+                    'applied': {'present': True, 'value': 'custom'},
+                },
+                'desktop.appearanceDarkChromeTheme.ink': {
+                    'keys': ['desktop', 'appearanceDarkChromeTheme', 'ink'],
+                    'previous': {'present': True, 'value': '#9fa8aa'},
+                    'applied': {'present': True, 'value': '#b1ab99'},
+                },
+                'desktop.appearanceDarkChromeTheme.surface': {
+                    'keys': ['desktop', 'appearanceDarkChromeTheme', 'surface'],
+                    'previous': {'present': True, 'value': '#111111'},
+                    'applied': {'present': True, 'value': '#121009'},
+                },
+            },
+        }
+        codex.write_text(real_pre)
+        codex_journal.write_text(json.dumps(legacy_journal, indent=2))
+        run('false', 'false')
+        legacy_restored = tomllib.loads(codex.read_text())
+        assert legacy_restored['desktop']['appearanceTheme'] == 'system'
+        assert legacy_restored['desktop']['appearanceDarkChromeTheme']['accent'] == '#0169cc'
+        assert legacy_restored['desktop']['appearanceDarkChromeTheme']['fonts'] == {}
+        assert legacy_restored['desktop']['appearanceDarkChromeTheme']['semanticColors']['diffAdded'] == '#00a240'
+
+        # Re-apply onto pre-existing layout with a passive Unix socket simulating running desktop.
+        import socket as _socket
+        codex.write_text(real_pre)
+        codex_journal.write_text(json.dumps(legacy_journal, indent=2))
+        palette.write_text(json.dumps({'background': '#121009', 'on_surface': '#b1ab99', 'primary': '#dbc66e'}))
+        ipc_sock = home / '.codex/ipc/ipc.sock'
+        ipc_sock.parent.mkdir(parents=True, exist_ok=True)
+        srv = _socket.socket(_socket.AF_UNIX, _socket.SOCK_STREAM)
+        try:
+            srv.bind(str(ipc_sock))
+            srv.listen(1)
+            proc = subprocess.run([sys.executable, str(HELPER), '--colors', str(palette),
+                                   '--codex', 'true', '--antigravity', 'false'],
+                                  env=env, capture_output=True, text=True)
+            assert proc.returncode == 0, proc.stderr
+            assert 'restart ChatGPT/Codex desktop' in proc.stderr
+        finally:
+            srv.close()
+        upgraded = tomllib.loads(codex.read_text())
+        assert upgraded['desktop']['appearanceDarkChromeTheme']['opaqueWindows'] is True
+        assert upgraded['desktop']['appearanceDarkChromeTheme']['fonts'] == {}
+        assert upgraded['desktop']['appearanceDarkChromeTheme']['semanticColors']['skill'] == '#b06dff'
+        run('false', 'false')
+        reverted = tomllib.loads(codex.read_text())
+        assert reverted['desktop']['appearanceDarkChromeTheme']['opaqueWindows'] is False
+        assert reverted['desktop']['appearanceDarkChromeTheme']['accent'] == '#0169cc'
+        assert reverted['desktop']['appearanceDarkChromeTheme']['semanticColors']['diffAdded'] == '#00a240'
     print('PASS: desktop AI theme merge, mode switch, opt-out, Owner edits, invalid settings, interruption and CLI-only fixtures')
 
 

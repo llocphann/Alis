@@ -165,6 +165,11 @@ Item {
     property string widthModeKey: ""
     property string widthContextKey: ""
     readonly property bool widthMorphActive: fromFrame!==null && widthProgress<1
+    property int _activeModuleMotions: 0
+    function _adjustModuleMotion(delta: int): void {
+        _activeModuleMotions = Math.max(0, _activeModuleMotions + delta)
+    }
+    readonly property bool motionActive: widthMorphActive || _activeModuleMotions > 0
     readonly property var presentedFrame: widthMorphActive
         ? Layout.widthFrameBetween(fromFrame,targetFrame,widthProgress) : targetFrame
     readonly property var presentedLayoutRecords: presentedFrame?.records ?? layoutRecords
@@ -420,6 +425,8 @@ Item {
                 && !placement?.locked && !root.draggedIds.includes(modelData)
             Behavior on x { enabled:module.animatePlacement && module.motionHeight===module.height && module.cavaProtrusion < 0.01; NumberAnimation { id:xMotion;duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }
             Behavior on y { enabled:module.animatePlacement && (module.motionHeight===module.height || module.kind==="cava"); NumberAnimation { id:yMotion;duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }
+            readonly property bool placementAnimating: xMotion.running || yMotion.running
+            onPlacementAnimatingChanged: root._adjustModuleMotion(placementAnimating ? 1 : -1)
             x: (geometry?.content.x ?? 0) + cavaShiftX
             y: module.kind === "cava" && module.vertical && cavaAdjusted ? cavaAdjusted.along : (geometry?.content.y ?? 0)
             width: geometry?.content.width ?? 0
@@ -437,7 +444,11 @@ Item {
                     root.popupHoverStateChanged(kind,geometry.edge,geometry.along+geometry.span/2,hovered)
             }
             onHoveredChanged: if (root) root.setModuleKindHovered(module.kind, module.hovered)
-            Component.onDestruction: if (root) root.setModuleKindHovered(module.kind, false)
+            Component.onDestruction: if (root) {
+                root.setModuleKindHovered(module.kind, false)
+                if (module.placementAnimating)
+                    root._adjustModuleMotion(-1)
+            }
         }
     }
     Repeater {

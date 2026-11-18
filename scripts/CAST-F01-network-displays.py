@@ -13,6 +13,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -378,12 +379,132 @@ def daemon_executable():
     return next((p for p in DAEMON_PATHS if Path(p).is_file()), "")
 
 
+def shim_library_path():
+    return Path.home() / ".local/lib/alis/libalis_nd_screencast_fix.so"
+
+
+def sync_stream_dropin(shim):
+    if not shim.is_file():
+        return
+    try:
+        dropin = (Path.home()
+                  / ".config/systemd/user/gnome-network-displays-stream-.service.d/alis-screencast.conf")
+        expected = f'[Service]\nEnvironment="LD_PRELOAD={shim}"\n'
+        current = dropin.read_text(encoding="utf-8") if dropin.is_file() else ""
+        if current == expected:
+            return
+        dropin.parent.mkdir(parents=True, exist_ok=True)
+        dropin.write_text(expected, encoding="utf-8")
+        subprocess.run(["systemctl", "--user", "daemon-reload"],
+                       capture_output=True, text=True, timeout=3, check=False)
+    except (OSError, subprocess.SubprocessError, ValueError):
+        pass
+
+
+def refresh_stale_daemon(shim):
+    if not shim.is_file():
+        return
+    uid = os.getuid()
+    shim_str = str(shim)
+    stale_pids = []
+    try:
+        proc_entries = list(Path("/proc").iterdir())
+    except OSError:
+        return
+    for entry in proc_entries:
+        if not entry.name.isdigit():
+            continue
+        try:
+            if entry.stat().st_uid != uid:
+                continue
+            exe = os.readlink(entry / "exe")
+            if Path(exe).name != "gnome-network-displays-daemon":
+                continue
+            maps = (entry / "maps").read_text(encoding="utf-8", errors="replace")
+            has_current = any(
+                shim_str in line and "(deleted)" not in line
+                for line in maps.splitlines()
+            )
+            if not has_current:
+                stale_pids.append(int(entry.name))
+        except OSError:
+            continue
+
+    if not stale_pids:
+        return
+
+    try:
+        active = subprocess.run(
+            ["systemctl", "--user", "list-units", "--plain", "--no-legend",
+             "--state=active,activating", "gnome-network-displays-stream-*.service"],
+            capture_output=True, text=True, timeout=3, check=False)
+        if active.returncode != 0 or active.stdout.strip():
+            return
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return
+
+    for pid in stale_pids:
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except OSError:
+            continue
+
+    deadline = time.monotonic() + 1.5
+    while stale_pids and time.monotonic() < deadline:
+        alive = []
+        for pid in stale_pids:
+            try:
+                os.kill(pid, 0)
+                alive.append(pid)
+            except OSError:
+                pass
+        stale_pids = alive
+        if stale_pids:
+            time.sleep(0.05)
+
+
+def ufw_miracast_warning():
+    try:
+        conf = Path("/etc/ufw/ufw.conf")
+        if not conf.is_file() or not os.access(conf, os.R_OK):
+            return ""
+        enabled = any(
+            re.match(r"^\s*ENABLED\s*=\s*yes\s*$", line, re.IGNORECASE)
+            for line in conf.read_text(encoding="utf-8", errors="replace").splitlines()
+        )
+        if not enabled:
+            return ""
+        state = subprocess.run(["systemctl", "is-active", "--quiet", "ufw"],
+                               capture_output=True, timeout=2, check=False)
+        if state.returncode != 0:
+            return ""
+        user_rules = Path("/etc/ufw/user.rules")
+        before_rules = Path("/etc/ufw/before.rules")
+        if not (user_rules.is_file() and os.access(user_rules, os.R_OK)):
+            return ""
+        rules_text = user_rules.read_text(encoding="utf-8", errors="replace")
+        if before_rules.is_file() and os.access(before_rules, os.R_OK):
+            rules_text += "\n" + before_rules.read_text(encoding="utf-8", errors="replace")
+        has_p2p = bool(re.search(
+            r"(?m)^\s*-A\s+\S*input\b.*\s-i\s+p2p\S*\s.*-j\s+ACCEPT\b", rules_text))
+        has_7236 = bool(re.search(
+            r"(?m)^\s*-A\s+\S*input\b.*--dport\s+7236\b.*-j\s+ACCEPT\b", rules_text))
+        if not (has_p2p or has_7236):
+            return "UFW blocks Miracast (p2p+ / port 7236). Run: sudo ufw allow in on p2p+"
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return ""
+    return ""
+
+
 def ensure_daemon():
     """Start the *user-session* upstream daemon only when Scan is requested.
 
     Keep failure causes distinct: a missing package is not the same as a
     crashing daemon, broken user D-Bus session or receiver discovery failure.
     """
+    shim = shim_library_path()
+    sync_stream_dropin(shim)
+    refresh_stale_daemon(shim)
     if name_owned():
         return {"ok": True, "code": "ready", "message": ""}
     if not shutil.which("busctl"):
@@ -395,7 +516,6 @@ def ensure_daemon():
                 "message": "GNOME Network Displays daemon missing. Install version 0.98+ with the daemon enabled, then Scan again."}
     try:
         env = dict(os.environ)
-        shim = Path.home() / ".local/lib/alis/libalis_nd_screencast_fix.so"
         if shim.is_file():
             existing = env.get("LD_PRELOAD", "").strip()
             env["LD_PRELOAD"] = f"{shim}:{existing}" if existing else str(shim)
@@ -421,7 +541,8 @@ def scan():
     if not readiness["ok"]:
         return {"ok": False, "backend": False, "streamReady": False,
                 "code": readiness["code"], "displays": [],
-                "message": readiness["message"]}
+                "message": readiness["message"],
+                "firewallWarning": ""}
     try:
         p = bus("get-property", BUS, OBJ, IFACE, "Displays")
         installed = stream_binary_available()
@@ -433,11 +554,13 @@ def scan():
         return {"ok": True, "backend": True, "streamReady": installed,
                 "code": "ready" if installed else "stream_helper_missing",
                 "displays": receivers, "message": "" if installed else
-                "TV discovery works, but /usr/libexec/gnome-network-displays-stream is missing. Rebuild the native package or use Open app."}
+                "TV discovery works, but /usr/libexec/gnome-network-displays-stream is missing. Rebuild the native package or use Open app.",
+                "firewallWarning": ufw_miracast_warning()}
     except (CastError, ValueError, json.JSONDecodeError):
         return {"ok": False, "backend": True, "streamReady": False,
                 "code": "dbus_property_error", "displays": [],
-                "message": "Network Displays is running, but reading Displays failed. Inspect the installed daemon version and session D-Bus."}
+                "message": "Network Displays is running, but reading Displays failed. Inspect the installed daemon version and session D-Bus.",
+                "firewallWarning": ufw_miracast_warning()}
 
 
 def valid_unit(value):
@@ -462,6 +585,12 @@ def start(uid):
     available = scan()
     if not available["ok"] or uid not in {d["uuid"] for d in available["displays"]}:
         raise CastError("TV is not in the current discovery list")
+    try:
+        subprocess.run(["systemctl", "--user", "reset-failed",
+                        f"gnome-network-displays-stream-{uid}.service"],
+                       capture_output=True, text=True, timeout=2, check=False)
+    except (OSError, subprocess.SubprocessError, ValueError):
+        pass
     reply = bus("call", BUS, OBJ, IFACE, "StartStream", "s", uid)
     data = typed(reply)
     unit = data[0] if isinstance(data, list) and len(data) == 1 else None
@@ -501,6 +630,9 @@ def status(unit):
               if active == "active" else "TV stream is not active."}
     if sink_state:
         result["sinkState"] = sink_state
+    fw_warn = ufw_miracast_warning()
+    if fw_warn:
+        result["firewallWarning"] = fw_warn
     return result
 
 

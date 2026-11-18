@@ -113,8 +113,31 @@ Item {
         id: onlineLyricsPositionTimer
         interval: 480
         repeat: true
-        running: root.presentationActive && root._useOnlineLyrics && root.effectiveLyricsPlaying
+        running: root.presentationActive && root._useOnlineLyrics && root.effectiveLyricsPlaying && !GlobalStates.screenLocked
         onTriggered: MprisController.activePlayer?.positionChanged()
+    }
+    property var _searchMemo: ({
+        poolRef: null,
+        queryLower: "",
+        matched: []
+    })
+    function _matchingTracksFast(pool, rawQuery): var {
+        const list = pool ?? [];
+        const q = String(rawQuery ?? "").trim().toLowerCase();
+        if (!q || list.length === 0)
+            return list;
+        const memo = root._searchMemo;
+        let base = list;
+        if (memo.poolRef === list && memo.queryLower.length > 0 && q.startsWith(memo.queryLower)) {
+            if (q === memo.queryLower)
+                return memo.matched;
+            base = memo.matched;
+        }
+        const matched = Library.matching(base, rawQuery);
+        memo.poolRef = list;
+        memo.queryLower = q;
+        memo.matched = matched;
+        return matched;
     }
     readonly property var results: {
         if (sourceMode === "queue") {
@@ -126,17 +149,17 @@ Item {
                     }));
             if (!query.trim())
                 return entries;
-            const matched = new Set(Library.matching(backend.activeQueue ?? [], query));
+            const matched = new Set(root._matchingTracksFast(backend.activeQueue ?? [], query));
             return entries.filter(entry => matched.has(entry.track));
         }
         if (sourceMode === "playlist")
-            return Library.matching(selectedPlaylist?.tracks ?? [], query).map(track => ({
+            return root._matchingTracksFast(selectedPlaylist?.tracks ?? [], query).map(track => ({
                         kind: "track",
                         track,
                         name: String(track.title || track.uri || "")
                     }));
         if (query.trim())
-            return Library.matching(tracks, query).map(track => ({
+            return root._matchingTracksFast(tracks, query).map(track => ({
                         kind: "track",
                         track,
                         name: String(track.title || track.uri || "")
@@ -144,11 +167,29 @@ Item {
         return Library.results(tracks, sourceMode, selectedGenres,
             selectedFolders.length === 1 ? resultFolder : selectedFolders);
     }
+    readonly property var _selectedKeySet: new Set(selectedKeys ?? [])
     readonly property var selectedTracks: Library.selectedTracks(sourceMode === "playlist" ? (selectedPlaylist?.tracks ?? []) : sourceMode === "queue" ? (backend.activeQueue ?? []) : tracks, selectedKeys)
-     readonly property var allResultTracks: Library.selectedTracks(
-        sourceMode === "playlist" ? (selectedPlaylist?.tracks ?? []) :
-        sourceMode === "queue" ? (backend.activeQueue ?? []) : tracks,
-        results.map(entry => Library.key(entry)))
+    readonly property var allResultTracks: {
+        const pool = sourceMode === "playlist"
+            ? (selectedPlaylist?.tracks ?? [])
+            : sourceMode === "queue"
+                ? (backend.activeQueue ?? [])
+                : tracks;
+        if (!results || results.length === 0 || pool.length === 0)
+            return [];
+        const directTracks = [];
+        const folderPrefixes = [];
+        for (let i = 0; i < results.length; ++i) {
+            const entry = results[i];
+            if (entry?.kind === "track" && entry.track)
+                directTracks.push(entry.track);
+            else if (entry?.kind === "folder")
+                folderPrefixes.push(String(entry.path ?? ""));
+        }
+        if (folderPrefixes.length === 0)
+            return directTracks;
+        return Library.selectedTracks(pool, results.map(entry => Library.key(entry)));
+    }
     // MPD command/decoder/connection errors must be visible to the user.
     // This is a read-only presentation of the existing LocalMusic backend.
     readonly property string backendError: String(root.backend?.error ?? "").trim()
@@ -372,12 +413,20 @@ Item {
     onPresentationActiveChanged: {
         root._syncOnlineLyricsSubscription();
         if (!presentationActive) {
+            queueExpandTimer.stop();
             queueCollapseTimer.stop();
             queueExpanded = false;
             contextMenu.close();
             playlistDialogVisible = false;
             pendingPlaylistTracks = [];
         }
+    }
+
+    Timer {
+        id: queueExpandTimer
+        interval: 160
+        repeat: false
+        onTriggered: if (queueHover.hovered) root.queueExpanded = true
     }
 
     Timer {
@@ -497,8 +546,11 @@ Item {
                 Image {
                     id: cover
                     anchors.fill: parent
-                    source: entry.artUrl
+                    visible: entry.artUrl.length > 0
+                    source: entry.artUrl.length > 0 ? entry.artUrl : ""
                     asynchronous: true
+                    cache: false
+                    mipmap: false
                     sourceSize: Qt.size(48, 48)
                     fillMode: Image.PreserveAspectCrop
                 }
@@ -815,6 +867,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         model: root.results
+                        cacheBuffer: 320
                         clip: true
                         spacing: 3
                         ScrollBar.vertical: MusicScrollBar {}
@@ -827,7 +880,7 @@ Item {
                             glyph: modelData.kind === "folder" ? "folder" : "music_note"
                             artUrl: modelData.kind === "track" ? String(modelData.track.artUrl ?? modelData.track.art ?? "") : ""
                             detail: modelData.kind === "folder" ? Translation.tr("Folder · %1 tracks").arg(modelData.count) : String(modelData.track.artist ?? "")
-                            selected: root.selectedKeys.includes(Library.key(modelData))
+                            selected: root._selectedKeySet.has(Library.key(modelData))
                             onClicked: root.selectEntry(index, 0)
                             Keys.onReturnPressed: root.activate(modelData)
                             MouseArea {
@@ -908,8 +961,10 @@ Item {
                         onHoveredChanged: {
                             if (hovered) {
                                 queueCollapseTimer.stop()
-                                root.queueExpanded = true
+                                if (!root.queueExpanded)
+                                    queueExpandTimer.restart()
                             } else {
+                                queueExpandTimer.stop()
                                 queueCollapseTimer.restart()
                             }
                         }

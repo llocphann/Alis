@@ -59,6 +59,8 @@ Canvas {
     property var _primaryScratch: []
     property var _secondaryScratch: []
     property var _baselineScratch: []
+    property var _profileCache: ({key: "", weights: []})
+    property var _gradientCache: ({ctx: null, key: "", value: null})
 
     readonly property var _resolvedPalette: root._makePalette()
     readonly property var _resolvedCornerRadii: root._makeCornerRadii()
@@ -120,7 +122,15 @@ Canvas {
             1)
     }
 
+    function _invalidateGradientCache(): void {
+        root._gradientCache = ({ctx: null, key: "", value: null})
+    }
+
     function _horizontalGradient(ctx, x0, x1, alphaScale): var {
+        const key = `${x0}|${x1}|${alphaScale}`
+        const cached = root._gradientCache
+        if (cached && cached.ctx === ctx && cached.key === key && cached.value)
+            return cached.value
         const gradient = ctx.createLinearGradient(x0, 0, x1, 0)
         const stopCount = 16
         for (let i = 0; i <= stopCount; ++i) {
@@ -132,6 +142,7 @@ Canvas {
                 root._rgbaColor(root._colorAt(ratio), opacity * alphaScale
                     * Math.sqrt(root._edgeMorphFactor(x, x0, x1))))
         }
+        root._gradientCache = ({ctx: ctx, key: key, value: gradient})
         return gradient
     }
 
@@ -151,17 +162,30 @@ Canvas {
         const selected = root._selectedScratch
         selected.length = selectedCount
 
+        let profileWeights = null
+        if (applyProfile) {
+            const cacheKey = `${selectedCount}|${startRatio}|${endRatio}|${root.mirroredStereo}|${root.frequencyProfile}|${strength}`
+            if (root._profileCache.key !== cacheKey) {
+                const weights = root._profileCache.weights
+                weights.length = selectedCount
+                for (let i = 0; i < selectedCount; ++i) {
+                    const domainPosition = startRatio + (endRatio - startRatio)
+                        * (selectedCount > 1 ? i / (selectedCount - 1) : 0.5)
+                    const frequencyPosition = root.mirroredStereo
+                        ? Math.abs(domainPosition * 2 - 1)
+                        : domainPosition
+                    const profileWeight = root._profileWeight(frequencyPosition)
+                    weights[i] = 1 + (profileWeight - 1) * strength
+                }
+                root._profileCache = ({key: cacheKey, weights: weights})
+            }
+            profileWeights = root._profileCache.weights
+        }
+
         for (let i = 0; i < selectedCount; ++i) {
             let value = Number(source[start + i]) || 0
-            if (applyProfile) {
-                const domainPosition = startRatio + (endRatio - startRatio)
-                    * (selectedCount > 1 ? i / (selectedCount - 1) : 0.5)
-                const frequencyPosition = root.mirroredStereo
-                    ? Math.abs(domainPosition * 2 - 1)
-                    : domainPosition
-                const profileWeight = root._profileWeight(frequencyPosition)
-                value *= 1 + (profileWeight - 1) * strength
-            }
+            if (profileWeights)
+                value *= profileWeights[i]
             selected[i] = value
         }
         return selected
@@ -588,16 +612,16 @@ Canvas {
             root.requestPaint()
     }
 
-    onAvailableChanged: root._queuePaint()
+    onAvailableChanged: { root._invalidateGradientCache(); root._queuePaint() }
     onPointsChanged: if (root.visible) root._queuePaint()
     onVisibleChanged: if (root.visible) root._queuePaint()
-    onWidthChanged: root._queuePaint()
+    onWidthChanged: { root._invalidateGradientCache(); root._queuePaint() }
     onHeightChanged: root._queuePaint()
     onVisualizerTypeChanged: root._queuePaint()
     onNormalizationCeilingChanged: root._queuePaint()
     onFillRatioChanged: root._queuePaint()
-    onSpectrumColorChanged: root._queuePaint()
-    onSpectrumColorsChanged: root._queuePaint()
+    onSpectrumColorChanged: { root._invalidateGradientCache(); root._queuePaint() }
+    onSpectrumColorsChanged: { root._invalidateGradientCache(); root._queuePaint() }
     onSampleStartRatioChanged: root._queuePaint()
     onSampleEndRatioChanged: root._queuePaint()
     onReverseFrequencyChanged: root._queuePaint()
@@ -610,20 +634,20 @@ Canvas {
     onWaveModeChanged: root._queuePaint()
     onWaveOutlineEnabledChanged: root._queuePaint()
     onLineWidthChanged: root._queuePaint()
-    onEdgeInsetChanged: root._queuePaint()
+    onEdgeInsetChanged: { root._invalidateGradientCache(); root._queuePaint() }
     onLeftRadiusChanged: root._queuePaint()
     onRightRadiusChanged: root._queuePaint()
     onTopLeftRadiusChanged: root._queuePaint()
     onTopRightRadiusChanged: root._queuePaint()
     onBottomLeftRadiusChanged: root._queuePaint()
     onBottomRightRadiusChanged: root._queuePaint()
-    onEdgeSoftnessChanged: root._queuePaint()
+    onEdgeSoftnessChanged: { root._invalidateGradientCache(); root._queuePaint() }
     onFrequencyProfileChanged: root._queuePaint()
     onMirroredStereoChanged: root._queuePaint()
     onAccentStrengthChanged: root._queuePaint()
-    onStartOpacityChanged: root._queuePaint()
-    onEndOpacityChanged: root._queuePaint()
-    onStartTaperChanged: root._queuePaint()
-    onEndTaperChanged: root._queuePaint()
+    onStartOpacityChanged: { root._invalidateGradientCache(); root._queuePaint() }
+    onEndOpacityChanged: { root._invalidateGradientCache(); root._queuePaint() }
+    onStartTaperChanged: { root._invalidateGradientCache(); root._queuePaint() }
+    onEndTaperChanged: { root._invalidateGradientCache(); root._queuePaint() }
     onClipSegmentsChanged: root._queuePaint()
 }

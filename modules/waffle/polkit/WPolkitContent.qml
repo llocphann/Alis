@@ -202,6 +202,7 @@ Rectangle {
                             WBorderedButton {
                                 implicitWidth: Looks.dp(104)
                                 implicitHeight: Looks.dp(34)
+                                centerContent: true
                                 text: Translation.tr("Cancel")
                                 icon.name: "dismiss"
                                 forceShowIcon: true
@@ -211,6 +212,7 @@ Rectangle {
                             WButton {
                                 implicitWidth: Looks.dp(104)
                                 implicitHeight: Looks.dp(34)
+                                centerContent: true
                                 enabled: PolkitService.interactionAvailable
                                 text: Translation.tr("OK")
                                 icon.name: "checkmark"

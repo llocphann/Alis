@@ -50,7 +50,7 @@ for token in (
     "DisplayMode.outputLabel(output)", "DisplayMode.connectedOutputs[currentIndex]",
     "DisplayMode.setMirrorTarget(outputIds[currentIndex])",
     'command: ["/bin/sh", "-c", "command -v gnome-network-displays',
-    'Quickshell.execDetached(["gnome-network-displays"])',
+    'ShellExec.execDetachedArgs(["gnome-network-displays"], "Launch Network Displays")',
     'visible: root.wirelessToolAvailable',
 ):
     assert token in popup, token

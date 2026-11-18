@@ -13,13 +13,19 @@ import "../looks/AbyssWave.js" as Wave
 ColumnLayout {
     id: root
     Layout.fillWidth: true
-    spacing: root.activeSection === "popups" ? 14 : 10
+    Layout.fillHeight: false
+    spacing: SettingsMaterialPreset.pageSpacing
+
     property string activeSection: "surface"
-    property var sections: ["surface","interaction","performance","spectrum","waves"]
+    property var sections: ["surface", "interaction", "performance", "spectrum", "waves"]
     property real modulesCardMinHeight: 0
     readonly property real modulesCardImplicitHeight: modulesCard.implicitHeight
     property real popupsCardMinHeight: 0
     readonly property real popupsCardImplicitHeight: popupsCard.naturalCardImplicitHeight + root.spacing + popupSurfacesCard.naturalCardImplicitHeight
+    property real hostPageHeight: 0
+    property int hostSubTabCount: 0
+    property real hostTargetBentoHeight: 0
+
     readonly property bool unifiedSurfaceWaves: root.sections.includes("surface")
         && root.sections.includes("waves")
     readonly property bool twoColumnSurfacePerformance: root.sections.length === 2
@@ -29,22 +35,24 @@ ColumnLayout {
         && root.sections.includes("interaction")
     readonly property var waveValues: Wave.parameters(Config.options?.abyss?.waves)
 
-    function spectrumChange(key,value): void {
-        const options=Config.options?.abyss?.spectrum
-        const updates={"abyss.spectrum.configured":true,
-            "abyss.spectrum.enabled":options?.configured ? options.enabled : Config.options?.bar?.visualizer?.enable ?? false,
-            "abyss.spectrum.multiMonitorMode":options?.configured ? options.multiMonitorMode : Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary"}
-        updates["abyss.spectrum."+key]=value
-        Config.setNestedValues(updates)
-    }
-    function waveChange(key,value): void {
-        const updates={"abyss.waves.preset":"custom"}
-        Object.keys(Wave.presets.balanced).forEach(k => updates["abyss.waves."+k]=waveValues[k])
-        updates["abyss.waves."+key]=value
+    function spectrumChange(key, value): void {
+        const options = Config.options?.abyss?.spectrum
+        const updates = {
+            "abyss.spectrum.configured": true,
+            "abyss.spectrum.enabled": options?.configured ? options.enabled : Config.options?.bar?.visualizer?.enable ?? false,
+            "abyss.spectrum.multiMonitorMode": options?.configured ? options.multiMonitorMode : Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary"
+        }
+        updates["abyss.spectrum." + key] = value
         Config.setNestedValues(updates)
     }
 
-    // Ultra-compact one-line slider row that fits 2 or 3 per row in a GridLayout.
+    function waveChange(key, value): void {
+        const updates = { "abyss.waves.preset": "custom" }
+        Object.keys(Wave.presets.balanced).forEach(k => updates["abyss.waves." + k] = waveValues[k])
+        updates["abyss.waves." + key] = value
+        Config.setNestedValues(updates)
+    }
+
     component CompactSurfaceRow: RowLayout {
         id: row
         property string text: ""
@@ -63,17 +71,18 @@ ColumnLayout {
 
         Layout.fillWidth: true
         Layout.preferredWidth: 1
-        spacing: 6
-        implicitHeight: Math.round(28 * Appearance.fontSizeScale)
+        Layout.minimumWidth: 0
+        spacing: 8
+        implicitHeight: Math.round(32 * Appearance.fontSizeScale)
 
         Item {
             visible: row.toggleIcon.length > 0
-            Layout.preferredWidth: Math.round(24 * Appearance.fontSizeScale)
-            Layout.preferredHeight: Math.round(24 * Appearance.fontSizeScale)
+            Layout.preferredWidth: Math.round(26 * Appearance.fontSizeScale)
+            Layout.preferredHeight: Math.round(26 * Appearance.fontSizeScale)
             Layout.alignment: Qt.AlignVCenter
             IconToolbarButton {
                 anchors.centerIn: parent
-                width: Math.round(24 * Appearance.fontSizeScale)
+                width: Math.round(26 * Appearance.fontSizeScale)
                 height: width
                 visible: row.toggleIcon.length > 0
                 objectName: row.toggleObjectName
@@ -91,18 +100,18 @@ ColumnLayout {
         }
 
         StyledText {
-            Layout.preferredWidth: (row.toggleIcon.length > 0 ? 116 : 140) * Appearance.fontSizeScale
-            Layout.minimumWidth: 72 * Appearance.fontSizeScale
+            Layout.preferredWidth: (row.toggleIcon.length > 0 ? 172 : 188) * Appearance.fontSizeScale
+            Layout.minimumWidth: 84 * Appearance.fontSizeScale
             Layout.alignment: Qt.AlignVCenter
             text: row.text
             elide: Text.ElideRight
             color: Appearance.colors.colOnSurface
-            font.pixelSize: Appearance.font.pixelSize.smaller
+            font.pixelSize: Appearance.font.pixelSize.small
         }
 
         StyledSlider {
             Layout.fillWidth: true
-            Layout.minimumWidth: 56 * Appearance.fontSizeScale
+            Layout.minimumWidth: 64 * Appearance.fontSizeScale
             Layout.alignment: Qt.AlignVCenter
             configuration: StyledSlider.Configuration.S
             from: row.from
@@ -117,13 +126,13 @@ ColumnLayout {
         }
 
         StyledText {
-            Layout.preferredWidth: 44 * Appearance.fontSizeScale
+            Layout.preferredWidth: 48 * Appearance.fontSizeScale
             Layout.minimumWidth: 40 * Appearance.fontSizeScale
             Layout.alignment: Qt.AlignVCenter
             text: row.valueText
             horizontalAlignment: Text.AlignRight
             color: Appearance.colors.colSubtext
-            font.pixelSize: Appearance.font.pixelSize.smallest
+            font.pixelSize: Appearance.font.pixelSize.smaller
         }
     }
 
@@ -158,89 +167,95 @@ ColumnLayout {
     }
 
     SettingsTaskNavigator {
-        icon:"water";title:"Abyss"
-        description:"Screen Edge appearance and behavior."
-        currentValue:root.activeSection
-        onSelected:value=>root.activeSection=value
-        visible:options.length > 2 && !root.twoColumnWavesSpectrum && !root.unifiedSurfaceWaves
-        showIntro:false
-        options:[
-            {displayName:"Surface",value:"surface",icon:"opacity"},
-            {displayName:"Waves",value:"waves",icon:"waves"},
-            {displayName:"Spectrum",value:"spectrum",icon:"graphic_eq"},
-            {displayName:"Modules",value:"modules",icon:"widgets"},
-            {displayName:"Module behavior",value:"bar",icon:"tune"},
-            {displayName:"Dock",value:"dock",icon:"dock_to_bottom"},
-            {displayName:"Sidebars",value:"sidebars",icon:"side_navigation"},
-            {displayName:"Popups",value:"popups",icon:"chat_bubble"},
-            {displayName:"Live Editor",value:"editor",icon:"edit"},
-            {displayName:"Interaction",value:"interaction",icon:"touch_app"},
-            {displayName:"Performance",value:"performance",icon:"speed"}].filter(option=>root.sections.includes(option.value))
+        icon: "water"
+        title: "Abyss"
+        description: "Screen Edge appearance and behavior."
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        visible: options.length > 2 && !root.twoColumnWavesSpectrum && !root.unifiedSurfaceWaves
+        showTabBar: visible
+        activeNavigator: visible
+        showIntro: false
+        options: [
+            { displayName: "Surface", value: "surface", icon: "opacity" },
+            { displayName: "Waves", value: "waves", icon: "waves" },
+            { displayName: "Spectrum", value: "spectrum", icon: "graphic_eq" },
+            { displayName: "Modules", value: "modules", icon: "widgets" },
+            { displayName: "Module behavior", value: "bar", icon: "tune" },
+            { displayName: "Dock", value: "dock", icon: "dock_to_bottom" },
+            { displayName: "Sidebars", value: "sidebars", icon: "side_navigation" },
+            { displayName: "Popups", value: "popups", icon: "chat_bubble" },
+            { displayName: "Interaction", value: "interaction", icon: "touch_app" },
+            { displayName: "Performance", value: "performance", icon: "speed" }
+        ].filter(option => root.sections.includes(option.value))
     }
 
-    property real hostPageHeight: 0
-    property int hostSubTabCount: 0
-    readonly property real targetBentoHeight: {
-        const gap = SettingsMaterialPreset.pageSpacing
-        const baseH = SettingsMaterialPreset.standardBentoHeight
-        const availBodyH = root.hostPageHeight >= 800
-            ? Math.max(720, root.hostPageHeight - 20 - (root.hostSubTabCount > 1 || SettingsLayoutManager.editMode ? (40 + gap) : 0))
-            : baseH
-        return Math.min(baseH, availBodyH)
+    function activateSection(section: string): void {
+        const raw = String(section ?? "").trim()
+        const lower = raw.toLowerCase()
+        if (lower === "editmode" || lower === "edit mode" || lower === "editor" || lower === "live editor") {
+            root.activeSection = root.sections.includes("bar")
+                ? "bar"
+                : (root.sections.includes("surface") ? "surface" : (root.sections[0] ?? "surface"))
+            return
+        }
+        if (root.sections.includes(raw))
+            root.activeSection = raw
     }
 
-    // Left Bento Card: Surface & Performance
+    // 01: Perimeter & Liquid Frame
     SettingsCardSection {
         id: surfaceCard
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignTop
-        bentoColumn: "left"
-        _consumesBentoExtraHeight: true
-        title: "Surface & Performance"
+        title: "Perimeter & Liquid Frame"
         icon: "opacity"
         showHeader: true
         settingsTaskSection: "surface"
         visible: root.activeSection === "surface" || root.activeSection === "performance"
             || root.activeSection === "waves" || root.activeSection === "spectrum"
             || root.activeSection === "interaction"
-            || root.twoColumnSurfacePerformance || root.twoColumnWavesSpectrum || root.unifiedSurfaceWaves
+            || root.twoColumnSurfacePerformance || root.twoColumnWavesSpectrum
+            || (root.unifiedSurfaceWaves && root.activeSection !== "bar" && root.activeSection !== "popups" && root.activeSection !== "dock" && root.activeSection !== "sidebars")
 
         SettingsGroup {
             id: surfacePerfGroup
+
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 12
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    spacing: 2
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: "Rendering quality tier"
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.Medium
+                        color: Appearance.colors.colOnSurface
+                        elide: Text.ElideRight
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: "Glass uses wallpaper, not window capture."
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.colors.colSubtext
+                        elide: Text.ElideRight
+                    }
+                }
 
                 ConfigSelectionArray {
-                    Layout.fillWidth: true
+                    Layout.fillWidth: false
                     enabled: !(Config.options?.abyss?.autoQuality ?? false)
                     currentValue: Config.options?.abyss?.quality ?? "balanced"
                     options: [
-                        {displayName:"Performance",value:"performance"},
-                        {displayName:"Balanced",value:"balanced"},
-                        {displayName:"Quality",value:"quality"}
+                        { displayName: "Performance", value: "performance" },
+                        { displayName: "Balanced", value: "balanced" },
+                        { displayName: "Quality", value: "quality" }
                     ]
                     onSelected: value => Config.setNestedValue("abyss.quality", value)
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: false
-                    buttonIcon: "speed"
-                    text: "Auto quality"
-                    autoToggle: false
-                    checked: Config.options?.abyss?.autoQuality ?? false
-                    onToggledByUser: checked => Config.setNestedValue("abyss.autoQuality", checked)
-                    StyledToolTip { text: "Follow power profile" }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: false
-                    buttonIcon: "fullscreen"
-                    text: "In fullscreen"
-                    autoToggle: false
-                    checked: Config.options?.abyss?.perimeter?.visibleInFullscreen ?? false
-                    onToggledByUser: checked => Config.setNestedValue("abyss.perimeter.visibleInFullscreen", checked)
-                    StyledToolTip { text: "Visible during fullscreen" }
                 }
             }
 
@@ -248,133 +263,193 @@ ColumnLayout {
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: 2
-                uniformCellWidths: true
-                columnSpacing: 14
+                columns: width >= 460 ? 3 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 12
                 rowSpacing: 6
 
-                CompactSurfacePercent {
-                    text:"Surface opacity"
-                    configKey:"abyss.surface.opacity";fallback:.78;minimum:0
-                    toggleIcon:"opacity"
-                    toggleDescription:"Transparent surfaces"
-                    searchKeywords:["transparent", "surface", "opacity"]
-                    toggleChecked:(Config.options?.abyss?.surface?.opacity ?? .78)<.999
-                    onToggledByUser:checked=>Config.setNestedValue("abyss.surface.opacity",checked ? .78 : 1)
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "speed"
+                    text: "Auto quality"
+                    autoToggle: false
+                    checked: Config.options?.abyss?.autoQuality ?? false
+                    onToggledByUser: checked => Config.setNestedValue("abyss.autoQuality", checked)
+                    StyledToolTip { text: "Follow system power profile automatically" }
                 }
-                CompactSurfacePercent {
-                    text:"Curvature";configKey:"abyss.perimeter.radius"
-                    fallback:34;minimum:12;maximum:64
-                }
-                CompactSurfacePercent {
-                    text:"Fusion softness";configKey:"abyss.surface.softness"
-                    fallback:24;minimum:4;maximum:48
-                }
-                CompactSurfacePercent {
-                    text:"Blur strength";configKey:"abyss.effects.blur.radius"
-                    fallback:10;maximum:24
-                    toggleIcon:"blur_on"
-                    toggleDescription:"Wallpaper blur"
-                    searchKeywords:["wallpaper", "blur", "toggle"]
-                    toggleChecked:Config.options?.abyss?.effects?.blur?.enabled ?? true
-                    onToggledByUser:checked=>Config.setNestedValue("abyss.effects.blur.enabled",checked)
-                }
-                CompactSurfaceRow {
-                    objectName:"abyssPanelOpacity"
-                    text:"Panel opacity";from:0;to:1;stepSize:.01
-                    currentValue:AbyssStyle.contentOpacity
-                    valueText:Math.round(currentValue*100)+"%"
-                    toggleIcon:"link"
-                    toggleObjectName:"abyssPanelOpacityFollow"
-                    toggleDescription:"Panel and content opacity follows Screen Edge"
-                    searchKeywords:["follow", "screen edge", "panel", "content", "opacity"]
-                    toggleChecked:(Config.options?.abyss?.content?.opacity ?? -1)<0
-                    onToggledByUser:checked=>Config.setNestedValue("abyss.content.opacity",checked ? -1 : AbyssStyle.contentOpacity)
-                    onMoved:value=>Config.setNestedValue("abyss.content.opacity",value)
-                }
-                CompactSurfaceRow {
-                    objectName:"abyssPanelBlur"
-                    text:"Panel blur";from:0;to:24;stepSize:1
-                    currentValue:AbyssStyle.configuredContentBlurRadius
-                    valueText:Math.round(currentValue)+" px"
-                    toggleIcon:"link"
-                    toggleObjectName:"abyssPanelBlurFollow"
-                    toggleDescription:"Panel blur follows Screen Edge"
-                    searchKeywords:["follow", "screen edge", "panel", "blur"]
-                    toggleChecked:(Config.options?.abyss?.content?.blurRadius ?? -1)<0
-                    onToggledByUser:checked=>Config.setNestedValue("abyss.content.blurRadius",checked ? -1 : AbyssStyle.configuredContentBlurRadius)
-                    onMoved:value=>Config.setNestedValue("abyss.content.blurRadius",value)
-                }
-                CompactSurfacePercent {
-                    objectName:"abyssRimHighlight"
-                    text:"Rim highlight";configKey:"abyss.effects.surfaceHighlight"
-                    fallback:.45;minimum:0;maximum:1
-                    searchKeywords:["rim", "highlight", "specular", "border", "edge"]
-                }
-                CompactSurfacePercent {
-                    objectName:"abyssShadowStrength"
-                    text:"Shadows";configKey:"abyss.effects.shadowStrength"
-                    fallback:.24;minimum:0;maximum:.5
-                    searchKeywords:["shadow", "shadows", "drop shadow", "depth"]
-                }
-            }
-        }
-
-        // Interaction & Motion
-        SettingsGroup {
-            id: interactionMotionGroup
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                MaterialSymbol {
-                    text: "touch_app"
-                    iconSize: Appearance.font.pixelSize.normal
-                    color: SettingsMaterialPreset.iconExpandedColor
-                }
-                StyledText {
-                    text: "Interaction & Motion"
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.DemiBold
-                    color: SettingsMaterialPreset.titleExpandedColor
-                }
-
-                Item { Layout.fillWidth: true }
 
                 SettingsSwitch {
-                    Layout.fillWidth: false
-                    buttonIcon: "motion_photos_off"
-                    text: "Reduce animations"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "energy_savings_leaf"
+                    text: "Low power mode"
                     autoToggle: false
-                    checked: Config.options?.performance?.reduceAnimations ?? false
-                    onToggledByUser: checked => Config.setNestedValue("performance.reduceAnimations", checked)
+                    checked: Config.options?.performance?.lowPower ?? false
+                    onToggledByUser: checked => Config.setNestedValue("performance.lowPower", checked)
+                    StyledToolTip { text: "Reduce background shell visual overhead" }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "fullscreen"
+                    text: "Show in fullscreen"
+                    autoToggle: false
+                    checked: Config.options?.abyss?.perimeter?.visibleInFullscreen ?? false
+                    onToggledByUser: checked => Config.setNestedValue("abyss.perimeter.visibleInFullscreen", checked)
+                    StyledToolTip { text: "Keep Screen Edge visible over fullscreen windows" }
                 }
             }
+
+            SettingsDivider {}
+
+            CompactSurfacePercent {
+                text: "Surface opacity"
+                configKey: "abyss.surface.opacity"
+                fallback: .78
+                minimum: 0
+                toggleIcon: "opacity"
+                toggleDescription: "Transparent surfaces"
+                searchKeywords: ["transparent", "surface", "opacity"]
+                toggleChecked: (Config.options?.abyss?.surface?.opacity ?? .78) < .999
+                onToggledByUser: checked => Config.setNestedValue("abyss.surface.opacity", checked ? .78 : 1)
+            }
+
+            SettingsDivider {}
+
+            CompactSurfaceRow {
+                objectName: "abyssPanelOpacity"
+                text: "Panel & content opacity"
+                from: 0
+                to: 1
+                stepSize: .01
+                currentValue: AbyssStyle.contentOpacity
+                valueText: Math.round(currentValue * 100) + "%"
+                toggleIcon: "link"
+                toggleObjectName: "abyssPanelOpacityFollow"
+                toggleDescription: "Panel and content opacity follows Screen Edge"
+                searchKeywords: ["follow", "screen edge", "panel", "content", "opacity"]
+                toggleChecked: (Config.options?.abyss?.content?.opacity ?? -1) < 0
+                onToggledByUser: checked => Config.setNestedValue("abyss.content.opacity", checked ? -1 : AbyssStyle.contentOpacity)
+                onMoved: value => Config.setNestedValue("abyss.content.opacity", value)
+            }
+
+            SettingsDivider {}
+
+            CompactSurfacePercent {
+                text: "Blur strength"
+                configKey: "abyss.effects.blur.radius"
+                fallback: 10
+                maximum: 24
+                toggleIcon: "blur_on"
+                toggleDescription: "Wallpaper blur"
+                searchKeywords: ["wallpaper", "blur", "toggle"]
+                toggleChecked: Config.options?.abyss?.effects?.blur?.enabled ?? true
+                onToggledByUser: checked => Config.setNestedValue("abyss.effects.blur.enabled", checked)
+            }
+
+            SettingsDivider {}
+
+            CompactSurfaceRow {
+                objectName: "abyssPanelBlur"
+                text: "Panel blur"
+                from: 0
+                to: 24
+                stepSize: 1
+                currentValue: AbyssStyle.configuredContentBlurRadius
+                valueText: Math.round(currentValue) + " px"
+                toggleIcon: "link"
+                toggleObjectName: "abyssPanelBlurFollow"
+                toggleDescription: "Panel blur follows Screen Edge"
+                searchKeywords: ["follow", "screen edge", "panel", "blur"]
+                toggleChecked: (Config.options?.abyss?.content?.blurRadius ?? -1) < 0
+                onToggledByUser: checked => Config.setNestedValue("abyss.content.blurRadius", checked ? -1 : AbyssStyle.configuredContentBlurRadius)
+                onMoved: value => Config.setNestedValue("abyss.content.blurRadius", value)
+            }
+
+            SettingsDivider {}
+
+            CompactSurfacePercent {
+                text: "Refraction"
+                configKey: "abyss.effects.refraction.strength"
+                fallback: 6
+                minimum: 0
+                maximum: 16
+                toggleIcon: "water_lux"
+                toggleDescription: "Liquid refraction (Quality tier)"
+                searchKeywords: ["refraction", "glass", "distortion", "liquid"]
+                toggleChecked: Config.options?.abyss?.effects?.refraction?.enabled ?? false
+                onToggledByUser: checked => Config.setNestedValue("abyss.effects.refraction.enabled", checked)
+            }
+
+            SettingsDivider {}
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: 2
-                uniformCellWidths: true
-                columnSpacing: 14
-                rowSpacing: 4
+                columns: width >= 520 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 16
+                rowSpacing: 6
 
-                CompactSurfacePercent { text:"Hover response";configKey:"abyss.waves.hover";fallback:1 }
-                CompactSurfacePercent { text:"Press response";configKey:"abyss.waves.press";fallback:1 }
-                CompactSurfacePercent { text:"Opening response";configKey:"abyss.waves.open";fallback:1 }
-                CompactSurfacePercent { text:"Closing response";configKey:"abyss.waves.close";fallback:1 }
-                CompactSurfacePercent { text:"Drag response";configKey:"abyss.waves.drag";fallback:1 }
-                CompactSurfacePercent { text:"Motion intensity";configKey:"abyss.motion.intensity";fallback:.6 }
+                CompactSurfacePercent {
+                    text: "Curvature"
+                    configKey: "abyss.perimeter.radius"
+                    fallback: 34
+                    minimum: 12
+                    maximum: 64
+                }
+                CompactSurfacePercent {
+                    text: "Fusion softness"
+                    configKey: "abyss.surface.softness"
+                    fallback: 24
+                    minimum: 4
+                    maximum: 48
+                }
+                CompactSurfacePercent {
+                    text: "Surface tension"
+                    configKey: "abyss.surface.tension"
+                    fallback: .5
+                    minimum: 0
+                    maximum: 1
+                    searchKeywords: ["tension", "neck", "liquid", "curve"]
+                }
+                CompactSurfacePercent {
+                    text: "Edge glow"
+                    configKey: "abyss.effects.glow.strength"
+                    fallback: .08
+                    minimum: 0
+                    maximum: .3
+                    searchKeywords: ["glow", "accent", "edge", "bloom"]
+                }
+                CompactSurfacePercent {
+                    objectName: "abyssRimHighlight"
+                    text: "Rim highlight"
+                    configKey: "abyss.effects.surfaceHighlight"
+                    fallback: .45
+                    minimum: 0
+                    maximum: 1
+                    searchKeywords: ["rim", "highlight", "specular", "border", "edge"]
+                }
+                CompactSurfacePercent {
+                    objectName: "abyssShadowStrength"
+                    text: "Shadows"
+                    configKey: "abyss.effects.shadowStrength"
+                    fallback: .24
+                    minimum: 0
+                    maximum: .5
+                    searchKeywords: ["shadow", "shadows", "drop shadow", "depth"]
+                }
             }
         }
     }
 
-    // Right Bento Card: Waves & Audio Spectrum
+    // 02: Edge Waves & Organic Reactivity
     SettingsCardSection {
         id: wavesCard
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignTop
-        bentoColumn: "right"
-        title: "Waves & Audio Spectrum"
+        title: "Edge Waves & Organic Reactivity"
         icon: "waves"
         showHeader: true
         settingsTaskSection: "surface"
@@ -382,10 +457,11 @@ ColumnLayout {
 
         SettingsGroup {
             id: wavesTuningGroup
+
             RowLayout {
                 id: wavesHeaderRow
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 10
 
                 SettingsSwitch {
                     Layout.fillWidth: false
@@ -400,16 +476,16 @@ ColumnLayout {
                     Layout.fillWidth: true
                     currentValue: Config.options?.abyss?.waves?.preset ?? "balanced"
                     options: [
-                        {displayName:"Calm",value:"calm"},
-                        {displayName:"Balanced",value:"balanced"},
-                        {displayName:"Fluid",value:"fluid"},
-                        {displayName:"Deep",value:"deep"},
-                        {displayName:"Custom",value:"custom"}
+                        { displayName: "Calm", value: "calm" },
+                        { displayName: "Balanced", value: "balanced" },
+                        { displayName: "Fluid", value: "fluid" },
+                        { displayName: "Deep", value: "deep" },
+                        { displayName: "Custom", value: "custom" }
                     ]
                     onSelected: value => {
-                        const updates = {"abyss.waves.preset": value}
+                        const updates = { "abyss.waves.preset": value }
                         if (Wave.presets[value])
-                            Object.keys(Wave.presets[value]).forEach(k => updates["abyss.waves."+k] = Wave.presets[value][k])
+                            Object.keys(Wave.presets[value]).forEach(k => updates["abyss.waves." + k] = Wave.presets[value][k])
                         Config.setNestedValues(updates)
                     }
                 }
@@ -418,51 +494,49 @@ ColumnLayout {
             AbyssWavePreview {
                 id: wavePreview
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                implicitHeight: Math.max(
-                    wavesCustomGrid.visible ? 56 : 84,
-                    root.targetBentoHeight
-                    - wavesCard.chromeImplicitHeight
-                    - wavesCard.spacing
-                    - audioSpectrumGroup.implicitHeight
-                    - (SettingsMaterialPreset.groupPadding * 2
-                       + wavesHeaderRow.implicitHeight
-                       + SettingsMaterialPreset.groupSpacing
-                       + (wavesCustomGrid.visible ? wavesCustomGrid.implicitHeight + SettingsMaterialPreset.groupSpacing : 0))
-                )
+                implicitHeight: Math.round(112 * Appearance.fontSizeScale)
+                Layout.preferredHeight: implicitHeight
             }
 
             GridLayout {
-                id: wavesCustomGrid
+                id: wavesCommonSlidersGrid
                 Layout.fillWidth: true
-                visible: (Config.options?.abyss?.waves?.preset ?? "balanced") === "custom"
-                columns: 2
-                uniformCellWidths: true
-                columnSpacing: 12
-                rowSpacing: 4
+                columns: width >= 520 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 16
+                rowSpacing: 6
 
                 CompactSurfaceRow {
-                    text: "Strength"; from: 0; to: 4; stepSize: .01
+                    text: "Strength"
+                    from: 0
+                    to: 4
+                    stepSize: .01
                     currentValue: Wave.bodyStrength(Config.options?.abyss?.waves)
                     valueText: Math.round(currentValue * 100) + "%"
                     onMoved: value => Config.setNestedValue("abyss.waves.strength", value)
                 }
                 CompactSurfaceRow {
-                    text: "Whitewater"; from: 0; to: 1; stepSize: .01
+                    text: "Whitewater"
+                    from: 0
+                    to: 1
+                    stepSize: .01
                     currentValue: Config.options?.abyss?.waves?.whitewater ?? .65
                     valueText: Math.round(currentValue * 100) + "%"
                     onMoved: value => Config.setNestedValue("abyss.waves.whitewater", value)
                 }
-                WaveControl { text: "Wave size"; parameter: "amplitude" }
-                WaveControl { text: "Propagation"; parameter: "propagation" }
-                WaveControl { text: "Wave speed"; parameter: "speed" }
-                WaveControl { text: "Decay"; parameter: "decay" }
-                WaveControl { text: "Tension"; parameter: "tension" }
-                WaveControl { text: "Viscosity"; parameter: "viscosity" }
-                WaveControl { text: "Rebound"; parameter: "rebound" }
-                WaveControl { text: "Corner"; parameter: "corner" }
+            }
+
+            GridLayout {
+                id: wavesCommonSwitchesGrid
+                Layout.fillWidth: true
+                columns: width >= 460 ? 3 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 12
+                rowSpacing: 6
+
                 SettingsSwitch {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     buttonIcon: "moving"
                     text: "Popup travel"
                     autoToggle: false
@@ -471,23 +545,85 @@ ColumnLayout {
                 }
                 SettingsSwitch {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     buttonIcon: "water_drop"
                     text: "Idle ripple"
                     autoToggle: false
                     checked: Config.options?.abyss?.waves?.idle ?? false
                     onToggledByUser: checked => Config.setNestedValue("abyss.waves.idle", checked)
                 }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "side_navigation"
+                    text: "Edge hover sidebars"
+                    autoToggle: false
+                    checked: Config.options?.abyss?.sidebars?.hoverEnabled ?? true
+                    onToggledByUser: checked => Config.setNestedValue("abyss.sidebars.hoverEnabled", checked)
+                }
+            }
+
+            GridLayout {
+                id: wavesCustomGrid
+                Layout.fillWidth: true
+                visible: (Config.options?.abyss?.waves?.preset ?? "balanced") === "custom"
+                columns: width >= 520 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 16
+                rowSpacing: 6
+
+                WaveControl { text: "Wave size"; parameter: "amplitude" }
+                WaveControl { text: "Propagation"; parameter: "propagation" }
+                WaveControl { text: "Wave speed"; parameter: "speed" }
+                WaveControl { text: "Decay"; parameter: "decay" }
+                WaveControl { text: "Tension"; parameter: "tension" }
+                WaveControl { text: "Viscosity"; parameter: "viscosity" }
+                WaveControl { text: "Rebound"; parameter: "rebound" }
+                WaveControl { text: "Corner"; parameter: "corner" }
+            }
+
+            SettingsDivider {}
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 520 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 16
+                rowSpacing: 6
+
+                CompactSurfacePercent { text: "Hover response"; configKey: "abyss.waves.hover"; fallback: 1 }
+                CompactSurfacePercent { text: "Press response"; configKey: "abyss.waves.press"; fallback: 1 }
+                CompactSurfacePercent { text: "Opening response"; configKey: "abyss.waves.open"; fallback: 1 }
+                CompactSurfacePercent { text: "Closing response"; configKey: "abyss.waves.close"; fallback: 1 }
+                CompactSurfacePercent { text: "Drag response"; configKey: "abyss.waves.drag"; fallback: 1 }
             }
         }
+    }
+
+    // 03: Audio Spectrum
+    SettingsCardSection {
+        id: spectrumCard
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        title: "Audio Spectrum"
+        icon: "graphic_eq"
+        showHeader: true
+        settingsTaskSection: "surface"
+        visible: surfaceCard.visible
 
         SettingsGroup {
             id: audioSpectrumGroup
-            RowLayout {
+
+            GridLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                columns: width >= 440 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 12
+                rowSpacing: 6
 
                 SettingsSwitch {
-                    Layout.fillWidth: false
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     buttonIcon: "graphic_eq"
                     text: "Audio spectrum"
                     autoToggle: false
@@ -497,10 +633,9 @@ ColumnLayout {
                     onToggledByUser: checked => root.spectrumChange("enabled", checked)
                 }
 
-                Item { Layout.fillWidth: true }
-
                 SettingsSwitch {
-                    Layout.fillWidth: false
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     buttonIcon: "desktop_windows"
                     text: "All screens"
                     autoToggle: false
@@ -512,27 +647,173 @@ ColumnLayout {
                 }
             }
 
+            SettingsDivider {}
+
             CompactSurfaceRow {
                 Layout.fillWidth: true
                 text: "Spectrum strength"
-                from: 0; to: 4; stepSize: .01
+                from: 0
+                to: 4
+                stepSize: .01
                 currentValue: Config.getNestedValue("abyss.spectrum.strength", .45)
                 valueText: Math.round(currentValue * 100) + "%"
                 onMoved: value => root.spectrumChange("strength", value)
             }
 
-            ConfigSelectionArray {
+            SettingsDivider {}
+
+            RowLayout {
                 Layout.fillWidth: true
-                currentValue: Config.options?.abyss?.spectrum?.edge ?? "bar"
-                options: [
-                    {displayName:"Bar",value:"bar"},
-                    {displayName:"All",value:"all"},
-                    {displayName:"Top",value:"top"},
-                    {displayName:"Right",value:"right"},
-                    {displayName:"Bottom",value:"bottom"},
-                    {displayName:"Left",value:"left"}
-                ]
-                onSelected: value => Config.setNestedValue("abyss.spectrum.edge", value)
+                spacing: 12
+
+                StyledText {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    text: "Spectrum edge"
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    color: Appearance.colors.colOnSurface
+                    elide: Text.ElideRight
+                }
+
+                ConfigSelectionArray {
+                    Layout.fillWidth: false
+                    currentValue: Config.options?.abyss?.spectrum?.edge ?? "bar"
+                    options: [
+                        { displayName: "Bar", value: "bar" },
+                        { displayName: "All", value: "all" },
+                        { displayName: "Top", value: "top" },
+                        { displayName: "Right", value: "right" },
+                        { displayName: "Bottom", value: "bottom" },
+                        { displayName: "Left", value: "left" }
+                    ]
+                    onSelected: value => Config.setNestedValue("abyss.spectrum.edge", value)
+                }
+            }
+        }
+    }
+
+    // 04: Surface Transitions
+    SettingsCardSection {
+        id: interactionCard
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        title: "Surface Transitions"
+        icon: "swap_horiz"
+        showHeader: true
+        settingsTaskSection: "surface"
+        visible: surfaceCard.visible
+
+        SettingsGroup {
+            id: interactionMotionGroup
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 440 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 12
+                rowSpacing: 6
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "swap_horiz"
+                    text: "Family transition"
+                    autoToggle: false
+                    checked: Config.options?.familyTransitionAnimation ?? true
+                    onToggledByUser: checked => Config.setNestedValue("familyTransitionAnimation", checked)
+                    StyledToolTip { text: "Animate when switching panel families" }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "motion_photos_off"
+                    text: "Reduce animations"
+                    autoToggle: false
+                    checked: Config.options?.performance?.reduceAnimations ?? false
+                    onToggledByUser: checked => Config.setNestedValue("performance.reduceAnimations", checked)
+                }
+            }
+
+            SettingsDivider {}
+
+            CompactSurfacePercent {
+                text: "Motion intensity"
+                configKey: "abyss.motion.intensity"
+                fallback: .6
+            }
+        }
+    }
+
+    // 05: Customization Stage (Edit Mode)
+    SettingsCardSection {
+        id: editStageCard
+        objectName: "abyssEditStageSettingsCard"
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        title: Translation.tr("Customization Stage (Edit Mode)")
+        icon: "picture_in_picture_alt"
+        showHeader: true
+        settingsTaskSection: "surface"
+        visible: surfaceCard.visible
+
+        SettingsGroup {
+            SettingsSwitch {
+                objectName: "abyssEditStageEnable"
+                Layout.fillWidth: true
+                buttonIcon: "aspect_ratio"
+                text: Translation.tr("Shrink desktop in Edit mode")
+                autoToggle: false
+                checked: Config.options?.abyss?.editStage?.enable ?? true
+                onToggledByUser: checked => Config.setNestedValue("abyss.editStage.enable", checked)
+                StyledToolTip { text: Translation.tr("Zoom out the live desktop stage and mount customization docks outside the bottom edge") }
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 440 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 12
+                rowSpacing: 6
+
+                SettingsSwitch {
+                    objectName: "abyssEditStageWallpaper"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    enabled: Config.options?.abyss?.editStage?.enable ?? true
+                    buttonIcon: "wallpaper"
+                    text: Translation.tr("Stage on Change Wallpaper")
+                    autoToggle: false
+                    checked: Config.options?.abyss?.editStage?.wallpaperPreview ?? true
+                    onToggledByUser: checked => Config.setNestedValue("abyss.editStage.wallpaperPreview", checked)
+                    StyledToolTip { text: Translation.tr("Shrink the desktop stage when previewing wallpapers from the customization dock") }
+                }
+
+                SettingsSwitch {
+                    objectName: "abyssEditStagePark"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    enabled: Config.options?.abyss?.editStage?.enable ?? true
+                    buttonIcon: "workspaces"
+                    text: Translation.tr("Park on empty workspace")
+                    autoToggle: false
+                    checked: Config.options?.abyss?.editStage?.parkEmptyWorkspace ?? true
+                    onToggledByUser: checked => Config.setNestedValue("abyss.editStage.parkEmptyWorkspace", checked)
+                    StyledToolTip { text: Translation.tr("Temporarily switch to an empty workspace while editing desktop widgets, edges, or wallpaper") }
+                }
+            }
+
+            SettingsDivider {}
+
+            CompactSurfacePercent {
+                objectName: "abyssEditStageScale"
+                enabled: Config.options?.abyss?.editStage?.enable ?? true
+                text: Translation.tr("Desktop stage scale")
+                configKey: "abyss.editStage.scale"
+                fallback: 0.83
+                minimum: 0.72
+                maximum: 0.92
+                searchKeywords: ["desktop", "stage", "shrink", "scale", "zoom", "edit mode", "wallpaper", "customization"]
             }
         }
     }
@@ -800,22 +1081,167 @@ ColumnLayout {
         visible: false
         implicitHeight: 0
     }
+
+    // Popups & OSD section
     SettingsCardSection {
         id: popupsCard
         _preventBentoReparent: true
-        title:"Popup Placement & Size";icon:"chat_bubble";settingsTaskSection:"popups"
-        visible:root.activeSection==="popups"
+        Layout.fillWidth: true
+        Layout.fillHeight: false
+        Layout.alignment: Qt.AlignTop
+        title: "Popups & OSD"
+        icon: "chat_bubble"
+        settingsTaskSection: "popups"
+        visible: root.activeSection === "popups"
+
         SettingsGroup {
             ContentSubsectionLabel {
                 text: "Edge placement"
             }
-            AbyssPositionSettings { compactActions: true }
+            AbyssPositionSettings { compactActions: true; compactVertical: width < 480 }
+
+            SettingsDivider {}
+
+            ContentSubsection {
+                title: Translation.tr("On-screen display (OSD)")
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: width >= 360 ? 2 : 1
+                    uniformCellWidths: columns === 2
+                    columnSpacing: 10
+                    rowSpacing: 8
+
+                    ConfigSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
+                        buttonIcon: "music_note"
+                        text: Translation.tr("Media OSD")
+                        checked: Config.options?.osd?.mediaEnabled ?? true
+                        onCheckedChanged: Config.setNestedValue("osd.mediaEnabled", checked)
+                    }
+
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
+                        icon: "av_timer"
+                        text: Translation.tr("Timeout (ms)")
+                        value: Config.options?.osd?.timeout ?? 1500
+                        from: 500
+                        to: 5000
+                        stepSize: 100
+                        onValueChanged: Config.setNestedValue("osd.timeout", value)
+                    }
+
+                    ConfigSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
+                        buttonIcon: "keyboard"
+                        text: Translation.tr("Keyboard OSD popup")
+                        checked: Config.options?.keyboardIndicators?.showPopup ?? true
+                        onCheckedChanged: Config.setNestedValue("keyboardIndicators.showPopup", checked)
+                    }
+
+                    ConfigSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
+                        buttonIcon: "keyboard_capslock"
+                        enabled: Config.options?.keyboardIndicators?.showPopup ?? true
+                        text: Translation.tr("Caps Lock OSD")
+                        checked: Config.options?.keyboardIndicators?.popup?.caps ?? true
+                        onCheckedChanged: Config.setNestedValue("keyboardIndicators.popup.caps", checked)
+                    }
+
+                    ConfigSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
+                        buttonIcon: "pin"
+                        enabled: Config.options?.keyboardIndicators?.showPopup ?? true
+                        text: Translation.tr("Num Lock OSD")
+                        checked: Config.options?.keyboardIndicators?.popup?.num ?? false
+                        onCheckedChanged: Config.setNestedValue("keyboardIndicators.popup.num", checked)
+                    }
+
+                    ConfigSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
+                        buttonIcon: "language"
+                        enabled: Config.options?.keyboardIndicators?.showPopup ?? true
+                        text: Translation.tr("Layout switch OSD")
+                        checked: Config.options?.keyboardIndicators?.popup?.layout ?? true
+                        onCheckedChanged: Config.setNestedValue("keyboardIndicators.popup.layout", checked)
+                    }
+                }
+            }
+
+            SettingsDivider {}
+
+            ContentSubsection {
+                title: "Edge Bar keyboard indicators"
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: width >= 360 ? 2 : 1
+                    uniformCellWidths: columns === 2
+                    columnSpacing: 10
+                    rowSpacing: 8
+
+                    ConfigSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
+                        buttonIcon: "dock_to_bottom"
+                        text: "Panel indicators"
+                        checked: Config.options?.keyboardIndicators?.showPanel ?? true
+                        onCheckedChanged: Config.setNestedValue("keyboardIndicators.showPanel", checked)
+                    }
+
+                    ConfigSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
+                        buttonIcon: "keyboard_capslock"
+                        enabled: Config.options?.keyboardIndicators?.showPanel ?? true
+                        text: "Caps Lock badge"
+                        checked: Config.options?.keyboardIndicators?.panel?.caps ?? true
+                        onCheckedChanged: Config.setNestedValue("keyboardIndicators.panel.caps", checked)
+                    }
+
+                    ConfigSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
+                        buttonIcon: "pin"
+                        enabled: Config.options?.keyboardIndicators?.showPanel ?? true
+                        text: "Num Lock badge"
+                        checked: Config.options?.keyboardIndicators?.panel?.num ?? false
+                        onCheckedChanged: Config.setNestedValue("keyboardIndicators.panel.num", checked)
+                    }
+
+                    ConfigSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
+                        buttonIcon: "translate"
+                        enabled: Config.options?.keyboardIndicators?.showPanel ?? true
+                        text: "Layout badge"
+                        checked: Config.options?.keyboardIndicators?.panel?.layout ?? true
+                        onCheckedChanged: Config.setNestedValue("keyboardIndicators.panel.layout", checked)
+                    }
+                }
+            }
         }
     }
+
     SettingsCardSection {
         id: popupSurfacesCard
         _preventBentoReparent: true
-        _bentoExtraHeight: expanded ? Math.max(0, root.popupsCardMinHeight - (popupsCard.naturalCardImplicitHeight + root.spacing + naturalCardImplicitHeight)) : 0
         Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
         settingsTaskSection: "popups"
@@ -842,82 +1268,6 @@ ColumnLayout {
                     surface: modelData
                 }
             }
-        }
-    }
-    SettingsCardSection {
-        id: editStageCard
-        objectName: "abyssEditStageSettingsCard"
-        Layout.fillWidth: true
-        Layout.alignment: Qt.AlignTop
-        bentoColumn: "left"
-        title: Translation.tr("Customization Stage (Edit Mode)")
-        icon: "picture_in_picture_alt"
-        showHeader: true
-        settingsTaskSection: "surface"
-        visible: surfaceCard.visible || root.activeSection === "editor"
-
-        SettingsGroup {
-            GridLayout {
-                Layout.fillWidth: true
-                columns: width >= 340 ? 2 : 1
-                uniformCellWidths: columns === 2
-                columnSpacing: 8
-                rowSpacing: 4
-
-                SettingsSwitch {
-                    objectName: "abyssEditStageEnable"
-                    Layout.fillWidth: true
-                    buttonIcon: "aspect_ratio"
-                    text: Translation.tr("Shrink desktop in Edit mode")
-                    autoToggle: false
-                    checked: Config.options?.abyss?.editStage?.enable ?? true
-                    onToggledByUser: checked => Config.setNestedValue("abyss.editStage.enable", checked)
-                    StyledToolTip { text: Translation.tr("Zoom out the live desktop stage and mount customization docks outside the bottom edge") }
-                }
-
-                SettingsSwitch {
-                    objectName: "abyssEditStageWallpaper"
-                    Layout.fillWidth: true
-                    enabled: Config.options?.abyss?.editStage?.enable ?? true
-                    buttonIcon: "wallpaper"
-                    text: Translation.tr("Stage on Change Wallpaper")
-                    autoToggle: false
-                    checked: Config.options?.abyss?.editStage?.wallpaperPreview ?? true
-                    onToggledByUser: checked => Config.setNestedValue("abyss.editStage.wallpaperPreview", checked)
-                    StyledToolTip { text: Translation.tr("Shrink the desktop stage when previewing wallpapers from the customization dock") }
-                }
-
-                SettingsSwitch {
-                    objectName: "abyssEditStagePark"
-                    Layout.fillWidth: true
-                    enabled: Config.options?.abyss?.editStage?.enable ?? true
-                    buttonIcon: "workspaces"
-                    text: Translation.tr("Park on empty workspace")
-                    autoToggle: false
-                    checked: Config.options?.abyss?.editStage?.parkEmptyWorkspace ?? true
-                    onToggledByUser: checked => Config.setNestedValue("abyss.editStage.parkEmptyWorkspace", checked)
-                    StyledToolTip { text: Translation.tr("Temporarily switch to an empty workspace while editing desktop widgets, edges, or wallpaper") }
-                }
-            }
-
-            CompactSurfacePercent {
-                objectName: "abyssEditStageScale"
-                enabled: Config.options?.abyss?.editStage?.enable ?? true
-                text: Translation.tr("Desktop stage scale")
-                configKey: "abyss.editStage.scale"
-                fallback: 0.83
-                minimum: 0.72
-                maximum: 0.92
-                searchKeywords: ["desktop", "stage", "shrink", "scale", "zoom", "edit mode", "wallpaper", "customization"]
-            }
-        }
-    }
-
-    SettingsCardSection {
-        title:"Live Editor";icon:"edit";settingsTaskSection:"editor"
-        visible:root.activeSection==="editor"
-        SettingsGroup {
-            SettingsNote { text:"Done saves; Cancel restores. Choose a global or per-output layout." }
         }
     }
 }

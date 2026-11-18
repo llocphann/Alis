@@ -29,22 +29,20 @@ WBarAttachedPanelContent {
         borderColor: Looks.colors.ambientShadow
 
         contentItem: Item {
-            // color: Looks.colors.bg1Base
-            // radius: Looks.radius.medium
-            implicitWidth: root.showNumber ? 192 : 170
-            implicitHeight: 46
+            implicitWidth: root.showNumber ? Looks.dp(202) : Looks.dp(170)
+            implicitHeight: Looks.dp(46)
 
             RowLayout {
                 id: contentRow
                 anchors.fill: parent
-                anchors.margins: 12
+                anchors.margins: Looks.dp(12)
 
-                spacing: 12
+                spacing: Looks.dp(12)
 
                 FluentIcon {
                     Layout.alignment: Qt.AlignVCenter
                     icon: root.iconName
-                    implicitSize: 18
+                    implicitSize: Looks.dp(18)
                 }
 
                 WProgressBar {
@@ -56,10 +54,12 @@ WBarAttachedPanelContent {
                 }
 
                 WTextWithFixedWidth {
+                    objectName: "osdValueLabel"
                     visible: root.showNumber
-                    text: Math.round(root.value * 100)
-                    // longestText: "100"
-                    implicitWidth: 16
+                    Layout.alignment: Qt.AlignVCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: String(Math.round(root.value * 100))
+                    longestText: "100"
                     horizontalAlignment: Text.AlignHCenter
                 }
             }

@@ -5,7 +5,9 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import sys
+import tempfile
 
 ENTRYPOINTS = {
     "session": "AlisSession.qml",
@@ -111,10 +113,10 @@ def inspect_package(package):
             if "__pycache__" in rel.parts and path.is_file() and path.suffix in (".pyc", ".pyo"):
                 continue
             if path.is_file() and path != manifest.resolve():
-                if len(inventory) >= 512 or path.stat().st_size > 2 * 1024 * 1024:
+                if len(inventory) >= 512 or path.stat().st_size > 8 * 1024 * 1024:
                     raise ValueError("oversized payload")
                 total += path.stat().st_size
-                if total > 24 * 1024 * 1024:
+                if total > 64 * 1024 * 1024:
                     raise ValueError("oversized package")
                 inventory[rel.as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
             elif not path.is_file() and not path.is_dir():
@@ -136,7 +138,13 @@ def inspect_package(package):
         return {**result, "diagnostic": "invalid-package"}
 
 
+_LEGACY_PREFIX = "".join(("i", "nir"))
 _LEGACY_COMPONENT = "".join(("hada", "lird"))
+_LEGACY_HELPER_NAMES = {
+    "alis-thinkfan": f"{_LEGACY_PREFIX}-thinkfan",
+    "alis-battery-charge-limit": f"{_LEGACY_PREFIX}-battery-charge-limit",
+    "alis-intergration-system-provision": f"{_LEGACY_PREFIX}-{_LEGACY_COMPONENT}-system-provision",
+}
 
 
 def resolve_user_data_dir(data_home=None):
@@ -158,6 +166,183 @@ def resolve_bundled_package(shell_root):
     return root / "optional" / _LEGACY_COMPONENT
 
 
+_DEFAULT_DEPENDENCIES = {
+    "nexus": {
+        "userSpace": True,
+        "requiresSystemHelpers": False,
+        "packages": ["python3"],
+        "binaries": ["python3"],
+        "helpers": [],
+        "setupCommand": "",
+        "helpersCommand": "",
+        "note": "User-space plugin (requires Python 3; no root helpers needed).",
+    },
+    "spaced_repetition": {
+        "userSpace": True,
+        "requiresSystemHelpers": False,
+        "packages": [],
+        "binaries": [],
+        "helpers": [],
+        "setupCommand": "",
+        "helpersCommand": "",
+        "note": "User-space plugin (no system dependencies or root helpers needed).",
+    },
+    "tlp": {
+        "userSpace": False,
+        "requiresSystemHelpers": True,
+        "packages": ["tlp", "alis-deps"],
+        "binaries": ["tlp"],
+        "helpers": ["/usr/libexec/alis-battery-charge-limit"],
+        "provisioner": "/usr/libexec/alis-intergration-system-provision",
+        "setupCommand": "./setup install-deps",
+        "helpersCommand": "./setup integrations",
+        "note": "Requires tlp (via ./setup install-deps / alis-deps) and TLP battery helpers (./setup integrations).",
+    },
+    "thinkfan": {
+        "userSpace": False,
+        "requiresSystemHelpers": True,
+        "packages": ["thinkfan", "alis-deps"],
+        "binaries": ["thinkfan"],
+        "helpers": ["/usr/libexec/alis-thinkfan"],
+        "provisioner": "/usr/libexec/alis-intergration-system-provision",
+        "setupCommand": "./setup install-deps",
+        "helpersCommand": "./setup integrations",
+        "note": "Requires thinkfan (via ./setup install-deps / alis-deps) and Thinkfan helpers (./setup integrations).",
+    },
+}
+
+
+def installed_plugins_path(user_data):
+    return Path(user_data) / "installed-plugins.json"
+
+
+def load_installed_plugins(user_data, valid_ids=None):
+    target = installed_plugins_path(user_data)
+    if target.is_symlink():
+        raise ValueError("Refusing symlinked installed-plugins.json")
+    if not target.exists():
+        return None, False
+    doc = json.loads(target.read_text(encoding="utf-8"))
+    if not isinstance(doc, dict) or doc.get("schemaVersion") != 1 or not isinstance(doc.get("plugins"), list):
+        raise ValueError("Invalid installed-plugins.json schema")
+    allowed = set(valid_ids) if valid_ids is not None else None
+    seen = []
+    for item in doc["plugins"]:
+        if isinstance(item, str) and item and (allowed is None or item in allowed) and item not in seen:
+            seen.append(item)
+    return seen, True
+
+
+def save_installed_plugins(user_data, plugin_ids):
+    user_data = Path(user_data)
+    user_data.mkdir(parents=True, exist_ok=True)
+    target = installed_plugins_path(user_data)
+    if target.is_symlink():
+        raise ValueError("Refusing symlinked installed-plugins.json")
+    unique = []
+    for item in plugin_ids:
+        if isinstance(item, str) and item and item not in unique:
+            unique.append(item)
+    payload = json.dumps({"schemaVersion": 1, "plugins": unique}, indent=2) + "\n"
+    fd, tmp_path = tempfile.mkstemp(prefix=".installed-plugins-", suffix=".tmp", dir=user_data)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(payload)
+        os.chmod(tmp_path, 0o644)
+        os.replace(tmp_path, target)
+    except Exception:
+        Path(tmp_path).unlink(missing_ok=True)
+        raise
+    return unique
+
+
+def _binary_available(name):
+    if shutil.which(name):
+        return True
+    for directory in ("/usr/bin", "/usr/sbin", "/bin", "/sbin"):
+        candidate = Path(directory) / name
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return True
+    return False
+
+
+def _trusted_executable_file(candidate):
+    path = Path(candidate)
+    return not path.is_symlink() and path.is_file() and os.access(path, os.X_OK)
+
+
+def _resolve_helper_path(path_str):
+    if not isinstance(path_str, str) or not path_str:
+        return ""
+    candidate = Path(path_str)
+    if _trusted_executable_file(candidate):
+        return str(candidate)
+    legacy_name = _LEGACY_HELPER_NAMES.get(candidate.name)
+    if legacy_name:
+        legacy_candidate = candidate.with_name(legacy_name)
+        if _trusted_executable_file(legacy_candidate):
+            return str(legacy_candidate)
+    return ""
+
+
+def _helper_available(path_str):
+    return bool(_resolve_helper_path(path_str))
+
+
+def inspect_runtime_tools():
+    return {
+        "python3": _binary_available("python3"),
+        "khal": _binary_available("khal"),
+        "curl": _binary_available("curl"),
+        "tlp": _binary_available("tlp"),
+        "thinkfan": _binary_available("thinkfan"),
+    }
+
+
+def inspect_plugin_dependencies(catalog_doc=None):
+    raw_deps = catalog_doc.get("dependencies") if isinstance(catalog_doc, dict) and isinstance(catalog_doc.get("dependencies"), dict) else {}
+    report = {}
+    for plugin_id, defaults in _DEFAULT_DEPENDENCIES.items():
+        spec = dict(defaults)
+        override = raw_deps.get(plugin_id)
+        if isinstance(override, dict):
+            spec.update(override)
+        binaries = [str(b) for b in spec.get("binaries", []) if isinstance(b, str) and b]
+        helpers = [str(h) for h in spec.get("helpers", []) if isinstance(h, str) and h]
+        primary_helpers = [h for h in helpers if not h.endswith("system-provision")]
+        if not primary_helpers and spec.get("requiresSystemHelpers"):
+            primary_helpers = helpers
+        provisioner = str(spec.get("provisioner") or "/usr/libexec/alis-intergration-system-provision")
+        binary_checks = [{"name": b, "installed": _binary_available(b)} for b in binaries]
+        helper_checks = [{"path": h, "installed": _helper_available(h)} for h in primary_helpers]
+        binaries_ready = all(c["installed"] for c in binary_checks)
+        helpers_ready = all(c["installed"] for c in helper_checks) if spec.get("requiresSystemHelpers") else True
+        provisioner_ready = _helper_available(provisioner) if spec.get("requiresSystemHelpers") else True
+        missing = [c["name"] for c in binary_checks if not c["installed"]]
+        if spec.get("requiresSystemHelpers"):
+            missing.extend(c["path"] for c in helper_checks if not c["installed"])
+        packages = [str(p) for p in spec.get("packages", []) if isinstance(p, str) and p]
+        user_space = bool(spec.get("userSpace", not spec.get("requiresSystemHelpers", False)))
+        setup_cmd = str(spec.get("setupCommand", "./setup install-deps" if not user_space else ""))
+        helpers_cmd = str(spec.get("helpersCommand", "./setup integrations" if not user_space else ""))
+        report[plugin_id] = {
+            "userSpace": user_space,
+            "requiresSystemHelpers": bool(spec.get("requiresSystemHelpers", False)),
+            "satisfied": binaries_ready and helpers_ready,
+            "binariesReady": binaries_ready,
+            "helpersReady": helpers_ready,
+            "provisionerReady": provisioner_ready,
+            "packages": packages,
+            "binaries": binary_checks,
+            "helpers": helper_checks,
+            "missing": missing,
+            "setupCommand": setup_cmd,
+            "helpersCommand": helpers_cmd,
+            "note": str(spec.get("note", "")),
+        }
+    return report
+
+
 def inspect(shell_root, data_home=None):
     user_data = resolve_user_data_dir(data_home)
     package = resolve_bundled_package(shell_root)
@@ -165,6 +350,7 @@ def inspect(shell_root, data_home=None):
         package = user_data / "current"
     result = inspect_package(package)
     result["canRollback"] = False
+    catalog_doc = {}
     try:
         previous_file = user_data / ".previous"
         if previous_file.is_file() and not previous_file.is_symlink() and previous_file.stat().st_size <= 64:
@@ -173,10 +359,38 @@ def inspect(shell_root, data_home=None):
             if re.fullmatch(r"[0-9a-f]{40}", previous) and not prior.is_symlink():
                 report = inspect_package(prior)
                 result["canRollback"] = report.get("available") is True and report.get("sourceSha") == previous
-        catalog = json.loads((Path(shell_root) / "defaults/integration-plugins.json").read_text())
-        result["catalog"] = plugin_metadata(catalog)
+        catalog_doc = json.loads((Path(shell_root) / "defaults/integration-plugins.json").read_text())
+        result["catalog"] = plugin_metadata(catalog_doc)
     except (OSError, ValueError, TypeError):
         result["catalog"] = []
+    result["dependencies"] = inspect_plugin_dependencies(catalog_doc)
+    result["runtimeTools"] = inspect_runtime_tools()
+    all_package_plugins = list(result.get("plugins") or [])
+    valid_ids = [plugin["id"] for plugin in all_package_plugins if isinstance(plugin, dict) and plugin.get("id")]
+    if not valid_ids:
+        valid_ids = [plugin["id"] for plugin in result.get("catalog") or [] if isinstance(plugin, dict) and plugin.get("id")]
+    if not valid_ids:
+        valid_ids = list(_DEFAULT_DEPENDENCIES.keys())
+    result["pluginSelectionExplicit"] = False
+    if not result.get("available"):
+        result["installedPluginIds"] = []
+        result["plugins"] = []
+        return result
+    try:
+        selected, explicit = load_installed_plugins(user_data, valid_ids or None)
+    except (OSError, ValueError, TypeError):
+        result["installedPluginIds"] = []
+        result["plugins"] = []
+        result["pluginSelectionExplicit"] = True
+        return result
+    if explicit:
+        selected_set = set(selected)
+        filtered = [plugin for plugin in all_package_plugins if plugin.get("id") in selected_set]
+        result["plugins"] = filtered
+        result["installedPluginIds"] = [pid for pid in valid_ids if pid in selected_set]
+        result["pluginSelectionExplicit"] = True
+    else:
+        result["installedPluginIds"] = [plugin["id"] for plugin in all_package_plugins] if all_package_plugins else list(valid_ids)
     return result
 
 

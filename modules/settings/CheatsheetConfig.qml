@@ -16,9 +16,9 @@ ContentPage {
     settingsPageName: Translation.tr("Shortcuts")
 
     // ── Data sources ────────────────────────────────────────────────────────
-    readonly property var keybinds: CompositorService.isNiri ? NiriKeybinds.keybinds : HyprlandKeybinds.keybinds
+    readonly property var keybinds: CompositorService.isHyprland ? HyprlandKeybinds.keybinds : NiriKeybinds.keybinds
     readonly property var categories: keybinds?.children ?? []
-    readonly property bool hasEnrichedData: CompositorService.isNiri && NiriKeybinds.enrichedCategories.length > 0
+    readonly property bool hasEnrichedData: !CompositorService.isHyprland && NiriKeybinds.enrichedCategories.length > 0
     readonly property bool canEdit: CompositorService.isNiri
 
     property var keySubstitutions: ({
@@ -32,6 +32,7 @@ ContentPage {
     property string _statusMsg: ""
     property string _statusType: ""   // "saved" | "removed" | "error"
     property bool _statusVisible: false
+    property bool addKeybindExpanded: false
     property var expandedRows: ({})
 
     readonly property var defaultRoleShortcuts: [
@@ -67,6 +68,7 @@ ContentPage {
         const pendingAct = String(AppLauncher.pendingShortcutAction ?? "").trim()
         if (!pendingAct)
             return
+        root.addKeybindExpanded = true
         addActionBuilder.actionText = pendingAct
         addActionBuilder.pickerMode = "app"
         const label = String(AppLauncher.pendingShortcutLabel ?? "").trim()
@@ -166,23 +168,22 @@ ContentPage {
             byName[shellName] = shellKept
         }
 
+        const q = root.searchQuery.trim().toLowerCase()
         let groups = order
-            .map(name => ({ name: name, binds: byName[name] }))
+            .map(name => ({
+                name: name,
+                binds: q.length === 0
+                    ? byName[name]
+                    : byName[name].filter(idx => {
+                        const b = allBinds[idx] ?? {}
+                        return name.toLowerCase().includes(q)
+                            || String(b.key_combo ?? "").toLowerCase().includes(q)
+                            || String(b.description ?? "").toLowerCase().includes(q)
+                            || String(b.action ?? "").toLowerCase().includes(q)
+                    })
+            }))
             .filter(g => g.binds.length > 0)
 
-        // If odd number of groups, merge the two smallest groups so 2-column rows stay paired
-        if (groups.length > 2 && (groups.length % 2 === 1)) {
-            groups.sort((a, b) => a.binds.length - b.binds.length)
-            const first = groups.shift()
-            const second = groups.shift()
-            groups.push({
-                name: first.name + " · " + second.name,
-                binds: first.binds.concat(second.binds)
-            })
-        }
-
-        // Sort by item count so adjacent (Left, Right) pairs on each row have matching height
-        groups.sort((a, b) => b.binds.length - a.binds.length)
         return groups
     }
 
@@ -220,26 +221,45 @@ ContentPage {
             }
         }
 
+        const q = root.searchQuery.trim().toLowerCase()
         let groups = order
-            .map(name => ({ name: name, children: [{ keybinds: byName[name] }] }))
+            .map(name => ({
+                name: name,
+                children: [{
+                    keybinds: q.length === 0
+                        ? byName[name]
+                        : byName[name].filter(kb => {
+                            const combo = [...(kb?.mods ?? []), String(kb?.key ?? "")].join("+").toLowerCase()
+                            return name.toLowerCase().includes(q)
+                                || combo.includes(q)
+                                || String(kb?.comment ?? "").toLowerCase().includes(q)
+                        })
+                }]
+            }))
             .filter(g => g.children[0].keybinds.length > 0)
 
-        if (groups.length > 2 && (groups.length % 2 === 1)) {
-            groups.sort((a, b) => a.children[0].keybinds.length - b.children[0].keybinds.length)
-            const first = groups.shift()
-            const second = groups.shift()
-            groups.push({
-                name: first.name + " · " + second.name,
-                children: [{ keybinds: first.children[0].keybinds.concat(second.children[0].keybinds) }]
-            })
-        }
-
-        groups.sort((a, b) => b.children[0].keybinds.length - a.children[0].keybinds.length)
         return groups
+    }
+
+    property string searchQuery: ""
+    readonly property int visibleKeybindCount: {
+        if (root.hasEnrichedData) {
+            let total = 0
+            const cats = root.balancedEnrichedCategories ?? []
+            for (let i = 0; i < cats.length; i++)
+                total += (cats[i]?.binds?.length ?? 0)
+            return total
+        }
+        let legacyTotal = 0
+        const lcats = root.balancedLegacyCategories ?? []
+        for (let j = 0; j < lcats.length; j++)
+            legacyTotal += (lcats[j]?.children?.[0]?.keybinds?.length ?? 0)
+        return legacyTotal
     }
 
     SettingsTaskNavigator {
         showTabBar: false
+        showIntro: false
         icon: "keyboard"
         title: Translation.tr("Shortcuts")
         description: CompositorService.isNiri && NiriKeybinds.loaded
@@ -281,11 +301,36 @@ ContentPage {
         onTriggered: root._statusVisible = false
     }
 
+    Item {
+        id: shortcutsScrollHost
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        implicitHeight: shortcutsBodyColumn.implicitHeight
+        Layout.preferredHeight: implicitHeight
+
+        Flickable {
+            id: shortcutsScrollFlickable
+            objectName: "cheatsheetScrollFlickable"
+            anchors.fill: parent
+            interactive: false
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            contentWidth: width
+            contentHeight: shortcutsBodyColumn.implicitHeight
+            ScrollBar.vertical: ScrollBar {
+                objectName: "cheatsheetVerticalScrollBar"
+                policy: ScrollBar.AlwaysOff
+            }
+
+        ColumnLayout {
+            id: shortcutsBodyColumn
+            width: shortcutsScrollFlickable.width
+            spacing: SettingsMaterialPreset.pageSpacing
+
     // ── Feedback bar ─────────────────────────────────────────────────────────
     Rectangle {
         visible: root._statusVisible
         Layout.fillWidth: true
-        Layout.bottomMargin: visible ? SettingsMaterialPreset.pageSpacing : 0
         implicitHeight: statusBarRow.implicitHeight + 16
         radius: Appearance.rounding.small
         color: root._statusType === "error"
@@ -346,17 +391,149 @@ ContentPage {
         }
     }
 
-    // ── Add keybind section ──────────────────────────────────────────────────
+    // ── Compact search + Add keybind header bar ──────────────────────────────
     SettingsCardSection {
+        id: addKeybindCard
+        objectName: "addKeybindCard"
         _preventBentoReparent: true
-        visible: root.canEdit
+        visible: true
         Layout.fillWidth: true
+        showHeader: false
+        allowEditWithoutHeader: true
         expanded: true
-        icon: "add_circle"
-        title: Translation.tr("Add keybind")
+        icon: "keyboard"
+        title: Translation.tr("Search & Add Keybind")
 
-        SettingsGroup {
+        RowLayout {
             Layout.fillWidth: true
+            spacing: 10
+
+            MaterialSymbol {
+                text: "search"
+                iconSize: Appearance.font.pixelSize.normal
+                color: Appearance.colors.colSubtext
+            }
+
+            MaterialTextField {
+                id: shortcutsSearchField
+                objectName: "shortcutsSearchInput"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                placeholderText: Translation.tr("Filter shortcuts by key or action…")
+                text: root.searchQuery
+                enableSettingsSearch: false
+                onTextChanged: root.searchQuery = text
+            }
+
+            RippleButton {
+                visible: root.searchQuery.length > 0
+                implicitWidth: 28
+                implicitHeight: 28
+                buttonRadius: Appearance.rounding.full
+                colBackground: "transparent"
+                colBackgroundHover: Appearance.colors.colLayer2Hover
+                onClicked: {
+                    root.searchQuery = ""
+                    shortcutsSearchField.text = ""
+                }
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "close"
+                    iconSize: Appearance.font.pixelSize.small
+                    color: Appearance.colors.colSubtext
+                }
+            }
+
+            Rectangle {
+                implicitHeight: 26
+                implicitWidth: bindCountText.implicitWidth + 16
+                radius: Appearance.rounding.full
+                color: Appearance.colors.colLayer2
+
+                StyledText {
+                    id: bindCountText
+                    anchors.centerIn: parent
+                    text: Translation.tr("%1 shortcuts").arg(root.visibleKeybindCount)
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.family: Appearance.font.family.monospace
+                    color: Appearance.colors.colSubtext
+                }
+            }
+
+            RippleButton {
+                id: addKeybindCompactRow
+                objectName: "addKeybindCompactToggle"
+                visible: root.canEdit
+                implicitHeight: 34
+                implicitWidth: addToggleContentRow.implicitWidth + 22
+                buttonRadius: Appearance.rounding.small
+                colBackground: root.addKeybindExpanded
+                    ? Appearance.colors.colSecondaryContainer
+                    : Appearance.colors.colPrimary
+                colBackgroundHover: root.addKeybindExpanded
+                    ? Appearance.colors.colLayer2Hover
+                    : Appearance.colors.colPrimaryHover
+                onClicked: {
+                    const next = !root.addKeybindExpanded
+                    root.addKeybindExpanded = next
+                    if (next)
+                        Qt.callLater(() => addKeyComboField.forceActiveFocus())
+                }
+
+                contentItem: Item {
+                    RowLayout {
+                        id: addToggleContentRow
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        MaterialSymbol {
+                            Layout.alignment: Qt.AlignVCenter
+                            text: root.addKeybindExpanded ? "expand_less" : "add"
+                            iconSize: Appearance.font.pixelSize.normal
+                            color: root.addKeybindExpanded
+                                ? Appearance.colors.colOnSecondaryContainer
+                                : Appearance.colors.colOnPrimary
+                        }
+
+                        StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            text: root.addKeybindExpanded
+                                ? Translation.tr("Close")
+                                : Translation.tr("Add keybind")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            font.weight: Font.DemiBold
+                            color: root.addKeybindExpanded
+                                ? Appearance.colors.colOnSecondaryContainer
+                                : Appearance.colors.colOnPrimary
+                        }
+                    }
+                }
+            }
+        }
+
+        Item {
+            id: addKeybindDrawer
+            objectName: "addKeybindFormDrawer"
+            Layout.fillWidth: true
+            clip: true
+            enabled: root.addKeybindExpanded
+            visible: height > 0.5 || root.addKeybindExpanded
+            implicitHeight: Layout.preferredHeight
+            Layout.preferredHeight: root.addKeybindExpanded ? (addKeybindFormGroup.implicitHeight + 8) : 0
+
+            Behavior on Layout.preferredHeight {
+                NumberAnimation {
+                    duration: 220
+                    easing.type: Easing.OutCubic
+                }
+            }
+
+            SettingsGroup {
+                id: addKeybindFormGroup
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.topMargin: 8
 
             RowLayout {
                 Layout.fillWidth: true
@@ -449,17 +626,16 @@ ContentPage {
                 Layout.fillWidth: true
             }
         }
+        }
     }
 
-    // ── Enriched categories (editor-capable) ────────────────────────────────
-    GridLayout {
+    // ── Enriched categories (single-column iRiS plates) ──────────────────────
+    ColumnLayout {
+        id: enrichedCategoriesGrid
         visible: root.hasEnrichedData
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        columns: width >= 620 ? 2 : 1
-        uniformCellWidths: columns === 2
-        columnSpacing: 14
-        rowSpacing: 14
+        spacing: SettingsMaterialPreset.pageSpacing
 
         Repeater {
             model: root.balancedEnrichedCategories
@@ -468,16 +644,15 @@ ContentPage {
                 required property var modelData
                 required property int index
                 _preventBentoReparent: true
+                Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.preferredWidth: 1
+                Layout.fillHeight: false
                 Layout.minimumWidth: 0
 
                 readonly property string catName: modelData?.name ?? ""
                 readonly property var bindIndices: modelData?.binds ?? []
 
                 expanded: true
-
                 icon: root.getCategoryIcon(catName)
                 title: catName
 
@@ -489,9 +664,10 @@ ContentPage {
                         model: bindIndices
 
                         delegate: KeybindRow {
-                            required property int modelData   // index into allBinds
+                            required property int modelData
                             required property int index
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
 
                             readonly property var bindData: NiriKeybinds.allBinds[modelData] ?? {}
                             readonly property var _parsed: root.parseComboParts(bindData.key_combo ?? "")
@@ -513,15 +689,13 @@ ContentPage {
         }
     }
 
-    // ── Legacy categories (read-only fallback) ───────────────────────────────
-    GridLayout {
+    // ── Legacy categories (single-column read-only fallback) ─────────────────
+    ColumnLayout {
+        id: legacyCategoriesGrid
         visible: !root.hasEnrichedData
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        columns: width >= 620 ? 2 : 1
-        uniformCellWidths: columns === 2
-        columnSpacing: 14
-        rowSpacing: 14
+        spacing: SettingsMaterialPreset.pageSpacing
 
         Repeater {
             model: root.balancedLegacyCategories
@@ -530,9 +704,9 @@ ContentPage {
                 required property var modelData
                 required property int index
                 _preventBentoReparent: true
+                Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.preferredWidth: 1
+                Layout.fillHeight: false
                 Layout.minimumWidth: 0
                 expanded: true
 
@@ -552,6 +726,7 @@ ContentPage {
                             required property var modelData
                             required property int index
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
                             mods: modelData.mods ?? []
                             keyName: modelData.key ?? ""
                             action: modelData.comment ?? ""
@@ -569,7 +744,10 @@ ContentPage {
         }
     }
 
-    Item { Layout.preferredHeight: 20 }
+            Item { Layout.preferredHeight: 8 }
+        }
+        }
+    }
 
     // ── Functions ────────────────────────────────────────────────────────────
 
@@ -1091,6 +1269,7 @@ ContentPage {
             : null
 
         // Drive outer height from inner column
+        implicitWidth: kbMainColumn.implicitWidth
         implicitHeight: kbMainColumn.implicitHeight
 
         clip: true

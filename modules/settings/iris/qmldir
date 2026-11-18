@@ -1,0 +1,10 @@
+module qs.modules.settings.iris
+singleton IrisTheme 1.0 IrisTheme.qml
+singleton IrisState 1.0 IrisState.qml
+IrisScrollEdge 1.0 IrisScrollEdge.qml
+IrisPrismSidebar 1.0 IrisPrismSidebar.qml
+IrisPrismHero 1.0 IrisPrismHero.qml
+IrisPrismHome 1.0 IrisPrismHome.qml
+IrisPrismSearchView 1.0 IrisPrismSearchView.qml
+IrisPrismNowPlaying 1.0 IrisPrismNowPlaying.qml
+IrisPrismRail 1.0 IrisPrismRail.qml

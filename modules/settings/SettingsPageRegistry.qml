@@ -29,7 +29,7 @@ Singleton {
     function isPageApplicable(index: int): bool {
         if (index < 0 || index >= root.pages.length
                 || root.isHiddenLegacyIndex(index) || !root.pages[index]) return false
-        if (index === 38 || index === 39) return true
+        if (index === 38 || index === 39 || index === 40) return true
         if (root.abyssFamily)
             return ![11,26,32,34].includes(index)
         if (root.waffleFamily)
@@ -42,6 +42,8 @@ Singleton {
     function safePageIndex(index: int): int {
         if (index === 0)
             return root.isPageApplicable(root.barPageIndex) ? root.barPageIndex : 4
+        if (index === 13 && root.isPageApplicable(40))
+            return 40
         if (root.abyssFamily && (index === 26 || index === 32 || index === 34))
             return root.barPageIndex
         if (index === 5)
@@ -49,7 +51,9 @@ Singleton {
         if (index === 8)
             return 25
         if (index === 14)
-            return 15
+            return root.isPageApplicable(12) ? 12 : (root.isPageApplicable(root.barPageIndex) ? root.barPageIndex : 4)
+        if (index === 15)
+            return root.isPageApplicable(12) ? 12 : (root.isPageApplicable(root.barPageIndex) ? root.barPageIndex : 4)
         if (index === 16 && root.isPageApplicable(22))
             return 22
         if (index === 17)
@@ -64,12 +68,14 @@ Singleton {
     // retirement. The active Settings chrome navigates inside its own window
     // instead of spawning a second instance when a related-settings link runs.
     signal navigateRequested(int pageIndex, string section)
+    signal homeRequested()
     function pageIndexForKey(key: string): int {
         const value = String(key ?? "").trim()
         if (!value) return -1
+        if (value === "about") return root.isPageApplicable(40) ? 40 : -1
         if (value === "autostart" || value === "applications") return 39
         if (value === "advanced") return 25
-        if (value === "widgets") return 15
+        if (value === "widgets" || value === "monitors") return 12
         if (value === "panels") return 10
         if (value === "dashboard") return root.isPageApplicable(22) ? 22 : -1
         if (value === "overview") return root.isPageApplicable(23) ? 23 : -1
@@ -79,6 +85,10 @@ Singleton {
             && root.isPageApplicable(index))
     }
     function navigateToKey(key: string, section: string): bool {
+        if (String(key ?? "").trim().toLowerCase() === "home") {
+            root.homeRequested()
+            return true
+        }
         // Resolve moved Services sections before a lazy page is loaded. An old
         // deep link must not depend on that page's retired search controls.
         const label = String(section ?? "").toLowerCase()
@@ -182,8 +192,8 @@ Singleton {
             Persistent.states.settings.iiPage = 25
             return
         }
-        if (current === 14) {
-            Persistent.states.settings.iiPage = 15
+        if (current === 14 || current === 15) {
+            Persistent.states.settings.iiPage = 12
             return
         }
         if (current === 16) {
@@ -312,6 +322,8 @@ Singleton {
             .map(entry => {
                 if (root.abyssFamily && entry.pageIndex === 10 && entry.section === Translation.tr("Notifications"))
                     return Object.assign({}, entry, { pageIndex: 33, pageName: root.pages[33].name })
+                if (!root.abyssFamily && entry.pageIndex === 33)
+                    return Object.assign({}, entry, { pageIndex: 10, pageName: root.pages[10].name, section: Translation.tr("Notifications") })
                 const route = FamilyPolicy.settingsRoute(Config.options?.panelFamily,entry.pageIndex,entry.section)
                 if (route.pageIndex !== entry.pageIndex)
                     return Object.assign({},entry,route,{pageName:"Abyss"})

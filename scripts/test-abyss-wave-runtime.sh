@@ -160,7 +160,9 @@ ShellRoot {
     }
 }
 QML
-if ! env -u QS_CONFIG_PATH -u QS_CONFIG_NAME -u QS_MANIFEST QT_QPA_PLATFORM=offscreen \
+if ! env -u LIBGL_ALWAYS_SOFTWARE -u GALLIUM_DRIVER -u MESA_LOADER_DRIVER_OVERRIDE \
+    -u QS_CONFIG_PATH -u QS_CONFIG_NAME -u QS_MANIFEST \
+    QT_QPA_PLATFORM="$([[ -n "${WAYLAND_DISPLAY:-}" ]] && printf wayland || printf offscreen)" \
     QSG_RHI_BACKEND=opengl QT_QUICK_BACKEND=rhi ABYSS_WAVE_OUTPUT="$wave_test_root" \
     XDG_CONFIG_HOME="$wave_test_root/config" XDG_STATE_HOME="$wave_test_root/state" \
     XDG_CACHE_HOME="$wave_test_root/cache" timeout 12s qs -p "$wave_test_root" --no-color \

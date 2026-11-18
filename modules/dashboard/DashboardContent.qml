@@ -29,6 +29,8 @@ Item {
         && (Config.options?.dashboard?.spacedRepetition?.enable ?? true)
         && (Config.options?.dashboard?.pageOrderVersion ?? 1) >= 1
         && Array.from(dashboardCanvas.effectivePageOrder ?? []).includes("spacedRepetition")
+    readonly property bool exercisesTrackerEnabled: AlisIntergration.exercisesTrackerEnabled
+        && AlisIntergration.exercisesTrackerDashboardSource().length > 0
     readonly property var customTabs: TabPolicy.tabs(Config.options?.dashboard?.customTabs)
     readonly property var _customPageModelMemo: ({signature:"",tabs:[]})
     readonly property var customPageModel: {
@@ -44,9 +46,20 @@ Item {
         return memo.tabs
     }
     property var _navigationDraftOrder: null
+    readonly property var availablePageIds: {
+        const base = TabPolicy.available(root.customTabs, root.musicEnabled, root.spacedRepetitionEnabled)
+        if (!root.exercisesTrackerEnabled)
+            return base
+        const customIdx = base.findIndex(id => id.startsWith("custom-"))
+        if (customIdx < 0)
+            return base.concat(["exercisesTracker"])
+        const copy = base.slice()
+        copy.splice(customIdx, 0, "exercisesTracker")
+        return copy
+    }
     readonly property var pageIds: PagePolicy.ordered(
         root._navigationDraftOrder ?? dashboardCanvas.effectivePageOrder,
-        TabPolicy.available(root.customTabs, root.musicEnabled, root.spacedRepetitionEnabled))
+        root.availablePageIds)
     readonly property string currentPageId: pageIds.includes(GlobalStates.dashboardPageId)
         ? GlobalStates.dashboardPageId : pageIds[0]
     readonly property int currentPage: pageIds.indexOf(currentPageId)
@@ -80,6 +93,8 @@ Item {
     property bool musicVisited: currentPageId === "music"
     property bool plannerVisited: currentPageId === "weeklyPlanner"
     property bool spacedRepetitionVisited: currentPageId === "spacedRepetition"
+    property bool exercisesTrackerVisited: currentPageId === "exercisesTracker"
+    readonly property var exercisesTrackerItem: exercisesTrackerPage.item
     property string _pendingPageId: ""
     property string _synchronousPageId: ""
     property bool _userPageNavigation: false
@@ -101,6 +116,7 @@ Item {
         if (_pendingPageId === "music") return musicPage.status === Loader.Ready
         if (_pendingPageId === "weeklyPlanner") return plannerPage.status === Loader.Ready
         if (_pendingPageId === "spacedRepetition") return spacedRepetitionPage.status === Loader.Ready
+        if (_pendingPageId === "exercisesTracker") return exercisesTrackerPage.status === Loader.Ready
         const index = root.customTabs.findIndex(tab => tab.id === root._pendingPageId)
         return index >= 0 && (customPagesRepeater.itemAt(index)?.pageReady ?? false)
     }
@@ -152,12 +168,19 @@ Item {
             if (root.presentationActive)
                 Qt.callLater(() => root.focusPrimarySurface())
         }
+        if (currentPageId === "exercisesTracker") {
+            exercisesTrackerVisited = true
+            if (root.presentationActive)
+                Qt.callLater(() => root.focusPrimarySurface())
+        }
     }
 
     readonly property bool navigationAllowed: root.presentationActive && pageIds.length > 1
         && !root.editMode && !root._agendaDialogShown && !root._customDialogShown
         && !(musicPage.item?.playlistDialogVisible ?? false)
         && !(plannerPage.item?.sideView === "events")
+    readonly property bool pageSlideInFlight: Math.abs(pages.pagePosition - root.currentPage) > 0.01
+    property bool _skipSyncOnLegacyPageChange: false
     property var _pageWheelState: PagePolicy.idle()
     function resetPageWheel(): void {
         pageWheelIdle.stop()
@@ -176,6 +199,21 @@ Item {
         const legacy = PagePolicy.defaultOrder.indexOf(id)
         if (legacy >= 0 && GlobalStates.dashboardPage !== legacy)
             GlobalStates.dashboardPage = legacy
+        root._pendingPageId = ""
+    }
+    function selectPageAsync(id): void {
+        if (!pageIds.includes(id)) return
+        root._synchronousPageId = ""
+        const previousId = root.currentPageId
+        if (previousId !== id && previousId.startsWith("custom-")
+                && !root._slideHeldCustomIds.includes(previousId))
+            root._slideHeldCustomIds = root._slideHeldCustomIds.concat([previousId])
+        root._skipSyncOnLegacyPageChange = true
+        GlobalStates.dashboardPageId = id
+        const legacy = PagePolicy.defaultOrder.indexOf(id)
+        if (legacy >= 0 && GlobalStates.dashboardPage !== legacy)
+            GlobalStates.dashboardPage = legacy
+        root._skipSyncOnLegacyPageChange = false
         root._pendingPageId = ""
     }
     function requestPage(id): void {
@@ -209,6 +247,11 @@ Item {
         event.accepted = false
         if (!navigationAllowed) return
         const movement = PagePolicy.delta(event)
+        if (root.pageSlideInFlight) {
+            if (movement.x && Math.abs(movement.x) > Math.abs(movement.y))
+                event.accepted = true
+            return
+        }
         const phase = Number(event.phase ?? 0)
         const contentConsumed = movement.x && Math.abs(movement.x) > Math.abs(movement.y)
             && panContent && (currentPageId === "music" ? musicPage.item?.panHorizontally(movement.x)
@@ -229,6 +272,7 @@ Item {
     Connections {
         target: GlobalStates
         function onDashboardPageChanged(): void {
+            if (root._skipSyncOnLegacyPageChange) return
             const id = PagePolicy.defaultOrder[GlobalStates.dashboardPage] ?? "dashboard"
             root.selectPage(root.pageIds.includes(id) ? id : root.pageIds[0])
         }
@@ -268,7 +312,7 @@ Item {
             Config.options?.dashboard?.lastHiddenAtMs ?? 0,
             Config.options?.dashboard?.inactiveMinutes ?? 0,
             configured, root.pageIds, root.currentPageId)
-        if (target !== root.currentPageId) root.selectPage(target)
+        if (target !== root.currentPageId) root.selectPageAsync(target)
     }
     function sessionHidden(): void {
         if (!root._sessionWasVisible) return
@@ -300,7 +344,7 @@ Item {
         if (Config.ready) root.restoreLastPage()
         if (!root.pageIds.includes(GlobalStates.dashboardPageId)) {
             const legacy = PagePolicy.defaultOrder[GlobalStates.dashboardPage]
-            root.selectPage(root.pageIds.includes(legacy) ? legacy : root.pageIds[0])
+            root.selectPageAsync(root.pageIds.includes(legacy) ? legacy : root.pageIds[0])
         }
         if (root.presentationActive) root.sessionShown()
     }
@@ -424,6 +468,8 @@ Item {
         }
         if (currentPageId === "spacedRepetition" && (spacedRepetitionPage.item?.handleEscape() ?? false))
             return true
+        if (currentPageId === "exercisesTracker" && (root.exercisesTrackerItem?.handleEscape?.() ?? false))
+            return true
         if (currentPageId === "music" && (musicPage.item?.restoreBrowserColumns() ?? false))
             return true
         if (currentPageId === "weeklyPlanner" && (plannerPage.item?.handleEscape() ?? false))
@@ -466,6 +512,13 @@ Item {
     function focusPrimarySurface(): void {
         if (root.currentPageId === "spacedRepetition" && spacedRepetitionPage.item && spacedRepetitionPage.visible) {
             spacedRepetitionPage.item.focusPrimarySurface()
+            return
+        }
+        if (root.currentPageId === "exercisesTracker" && root.exercisesTrackerItem && exercisesTrackerPage.visible) {
+            if (typeof root.exercisesTrackerItem.focusPrimarySurface === "function")
+                root.exercisesTrackerItem.focusPrimarySurface()
+            else
+                root.exercisesTrackerItem.forceActiveFocus()
             return
         }
         root.forceActiveFocus()
@@ -516,6 +569,7 @@ Item {
                 pageCount: root.pageIds.length
                 pageIds: root.pageIds
                 navigationAllowed: root.navigationAllowed
+                pageSlideInFlight: root.pageSlideInFlight
                 reorderAllowed: root.editMode && !root._agendaDialogShown
                 customTabs: root.customTabs
                 defaultTabId: Config.options?.dashboard?.defaultTabId ?? ""
@@ -606,20 +660,24 @@ Item {
                         x: root.pageIds.indexOf("dashboard") * pages.width
                         visible: Math.abs(pages.slideProgress - root.pageIds.indexOf("dashboard")) < 1
                         enabled: root.currentPageId === "dashboard"
-                        presentationActive: root.presentationActive && root.currentPageId === "dashboard"
+                        presentationActive: root.presentationActive && (root.currentPageId === "dashboard"
+                            || (root.pageIds.indexOf("dashboard") >= 0
+                                && Math.abs(pages.slideProgress - root.pageIds.indexOf("dashboard")) < 0.999))
+                        layer.enabled: visible && Math.abs(pages.pagePosition - root.currentPage) > 0.001
                         warmContent: root.warmContent
                         onRequestEventsDialog: event => root.openAgendaDialog(event)
                     }
                     Loader {
                         id: musicPage
                         objectName: "dashboardMusicPageLoader"
-                        asynchronous: root._userPageNavigation && root._synchronousPageId !== "music"
+                        asynchronous: root._synchronousPageId !== "music"
                         onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("music")
                         width: pages.width
                         height: pages.height
                         x: root.pageIds.indexOf("music") * pages.width
                         visible: root.musicEnabled && Math.abs(pages.slideProgress - root.pageIds.indexOf("music")) < 1
                         enabled: root.currentPageId === "music"
+                        layer.enabled: visible && Math.abs(pages.pagePosition - root.currentPage) > 0.001
                         active: root.musicEnabled && (root.musicVisited || root._pendingPageId === "music")
                             && (root.presentationActive || root.warmContent)
                         sourceComponent: DashboardMusic {
@@ -631,23 +689,26 @@ Item {
                     Loader {
                         id:plannerPage
                         objectName: "dashboardPlannerPageLoader"
-                        asynchronous: root._userPageNavigation && root._synchronousPageId !== "weeklyPlanner"
+                        asynchronous: root._synchronousPageId !== "weeklyPlanner"
                         onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("weeklyPlanner")
                         width:pages.width;height:pages.height
                         x:root.pageIds.indexOf("weeklyPlanner")*pages.width
                         visible:Math.abs(pages.slideProgress-root.pageIds.indexOf("weeklyPlanner"))<1
                         enabled:root.currentPageId==="weeklyPlanner"
+                        layer.enabled:visible && Math.abs(pages.pagePosition-root.currentPage)>0.001
                         active:(root.plannerVisited || root._pendingPageId === "weeklyPlanner")
                             && (root.presentationActive || root.warmContent)
                         sourceComponent:DashboardWeeklyPlanner {
-                            presentationActive:root.presentationActive && root.currentPageId==="weeklyPlanner"
+                            presentationActive:root.presentationActive && (root.currentPageId==="weeklyPlanner"
+                                || (root.pageIds.indexOf("weeklyPlanner")>=0
+                                    && Math.abs(pages.slideProgress-root.pageIds.indexOf("weeklyPlanner"))<0.999))
                             onRequestEventsDialog:event=>root.openPlannerEventEditor(event)
                         }
                     }
                     Loader {
                         id: spacedRepetitionPage
                         objectName: "dashboardSpacedRepetitionPageLoader"
-                        asynchronous: root._userPageNavigation && root._synchronousPageId !== "spacedRepetition"
+                        asynchronous: root._synchronousPageId !== "spacedRepetition"
                         onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("spacedRepetition")
                         onLoaded: if (root.presentationActive && root.currentPageId === "spacedRepetition") Qt.callLater(() => root.focusPrimarySurface())
                         onVisibleChanged: if (visible && root.presentationActive && root.currentPageId === "spacedRepetition") Qt.callLater(() => root.focusPrimarySurface())
@@ -656,11 +717,40 @@ Item {
                         x: root.pageIds.indexOf("spacedRepetition") * pages.width
                         visible: root.spacedRepetitionEnabled && Math.abs(pages.slideProgress - root.pageIds.indexOf("spacedRepetition")) < 1
                         enabled: root.currentPageId === "spacedRepetition"
+                        layer.enabled: visible && Math.abs(pages.pagePosition - root.currentPage) > 0.001
                         active: root.spacedRepetitionEnabled
                             && (root.spacedRepetitionVisited || root._pendingPageId === "spacedRepetition")
                             && (root.presentationActive || root.warmContent)
                         sourceComponent: DashboardSpacedRepetition {
-                            presentationActive: root.presentationActive && root.currentPageId === "spacedRepetition"
+                            presentationActive: root.presentationActive && (root.currentPageId === "spacedRepetition"
+                                || (root.pageIds.indexOf("spacedRepetition") >= 0
+                                    && Math.abs(pages.slideProgress - root.pageIds.indexOf("spacedRepetition")) < 0.999))
+                        }
+                    }
+                    Loader {
+                        id: exercisesTrackerPage
+                        objectName: "dashboardExercisesTrackerPageLoader"
+                        asynchronous: root._synchronousPageId !== "exercisesTracker" && status !== Loader.Ready
+                        onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("exercisesTracker")
+                        onLoaded: if (root.presentationActive && root.currentPageId === "exercisesTracker") Qt.callLater(() => root.focusPrimarySurface())
+                        onVisibleChanged: if (visible && root.presentationActive && root.currentPageId === "exercisesTracker") Qt.callLater(() => root.focusPrimarySurface())
+                        width: pages.width
+                        height: pages.height
+                        x: root.pageIds.indexOf("exercisesTracker") * pages.width
+                        visible: root.exercisesTrackerEnabled && Math.abs(pages.slideProgress - root.pageIds.indexOf("exercisesTracker")) < 1
+                        enabled: root.currentPageId === "exercisesTracker"
+                        layer.enabled: visible && Math.abs(pages.pagePosition - root.currentPage) > 0.001
+                        active: root.exercisesTrackerEnabled
+                            && (root.exercisesTrackerVisited || root._pendingPageId === "exercisesTracker")
+                            && (root.presentationActive || root.warmContent)
+                        source: active ? AlisIntergration.exercisesTrackerDashboardSource() : ""
+                        Binding {
+                            target: root.exercisesTrackerItem
+                            property: "presentationActive"
+                            when: exercisesTrackerPage.status === Loader.Ready && root.exercisesTrackerItem !== null
+                            value: root.presentationActive && (root.currentPageId === "exercisesTracker"
+                                || (root.pageIds.indexOf("exercisesTracker") >= 0
+                                    && Math.abs(pages.slideProgress - root.pageIds.indexOf("exercisesTracker")) < 0.999))
                         }
                     }
                     // Custom canvases have isolated geometry but share the exact
@@ -679,12 +769,12 @@ Item {
                             x: pageIndex * pages.width
                             visible: pageIndex >= 0 && Math.abs(pages.slideProgress - pageIndex) < 1
                             enabled: root.currentPageId === modelData.id
+                            layer.enabled: visible && Math.abs(pages.pagePosition - root.currentPage) > 0.001
     
                             Loader {
                                 id: customCanvasLoader
                                 objectName: "dashboardCustomPageLoader-" + customTabHost.modelData.id
-                                asynchronous: root._userPageNavigation
-                                    && root._synchronousPageId !== customTabHost.modelData.id
+                                asynchronous: root._synchronousPageId !== customTabHost.modelData.id
                                 onStatusChanged: if (status === Loader.Error)
                                     root.pageLoadFailed(customTabHost.modelData.id)
                                 anchors.fill: parent
@@ -700,7 +790,9 @@ Item {
                                     customTabId: customTabHost.modelData.id
                                     warmContent: root.warmContent
                                     presentationActive: root.presentationActive
-                                        && root.currentPageId === customTabHost.modelData.id
+                                        && (root.currentPageId === customTabHost.modelData.id
+                                            || (customTabHost.pageIndex >= 0
+                                                && Math.abs(pages.slideProgress - customTabHost.pageIndex) < 0.999))
                                     onRequestEventsDialog: event => root.openAgendaDialog(event)
                                 }
                             }

@@ -20,14 +20,13 @@ ContentPage {
         showIntro: false
         icon: "build"
         title: Translation.tr("Tools")
-        description: Translation.tr("Capture, selection and OSD settings by tool.")
-        summary: Translation.tr("Recording · snipping · OSD")
+        description: Translation.tr("Capture, selection and overlay settings by tool.")
+        summary: Translation.tr("Recording · snipping")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
             { displayName: Translation.tr("Recording"), icon: "screen_record", value: "recording" },
-            { displayName: Translation.tr("Snipping"), icon: "screenshot_frame_2", value: "snipping" },
-            { displayName: Translation.tr("OSD"), icon: "voting_chip", value: "osd" }
+            { displayName: Translation.tr("Snipping"), icon: "screenshot_frame_2", value: "snipping" }
         ]
     }
 
@@ -125,6 +124,17 @@ ContentPage {
         { value: "scale_vaapi=format=nv12", displayName: Translation.tr("Limited range") },
         { value: "", displayName: Translation.tr("No VAAPI filter") }
     ]
+    readonly property var oskLayoutOptions: [
+        { value: "English (US)", displayName: Translation.tr("English (US)") },
+        { value: "German", displayName: Translation.tr("German") },
+        { value: "Russian", displayName: Translation.tr("Russian") }
+    ]
+
+    function availableOskLayoutOptions() {
+        const current = Config.options?.osk?.layout ?? "English (US)"
+        const label = current === "qwerty_full" ? Translation.tr("QWERTY (Default)") : current
+        return root.ensureOption(root.oskLayoutOptions, current, label)
+    }
 
     function setRecordingConfig(path, value) {
         Config.setNestedValue(path, value)
@@ -272,15 +282,19 @@ ContentPage {
         signal selected(var newValue)
 
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
         spacing: 4
 
         StyledText {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            wrapMode: Text.WordWrap
             text: field.title
         }
 
         StyledText {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             visible: field.description.length > 0
             text: field.description
             color: Appearance.angelEverywhere ? Appearance.angel.colTextMuted
@@ -292,6 +306,7 @@ ContentPage {
 
         StyledComboBox {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             enabled: field.fieldEnabled
             model: field.options
             textRole: "displayName"
@@ -371,30 +386,26 @@ ContentPage {
         }
     }
 
-    GridLayout {
-        id: toolsTwoColumnGrid
+    SettingsCardSection {
+        id: screenRecordSection
+        Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        columns: 2
-        uniformCellWidths: true
-        columnSpacing: 14
-        rowSpacing: 14
-
-SettingsCardSection {
-    id: screenRecordSection
-    Layout.preferredWidth: 1
-    Layout.alignment: Qt.AlignTop
-    Layout.fillWidth: true
-    visible: true
-    expanded: true
-    icon: "screen_record"
-    title: Translation.tr("Screen recording")
+        visible: true
+        expanded: true
+        icon: "screen_record"
+        title: Translation.tr("Screen recording")
 
     readonly property bool isCustomPreset: (Config.options?.screenRecord?.qualityPreset ?? "balanced") === "custom"
 
     SettingsGroup {
         ConfigRow {
-            uniform: true
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            uniform: width >= 500
+
             SettingsSwitch {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 buttonIcon: "pip"
                 text: Translation.tr("Show recording overlay")
                 checked: Config.options?.screenRecord?.showOsd ?? false
@@ -413,18 +424,22 @@ SettingsCardSection {
             }
 
             SettingsSwitch {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 buttonIcon: "mouse"
                 text: Translation.tr("Auto-hide recording OSD")
                 checked: Config.options?.screenRecord?.recordingOsd?.autoHide ?? false
                 onCheckedChanged: Config.setNestedValue("screenRecord.recordingOsd.autoHide", checked)
             }
+        }
 
-            SettingsSwitch {
-                buttonIcon: "notifications"
-                text: Translation.tr("Recording notifications")
-                checked: Config.options?.screenRecord?.showNotifications ?? true
-                onCheckedChanged: Config.setNestedValue("screenRecord.showNotifications", checked)
-            }
+        SettingsSwitch {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            buttonIcon: "notifications"
+            text: Translation.tr("Recording notifications")
+            checked: Config.options?.screenRecord?.showNotifications ?? true
+            onCheckedChanged: Config.setNestedValue("screenRecord.showNotifications", checked)
         }
 
         LoadingText {
@@ -433,14 +448,18 @@ SettingsCardSection {
         }
 
         ContentSubsection {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
             title: Translation.tr("Recording folder")
 
             RowLayout {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 spacing: Appearance.sizes.spacingSmall
 
                 StyledText {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     text: Directories.shortHomePath(root.effectiveRecordingPath)
                     color: Appearance.colors.colOnLayer1
                     elide: Text.ElideMiddle
@@ -461,9 +480,12 @@ SettingsCardSection {
         }
 
         ConfigRow {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
             uniform: true
 
             RecordingDropdownField {
+                Layout.preferredWidth: 1
                 title: Translation.tr("Quality preset")
                 description: Translation.tr("Tradeoff between file size and quality.")
                 options: root.recordingQualityPresetOptions
@@ -477,6 +499,7 @@ SettingsCardSection {
             }
 
             RecordingDropdownField {
+                Layout.preferredWidth: 1
                 title: Translation.tr("Acceleration")
                 description: Translation.tr("Auto picks the best path for your hardware.")
                 options: root.recordingAccelerationOptions
@@ -485,14 +508,45 @@ SettingsCardSection {
             }
         }
 
+        ConfigRow {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            uniform: true
+
+            RecordingDropdownField {
+                Layout.preferredWidth: 1
+                title: Translation.tr("Codec")
+                description: ""
+                options: root.availableVideoCodecOptions()
+                currentValue: Config.options?.screenRecord?.videoCodec ?? "libx264"
+                onSelected: newValue => root.setRecordingConfig("screenRecord.videoCodec", newValue)
+            }
+
+            RecordingDropdownField {
+                Layout.preferredWidth: 1
+                title: Translation.tr("Frame rate")
+                description: ""
+                options: root.recordingFpsOptions
+                currentValue: Config.options?.screenRecord?.fps ?? 60
+                onSelected: newValue => root.setRecordingConfig("screenRecord.fps", newValue)
+            }
+        }
+
         SettingsSwitch {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
             buttonIcon: "swap_horiz"
-            text: Translation.tr("Fallback to safe mode if preferred encoder fails")
+            text: Translation.tr("Fallback if preferred encoder fails")
             checked: Config.options?.screenRecord?.enableFallback ?? true
-            onCheckedChanged: root.setRecordingConfig("screenRecord.enableFallback", checked)
+            onCheckedChanged: {
+                if (checked !== (Config.options?.screenRecord?.enableFallback ?? true))
+                    root.setRecordingConfig("screenRecord.enableFallback", checked);
+            }
         }
 
         ContentSubsection {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
             title: Translation.tr("Audio capture")
 
             RecordingDropdownField {
@@ -505,6 +559,7 @@ SettingsCardSection {
 
             NoticeBox {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 visible: root.recordingAudioMode === "both"
                 materialIcon: root.audioMixAvailable ? "instant_mix" : "warning"
                 text: root.audioMixAvailable
@@ -532,104 +587,18 @@ SettingsCardSection {
         }
 
         ContentSubsection {
-            title: Translation.tr("Discord compression")
-
-            SettingsSwitch {
-                buttonIcon: "compress"
-                text: Translation.tr("Compress recordings for Discord")
-                checked: Config.options?.screenRecord?.discordCompress?.enabled ?? false
-                onCheckedChanged: Config.setNestedValue("screenRecord.discordCompress.enabled", checked)
-                StyledToolTip {
-                    text: Translation.tr("Creates a separate Discord-ready copy after recording")
-                }
-            }
-
-            NoticeBox {
-                visible: Config.options?.screenRecord?.discordCompress?.enabled ?? false
-                Layout.fillWidth: true
-                materialIcon: "info"
-                text: Translation.tr("Two-pass H.264 makes a smaller copy; original stays intact. Higher CPU load.")
-            }
-
-            ConfigRow {
-                visible: Config.options?.screenRecord?.discordCompress?.enabled ?? false
-                uniform: true
-
-                RecordingDropdownField {
-                    title: Translation.tr("Target size")
-                    description: Translation.tr("10 MB fits Discord Free. A safety margin is applied automatically.")
-                    options: root.recordingDiscordTargetSizeOptions
-                    currentValue: Config.options?.screenRecord?.discordCompress?.targetSizeMb ?? 10
-                    onSelected: newValue => Config.setNestedValue("screenRecord.discordCompress.targetSizeMb", newValue)
-                }
-
-                RecordingDropdownField {
-                    title: Translation.tr("Max dimension")
-                    description: Translation.tr("Lower values help long clips fit without turning into soup.")
-                    options: root.recordingDiscordDimensionOptions
-                    currentValue: Config.options?.screenRecord?.discordCompress?.maxDimension ?? 1280
-                    onSelected: newValue => Config.setNestedValue("screenRecord.discordCompress.maxDimension", newValue)
-                }
-            }
-
-            ConfigRow {
-                visible: Config.options?.screenRecord?.discordCompress?.enabled ?? false
-                uniform: true
-
-                RecordingDropdownField {
-                    title: Translation.tr("Encoder speed")
-                    description: Translation.tr("Slower is smaller and cleaner, because physics remains annoying.")
-                    options: root.recordingSoftwarePresetOptions
-                    currentValue: Config.options?.screenRecord?.discordCompress?.preset ?? "slow"
-                    onSelected: newValue => Config.setNestedValue("screenRecord.discordCompress.preset", newValue)
-                }
-
-                RecordingDropdownField {
-                    title: Translation.tr("Audio bitrate")
-                    description: Translation.tr("Automatically reduced if the clip needs more video budget.")
-                    options: root.recordingAudioBitrateOptions
-                    currentValue: Config.options?.screenRecord?.discordCompress?.audioBitrateKbps ?? 96
-                    onSelected: newValue => Config.setNestedValue("screenRecord.discordCompress.audioBitrateKbps", newValue)
-                }
-            }
-
-            SettingsSwitch {
-                visible: Config.options?.screenRecord?.discordCompress?.enabled ?? false
-                buttonIcon: "done_all"
-                text: Translation.tr("Skip compression when already under target")
-                checked: Config.options?.screenRecord?.discordCompress?.onlyIfNeeded ?? true
-                onCheckedChanged: Config.setNestedValue("screenRecord.discordCompress.onlyIfNeeded", checked)
-            }
-        }
-
-        ContentSubsection {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
             visible: screenRecordSection.isCustomPreset
             title: Translation.tr("Video")
 
             ConfigRow {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 uniform: true
 
                 RecordingDropdownField {
-                    title: Translation.tr("Codec")
-                    description: ""
-                    options: root.availableVideoCodecOptions()
-                    currentValue: Config.options?.screenRecord?.videoCodec ?? "libx264"
-                    onSelected: newValue => root.setRecordingConfig("screenRecord.videoCodec", newValue)
-                }
-
-                RecordingDropdownField {
-                    title: Translation.tr("Frame rate")
-                    description: ""
-                    options: root.recordingFpsOptions
-                    currentValue: Config.options?.screenRecord?.fps ?? 60
-                    onSelected: newValue => root.setRecordingConfig("screenRecord.fps", newValue)
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                RecordingDropdownField {
+                    Layout.preferredWidth: 1
                     title: Translation.tr("Bitrate")
                     description: Translation.tr("Higher = better quality, bigger file.")
                     options: root.recordingVideoBitrateOptions
@@ -638,6 +607,7 @@ SettingsCardSection {
                 }
 
                 RecordingDropdownField {
+                    Layout.preferredWidth: 1
                     title: Translation.tr("CRF")
                     description: Translation.tr("Lower = better quality. Software mode only.")
                     options: root.recordingCrfOptions
@@ -647,9 +617,12 @@ SettingsCardSection {
             }
 
             ConfigRow {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 uniform: true
 
                 RecordingDropdownField {
+                    Layout.preferredWidth: 1
                     title: Translation.tr("Encoder speed")
                     description: Translation.tr("Software mode only.")
                     options: root.recordingSoftwarePresetOptions
@@ -658,6 +631,7 @@ SettingsCardSection {
                 }
 
                 RecordingDropdownField {
+                    Layout.preferredWidth: 1
                     title: Translation.tr("Pixel format")
                     description: ""
                     options: root.recordingPixelFormatOptions
@@ -668,41 +642,27 @@ SettingsCardSection {
         }
 
         ContentSubsection {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
             visible: screenRecordSection.isCustomPreset
             title: Translation.tr("Audio encoding")
 
             ConfigRow {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 uniform: true
 
                 RecordingDropdownField {
-                    title: Translation.tr("Codec")
-                    description: ""
-                    options: root.availableAudioCodecOptions()
-                    currentValue: Config.options?.screenRecord?.audioCodec ?? "aac"
-                    onSelected: newValue => root.setRecordingConfig("screenRecord.audioCodec", newValue)
-                }
-
-                RecordingDropdownField {
+                    Layout.preferredWidth: 1
                     title: Translation.tr("Bitrate")
                     description: ""
                     options: root.recordingAudioBitrateOptions
                     currentValue: Config.options?.screenRecord?.audioBitrateKbps ?? 192
                     onSelected: newValue => root.setRecordingConfig("screenRecord.audioBitrateKbps", newValue)
                 }
-            }
-
-            ConfigRow {
-                uniform: true
 
                 RecordingDropdownField {
-                    title: Translation.tr("Sample rate")
-                    description: ""
-                    options: root.recordingSampleRateOptions
-                    currentValue: Config.options?.screenRecord?.audioSampleRate ?? 48000
-                    onSelected: newValue => root.setRecordingConfig("screenRecord.audioSampleRate", newValue)
-                }
-
-                RecordingDropdownField {
+                    Layout.preferredWidth: 1
                     title: Translation.tr("Backend")
                     description: ""
                     options: root.recordingAudioBackendOptions
@@ -713,13 +673,18 @@ SettingsCardSection {
         }
 
         ContentSubsection {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
             visible: screenRecordSection.isCustomPreset && root.vaapiRecordingAvailable
             title: Translation.tr("VAAPI hardware")
 
             ConfigRow {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 uniform: true
 
                 RecordingDropdownField {
+                    Layout.preferredWidth: 1
                     title: Translation.tr("Render device")
                     description: ""
                     options: root.availableHardwareDeviceOptions()
@@ -728,6 +693,7 @@ SettingsCardSection {
                 }
 
                 RecordingDropdownField {
+                    Layout.preferredWidth: 1
                     title: Translation.tr("VAAPI filter")
                     description: ""
                     options: root.ensureOption(root.recordingVaapiFilterOptions, Config.options?.screenRecord?.vaapiFilter ?? "scale_vaapi=format=nv12:out_range=full", `${Translation.tr("Configured filter")}: ${Config.options?.screenRecord?.vaapiFilter ?? "scale_vaapi=format=nv12:out_range=full"}`)
@@ -737,34 +703,22 @@ SettingsCardSection {
             }
         }
 
-        ContentSubsection {
-            title: Translation.tr("File naming")
-
-            ContentSubsectionLabel {
-                text: Translation.tr("Recording filename format (date tokens)")
-            }
-            MaterialTextField {
-                Layout.fillWidth: true
-                placeholderText: "recording_%Y-%m-%d_%H.%M.%S"
-                text: Config.options?.screenRecord?.recordingNameFormat ?? "recording_%Y-%m-%d_%H.%M.%S"
-                onEditingFinished: Config.setNestedValue("screenRecord.recordingNameFormat", text)
-            }
-        }
     }
 }
 
-SettingsCardSection {
-    Layout.preferredWidth: 1
-    Layout.alignment: Qt.AlignTop
-    Layout.fillWidth: true
-    visible: true
-    expanded: true
-    icon: "screenshot_frame_2"
-    title: Translation.tr("Screen Snipping, Google Lens & OSD")
+    SettingsCardSection {
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        visible: true
+        expanded: true
+        icon: "screenshot_frame_2"
+        title: Translation.tr("Screen Snipping, OCR & Lens")
 
     SettingsGroup {
         ConfigRow {
-            uniform: true
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            uniform: width >= 500
 
             SettingsSwitch {
                 buttonIcon: "history"
@@ -784,14 +738,18 @@ SettingsCardSection {
         }
 
         ContentSubsection {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
             title: Translation.tr("Screenshots folder")
 
             RowLayout {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 spacing: Appearance.sizes.spacingSmall
 
                 StyledText {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     text: Directories.shortHomePath(root.effectiveScreenshotPath)
                     color: Appearance.colors.colOnLayer1
                     elide: Text.ElideMiddle
@@ -811,52 +769,369 @@ SettingsCardSection {
             }
         }
 
-        ConfigRow {
-            uniform: true
+        ContentSubsection {
+            title: Translation.tr("Hint target regions")
 
-            ContentSubsection {
-                title: Translation.tr("Hint target regions")
-                ConfigRow {
-                    uniform: true
-                    SettingsSwitch {
-                        buttonIcon: "select_window"
-                        text: Translation.tr('Windows')
-                        checked: Config.options?.regionSelector?.targetRegions?.windows ?? true
-                        onCheckedChanged: {
-                            Config.setNestedValue("regionSelector.targetRegions.windows", checked);
-                        }
+            GridLayout {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                columns: width >= 370 ? 3 : 1
+                uniformCellWidths: columns === 3
+                columnSpacing: Appearance.sizes.spacingSmall
+                rowSpacing: Appearance.sizes.spacingSmall
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.preferredWidth: 1
+                    buttonIcon: "select_window"
+                    text: Translation.tr('Windows')
+                    checked: Config.options?.regionSelector?.targetRegions?.windows ?? true
+                    onCheckedChanged: {
+                        Config.setNestedValue("regionSelector.targetRegions.windows", checked);
                     }
-                    SettingsSwitch {
-                        buttonIcon: "right_panel_open"
-                        text: Translation.tr('Layers')
-                        checked: Config.options?.regionSelector?.targetRegions?.layers ?? true
-                        onCheckedChanged: {
-                            Config.setNestedValue("regionSelector.targetRegions.layers", checked);
-                        }
+                }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.preferredWidth: 1
+                    buttonIcon: "right_panel_open"
+                    text: Translation.tr('Layers')
+                    checked: Config.options?.regionSelector?.targetRegions?.layers ?? true
+                    onCheckedChanged: {
+                        Config.setNestedValue("regionSelector.targetRegions.layers", checked);
                     }
-                    SettingsSwitch {
-                        buttonIcon: "nearby"
-                        text: Translation.tr('Content')
-                        checked: Config.options?.regionSelector?.targetRegions?.content ?? false
-                        onCheckedChanged: {
-                            Config.setNestedValue("regionSelector.targetRegions.content", checked);
-                        }
+                }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.preferredWidth: 1
+                    buttonIcon: "nearby"
+                    text: Translation.tr('Content')
+                    checked: Config.options?.regionSelector?.targetRegions?.content ?? false
+                    onCheckedChanged: {
+                        Config.setNestedValue("regionSelector.targetRegions.content", checked);
                     }
                 }
             }
+        }
 
-            ContentSubsection {
-                title: Translation.tr("Google Lens")
+        ContentSubsection {
+            title: Translation.tr("Google Lens")
 
-                ConfigSelectionArray {
-                    currentValue: (Config.options?.search?.imageSearch?.useCircleSelection ?? false) ? "circle" : "rectangles"
-                    onSelected: newValue => {
-                        Config.setNestedValue("search.imageSearch.useCircleSelection", newValue === "circle");
-                    }
-                    options: [
-                        { icon: "activity_zone", value: "rectangles", displayName: Translation.tr("Rectangular") },
-                        { icon: "gesture", value: "circle", displayName: Translation.tr("Circle to Search") }
-                    ]
+            ConfigSelectionArray {
+                currentValue: (Config.options?.search?.imageSearch?.useCircleSelection ?? false) ? "circle" : "rectangles"
+                onSelected: newValue => {
+                    Config.setNestedValue("search.imageSearch.useCircleSelection", newValue === "circle");
+                }
+                options: [
+                    { icon: "activity_zone", value: "rectangles", displayName: Translation.tr("Rectangular") },
+                    { icon: "gesture", value: "circle", displayName: Translation.tr("Circle to Search") }
+                ]
+            }
+        }
+
+        ConfigRow {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            uniform: width >= 500
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                buttonIcon: "draw"
+                text: Translation.tr("Native screenshot editor")
+                checked: Config.options?.regionSelector?.annotation?.useNativeEditor ?? true
+                onCheckedChanged: Config.setNestedValue("regionSelector.annotation.useNativeEditor", checked)
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                buttonIcon: "label"
+                text: Translation.tr("Region labels")
+                checked: Config.options?.regionSelector?.targetRegions?.showLabel ?? false
+                onCheckedChanged: Config.setNestedValue("regionSelector.targetRegions.showLabel", checked)
+            }
+        }
+
+        ConfigRow {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            uniform: width >= 500
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                buttonIcon: "open_in_new"
+                text: Translation.tr("External Satty editor")
+                checked: Config.options?.regionSelector?.annotation?.useSatty ?? false
+                onCheckedChanged: Config.setNestedValue("regionSelector.annotation.useSatty", checked)
+            }
+
+            ConfigSpinBox {
+                icon: "border_outer"
+                text: Translation.tr("Region border (px)")
+                value: Config.options?.regionSelector?.borderSize ?? 4
+                from: 1
+                to: 12
+                stepSize: 1
+                onValueChanged: Config.setNestedValue("regionSelector.borderSize", value)
+            }
+        }
+
+        ConfigRow {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            uniform: width >= 500
+
+            ConfigSpinBox {
+                icon: "padding"
+                text: Translation.tr("Target padding (px)")
+                value: Config.options?.regionSelector?.targetRegions?.selectionPadding ?? 5
+                from: 0
+                to: 24
+                stepSize: 1
+                onValueChanged: Config.setNestedValue("regionSelector.targetRegions.selectionPadding", value)
+            }
+
+            ConfigSpinBox {
+                icon: "gesture"
+                text: Translation.tr("Circle stroke (px)")
+                value: Config.options?.regionSelector?.circle?.strokeWidth ?? 6
+                from: 2
+                to: 16
+                stepSize: 1
+                onValueChanged: Config.setNestedValue("regionSelector.circle.strokeWidth", value)
+            }
+        }
+
+        ContentSubsection {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            title: Translation.tr("Screenshot filename format")
+
+            MaterialTextField {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.maximumHeight: 44
+                wrapMode: TextEdit.NoWrap
+                placeholderText: "ss-%Y%m%d-%H%M%S"
+                text: Config.options?.regionSelector?.screenshotNameFormat ?? "ss-%Y%m%d-%H%M%S"
+                onEditingFinished: Config.setNestedValue("regionSelector.screenshotNameFormat", text)
+            }
+        }
+    }
+}
+
+    SettingsCardSection {
+        id: recordingFileAndCompressSection
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        visible: true
+        expanded: true
+        icon: "video_file"
+        title: Translation.tr("Recording File & Compression")
+
+    SettingsGroup {
+        ConfigRow {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            uniform: true
+
+            RecordingDropdownField {
+                Layout.preferredWidth: 1
+                title: Translation.tr("Audio codec")
+                description: ""
+                options: root.availableAudioCodecOptions()
+                currentValue: Config.options?.screenRecord?.audioCodec ?? "aac"
+                onSelected: newValue => root.setRecordingConfig("screenRecord.audioCodec", newValue)
+            }
+
+            RecordingDropdownField {
+                Layout.preferredWidth: 1
+                title: Translation.tr("Sample rate")
+                description: ""
+                options: root.recordingSampleRateOptions
+                currentValue: Config.options?.screenRecord?.audioSampleRate ?? 48000
+                onSelected: newValue => root.setRecordingConfig("screenRecord.audioSampleRate", newValue)
+            }
+        }
+
+        ContentSubsection {
+            title: Translation.tr("Discord compression")
+
+            SettingsSwitch {
+                buttonIcon: "compress"
+                text: Translation.tr("Compress recordings for Discord")
+                checked: Config.options?.screenRecord?.discordCompress?.enabled ?? false
+                onCheckedChanged: Config.setNestedValue("screenRecord.discordCompress.enabled", checked)
+                StyledToolTip {
+                    text: Translation.tr("Creates a separate Discord-ready copy after recording")
+                }
+            }
+
+            NoticeBox {
+                visible: Config.options?.screenRecord?.discordCompress?.enabled ?? false
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                materialIcon: "info"
+                text: Translation.tr("Two-pass H.264 makes a smaller copy; original stays intact. Higher CPU load.")
+            }
+
+            ConfigRow {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                visible: Config.options?.screenRecord?.discordCompress?.enabled ?? false
+                uniform: true
+
+                RecordingDropdownField {
+                    Layout.preferredWidth: 1
+                    title: Translation.tr("Target size")
+                    description: Translation.tr("10 MB fits Discord Free. A safety margin is applied automatically.")
+                    options: root.recordingDiscordTargetSizeOptions
+                    currentValue: Config.options?.screenRecord?.discordCompress?.targetSizeMb ?? 10
+                    onSelected: newValue => Config.setNestedValue("screenRecord.discordCompress.targetSizeMb", newValue)
+                }
+
+                RecordingDropdownField {
+                    Layout.preferredWidth: 1
+                    title: Translation.tr("Max dimension")
+                    description: Translation.tr("Lower values help long clips fit without turning into soup.")
+                    options: root.recordingDiscordDimensionOptions
+                    currentValue: Config.options?.screenRecord?.discordCompress?.maxDimension ?? 1280
+                    onSelected: newValue => Config.setNestedValue("screenRecord.discordCompress.maxDimension", newValue)
+                }
+            }
+
+            ConfigRow {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                visible: Config.options?.screenRecord?.discordCompress?.enabled ?? false
+                uniform: true
+
+                RecordingDropdownField {
+                    Layout.preferredWidth: 1
+                    title: Translation.tr("Encoder speed")
+                    description: Translation.tr("Slower is smaller and cleaner, because physics remains annoying.")
+                    options: root.recordingSoftwarePresetOptions
+                    currentValue: Config.options?.screenRecord?.discordCompress?.preset ?? "slow"
+                    onSelected: newValue => Config.setNestedValue("screenRecord.discordCompress.preset", newValue)
+                }
+
+                RecordingDropdownField {
+                    Layout.preferredWidth: 1
+                    title: Translation.tr("Audio bitrate")
+                    description: Translation.tr("Automatically reduced if the clip needs more video budget.")
+                    options: root.recordingAudioBitrateOptions
+                    currentValue: Config.options?.screenRecord?.discordCompress?.audioBitrateKbps ?? 96
+                    onSelected: newValue => Config.setNestedValue("screenRecord.discordCompress.audioBitrateKbps", newValue)
+                }
+            }
+
+            SettingsSwitch {
+                enabled: Config.options?.screenRecord?.discordCompress?.enabled ?? false
+                buttonIcon: "done_all"
+                text: Translation.tr("Skip compression when already under target")
+                checked: Config.options?.screenRecord?.discordCompress?.onlyIfNeeded ?? true
+                onCheckedChanged: Config.setNestedValue("screenRecord.discordCompress.onlyIfNeeded", checked)
+            }
+        }
+
+        ContentSubsection {
+            title: Translation.tr("File naming")
+
+            ContentSubsectionLabel {
+                text: Translation.tr("Recording filename format (date tokens)")
+            }
+            MaterialTextField {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.maximumHeight: 44
+                wrapMode: TextEdit.NoWrap
+                placeholderText: "recording_%Y-%m-%d_%H.%M.%S"
+                text: Config.options?.screenRecord?.recordingNameFormat ?? "recording_%Y-%m-%d_%H.%M.%S"
+                onEditingFinished: Config.setNestedValue("screenRecord.recordingNameFormat", text)
+            }
+        }
+    }
+}
+
+    SettingsCardSection {
+        id: captureToolsQuickSection
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        visible: true
+        expanded: true
+        icon: "keyboard_onscreen"
+        title: Translation.tr("Clipboard, Keyboard & Quick Tools")
+
+    SettingsGroup {
+        ConfigRow {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            uniform: width >= 500
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                buttonIcon: "content_paste"
+                text: Translation.tr("Clipboard history")
+                checked: Config.options?.modules?.clipboard ?? true
+                onCheckedChanged: Config.setNestedValue("modules.clipboard", checked)
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                buttonIcon: "keyboard"
+                text: Translation.tr("On-screen keyboard")
+                checked: Config.options?.modules?.onScreenKeyboard ?? true
+                onCheckedChanged: Config.setNestedValue("modules.onScreenKeyboard", checked)
+            }
+        }
+
+        ConfigRow {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            uniform: width >= 500
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                enabled: Config.options?.modules?.onScreenKeyboard ?? true
+                buttonIcon: "push_pin"
+                text: Translation.tr("Pin OSK on startup")
+                checked: Config.options?.osk?.pinnedOnStartup ?? false
+                onCheckedChanged: Config.setNestedValue("osk.pinnedOnStartup", checked)
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                enabled: Config.options?.modules?.onScreenKeyboard ?? true
+                buttonIcon: "flip_to_front"
+                text: Translation.tr("Keep OSK on top")
+                checked: Config.options?.osk?.keepOnTop ?? false
+                onCheckedChanged: Config.setNestedValue("osk.keepOnTop", checked)
+            }
+        }
+
+        ContentSubsection {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            title: Translation.tr("OSK layout")
+
+            StyledComboBox {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                enabled: Config.options?.modules?.onScreenKeyboard ?? true
+                model: root.availableOskLayoutOptions()
+                textRole: "displayName"
+                currentIndex: root.choiceIndex(model, Config.options?.osk?.layout ?? "English (US)")
+                onActivated: index => {
+                    if (index >= 0 && index < model.length)
+                        Config.setNestedValue("osk.layout", model[index].value)
                 }
             }
         }
@@ -864,34 +1139,82 @@ SettingsCardSection {
         SettingsDivider {}
 
         ContentSubsection {
-            title: Translation.tr("On-screen display (OSD)")
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            title: Translation.tr("Bar capture shortcuts")
 
             ConfigRow {
-                uniform: true
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                uniform: width >= 500
 
-                ConfigSwitch {
-                    buttonIcon: "music_note"
-                    text: Translation.tr("Media OSD")
-                    checked: Config.options?.osd?.mediaEnabled ?? true
-                    onCheckedChanged: {
-                        Config.setNestedValue("osd.mediaEnabled", checked);
-                    }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "screenshot_region"
+                    text: Translation.tr("Screen snip button")
+                    checked: Config.options?.bar?.utilButtons?.showScreenSnip ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showScreenSnip", checked)
                 }
 
-                ConfigSpinBox {
-                    icon: "av_timer"
-                    text: Translation.tr("Timeout (ms)")
-                    value: Config.options?.osd?.timeout ?? 1500
-                    from: 100
-                    to: 3000
-                    stepSize: 100
-                    onValueChanged: {
-                        Config.setNestedValue("osd.timeout", value);
-                    }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "screen_record"
+                    text: Translation.tr("Screen record button")
+                    checked: Config.options?.bar?.utilButtons?.showScreenRecord ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showScreenRecord", checked)
+                }
+            }
+
+            ConfigRow {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                uniform: width >= 500
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "colorize"
+                    text: Translation.tr("Color picker button")
+                    checked: Config.options?.bar?.utilButtons?.showColorPicker ?? false
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showColorPicker", checked)
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "edit_note"
+                    text: Translation.tr("Quick notepad button")
+                    checked: Config.options?.bar?.utilButtons?.showNotepad ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showNotepad", checked)
+                }
+            }
+
+            ConfigRow {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                uniform: width >= 500
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "keyboard_alt"
+                    text: Translation.tr("Keyboard toggle button")
+                    checked: Config.options?.bar?.utilButtons?.showKeyboardToggle ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showKeyboardToggle", checked)
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "widgets"
+                    text: Translation.tr("Utilities button")
+                    checked: Config.options?.bar?.utilButtons?.showUtilitiesLauncher ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showUtilitiesLauncher", checked)
                 }
             }
         }
     }
 }
-    }
 }

@@ -63,8 +63,16 @@ Item {
 
     CavaProcess {
         id: cavaProcess
-        active: root.visible
+        active: root.visible && MprisController.anyAudioPlaying
         sampleCount: Math.max(16, root.effectiveBarCount)
+    }
+
+    readonly property var _idleNormalized: {
+        const count = Math.max(1, root.effectiveBarCount)
+        const out = new Array(count)
+        for (let idx = 0; idx < count; ++idx)
+            out[idx] = 0.14 + 0.08 * Math.sin((idx / count) * Math.PI)
+        return out
     }
 
     readonly property var paletteColors: {
@@ -95,6 +103,37 @@ Item {
         rotation: root.vertical ? 90 : 0
         clip: true
 
+        readonly property var targetNormalized: {
+            if (!cavaProcess.audioSignalActive)
+                return root._idleNormalized
+            const count = Math.max(1, root.effectiveBarCount)
+            const out = new Array(count)
+            if (!root.visible) {
+                out.fill(0.08)
+                return out
+            }
+            const pts = cavaProcess.points
+            const len = pts ? pts.length : 0
+            const ceiling = Math.max(100, Number(cavaProcess.normalizationCeiling || 1000))
+            if (len <= 0) {
+                out.fill(0.08)
+                return out
+            }
+            for (let idx = 0; idx < count; ++idx) {
+                const start = Math.floor(idx * len / count)
+                const end = Math.min(len, Math.max(start + 1, Math.ceil((idx + 1) * len / count)))
+                let sum = 0
+                let cnt = 0
+                for (let i = start; i < end; ++i) {
+                    sum += Number(pts[i] || 0)
+                    cnt++
+                }
+                const rawPoint = cnt > 0 ? (sum / cnt) : 0
+                out[idx] = Math.max(0.08, Math.min(1.0, rawPoint / ceiling))
+            }
+            return out
+        }
+
         Repeater {
             model: root.visible ? root.effectiveBarCount : 0
 
@@ -109,33 +148,14 @@ Item {
                 width: slotWidth
                 height: barsContainer.height
 
-                readonly property real rawPoint: {
-                    const pts = cavaProcess.points
-                    const len = pts ? pts.length : 0
-                    if (!root.visible || len <= 0) return 0
-                    const start = Math.floor(index * len / Math.max(1, root.effectiveBarCount))
-                    const end = Math.min(len, Math.max(start + 1, Math.ceil((index + 1) * len / Math.max(1, root.effectiveBarCount))))
-                    let sum = 0
-                    let cnt = 0
-                    for (let i = start; i < end; i++) {
-                        sum += Number(pts[i] || 0)
-                        cnt++
-                    }
-                    return cnt > 0 ? (sum / cnt) : 0
+                property real normalizedPoint: (index < barsContainer.targetNormalized.length)
+                    ? barsContainer.targetNormalized[index] : 0.08
+                Behavior on normalizedPoint {
+                    enabled: Appearance.animationsEnabled && root.visible
+                    NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
                 }
-
-                readonly property real ceiling: Math.max(100, Number(cavaProcess.normalizationCeiling || 1000))
-                readonly property real normalized: {
-                    if (!cavaProcess.audioSignalActive) {
-                        // Subtle idle equalizer silhouette so module size/bars are always clear
-                        const wave = 0.14 + 0.08 * Math.sin((index / Math.max(1, root.effectiveBarCount)) * Math.PI)
-                        return wave
-                    }
-                    return Math.max(0.08, Math.min(1.0, rawPoint / ceiling))
-                }
-
-                readonly property real activeBarHeight: Math.max(2, Math.round(normalized * barSlot.height))
-                readonly property color activeColor: root.barColorForIndex(index, root.effectiveBarCount, normalized)
+                readonly property real activeBarHeight: Math.max(2, Math.round(normalizedPoint * barSlot.height))
+                readonly property color activeColor: root.barColorForIndex(index, root.effectiveBarCount, normalizedPoint)
 
                 Rectangle {
                     width: barSlot.slotWidth
@@ -147,11 +167,6 @@ Item {
                         : (barSlot.height - height)
                     color: barSlot.activeColor
                     opacity: cavaProcess.audioSignalActive ? 0.95 : 0.45
-
-                    Behavior on height {
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { duration: 65; easing.type: Easing.OutQuad }
-                    }
                 }
             }
         }

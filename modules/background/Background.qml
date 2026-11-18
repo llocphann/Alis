@@ -479,6 +479,7 @@ Scope {
         // flag or the grabbed xdg-popup pointer path.
         readonly property bool _needsKeyboardFocus: bgRoot._widgetEnabled("notes", false)
             || desktopContextHitArea.enabled
+            || GlobalStates.widgetEditMode
 
         // Zone occupancy: map zone name → array of widget names
         readonly property var _builtinWidgets: [
@@ -865,7 +866,8 @@ Scope {
         Process {
             id: getWallpaperSizeProc
             property string path: bgRoot.wallpaperPath
-            command: ["/usr/bin/magick", "identify", "-format", "%w %h", path]
+            // `-ping` reads only the image header instead of decoding the full 4K/8K pixel buffer.
+            command: ["/usr/bin/magick", "identify", "-ping", "-format", "%w %h", path]
             stdout: StdioCollector {
                 id: wallpaperSizeOutputCollector
                 onStreamFinished: {
@@ -1253,7 +1255,28 @@ Scope {
                         desktopContextMenu.close()
                         desktopItemContextMenu.close()
                         event.accepted = true
+                    } else if (GlobalStates.widgetEditMode) {
+                        widgetManagerPanel.shown = false
+                        GlobalStates.cancelWidgetEditMode()
+                        event.accepted = true
                     } else event.accepted = false
+                }
+                Shortcut {
+                    sequences: ["Escape"]
+                    context: Qt.WindowShortcut
+                    autoRepeat: false
+                    enabled: GlobalStates.widgetEditMode && !(desktopContextMenu.active || desktopItemContextMenu.active)
+                    onActivated: {
+                        widgetManagerPanel.shown = false
+                        GlobalStates.cancelWidgetEditMode()
+                    }
+                }
+            }
+            Connections {
+                target: GlobalStates
+                function onWidgetEditModeChanged(): void {
+                    if (!GlobalStates.widgetEditMode)
+                        widgetManagerPanel.shown = false
                 }
             }
 
@@ -1338,7 +1361,7 @@ Scope {
                         } },
                     { type: "separator" },
                     { text: Translation.tr("Done editing"), iconName: "check", monochromeIcon: true,
-                        action: () => { widgetManagerPanel.shown = false; GlobalStates.setWidgetEditMode(false) } }
+                        action: () => { widgetManagerPanel.shown = false; GlobalStates.commitWidgetEditMode() } }
                 ] : [
                     { text: Translation.tr("Settings"), iconName: "settings", monochromeIcon: true,
                         action: () => { Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"]) } },

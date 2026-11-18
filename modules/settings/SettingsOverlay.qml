@@ -9,11 +9,13 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.services
 import qs.modules.settings
+import qs.modules.settings.iris
 import "SettingsHierarchy.js" as Hierarchy
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.perimeter
 import qs.modules.common.functions as CF
+import qs.modules.waffle.settings as WaffleSettings
 
 /**
  * Settings UI as a layer shell overlay panel.
@@ -80,20 +82,152 @@ Scope {
         onTriggered: _closeAnimRunning = false
     }
 
-    // ── Search system (full, same as settings.qml) ──
+    // ── Search & iRiS Navigation State (shared contract with settings.qml) ──
     property string overlaySearchText: ""
     property var overlaySearchResults: []
+    property int overlaySearchSelectedIndex: 0
+    property Item searchFieldItem: null
+    property Item homeViewItem: null
+    property Item searchViewItem: null
+
+    property bool showingHome: false
+    property var _historyStack: []
+    property int _historyIndex: -1
+    property bool _historyNavigating: false
+    readonly property bool canGoBack: root._historyIndex > 0
+    readonly property bool canGoForward: root._historyIndex >= 0 && root._historyIndex + 1 < root._historyStack.length
+
+    function _pushHistoryEntry(isHome: bool, pageIdx: int): void {
+        if (root._historyNavigating)
+            return
+        const cur = root._historyIndex >= 0 && root._historyIndex < root._historyStack.length
+            ? root._historyStack[root._historyIndex]
+            : null
+        if (cur && Boolean(cur.home) === isHome && (isHome || Number(cur.pageIndex) === pageIdx))
+            return
+        const next = root._historyStack.slice(0, root._historyIndex + 1)
+        next.push({ home: isHome, pageIndex: pageIdx })
+        if (next.length > 32)
+            next.shift()
+        root._historyStack = next
+        root._historyIndex = next.length - 1
+    }
+
+    function showHomeView(): void {
+        SettingsLayoutManager.activeCustomTabId = ""
+        if (root.overlaySearchText.length > 0) {
+            root.overlaySearchText = ""
+            root.overlaySearchResults = []
+            if (root.searchFieldItem)
+                root.searchFieldItem.text = ""
+        }
+        root.showingHome = true
+        root._pushHistoryEntry(true, root.overlayCurrentPage)
+    }
+
+    function navigateToArea(pageIndex: int): void {
+        SettingsLayoutManager.activeCustomTabId = ""
+        if (root.overlaySearchText.length > 0) {
+            root.overlaySearchText = ""
+            root.overlaySearchResults = []
+            if (root.searchFieldItem)
+                root.searchFieldItem.text = ""
+        }
+        const safe = SettingsPageRegistry.safePageIndex(pageIndex)
+        root.showingHome = false
+        if (root.pageHost?.currentItem
+                && typeof root.pageHost.currentItem.exitSubView === "function"
+                && Boolean(root.pageHost.currentItem.isSubViewActive)
+                && root.overlayCurrentPage === safe) {
+            root.pageHost.currentItem.exitSubView()
+        }
+        if (root.overlayCurrentPage !== safe) {
+            root.overlayCurrentPage = safe
+        } else {
+            root._pushHistoryEntry(false, safe)
+            IrisState.recordVisit(safe)
+        }
+    }
+
+    function goBack(): void {
+        if (!root.canGoBack)
+            return
+        root._historyNavigating = true
+        root._historyIndex = Math.max(0, root._historyIndex - 1)
+        const entry = root._historyStack[root._historyIndex]
+        SettingsLayoutManager.activeCustomTabId = ""
+        if (entry?.home) {
+            root.showingHome = true
+        } else if (entry) {
+            root.showingHome = false
+            root.overlayCurrentPage = SettingsPageRegistry.safePageIndex(Number(entry.pageIndex ?? 2))
+        }
+        root._historyNavigating = false
+    }
+
+    function goForward(): void {
+        if (!root.canGoForward)
+            return
+        root._historyNavigating = true
+        root._historyIndex = Math.min(root._historyStack.length - 1, root._historyIndex + 1)
+        const entry = root._historyStack[root._historyIndex]
+        SettingsLayoutManager.activeCustomTabId = ""
+        if (entry?.home) {
+            root.showingHome = true
+        } else if (entry) {
+            root.showingHome = false
+            root.overlayCurrentPage = SettingsPageRegistry.safePageIndex(Number(entry.pageIndex ?? 2))
+        }
+        root._historyNavigating = false
+    }
+
+    function moveOverlaySearchSelection(delta: int): void {
+        const count = root.overlaySearchResults?.length ?? 0
+        if (count <= 0) {
+            root.overlaySearchSelectedIndex = 0
+            return
+        }
+        root.overlaySearchSelectedIndex = Math.max(0, Math.min(count - 1, root.overlaySearchSelectedIndex + delta))
+    }
+
+    function acceptOverlaySearchSelection(): void {
+        const count = root.overlaySearchResults?.length ?? 0
+        if (count > 0) {
+            const idx = Math.max(0, Math.min(count - 1, root.overlaySearchSelectedIndex))
+            root.openOverlaySearchResult(root.overlaySearchResults[idx])
+            return
+        }
+        const places = root.searchViewItem?.matchingPlaces ?? []
+        if (places.length > 0) {
+            const p = places[0]
+            root.openOverlaySearchResult({
+                pageIndex: Number(p.pageIndex),
+                section: String(p.section || ""),
+                label: String(p.section || p.title || ""),
+                isSection: true
+            })
+        }
+    }
 
     function handleEscape(): bool {
         if (root.overlaySearchText.length > 0) {
             root.openOverlaySearchResult({})
             return true
         }
+        if (Boolean(root.homeViewItem?.editingTiles)) {
+            root.homeViewItem.editingTiles = false
+            return true
+        }
         if (SettingsLayoutManager.editMode) {
             return SettingsLayoutManager.handleEscape()
         }
-        if (typeof root.pageHost?.currentItem?.handleEscape === "function"
+        if (!root.showingHome && typeof root.pageHost?.currentItem?.handleEscape === "function"
                 && root.pageHost.currentItem.handleEscape()) {
+            return true
+        }
+        if (!root.showingHome && Boolean(root.pageHost?.currentItem?.isSubViewActive)
+                && typeof root.pageHost.currentItem.exitSubView === "function") {
+            root.pageHost.currentItem.exitSubView()
             return true
         }
         if (root.navEditMode) {
@@ -209,6 +343,7 @@ Scope {
         }
 
         overlaySearchResults = unique.slice(0, 50);
+        overlaySearchSelectedIndex = 0;
     }
 
     // ── Search navigation system ──
@@ -223,12 +358,17 @@ Scope {
     function openOverlaySearchResult(entry) {
         // Clear search immediately
         overlaySearchText = "";
-        if (typeof overlaySearchField !== "undefined" && overlaySearchField) overlaySearchField.text = "";
+        overlaySearchResults = [];
+        overlaySearchSelectedIndex = 0;
+        if (root.searchFieldItem) root.searchFieldItem.text = "";
 
         // Reset any previous search target
         resetSearchTarget();
 
         if (!entry || entry.pageIndex === undefined || entry.pageIndex < 0) return;
+
+        SettingsLayoutManager.activeCustomTabId = "";
+        root.showingHome = false;
 
         // Store spotlight target info
         pendingSpotlightOptionId = (entry.optionId !== undefined) ? entry.optionId : -1;
@@ -243,6 +383,9 @@ Scope {
         }
         if (overlayCurrentPage !== entry.pageIndex) {
             overlayCurrentPage = entry.pageIndex;
+        } else {
+            root._pushHistoryEntry(false, entry.pageIndex);
+            IrisState.recordVisit(entry.pageIndex);
         }
 
         // Always try navigation (with retry for lazy-loaded widgets)
@@ -410,13 +553,30 @@ Scope {
 
     Connections {
         target: SettingsPageRegistry
+        function onHomeRequested() {
+            if (!root.settingsOpen) return
+            root.showHomeView()
+        }
         function onNavigateRequested(pageIndex, section) {
             if (!root.settingsOpen) return
+            root.showingHome = false
             if (section.length > 0)
                 root.openOverlaySearchResult({ pageIndex: pageIndex,
                     section: section, label: section, isSection: true })
             else
-                root.overlayCurrentPage = pageIndex
+                root.navigateToArea(pageIndex)
+        }
+    }
+
+    Connections {
+        target: SettingsLayoutManager
+        function onEditModeChanged() {
+            if (SettingsLayoutManager.editMode)
+                root.showingHome = false
+        }
+        function onActiveCustomTabIdChanged() {
+            if (SettingsLayoutManager.activeCustomTabId.length > 0)
+                root.showingHome = false
         }
     }
 
@@ -579,7 +739,10 @@ Scope {
                 sequences: ["Ctrl+F"]
                 enabled: root.settingsOpen
                 context: Qt.WindowShortcut
-                onActivated: if (typeof overlaySearchField !== "undefined" && overlaySearchField) overlaySearchField.forceActiveFocus()
+                onActivated: {
+                    if (root.searchFieldItem)
+                        root.searchFieldItem.forceActiveFocus()
+                }
             }
 
             // Focus grab for Hyprland
@@ -711,11 +874,15 @@ Scope {
                     1600,
                     Math.max(900, settingsPanel.width * 0.90),
                     Math.max(0, settingsPanel.width - 48)))
-                readonly property real maxCardHeight: root.embeddedHost ? root.embeddedHost.height : Math.round(Math.min(
-                    1080,
-                    Math.max(720, settingsPanel.height * 0.88),
-                    Math.max(0, (Config.options?.panelFamily === "waffle"
-                        ? settingsCard.waffleWorkHeight : settingsPanel.height) - 64)))
+                readonly property real _panelAvailHeight: Config.options?.panelFamily === "waffle"
+                    ? settingsCard.waffleWorkHeight
+                    : settingsPanel.height
+                readonly property real maxCardHeight: root.embeddedHost
+                    ? root.embeddedHost.height
+                    : Math.round(Math.max(560, Math.min(
+                        Math.round(1280 * Math.max(1, Appearance.fontSizeScale)),
+                        Math.round(settingsCard._panelAvailHeight * 0.92),
+                        Math.max(0, settingsCard._panelAvailHeight - 40))))
                 // Structural connected chrome: the same Material surface token as
                 // Screen Edge. Preserve colLayer0's global transparency as-is.
                 readonly property color surfaceFillColor: Appearance.colors.colLayer0
@@ -727,15 +894,15 @@ Scope {
                         + (1 - root._surfaceReveal) * height)
                 width: maxCardWidth
                 height: maxCardHeight
-                radius: Appearance.rounding.windowRounding
+                radius: SettingsMaterialPreset.waffle ? 8 : Appearance.rounding.windowRounding
                 bottomLeftRadius: Config.options?.panelFamily === "waffle" ? radius : 0
                 bottomRightRadius: Config.options?.panelFamily === "waffle" ? radius : 0
-                color: (!root.embeddedHost && Config.options?.panelFamily === "waffle")
-                    ? settingsCard.surfaceFillColor : "transparent"
+                color: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.windowColor : "transparent"
                 clip: true
 
-                border.width: 0
-                border.color: "transparent"
+                border.width: (!root.embeddedHost && SettingsMaterialPreset.waffle) ? 1 : 0
+                border.color: (!root.embeddedHost && SettingsMaterialPreset.waffle)
+                    ? SettingsMaterialPreset.cardBorderColor : "transparent"
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -765,14 +932,44 @@ Scope {
                     id: mainLayout
                     anchors {
                         fill: parent
-                        margins: 16
+                        margins: SettingsMaterialPreset.waffle ? 0 : 16
                     }
                     z: 2
                     spacing: 0
 
+                    WaffleSettings.WWin11SettingsTitleBar {
+                        id: waffleOverlayTitleBar
+                        visible: SettingsMaterialPreset.waffle
+                        Layout.fillWidth: true
+                        embedded: Boolean(root.embeddedHost)
+                        isOverlay: true
+                        canGoBack: root.canGoBack || root.overlaySearchText.length > 0
+                        editButtonObjectName: SettingsMaterialPreset.waffle ? "overlayEditSettingsLayoutButton" : ""
+                        onBackRequested: {
+                            if (root.overlaySearchText.length > 0)
+                                root.openOverlaySearchResult({})
+                            else
+                                root.goBack()
+                        }
+                        onToggleEditLayout: {
+                            if (SettingsLayoutManager.editMode)
+                                SettingsLayoutManager.commitEditMode()
+                            else
+                                SettingsLayoutManager.beginEditMode()
+                        }
+                        onSwitchModeRequested: {
+                            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings-window"])
+                            Config.setNestedValue("settingsUi.overlayMode", false)
+                            GlobalStates.settingsOverlayOpen = false
+                        }
+                        onLockRequested: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "lock", "activate"])
+                        onCloseRequested: GlobalStates.settingsOverlayOpen = false
+                    }
+
                     // ── Title bar ──
                     Item {
                         id: overlayHeader
+                        visible: !SettingsMaterialPreset.waffle
                         Layout.fillWidth: true
                         Layout.preferredHeight: root.navEditMode ? 58 : 44
                         Layout.leftMargin: 4
@@ -965,12 +1162,12 @@ Scope {
                             anchors.fill: parent
                             anchors.topMargin: root.navEditMode ? 10 : 4
                             anchors.bottomMargin: root.navEditMode ? 10 : 4
-                            radius: Appearance.rounding.full
-                            color: overlaySearchField.activeFocus
+                            radius: SettingsMaterialPreset.searchRadius
+                            color: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.searchColor : overlaySearchField.activeFocus
                                 ? Appearance.colors.colLayer1
                                 : Appearance.colors.colSurfaceContainerLow
                             border.width: overlaySearchField.activeFocus ? 2 : 1
-                            border.color: overlaySearchField.activeFocus
+                            border.color: SettingsMaterialPreset.waffle ? (overlaySearchField.activeFocus ? SettingsMaterialPreset.accentColor : SettingsMaterialPreset.cardBorderColor) : overlaySearchField.activeFocus
                                 ? Appearance.colors.colPrimary
                                 : Appearance.colors.colOutlineVariant
 
@@ -1154,7 +1351,7 @@ Scope {
 
                                 RippleButton {
                                     id: editSettingsLayoutBtn
-                                    objectName: "overlayEditSettingsLayoutButton"
+                                    objectName: SettingsMaterialPreset.waffle ? "" : "overlayEditSettingsLayoutButton"
                                     buttonRadius: Appearance.rounding.full
                                     implicitWidth: 36
                                     implicitHeight: 36
@@ -1243,14 +1440,18 @@ Scope {
                     RowLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        spacing: 10
+                        Layout.leftMargin: SettingsMaterialPreset.waffle ? 14 : 0
+                        Layout.bottomMargin: SettingsMaterialPreset.waffle ? 10 : 0
+                        spacing: SettingsMaterialPreset.waffle ? 8 : 10
 
                         // Navigation rail with labels
                         Rectangle {
                             id: navColumn
                             objectName: "settingsOverlayNavColumn"
                             Layout.fillHeight: true
-                            Layout.preferredWidth: 204
+                            Layout.preferredWidth: SettingsMaterialPreset.waffle
+                                ? Math.min(SettingsMaterialPreset.waffleRailWidth, Math.max(216, Math.round(settingsCard.width * 0.24)))
+                                : 204
                             radius: Appearance.rounding.normal
                             color: "transparent"
 
@@ -1263,12 +1464,46 @@ Scope {
                                 }
                             }
 
+                            Binding {
+                                target: root
+                                property: "searchFieldItem"
+                                value: SettingsMaterialPreset.waffle ? waffleOverlayRailHeader.searchField : overlaySearchField
+                            }
+
+                            WaffleSettings.WWin11SettingsRailHeader {
+                                id: waffleOverlayRailHeader
+                                visible: SettingsMaterialPreset.waffle
+                                anchors {
+                                    top: parent.top
+                                    left: parent.left
+                                    right: parent.right
+                                    margins: 2
+                                }
+                                searchQuery: root.overlaySearchText
+                                resultCount: root.overlaySearchResults.length
+                                onAccountClicked: root.navigateToArea(1)
+                                onSearchTextEdited: query => {
+                                    root.overlaySearchText = query
+                                    root.recomputeOverlaySearchResults()
+                                }
+                                onFocusResultsRequested: overlayLiveSearch.focusResults()
+                                onAcceptCurrentResultRequested: overlayLiveSearch.activateCurrent()
+                                onClearSearchRequested: root.openOverlaySearchResult({})
+                            }
+
                             Flickable {
                                 id: navFlickable
                                 visible: !root.navEditMode || navEditLoader.status !== Loader.Ready
-                                anchors.fill: parent
-                                anchors.margins: 2
-                                anchors.bottomMargin: overlayNavActions.height + 6
+                                anchors {
+                                    top: SettingsMaterialPreset.waffle ? waffleOverlayRailHeader.bottom : parent.top
+                                    left: parent.left
+                                    right: parent.right
+                                    bottom: parent.bottom
+                                    topMargin: SettingsMaterialPreset.waffle ? 8 : 2
+                                    leftMargin: 2
+                                    rightMargin: 2
+                                    bottomMargin: overlayNavActions.height + 6
+                                }
                                 contentHeight: navCol.implicitHeight
                                 clip: true
                                 boundsBehavior: Flickable.StopAtBounds
@@ -1281,7 +1516,7 @@ Scope {
                                 ColumnLayout {
                                     id: navCol
                                     width: parent.width
-                                    spacing: 4
+                                    spacing: SettingsMaterialPreset.waffle ? 3 : 4
 
                                     Repeater {
                                         id: navRepeater
@@ -1307,17 +1542,17 @@ Scope {
                                                 : ("settingsNavGroup_" + index)
                                             visible: navHeadingGroup.groupPages.length > 0
                                             Layout.fillWidth: true
-                                            implicitHeight: 36
+                                            implicitHeight: SettingsMaterialPreset.waffle ? Math.round(38 * Appearance.fontSizeScale) : 36
                                             rippleEnabled: true
-                                            buttonRadius: Appearance.rounding.small
+                                            buttonRadius: SettingsMaterialPreset.navItemRadius
                                             toggled: navHeadingGroup.hasActivePage || navHeadingGroup.isDropHovered
                                             colBackground: navHeadingGroup.isDropHovered
                                                 ? Appearance.colors.colSecondaryContainer : "transparent"
-                                            colBackgroundHover: Appearance.colors.colLayer1Hover
+                                            colBackgroundHover: SettingsMaterialPreset.navHoverColor
                                             colBackgroundToggled: navHeadingGroup.isDropHovered
                                                 ? Appearance.colors.colSecondaryContainer
-                                                : Appearance.colors.colPrimaryContainer
-                                            colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+                                                : SettingsMaterialPreset.navSelectedColor
+                                            colBackgroundToggledHover: SettingsMaterialPreset.navSelectedHoverColor
 
                                             Component.onCompleted: {
                                                 if (navHeadingGroup.primaryPageIndex >= 0) {
@@ -1348,7 +1583,17 @@ Scope {
                                                 }
                                             }
 
-                                            contentItem: RowLayout {
+                                            Rectangle {
+                                    objectName: "waffleSettingsSelectionIndicator"
+                                    visible: SettingsMaterialPreset.waffle && navHeadingGroup.hasActivePage
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 2
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 3; height: 16; radius: 1.5
+                                    color: SettingsMaterialPreset.accentColor
+                                }
+
+                                contentItem: RowLayout {
                                                 anchors.fill: parent
                                                 anchors.leftMargin: 10
                                                 anchors.rightMargin: 10
@@ -1371,11 +1616,12 @@ Scope {
                                                     Layout.fillWidth: true
                                                     verticalAlignment: Text.AlignVCenter
                                                     text: navHeadingGroup.headingTitle
+                                        font.family: SettingsMaterialPreset.fontFamily
                                                     font.pixelSize: Appearance.font.pixelSize.small
                                                     font.weight: navHeadingGroup.hasActivePage ? Font.DemiBold : Font.Medium
                                                     color: navHeadingGroup.hasActivePage
-                                                        ? Appearance.colors.colOnPrimaryContainer
-                                                        : Appearance.colors.colOnLayer1
+                                                        ? SettingsMaterialPreset.navSelectedTextColor
+                                                        : SettingsMaterialPreset.textColor
                                                     marquee: true
                                                     maximumLineCount: 1
                                                 }
@@ -1548,11 +1794,13 @@ Scope {
                             Loader {
                                 id: navEditLoader
                                 anchors {
-                                    top: parent.top
+                                    top: SettingsMaterialPreset.waffle ? waffleOverlayRailHeader.bottom : parent.top
                                     left: parent.left
                                     right: parent.right
                                     bottom: overlayNavActions.top
-                                    margins: 2
+                                    topMargin: SettingsMaterialPreset.waffle ? 8 : 2
+                                    leftMargin: 2
+                                    rightMargin: 2
                                     bottomMargin: 6
                                 }
                                 active: root.navEditMode
@@ -1595,15 +1843,15 @@ Scope {
                                 RippleButton {
                                     id: overlayLayoutEditToggle
                                     objectName: "overlayLayoutEditToggle"
-                                    readonly property color editSurface: Appearance.colors.colPrimaryContainer
-                                    readonly property color editSurfaceHover: Appearance.colors.colPrimaryContainerHover
-                                    readonly property color editForeground: Appearance.colors.colOnPrimaryContainer
+                                    readonly property color editSurface: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedColor : Appearance.colors.colPrimaryContainer
+                                    readonly property color editSurfaceHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedHoverColor : Appearance.colors.colPrimaryContainerHover
+                                    readonly property color editForeground: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.textColor : Appearance.colors.colOnPrimaryContainer
                                     Layout.fillWidth: true
                                     implicitHeight: 36
-                                    buttonRadius: Appearance.rounding.small
+                                    buttonRadius: SettingsMaterialPreset.navItemRadius
                                     toggled: SettingsLayoutManager.editMode
                                     colBackground: "transparent"
-                                    colBackgroundHover: Appearance.colors.colLayer1Hover
+                                    colBackgroundHover: SettingsMaterialPreset.navHoverColor
                                     colBackgroundToggled: editSurface
                                     colBackgroundToggledHover: editSurfaceHover
                                     onClicked: {
@@ -1625,7 +1873,7 @@ Scope {
                                             iconSize: 18
                                             color: SettingsLayoutManager.editMode
                                                 ? overlayLayoutEditToggle.editForeground
-                                                : Appearance.colors.colOnSurfaceVariant
+                                                : SettingsMaterialPreset.secondaryTextColor
                                         }
 
                                         StyledText {
@@ -1635,10 +1883,11 @@ Scope {
                                             text: SettingsLayoutManager.editMode
                                                 ? Translation.tr("Done layout")
                                                 : Translation.tr("Edit layout")
+                                            font.family: SettingsMaterialPreset.fontFamily
                                             font.pixelSize: Appearance.font.pixelSize.small
                                             color: SettingsLayoutManager.editMode
                                                 ? overlayLayoutEditToggle.editForeground
-                                                : Appearance.colors.colOnSurfaceVariant
+                                                : SettingsMaterialPreset.secondaryTextColor
                                             elide: Text.ElideRight
                                         }
                                     }
@@ -1653,15 +1902,15 @@ Scope {
 
                                 RippleButton {
                                     id: overlayNavEditToggle
-                                    readonly property color editSurface: Appearance.colors.colPrimaryContainer
-                                    readonly property color editSurfaceHover: Appearance.colors.colPrimaryContainerHover
-                                    readonly property color editForeground: Appearance.colors.colOnPrimaryContainer
+                                    readonly property color editSurface: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedColor : Appearance.colors.colPrimaryContainer
+                                    readonly property color editSurfaceHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedHoverColor : Appearance.colors.colPrimaryContainerHover
+                                    readonly property color editForeground: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.textColor : Appearance.colors.colOnPrimaryContainer
                                     Layout.fillWidth: true
                                     implicitHeight: 36
-                                    buttonRadius: Appearance.rounding.small
+                                    buttonRadius: SettingsMaterialPreset.navItemRadius
                                     toggled: root.navEditMode
                                     colBackground: "transparent"
-                                    colBackgroundHover: Appearance.colors.colLayer1Hover
+                                    colBackgroundHover: SettingsMaterialPreset.navHoverColor
                                     colBackgroundToggled: editSurface
                                     colBackgroundToggledHover: editSurfaceHover
                                     onClicked: root.navEditMode = !root.navEditMode
@@ -1679,7 +1928,7 @@ Scope {
                                             iconSize: 18
                                             color: root.navEditMode
                                                 ? overlayNavEditToggle.editForeground
-                                                : Appearance.colors.colOnSurfaceVariant
+                                                : SettingsMaterialPreset.secondaryTextColor
                                         }
 
                                         StyledText {
@@ -1689,10 +1938,11 @@ Scope {
                                             text: root.navEditMode
                                                 ? Translation.tr("Done")
                                                 : Translation.tr("Edit navigation")
+                                            font.family: SettingsMaterialPreset.fontFamily
                                             font.pixelSize: Appearance.font.pixelSize.small
                                             color: root.navEditMode
                                                 ? overlayNavEditToggle.editForeground
-                                                : Appearance.colors.colOnSurfaceVariant
+                                                : SettingsMaterialPreset.secondaryTextColor
                                             elide: Text.ElideRight
                                         }
                                     }
@@ -1709,10 +1959,9 @@ Scope {
                                     id: overlayWindowToggle
                                     Layout.fillWidth: true
                                     implicitHeight: 36
-                                    buttonRadius: Appearance.rounding.small
+                                    buttonRadius: SettingsMaterialPreset.navItemRadius
                                     colBackground: "transparent"
-                                    colBackgroundHover: CF.ColorUtils.transparentize(
-                                        Appearance.colors.colLayer1Hover, 0.5)
+                                    colBackgroundHover: SettingsMaterialPreset.navHoverColor
 
                                     onClicked: {
                                         Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings-window"])
@@ -1730,7 +1979,7 @@ Scope {
                                             Layout.alignment: Qt.AlignVCenter
                                             text: "open_in_new"
                                             iconSize: 18
-                                            color: Appearance.colors.colOnSurfaceVariant
+                                            color: SettingsMaterialPreset.secondaryTextColor
                                         }
 
                                         StyledText {
@@ -1739,10 +1988,10 @@ Scope {
                                             verticalAlignment: Text.AlignVCenter
                                             text: Translation.tr("Window")
                                             font {
-                                                family: Appearance.font.family.main
+                                                family: SettingsMaterialPreset.fontFamily
                                                 pixelSize: Appearance.font.pixelSize.small
                                             }
-                                            color: Appearance.colors.colOnSurfaceVariant
+                                            color: SettingsMaterialPreset.secondaryTextColor
                                             elide: Text.ElideRight
                                         }
                                     }
@@ -1806,12 +2055,29 @@ Scope {
                                     }
                                 }
 
-                                height: root.overlaySearchText.trim().length > 0 ? 0 : 48
+                                height: root.overlaySearchText.trim().length > 0
+                                    ? 0
+                                    : (SettingsMaterialPreset.waffle ? 56 : 48)
                                 visible: root.overlaySearchText.trim().length === 0
+
+                                WaffleSettings.WWin11SettingsBreadcrumb {
+                                    id: waffleOverlayBreadcrumb
+                                    visible: SettingsMaterialPreset.waffle
+                                    anchors.fill: parent
+                                    categoryTitle: overlayPageHeader.activeTitle
+                                    hasSubTabs: Boolean(overlayPageHeader.activePageItem?._subTabItems?.length > 1)
+                                    subPageTitle: String(overlayPageHeader.activePageItem?.activeSubTabLabel ?? "")
+                                    contentLeftMargin: Number(overlayPageHeader.activePageItem?._horizontalMargin ?? 28)
+                                    onCategoryRootClicked: {
+                                        const items = overlayPageHeader.activePageItem?._subTabItems ?? []
+                                        if (items.length > 0 && typeof overlayPageHeader.activePageItem?.activateSubTabItem === "function")
+                                            overlayPageHeader.activePageItem.activateSubTabItem(items[0])
+                                    }
+                                }
 
                                 RowLayout {
                                     id: overlayPageHeaderRow
-                                    visible: true
+                                    visible: !SettingsMaterialPreset.waffle
                                     anchors.fill: parent
                                     anchors.leftMargin: 20
                                     anchors.rightMargin: 20
@@ -1951,7 +2217,7 @@ Scope {
                                 z: 20
                                 query: root.overlaySearchText
                                 results: root.overlaySearchResults
-                                searchField: overlaySearchField
+                                searchField: SettingsMaterialPreset.waffle ? waffleOverlayRailHeader.searchField : overlaySearchField
                                 iconForPage: index => SettingsPageRegistry.iconForPage(index)
                                 onActivated: entry => root.openOverlaySearchResult(entry)
                                 onCloseRequested: root.openOverlaySearchResult({})
@@ -1975,13 +2241,22 @@ Scope {
                         event.accepted = true
                     } else if (event.modifiers === Qt.ControlModifier) {
                         if (event.key === Qt.Key_F) {
-                            overlaySearchField.forceActiveFocus();
-                            event.accepted = true;
+                            if (root.searchFieldItem)
+                                root.searchFieldItem.forceActiveFocus()
+                            event.accepted = true
                         } else if (event.key === Qt.Key_PageDown || event.key === Qt.Key_Tab) {
-                            overlayCurrentPage = root.nextNavPage(overlayCurrentPage)
+                            root.navigateToArea(root.nextNavPage(overlayCurrentPage))
                             event.accepted = true
                         } else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_Backtab) {
-                            overlayCurrentPage = root.prevNavPage(overlayCurrentPage)
+                            root.navigateToArea(root.prevNavPage(overlayCurrentPage))
+                            event.accepted = true
+                        }
+                    } else if (event.modifiers === Qt.AltModifier) {
+                        if (event.key === Qt.Key_Left) {
+                            root.goBack()
+                            event.accepted = true
+                        } else if (event.key === Qt.Key_Right) {
+                            root.goForward()
                             event.accepted = true
                         }
                     }
@@ -2079,6 +2354,9 @@ Scope {
         root.navGroup = Hierarchy.parentKey(root.overlayPages[root.overlayCurrentPage])
         root._navigationInitialized = true
         root._initialDeepLinkPage = -1
+        root._historyStack = [{ home: false, pageIndex: root.overlayCurrentPage }]
+        root._historyIndex = 0
+        IrisState.recordVisit(root.overlayCurrentPage)
         root._persistOverlayPage()
         if (pending >= 0 && pendingSection.length > 0 && SettingsPageRegistry.isPageApplicable(pending)) {
             root.openOverlaySearchResult({
@@ -2099,6 +2377,11 @@ Scope {
         }
         root._slideDir = root.overlayCurrentPage > root._prevPage ? 1 : -1
         root._prevPage = root.overlayCurrentPage
+        if (root._navigationInitialized && !root._historyNavigating) {
+            root.showingHome = false
+            root._pushHistoryEntry(false, root.overlayCurrentPage)
+            IrisState.recordVisit(root.overlayCurrentPage)
+        }
         root._persistOverlayPage()
         root.navGroup=Hierarchy.parentKey(root.overlayPages[root.overlayCurrentPage])
         // Published for settingsNav, which shell.qml owns for both chromes.

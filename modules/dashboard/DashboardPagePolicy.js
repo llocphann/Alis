@@ -47,9 +47,16 @@ function delta(event) {
 // phase follows Qt::ScrollPhase: none=0, begin=1, update=2, end=3, momentum=4.
 function advance(previous, movement, phase, now, ids, currentId, contentConsumed) {
     var state = Object.assign({}, previous);
-    if (phase === 3) return {state:idle(), accepted:false, target:""};
-    if (phase === 1 || (!phase && state.phased)
-            || (!state.phased && state.last && now-state.last > 180)) state = idle();
+    if (phase === 4) return {state:state, accepted:false, target:""};
+    if (phase === 3) {
+        state.distance = 0;
+        state.phased = true;
+        state.last = now;
+        return {state:state, accepted:false, target:""};
+    }
+    if (phase === 1
+            || (!phase && state.phased && !state.fired)
+            || (!phase && state.last && now - state.last > 180)) state = idle();
     if (phase) state.phased = true;
     state.last = now;
     var x = movement.x, y = movement.y;

@@ -201,7 +201,7 @@ Item {
                     Layout.leftMargin: 8
                     Layout.rightMargin: 8
                     viewingDate: root.viewingDate
-                    today: DateTime.clock.date
+                    today: DateTime.todayDate
                     locale: root.locale
                     calendarCells: root.monthCells
                     responsive: true

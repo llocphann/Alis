@@ -321,12 +321,13 @@ Item { // Wrapper
     }
 
     // The default (non-prefixed) result set is the only one that shows a math row,
-    // so it is the only one worth spawning qalc for.
+    // so only spawn qalc when the query plausibly represents math or unit conversion.
     function wantsMathResult(text): bool {
         return text !== ""
             && !text.startsWith(root.prefixAction)
             && !text.startsWith(root.prefixClipboard)
-            && !text.startsWith(root.prefixEmojis);
+            && !text.startsWith(root.prefixEmojis)
+            && StringUtils.looksLikeMathExpression(text, root.prefixMath);
     }
 
     Timer {
@@ -513,7 +514,7 @@ Item { // Wrapper
             width: root.embeddedSurface ? searchWidgetContent.width : implicitWidth
 
             // clip: true
-            layer.enabled: !root.embeddedSurface
+            layer.enabled: !root.embeddedSurface && root.visible && root.panelVisible && (root.QsWindow?.window?.visible ?? true)
             layer.effect: OpacityMask {
                 maskSource: Rectangle {
                     width: searchWidgetContent.width

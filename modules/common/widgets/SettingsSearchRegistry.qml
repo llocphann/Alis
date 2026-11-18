@@ -137,6 +137,22 @@ Singleton {
         entries = activeEntries.slice();
     }
 
+    function _ensurePreparedSearch(entry) {
+        if (!entry)
+            return null;
+        if (!entry._preparedSearch) {
+            var kws = entry.keywords || [];
+            entry._preparedSearch = {
+                label: (entry.label || "").toLowerCase(),
+                desc: (entry.description || "").toLowerCase(),
+                page: (entry.pageName || "").toLowerCase(),
+                sect: (entry.section || "").toLowerCase(),
+                kw: kws.join(" ").toLowerCase()
+            };
+        }
+        return entry._preparedSearch;
+    }
+
     function registerOption(meta) {
         if (!meta || !meta.control)
             return -1;
@@ -146,10 +162,7 @@ Singleton {
         var section = meta.section || "";
         var label = meta.label || "";
         var description = meta.description || "";
-        var providedKeywords = meta.keywords || [];
-        
-        var autoKeywords = _generateKeywords(label, section, description);
-        var allKeywords = providedKeywords.concat(autoKeywords);
+        var providedKeywords = meta.keywords || null;
 
         var id = _nextId++;
         var entry = {
@@ -160,8 +173,21 @@ Singleton {
             section: section,
             label: label,
             description: description,
-            keywords: allKeywords
+            _rawKeywords: providedKeywords,
+            _keywords: null,
+            _preparedSearch: null
         };
+        Object.defineProperty(entry, "keywords", {
+            enumerable: true,
+            configurable: true,
+            get: function() {
+                if (!this._keywords) {
+                    var autoKeywords = root._generateKeywords(this.label, this.section, this.description);
+                    this._keywords = (this._rawKeywords ? this._rawKeywords.slice() : []).concat(autoKeywords);
+                }
+                return this._keywords;
+            }
+        });
 
         _entryStore.push(entry);
         _entryById[id] = entry;
@@ -236,11 +262,12 @@ Singleton {
             var e = _entryStore[i];
             if (!e || _removedEntryIds[e.id] || !e.control)
                 continue;
-            var label = (e.label || "").toLowerCase();
-            var desc = (e.description || "").toLowerCase();
-            var page = (e.pageName || "").toLowerCase();
-            var sect = (e.section || "").toLowerCase();
-            var kw = (e.keywords || []).join(" ").toLowerCase();
+            var prep = root._ensurePreparedSearch(e);
+            var label = prep.label;
+            var desc = prep.desc;
+            var page = prep.page;
+            var sect = prep.sect;
+            var kw = prep.kw;
 
             var score = 0;
             var matchCount = 0;

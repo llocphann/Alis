@@ -38,197 +38,193 @@ ContentPage {
         }
     }
 
-    GridLayout {
-        objectName: "overviewTwoColumnGrid"
+    SettingsCardSection {
         Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
         visible: root.isIiActive
-        columns: 1
-        uniformCellWidths: false
-        columnSpacing: 0
-        rowSpacing: 0
+        expanded: true
+        icon: "overview_key"
+        title: Translation.tr("Overview")
 
-        SettingsCardSection {
-            Layout.fillWidth: true
-            Layout.preferredWidth: 1
-            Layout.alignment: Qt.AlignTop
-            expanded: true
-            icon: "overview_key"
-            title: Translation.tr("Overview")
+        SettingsGroup {
+            SettingsSwitch {
+                buttonIcon: "check"
+                text: Translation.tr("Enable workspace Overview")
+                checked: Config.options?.overview?.workspaceHover?.enable ?? true
+                onCheckedChanged: Config.setNestedValue(
+                    "overview.workspaceHover.enable", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show Overview when hovering workspace buttons on the Bar")
+                }
+            }
 
-            SettingsGroup {
-                SettingsSwitch {
-                    buttonIcon: "check"
-                    text: Translation.tr("Enable workspace Overview")
-                    checked: Config.options?.overview?.workspaceHover?.enable ?? true
-                    onCheckedChanged: Config.setNestedValue(
-                        "overview.workspaceHover.enable", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Show Overview when hovering workspace buttons on the Bar")
+            SettingsDivider {}
+
+            ContentSubsection {
+                title: Translation.tr("Hover timing (ms)")
+
+                ConfigRow {
+                    uniform: true
+
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        icon: "timer"
+                        text: Translation.tr("Open")
+                        value: Config.options?.overview?.workspaceHover?.delayMs ?? 280
+                        from: 0
+                        to: 1200
+                        stepSize: 20
+                        enabled: Config.options?.overview?.workspaceHover?.enable ?? true
+                        onValueChanged: Config.setNestedValue(
+                            "overview.workspaceHover.delayMs", value)
+                    }
+
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        icon: "timer_off"
+                        text: Translation.tr("Close")
+                        value: Config.options?.overview?.workspaceHover?.closeDelayMs ?? 220
+                        from: 0
+                        to: 1200
+                        stepSize: 20
+                        enabled: Config.options?.overview?.workspaceHover?.enable ?? true
+                        onValueChanged: Config.setNestedValue(
+                            "overview.workspaceHover.closeDelayMs", value)
+                    }
+                }
+            }
+
+            SettingsDivider {}
+
+            ContentSubsection {
+                title: Translation.tr("Layout")
+
+                ConfigRow {
+                    uniform: true
+
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        icon: "splitscreen_bottom"
+                        text: Translation.tr("Rows")
+                        value: Config.options?.overview?.rows ?? 1
+                        from: 1
+                        to: 6
+                        stepSize: 1
+                        onValueChanged: Config.setNestedValue(
+                            "overview.rows", value)
+                    }
+
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        icon: "splitscreen_right"
+                        text: Translation.tr("Columns")
+                        value: Config.options?.overview?.columns ?? 5
+                        from: 1
+                        to: 8
+                        stepSize: 1
+                        onValueChanged: Config.setNestedValue(
+                            "overview.columns", value)
                     }
                 }
 
-                ContentSubsection {
-                    title: Translation.tr("Hover timing (ms)")
+                ConfigRow {
+                    uniform: true
 
-                    ConfigRow {
-                        uniform: true
-
-                        ConfigSpinBox {
-                            Layout.fillWidth: true
-                            icon: "timer"
-                            text: Translation.tr("Open")
-                            value: Config.options?.overview?.workspaceHover?.delayMs ?? 280
-                            from: 0
-                            to: 1200
-                            stepSize: 20
-                            enabled: Config.options?.overview?.workspaceHover?.enable ?? true
-                            onValueChanged: Config.setNestedValue(
-                                "overview.workspaceHover.delayMs", value)
-                        }
-
-                        ConfigSpinBox {
-                            Layout.fillWidth: true
-                            icon: "timer_off"
-                            text: Translation.tr("Close")
-                            value: Config.options?.overview?.workspaceHover?.closeDelayMs ?? 220
-                            from: 0
-                            to: 1200
-                            stepSize: 20
-                            enabled: Config.options?.overview?.workspaceHover?.enable ?? true
-                            onValueChanged: Config.setNestedValue(
-                                "overview.workspaceHover.closeDelayMs", value)
-                        }
-                    }
-                }
-
-                ContentSubsection {
-                    title: Translation.tr("Layout")
-
-                    ConfigRow {
-                        uniform: true
-
-                        ConfigSpinBox {
-                            Layout.fillWidth: true
-                            icon: "splitscreen_bottom"
-                            text: Translation.tr("Rows")
-                            value: Config.options?.overview?.rows ?? 1
-                            from: 1
-                            to: 6
-                            stepSize: 1
-                            onValueChanged: Config.setNestedValue(
-                                "overview.rows", value)
-                        }
-
-                        ConfigSpinBox {
-                            Layout.fillWidth: true
-                            icon: "splitscreen_right"
-                            text: Translation.tr("Columns")
-                            value: Config.options?.overview?.columns ?? 5
-                            from: 1
-                            to: 8
-                            stepSize: 1
-                            onValueChanged: Config.setNestedValue(
-                                "overview.columns", value)
-                        }
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        icon: "loupe"
+                        text: Translation.tr("% scale")
+                        value: Math.round((Config.options?.overview?.scale ?? 0.17) * 100)
+                        from: 5
+                        to: 50
+                        stepSize: 1
+                        onValueChanged: Config.setNestedValue(
+                            "overview.scale", value / 100)
                     }
 
-                    ConfigRow {
-                        uniform: true
-
-                        ConfigSpinBox {
-                            Layout.fillWidth: true
-                            icon: "loupe"
-                            text: Translation.tr("% scale")
-                            value: Math.round((Config.options?.overview?.scale ?? 0.17) * 100)
-                            from: 5
-                            to: 50
-                            stepSize: 1
-                            onValueChanged: Config.setNestedValue(
-                                "overview.scale", value / 100)
-                        }
-
-                        ConfigSpinBox {
-                            Layout.fillWidth: true
-                            icon: "grid_3x3"
-                            text: Translation.tr("Gap (px)")
-                            value: Config.options?.overview?.workspaceSpacing ?? 5
-                            from: 0
-                            to: 32
-                            stepSize: 1
-                            onValueChanged: Config.setNestedValue(
-                                "overview.workspaceSpacing", value)
-                        }
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        icon: "grid_3x3"
+                        text: Translation.tr("Gap (px)")
+                        value: Config.options?.overview?.workspaceSpacing ?? 5
+                        from: 0
+                        to: 32
+                        stepSize: 1
+                        onValueChanged: Config.setNestedValue(
+                            "overview.workspaceSpacing", value)
                     }
                 }
             }
         }
+    }
 
-        SettingsCardSection {
-            Layout.fillWidth: true
-            Layout.preferredWidth: 1
-            Layout.alignment: Qt.AlignTop
-            expanded: true
-            icon: "preview"
-            title: Translation.tr("Content")
+    SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        visible: root.isIiActive
+        expanded: true
+        icon: "preview"
+        title: Translation.tr("Content")
 
-            SettingsGroup {
-                ContentSubsection {
-                    title: Translation.tr("Content & appearance")
+        SettingsGroup {
+            ContentSubsection {
+                title: Translation.tr("Content & appearance")
 
-                    ConfigRow {
-                        uniform: true
+                ConfigRow {
+                    uniform: true
 
-                        SettingsSwitch {
-                            Layout.fillWidth: true
-                            buttonIcon: "preview"
-                            text: Translation.tr("Window previews")
-                            checked: Config.options?.overview?.showPreviews !== false
-                            onCheckedChanged: Config.setNestedValue(
-                                "overview.showPreviews", checked)
-                        }
-
-                        SettingsSwitch {
-                            Layout.fillWidth: true
-                            buttonIcon: "looks_one"
-                            text: Translation.tr("Workspace numbers")
-                            checked: Config.options?.overview?.showWorkspaceNumbers ?? false
-                            onCheckedChanged: Config.setNestedValue(
-                                "overview.showWorkspaceNumbers", checked)
-                        }
+                    SettingsSwitch {
+                        Layout.fillWidth: true
+                        buttonIcon: "preview"
+                        text: Translation.tr("Window previews")
+                        checked: Config.options?.overview?.showPreviews !== false
+                        onCheckedChanged: Config.setNestedValue(
+                            "overview.showPreviews", checked)
                     }
 
-                    ConfigRow {
-                        uniform: true
+                    SettingsSwitch {
+                        Layout.fillWidth: true
+                        buttonIcon: "looks_one"
+                        text: Translation.tr("Workspace numbers")
+                        checked: Config.options?.overview?.showWorkspaceNumbers ?? false
+                        onCheckedChanged: Config.setNestedValue(
+                            "overview.showWorkspaceNumbers", checked)
+                    }
+                }
 
-                        SettingsSwitch {
-                            Layout.fillWidth: true
-                            buttonIcon: "center_focus_strong"
-                            text: Translation.tr("Center app icons")
-                            checked: Config.options?.overview?.centerIcons ?? true
-                            onCheckedChanged: Config.setNestedValue(
-                                "overview.centerIcons", checked)
-                        }
+                ConfigRow {
+                    uniform: true
 
-                        SettingsSwitch {
-                            Layout.fillWidth: true
-                            buttonIcon: "blur_on"
-                            text: Translation.tr("Blur wallpaper")
-                            checked: Config.options?.overview?.backgroundBlurEnable !== false
-                            onCheckedChanged: Config.setNestedValue(
-                                "overview.backgroundBlurEnable", checked)
-                        }
+                    SettingsSwitch {
+                        Layout.fillWidth: true
+                        buttonIcon: "center_focus_strong"
+                        text: Translation.tr("Center app icons")
+                        checked: Config.options?.overview?.centerIcons ?? true
+                        onCheckedChanged: Config.setNestedValue(
+                            "overview.centerIcons", checked)
                     }
 
-                    ConfigSpinBox {
-                        icon: "opacity"
-                        text: Translation.tr("Workspace dim (%)")
-                        value: Config.options?.overview?.backgroundDim ?? 35
-                        from: 0
-                        to: 80
-                        stepSize: 5
-                        onValueChanged: Config.setNestedValue(
-                            "overview.backgroundDim", value)
+                    SettingsSwitch {
+                        Layout.fillWidth: true
+                        buttonIcon: "blur_on"
+                        text: Translation.tr("Blur wallpaper")
+                        checked: Config.options?.overview?.backgroundBlurEnable !== false
+                        onCheckedChanged: Config.setNestedValue(
+                            "overview.backgroundBlurEnable", checked)
                     }
+                }
+
+                SettingsDivider {}
+
+                ConfigSpinBox {
+                    icon: "opacity"
+                    text: Translation.tr("Workspace dim (%)")
+                    value: Config.options?.overview?.backgroundDim ?? 35
+                    from: 0
+                    to: 80
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue(
+                        "overview.backgroundDim", value)
                 }
             }
         }

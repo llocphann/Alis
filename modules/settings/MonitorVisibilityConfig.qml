@@ -19,16 +19,7 @@ ContentPage {
     // Reserve 55 px for the card/group chrome and keep monitor tiles compact.
     readonly property real arrangementCanvasHeight:
         embeddedArrangementOnly ? Math.max(80, height - 55) : 292
-    readonly property real settingsArrangementCanvasHeight: {
-        const targetCardH = SettingsMaterialPreset.standardBentoHeight > 400
-            ? SettingsMaterialPreset.standardBentoHeight
-            : 831
-        const cardOverhead = SettingsMaterialPreset.cardPadding * 2
-            + (monitorArrangementCard.showHeader ? 33 : 0)
-            + SettingsMaterialPreset.groupPadding * 2
-            + (monitorArrangementNotice.visible ? monitorArrangementNotice.implicitHeight + SettingsMaterialPreset.groupSpacing : 0)
-        return Math.max(480, targetCardH - cardOverhead)
-    }
+    readonly property real settingsArrangementCanvasHeight: 320
     readonly property real arrangementVisualScale:
         embeddedArrangementOnly ? 0.65 : 0.70
     readonly property string _legacyPrimaryMonitorHint: Translation.tr("Primary monitor sets the fallback output; display controls are in Compositor.")
@@ -621,8 +612,9 @@ ContentPage {
     }
 
     component MonitorInfoRow: Rectangle {
-        required property var monitor
+        required property var modelData
         required property int index
+        readonly property var monitor: modelData
         readonly property string screenName: monitor?.name ?? ""
         readonly property bool primary: screenName === root.primaryScreenName()
 
@@ -1243,7 +1235,6 @@ ContentPage {
 
     SettingsCardSection {
         id: monitorArrangementCard
-        bentoColumn: "full"
         settingsTaskSection: "outputs"
         visible: CompositorService.isNiri
         expanded: true
@@ -1543,6 +1534,97 @@ ContentPage {
                 visible: !root.monitorLayoutBusy && root.monitorLayoutError.length === 0 && root.monitorLayoutInfo.length > 0
                 icon: "check_circle"
                 text: root.monitorLayoutInfo
+            }
+        }
+    }
+
+    SettingsCardSection {
+        settingsTaskSection: "outputs"
+        visible: !root.embeddedArrangementOnly
+        expanded: true
+        icon: "monitor"
+        title: Translation.tr("Connected outputs")
+
+        SettingsGroup {
+            ConfigSelectionArray {
+                currentValue: Config.options?.display?.primaryMonitor ?? ""
+                onSelected: newValue => Config.setNestedValue("display.primaryMonitor", newValue)
+                options: root.monitorOptions()
+            }
+
+            Repeater {
+                model: Quickshell.screens
+
+                MonitorInfoRow {}
+            }
+        }
+    }
+
+    SettingsCardSection {
+        settingsTaskSection: "surfaces"
+        visible: !root.embeddedArrangementOnly
+        expanded: true
+        icon: "web_asset"
+        title: Translation.tr("Shell surfaces")
+
+        SettingsGroup {
+            PresetActions {
+                paths: root.surfacePaths(root.iiSurfaces)
+            }
+
+            Repeater {
+                model: root.iiSurfaces
+
+                SurfaceVisibilityBlock {
+                    required property var modelData
+                    surface: modelData
+                }
+            }
+        }
+    }
+
+    SettingsCardSection {
+        settingsTaskSection: "widgets"
+        visible: !root.embeddedArrangementOnly
+        expanded: true
+        icon: "widgets"
+        title: Translation.tr("Desktop widgets per output")
+
+        SettingsGroup {
+            SurfaceVisibilityBlock {
+                surface: root.desktopWidgetSurface
+            }
+
+            Repeater {
+                model: root.desktopWidgetOutputNames()
+
+                DesktopWidgetOutputBlock {
+                    required property var modelData
+                    outputName: String(modelData)
+                }
+            }
+        }
+    }
+
+    SettingsCardSection {
+        settingsTaskSection: "popups"
+        visible: !root.embeddedArrangementOnly
+        expanded: true
+        icon: "notifications"
+        title: Translation.tr("Notification & OSD popups")
+
+        SettingsGroup {
+            PresetActions {
+                paths: root.surfacePaths(root.sharedSurfaces)
+            }
+
+            Repeater {
+                model: root.sharedSurfaces
+
+                SurfaceVisibilityBlock {
+                    required property var modelData
+                    surface: modelData
+                }
             }
         }
     }

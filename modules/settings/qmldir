@@ -39,8 +39,11 @@ CompanionConfig 1.0 CompanionConfig.qml
 DefaultAppsConfig 1.0 DefaultAppsConfig.qml
 IntegrationsConfig 1.0 IntegrationsConfig.qml
 NexusThemeSettings 1.0 NexusThemeSettings.qml
-
 NexusTodoSettings 1.0 NexusTodoSettings.qml
 ThinkfanSettings 1.0 ThinkfanSettings.qml
 AiConfig 1.0 AiConfig.qml
 CustomSettingsTabPage 1.0 CustomSettingsTabPage.qml
+AbyssConfig 1.0 AbyssConfig.qml
+AboutConfig 1.0 AboutConfig.qml
+AudioConfig 1.0 AudioConfig.qml
+BluetoothConfig 1.0 BluetoothConfig.qml

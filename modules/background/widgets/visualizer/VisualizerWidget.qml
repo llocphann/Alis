@@ -201,7 +201,7 @@ AbstractBackgroundWidget {
     }
 
     readonly property bool _active: root.visible
-        && root.powerActive && MprisController.isPlaying
+        && root.powerActive && MprisController.anyAudioPlaying
 
     // ── Style tokens ───────────────────────────────────────────
     readonly property real cardRadius: root.widgetCardRadius

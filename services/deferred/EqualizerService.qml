@@ -432,6 +432,8 @@ Singleton {
                 root._pendingPresetName = ""
                 if (exitCode === 65)
                     root.error = "backend-not-running"
+                else if (exitCode === 66)
+                    root.error = "dsp-unavailable"
                 else if (exitCode === 127) {
                     root._transportAvailable = false
                     root.error = "transport-unavailable"

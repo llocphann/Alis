@@ -288,6 +288,40 @@ Singleton {
     property string wallpaperLauncherMode: "static"
     property string wallpaperLauncherSearchText: ""
     property bool widgetEditMode: false
+    property var _widgetEditSnapshot: null
+
+    function _cloneWidgetConfigValue(val) {
+        if (val === null || val === undefined)
+            return val
+        const t = typeof val
+        if (t === "boolean" || t === "number" || t === "string")
+            return val
+        if (t !== "object")
+            return undefined
+        if (Array.isArray(val) || (typeof val.length === "number" && val.objectName === undefined)) {
+            const arr = []
+            for (let i = 0; i < val.length; ++i) {
+                const item = _cloneWidgetConfigValue(val[i])
+                if (item !== undefined)
+                    arr.push(item)
+            }
+            return arr
+        }
+        const out = {}
+        const keys = Object.keys(val)
+        for (let i = 0; i < keys.length; ++i) {
+            const k = keys[i]
+            if (k === "objectName" || k.endsWith("Changed"))
+                continue
+            const prop = val[k]
+            if (typeof prop === "function")
+                continue
+            const cloned = _cloneWidgetConfigValue(prop)
+            if (cloned !== undefined)
+                out[k] = cloned
+        }
+        return out
+    }
     property string selectedDesktopWidget: ""
     property string selectedDesktopItem: ""
     property string desktopWidgetQuickControls: ""
@@ -313,15 +347,64 @@ Singleton {
     }
 
     function setWidgetEditMode(enabled: bool): void {
-        if (enabled)
+        if (enabled) {
+            if (!widgetEditMode) {
+                _widgetEditSnapshot = {
+                    backgroundWidgets: Config.options?.background?.widgets !== undefined
+                        ? _cloneWidgetConfigValue(Config.options.background.widgets)
+                        : undefined,
+                    backgroundPowerSaving: Config.options?.background?.powerSaving !== undefined
+                        ? _cloneWidgetConfigValue(Config.options.background.powerSaving)
+                        : undefined,
+                    wafflesBackgroundWidgets: Config.options?.waffles?.background?.widgets !== undefined
+                        ? _cloneWidgetConfigValue(Config.options.waffles.background.widgets)
+                        : undefined,
+                    customWidgetData: _cloneWidgetConfigValue(Config.customWidgetData ?? ({}))
+                }
+            }
             shellLayoutEditMode = false
-        else {
+        } else {
+            _widgetEditSnapshot = null
             selectedDesktopWidget = ""
             selectedDesktopItem = ""
             desktopWidgetQuickControls = ""
             desktopWidgetInspectorTarget = ""
         }
         widgetEditMode = enabled
+    }
+
+    function commitWidgetEditMode(): void {
+        _widgetEditSnapshot = null
+        setWidgetEditMode(false)
+    }
+
+    function cancelWidgetEditMode(): void {
+        const snap = _widgetEditSnapshot
+        _widgetEditSnapshot = null
+        if (snap) {
+            const updates = {}
+            if (snap.backgroundWidgets !== undefined) {
+                const cur = _cloneWidgetConfigValue(Config.options?.background?.widgets)
+                if (JSON.stringify(cur) !== JSON.stringify(snap.backgroundWidgets))
+                    updates["background.widgets"] = snap.backgroundWidgets
+            }
+            if (snap.backgroundPowerSaving !== undefined) {
+                const cur = _cloneWidgetConfigValue(Config.options?.background?.powerSaving)
+                if (JSON.stringify(cur) !== JSON.stringify(snap.backgroundPowerSaving))
+                    updates["background.powerSaving"] = snap.backgroundPowerSaving
+            }
+            if (snap.wafflesBackgroundWidgets !== undefined) {
+                const cur = _cloneWidgetConfigValue(Config.options?.waffles?.background?.widgets)
+                if (JSON.stringify(cur) !== JSON.stringify(snap.wafflesBackgroundWidgets))
+                    updates["waffles.background.widgets"] = snap.wafflesBackgroundWidgets
+            }
+            const curCustom = _cloneWidgetConfigValue(Config.customWidgetData ?? ({}))
+            if (snap.customWidgetData !== undefined && JSON.stringify(curCustom) !== JSON.stringify(snap.customWidgetData))
+                updates["background.widgets.custom"] = snap.customWidgetData
+            if (Object.keys(updates).length > 0)
+                Config.setNestedValues(updates)
+        }
+        setWidgetEditMode(false)
     }
 
     function selectDesktopWidget(instanceKey: string): void {
@@ -422,6 +505,7 @@ Singleton {
     property var dashboardMusicBrowser: ({})
     property var dashboardPlannerBrowser: ({})
     property var dashboardSpacedRepetitionBrowser: ({})
+    property var githubContributionCache: ({})
     property bool workspaceShowNumbers: false
     property var activeTaskViewMenu: null  // Track which WindowThumbnail has its menu open
     // Waffle-specific states

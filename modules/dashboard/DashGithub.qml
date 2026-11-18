@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -14,26 +15,77 @@ DashCard {
     id: root
 
     readonly property string username: Config.options?.dashboard?.github?.username ?? ""
+    readonly property bool configured: root.username.length > 0
     property var weeks: [] // [[level 0–4 per day] per week]
     property int total: -1
     property double _lastFetch: 0
+    property double _lastFailedFetch: 0
     property bool fetching: false
     readonly property bool hasData: total >= 0 && weeks.length > 0
 
-    onVisibleChanged: if (visible) refresh()
-    Component.onCompleted: if (visible) refresh()
-    onUsernameChanged: { total = -1; weeks = []; _lastFetch = 0; if (visible) refresh() }
+    Timer {
+        id: deferredRefreshTimer
+        interval: 320
+        repeat: false
+        onTriggered: root.refresh()
+    }
+
+    function _restoreCached(): bool {
+        if (!root.configured) return false
+        const entry = GlobalStates.githubContributionCache?.[root.username]
+        if (!entry || !Array.isArray(entry.weeks) || entry.weeks.length === 0 || !(entry.total >= 0))
+            return false
+        root.total = entry.total
+        root.weeks = entry.weeks
+        root._lastFetch = Number(entry.fetchedAt ?? 0)
+        root._lastFailedFetch = 0
+        if (heatmap.available) heatmap.requestPaint()
+        return true
+    }
+
+    function _scheduleRefresh(): void {
+        if (!visible || !root.configured) {
+            deferredRefreshTimer.stop()
+            return
+        }
+        root._restoreCached()
+        const now = Date.now()
+        if (now - root._lastFetch < 3600 * 1000) return
+        if (now - root._lastFailedFetch < 60 * 1000) return
+        deferredRefreshTimer.restart()
+    }
+
+    onVisibleChanged: {
+        if (visible) _scheduleRefresh()
+        else deferredRefreshTimer.stop()
+    }
+    Component.onCompleted: if (visible) _scheduleRefresh()
+    onUsernameChanged: {
+        deferredRefreshTimer.stop()
+        total = -1
+        weeks = []
+        _lastFetch = 0
+        _lastFailedFetch = 0
+        if (visible) _scheduleRefresh()
+    }
 
     function refresh() {
-        if (root.username.length === 0 || root.fetching) return
-        if (Date.now() - root._lastFetch < 3600 * 1000) return
+        if (!root.configured || root.fetching) return
+        const now = Date.now()
+        if (now - root._lastFetch < 3600 * 1000) return
+        if (now - root._lastFailedFetch < 60 * 1000) return
         root.fetching = true
+        const requestedUser = root.username
         const xhr = new XMLHttpRequest()
         xhr.onreadystatechange = () => {
             if (xhr.readyState !== XMLHttpRequest.DONE) return
             if (!root) return  // dashboard closed mid-fetch
             root.fetching = false
-            if (xhr.status !== 200) return
+            if (requestedUser !== root.username) return
+            if (xhr.status !== 200) {
+                root._lastFailedFetch = Date.now()
+                return
+            }
             try {
                 const data = JSON.parse(xhr.responseText)
                 const days = data?.contributions ?? []
@@ -58,12 +110,21 @@ DashCard {
                 root.total = total
                 root.weeks = wk
                 root._lastFetch = Date.now()
-                heatmap.requestPaint()
+                root._lastFailedFetch = 0
+                const nextCache = Object.assign({}, GlobalStates.githubContributionCache ?? {})
+                nextCache[requestedUser] = {
+                    total: total,
+                    weeks: wk,
+                    fetchedAt: root._lastFetch
+                }
+                GlobalStates.githubContributionCache = nextCache
+                if (heatmap.available) heatmap.requestPaint()
             } catch (e) {
+                root._lastFailedFetch = Date.now()
                 console.log("[DashGithub] failed to parse contributions:", e)
             }
         }
-        xhr.open("GET", `https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(root.username)}?y=last`)
+        xhr.open("GET", `https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(requestedUser)}?y=last`)
         xhr.send()
     }
 
@@ -189,7 +250,7 @@ DashCard {
 
         Rectangle {
             id: heatmapSurface
-            visible: root.hasData
+            visible: root.configured
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumHeight: 48
@@ -202,8 +263,53 @@ DashCard {
             border.color: ColorUtils.applyAlpha(
                 Appearance.colors.colOutlineVariant, 0.18)
 
+            ColumnLayout {
+                anchors.centerIn: parent
+                width: Math.max(0, parent.width - 24)
+                visible: !root.hasData
+                spacing: 6
+
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 4
+
+                    Rectangle {
+                        implicitWidth: 42
+                        implicitHeight: 6
+                        radius: 3
+                        color: ColorUtils.applyAlpha(root.colAccent, 0.22)
+                    }
+                    Rectangle {
+                        implicitWidth: 64
+                        implicitHeight: 6
+                        radius: 3
+                        color: ColorUtils.applyAlpha(root.colSubtext, 0.18)
+                    }
+                    Rectangle {
+                        implicitWidth: 28
+                        implicitHeight: 6
+                        radius: 3
+                        color: ColorUtils.applyAlpha(root.colAccent, 0.14)
+                    }
+                }
+
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.maximumWidth: parent.width
+                    Layout.minimumWidth: 0
+                    text: root._lastFailedFetch > 0 && !root.fetching
+                        ? Translation.tr("Contributions unavailable")
+                        : Translation.tr("Loading contributions…")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.weight: Font.Medium
+                    color: root.colSubtext
+                    elide: Text.ElideRight
+                }
+            }
+
             Canvas {
                 id: heatmap
+                visible: root.hasData
                 anchors.fill: parent
                 anchors.margins: contributionContent.roomy ? 6 : 4
 
@@ -214,7 +320,6 @@ DashCard {
                         ? Appearance.angel.colGlassCardHover
                         : Appearance.colors.colLayer2
 
-                onVisibleChanged: if (visible && available) requestPaint()
                 onAvailableChanged: if (visible && available) requestPaint()
                 onCellColorChanged: if (visible && available) requestPaint()
                 onEmptyColorChanged: if (visible && available) requestPaint()

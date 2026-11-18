@@ -5,6 +5,64 @@
     "nexus",
     "spaced_repetition"
   ],
+  "dependencies": {
+    "nexus": {
+      "userSpace": true,
+      "requiresSystemHelpers": false,
+      "packages": [
+        "python3"
+      ],
+      "binaries": [
+        "python3"
+      ],
+      "helpers": [],
+      "setupCommand": "",
+      "note": "User-space plugin (requires Python 3; no root helpers needed)."
+    },
+    "spaced_repetition": {
+      "userSpace": true,
+      "requiresSystemHelpers": false,
+      "packages": [],
+      "binaries": [],
+      "helpers": [],
+      "setupCommand": "",
+      "note": "User-space plugin (no system dependencies or root helpers needed)."
+    },
+    "tlp": {
+      "userSpace": false,
+      "requiresSystemHelpers": true,
+      "packages": [
+        "tlp",
+        "alis-deps"
+      ],
+      "binaries": [
+        "tlp"
+      ],
+      "helpers": [
+        "/usr/libexec/alis-battery-charge-limit",
+        "/usr/libexec/alis-intergration-system-provision"
+      ],
+      "setupCommand": "./setup install-deps",
+      "note": "Requires tlp (via ./setup install-deps / alis-deps) and TLP battery helpers (./setup integrations)."
+    },
+    "thinkfan": {
+      "userSpace": false,
+      "requiresSystemHelpers": true,
+      "packages": [
+        "thinkfan",
+        "alis-deps"
+      ],
+      "binaries": [
+        "thinkfan"
+      ],
+      "helpers": [
+        "/usr/libexec/alis-thinkfan",
+        "/usr/libexec/alis-intergration-system-provision"
+      ],
+      "setupCommand": "./setup install-deps",
+      "note": "Requires thinkfan (via ./setup install-deps / alis-deps) and Thinkfan helpers (./setup integrations)."
+    }
+  },
   "settings": {
     "tlp": "modules/settings/TlpPowerSettings.qml",
     "nexus": "modules/settings/NexusThemeSettings.qml",

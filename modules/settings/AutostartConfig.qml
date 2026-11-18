@@ -24,6 +24,11 @@ ContentPage {
     property string serviceStatusMessage: ""
     property string serviceErrorMessage: ""
     property string _servicesStdout: ""
+    property real targetContainerHeight: 0
+    readonly property real _effectiveTargetHeight: root.targetContainerHeight > 0 ? root.targetContainerHeight : 480
+    readonly property real _targetGridHeight: _effectiveTargetHeight
+    property var cachedServicesState: null
+    signal servicesStateUpdated(var state)
 
     readonly property string _servicesHelper: Quickshell.shellPath("scripts/apps/manage-autostart-services.py")
     readonly property string _legacySubtext: Translation.tr("Manage startup apps and commands written to niri.")
@@ -90,6 +95,9 @@ ContentPage {
     }
 
     Component.onCompleted: {
+        if (Array.isArray(root.cachedServicesState) && root.cachedServicesState.length > 0) {
+            root.userServices = root.cachedServicesState
+        }
         Autostart.reload()
         root.refreshServices()
     }
@@ -162,6 +170,7 @@ ContentPage {
             const data = JSON.parse(rawJson)
             if (Array.isArray(data.services)) {
                 root.userServices = data.services
+                root.servicesStateUpdated(data.services)
             }
             if (data.ok === false && data.error) {
                 root.serviceErrorMessage = String(data.error)
@@ -274,7 +283,40 @@ ContentPage {
         })
     }
 
+    readonly property var combinedServiceEntries: {
+        const list = []
+        const daemons = root.customServiceEntries ?? []
+        for (let i = 0; i < daemons.length; i++) {
+            list.push({ kind: "daemon", data: daemons[i] })
+        }
+        const svcs = root.filteredUserServices ?? []
+        for (let j = 0; j < svcs.length; j++) {
+            list.push({ kind: "systemd", data: svcs[j] })
+        }
+        return list
+    }
+
+    readonly property var slotLabelsByDesktopId: {
+        void(AppLauncher._configRevision)
+        void(AppLauncher.discoveredApps)
+        const map = {}
+        const defs = AppLauncher.primarySlotDefinitions()
+        for (let i = 0; i < defs.length; i++) {
+            const slot = defs[i]
+            const sum = AppLauncher.selectedAppSummary(slot.id)
+            const did = String(sum?.desktopId ?? "").trim()
+            if (!did)
+                continue
+            const norm = did.endsWith(".desktop") ? did : `${did}.desktop`
+            if (!map[norm])
+                map[norm] = []
+            map[norm].push({ id: slot.id, label: slot.label, title: slot.label, icon: slot.icon })
+        }
+        return map
+    }
+
     SettingsCardSection {
+        id: niriOnlyCard
         visible: !CompositorService.isNiri
         _preventBentoReparent: true
         expanded: true
@@ -295,15 +337,11 @@ ContentPage {
         id: autostartTwoColumnGrid
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        Layout.bottomMargin: startupFileCard.visible ? SettingsMaterialPreset.pageSpacing : 0
-        columns: 2
+        columns: 1
         columnSpacing: 14
-        rowSpacing: 14
+        rowSpacing: SettingsMaterialPreset.pageSpacing
         uniformCellWidths: true
 
-        // ============================================================
-        // LEFT COLUMN: Autostart Applications
-        // ============================================================
         SettingsCardSection {
             id: appsCard
             objectName: "autostartAppsCard"
@@ -343,6 +381,9 @@ ContentPage {
                         MaterialTextField {
                             id: appSearchField
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            Layout.maximumHeight: 44
+                            wrapMode: TextEdit.NoWrap
                             placeholderText: Translation.tr("Filter installed applications...")
                             text: root.appSearchText
                             onTextChanged: root.appSearchText = text
@@ -388,7 +429,19 @@ ContentPage {
                 Rectangle {
                     id: appsListContainer
                     Layout.fillWidth: true
-                    implicitHeight: Math.max(382, servicesListContainer.implicitHeight + (servicesTopControls.implicitHeight - appsTopControls.implicitHeight))
+                    implicitHeight: (root._targetGridHeight > 0 && appsCard._effectiveCustomHeight <= 0)
+                        ? Math.max(
+                            180,
+                            Math.round(
+                                root._targetGridHeight
+                                - appsCard.chromeImplicitHeight
+                                - appsTopControls.implicitHeight
+                                - SettingsMaterialPreset.groupPadding * 2
+                                - SettingsMaterialPreset.groupSpacing
+                            )
+                        )
+                        : 320
+                    Layout.preferredHeight: implicitHeight
                     radius: Appearance.rounding.normal
                     color: Appearance.colors.colLayer1
                     border.width: 1
@@ -405,7 +458,10 @@ ContentPage {
                         boundsBehavior: Flickable.StopAtBounds
                         model: root.filteredDesktopApps
 
-                        ScrollBar.vertical: StyledScrollBar {}
+                        ScrollBar.vertical: ScrollBar {
+                            objectName: "autostartAppsScrollBar"
+                            policy: ScrollBar.AlwaysOff
+                        }
 
                         delegate: Rectangle {
                             id: appRow
@@ -415,8 +471,11 @@ ContentPage {
                             readonly property bool isExternal: Autostart.isAppExternal(modelData)
                             readonly property bool isPortable: appRow.appId.startsWith("alis-app-")
                             readonly property var linkedSlots: {
-                                void(AppLauncher._configRevision)
-                                return AppLauncher.defaultSlotsForDesktopId(appRow.appId)
+                                const target = String(appRow.appId ?? "").trim()
+                                if (!target)
+                                    return []
+                                const norm = target.endsWith(".desktop") ? target : `${target}.desktop`
+                                return root.slotLabelsByDesktopId[norm] ?? []
                             }
                             readonly property string resolvedIconPath: {
                                 const raw = String(appRow.modelData.icon ?? "").trim()
@@ -453,13 +512,14 @@ ContentPage {
                                 }
 
                                 ColumnLayout {
+                                    id: appInfoColumn
                                     Layout.fillWidth: true
                                     Layout.preferredWidth: 1
                                     Layout.minimumWidth: 0
                                     clip: true
                                     spacing: 1
 
-                                    Row {
+                                    RowLayout {
                                         id: appTitleBadgeRow
                                         Layout.fillWidth: true
                                         Layout.minimumWidth: 0
@@ -487,8 +547,10 @@ ContentPage {
                                         StyledText {
                                             id: autostartAppNameText
                                             objectName: "autostartAppName_" + appRow.appId
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            width: Math.min(implicitWidth, appTitleBadgeRow.availableAppNameWidth)
+                                            Layout.alignment: Qt.AlignVCenter
+                                            Layout.fillWidth: false
+                                            Layout.minimumWidth: 0
+                                            Layout.maximumWidth: appTitleBadgeRow.availableAppNameWidth
                                             elide: Text.ElideRight
                                             maximumLineCount: 1
                                             font.weight: appRow.isEnabled ? Font.DemiBold : Font.Normal
@@ -497,7 +559,7 @@ ContentPage {
 
                                         Rectangle {
                                             id: portableTagRect
-                                            anchors.verticalCenter: parent.verticalCenter
+                                            Layout.alignment: Qt.AlignVCenter
                                             visible: appRow.isPortable
                                             radius: Appearance.rounding.full
                                             color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.84)
@@ -515,7 +577,7 @@ ContentPage {
                                         RippleButton {
                                             id: defRoleBtn
                                             objectName: "autostartDefaultBadge_" + appRow.appId
-                                            anchors.verticalCenter: parent.verticalCenter
+                                            Layout.alignment: Qt.AlignVCenter
                                             visible: appRow.linkedSlots.length > 0
                                             readonly property real naturalWidth: defRoleTag.implicitWidth + 10
                                             implicitHeight: 18
@@ -548,7 +610,7 @@ ContentPage {
 
                                         Rectangle {
                                             id: extTagRect
-                                            anchors.verticalCenter: parent.verticalCenter
+                                            Layout.alignment: Qt.AlignVCenter
                                             visible: appRow.isExternal
                                             radius: Appearance.rounding.full
                                             color: Appearance.colors.colTertiaryContainer
@@ -562,9 +624,15 @@ ContentPage {
                                                 text: Translation.tr("External")
                                             }
                                         }
+
+                                        Item {
+                                            Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
+                                        }
                                     }
 
                                     HoverMarqueeText {
+                                        Layout.preferredWidth: appInfoColumn.width
                                         hovered: rowHover.hovered
                                         text: appRow.modelData.comment || appRow.modelData.genericName || appRow.appId
                                     }
@@ -613,9 +681,6 @@ ContentPage {
             }
         }
 
-        // ============================================================
-        // RIGHT COLUMN: Autostart Services
-        // ============================================================
         SettingsCardSection {
             id: servicesCard
             objectName: "autostartServicesCard"
@@ -656,7 +721,10 @@ ContentPage {
                         MaterialTextField {
                             id: serviceSearchField
                             Layout.fillWidth: true
-                            placeholderText: Translation.tr("Search services (e.g. mpd, syncthing, wireplumber)...")
+                            Layout.minimumWidth: 0
+                            Layout.maximumHeight: 44
+                            wrapMode: TextEdit.NoWrap
+                            placeholderText: Translation.tr("Search services…")
                             text: root.serviceSearchText
                             onTextChanged: root.serviceSearchText = text
                         }
@@ -734,7 +802,10 @@ ContentPage {
                         MaterialTextField {
                             id: serviceAddField
                             Layout.fillWidth: true
-                            placeholderText: Translation.tr("Add service unit (e.g. syncthing.service) or daemon command...")
+                            Layout.minimumWidth: 0
+                            Layout.maximumHeight: 44
+                            wrapMode: TextEdit.NoWrap
+                            placeholderText: Translation.tr("Add unit or command…")
                             font.family: Appearance.font.family.monospace
                             text: root.newServiceInput
                             onTextChanged: root.newServiceInput = text
@@ -793,291 +864,295 @@ ContentPage {
                 Rectangle {
                     id: servicesListContainer
                     Layout.fillWidth: true
-                    implicitHeight: 390
+                    implicitHeight: (root._targetGridHeight > 0 && servicesCard._effectiveCustomHeight <= 0)
+                        ? Math.max(
+                            180,
+                            Math.round(
+                                root._targetGridHeight
+                                - servicesCard.chromeImplicitHeight
+                                - servicesTopControls.implicitHeight
+                                - SettingsMaterialPreset.groupPadding * 2
+                                - SettingsMaterialPreset.groupSpacing
+                            )
+                        )
+                        : 320
+                    Layout.preferredHeight: implicitHeight
                     radius: Appearance.rounding.normal
                     color: Appearance.colors.colLayer1
                     border.width: 1
                     border.color: Appearance.colors.colOutlineVariant
                     clip: true
 
-                    Flickable {
-                        id: servicesFlickable
+                    ListView {
+                        id: servicesListView
+                        objectName: "autostartServicesListView"
                         anchors.fill: parent
                         anchors.margins: 6
-                        contentWidth: width
-                        contentHeight: servicesListColumn.implicitHeight
+                        spacing: 4
                         clip: true
+                        cacheBuffer: 160
                         boundsBehavior: Flickable.StopAtBounds
+                        model: root.combinedServiceEntries
 
-                        ScrollBar.vertical: StyledScrollBar {}
+                        ScrollBar.vertical: ScrollBar {
+                            objectName: "autostartServicesScrollBar"
+                            policy: ScrollBar.AlwaysOff
+                        }
 
-                        ColumnLayout {
-                            id: servicesListColumn
-                            width: servicesFlickable.width
-                            spacing: 4
+                        delegate: Item {
+                            id: combinedRow
+                            required property var modelData
+                            readonly property bool isDaemon: modelData?.kind === "daemon"
+                            readonly property var itemData: modelData?.data ?? ({})
+                            width: servicesListView.width
+                            height: isDaemon ? 50 : 52
 
-                            // 1. Custom Niri Startup Daemons / Commands
-                            Repeater {
-                                model: root.customServiceEntries
-                                delegate: Rectangle {
-                                    id: daemonRow
-                                    required property var modelData
-                                    Layout.fillWidth: true
-                                    Layout.minimumWidth: 0
-                                    implicitHeight: 50
-                                    clip: true
-                                    radius: Appearance.rounding.small
-                                    color: modelData.enabled
-                                        ? ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.55)
-                                        : (daemonHover.hovered ? Appearance.colors.colLayer2Hover : Appearance.colors.colLayer2)
+                            Rectangle {
+                                id: daemonRow
+                                visible: combinedRow.isDaemon
+                                anchors.fill: parent
+                                clip: true
+                                radius: Appearance.rounding.small
+                                color: Boolean(combinedRow.itemData.enabled)
+                                    ? ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.55)
+                                    : (daemonHover.hovered ? Appearance.colors.colLayer2Hover : Appearance.colors.colLayer2)
 
-                                    HoverHandler { id: daemonHover }
+                                HoverHandler { id: daemonHover; enabled: combinedRow.isDaemon }
 
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 10
-                                        spacing: 10
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 10
+                                    spacing: 10
 
-                                        MaterialSymbol {
-                                            text: "terminal"
-                                            iconSize: Appearance.font.pixelSize.large
-                                            color: daemonRow.modelData.enabled
-                                                ? Appearance.colors.colPrimary
-                                                : Appearance.colors.colSubtext
+                                    MaterialSymbol {
+                                        text: "terminal"
+                                        iconSize: Appearance.font.pixelSize.large
+                                        color: Boolean(combinedRow.itemData.enabled)
+                                            ? Appearance.colors.colPrimary
+                                            : Appearance.colors.colSubtext
+                                    }
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        Layout.preferredWidth: 1
+                                        Layout.minimumWidth: 0
+                                        clip: true
+                                        spacing: 1
+
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
+                                            elide: Text.ElideRight
+                                            maximumLineCount: 1
+                                            font.family: Appearance.font.family.monospace
+                                            font.pixelSize: Appearance.font.pixelSize.small
+                                            font.weight: Font.DemiBold
+                                            text: String(combinedRow.itemData.command ?? "")
                                         }
 
-                                        ColumnLayout {
+                                        HoverMarqueeText {
+                                            hovered: daemonHover.hovered
+                                            text: Translation.tr("Startup command in niri 50-startup.kdl")
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        Layout.preferredWidth: 66
+                                        Layout.minimumWidth: 66
+                                        Layout.maximumWidth: 66
+                                        implicitHeight: 20
+                                        radius: Appearance.rounding.full
+                                        color: Appearance.colors.colSecondaryContainer
+                                        StyledText {
+                                            anchors.centerIn: parent
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            color: Appearance.colors.colOnSecondaryContainer
+                                            text: Translation.tr("Daemon")
+                                        }
+                                    }
+
+                                    RippleButton {
+                                        implicitWidth: 28
+                                        implicitHeight: 28
+                                        Layout.fillWidth: false
+                                        Layout.minimumWidth: implicitWidth
+                                        Layout.preferredWidth: implicitWidth
+                                        Layout.maximumWidth: implicitWidth
+                                        buttonRadius: Appearance.rounding.full
+                                        colBackground: "transparent"
+                                        colBackgroundHover: Appearance.colors.colErrorContainer
+                                        onClicked: Autostart.removeEntry(combinedRow.itemData.entryIndex)
+                                        contentItem: MaterialSymbol {
+                                            anchors.centerIn: parent
+                                            text: "delete"
+                                            iconSize: Appearance.font.pixelSize.normal
+                                            color: Appearance.colors.colError
+                                        }
+                                    }
+
+                                    StyledSwitch {
+                                        Layout.fillWidth: false
+                                        Layout.minimumWidth: implicitWidth
+                                        Layout.preferredWidth: implicitWidth
+                                        Layout.maximumWidth: implicitWidth
+                                        checked: Boolean(combinedRow.itemData.enabled)
+                                        enabled: Autostart.ready && !Autostart.busy
+                                        onToggled: Autostart.setEntryEnabled(combinedRow.itemData.entryIndex, checked)
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                id: svcRow
+                                visible: !combinedRow.isDaemon
+                                readonly property bool isEnabled: Boolean(combinedRow.itemData.enabled)
+                                readonly property bool isRunning: Boolean(combinedRow.itemData.running)
+                                readonly property bool canToggle: Boolean(combinedRow.itemData.canToggle)
+
+                                anchors.fill: parent
+                                clip: true
+                                radius: Appearance.rounding.small
+                                color: isEnabled
+                                    ? ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.55)
+                                    : (svcHover.hovered ? Appearance.colors.colLayer2Hover : "transparent")
+
+                                HoverHandler { id: svcHover; enabled: !combinedRow.isDaemon }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 10
+                                    spacing: 10
+
+                                    Rectangle {
+                                        Layout.preferredWidth: 10
+                                        Layout.preferredHeight: 10
+                                        radius: 5
+                                        color: svcRow.isRunning
+                                            ? Appearance.colors.colPrimary
+                                            : (combinedRow.itemData.activeState === "failed"
+                                                ? Appearance.colors.colError
+                                                : Appearance.colors.colOutline)
+                                    }
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        Layout.preferredWidth: 1
+                                        Layout.minimumWidth: 0
+                                        clip: true
+                                        spacing: 1
+
+                                        RowLayout {
                                             Layout.fillWidth: true
-                                            Layout.preferredWidth: 1
                                             Layout.minimumWidth: 0
                                             clip: true
-                                            spacing: 1
+                                            spacing: 6
 
                                             StyledText {
                                                 Layout.fillWidth: true
                                                 Layout.minimumWidth: 0
                                                 elide: Text.ElideRight
                                                 maximumLineCount: 1
-                                                font.family: Appearance.font.family.monospace
-                                                font.pixelSize: Appearance.font.pixelSize.small
-                                                font.weight: Font.DemiBold
-                                                text: daemonRow.modelData.command
+                                                font.weight: (svcRow.isEnabled || svcRow.isRunning) ? Font.DemiBold : Font.Normal
+                                                text: String(combinedRow.itemData.name || combinedRow.itemData.unit || "")
                                             }
 
-                                            HoverMarqueeText {
-                                                hovered: daemonHover.hovered
-                                                text: Translation.tr("Startup command in niri 50-startup.kdl")
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            Layout.preferredWidth: 66
-                                            Layout.minimumWidth: 66
-                                            Layout.maximumWidth: 66
-                                            implicitHeight: 20
-                                            radius: Appearance.rounding.full
-                                            color: Appearance.colors.colSecondaryContainer
-                                            StyledText {
-                                                anchors.centerIn: parent
-                                                font.pixelSize: Appearance.font.pixelSize.smallest
-                                                color: Appearance.colors.colOnSecondaryContainer
-                                                text: Translation.tr("Daemon")
+                                            Rectangle {
+                                                visible: !svcRow.canToggle
+                                                radius: Appearance.rounding.full
+                                                color: Appearance.colors.colLayer2
+                                                implicitHeight: 18
+                                                implicitWidth: staticBadge.implicitWidth + 10
+                                                StyledText {
+                                                    id: staticBadge
+                                                    anchors.centerIn: parent
+                                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                                    color: Appearance.colors.colSubtext
+                                                    text: String(combinedRow.itemData.unitFileState || "static")
+                                                }
                                             }
                                         }
 
-                                        RippleButton {
-                                            implicitWidth: 28
-                                            implicitHeight: 28
-                                            Layout.fillWidth: false
-                                            Layout.minimumWidth: implicitWidth
-                                            Layout.preferredWidth: implicitWidth
-                                            Layout.maximumWidth: implicitWidth
-                                            buttonRadius: Appearance.rounding.full
-                                            colBackground: "transparent"
-                                            colBackgroundHover: Appearance.colors.colErrorContainer
-                                            onClicked: Autostart.removeEntry(daemonRow.modelData.entryIndex)
-                                            contentItem: MaterialSymbol {
-                                                anchors.centerIn: parent
-                                                text: "delete"
-                                                iconSize: Appearance.font.pixelSize.normal
-                                                color: Appearance.colors.colError
-                                            }
-                                        }
-
-                                        StyledSwitch {
-                                            Layout.fillWidth: false
-                                            Layout.minimumWidth: implicitWidth
-                                            Layout.preferredWidth: implicitWidth
-                                            Layout.maximumWidth: implicitWidth
-                                            checked: daemonRow.modelData.enabled
-                                            enabled: Autostart.ready && !Autostart.busy
-                                            onToggled: Autostart.setEntryEnabled(daemonRow.modelData.entryIndex, checked)
+                                        HoverMarqueeText {
+                                            hovered: svcHover.hovered
+                                            text: `${combinedRow.itemData.description ?? ""} · ${combinedRow.itemData.unit ?? ""}`
                                         }
                                     }
-                                }
-                            }
 
-                            // 2. Systemd User Services
-                            Repeater {
-                                model: root.filteredUserServices
-                                delegate: Rectangle {
-                                    id: svcRow
-                                    required property var modelData
-                                    readonly property bool isEnabled: Boolean(modelData.enabled)
-                                    readonly property bool isRunning: Boolean(modelData.running)
-                                    readonly property bool canToggle: Boolean(modelData.canToggle)
-
-                                    Layout.fillWidth: true
-                                    Layout.minimumWidth: 0
-                                    implicitHeight: 52
-                                    clip: true
-                                    radius: Appearance.rounding.small
-                                    color: isEnabled
-                                        ? ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.55)
-                                        : (svcHover.hovered ? Appearance.colors.colLayer2Hover : "transparent")
-
-                                    HoverHandler { id: svcHover }
-
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 10
-                                        spacing: 10
-
-                                        // Running status indicator dot
-                                        Rectangle {
-                                            Layout.preferredWidth: 10
-                                            Layout.preferredHeight: 10
-                                            radius: 5
+                                    Rectangle {
+                                        Layout.preferredWidth: 66
+                                        Layout.minimumWidth: 66
+                                        Layout.maximumWidth: 66
+                                        implicitHeight: 20
+                                        radius: Appearance.rounding.full
+                                        color: svcRow.isRunning
+                                            ? Appearance.colors.colPrimaryContainer
+                                            : (combinedRow.itemData.activeState === "failed"
+                                                ? Appearance.colors.colErrorContainer
+                                                : Appearance.colors.colLayer2)
+                                        StyledText {
+                                            id: stateBadgeText
+                                            anchors.centerIn: parent
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            font.weight: Font.Medium
                                             color: svcRow.isRunning
-                                                ? Appearance.colors.colPrimary
-                                                : (svcRow.modelData.activeState === "failed"
-                                                    ? Appearance.colors.colError
-                                                    : Appearance.colors.colOutline)
+                                                ? Appearance.colors.colOnPrimaryContainer
+                                                : (combinedRow.itemData.activeState === "failed"
+                                                    ? Appearance.colors.colOnErrorContainer
+                                                    : Appearance.colors.colSubtext)
+                                            text: svcRow.isRunning
+                                                ? Translation.tr("Running")
+                                                : (combinedRow.itemData.activeState === "failed"
+                                                    ? Translation.tr("Failed")
+                                                    : Translation.tr("Stopped"))
                                         }
+                                    }
 
-                                        ColumnLayout {
-                                            Layout.fillWidth: true
-                                            Layout.preferredWidth: 1
-                                            Layout.minimumWidth: 0
-                                            clip: true
-                                            spacing: 1
-
-                                            RowLayout {
-                                                Layout.fillWidth: true
-                                                Layout.minimumWidth: 0
-                                                clip: true
-                                                spacing: 6
-
-                                                StyledText {
-                                                    Layout.fillWidth: true
-                                                    Layout.minimumWidth: 0
-                                                    elide: Text.ElideRight
-                                                    maximumLineCount: 1
-                                                    font.weight: (svcRow.isEnabled || svcRow.isRunning) ? Font.DemiBold : Font.Normal
-                                                    text: svcRow.modelData.name || svcRow.modelData.unit
-                                                }
-
-                                                Rectangle {
-                                                    visible: !svcRow.canToggle
-                                                    radius: Appearance.rounding.full
-                                                    color: Appearance.colors.colLayer2
-                                                    implicitHeight: 18
-                                                    implicitWidth: staticBadge.implicitWidth + 10
-                                                    StyledText {
-                                                        id: staticBadge
-                                                        anchors.centerIn: parent
-                                                        font.pixelSize: Appearance.font.pixelSize.smallest
-                                                        color: Appearance.colors.colSubtext
-                                                        text: svcRow.modelData.unitFileState || "static"
-                                                    }
-                                                }
-                                            }
-
-                                            HoverMarqueeText {
-                                                hovered: svcHover.hovered
-                                                text: `${svcRow.modelData.description} · ${svcRow.modelData.unit}`
-                                            }
-                                        }
-
-                                        // Fixed-width aligned Running / Stopped / Failed column
-                                        Rectangle {
-                                            Layout.preferredWidth: 66
-                                            Layout.minimumWidth: 66
-                                            Layout.maximumWidth: 66
-                                            implicitHeight: 20
-                                            radius: Appearance.rounding.full
+                                    RippleButton {
+                                        implicitWidth: 28
+                                        implicitHeight: 28
+                                        Layout.fillWidth: false
+                                        Layout.minimumWidth: implicitWidth
+                                        Layout.preferredWidth: implicitWidth
+                                        Layout.maximumWidth: implicitWidth
+                                        buttonRadius: Appearance.rounding.full
+                                        enabled: !servicesActionProc.running
+                                        colBackground: Appearance.colors.colLayer2
+                                        colBackgroundHover: Appearance.colors.colLayer2Hover
+                                        onClicked: root.runServiceAction(
+                                            combinedRow.itemData.unit,
+                                            svcRow.isRunning ? "stop" : "start"
+                                        )
+                                        contentItem: MaterialSymbol {
+                                            anchors.centerIn: parent
+                                            text: svcRow.isRunning ? "stop" : "play_arrow"
+                                            iconSize: Appearance.font.pixelSize.normal
                                             color: svcRow.isRunning
-                                                ? Appearance.colors.colPrimaryContainer
-                                                : (svcRow.modelData.activeState === "failed"
-                                                    ? Appearance.colors.colErrorContainer
-                                                    : Appearance.colors.colLayer2)
-                                            StyledText {
-                                                id: stateBadgeText
-                                                anchors.centerIn: parent
-                                                font.pixelSize: Appearance.font.pixelSize.smallest
-                                                font.weight: Font.Medium
-                                                color: svcRow.isRunning
-                                                    ? Appearance.colors.colOnPrimaryContainer
-                                                    : (svcRow.modelData.activeState === "failed"
-                                                        ? Appearance.colors.colOnErrorContainer
-                                                        : Appearance.colors.colSubtext)
-                                                text: svcRow.isRunning
-                                                    ? Translation.tr("Running")
-                                                    : (svcRow.modelData.activeState === "failed"
-                                                        ? Translation.tr("Failed")
-                                                        : Translation.tr("Stopped"))
-                                            }
+                                                ? Appearance.colors.colError
+                                                : Appearance.colors.colPrimary
                                         }
-
-                                        // Start / Stop button
-                                        RippleButton {
-                                            implicitWidth: 28
-                                            implicitHeight: 28
-                                            Layout.fillWidth: false
-                                            Layout.minimumWidth: implicitWidth
-                                            Layout.preferredWidth: implicitWidth
-                                            Layout.maximumWidth: implicitWidth
-                                            buttonRadius: Appearance.rounding.full
-                                            enabled: !servicesActionProc.running
-                                            colBackground: Appearance.colors.colLayer2
-                                            colBackgroundHover: Appearance.colors.colLayer2Hover
-                                            onClicked: root.runServiceAction(
-                                                svcRow.modelData.unit,
-                                                svcRow.isRunning ? "stop" : "start"
-                                            )
-                                            contentItem: MaterialSymbol {
-                                                anchors.centerIn: parent
-                                                text: svcRow.isRunning ? "stop" : "play_arrow"
-                                                iconSize: Appearance.font.pixelSize.normal
-                                                color: svcRow.isRunning
-                                                    ? Appearance.colors.colError
-                                                    : Appearance.colors.colPrimary
-                                            }
-                                            StyledToolTip {
-                                                text: svcRow.isRunning
-                                                    ? Translation.tr("Stop service now")
-                                                    : Translation.tr("Start service now")
-                                            }
+                                        StyledToolTip {
+                                            text: svcRow.isRunning
+                                                ? Translation.tr("Stop service now")
+                                                : Translation.tr("Start service now")
                                         }
+                                    }
 
-                                        // Enable / Disable on Autostart switch
-                                        StyledSwitch {
-                                            Layout.fillWidth: false
-                                            Layout.minimumWidth: implicitWidth
-                                            Layout.preferredWidth: implicitWidth
-                                            Layout.maximumWidth: implicitWidth
-                                            checked: svcRow.isEnabled
-                                            enabled: svcRow.canToggle && !servicesActionProc.running
-                                            onToggled: root.setServiceAutostart(svcRow.modelData.unit, checked)
-                                            StyledToolTip {
-                                                text: svcRow.canToggle
-                                                    ? (svcRow.isEnabled
-                                                        ? Translation.tr("Enabled at login (click to disable autostart)")
-                                                        : Translation.tr("Disabled at login (click to enable autostart)"))
-                                                    : Translation.tr("Managed automatically by systemd socket/target (%1)").arg(svcRow.modelData.unitFileState)
-                                            }
+                                    StyledSwitch {
+                                        Layout.fillWidth: false
+                                        Layout.minimumWidth: implicitWidth
+                                        Layout.preferredWidth: implicitWidth
+                                        Layout.maximumWidth: implicitWidth
+                                        checked: svcRow.isEnabled
+                                        enabled: svcRow.canToggle && !servicesActionProc.running
+                                        onToggled: root.setServiceAutostart(combinedRow.itemData.unit, checked)
+                                        StyledToolTip {
+                                            text: svcRow.canToggle
+                                                ? (svcRow.isEnabled
+                                                    ? Translation.tr("Enabled at login (click to disable autostart)")
+                                                    : Translation.tr("Disabled at login (click to enable autostart)"))
+                                                : Translation.tr("Managed automatically by systemd socket/target (%1)").arg(combinedRow.itemData.unitFileState)
                                         }
                                     }
                                 }
@@ -1151,60 +1226,80 @@ ContentPage {
                     }
                 }
 
-                Repeater {
-                    model: root.externalStartupLines
-                    delegate: Rectangle {
-                        id: extRow
-                        required property var modelData
-                        Layout.fillWidth: true
-                        implicitHeight: 38
-                        radius: Appearance.rounding.small
-                        color: Appearance.colors.colLayer2
-                        border.width: 1
-                        border.color: Appearance.colors.colOutlineVariant
+                Flickable {
+                    id: externalLinesFlickable
+                    Layout.fillWidth: true
+                    implicitHeight: Math.min(130, externalLinesColumn.implicitHeight)
+                    Layout.preferredHeight: implicitHeight
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    contentWidth: width
+                    contentHeight: externalLinesColumn.implicitHeight
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AlwaysOff
+                    }
 
-                        HoverHandler {
-                            id: extHover
-                        }
+                    ColumnLayout {
+                        id: externalLinesColumn
+                        width: externalLinesFlickable.width
+                        spacing: 6
 
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
-                            spacing: 8
+                        Repeater {
+                            model: root.externalStartupLines
+                            delegate: Rectangle {
+                                id: extRow
+                                required property var modelData
+                                Layout.fillWidth: true
+                                implicitHeight: 38
+                                radius: Appearance.rounding.small
+                                color: Appearance.colors.colLayer2
+                                border.width: 1
+                                border.color: Appearance.colors.colOutlineVariant
 
-                            MaterialSymbol {
-                                text: "terminal"
-                                iconSize: Appearance.font.pixelSize.normal
-                                color: Appearance.colors.colSubtext
-                            }
+                                HoverHandler {
+                                    id: extHover
+                                }
 
-                            HoverMarqueeText {
-                                hovered: extHover.hovered
-                                fontFamily: Appearance.font.family.monospace
-                                color: Appearance.colors.colOnLayer1
-                                text: String(extRow.modelData.raw ?? "")
-                            }
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 10
+                                    spacing: 8
 
-                            Rectangle {
-                                Layout.preferredWidth: 66
-                                Layout.minimumWidth: 66
-                                Layout.maximumWidth: 66
-                                implicitHeight: 20
-                                radius: Appearance.rounding.full
-                                color: extRow.modelData.enabled
-                                    ? Appearance.colors.colSecondaryContainer
-                                    : Appearance.colors.colLayer1
-                                StyledText {
-                                    anchors.centerIn: parent
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    font.weight: Font.Medium
-                                    color: extRow.modelData.enabled
-                                        ? Appearance.colors.colOnSecondaryContainer
-                                        : Appearance.colors.colSubtext
-                                    text: extRow.modelData.enabled
-                                        ? Translation.tr("External")
-                                        : Translation.tr("Disabled")
+                                    MaterialSymbol {
+                                        text: "terminal"
+                                        iconSize: Appearance.font.pixelSize.normal
+                                        color: Appearance.colors.colSubtext
+                                    }
+
+                                    HoverMarqueeText {
+                                        hovered: extHover.hovered
+                                        fontFamily: Appearance.font.family.monospace
+                                        color: Appearance.colors.colOnLayer1
+                                        text: String(extRow.modelData.raw ?? "")
+                                    }
+
+                                    Rectangle {
+                                        Layout.preferredWidth: 66
+                                        Layout.minimumWidth: 66
+                                        Layout.maximumWidth: 66
+                                        implicitHeight: 20
+                                        radius: Appearance.rounding.full
+                                        color: extRow.modelData.enabled
+                                            ? Appearance.colors.colSecondaryContainer
+                                            : Appearance.colors.colLayer1
+                                        StyledText {
+                                            anchors.centerIn: parent
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            font.weight: Font.Medium
+                                            color: extRow.modelData.enabled
+                                                ? Appearance.colors.colOnSecondaryContainer
+                                                : Appearance.colors.colSubtext
+                                            text: extRow.modelData.enabled
+                                                ? Translation.tr("External")
+                                                : Translation.tr("Disabled")
+                                        }
+                                    }
                                 }
                             }
                         }

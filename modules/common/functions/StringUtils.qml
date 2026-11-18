@@ -372,4 +372,19 @@ Singleton {
             }
         );
     }
+
+    function looksLikeMathExpression(query, mathPrefix = "=") {
+        const trimmed = String(query ?? "").trim();
+        if (trimmed.length === 0)
+            return false;
+        if (mathPrefix && trimmed.startsWith(mathPrefix))
+            return trimmed.slice(mathPrefix.length).trim().length > 0;
+        if (/[+\-*/%^()]/.test(trimmed) && /\d/.test(trimmed))
+            return true;
+        if (/^(?:sin|cos|tan|sqrt|log|ln|abs|floor|ceil|round|pow|min|max)\s*\(/i.test(trimmed))
+            return true;
+        if (/\b(?:to|in)\b/i.test(trimmed) && /\d/.test(trimmed))
+            return true;
+        return false;
+    }
 }

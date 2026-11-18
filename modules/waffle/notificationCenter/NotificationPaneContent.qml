@@ -72,11 +72,12 @@ BodyRectangle {
             Layout.fillWidth: true
             Layout.leftMargin: 12
             Layout.rightMargin: 12
-            implicitHeight: visible ? 32 : 0
-            radius: height / 2
+            implicitHeight: visible ? 34 : 0
+            radius: Looks.radius.medium
             color: Looks.colors.inputBg
             border.width: 1
             border.color: Looks.colors.bg2Border
+            clip: true
 
             onVisibleChanged: if (!visible) root.filterQuery = ""
 
@@ -106,6 +107,14 @@ BodyRectangle {
                         font.pixelSize: Looks.font.pixelSize.small
                     }
                 }
+            }
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: notificationSearchInput.activeFocus ? 2 : 1
+                color: notificationSearchInput.activeFocus ? Looks.colors.accent : Looks.colors.accentUnfocused
             }
         }
 

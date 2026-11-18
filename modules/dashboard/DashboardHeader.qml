@@ -33,6 +33,7 @@ Item {
     property var customTabs: []
     property string defaultTabId: "dashboard"
     property bool navigationAllowed: true
+    property bool pageSlideInFlight: false
     property bool reorderAllowed: editMode
     property string dragPageId: ""
     property string dragPageOrder: ""
@@ -56,6 +57,7 @@ Item {
         if(id==="music") return Translation.tr("Music")
         if(id==="weeklyPlanner") return Translation.tr("Weekly Planner")
         if(id==="spacedRepetition") return Translation.tr("Spaced Repetition")
+        if(id==="exercisesTracker") return Translation.tr("Exercises Tracker")
         return root.customTabs.find(tab => tab.id === id)?.name ?? String(id ?? "")
     }
     function focusMovedPage(): void {
@@ -113,12 +115,20 @@ Item {
     }
     Keys.onLeftPressed: event => {
         if (root.navigationAllowed && !root.editMode && root.navigationPage > 0) {
+            if (event.isAutoRepeat) {
+                event.accepted = true
+                return
+            }
             root.pageRequested(root.navigationPage - 1)
             event.accepted = true
         } else event.accepted = false
     }
     Keys.onRightPressed: event => {
         if (root.navigationAllowed && !root.editMode && root.navigationPage < root.pageCount - 1) {
+            if (event.isAutoRepeat) {
+                event.accepted = true
+                return
+            }
             root.pageRequested(root.navigationPage + 1)
             event.accepted = true
         } else event.accepted = false
@@ -265,6 +275,10 @@ Item {
                     Keys.onPressed: event => {
                         if(root.reorderAllowed && (event.modifiers & Qt.AltModifier)
                                 && (event.key===Qt.Key_Left || event.key===Qt.Key_Right)) {
+                            if (event.isAutoRepeat || root.pageSlideInFlight) {
+                                event.accepted = true
+                                return
+                            }
                             root.moveFocusedPage(root.pageIds[index],index+(event.key===Qt.Key_Left?-1:1))
                             event.accepted=true
                         }else if(event.key===Qt.Key_Escape && root.cancelPageDrag())event.accepted=true

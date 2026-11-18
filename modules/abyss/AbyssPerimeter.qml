@@ -1307,6 +1307,7 @@ Scope {
                 || rightPanel.presented || popup.presented || dashboardBody.presented
                 || nexusBody.presented || settings.presented || controls.presented || wallpaperBody.presented
                 || window.wallpaperStageEditing
+                || window.widgetStageEditing
                 || utility.presented || dialogBody.presented || window.editorOpen
                 || companionExtension.popupOpen
             readonly property bool anyBodyVisualResident: aux.visualResident
@@ -1555,7 +1556,7 @@ Scope {
                         return
                     }
                     if (window.widgetStageEditing) {
-                        GlobalStates.setWidgetEditMode(false)
+                        GlobalStates.cancelWidgetEditMode()
                         if (event) event.accepted = true
                         return
                     }
@@ -2443,9 +2444,9 @@ Scope {
                     && GlobalStates.settingsOverlayPresentationOutput === window.outputName
                 largeSurface: true
                 edgeInsets: window.bodyInsets(edge,along,span)
-                span: Geometry.horizontal(edge) ? Math.min(1600,Math.max(900,window.width*.9)) : Math.min(1080,Math.max(720,window.height*.92))
+                span: Geometry.horizontal(edge) ? Math.min(1600,Math.max(900,window.width*.9)) : Math.max(560, Math.min(Math.round(1280 * Math.max(1, Appearance.fontSizeScale)), Math.round(window.height * .92), window.height - 40))
                 along: window.positionAlong(identity,edge,span,((Geometry.horizontal(edge) ? window.width : window.height)-span)/2)
-                depth: Geometry.horizontal(edge) ? Math.min(1080,Math.max(720,window.height*.92)) : Math.min(1600,Math.max(900,window.width*.9))
+                depth: Geometry.horizontal(edge) ? Math.max(560, Math.min(Math.round(1280 * Math.max(1, Appearance.fontSizeScale)), Math.round(window.height * .92), window.height - 40)) : Math.min(1600,Math.max(900,window.width*.9))
                 source: "content/AbyssSettingsContent.qml"
                 onCloseRequested: GlobalStates.settingsOverlayOpen = false
             }
@@ -2800,6 +2801,24 @@ Scope {
                 records: window.presented ? liquid.records : window.physicalOsdResident ? [osd.record] : []
                 waveTexture: liquid.waves.texture
                 waterLink: companionExtension.waterLink
+                // Cache the full-output SDF/shadow FBO strictly when perimeter
+                // geometry, panel transitions, waves, and Companion rim contact
+                // are static (e.g. rotating Companion bubbles in Performance mode).
+                layer.enabled: field.ready
+                    && field.visible
+                    && window.presented
+                    && !GlobalStates.screenLocked
+                    && !GlobalStates.abyssColdPerimeterRecreatePending
+                    && !window.editStageVisible
+                    && !window.editorOpen
+                    && !window.physicalOsdResident
+                    && (window.barProgress <= 0.001 || window.barProgress >= 0.999)
+                    && !bar.motionActive
+                    && liquid.surfacesSettled
+                    && !liquid.waves.running
+                    && !Boolean(liquid.waves.texture?.activeProfile)
+                    && !(companionExtension.waterLink?.running ?? false)
+                    && !((companionExtension.waterLink?.neck ?? 0) > 0.001)
             }
             Item {
                 id: abyssDesktopStage
@@ -2933,7 +2952,8 @@ Scope {
                     const child = kids[i]
                     if (!child || excluded.includes(child))
                         continue
-                    if (Number(child.z ?? 0) >= 900 || String(child).startsWith("QQuickOverlay"))
+                    const childType = String(child)
+                    if (Number(child.z ?? 0) >= 900 || childType.startsWith("QQuickOverlay") || childType.startsWith("QQuickShaderEffectSource"))
                         continue
                     child.parent = abyssDesktopStage
                 }

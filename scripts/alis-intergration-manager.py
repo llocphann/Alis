@@ -26,11 +26,14 @@ discovery = module_from_spec(spec)
 spec.loader.exec_module(discovery)
 
 API = "https://api.github.com/repos/llocphann/Alis-Intergration/commits/main"
+API_REF = "https://api.github.com/repos/llocphann/Alis-Intergration/git/ref/heads/main"
 ARCHIVE = "https://api.github.com/repos/llocphann/Alis-Intergration/tarball/"
 PAYLOAD = ("AlisSession.qml", "services/", "modules/", "assets/",
            "scripts/integrations/", "scripts/todo/", "scripts/notes/", "LICENSE")
-MAX_ARCHIVE = 8 * 1024 * 1024
-MAX_PAYLOAD = 24 * 1024 * 1024
+MAX_COMMIT_META = 16 * 1024 * 1024
+MAX_ARCHIVE = 32 * 1024 * 1024
+MAX_PAYLOAD = 64 * 1024 * 1024
+MAX_FILE_SIZE = 8 * 1024 * 1024
 MAX_FILES = 512
 MAX_MEMBERS = 4096
 SYSTEM_PROVISIONER = "/usr/libexec/alis-intergration-system-provision"
@@ -69,8 +72,15 @@ def request_bytes(url, limit):
 
 
 def latest_sha():
-    doc = json.loads(request_bytes(API, 256 * 1024))
-    revision = doc.get("sha") if isinstance(doc, dict) else None
+    try:
+        doc = json.loads(request_bytes(API, MAX_COMMIT_META))
+        revision = doc.get("sha") if isinstance(doc, dict) else None
+    except ValueError as error:
+        if "exceeds the configured limit" not in str(error):
+            raise
+        ref_doc = json.loads(request_bytes(API_REF, 256 * 1024))
+        obj = ref_doc.get("object") if isinstance(ref_doc, dict) else None
+        revision = obj.get("sha") if isinstance(obj, dict) and obj.get("type") == "commit" else None
     if not isinstance(revision, str) or not SHA.fullmatch(revision):
         raise ValueError("GitHub did not return an immutable commit SHA")
     return revision
@@ -113,7 +123,7 @@ def unpack(data):
                 raise ValueError("Nonregular package member")
             if name in result or len(result) >= MAX_FILES:
                 raise ValueError("Duplicate or excessive package entries")
-            if member.size < 0 or member.size > 2 * 1024 * 1024:
+            if member.size < 0 or member.size > MAX_FILE_SIZE:
                 raise ValueError("Oversized package file")
             total += member.size
             if total > MAX_PAYLOAD:
@@ -280,8 +290,62 @@ def gateway_package(action):
     return payload
 
 
+def _catalog_doc(shell_root):
+    try:
+        return json.loads((Path(shell_root) / "defaults/integration-plugins.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _known_plugin_ids(shell_root, package_dir=None):
+    if package_dir is not None and (package_dir / "manifest.json").is_file():
+        try:
+            manifest = json.loads((package_dir / "manifest.json").read_text(encoding="utf-8"))
+            ids = [plugin["id"] for plugin in discovery.plugin_metadata(manifest)]
+            if ids:
+                return ids
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
+    doc = _catalog_doc(shell_root)
+    ids = [plugin["id"] for plugin in discovery.plugin_metadata(doc)]
+    return ids or ["tlp", "thinkfan", "nexus", "spaced_repetition"]
+
+
+def _install_release(home, current, previous_file, revision_fetch, archive_fetch):
+    latest = revision_fetch()
+    if not SHA.fullmatch(latest):
+        raise ValueError("Invalid source revision")
+    if latest == current:
+        return {"latestSha": latest, "installedSha": current,
+                "version": json.loads((home / "releases" / current / "manifest.json").read_text())["version"],
+                "alreadyCurrent": True}
+    releases = home / "releases"
+    releases.mkdir(exist_ok=True)
+    candidate = releases / latest
+    if candidate.exists():
+        if not package_good(candidate, latest):
+            raise ValueError("Existing release bytes differ; preserved unchanged")
+    else:
+        with tempfile.TemporaryDirectory(dir=releases, prefix=".stage-") as temporary:
+            bundle = unpack(archive_fetch(ARCHIVE + latest, MAX_ARCHIVE))
+            payload = Path(temporary) / "payload"
+            assemble(bundle, latest, payload)
+            if not package_good(payload, latest):
+                raise ValueError("Package integrity verification failed")
+            os.replace(payload, candidate)
+    switch(home, latest)
+    if current:
+        previous_file.write_text(current + "\n")
+    return {
+        "latestSha": latest,
+        "installedSha": latest,
+        "version": json.loads((candidate / "manifest.json").read_text())["version"],
+        "alreadyCurrent": False,
+    }
+
+
 def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=request_bytes,
-            system_call=call_system_helper, gateway_call=gateway_package):
+            system_call=call_system_helper, gateway_call=gateway_package, *, plugin_id=None):
     home.mkdir(parents=True, exist_ok=True)
     bundled = discovery.resolve_bundled_package(shell_root)
     # Bundled distro payload takes precedence in Alis discovery.
@@ -294,7 +358,7 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
         try:
             current = active_revision(home)
         except ValueError:
-            if action in ("install", "remove", "rollback"):
+            if action in ("install", "install-all", "remove", "rollback", "install-plugin", "remove-plugin"):
                 owned_link(home)
             elif action not in ("status", "check", "system-status", "helpers-status", "gateway-status", "helpers-remove", "gateway-remove", "gateway-rollback"):
                 raise
@@ -406,8 +470,74 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
             return result
         if action == "remove":
             owned_link(home).unlink(missing_ok=True)
+            selection = discovery.installed_plugins_path(home)
+            if selection.is_file() and not selection.is_symlink():
+                selection.unlink()
             result.update(diagnostic="not-installed", installedSha="", available=False, version="",
+                          installedPluginIds=[],
                           message="Package removed; preferences and releases retained")
+            return result
+        if action == "install-plugin":
+            catalog_doc = _catalog_doc(shell_root)
+            if not isinstance(plugin_id, str) or not plugin_id.strip():
+                raise ValueError("install-plugin requires a plugin id")
+            plugin_id = plugin_id.strip()
+            known_ids = _known_plugin_ids(shell_root)
+            if plugin_id not in known_ids:
+                raise ValueError(f"Unknown integration plugin: {plugin_id}")
+            had_package = bool(current) or bundled.is_dir()
+            if not had_package:
+                rel = _install_release(home, current, previous_file, revision_fetch, archive_fetch)
+                result.update(diagnostic="ready", available=True,
+                              installedSha=rel["installedSha"], latestSha=rel["latestSha"],
+                              canRollback=bool(current) or result["canRollback"],
+                              version=rel["version"])
+                current = rel["installedSha"]
+            package_dir = bundled if bundled.is_dir() else (home / "releases" / current if current else None)
+            valid_ids = _known_plugin_ids(shell_root, package_dir)
+            if plugin_id not in valid_ids:
+                raise ValueError(f"Plugin {plugin_id} is not in this Alis-Intergration release")
+            existing, explicit = discovery.load_installed_plugins(home, valid_ids)
+            if explicit:
+                updated = list(existing)
+            elif had_package:
+                updated = list(valid_ids)
+            else:
+                updated = []
+            if plugin_id not in updated:
+                updated.append(plugin_id)
+            discovery.save_installed_plugins(home, updated)
+            deps = discovery.inspect_plugin_dependencies(catalog_doc).get(plugin_id, {})
+            missing = deps.get("missing") or []
+            if missing and not deps.get("userSpace", True):
+                guidance = f"Missing dependencies: {', '.join(missing)}. Run {deps.get('setupCommand') or './setup install-deps'} and {deps.get('helpersCommand') or './setup integrations'}."
+            elif missing:
+                guidance = f"Missing dependencies: {', '.join(missing)}."
+            else:
+                guidance = f"Installed integration plugin {plugin_id}"
+            result.update(plugin=plugin_id, installedPluginIds=updated,
+                          dependencies=deps, message=guidance)
+            return result
+        if action == "remove-plugin":
+            if not isinstance(plugin_id, str) or not plugin_id.strip():
+                raise ValueError("remove-plugin requires a plugin id")
+            plugin_id = plugin_id.strip()
+            package_dir = bundled if bundled.is_dir() else (home / "releases" / current if current else None)
+            valid_ids = _known_plugin_ids(shell_root, package_dir)
+            if plugin_id not in valid_ids:
+                raise ValueError(f"Unknown integration plugin: {plugin_id}")
+            had_package = bool(current) or bundled.is_dir()
+            existing, explicit = discovery.load_installed_plugins(home, valid_ids)
+            if explicit:
+                updated = [item for item in existing if item != plugin_id]
+                discovery.save_installed_plugins(home, updated)
+            elif had_package:
+                updated = [item for item in valid_ids if item != plugin_id]
+                discovery.save_installed_plugins(home, updated)
+            else:
+                updated = []
+            result.update(plugin=plugin_id, installedPluginIds=updated,
+                          message=f"Removed integration plugin {plugin_id}; saved preferences retained")
             return result
         if action == "rollback":
             if not SHA.fullmatch(previous) or not package_good(home / "releases" / previous, previous):
@@ -418,44 +548,54 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
                           version=json.loads((home / "releases" / previous / "manifest.json").read_text())["version"],
                           message="Previous release restored")
             return result
+        if action == "install-all":
+            if bundled.is_dir():
+                package_dir = bundled
+                valid_ids = _known_plugin_ids(shell_root, package_dir)
+                updated = discovery.save_installed_plugins(home, valid_ids)
+                version = ""
+                try:
+                    version = json.loads((bundled / "manifest.json").read_text(encoding="utf-8")).get("version", "")
+                except (OSError, ValueError):
+                    pass
+                result.update(diagnostic="ready", available=True, version=version,
+                              installedPluginIds=updated,
+                              message="Enabled all bundled integration plugins")
+                return result
+            rel = _install_release(home, current, previous_file, revision_fetch, archive_fetch)
+            target_sha = rel["installedSha"]
+            package_dir = home / "releases" / target_sha
+            valid_ids = _known_plugin_ids(shell_root, package_dir)
+            updated = discovery.save_installed_plugins(home, valid_ids)
+            result.update(diagnostic="ready", available=True,
+                          installedSha=target_sha, latestSha=rel["latestSha"],
+                          canRollback=(bool(current) and current != target_sha) or result["canRollback"],
+                          version=rel["version"],
+                          installedPluginIds=updated,
+                          message="Installed all verified Alis-Intergration plugins")
+            return result
         if action != "install":
             raise ValueError("Unsupported action")
-        latest = revision_fetch()
-        if not SHA.fullmatch(latest):
-            raise ValueError("Invalid source revision")
-        result["latestSha"] = latest
-        if latest == current:
+        rel = _install_release(home, current, previous_file, revision_fetch, archive_fetch)
+        result["latestSha"] = rel["latestSha"]
+        if rel["alreadyCurrent"]:
             result["message"] = "Already on the latest revision"
             return result
-        releases = home / "releases"
-        releases.mkdir(exist_ok=True)
-        candidate = releases / latest
-        if candidate.exists():
-            if not package_good(candidate, latest):
-                raise ValueError("Existing release bytes differ; preserved unchanged")
-        else:
-            with tempfile.TemporaryDirectory(dir=releases, prefix=".stage-") as temporary:
-                bundle = unpack(archive_fetch(ARCHIVE + latest, MAX_ARCHIVE))
-                payload = Path(temporary) / "payload"
-                assemble(bundle, latest, payload)
-                if not package_good(payload, latest):
-                    raise ValueError("Package integrity verification failed")
-                os.replace(payload, candidate)
-        switch(home, latest)
-        if current:
-            previous_file.write_text(current + "\n")
-        result.update(diagnostic="ready", available=True, installedSha=latest,
+        result.update(diagnostic="ready", available=True, installedSha=rel["installedSha"],
                       canRollback=bool(current) or result["canRollback"],
-                      version=json.loads((candidate / "manifest.json").read_text())["version"],
+                      version=rel["version"],
                       message="Installed verified Alis-Intergration release")
         return result
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("status", "check", "install", "remove", "rollback",
+    parser.add_argument("action", choices=("status", "check", "install", "install-all", "remove", "rollback",
+                                                    "install-plugin", "remove-plugin",
                                                     "system-status", "helpers-status", "helpers-install", "helpers-remove", "helpers-ensure",
                                                     "gateway-status", "gateway-install", "gateway-remove", "gateway-rollback"))
+    parser.add_argument("plugin_id", nargs="?", default=None)
+    parser.add_argument("--plugin", dest="plugin_flag", default=None)
     parser.add_argument("--shell-root", type=Path, default=ROOT)
     parser.add_argument("--data-home", type=Path, default=Path(
         os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))))
@@ -463,13 +603,14 @@ def main():
     try:
         canonical = args.data_home / "alis-intergration"
         legacy = args.data_home / _LEGACY_COMPONENT
-        if args.action in ("install", "remove", "rollback"):
+        if args.action in ("install", "install-all", "remove", "rollback", "install-plugin", "remove-plugin"):
             if legacy.is_dir() and not legacy.is_symlink() and not canonical.exists():
                 os.replace(legacy, canonical)
             home = canonical
         else:
             home = canonical if canonical.exists() or not legacy.exists() else legacy
-        result = operate(args.action, home, args.shell_root)
+        target_plugin = args.plugin_flag or args.plugin_id or None
+        result = operate(args.action, home, args.shell_root, plugin_id=target_plugin)
         print(json.dumps(result))
     except (OSError, ValueError, KeyError, json.JSONDecodeError, tarfile.TarError) as error:
         print(json.dumps({"ok": False, "action": args.action, "error": str(error)}))

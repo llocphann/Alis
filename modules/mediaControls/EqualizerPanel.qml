@@ -23,6 +23,7 @@ Item {
     readonly property color eqAccentColor: Appearance.colors.colPrimary
     readonly property bool showTransportStatus: EqualizerService.busy
         || !EqualizerService.dspControlAvailable
+        || EqualizerService.error.length > 0
     readonly property int presetStripHeight:
         root.compactLayout ? 20 : 22
     implicitHeight: root.compactLayout
@@ -43,7 +44,8 @@ Item {
     function statusText(): string {
         if (EqualizerService.busy)
             return "Applying…"
-        if (EqualizerService.dspControlAvailable)
+        if (EqualizerService.dspControlAvailable
+                && EqualizerService.error.length === 0)
             return EqualizerService.dspPresetName || "Custom"
         switch (EqualizerService.error) {
         case "backend-not-running":
@@ -267,6 +269,7 @@ Item {
                     font.weight: Font.Medium
                     elide: Text.ElideRight
                     color: EqualizerService.dspControlAvailable
+                        && EqualizerService.error.length === 0
                         ? Appearance.colors.colSubtext
                         : Appearance.colors.colError
                 }

@@ -31,7 +31,6 @@ Item {
     readonly property bool managerShown: Boolean(manager?.shown)
     readonly property real desiredRightDockWidth: manager?.desiredDockWidth ?? Math.round(284 * Appearance.fontSizeScale)
     readonly property real desiredRightDockHeight: manager?.desiredDockHeight ?? Math.round(520 * Appearance.fontSizeScale)
-    property string newCustomWidgetName: ""
     readonly property real hostPadding: hosted ? Number(abyssHost?.padding ?? 6) : 0
     readonly property real desiredDepth: Math.round(dock.implicitHeight + hostPadding * 2)
     readonly property real desiredDockWidth: Math.min(2400, Math.max(680, Math.ceil(dock.implicitWidth)))
@@ -168,18 +167,6 @@ Item {
             }
         }
         return count;
-    }
-
-    readonly property int customWidgetCount: CustomWidgets.ready ? CustomWidgets.widgets.length : 0
-
-    readonly property bool exampleWidgetInstalled: {
-        if (!CustomWidgets.ready)
-            return false;
-        for (let i = 0; i < CustomWidgets.widgets.length; ++i) {
-            if (CustomWidgets.widgets[i].id === "example-widget")
-                return true;
-        }
-        return false;
     }
 
     readonly property bool outputHasPositionOverrides: {
@@ -1123,13 +1110,12 @@ Item {
             ? Math.ceil(gridTrayRow.implicitWidth + 12)
             : (dock.activeTab === "power"
                 ? Math.ceil(powerTrayRow.implicitWidth + 12)
-                : (dock.activeTab === "custom"
-                    ? Math.ceil(customTrayRow.implicitWidth + 12)
-                    : Math.ceil(tileGalleryRow.implicitWidth + 12)))
+                : Math.ceil(tileGalleryRow.implicitWidth + 12))
 
         showUndo: false
         showRedo: false
-        showCancel: false
+        showCancel: true
+        cancelObjectName: "widgetDockCancelButton"
         autoSwitchTab: false
 
         activeTab: "widgets"
@@ -1163,19 +1149,10 @@ Item {
                 icon: (editControlsBar.iconOnlyHeader || !editControlsBar.ultraCompactHeader) ? "bolt" : "",
                 objectName: "widgetDockTabPower",
                 tooltipText: Translation.tr("Configure widget displays and power-saving rules")
-            },
-            {
-                key: "custom",
-                label: editControlsBar.iconOnlyHeader ? "" : Translation.tr("Custom"),
-                icon: (editControlsBar.iconOnlyHeader || !editControlsBar.ultraCompactHeader) ? "dashboard_customize" : "",
-                badge: editControlsBar.compactHeader || editControlsBar.customWidgetCount === 0
-                    ? "" : String(editControlsBar.customWidgetCount),
-                objectName: "widgetDockTabCustom",
-                tooltipText: Translation.tr("Create and manage custom widgets")
             }
         ]
 
-        showSearch: editControlsBar.width >= 640 && (dock.activeTab === "widgets" || dock.activeTab === "active" || dock.activeTab === "custom")
+        showSearch: editControlsBar.width >= 640 && (dock.activeTab === "widgets" || dock.activeTab === "active")
         searchPlaceholder: Translation.tr("Search widgets...")
         searchObjectName: "widgetDockSearchInput"
 
@@ -1191,9 +1168,15 @@ Item {
             }
         }
 
+        onCancelClicked: {
+            if (editControlsBar.manager)
+                editControlsBar.manager.shown = false;
+            GlobalStates.cancelWidgetEditMode();
+        }
         onDoneClicked: {
-            editControlsBar.manager.shown = false;
-            GlobalStates.setWidgetEditMode(false);
+            if (editControlsBar.manager)
+                editControlsBar.manager.shown = false;
+            GlobalStates.commitWidgetEditMode();
         }
 
         leadingControls: [
@@ -1225,6 +1208,69 @@ Item {
         ]
 
         trailingControls: [
+            // Non-Stage (ii / Waffle) Inspector toggle chip
+            Loader {
+                id: inspectorChipLoader
+                active: !DesktopEditStage.stageEnabled || !editControlsBar.abyssMode
+                visible: active
+                sourceComponent: Component {
+                    RippleButton {
+                        id: inspectorChipBtn
+                        objectName: "widgetDockInspectorButton"
+                        readonly property bool shown: Boolean(editControlsBar.manager?.shown)
+                        padding: 0
+                        leftPadding: 0
+                        rightPadding: 0
+                        topPadding: 0
+                        bottomPadding: 0
+                        implicitWidth: Math.max(30, Math.ceil(inspectorChipRow.implicitWidth) + (inspectorLabel.visible ? 16 : 0))
+                        width: implicitWidth
+                        implicitHeight: 30
+                        height: 30
+                        buttonRadius: Appearance.rounding.full
+                        toggled: inspectorChipBtn.shown
+                        colBackground: Qt.alpha(Appearance.colors.colLayer2, 0.55)
+                        colBackgroundHover: Appearance.colors.colLayer2Hover
+                        colBackgroundToggled: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.18)
+                        colBackgroundToggledHover: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.26)
+                        colRipple: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.12)
+                        downAction: () => {
+                            if (editControlsBar.manager)
+                                editControlsBar.manager.shown = !editControlsBar.manager.shown;
+                        }
+                        contentItem: Item {
+                            implicitWidth: inspectorChipRow.implicitWidth
+                            implicitHeight: inspectorChipRow.implicitHeight
+                            Row {
+                                id: inspectorChipRow
+                                anchors.centerIn: parent
+                                spacing: inspectorLabel.visible ? 4 : 0
+                                MaterialSymbol {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "tune"
+                                    iconSize: 15
+                                    color: inspectorChipBtn.shown ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                                }
+                                StyledText {
+                                    id: inspectorLabel
+                                    visible: editControlsBar.width >= 600
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: Translation.tr("Inspector")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.weight: Font.DemiBold
+                                    color: inspectorChipBtn.shown ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                                }
+                            }
+                        }
+                        StyledToolTip {
+                            text: inspectorChipBtn.shown
+                                ? Translation.tr("Hide widget inspector")
+                                : Translation.tr("Open widget inspector")
+                        }
+                    }
+                }
+            },
+
             // Snap quick-action toggle
             RippleButton {
                 id: gridSnapBtn
@@ -1856,228 +1902,6 @@ Item {
                                 onClicked: Config.setNestedValue("background.widgets.powerSaving.showPausedEffect",
                                     !Boolean(Config.getNestedValue("background.widgets.powerSaving.showPausedEffect", true)))
                             }
-                        }
-                    }
-                }
-            }
-        }
-
-        // ── Tier 2C: Custom Widgets & Manager Strip ──
-        Flickable {
-            id: customTrayFlickable
-            visible: dock.activeTab === "custom"
-            anchors.fill: parent
-            contentWidth: Math.max(width, customTrayRow.implicitWidth + 8)
-            contentHeight: height
-            clip: true
-            interactive: contentWidth > width
-            boundsBehavior: Flickable.StopAtBounds
-            flickableDirection: Flickable.HorizontalFlick
-
-            WheelHandler {
-                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                onWheel: event => {
-                    const ax = event.angleDelta.x;
-                    const ay = event.angleDelta.y;
-                    const d = Math.abs(ax) > Math.abs(ay) ? -ax : -ay;
-                    const maxX = Math.max(0, customTrayFlickable.contentWidth - customTrayFlickable.width);
-                    customTrayFlickable.contentX = Math.max(0, Math.min(maxX, customTrayFlickable.contentX + (d / 120) * 150));
-                    event.accepted = true;
-                }
-            }
-
-            Row {
-                id: customTrayRow
-                x: 4
-                height: customTrayFlickable.height
-                spacing: 12
-
-                // Management Actions Card
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: 82
-                    width: customActionsCol.implicitWidth + 24
-                    radius: Math.min(14, Appearance.rounding.normal)
-                    color: Qt.alpha(editControlsBar.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.62)
-                    border.width: 1
-                    border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.24)
-
-                    Column {
-                        id: customActionsCol
-                        anchors.centerIn: parent
-                        spacing: 8
-
-                        StyledText {
-                            text: Translation.tr("Custom QML Widgets")
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.weight: Font.DemiBold
-                            color: Appearance.colors.colSubtext
-                        }
-
-                        Row {
-                            spacing: 6
-
-                            TrayActionChip {
-                                visible: !DesktopEditStage.stageEnabled || !editControlsBar.abyssMode
-                                icon: "tune"
-                                label: Boolean(editControlsBar.manager?.shown)
-                                    ? Translation.tr("Hide Inspector")
-                                    : Translation.tr("Open Inspector")
-                                activeState: Boolean(editControlsBar.manager?.shown)
-                                accentStyle: !Boolean(editControlsBar.manager?.shown)
-                                tooltipText: Translation.tr("Open floating Widget Manager for per-widget settings")
-                                onClicked: editControlsBar.manager.shown = !editControlsBar.manager.shown
-                            }
-
-                            TrayActionChip {
-                                icon: "refresh"
-                                label: Translation.tr("Reload")
-                                tooltipText: Translation.tr("Rescan ~/.config/alis/widgets/ for custom QML widgets")
-                                onClicked: CustomWidgets.reload()
-                            }
-
-                            TrayActionChip {
-                                icon: "folder_open"
-                                label: Translation.tr("Folder")
-                                tooltipText: Translation.tr("Open ~/.config/alis/widgets/ directory")
-                                onClicked: CustomWidgets.openWidgetDir("")
-                            }
-
-                            TrayActionChip {
-                                visible: !editControlsBar.exampleWidgetInstalled
-                                icon: "download"
-                                label: Translation.tr("Install Example")
-                                accentStyle: true
-                                tooltipText: Translation.tr("Install starter custom widget into ~/.config/alis/widgets/")
-                                onClicked: {
-                                    CustomWidgets.installExample();
-                                    CustomWidgets.reload();
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Create Custom Widget Card
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: 82
-                    width: customCreateCol.implicitWidth + 24
-                    radius: Math.min(14, Appearance.rounding.normal)
-                    color: Qt.alpha(editControlsBar.abyssMode ? AbyssStyle.surfaceRaised : Appearance.colors.colLayer2, 0.62)
-                    border.width: 1
-                    border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.24)
-
-                    Column {
-                        id: customCreateCol
-                        anchors.centerIn: parent
-                        spacing: 8
-
-                        StyledText {
-                            text: Translation.tr("Create Custom Widget")
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.weight: Font.DemiBold
-                            color: Appearance.colors.colSubtext
-                        }
-
-                        Row {
-                            spacing: 6
-
-                            MaterialTextField {
-                                id: customWidgetNameField
-                                objectName: "widgetDockCustomCreateInput"
-                                width: Math.round(140 * Appearance.fontSizeScale)
-                                height: 32
-                                enableSettingsSearch: false
-                                placeholderText: Translation.tr("Widget name...")
-                                text: editControlsBar.newCustomWidgetName
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                onTextChanged: {
-                                    if (editControlsBar.newCustomWidgetName !== text)
-                                        editControlsBar.newCustomWidgetName = text;
-                                }
-                                onAccepted: {
-                                    const name = editControlsBar.newCustomWidgetName.trim();
-                                    if (name.length > 0) {
-                                        CustomWidgets.create(name);
-                                        CustomWidgets.reload();
-                                        editControlsBar.newCustomWidgetName = "";
-                                    }
-                                }
-                            }
-
-                            TrayActionChip {
-                                objectName: "widgetDockCustomCreateButton"
-                                icon: "add"
-                                label: Translation.tr("Create")
-                                accentStyle: true
-                                enabled: editControlsBar.newCustomWidgetName.trim().length > 0
-                                tooltipText: Translation.tr("Create editable custom QML widget template")
-                                onClicked: {
-                                    const name = editControlsBar.newCustomWidgetName.trim();
-                                    if (name.length > 0) {
-                                        CustomWidgets.create(name);
-                                        CustomWidgets.reload();
-                                        editControlsBar.newCustomWidgetName = "";
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Installed Custom Widget Tiles
-                Repeater {
-                    model: CustomWidgets.ready ? CustomWidgets.widgets : []
-                    delegate: AbyssCustomizationTile {
-                        id: customTabTile
-                        required property var modelData
-                        readonly property string layoutKey: "custom." + modelData.id
-                        readonly property bool widgetEnabled: editControlsBar.isWidgetEnabled(layoutKey, false)
-                        visible: editControlsBar.matchesSearch(modelData.name, modelData.id + " custom")
-                        y: Math.round((customTrayRow.height - height) / 2)
-                        tileId: layoutKey
-                        title: modelData.name || modelData.id
-                        icon: modelData.icon || "extension"
-                        active: widgetEnabled
-                        selected: editControlsBar.selectedWidgetKey === layoutKey
-                        tileWidth: 132
-                        previewHeight: 68
-                        tooltipText: widgetEnabled
-                            ? Translation.tr("%1 — active (click to hide)").arg(modelData.name || modelData.id)
-                            : Translation.tr("Add %1 to desktop").arg(modelData.name || modelData.id)
-                        onClicked: editControlsBar.toggleWidget(layoutKey, false)
-                    }
-                }
-
-                // Hint card when no custom widgets exist yet
-                Rectangle {
-                    visible: editControlsBar.customWidgetCount === 0
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: 82
-                    width: emptyCustomCol.implicitWidth + 28
-                    radius: Math.min(14, Appearance.rounding.normal)
-                    color: Qt.alpha(Appearance.colors.colLayer2, 0.36)
-                    border.width: 1
-                    border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.18)
-
-                    Column {
-                        id: emptyCustomCol
-                        anchors.centerIn: parent
-                        spacing: 4
-
-                        StyledText {
-                            text: Translation.tr("No custom widgets installed yet")
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            font.weight: Font.Medium
-                            color: Appearance.colors.colOnLayer1
-                        }
-
-                        StyledText {
-                            text: "~/.config/alis/widgets/"
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.family: Appearance.font.family.monospace
-                            color: Appearance.colors.colSubtext
                         }
                     }
                 }

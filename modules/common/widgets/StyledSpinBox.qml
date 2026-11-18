@@ -12,6 +12,15 @@ SpinBox {
     property real baseHeight: 35
     property real radius: Appearance.rounding.small
     property real innerButtonRadius: Appearance.rounding.unsharpen
+    topPadding: 0
+    bottomPadding: 0
+    leftPadding: (down.indicator ? down.indicator.width : root.baseHeight) + 4
+    rightPadding: (up.indicator ? up.indicator.width : root.baseHeight) + 4
+    implicitHeight: root.baseHeight
+    implicitWidth: Math.max(
+        implicitBackgroundWidth + leftInset + rightInset,
+        implicitContentWidth + leftPadding + rightPadding
+    )
     hoverEnabled: true
     editable: true
     textFromValue: function(value, locale) {
@@ -55,6 +64,8 @@ SpinBox {
             verticalCenter: parent.verticalCenter
             left: parent.left
         }
+        width: root.baseHeight
+        height: root.baseHeight
         implicitHeight: root.baseHeight
         implicitWidth: root.baseHeight
         topLeftRadius: root.radius
@@ -83,6 +94,8 @@ SpinBox {
             verticalCenter: parent.verticalCenter
             right: parent.right
         }
+        width: root.baseHeight
+        height: root.baseHeight
         implicitHeight: root.baseHeight
         implicitWidth: root.baseHeight
         topRightRadius: root.radius

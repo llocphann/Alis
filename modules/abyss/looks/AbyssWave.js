@@ -178,6 +178,49 @@ function advanceTravel(state, elapsed) {
     }
     state.traveling.length=kept;
 }
+var _spectrumCacheEntries = [];
+function _ensureSpectrumCache(state, count) {
+    for(var c=0;c<_spectrumCacheEntries.length;c++) {
+        var entry=_spectrumCacheEntries[c];
+        if(entry.sampleCount===state.count && entry.width===state.width
+                && entry.height===state.height && entry.pointCount===count)
+            return entry;
+    }
+    var sampleCount=state.count;
+    var edgeBits=Array(sampleCount);
+    var lobeIdx=Array(sampleCount);
+    var carrierEnv=Array(sampleCount);
+    var lobeKeys={};
+    var lobeList=[];
+    for(var i=0;i<sampleCount;i++) {
+        var location=i*state.length/sampleCount,bit,along,length;
+        if(location<state.width) { bit=1;along=location;length=state.width; }
+        else if(location<state.width+state.height) { bit=2;along=location-state.width;length=state.height; }
+        else if(location<2*state.width+state.height) { bit=4;along=2*state.width+state.height-location;length=state.width; }
+        else { bit=8;along=state.length-location;length=state.height; }
+        edgeBits[i]=bit;
+        var t=along/Math.max(1,length);
+        var position=t*(count-1),carrier=position*.5,lobe=Math.floor(carrier/Math.PI);
+        var mapped=lobeKeys[lobe];
+        if(mapped===undefined) {
+            var low=Math.min(count-1,Math.max(0,Math.floor(lobe*2*Math.PI)));
+            var high=Math.min(count-1,Math.max(low,Math.ceil((lobe+1)*2*Math.PI)));
+            mapped=lobeList.length;
+            lobeKeys[lobe]=mapped;
+            lobeList.push({low:low,high:high,span:high-low+1});
+        }
+        lobeIdx[i]=mapped;
+        var s=Math.sin(t*Math.PI);
+        carrierEnv[i]=Math.sin(carrier)*(s*s);
+    }
+    var cache={sampleCount:sampleCount,width:state.width,height:state.height,pointCount:count,
+        edgeBits:edgeBits,lobeIdx:lobeIdx,carrierEnv:carrierEnv,lobes:lobeList,
+        lobeLevels:Array(lobeList.length).fill(0)};
+    _spectrumCacheEntries.push(cache);
+    if(_spectrumCacheEntries.length>4) _spectrumCacheEntries.shift();
+    return cache;
+}
+
 // Present a bounded audio shape in the existing field. CAVA supplies the clock;
 // this path never wakes or adds energy to the interaction spring solver.
 function spectrum(state, edges, points, ceiling, strength, phase) {
@@ -186,33 +229,44 @@ function spectrum(state, edges, points, ceiling, strength, phase) {
     var limit=Math.min(192,Math.min(state.width,state.height)*.18);
     state.spectrumLimit=count && maximum>0 ? limit : 0;
     var normalizer=Math.max(20,Number(ceiling) || 100);
-    for(var i=0;i<state.count;i++) {
-        var location=i*state.length/state.count,edge,along,length;
-        if(location<state.width) { edge="top";along=location;length=state.width; }
-        else if(location<state.width+state.height) { edge="right";along=location-state.width;length=state.height; }
-        else if(location<2*state.width+state.height) { edge="bottom";along=2*state.width+state.height-location;length=state.width; }
-        else { edge="left";along=state.length-location;length=state.height; }
-        var t=along/Math.max(1,length),target=0;
-        if(count && edges.indexOf(edge)>=0 && maximum>0) {
-            var position=t*(count-1),carrier=position*.5,lobe=Math.floor(carrier/Math.PI);
-            var low=Math.min(count-1,Math.max(0,Math.floor(lobe*2*Math.PI)));
-            var high=Math.min(count-1,Math.max(low,Math.ceil((lobe+1)*2*Math.PI)));
-            var sum=0,span=high-low+1;
-            for(var k=low;k<=high;k++) {
+    if(count>0 && maximum>0) {
+        var activeEdgeMask=(edges.indexOf("top")>=0 ? 1 : 0)
+            | (edges.indexOf("right")>=0 ? 2 : 0)
+            | (edges.indexOf("bottom")>=0 ? 4 : 0)
+            | (edges.indexOf("left")>=0 ? 8 : 0);
+        var cache=_ensureSpectrumCache(state,count);
+        var lobes=cache.lobes,lobeLevels=cache.lobeLevels;
+        for(var li=0;li<lobes.length;li++) {
+            var range=lobes[li],sum=0;
+            for(var k=range.low;k<=range.high;k++) {
                 var sample=Number(points[k]);
                 if(Number.isFinite(sample) && sample>0) sum+=sample;
             }
-            var level=Math.sqrt(Math.max(0,Math.min(1,sum/(span*normalizer))));
-            // Stationary lobe carrier: wave crests remain at fixed horizontal
-            // positions and only rise and fall vertically with audio level.
-            if(level>.025) target=Math.min(limit,maximum*level)*Math.sin(carrier)*Math.pow(Math.sin(t*Math.PI),2);
+            lobeLevels[li]=Math.sqrt(Math.max(0,Math.min(1,sum/(range.span*normalizer))));
         }
-        if(Math.abs(target-state.spectrumTargets[i])>.005 || (target===0 && state.spectrumTargets[i]!==0)) {
-            changed=true;state.spectrumTargets[i]=target;
+        var edgeBits=cache.edgeBits,lobeIdx=cache.lobeIdx,carrierEnv=cache.carrierEnv;
+        for(var i=0;i<state.count;i++) {
+            var target=0;
+            if((activeEdgeMask & edgeBits[i])!==0) {
+                var level=lobeLevels[lobeIdx[i]];
+                // Stationary lobe carrier: wave crests remain at fixed horizontal
+                // positions and only rise and fall vertically with audio level.
+                if(level>.025) target=Math.min(limit,maximum*level)*carrierEnv[i];
+            }
+            if(Math.abs(target-state.spectrumTargets[i])>.005 || (target===0 && state.spectrumTargets[i]!==0)) {
+                changed=true;state.spectrumTargets[i]=target;
+            }
+            active=active || Math.abs(state.spectrumTargets[i])>.005;
         }
-        active=active || Math.abs(state.spectrumTargets[i])>.005;
+        state.hasSpectrum=active;
+        return changed;
     }
-    state.hasSpectrum=active;
+    for(var j=0;j<state.count;j++) {
+        if(state.spectrumTargets[j]!==0) {
+            changed=true;state.spectrumTargets[j]=0;
+        }
+    }
+    state.hasSpectrum=false;
     return changed;
 }
 function advance(state, elapsed) {

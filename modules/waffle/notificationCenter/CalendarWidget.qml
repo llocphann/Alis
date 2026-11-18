@@ -525,7 +525,9 @@ BodyRectangle {
             contentItem: Item {
                 WText {
                     anchors.fill: parent
+                    anchors.leftMargin: 6
                     horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
                     text: root.locale.toString(calendarView.focusedDate, "MMMM yyyy")
                     font.pixelSize: Looks.font.pixelSize.large
                     font.weight: Looks.font.weight.strong
@@ -551,10 +553,13 @@ BodyRectangle {
         implicitWidth: 32
         implicitHeight: 34
 
-        contentItem: FluentIcon {
-            filled: true
-            implicitSize: 12
-            icon: scrollMonthButton.scrollDown ? "caret-down" : "caret-up"
+        contentItem: Item {
+            FluentIcon {
+                anchors.centerIn: parent
+                filled: true
+                implicitSize: 12
+                icon: scrollMonthButton.scrollDown ? "caret-down" : "caret-up"
+            }
         }
     }
 }

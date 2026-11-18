@@ -13,6 +13,10 @@ ContentPage {
 
     property bool cavaControlsReady: false
     property string activeSection: "color"
+    property real extraBottomHeight: 0
+    readonly property real naturalGridHeight: advancedTwoColumnGrid.columns === 2
+        ? Math.max(appColorGenCard.naturalCardImplicitHeight, cavaSpectrumCard.naturalCardImplicitHeight)
+        : (appColorGenCard.naturalCardImplicitHeight + advancedTwoColumnGrid.rowSpacing + cavaSpectrumCard.naturalCardImplicitHeight)
     readonly property string _legacyGpuMonitorHint: Translation.tr("On hybrid laptops, GPU polling can wake the dGPU; disabling pins Qt to iGPU after restart.")
     Component.onCompleted: Qt.callLater(() => root.cavaControlsReady = true)
 
@@ -62,6 +66,7 @@ ContentPage {
     }
 
     GridLayout {
+        id: advancedTwoColumnGrid
         objectName: "advancedTwoColumnGrid"
         Layout.fillWidth: true
         columns: width >= 620 ? 2 : 1
@@ -70,10 +75,10 @@ ContentPage {
         rowSpacing: 14
 
         SettingsCardSection {
+            id: appColorGenCard
             _preventBentoReparent: true
             Layout.preferredWidth: 1
             Layout.fillWidth: true
-            Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
             settingsTaskSection: "color"
             visible: true
@@ -85,14 +90,13 @@ ContentPage {
                 GridLayout {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    columns: width >= 360 ? 2 : 1
-                    uniformCellWidths: columns > 1
+                    columns: width >= 430 ? 2 : 1
+                    uniformCellWidths: false
                     columnSpacing: 10
                     rowSpacing: 4
 
                     SettingsSwitch {
                         Layout.fillWidth: true
-                        Layout.preferredWidth: 1
                         Layout.minimumWidth: 0
                         buttonIcon: "hardware"
                         text: Translation.tr("Shell & utilities")
@@ -107,7 +111,6 @@ ContentPage {
                     }
                     SettingsSwitch {
                         Layout.fillWidth: true
-                        Layout.preferredWidth: 1
                         Layout.minimumWidth: 0
                         buttonIcon: "tv_options_input_settings"
                         text: Translation.tr("Qt apps")
@@ -122,7 +125,6 @@ ContentPage {
                     }
                     SettingsSwitch {
                         Layout.fillWidth: true
-                        Layout.preferredWidth: 1
                         Layout.minimumWidth: 0
                         buttonIcon: "chat"
                         text: Translation.tr("Vesktop/Discord")
@@ -137,7 +139,6 @@ ContentPage {
                     }
                     SettingsSwitch {
                         Layout.fillWidth: true
-                        Layout.preferredWidth: 1
                         Layout.minimumWidth: 0
                         buttonIcon: "music_note"
                         text: Translation.tr("Spotify (Spicetify)")
@@ -165,6 +166,9 @@ ContentPage {
                     }
                     SettingsSwitch {
                         Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
+                        Layout.columnSpan: (parent.columns > 1 && parent.width < Math.round(580 * Appearance.fontSizeScale)) ? 2 : 1
                         buttonIcon: "music_note"
                         text: Translation.tr("Pear Desktop (YouTube Music)")
                         checked: Config.options?.appearance?.wallpaperTheming?.enablePearDesktop ?? true
@@ -331,10 +335,10 @@ ContentPage {
         }
 
         SettingsCardSection {
+            id: cavaSpectrumCard
             _preventBentoReparent: true
             Layout.preferredWidth: 1
             Layout.fillWidth: true
-            Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
             settingsTaskSection: "color"
             visible: true
@@ -432,10 +436,16 @@ ContentPage {
                     }
                 }
 
-                ConfigRow {
-                    uniform: true
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: width >= 430 ? 2 : 1
+                    uniformCellWidths: false
+                    columnSpacing: 8
+                    rowSpacing: 6
 
                     ConfigSpinBox {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         icon: "gradient"
                         text: Translation.tr("Gradient colors")
                         value: Config.options?.appearance?.cava?.gradientCount ?? 8
@@ -449,6 +459,8 @@ ContentPage {
                     }
 
                     ConfigSpinBox {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         icon: "hearing"
                         text: Translation.tr("Sensitivity")
                         value: Config.options?.appearance?.cava?.sensitivity ?? 100
@@ -461,12 +473,10 @@ ContentPage {
                             text: Translation.tr("Audio sensitivity (higher = more reactive)")
                         }
                     }
-                }
-
-                ConfigRow {
-                    uniform: true
 
                     ConfigSpinBox {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         icon: "bar_chart"
                         text: Translation.tr("Bars")
                         value: Config.options?.appearance?.cava?.bars ?? 0
@@ -481,6 +491,8 @@ ContentPage {
                     }
 
                     ConfigSpinBox {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         icon: "speed"
                         text: Translation.tr("Framerate")
                         value: Config.options?.appearance?.cava?.framerate ?? 30
@@ -493,23 +505,10 @@ ContentPage {
                             text: Translation.tr("Target refresh rate for the visualizer")
                         }
                     }
-                }
-
-                ConfigRow {
-                    uniform: true
-
-                    SettingsSwitch {
-                        buttonIcon: "headphones"
-                        text: Translation.tr("Stereo")
-                        checked: Config.options?.appearance?.cava?.stereo ?? true
-                        onCheckedChanged: root.setCavaValue(
-                            "appearance.cava.stereo", checked, true)
-                        StyledToolTip {
-                            text: Translation.tr("Split visualizer into left/right channels")
-                        }
-                    }
 
                     ConfigSpinBox {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         icon: "opacity"
                         text: Translation.tr("Wave opacity")
                         value: Config.options?.appearance?.cava?.waveOpacity ?? 30
@@ -522,12 +521,23 @@ ContentPage {
                             text: Translation.tr("Shared wave fill opacity; bar spectrum has its own setting.")
                         }
                     }
-                }
 
-                ConfigRow {
-                    uniform: true
+                    SettingsSwitch {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        buttonIcon: "headphones"
+                        text: Translation.tr("Stereo")
+                        checked: Config.options?.appearance?.cava?.stereo ?? true
+                        onCheckedChanged: root.setCavaValue(
+                            "appearance.cava.stereo", checked, true)
+                        StyledToolTip {
+                            text: Translation.tr("Split visualizer into left/right channels")
+                        }
+                    }
 
                     ConfigSpinBox {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         icon: "width_normal"
                         text: Translation.tr("Equalizer width")
                         value: Config.options?.bar?.cava?.width ?? 120
@@ -542,6 +552,8 @@ ContentPage {
                     }
 
                     ConfigSpinBox {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         icon: "space_bar"
                         text: Translation.tr("Bar spacing")
                         value: Config.options?.bar?.cava?.barSpacing ?? 2

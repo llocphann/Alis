@@ -17,17 +17,18 @@ Item {
     readonly property int _timePixelSize: sharedTypography ? 0 : Config.options?.bar?.clock?.timePixelSize ?? 0
     readonly property string _dateFontFamily: sharedTypography ? "" : Config.options?.bar?.clock?.dateFontFamily ?? ""
     readonly property int _datePixelSize: sharedTypography ? 0 : Config.options?.bar?.clock?.datePixelSize ?? 0
-    readonly property var verticalTimeLines: String(DateTime.timeDisplay ?? "")
-        .split(/[:\s]+/)
-        .filter(part => part.length > 0)
+    readonly property var verticalTimeLines: root.verticalContent
+        ? String(DateTime.timeDisplay ?? "").split(/[:\s]+/).filter(part => part.length > 0)
+        : []
     readonly property var verticalDateItems: {
+        if (!root.verticalContent || !root.showDate) return []
         const raw = String(DateTime.date ?? "").trim()
         if (!raw) return []
         const tokens = raw.split(/[,\s]+/).filter(t => t.length > 0)
         const items = []
         for (const token of tokens) {
             if (/^[A-Za-zÀ-ỹ]+$/.test(token) && token.length > 3) {
-                const shortDay = Qt.locale().toString(DateTime.clock.date, "ddd").replace(/\.$/, "")
+                const shortDay = Qt.locale().toString(DateTime.todayDate, "ddd").replace(/\.$/, "")
                 items.push({
                     text: shortDay.length > 0 && shortDay.length <= 4 ? shortDay : token.slice(0, 3),
                     slashBefore: false
@@ -66,6 +67,7 @@ Item {
             font.pixelSize: root._timePixelSize > 0
                 ? root._timePixelSize * root.typographyScale
                 : Appearance.font.pixelSize.large * root.typographyScale
+            font.features: ({ "tnum": 1 })
             color: Appearance.colors.colOnLayer1
             text: DateTime.timeDisplay
         }

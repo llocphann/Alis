@@ -26,6 +26,18 @@ ContentPage {
     }
 
     property bool _localPickerLockHeld: false
+    property real embeddedStretchHeight: 0
+    readonly property real _effectiveCardTargetHeight: root.embedded
+        ? root.embeddedStretchHeight
+        : (root.targetBentoHeight > 0 ? Math.round(root.targetBentoHeight) : 0)
+    readonly property string portableAppsDir: {
+        const customData = String(Quickshell.env("ALIS_PORTABLE_APPS_DATA_HOME") ?? "").trim()
+        const xdgData = String(Quickshell.env("XDG_DATA_HOME") ?? "").trim()
+        const base = customData.length > 0
+            ? customData
+            : (xdgData.length > 0 ? xdgData : `${Directories.homePath}/.local/share`)
+        return `${base}/alis/applications`
+    }
 
     Connections {
         target: AppLauncher
@@ -49,6 +61,25 @@ ContentPage {
     }
 
     readonly property var apps: root.managedApps
+    readonly property var slotLabelsByDesktopId: {
+        void(AppLauncher._configRevision)
+        void(AppLauncher.discoveredApps)
+        const map = {}
+        const defs = AppLauncher.primarySlotDefinitions()
+        for (let i = 0; i < defs.length; i++) {
+            const slot = defs[i]
+            const sum = AppLauncher.selectedAppSummary(slot.id)
+            const did = String(sum?.desktopId ?? "").trim()
+            if (!did)
+                continue
+            const norm = did.endsWith(".desktop") ? did : `${did}.desktop`
+            if (!map[norm])
+                map[norm] = []
+            map[norm].push({ id: slot.id, label: slot.label, title: slot.label, icon: slot.icon })
+        }
+        return map
+    }
+
     readonly property bool busy: AppLauncher.busy && (typeof AppLauncher.portableProcessRunning !== "boolean" || AppLauncher.portableProcessRunning)
     readonly property string busyAction: AppLauncher.busyAction
     readonly property string busyAppId: AppLauncher.busyAppId
@@ -245,6 +276,8 @@ ContentPage {
 
     SettingsTaskNavigator {
         visible: !root.embedded
+        activeNavigator: !root.embedded
+        showIntro: !root.embedded
         showTabBar: false
         icon: "inventory_2"
         title: Translation.tr("Applications")
@@ -253,20 +286,36 @@ ContentPage {
     }
 
     SettingsCardSection {
+        id: portableAppsCard
+        objectName: "portableAppsEmbeddedCard"
         _preventBentoReparent: true
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        _consumesBentoExtraHeight: true
+        readonly property real _fixedBodyOverhead: portableAppsCard.chromeImplicitHeight
+            + portableToolbarRow.implicitHeight
+            + portableFooterBar.implicitHeight
+            + (portableAppsCard.spacing * 2)
+            + (progressCard.visible ? (progressCard.implicitHeight + portableAppsCard.spacing) : 0)
+            + (statusMessageLabel.visible ? (statusMessageLabel.implicitHeight + portableAppsCard.spacing) : 0)
+            + (statusErrorLabel.visible ? (statusErrorLabel.implicitHeight + portableAppsCard.spacing) : 0)
         expanded: true
         icon: "inventory_2"
         title: Translation.tr("Portable Applications")
 
         RowLayout {
+            id: portableToolbarRow
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             spacing: 8
 
             MaterialTextField {
                 objectName: "applicationsSearchField"
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 Layout.preferredHeight: 36
+                Layout.maximumHeight: 36
+                wrapMode: TextEdit.NoWrap
                 placeholderText: Translation.tr("Search applications…")
                 text: root.searchQuery
                 onTextChanged: root.searchQuery = text
@@ -454,6 +503,7 @@ ContentPage {
         }
 
         StyledText {
+            id: statusMessageLabel
             objectName: "portableAppsStatusMessage"
             Layout.fillWidth: true
             visible: !progressCard.visible && root.statusMessage.length > 0
@@ -464,6 +514,7 @@ ContentPage {
         }
 
         StyledText {
+            id: statusErrorLabel
             objectName: "portableAppsStatusError"
             Layout.fillWidth: true
             visible: root.statusError.length > 0
@@ -473,341 +524,476 @@ ContentPage {
             wrapMode: Text.WordWrap
         }
 
-        Rectangle {
+        Flickable {
+            id: portableAppsScrollFlickable
+            objectName: "portableAppsScrollFlickable"
             Layout.fillWidth: true
-            visible: (root.managedApps ?? []).length === 0
-            implicitHeight: 84
+            Layout.fillHeight: true
+            Layout.minimumWidth: 0
+            implicitHeight: (root._effectiveCardTargetHeight > 0 && portableAppsCard._effectiveCustomHeight <= 0)
+                ? Math.max(120, Math.round(root._effectiveCardTargetHeight - portableAppsCard._fixedBodyOverhead))
+                : portableAppsScrollBody.implicitHeight
+            Layout.preferredHeight: implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            contentWidth: width
+            contentHeight: portableAppsScrollBody.implicitHeight
+            ScrollBar.vertical: ScrollBar {
+                objectName: "portableAppsScrollBar"
+                policy: ScrollBar.AlwaysOff
+            }
+
+            ColumnLayout {
+                id: portableAppsScrollBody
+                width: portableAppsScrollFlickable.width
+                spacing: 6
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    visible: (root.managedApps ?? []).length === 0
+                    implicitHeight: 84
+                    radius: Appearance.rounding.small
+                    color: Appearance.colors.colLayer1
+                    border.width: 1
+                    border.color: Appearance.colors.colLayer0Border
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 4
+
+                        MaterialSymbol {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: "inventory_2"
+                            iconSize: 26
+                            color: Appearance.colors.colSubtext
+                        }
+
+                        StyledText {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: root.busy
+                                ? Translation.tr("Processing application package…")
+                                : Translation.tr("No portable applications added yet")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            font.weight: Font.Medium
+                            color: Appearance.colors.colOnLayer1
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: root.filteredApps.length > 0
+                    spacing: 6
+
+                    Repeater {
+                        model: root.filteredApps
+
+                        delegate: Rectangle {
+                            id: appRow
+                            required property var modelData
+                            required property int index
+                            readonly property string appIdStr: String(modelData?.id ?? "")
+                            objectName: "portableAppCard_" + (appIdStr.length > 0 ? appIdStr : String(index))
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            implicitHeight: 48
+                            clip: true
+                            radius: Appearance.rounding.small
+                            color: Appearance.colors.colLayer1
+                            border.width: 1
+                            border.color: appRow.isThisAppUpdating
+                                ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.55)
+                                : Appearance.colors.colLayer0Border
+
+                            readonly property string desktopBaseId: "alis-app-" + appRow.appIdStr
+                            readonly property var linkedSlots: {
+                                const norm = appRow.desktopBaseId.endsWith(".desktop") ? appRow.desktopBaseId : `${appRow.desktopBaseId}.desktop`
+                                return root.slotLabelsByDesktopId[norm] ?? []
+                            }
+                            readonly property bool isAutostarted: CompositorService.isNiri && Autostart.isAppEnabled(appRow.desktopBaseId)
+                            readonly property bool isUpdateSupported: Boolean(appRow.modelData?.hasZsync) || Boolean(appRow.modelData?.updateSupported) || Boolean(appRow.modelData?.updateAvailable)
+                            readonly property bool hasUpdateAvailable: Boolean(appRow.modelData?.updateAvailable)
+                            readonly property bool isThisAppUpdating: root.busy && root.busyAction === "update"
+                                && (root.updatingAppId === appRow.appIdStr
+                                    || root.busyAppId === appRow.appIdStr
+                                    || (root.updatingAppId === "__all__" && appRow.hasUpdateAvailable))
+                            readonly property string protocolLabel: {
+                                const p = String(appRow.modelData?.updateProtocol ?? "").trim()
+                                if (p === "rsync")
+                                    return "rsync"
+                                if (p === "zsync" || Boolean(appRow.modelData?.hasZsync))
+                                    return "zsync"
+                                if (p.length > 0)
+                                    return "update"
+                                return "zsync"
+                            }
+                            readonly property real rowBtnSize: 28
+
+                            readonly property string iconFileUrl: {
+                                const p = String(appRow.modelData?.iconPath ?? "").trim()
+                                if (!p)
+                                    return ""
+                                return p.startsWith("file://") ? p : ("file://" + p)
+                            }
+
+                            RowLayout {
+                                id: rowLayout
+                                anchors {
+                                    fill: parent
+                                    leftMargin: 10
+                                    rightMargin: 10
+                                }
+                                spacing: 10
+
+                                Item {
+                                    Layout.preferredWidth: 28
+                                    Layout.preferredHeight: 28
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    Image {
+                                        id: appIconImg
+                                        anchors.fill: parent
+                                        source: appRow.iconFileUrl
+                                        sourceSize.width: 56
+                                        sourceSize.height: 56
+                                        fillMode: Image.PreserveAspectFit
+                                        visible: appRow.iconFileUrl.length > 0 && status === Image.Ready
+                                    }
+
+                                    MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        visible: !appIconImg.visible
+                                        text: String(appRow.modelData?.kind ?? "") === "appimage" ? "deployed_code" : "folder_zip"
+                                        iconSize: 22
+                                        color: Appearance.colors.colPrimary
+                                    }
+                                }
+
+                                Row {
+                                    id: titleTagsRow
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    Layout.preferredWidth: 1
+                                    Layout.alignment: Qt.AlignVCenter
+                                    spacing: 6
+                                    clip: true
+
+                                    readonly property real fixedPillsWidth: (kindPill.visible ? kindPill.naturalWidth + 6 : 0)
+                                        + (zsyncPill.visible ? zsyncPill.naturalWidth + 6 : 0)
+                                    readonly property real minNameReserved: Math.min(
+                                        appNameLabel.implicitWidth,
+                                        Math.max(68, Math.floor(width * 0.42))
+                                    )
+                                    readonly property real maxDefaultSlotPillWidth: width > 0
+                                        ? Math.max(48, Math.floor(width - minNameReserved - fixedPillsWidth - (defaultSlotPill.visible ? 6 : 0)))
+                                        : 120
+                                    readonly property real effectiveDefaultSlotPillWidth: defaultSlotPill.visible
+                                        ? (width > 0 ? Math.min(defaultSlotPill.naturalWidth, maxDefaultSlotPillWidth) : defaultSlotPill.naturalWidth)
+                                        : 0
+                                    readonly property real totalBadgesReserved: fixedPillsWidth
+                                        + (defaultSlotPill.visible ? effectiveDefaultSlotPillWidth + 6 : 0)
+                                    readonly property real availableNameWidth: width > 0
+                                        ? Math.max(0, width - totalBadgesReserved)
+                                        : appNameLabel.implicitWidth
+
+                                    StyledText {
+                                        id: appNameLabel
+                                        objectName: "portableAppName_" + String(appRow.modelData?.id ?? appRow.index)
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: Math.min(implicitWidth, titleTagsRow.availableNameWidth)
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: String(appRow.modelData?.name ?? "")
+                                        font.pixelSize: Appearance.font.pixelSize.normal
+                                        font.weight: Font.Medium
+                                        color: Appearance.colors.colOnLayer1
+                                        elide: Text.ElideRight
+                                        maximumLineCount: 1
+                                    }
+
+                                    BadgePill {
+                                        id: kindPill
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        readonly property string kindStr: String(appRow.modelData?.kind ?? "appimage")
+                                        badgeText: kindStr === "appimage" ? "AppImage" : kindStr
+                                        accent: kindStr === "appimage"
+                                        secondary: kindStr !== "appimage"
+                                    }
+
+                                    BadgePill {
+                                        id: zsyncPill
+                                        objectName: "portableUpdateBadge_" + String(appRow.modelData?.id ?? appRow.index)
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        visible: appRow.isUpdateSupported || appRow.isThisAppUpdating
+                                        badgeText: {
+                                            if (appRow.isThisAppUpdating) {
+                                                const pct = root.progressPercent >= 0 ? `${Math.max(0, Math.min(100, root.progressPercent))}%` : "…"
+                                                return `${appRow.protocolLabel} · ${pct}`
+                                            }
+                                            if (appRow.hasUpdateAvailable) {
+                                                const lv = String(appRow.modelData?.latestVersion ?? "").trim()
+                                                return lv.length > 0 ? `${appRow.protocolLabel} · ↑${lv}` : `${appRow.protocolLabel} · ↑`
+                                            }
+                                            return appRow.protocolLabel
+                                        }
+                                        accent: true
+                                    }
+
+                                    BadgePill {
+                                        id: defaultSlotPill
+                                        objectName: "portableDefaultBadge_" + String(appRow.modelData?.id ?? appRow.index)
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        visible: appRow.linkedSlots.length > 0
+                                        badgeText: Translation.tr("Default: ") + (appRow.linkedSlots[0]?.title ?? "")
+                                        accent: true
+                                        maxPillWidth: titleTagsRow.maxDefaultSlotPillWidth
+                                        width: titleTagsRow.effectiveDefaultSlotPillWidth
+                                    }
+                                }
+
+                                RowLayout {
+                                    id: actionsRow
+                                    readonly property int buttonCount: CompositorService.isNiri ? 3 : 2
+                                    implicitWidth: (appRow.rowBtnSize * buttonCount) + (actionsRow.spacing * (buttonCount - 1))
+                                    Layout.fillWidth: false
+                                    Layout.minimumWidth: implicitWidth
+                                    Layout.preferredWidth: implicitWidth
+                                    Layout.maximumWidth: implicitWidth
+                                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                                    spacing: 4
+
+                                    Item {
+                                        width: appRow.rowBtnSize
+                                        height: appRow.rowBtnSize
+                                        implicitWidth: appRow.rowBtnSize
+                                        implicitHeight: appRow.rowBtnSize
+                                        Layout.preferredWidth: appRow.rowBtnSize
+                                        Layout.preferredHeight: appRow.rowBtnSize
+                                        Layout.minimumWidth: appRow.rowBtnSize
+                                        Layout.maximumWidth: appRow.rowBtnSize
+                                        Layout.fillWidth: false
+                                        Layout.fillHeight: false
+                                        Layout.alignment: Qt.AlignVCenter
+
+                                        ActionIconButton {
+                                            objectName: "portableUpdateBtn_" + appRow.appIdStr
+                                            anchors.fill: parent
+                                            visible: appRow.isUpdateSupported
+                                            implicitWidth: appRow.rowBtnSize
+                                            implicitHeight: appRow.rowBtnSize
+                                            enabled: !root.busy && appRow.isUpdateSupported
+                                            iconName: appRow.hasUpdateAvailable ? "download" : "sync"
+                                            colBackground: appRow.hasUpdateAvailable
+                                                ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.80)
+                                                : Appearance.colors.colLayer2
+                                            tooltipText: {
+                                                const curVer = String(appRow.modelData?.version ?? "").trim()
+                                                const latVer = String(appRow.modelData?.latestVersion ?? "").trim()
+                                                const errStr = String(appRow.modelData?.updateError ?? "").trim()
+                                                if (errStr.length > 0)
+                                                    return Translation.tr("Update check error: %1").arg(errStr)
+                                                if (appRow.hasUpdateAvailable)
+                                                    return Translation.tr("Update available (%1 → %2) — click to update").arg(curVer || "?").arg(latVer || "latest")
+                                                if (curVer.length > 0)
+                                                    return Translation.tr("Check or apply update (%1 · v%2)").arg(appRow.protocolLabel).arg(curVer)
+                                                return Translation.tr("Check or apply update (%1)").arg(appRow.protocolLabel)
+                                            }
+                                            onClicked: root.updateApplication(appRow.appIdStr)
+                                        }
+                                    }
+
+                                    Item {
+                                        visible: CompositorService.isNiri
+                                        width: appRow.rowBtnSize
+                                        height: appRow.rowBtnSize
+                                        implicitWidth: appRow.rowBtnSize
+                                        implicitHeight: appRow.rowBtnSize
+                                        Layout.preferredWidth: appRow.rowBtnSize
+                                        Layout.preferredHeight: appRow.rowBtnSize
+                                        Layout.minimumWidth: appRow.rowBtnSize
+                                        Layout.maximumWidth: appRow.rowBtnSize
+                                        Layout.fillWidth: false
+                                        Layout.fillHeight: false
+                                        Layout.alignment: Qt.AlignVCenter
+
+                                        ActionIconButton {
+                                            objectName: "portableAutostartBtn_" + appRow.appIdStr
+                                            anchors.fill: parent
+                                            visible: CompositorService.isNiri
+                                            implicitWidth: appRow.rowBtnSize
+                                            implicitHeight: appRow.rowBtnSize
+                                            iconName: "rocket_launch"
+                                            colBackground: appRow.isAutostarted
+                                                ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.84)
+                                                : Appearance.colors.colLayer2
+                                            tooltipText: appRow.isAutostarted
+                                                ? Translation.tr("Autostart enabled (click to disable)")
+                                                : Translation.tr("Enable Autostart at login")
+                                            onClicked: Autostart.setAppEnabled(appRow.desktopBaseId, !appRow.isAutostarted)
+                                        }
+                                    }
+
+                                    Item {
+                                        width: appRow.rowBtnSize
+                                        height: appRow.rowBtnSize
+                                        implicitWidth: appRow.rowBtnSize
+                                        implicitHeight: appRow.rowBtnSize
+                                        Layout.preferredWidth: appRow.rowBtnSize
+                                        Layout.preferredHeight: appRow.rowBtnSize
+                                        Layout.minimumWidth: appRow.rowBtnSize
+                                        Layout.maximumWidth: appRow.rowBtnSize
+                                        Layout.fillWidth: false
+                                        Layout.fillHeight: false
+                                        Layout.alignment: Qt.AlignVCenter
+
+                                        ActionIconButton {
+                                            objectName: "removeApplicationBtn_" + appRow.appIdStr
+                                            anchors.fill: parent
+                                            implicitWidth: appRow.rowBtnSize
+                                            implicitHeight: appRow.rowBtnSize
+                                            iconName: "delete"
+                                            danger: true
+                                            enabled: !root.busy
+                                            tooltipText: Translation.tr("Remove application")
+                                            onClicked: root.removeApplication(appRow.appIdStr)
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                objectName: "portableAppRowProgressBar_" + appRow.appIdStr
+                                visible: appRow.isThisAppUpdating
+                                anchors {
+                                    left: parent.left
+                                    right: parent.right
+                                    bottom: parent.bottom
+                                }
+                                height: 3
+                                color: Appearance.colors.colLayer2
+
+                                Rectangle {
+                                    anchors {
+                                        left: parent.left
+                                        top: parent.top
+                                        bottom: parent.bottom
+                                    }
+                                    width: {
+                                        const pct = root.progressPercent >= 0 ? Math.max(4, Math.min(100, root.progressPercent)) : 18
+                                        return Math.round(parent.width * (pct / 100.0))
+                                    }
+                                    color: Appearance.colors.colPrimary
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            id: portableFooterBar
+            objectName: "portableAppsFooterBar"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            implicitHeight: 40
             radius: Appearance.rounding.small
             color: Appearance.colors.colLayer1
             border.width: 1
             border.color: Appearance.colors.colLayer0Border
 
-            ColumnLayout {
-                anchors.centerIn: parent
-                spacing: 4
+            RowLayout {
+                anchors {
+                    fill: parent
+                    leftMargin: 10
+                    rightMargin: 8
+                }
+                spacing: 6
 
                 MaterialSymbol {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: "inventory_2"
-                    iconSize: 26
-                    color: Appearance.colors.colSubtext
+                    text: "folder_special"
+                    iconSize: 16
+                    color: Appearance.colors.colPrimary
                 }
 
                 StyledText {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: root.busy
-                        ? Translation.tr("Processing application package…")
-                        : Translation.tr("No portable applications added yet")
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.Medium
-                    color: Appearance.colors.colOnLayer1
-                }
-            }
-        }
-
-        ColumnLayout {
-            Layout.fillWidth: true
-            visible: root.filteredApps.length > 0
-            spacing: 6
-
-            Repeater {
-                model: root.filteredApps
-
-                delegate: Rectangle {
-                    id: appRow
-                    required property var modelData
-                    required property int index
-                    readonly property string appIdStr: String(modelData?.id ?? "")
-                    objectName: "portableAppCard_" + (appIdStr.length > 0 ? appIdStr : String(index))
+                    objectName: "portableAppsDirLabel"
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    implicitHeight: 48
-                    clip: true
-                    radius: Appearance.rounding.small
-                    color: Appearance.colors.colLayer1
-                    border.width: 1
-                    border.color: appRow.isThisAppUpdating
-                        ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.55)
-                        : Appearance.colors.colLayer0Border
+                    text: Directories.shortHomePath(root.portableAppsDir)
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.family: Appearance.font.family.monospace
+                    color: Appearance.colors.colSubtext
+                    elide: Text.ElideMiddle
+                    maximumLineCount: 1
+                }
 
-                    readonly property string desktopBaseId: "alis-app-" + appRow.appIdStr
-                    readonly property var linkedSlots: {
-                        void(AppLauncher._configRevision)
-                        void(AppLauncher.discoveredApps)
-                        return AppLauncher.defaultSlotsForDesktopId(appRow.desktopBaseId)
-                    }
-                    readonly property bool isAutostarted: CompositorService.isNiri && Autostart.isAppEnabled(appRow.desktopBaseId)
-                    readonly property bool isUpdateSupported: Boolean(appRow.modelData?.hasZsync) || Boolean(appRow.modelData?.updateSupported) || Boolean(appRow.modelData?.updateAvailable)
-                    readonly property bool hasUpdateAvailable: Boolean(appRow.modelData?.updateAvailable)
-                    readonly property bool isThisAppUpdating: root.busy && root.busyAction === "update"
-                        && (root.updatingAppId === appRow.appIdStr
-                            || root.busyAppId === appRow.appIdStr
-                            || (root.updatingAppId === "__all__" && appRow.hasUpdateAvailable))
-                    readonly property string protocolLabel: {
-                        const p = String(appRow.modelData?.updateProtocol ?? "").trim()
-                        if (p === "rsync")
-                            return "rsync"
-                        if (p === "zsync" || Boolean(appRow.modelData?.hasZsync))
-                            return "zsync"
-                        if (p.length > 0)
-                            return "update"
-                        return "zsync"
-                    }
-                    readonly property real rowBtnSize: 28
+                RippleButton {
+                    objectName: "openPortableFolderButton"
+                    implicitHeight: 26
+                    implicitWidth: openDirBtnRow.implicitWidth + 14
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: Appearance.colors.colLayer2
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    onClicked: ShellExec.openDirectory(root.portableAppsDir, Translation.tr("Open portable apps folder"))
 
-                    readonly property string iconFileUrl: {
-                        const p = String(appRow.modelData?.iconPath ?? "").trim()
-                        if (!p)
-                            return ""
-                        return p.startsWith("file://") ? p : ("file://" + p)
-                    }
-
-                    RowLayout {
-                        id: rowLayout
-                        anchors {
-                            fill: parent
-                            leftMargin: 10
-                            rightMargin: 10
-                        }
-                        spacing: 10
-
-                        Item {
-                            Layout.preferredWidth: 28
-                            Layout.preferredHeight: 28
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Image {
-                                id: appIconImg
-                                anchors.fill: parent
-                                source: appRow.iconFileUrl
-                                sourceSize.width: 56
-                                sourceSize.height: 56
-                                fillMode: Image.PreserveAspectFit
-                                visible: appRow.iconFileUrl.length > 0 && status === Image.Ready
-                            }
-
-                            MaterialSymbol {
-                                anchors.centerIn: parent
-                                visible: !appIconImg.visible
-                                text: String(appRow.modelData?.kind ?? "") === "appimage" ? "deployed_code" : "folder_zip"
-                                iconSize: 22
-                                color: Appearance.colors.colPrimary
-                            }
-                        }
-
+                    contentItem: Item {
+                        implicitWidth: openDirBtnRow.implicitWidth
+                        implicitHeight: openDirBtnRow.implicitHeight
                         Row {
-                            id: titleTagsRow
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            Layout.preferredWidth: 1
-                            Layout.alignment: Qt.AlignVCenter
-                            spacing: 6
-                            clip: true
-
-                            readonly property real fixedPillsWidth: (kindPill.visible ? kindPill.naturalWidth + 6 : 0)
-                                + (zsyncPill.visible ? zsyncPill.naturalWidth + 6 : 0)
-                            readonly property real minNameReserved: Math.min(
-                                appNameLabel.implicitWidth,
-                                Math.max(68, Math.floor(width * 0.42))
-                            )
-                            readonly property real maxDefaultSlotPillWidth: width > 0
-                                ? Math.max(48, Math.floor(width - minNameReserved - fixedPillsWidth - (defaultSlotPill.visible ? 6 : 0)))
-                                : 120
-                            readonly property real effectiveDefaultSlotPillWidth: defaultSlotPill.visible
-                                ? (width > 0 ? Math.min(defaultSlotPill.naturalWidth, maxDefaultSlotPillWidth) : defaultSlotPill.naturalWidth)
-                                : 0
-                            readonly property real totalBadgesReserved: fixedPillsWidth
-                                + (defaultSlotPill.visible ? effectiveDefaultSlotPillWidth + 6 : 0)
-                            readonly property real availableNameWidth: width > 0
-                                ? Math.max(0, width - totalBadgesReserved)
-                                : appNameLabel.implicitWidth
-
-                            StyledText {
-                                id: appNameLabel
-                                objectName: "portableAppName_" + String(appRow.modelData?.id ?? appRow.index)
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: Math.min(implicitWidth, titleTagsRow.availableNameWidth)
-                                verticalAlignment: Text.AlignVCenter
-                                text: String(appRow.modelData?.name ?? "")
-                                font.pixelSize: Appearance.font.pixelSize.normal
-                                font.weight: Font.Medium
-                                color: Appearance.colors.colOnLayer1
-                                elide: Text.ElideRight
-                                maximumLineCount: 1
-                            }
-
-                            BadgePill {
-                                id: kindPill
-                                anchors.verticalCenter: parent.verticalCenter
-                                readonly property string kindStr: String(appRow.modelData?.kind ?? "appimage")
-                                badgeText: kindStr === "appimage" ? "AppImage" : kindStr
-                                accent: kindStr === "appimage"
-                                secondary: kindStr !== "appimage"
-                            }
-
-                            BadgePill {
-                                id: zsyncPill
-                                objectName: "portableUpdateBadge_" + String(appRow.modelData?.id ?? appRow.index)
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: appRow.isUpdateSupported || appRow.isThisAppUpdating
-                                badgeText: {
-                                    if (appRow.isThisAppUpdating) {
-                                        const pct = root.progressPercent >= 0 ? `${Math.max(0, Math.min(100, root.progressPercent))}%` : "…"
-                                        return `${appRow.protocolLabel} · ${pct}`
-                                    }
-                                    if (appRow.hasUpdateAvailable) {
-                                        const lv = String(appRow.modelData?.latestVersion ?? "").trim()
-                                        return lv.length > 0 ? `${appRow.protocolLabel} · ↑${lv}` : `${appRow.protocolLabel} · ↑`
-                                    }
-                                    return appRow.protocolLabel
-                                }
-                                accent: true
-                            }
-
-                            BadgePill {
-                                id: defaultSlotPill
-                                objectName: "portableDefaultBadge_" + String(appRow.modelData?.id ?? appRow.index)
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: appRow.linkedSlots.length > 0
-                                badgeText: Translation.tr("Default: ") + (appRow.linkedSlots[0]?.title ?? "")
-                                accent: true
-                                maxPillWidth: titleTagsRow.maxDefaultSlotPillWidth
-                                width: titleTagsRow.effectiveDefaultSlotPillWidth
-                            }
-                        }
-
-                        RowLayout {
-                            id: actionsRow
-                            readonly property int buttonCount: CompositorService.isNiri ? 3 : 2
-                            implicitWidth: (appRow.rowBtnSize * buttonCount) + (actionsRow.spacing * (buttonCount - 1))
-                            Layout.fillWidth: false
-                            Layout.minimumWidth: implicitWidth
-                            Layout.preferredWidth: implicitWidth
-                            Layout.maximumWidth: implicitWidth
-                            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                            id: openDirBtnRow
+                            anchors.centerIn: parent
                             spacing: 4
 
-                            Item {
-                                width: appRow.rowBtnSize
-                                height: appRow.rowBtnSize
-                                implicitWidth: appRow.rowBtnSize
-                                implicitHeight: appRow.rowBtnSize
-                                Layout.preferredWidth: appRow.rowBtnSize
-                                Layout.preferredHeight: appRow.rowBtnSize
-                                Layout.minimumWidth: appRow.rowBtnSize
-                                Layout.maximumWidth: appRow.rowBtnSize
-                                Layout.fillWidth: false
-                                Layout.fillHeight: false
-                                Layout.alignment: Qt.AlignVCenter
-
-                                ActionIconButton {
-                                    objectName: "portableUpdateBtn_" + appRow.appIdStr
-                                    anchors.fill: parent
-                                    visible: appRow.isUpdateSupported
-                                    implicitWidth: appRow.rowBtnSize
-                                    implicitHeight: appRow.rowBtnSize
-                                    enabled: !root.busy && appRow.isUpdateSupported
-                                    iconName: appRow.hasUpdateAvailable ? "download" : "sync"
-                                    colBackground: appRow.hasUpdateAvailable
-                                        ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.80)
-                                        : Appearance.colors.colLayer2
-                                    tooltipText: {
-                                        const curVer = String(appRow.modelData?.version ?? "").trim()
-                                        const latVer = String(appRow.modelData?.latestVersion ?? "").trim()
-                                        const errStr = String(appRow.modelData?.updateError ?? "").trim()
-                                        if (errStr.length > 0)
-                                            return Translation.tr("Update check error: %1").arg(errStr)
-                                        if (appRow.hasUpdateAvailable)
-                                            return Translation.tr("Update available (%1 → %2) — click to update").arg(curVer || "?").arg(latVer || "latest")
-                                        if (curVer.length > 0)
-                                            return Translation.tr("Check or apply update (%1 · v%2)").arg(appRow.protocolLabel).arg(curVer)
-                                        return Translation.tr("Check or apply update (%1)").arg(appRow.protocolLabel)
-                                    }
-                                    onClicked: root.updateApplication(appRow.appIdStr)
-                                }
+                            MaterialSymbol {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "folder_open"
+                                iconSize: 14
+                                color: Appearance.colors.colOnLayer2
                             }
 
-                            Item {
-                                visible: CompositorService.isNiri
-                                width: appRow.rowBtnSize
-                                height: appRow.rowBtnSize
-                                implicitWidth: appRow.rowBtnSize
-                                implicitHeight: appRow.rowBtnSize
-                                Layout.preferredWidth: appRow.rowBtnSize
-                                Layout.preferredHeight: appRow.rowBtnSize
-                                Layout.minimumWidth: appRow.rowBtnSize
-                                Layout.maximumWidth: appRow.rowBtnSize
-                                Layout.fillWidth: false
-                                Layout.fillHeight: false
-                                Layout.alignment: Qt.AlignVCenter
-
-                                ActionIconButton {
-                                    objectName: "portableAutostartBtn_" + appRow.appIdStr
-                                    anchors.fill: parent
-                                    visible: CompositorService.isNiri
-                                    implicitWidth: appRow.rowBtnSize
-                                    implicitHeight: appRow.rowBtnSize
-                                    iconName: "rocket_launch"
-                                    colBackground: appRow.isAutostarted
-                                        ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.84)
-                                        : Appearance.colors.colLayer2
-                                    tooltipText: appRow.isAutostarted
-                                        ? Translation.tr("Autostart enabled (click to disable)")
-                                        : Translation.tr("Enable Autostart at login")
-                                    onClicked: Autostart.setAppEnabled(appRow.desktopBaseId, !appRow.isAutostarted)
-                                }
-                            }
-
-                            Item {
-                                width: appRow.rowBtnSize
-                                height: appRow.rowBtnSize
-                                implicitWidth: appRow.rowBtnSize
-                                implicitHeight: appRow.rowBtnSize
-                                Layout.preferredWidth: appRow.rowBtnSize
-                                Layout.preferredHeight: appRow.rowBtnSize
-                                Layout.minimumWidth: appRow.rowBtnSize
-                                Layout.maximumWidth: appRow.rowBtnSize
-                                Layout.fillWidth: false
-                                Layout.fillHeight: false
-                                Layout.alignment: Qt.AlignVCenter
-
-                                ActionIconButton {
-                                    objectName: "removeApplicationBtn_" + appRow.appIdStr
-                                    anchors.fill: parent
-                                    implicitWidth: appRow.rowBtnSize
-                                    implicitHeight: appRow.rowBtnSize
-                                    iconName: "delete"
-                                    danger: true
-                                    enabled: !root.busy
-                                    tooltipText: Translation.tr("Remove application")
-                                    onClicked: root.removeApplication(appRow.appIdStr)
-                                }
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: Translation.tr("Open folder")
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colOnLayer2
                             }
                         }
                     }
+                }
 
-                    Rectangle {
-                        objectName: "portableAppRowProgressBar_" + appRow.appIdStr
-                        visible: appRow.isThisAppUpdating
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            bottom: parent.bottom
-                        }
-                        height: 3
-                        color: Appearance.colors.colLayer2
+                RippleButton {
+                    objectName: "syncPortableShortcutsButton"
+                    enabled: !AppLauncher.discoveryLoading
+                    implicitHeight: 26
+                    implicitWidth: syncDeskBtnRow.implicitWidth + 14
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: Appearance.colors.colLayer2
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    onClicked: AppLauncher.refreshDiscovery()
 
-                        Rectangle {
-                            anchors {
-                                left: parent.left
-                                top: parent.top
-                                bottom: parent.bottom
+                    contentItem: Item {
+                        implicitWidth: syncDeskBtnRow.implicitWidth
+                        implicitHeight: syncDeskBtnRow.implicitHeight
+                        Row {
+                            id: syncDeskBtnRow
+                            anchors.centerIn: parent
+                            spacing: 4
+
+                            MaterialSymbol {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "sync"
+                                iconSize: 14
+                                color: Appearance.colors.colOnLayer2
                             }
-                            width: {
-                                const pct = root.progressPercent >= 0 ? Math.max(4, Math.min(100, root.progressPercent)) : 18
-                                return Math.round(parent.width * (pct / 100.0))
+
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: Translation.tr("Sync shortcuts")
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colOnLayer2
                             }
-                            color: Appearance.colors.colPrimary
                         }
                     }
                 }

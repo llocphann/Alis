@@ -2438,7 +2438,7 @@ cleanup_service_processes() {
     while IFS= read -r pid; do
         alis_cleanup_owns_pid "$pid" "$service_group" || continue
         kill "$pid" 2>/dev/null || true
-    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|/alis-inputd([[:space:]]|$)|nmcli monitor|/usr/bin/swayidle -w|scripts/keyring/try_lookup\.sh|secret-tool lookup' 2>/dev/null || true)
+    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|/alis-inputd([[:space:]]|$)|nmcli monitor|/usr/bin/swayidle -w|scripts/keyring/try_lookup\.sh|secret-tool lookup|dbus-monitor --system .*PrepareForSleep|cava -p ' 2>/dev/null || true)
 
     local thumb_pattern='scripts/thumbnails/(thumbgen-venv\.sh|thumbgen\.py|generate-thumbnails-magick\.sh)'
     local thumb_pids=()

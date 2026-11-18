@@ -11,7 +11,7 @@ Rectangle {
     StyledText {
         anchors.centerIn: parent
         color: Appearance.colors.colSecondaryHover
-        text: Qt.locale().toString(DateTime.clock.date, "dd")
+        text: Qt.locale().toString(DateTime.todayDate, "dd")
         font {
             family: Config.getNestedValue("background.widgets.clock.fontFamily", "Space Grotesk")
             pixelSize: 20

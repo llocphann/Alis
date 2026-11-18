@@ -6,11 +6,61 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
+from unittest import mock
 
 from native_test_session import private_wayland, run_qs
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_resolve_audio_source_multi_source() -> None:
+    sys.path.insert(0, str(ROOT / "scripts/cava"))
+    import resolve_audio_source as resolver  # noqa: PLC0415
+
+    clients_raw = (
+        'Client #10\n\tProperties:\n\t\tapplication.name = "mpd"\n\t\tapplication.process.binary = "mpd"\n'
+        'Client #20\n\tProperties:\n\t\tapplication.name = "Zen"\n\t\tapplication.process.binary = "zen-bin"\n'
+    )
+    zen_playing = (
+        'Sink Input #1\n\tCorked: yes\n\tMute: no\n\tClient: 10\n\tProperties:\n'
+        '\t\tnode.name = "mpd"\n\t\tobject.serial = "55"\n\t\tmedia.role = "music"\n'
+        '\t\tapplication.process.binary = "mpd"\n'
+        'Sink Input #2\n\tCorked: no\n\tMute: no\n\tClient: 20\n\tProperties:\n'
+        '\t\tnode.name = "firefox.instance_1_191"\n\t\tobject.serial = "675"\n'
+        '\t\tpipewire.access.portal.app_id = "app.zen_browser.zen"\n'
+        '\t\tapplication.process.binary = "zen-bin"\n'
+    )
+    both_playing = zen_playing.replace("\tCorked: yes\n", "\tCorked: no\n", 1)
+    zen_muted = zen_playing.replace('Sink Input #2\n\tCorked: no\n\tMute: no', 'Sink Input #2\n\tCorked: no\n\tMute: yes')
+    all_corked = zen_playing.replace('Sink Input #2\n\tCorked: no', 'Sink Input #2\n\tCorked: yes')
+
+    def fake_run(sink_raw: str):
+        def _inner(cmd):
+            if cmd == ["pactl", "info"]:
+                return "Server Name: PulseAudio (on PipeWire 1.4)\n"
+            if cmd == ["pactl", "list", "clients"]:
+                return clients_raw
+            if cmd == ["pactl", "list", "sink-inputs"]:
+                return sink_raw
+            if cmd == ["pactl", "get-default-sink"]:
+                return "alsa_output.pci.stereo"
+            return ""
+        return _inner
+
+    with mock.patch.object(resolver, "_run", side_effect=fake_run(zen_playing)):
+        assert resolver.resolve_source("mpd", "") == "675.monitor", "Paused MPD must fall back to active Flatpak Zen browser"
+    with mock.patch.object(resolver, "_run", side_effect=fake_run(both_playing)):
+        assert resolver.resolve_source("mpd", "") == "55.monitor", "Active hinted MPD must beat background browser"
+    with mock.patch.object(resolver, "_run", side_effect=fake_run(zen_muted)):
+        assert resolver.resolve_source("mpd", "") == "", "Muted browser stream must not be selected"
+    with mock.patch.object(resolver, "_run", side_effect=fake_run(all_corked)):
+        assert resolver.resolve_source("mpd", "") == "", "All-corked streams must yield empty source"
+    print("CAVA_SOURCE_RESOLVER_PASS multi-source browser fallback, muted rejection, and .monitor PipeWire target")
+
+
+test_resolve_audio_source_multi_source()
 
 
 def executable(path, text):
@@ -55,7 +105,7 @@ elif args!=['list','clients']: raise SystemExit(2)
     assert (before.st_ino, before.st_mtime_ns) == (after.st_ino, after.st_mtime_ns)
     parsed = configparser.ConfigParser()
     parsed.read_string(baseline)
-    assert parsed["input"]["source"] == "101"
+    assert parsed["input"]["source"] == "101.monitor"
     assert parsed["input"]["active"] == "0"
     assert parsed["output"]["channels"] == "stereo"
     assert parsed["output"]["ascii_max_range"] == "1000"
@@ -165,7 +215,7 @@ ShellRoot {
    setting("sensitivity",125);starts(3)
    setting("stereo",false);starts(4)
    change({source:"102"});CavaService._scheduleSourceRefresh();starts(5)
-   check(log("start")[4].source==="102","changed source was not applied")
+   check(log("start")[4].source==="102.monitor","changed source was not applied")
    CavaService.updateSubscription(token,128);starts(6);tryVerify(()=>CavaService.points.length===128,2000)
 
    // Superseded config may be published while the old process is still alive.

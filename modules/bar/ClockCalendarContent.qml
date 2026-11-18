@@ -16,7 +16,7 @@ Item {
     property int monthShift: 0
     property bool eventDateSelectionEnabled: false
     property var selectedEventDate: null
-    readonly property date today: DateTime.clock.date
+    readonly property date today: DateTime.todayDate
     readonly property var locale: Qt.locale()
     readonly property date viewingDate: new Date(
         root.today.getFullYear(),

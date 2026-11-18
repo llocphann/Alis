@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 
 Item {
     id: root
@@ -29,7 +30,6 @@ Item {
         }
     }
 
-    // Helper to safely get color from preset
     function getColor(key, fallback) {
         if (!preset.colors) return Appearance.m3colors[key] ?? fallback
         if (preset.colors === "custom") return Config.options?.appearance?.customTheme?.[key] ?? fallback
@@ -46,56 +46,69 @@ Item {
         Config.setNestedValue("appearance.favoriteThemes", favs)
     }
 
-    implicitHeight: 36
+    implicitHeight: Math.round(42 * Appearance.fontSizeScale)
 
-    // Card background
     Rectangle {
         id: cardBg
         anchors.fill: parent
         radius: Appearance.rounding.small
 
-        // Get primary color from THIS preset (not current theme)
         readonly property color presetPrimary: root.getColor("m3primary", "#6366f1")
+        readonly property color presetSecondary: root.getColor("m3secondary", "#818cf8")
+        readonly property color presetTertiary: root.getColor("m3tertiary", "#a5b4fc")
+        readonly property color presetSurface: root.getColor("m3background", "#0f0f23")
 
-        color: cardMouseArea.containsMouse || root.activeFocus
-            ? Appearance.colors.colLayer2Hover
-            : Appearance.colors.colLayer2
+        color: root.isActive
+            ? ColorUtils.transparentize(cardBg.presetPrimary, 0.84)
+            : (cardMouseArea.containsMouse || root.activeFocus
+                ? Appearance.colors.colLayer2Hover
+                : Appearance.colors.colLayer2)
 
-        border.width: root.isActive ? 1.5 : root.activeFocus ? 1 : 0
-        border.color: cardBg.presetPrimary
+        border.width: root.isActive ? 1.5 : 1
+        border.color: root.isActive
+            ? cardBg.presetPrimary
+            : (root.activeFocus ? Appearance.colors.colPrimary : SettingsMaterialPreset.groupBorderColor)
 
-        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: 100 } }
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: 110 } }
     }
 
-    // Content row
     RowLayout {
         anchors.fill: parent
         anchors.leftMargin: 8
-        anchors.rightMargin: 4
-        spacing: 6
+        anchors.rightMargin: 6
+        spacing: 8
 
-        // Color swatches - simple overlapping circles
-        Row {
-            spacing: -4
+        // iRiS mini palette specimen tile
+        Rectangle {
+            Layout.preferredWidth: Math.round(38 * Appearance.fontSizeScale)
+            Layout.preferredHeight: Math.round(24 * Appearance.fontSizeScale)
+            Layout.alignment: Qt.AlignVCenter
+            radius: 6
+            color: cardBg.presetSurface
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.14)
 
-            Repeater {
-                model: [
-                    { key: "m3primary", fallback: "#6366f1" },
-                    { key: "m3secondary", fallback: "#818cf8" },
-                    { key: "m3background", fallback: "#0f0f23" }
-                ]
+            Row {
+                anchors.centerIn: parent
+                spacing: 3
 
                 Rectangle {
-                    required property var modelData
-                    required property int index
-
-                    width: 14
-                    height: 14
-                    radius: 7
-                    color: root.getColor(modelData.key, modelData.fallback)
-                    border.width: 1
-                    border.color: Qt.rgba(0, 0, 0, 0.25)
-                    z: 3 - index
+                    width: 8
+                    height: 8
+                    radius: 4
+                    color: cardBg.presetPrimary
+                }
+                Rectangle {
+                    width: 8
+                    height: 8
+                    radius: 4
+                    color: cardBg.presetSecondary
+                }
+                Rectangle {
+                    width: 8
+                    height: 8
+                    radius: 4
+                    color: cardBg.presetTertiary
                 }
             }
         }
@@ -107,7 +120,6 @@ Item {
             color: cardBg.presetPrimary
         }
 
-        // Theme name - clickable area for selecting theme
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -120,7 +132,7 @@ Item {
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 font.weight: root.isActive ? Font.DemiBold : Font.Normal
                 color: root.isActive
-                    ? cardBg.presetPrimary
+                    ? Appearance.colors.colOnSurface
                     : Appearance.colors.colOnLayer2
                 elide: Text.ElideRight
             }
@@ -137,12 +149,11 @@ Item {
             }
         }
 
-        // Favorite button - separate clickable area
         Rectangle {
             id: starButton
-            width: 28
-            height: 28
-            radius: 14
+            width: 26
+            height: 26
+            radius: 13
             activeFocusOnTab: root.favoriteEnabled
             Accessible.role: Accessible.Button
             Accessible.name: root.isFavorite ? Translation.tr("Remove from favorites") : Translation.tr("Add to favorites")
@@ -161,16 +172,11 @@ Item {
                 }
             }
 
-            Behavior on color {
-                enabled: Appearance.animationsEnabled
-                animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-            }
-
             MaterialSymbol {
                 anchors.centerIn: parent
                 text: "star"
                 fill: root.isFavorite ? 1 : 0
-                iconSize: 16
+                iconSize: 15
                 color: root.isFavorite
                     ? Appearance.colors.colTertiary
                     : starMouseArea.containsMouse || starButton.activeFocus
@@ -195,7 +201,6 @@ Item {
             }
         }
 
-        // Active check
         MaterialSymbol {
             visible: root.isActive && !starButton.visible
             text: "check"
@@ -204,7 +209,6 @@ Item {
         }
     }
 
-    // Tooltip for theme description
     StyledToolTip {
         text: preset.description ?? ""
         visible: cardMouseArea.containsMouse && (preset.description ?? "").length > 0

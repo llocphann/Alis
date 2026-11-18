@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 """SET-F01 helper: Native + Flatpak/Flathub app discovery, XDG/MIME sync, and safe launcher."""
-import configparser
 import json
 import os
 import re
 import shlex
-import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -278,9 +275,14 @@ def _which(cmd: str) -> str | None:
     if not cmd:
         return None
     if "/" in cmd:
-        p = Path(cmd)
-        return str(p) if p.is_file() and os.access(p, os.X_OK) else None
-    return shutil.which(cmd, path=_search_path())
+        return cmd if os.path.isfile(cmd) and os.access(cmd, os.X_OK) else None
+    for directory in _search_path().split(os.pathsep):
+        if not directory:
+            continue
+        candidate = os.path.join(directory, cmd)
+        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+            return candidate
+    return None
 
 
 def _clean_exec_tokens(exec_line: str) -> list[str]:
@@ -362,6 +364,7 @@ def _query_flatpak_inventory() -> tuple[dict[tuple[str, str], dict], bool]:
     if not flatpak_bin:
         return {}, False
     try:
+        import subprocess
         proc = subprocess.run(
             [flatpak_bin, "list", "--app", "--columns=application,installation,origin,branch,name"],
             text=True,
@@ -659,14 +662,18 @@ def _repair_managed_desktop_entries() -> None:
                 any_updated = True
             except Exception:
                 pass
-    if any_updated and shutil.which("update-desktop-database"):
-        try:
-            subprocess.run(["update-desktop-database", str(apps_dir)], capture_output=True, timeout=5)
-        except Exception:
-            pass
+    if any_updated:
+        import shutil
+        import subprocess
+        if shutil.which("update-desktop-database"):
+            try:
+                subprocess.run(["update-desktop-database", str(apps_dir)], capture_output=True, timeout=5)
+            except Exception:
+                pass
 
 
 def discover_applications() -> tuple[list[dict], bool]:
+    import configparser
     _repair_managed_desktop_entries()
     fixture_path = os.environ.get("ALIS_DEFAULT_APPS_FIXTURE_JSON")
     if fixture_path and Path(fixture_path).is_file():
@@ -818,6 +825,7 @@ def _run_query(cmd: list[str]) -> tuple[int, str]:
                 cur_dirs.append(ed)
         env["XDG_DATA_DIRS"] = ":".join(cur_dirs)
     try:
+        import subprocess
         proc = subprocess.run([bin_path] + cmd[1:], text=True, capture_output=True, timeout=3, check=False, env=env)
         return proc.returncode, proc.stdout.strip()
     except Exception as exc:
@@ -852,50 +860,275 @@ def _read_user_mimeapps_defaults() -> dict[str, str]:
     return defaults
 
 
+def _is_desktop_id_installed_fast(
+    desktop_id: str,
+    installed_ids: set[str] | None,
+    cache: dict[str, bool],
+    app_dirs: list[tuple[Path, str, str, Path | None]],
+) -> bool:
+    if not desktop_id:
+        return False
+    if installed_ids is not None:
+        return desktop_id in installed_ids
+    if desktop_id in cache:
+        return cache[desktop_id]
+
+    xdg_data_home = Path(os.environ.get("XDG_DATA_HOME") or (Path.home() / ".local" / "share"))
+    default_user_fp = xdg_data_home / "flatpak"
+    default_sys_fp = Path("/var/lib/flatpak")
+
+    found_valid = False
+    for apps_dir, dir_kind, _dir_inst, fp_root in app_dirs:
+        entry_path = apps_dir / desktop_id
+        if not entry_path.is_file():
+            continue
+        sec: dict[str, str] = {}
+        in_entry = False
+        try:
+            with entry_path.open("r", encoding="utf-8", errors="ignore") as fh:
+                for raw_line in fh:
+                    line = raw_line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    if line.startswith("[") and line.endswith("]"):
+                        section_name = line[1:-1].strip()
+                        if section_name == "Desktop Entry":
+                            in_entry = True
+                        elif in_entry:
+                            break
+                        continue
+                    if in_entry and "=" in line:
+                        k, v = line.split("=", 1)
+                        k = k.strip()
+                        if k in ("Type", "Hidden", "NoDisplay", "Exec", "TryExec", "X-Flatpak"):
+                            sec[k] = v.strip()
+        except Exception:
+            continue
+        if not in_entry:
+            continue
+        if sec.get("Type", "Application") != "Application":
+            continue
+        if sec.get("Hidden", "false").lower() == "true":
+            continue
+        if sec.get("NoDisplay", "false").lower() == "true":
+            continue
+        exec_raw = sec.get("Exec", "")
+        if not exec_raw:
+            continue
+        tokens = _clean_exec_tokens(exec_raw)
+        if not tokens:
+            continue
+        try_exec = sec.get("TryExec", "")
+        x_flatpak = sec.get("X-Flatpak", "")
+        is_flatpak = (
+            dir_kind == "flatpak"
+            or bool(x_flatpak)
+            or (os.path.basename(tokens[0]) == "flatpak" and len(tokens) >= 2 and tokens[1] == "run")
+        )
+        if is_flatpak:
+            app_id, inst_hint = _parse_flatpak_exec(tokens, desktop_id, x_flatpak)
+            if not app_id:
+                continue
+            check_roots = [fp_root] if fp_root else ([default_user_fp] if inst_hint == "user" else [default_sys_fp, default_user_fp])
+            if any(_read_flatpak_origin_from_disk(r, app_id)[0] for r in check_roots if r):
+                found_valid = True
+                break
+        else:
+            if _which(try_exec or tokens[0]):
+                found_valid = True
+                break
+
+    cache[desktop_id] = found_valid
+    return found_valid
+
+
+def _read_keyed_mime_lists(
+    path: Path,
+    target_mimes: set[str],
+    section_names: tuple[str, ...],
+) -> dict[str, list[str]]:
+    results: dict[str, list[str]] = {}
+    if not path.is_file():
+        return results
+    current_section = ""
+    allowed = set(section_names)
+    try:
+        with path.open("r", encoding="utf-8", errors="ignore") as fh:
+            for raw_line in fh:
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if line.startswith("[") and line.endswith("]"):
+                    current_section = line[1:-1].strip()
+                    continue
+                if current_section not in allowed or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                mime_key = k.strip()
+                if mime_key not in target_mimes or mime_key in results:
+                    continue
+                items = [part.strip() for part in v.split(";") if part.strip()]
+                if items:
+                    results[mime_key] = items
+    except Exception:
+        pass
+    return results
+
+
+def _resolve_mimes_in_process(
+    mime_types: list[str],
+    installed_ids: set[str] | None,
+) -> dict[str, str]:
+    target = set(mime_types)
+    resolved: dict[str, str] = {}
+    app_dirs = _candidate_application_dirs()
+    desktop_valid_cache: dict[str, bool] = {}
+
+    desktop_env = os.environ.get("XDG_CURRENT_DESKTOP", "")
+    prefixes = [f"{d.strip().lower()}-" for d in desktop_env.split(":") if d.strip()]
+    prefixes.append("")
+
+    xdg_config_home = Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"))
+    xdg_config_dirs = [Path(p.strip()) for p in (os.environ.get("XDG_CONFIG_DIRS") or "/etc/xdg").split(":") if p.strip()]
+    xdg_data_home = Path(os.environ.get("XDG_DATA_HOME") or (Path.home() / ".local" / "share"))
+    xdg_data_dirs = [Path(p.strip()) for p in (os.environ.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share").split(":") if p.strip()]
+
+    mimeapps_dirs = [xdg_config_home, *xdg_config_dirs, xdg_data_home / "applications", *(d / "applications" for d in xdg_data_dirs)]
+    for base_dir in mimeapps_dirs:
+        if len(resolved) == len(target):
+            break
+        if not base_dir.is_dir():
+            continue
+        for prefix in prefixes:
+            if len(resolved) == len(target):
+                break
+            entries = _read_keyed_mime_lists(
+                base_dir / f"{prefix}mimeapps.list",
+                target - resolved.keys(),
+                ("Default Applications",),
+            )
+            for mime_type, candidates in entries.items():
+                for desktop_id in candidates:
+                    if _is_desktop_id_installed_fast(desktop_id, installed_ids, desktop_valid_cache, app_dirs):
+                        resolved[mime_type] = desktop_id
+                        break
+
+    if len(resolved) < len(target):
+        menu_prefix = os.environ.get("XDG_MENU_PREFIX", "")
+        cache_prefixes = [menu_prefix, ""] if menu_prefix else [""]
+        for data_root in [xdg_data_home, *xdg_data_dirs]:
+            if len(resolved) == len(target):
+                break
+            apps_dir = data_root / "applications"
+            if not apps_dir.is_dir():
+                continue
+            for prefix in cache_prefixes:
+                for filename, sections in (
+                    (f"{prefix}defaults.list", ("Default Applications",)),
+                    (f"{prefix}mimeinfo.cache", ("MIME Cache", "Default Applications")),
+                ):
+                    if len(resolved) == len(target):
+                        break
+                    entries = _read_keyed_mime_lists(apps_dir / filename, target - resolved.keys(), sections)
+                    for mime_type, candidates in entries.items():
+                        for desktop_id in candidates:
+                            if _is_desktop_id_installed_fast(desktop_id, installed_ids, desktop_valid_cache, app_dirs):
+                                resolved[mime_type] = desktop_id
+                                break
+
+    return resolved
+
+
 def query_xdg_defaults(installed_ids: set[str] | None = None) -> dict:
-    _repair_managed_desktop_entries()
     xdg_settings_ok = _which("xdg-settings") is not None
     xdg_mime_ok = _which("xdg-mime") is not None
 
-    if installed_ids is None and not os.environ.get("ALIS_DEFAULT_APPS_PATH"):
-        try:
-            apps, _ = discover_applications()
-            installed_ids = {str(a.get("desktopId") or "") for a in apps if a.get("installed", True)}
-        except Exception:
-            installed_ids = set()
+    use_mock_xdg = bool(os.environ.get("ALIS_DEFAULT_APPS_PATH") or os.environ.get("ALIS_DEFAULT_APPS_XDG_DIRS"))
+    if use_mock_xdg:
+        if installed_ids is None and not os.environ.get("ALIS_DEFAULT_APPS_PATH"):
+            try:
+                apps, _ = discover_applications()
+                installed_ids = {str(a.get("desktopId") or "") for a in apps if a.get("installed", True)}
+            except Exception:
+                installed_ids = set()
 
-    user_mimeapps = _read_user_mimeapps_defaults()
+        user_mimeapps = _read_user_mimeapps_defaults()
 
-    def _resolve_mime(mime_type: str, queried: str) -> str:
-        explicit = user_mimeapps.get(mime_type, "")
-        if explicit and installed_ids and explicit in installed_ids:
-            return explicit
-        return queried
+        def _resolve_mime(mime_type: str, queried: str) -> str:
+            explicit = user_mimeapps.get(mime_type, "")
+            if explicit and installed_ids and explicit in installed_ids:
+                return explicit
+            return queried
 
-    _, web_browser = _run_query(["xdg-settings", "get", "default-web-browser"]) if xdg_settings_ok else (127, "")
-    _, http_handler = _run_query(["xdg-mime", "query", "default", "x-scheme-handler/http"]) if xdg_mime_ok else (127, "")
-    _, https_handler = _run_query(["xdg-mime", "query", "default", "x-scheme-handler/https"]) if xdg_mime_ok else (127, "")
-    _, html_handler = _run_query(["xdg-mime", "query", "default", "text/html"]) if xdg_mime_ok else (127, "")
-    _, dir_handler = _run_query(["xdg-mime", "query", "default", "inode/directory"]) if xdg_mime_ok else (127, "")
-    _, text_handler = _run_query(["xdg-mime", "query", "default", "text/plain"]) if xdg_mime_ok else (127, "")
-    _, pdf_handler = _run_query(["xdg-mime", "query", "default", "application/pdf"]) if xdg_mime_ok else (127, "")
-    _, docx_handler = _run_query(["xdg-mime", "query", "default", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]) if xdg_mime_ok else (127, "")
-    _, image_handler = _run_query(["xdg-mime", "query", "default", "image/png"]) if xdg_mime_ok else (127, "")
-    _, video_handler = _run_query(["xdg-mime", "query", "default", "video/mp4"]) if xdg_mime_ok else (127, "")
-    _, audio_handler = _run_query(["xdg-mime", "query", "default", "audio/mpeg"]) if xdg_mime_ok else (127, "")
-    _, archive_handler = _run_query(["xdg-mime", "query", "default", "application/zip"]) if xdg_mime_ok else (127, "")
+        _, web_browser = _run_query(["xdg-settings", "get", "default-web-browser"]) if xdg_settings_ok else (127, "")
+        _, http_handler = _run_query(["xdg-mime", "query", "default", "x-scheme-handler/http"]) if xdg_mime_ok else (127, "")
+        _, https_handler = _run_query(["xdg-mime", "query", "default", "x-scheme-handler/https"]) if xdg_mime_ok else (127, "")
+        _, html_handler = _run_query(["xdg-mime", "query", "default", "text/html"]) if xdg_mime_ok else (127, "")
+        _, dir_handler = _run_query(["xdg-mime", "query", "default", "inode/directory"]) if xdg_mime_ok else (127, "")
+        _, text_handler = _run_query(["xdg-mime", "query", "default", "text/plain"]) if xdg_mime_ok else (127, "")
+        _, pdf_handler = _run_query(["xdg-mime", "query", "default", "application/pdf"]) if xdg_mime_ok else (127, "")
+        _, docx_handler = _run_query(["xdg-mime", "query", "default", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]) if xdg_mime_ok else (127, "")
+        _, image_handler = _run_query(["xdg-mime", "query", "default", "image/png"]) if xdg_mime_ok else (127, "")
+        _, video_handler = _run_query(["xdg-mime", "query", "default", "video/mp4"]) if xdg_mime_ok else (127, "")
+        _, audio_handler = _run_query(["xdg-mime", "query", "default", "audio/mpeg"]) if xdg_mime_ok else (127, "")
+        _, archive_handler = _run_query(["xdg-mime", "query", "default", "application/zip"]) if xdg_mime_ok else (127, "")
 
-    http_handler = _resolve_mime("x-scheme-handler/http", http_handler)
-    https_handler = _resolve_mime("x-scheme-handler/https", https_handler)
-    html_handler = _resolve_mime("text/html", html_handler)
-    dir_handler = _resolve_mime("inode/directory", dir_handler)
-    text_handler = _resolve_mime("text/plain", text_handler)
-    pdf_handler = _resolve_mime("application/pdf", pdf_handler)
-    docx_handler = _resolve_mime("application/vnd.openxmlformats-officedocument.wordprocessingml.document", docx_handler)
-    image_handler = _resolve_mime("image/png", image_handler)
-    video_handler = _resolve_mime("video/mp4", video_handler)
-    audio_handler = _resolve_mime("audio/mpeg", audio_handler)
-    archive_handler = _resolve_mime("application/zip", archive_handler)
+        http_handler = _resolve_mime("x-scheme-handler/http", http_handler)
+        https_handler = _resolve_mime("x-scheme-handler/https", https_handler)
+        html_handler = _resolve_mime("text/html", html_handler)
+        dir_handler = _resolve_mime("inode/directory", dir_handler)
+        text_handler = _resolve_mime("text/plain", text_handler)
+        pdf_handler = _resolve_mime("application/pdf", pdf_handler)
+        docx_handler = _resolve_mime("application/vnd.openxmlformats-officedocument.wordprocessingml.document", docx_handler)
+        image_handler = _resolve_mime("image/png", image_handler)
+        video_handler = _resolve_mime("video/mp4", video_handler)
+        audio_handler = _resolve_mime("audio/mpeg", audio_handler)
+        archive_handler = _resolve_mime("application/zip", archive_handler)
+    else:
+        target_mimes = [
+            "x-scheme-handler/http",
+            "x-scheme-handler/https",
+            "text/html",
+            "inode/directory",
+            "text/plain",
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "image/png",
+            "video/mp4",
+            "audio/mpeg",
+            "application/zip",
+        ]
+        resolved_map = _resolve_mimes_in_process(target_mimes, installed_ids)
+
+        def _get_or_fallback(mime_type: str) -> str:
+            val = resolved_map.get(mime_type, "")
+            if val:
+                return val
+            if xdg_mime_ok:
+                _, fallback_val = _run_query(["xdg-mime", "query", "default", mime_type])
+                return fallback_val
+            return ""
+
+        http_handler = _get_or_fallback("x-scheme-handler/http")
+        https_handler = _get_or_fallback("x-scheme-handler/https")
+        html_handler = _get_or_fallback("text/html")
+        dir_handler = _get_or_fallback("inode/directory")
+        text_handler = _get_or_fallback("text/plain")
+        pdf_handler = _get_or_fallback("application/pdf")
+        docx_handler = _get_or_fallback("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        image_handler = _get_or_fallback("image/png")
+        video_handler = _get_or_fallback("video/mp4")
+        audio_handler = _get_or_fallback("audio/mpeg")
+        archive_handler = _get_or_fallback("application/zip")
+
+        desktop_tokens = {d.strip().lower() for d in os.environ.get("XDG_CURRENT_DESKTOP", "").split(":") if d.strip()}
+        if desktop_tokens & {"kde", "gnome", "x-cinnamon", "cinnamon", "mate", "xfce"}:
+            _, web_browser = _run_query(["xdg-settings", "get", "default-web-browser"]) if xdg_settings_ok else (127, "")
+        else:
+            web_browser = http_handler or (
+                _run_query(["xdg-settings", "get", "default-web-browser"])[1] if xdg_settings_ok else ""
+            )
+
     if not web_browser and http_handler and http_handler == https_handler:
         web_browser = http_handler
 
@@ -1383,10 +1616,13 @@ def _query_niri_windows() -> list[dict]:
             return []
     if os.environ.get("ALIS_LAUNCH_DRY_RUN") == "1":
         return []
+    import shutil
+    import subprocess
     niri_bin = _which("niri") or shutil.which("niri")
     if not niri_bin:
         return []
     try:
+        import subprocess
         proc = subprocess.run(
             [niri_bin, "msg", "-j", "windows"],
             text=True,
@@ -1412,10 +1648,13 @@ def _focus_niri_window(window_id: int) -> bool:
             return False
     if os.environ.get("ALIS_LAUNCH_DRY_RUN") == "1":
         return True
+    import shutil
+    import subprocess
     niri_bin = _which("niri") or shutil.which("niri")
     if not niri_bin:
         return False
     try:
+        import subprocess
         proc = subprocess.run(
             [niri_bin, "msg", "action", "focus-window", "--id", str(window_id)],
             text=True,

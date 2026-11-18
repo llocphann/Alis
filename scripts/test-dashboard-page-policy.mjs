@@ -51,7 +51,20 @@ for (const ids of [...permutations(['dashboard', 'music']), ...permutations(['da
     }
     eq(phased.step(-120, 0, 4, 16000).target, '', 'momentum/long phased pause released latch');
     phased.step(0, 0, 3);
-    if (ids.length === 3) eq(phased.step(-32, 0, 1).target, ids[2], 'new phased gesture did not release latch');
+    eq(phased.step(-64, 0, 2, 10).target, '', 'stale update after ScrollEnd skipped another page');
+    eq(phased.step(-64, 0, 4, 10).target, '', 'momentum after ScrollEnd skipped another page');
+    eq(phased.step(-64, 0, 0, 50).target, '', 'unphased event within ScrollEnd cooldown skipped another page');
+    if (ids.length === 3) {
+        const freshBegin = gesture(ids, ids[0]);
+        freshBegin.step(0, 0, 1);
+        eq(freshBegin.step(-32, 0, 2).target, ids[1]);
+        freshBegin.step(0, 0, 3);
+        eq(freshBegin.step(-32, 0, 1).target, ids[2], 'new phased gesture did not release latch');
+        eq(phased.step(-32, 0, 0, 181).target, ids[2], 'unphased wheel after ScrollEnd cooldown stayed blocked');
+    }
+    const pureMomentum = gesture(ids, ids[0]);
+    const momRes = pureMomentum.step(-120, 0, 4, 10);
+    eq([momRes.accepted, momRes.target], [false, ''], 'standalone ScrollMomentum was not ignored');
 }
 const ids = ['dashboard', 'music', 'weeklyPlanner'];
 const burst = gesture(ids, 'dashboard');
@@ -94,5 +107,16 @@ eq(
     policy.move(['dashboard', 'music', 'weeklyPlanner'], withSrAvailable, 'spacedRepetition', 1),
     ['dashboard', 'spacedRepetition', 'music', 'weeklyPlanner'],
     'moving newly available spacedRepetition tab dropped an existing visible page'
+);
+const withExercisesAvailable = ['dashboard', 'music', 'weeklyPlanner', 'spacedRepetition', 'exercisesTracker', 'custom-1'];
+eq(
+    policy.ordered(['custom-1', 'weeklyPlanner', 'dashboard', 'spacedRepetition', 'music'], withExercisesAvailable),
+    ['custom-1', 'weeklyPlanner', 'dashboard', 'spacedRepetition', 'music', 'exercisesTracker'],
+    'existing user pageOrder did not append newly enabled exercisesTracker cleanly'
+);
+eq(
+    policy.move(['custom-1', 'weeklyPlanner', 'dashboard', 'spacedRepetition', 'music'], withExercisesAvailable, 'exercisesTracker', 2),
+    ['custom-1', 'weeklyPlanner', 'exercisesTracker', 'dashboard', 'spacedRepetition', 'music'],
+    'reordering exercisesTracker into existing user pageOrder failed'
 );
 console.log(`DASHBOARD_PAGE_POLICY_PASS ${checks} checks; stable/reordered two and three pages, thresholds, vertical/diagonal, bursts, phases, reversal, inner-browser ownership`);

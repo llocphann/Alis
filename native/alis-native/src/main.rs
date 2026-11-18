@@ -1,3 +1,4 @@
+mod accel;
 mod backlight;
 mod calc;
 mod clipboard;
@@ -20,6 +21,12 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Native qs-rs / inir-accel style accelerators (image-size, cava-config, app-search, thumb-info).
+    Accel {
+        #[command(subcommand)]
+        command: accel::AccelCommand,
+    },
+
     /// Native sysfs + systemd-logind backlight controller replacing brightnessctl.
     Backlight {
         #[command(subcommand)]
@@ -64,6 +71,7 @@ enum Command {
 fn run() -> Result<i32> {
     let args = Args::parse();
     match args.command {
+        Command::Accel { command } => accel::run(command),
         Command::Backlight { command } => backlight::run(command),
         Command::Calc(args) => calc::run(args),
         Command::ClipboardFilter { filter } => clipboard::run(filter),

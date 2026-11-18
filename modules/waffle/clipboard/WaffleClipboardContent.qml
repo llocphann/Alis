@@ -282,10 +282,19 @@ Item {
                     anchors.rightMargin: 16
                     anchors.topMargin: 8
                     anchors.bottomMargin: 8
-                    radius: height / 2
+                    radius: Looks.radius.medium
                     color: Looks.colors.inputBg
                     border.width: 1
                     border.color: Looks.colors.bg2Border
+                    clip: true
+
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: searchInput.activeFocus ? 2 : 1
+                        color: searchInput.activeFocus ? Looks.colors.accent : Looks.colors.accentUnfocused
+                    }
 
                     RowLayout {
                         anchors.fill: parent

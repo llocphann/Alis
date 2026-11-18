@@ -585,6 +585,65 @@ def build_gecko_chrome_css(pal: dict[str, Any], is_zen: bool) -> str:
   --zen-main-browser-background-toolbar: linear-gradient(135deg, var(--lwt-accent-color) 0%, var(--toolbar-background-color) 100%) !important;
   --zen-main-browser-background-toolbar-old: var(--lwt-accent-color) !important;
 }}
+
+/* Override Zen Favourite / Essential tab accent & favicon-glow washes to match regular tabs */
+:root:not([lwtheme]) :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab) > .tab-stack > .tab-background,
+#main-window:not([lwtheme]) :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab) > .tab-stack > .tab-background {{
+  background: var(--zen-toolbar-element-bg, {pal['surface_elev']}) !important;
+  background-color: var(--zen-toolbar-element-bg, {pal['surface_elev']}) !important;
+  --zen-essential-tab-selected-bg: {pal['surface_elev']} !important;
+  --zen-essential-tab-selected-bg-hover: {pal['surface_hover']} !important;
+}}
+
+:root:not([lwtheme]) :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab):hover > .tab-stack > .tab-background,
+#main-window:not([lwtheme]) :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab):hover > .tab-stack > .tab-background {{
+  background: {pal['surface_hover']} !important;
+  background-color: {pal['surface_hover']} !important;
+}}
+
+:root:not([lwtheme]) :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab):is([visuallyselected], [selected], [multiselected="true"], [multiselected]) > .tab-stack > .tab-background,
+#main-window:not([lwtheme]) :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab):is([visuallyselected], [selected], [multiselected="true"], [multiselected]) > .tab-stack > .tab-background {{
+  --zen-essential-tab-selected-bg: {pal['surface_elev']} !important;
+  --zen-essential-tab-selected-bg-hover: {pal['surface_hover']} !important;
+  background: {pal['surface_elev']} !important;
+  background-color: {pal['surface_elev']} !important;
+  outline: 1px solid var(--lwt-tab-line-color, {pal['primary']}) !important;
+  outline-offset: -1px !important;
+  border-color: transparent !important;
+}}
+
+:root[lwtheme] :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab) > .tab-stack > .tab-background,
+#main-window[lwtheme] :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab) > .tab-stack > .tab-background {{
+  background: var(--zen-toolbar-element-bg, var(--toolbar-field-background-color)) !important;
+  background-color: var(--zen-toolbar-element-bg, var(--toolbar-field-background-color)) !important;
+  --zen-essential-tab-selected-bg: var(--toolbar-field-background-color) !important;
+  --zen-essential-tab-selected-bg-hover: var(--lwt-background-tab-separator-color) !important;
+}}
+
+:root[lwtheme] :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab):hover > .tab-stack > .tab-background,
+#main-window[lwtheme] :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab):hover > .tab-stack > .tab-background {{
+  background: var(--lwt-background-tab-separator-color) !important;
+  background-color: var(--lwt-background-tab-separator-color) !important;
+}}
+
+:root[lwtheme] :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab):is([visuallyselected], [selected], [multiselected="true"], [multiselected]) > .tab-stack > .tab-background,
+#main-window[lwtheme] :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab):is([visuallyselected], [selected], [multiselected="true"], [multiselected]) > .tab-stack > .tab-background {{
+  --zen-essential-tab-selected-bg: var(--toolbar-field-background-color) !important;
+  --zen-essential-tab-selected-bg-hover: var(--lwt-background-tab-separator-color) !important;
+  background: var(--toolbar-field-background-color) !important;
+  background-color: var(--toolbar-field-background-color) !important;
+  outline: 1px solid var(--lwt-tab-line-color, {pal['primary']}) !important;
+  outline-offset: -1px !important;
+  border-color: transparent !important;
+}}
+
+:root :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab) > .tab-stack > .tab-background::before,
+:root :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab) > .tab-stack > .tab-background::after,
+#main-window :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab) > .tab-stack > .tab-background::before,
+#main-window :is(.tabbrowser-tab[zen-essential="true"], #zen-essentials .tabbrowser-tab, #zen-essentials-container .tabbrowser-tab) > .tab-stack > .tab-background::after {{
+  background: none !important;
+  opacity: 0 !important;
+}}
 """
     return f"""/* Auto-generated by Alis Wallpaper Theming — Do not edit alis-theme.css directly. */
 
@@ -607,6 +666,7 @@ def build_gecko_chrome_css(pal: dict[str, Any], is_zen: bool) -> str:
   --tab-selected-bgcolor: {pal['surface_elev']} !important;
   --tab-selected-textcolor: {pal['fg']} !important;
   --tab-line-color: {pal['primary']} !important;
+  --tab-border-color-selected: {pal['primary']} !important;
   --tabs-navbar-separator-color: {pal['border']} !important;
   --chrome-content-separator-color: {pal['border']} !important;
   --sidebar-background-color: {pal['bg']} !important;

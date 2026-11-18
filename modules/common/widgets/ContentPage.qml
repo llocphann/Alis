@@ -33,14 +33,19 @@ StyledFlickable {
     property alias contentColumn: contentColumn
 
     property var _registeredCards: []
+    property var _registeredContentSections: []
     property var _activeForeignCards: []
     property var _eligibleCards: []
+    property var irisSectionGroups: []
+    property string _heldIrisSectionTitle: ""
+    property int _irisGeometryRevision: 0
     property var _cardPages: []
     property var _cardPageOptions: []
     property string activeCardSubTab: ""
     property string customActiveSubTab: ""
     property var activeCardItem: null
     property bool _cardTabsUpdateScheduled: false
+    property bool _initialCardTabsSynced: false
     property bool _isDestroying: false
     property bool _persistedSectionRestored: false
     property bool _suppressSectionPersist: false
@@ -111,10 +116,11 @@ StyledFlickable {
             root.activeCardSubTab = entry.cardTab;
         }
         root._suppressSectionPersist = false;
-        if (!root.embedded) {
+        if (!root.embedded && root._initialCardTabsSynced) {
             root._updateCardTabs();
+        } else if (!root.embedded) {
+            root._scheduleCardTabsUpdate();
         }
-        root._scheduleCardTabsUpdate();
     }
 
     function _savePersistedSection() {
@@ -751,6 +757,211 @@ StyledFlickable {
         root._updateCardTabs();
     }
 
+    function registerContentSection(sec) {
+        if (root._isDestroying || !sec || _registeredContentSections.indexOf(sec) >= 0)
+            return;
+        var next = _registeredContentSections.slice();
+        next.push(sec);
+        _registeredContentSections = next;
+        _scheduleCardTabsUpdate();
+    }
+
+    function unregisterContentSection(sec) {
+        if (root._isDestroying)
+            return;
+        var idx = _registeredContentSections.indexOf(sec);
+        if (idx < 0)
+            return;
+        var next = _registeredContentSections.slice();
+        next.splice(idx, 1);
+        _registeredContentSections = next;
+        _scheduleCardTabsUpdate();
+    }
+
+    function _isInsideCardSection(item) {
+        var p = item ? item.parent : null;
+        while (p && p !== root) {
+            if (p.hasOwnProperty("bentoColumn") && p.hasOwnProperty("showHeader"))
+                return true;
+            p = p.parent;
+        }
+        return false;
+    }
+
+    function _syncIrisSectionGroups() {
+        if (root._isDestroying || root.embedded) {
+            root.irisSectionGroups = [];
+            return;
+        }
+        var items = [];
+        var cards = root._eligibleCards || [];
+        for (var i = 0; i < cards.length; i++) {
+            var c = cards[i];
+            if (c && c.visible && c.showHeader && c.title && String(c.title).trim().length > 0) {
+                items.push(c);
+            }
+        }
+        var secs = root._registeredContentSections || [];
+        for (var j = 0; j < secs.length; j++) {
+            var s = secs[j];
+            if (s && s.visible && s.title && String(s.title).trim().length > 0 && !_isInsideCardSection(s)) {
+                items.push(s);
+            }
+        }
+        var total = items.length;
+        // Clear numbering on non-active registered cards/sections
+        for (var rc = 0; rc < _registeredCards.length; rc++) {
+            var regC = _registeredCards[rc];
+            if (regC && items.indexOf(regC) < 0) {
+                regC.irisSectionNumber = 0;
+                regC.irisSectionTotal = 0;
+            }
+        }
+        for (var rs = 0; rs < _registeredContentSections.length; rs++) {
+            var regS = _registeredContentSections[rs];
+            if (regS && items.indexOf(regS) < 0) {
+                regS.irisSectionNumber = 0;
+                regS.irisSectionTotal = 0;
+            }
+        }
+        var groups = [];
+        for (var k = 0; k < total; k++) {
+            var it = items[k];
+            var num = k + 1;
+            if (it.irisSectionNumber !== undefined)
+                it.irisSectionNumber = num;
+            if (it.irisSectionTotal !== undefined)
+                it.irisSectionTotal = total;
+            var numStr = (num < 10 ? "0" : "") + String(num) + " / " + (total < 10 ? "0" : "") + String(total);
+            var titleStr = String(it.title || "").trim();
+            var keyStr = String(it._cardSubTabKey || titleStr || ("sec-" + k));
+            groups.push({
+                index: num,
+                numberText: numStr,
+                title: titleStr,
+                key: keyStr,
+                icon: String(it.icon || ""),
+                targetItem: it
+            });
+        }
+        root.irisSectionGroups = groups;
+        root._irisGeometryRevision++;
+    }
+
+    readonly property string currentIrisSectionTitle: {
+        void(root.contentY);
+        void(root.height);
+        void(root._irisGeometryRevision);
+        if (root._heldIrisSectionTitle && root._heldIrisSectionTitle.length > 0)
+            return root._heldIrisSectionTitle;
+        var groups = root.irisSectionGroups || [];
+        if (groups.length === 0)
+            return "";
+        if (root.contentY <= 4)
+            return String(groups[0].title || "");
+        var maxScroll = Math.max(0, root.contentHeight - root.height);
+        if (maxScroll > 0 && root.contentY >= maxScroll - 8)
+            return String(groups[groups.length - 1].title || "");
+        var probeY = root.contentY + Math.max(64, root.height * 0.28);
+        var current = String(groups[0].title || "");
+        for (var i = 0; i < groups.length; i++) {
+            var g = groups[i];
+            var target = g ? g.targetItem : null;
+            if (!target || !target.visible)
+                continue;
+            var mapped = target.mapToItem(contentColumn, 0, 0);
+            var itemTop = contentColumn.y + (mapped ? mapped.y : 0);
+            if (itemTop <= probeY) {
+                current = String(g.title || "");
+            } else {
+                break;
+            }
+        }
+        return current;
+    }
+
+    function scrollToIrisSection(titleOrKey): bool {
+        var needle = String(titleOrKey ?? "").trim();
+        if (!needle || root.embedded)
+            return false;
+        var lower = needle.toLowerCase();
+        var groups = root.irisSectionGroups || [];
+        var match = null;
+        for (var i = 0; i < groups.length; i++) {
+            var g = groups[i];
+            if (!g) continue;
+            if (String(g.key || "").toLowerCase() === lower || String(g.title || "").toLowerCase() === lower) {
+                match = g;
+                break;
+            }
+        }
+        if (!match) {
+            for (var j = 0; j < groups.length; j++) {
+                var gj = groups[j];
+                if (!gj) continue;
+                if (String(gj.title || "").toLowerCase().indexOf(lower) >= 0) {
+                    match = gj;
+                    break;
+                }
+            }
+        }
+        if (!match || !match.targetItem) {
+            // Check sub-tabs if section matches a sub-tab key or label
+            var subItems = root._subTabItems || [];
+            for (var si = 0; si < subItems.length; si++) {
+                var subIt = subItems[si];
+                if (subIt && (String(subIt.value || "").toLowerCase() === lower || String(subIt.title || "").toLowerCase() === lower)) {
+                    root.activateSubTabItem(subIt);
+                    return true;
+                }
+            }
+            var specs = root.effectiveSubTabSpecs || [];
+            for (var s = 0; s < specs.length; s++) {
+                var sp = specs[s];
+                if (sp && (String(sp.key || "").toLowerCase() === lower || String(sp.label || "").toLowerCase() === lower)) {
+                    if (root._hasTaskNavigatorTabs && root.settingsTaskNavigator)
+                        root.settingsTaskNavigator.selected(sp.key);
+                    else if (typeof root.selectCardSubTab === "function")
+                        root.selectCardSubTab(sp.key);
+                    return true;
+                }
+            }
+            return false;
+        }
+        root._heldIrisSectionTitle = String(match.title || "");
+        irisHoldTimer.restart();
+        var mapped = match.targetItem.mapToItem(contentColumn, 0, 0);
+        var rawY = contentColumn.y + (mapped ? mapped.y : 0) - 12;
+        var maxY = Math.max(0, root.contentHeight - root.height);
+        var targetY = Math.max(0, Math.min(maxY, Math.round(rawY)));
+        if (root.scrollTargetY !== undefined)
+            root.scrollTargetY = targetY;
+        irisScrollAnim.stop();
+        if (!Appearance.animationsEnabled || Math.abs(root.contentY - targetY) < 2) {
+            root.contentY = targetY;
+        } else {
+            irisScrollAnim.from = root.contentY;
+            irisScrollAnim.to = targetY;
+            irisScrollAnim.start();
+        }
+        return true;
+    }
+
+    Timer {
+        id: irisHoldTimer
+        interval: 420
+        repeat: false
+        onTriggered: root._heldIrisSectionTitle = ""
+    }
+
+    NumberAnimation {
+        id: irisScrollAnim
+        target: root
+        property: "contentY"
+        duration: 220
+        easing.type: Easing.OutCubic
+    }
+
     function registerCardSection(card) {
         if (root._isDestroying || !card || _registeredCards.indexOf(card) >= 0)
             return;
@@ -975,75 +1186,15 @@ StyledFlickable {
 
     function _syncBentoColumnHeights(leftCards, rightCards) {
         var allCards = _registeredCards.concat(root._activeForeignCards || []);
-        var targetCard = null;
-        var targetExtra = 0;
-
-        var canStretch = !root.isCanvasLayoutMode
-            && leftCards && rightCards
-            && leftCards.length > 0 && rightCards.length > 0;
-
-        if (canStretch) {
-            for (var ci = 0; ci < leftCards.length; ci++) {
-                var lc = leftCards[ci];
-                var lCustomH = lc ? (lc._effectiveCustomHeight !== undefined ? lc._effectiveCustomHeight : lc.customHeight) : 0;
-                var lCustomW = lc ? (lc._effectiveWidthRatio !== undefined ? lc._effectiveWidthRatio : lc.customWidthRatio) : 0;
-                if (lc && (lCustomH > 0 || lCustomW > 0 || lc._preventBentoReparent)) {
-                    canStretch = false;
-                    break;
-                }
-            }
-        }
-        if (canStretch) {
-            for (var cj = 0; cj < rightCards.length; cj++) {
-                var rc = rightCards[cj];
-                var rCustomH = rc ? (rc._effectiveCustomHeight !== undefined ? rc._effectiveCustomHeight : rc.customHeight) : 0;
-                var rCustomW = rc ? (rc._effectiveWidthRatio !== undefined ? rc._effectiveWidthRatio : rc.customWidthRatio) : 0;
-                if (rc && (rCustomH > 0 || rCustomW > 0 || rc._preventBentoReparent)) {
-                    canStretch = false;
-                    break;
-                }
-            }
-        }
-
-        if (canStretch) {
-            var gap = SettingsMaterialPreset.pageSpacing;
-            var leftNaturalH = 0;
-            for (var a = 0; a < leftCards.length; a++) {
-                leftNaturalH += _cardHeight(leftCards[a]) + (a < leftCards.length - 1 ? gap : 0);
-            }
-            var rightNaturalH = 0;
-            for (var b = 0; b < rightCards.length; b++) {
-                rightNaturalH += _cardHeight(rightCards[b]) + (b < rightCards.length - 1 ? gap : 0);
-            }
-            var diff = Math.round(Math.abs(leftNaturalH - rightNaturalH));
-            if (diff > 1) {
-                var shorterList = leftNaturalH < rightNaturalH ? leftCards : rightCards;
-                for (var si = 0; si < shorterList.length; si++) {
-                    if (shorterList[si] && shorterList[si]._consumesBentoExtraHeight && !shorterList[si]._preventBentoReparent && shorterList[si]._bentoExtraHeight !== undefined) {
-                        targetCard = shorterList[si];
-                        targetExtra = diff;
-                        break;
-                    }
-                }
-                if (!targetCard && shorterList.length > 0) {
-                    var lastShort = shorterList[shorterList.length - 1];
-                    if (lastShort && !lastShort._preventBentoReparent && lastShort._bentoExtraHeight !== undefined) {
-                        targetCard = lastShort;
-                        targetExtra = diff;
-                    }
-                }
-            }
-        }
-
         for (var n = 0; n < allCards.length; n++) {
             var cardItem = allCards[n];
-            if (!cardItem || cardItem._bentoExtraHeight === undefined)
+            if (!cardItem || cardItem._bentoExtraHeight === undefined || cardItem._preventBentoReparent)
                 continue;
-            var desired = (cardItem === targetCard) ? targetExtra : 0;
-            if (Math.abs(cardItem._bentoExtraHeight - desired) > 1) {
-                cardItem._bentoExtraHeight = desired;
+            if (Math.abs(cardItem._bentoExtraHeight) > 0.5) {
+                cardItem._bentoExtraHeight = 0;
             }
         }
+        root._irisGeometryRevision++;
     }
 
     function _reparentColumnOrdered(columnItem, cardsList, reparentedOutList, bodyDirectOutList) {
@@ -1059,6 +1210,10 @@ StyledFlickable {
                 reparentable.push(c);
             } else if (c.parent === pageBodyColumn) {
                 c.Layout.fillHeight = false;
+                if (pageBodyColumn.width > 0) {
+                    c.x = 0;
+                    c.width = pageBodyColumn.width;
+                }
                 bodyDirectOutList.push(c);
             }
             c._cardSubTabActive = true;
@@ -1092,12 +1247,20 @@ StyledFlickable {
         }
         for (var r = 0; r < reparentable.length; r++) {
             var rc = reparentable[r];
+            var prevCard = r > 0 ? reparentable[r - 1] : null;
             rc.Layout.fillHeight = false;
-            if (columnItem === topBentoColumn && contentColumn.width > 0) {
-                rc.width = contentColumn.width;
-            } else if ((columnItem === leftBentoColumn || columnItem === rightBentoColumn) && columnItem.width > 0) {
-                rc.width = columnItem.width;
-            }
+            rc.x = 0;
+            rc.width = Qt.binding((function(col) {
+                return function() { return col.width; };
+            })(columnItem));
+            rc.height = Qt.binding((function(card) {
+                return function() { return card.implicitHeight; };
+            })(rc));
+            rc.y = prevCard
+                ? Qt.binding((function(prev) {
+                    return function() { return prev.y + (prev.visible ? prev.height : 0); };
+                })(prevCard))
+                : 0;
             rc.parent = columnItem;
             reparentedOutList.push(rc);
         }
@@ -1209,15 +1372,14 @@ StyledFlickable {
             }
         }
 
+        root._topBentoCount = topReparented;
+        root._leftBentoCount = leftReparented;
+        root._rightBentoCount = rightReparented;
         root._activeTopBentoCards = reparentedTopList;
         root._activeLeftBentoCards = reparentedLeftList;
         root._activeRightBentoCards = reparentedRightList;
         _syncBentoColumnHeights(reparentedLeftList, reparentedRightList);
         bentoSyncTimer.restart();
-
-        root._topBentoCount = topReparented;
-        root._leftBentoCount = leftReparented;
-        root._rightBentoCount = rightReparented;
         _syncPageBodyWrappers();
     }
 
@@ -1340,6 +1502,7 @@ StyledFlickable {
     function _updateCardTabs() {
         if (root.embedded || root._isDestroying)
             return;
+        root._initialCardTabsSynced = true;
 
         var currentSpecs = SettingsLayoutManager.getEffectiveSubTabs(
             root.settingsPageIndex,
@@ -1505,6 +1668,7 @@ StyledFlickable {
             _cardPageOptions = [];
             activeCardItem = null;
             _applyBentoPlacement(null);
+            _syncIrisSectionGroups();
             return;
         }
 
@@ -1513,30 +1677,26 @@ StyledFlickable {
             _cardPageOptions = [];
             activeCardItem = eligible[0];
             _applyCanvasPlacement(eligible);
+            _syncIrisSectionGroups();
             return;
         }
 
-        var firstPageCap = 999999;
-        var detailPageCap = 999999;
         var gap = SettingsMaterialPreset.pageSpacing;
         var twoCols = (root.width <= 0 || root.width >= 560);
 
-        // Pack eligible cards into 2-column Bento pages
+        // Pack eligible cards into iRiS single-column form plates by default;
+        // honor explicit user-configured left/right columns from SettingsLayoutManager.
         var pages = [];
         var curPage = { cards: [], top: [], left: [], right: [], leftH: 0, rightH: 0 };
 
         for (var idx = 0; idx < eligible.length; idx++) {
             var card = eligible[idx];
             var ch = _cardHeight(card);
-            var cap = pages.length === 0 ? firstPageCap : detailPageCap;
             var effectiveCol = (card.customColumn && card.customColumn !== "auto")
                 ? card.customColumn
-                : card.bentoColumn;
+                : "full";
 
-            if (effectiveCol === "full" || effectiveCol === "top") {
-                curPage.top.push(card);
-                curPage.cards.push(card);
-            } else if (twoCols && effectiveCol === "left") {
+            if (twoCols && effectiveCol === "left") {
                 curPage.left.push(card);
                 curPage.leftH += (curPage.left.length > 1 ? gap : 0) + ch;
                 curPage.cards.push(card);
@@ -1544,46 +1704,9 @@ StyledFlickable {
                 curPage.right.push(card);
                 curPage.rightH += (curPage.right.length > 1 ? gap : 0) + ch;
                 curPage.cards.push(card);
-            } else if (curPage.left.length === 0) {
-                curPage.left.push(card);
-                curPage.leftH = ch;
-                curPage.cards.push(card);
-            } else if (twoCols && curPage.right.length === 0) {
-                curPage.right.push(card);
-                curPage.rightH = ch;
-                curPage.cards.push(card);
-            } else if (!twoCols) {
-                if (curPage.leftH + gap + ch <= cap) {
-                    curPage.left.push(card);
-                    curPage.leftH += gap + ch;
-                    curPage.cards.push(card);
-                } else {
-                    pages.push(curPage);
-                    curPage = { cards: [card], top: [], left: [card], right: [], leftH: ch, rightH: 0 };
-                }
             } else {
-                // Deterministic alternating placement so cards never swap columns when heights change
-                var preferLeft = (curPage.left.length <= curPage.right.length);
-                if (preferLeft && (curPage.leftH + gap + ch <= cap)) {
-                    curPage.left.push(card);
-                    curPage.leftH += gap + ch;
-                    curPage.cards.push(card);
-                } else if (!preferLeft && (curPage.rightH + gap + ch <= cap)) {
-                    curPage.right.push(card);
-                    curPage.rightH += gap + ch;
-                    curPage.cards.push(card);
-                } else if (curPage.leftH + gap + ch <= cap) {
-                    curPage.left.push(card);
-                    curPage.leftH += gap + ch;
-                    curPage.cards.push(card);
-                } else if (curPage.rightH + gap + ch <= cap) {
-                    curPage.right.push(card);
-                    curPage.rightH += gap + ch;
-                    curPage.cards.push(card);
-                } else {
-                    pages.push(curPage);
-                    curPage = { cards: [card], top: [], left: [card], right: [], leftH: ch, rightH: 0 };
-                }
+                curPage.top.push(card);
+                curPage.cards.push(card);
             }
         }
         if (curPage.cards.length > 0) {
@@ -1596,6 +1719,7 @@ StyledFlickable {
             activeCardItem = eligible[0];
             activeCardSubTab = activeCardItem ? activeCardItem._cardSubTabKey : "";
             _applyBentoPlacement(pages[0] || null);
+            _syncIrisSectionGroups();
             return;
         }
 
@@ -1637,6 +1761,7 @@ StyledFlickable {
         var chosenPage = pages[chosenPageIdx];
         activeCardItem = chosenPage.cards.length > 0 ? chosenPage.cards[0] : null;
         _applyBentoPlacement(chosenPage);
+        _syncIrisSectionGroups();
     }
 
     onEmbeddedChanged: {
@@ -1678,6 +1803,19 @@ StyledFlickable {
 
     onHeightChanged: {
         root._clampScrollPosition();
+        if (root.bentoEqualizeToTarget && !root.embedded) {
+            root._scheduleBentoHeightSync();
+        }
+    }
+    onTargetBentoHeightChanged: {
+        if (root.bentoEqualizeToTarget && !root.embedded) {
+            root._scheduleBentoHeightSync();
+        }
+    }
+    onBentoEqualizeToTargetChanged: {
+        if (!root.embedded) {
+            root._scheduleBentoHeightSync();
+        }
     }
 
     onWidthChanged: {
@@ -1713,7 +1851,12 @@ StyledFlickable {
 
     clip: !embedded
     showVerticalScrollBar: false
-    readonly property real standardPageBodyHeight: Math.max(400, SettingsMaterialPreset.standardBentoHeight)
+    readonly property real standardPageBodyHeight: 0
+    readonly property real availableBentoBodyHeight: (!root.embedded && root.height > 120)
+        ? Math.max(240, root.height - 20 - (subTabBarContainer.visible ? (40 + SettingsMaterialPreset.pageSpacing) : 0))
+        : 0
+    readonly property real targetBentoHeight: 0
+    property bool bentoEqualizeToTarget: false
     readonly property real pageContentBodyHeight: {
         if (root._isDestroying || !contentColumn)
             return 0;
@@ -1735,9 +1878,18 @@ StyledFlickable {
                 sections++;
             }
         }
-        if (bentoColumnsRow && bentoColumnsRow.visible && bentoColumnsRow.implicitHeight > 0) {
-            total += (sections > 0 ? gap : 0) + bentoColumnsRow.implicitHeight;
-            sections++;
+        if (bentoColumnsRow && bentoColumnsRow.visible) {
+            var leftColH = leftBentoColumn && leftBentoColumn.visible
+                ? (leftBentoColumn.activeCardsImplicitHeight > 0 ? leftBentoColumn.activeCardsImplicitHeight : leftBentoColumn.implicitHeight)
+                : 0;
+            var rightColH = rightBentoColumn && rightBentoColumn.visible
+                ? (rightBentoColumn.activeCardsImplicitHeight > 0 ? rightBentoColumn.activeCardsImplicitHeight : rightBentoColumn.implicitHeight)
+                : 0;
+            var bentoRowH = Math.max(bentoColumnsRow.implicitHeight, leftColH, rightColH);
+            if (bentoRowH > 0) {
+                total += (sections > 0 ? gap : 0) + bentoRowH;
+                sections++;
+            }
         }
         if (pageBodyColumn && pageBodyColumn.visible) {
             var bodyH = 0;
@@ -1761,16 +1913,18 @@ StyledFlickable {
         }
         return Number(total) || 0;
     }
-    readonly property bool exceedsStandardHeight: !root.embedded
-        && (root.pageContentBodyHeight > root.standardPageBodyHeight + 2)
+    readonly property bool exceedsStandardHeight: false
+    readonly property bool overflowsViewport: !root.embedded
+        && root.height > 80
+        && (contentColumn.implicitHeight + root.bottomContentPadding + 20 > root.height + 2)
     // Bottom-docked Settings customization dock (standalone / non-Abyss overlay) covers the
     // page's lower edge while editing. Hosts publish its overlap here so the page can scroll
     // its last cards clear above the dock; availableCardContentHeight is intentionally unaffected.
     property real editBottomScrollReserve: 0
     readonly property real _editScrollReserve: (!root.embedded && root.pageScrollEnabled && SettingsLayoutManager.editMode)
         ? Math.max(0, Number(root.editBottomScrollReserve) || 0) : 0
-    // Allow vertical scrolling (without scrollbar) only when page content height exceeds the Themes & Style / Custom Theme standard height
-    interactive: !embedded && pageScrollEnabled && (root.exceedsStandardHeight || root._editScrollReserve > 0) && !SettingsLayoutManager.draggingModule
+    // Smooth natural vertical scrolling (without scrollbar) whenever form plates overflow viewport
+    interactive: !embedded && pageScrollEnabled && (root.overflowsViewport || root._editScrollReserve > 0) && !SettingsLayoutManager.draggingModule
 
     function _clampScrollPosition() {
         if (root.embedded || root._clampingScroll)
@@ -1796,7 +1950,10 @@ StyledFlickable {
     }
 
     onInteractiveChanged: root._clampScrollPosition()
-    onContentHeightChanged: root._clampScrollPosition()
+    onContentHeightChanged: {
+        root._clampScrollPosition();
+        root._irisGeometryRevision++;
+    }
     onContentYChanged: {
         if (!root.embedded && !root.interactive && !SettingsLayoutManager.draggingModule && !root._clampingScroll && Math.abs(root.contentY) > 0.5) {
             root._clampScrollPosition();
@@ -1805,19 +1962,36 @@ StyledFlickable {
     implicitHeight: embedded ? contentColumn.implicitHeight : 0
     Layout.preferredHeight: embedded ? contentColumn.implicitHeight : -1
     Layout.maximumHeight: embedded && contentColumn.implicitHeight <= 0 ? 0 : -1
-    contentHeight: (!embedded && pageScrollEnabled && (root.exceedsStandardHeight || root._editScrollReserve > 0))
-        ? Math.max(height + 1, contentColumn.implicitHeight + root.bottomContentPadding + 20) + root._editScrollReserve
+    contentHeight: (!embedded && pageScrollEnabled && (root.overflowsViewport || root._editScrollReserve > 0))
+        ? Math.max(height + 1, contentColumn.implicitHeight + root.bottomContentPadding + 28) + root._editScrollReserve
         : (root.embedded ? contentColumn.implicitHeight + root.bottomContentPadding : height)
     implicitWidth: embedded ? 0 : contentColumn.implicitWidth
 
-    readonly property real maxContentWidth: Math.min(1320, Math.max(920, root.width - 40))
+    readonly property bool _usesMultiColumnOverride: root.isCanvasLayoutMode
+        || root._leftBentoCount > 0
+        || root._rightBentoCount > 0
+        || SettingsLayoutManager.draggingModule
+    readonly property real maxContentWidth: root._usesMultiColumnOverride
+        ? Math.min(1320, Math.max(860, root.width - 40))
+        : Math.min(Math.max(320, root.width - (SettingsMaterialPreset.waffle ? 56 : 40)), Math.round((SettingsMaterialPreset.waffle ? 980 : 860) * Appearance.fontSizeScale))
     readonly property real _horizontalMargin: {
         if (root.embedded) return 0
         const w = root.width
-        if (w > maxContentWidth + 40) return (w - maxContentWidth) / 2
+        if (SettingsMaterialPreset.waffle) {
+            if (w > 900) return 28
+            if (w > 640) return 20
+            return 14
+        }
+        if (w > maxContentWidth + 40) return Math.round((w - maxContentWidth) / 2)
         if (w > 900) return 20
         if (w > 600) return 16
         return 12
+    }
+    readonly property real _rightHorizontalMargin: {
+        if (root.embedded || !SettingsMaterialPreset.waffle)
+            return root._horizontalMargin
+        const w = root.width
+        return Math.max(root._horizontalMargin, Math.round(w - root._horizontalMargin - maxContentWidth))
     }
 
     // Horizontal touchpad/mouse wheel scroll anywhere on the page switches sub-tabs
@@ -1841,24 +2015,48 @@ StyledFlickable {
         enabled: false
     }
 
-    ColumnLayout {
+    Item {
         id: contentColumn
         objectName: "contentColumn"
         anchors {
             top: parent.top
             left: parent.left
             right: parent.right
-            topMargin: root.embedded ? 0 : 10
+            topMargin: root.embedded ? 0 : (SettingsMaterialPreset.waffle ? 4 : 10)
             bottomMargin: root.embedded ? 0 : 10
             leftMargin: root._horizontalMargin
-            rightMargin: root._horizontalMargin
+            rightMargin: root._rightHorizontalMargin
         }
-        spacing: root.embedded ? 0 : SettingsMaterialPreset.pageSpacing
+        readonly property real spacing: root.embedded ? 0 : SettingsMaterialPreset.pageSpacing
+        readonly property real _yAfterNav: (navigatorHeaderHost.visible && navigatorHeaderHost.height > 0)
+            ? (navigatorHeaderHost.height + spacing)
+            : 0
+        readonly property real _yAfterSubTabs: (subTabBarContainer.visible && subTabBarContainer.height > 0)
+            ? (_yAfterNav + subTabBarContainer.height + spacing)
+            : _yAfterNav
+        readonly property real _yAfterCanvas: (freeformCanvasContainer.visible && freeformCanvasContainer.height > 0)
+            ? (_yAfterSubTabs + freeformCanvasContainer.height + spacing)
+            : _yAfterSubTabs
+        readonly property real _yAfterTopBento: (topBentoColumn.visible && topBentoColumn.height > 0)
+            ? (_yAfterCanvas + topBentoColumn.height + spacing)
+            : _yAfterCanvas
+        readonly property real _yAfterBentoRow: (bentoColumnsRow.visible && bentoColumnsRow.height > 0)
+            ? (_yAfterTopBento + bentoColumnsRow.height + spacing)
+            : _yAfterTopBento
+        readonly property real _yEnd: (pageBodyColumn.visible && pageBodyColumn.activeBodyImplicitHeight > 0)
+            ? (_yAfterBentoRow + pageBodyColumn.activeBodyImplicitHeight)
+            : (_yAfterBentoRow > 0 ? (_yAfterBentoRow - spacing) : 0)
+        implicitWidth: Math.max(subTabBarContainer.implicitWidth, pageBodyColumn.implicitWidth)
+        implicitHeight: _yEnd
+        height: implicitHeight
 
         ColumnLayout {
             id: navigatorHeaderHost
             objectName: "navigatorHeaderHost"
-            Layout.fillWidth: true
+            x: 0
+            y: 0
+            width: contentColumn.width
+            height: visible ? implicitHeight : 0
             spacing: 0
             visible: false
         }
@@ -1868,18 +2066,21 @@ StyledFlickable {
             id: subTabBarContainer
             objectName: "settingsSubTabBarContainer"
             visible: !root.embedded && (root._subTabItems.length > 1 || SettingsLayoutManager.editMode)
-            Layout.fillWidth: true
+            x: 0
+            y: contentColumn._yAfterNav
+            width: contentColumn.width
             implicitHeight: visible ? 40 : 0
+            height: implicitHeight
 
             Rectangle {
                 id: subTabTrack
-                anchors.horizontalCenter: parent.horizontalCenter
+                x: SettingsMaterialPreset.waffle ? 0 : Math.round((parent.width - width) / 2)
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(parent.width, subTabRow.implicitWidth + 8)
+                width: Math.min(parent.width, subTabRow.implicitWidth + (SettingsMaterialPreset.waffle ? 0 : 8))
                 height: 40
-                radius: 20
-                color: SettingsMaterialPreset.cardColor
-                border.width: 1
+                radius: SettingsMaterialPreset.waffle ? 6 : 20
+                color: SettingsMaterialPreset.waffle ? "transparent" : SettingsMaterialPreset.cardColor
+                border.width: SettingsMaterialPreset.waffle ? 0 : 1
                 border.color: SettingsMaterialPreset.cardBorderColor
 
                 WheelHandler {
@@ -1892,7 +2093,7 @@ StyledFlickable {
                 Flickable {
                     id: subTabFlickable
                     anchors.fill: parent
-                    anchors.margins: 4
+                    anchors.margins: SettingsMaterialPreset.waffle ? 0 : 4
                     contentWidth: subTabRow.implicitWidth
                     contentHeight: height
                     clip: true
@@ -1929,7 +2130,12 @@ StyledFlickable {
                         readonly property int pillIndex: root._subTabAnimFromIndex >= 0
                             ? root._subTabAnimFromIndex
                             : root._activeSubTabIndex
-                        readonly property Item activeBtn: subTabRepeater.itemAt(pillIndex)
+                        readonly property Item activeBtn: {
+                            // itemAt() is not a binding dependency. Resolve again
+                            // when delegates arrive after the initial page load.
+                            void subTabRepeater.delegateRevision;
+                            return subTabRepeater.itemAt(pillIndex);
+                        }
                         property bool animReady: true
 
                         function snapFromIndex(fromIdx: int) {
@@ -1952,10 +2158,21 @@ StyledFlickable {
                         y: (parent.height - height) / 2
                         width: activeBtn ? activeBtn.width : 0
                         height: 32
-                        radius: 16
-                        color: Appearance.colors.colPrimaryContainer
-                        border.width: 1
+                        radius: SettingsMaterialPreset.waffle ? 6 : 16
+                        color: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedColor : Appearance.colors.colPrimaryContainer
+                        border.width: SettingsMaterialPreset.waffle ? 0 : 1
                         border.color: Qt.alpha(Appearance.colors.colPrimary, 0.35)
+
+                        Rectangle {
+                            objectName: "waffleSettingsTabIndicator"
+                            visible: SettingsMaterialPreset.waffle
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.bottom
+                            width: Math.max(16, Math.min(28, Math.round(parent.width * 0.45)))
+                            height: 3
+                            radius: 1.5
+                            color: SettingsMaterialPreset.accentColor
+                        }
 
                         Behavior on x {
                             enabled: Appearance.animationsEnabled && activeSubTabPill.animReady
@@ -1978,16 +2195,20 @@ StyledFlickable {
 
                     Row {
                         id: subTabRow
-                        x: Math.max(0, (subTabFlickable.width - implicitWidth) / 2)
+                        x: SettingsMaterialPreset.waffle ? 0 : Math.max(0, (subTabFlickable.width - implicitWidth) / 2)
                         height: parent.height
-                        spacing: 4
+                        spacing: SettingsMaterialPreset.waffle ? 6 : 4
 
                         Repeater {
                             id: subTabRepeater
+                            property int delegateRevision: 0
+                            onItemAdded: delegateRevision++
+                            onItemRemoved: delegateRevision++
                             model: root._subTabItems
 
                             delegate: RippleButton {
                                 id: subTabButton
+                                objectName: "settingsSubTab_" + index
                                 required property int index
                                 required property var modelData
                                 readonly property bool isCurrent: Boolean(modelData.active)
@@ -1998,12 +2219,12 @@ StyledFlickable {
                                 implicitHeight: 32
                                 implicitWidth: tabPillContent.implicitWidth + (SettingsLayoutManager.editMode && isCurrent ? 18 : 24)
                                 anchors.verticalCenter: parent.verticalCenter
-                                buttonRadius: 16
+                                buttonRadius: SettingsMaterialPreset.waffle ? 6 : 16
                                 toggled: isCurrent
                                 colBackground: isDropHovered ? Qt.alpha(Appearance.colors.colPrimary, 0.25) : "transparent"
                                 colBackgroundHover: SettingsMaterialPreset.headerHoverColor
-                                colBackgroundToggled: activeSubTabPill.visible ? "transparent" : Appearance.colors.colPrimaryContainer
-                                colBackgroundToggledHover: Qt.alpha(Appearance.colors.colPrimaryContainerHover, 0.35)
+                                colBackgroundToggled: activeSubTabPill.visible ? "transparent" : SettingsMaterialPreset.navSelectedColor
+                                colBackgroundToggledHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedHoverColor : Qt.alpha(Appearance.colors.colPrimaryContainerHover, 0.35)
                                 onClicked: root.activateSubTabItem(modelData)
 
                                 Component.onCompleted: {
@@ -2023,7 +2244,7 @@ StyledFlickable {
                                 Rectangle {
                                     visible: subTabButton.isDropHovered
                                     anchors.fill: parent
-                                    radius: 16
+                                    radius: SettingsMaterialPreset.waffle ? 4 : 16
                                     color: "transparent"
                                     border.width: 2
                                     border.color: Appearance.colors.colPrimary
@@ -2062,7 +2283,7 @@ StyledFlickable {
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: subTabButton.modelData.icon || "tune"
                                             iconSize: 16
-                                            color: subTabButton.isCurrent
+                                            color: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.textColor : subTabButton.isCurrent
                                                 ? Appearance.colors.colOnPrimaryContainer
                                                 : SettingsMaterialPreset.navigationIconColor(
                                                     subTabButton.index,
@@ -2076,8 +2297,9 @@ StyledFlickable {
                                             verticalAlignment: Text.AlignVCenter
                                             text: subTabButton.modelData.title || ""
                                             font.pixelSize: Appearance.font.pixelSize.small
+                                            font.family: SettingsMaterialPreset.fontFamily
                                             font.weight: subTabButton.isCurrent ? Font.DemiBold : Font.Medium
-                                            color: subTabButton.isCurrent
+                                            color: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.textColor : subTabButton.isCurrent
                                                 ? Appearance.colors.colOnPrimaryContainer
                                                 : Appearance.colors.colOnSurface
                                         }
@@ -2202,7 +2424,9 @@ StyledFlickable {
             id: freeformCanvasContainer
             objectName: "freeformCanvasContainer"
             visible: !root.embedded && root.isCanvasLayoutMode
-            Layout.fillWidth: true
+            x: 0
+            y: contentColumn._yAfterSubTabs
+            width: contentColumn.width
             implicitHeight: {
                 if (!visible) return 0;
                 var maxY = 520;
@@ -2214,6 +2438,7 @@ StyledFlickable {
                 }
                 return maxY;
             }
+            height: implicitHeight
             radius: SettingsMaterialPreset.cardRadius
             color: SettingsLayoutManager.editMode
                 ? Qt.alpha(Appearance.colors.colLayer1, 0.5)
@@ -2233,10 +2458,12 @@ StyledFlickable {
         }
 
         // Full-Width Top Bento Section for cards with bentoColumn === "full" or "top"
-        ColumnLayout {
+        Item {
             id: topBentoColumn
             objectName: "topBentoColumn"
             visible: !root.embedded && !root.isCanvasLayoutMode && (root._topBentoCount > 0 || SettingsLayoutManager.draggingModule)
+            x: 0
+            y: contentColumn._yAfterCanvas
             width: contentColumn.width
             readonly property real activeCardsImplicitHeight: {
                 var list = root._activeTopBentoCards || [];
@@ -2248,16 +2475,11 @@ StyledFlickable {
                 }
                 return sum;
             }
-            Layout.fillWidth: true
-            Layout.fillHeight: false
-            Layout.preferredHeight: root._topBentoCount > 0
-                ? (activeCardsImplicitHeight > 0 ? activeCardsImplicitHeight : implicitHeight)
-                : (SettingsLayoutManager.draggingModule ? 44 : 0)
-            Layout.maximumHeight: root._topBentoCount > 0
-                ? (activeCardsImplicitHeight > 0 ? activeCardsImplicitHeight : implicitHeight)
-                : (SettingsLayoutManager.draggingModule ? 44 : 0)
-            Layout.alignment: Qt.AlignTop
-            spacing: 0
+            readonly property real spacing: 0
+            implicitHeight: visible
+                ? (root._topBentoCount > 0 ? activeCardsImplicitHeight : (SettingsLayoutManager.draggingModule ? 44 : 0))
+                : 0
+            height: implicitHeight
             opacity: root._subTabContentOpacity
             transform: Translate {
                 x: root._subTabContentSlideOffset
@@ -2265,8 +2487,11 @@ StyledFlickable {
 
             Rectangle {
                 visible: root._topBentoCount === 0 && SettingsLayoutManager.draggingModule
-                Layout.fillWidth: true
+                x: 0
+                y: 0
+                width: topBentoColumn.width
                 implicitHeight: 40
+                height: visible ? 40 : 0
                 radius: Appearance.rounding.small
                 color: Qt.alpha(Appearance.colors.colPrimary, 0.10)
                 border.width: 1
@@ -2282,41 +2507,67 @@ StyledFlickable {
         }
 
         // 2-Column macOS Sequoia Bento Grid for active SettingsCardSection cards
-        RowLayout {
+        Item {
             id: bentoColumnsRow
             objectName: "bentoColumnsRow"
             visible: !root.embedded && !root.isCanvasLayoutMode && (root._leftBentoCount > 0 || root._rightBentoCount > 0 || SettingsLayoutManager.draggingModule)
-            Layout.fillWidth: true
-            Layout.fillHeight: false
-            Layout.minimumWidth: 0
-            Layout.alignment: Qt.AlignTop
-            spacing: SettingsLayoutManager.editMode ? 8 : SettingsMaterialPreset.pageSpacing
+            x: 0
+            y: contentColumn._yAfterTopBento
+            width: contentColumn.width
+            readonly property real spacing: SettingsLayoutManager.editMode ? 8 : SettingsMaterialPreset.pageSpacing
+            readonly property bool twoColsVisible: leftBentoColumn.visible && rightBentoColumn.visible
+            readonly property real handleAlloc: bentoSplitHandle.visible ? (10 + spacing * 2) : (twoColsVisible ? spacing : 0)
+            readonly property real columnsAvailW: Math.max(0, width - handleAlloc)
+            readonly property real leftW: twoColsVisible
+                ? Math.round(columnsAvailW * root.effectiveLeftColumnRatio)
+                : (leftBentoColumn.visible ? width : 0)
+            readonly property real rightW: twoColsVisible
+                ? Math.max(0, columnsAvailW - leftW)
+                : (rightBentoColumn.visible ? width : 0)
+            implicitHeight: visible
+                ? Math.max(
+                    leftBentoColumn.visible ? leftBentoColumn.implicitHeight : 0,
+                    rightBentoColumn.visible ? rightBentoColumn.implicitHeight : 0,
+                    bentoSplitHandle.visible ? 80 : 0)
+                : 0
+            height: implicitHeight
             opacity: root._subTabContentOpacity
             transform: Translate {
                 x: root._subTabContentSlideOffset
             }
 
-            ColumnLayout {
+            Item {
                 id: leftBentoColumn
                 objectName: "leftBentoColumn"
                 visible: root._leftBentoCount > 0 || SettingsLayoutManager.draggingModule
-                Layout.fillWidth: true
-                Layout.fillHeight: false
-                Layout.minimumWidth: 0
-                Layout.preferredWidth: Math.round(1000 * root.effectiveLeftColumnRatio)
-                Layout.preferredHeight: root._leftBentoCount > 0
-                    ? implicitHeight
-                    : (SettingsLayoutManager.draggingModule ? Math.max(80, rightBentoColumn.implicitHeight) : 0)
-                Layout.maximumHeight: root._leftBentoCount > 0
-                    ? implicitHeight
-                    : (SettingsLayoutManager.draggingModule ? Math.max(80, rightBentoColumn.implicitHeight) : 0)
-                Layout.alignment: Qt.AlignTop
-                spacing: 0
+                x: 0
+                y: 0
+                width: bentoColumnsRow.leftW
+                readonly property real activeCardsImplicitHeight: {
+                    var list = root._activeLeftBentoCards || [];
+                    var sum = 0;
+                    for (var i = 0; i < list.length; i++) {
+                        var c = list[i];
+                        if (c && c.visible)
+                            sum += c.implicitHeight;
+                    }
+                    return sum;
+                }
+                readonly property real spacing: 0
+                implicitHeight: visible
+                    ? (root._leftBentoCount > 0
+                        ? activeCardsImplicitHeight
+                        : (SettingsLayoutManager.draggingModule ? Math.max(80, rightBentoColumn.activeCardsImplicitHeight) : 0))
+                    : 0
+                height: implicitHeight
 
                 Rectangle {
                     visible: root._leftBentoCount === 0 && SettingsLayoutManager.draggingModule
-                    Layout.fillWidth: true
-                    implicitHeight: Math.max(80, rightBentoColumn.implicitHeight)
+                    x: 0
+                    y: 0
+                    width: leftBentoColumn.width
+                    implicitHeight: Math.max(80, rightBentoColumn.activeCardsImplicitHeight)
+                    height: visible ? implicitHeight : 0
                     radius: Appearance.rounding.small
                     color: Qt.alpha(Appearance.colors.colPrimary, 0.10)
                     border.width: 1
@@ -2335,9 +2586,10 @@ StyledFlickable {
             Rectangle {
                 id: bentoSplitHandle
                 visible: SettingsLayoutManager.editMode && root._leftBentoCount > 0 && root._rightBentoCount > 0
-                Layout.preferredWidth: 10
-                Layout.fillHeight: true
-                Layout.minimumHeight: 80
+                x: leftBentoColumn.width + bentoColumnsRow.spacing
+                y: 0
+                width: 10
+                height: Math.max(80, leftBentoColumn.height, rightBentoColumn.height)
                 radius: 5
                 color: splitDragArea.pressed || splitDragArea.containsMouse
                     ? Qt.alpha(Appearance.colors.colPrimary, 0.35)
@@ -2412,27 +2664,42 @@ StyledFlickable {
                 }
             }
 
-            ColumnLayout {
+            Item {
                 id: rightBentoColumn
                 objectName: "rightBentoColumn"
                 visible: root._rightBentoCount > 0 || SettingsLayoutManager.draggingModule
-                Layout.fillWidth: true
-                Layout.fillHeight: false
-                Layout.minimumWidth: 0
-                Layout.preferredWidth: Math.round(1000 * (1.0 - root.effectiveLeftColumnRatio))
-                Layout.preferredHeight: root._rightBentoCount > 0
-                    ? implicitHeight
-                    : (SettingsLayoutManager.draggingModule ? Math.max(80, leftBentoColumn.implicitHeight) : 0)
-                Layout.maximumHeight: root._rightBentoCount > 0
-                    ? implicitHeight
-                    : (SettingsLayoutManager.draggingModule ? Math.max(80, leftBentoColumn.implicitHeight) : 0)
-                Layout.alignment: Qt.AlignTop
-                spacing: 0
+                x: leftBentoColumn.visible
+                    ? (bentoSplitHandle.visible
+                        ? (bentoSplitHandle.x + bentoSplitHandle.width + bentoColumnsRow.spacing)
+                        : (leftBentoColumn.width + bentoColumnsRow.spacing))
+                    : 0
+                y: 0
+                width: bentoColumnsRow.rightW
+                readonly property real activeCardsImplicitHeight: {
+                    var list = root._activeRightBentoCards || [];
+                    var sum = 0;
+                    for (var i = 0; i < list.length; i++) {
+                        var c = list[i];
+                        if (c && c.visible)
+                            sum += c.implicitHeight;
+                    }
+                    return sum;
+                }
+                readonly property real spacing: 0
+                implicitHeight: visible
+                    ? (root._rightBentoCount > 0
+                        ? activeCardsImplicitHeight
+                        : (SettingsLayoutManager.draggingModule ? Math.max(80, leftBentoColumn.activeCardsImplicitHeight) : 0))
+                    : 0
+                height: implicitHeight
 
                 Rectangle {
                     visible: root._rightBentoCount === 0 && SettingsLayoutManager.draggingModule
-                    Layout.fillWidth: true
-                    implicitHeight: Math.max(80, leftBentoColumn.implicitHeight)
+                    x: 0
+                    y: 0
+                    width: rightBentoColumn.width
+                    implicitHeight: Math.max(80, leftBentoColumn.activeCardsImplicitHeight)
+                    height: visible ? implicitHeight : 0
                     radius: Appearance.rounding.small
                     color: Qt.alpha(Appearance.colors.colPrimary, 0.10)
                     border.width: 1
@@ -2452,13 +2719,27 @@ StyledFlickable {
             id: pageBodyColumn
             objectName: "pageBodyColumn"
             visible: true
-            Layout.fillWidth: true
-            Layout.fillHeight: false
-            Layout.preferredHeight: implicitHeight
-            Layout.maximumHeight: implicitHeight
-            Layout.topMargin: (!root.embedded && (topBentoColumn.visible || bentoColumnsRow.visible || freeformCanvasContainer.visible) && implicitHeight <= 0)
-                ? -SettingsMaterialPreset.pageSpacing
-                : 0
+            x: 0
+            y: contentColumn._yAfterBentoRow
+            width: contentColumn.width
+            readonly property real activeBodyImplicitHeight: {
+                var bodyCh = pageBodyColumn.children || [];
+                var bodyH = 0;
+                var bodyCount = 0;
+                for (var bi = 0; bi < bodyCh.length; bi++) {
+                    var bItem = bodyCh[bi];
+                    if (!bItem || !bItem.visible || bItem.implicitHeight <= 0)
+                        continue;
+                    if (bItem.hasOwnProperty("showTabBar") && bItem.hasOwnProperty("options"))
+                        continue;
+                    if (root._isWrapperContainer(bItem) && !root._wrapperHasActiveVisibleChild(bItem))
+                        continue;
+                    bodyH += (bodyCount > 0 ? pageBodyColumn.spacing : 0) + bItem.implicitHeight;
+                    bodyCount++;
+                }
+                return bodyH;
+            }
+            Layout.minimumWidth: 0
             spacing: 0
             opacity: root._subTabContentOpacity
             transform: Translate {

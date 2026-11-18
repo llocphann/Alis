@@ -117,10 +117,10 @@ RippleButton {
     property string displayContent: highlightContent(root.itemName, root.query)
 
     property list<string> urls: {
-        if (!root.itemName) return [];
+        if (!root.itemName || root.itemName.indexOf("http") < 0) return [];
         // Regular expression to match URLs
         const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
-        const matches = root.itemName?.match(urlRegex)
+        const matches = root.itemName.match(urlRegex)
             ?.filter(url => !url.includes("…")) // Elided = invalid
         return matches ? matches : [];
     }
@@ -161,7 +161,9 @@ RippleButton {
         Drag.mimeData: ({
             "application/x-alis-desktop-entry": root.desktopEntryId
         })
-        Drag.imageSource: Quickshell.iconPath(root.itemIcon, "application-x-executable")
+        Drag.imageSource: (root.pointerDragActive && root.draggableApplication)
+            ? Quickshell.iconPath(root.itemIcon, "application-x-executable")
+            : ""
         Drag.imageSourceSize: Qt.size(52, 52)
         Drag.hotSpot: Qt.point(26, 26)
         Drag.active: root.pointerDragActive && root.draggableApplication

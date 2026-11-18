@@ -23,6 +23,31 @@ Item {
     property real barMinHeight: 2
     property real barRadius: 3
 
+    readonly property var _targetNormalized: {
+        const count = Math.max(1, root.barCount)
+        const out = new Array(count)
+        const pts = root.points
+        const len = pts ? pts.length : 0
+        if (!root.visible || !root.live || len === 0) {
+            out.fill(0)
+            return out
+        }
+        const maxVal = Math.max(1, root.maxVisualizerValue)
+        for (let idx = 0; idx < count; ++idx) {
+            const start = Math.floor(idx * len / count)
+            const end = Math.min(len, Math.max(start + 1, Math.ceil((idx + 1) * len / count)))
+            let sum = 0
+            let cnt = 0
+            for (let i = start; i < end; ++i) {
+                sum += pts[i] || 0
+                cnt++
+            }
+            const barValue = cnt > 0 ? sum / cnt : 0
+            out[idx] = Math.min(1, barValue / maxVal)
+        }
+        return out
+    }
+
     Row {
         id: barsRow
         anchors.fill: parent
@@ -38,25 +63,10 @@ Item {
                 width: (root.width - (root.barCount - 1) * root.barSpacing) / root.barCount
                 height: root.height
 
-                property real barValue: {
-                    if (!root.visible || !root.live || root.points.length === 0) return 0;
-                    const start = Math.floor(index * root.points.length / root.barCount);
-                    const end = Math.min(root.points.length,
-                        Math.max(start + 1, Math.ceil((index + 1) * root.points.length / root.barCount)));
-                    let sum = 0;
-                    let count = 0;
-                    for (let i = start; i < end; i++) {
-                        sum += root.points[i] || 0;
-                        count++;
-                    }
-                    return count > 0 ? sum / count : 0;
-                }
-
-                property real normalizedValue: Math.min(1, barValue / root.maxVisualizerValue)
-                property real barHeight: Math.max(root.barMinHeight, normalizedValue * (root.height / 2 - 2))
-                property string intensity: normalizedValue > 0.7 ? "high" : normalizedValue > 0.35 ? "med" : "low"
-                property color barColor: intensity === "high" ? root.colorHigh 
-                                       : intensity === "med" ? root.colorMed 
+                readonly property real normalizedValue: index < root._targetNormalized.length ? (root._targetNormalized[index] ?? 0) : 0
+                readonly property real barHeight: Math.max(root.barMinHeight, normalizedValue * (root.height / 2 - 2))
+                readonly property color barColor: normalizedValue > 0.7 ? root.colorHigh
+                                       : normalizedValue > 0.35 ? root.colorMed
                                        : root.colorLow
 
                 Column {
@@ -72,11 +82,11 @@ Item {
                         opacity: 0.9
 
                         Behavior on height {
-                            enabled: Appearance.animationsEnabled
+                            enabled: Appearance.animationsEnabled && root.visible
                             NumberAnimation { duration: 80; easing.type: Easing.OutQuad }
                         }
                         Behavior on color {
-                            enabled: Appearance.animationsEnabled
+                            enabled: Appearance.animationsEnabled && root.visible
                             ColorAnimation { duration: 100 }
                         }
                     }
@@ -90,11 +100,11 @@ Item {
                         opacity: 0.9
 
                         Behavior on height {
-                            enabled: Appearance.animationsEnabled
+                            enabled: Appearance.animationsEnabled && root.visible
                             NumberAnimation { duration: 80; easing.type: Easing.OutQuad }
                         }
                         Behavior on color {
-                            enabled: Appearance.animationsEnabled
+                            enabled: Appearance.animationsEnabled && root.visible
                             ColorAnimation { duration: 100 }
                         }
                     }

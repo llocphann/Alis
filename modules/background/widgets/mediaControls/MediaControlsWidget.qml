@@ -243,7 +243,7 @@ AbstractBackgroundWidget {
     // true. Rechecking the global base would incorrectly disable Cava for a
     // widget enabled only on this monitor.
     readonly property bool visualizerActive: root.vizPosition !== "none"
-        && root.visible && root.powerActive && MprisController.isPlaying
+        && root.visible && root.powerActive && MprisController.anyAudioPlaying
 
     CavaProcess {
         id: cavaProcess

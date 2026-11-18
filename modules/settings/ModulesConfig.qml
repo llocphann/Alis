@@ -77,11 +77,25 @@ ContentPage {
 
     property string activeSection: "panels"
 
-    function reconcileActiveSection(): void {
-        if ((modulesPage.isAbyss && modulesPage.activeSection === "modules")
-                || modulesPage.activeSection === "terminal")
-            modulesPage.activeSection = "panels"
+    function _normalizeSection(section) {
+        const value = String(section || "").trim()
+        if (value === "modules")
+            return modulesPage.isAbyss ? "panels" : "modules"
+        if (value === "interface" || value === "panels")
+            return value
+        return "panels"
     }
+
+    function reconcileActiveSection(): void {
+        const normalized = _normalizeSection(modulesPage.activeSection)
+        if (modulesPage.activeSection !== normalized)
+            modulesPage.activeSection = normalized
+    }
+
+    function activateSettingsSearchSection(section): void {
+        modulesPage.activeSection = _normalizeSection(section)
+    }
+
     onActiveSectionChanged: reconcileActiveSection()
     onIsAbyssChanged: reconcileActiveSection()
     Component.onCompleted: reconcileActiveSection()
@@ -102,36 +116,52 @@ ContentPage {
         ].filter(option => option.value !== "modules" || !modulesPage.isAbyss)
     }
 
-    GridLayout {
-        id: modulesTwoColumnGrid
-        objectName: "modulesTwoColumnGrid"
+    SettingsCardSection {
+        id: panelStyleCard
+        _preventBentoReparent: true
         Layout.fillWidth: true
-        columns: 2
-        uniformCellWidths: true
-        columnSpacing: 14
-        rowSpacing: 14
+        Layout.alignment: Qt.AlignTop
+        settingsTaskSection: "panels"
         visible: true
+        expanded: true
+        icon: "style"
+        title: Translation.tr("Panel Style")
 
-        SettingsCardSection {
-            id: panelStyleCard
-            _preventBentoReparent: true
-            Layout.preferredWidth: 1
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.alignment: Qt.AlignTop
-            settingsTaskSection: "panels"
-            visible: true
-            expanded: true
-            icon: "style"
-            title: Translation.tr("Panel Style")
+        SettingsGroup {
+            id: panelStyleGroup
 
-            SettingsGroup {
-                id: panelStyleGroup
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    spacing: 2
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: "Active shell architecture"
+                        color: Appearance.colors.colOnLayer1
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.Medium
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: modulesPage.isWaffle
+                            ? "Windows 11-inspired taskbar, Start Menu and Action Center."
+                            : "Connected Abyss perimeter frame, top bar and liquid dock."
+                        color: Appearance.colors.colSubtext
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        wrapMode: Text.WordWrap
+                    }
+                }
 
                 ConfigSelectionArray {
                     id: panelStyleSelector
                     Layout.fillWidth: false
-                    Layout.alignment: Qt.AlignHCenter
+                    Layout.alignment: Qt.AlignVCenter
                     currentValue: Config.options?.panelFamily ?? "abyss"
                     onSelected: newValue => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "panelFamily", "set", newValue])
                     options: [
@@ -147,787 +177,487 @@ ContentPage {
                         }
                     ]
                 }
+            }
 
+            Rectangle {
+                id: panelStylePreview
+                Layout.fillWidth: true
+                implicitHeight: Math.round(224 * Appearance.fontSizeScale)
+                Layout.preferredHeight: implicitHeight
+                radius: Appearance.rounding.normal
+                clip: true
+                color: Appearance.colors.colLayer2
+                border.width: 1
+                border.color: Appearance.colors.colOutlineVariant
+
+                readonly property bool isWaffleMode: (Config.options?.panelFamily ?? "abyss") === "waffle"
+
+                // Desktop wallpaper backdrop
                 Rectangle {
-                    id: panelStylePreview
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    implicitHeight: Math.max(240, modulesTwoColumnGrid.columns === 2
-                        ? settingsUiGroup.implicitHeight - panelStyleSelector.implicitHeight - SettingsMaterialPreset.groupSpacing - SettingsMaterialPreset.groupPadding * 2
-                        : 240)
-                    radius: Appearance.rounding.normal
-                    clip: true
-                    color: Appearance.colors.colLayer2
-                    border.width: 1
-                    border.color: Appearance.colors.colOutlineVariant
+                    anchors.fill: parent
+                    anchors.margins: 1
+                    radius: Math.max(0, parent.radius - 1)
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: Qt.tint(Appearance.colors.colLayer1, Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.18)) }
+                        GradientStop { position: 0.55; color: Qt.tint(Appearance.colors.colLayer2, Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.08)) }
+                        GradientStop { position: 1.0; color: Appearance.colors.colLayer2 }
+                    }
+                }
 
-                    readonly property bool isWaffleMode: (Config.options?.panelFamily ?? "abyss") === "waffle"
+                // ==================== ABYSS SCREENSHOT PREVIEW ====================
+                Item {
+                    id: abyssScreenshotMockup
+                    anchors.fill: parent
+                    visible: !panelStylePreview.isWaffleMode
 
-                    // Desktop wallpaper backdrop
-                    Rectangle {
+                    Canvas {
+                        id: abyssPerimeterCanvas
                         anchors.fill: parent
-                        anchors.margins: 1
-                        radius: Math.max(0, parent.radius - 1)
-                        gradient: Gradient {
-                            GradientStop { position: 0.0; color: Qt.tint(Appearance.colors.colLayer1, Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.18)) }
-                            GradientStop { position: 0.55; color: Qt.tint(Appearance.colors.colLayer2, Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.08)) }
-                            GradientStop { position: 1.0; color: Appearance.colors.colLayer2 }
+                        property color frameColor: Appearance.colors.colLayer0
+                        property color outlineColor: Appearance.colors.colOutlineVariant
+                        onFrameColorChanged: requestPaint()
+                        onOutlineColorChanged: requestPaint()
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            ctx.reset()
+                            const w = width
+                            const h = height
+                            if (w <= 60 || h <= 60)
+                                return
+                            const leftX = 8
+                            const rightX = w - 8
+                            const topY = 28
+                            const bottomY = h - 8
+                            const cornerR = 12
+                            const dockW = 148
+                            const dockH = 22
+                            const dockLeft = Math.round((w - dockW) / 2)
+                            const dockRight = dockLeft + dockW
+                            const dockTop = bottomY - dockH
+                            const dockR = 9
+                            const shoulderR = 8
+
+                            function traceInnerCutout() {
+                                ctx.moveTo(leftX + cornerR, topY)
+                                ctx.arcTo(rightX, topY, rightX, topY + cornerR, cornerR)
+                                ctx.arcTo(rightX, bottomY, rightX - cornerR, bottomY, cornerR)
+                                ctx.arcTo(dockRight, bottomY, dockRight, bottomY - shoulderR, shoulderR)
+                                ctx.arcTo(dockRight, dockTop, dockRight - dockR, dockTop, dockR)
+                                ctx.arcTo(dockLeft, dockTop, dockLeft, dockTop + dockR, dockR)
+                                ctx.arcTo(dockLeft, bottomY, dockLeft - shoulderR, bottomY, shoulderR)
+                                ctx.arcTo(leftX, bottomY, leftX, bottomY - cornerR, cornerR)
+                                ctx.arcTo(leftX, topY, leftX + cornerR, topY, cornerR)
+                                ctx.closePath()
+                            }
+
+                            ctx.beginPath()
+                            ctx.rect(0, 0, w, h)
+                            traceInnerCutout()
+                            ctx.fillStyle = frameColor
+                            ctx.fill("evenodd")
+
+                            ctx.beginPath()
+                            traceInnerCutout()
+                            ctx.strokeStyle = outlineColor
+                            ctx.lineWidth = 1
+                            ctx.stroke()
                         }
                     }
 
-                    // ==================== ABYSS SCREENSHOT PREVIEW ====================
                     Item {
-                        id: abyssScreenshotMockup
-                        anchors.fill: parent
-                        visible: !panelStylePreview.isWaffleMode
+                        id: abyssTopBarMock
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        height: 28
 
-                        // Unified Screen Edge + Top Bar + Connected Bottom Dock silhouette
-                        Canvas {
-                            id: abyssPerimeterCanvas
-                            anchors.fill: parent
-                            property color frameColor: Appearance.colors.colLayer0
-                            property color outlineColor: Appearance.colors.colOutlineVariant
-                            onFrameColorChanged: requestPaint()
-                            onOutlineColorChanged: requestPaint()
-                            onWidthChanged: requestPaint()
-                            onHeightChanged: requestPaint()
-                            onPaint: {
-                                const ctx = getContext("2d")
-                                ctx.reset()
-                                const w = width
-                                const h = height
-                                if (w <= 60 || h <= 60)
-                                    return
-                                const leftX = 8
-                                const rightX = w - 8
-                                const topY = 28
-                                const bottomY = h - 8
-                                const cornerR = 12
-                                const dockW = 148
-                                const dockH = 22
-                                const dockLeft = Math.round((w - dockW) / 2)
-                                const dockRight = dockLeft + dockW
-                                const dockTop = bottomY - dockH
-                                const dockR = 9
-                                const shoulderR = 8
-
-                                function traceInnerCutout() {
-                                    ctx.moveTo(leftX + cornerR, topY)
-                                    ctx.arcTo(rightX, topY, rightX, topY + cornerR, cornerR)
-                                    ctx.arcTo(rightX, bottomY, rightX - cornerR, bottomY, cornerR)
-                                    ctx.arcTo(dockRight, bottomY, dockRight, bottomY - shoulderR, shoulderR)
-                                    ctx.arcTo(dockRight, dockTop, dockRight - dockR, dockTop, dockR)
-                                    ctx.arcTo(dockLeft, dockTop, dockLeft, dockTop + dockR, dockR)
-                                    ctx.arcTo(dockLeft, bottomY, dockLeft - shoulderR, bottomY, shoulderR)
-                                    ctx.arcTo(leftX, bottomY, leftX, bottomY - cornerR, cornerR)
-                                    ctx.arcTo(leftX, topY, leftX + cornerR, topY, cornerR)
-                                    ctx.closePath()
-                                }
-
-                                // Fill outer Screen Edge + Top Bar + Connected Dock as one solid piece
-                                ctx.beginPath()
-                                ctx.rect(0, 0, w, h)
-                                traceInnerCutout()
-                                ctx.fillStyle = frameColor
-                                ctx.fill("evenodd")
-
-                                // Subtle inner contour along the connected Screen Edge & Dock boundary
-                                ctx.beginPath()
-                                traceInnerCutout()
-                                ctx.strokeStyle = outlineColor
-                                ctx.lineWidth = 1
-                                ctx.stroke()
-                            }
-                        }
-
-                        // Top integrated Abyss Bar (merged into the top Screen Edge)
-                        Item {
-                            id: abyssTopBarMock
-                            anchors.top: parent.top
+                        Row {
                             anchors.left: parent.left
-                            anchors.right: parent.right
-                            height: 28
+                            anchors.leftMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 6
 
-                            // Left: Launcher button + Workspaces pill + Active Window chip
-                            Row {
-                                anchors.left: parent.left
-                                anchors.leftMargin: 10
+                            Rectangle {
+                                width: 16; height: 16; radius: 8
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 6
-
-                                // Left sidebar / distro button
-                                Rectangle {
-                                    width: 16; height: 16; radius: 8
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: Appearance.colors.colPrimaryContainer
-                                    MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        text: "water"
-                                        iconSize: 11
-                                        color: Appearance.colors.colOnPrimaryContainer
-                                    }
+                                color: Appearance.colors.colPrimaryContainer
+                                MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: "water"
+                                    iconSize: 11
+                                    color: Appearance.colors.colOnPrimaryContainer
                                 }
+                            }
 
-                                // Workspaces pill
-                                Rectangle {
-                                    height: 16
-                                    width: wsRowMock.implicitWidth + 10
-                                    radius: 8
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: Appearance.colors.colLayer1
+                            Rectangle {
+                                height: 16
+                                width: wsRowMock.implicitWidth + 10
+                                radius: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: Appearance.colors.colLayer1
 
-                                    Row {
-                                        id: wsRowMock
-                                        anchors.centerIn: parent
-                                        spacing: 4
-                                        Rectangle {
-                                            width: 16; height: 7; radius: 3.5
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            color: Appearance.colors.colPrimary
-                                        }
-                                        Repeater {
-                                            model: 4
-                                            Rectangle {
-                                                required property int index
-                                                width: 6; height: 6; radius: 3
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                color: index < 2 ? Appearance.colors.colOnLayer1 : Appearance.colors.colLayer2
-                                                opacity: index < 2 ? 0.65 : 0.9
-                                            }
-                                        }
+                                Row {
+                                    id: wsRowMock
+                                    anchors.centerIn: parent
+                                    spacing: 4
+                                    Rectangle {
+                                        width: 16; height: 7; radius: 3.5
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        color: Appearance.colors.colPrimary
                                     }
-                                }
-
-                                // Active Window module chip
-                                Rectangle {
-                                    visible: abyssTopBarMock.width >= 340
-                                    height: 16
-                                    width: 68
-                                    radius: 8
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: Appearance.colors.colLayer1
-                                    Row {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 5
-                                        anchors.rightMargin: 5
-                                        spacing: 4
+                                    Repeater {
+                                        model: 4
                                         Rectangle {
+                                            required property int index
                                             width: 6; height: 6; radius: 3
                                             anchors.verticalCenter: parent.verticalCenter
-                                            color: Appearance.colors.colPrimary
-                                        }
-                                        Column {
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            spacing: 2
-                                            Rectangle { width: 34; height: 3.5; radius: 1.75; color: Appearance.colors.colOnLayer0; opacity: 0.85 }
-                                            Rectangle { width: 22; height: 2.5; radius: 1.25; color: Appearance.colors.colSubtext; opacity: 0.6 }
+                                            color: index < 2 ? Appearance.colors.colOnLayer1 : Appearance.colors.colLayer2
+                                            opacity: index < 2 ? 0.65 : 0.9
                                         }
                                     }
                                 }
                             }
 
-                            // Center: Connected Abyss Clock & Media Notch
                             Rectangle {
-                                width: 92
-                                height: 22
-                                radius: 9
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.top: parent.top
-                                anchors.topMargin: 3
+                                visible: abyssTopBarMock.width >= 340
+                                height: 16
+                                width: 68
+                                radius: 8
+                                anchors.verticalCenter: parent.verticalCenter
                                 color: Appearance.colors.colLayer1
-                                border.width: 1
-                                border.color: Appearance.colors.colOutlineVariant
-
                                 Row {
-                                    anchors.centerIn: parent
-                                    spacing: 6
-
-                                    StyledText {
-                                        text: "14:20"
-                                        font.pixelSize: 10
-                                        font.weight: Font.DemiBold
-                                        color: Appearance.colors.colOnLayer0
-                                    }
-
-                                    Rectangle {
-                                        width: 3; height: 3; radius: 1.5
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        color: Appearance.colors.colPrimary
-                                    }
-
-                                    // Mini equalizer bars
-                                    Row {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        spacing: 1.5
-                                        Repeater {
-                                            model: [5, 10, 7, 11, 6]
-                                            Rectangle {
-                                                required property int modelData
-                                                width: 2
-                                                height: modelData
-                                                radius: 1
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                color: Appearance.colors.colPrimary
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Right: Resources pill + System Tray & Status pill + Right sidebar icon
-                            Row {
-                                anchors.right: parent.right
-                                anchors.rightMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 5
-
-                                // Resources pill (CPU / RAM)
-                                Rectangle {
-                                    visible: abyssTopBarMock.width >= 310
-                                    width: 44; height: 16; radius: 8
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: Appearance.colors.colLayer1
-                                    Row {
-                                        anchors.centerIn: parent
-                                        spacing: 4
-                                        Rectangle { width: 7; height: 7; radius: 3.5; border.width: 1.5; border.color: Appearance.colors.colPrimary; color: "transparent" }
-                                        Rectangle { width: 10; height: 3.5; radius: 1.75; anchors.verticalCenter: parent.verticalCenter; color: Appearance.colors.colOnLayer1; opacity: 0.7 }
-                                        Rectangle { width: 7; height: 7; radius: 3.5; border.width: 1.5; border.color: Appearance.colors.colTertiary; color: "transparent" }
-                                    }
-                                }
-
-                                // Status cluster pill (Wi-Fi, Audio, Battery)
-                                Rectangle {
-                                    width: 46; height: 16; radius: 8
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: Appearance.colors.colSecondaryContainer
-                                    Row {
-                                        anchors.centerIn: parent
-                                        spacing: 4
-                                        MaterialSymbol { text: "wifi"; iconSize: 10; color: Appearance.colors.colOnSecondaryContainer }
-                                        MaterialSymbol { text: "volume_up"; iconSize: 10; color: Appearance.colors.colOnSecondaryContainer }
-                                        MaterialSymbol { text: "battery_5_bar"; iconSize: 10; color: Appearance.colors.colOnSecondaryContainer }
-                                    }
-                                }
-
-                                // Notification / Right sidebar dot
-                                Rectangle {
-                                    width: 16; height: 16; radius: 8
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: Appearance.colors.colLayer1
-                                    MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        text: "notifications"
-                                        iconSize: 10
-                                        color: Appearance.colors.colPrimary
-                                    }
-                                }
-                            }
-                        }
-
-                        // Inner concave Screen Edge viewport
-                        Item {
-                            id: abyssViewportMock
-                            anchors.top: abyssTopBarMock.bottom
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.bottom: parent.bottom
-                            anchors.leftMargin: 8
-                            anchors.rightMargin: 8
-                            anchors.bottomMargin: 8
-
-                            // Niri tiled desktop windows inside workspace
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.topMargin: 10
-                                anchors.leftMargin: 12
-                                anchors.rightMargin: 12
-                                anchors.bottomMargin: 30
-                                spacing: 10
-
-                                // Left focused tiled window (Code Editor / Terminal)
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    Layout.preferredWidth: 3
-                                    radius: 8
-                                    color: Appearance.colors.colLayer0
-                                    opacity: 0.95
-                                    border.width: 1.5
-                                    border.color: Appearance.colors.colPrimary
-
-                                    ColumnLayout {
-                                        anchors.fill: parent
-                                        anchors.margins: 8
-                                        spacing: 6
-
-                                        // Window title bar
-                                        RowLayout {
-                                            Layout.fillWidth: true
-                                            spacing: 4
-                                            Rectangle { width: 6; height: 6; radius: 3; color: Appearance.colors.colPrimary }
-                                            Rectangle { width: 6; height: 6; radius: 3; color: Appearance.colors.colSecondaryContainer }
-                                            Rectangle { width: 48; height: 4.5; radius: 2.25; color: Appearance.colors.colOnLayer1; opacity: 0.55 }
-                                            Item { Layout.fillWidth: true }
-                                            Rectangle { width: 22; height: 8; radius: 4; color: Appearance.colors.colLayer1 }
-                                        }
-
-                                        Rectangle {
-                                            Layout.fillWidth: true
-                                            height: 1
-                                            color: Appearance.colors.colOutlineVariant
-                                            opacity: 0.5
-                                        }
-
-                                        // Editor body: sidebar rail + code lines
-                                        RowLayout {
-                                            Layout.fillWidth: true
-                                            Layout.fillHeight: true
-                                            spacing: 8
-
-                                            // File tree rail
-                                            Rectangle {
-                                                Layout.preferredWidth: 32
-                                                Layout.fillHeight: true
-                                                radius: 4
-                                                color: Appearance.colors.colLayer1
-                                                Column {
-                                                    anchors.fill: parent
-                                                    anchors.margins: 5
-                                                    spacing: 4
-                                                    Rectangle { width: parent.width * 0.9; height: 4; radius: 2; color: Appearance.colors.colPrimary; opacity: 0.8 }
-                                                    Rectangle { width: parent.width * 0.7; height: 4; radius: 2; color: Appearance.colors.colLayer2 }
-                                                    Rectangle { width: parent.width * 0.85; height: 4; radius: 2; color: Appearance.colors.colLayer2 }
-                                                    Rectangle { width: parent.width * 0.6; height: 4; radius: 2; color: Appearance.colors.colLayer2 }
-                                                }
-                                            }
-
-                                            // Code lines
-                                            Column {
-                                                Layout.fillWidth: true
-                                                Layout.fillHeight: true
-                                                spacing: 5
-                                                Row {
-                                                    spacing: 4
-                                                    Rectangle { width: 24; height: 4.5; radius: 2.25; color: Appearance.colors.colPrimary; opacity: 0.85 }
-                                                    Rectangle { width: 46; height: 4.5; radius: 2.25; color: Appearance.colors.colLayer2 }
-                                                }
-                                                Rectangle { width: parent.width * 0.88; height: 4.5; radius: 2.25; color: Appearance.colors.colLayer2 }
-                                                Row {
-                                                    spacing: 4
-                                                    Rectangle { width: 14; height: 4.5; radius: 2.25; color: "transparent" }
-                                                    Rectangle { width: 36; height: 4.5; radius: 2.25; color: Appearance.colors.colSecondaryContainer }
-                                                    Rectangle { width: 52; height: 4.5; radius: 2.25; color: Appearance.colors.colLayer2 }
-                                                }
-                                                Rectangle { width: parent.width * 0.68; height: 4.5; radius: 2.25; color: Appearance.colors.colLayer2 }
-                                                Rectangle { width: parent.width * 0.78; height: 4.5; radius: 2.25; color: Appearance.colors.colLayer2 }
-                                                Rectangle { width: parent.width * 0.52; height: 4.5; radius: 2.25; color: Appearance.colors.colLayer2 }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Right column: 2 stacked tiled windows
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    Layout.preferredWidth: 2
-                                    spacing: 8
-
-                                    // Top right window
-                                    Rectangle {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        Layout.preferredHeight: 3
-                                        radius: 8
-                                        color: Appearance.colors.colLayer0
-                                        opacity: 0.9
-                                        border.width: 1
-                                        border.color: Appearance.colors.colOutlineVariant
-
-                                        ColumnLayout {
-                                            anchors.fill: parent
-                                            anchors.margins: 8
-                                            spacing: 5
-                                            RowLayout {
-                                                Layout.fillWidth: true
-                                                spacing: 4
-                                                Rectangle { width: 5; height: 5; radius: 2.5; color: Appearance.colors.colOnLayer1; opacity: 0.45 }
-                                                Rectangle { width: 38; height: 4; radius: 2; color: Appearance.colors.colOnLayer1; opacity: 0.45 }
-                                            }
-                                            Rectangle {
-                                                Layout.fillWidth: true
-                                                Layout.fillHeight: true
-                                                radius: 5
-                                                color: Appearance.colors.colLayer1
-                                                RowLayout {
-                                                    anchors.fill: parent
-                                                    anchors.margins: 6
-                                                    spacing: 6
-                                                    Rectangle {
-                                                        Layout.fillWidth: true
-                                                        Layout.fillHeight: true
-                                                        radius: 4
-                                                        color: Appearance.colors.colLayer2
-                                                    }
-                                                    Rectangle {
-                                                        Layout.fillWidth: true
-                                                        Layout.fillHeight: true
-                                                        radius: 4
-                                                        color: Appearance.colors.colSecondaryContainer
-                                                        opacity: 0.65
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    // Bottom right window (Media / Monitor card)
-                                    Rectangle {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        Layout.preferredHeight: 2
-                                        radius: 8
-                                        color: Appearance.colors.colLayer0
-                                        opacity: 0.9
-                                        border.width: 1
-                                        border.color: Appearance.colors.colOutlineVariant
-
-                                        RowLayout {
-                                            anchors.fill: parent
-                                            anchors.margins: 7
-                                            spacing: 7
-                                            Rectangle {
-                                                width: 24; height: 24; radius: 5
-                                                color: Appearance.colors.colPrimaryContainer
-                                                MaterialSymbol {
-                                                    anchors.centerIn: parent
-                                                    text: "music_note"
-                                                    iconSize: 13
-                                                    color: Appearance.colors.colOnPrimaryContainer
-                                                }
-                                            }
-                                            Column {
-                                                Layout.fillWidth: true
-                                                spacing: 4
-                                                Rectangle { width: parent.width * 0.75; height: 4.5; radius: 2.25; color: Appearance.colors.colOnLayer0; opacity: 0.75 }
-                                                Rectangle { width: parent.width * 0.5; height: 3.5; radius: 1.75; color: Appearance.colors.colSubtext; opacity: 0.55 }
-                                                Rectangle {
-                                                    width: parent.width * 0.9; height: 3.5; radius: 1.75
-                                                    color: Appearance.colors.colLayer2
-                                                    Rectangle {
-                                                        width: parent.width * 0.62; height: parent.height; radius: 1.75
-                                                        color: Appearance.colors.colPrimary
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Bottom connected Abyss Dock icons (dock body is fused into Screen Edge via abyssPerimeterCanvas)
-                            Item {
-                                width: 148
-                                height: 22
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.bottom: parent.bottom
-
-                                Row {
-                                    anchors.centerIn: parent
-                                    spacing: 6
-                                    Repeater {
-                                        model: 6
-                                        Item {
-                                            required property int index
-                                            width: 14; height: 16
-                                            Rectangle {
-                                                width: 13; height: 13; radius: 4
-                                                anchors.horizontalCenter: parent.horizontalCenter
-                                                anchors.top: parent.top
-                                                color: index === 0
-                                                    ? Appearance.colors.colPrimary
-                                                    : (index === 2 || index === 4
-                                                        ? Appearance.colors.colSecondaryContainer
-                                                        : Appearance.colors.colLayer2)
-                                            }
-                                            Rectangle {
-                                                visible: index < 3
-                                                width: index === 0 ? 6 : 3
-                                                height: 2; radius: 1
-                                                anchors.horizontalCenter: parent.horizontalCenter
-                                                anchors.bottom: parent.bottom
-                                                color: Appearance.colors.colPrimary
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // ==================== WAFFLE SCREENSHOT PREVIEW ====================
-                    Item {
-                        id: waffleScreenshotMockup
-                        anchors.fill: parent
-                        visible: panelStylePreview.isWaffleMode
-
-                        // Background desktop windows (left & right)
-                        Rectangle {
-                            width: parent.width * 0.44
-                            height: parent.height * 0.58
-                            x: 14
-                            y: 12
-                            radius: 7
-                            color: Appearance.colors.colLayer0
-                            opacity: 0.76
-                            border.width: 1
-                            border.color: Appearance.colors.colOutlineVariant
-
-                            Column {
-                                anchors.fill: parent
-                                anchors.margins: 9
-                                spacing: 5
-                                Row {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 5
+                                    anchors.rightMargin: 5
                                     spacing: 4
-                                    Rectangle { width: 6; height: 6; radius: 3; color: Appearance.colors.colPrimary; opacity: 0.7 }
-                                    Rectangle { width: 44; height: 4.5; radius: 2.25; color: Appearance.colors.colOnLayer1; opacity: 0.4 }
+                                    Rectangle {
+                                        width: 6; height: 6; radius: 3
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        color: Appearance.colors.colPrimary
+                                    }
+                                    Column {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: 2
+                                        Rectangle { width: 34; height: 3.5; radius: 1.75; color: Appearance.colors.colOnLayer0; opacity: 0.85 }
+                                        Rectangle { width: 22; height: 2.5; radius: 1.25; color: Appearance.colors.colSubtext; opacity: 0.6 }
+                                    }
                                 }
-                                Rectangle { width: parent.width * 0.85; height: 5; radius: 2.5; color: Appearance.colors.colLayer2 }
-                                Rectangle { width: parent.width * 0.7; height: 5; radius: 2.5; color: Appearance.colors.colLayer2 }
-                                Rectangle { width: parent.width * 0.78; height: 5; radius: 2.5; color: Appearance.colors.colLayer2 }
                             }
                         }
 
                         Rectangle {
-                            width: parent.width * 0.38
-                            height: parent.height * 0.52
-                            anchors.right: parent.right
-                            anchors.rightMargin: 14
-                            y: 18
-                            radius: 7
-                            color: Appearance.colors.colLayer0
-                            opacity: 0.68
-                            border.width: 1
-                            border.color: Appearance.colors.colOutlineVariant
-
-                            Column {
-                                anchors.fill: parent
-                                anchors.margins: 9
-                                spacing: 5
-                                Rectangle { width: parent.width * 0.55; height: 4.5; radius: 2.25; color: Appearance.colors.colOnLayer1; opacity: 0.35 }
-                                Rectangle { width: parent.width; height: 24; radius: 4; color: Appearance.colors.colLayer2 }
-                                Rectangle { width: parent.width * 0.82; height: 14; radius: 4; color: Appearance.colors.colLayer2 }
-                            }
-                        }
-
-                        // Centered floating Waffle Start Menu card
-                        Rectangle {
-                            id: waffleStartMenuMock
-                            width: Math.min(216, parent.width * 0.58)
-                            height: Math.min(156, parent.height - waffleTaskbarMock.height - 16)
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: waffleTaskbarMock.top
-                            anchors.bottomMargin: 6
+                            width: 92
+                            height: 22
                             radius: 9
-                            color: Appearance.colors.colLayer0
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.top: parent.top
+                            anchors.topMargin: 3
+                            color: Appearance.colors.colLayer1
                             border.width: 1
                             border.color: Appearance.colors.colOutlineVariant
 
-                            ColumnLayout {
-                                anchors.fill: parent
-                                spacing: 0
-
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    Layout.margins: 9
-                                    spacing: 6
-
-                                    // Search pill inside Start menu
-                                    Rectangle {
-                                        Layout.fillWidth: true
-                                        Layout.preferredHeight: 16
-                                        radius: 8
-                                        color: Appearance.colors.colLayer1
-                                        border.width: 1
-                                        border.color: Appearance.colors.colOutlineVariant
-
-                                        Row {
-                                            anchors.left: parent.left
-                                            anchors.leftMargin: 7
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            spacing: 5
-                                            MaterialSymbol { text: "search"; iconSize: 10; color: Appearance.colors.colPrimary }
-                                            Rectangle { width: 58; height: 4; radius: 2; anchors.verticalCenter: parent.verticalCenter; color: Appearance.colors.colOnLayer1; opacity: 0.45 }
-                                        }
-                                    }
-
-                                    // "Pinned" header row
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        Rectangle { width: 26; height: 3.5; radius: 1.75; color: Appearance.colors.colOnLayer0; opacity: 0.7 }
-                                        Item { Layout.fillWidth: true }
-                                        Rectangle { width: 20; height: 8; radius: 4; color: Appearance.colors.colLayer2 }
-                                    }
-
-                                    // Pinned app grid (6x2)
-                                    GridLayout {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        columns: 6
-                                        columnSpacing: 6
-                                        rowSpacing: 6
-
-                                        Repeater {
-                                            model: 12
-                                            ColumnLayout {
-                                                required property int index
-                                                Layout.fillWidth: true
-                                                Layout.fillHeight: true
-                                                spacing: 2
-
-                                                Rectangle {
-                                                    Layout.alignment: Qt.AlignHCenter
-                                                    Layout.preferredWidth: 16
-                                                    Layout.preferredHeight: 16
-                                                    radius: 4
-                                                    color: index === 0
-                                                        ? Appearance.colors.colPrimary
-                                                        : (index % 3 === 0
-                                                            ? Appearance.colors.colSecondaryContainer
-                                                            : (index % 4 === 0 ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer2))
-                                                }
-                                                Rectangle {
-                                                    Layout.alignment: Qt.AlignHCenter
-                                                    width: 12; height: 2.5; radius: 1.25
-                                                    color: Appearance.colors.colSubtext
-                                                    opacity: 0.55
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Bottom user + power footer strip
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 22
-                                    color: Appearance.colors.colLayer1
-                                    radius: 0
-
-                                    Rectangle {
-                                        anchors.top: parent.top
-                                        anchors.left: parent.left
-                                        anchors.right: parent.right
-                                        height: 1
-                                        color: Appearance.colors.colOutlineVariant
-                                        opacity: 0.6
-                                    }
-
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 10
-                                        spacing: 5
-                                        Rectangle { width: 11; height: 11; radius: 5.5; color: Appearance.colors.colPrimary }
-                                        Rectangle { width: 38; height: 4; radius: 2; color: Appearance.colors.colOnLayer0; opacity: 0.7 }
-                                        Item { Layout.fillWidth: true }
-                                        MaterialSymbol { text: "power_settings_new"; iconSize: 11; color: Appearance.colors.colSubtext }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Bottom full-width Waffle Taskbar
-                        Rectangle {
-                            id: waffleTaskbarMock
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.bottom: parent.bottom
-                            height: 30
-                            color: Appearance.colors.colLayer0
-
-                            Rectangle {
-                                anchors.top: parent.top
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                height: 1
-                                color: Appearance.colors.colOutlineVariant
-                            }
-
-                            // Left: Weather widget pill
-                            Row {
-                                anchors.left: parent.left
-                                anchors.leftMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 5
-                                MaterialSymbol {
-                                    text: "partly_cloudy_day"
-                                    iconSize: 13
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: Appearance.colors.colPrimary
-                                }
-                                Column {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 2
-                                    Rectangle { width: 18; height: 4; radius: 2; color: Appearance.colors.colOnLayer0; opacity: 0.8 }
-                                    Rectangle { width: 24; height: 3; radius: 1.5; color: Appearance.colors.colSubtext; opacity: 0.55 }
-                                }
-                            }
-
-                            // Center: Start button + search pill + pinned apps
                             Row {
                                 anchors.centerIn: parent
                                 spacing: 6
 
-                                // 4-tile Waffle Start icon
-                                Grid {
-                                    columns: 2
-                                    spacing: 1.5
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    Repeater {
-                                        model: 4
-                                        Rectangle { width: 6; height: 6; radius: 1.2; color: Appearance.colors.colPrimary }
-                                    }
+                                StyledText {
+                                    text: "14:20"
+                                    font.pixelSize: 10
+                                    font.weight: Font.DemiBold
+                                    color: Appearance.colors.colOnLayer0
                                 }
 
-                                // Taskbar search pill
                                 Rectangle {
-                                    width: 44; height: 16; radius: 8
+                                    width: 3; height: 3; radius: 1.5
                                     anchors.verticalCenter: parent.verticalCenter
-                                    color: Appearance.colors.colLayer1
+                                    color: Appearance.colors.colPrimary
+                                }
+
+                                Row {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 1.5
+                                    Repeater {
+                                        model: [5, 10, 7, 11, 6]
+                                        Rectangle {
+                                            required property int modelData
+                                            width: 2
+                                            height: modelData
+                                            radius: 1
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            color: Appearance.colors.colPrimary
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Row {
+                            anchors.right: parent.right
+                            anchors.rightMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 5
+
+                            Rectangle {
+                                visible: abyssTopBarMock.width >= 310
+                                width: 44; height: 16; radius: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: Appearance.colors.colLayer1
+                                Row {
+                                    anchors.centerIn: parent
+                                    spacing: 4
+                                    Rectangle { width: 7; height: 7; radius: 3.5; border.width: 1.5; border.color: Appearance.colors.colPrimary; color: "transparent" }
+                                    Rectangle { width: 10; height: 3.5; radius: 1.75; anchors.verticalCenter: parent.verticalCenter; color: Appearance.colors.colOnLayer1; opacity: 0.7 }
+                                    Rectangle { width: 7; height: 7; radius: 3.5; border.width: 1.5; border.color: Appearance.colors.colTertiary; color: "transparent" }
+                                }
+                            }
+
+                            Rectangle {
+                                width: 46; height: 16; radius: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: Appearance.colors.colSecondaryContainer
+                                Row {
+                                    anchors.centerIn: parent
+                                    spacing: 4
+                                    MaterialSymbol { text: "wifi"; iconSize: 10; color: Appearance.colors.colOnSecondaryContainer }
+                                    MaterialSymbol { text: "volume_up"; iconSize: 10; color: Appearance.colors.colOnSecondaryContainer }
+                                    MaterialSymbol { text: "battery_5_bar"; iconSize: 10; color: Appearance.colors.colOnSecondaryContainer }
+                                }
+                            }
+
+                            Rectangle {
+                                width: 16; height: 16; radius: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: Appearance.colors.colLayer1
+                                MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: "notifications"
+                                    iconSize: 10
+                                    color: Appearance.colors.colPrimary
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        id: abyssViewportMock
+                        anchors.top: abyssTopBarMock.bottom
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 8
+                        anchors.bottomMargin: 8
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.topMargin: 10
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            anchors.bottomMargin: 30
+                            spacing: 10
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                Layout.preferredWidth: 3
+                                radius: 8
+                                color: Appearance.colors.colLayer0
+                                opacity: 0.95
+                                border.width: 1.5
+                                border.color: Appearance.colors.colPrimary
+
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 8
+                                    spacing: 6
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 4
+                                        Rectangle { width: 6; height: 6; radius: 3; color: Appearance.colors.colPrimary }
+                                        Rectangle { width: 6; height: 6; radius: 3; color: Appearance.colors.colSecondaryContainer }
+                                        Rectangle { width: 48; height: 4.5; radius: 2.25; color: Appearance.colors.colOnLayer1; opacity: 0.55 }
+                                        Item { Layout.fillWidth: true }
+                                        Rectangle { width: 22; height: 8; radius: 4; color: Appearance.colors.colLayer1 }
+                                    }
+
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        height: 1
+                                        color: Appearance.colors.colOutlineVariant
+                                        opacity: 0.5
+                                    }
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        spacing: 8
+
+                                        Rectangle {
+                                            Layout.preferredWidth: 32
+                                            Layout.fillHeight: true
+                                            radius: 4
+                                            color: Appearance.colors.colLayer1
+                                            Column {
+                                                anchors.fill: parent
+                                                anchors.margins: 5
+                                                spacing: 4
+                                                Rectangle { width: parent.width * 0.9; height: 4; radius: 2; color: Appearance.colors.colPrimary; opacity: 0.8 }
+                                                Rectangle { width: parent.width * 0.7; height: 4; radius: 2; color: Appearance.colors.colLayer2 }
+                                                Rectangle { width: parent.width * 0.85; height: 4; radius: 2; color: Appearance.colors.colLayer2 }
+                                                Rectangle { width: parent.width * 0.6; height: 4; radius: 2; color: Appearance.colors.colLayer2 }
+                                            }
+                                        }
+
+                                        Column {
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            spacing: 5
+                                            Row {
+                                                spacing: 4
+                                                Rectangle { width: 24; height: 4.5; radius: 2.25; color: Appearance.colors.colPrimary; opacity: 0.85 }
+                                                Rectangle { width: 46; height: 4.5; radius: 2.25; color: Appearance.colors.colLayer2 }
+                                            }
+                                            Rectangle { width: parent.width * 0.88; height: 4.5; radius: 2.25; color: Appearance.colors.colLayer2 }
+                                            Row {
+                                                spacing: 4
+                                                Rectangle { width: 14; height: 4.5; radius: 2.25; color: "transparent" }
+                                                Rectangle { width: 36; height: 4.5; radius: 2.25; color: Appearance.colors.colSecondaryContainer }
+                                                Rectangle { width: 52; height: 4.5; radius: 2.25; color: Appearance.colors.colLayer2 }
+                                            }
+                                            Rectangle { width: parent.width * 0.68; height: 4.5; radius: 2.25; color: Appearance.colors.colLayer2 }
+                                            Rectangle { width: parent.width * 0.78; height: 4.5; radius: 2.25; color: Appearance.colors.colLayer2 }
+                                            Rectangle { width: parent.width * 0.52; height: 4.5; radius: 2.25; color: Appearance.colors.colLayer2 }
+                                        }
+                                    }
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                Layout.preferredWidth: 2
+                                spacing: 8
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    Layout.preferredHeight: 3
+                                    radius: 8
+                                    color: Appearance.colors.colLayer0
+                                    opacity: 0.9
                                     border.width: 1
                                     border.color: Appearance.colors.colOutlineVariant
-                                    Row {
-                                        anchors.left: parent.left
-                                        anchors.leftMargin: 5
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        spacing: 3
-                                        MaterialSymbol { text: "search"; iconSize: 9; color: Appearance.colors.colSubtext }
-                                        Rectangle { width: 20; height: 3.5; radius: 1.75; anchors.verticalCenter: parent.verticalCenter; color: Appearance.colors.colSubtext; opacity: 0.5 }
+
+                                    ColumnLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 8
+                                        spacing: 5
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 4
+                                            Rectangle { width: 5; height: 5; radius: 2.5; color: Appearance.colors.colOnLayer1; opacity: 0.45 }
+                                            Rectangle { width: 38; height: 4; radius: 2; color: Appearance.colors.colOnLayer1; opacity: 0.45 }
+                                        }
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            radius: 5
+                                            color: Appearance.colors.colLayer1
+                                            RowLayout {
+                                                anchors.fill: parent
+                                                anchors.margins: 6
+                                                spacing: 6
+                                                Rectangle {
+                                                    Layout.fillWidth: true
+                                                    Layout.fillHeight: true
+                                                    radius: 4
+                                                    color: Appearance.colors.colLayer2
+                                                }
+                                                Rectangle {
+                                                    Layout.fillWidth: true
+                                                    Layout.fillHeight: true
+                                                    radius: 4
+                                                    color: Appearance.colors.colSecondaryContainer
+                                                    opacity: 0.65
+                                                }
+                                            }
+                                        }
                                     }
                                 }
 
-                                // Pinned & running app icons
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    Layout.preferredHeight: 2
+                                    radius: 8
+                                    color: Appearance.colors.colLayer0
+                                    opacity: 0.9
+                                    border.width: 1
+                                    border.color: Appearance.colors.colOutlineVariant
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 7
+                                        spacing: 7
+                                        Rectangle {
+                                            width: 24; height: 24; radius: 5
+                                            color: Appearance.colors.colPrimaryContainer
+                                            MaterialSymbol {
+                                                anchors.centerIn: parent
+                                                text: "music_note"
+                                                iconSize: 13
+                                                color: Appearance.colors.colOnPrimaryContainer
+                                            }
+                                        }
+                                        Column {
+                                            Layout.fillWidth: true
+                                            spacing: 4
+                                            Rectangle { width: parent.width * 0.75; height: 4.5; radius: 2.25; color: Appearance.colors.colOnLayer0; opacity: 0.75 }
+                                            Rectangle { width: parent.width * 0.5; height: 3.5; radius: 1.75; color: Appearance.colors.colSubtext; opacity: 0.55 }
+                                            Rectangle {
+                                                width: parent.width * 0.9; height: 3.5; radius: 1.75
+                                                color: Appearance.colors.colLayer2
+                                                Rectangle {
+                                                    width: parent.width * 0.62; height: parent.height; radius: 1.75
+                                                    color: Appearance.colors.colPrimary
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Item {
+                            width: 148
+                            height: 22
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.bottom
+
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 6
                                 Repeater {
-                                    model: 4
+                                    model: 6
                                     Item {
                                         required property int index
-                                        width: 16; height: 20
-                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 14; height: 16
                                         Rectangle {
-                                            width: 13; height: 13; radius: 3.5
+                                            width: 13; height: 13; radius: 4
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             anchors.top: parent.top
-                                            anchors.topMargin: 1
                                             color: index === 0
-                                                ? Appearance.colors.colPrimaryContainer
-                                                : (index === 1 ? Appearance.colors.colSecondaryContainer : Appearance.colors.colLayer2)
+                                                ? Appearance.colors.colPrimary
+                                                : (index === 2 || index === 4
+                                                    ? Appearance.colors.colSecondaryContainer
+                                                    : Appearance.colors.colLayer2)
                                         }
                                         Rectangle {
-                                            visible: index < 2
-                                            width: index === 0 ? 7 : 3
+                                            visible: index < 3
+                                            width: index === 0 ? 6 : 3
                                             height: 2; radius: 1
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             anchors.bottom: parent.bottom
@@ -936,108 +666,412 @@ ContentPage {
                                     }
                                 }
                             }
+                        }
+                    }
+                }
 
-                            // Right: Tray + Quick Settings + 2-line clock
+                // ==================== WAFFLE SCREENSHOT PREVIEW ====================
+                Item {
+                    id: waffleScreenshotMockup
+                    anchors.fill: parent
+                    visible: panelStylePreview.isWaffleMode
+
+                    Rectangle {
+                        width: parent.width * 0.44
+                        height: parent.height * 0.58
+                        x: 14
+                        y: 12
+                        radius: 7
+                        color: Appearance.colors.colLayer0
+                        opacity: 0.76
+                        border.width: 1
+                        border.color: Appearance.colors.colOutlineVariant
+
+                        Column {
+                            anchors.fill: parent
+                            anchors.margins: 9
+                            spacing: 5
                             Row {
-                                anchors.right: parent.right
-                                anchors.rightMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 6
+                                spacing: 4
+                                Rectangle { width: 6; height: 6; radius: 3; color: Appearance.colors.colPrimary; opacity: 0.7 }
+                                Rectangle { width: 44; height: 4.5; radius: 2.25; color: Appearance.colors.colOnLayer1; opacity: 0.4 }
+                            }
+                            Rectangle { width: parent.width * 0.85; height: 5; radius: 2.5; color: Appearance.colors.colLayer2 }
+                            Rectangle { width: parent.width * 0.7; height: 5; radius: 2.5; color: Appearance.colors.colLayer2 }
+                            Rectangle { width: parent.width * 0.78; height: 5; radius: 2.5; color: Appearance.colors.colLayer2 }
+                        }
+                    }
 
-                                MaterialSymbol {
-                                    text: "expand_less"
-                                    iconSize: 11
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: Appearance.colors.colSubtext
+                    Rectangle {
+                        width: parent.width * 0.38
+                        height: parent.height * 0.52
+                        anchors.right: parent.right
+                        anchors.rightMargin: 14
+                        y: 18
+                        radius: 7
+                        color: Appearance.colors.colLayer0
+                        opacity: 0.68
+                        border.width: 1
+                        border.color: Appearance.colors.colOutlineVariant
+
+                        Column {
+                            anchors.fill: parent
+                            anchors.margins: 9
+                            spacing: 5
+                            Rectangle { width: parent.width * 0.55; height: 4.5; radius: 2.25; color: Appearance.colors.colOnLayer1; opacity: 0.35 }
+                            Rectangle { width: parent.width; height: 24; radius: 4; color: Appearance.colors.colLayer2 }
+                            Rectangle { width: parent.width * 0.82; height: 14; radius: 4; color: Appearance.colors.colLayer2 }
+                        }
+                    }
+
+                    Rectangle {
+                        id: waffleStartMenuMock
+                        width: Math.min(216, parent.width * 0.58)
+                        height: Math.min(156, parent.height - waffleTaskbarMock.height - 16)
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.bottom: waffleTaskbarMock.top
+                        anchors.bottomMargin: 6
+                        radius: 9
+                        color: Appearance.colors.colLayer0
+                        border.width: 1
+                        border.color: Appearance.colors.colOutlineVariant
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            spacing: 0
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                Layout.margins: 9
+                                spacing: 7
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 16
+                                    radius: 8
+                                    color: Appearance.colors.colLayer1
+                                    border.width: 1
+                                    border.color: Appearance.colors.colOutlineVariant
+
+                                    Row {
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: 7
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: 4
+                                        MaterialSymbol { text: "search"; iconSize: 10; color: Appearance.colors.colSubtext }
+                                        Rectangle { width: 52; height: 3.5; radius: 1.75; anchors.verticalCenter: parent.verticalCenter; color: Appearance.colors.colSubtext; opacity: 0.5 }
+                                    }
                                 }
 
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    Rectangle { width: 32; height: 4; radius: 2; color: Appearance.colors.colOnLayer0; opacity: 0.7 }
+                                    Item { Layout.fillWidth: true }
+                                    Rectangle { width: 22; height: 8; radius: 4; color: Appearance.colors.colLayer1 }
+                                }
+
+                                GridLayout {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    columns: 6
+                                    columnSpacing: 4
+                                    rowSpacing: 4
+
+                                    Repeater {
+                                        model: 12
+                                        ColumnLayout {
+                                            required property int index
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            spacing: 2
+
+                                            Rectangle {
+                                                Layout.alignment: Qt.AlignHCenter
+                                                Layout.preferredWidth: 16
+                                                Layout.preferredHeight: 16
+                                                radius: 4
+                                                color: index === 0
+                                                    ? Appearance.colors.colPrimary
+                                                    : (index % 3 === 0
+                                                        ? Appearance.colors.colSecondaryContainer
+                                                        : (index % 4 === 0 ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer2))
+                                            }
+                                            Rectangle {
+                                                Layout.alignment: Qt.AlignHCenter
+                                                width: 12; height: 2.5; radius: 1.25
+                                                color: Appearance.colors.colSubtext
+                                                opacity: 0.55
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 22
+                                color: Appearance.colors.colLayer1
+                                radius: 0
+
+                                Rectangle {
+                                    anchors.top: parent.top
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    height: 1
+                                    color: Appearance.colors.colOutlineVariant
+                                    opacity: 0.6
+                                }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 10
+                                    spacing: 5
+                                    Rectangle { width: 11; height: 11; radius: 5.5; color: Appearance.colors.colPrimary }
+                                    Rectangle { width: 38; height: 4; radius: 2; color: Appearance.colors.colOnLayer0; opacity: 0.7 }
+                                    Item { Layout.fillWidth: true }
+                                    MaterialSymbol { text: "power_settings_new"; iconSize: 11; color: Appearance.colors.colSubtext }
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        id: waffleTaskbarMock
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: 30
+                        color: Appearance.colors.colLayer0
+
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            height: 1
+                            color: Appearance.colors.colOutlineVariant
+                        }
+
+                        Row {
+                            anchors.left: parent.left
+                            anchors.leftMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 5
+                            MaterialSymbol {
+                                text: "partly_cloudy_day"
+                                iconSize: 13
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: Appearance.colors.colPrimary
+                            }
+                            Column {
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 2
+                                Rectangle { width: 18; height: 4; radius: 2; color: Appearance.colors.colOnLayer0; opacity: 0.8 }
+                                Rectangle { width: 24; height: 3; radius: 1.5; color: Appearance.colors.colSubtext; opacity: 0.55 }
+                            }
+                        }
+
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 6
+
+                            Grid {
+                                columns: 2
+                                spacing: 1.5
+                                anchors.verticalCenter: parent.verticalCenter
+                                Repeater {
+                                    model: 4
+                                    Rectangle { width: 6; height: 6; radius: 1.2; color: Appearance.colors.colPrimary }
+                                }
+                            }
+
+                            Rectangle {
+                                width: 44; height: 16; radius: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: Appearance.colors.colLayer1
+                                border.width: 1
+                                border.color: Appearance.colors.colOutlineVariant
                                 Row {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 5
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: 3
-                                    MaterialSymbol { text: "wifi"; iconSize: 10; color: Appearance.colors.colOnLayer1 }
-                                    MaterialSymbol { text: "volume_up"; iconSize: 10; color: Appearance.colors.colOnLayer1 }
-                                    MaterialSymbol { text: "battery_5_bar"; iconSize: 10; color: Appearance.colors.colOnLayer1 }
+                                    MaterialSymbol { text: "search"; iconSize: 9; color: Appearance.colors.colSubtext }
+                                    Rectangle { width: 20; height: 3.5; radius: 1.75; anchors.verticalCenter: parent.verticalCenter; color: Appearance.colors.colSubtext; opacity: 0.5 }
                                 }
+                            }
 
-                                Column {
+                            Repeater {
+                                model: 4
+                                Item {
+                                    required property int index
+                                    width: 16; height: 20
                                     anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 2
-                                    StyledText {
-                                        text: "14:20"
-                                        font.pixelSize: 8
-                                        font.weight: Font.DemiBold
-                                        color: Appearance.colors.colOnLayer0
-                                        anchors.right: parent.right
+                                    Rectangle {
+                                        width: 13; height: 13; radius: 3.5
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.top: parent.top
+                                        anchors.topMargin: 1
+                                        color: index === 0
+                                            ? Appearance.colors.colPrimaryContainer
+                                            : (index === 1 ? Appearance.colors.colSecondaryContainer : Appearance.colors.colLayer2)
                                     }
-                                    Rectangle { width: 26; height: 3; radius: 1.5; color: Appearance.colors.colSubtext; opacity: 0.55 }
+                                    Rectangle {
+                                        visible: index < 2
+                                        width: index === 0 ? 7 : 3
+                                        height: 2; radius: 1
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.bottom: parent.bottom
+                                        color: Appearance.colors.colPrimary
+                                    }
                                 }
+                            }
+                        }
+
+                        Row {
+                            anchors.right: parent.right
+                            anchors.rightMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 6
+
+                            MaterialSymbol {
+                                text: "expand_less"
+                                iconSize: 11
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: Appearance.colors.colSubtext
+                            }
+
+                            Row {
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 3
+                                MaterialSymbol { text: "wifi"; iconSize: 10; color: Appearance.colors.colOnLayer1 }
+                                MaterialSymbol { text: "volume_up"; iconSize: 10; color: Appearance.colors.colOnLayer1 }
+                                MaterialSymbol { text: "battery_5_bar"; iconSize: 10; color: Appearance.colors.colOnLayer1 }
+                            }
+
+                            Column {
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 2
+                                StyledText {
+                                    text: "14:20"
+                                    font.pixelSize: 8
+                                    font.weight: Font.DemiBold
+                                    color: Appearance.colors.colOnLayer0
+                                    anchors.right: parent.right
+                                }
+                                Rectangle { width: 26; height: 3; radius: 1.5; color: Appearance.colors.colSubtext; opacity: 0.55 }
                             }
                         }
                     }
                 }
             }
         }
+    }
 
-        SettingsCardSection {
-            id: settingsUiCard
-            _preventBentoReparent: true
-            Layout.preferredWidth: 1
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.alignment: Qt.AlignTop
-            settingsTaskSection: "panels"
-            visible: true
-            expanded: true
-            icon: "web_asset"
-            title: Translation.tr("Settings UI")
+    SettingsCardSection {
+        id: settingsUiCard
+        _preventBentoReparent: true
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        settingsTaskSection: "panels"
+        visible: true
+        expanded: true
+        icon: "web_asset"
+        title: Translation.tr("Settings UI")
 
-            SettingsGroup {
-                id: settingsUiGroup
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Translation.tr("Overlay opens Settings above the shell for live previews.")
-                    color: Appearance.colors.colOnSurfaceVariant
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    wrapMode: Text.WordWrap
-                }
+        SettingsGroup {
+            id: settingsUiGroup
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Overlay opens Settings above the shell for live previews.")
+                color: Appearance.colors.colOnSurfaceVariant
+                font.pixelSize: Appearance.font.pixelSize.small
+                wrapMode: Text.WordWrap
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 410 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 10
+                rowSpacing: 6
 
                 SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
                     buttonIcon: "layers"
                     text: Translation.tr("Overlay mode (live preview)")
-                    checked: Config.options?.settingsUi?.overlayMode ?? false
+                    checked: Config.options?.settingsUi?.overlayMode ?? true
                     onCheckedChanged: Config.setNestedValue("settingsUi.overlayMode", checked)
                     StyledToolTip {
                         text: Translation.tr("Overlay replaces the separate Settings window. Restart required.")
                     }
                 }
 
-                ContentSubsection {
-                    title: Translation.tr("Overlay layout")
-                    visible: Config.options?.settingsUi?.overlayMode ?? false
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "notifications"
+                    text: Translation.tr("Shell reload toasts")
+                    checked: Config.options?.reloadToasts?.enable ?? true
+                    onCheckedChanged: Config.setNestedValue("reloadToasts.enable", checked)
+                }
+            }
 
-                    ConfigSelectionArray {
-                        currentValue: Config.options?.settingsUi?.overlayStyle ?? "rail"
-                        options: [
-                            { displayName: Translation.tr("Nav rail"), icon: "view_sidebar", value: "rail" },
-                            { displayName: Translation.tr("Focus"), icon: "grid_view", value: "focus" }
-                        ]
-                        onSelected: value => Config.setNestedValue("settingsUi.overlayStyle", value)
-                    }
+            SettingsSwitch {
+                buttonIcon: "swap_horiz"
+                text: Translation.tr("Animate panel style switch")
+                checked: Config.options?.familyTransitionAnimation ?? true
+                onCheckedChanged: Config.setNestedValue("familyTransitionAnimation", checked)
+            }
 
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
-                            ? Translation.tr("One page at a time: a grid of every settings page, then the page you pick, full width. Escape steps back.")
-                            : Translation.tr("A persistent flat tab rail beside the page you are editing.")
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        wrapMode: Text.WordWrap
-                    }
+            SettingsDivider {}
+
+            ContentSubsection {
+                title: Translation.tr("Overlay layout")
+                enabled: Config.options?.settingsUi?.overlayMode ?? true
+
+                ConfigSelectionArray {
+                    currentValue: Config.options?.settingsUi?.overlayStyle ?? "rail"
+                    options: [
+                        { displayName: Translation.tr("Nav rail"), icon: "view_sidebar", value: "rail" },
+                        { displayName: Translation.tr("Focus"), icon: "grid_view", value: "focus" }
+                    ]
+                    onSelected: value => Config.setNestedValue("settingsUi.overlayStyle", value)
                 }
 
-                ContentSubsection {
-                    title: Translation.tr("Overlay appearance")
-                    visible: Config.options?.settingsUi?.overlayMode ?? false
+                StyledText {
+                    Layout.fillWidth: true
+                    text: (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
+                        ? Translation.tr("One page at a time: a grid of every settings page, then the page you pick, full width. Escape steps back.")
+                        : Translation.tr("A persistent flat tab rail beside the page you are editing.")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            SettingsDivider {}
+
+            ContentSubsection {
+                title: Translation.tr("Overlay appearance")
+                enabled: Config.options?.settingsUi?.overlayMode ?? true
+
+                ConfigRow {
+                    uniform: true
+
+                    ConfigSpinBox {
+                        icon: "opacity"
+                        text: Translation.tr("Panel opacity (%)")
+                        value: Math.round((Config.options?.settingsUi?.overlayAppearance?.backgroundOpacity ?? 1.0) * 100)
+                        from: 50
+                        to: 100
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.backgroundOpacity", value / 100)
+                    }
 
                     ConfigSpinBox {
                         icon: "blur_on"
@@ -1051,93 +1085,67 @@ ContentPage {
                             text: Translation.tr("Blur wallpaper behind Settings; 0 disables the effect.")
                         }
                     }
-
-                    ConfigSpinBox {
-                        icon: "water"
-                        text: Translation.tr("Background dim (%)")
-                        value: Config.options?.settingsUi?.overlayAppearance?.scrimDim ?? 35
-                        from: 0
-                        to: 80
-                        stepSize: 5
-                        onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.scrimDim", value)
-                        StyledToolTip {
-                            text: Translation.tr("How dark the backdrop behind the Settings panel should be (0 = transparent, 80 = very dark)")
-                        }
-                    }
-
                 }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: modeHintRow.implicitHeight + 16
-                    radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius : Appearance.rounding.small
-                    color: Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colSurfaceContainerLow
-                    border.width: Appearance.zzzEverywhere ? 0 : 1
-                    border.color: Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colLayer0Border
-                    Behavior on radius {
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                ConfigSpinBox {
+                    icon: "water"
+                    text: Translation.tr("Background dim (%)")
+                    value: Config.options?.settingsUi?.overlayAppearance?.scrimDim ?? 35
+                    from: 0
+                    to: 80
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.scrimDim", value)
+                    StyledToolTip {
+                        text: Translation.tr("How dark the backdrop behind the Settings panel should be (0 = transparent, 80 = very dark)")
                     }
-                    Behavior on color {
-                        enabled: Appearance.animationsEnabled
-                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: modeHintRow.implicitHeight + 16
+                radius: Appearance.rounding.small
+                color: Appearance.colors.colSurfaceContainerLow
+                border.width: 1
+                border.color: Appearance.colors.colLayer0Border
+
+                RowLayout {
+                    id: modeHintRow
+                    anchors {
+                        fill: parent
+                        margins: 8
                     }
-                    Behavior on border.width {
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                    }
-                    Behavior on border.color {
-                        enabled: Appearance.animationsEnabled
-                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                    spacing: 8
+
+                    MaterialSymbol {
+                        text: (Config.options?.settingsUi?.overlayMode ?? false) ? "layers" : "open_in_new"
+                        iconSize: Appearance.font.pixelSize.huge
+                        color: Appearance.colors.colPrimary
                     }
 
-                    ZzzPlate {
-                        anchors.fill: parent
-                        visible: Appearance.zzzEverywhere
-                        fillColor: Appearance.colors.colLayer1
-                        strokeColor: Appearance.zzz.hairline
-                        radius: Appearance.zzz.cardRadius
-                        chamfer: Appearance.zzz.cutCorner * 0.45
-                        chamferTopRight: !Appearance.zzz.round
-                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        spacing: 2
 
-                    RowLayout {
-                        id: modeHintRow
-                        anchors {
-                            fill: parent
-                            margins: 8
+                        StyledText {
+                            text: (Config.options?.settingsUi?.overlayMode ?? false)
+                                ? Translation.tr("Overlay mode")
+                                : Translation.tr("Window mode")
+                            font {
+                                pixelSize: Appearance.font.pixelSize.small
+                                weight: Font.Medium
+                            }
+                            color: Appearance.colors.colOnSurface
                         }
-                        spacing: 8
-
-                        MaterialSymbol {
-                            text: (Config.options?.settingsUi?.overlayMode ?? false) ? "layers" : "open_in_new"
-                            iconSize: Appearance.font.pixelSize.huge
-                            color: Appearance.colors.colPrimary
-                        }
-
-                        ColumnLayout {
+                        StyledText {
                             Layout.fillWidth: true
-                            spacing: 2
-
-                            StyledText {
-                                text: (Config.options?.settingsUi?.overlayMode ?? false)
-                                    ? Translation.tr("Overlay mode")
-                                    : Translation.tr("Window mode")
-                                font {
-                                    pixelSize: Appearance.font.pixelSize.small
-                                    weight: Font.Medium
-                                }
-                                color: Appearance.colors.colOnSurface
-                            }
-                            StyledText {
-                                Layout.fillWidth: true
-                                text: (Config.options?.settingsUi?.overlayMode ?? false)
-                                    ? Translation.tr("Settings will open as a floating panel over the shell. Press Esc or click outside to close.")
-                                    : Translation.tr("Settings will open as a separate application window (current behavior).")
-                                font.pixelSize: Appearance.font.pixelSize.smallest
-                                color: Appearance.colors.colSubtext
-                                wrapMode: Text.WordWrap
-                            }
+                            text: (Config.options?.settingsUi?.overlayMode ?? false)
+                                ? Translation.tr("Settings will open as a floating panel over the shell. Press Esc or click outside to close.")
+                                : Translation.tr("Settings will open as a separate application window (current behavior).")
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            color: Appearance.colors.colSubtext
+                            wrapMode: Text.WordWrap
                         }
                     }
                 }
@@ -1154,11 +1162,12 @@ ContentPage {
         activeSection: "tools"
         visible: true
         Layout.fillWidth: true
-        Layout.topMargin: 14
+        Layout.topMargin: SettingsMaterialPreset.pageSpacing
     }
 
     // ==================== MATERIAL II ====================
     SettingsCardSection {
+        _preventBentoReparent: true
         settingsTaskSection: "modules"
         visible: modulesPage.isIi
         expanded: true
@@ -1217,6 +1226,7 @@ ContentPage {
     }
 
     SettingsCardSection {
+        _preventBentoReparent: true
         settingsTaskSection: "modules"
         visible: modulesPage.isIi
         expanded: true
@@ -1251,6 +1261,7 @@ ContentPage {
     }
 
     SettingsCardSection {
+        _preventBentoReparent: true
         settingsTaskSection: "modules"
         visible: modulesPage.isIi
         expanded: true
@@ -1333,6 +1344,7 @@ ContentPage {
     }
 
     SettingsCardSection {
+        _preventBentoReparent: true
         settingsTaskSection: "modules"
         visible: modulesPage.isIi
         expanded: true
@@ -1360,6 +1372,7 @@ ContentPage {
 
     // ==================== WAFFLE ====================
     SettingsCardSection {
+        _preventBentoReparent: true
         settingsTaskSection: "modules"
         visible: modulesPage.isWaffle
         expanded: true
@@ -1367,73 +1380,148 @@ ContentPage {
         title: Translation.tr("Waffle Core")
 
         SettingsGroup {
-            SettingsSwitch {
-                buttonIcon: "toolbar"
-                text: Translation.tr("Taskbar")
-                checked: modulesPage.isPanelEnabled("wBar")
-                onCheckedChanged: modulesPage.setPanelEnabled("wBar", checked)
-                StyledToolTip { text: Translation.tr("Windows 11 style taskbar with app icons and system tray") }
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Primary Windows 11-style panels and desktop overlays")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                wrapMode: Text.WordWrap
             }
 
-            SettingsSwitch {
-                buttonIcon: "wallpaper"
-                text: Translation.tr("Background")
-                checked: modulesPage.isPanelEnabled("wBackground")
-                onCheckedChanged: modulesPage.setPanelEnabled("wBackground", checked)
-                StyledToolTip { text: Translation.tr("Desktop wallpaper") }
-            }
+            GridLayout {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                columns: width >= 410 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 10
+                rowSpacing: 6
 
-            SettingsSwitch {
-                buttonIcon: "grid_view"
-                text: Translation.tr("Start Menu")
-                checked: modulesPage.isPanelEnabled("wStartMenu")
-                onCheckedChanged: modulesPage.setPanelEnabled("wStartMenu", checked)
-                StyledToolTip { text: Translation.tr("Windows 11 style start menu with search and pinned apps (Super+Space)") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "toolbar"
+                    text: Translation.tr("Taskbar")
+                    checked: modulesPage.isPanelEnabled("wBar")
+                    onCheckedChanged: modulesPage.setPanelEnabled("wBar", checked)
+                    StyledToolTip { text: Translation.tr("Windows 11 style taskbar with app icons and system tray") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "toggle_on"
-                text: Translation.tr("Action Center")
-                checked: modulesPage.isPanelEnabled("wActionCenter")
-                onCheckedChanged: modulesPage.setPanelEnabled("wActionCenter", checked)
-                StyledToolTip { text: Translation.tr("Quick settings panel with toggles and sliders") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "wallpaper"
+                    text: Translation.tr("Background")
+                    checked: modulesPage.isPanelEnabled("wBackground")
+                    onCheckedChanged: modulesPage.setPanelEnabled("wBackground", checked)
+                    StyledToolTip { text: Translation.tr("Desktop wallpaper") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "notifications"
-                text: Translation.tr("Notification Center")
-                checked: modulesPage.isPanelEnabled("wNotificationCenter")
-                onCheckedChanged: modulesPage.setPanelEnabled("wNotificationCenter", checked)
-                StyledToolTip { text: Translation.tr("Notification panel with calendar") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "grid_view"
+                    text: Translation.tr("Start Menu")
+                    checked: modulesPage.isPanelEnabled("wStartMenu")
+                    onCheckedChanged: modulesPage.setPanelEnabled("wStartMenu", checked)
+                    StyledToolTip { text: Translation.tr("Windows 11 style start menu with search and pinned apps (Super+Space)") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "notifications_active"
-                text: Translation.tr("Notification Popups")
-                checked: modulesPage.isPanelEnabled("wNotificationPopup")
-                onCheckedChanged: modulesPage.setPanelEnabled("wNotificationPopup", checked)
-                StyledToolTip { text: Translation.tr("Toast notifications that appear on screen (Windows 11 style)") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "toggle_on"
+                    text: Translation.tr("Action Center")
+                    checked: modulesPage.isPanelEnabled("wActionCenter")
+                    onCheckedChanged: modulesPage.setPanelEnabled("wActionCenter", checked)
+                    StyledToolTip { text: Translation.tr("Quick settings panel with toggles and sliders") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "volume_up"
-                text: Translation.tr("OSD")
-                checked: modulesPage.isPanelEnabled("wOnScreenDisplay")
-                onCheckedChanged: modulesPage.setPanelEnabled("wOnScreenDisplay", checked)
-                StyledToolTip { text: Translation.tr("On-screen display for volume and brightness") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "notifications"
+                    text: Translation.tr("Notification Center")
+                    checked: modulesPage.isPanelEnabled("wNotificationCenter")
+                    onCheckedChanged: modulesPage.setPanelEnabled("wNotificationCenter", checked)
+                    StyledToolTip { text: Translation.tr("Notification panel with calendar") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "widgets"
-                text: Translation.tr("Widgets Panel")
-                checked: modulesPage.isPanelEnabled("wWidgets")
-                onCheckedChanged: modulesPage.setPanelEnabled("wWidgets", checked)
-                StyledToolTip { text: Translation.tr("Windows 11 style widgets sidebar") }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "notifications_active"
+                    text: Translation.tr("Notification Popups")
+                    checked: modulesPage.isPanelEnabled("wNotificationPopup")
+                    onCheckedChanged: modulesPage.setPanelEnabled("wNotificationPopup", checked)
+                    StyledToolTip { text: Translation.tr("Toast notifications that appear on screen (Windows 11 style)") }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "volume_up"
+                    text: Translation.tr("OSD")
+                    checked: modulesPage.isPanelEnabled("wOnScreenDisplay")
+                    onCheckedChanged: modulesPage.setPanelEnabled("wOnScreenDisplay", checked)
+                    StyledToolTip { text: Translation.tr("On-screen display for volume and brightness") }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "widgets"
+                    text: Translation.tr("Widgets Panel")
+                    checked: modulesPage.isPanelEnabled("wWidgets")
+                    onCheckedChanged: modulesPage.setPanelEnabled("wWidgets", checked)
+                    StyledToolTip { text: Translation.tr("Windows 11 style widgets sidebar") }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "view_carousel"
+                    text: Translation.tr("Task View")
+                    checked: modulesPage.isPanelEnabled("wTaskView")
+                    onCheckedChanged: modulesPage.setPanelEnabled("wTaskView", checked)
+                    StyledToolTip { text: Translation.tr("Workspace and open-window overview") }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "layers"
+                    text: Translation.tr("Waffle Backdrop")
+                    checked: modulesPage.isPanelEnabled("wBackdrop")
+                    onCheckedChanged: modulesPage.setPanelEnabled("wBackdrop", checked)
+                    StyledToolTip { text: Translation.tr("Backdrop layer behind Waffle overview") }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "rounded_corner"
+                    text: Translation.tr("Screen Corners")
+                    checked: modulesPage.isPanelEnabled("iiScreenCorners")
+                    onCheckedChanged: modulesPage.setPanelEnabled("iiScreenCorners", checked)
+                    StyledToolTip { text: Translation.tr("Hot-corner triggers along screen edges") }
+                }
             }
         }
     }
 
     SettingsCardSection {
+        _preventBentoReparent: true
         settingsTaskSection: "modules"
         visible: modulesPage.isWaffle
         expanded: true
@@ -1449,92 +1537,134 @@ ContentPage {
                 wrapMode: Text.WordWrap
             }
 
-            SettingsSwitch {
-                buttonIcon: "blur_on"
-                text: Translation.tr("Niri Overview Backdrop")
-                checked: modulesPage.isPanelEnabled("iiBackdrop")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiBackdrop", checked)
-                StyledToolTip { text: Translation.tr("Blurred wallpaper shown in Niri's native overview (Mod+Tab)") }
-            }
+            GridLayout {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                columns: width >= 410 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 10
+                rowSpacing: 6
 
-            SettingsSwitch {
-                buttonIcon: "search"
-                text: Translation.tr("Overview")
-                checked: modulesPage.isPanelEnabled("iiOverview")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiOverview", checked)
-                StyledToolTip { text: Translation.tr("Workspace grid (used by Start Menu)") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "blur_on"
+                    text: Translation.tr("Niri Overview Backdrop")
+                    checked: modulesPage.isPanelEnabled("iiBackdrop")
+                    onCheckedChanged: modulesPage.setPanelEnabled("iiBackdrop", checked)
+                    StyledToolTip { text: Translation.tr("Blurred wallpaper shown in Niri's native overview (Mod+Tab)") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "lock"
-                text: Translation.tr("Lock Screen")
-                checked: modulesPage.isPanelEnabled("wLock")
-                onCheckedChanged: modulesPage.setPanelEnabled("wLock", checked)
-                StyledToolTip { text: Translation.tr("Custom lock screen with clock and password input") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "search"
+                    text: Translation.tr("Overview")
+                    checked: modulesPage.isPanelEnabled("iiOverview")
+                    onCheckedChanged: modulesPage.setPanelEnabled("iiOverview", checked)
+                    StyledToolTip { text: Translation.tr("Workspace grid (used by Start Menu)") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "power_settings_new"
-                text: Translation.tr("Session Screen")
-                checked: modulesPage.isPanelEnabled("wSessionScreen")
-                onCheckedChanged: modulesPage.setPanelEnabled("wSessionScreen", checked)
-                StyledToolTip { text: Translation.tr("Power menu: lock, logout, suspend, reboot, shutdown") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "lock"
+                    text: Translation.tr("Lock Screen")
+                    checked: modulesPage.isPanelEnabled("wLock")
+                    onCheckedChanged: modulesPage.setPanelEnabled("wLock", checked)
+                    StyledToolTip { text: Translation.tr("Custom lock screen with clock and password input") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "admin_panel_settings"
-                text: Translation.tr("Polkit Agent")
-                checked: modulesPage.isPanelEnabled("wPolkit")
-                onCheckedChanged: modulesPage.setPanelEnabled("wPolkit", checked)
-                StyledToolTip { text: Translation.tr("Password prompt for administrative actions") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "power_settings_new"
+                    text: Translation.tr("Session Screen")
+                    checked: modulesPage.isPanelEnabled("wSessionScreen")
+                    onCheckedChanged: modulesPage.setPanelEnabled("wSessionScreen", checked)
+                    StyledToolTip { text: Translation.tr("Power menu: lock, logout, suspend, reboot, shutdown") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "screenshot_region"
-                text: Translation.tr("Region Selector")
-                checked: modulesPage.isPanelEnabled("iiRegionSelector")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiRegionSelector", checked)
-                StyledToolTip { text: Translation.tr("Screen capture, OCR text extraction, color picker") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "admin_panel_settings"
+                    text: Translation.tr("Polkit Agent")
+                    checked: modulesPage.isPanelEnabled("wPolkit")
+                    onCheckedChanged: modulesPage.setPanelEnabled("wPolkit", checked)
+                    StyledToolTip { text: Translation.tr("Password prompt for administrative actions") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "image"
-                text: Translation.tr("Wallpaper Selector")
-                checked: modulesPage.isPanelEnabled("iiWallpaperSelector")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiWallpaperSelector", checked)
-                StyledToolTip { text: Translation.tr("File picker for changing wallpaper") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "screenshot_region"
+                    text: Translation.tr("Region Selector")
+                    checked: modulesPage.isPanelEnabled("iiRegionSelector")
+                    onCheckedChanged: modulesPage.setPanelEnabled("iiRegionSelector", checked)
+                    StyledToolTip { text: Translation.tr("Screen capture, OCR text extraction, color picker") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "keyboard"
-                text: Translation.tr("Cheatsheet")
-                checked: modulesPage.isPanelEnabled("iiCheatsheet")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiCheatsheet", checked)
-                StyledToolTip { text: Translation.tr("Keyboard shortcuts reference overlay") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "image"
+                    text: Translation.tr("Wallpaper Selector")
+                    checked: modulesPage.isPanelEnabled("iiWallpaperSelector")
+                    onCheckedChanged: modulesPage.setPanelEnabled("iiWallpaperSelector", checked)
+                    StyledToolTip { text: Translation.tr("File picker for changing wallpaper") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "keyboard_alt"
-                text: Translation.tr("On-Screen Keyboard")
-                checked: modulesPage.isPanelEnabled("iiOnScreenKeyboard")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiOnScreenKeyboard", checked)
-                StyledToolTip { text: Translation.tr("Virtual keyboard for touch input") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "keyboard"
+                    text: Translation.tr("Cheatsheet")
+                    checked: modulesPage.isPanelEnabled("iiCheatsheet")
+                    onCheckedChanged: modulesPage.setPanelEnabled("iiCheatsheet", checked)
+                    StyledToolTip { text: Translation.tr("Keyboard shortcuts reference overlay") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "tab"
-                text: Translation.tr("Alt-Tab Switcher")
-                checked: false
-                enabled: false
-                StyledToolTip { text: Translation.tr("Window switcher popup") }
-            }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "keyboard_alt"
+                    text: Translation.tr("On-Screen Keyboard")
+                    checked: modulesPage.isPanelEnabled("iiOnScreenKeyboard")
+                    onCheckedChanged: modulesPage.setPanelEnabled("iiOnScreenKeyboard", checked)
+                    StyledToolTip { text: Translation.tr("Virtual keyboard for touch input") }
+                }
 
-            SettingsSwitch {
-                buttonIcon: "content_paste"
-                text: Translation.tr("Clipboard History")
-                checked: modulesPage.isPanelEnabled("iiClipboard")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiClipboard", checked)
-                StyledToolTip { text: Translation.tr("Clipboard manager with history") }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "tab"
+                    text: Translation.tr("Alt-Tab Switcher")
+                    checked: false
+                    enabled: false
+                    StyledToolTip { text: Translation.tr("Window switcher popup") }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "content_paste"
+                    text: Translation.tr("Clipboard History")
+                    checked: modulesPage.isPanelEnabled("iiClipboard")
+                    onCheckedChanged: modulesPage.setPanelEnabled("iiClipboard", checked)
+                    StyledToolTip { text: Translation.tr("Clipboard manager with history") }
+                }
             }
         }
     }

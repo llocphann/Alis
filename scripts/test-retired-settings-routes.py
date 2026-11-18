@@ -30,7 +30,10 @@ class RetiredSettingsRoutesTest(unittest.TestCase):
         self.assertNotIn("pageIndex:35", data)
         self.assertNotIn("pages: [24, 35", data)
         self.assertIn("function safePageIndex(index: int): int", registry)
+        self.assertIn("if (index === 13 && root.isPageApplicable(40))", registry)
         self.assertIn("if (index === 14)", registry)
+        self.assertIn('if (value === "widgets" || value === "monitors") return 12', registry)
+        self.assertIn('if (value === "about") return root.isPageApplicable(40) ? 40 : -1', registry)
         self.assertIn("root.isPageApplicable(index)", registry)
         self.assertIn("root.panelsPageIndex", registry)
 
@@ -50,9 +53,12 @@ class RetiredSettingsRoutesTest(unittest.TestCase):
     def test_other_settings_services_stay_connected(self):
         data = source("modules/settings/SettingsPageRegistryData.qml")
         for component in ("CompanionConfig.qml", "IntegrationsConfig.qml",
-                          "ServicesConfig.qml", "AiConfig.qml"):
+                          "ServicesConfig.qml", "AiConfig.qml", "AboutConfig.qml",
+                          "DefaultAppsConfig.qml", "NiriConfig.qml", "CheatsheetConfig.qml"):
             self.assertIn(component, data)
             self.assertTrue((ROOT / "modules/settings" / component).is_file())
+        for standalone_plate in ("AudioConfig.qml", "BluetoothConfig.qml"):
+            self.assertTrue((ROOT / "modules/settings" / standalone_plate).is_file())
         reg = source("modules/settings/SettingsPageRegistry.qml")
         self.assertIn("root.isPageApplicable(index)", reg)
         self.assertIn("root._migrateLegacyPersistentPage()", reg)

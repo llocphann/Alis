@@ -42,11 +42,23 @@ WPanelPageColumn {
                 WBorderlessButton {
                     implicitHeight: 28
                     implicitWidth: allAppsRow.implicitWidth + 16
-                    contentItem: RowLayout {
-                        id: allAppsRow
-                        spacing: 4
-                        WText { text: Translation.tr("All apps"); font.pixelSize: Looks.font.pixelSize.normal }
-                        FluentIcon { icon: "chevron-right"; implicitSize: 12 }
+                    contentItem: Item {
+                        Row {
+                            id: allAppsRow
+                            anchors.centerIn: parent
+                            spacing: 5
+                            WText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                verticalAlignment: Text.AlignVCenter
+                                text: Translation.tr("All apps")
+                                font.pixelSize: Looks.font.pixelSize.normal
+                            }
+                            FluentIcon {
+                                anchors.verticalCenter: parent.verticalCenter
+                                icon: "chevron-right"
+                                implicitSize: 12
+                            }
+                        }
                     }
                     onClicked: root.allAppsClicked()
                 }
@@ -232,13 +244,20 @@ WPanelPageColumn {
         }
         
         contentItem: RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
             spacing: 10
             Image {
+                Layout.alignment: Qt.AlignVCenter
                 source: AppSearch.getIconSource(recBtn.appId, "application-x-executable")
                 sourceSize: Qt.size(28, 28)
             }
             WText {
+                Layout.alignment: Qt.AlignVCenter
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                verticalAlignment: Text.AlignVCenter
                 text: recBtn.appName
                 font.pixelSize: Looks.font.pixelSize.normal
                 elide: Text.ElideRight
@@ -259,13 +278,33 @@ WPanelPageColumn {
             }
         }
 
-        PowerButton {
+        Row {
             anchors {
                 right: parent.right
                 rightMargin: 52
                 bottom: parent.bottom
                 bottomMargin: 12
             }
+            spacing: 4
+
+            WBorderlessButton {
+                objectName: "waffleStartSettingsButton"
+                implicitWidth: 40
+                implicitHeight: 40
+                onClicked: WaffleNavigation.openSettings()
+
+                contentItem: Item {
+                    FluentIcon {
+                        anchors.centerIn: parent
+                        icon: "settings"
+                        implicitSize: 20
+                    }
+                }
+
+                WToolTip { text: Translation.tr("Settings") }
+            }
+
+            PowerButton {}
         }
     }
 

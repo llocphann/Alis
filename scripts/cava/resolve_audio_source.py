@@ -73,14 +73,17 @@ DESKTOP_ENTRY_BINARIES: dict[str, tuple[str, ...]] = {
     "mpd": ("mpd",),
     "mpd-mpris": ("mpd",),
     "vlc": ("vlc",),
-    "firefox": ("firefox", "zen"),
-    "zen": ("zen", "firefox"),
+    "firefox": ("firefox", "firefox-bin", "zen", "zen-bin"),
+    "zen": ("zen", "zen-bin", "firefox", "firefox-bin"),
+    "app.zen_browser.zen": ("zen", "zen-bin", "firefox", "firefox-bin"),
     "chromium": ("chromium", "chrome", "brave", "google-chrome", "google-chrome-stable"),
     "chrome": ("chrome", "google-chrome", "google-chrome-stable", "brave"),
+    "google-chrome": ("chrome", "chromium", "google-chrome", "google-chrome-stable"),
     "brave": ("brave",),
+    "brave-browser": ("brave", "chrome", "chromium"),
     "org.chromium.Chromium": ("chromium", "chrome"),
     "com.google.Chrome": ("chrome", "google-chrome", "google-chrome-stable"),
-    "org.mozilla.firefox": ("firefox",),
+    "org.mozilla.firefox": ("firefox", "firefox-bin"),
     "strawberry": ("strawberry",),
     "audacious": ("audacious",),
     "deadbeef": ("deadbeef",),
@@ -103,6 +106,7 @@ class SinkInput:
     app_id: str
     binary: str
     corked: bool
+    muted: bool = False
 
 
 @dataclass
@@ -177,11 +181,13 @@ def _parse_sink_inputs(text: str, clients: dict[str, PulseClient]) -> list[SinkI
                 media_name=block.get("media.name", "").lower(),
                 app_name=(block.get("application.name")
                     or (client.app_name if client else "")).lower(),
-                app_id=block.get("application.id", "").lower(),
+                app_id=(block.get("application.id")
+                    or block.get("pipewire.access.portal.app_id", "")).lower(),
                 binary=(block.get("application.process.binary")
                     or (client.binary if client else "")).lower(),
                 corked=(block.get("Corked", block.get("pulse.corked", "false"))
                     .lower() in ("yes", "true", "1")),
+                muted=(block.get("Mute", "no").lower() in ("yes", "true", "1")),
             )
         )
         block = {}
@@ -196,6 +202,10 @@ def _parse_sink_inputs(text: str, clients: dict[str, PulseClient]) -> list[SinkI
         corked_match = re.match(r"^\s+Corked:\s+(yes|no)$", line, re.IGNORECASE)
         if corked_match and sink_index:
             block["Corked"] = corked_match.group(1)
+            continue
+        mute_match = re.match(r"^\s+Mute:\s+(yes|no)$", line, re.IGNORECASE)
+        if mute_match and sink_index:
+            block["Mute"] = mute_match.group(1)
             continue
         prop = re.match(r"^\s+([^=]+) = \"(.*)\"$", line)
         if prop and sink_index:
@@ -249,6 +259,8 @@ def _score_stream(stream: SinkInput, hint_binaries: set[str], track_title: str =
         return -10_000
     if stream.corked:
         return -5_000
+    if stream.muted:
+        return -4_000
 
     score = 180
     if stream.media_role == "music":
@@ -262,15 +274,6 @@ def _score_stream(stream: SinkInput, hint_binaries: set[str], track_title: str =
         stream.node_name.lower(), stream.media_name, stream.app_name,
         stream.app_id, stream.binary,
     ))
-    hint_match = not hint_binaries or (
-        stream.binary in hint_binaries
-        or stream.node_name.lower() in hint_binaries
-        or stream.app_id in hint_binaries
-        or any(hint in identity for hint in hint_binaries)
-    )
-    if not hint_match:
-        return -1_000
-
     if hint_binaries:
         if stream.binary in hint_binaries:
             score += 500
@@ -326,7 +329,13 @@ def resolve_source(desktop_entry: str = "", track_title: str = "") -> str:
     for score, stream in ranked:
         if score > 0 and stream.node_name:
             if is_pipewire and stream.object_serial:
-                return stream.object_serial
+                # Suffix .monitor so cava sets PW_KEY_STREAM_CAPTURE_SINK=true
+                # alongside target.object, preventing fallback capture of Mic1.
+                return (
+                    stream.object_serial
+                    if stream.object_serial.endswith(".monitor")
+                    else f"{stream.object_serial}.monitor"
+                )
             return stream.node_name
 
     # VoIP/system streams only — don't fall back to the full sink mix (Discord voices, etc.)

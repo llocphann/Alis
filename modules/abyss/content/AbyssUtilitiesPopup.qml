@@ -723,6 +723,17 @@ Item {
                         wrapMode: Text.WordWrap
                     }
 
+                    AbyssLabel {
+                        Layout.fillWidth: true
+                        visible: NetworkDisplays.firewallWarning.length > 0
+                            && NetworkDisplays.lastError.length === 0
+                            && NetworkDisplays.displays.some(d => d.protocolId === 1 || d.protocolId === 2)
+                        text: NetworkDisplays.firewallWarning
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        color: Appearance.colors.colError
+                        wrapMode: Text.WordWrap
+                    }
+
                     AbyssButton {
                         Layout.alignment: Qt.AlignLeft
                         visible: root.wirelessToolAvailable

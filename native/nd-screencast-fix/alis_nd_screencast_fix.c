@@ -13,35 +13,133 @@ typedef GstElementFactory *(*gst_element_factory_find_fn)(const gchar *);
 typedef GstElement *(*gst_element_factory_make_fn)(const gchar *, const gchar *);
 typedef GstStateChangeReturn (*gst_element_set_state_fn)(GstElement *, GstState);
 typedef void (*nm_start_find_fn)(void *, void *, void *, void *, void *);
-typedef void (*nm_stop_find_fn)(void *, void *, void *, void *);
 typedef guint (*nm_get_state_fn)(void *);
+typedef int (*pa_tml_start_fn)(void *);
+typedef void (*pa_tml_void_fn)(void *);
+typedef int (*pa_tml_in_thread_fn)(void *);
+
+static void *g_pa_mainloop = NULL;
+static volatile int g_pa_mainloop_running = 0;
+
+static int
+caller_is_nd_stream(const void *ret_addr)
+{
+    Dl_info info;
+    if (!ret_addr || dladdr(ret_addr, &info) == 0 || !info.dli_fname)
+        return 0;
+    return strstr(info.dli_fname, "gnome-network-displays") != NULL;
+}
+
+static void
+stop_pa_mainloop_before_teardown(void)
+{
+    static pa_tml_void_fn real_pa_stop = NULL;
+    static pa_tml_in_thread_fn real_pa_in_thread = NULL;
+    if (!real_pa_stop)
+        real_pa_stop = (pa_tml_void_fn)dlsym(RTLD_NEXT, "pa_threaded_mainloop_stop");
+    if (!real_pa_in_thread)
+        real_pa_in_thread = (pa_tml_in_thread_fn)dlsym(RTLD_NEXT, "pa_threaded_mainloop_in_thread");
+
+    void *ml = g_pa_mainloop;
+    if (!ml || !g_pa_mainloop_running || !real_pa_stop)
+        return;
+    if (real_pa_in_thread && real_pa_in_thread(ml))
+        return;
+
+    g_pa_mainloop_running = 0;
+    real_pa_stop(ml);
+}
+
+int
+pa_threaded_mainloop_start(void *m)
+{
+    static pa_tml_start_fn real_pa_start = NULL;
+    if (!real_pa_start)
+        real_pa_start = (pa_tml_start_fn)dlsym(RTLD_NEXT, "pa_threaded_mainloop_start");
+    if (!real_pa_start)
+        return -1;
+
+    int rc = real_pa_start(m);
+    if (rc >= 0 && m && caller_is_nd_stream(__builtin_return_address(0))) {
+        g_pa_mainloop = m;
+        g_pa_mainloop_running = 1;
+    }
+    return rc;
+}
+
+void
+pa_threaded_mainloop_stop(void *m)
+{
+    static pa_tml_void_fn real_pa_stop = NULL;
+    if (!real_pa_stop)
+        real_pa_stop = (pa_tml_void_fn)dlsym(RTLD_NEXT, "pa_threaded_mainloop_stop");
+    if (!real_pa_stop || !m)
+        return;
+
+    if (m == g_pa_mainloop) {
+        if (!g_pa_mainloop_running)
+            return;
+        g_pa_mainloop_running = 0;
+    }
+    real_pa_stop(m);
+}
+
+void
+pa_threaded_mainloop_free(void *m)
+{
+    static pa_tml_void_fn real_pa_free = NULL;
+    if (!real_pa_free)
+        real_pa_free = (pa_tml_void_fn)dlsym(RTLD_NEXT, "pa_threaded_mainloop_free");
+    if (!real_pa_free || !m)
+        return;
+
+    if (m == g_pa_mainloop) {
+        stop_pa_mainloop_before_teardown();
+        g_pa_mainloop = NULL;
+        g_pa_mainloop_running = 0;
+    }
+    real_pa_free(m);
+}
+
+void
+pa_context_disconnect(void *c)
+{
+    static pa_tml_void_fn real_pa_disconnect = NULL;
+    if (!real_pa_disconnect)
+        real_pa_disconnect = (pa_tml_void_fn)dlsym(RTLD_NEXT, "pa_context_disconnect");
+    if (!real_pa_disconnect || !c)
+        return;
+
+    /* Upstream nd_pulseaudio_finalize disconnects pa_context before calling
+     * pa_threaded_mainloop_stop, racing the active PulseAudio I/O thread.
+     * Scope teardown to gnome-network-displays itself so GStreamer's
+     * pulsesrc (libgstpulseaudio.so) does not stop/deadlock its own loop. */
+    if (caller_is_nd_stream(__builtin_return_address(0)))
+        stop_pa_mainloop_before_teardown();
+    real_pa_disconnect(c);
+}
 
 void
 nm_device_wifi_p2p_start_find(void *device, void *options, void *cancellable,
                               void *callback, void *user_data)
 {
     static nm_start_find_fn real_start_find = NULL;
-    static nm_stop_find_fn real_stop_find = NULL;
     static nm_get_state_fn real_get_state = NULL;
     if (!real_start_find)
         real_start_find = (nm_start_find_fn)dlsym(RTLD_NEXT, "nm_device_wifi_p2p_start_find");
-    if (!real_stop_find)
-        real_stop_find = (nm_stop_find_fn)dlsym(RTLD_NEXT, "nm_device_wifi_p2p_stop_find");
     if (!real_get_state)
         real_get_state = (nm_get_state_fn)dlsym(RTLD_NEXT, "nm_device_get_state");
 
     /* NM_DEVICE_STATE_DISCONNECTED = 30.
-     * In gnome-network-displays 0.99.0, NdWFDP2PProvider in the daemon checks
+     * In gnome-network-displays 0.99.0, NdWFDP2PProvider checks
      * `state > NM_DEVICE_STATE_UNAVAILABLE (20)` and restarts P2P discovery even
-     * when the P2P device transitions into PREPARE (40) / CONFIG (50) / ACTIVATED (100)
-     * during a stream connection, interrupting GO negotiation and causing packet drops. */
+     * during PREPARE (40) / CONFIG (50) / ACTIVATED (100). Return early without
+     * invoking P2P StopFind so wpa_supplicant's GO negotiation is not aborted
+     * mid-handshake. */
     if (real_get_state && device) {
         guint state = real_get_state(device);
-        if (state > 30 && state <= 100) {
-            if ((state == 40 || state == 50) && real_stop_find)
-                real_stop_find(device, NULL, NULL, NULL);
+        if (state > 30 && state <= 100)
             return;
-        }
     }
     if (real_start_find)
         real_start_find(device, options, cancellable, callback, user_data);

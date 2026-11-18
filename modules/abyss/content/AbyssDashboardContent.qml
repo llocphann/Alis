@@ -27,7 +27,7 @@ Item {
         anchors.fill: parent
         embeddedSurface: true
         warmContent: root.participant?.warmContent ?? false
-        presentationActive: root.participant ? Boolean(root.participant.open || root.participant.visualResident) : true
+        presentationActive: root.participant ? Boolean(root.participant.open || root.participant.visualResident) : false
         screenWidth: root.participant?.width ?? 1920
         screenHeight: root.participant?.height ?? 1080
     }

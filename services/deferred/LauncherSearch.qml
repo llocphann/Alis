@@ -129,8 +129,14 @@ Singleton {
             })
         }
 
-        // Start math calculation
-        mathTimer.restart()
+        // Start math calculation only for math/conversion expressions
+        if (StringUtils.looksLikeMathExpression(q, mathPrefix)) {
+            mathTimer.restart()
+        } else {
+            mathTimer.stop()
+            if (root.mathResult !== "")
+                root.mathResult = ""
+        }
 
         // Build results
         let result = []

@@ -40,30 +40,50 @@ AppButton {
 
         model: [
             {
+                iconName: "apps",
+                text: Translation.tr("Installed apps"),
+                action: () => {
+                    WaffleNavigation.openSettings("applications", "")
+                }
+            },
+            {
+                iconName: "desktop",
+                text: Translation.tr("System"),
+                action: () => {
+                    WaffleNavigation.openSettings("system", "")
+                }
+            },
+            { type: "separator" },
+            {
+                iconName: "terminal",
                 text: Translation.tr("Terminal"),
                 action: () => {
                     AppLauncher.launch("terminal")
                 }
             },
             {
+                iconName: "pulse",
                 text: Translation.tr("Task Manager"),
                 action: () => {
                     AppLauncher.launch("taskManager")
                 }
             },
             {
+                iconName: "settings",
                 text: Translation.tr("Settings"),
                 action: () => {
-                    ShellExec.execDetachedArgs([Quickshell.shellPath("scripts/alis"), "settings"], "Open Alis settings");
+                    WaffleNavigation.openSettings()
                 }
             },
             {
+                iconName: "folder",
                 text: Translation.tr("File Explorer"),
                 action: () => {
-                    Qt.openUrlExternally(Directories.home);
+                    AppLauncher.launch("fileManager")
                 }
             },
             {
+                iconName: "search",
                 text: Translation.tr("Search"),
                 action: () => {
                     Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "overview", "toggle"]);

@@ -59,8 +59,8 @@ BarIconButton {
                 inset: 2
                 contentItem: RowLayout {
                     spacing: 8
-                    FluentIcon { icon: "arrow-sync"; implicitSize: 16 }
-                    WText { text: Translation.tr("Update now") }
+                    FluentIcon { Layout.alignment: Qt.AlignVCenter; icon: "arrow-sync"; implicitSize: 16 }
+                    WText { Layout.alignment: Qt.AlignVCenter; verticalAlignment: Text.AlignVCenter; text: Translation.tr("Update now") }
                 }
                 onClicked: {
                     menu.close()
@@ -76,8 +76,8 @@ BarIconButton {
                 inset: 2
                 contentItem: RowLayout {
                     spacing: 8
-                    FluentIcon { icon: "arrow-clockwise"; implicitSize: 16 }
-                    WText { text: Translation.tr("Check for updates") }
+                    FluentIcon { Layout.alignment: Qt.AlignVCenter; icon: "arrow-clockwise"; implicitSize: 16 }
+                    WText { Layout.alignment: Qt.AlignVCenter; verticalAlignment: Text.AlignVCenter; text: Translation.tr("Check for updates") }
                 }
                 onClicked: {
                     menu.close()
@@ -101,12 +101,12 @@ BarIconButton {
                 inset: 2
                 contentItem: RowLayout {
                     spacing: 8
-                    FluentIcon { icon: "settings"; implicitSize: 16 }
-                    WText { text: Translation.tr("Settings") }
+                    FluentIcon { Layout.alignment: Qt.AlignVCenter; icon: "settings"; implicitSize: 16 }
+                    WText { Layout.alignment: Qt.AlignVCenter; verticalAlignment: Text.AlignVCenter; text: Translation.tr("Settings") }
                 }
                 onClicked: {
                     menu.close()
-                    Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"])
+                    WaffleNavigation.openSettings("services", "")
                 }
             }
         }

@@ -64,7 +64,7 @@ Item {
         function onEventsUpdated() { root._externalTrigger++ }
     }
 
-    readonly property string _todayKey: Qt.formatDate(DateTime.clock.date, "yyyy-MM-dd")
+    readonly property string _todayKey: Qt.formatDate(DateTime.todayDate, "yyyy-MM-dd")
 
     // Merged events: local + external, sorted by date
     readonly property var mergedEvents: {
@@ -78,7 +78,7 @@ Item {
         const now = new Date()
         if (root.compactCalendarWindow)
             return UpcomingWindow.threeDayEvents(Events.list, CalendarSync.events,
-                DateTime.clock.date, Planner.project)
+                DateTime.minuteDate, Planner.project)
         const all = []
         const localEvents = Events.getUpcomingEvents(30)
         for (const e of localEvents) {

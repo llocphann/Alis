@@ -77,27 +77,14 @@ ContentPage {
     }
 
     function _log(...args): void {
-        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args)
     }
 
     settingsPageIndex: 4
     settingsPageName: Translation.tr("Themes")
     property string activeSection: "colors"
 
-    readonly property real effectiveColorsBentoHeight: {
-        const gap = SettingsMaterialPreset.pageSpacing
-        const leftActual = colorThemesCard.cardImplicitHeight + gap + typographyCard.cardImplicitHeight
-        const baseH = (leftActual >= 560 && (colorThemesCard.hasCustomModuleSizing || typographyCard.hasCustomModuleSizing))
-            ? leftActual
-            : SettingsMaterialPreset.standardBentoHeight
-        const availBodyH = root.height >= 800
-            ? Math.max(720, root.height - 20 - (root._subTabItems.length > 1 || SettingsLayoutManager.editMode ? (40 + gap) : 0))
-            : baseH
-        return Math.min(baseH, availBodyH)
-    }
-
     onActiveSectionChanged: {
-        // "style", "motion", and "type" are merged into the main "colors" Hub view.
         if (activeSection === "style")
             activeSection = "colors"
         if (activeSection === "motion" || activeSection === "type")
@@ -143,70 +130,11 @@ ContentPage {
         return testFont.family.toLowerCase() === fontName.toLowerCase()
     }
 
-    readonly property real colorsBentoHeight: {
-        const gap = SettingsMaterialPreset.pageSpacing
-        const showMotion = (Config.options?.panelFamily ?? "ii") !== "waffle"
-        const rightTotal = schemeVariantCard.naturalCardImplicitHeight
-            + (showMotion ? (gap + motionSpeedCard.naturalCardImplicitHeight) : 0)
-            + gap + iconThemeCard.naturalCardImplicitHeight
-            + gap + themeSchedulingCard.naturalCardImplicitHeight
-        const leftTotal = colorThemesCard.naturalCardImplicitHeight + gap + typographyCard.naturalCardImplicitHeight
-        return Math.max(leftTotal, rightTotal)
-    }
-
-    function _syncStandardBentoHeight(): void {
-        if (!SettingsLayoutManager.editMode
-                && !root.isCanvasLayoutMode
-                && Math.abs(root.effectiveLeftColumnRatio - 0.5) < 0.01
-                && !colorThemesCard.hasCustomModuleSizing
-                && !schemeVariantCard.hasCustomModuleSizing
-                && root.activeSection === "colors"
-                && root.visible
-                && colorThemesCard._cardSubTabActive
-                && schemeVariantCard._cardSubTabActive
-                && colorThemesCard.width >= 400 && colorThemesCard.width <= 850
-                && schemeVariantCard.width >= 400 && schemeVariantCard.width <= 850
-                && colorsBentoHeight >= 600) {
-            const scale = Appearance.fontSizeScale ?? 1.0
-            const family = String(Config.options?.panelFamily ?? "abyss")
-            const rounded = Math.round(colorsBentoHeight)
-            if (Math.abs(SettingsMaterialPreset._measuredThemesBentoHeight - rounded) >= 1
-                    || Math.abs(SettingsMaterialPreset._measuredThemesFontScale - scale) >= 0.001
-                    || SettingsMaterialPreset._measuredThemesPanelFamily !== family) {
-                SettingsMaterialPreset._measuredThemesBentoHeight = rounded
-                SettingsMaterialPreset._measuredThemesFontScale = scale
-                SettingsMaterialPreset._measuredThemesPanelFamily = family
-            }
-        }
-    }
-
-    Connections {
-        target: Appearance
-        function onFontSizeScaleChanged() {
-            SettingsMaterialPreset._measuredThemesFontScale = -1
-            Qt.callLater(() => root._syncStandardBentoHeight())
-        }
-    }
-
-    onColorsBentoHeightChanged: Qt.callLater(() => root._syncStandardBentoHeight())
-
-    GridLayout {
-        Layout.fillWidth: true
-        visible: children.length > 0
-        columns: 1
-        uniformCellWidths: false
-        columnSpacing: 14
-        rowSpacing: 14
-
+    // 01: Style & Presets
     SettingsCardSection {
         id: colorThemesCard
-        bentoColumn: "left"
-        _consumesBentoExtraHeight: true
-        onWidthChanged: root._syncStandardBentoHeight()
-        Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        Layout.columnSpan: parent?.columns ?? 1
         settingsTaskSection: "colors"
         visible: true
         expanded: true
@@ -215,13 +143,12 @@ ContentPage {
 
         SettingsGroup {
             id: themesGroup
-            Layout.fillHeight: true
 
             property string searchQuery: ""
             property int selectedTab: Persistent.states?.settings?.themeTab ?? 0  // 0=All, 1=Dark, 2=Light
             onSelectedTabChanged: if (Persistent.ready && Persistent.states?.settings)
                 Persistent.states.settings.themeTab = selectedTab
-            property string selectedTag: Persistent.states?.settings?.themeTag ?? ""  // Single active tag filter
+            property string selectedTag: Persistent.states?.settings?.themeTag ?? ""
             onSelectedTagChanged: if (Persistent.ready && Persistent.states?.settings)
                 Persistent.states.settings.themeTag = selectedTag
             property string activeSavedTheme: ""
@@ -237,7 +164,6 @@ ContentPage {
             }
 
             function toggleTag(tagId) {
-                // Single selection: click same tag to deselect, different tag to switch
                 selectedTag = (selectedTag === tagId) ? "" : tagId
             }
 
@@ -247,15 +173,12 @@ ContentPage {
                 const available = ThemePresets.presets.concat(root.savedThemePresets)
                 for (let i = 0; i < available.length; i++) {
                     const preset = available[i]
-                    // Dark/Light filter
                     if (selectedTab === 1 && !isDarkTheme(preset)) continue
                     if (selectedTab === 2 && isDarkTheme(preset)) continue
-                    // Tag filter - single tag selection
                     if (selectedTag.length > 0) {
                         const presetTags = preset.tags ?? []
                         if (!presetTags.includes(selectedTag)) continue
                     }
-                    // Search filter
                     if (searchQuery.length > 0) {
                         const query = searchQuery.toLowerCase()
                         const name = (preset.name ?? "").toLowerCase()
@@ -264,7 +187,6 @@ ContentPage {
                     }
                     result.push(preset)
                 }
-                // Sort: favorites first
                 const favoriteSet = new Set(favorites)
                 result.sort((a, b) => {
                     const aFav = favoriteSet.has(a.id) ? 0 : 1
@@ -276,19 +198,94 @@ ContentPage {
             readonly property var filteredSavedPresets: filteredPresets.filter(preset => preset.saved === true)
             readonly property var filteredBuiltInPresets: filteredPresets.filter(preset => preset.saved !== true)
 
-            // Compact search + filter row
+            // iRiS Scheme row: Dark / Light / Auto mode + filter
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    spacing: 2
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: "Color scheme"
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.Medium
+                        color: Appearance.colors.colOnSurface
+                        elide: Text.ElideRight
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: "Filter curated presets or follow wallpaper brightness automatically"
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.colors.colSubtext
+                        elide: Text.ElideRight
+                    }
+                }
+
+                Row {
+                    spacing: 4
+
+                    Repeater {
+                        model: [
+                            { icon: "dark_mode", label: "Dark", tabIndex: 1 },
+                            { icon: "light_mode", label: "Light", tabIndex: 2 },
+                            { icon: "auto_awesome", label: "Auto", tabIndex: 0 }
+                        ]
+
+                        RippleButton {
+                            required property var modelData
+                            readonly property bool chosen: themesGroup.selectedTab === modelData.tabIndex
+                            implicitWidth: schemeSegRow.implicitWidth + 18
+                            implicitHeight: 30
+                            buttonRadius: Appearance.rounding.small
+                            toggled: chosen
+                            colBackground: chosen ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
+                            colBackgroundHover: chosen ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
+                            onClicked: themesGroup.selectedTab = modelData.tabIndex
+
+                            contentItem: Item {
+                                implicitWidth: schemeSegRow.implicitWidth
+                                implicitHeight: schemeSegRow.implicitHeight
+                                Row {
+                                    id: schemeSegRow
+                                    anchors.centerIn: parent
+                                    spacing: 5
+                                    MaterialSymbol {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: modelData.icon
+                                        iconSize: 14
+                                        color: chosen ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
+                                    }
+                                    StyledText {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: modelData.label
+                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                        font.weight: chosen ? Font.DemiBold : Font.Normal
+                                        color: chosen ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            SettingsDivider {}
+
+            // Search + Soften toggle + Tag pills
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
 
-                // Search
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 32
-                    radius: 16
+                    Layout.preferredHeight: 34
+                    radius: Appearance.rounding.small
                     color: Appearance.colors.colLayer1
-                    border.width: searchField.activeFocus ? 1.5 : 0
-                    border.color: Appearance.colors.colPrimary
+                    border.width: searchField.activeFocus ? 1.5 : 1
+                    border.color: searchField.activeFocus ? Appearance.colors.colPrimary : SettingsMaterialPreset.groupBorderColor
 
                     RowLayout {
                         anchors.fill: parent
@@ -298,7 +295,7 @@ ContentPage {
 
                         MaterialSymbol {
                             text: "search"
-                            iconSize: 14
+                            iconSize: 15
                             color: Appearance.colors.colSubtext
                         }
 
@@ -325,7 +322,7 @@ ContentPage {
                         MaterialSymbol {
                             visible: searchField.text.length > 0
                             text: "close"
-                            iconSize: 12
+                            iconSize: 13
                             color: Appearance.colors.colSubtext
 
                             MouseArea {
@@ -338,114 +335,74 @@ ContentPage {
                     }
                 }
 
-                // Soften colors toggle
-                Rectangle {
-                    width: 32
-                    height: 32
-                    radius: 16
-                    color: Config.options?.appearance?.softenColors ? Appearance.colors.colPrimary : Appearance.colors.colLayer1
-
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "opacity"
-                        iconSize: 16
-                        color: Config.options?.appearance?.softenColors ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
+                RippleButton {
+                    implicitWidth: softenBtnRow.implicitWidth + 18
+                    implicitHeight: 34
+                    buttonRadius: Appearance.rounding.small
+                    toggled: Config.options?.appearance?.softenColors ?? true
+                    colBackground: toggled ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
+                    colBackgroundHover: toggled ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
+                    onClicked: {
+                        const val = !(Config.options?.appearance?.softenColors ?? true)
+                        Config.setNestedValue("appearance.softenColors", val)
+                        ThemeService.regenerateAutoTheme()
                     }
-
-                    MouseArea {
-                        id: softenMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            const val = !(Config.options?.appearance?.softenColors ?? true)
-                            Config.setNestedValue("appearance.softenColors", val)
-                            // Regenerate theme (for auto theme, regenerates from wallpaper)
-                            ThemeService.regenerateAutoTheme()
-                        }
-                    }
-
-                    StyledToolTip { text: Translation.tr("Soften colors (less intense)"); visible: softenMouse.containsMouse }
-                }
-
-                // Tab pills
-                Row {
-                    spacing: 4
-
-                    Repeater {
-                        model: [
-                            { icon: "apps", tip: "All" },
-                            { icon: "dark_mode", tip: "Dark" },
-                            { icon: "light_mode", tip: "Light" }
-                        ]
-
-                        Rectangle {
-                            required property var modelData
-                            required property int index
-
-                            width: 28
-                            height: 28
-                            radius: 14
-                            color: themesGroup.selectedTab === index
-                                ? Appearance.colors.colPrimary
-                                : tabMouse.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1
-
+                    contentItem: Item {
+                        implicitWidth: softenBtnRow.implicitWidth
+                        implicitHeight: softenBtnRow.implicitHeight
+                        Row {
+                            id: softenBtnRow
+                            anchors.centerIn: parent
+                            spacing: 5
                             MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: modelData.icon
-                                iconSize: 14
-                                color: themesGroup.selectedTab === index
-                                    ? Appearance.colors.colOnPrimary
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "opacity"
+                                iconSize: 15
+                                color: (Config.options?.appearance?.softenColors ?? true)
+                                    ? Appearance.colors.colOnPrimaryContainer
                                     : Appearance.colors.colOnLayer1
                             }
-
-                            MouseArea {
-                                id: tabMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: themesGroup.selectedTab = index
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "Soften"
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: (Config.options?.appearance?.softenColors ?? true)
+                                    ? Appearance.colors.colOnPrimaryContainer
+                                    : Appearance.colors.colOnLayer1
                             }
-
-                            StyledToolTip { text: modelData.tip; visible: tabMouse.containsMouse }
                         }
                     }
+                    StyledToolTip { text: Translation.tr("Soften colors (less intense)"); visible: parent.buttonHovered }
                 }
             }
 
-            // Tag filters
             Flow {
                 id: tagFlow
                 Layout.fillWidth: true
-                Layout.topMargin: 6
-                spacing: 4
-
-                property bool hovered: false
+                spacing: 6
 
                 Repeater {
-                    // Filter tags based on selectedTab (exclude dark/light since we have tabs)
                     model: ThemePresets.availableTags.filter(t => t.id !== "dark" && t.id !== "light")
 
                     Rectangle {
                         required property var modelData
-
                         readonly property bool isActive: themesGroup.selectedTag === modelData.id
 
-                        width: tagRow.implicitWidth + 12
-                        height: 24
-                        radius: 12
+                        width: tagRow.implicitWidth + 14
+                        height: 26
+                        radius: 13
                         color: isActive ? Appearance.colors.colPrimaryContainer
-                             : tagMouse.containsMouse ? Appearance.colors.colLayer1Hover
-                             : Appearance.colors.colLayer1
+                            : tagMouse.containsMouse ? Appearance.colors.colLayer1Hover
+                            : Appearance.colors.colLayer1
 
                         RowLayout {
                             id: tagRow
                             anchors.centerIn: parent
-                            spacing: 3
+                            spacing: 4
 
                             MaterialSymbol {
                                 text: modelData.icon
-                                iconSize: 12
+                                iconSize: 13
                                 color: parent.parent.isActive ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
                             }
 
@@ -462,23 +419,21 @@ ContentPage {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: themesGroup.toggleTag(modelData.id)
-                            onContainsMouseChanged: tagFlow.hovered = containsMouse
                         }
                     }
                 }
 
-                // Clear tag button
                 Rectangle {
                     visible: themesGroup.selectedTag.length > 0
-                    width: 24
-                    height: 24
-                    radius: 12
+                    width: 26
+                    height: 26
+                    radius: 13
                     color: clearMouse.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1
 
                     MaterialSymbol {
                         anchors.centerIn: parent
                         text: "close"
-                        iconSize: 12
+                        iconSize: 13
                         color: Appearance.colors.colSubtext
                     }
 
@@ -494,19 +449,16 @@ ContentPage {
                 }
             }
 
-            // Quick Access - Favorites + Recent (unified)
+            // Quick Access - Favorites + Recent
             ColumnLayout {
                 id: quickAccessSection
                 Layout.fillWidth: true
-                Layout.topMargin: 8
                 spacing: 6
 
-                // Compute quick access items: favorites first, then recent (excluding duplicates)
                 readonly property var quickAccessItems: {
                     const favs = Config.options?.appearance?.favoriteThemes ?? []
                     const recent = Config.options?.appearance?.recentThemes ?? []
 
-                    // Collect IDs: favorites first, then recent (excluding duplicates)
                     let ids = favs.slice()
                     let recentCount = 0
                     for (let i = 0; i < recent.length && recentCount < 4; i++) {
@@ -516,7 +468,6 @@ ContentPage {
                         }
                     }
 
-                    // Map to presets
                     const result = []
                     if (ids.length === 0)
                         return result
@@ -561,16 +512,19 @@ ContentPage {
                     }
                 }
 
-                Flow {
+                Grid {
+                    id: quickAccessGrid
                     Layout.fillWidth: true
-                    spacing: 4
+                    columns: width >= 600 ? 3 : 2
+                    columnSpacing: 6
+                    rowSpacing: 6
 
                     Repeater {
                         model: quickAccessSection.quickAccessItems
 
                         ThemePresetCard {
                             required property var modelData
-                            width: Math.min(160, (parent.width - 8) / 3)
+                            width: Math.floor((quickAccessGrid.width - quickAccessGrid.columnSpacing * (quickAccessGrid.columns - 1)) / quickAccessGrid.columns)
                             preset: modelData
                             onClicked: ThemeService.setTheme(modelData.id)
                         }
@@ -581,9 +535,8 @@ ContentPage {
             // Wallpaper Dominant Colors
             ColumnLayout {
                 Layout.fillWidth: true
-                Layout.topMargin: 4
                 spacing: 4
-                visible: Config.options?.background?.wallpaperPath?.length > 0
+                visible: (Config.options?.background?.wallpaperPath?.length ?? 0) > 0
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -598,7 +551,6 @@ ContentPage {
 
                     Item { Layout.fillWidth: true }
 
-                    // Copy color button
                     StyledText {
                         text: Translation.tr("Click to copy")
                         font.pixelSize: Appearance.font.pixelSize.smallest
@@ -612,7 +564,7 @@ ContentPage {
                     property string wallpaperPath: Config.options?.background?.wallpaperPath ?? ""
                     property bool isVideo: wallpaperPath.endsWith(".mp4") || wallpaperPath.endsWith(".webm")
                     source: wallpaperPath.length > 0 ? Qt.resolvedUrl(isVideo ? Config.options?.background?.thumbnailPath : wallpaperPath) : ""
-                    depth: 3  // 2^3 = 8 colors
+                    depth: 3
                     rescaleSize: 64
                 }
 
@@ -620,7 +572,6 @@ ContentPage {
                     Layout.fillWidth: true
                     height: 28
                     Layout.preferredHeight: 28
-                    Layout.minimumHeight: 28
                     spacing: 4
 
                     Repeater {
@@ -656,9 +607,9 @@ ContentPage {
                 }
             }
 
+            // Saved custom themes
             ColumnLayout {
                 Layout.fillWidth: true
-                Layout.topMargin: 10
                 spacing: 6
                 visible: themesGroup.filteredSavedPresets.length > 0
 
@@ -689,16 +640,19 @@ ContentPage {
                     }
                 }
 
-                Flow {
+                Grid {
+                    id: savedThemesGrid
                     Layout.fillWidth: true
-                    spacing: 4
+                    columns: width >= 600 ? 3 : 2
+                    columnSpacing: 6
+                    rowSpacing: 6
 
                     Repeater {
                         model: themesGroup.filteredSavedPresets
 
                         ThemePresetCard {
                             required property var modelData
-                            width: Math.max(140, (parent.width - 8) / 3)
+                            width: Math.floor((savedThemesGrid.width - savedThemesGrid.columnSpacing * (savedThemesGrid.columns - 1)) / savedThemesGrid.columns)
                             preset: modelData
                             forceActive: themesGroup.activeSavedTheme === modelData.id
                             onClicked: root.applyThemeChoice(modelData)
@@ -707,59 +661,43 @@ ContentPage {
                 }
             }
 
-            // Built-in theme grid - scrollable with 3 columns (expands to equalize Left/Right Bento columns)
-            Rectangle {
-                id: themeGridContainer
+            SettingsDivider {}
+
+            // Curated presets specimen grid — full natural height, zero inner scroll trap
+            ColumnLayout {
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.topMargin: 4
-                readonly property real baseGridHeight: {
-                    if (themesGroup.filteredBuiltInPresets.length === 0)
-                        return 96
-                    if (quickAccessSection.visible && themesGroup.filteredSavedPresets.length > 0)
-                        return 96
-                    if (quickAccessSection.visible || themesGroup.filteredSavedPresets.length > 0)
-                        return 120
-                    return 146
+                spacing: 6
+
+                StyledText {
+                    text: "Style › Presets"
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.weight: Font.Medium
+                    color: Appearance.colors.colSubtext
                 }
-                Layout.minimumHeight: baseGridHeight
-                Layout.preferredHeight: baseGridHeight
-                color: Appearance.colors.colLayer1
-                radius: Appearance.rounding.small
-                clip: true
 
-                ScrollView {
-                    id: themeScrollView
-                    anchors.fill: parent
-                    anchors.margins: 6
-                    contentWidth: availableWidth
-                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                    ScrollBar.vertical.policy: themeGridContent.implicitHeight > parent.height - 12 ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                Grid {
+                    id: themeGridContent
+                    Layout.fillWidth: true
+                    visible: themesGroup.filteredBuiltInPresets.length > 0
+                    columns: width >= 600 ? 3 : 2
+                    columnSpacing: 6
+                    rowSpacing: 6
 
-                    Grid {
-                        id: themeGridContent
-                        width: themeScrollView.availableWidth
-                        columns: 3
-                        columnSpacing: 4
-                        rowSpacing: 4
+                    Repeater {
+                        model: themesGroup.filteredBuiltInPresets
 
-                        Repeater {
-                            model: themesGroup.filteredBuiltInPresets
-
-                            ThemePresetCard {
-                                required property var modelData
-                                width: (themeGridContent.width - themeGridContent.columnSpacing * 2) / 3
-                                preset: modelData
-                                forceActive: modelData.saved === true && themesGroup.activeSavedTheme === modelData.id
-                                onClicked: root.applyThemeChoice(modelData)
-                            }
+                        ThemePresetCard {
+                            required property var modelData
+                            width: Math.floor((themeGridContent.width - themeGridContent.columnSpacing * (themeGridContent.columns - 1)) / themeGridContent.columns)
+                            preset: modelData
+                            forceActive: modelData.saved === true && themesGroup.activeSavedTheme === modelData.id
+                            onClicked: root.applyThemeChoice(modelData)
                         }
                     }
                 }
 
-                // Empty state overlay
                 MaterialPlaceholderMessage {
-                    anchors.centerIn: parent
+                    Layout.alignment: Qt.AlignHCenter
                     maximumWidth: 300
                     shown: themesGroup.filteredPresets.length === 0
                     icon: "search_off"
@@ -772,624 +710,702 @@ ContentPage {
                 }
             }
 
-            ConfigSwitch {
-                buttonIcon: "invert_colors"
-                text: Translation.tr("Invert colors (complementary)")
-                checked: Config.options?.appearance?.colorInvert ?? false
-                onCheckedChanged: Config.setNestedValue("appearance.colorInvert", checked)
-                StyledToolTip {
-                    text: Translation.tr("Use complementary shell colors; external apps retain their colors.")
-                }
-            }
-        }
-    }
+            SettingsDivider {}
 
-    // ==================== HUB RIGHT: SCHEME VARIANT & TERMINAL COLORS ====================
-SettingsCardSection {
-    id: schemeVariantCard
-    bentoColumn: "right"
-    onWidthChanged: root._syncStandardBentoHeight()
-    Layout.preferredWidth: 1
-    Layout.alignment: Qt.AlignTop
-    Layout.fillWidth: true
-    settingsTaskSection: "colors"
-    visible: true
-    expanded: true
-    icon: "tune"
-    title: Translation.tr("Scheme Variant & Terminals")
-
-    SettingsGroup {
-        ConfigSelectionArray {
-            optionHorizontalPadding: 5
-            optionIconSize: Appearance.font.pixelSize.smaller
-            optionIconSpacing: 4
-            currentValue: Config.options?.appearance?.palette?.type ?? "auto"
-            onSelected: newValue => {
-                Config.setNestedValue("appearance.palette.type", newValue)
-                if (!ThemeService.isAutoTheme) {
-                    const hex = MaterialThemeLoader.colorToHex(Appearance.m3colors.m3primary)
-                    const mode = Appearance.m3colors.darkmode ? "dark" : "light"
-                    MaterialThemeLoader.applySchemeVariant(hex, newValue, mode)
-                }
-            }
-            options: [
-                { "value": "auto", "displayName": Translation.tr("Auto"), "icon": "auto_awesome" },
-                { "value": "scheme-content", "displayName": Translation.tr("Content"), "icon": "image" },
-                { "value": "scheme-expressive", "displayName": Translation.tr("Expressive"), "icon": "flare" },
-                { "value": "scheme-fidelity", "displayName": Translation.tr("Fidelity"), "icon": "verified" },
-                { "value": "scheme-fruit-salad", "displayName": Translation.tr("Fruit Salad"), "icon": "local_florist" },
-                { "value": "scheme-monochrome", "displayName": Translation.tr("Monochrome"), "icon": "filter_b_and_w" },
-                { "value": "scheme-neutral", "displayName": Translation.tr("Neutral"), "icon": "tonality" },
-                { "value": "scheme-rainbow", "displayName": Translation.tr("Rainbow"), "icon": "gradient" },
-                { "value": "scheme-tonal-spot", "displayName": Translation.tr("Tonal Spot"), "icon": "palette" }
-            ]
-        }
-
-        ConfigSwitch {
-            buttonIcon: "contrast"
-            text: Translation.tr("Auto light/dark from wallpaper")
-            checked: Config.options?.appearance?.wallpaperTheming?.autoDarkLightMode ?? false
-            onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.autoDarkLightMode", checked)
-        }
-
-        SettingsDivider {}
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            ConfigSwitch {
+            GridLayout {
                 Layout.fillWidth: true
-                buttonIcon: "terminal"
-                text: Translation.tr("Sync colors to terminals & CLI tools")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
-                onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableTerminal", checked)
-            }
+                columns: width >= 460 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 12
+                rowSpacing: 8
 
-            DialogButton {
-                visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
-                buttonText: Translation.tr("Apply now")
-                onClicked: applyTerminalColorsProcess.running = true
-
-                Process {
-                    id: applyTerminalColorsProcess
-                    command: ["/usr/bin/bash", Directories.scriptsPath + "/colors/applycolor.sh"]
-                }
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 3
-            visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
-
-            Repeater {
-                model: 16
-
-                Rectangle {
-                    required property int index
+                ConfigSwitch {
                     Layout.fillWidth: true
-                    height: 18
-                    radius: index === 0 || index === 15 ? 4 : 2
-                    color: {
-                        const isDark = Appearance.m3colors.darkmode;
-                        const adj = Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments ?? {};
-                        const sat = adj.saturation ?? 0.65;
-                        const bright = adj.brightness ?? 0.60;
-                        if (index === 0) return Appearance.m3colors.m3surfaceContainerLowest;
-                        if (index === 7) return Appearance.m3colors.m3onSurfaceVariant;
-                        if (index === 8) return Appearance.m3colors.m3outline;
-                        if (index === 15) return Appearance.m3colors.m3onBackground;
-                        const hues = [0, 0.98, 0.36, 0.12, 0.58, 0.85, 0.48, 0, 0, 0.98, 0.36, 0.12, 0.58, 0.85, 0.48, 0];
-                        const isBright = index >= 9;
-                        const l = isDark ? (isBright ? bright + 0.12 : bright) : (isBright ? (1 - bright) - 0.10 : (1 - bright));
-                        const s = isBright ? sat + 0.08 : sat;
-                        return Qt.hsla(hues[index], s, l, 1.0);
+                    Layout.minimumWidth: 0
+                    buttonIcon: "contrast"
+                    text: Translation.tr("Auto light/dark from wallpaper")
+                    checked: Config.options?.appearance?.wallpaperTheming?.autoDarkLightMode ?? false
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.autoDarkLightMode", checked)
+                }
+
+                ConfigSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "invert_colors"
+                    text: Translation.tr("Invert colors (complementary)")
+                    checked: Config.options?.appearance?.colorInvert ?? false
+                    onCheckedChanged: Config.setNestedValue("appearance.colorInvert", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Use complementary shell colors; external apps retain their colors.")
                     }
                 }
             }
         }
     }
-}
 
-SettingsCardSection {
-    id: motionSpeedCard
-    bentoColumn: "right"
-    Layout.preferredWidth: 1
-    Layout.alignment: Qt.AlignTop
-    Layout.fillWidth: true
-    settingsTaskSection: "colors"
-    visible: (Config.options?.panelFamily ?? "ii") !== "waffle"
-    expanded: true
-    icon: "animation"
-    title: Translation.tr("Motion & Animation Speed")
+    // 02: Palette Generation & Terminals
+    SettingsCardSection {
+        id: schemeVariantCard
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        settingsTaskSection: "colors"
+        visible: true
+        expanded: true
+        icon: "tune"
+        title: Translation.tr("Scheme Variant & Terminals")
 
-    SettingsGroup {
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
+        SettingsGroup {
+            id: schemeVariantGroup
 
-            ConfigSelectionArray {
-                Layout.fillWidth: true
-                currentValue: Config.options?.appearance?.iiMotionProfile ?? "classic"
-                onSelected: newValue => Config.setNestedValue("appearance.iiMotionProfile", newValue)
-                options: [
-                    { displayName: Translation.tr("Classic"), icon: "motion_photos_paused", value: "classic" },
-                    { displayName: Translation.tr("Contextual"), icon: "gesture", value: "contextual" }
-                ]
-            }
+            ContentSubsection {
+                title: Translation.tr("Palette generation")
 
-            DialogButton {
-                buttonText: Translation.tr("Reset motion to defaults")
-                onClicked: {
-                    for (const key of ["movement", "enterExit", "clickBounce", "scroll"]) {
-                        Config.setNestedValue(`appearance.animationSpeed.${key}`, 1.0)
-                        Config.setNestedValue(`appearance.animationCurve.${key}`, "default")
+                ConfigSelectionArray {
+                    optionHorizontalPadding: 6
+                    optionIconSize: Appearance.font.pixelSize.smaller
+                    optionIconSpacing: 4
+                    currentValue: Config.options?.appearance?.palette?.type ?? "auto"
+                    onSelected: newValue => {
+                        Config.setNestedValue("appearance.palette.type", newValue)
+                        if (!ThemeService.isAutoTheme) {
+                            const hex = MaterialThemeLoader.colorToHex(Appearance.m3colors.m3primary)
+                            const mode = Appearance.m3colors.darkmode ? "dark" : "light"
+                            MaterialThemeLoader.applySchemeVariant(hex, newValue, mode)
+                        }
                     }
+                    options: [
+                        { "value": "auto", "displayName": Translation.tr("Auto"), "icon": "auto_awesome" },
+                        { "value": "scheme-content", "displayName": Translation.tr("Content"), "icon": "image" },
+                        { "value": "scheme-expressive", "displayName": Translation.tr("Expressive"), "icon": "flare" },
+                        { "value": "scheme-fidelity", "displayName": Translation.tr("Fidelity"), "icon": "verified" },
+                        { "value": "scheme-fruit-salad", "displayName": Translation.tr("Fruit Salad"), "icon": "local_florist" },
+                        { "value": "scheme-monochrome", "displayName": Translation.tr("Monochrome"), "icon": "filter_b_and_w" },
+                        { "value": "scheme-neutral", "displayName": Translation.tr("Neutral"), "icon": "tonality" },
+                        { "value": "scheme-rainbow", "displayName": Translation.tr("Rainbow"), "icon": "gradient" },
+                        { "value": "scheme-tonal-spot", "displayName": Translation.tr("Tonal Spot"), "icon": "palette" }
+                    ]
                 }
             }
-        }
 
-        SettingsSliderRow {
-            icon: "speed"
-            text: Translation.tr("Global animation speed")
-            from: 0.5
-            to: 2.0
-            stepSize: 0.05
-            value: Config.options?.appearance?.animationSpeed?.movement ?? 1.0
-            displayValue: (Config.options?.appearance?.animationSpeed?.movement ?? 1.0).toFixed(2) + "x"
-            onMoved: nextVal => {
-                const rounded = Math.round(nextVal * 100) / 100
-                for (const key of ["movement", "enterExit", "clickBounce", "scroll"])
-                    Config.setNestedValue(`appearance.animationSpeed.${key}`, rounded)
-            }
-        }
-    }
-}
-
-SettingsCardSection {
-    id: iconThemeCard
-    bentoColumn: "right"
-    Layout.preferredWidth: 1
-    Layout.alignment: Qt.AlignTop
-    Layout.fillWidth: true
-    settingsTaskSection: "colors"
-    visible: true
-    expanded: true
-    icon: "folder"
-    title: Translation.tr("Icon Theme")
-
-    SettingsGroup {
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 10
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                spacing: 4
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Translation.tr("System (tray, apps)")
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.Medium
-                }
-                IconThemeSelector { mode: "system" }
+            ConfigSwitch {
+                buttonIcon: "format_color_fill"
+                text: Translation.tr("Extra surface tint")
+                checked: Config.options?.appearance?.extraBackgroundTint ?? true
+                onCheckedChanged: Config.setNestedValue("appearance.extraBackgroundTint", checked)
             }
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                spacing: 4
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Translation.tr("Dock")
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.Medium
-                }
-                IconThemeSelector { mode: "dock" }
-            }
-        }
-    }
-}
-
-SettingsCardSection {
-    id: typographyCard
-    bentoColumn: "left"
-    Layout.preferredWidth: 1
-    Layout.alignment: Qt.AlignTop
-    Layout.fillWidth: true
-    settingsTaskSection: "colors"
-    visible: true
-    expanded: true
-    icon: "text_format"
-    title: Translation.tr("Typography")
-
-    SettingsGroup {
-        // Quick Presets first
-        ContentSubsection {
-            title: Translation.tr("Quick Presets")
+            SettingsDivider {}
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: 8
+
+                ConfigSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "terminal"
+                    text: Translation.tr("Sync colors to terminals & CLI tools")
+                    checked: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableTerminal", checked)
+                }
+
+                DialogButton {
+                    visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
+                    buttonText: Translation.tr("Apply now")
+                    onClicked: applyTerminalColorsProcess.running = true
+
+                    Process {
+                        id: applyTerminalColorsProcess
+                        command: ["/usr/bin/bash", Directories.scriptsPath + "/colors/applycolor.sh"]
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 3
+                visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
 
                 Repeater {
-                    model: StylePresets.presets
+                    model: 16
+
+                    Rectangle {
+                        required property int index
+                        Layout.fillWidth: true
+                        height: 18
+                        radius: index === 0 || index === 15 ? 4 : 2
+                        color: {
+                            const isDark = Appearance.m3colors.darkmode
+                            const adj = Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments ?? {}
+                            const sat = adj.saturation ?? 0.65
+                            const bright = adj.brightness ?? 0.60
+                            if (index === 0) return Appearance.m3colors.m3surfaceContainerLowest
+                            if (index === 7) return Appearance.m3colors.m3onSurfaceVariant
+                            if (index === 8) return Appearance.m3colors.m3outline
+                            if (index === 15) return Appearance.m3colors.m3onBackground
+                            const hues = [0, 0.98, 0.36, 0.12, 0.58, 0.85, 0.48, 0, 0, 0.98, 0.36, 0.12, 0.58, 0.85, 0.48, 0]
+                            const isBright = index >= 9
+                            const l = isDark ? (isBright ? bright + 0.12 : bright) : (isBright ? (1 - bright) - 0.10 : (1 - bright))
+                            const s = isBright ? sat + 0.08 : sat
+                            return Qt.hsla(hues[index], s, l, 1.0)
+                        }
+                    }
+                }
+            }
+
+            Grid {
+                id: terminalTargetsGrid
+                Layout.fillWidth: true
+                enabled: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
+                opacity: enabled ? 1.0 : 0.5
+                columns: width >= 460 ? 3 : 2
+                columnSpacing: 6
+                rowSpacing: 6
+
+                Repeater {
+                    model: [
+                        { key: "kitty", label: "Kitty", icon: "terminal" },
+                        { key: "foot", label: "Foot", icon: "terminal" },
+                        { key: "ghostty", label: "Ghostty", icon: "terminal" },
+                        { key: "alacritty", label: "Alacritty", icon: "terminal" },
+                        { key: "wezterm", label: "WezTerm", icon: "terminal" },
+                        { key: "konsole", label: "Konsole", icon: "terminal" },
+                        { key: "starship", label: "Starship", icon: "rocket_launch" },
+                        { key: "btop", label: "btop", icon: "monitoring" },
+                        { key: "yazi", label: "Yazi", icon: "folder" }
+                    ]
 
                     RippleButton {
                         required property var modelData
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 1
-                        implicitHeight: 46
-                        buttonRadius: Appearance.rounding.small
-                        colBackground: Appearance.colors.colLayer1
-                        colBackgroundHover: Appearance.colors.colLayer1Hover
+                        readonly property bool targetEnabled: Config.options?.appearance?.wallpaperTheming?.terminals?.[modelData.key] ?? true
+                        width: Math.floor((terminalTargetsGrid.width - terminalTargetsGrid.columnSpacing * (terminalTargetsGrid.columns - 1)) / terminalTargetsGrid.columns)
+                        implicitHeight: 32
+                        buttonRadius: Appearance.rounding.verysmall
+                        toggled: targetEnabled
+                        colBackground: targetEnabled ? Appearance.colors.colSecondaryContainer : Appearance.colors.colLayer1
+                        colBackgroundHover: targetEnabled ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colLayer1Hover
+                        onClicked: Config.setNestedValue(`appearance.wallpaperTheming.terminals.${modelData.key}`, !targetEnabled)
 
-                        ColumnLayout {
-                            anchors.centerIn: parent
-                            spacing: 2
+                        contentItem: Item {
+                            implicitWidth: termChipRow.implicitWidth
+                            implicitHeight: termChipRow.implicitHeight
+                            Row {
+                                id: termChipRow
+                                anchors.centerIn: parent
+                                spacing: 5
+                                MaterialSymbol {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: targetEnabled ? "check_circle" : modelData.icon
+                                    iconSize: 14
+                                    color: targetEnabled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colSubtext
+                                }
+                                StyledText {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData.label
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    color: targetEnabled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-                            MaterialSymbol {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: modelData.icon
-                                iconSize: Appearance.font.pixelSize.normal
-                                color: Appearance.colors.colOnSurface
+    // 03: Typography
+    SettingsCardSection {
+        id: typographyCard
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        settingsTaskSection: "colors"
+        visible: true
+        expanded: true
+        icon: "text_format"
+        title: Translation.tr("Typography")
+
+        SettingsGroup {
+            ContentSubsection {
+                title: Translation.tr("Quick Presets")
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Repeater {
+                        model: StylePresets.presets
+
+                        RippleButton {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            implicitHeight: 46
+                            buttonRadius: Appearance.rounding.small
+                            colBackground: Appearance.colors.colLayer1
+                            colBackgroundHover: Appearance.colors.colLayer1Hover
+
+                            ColumnLayout {
+                                anchors.centerIn: parent
+                                spacing: 2
+
+                                MaterialSymbol {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: modelData.icon
+                                    iconSize: Appearance.font.pixelSize.normal
+                                    color: Appearance.colors.colOnSurface
+                                }
+
+                                StyledText {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: modelData.name
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    elide: Text.ElideRight
+                                }
                             }
 
+                            onClicked: StylePresets.applyPreset(modelData.id)
+                            StyledToolTip { text: modelData.description; visible: parent.buttonHovered }
+                        }
+                    }
+                }
+            }
+
+            SettingsDivider {}
+
+            ContentSubsection {
+                title: Translation.tr("Font Families")
+
+                ConfigRow {
+                    uniform: true
+
+                    FontSelector {
+                        id: mainFontSelector
+                        label: Translation.tr("Main")
+                        icon: "font_download"
+                        selectedFont: Config.options?.appearance?.typography?.mainFont ?? "Roboto Flex"
+                        onSelectedFontChanged: {
+                            if (Config.options?.appearance?.typography)
+                                Config.setNestedValue("appearance.typography.mainFont", selectedFont)
+                        }
+                        Connections {
+                            target: Config.options?.appearance?.typography ?? null
+                            function onMainFontChanged() { mainFontSelector.selectedFont = Config.options.appearance.typography.mainFont }
+                        }
+                    }
+
+                    FontSelector {
+                        id: titleFontSelector
+                        label: Translation.tr("Title")
+                        icon: "title"
+                        selectedFont: Config.options?.appearance?.typography?.titleFont ?? "Gabarito"
+                        onSelectedFontChanged: {
+                            if (Config.options?.appearance?.typography)
+                                Config.setNestedValue("appearance.typography.titleFont", selectedFont)
+                        }
+                        Connections {
+                            target: Config.options?.appearance?.typography ?? null
+                            function onTitleFontChanged() { titleFontSelector.selectedFont = Config.options.appearance.typography.titleFont }
+                        }
+                    }
+
+                    FontSelector {
+                        id: monoFontSelector
+                        label: Translation.tr("Mono")
+                        icon: "terminal"
+                        selectedFont: Config.options?.appearance?.typography?.monospaceFont ?? "JetBrains Mono NF"
+                        onSelectedFontChanged: {
+                            if (Config.options?.appearance?.typography)
+                                Config.setNestedValue("appearance.typography.monospaceFont", selectedFont)
+                        }
+                        Connections {
+                            target: Config.options?.appearance?.typography ?? null
+                            function onMonospaceFontChanged() { monoFontSelector.selectedFont = Config.options.appearance.typography.monospaceFont }
+                        }
+                    }
+                }
+            }
+
+            SettingsDivider {}
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    icon: "format_size"
+                    text: Translation.tr("Size scale (%)")
+                    value: Math.round((Config.options?.appearance?.typography?.sizeScale ?? 1.0) * 100)
+                    from: 80
+                    to: 150
+                    stepSize: 5
+                    onValueChanged: {
+                        if (Config.options?.appearance?.typography)
+                            Config.setNestedValue("appearance.typography.sizeScale", value / 100)
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Scale all text in the shell")
+                    }
+                }
+
+                RippleButtonWithIcon {
+                    buttonRadius: Appearance.rounding.full
+                    materialIcon: "restart_alt"
+                    mainText: Translation.tr("Reset defaults")
+                    onClicked: StylePresets.resetTypographyToDefaults()
+                }
+            }
+        }
+    }
+
+    // 04: Motion & Animation Speed
+    SettingsCardSection {
+        id: motionSpeedCard
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        settingsTaskSection: "colors"
+        visible: (Config.options?.panelFamily ?? "ii") !== "waffle"
+        expanded: true
+        icon: "animation"
+        title: Translation.tr("Motion & Animation Speed")
+
+        SettingsGroup {
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                ConfigSelectionArray {
+                    Layout.fillWidth: true
+                    currentValue: Config.options?.appearance?.iiMotionProfile ?? "classic"
+                    onSelected: newValue => Config.setNestedValue("appearance.iiMotionProfile", newValue)
+                    options: [
+                        { displayName: Translation.tr("Classic"), icon: "motion_photos_paused", value: "classic" },
+                        { displayName: Translation.tr("Contextual"), icon: "gesture", value: "contextual" }
+                    ]
+                }
+
+                DialogButton {
+                    buttonText: Translation.tr("Reset motion to defaults")
+                    onClicked: {
+                        for (const key of ["movement", "enterExit", "clickBounce", "scroll"]) {
+                            Config.setNestedValue(`appearance.animationSpeed.${key}`, 1.0)
+                            Config.setNestedValue(`appearance.animationCurve.${key}`, "default")
+                        }
+                    }
+                }
+            }
+
+            SettingsDivider {}
+
+            SettingsSliderRow {
+                icon: "speed"
+                text: Translation.tr("Global animation speed")
+                from: 0.5
+                to: 2.0
+                stepSize: 0.05
+                value: Config.options?.appearance?.animationSpeed?.movement ?? 1.0
+                displayValue: (Config.options?.appearance?.animationSpeed?.movement ?? 1.0).toFixed(2) + "x"
+                onMoved: nextVal => {
+                    const rounded = Math.round(nextVal * 100) / 100
+                    for (const key of ["movement", "enterExit", "clickBounce", "scroll"])
+                        Config.setNestedValue(`appearance.animationSpeed.${key}`, rounded)
+                }
+            }
+        }
+    }
+
+    // 05: Icon Theme
+    SettingsCardSection {
+        id: iconThemeCard
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        settingsTaskSection: "colors"
+        visible: true
+        expanded: true
+        icon: "folder"
+        title: Translation.tr("Icon Theme")
+
+        SettingsGroup {
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    spacing: 4
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("System (tray, apps)")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.Medium
+                    }
+                    IconThemeSelector { mode: "system" }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    spacing: 4
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Dock")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.Medium
+                    }
+                    IconThemeSelector { mode: "dock" }
+                }
+            }
+        }
+    }
+
+    // 06: Theme Scheduling
+    SettingsCardSection {
+        id: themeSchedulingCard
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        settingsTaskSection: "colors"
+        visible: true
+        expanded: true
+        icon: "schedule"
+        title: Translation.tr("Theme Scheduling")
+
+        SettingsGroup {
+            ConfigSwitch {
+                buttonIcon: "schedule"
+                text: Translation.tr("Enable automatic theme switching")
+                checked: Config.options?.appearance?.themeSchedule?.enabled ?? false
+                onCheckedChanged: Config.setNestedValue("appearance.themeSchedule.enabled", checked)
+            }
+
+            SettingsDivider {}
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                MaterialSymbol { Layout.alignment: Qt.AlignVCenter; text: "wb_sunny"; iconSize: 18; color: Appearance.colors.colSubtext }
+                StyledText {
+                    Layout.alignment: Qt.AlignVCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: Translation.tr("Day theme")
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
+
+                Item {
+                    Layout.preferredWidth: 164
+                    Layout.preferredHeight: 32
+
+                    RippleButton {
+                        id: dayThemeBtn
+                        anchors.fill: parent
+                        colBackground: Appearance.colors.colLayer2
+                        colBackgroundHover: Appearance.colors.colLayer2Hover
+
+                        contentItem: RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 8
+
                             StyledText {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: modelData.name
+                                Layout.alignment: Qt.AlignVCenter
+                                Layout.fillWidth: true
+                                verticalAlignment: Text.AlignVCenter
+                                text: ThemePresets.presets.find(p => p.id === (Config.options?.appearance?.themeSchedule?.dayTheme ?? "auto"))?.name ?? "Auto"
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 elide: Text.ElideRight
                             }
+                            MaterialSymbol { Layout.alignment: Qt.AlignVCenter; text: dayThemePopup.visible ? "expand_less" : "expand_more"; iconSize: 14; color: Appearance.colors.colSubtext }
                         }
 
-                        onClicked: StylePresets.applyPreset(modelData.id)
-                        StyledToolTip { text: modelData.description; visible: parent.buttonHovered }
+                        onClicked: dayThemePopup.visible ? dayThemePopup.close() : dayThemePopup.open()
                     }
-                }
-            }
-        }
 
-        // Font Families
-        ContentSubsection {
-            title: Translation.tr("Font Families")
+                    Popup {
+                        id: dayThemePopup
+                        y: dayThemeBtn.height + 4
+                        width: Math.max(164, parent.width)
+                        height: Math.min(220, dayThemeList.contentHeight + 16)
+                        padding: 8
 
-            ConfigRow {
-                uniform: true
-
-                FontSelector {
-                    id: mainFontSelector
-                    label: Translation.tr("Main")
-                    icon: "font_download"
-                    selectedFont: Config.options?.appearance?.typography?.mainFont ?? "Roboto Flex"
-                    onSelectedFontChanged: {
-                        if (Config.options?.appearance?.typography)
-                            Config.setNestedValue("appearance.typography.mainFont", selectedFont)
-                    }
-                    Connections {
-                        target: Config.options?.appearance?.typography ?? null
-                        function onMainFontChanged() { mainFontSelector.selectedFont = Config.options.appearance.typography.mainFont }
-                    }
-                }
-
-                FontSelector {
-                    id: titleFontSelector
-                    label: Translation.tr("Title")
-                    icon: "title"
-                    selectedFont: Config.options?.appearance?.typography?.titleFont ?? "Gabarito"
-                    onSelectedFontChanged: {
-                        if (Config.options?.appearance?.typography)
-                            Config.setNestedValue("appearance.typography.titleFont", selectedFont)
-                    }
-                    Connections {
-                        target: Config.options?.appearance?.typography ?? null
-                        function onTitleFontChanged() { titleFontSelector.selectedFont = Config.options.appearance.typography.titleFont }
-                    }
-                }
-
-                FontSelector {
-                    id: monoFontSelector
-                    label: Translation.tr("Mono")
-                    icon: "terminal"
-                    selectedFont: Config.options?.appearance?.typography?.monospaceFont ?? "JetBrains Mono NF"
-                    onSelectedFontChanged: {
-                        if (Config.options?.appearance?.typography)
-                            Config.setNestedValue("appearance.typography.monospaceFont", selectedFont)
-                    }
-                    Connections {
-                        target: Config.options?.appearance?.typography ?? null
-                        function onMonospaceFontChanged() { monoFontSelector.selectedFont = Config.options.appearance.typography.monospaceFont }
-                    }
-                }
-            }
-        }
-
-        // Size Scale + Reset button
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            ConfigSpinBox {
-                Layout.fillWidth: true
-                icon: "format_size"
-                text: Translation.tr("Size scale (%)")
-                value: Math.round((Config.options?.appearance?.typography?.sizeScale ?? 1.0) * 100)
-                from: 80
-                to: 150
-                stepSize: 5
-                onValueChanged: {
-                    if (Config.options?.appearance?.typography)
-                        Config.setNestedValue("appearance.typography.sizeScale", value / 100)
-                }
-                StyledToolTip {
-                    text: Translation.tr("Scale all text in the shell")
-                }
-            }
-
-            RippleButtonWithIcon {
-                buttonRadius: Appearance.rounding.full
-                materialIcon: "restart_alt"
-                mainText: Translation.tr("Reset typography to defaults")
-                onClicked: StylePresets.resetTypographyToDefaults()
-            }
-        }
-    }
-}
-
-SettingsCardSection {
-    id: themeSchedulingCard
-    bentoColumn: "right"
-    _consumesBentoExtraHeight: true
-    Layout.preferredWidth: 1
-    Layout.alignment: Qt.AlignTop
-    Layout.fillWidth: true
-    settingsTaskSection: "colors"
-    visible: true
-    expanded: true
-    icon: "schedule"
-    title: Translation.tr("Theme Scheduling")
-
-    SettingsGroup {
-        ConfigSwitch {
-            buttonIcon: "schedule"
-            text: Translation.tr("Enable automatic theme switching")
-            checked: Config.options?.appearance?.themeSchedule?.enabled ?? false
-            onCheckedChanged: Config.setNestedValue("appearance.themeSchedule.enabled", checked)
-        }
-
-        // Day theme + start time row
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 6
-
-            MaterialSymbol { Layout.alignment: Qt.AlignVCenter; text: "wb_sunny"; iconSize: 18; color: Appearance.colors.colSubtext }
-            StyledText {
-                Layout.alignment: Qt.AlignVCenter
-                verticalAlignment: Text.AlignVCenter
-                text: Translation.tr("Day theme")
-                Layout.fillWidth: true
-                elide: Text.ElideRight
-            }
-
-            Item {
-                Layout.preferredWidth: 124
-                Layout.preferredHeight: 32
-
-                RippleButton {
-                    id: dayThemeBtn
-                    anchors.fill: parent
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-
-                    contentItem: RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 8
-                        anchors.rightMargin: 8
-
-                        StyledText {
-                            Layout.alignment: Qt.AlignVCenter
-                            Layout.fillWidth: true
-                            verticalAlignment: Text.AlignVCenter
-                            text: ThemePresets.presets.find(p => p.id === (Config.options?.appearance?.themeSchedule?.dayTheme ?? "auto"))?.name ?? "Auto"
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            elide: Text.ElideRight
+                        background: Rectangle {
+                            color: Appearance.colors.colLayer2Base
+                            radius: Appearance.rounding.small
+                            border.width: 1
+                            border.color: Appearance.colors.colLayer0Border
                         }
-                        MaterialSymbol { Layout.alignment: Qt.AlignVCenter; text: dayThemePopup.visible ? "expand_less" : "expand_more"; iconSize: 14; color: Appearance.colors.colSubtext }
-                    }
 
-                    onClicked: dayThemePopup.visible ? dayThemePopup.close() : dayThemePopup.open()
+                        ListView {
+                            id: dayThemeList
+                            anchors.fill: parent
+                            clip: true
+                            model: ThemePresets.presets
+
+                            delegate: RippleButton {
+                                required property var modelData
+                                width: dayThemeList.width
+                                implicitHeight: 28
+                                colBackground: modelData.id === (Config.options?.appearance?.themeSchedule?.dayTheme ?? "auto") ? Appearance.colors.colPrimaryContainer : "transparent"
+                                colBackgroundHover: Appearance.colors.colLayer1Hover
+
+                                contentItem: StyledText {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 8
+                                    text: modelData.name
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+
+                                onClicked: {
+                                    Config.setNestedValue("appearance.themeSchedule.dayTheme", modelData.id)
+                                    dayThemePopup.close()
+                                }
+                            }
+                        }
+                    }
                 }
 
-                Popup {
-                    id: dayThemePopup
-                    y: dayThemeBtn.height + 4
-                    width: Math.max(150, parent.width)
-                    height: Math.min(200, dayThemeList.contentHeight + 16)
-                    padding: 8
+                StyledSpinBox {
+                    id: dayHourSpin
+                    baseHeight: 32
+                    from: 0; to: 23
+                    value: parseInt((Config.options?.appearance?.themeSchedule?.dayStart ?? "06:00").split(":")[0]) || 6
+                    textFromValue: (v) => v.toString().padStart(2, '0')
+                    onValueChanged: Config.setNestedValue("appearance.themeSchedule.dayStart",
+                        `${textFromValue(value)}:${dayMinSpin.textFromValue(dayMinSpin.value)}`)
+                    StyledToolTip { text: Translation.tr("Day starts at"); visible: dayHourSpin.hovered }
+                }
+                StyledText { Layout.alignment: Qt.AlignVCenter; verticalAlignment: Text.AlignVCenter; text: ":"; font.pixelSize: Appearance.font.pixelSize.normal; color: Appearance.colors.colSubtext }
+                StyledSpinBox {
+                    id: dayMinSpin
+                    baseHeight: 32
+                    from: 0; to: 59; stepSize: 5
+                    value: parseInt((Config.options?.appearance?.themeSchedule?.dayStart ?? "06:00").split(":")[1]) || 0
+                    textFromValue: (v) => v.toString().padStart(2, '0')
+                    onValueChanged: Config.setNestedValue("appearance.themeSchedule.dayStart",
+                        `${dayHourSpin.textFromValue(dayHourSpin.value)}:${textFromValue(value)}`)
+                    StyledToolTip { text: Translation.tr("Day starts at"); visible: dayMinSpin.hovered }
+                }
+            }
 
-                    background: Rectangle {
-                        color: Appearance.colors.colLayer2Base
-                        radius: Appearance.rounding.small
-                        border.width: 1
-                        border.color: Appearance.colors.colLayer0Border
-                    }
+            SettingsDivider {}
 
-                    ListView {
-                        id: dayThemeList
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                MaterialSymbol { Layout.alignment: Qt.AlignVCenter; text: "bedtime"; iconSize: 18; color: Appearance.colors.colSubtext }
+                StyledText {
+                    Layout.alignment: Qt.AlignVCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: Translation.tr("Night theme")
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
+
+                Item {
+                    Layout.preferredWidth: 164
+                    Layout.preferredHeight: 32
+
+                    RippleButton {
+                        id: nightThemeBtn
                         anchors.fill: parent
-                        clip: true
-                        model: ThemePresets.presets
+                        colBackground: Appearance.colors.colLayer2
+                        colBackgroundHover: Appearance.colors.colLayer2Hover
 
-                        delegate: RippleButton {
-                            required property var modelData
-                            width: dayThemeList.width
-                            implicitHeight: 28
-                            colBackground: modelData.id === (Config.options?.appearance?.themeSchedule?.dayTheme ?? "auto") ? Appearance.colors.colPrimaryContainer : "transparent"
-                            colBackgroundHover: Appearance.colors.colLayer1Hover
+                        contentItem: RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 8
 
-                            contentItem: StyledText {
-                                anchors.fill: parent
-                                anchors.leftMargin: 8
-                                text: modelData.name
-                                font.pixelSize: Appearance.font.pixelSize.smaller
+                            StyledText {
+                                Layout.alignment: Qt.AlignVCenter
+                                Layout.fillWidth: true
                                 verticalAlignment: Text.AlignVCenter
-                            }
-
-                            onClicked: {
-                                Config.setNestedValue("appearance.themeSchedule.dayTheme", modelData.id)
-                                dayThemePopup.close()
-                            }
-                        }
-                    }
-                }
-            }
-
-            StyledSpinBox {
-                id: dayHourSpin
-                baseHeight: 32
-                from: 0; to: 23
-                value: parseInt((Config.options?.appearance?.themeSchedule?.dayStart ?? "06:00").split(":")[0]) || 6
-                textFromValue: (v) => v.toString().padStart(2, '0')
-                onValueChanged: Config.setNestedValue("appearance.themeSchedule.dayStart",
-                    `${textFromValue(value)}:${dayMinSpin.textFromValue(dayMinSpin.value)}`)
-                StyledToolTip { text: Translation.tr("Day starts at"); visible: dayHourSpin.hovered }
-            }
-            StyledText { Layout.alignment: Qt.AlignVCenter; verticalAlignment: Text.AlignVCenter; text: ":"; font.pixelSize: Appearance.font.pixelSize.normal; color: Appearance.colors.colSubtext }
-            StyledSpinBox {
-                id: dayMinSpin
-                baseHeight: 32
-                from: 0; to: 59; stepSize: 5
-                value: parseInt((Config.options?.appearance?.themeSchedule?.dayStart ?? "06:00").split(":")[1]) || 0
-                textFromValue: (v) => v.toString().padStart(2, '0')
-                onValueChanged: Config.setNestedValue("appearance.themeSchedule.dayStart",
-                    `${dayHourSpin.textFromValue(dayHourSpin.value)}:${textFromValue(value)}`)
-                StyledToolTip { text: Translation.tr("Day starts at"); visible: dayMinSpin.hovered }
-            }
-        }
-
-        // Night theme + start time row
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 6
-
-            MaterialSymbol { Layout.alignment: Qt.AlignVCenter; text: "bedtime"; iconSize: 18; color: Appearance.colors.colSubtext }
-            StyledText {
-                Layout.alignment: Qt.AlignVCenter
-                verticalAlignment: Text.AlignVCenter
-                text: Translation.tr("Night theme")
-                Layout.fillWidth: true
-                elide: Text.ElideRight
-            }
-
-            Item {
-                Layout.preferredWidth: 124
-                Layout.preferredHeight: 32
-
-                RippleButton {
-                    id: nightThemeBtn
-                    anchors.fill: parent
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-
-                    contentItem: RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 8
-                        anchors.rightMargin: 8
-
-                        StyledText {
-                            Layout.alignment: Qt.AlignVCenter
-                            Layout.fillWidth: true
-                            verticalAlignment: Text.AlignVCenter
-                            text: ThemePresets.presets.find(p => p.id === (Config.options?.appearance?.themeSchedule?.nightTheme ?? "auto"))?.name ?? "Auto"
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            elide: Text.ElideRight
-                        }
-                        MaterialSymbol { Layout.alignment: Qt.AlignVCenter; text: nightThemePopup.visible ? "expand_less" : "expand_more"; iconSize: 14; color: Appearance.colors.colSubtext }
-                    }
-
-                    onClicked: nightThemePopup.visible ? nightThemePopup.close() : nightThemePopup.open()
-                }
-
-                Popup {
-                    id: nightThemePopup
-                    y: nightThemeBtn.height + 4
-                    width: Math.max(150, parent.width)
-                    height: Math.min(200, nightThemeList.contentHeight + 16)
-                    padding: 8
-
-                    background: Rectangle {
-                        color: Appearance.colors.colLayer2Base
-                        radius: Appearance.rounding.small
-                        border.width: 1
-                        border.color: Appearance.colors.colLayer0Border
-                    }
-
-                    ListView {
-                        id: nightThemeList
-                        anchors.fill: parent
-                        clip: true
-                        model: ThemePresets.presets
-
-                        delegate: RippleButton {
-                            required property var modelData
-                            width: nightThemeList.width
-                            implicitHeight: 28
-                            colBackground: modelData.id === (Config.options?.appearance?.themeSchedule?.nightTheme ?? "auto") ? Appearance.colors.colPrimaryContainer : "transparent"
-                            colBackgroundHover: Appearance.colors.colLayer1Hover
-
-                            contentItem: StyledText {
-                                anchors.fill: parent
-                                anchors.leftMargin: 8
-                                text: modelData.name
+                                text: ThemePresets.presets.find(p => p.id === (Config.options?.appearance?.themeSchedule?.nightTheme ?? "auto"))?.name ?? "Auto"
                                 font.pixelSize: Appearance.font.pixelSize.smaller
-                                verticalAlignment: Text.AlignVCenter
+                                elide: Text.ElideRight
                             }
+                            MaterialSymbol { Layout.alignment: Qt.AlignVCenter; text: nightThemePopup.visible ? "expand_less" : "expand_more"; iconSize: 14; color: Appearance.colors.colSubtext }
+                        }
 
-                            onClicked: {
-                                Config.setNestedValue("appearance.themeSchedule.nightTheme", modelData.id)
-                                nightThemePopup.close()
+                        onClicked: nightThemePopup.visible ? nightThemePopup.close() : nightThemePopup.open()
+                    }
+
+                    Popup {
+                        id: nightThemePopup
+                        y: nightThemeBtn.height + 4
+                        width: Math.max(164, parent.width)
+                        height: Math.min(220, nightThemeList.contentHeight + 16)
+                        padding: 8
+
+                        background: Rectangle {
+                            color: Appearance.colors.colLayer2Base
+                            radius: Appearance.rounding.small
+                            border.width: 1
+                            border.color: Appearance.colors.colLayer0Border
+                        }
+
+                        ListView {
+                            id: nightThemeList
+                            anchors.fill: parent
+                            clip: true
+                            model: ThemePresets.presets
+
+                            delegate: RippleButton {
+                                required property var modelData
+                                width: nightThemeList.width
+                                implicitHeight: 28
+                                colBackground: modelData.id === (Config.options?.appearance?.themeSchedule?.nightTheme ?? "auto") ? Appearance.colors.colPrimaryContainer : "transparent"
+                                colBackgroundHover: Appearance.colors.colLayer1Hover
+
+                                contentItem: StyledText {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 8
+                                    text: modelData.name
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+
+                                onClicked: {
+                                    Config.setNestedValue("appearance.themeSchedule.nightTheme", modelData.id)
+                                    nightThemePopup.close()
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            StyledSpinBox {
-                id: nightHourSpin
-                baseHeight: 32
-                from: 0; to: 23
-                value: parseInt((Config.options?.appearance?.themeSchedule?.nightStart ?? "18:00").split(":")[0]) || 18
-                textFromValue: (v) => v.toString().padStart(2, '0')
-                onValueChanged: Config.setNestedValue("appearance.themeSchedule.nightStart",
-                    `${textFromValue(value)}:${nightMinSpin.textFromValue(nightMinSpin.value)}`)
-                StyledToolTip { text: Translation.tr("Night starts at"); visible: nightHourSpin.hovered }
-            }
-            StyledText { Layout.alignment: Qt.AlignVCenter; verticalAlignment: Text.AlignVCenter; text: ":"; font.pixelSize: Appearance.font.pixelSize.normal; color: Appearance.colors.colSubtext }
-            StyledSpinBox {
-                id: nightMinSpin
-                baseHeight: 32
-                from: 0; to: 59; stepSize: 5
-                value: parseInt((Config.options?.appearance?.themeSchedule?.nightStart ?? "18:00").split(":")[1]) || 0
-                textFromValue: (v) => v.toString().padStart(2, '0')
-                onValueChanged: Config.setNestedValue("appearance.themeSchedule.nightStart",
-                    `${nightHourSpin.textFromValue(nightHourSpin.value)}:${textFromValue(value)}`)
-                StyledToolTip { text: Translation.tr("Night starts at"); visible: nightMinSpin.hovered }
+                StyledSpinBox {
+                    id: nightHourSpin
+                    baseHeight: 32
+                    from: 0; to: 23
+                    value: parseInt((Config.options?.appearance?.themeSchedule?.nightStart ?? "18:00").split(":")[0]) || 18
+                    textFromValue: (v) => v.toString().padStart(2, '0')
+                    onValueChanged: Config.setNestedValue("appearance.themeSchedule.nightStart",
+                        `${textFromValue(value)}:${nightMinSpin.textFromValue(nightMinSpin.value)}`)
+                    StyledToolTip { text: Translation.tr("Night starts at"); visible: nightHourSpin.hovered }
+                }
+                StyledText { Layout.alignment: Qt.AlignVCenter; verticalAlignment: Text.AlignVCenter; text: ":"; font.pixelSize: Appearance.font.pixelSize.normal; color: Appearance.colors.colSubtext }
+                StyledSpinBox {
+                    id: nightMinSpin
+                    baseHeight: 32
+                    from: 0; to: 59; stepSize: 5
+                    value: parseInt((Config.options?.appearance?.themeSchedule?.nightStart ?? "18:00").split(":")[1]) || 0
+                    textFromValue: (v) => v.toString().padStart(2, '0')
+                    onValueChanged: Config.setNestedValue("appearance.themeSchedule.nightStart",
+                        `${nightHourSpin.textFromValue(nightHourSpin.value)}:${textFromValue(value)}`)
+                    StyledToolTip { text: Translation.tr("Night starts at"); visible: nightMinSpin.hovered }
+                }
             }
         }
     }
-}
-    }
 
-    // ==================== CUSTOM THEME EDITOR ====================
+    // Custom Theme Editor ("advanced" tab) — full natural height, zero inner Flickable clamp
     SettingsCardSection {
         id: customThemeEditorSection
-        bentoColumn: "full"
-        showHeader: false
-        allowEditWithoutHeader: true
         Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
         settingsTaskSection: "advanced"
@@ -1401,24 +1417,12 @@ SettingsCardSection {
         Loader {
             id: customThemeEditorLoader
             Layout.fillWidth: true
-            readonly property real desiredEditorHeight: Math.max(
-                0,
-                (customThemeEditorSection._effectiveCustomHeight > 0
-                    ? customThemeEditorSection._effectiveCustomHeight
-                    : root.effectiveColorsBentoHeight) - SettingsMaterialPreset.cardPadding * 2
-            )
             active: Boolean(
                 (root.activeSection === "advanced" || customThemeEditorSection._isForeignHosted || Boolean(customThemeEditorSection.moduleConfig?.targetSubTab))
                 && customThemeEditorSection.visible
                 && customThemeEditorSection.expanded
             )
             source: "CustomThemeEditor.qml"
-            Binding {
-                target: customThemeEditorLoader.item
-                property: "targetEditorHeight"
-                value: customThemeEditorLoader.desiredEditorHeight
-                when: customThemeEditorLoader.status === Loader.Ready && customThemeEditorLoader.item !== null
-            }
         }
     }
 }

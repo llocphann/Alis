@@ -39,7 +39,7 @@ Scope {
     readonly property real dockMargin: Appearance.sizes.elevationMargin + Appearance.sizes.hyprlandGapsOut
     property real popupRounding: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
         : Appearance.alisEverywhere ? Appearance.alis.roundingLarge : Appearance.rounding.large
-    readonly property bool visualizerActive: mediaControlsLoader.active && MprisController.isPlaying
+    readonly property bool visualizerActive: mediaControlsLoader.active && MprisController.anyAudioPlaying && !GlobalStates.screenLocked
     property var focusedScreen: GlobalStates.focusedScreen ?? (CompositorService.isNiri
         ? Quickshell.screens.find(s => s.name === NiriService.currentOutput) ?? GlobalStates.primaryScreen
         : Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? GlobalStates.primaryScreen)

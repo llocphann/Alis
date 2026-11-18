@@ -30,6 +30,19 @@ Item {
         (root.width - (root.activeBars - 1) * root.barSpacing)
             / Math.max(1, root.activeBars))
 
+    readonly property color _barRgbColor: Qt.rgba(root.color.r, root.color.g, root.color.b, 1.0)
+    readonly property var _edgeFactors: {
+        const count = Math.max(1, root.activeBars)
+        const factors = new Array(count)
+        const denom = Math.max(1, count - 1)
+        for (let i = 0; i < count; ++i) {
+            const edgeNorm = Math.sin((i / denom) * Math.PI)
+            const rawEdgeFactor = Math.min(1.0, edgeNorm * 2.0)
+            factors[i] = rawEdgeFactor * rawEdgeFactor * (3.0 - 2.0 * rawEdgeFactor)
+        }
+        return factors
+    }
+
     // Serpantinum mirrors low frequencies toward the center and higher
     // frequencies toward the edges, then eases the outer bars to zero. Alis
     // receives raw CAVA amplitudes plus an adaptive ceiling, so normalize first
@@ -95,17 +108,14 @@ Item {
         spacing: root.barSpacing
 
         Repeater {
-            model: root.activeBars
+            model: root.visible ? root.activeBars : 0
 
             delegate: Rectangle {
                 required property int index
                 property real level: root.processedBars && index < root.processedBars.length
                     ? root.processedBars[index] : 0.0
-                property real edgeNorm: Math.sin(
-                    (index / Math.max(1, root.activeBars - 1)) * Math.PI)
-                property real rawEdgeFactor: Math.min(1.0, edgeNorm * 2.0)
-                property real edgeFactor: rawEdgeFactor * rawEdgeFactor
-                    * (3.0 - 2.0 * rawEdgeFactor)
+                property real edgeFactor: root._edgeFactors && index < root._edgeFactors.length
+                    ? root._edgeFactors[index] : 1.0
 
                 width: root.actualBarWidth
                 // Animated delegates can lose their visual parent before the
@@ -120,7 +130,7 @@ Item {
                 // PlayerControl historically passes a transparentized accent.
                 // Use its RGB as the bar color and let opacity own intensity so
                 // the equalizer cannot become effectively double-transparent.
-                color: Qt.rgba(root.color.r, root.color.g, root.color.b, 1.0)
+                color: root._barRgbColor
                 opacity: {
                     const base = Math.max(0.12, Math.min(0.70, root.fillOpacity))
                     const strength = root.live
@@ -130,11 +140,11 @@ Item {
                 }
 
                 Behavior on height {
-                    enabled: Appearance.animationsEnabled
+                    enabled: Appearance.animationsEnabled && root.visible
                     NumberAnimation { duration: 75; easing.type: Easing.OutCubic }
                 }
                 Behavior on opacity {
-                    enabled: Appearance.animationsEnabled
+                    enabled: Appearance.animationsEnabled && root.visible
                     NumberAnimation { duration: 75; easing.type: Easing.OutQuad }
                 }
             }

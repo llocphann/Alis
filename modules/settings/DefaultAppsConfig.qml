@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import Quickshell.Widgets
 import qs.services
 import qs.modules.common
@@ -18,17 +19,78 @@ ContentPage {
     settingsPageName: Translation.tr("Applications")
 
     property string activeSection: "primary"
+    property bool _autostartMounted: false
     property string openPickerSlot: ""
     property string openCustomSlot: ""
+    property var _autostartCache: null
+    property int _statusConfigRevision: -1
 
     onActiveSectionChanged: {
         if (root.activeSection === "defaults" || root.activeSection === "portable") {
             root.activeSection = "primary"
+            return
+        }
+        if (root.activeSection === "autostart") {
+            root._autostartMounted = true
+        }
+        if (!root.embedded && typeof root.scrollToIrisSection === "function") {
+            if (root.activeSection === "primary") {
+                Qt.callLater(() => root.scrollToIrisSection(Translation.tr("Default Applications")))
+            } else if (root.activeSection === "utilities") {
+                Qt.callLater(() => root.scrollToIrisSection(Translation.tr("System Utilities")))
+            } else if (root.activeSection === "autostart") {
+                Qt.callLater(() => root.scrollToIrisSection(Translation.tr("Autostart Applications")))
+            }
+        }
+    }
+
+    onContentYChanged: {
+        if (!root._autostartMounted && root.contentY > 40)
+            root._autostartMounted = true
+    }
+
+    Timer {
+        id: deferredDiscoveryTimer
+        interval: 16
+        repeat: false
+        running: false
+        onTriggered: {
+            if (!AppLauncher.discoveryLoaded && !AppLauncher.discovering) {
+                AppLauncher.refreshDiscovery()
+            } else if (AppLauncher.discoveryLoaded && !AppLauncher.discovering && !backgroundStatusProc.running) {
+                root._statusConfigRevision = AppLauncher._configRevision
+                backgroundStatusProc.running = true
+            }
+        }
+    }
+
+    Process {
+        id: backgroundStatusProc
+        running: false
+        command: ["python3", AppLauncher._helperScript, "status"]
+        stdout: StdioCollector {
+            id: backgroundStatusStdout
+        }
+        onExited: (exitCode, _exitStatus) => {
+            if (exitCode !== 0 || root._statusConfigRevision !== AppLauncher._configRevision)
+                return
+            const raw = String(backgroundStatusStdout.text ?? "").trim()
+            if (!raw)
+                return
+            try {
+                const parsed = JSON.parse(raw)
+                if (parsed && parsed.browser && JSON.stringify(parsed) !== JSON.stringify(AppLauncher.xdgDefaults)) {
+                    AppLauncher.xdgDefaults = parsed
+                }
+            } catch (_err) {}
         }
     }
 
     Component.onCompleted: {
-        AppLauncher.refreshDiscovery()
+        if (root.activeSection === "autostart") {
+            root._autostartMounted = true
+        }
+        deferredDiscoveryTimer.restart()
     }
 
     function handleEscape(): bool {
@@ -192,29 +254,40 @@ ContentPage {
         }
     }
 
-    component DiscoveryHeaderBar: RowLayout {
+    component DiscoveryHeaderBar: Item {
+        property real horizontalBleed: 0
         Layout.fillWidth: true
+        Layout.leftMargin: -horizontalBleed
+        Layout.rightMargin: -horizontalBleed
+        Layout.preferredWidth: parent ? (parent.width + horizontalBleed * 2) : -1
         Layout.minimumWidth: 0
-        spacing: 8
+        width: parent ? (parent.width + horizontalBleed * 2) : 0
+        implicitHeight: discoveryRowInner.implicitHeight
 
-        StyledText {
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            text: AppLauncher.discovering
-                ? Translation.tr("Scanning installed applications…")
-                : Translation.tr("%1 installed applications").arg((AppLauncher.discoveredApps ?? []).length)
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.colors.colSubtext
-            elide: Text.ElideRight
-            maximumLineCount: 1
-        }
+        RowLayout {
+            id: discoveryRowInner
+            anchors.fill: parent
+            spacing: 8
 
-        SlotIconButton {
-            objectName: "defaultAppsRefreshButton"
-            iconName: "refresh"
-            tooltipText: Translation.tr("Refresh apps")
-            enabled: !AppLauncher.discovering
-            onClicked: AppLauncher.refreshDiscovery()
+            StyledText {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                text: AppLauncher.discovering
+                    ? Translation.tr("Scanning installed applications…")
+                    : Translation.tr("%1 installed applications").arg((AppLauncher.discoveredApps ?? []).length)
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                elide: Text.ElideRight
+                maximumLineCount: 1
+            }
+
+            SlotIconButton {
+                objectName: "defaultAppsRefreshButton"
+                iconName: "refresh"
+                tooltipText: Translation.tr("Refresh apps")
+                enabled: !AppLauncher.discovering
+                onClicked: AppLauncher.refreshDiscovery()
+            }
         }
     }
 
@@ -222,7 +295,8 @@ ContentPage {
         id: slotCard
         required property var slotData
         Layout.fillWidth: true
-        Layout.preferredWidth: 1
+        Layout.preferredWidth: -1
+        Layout.maximumWidth: 16777215
         Layout.minimumWidth: 0
         Layout.alignment: Qt.AlignTop
         clip: true
@@ -243,6 +317,8 @@ ContentPage {
         property int highlightedIndex: 0
 
         readonly property var candidates: {
+            if (!slotCard.pickerOpen)
+                return []
             void(_rev)
             return AppLauncher.candidatesForSlot(slotId, searchQuery, showAllApps)
         }
@@ -387,7 +463,7 @@ ContentPage {
                             id: autostartBadge
                             anchors.verticalCenter: parent.verticalCenter
                             readonly property string cleanDesktopId: String(slotCard.summary?.desktopId ?? "").replace(/\.desktop$/i, "")
-                            readonly property bool compactMode: (appNameText.implicitWidth + sourceBadge.naturalWidth) > 150
+                            readonly property bool compactMode: (titleBadgeRow.width > 0 && titleBadgeRow.width < 260) || (appNameText.implicitWidth + sourceBadge.naturalWidth) > 150
                             visible: CompositorService.isNiri && cleanDesktopId.length > 0 && Autostart.isAppEnabled(cleanDesktopId)
                             implicitHeight: 20
                             implicitWidth: autostartBadgeRow.implicitWidth + (compactMode ? 8 : 10)
@@ -525,189 +601,194 @@ ContentPage {
             wrapMode: Text.WordWrap
         }
 
-        ColumnLayout {
+        Loader {
             Layout.fillWidth: true
             Layout.minimumWidth: 0
-            visible: slotCard.pickerOpen
-            spacing: 6
+            active: slotCard.pickerOpen
+            visible: active
+            sourceComponent: Component {
+                ColumnLayout {
+                    spacing: 6
 
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                spacing: 6
-
-                MaterialTextField {
-                    id: searchInput
-                    objectName: "defaultAppSearch_" + slotCard.slotId
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    placeholderText: Translation.tr("Search installed applications…")
-                    text: slotCard.searchQuery
-                    onTextChanged: {
-                        slotCard.searchQuery = text
-                        slotCard.highlightedIndex = 0
-                    }
-                    Keys.onDownPressed: event => {
-                        if (slotCard.candidates.length > 0) {
-                            slotCard.highlightedIndex = Math.min(slotCard.candidates.length - 1, slotCard.highlightedIndex + 1)
-                        }
-                        event.accepted = true
-                    }
-                    Keys.onUpPressed: event => {
-                        if (slotCard.candidates.length > 0) {
-                            slotCard.highlightedIndex = Math.max(0, slotCard.highlightedIndex - 1)
-                        }
-                        event.accepted = true
-                    }
-                    Keys.onReturnPressed: event => {
-                        if (slotCard.candidates.length > 0 && slotCard.highlightedIndex >= 0 && slotCard.highlightedIndex < slotCard.candidates.length) {
-                            AppLauncher.selectDiscoveredApp(slotCard.slotId, slotCard.candidates[slotCard.highlightedIndex])
-                            root.openPickerSlot = ""
-                        }
-                        event.accepted = true
-                    }
-                    Keys.onEscapePressed: event => {
-                        root.openPickerSlot = ""
-                        event.accepted = true
-                    }
-                }
-
-                SlotIconButton {
-                    objectName: "defaultAppShowAll_" + slotCard.slotId
-                    iconName: slotCard.showAllApps ? "filter_alt_off" : "filter_alt"
-                    activeState: slotCard.showAllApps
-                    tooltipText: slotCard.showAllApps ? Translation.tr("Category only") : Translation.tr("Show all apps")
-                    onClicked: slotCard.showAllApps = !slotCard.showAllApps
-                }
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                visible: slotCard.candidates.length === 0
-                text: AppLauncher.discovering
-                    ? Translation.tr("Scanning installed applications…")
-                    : Translation.tr("No matching applications found.")
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
-                wrapMode: Text.WordWrap
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                spacing: 4
-
-                Repeater {
-                    model: slotCard.candidates
-
-                    delegate: RippleButton {
-                        id: candidateRow
-                        required property int index
-                        required property var modelData
-                        objectName: "defaultAppOption_" + slotCard.slotId + "_" + String(modelData.identityKey ?? index)
+                    RowLayout {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
-                        implicitHeight: 42
-                        clip: true
-                        buttonRadius: Appearance.rounding.small
-                        readonly property bool isCurrent: String(slotCard.summary?.identityKey ?? "") === String(modelData.identityKey ?? "")
-                            || (String(slotCard.summary?.identityKey ?? "").length === 0 && String(slotCard.summary?.desktopId ?? "") === String(modelData.desktopId ?? ""))
-                        readonly property bool isHighlighted: index === slotCard.highlightedIndex
-                        colBackground: isCurrent
-                            ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.86)
-                            : isHighlighted
-                                ? Appearance.colors.colLayer1Hover
-                                : Appearance.colors.colLayer1
-                        colBackgroundHover: Appearance.colors.colLayer1Hover
-                        onClicked: {
-                            AppLauncher.selectDiscoveredApp(slotCard.slotId, modelData)
-                            root.openPickerSlot = ""
+                        spacing: 6
+
+                        MaterialTextField {
+                            id: searchInput
+                            objectName: "defaultAppSearch_" + slotCard.slotId
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            placeholderText: Translation.tr("Search installed applications…")
+                            text: slotCard.searchQuery
+                            onTextChanged: {
+                                slotCard.searchQuery = text
+                                slotCard.highlightedIndex = 0
+                            }
+                            Keys.onDownPressed: event => {
+                                if (slotCard.candidates.length > 0) {
+                                    slotCard.highlightedIndex = Math.min(slotCard.candidates.length - 1, slotCard.highlightedIndex + 1)
+                                }
+                                event.accepted = true
+                            }
+                            Keys.onUpPressed: event => {
+                                if (slotCard.candidates.length > 0) {
+                                    slotCard.highlightedIndex = Math.max(0, slotCard.highlightedIndex - 1)
+                                }
+                                event.accepted = true
+                            }
+                            Keys.onReturnPressed: event => {
+                                if (slotCard.candidates.length > 0 && slotCard.highlightedIndex >= 0 && slotCard.highlightedIndex < slotCard.candidates.length) {
+                                    AppLauncher.selectDiscoveredApp(slotCard.slotId, slotCard.candidates[slotCard.highlightedIndex])
+                                    root.openPickerSlot = ""
+                                }
+                                event.accepted = true
+                            }
+                            Keys.onEscapePressed: event => {
+                                root.openPickerSlot = ""
+                                event.accepted = true
+                            }
                         }
 
-                        contentItem: RowLayout {
-                            anchors {
-                                fill: parent
-                                leftMargin: 10
-                                rightMargin: 10
-                            }
-                            spacing: 10
+                        SlotIconButton {
+                            objectName: "defaultAppShowAll_" + slotCard.slotId
+                            iconName: slotCard.showAllApps ? "filter_alt_off" : "filter_alt"
+                            activeState: slotCard.showAllApps
+                            tooltipText: slotCard.showAllApps ? Translation.tr("Category only") : Translation.tr("Show all apps")
+                            onClicked: slotCard.showAllApps = !slotCard.showAllApps
+                        }
+                    }
 
-                            AppIconView {
-                                Layout.fillWidth: false
-                                Layout.minimumWidth: 20
-                                Layout.preferredWidth: 20
-                                Layout.maximumWidth: 20
-                                Layout.alignment: Qt.AlignVCenter
-                                iconName: candidateRow.modelData.icon || (slotCard.slotData?.icon ?? "apps")
-                                fallbackSymbol: slotCard.slotData?.icon ?? "apps"
-                                iconSize: 20
-                            }
+                    StyledText {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        visible: slotCard.candidates.length === 0
+                        text: AppLauncher.discovering
+                            ? Translation.tr("Scanning installed applications…")
+                            : Translation.tr("No matching applications found.")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.colors.colSubtext
+                        wrapMode: Text.WordWrap
+                    }
 
-                            ColumnLayout {
-                                id: candidateInfoCol
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        spacing: 4
+
+                        Repeater {
+                            model: slotCard.candidates
+
+                            delegate: RippleButton {
+                                id: candidateRow
+                                required property int index
+                                required property var modelData
+                                objectName: "defaultAppOption_" + slotCard.slotId + "_" + String(modelData.identityKey ?? index)
                                 Layout.fillWidth: true
                                 Layout.minimumWidth: 0
-                                Layout.preferredWidth: 1
-                                Layout.alignment: Qt.AlignVCenter
+                                implicitHeight: 42
                                 clip: true
-                                spacing: 1
-
-                                Row {
-                                    id: candidateTitleRow
-                                    Layout.fillWidth: true
-                                    Layout.minimumWidth: 0
-                                    clip: true
-                                    spacing: 6
-
-                                    readonly property real maxBadgeWidth: Math.max(48, Math.floor(width * 0.48))
-                                    readonly property real effectiveBadgeWidth: width > 0
-                                        ? Math.min(candidateSourceBadge.naturalWidth, maxBadgeWidth)
-                                        : candidateSourceBadge.naturalWidth
-                                    readonly property real availableNameWidth: width > 0
-                                        ? Math.max(0, width - (effectiveBadgeWidth + 6))
-                                        : candidateNameText.implicitWidth
-
-                                    StyledText {
-                                        id: candidateNameText
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: Math.min(implicitWidth, candidateTitleRow.availableNameWidth)
-                                        text: candidateRow.modelData.name ?? ""
-                                        font.pixelSize: Appearance.font.pixelSize.small
-                                        font.weight: candidateRow.isCurrent ? Font.DemiBold : Font.Normal
-                                        color: Appearance.colors.colOnLayer1
-                                        elide: Text.ElideRight
-                                        maximumLineCount: 1
-                                    }
-
-                                    SourceBadgePill {
-                                        id: candidateSourceBadge
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: candidateTitleRow.effectiveBadgeWidth
-                                        badgeText: candidateRow.modelData.sourceBadge ?? "Native"
-                                        available: true
-                                    }
+                                buttonRadius: Appearance.rounding.small
+                                readonly property bool isCurrent: String(slotCard.summary?.identityKey ?? "") === String(modelData.identityKey ?? "")
+                                    || (String(slotCard.summary?.identityKey ?? "").length === 0 && String(slotCard.summary?.desktopId ?? "") === String(modelData.desktopId ?? ""))
+                                readonly property bool isHighlighted: index === slotCard.highlightedIndex
+                                colBackground: isCurrent
+                                    ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.86)
+                                    : isHighlighted
+                                        ? Appearance.colors.colLayer1Hover
+                                        : Appearance.colors.colLayer1
+                                colBackgroundHover: Appearance.colors.colLayer1Hover
+                                onClicked: {
+                                    AppLauncher.selectDiscoveredApp(slotCard.slotId, modelData)
+                                    root.openPickerSlot = ""
                                 }
 
-                                StyledText {
-                                    Layout.fillWidth: true
-                                    Layout.minimumWidth: 0
-                                    text: candidateRow.modelData.exec ?? ""
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    font.family: Appearance.font.family.monospace
-                                    color: Appearance.colors.colSubtext
-                                    elide: Text.ElideMiddle
-                                    maximumLineCount: 1
-                                }
-                            }
+                                contentItem: RowLayout {
+                                    anchors {
+                                        fill: parent
+                                        leftMargin: 10
+                                        rightMargin: 10
+                                    }
+                                    spacing: 10
 
-                            MaterialSymbol {
-                                Layout.fillWidth: false
-                                Layout.alignment: Qt.AlignVCenter
-                                visible: candidateRow.isCurrent
-                                text: "check_circle"
-                                iconSize: Appearance.font.pixelSize.normal
-                                color: Appearance.colors.colPrimary
+                                    AppIconView {
+                                        Layout.fillWidth: false
+                                        Layout.minimumWidth: 20
+                                        Layout.preferredWidth: 20
+                                        Layout.maximumWidth: 20
+                                        Layout.alignment: Qt.AlignVCenter
+                                        iconName: candidateRow.modelData.icon || (slotCard.slotData?.icon ?? "apps")
+                                        fallbackSymbol: slotCard.slotData?.icon ?? "apps"
+                                        iconSize: 20
+                                    }
+
+                                    ColumnLayout {
+                                        id: candidateInfoCol
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
+                                        Layout.preferredWidth: 1
+                                        Layout.alignment: Qt.AlignVCenter
+                                        clip: true
+                                        spacing: 1
+
+                                        Row {
+                                            id: candidateTitleRow
+                                            Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
+                                            clip: true
+                                            spacing: 6
+
+                                            readonly property real maxBadgeWidth: Math.max(48, Math.floor(width * 0.48))
+                                            readonly property real effectiveBadgeWidth: width > 0
+                                                ? Math.min(candidateSourceBadge.naturalWidth, maxBadgeWidth)
+                                                : candidateSourceBadge.naturalWidth
+                                            readonly property real availableNameWidth: width > 0
+                                                ? Math.max(0, width - (effectiveBadgeWidth + 6))
+                                                : candidateNameText.implicitWidth
+
+                                            StyledText {
+                                                id: candidateNameText
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                width: Math.min(implicitWidth, candidateTitleRow.availableNameWidth)
+                                                text: candidateRow.modelData.name ?? ""
+                                                font.pixelSize: Appearance.font.pixelSize.small
+                                                font.weight: candidateRow.isCurrent ? Font.DemiBold : Font.Normal
+                                                color: Appearance.colors.colOnLayer1
+                                                elide: Text.ElideRight
+                                                maximumLineCount: 1
+                                            }
+
+                                            SourceBadgePill {
+                                                id: candidateSourceBadge
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                width: candidateTitleRow.effectiveBadgeWidth
+                                                badgeText: candidateRow.modelData.sourceBadge ?? "Native"
+                                                available: true
+                                            }
+                                        }
+
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
+                                            text: candidateRow.modelData.exec ?? ""
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            font.family: Appearance.font.family.monospace
+                                            color: Appearance.colors.colSubtext
+                                            elide: Text.ElideMiddle
+                                            maximumLineCount: 1
+                                        }
+                                    }
+
+                                    MaterialSymbol {
+                                        Layout.fillWidth: false
+                                        Layout.alignment: Qt.AlignVCenter
+                                        visible: candidateRow.isCurrent
+                                        text: "check_circle"
+                                        iconSize: Appearance.font.pixelSize.normal
+                                        color: Appearance.colors.colPrimary
+                                    }
+                                }
                             }
                         }
                     }
@@ -715,32 +796,37 @@ ContentPage {
             }
         }
 
-        RowLayout {
+        Loader {
             Layout.fillWidth: true
             Layout.minimumWidth: 0
-            visible: slotCard.customOpen
-            spacing: 6
+            active: slotCard.customOpen
+            visible: active
+            sourceComponent: Component {
+                RowLayout {
+                    spacing: 6
 
-            MaterialTextField {
-                id: customCmdField
-                objectName: "defaultAppCustomInput_" + slotCard.slotId
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                placeholderText: slotCard.slotData?.placeholder ?? ""
-                text: slotCard.summary?.command ?? ""
-                onAccepted: {
-                    AppLauncher.setCustomCommand(slotCard.slotId, text)
-                    root.openCustomSlot = ""
-                }
-            }
+                    MaterialTextField {
+                        id: customCmdField
+                        objectName: "defaultAppCustomInput_" + slotCard.slotId
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        placeholderText: slotCard.slotData?.placeholder ?? ""
+                        text: slotCard.summary?.command ?? ""
+                        onAccepted: {
+                            AppLauncher.setCustomCommand(slotCard.slotId, text)
+                            root.openCustomSlot = ""
+                        }
+                    }
 
-            SlotIconButton {
-                objectName: "defaultAppCustomApply_" + slotCard.slotId
-                iconName: "check"
-                tooltipText: Translation.tr("Save command")
-                onClicked: {
-                    AppLauncher.setCustomCommand(slotCard.slotId, customCmdField.text)
-                    root.openCustomSlot = ""
+                    SlotIconButton {
+                        objectName: "defaultAppCustomApply_" + slotCard.slotId
+                        iconName: "check"
+                        tooltipText: Translation.tr("Save command")
+                        onClicked: {
+                            AppLauncher.setCustomCommand(slotCard.slotId, customCmdField.text)
+                            root.openCustomSlot = ""
+                        }
+                    }
                 }
             }
         }
@@ -763,92 +849,164 @@ ContentPage {
         ]
     }
 
-    GridLayout {
-        objectName: "defaultAppsTwoColumnGrid"
+    Item {
+        id: primarySectionHost
+        visible: true
         Layout.fillWidth: true
+        Layout.preferredWidth: -1
+        Layout.maximumWidth: 16777215
         Layout.minimumWidth: 0
-        visible: root.activeSection === "primary"
-        columns: 2
-        uniformCellWidths: true
-        columnSpacing: 14
-        rowSpacing: 14
+        width: parent ? parent.width : 0
+        implicitHeight: defaultAppsTwoColumnGrid.implicitHeight
+        Layout.preferredHeight: implicitHeight
 
-        SettingsCardSection {
-            _preventBentoReparent: true
-            Layout.fillWidth: true
-            Layout.preferredWidth: 1
-            Layout.minimumWidth: 0
-            Layout.alignment: Qt.AlignTop
-            visible: true
-            expanded: true
-            icon: "apps"
-            title: Translation.tr("Core Applications")
+        GridLayout {
+            id: defaultAppsTwoColumnGrid
+            objectName: "defaultAppsTwoColumnGrid"
+            width: primarySectionHost.width
+            columns: 1
+            uniformCellWidths: true
+            columnSpacing: 14
+            rowSpacing: SettingsMaterialPreset.pageSpacing
 
-            DiscoveryHeaderBar {
-                objectName: "defaultAppsDiscoverySummary"
-            }
+            SettingsCardSection {
+                id: coreAppsCard
+                objectName: "defaultAppsCoreColumnCard"
+                _preventBentoReparent: true
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                Layout.minimumWidth: 0
+                Layout.alignment: Qt.AlignTop
+                visible: true
+                expanded: true
+                icon: "apps"
+                title: Translation.tr("Default Applications")
 
-            Repeater {
-                model: AppLauncher.primarySlotDefinitions()
-                delegate: DefaultAppSlotCard {
-                    required property var modelData
-                    slotData: modelData
+                DiscoveryHeaderBar {
+                    id: primaryDiscoveryBar
+                    objectName: "defaultAppsDiscoverySummary"
+                    horizontalBleed: Math.max(0, ((portableAppsSection.width - 22) - (parent ? parent.width : 0)) / 2)
+                }
+
+                Flickable {
+                    id: coreAppsScrollFlickable
+                    objectName: "defaultAppsPrimaryFlickable"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    width: parent ? parent.width : 0
+                    implicitHeight: coreAppsSlotsColumn.implicitHeight
+                    Layout.preferredHeight: implicitHeight
+                    interactive: false
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    contentWidth: width
+                    contentHeight: coreAppsSlotsColumn.implicitHeight
+                    ScrollBar.vertical: ScrollBar {
+                        objectName: "defaultAppsPrimaryScrollBar"
+                        policy: ScrollBar.AlwaysOff
+                    }
+
+                    ColumnLayout {
+                        id: coreAppsSlotsColumn
+                        width: coreAppsScrollFlickable.width
+                        spacing: 8
+
+                        Repeater {
+                            model: AppLauncher.primarySlotDefinitions()
+                            delegate: DefaultAppSlotCard {
+                                required property var modelData
+                                slotData: modelData
+                            }
+                        }
+                    }
                 }
             }
-        }
 
-        ApplicationsConfig {
-            id: portableAppsSection
-            objectName: "defaultAppsPortableSection"
-            embedded: true
-            settingsPageIndex: root.settingsPageIndex
-            Layout.fillWidth: true
-            Layout.preferredWidth: 1
-            Layout.minimumWidth: 0
-            Layout.alignment: Qt.AlignTop
+            ApplicationsConfig {
+                id: portableAppsSection
+                objectName: "defaultAppsPortableSection"
+                embedded: true
+                settingsPageIndex: root.settingsPageIndex
+                embeddedStretchHeight: 0
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                Layout.minimumWidth: 0
+                Layout.alignment: Qt.AlignTop
+            }
         }
     }
 
     SettingsCardSection {
+        id: utilitiesCard
         objectName: "defaultAppsUtilitiesCard"
         _preventBentoReparent: true
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         Layout.alignment: Qt.AlignTop
-        visible: root.activeSection === "utilities"
+        visible: true
         expanded: true
         icon: "tune"
         title: Translation.tr("System Utilities")
 
         DiscoveryHeaderBar {
+            id: utilitiesDiscoveryBar
             objectName: "defaultAppsUtilitiesDiscoverySummary"
         }
 
-        GridLayout {
+        Flickable {
+            id: utilitiesScrollFlickable
+            objectName: "defaultAppsUtilitiesFlickable"
             Layout.fillWidth: true
             Layout.minimumWidth: 0
-            columns: width >= 680 ? 2 : 1
-            uniformCellWidths: columns === 2
-            columnSpacing: 14
-            rowSpacing: 10
+            implicitHeight: utilitiesSlotsGrid.implicitHeight
+            Layout.preferredHeight: implicitHeight
+            interactive: false
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            contentWidth: width
+            contentHeight: utilitiesSlotsGrid.implicitHeight
+            ScrollBar.vertical: ScrollBar {
+                objectName: "defaultAppsUtilitiesScrollBar"
+                policy: ScrollBar.AlwaysOff
+            }
 
-            Repeater {
-                model: AppLauncher.utilitySlotDefinitions()
-                delegate: DefaultAppSlotCard {
-                    required property var modelData
-                    slotData: modelData
+            GridLayout {
+                id: utilitiesSlotsGrid
+                width: utilitiesScrollFlickable.width
+                columns: 1
+                uniformCellWidths: true
+                columnSpacing: 14
+                rowSpacing: 8
+
+                Repeater {
+                    model: AppLauncher.utilitySlotDefinitions()
+                    delegate: DefaultAppSlotCard {
+                        required property var modelData
+                        slotData: modelData
+                    }
                 }
             }
         }
     }
 
-    AutostartConfig {
-        id: autostartSection
-        objectName: "defaultAppsAutostartSection"
-        visible: root.activeSection === "autostart"
-        embedded: true
-        settingsPageIndex: root.settingsPageIndex
+    Loader {
+        id: autostartLoader
+        active: root._autostartMounted
+        asynchronous: false
+        visible: root._autostartMounted
         Layout.fillWidth: true
-        Layout.alignment: Qt.AlignTop
+        Layout.preferredWidth: -1
+        Layout.maximumWidth: 16777215
+        Layout.minimumWidth: 0
+        Layout.preferredHeight: visible && item ? item.implicitHeight : 0
+        sourceComponent: AutostartConfig {
+            id: autostartSection
+            objectName: "defaultAppsAutostartSection"
+            embedded: true
+            settingsPageIndex: root.settingsPageIndex
+            targetContainerHeight: 0
+            cachedServicesState: root._autostartCache
+            onServicesStateUpdated: state => root._autostartCache = state
+        }
     }
 }

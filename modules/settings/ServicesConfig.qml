@@ -48,17 +48,9 @@ ContentPage {
         ]
     }
 
-    GridLayout {
-        Layout.fillWidth: true
-        columns: 2
-        uniformCellWidths: true
-        columnSpacing: 14
-        rowSpacing: 14
-
     SettingsCardSection {
         Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        Layout.preferredWidth: 1
         settingsTaskSection: "system"
         visible: true
         expanded: true
@@ -125,7 +117,6 @@ ContentPage {
             }
 
             SettingsSwitch {
-                visible: Battery.available
                 buttonIcon: "battery_saver"
                 text: Translation.tr("Separate timeouts on battery")
                 checked: Config.options?.idle?.onBattery?.enable ?? false
@@ -133,7 +124,7 @@ ContentPage {
             }
 
             ConfigSpinBox {
-                visible: Battery.available && (Config.options?.idle?.onBattery?.enable ?? false)
+                visible: Config.options?.idle?.onBattery?.enable ?? false
                 icon: "lock_clock"
                 text: Translation.tr("Battery: screen off") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
                 value: Config.options?.idle?.onBattery?.screenOffTimeout ?? 120
@@ -144,7 +135,7 @@ ContentPage {
             }
 
             ConfigSpinBox {
-                visible: Battery.available && (Config.options?.idle?.onBattery?.enable ?? false)
+                visible: Config.options?.idle?.onBattery?.enable ?? false
                 icon: "lock"
                 text: Translation.tr("Battery: lock") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
                 value: Config.options?.idle?.onBattery?.lockTimeout ?? 300
@@ -155,7 +146,7 @@ ContentPage {
             }
 
             ConfigSpinBox {
-                visible: Battery.available && (Config.options?.idle?.onBattery?.enable ?? false)
+                visible: Config.options?.idle?.onBattery?.enable ?? false
                 icon: "dark_mode"
                 text: Translation.tr("Battery: suspend") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
                 value: Config.options?.idle?.onBattery?.suspendTimeout ?? 600
@@ -167,22 +158,79 @@ ContentPage {
 
             SettingsDivider {}
 
-            SettingsSwitch {
-                buttonIcon: "memory_alt"
-                text: Translation.tr("GPU usage monitoring")
-                checked: Config.options?.resources?.monitorGpu ?? true
-                onCheckedChanged: {
-                    Config.setNestedValue("resources.monitorGpu", checked)
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    buttonIcon: "memory_alt"
+                    text: Translation.tr("GPU usage monitoring")
+                    checked: Config.options?.resources?.monitorGpu ?? true
+                    onCheckedChanged: {
+                        Config.setNestedValue("resources.monitorGpu", checked)
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("On hybrid laptops, GPU polling can wake the dGPU; disabling pins Qt to iGPU after restart.")
+                    }
                 }
-                StyledToolTip {
-                    text: Translation.tr("On hybrid laptops, GPU polling can wake the dGPU; disabling pins Qt to iGPU after restart.")
+
+                SettingsSwitch {
+                    buttonIcon: "memory"
+                    text: Translation.tr("Memory monitoring")
+                    checked: Config.options?.performance?.memoryMonitoring ?? true
+                    onCheckedChanged: Config.setNestedValue("performance.memoryMonitoring", checked)
                 }
+            }
+
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    buttonIcon: "energy_savings_leaf"
+                    text: Translation.tr("Low-power shell mode")
+                    checked: Config.options?.performance?.lowPower ?? false
+                    onCheckedChanged: Config.setNestedValue("performance.lowPower", checked)
+                }
+
+                SettingsSwitch {
+                    enabled: Config.options?.performance?.memoryMonitoring ?? true
+                    buttonIcon: "notification_important"
+                    text: Translation.tr("Memory warning alerts")
+                    checked: Config.options?.performance?.memoryWarningNotification ?? false
+                    onCheckedChanged: Config.setNestedValue("performance.memoryWarningNotification", checked)
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    buttonIcon: "motion_photos_off"
+                    text: Translation.tr("Reduce shell animations")
+                    checked: Config.options?.performance?.reduceAnimations ?? false
+                    onCheckedChanged: Config.setNestedValue("performance.reduceAnimations", checked)
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "blur_on"
+                    text: Translation.tr("Compositor surface blur")
+                    checked: Config.options?.performance?.compositorBlur ?? true
+                    onCheckedChanged: Config.setNestedValue("performance.compositorBlur", checked)
+                }
+            }
+
+            ConfigSpinBox {
+                icon: "speed"
+                text: Translation.tr("Resource poll") + ` (${(value / 1000).toFixed(1)}s)`
+                value: Config.options?.resources?.updateInterval ?? 3000
+                from: 1000
+                to: 10000
+                stepSize: 500
+                onValueChanged: Config.setNestedValue("resources.updateInterval", value)
             }
         }
     }
 
     SettingsCardSection {
-        Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
         settingsTaskSection: "updates"
@@ -244,7 +292,6 @@ ContentPage {
     SettingsCardSection {
         Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        Layout.preferredWidth: 1
         settingsTaskSection: "updates"
         visible: true
         expanded: true
@@ -720,7 +767,6 @@ ContentPage {
     SettingsCardSection {
         Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
-        Layout.preferredWidth: 1
         settingsTaskSection: "system"
         visible: true
         expanded: true
@@ -761,6 +807,9 @@ ContentPage {
                 MaterialTextField {
                     id: weatherCityInput
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.maximumHeight: 44
+                    wrapMode: TextEdit.NoWrap
                     placeholderText: Translation.tr("e.g. Buenos Aires, London, Tokyo")
                     font.pixelSize: Appearance.font.pixelSize.small
                     color: Appearance.colors.colOnSurface
@@ -825,15 +874,80 @@ ContentPage {
 
                 MaterialTextField {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.maximumHeight: 44
+                    wrapMode: TextEdit.NoWrap
                     placeholderText: Translation.tr("Web search base URL")
                     text: Config.options?.search?.engineBaseUrl ?? "https://www.google.com/search?q="
                     onEditingFinished: {
                         Config.setNestedValue("search.engineBaseUrl", text)
                     }
                 }
+
+                ConfigRow {
+                    uniform: true
+
+                    SettingsSwitch {
+                        buttonIcon: "spellcheck"
+                        text: Translation.tr("Fuzzy app search")
+                        checked: Config.options?.search?.sloppy ?? false
+                        onCheckedChanged: Config.setNestedValue("search.sloppy", checked)
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "bolt"
+                        text: Translation.tr("Default quick actions")
+                        checked: Config.options?.search?.prefix?.showDefaultActionsWithoutPrefix ?? true
+                        onCheckedChanged: Config.setNestedValue("search.prefix.showDefaultActionsWithoutPrefix", checked)
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+
+                    SettingsSwitch {
+                        buttonIcon: "settings_power"
+                        text: Translation.tr("System quick actions")
+                        checked: Config.options?.search?.globalActions?.enableSystem ?? true
+                        onCheckedChanged: Config.setNestedValue("search.globalActions.enableSystem", checked)
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "tune"
+                        text: Translation.tr("Settings quick actions")
+                        checked: Config.options?.search?.globalActions?.enableSettings ?? true
+                        onCheckedChanged: Config.setNestedValue("search.globalActions.enableSettings", checked)
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+
+                    SettingsSwitch {
+                        buttonIcon: "build"
+                        text: Translation.tr("Capture & tool actions")
+                        checked: Config.options?.search?.globalActions?.enableTools ?? true
+                        onCheckedChanged: Config.setNestedValue("search.globalActions.enableTools", checked)
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "music_note"
+                        text: Translation.tr("Media quick actions")
+                        checked: Config.options?.search?.globalActions?.enableMedia ?? true
+                        onCheckedChanged: Config.setNestedValue("search.globalActions.enableMedia", checked)
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "mic"
+                    text: Translation.tr("Voice search clip (s)")
+                    value: Config.options?.voiceSearch?.duration ?? 5
+                    from: 2
+                    to: 30
+                    stepSize: 1
+                    onValueChanged: Config.setNestedValue("voiceSearch.duration", value)
+                }
             }
         }
     }
-    }
-
 }

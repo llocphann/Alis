@@ -23,39 +23,103 @@ Singleton {
     property string latestSha: ""
     property bool updateAvailable: false
     property var installedPlugins: []
+    property var installedPluginIds: []
     property var pluginCatalog: []
+    property var pluginDependenciesMap: ({})
+    property var runtimeTools: ({})
     property var settingsEntries: ({})
     property bool pluginMetadataAvailable: false
     property bool systemProvisionerAvailable: false
     property bool systemHelpersInstalled: false
     property bool gatewayPackageInstalled: false
     property string systemHelpersDiagnostic: "unchecked"
+    property string managerPluginId: ""
+    readonly property bool hardwareHelpersSatisfied: {
+        if (root.systemHelpersInstalled)
+            return true
+        const hwIds = ["tlp", "thinkfan"]
+        const installedHw = hwIds.filter(id => root.isPluginInstalled(id))
+        const checkIds = installedHw.length > 0 ? installedHw : hwIds
+        return checkIds.every(id => root.pluginDependencies(id).satisfied === true)
+    }
     readonly property var options: Config.options?.integrations?.alisIntergration
-    readonly property bool tlpEnabled: available && !loadFailed && Config.ready && options?.tlp === true
-    readonly property bool thinkfanEnabled: available && !loadFailed && Config.ready && options?.thinkfan === true
-    readonly property bool nexusEnabled: available && !loadFailed && Config.ready && options?.nexus === true
-    readonly property bool spacedRepetitionEnabled: available && !loadFailed && Config.ready && options?.spaced_repetition === true
+    readonly property bool tlpEnabled: isPluginInstalled("tlp") && Config.ready && options?.tlp === true
+    readonly property bool thinkfanEnabled: isPluginInstalled("thinkfan") && Config.ready && options?.thinkfan === true
+    readonly property bool nexusEnabled: isPluginInstalled("nexus") && Config.ready && options?.nexus === true
+    readonly property bool spacedRepetitionEnabled: isPluginInstalled("spaced_repetition") && Config.ready && options?.spaced_repetition === true
+    property bool _hasExplicitExercisesTrackerPref: false
+    property bool _explicitExercisesTrackerEnabled: false
+    readonly property string exercisesTrackerPrefsPath: `${Directories.stateUserPath}/exercises-tracker/prefs.json`
+    readonly property bool exercisesTrackerAvailable: available && !loadFailed && packageRoot.length > 0
+    readonly property bool exercisesTrackerEnabled: exercisesTrackerAvailable && Config.ready
+        && (_hasExplicitExercisesTrackerPref ? _explicitExercisesTrackerEnabled : (nexusEnabled || spacedRepetitionEnabled))
     readonly property bool enabled: tlpEnabled || thinkfanEnabled || nexusEnabled || spacedRepetitionEnabled
+        || (_hasExplicitExercisesTrackerPref && _explicitExercisesTrackerEnabled && exercisesTrackerAvailable && Config.ready)
     readonly property var session: worker.status === Loader.Ready ? worker.item : null
     readonly property var nexus: session?.nexus ?? null
     readonly property var spacedRepetition: session?.spacedRepetition ?? null
+    readonly property var exercisesTracker: session?.exercisesTracker ?? null
 
+    function isPluginInstalled(pluginId): bool {
+        if (!available || loadFailed)
+            return false
+        if (installedPlugins.some(plugin => plugin.id === pluginId))
+            return true
+        return !pluginMetadataAvailable && installedPluginIds.includes(pluginId)
+    }
+    function pluginDependencies(pluginId): var {
+        const entry = pluginDependenciesMap?.[pluginId]
+        if (entry && typeof entry === "object")
+            return entry
+        const userSpace = pluginId === "nexus" || pluginId === "spaced_repetition"
+        return {
+            userSpace: userSpace,
+            requiresSystemHelpers: !userSpace,
+            satisfied: userSpace,
+            binariesReady: true,
+            helpersReady: userSpace,
+            provisionerReady: systemProvisionerAvailable,
+            packages: userSpace ? (pluginId === "nexus" ? ["python3"] : []) : [pluginId, "alis-deps"],
+            binaries: [],
+            helpers: [],
+            missing: [],
+            setupCommand: userSpace ? "" : "./setup install-deps",
+            helpersCommand: userSpace ? "" : "./setup integrations",
+            note: ""
+        }
+    }
     function pluginEnabled(pluginId): bool {
-        return available && !loadFailed && Config.ready && options?.[pluginId] === true
+        return isPluginInstalled(pluginId) && Config.ready && options?.[pluginId] === true
     }
     function setPluginEnabled(pluginId, value): void {
-        if (!managerBusy && installedPlugins.some(plugin => plugin.id === pluginId))
+        if (!managerBusy && isPluginInstalled(pluginId))
             Config.setNestedValue("integrations.alisIntergration." + pluginId, value === true)
+    }
+    function installPlugin(pluginId): void {
+        if (typeof pluginId !== "string" || pluginId.length === 0)
+            return
+        _runManager("install-plugin", pluginId)
+    }
+    function removePlugin(pluginId): void {
+        if (typeof pluginId !== "string" || pluginId.length === 0)
+            return
+        _runManager("remove-plugin", pluginId)
     }
 
     // Explicit user action only. Alis owns transport and the signed-off
     // optional-package lifecycle, not an external installer run by the user.
     function manage(action): void {
-        if (managerBusy || probe.running || !["check","install","remove","rollback",
+        if (!["check","install","install-all","remove","rollback",
                 "helpers-status","helpers-install","helpers-remove","helpers-ensure",
                 "gateway-status","gateway-install","gateway-remove"].includes(action))
             return
+        _runManager(action, "")
+    }
+    function _runManager(action, pluginId): void {
+        if (managerBusy || probe.running)
+            return
         managerAction = action
+        managerPluginId = String(pluginId ?? "")
         managerBusy = true
         authorizationPending = ["helpers-ensure","helpers-install","helpers-remove",
             "gateway-install","gateway-remove"].includes(action)
@@ -69,14 +133,20 @@ Singleton {
             GlobalStates.settingsOverlayOpen = false
         managerError = ""
         managerMessage = ""
-        if (["install","remove","rollback","helpers-install","helpers-remove","helpers-ensure"].includes(action)) {
+        if (["install","remove","rollback","helpers-install","helpers-remove","helpers-ensure"].includes(action)
+                || action === "install-all") {
             // Release all disposable workers before switching the immutable package link.
             available = false
             loadFailed = false
         }
-        managerProcess.command = ["/usr/bin/python3",
+        const cmd = ["/usr/bin/python3",
             Quickshell.shellPath("scripts/alis-intergration-manager.py"), action,
             "--shell-root", Quickshell.shellPath("")]
+        if (managerPluginId.length > 0) {
+            cmd.push("--plugin")
+            cmd.push(managerPluginId)
+        }
+        managerProcess.command = cmd
         managerProcess.running = true
         managerDeadline.restart()
     }
@@ -93,6 +163,27 @@ Singleton {
         if (!available || packageRoot.length === 0) return ""
         return packageRoot + "/scripts/integrations/lookup_word_level.py"
     }
+    function exercisesTrackerDashboardSource(): string {
+        if (!exercisesTrackerEnabled || packageRoot.length === 0) return ""
+        return packageRoot + "/modules/dashboard/DashboardExercisesTracker.qml"
+    }
+    function exercisesTrackerHelperPath(): string {
+        if (!available || packageRoot.length === 0) return ""
+        return packageRoot + "/scripts/integrations/exercises_tracker.py"
+    }
+    function setExercisesTrackerEnabled(value): void {
+        if (managerBusy)
+            return
+        const nextVal = value === true
+        root._hasExplicitExercisesTrackerPref = true
+        root._explicitExercisesTrackerEnabled = nextVal
+        exercisesPrefsDirProc.pendingPayload = JSON.stringify({ schemaVersion: 1, enabled: nextVal }, null, 2) + "\n"
+        const dirPath = `${Directories.stateUserPath}/exercises-tracker`
+        if (!exercisesPrefsDirProc.running) {
+            exercisesPrefsDirProc.command = ["/usr/bin/mkdir", "-p", dirPath]
+            exercisesPrefsDirProc.running = true
+        }
+    }
     function backendSource(kind): string {
         if (!nexusEnabled) return ""
         if (kind === "managed") return packageRoot + "/services/NexusTodoBackend.qml"
@@ -102,6 +193,10 @@ Singleton {
     function nexusWorkspaceSource(): string {
         if (!nexusEnabled || packageRoot.length === 0) return ""
         return packageRoot + "/modules/nexus/NexusWorkspace.qml"
+    }
+    function clearFeedback(): void {
+        managerError = ""
+        managerMessage = ""
     }
     function refresh(): void {
         if (probe.running || managerBusy) return
@@ -120,8 +215,8 @@ Singleton {
         return JSON.stringify({available, enabled, diagnostic, version, sourceSha,
             managerBusy, authorizationPending, managerError, updateAvailable, canRollback,
             systemProvisionerAvailable, systemHelpersInstalled, systemHelpersDiagnostic,
-            gatewayPackageInstalled,
-            integrations:{tlp:tlpEnabled,thinkfan:thinkfanEnabled,nexus:nexusEnabled}})
+            gatewayPackageInstalled, installedPluginIds,
+            integrations:{tlp:tlpEnabled,thinkfan:thinkfanEnabled,nexus:nexusEnabled,spaced_repetition:spacedRepetitionEnabled,exercises_tracker:exercisesTrackerEnabled}})
     }
     Loader {
         id: worker
@@ -149,12 +244,18 @@ Singleton {
                     root.available = result.available === true
                     root.canRollback = result.canRollback === true
                     root.installedPlugins = root.available && Array.isArray(result.plugins) ? result.plugins : []
+                    root.installedPluginIds = root.available && Array.isArray(result.installedPluginIds)
+                        ? result.installedPluginIds : root.installedPlugins.map(plugin => plugin.id)
                     root.pluginCatalog = Array.isArray(result.catalog) ? result.catalog : []
+                    root.pluginDependenciesMap = result.dependencies && typeof result.dependencies === "object"
+                        ? result.dependencies : ({})
+                    root.runtimeTools = result.runtimeTools && typeof result.runtimeTools === "object"
+                        ? result.runtimeTools : ({})
                     root.settingsEntries = root.available ? result.settings ?? ({}) : ({})
                     root.pluginMetadataAvailable = result.pluginMetadataAvailable === true
                 } catch (_error) {
                     root.available=false;root.diagnostic="invalid-package";root.canRollback=false
-                    root.installedPlugins=[];root.settingsEntries=({});root.pluginMetadataAvailable=false
+                    root.installedPlugins=[];root.installedPluginIds=[];root.settingsEntries=({});root.pluginMetadataAvailable=false
                 }
             }
         }
@@ -212,17 +313,20 @@ Singleton {
                     } else {
                         root.updateAvailable = false
                         root.canRollback = result.canRollback === true
+                        if (Array.isArray(result.installedPluginIds))
+                            root.installedPluginIds = result.installedPluginIds
                     }
                 }
             } catch (_error) {
                 root.managerError = String(managerStderr.text ?? "Could not read Alis-Intergration manager result").slice(0, 256)
             }
             root.authorizationPending = false
+            root.managerPluginId = ""
             if (root._restoreEmbeddedSettings) {
                 root._restoreEmbeddedSettings = false
                 GlobalStates.settingsOverlayOpen = true
             }
-            if (["install","remove","rollback","helpers-install","helpers-remove",
+            if (["install","install-all","remove","rollback","install-plugin","remove-plugin","helpers-install","helpers-remove",
                 "helpers-ensure","gateway-install","gateway-remove"].includes(root.managerAction))
                 Qt.callLater(root.refresh)
             // An unsuccessful or cancelled Polkit operation may have changed
@@ -269,6 +373,39 @@ Singleton {
         function openWindow(): void { if (root.nexus) root.nexus.openWindow() }
         function close(): void { if (root.nexus) root.nexus.close() }
         function daily(): void { if (root.nexus) { root.nexus.open(); root.nexus.openDailyNote() } }
+    }
+    IpcHandler {
+        target: "exercises-tracker"
+        function open(): void { if (root.exercisesTracker) root.exercisesTracker.openDashboardTracker("") }
+    }
+    FileView {
+        id: exercisesPrefsFileView
+        path: "file://" + root.exercisesTrackerPrefsPath
+        preload: true
+        watchChanges: false
+        printErrors: false
+        onLoaded: {
+            try {
+                const doc = JSON.parse(exercisesPrefsFileView.text() || "")
+                if (doc && typeof doc.enabled === "boolean") {
+                    root._hasExplicitExercisesTrackerPref = true
+                    root._explicitExercisesTrackerEnabled = doc.enabled
+                }
+            } catch (_e) {}
+        }
+        onLoadFailed: {}
+    }
+    Process {
+        id: exercisesPrefsDirProc
+        property string pendingPayload: ""
+        running: false
+        onExited: {
+            if (exercisesPrefsDirProc.pendingPayload.length > 0) {
+                const payload = exercisesPrefsDirProc.pendingPayload
+                exercisesPrefsDirProc.pendingPayload = ""
+                exercisesPrefsFileView.setText(payload)
+            }
+        }
     }
     Component.onCompleted: {
         root.refresh()

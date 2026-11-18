@@ -45,7 +45,7 @@ DashCard {
         return Qt.formatDate(day, "ddd d MMM")
     }
 
-    readonly property string _todayKey: Qt.formatDate(DateTime.clock.date, "yyyy-MM-dd")
+    readonly property string _todayKey: Qt.formatDate(DateTime.todayDate, "yyyy-MM-dd")
 
     // Day-grouped entries: { header } and { event } rows, capped at maxRows
     // events with an overflow counter.
@@ -150,27 +150,72 @@ DashCard {
         }
     }
 
-    RippleButton {
+    Row {
         Layout.alignment: Qt.AlignHCenter
-        implicitHeight: 30
-        implicitWidth: addRowContent.implicitWidth + 24
-        buttonRadius: Appearance.rounding.full
-        colBackground: "transparent"
-        colBackgroundHover: Appearance.colors.colLayer1Hover
-        colRipple: Appearance.colors.colLayer1Active
-        onClicked: card.requestEventsDialog(null)
-        contentItem: RowLayout {
-            id: addRowContent
-            spacing: 4
-            MaterialSymbol {
-                text: "add"
-                iconSize: Appearance.font.pixelSize.normal
-                color: card.colAccent
+        spacing: 8
+
+        RippleButton {
+            implicitHeight: 30
+            implicitWidth: addRowContent.implicitWidth + 24
+            buttonRadius: Appearance.rounding.full
+            colBackground: "transparent"
+            colBackgroundHover: Appearance.colors.colLayer1Hover
+            colRipple: Appearance.colors.colLayer1Active
+            onClicked: card.requestEventsDialog(null)
+            contentItem: Item {
+                Row {
+                    id: addRowContent
+                    anchors.centerIn: parent
+                    spacing: 4
+                    MaterialSymbol {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "add"
+                        iconSize: Appearance.font.pixelSize.normal
+                        color: card.colAccent
+                    }
+                    StyledText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Translation.tr("New event")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: card.colAccent
+                    }
+                }
             }
-            StyledText {
-                text: Translation.tr("New event")
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: card.colAccent
+        }
+
+        RippleButton {
+            objectName: "dashAgendaWorkoutsButton"
+            visible: AlisIntergration.exercisesTrackerEnabled
+            implicitHeight: 30
+            implicitWidth: workoutRowContent.implicitWidth + 24
+            buttonRadius: Appearance.rounding.full
+            colBackground: "transparent"
+            colBackgroundHover: Appearance.colors.colLayer1Hover
+            colRipple: Appearance.colors.colLayer1Active
+            onClicked: {
+                if (AlisIntergration.exercisesTracker)
+                    AlisIntergration.exercisesTracker.openDashboardTracker(card._todayKey)
+                else
+                    GlobalStates.dashboardPageId = "exercisesTracker"
+            }
+            contentItem: Item {
+                Row {
+                    id: workoutRowContent
+                    anchors.centerIn: parent
+                    spacing: 4
+                    MaterialSymbol {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "fitness_center"
+                        iconSize: Appearance.font.pixelSize.small
+                        color: card.colAccent
+                    }
+                    StyledText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Translation.tr("Workouts")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: card.colAccent
+                    }
+                }
             }
         }
     }

@@ -15,7 +15,7 @@ Item {
     property string outputName: ""
     property string barEdge: "top"
     property bool presented: true
-    property bool playing: MprisController.isPlaying
+    property bool playing: MprisController.anyAudioPlaying
     property var audioSource: null
     property real phase: 0
     property double lastFrameMs: 0

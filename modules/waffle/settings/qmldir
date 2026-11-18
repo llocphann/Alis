@@ -18,3 +18,6 @@ WSettingsChoiceGroup 1.0 WSettingsChoiceGroup.qml
 WSettingsFontSelector 1.0 WSettingsFontSelector.qml
 WBatteryChargeLimitRows 1.0 WBatteryChargeLimitRows.qml
 WTlpSettingRow 1.0 WTlpSettingRow.qml
+WWin11SettingsTitleBar 1.0 WWin11SettingsTitleBar.qml
+WWin11SettingsRailHeader 1.0 WWin11SettingsRailHeader.qml
+WWin11SettingsBreadcrumb 1.0 WWin11SettingsBreadcrumb.qml

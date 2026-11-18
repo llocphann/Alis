@@ -29,6 +29,11 @@ ColumnLayout {
     property bool hasMenu: toggleModel?.hasMenu ?? false
     property Component menu
 
+    function openMenu(): void {
+        if (root.hasMenu && root.menu)
+            ActionCenterContext.push(root.menu)
+    }
+
     property color colBackground: toggled ? Looks.colors.accent : Looks.colors.bg2
     property color colBackgroundHovered: toggled ? Looks.colors.accentHover : Looks.colors.bg2Hover
     property color colBackgroundActive: toggled ? Looks.colors.accentActive : Looks.colors.bg2Active
@@ -78,6 +83,7 @@ ColumnLayout {
 
     Item {
         id: toggleNameWidget
+        Layout.fillWidth: true
         implicitWidth: root.wholeToggleWidth
         implicitHeight: 36
         WText {

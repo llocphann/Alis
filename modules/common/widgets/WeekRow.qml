@@ -26,7 +26,7 @@ RowLayout {
                 day: dayDate.getDate(),
                 month: dayDate.getMonth() + 1,
                 year: dayDate.getFullYear(),
-                today: DateUtils.sameDate(dayDate, DateTime.clock.date)
+                today: DateUtils.sameDate(dayDate, DateTime.todayDate)
             });
         }
         return weekDates;

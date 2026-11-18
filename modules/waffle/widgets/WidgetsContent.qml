@@ -61,14 +61,14 @@ WBarAttachedPanelContent {
     function runQuickAction(actionId: string): void {
         switch (actionId) {
         case "files":
-            ShellExec.execDetachedArgs(["/usr/bin/nautilus"], "Launch Files")
+            AppLauncher.launch("fileManager")
             break
         case "terminal":
             AppLauncher.launch("terminal")
             break
         case "settings":
-            ShellExec.execDetachedArgs([Quickshell.shellPath("scripts/alis"), "settings"], "Open Alis settings")
-            break
+            WaffleNavigation.openSettings()
+            return
         case "wallpaper": {
             const useMain = Config.options?.waffles?.background?.useMainWallpaper ?? true
             Config.setNestedValue("wallpaperSelector.selectionTarget", useMain ? "main" : "waffle")
@@ -154,10 +154,7 @@ WBarAttachedPanelContent {
                             icon: "settings"
                             implicitSize: Looks.dp(16)
                         }
-                        onClicked: {
-                            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"])
-                            GlobalStates.waffleWidgetsOpen = false
-                        }
+                        onClicked: WaffleNavigation.openSettings()
                     }
                 }
             }

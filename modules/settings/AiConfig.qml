@@ -83,290 +83,42 @@ ContentPage {
     readonly property bool activeModelUsesLocalNoKey: companionActive ? Boolean(companionAiSection.item?.companionActiveModelLocal ?? true) : Boolean(Ai.getModel()?.local || !Ai.getModel()?.requires_key)
     readonly property string defaultCompanionSystemPromptFallback: "You are Alis-Companion, a grounded Linux desktop assistant and agent running on {DISTRO} ({DE}) at {DATETIME} (active window: {WINDOWCLASS}).\n- Ground every file, directory, code, or system claim in real tool output; never fabricate paths, line numbers, or command results.\n- If an @file mention or path does not exist on disk, state clearly that it was not found instead of guessing its contents.\n- Lead with a concise, direct answer in clean Markdown and match the user's language (Vietnamese or English)."
     readonly property string defaultCompanionRulesFallback: "- Ground every file, directory, or code claim in real tool output; never fabricate paths, line numbers, or command results.\n- If an `@file` mention or target path does not exist on disk, state clearly that it was not found instead of guessing its contents.\n- Keep responses concise, structured in clean Markdown, and match the user's language (Vietnamese or English).\n- Never execute destructive or out-of-Home system actions without explicit confirmation."
-    readonly property real targetBentoHeight: {
-        const gap = SettingsMaterialPreset.pageSpacing;
-        const baseH = SettingsMaterialPreset.standardBentoHeight;
-        const availBodyH = root.height >= 800
-            ? Math.max(720, root.height - 20 - (root._subTabItems.length > 1 || SettingsLayoutManager.editMode ? (40 + gap) : 0))
-            : baseH;
-        return Math.min(baseH, availBodyH);
-    }
     readonly property bool twoColBento: root.width <= 0 || root.width >= 560
-    readonly property real getStartedNaturalHeight: getStartedSection.chromeImplicitHeight
-        + SettingsMaterialPreset.groupPadding * 2
-        + getStartedInnerCol.implicitHeight
+    readonly property real getStartedNaturalHeight: getStartedSection.naturalCardImplicitHeight
     readonly property real toolModeNaturalHeight: toolModeFallbackCard.visible
-        ? (toolModeFallbackCard.chromeImplicitHeight
-            + SettingsMaterialPreset.groupPadding * 2
-            + toolModeContentSubsection.implicitHeight)
+        ? toolModeFallbackCard.naturalCardImplicitHeight
         : 0
-    readonly property real topBentoRowHeight: {
-        const minTop = Math.max(getStartedNaturalHeight, toolModeNaturalHeight);
+    readonly property real companionTargetHeight: {
+        if (!companionAiHostCard.visible)
+            return 0;
         if (!root.twoColBento)
-            return minTop;
-        const targetRatioH = Math.round((root.targetBentoHeight - SettingsMaterialPreset.pageSpacing) * 0.44);
-        return Math.max(minTop, targetRatioH);
+            return Math.max(360, Math.round(root.targetBentoHeight * 0.52));
+        return Math.max(
+            260,
+            root.targetBentoHeight - root.getStartedNaturalHeight - SettingsMaterialPreset.pageSpacing
+        );
     }
-    readonly property real bottomBentoRowHeight: Math.max(
-        220,
-        root.targetBentoHeight - root.topBentoRowHeight - SettingsMaterialPreset.pageSpacing
-    )
-
-    // ── 1. Get started (Top-Left Bento, Compact 2x2 Grid + Voice) ────────────
-    SettingsCardSection {
-        id: getStartedSection
-        objectName: "aiGetStartedSection"
-        bentoColumn: "left"
-        Layout.alignment: Qt.AlignTop
-        Layout.fillWidth: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "setup"
-        visible: true
-        expanded: true
-        icon: "rocket_launch"
-        title: Translation.tr("Get started")
-
-        SettingsGroup {
-            spacing: 0
-
-            ColumnLayout {
-                id: getStartedInnerCol
-                Layout.fillWidth: true
-                spacing: 6
-
-            GridLayout {
-                Layout.fillWidth: true
-                columns: getStartedSection.width > 420 ? 2 : 1
-                uniformCellWidths: columns > 1
-                columnSpacing: 8
-                rowSpacing: 6
-
-                StatusTile {
-                    objectName: "activeModelStatus"
-                    statusIcon: "smart_toy"
-                    ok: root.activeModelReady
-                    label: root.activeModelDisplayName.length > 0 ? Translation.tr("Active model: %1").arg(root.activeModelDisplayName) : Translation.tr("No model selected")
-                    detail: root.companionActive && root.companionRoutingLabel.length > 0 ? root.companionRoutingLabel : Translation.tr("Alis keeps the selected model and can add live models from connected providers automatically")
-                }
-
-                StatusTile {
-                    objectName: "apiKeyStatus"
-                    statusIcon: root.activeModelUsesLocalNoKey ? "verified_user" : "key"
-                    ok: root.activeModelUsesLocalNoKey || Ai.currentModelHasApiKey
-                    label: root.activeModelUsesLocalNoKey ? Translation.tr("Local runtime ready — no API key required") : (Ai.currentModelHasApiKey ? Translation.tr("API key stored for the active model") : Translation.tr("The active model needs an API key"))
-                    detail: root.activeModelUsesLocalNoKey ? Translation.tr("Local only: use on-device models (Ollama, LM Studio).") : (Ai.currentModelHasApiKey ? "" : Translation.tr("Connect the provider below. Keys are stored in the system keyring."))
-                }
-
-                StatusTile {
-                    objectName: "localModelStatus"
-                    readonly property bool localFound: root.dedupedLocalModelCount > 0 || Ai.modelList.some(m => Ai.models[m]?.local === true)
-                    readonly property bool localReady: root.dedupedLocalModelCount > 0 || Ai.modelList.some(m => Ai.models[m]?.local === true && (Ai.models[m]?.api_format !== "gguf" || !!Ai.models[m]?.runtime_path))
-                    statusIcon: "computer"
-                    ok: localReady
-                    label: localFound ? Translation.tr("Local models detected") : LocalModels.checkpoints.length > 0 ? Translation.tr("Downloaded checkpoints detected") : Translation.tr("No local models")
-                    detail: LocalModels.models.length > 0 && !LocalModels.runtimePath && !localReady ? Translation.tr("GGUF runtime unavailable") : localFound ? Translation.tr("%1 local model(s) available").arg(Math.max(1, root.dedupedLocalModelCount)) : LocalModels.checkpoints.length > 0 ? Translation.tr("Choose a GGUF export for local chat") : Translation.tr("Start Ollama or LM Studio to chat privately without an account or key")
-                }
-
-                StatusTile {
-                    statusIcon: AiProviderCatalog.refreshing ? "sync" : "cloud_sync"
-                    ok: AiProviderCatalog.availableModelCount > 0
-                    label: AiProviderCatalog.refreshing ? Translation.tr("Refreshing live model catalogs…") : Translation.tr("%1 live model(s) discovered").arg(AiProviderCatalog.availableModelCount)
-                    detail: Translation.tr("%1 free · %2 local · %3 connected · %4 browseable").arg(AiProviderCatalog.freeModelCount).arg(root.dedupedLocalModelCount).arg(AiProviderCatalog.healthyProviderCount).arg(AiProviderCatalog.browseableProviderCount)
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                StyledText {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 4
-                    text: Translation.tr("Choose local, free online or connected models; availability is discovered automatically.")
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colSubtext
-                    elide: Text.ElideRight
-                }
-
-                RippleButton {
-                    objectName: "aiRefreshModelCatalogsButton"
-                    implicitWidth: 30
-                    implicitHeight: 30
-                    enabled: !AiProviderCatalog.refreshing && !(companionAiSection.item?.companionRefreshingModels ?? false)
-                    buttonRadius: Appearance.rounding.full
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-                    onClicked: {
-                        AiProviderCatalog.refreshAll();
-                        LocalModels.refresh();
-                        if (typeof Ai.refreshLocalModels === "function")
-                            Ai.refreshLocalModels();
-                        if (typeof companionAiSection.item?.refreshCompanionModels === "function")
-                            companionAiSection.item.refreshCompanionModels();
-                    }
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "refresh"
-                        iconSize: 16
-                        color: Appearance.colors.colOnLayer2
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Refresh model catalogs & auto-detect available models")
-                    }
-                }
-            }
-
-            SettingsDivider {}
-
-            GridLayout {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                columns: getStartedSection.width > 640 ? 2 : 1
-                uniformCellWidths: false
-                columnSpacing: 10
-                rowSpacing: 6
-
-                ContentSubsection {
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 1
-                    Layout.minimumWidth: 0
-                    title: Translation.tr("Voice dictation backend")
-                    tooltip: Translation.tr("The same backend is used for chat dictation and voice web search. Keys are passed through the process environment and never written to commands or config files.")
-
-                    ConfigSelectionArray {
-                        enableSettingsSearch: false
-                        currentValue: Config.options?.voiceSearch?.provider ?? "auto"
-                        onSelected: newValue => Config.setNestedValue("voiceSearch.provider", newValue)
-                        options: [
-                            {
-                                displayName: Translation.tr("Auto"),
-                                icon: "auto_awesome",
-                                value: "auto"
-                            },
-                            {
-                                displayName: Translation.tr("Local Whisper"),
-                                icon: "shield_lock",
-                                value: "local"
-                            },
-                            {
-                                displayName: "Groq",
-                                icon: "bolt",
-                                value: "groq"
-                            },
-                            {
-                                displayName: "Gemini",
-                                icon: "auto_awesome",
-                                value: "gemini"
-                            },
-                            {
-                                displayName: "OpenAI",
-                                icon: "neurology",
-                                value: "openai"
-                            }
-                        ]
-                    }
-                }
-
-                ConfigSpinBox {
-                    id: voiceDurationSpin
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 1
-                    Layout.alignment: Qt.AlignBottom
-                    property bool _ready: false
-                    Component.onCompleted: _ready = true
-
-                    icon: "timer"
-                    text: Translation.tr("Max recording length (s)")
-                    value: Config.options?.voiceSearch?.duration ?? 5
-                    from: 3
-                    to: 60
-                    stepSize: 1
-                    onValueChanged: {
-                        if (voiceDurationSpin._ready)
-                            Config.setNestedValue("voiceSearch.duration", value);
-                    }
-                }
-            }
-            }
-
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredHeight: root.twoColBento
-                    ? Math.max(0, root.topBentoRowHeight - root.getStartedNaturalHeight)
-                    : 0
-                visible: Layout.preferredHeight > 0
-            }
-        }
+    readonly property real promptRulesTargetHeight: {
+        if (!root.twoColBento)
+            return Math.max(240, Math.round(root.targetBentoHeight * 0.42));
+        return Math.max(
+            220,
+            Math.round((root.targetBentoHeight - SettingsMaterialPreset.pageSpacing) * 0.60)
+        );
+    }
+    readonly property real providersTargetHeight: {
+        if (!root.twoColBento)
+            return 280;
+        return Math.max(
+            180,
+            root.targetBentoHeight - root.promptRulesTargetHeight - SettingsMaterialPreset.pageSpacing
+        );
     }
 
-    component StatusTile: Rectangle {
-        id: statusTile
-        property string statusIcon: ""
-        property bool ok: false
-        property string label: ""
-        property string detail: ""
-        Layout.fillWidth: true
-        Layout.preferredWidth: 1
-        Layout.minimumWidth: 0
-        implicitHeight: 44
-        radius: 10
-        color: Appearance.colors.colLayer2
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
-            spacing: 8
-
-            MaterialSymbol {
-                text: statusTile.statusIcon
-                iconSize: 18
-                color: statusTile.ok ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
-                Layout.alignment: Qt.AlignVCenter
-            }
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                Layout.minimumWidth: 0
-                Layout.alignment: Qt.AlignVCenter
-                clip: true
-                spacing: 1
-                StyledText {
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 1
-                    Layout.minimumWidth: 0
-                    text: statusTile.label
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    font.weight: Font.DemiBold
-                    color: Appearance.colors.colOnLayer1
-                    elide: Text.ElideRight
-                    maximumLineCount: 1
-                }
-                StyledText {
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 1
-                    Layout.minimumWidth: 0
-                    visible: statusTile.detail.length > 0
-                    text: statusTile.detail
-                    font.pixelSize: Appearance.font.pixelSize.smallest - 1
-                    color: Appearance.colors.colSubtext
-                    elide: Text.ElideRight
-                    maximumLineCount: 1
-                }
-            }
-            MaterialSymbol {
-                text: statusTile.ok ? "check_circle" : "radio_button_unchecked"
-                iconSize: 16
-                color: statusTile.ok ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
-                Layout.alignment: Qt.AlignVCenter
-            }
-        }
-    }
-
-    // ── 2. Companion AI Card (Top-Right Bento) ───────────────────────────────
+    // ── 1. Companion AI Card (Primary Top-Left Bento) ────────────────────────
     SettingsCardSection {
         id: companionAiHostCard
-        bentoColumn: "right"
+        bentoColumn: "left"
         Layout.fillWidth: true
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignTop
@@ -375,6 +127,9 @@ ContentPage {
         expanded: true
         icon: "chat"
         title: Translation.tr("Companion")
+        readonly property real _effectiveChromeH: chromeImplicitHeight > 0
+            ? chromeImplicitHeight
+            : (SettingsMaterialPreset.cardPadding * 2 + SettingsMaterialPreset.groupSpacing + Math.round(27 * Appearance.fontSizeScale))
 
         SettingsGroup {
             spacing: 4
@@ -432,8 +187,8 @@ ContentPage {
                 Binding {
                     target: companionAiSection.item
                     property: "targetEmbeddedHeight"
-                    value: root.twoColBento
-                        ? Math.max(160, root.topBentoRowHeight - companionAiHostCard.chromeImplicitHeight - SettingsMaterialPreset.groupPadding * 2)
+                    value: root.companionTargetHeight > 0
+                        ? Math.max(160, root.companionTargetHeight - companionAiHostCard._effectiveChromeH - SettingsMaterialPreset.groupPadding * 2)
                         : 0
                     when: !!companionAiSection.item
                 }
@@ -443,7 +198,7 @@ ContentPage {
 
     SettingsCardSection {
         id: toolModeFallbackCard
-        bentoColumn: "right"
+        bentoColumn: "left"
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
@@ -496,22 +251,275 @@ ContentPage {
                     text: Config.options?.ai?.tool === "advanced" ? Translation.tr("Advanced also exposes raw shell commands. Every command still requires approval.") : Translation.tr("Shell configuration changes show a typed preview and require approval. Search appears only when the selected provider supports it.")
                 }
             }
+        }
+    }
 
-            Item {
+    // ── 2. Get started (Ultra-Compact Secondary Bottom-Left Bento) ───────────
+    SettingsCardSection {
+        id: getStartedSection
+        objectName: "aiGetStartedSection"
+        bentoColumn: "left"
+        _consumesBentoExtraHeight: false
+        spacing: 4
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        Layout.preferredWidth: 1
+        settingsTaskSection: "setup"
+        visible: true
+        expanded: true
+        icon: "rocket_launch"
+        title: Translation.tr("Get started")
+
+        GridLayout {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            columns: (getStartedSection.width > 0 ? getStartedSection.width >= 380 : root.twoColBento) ? 2 : 1
+            uniformCellWidths: columns > 1
+            columnSpacing: 6
+            rowSpacing: 3
+
+            StatusTile {
+                objectName: "activeModelStatus"
+                statusIcon: "smart_toy"
+                ok: root.activeModelReady
+                label: root.activeModelDisplayName.length > 0 ? Translation.tr("Active model: %1").arg(root.activeModelDisplayName) : Translation.tr("No model selected")
+                detail: root.companionActive && root.companionRoutingLabel.length > 0 ? root.companionRoutingLabel : Translation.tr("Alis keeps the selected model and can add live models from connected providers automatically")
+            }
+
+            StatusTile {
+                objectName: "apiKeyStatus"
+                statusIcon: root.activeModelUsesLocalNoKey ? "verified_user" : "key"
+                ok: root.activeModelUsesLocalNoKey || Ai.currentModelHasApiKey
+                label: root.activeModelUsesLocalNoKey ? Translation.tr("Local runtime ready — no API key required") : (Ai.currentModelHasApiKey ? Translation.tr("API key stored for the active model") : Translation.tr("The active model needs an API key"))
+                detail: root.activeModelUsesLocalNoKey ? Translation.tr("Local only: use on-device models (Ollama, LM Studio).") : (Ai.currentModelHasApiKey ? "" : Translation.tr("Connect the provider below. Keys are stored in the system keyring."))
+            }
+
+            StatusTile {
+                objectName: "localModelStatus"
+                readonly property bool localFound: root.dedupedLocalModelCount > 0 || Ai.modelList.some(m => Ai.models[m]?.local === true)
+                readonly property bool localReady: root.dedupedLocalModelCount > 0 || Ai.modelList.some(m => Ai.models[m]?.local === true && (Ai.models[m]?.api_format !== "gguf" || !!Ai.models[m]?.runtime_path))
+                statusIcon: "computer"
+                ok: localReady
+                label: localFound ? Translation.tr("Local models detected") : LocalModels.checkpoints.length > 0 ? Translation.tr("Downloaded checkpoints detected") : Translation.tr("No local models")
+                detail: LocalModels.models.length > 0 && !LocalModels.runtimePath && !localReady ? Translation.tr("GGUF runtime unavailable") : localFound ? Translation.tr("%1 local model(s) available").arg(Math.max(1, root.dedupedLocalModelCount)) : LocalModels.checkpoints.length > 0 ? Translation.tr("Choose a GGUF export for local chat") : Translation.tr("Start Ollama or LM Studio to chat privately without an account or key")
+            }
+
+            StatusTile {
+                statusIcon: AiProviderCatalog.refreshing ? "sync" : "cloud_sync"
+                ok: AiProviderCatalog.availableModelCount > 0
+                label: AiProviderCatalog.refreshing ? Translation.tr("Refreshing live model catalogs…") : Translation.tr("%1 live model(s) discovered").arg(AiProviderCatalog.availableModelCount)
+                detail: Translation.tr("%1 free · %2 local · %3 connected · %4 browseable").arg(AiProviderCatalog.freeModelCount).arg(root.dedupedLocalModelCount).arg(AiProviderCatalog.healthyProviderCount).arg(AiProviderCatalog.browseableProviderCount)
+                showRefreshAction: true
+            }
+        }
+
+        RowLayout {
+            id: voiceCompactBar
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            spacing: 6
+
+            MouseArea {
+                id: voiceInfoHover
+                implicitWidth: 18
+                implicitHeight: 26
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+                Layout.alignment: Qt.AlignVCenter
+
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "mic"
+                    iconSize: 15
+                    color: Appearance.colors.colPrimary
+                }
+
+                StyledToolTip {
+                    extraVisibleCondition: voiceInfoHover.containsMouse
+                    text: Translation.tr("Voice dictation backend") + " — " + Translation.tr("The same backend is used for chat dictation and voice web search. Keys are passed through the process environment and never written to commands or config files.")
+                }
+            }
+
+            RowLayout {
+                id: voiceBackendStrip
                 Layout.fillWidth: true
-                Layout.preferredHeight: root.twoColBento
-                    ? Math.max(0, root.topBentoRowHeight - root.toolModeNaturalHeight)
-                    : 0
-                visible: Layout.preferredHeight > 0
+                Layout.minimumWidth: 0
+                spacing: 3
+
+                Repeater {
+                    model: [
+                        { displayName: Translation.tr("Auto"), value: "auto" },
+                        { displayName: "Whisper", value: "local" },
+                        { displayName: "Groq", value: "groq" },
+                        { displayName: "Gemini", value: "gemini" },
+                        { displayName: "OpenAI", value: "openai" }
+                    ]
+
+                    delegate: RippleButton {
+                        required property var modelData
+                        readonly property bool active: (Config.options?.voiceSearch?.provider ?? "auto") === modelData.value
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
+                        implicitHeight: 26
+                        buttonRadius: Appearance.rounding.full
+                        colBackground: active ? Appearance.colors.colPrimary : Appearance.colors.colLayer2
+                        colBackgroundHover: active ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer2Hover
+                        onClicked: Config.setNestedValue("voiceSearch.provider", modelData.value)
+
+                        contentItem: Item {
+                            StyledText {
+                                anchors.centerIn: parent
+                                width: Math.max(0, parent.width - 8)
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                text: modelData.displayName
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                font.weight: active ? Font.DemiBold : Font.Medium
+                                color: active ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
+                                maximumLineCount: 1
+                                elide: Text.ElideRight
+                            }
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: false
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 4
+
+                StyledText {
+                    text: "Max (s)"
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    color: Appearance.colors.colSubtext
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                StyledSpinBox {
+                    id: voiceDurationSpin
+                    objectName: "voiceDurationSpin"
+                    baseHeight: 26
+                    implicitHeight: 26
+                    Layout.preferredHeight: 26
+                    Layout.alignment: Qt.AlignVCenter
+                    property bool _ready: false
+                    Component.onCompleted: _ready = true
+
+                    value: Config.options?.voiceSearch?.duration ?? 5
+                    from: 3
+                    to: 60
+                    stepSize: 1
+                    onValueChanged: {
+                        if (voiceDurationSpin._ready)
+                            Config.setNestedValue("voiceSearch.duration", value);
+                    }
+
+                    StyledToolTip {
+                        extraVisibleCondition: voiceDurationSpin.hovered
+                        text: Translation.tr("Max recording length (s)")
+                    }
+                }
             }
         }
     }
 
-    // ── 3. Prompt & Rules Card (Bottom-Right Bento) ───────────────────────────
+    component StatusTile: Rectangle {
+        id: statusTile
+        property string statusIcon: ""
+        property bool ok: false
+        property string label: ""
+        property string detail: ""
+        property bool showRefreshAction: false
+        Layout.fillWidth: true
+        Layout.preferredWidth: 1
+        Layout.minimumWidth: 0
+        implicitHeight: 25
+        radius: Appearance.rounding.full
+        color: Appearance.colors.colLayer2
+
+        MouseArea {
+            id: statusTileHover
+            anchors.fill: parent
+            hoverEnabled: true
+            acceptedButtons: Qt.NoButton
+        }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 8
+            anchors.rightMargin: statusTile.showRefreshAction ? 3 : 8
+            spacing: 5
+
+            MaterialSymbol {
+                text: statusTile.statusIcon
+                iconSize: 14
+                color: statusTile.ok ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.alignment: Qt.AlignVCenter
+                text: statusTile.label
+                font.pixelSize: Appearance.font.pixelSize.smallest
+                font.weight: Font.Medium
+                color: Appearance.colors.colOnLayer1
+                maximumLineCount: 1
+                elide: Text.ElideRight
+            }
+
+            RippleButton {
+                objectName: statusTile.showRefreshAction ? "aiRefreshModelCatalogsButton" : ""
+                visible: statusTile.showRefreshAction
+                implicitWidth: 20
+                implicitHeight: 20
+                Layout.alignment: Qt.AlignVCenter
+                enabled: !AiProviderCatalog.refreshing && !(companionAiSection.item?.companionRefreshingModels ?? false)
+                buttonRadius: Appearance.rounding.full
+                colBackground: "transparent"
+                colBackgroundHover: Appearance.colors.colLayer2Hover
+                onClicked: {
+                    AiProviderCatalog.refreshAll();
+                    LocalModels.refresh();
+                    if (typeof Ai.refreshLocalModels === "function")
+                        Ai.refreshLocalModels();
+                    if (typeof companionAiSection.item?.refreshCompanionModels === "function")
+                        companionAiSection.item.refreshCompanionModels();
+                }
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "refresh"
+                    iconSize: 13
+                    color: Appearance.colors.colOnLayer2
+                }
+                StyledToolTip {
+                    text: Translation.tr("Refresh model catalogs & auto-detect available models") + " · " + Translation.tr("Choose local, free online or connected models; availability is discovered automatically.")
+                }
+            }
+
+            MaterialSymbol {
+                visible: !statusTile.showRefreshAction
+                text: statusTile.ok ? "check_circle" : "radio_button_unchecked"
+                iconSize: 13
+                color: statusTile.ok ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                Layout.alignment: Qt.AlignVCenter
+            }
+        }
+
+        StyledToolTip {
+            extraVisibleCondition: statusTileHover.containsMouse && statusTile.detail.length > 0
+            text: statusTile.label + "\n" + statusTile.detail
+        }
+    }
+
+    // ── 3. Prompt & Rules Card (Primary Top-Right Bento) ──────────────────────
     SettingsCardSection {
         id: promptRulesContainerCard
         bentoColumn: "right"
-        _consumesBentoExtraHeight: true
+        _consumesBentoExtraHeight: false
         Layout.fillWidth: true
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignTop
@@ -521,14 +529,17 @@ ContentPage {
         icon: "psychology"
         title: Translation.tr("Prompt & Rules")
 
+        readonly property real _effectiveChromeH: promptRulesContainerCard.chromeImplicitHeight > 0
+            ? promptRulesContainerCard.chromeImplicitHeight
+            : (SettingsMaterialPreset.cardPadding * 2 + SettingsMaterialPreset.groupSpacing + Math.round(27 * Appearance.fontSizeScale))
         readonly property real promptTextBoxHeight: {
-            const avail = root.bottomBentoRowHeight
-                - promptRulesContainerCard.chromeImplicitHeight
+            const avail = root.promptRulesTargetHeight
+                - promptRulesContainerCard._effectiveChromeH
                 - SettingsMaterialPreset.groupPadding * 2
                 - promptHeaderRow.implicitHeight
                 - promptFooterHint.implicitHeight
                 - 8;
-            return Math.max(72, promptAndRulesGrid.columns > 1 ? avail : Math.floor((avail - 10) / 2));
+            return Math.max(96, promptAndRulesGrid.columns > 1 ? avail : Math.floor((avail - 8) / 2));
         }
 
         SettingsGroup {
@@ -538,7 +549,7 @@ ContentPage {
                 id: promptAndRulesGrid
                 objectName: "aiPromptAndRulesGrid"
                 Layout.fillWidth: true
-                columns: width > 360 ? 2 : 1
+                columns: (width > 0 ? width > 360 : root.twoColBento) ? 2 : 1
                 uniformCellWidths: columns > 1
                 columnSpacing: 10
                 rowSpacing: 8
@@ -734,6 +745,7 @@ ContentPage {
                         text: "{DISTRO} · {DE} · {DATETIME} · {WINDOWCLASS}"
                         font.pixelSize: Appearance.font.pixelSize.smallest - 1
                         color: Appearance.colors.colSubtext
+                        maximumLineCount: 1
                         elide: Text.ElideRight
                     }
                 }
@@ -931,12 +943,12 @@ ContentPage {
         }
     }
 
-    // ── 4. Providers & models (Bottom-Left Bento with internal scroll) ───────
+    // ── 4. Providers & models (Compact Secondary Bottom-Right Bento) ──────────
     SettingsCardSection {
         id: providersAndModelsCard
         objectName: "aiProvidersAndModelsSection"
-        bentoColumn: "left"
-        _consumesBentoExtraHeight: true
+        bentoColumn: "right"
+        _consumesBentoExtraHeight: false
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
@@ -946,9 +958,12 @@ ContentPage {
         icon: "cloud"
         title: Translation.tr("Providers & models")
 
+        readonly property real _effectiveChromeH: providersAndModelsCard.chromeImplicitHeight > 0
+            ? providersAndModelsCard.chromeImplicitHeight
+            : (SettingsMaterialPreset.cardPadding * 2 + SettingsMaterialPreset.groupSpacing + Math.round(27 * Appearance.fontSizeScale))
         readonly property real providersListHeight: Math.max(110,
-            root.bottomBentoRowHeight
-            - providersAndModelsCard.chromeImplicitHeight
+            root.providersTargetHeight
+            - providersAndModelsCard._effectiveChromeH
             - SettingsMaterialPreset.groupPadding * 2
             - providersHeaderRow.implicitHeight
             - providersDescText.implicitHeight

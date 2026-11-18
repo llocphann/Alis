@@ -190,4 +190,12 @@ for word in (
 ):
     assert word in preload_src, word
 
+assert "nm_device_wifi_p2p_stop_find" not in preload_src
+assert "pa_context_disconnect" in preload_src
+assert "stop_pa_mainloop_before_teardown" in preload_src
+assert "caller_is_nd_stream" in preload_src
+assert "firewallWarning" in qml
+assert "_streamFailureMessage" in qml
+assert "NetworkDisplays.firewallWarning" in popup
+
 print("CAST_F01_WIRELESS_PASS: typed D-Bus discovery, request ownership and QML UI")

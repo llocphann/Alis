@@ -64,7 +64,7 @@ Item {
     }
     readonly property bool isAllDay: root.event?.allDay ?? false
     readonly property bool isPast: UpcomingWindow.eventIsPast(
-        root.eventDate, root.eventEndDate, DateTime.clock.date)
+        root.eventDate, root.eventEndDate, DateTime.minuteDate)
     // Passive hover tracking is shared by metadata, but the close action
     // independently tracks just its own small hit area.
     HoverHandler { id: cardHover }

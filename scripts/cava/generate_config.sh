@@ -26,6 +26,22 @@ if [[ -n "$PRINT_CONFIG" && "$PRINT_CONFIG" != "--print-config" ]]; then
     exit 64
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
+NATIVE_MODE="${ALIS_NATIVE_BACKEND:-}"
+if [[ -z "$NATIVE_MODE" && -r "${XDG_STATE_HOME:-$HOME/.local/state}/alis/native-backend" ]]; then
+    IFS= read -r NATIVE_MODE < "${XDG_STATE_HOME:-$HOME/.local/state}/alis/native-backend" || true
+fi
+NATIVE_MODE="${NATIVE_MODE:-rust}"
+NATIVE_BIN="${ALIS_NATIVE_BIN_DIR:-$ROOT_DIR/native/bin}/alis-native"
+if [[ "$NATIVE_MODE" != "python" && -x "$NATIVE_BIN" ]]; then
+    if [[ -n "$PRINT_CONFIG" ]]; then
+        "$NATIVE_BIN" accel cava-config "$OUTPUT_FILE" "$FRAMERATE" "$SENSITIVITY" "$BARS" "$STEREO" "$DESKTOP_ENTRY" --print-config && exit 0
+    else
+        "$NATIVE_BIN" accel cava-config "$OUTPUT_FILE" "$FRAMERATE" "$SENSITIVITY" "$BARS" "$STEREO" "$DESKTOP_ENTRY" && exit 0
+    fi
+fi
+
 # Detect audio backend (pipewire or pulseaudio)
 get_audio_method() {
     if pactl info 2>/dev/null | grep -qi "PipeWire"; then
@@ -47,7 +63,6 @@ get_default_monitor() {
 }
 
 METHOD=$(get_audio_method)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RESOLVER="$SCRIPT_DIR/resolve_audio_source.py"
 RESOLVED=""
 if [[ -f "$RESOLVER" ]]; then
@@ -97,19 +112,9 @@ if [[ "$PRINT_CONFIG" == "--print-config" ]]; then
     # rather than assuming the latest generated file was already in use.
     cat -- "$CANDIDATE"
 fi
-python3 - "$CANDIDATE" "$OUTPUT_FILE" <<'PY'
-from pathlib import Path
-import os
-import sys
-
-candidate, output = map(Path, sys.argv[1:])
-try:
-    unchanged = candidate.read_bytes() == output.read_bytes()
-except FileNotFoundError:
-    unchanged = False
-if not unchanged:
-    os.replace(candidate, output)
-PY
+if ! cmp -s -- "$CANDIDATE" "$OUTPUT_FILE" 2>/dev/null; then
+    mv -f -- "$CANDIDATE" "$OUTPUT_FILE"
+fi
 if [[ "$PRINT_CONFIG" != "--print-config" ]]; then
     printf '%s\n' "$OUTPUT_FILE"
 fi

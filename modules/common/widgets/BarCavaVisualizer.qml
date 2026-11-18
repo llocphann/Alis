@@ -322,9 +322,20 @@ Item {
         return bottom - level * Math.max(0, bottom - top) * fill
     }
 
-    function _paletteColor(position): color {
+    readonly property var _parsedPalette: {
         const palette = root.spectrumColors ?? []
-        const count = palette.length ?? 0
+        const out = []
+        for (let i = 0; i < palette.length; ++i) {
+            const c = Qt.color(palette[i])
+            if (c.valid)
+                out.push(c)
+        }
+        return out
+    }
+
+    function _paletteColor(position): color {
+        const palette = root._parsedPalette ?? []
+        const count = palette.length
         if (count === 0)
             return root.spectrumColor
         if (count === 1)
@@ -334,10 +345,8 @@ Item {
         const low = Math.floor(p)
         const high = Math.min(count - 1, low + 1)
         const t = p - low
-        const a = Qt.color(palette[low])
-        const b = Qt.color(palette[high])
-        if (!a.valid || !b.valid)
-            return root.spectrumColor
+        const a = palette[low]
+        const b = palette[high]
         return Qt.rgba(
             a.r + (b.r - a.r) * t,
             a.g + (b.g - a.g) * t,
@@ -362,7 +371,7 @@ Item {
                 Number(root._levels[index] ?? 0)
             property real rawLevel: targetRawLevel
             Behavior on rawLevel {
-                enabled: Appearance.animationsEnabled
+                enabled: Appearance.animationsEnabled && root.visible
                 NumberAnimation { duration: 75; easing.type: Easing.OutCubic }
             }
             readonly property real edge: root._edgeFactor(centerX)
@@ -454,7 +463,7 @@ Item {
                 Number(root._levels[index] ?? 0)
             property real rawLevel: targetRawLevel
             Behavior on rawLevel {
-                enabled: Appearance.animationsEnabled
+                enabled: Appearance.animationsEnabled && root.visible
                 NumberAnimation { duration: 75; easing.type: Easing.OutCubic }
             }
             readonly property real waveY: root._waveY(index, rawLevel)
@@ -469,7 +478,7 @@ Item {
                 hasNext ? Number(root._levels[index + 1] ?? 0) : targetRawLevel
             property real nextRawLevel: targetNextRawLevel
             Behavior on nextRawLevel {
-                enabled: Appearance.animationsEnabled
+                enabled: Appearance.animationsEnabled && root.visible
                 NumberAnimation { duration: 75; easing.type: Easing.OutCubic }
             }
             readonly property real nextX: hasNext
@@ -583,11 +592,11 @@ Item {
             property real level0: targetLevel0
             property real level1: targetLevel1
             Behavior on level0 {
-                enabled: Appearance.animationsEnabled
+                enabled: Appearance.animationsEnabled && root.visible
                 NumberAnimation { duration: 75; easing.type: Easing.OutCubic }
             }
             Behavior on level1 {
-                enabled: Appearance.animationsEnabled
+                enabled: Appearance.animationsEnabled && root.visible
                 NumberAnimation { duration: 75; easing.type: Easing.OutCubic }
             }
 

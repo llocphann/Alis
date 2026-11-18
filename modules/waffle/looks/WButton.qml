@@ -78,6 +78,8 @@ Button {
     property alias monochromeIcon: buttonIcon.monochrome
     property alias buttonSpacing: contentLayout.spacing
     property bool forceShowIcon: false
+    property real iconLeftMargin: 0
+    property bool centerContent: false
 
     property var altAction: () => {}
     property var middleClickAction: () => {}
@@ -150,21 +152,23 @@ Button {
         RowLayout {
             id: contentLayout
             anchors {
-                fill: parent
-                leftMargin: root.horizontalPadding
-                rightMargin: root.horizontalPadding
+                fill: root.centerContent ? undefined : parent
+                centerIn: root.centerContent ? parent : undefined
+                leftMargin: root.centerContent ? 0 : root.horizontalPadding
+                rightMargin: root.centerContent ? 0 : root.horizontalPadding
             }
-            spacing: 12
+            spacing: root.centerContent ? 8 : 12
             Item {
                 Layout.leftMargin: root.iconLeftMargin
                 Layout.fillWidth: false
                 Layout.alignment: Qt.AlignVCenter
-                visible: root.icon.name !== ""
+                visible: root.icon.name !== "" || root.forceShowIcon
                 implicitWidth: 18
                 implicitHeight: implicitWidth
 
                 FluentIcon {
                     id: buttonIcon
+                    visible: root.icon.name !== ""
                     anchors.centerIn: parent
                     monochrome: true
                     implicitSize: 18
@@ -174,10 +178,11 @@ Button {
             }
             WText {
                 id: buttonText
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                Layout.fillWidth: !root.centerContent
+                Layout.alignment: Qt.AlignVCenter | (root.centerContent ? Qt.AlignHCenter : Qt.AlignLeft)
+                verticalAlignment: Text.AlignVCenter
                 text: root.text
-                horizontalAlignment: Text.AlignLeft
+                horizontalAlignment: root.centerContent ? Text.AlignHCenter : Text.AlignLeft
                 font: root.font
                 color: root.fgColor
             }

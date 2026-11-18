@@ -274,6 +274,94 @@ assert.strictEqual(humanizeModuleTitle("", "p25:cava-spectrum-options"), "Cava S
 assert.strictEqual(humanizeModuleTitle("", "p24:ai-ui-osd"), "AI UI OSD");
 assert.strictEqual(humanizeModuleTitle("Providers & models", "p24:providers-models"), "Providers & models");
 
+// 12. SCHEMA_VERSION === 3 migration resets stale customHeight / retired sub-tabs / stale column on reworked pages while preserving customTabs & foreign moves
+assert.strictEqual(SCHEMA_VERSION, 3);
+const legacyV2Raw = JSON.stringify({
+    version: 2,
+    modules: {
+        "p22:dashboard": {
+            originPageIndex: 22,
+            targetPageIndex: 22,
+            column: "full",
+            customHeight: 520
+        },
+        "p1:audio-sounds": {
+            originPageIndex: 1,
+            originSubTab: "audio",
+            targetPageIndex: 1,
+            targetSubTab: "safety",
+            column: "right",
+            customHeight: 380
+        },
+        "p38:management": {
+            originPageIndex: 38,
+            originSubTab: "management",
+            targetPageIndex: 38,
+            targetSubTab: "Alis Nexus",
+            column: "left",
+            customHeight: 272
+        },
+        "p25:effects": {
+            originPageIndex: 25,
+            originSubTab: "color",
+            targetPageIndex: 25,
+            targetSubTab: "color",
+            column: "left",
+            customHeight: 410
+        },
+        "p22:dock-moved": {
+            originPageIndex: 22,
+            targetPageIndex: -1,
+            targetCustomTabId: "custom-my-hub",
+            column: "right",
+            customHeight: 300
+        }
+    },
+    pageLayouts: {
+        "page:1": {
+            layoutMode: "bento",
+            leftColumnRatio: 0.5,
+            deletedSubTabs: ["safety", "custom-keep"]
+        }
+    },
+    customTabs: [
+        { id: "custom-my-hub", label: "My Hub", icon: "star", categoryIndex: 0, order: 0 }
+    ]
+});
+const migratedV3 = parseState(legacyV2Raw);
+assert.strictEqual(migratedV3.version, 3);
+assert.strictEqual(getModuleConfig(migratedV3, "p22:dashboard").customHeight, 0);
+assert.strictEqual(getModuleConfig(migratedV3, "p22:dashboard").column, "auto");
+assert.strictEqual(getModuleConfig(migratedV3, "p1:audio-sounds").originSubTab, "");
+assert.strictEqual(getModuleConfig(migratedV3, "p1:audio-sounds").targetSubTab, "");
+assert.strictEqual(getModuleConfig(migratedV3, "p1:audio-sounds").customHeight, 0);
+assert.strictEqual(getModuleConfig(migratedV3, "p1:audio-sounds").column, "auto");
+assert.strictEqual(getModuleConfig(migratedV3, "p38:management").originSubTab, "");
+assert.strictEqual(getModuleConfig(migratedV3, "p38:management").targetSubTab, "");
+assert.strictEqual(getModuleConfig(migratedV3, "p38:management").customHeight, 0);
+assert.strictEqual(getModuleConfig(migratedV3, "p38:management").column, "auto");
+assert.strictEqual(getModuleConfig(migratedV3, "p25:effects").originSubTab, "");
+assert.strictEqual(getModuleConfig(migratedV3, "p25:effects").targetSubTab, "");
+assert.strictEqual(getModuleConfig(migratedV3, "p25:effects").customHeight, 0);
+assert.strictEqual(getModuleConfig(migratedV3, "p25:effects").column, "left");
+// Foreign customTab placement and customTabs array stay intact
+assert.strictEqual(getModuleConfig(migratedV3, "p22:dock-moved").targetCustomTabId, "custom-my-hub");
+assert.strictEqual(getModuleConfig(migratedV3, "p22:dock-moved").customHeight, 300);
+assert.strictEqual(getModuleConfig(migratedV3, "p22:dock-moved").column, "right");
+assert.strictEqual(migratedV3.customTabs.length, 1);
+assert.strictEqual(migratedV3.customTabs[0].id, "custom-my-hub");
+assert.deepStrictEqual(migratedV3.pageLayouts["page:1"].deletedSubTabs, ["custom-keep"]);
+
+// Post-v3 intentional customization on reworked page stays intact
+const postV3 = parseState(JSON.stringify({
+    version: 3,
+    modules: {
+        "p22:dashboard": { originPageIndex: 22, targetPageIndex: 22, column: "right", customHeight: 320 }
+    }
+}));
+assert.strictEqual(getModuleConfig(postV3, "p22:dashboard").customHeight, 320);
+assert.strictEqual(getModuleConfig(postV3, "p22:dashboard").column, "right");
+
 console.log("POLICY_UNIT_TESTS_PASS");
 """
     out = subprocess.check_output(["node", "-e", js_driver], text=True)
@@ -295,8 +383,8 @@ import qs.services
 Window {
     id: root
     visible: true
-    width: 1280
-    height: 860
+    width: 1600
+    height: 1620
     color: "#111820"
 
     Component.onCompleted: Quickshell.watchFiles = false
@@ -379,6 +467,12 @@ Window {
             return list;
         }
 
+        function openOverlayPage(pIdx) {
+            if (overlay.hasOwnProperty("showingHome") && overlay.showingHome)
+                overlay.showingHome = false;
+            overlay.overlayCurrentPage = pIdx;
+        }
+
         function runSuite() {
             try {
                 tryCompare(Config, "ready", true, 4000);
@@ -391,7 +485,7 @@ Window {
                 });
 
                 // Navigate to Bar settings (page 2) which has multiple SettingsCardSection cards & sliders
-                overlay.overlayCurrentPage = 2;
+                openOverlayPage(2);
                 tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 2 && overlay.pageHost.currentItem !== null, 6000);
                 wait(150);
 
@@ -410,12 +504,13 @@ Window {
                 check(SettingsLayoutManager.availableNavigationPages.length > 0 && SettingsLayoutManager.availableNavigationPages[0].pageIndex !== undefined,
                     "availableNavigationPages entries must expose pageIndex for Move Module To Tab menu");
 
-                // 1. Verify External SettingsEditToolbar, Fixed Sidebar Width (204), + Tab Button Alignment, Tooltips & Hover-Focused Module Controls
+                // 1. Verify External SettingsEditToolbar, Stable Sidebar Width, + Tab Button Alignment, Tooltips & Hover-Focused Module Controls
                 const editBtn = findByObjectName(host, "overlayEditSettingsLayoutButton");
                 check(editBtn !== null, "overlayEditSettingsLayoutButton not found");
-                const navCol = findByObjectName(host, "settingsOverlayNavColumn");
-                check(navCol !== null && Math.round(navCol.width) === 204,
-                    "Sidebar navColumn must start at fixed width 204, got: " + (navCol ? navCol.width : "null"));
+                const navCol = findByObjectName(host, "irisPrismSidebar") || findByObjectName(host, "settingsOverlayNavColumn");
+                check(navCol !== null && Math.round(navCol.width) >= 200 && Math.round(navCol.width) <= 320,
+                    "Sidebar column must start at fixed width in [200..320], got: " + (navCol ? navCol.width : "null"));
+                const initialNavWidth = Math.round(navCol.width);
                 const availHeightBeforeEdit = barPage.availableCardContentHeight;
                 check(findByObjectName(barPage, "settingsEditToolbar") === null,
                     "SettingsEditToolbar must NOT live inside ContentPage");
@@ -425,12 +520,12 @@ Window {
                 check(SettingsLayoutManager.editMode === true, "Edit mode did not activate");
                 check(SettingsLayoutManager.innerEditMode === false,
                     "innerEditMode must default to false when entering editMode to avoid control clutter");
-                check(Math.round(navCol.width) === 204,
-                    "Sidebar navColumn must NOT expand when editMode is active, got: " + navCol.width);
+                check(Math.round(navCol.width) === initialNavWidth,
+                    "Sidebar column must NOT expand when editMode is active, got: " + navCol.width + " vs " + initialNavWidth);
                 overlay.navEditMode = true;
                 wait(60);
-                check(Math.round(navCol.width) === 204,
-                    "Sidebar navColumn must NOT expand when navEditMode is active, got: " + navCol.width);
+                check(Math.round(navCol.width) === initialNavWidth,
+                    "Sidebar column must NOT expand when navEditMode is active, got: " + navCol.width + " vs " + initialNavWidth);
                 overlay.navEditMode = false;
                 wait(60);
 
@@ -886,7 +981,7 @@ Window {
                 // Inject malformed JSON into Config and verify SettingsLayoutManager recovers cleanly
                 Config.setNestedValue("settingsUi.moduleLayout", "{{malformed_json");
                 wait(60);
-                check(SettingsLayoutManager.state.version === 2, "SettingsLayoutManager did not recover from malformed JSON");
+                check(SettingsLayoutManager.state.version === 3, "SettingsLayoutManager did not recover from malformed JSON");
 
                 // Reset everything cleanly
                 SettingsLayoutManager.resetAll();
@@ -940,121 +1035,95 @@ Window {
                 SettingsLayoutManager.resetAll();
                 wait(60);
 
-                // 12. Verify Standard Height Scroll Threshold (Themes & Style / Custom Theme = standardBentoHeight), Hidden Scrollbars, and Button Vertical Alignment
-                overlay.overlayCurrentPage = 4; // ThemesConfig
+                // 12. Verify iRiS Single-Column Viewport-Overflow Scroll, Retired standardBentoHeight===0, Hidden Scrollbars, and Scale Reactivity
+                check(SettingsMaterialPreset.standardBentoHeight === 0,
+                    "SettingsMaterialPreset.standardBentoHeight must be 0 (retired Bento clamp), got: " + SettingsMaterialPreset.standardBentoHeight);
+
+                // AboutConfig (page 40) fits comfortably inside 1600x1620 without overflowing viewport: interactive=false and contentY clamped to 0
+                openOverlayPage(40);
+                tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 40 && overlay.pageHost.currentItem !== null, 6000);
+                wait(150);
+                const aboutPage40 = overlay.pageHost.currentItem;
+                check(aboutPage40.showVerticalScrollBar === false && aboutPage40.verticalScrollBar.visible === false,
+                    "ContentPage must always hide vertical scrollbar");
+                check(aboutPage40.exceedsStandardHeight === false && aboutPage40.overflowsViewport === false && aboutPage40.interactive === false,
+                    "Compact iRiS page (AboutConfig) inside 1600x1620 must not scroll, got overflowsViewport="
+                    + aboutPage40.overflowsViewport + " interactive=" + aboutPage40.interactive);
+                aboutPage40.contentY = 120;
+                wait(30);
+                check(Math.abs(aboutPage40.contentY) <= 1,
+                    "Non-interactive ContentPage must clamp programmatic contentY back to 0, got: " + aboutPage40.contentY);
+
+                // ThemesConfig (page 4): single-column iRiS plates scroll naturally whenever overflowsViewport is true while hiding scrollbar
+                openOverlayPage(4);
                 tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 4 && overlay.pageHost.currentItem !== null, 6000);
                 wait(150);
                 const themesPage4 = overlay.pageHost.currentItem;
-                check(themesPage4.showVerticalScrollBar === false,
-                    "ContentPage must hide vertical scrollbar (showVerticalScrollBar === false)");
-                check(themesPage4.verticalScrollBar.visible === false,
+                check(themesPage4.showVerticalScrollBar === false && themesPage4.verticalScrollBar.visible === false,
                     "ThemesConfig vertical ScrollBar must never be visible");
-                check(themesPage4.exceedsStandardHeight === false && themesPage4.interactive === false,
-                    "Themes & Style ('colors') must match standardBentoHeight and disable scrolling, got pageContentBodyHeight="
-                    + themesPage4.pageContentBodyHeight + " standardPageBodyHeight=" + themesPage4.standardPageBodyHeight
-                    + " interactive=" + themesPage4.interactive);
-
-                // Switch to Custom Theme ('advanced') sub-tab and verify it also matches standardBentoHeight without scrolling
+                check(themesPage4.exceedsStandardHeight === false && themesPage4.interactive === themesPage4.overflowsViewport,
+                    "ThemesConfig ('colors') interactive state must match overflowsViewport");
                 themesPage4.activeSection = "advanced";
                 wait(150);
-                check(themesPage4.exceedsStandardHeight === false && themesPage4.interactive === false,
-                    "Custom Theme ('advanced') must match standardBentoHeight and disable scrolling, got pageContentBodyHeight="
-                    + themesPage4.pageContentBodyHeight + " standardPageBodyHeight=" + themesPage4.standardPageBodyHeight
-                    + " interactive=" + themesPage4.interactive);
+                check(themesPage4.verticalScrollBar.visible === false && themesPage4.interactive === themesPage4.overflowsViewport,
+                    "ThemesConfig ('advanced') interactive state must match overflowsViewport with hidden scrollbar");
                 themesPage4.activeSection = "colors";
                 wait(100);
 
-                // Switch back to Bar page (page 2): verify default state (737 <= standardBentoHeight 901) does not scroll,
-                // and when an active module exceeds standardBentoHeight, scrolling activates WITHOUT showing a scrollbar
-                overlay.overlayCurrentPage = 2;
+                // Switch back to Bar page (page 2): resize a module tall so page overflows viewport, verify scroll clamping & hidden scrollbar
+                openOverlayPage(2);
                 tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 2 && overlay.pageHost.currentItem !== null, 6000);
                 wait(150);
                 const barPageScrollCheck = overlay.pageHost.currentItem;
-                check(barPageScrollCheck.exceedsStandardHeight === false && barPageScrollCheck.interactive === false,
-                    "Bar page at default height (<= standardBentoHeight) must have interactive=false, got body="
-                    + barPageScrollCheck.pageContentBodyHeight + " standard=" + barPageScrollCheck.standardPageBodyHeight);
                 check(barPageScrollCheck.verticalScrollBar.visible === false,
-                    "Bar page vertical scrollbar must remain hidden when non-interactive");
-
-                // Resize an active module on Bar page so total pageContentBodyHeight exceeds standardPageBodyHeight
+                    "Bar page vertical scrollbar must remain hidden");
                 const barModIds = Object.keys(SettingsLayoutManager._liveCardsByModuleId).filter(
                     id => id.indexOf("p2:") === 0
                         && SettingsLayoutManager._liveCardsByModuleId[id].visible
                         && SettingsLayoutManager._liveCardsByModuleId[id]._cardSubTabActive
                 );
                 check(barModIds.length >= 1, "Expected at least 1 visible active module on Bar page for scroll threshold test");
-                SettingsLayoutManager.resizeModule(barModIds[0], { customHeight: 1100 });
+                SettingsLayoutManager.resizeModule(barModIds[0], { customHeight: 1840 });
                 wait(150);
-                check(barPageScrollCheck.pageContentBodyHeight > barPageScrollCheck.standardPageBodyHeight + 2,
-                    "Resized Bar page should exceed standardPageBodyHeight, got body="
-                    + barPageScrollCheck.pageContentBodyHeight + " standard=" + barPageScrollCheck.standardPageBodyHeight);
-                check(barPageScrollCheck.exceedsStandardHeight === true && barPageScrollCheck.interactive === true,
-                    "ContentPage exceeding standardBentoHeight must enable scrolling (interactive=true)");
+                check(barPageScrollCheck.overflowsViewport === true && barPageScrollCheck.interactive === true,
+                    "ContentPage overflowing viewport must enable scrolling (interactive=true)");
                 check(barPageScrollCheck.verticalScrollBar.visible === false,
-                    "ContentPage exceeding standardBentoHeight must still hide vertical scrollbar (visible=false)");
+                    "ContentPage overflowing viewport must still hide vertical scrollbar (visible=false)");
 
-                // Scroll to bottom of tall page, then shrink module height while still > standardPageBodyHeight and verify contentY clamps to new maxY
+                // Scroll to bottom of tall page, then shrink module height while still overflowing and verify contentY clamps to new maxY
                 const maxScrollTall = Math.max(0, barPageScrollCheck.contentHeight - barPageScrollCheck.height);
                 barPageScrollCheck.contentY = maxScrollTall;
                 wait(40);
-                SettingsLayoutManager.resizeModule(barModIds[0], { customHeight: 950 });
+                SettingsLayoutManager.resizeModule(barModIds[0], { customHeight: 1640 });
                 wait(150);
                 const maxScrollMid = Math.max(0, barPageScrollCheck.contentHeight - barPageScrollCheck.height);
                 check(barPageScrollCheck.interactive === true && barPageScrollCheck.contentY <= maxScrollMid + 1,
-                    "When contentHeight shrinks while page remains interactive, contentY must clamp to new maxY (" + maxScrollMid + "), got: " + barPageScrollCheck.contentY + " interactive=" + barPageScrollCheck.interactive);
+                    "When contentHeight shrinks while page remains interactive, contentY must clamp to new maxY (" + maxScrollMid + "), got: " + barPageScrollCheck.contentY);
 
-                // Reset module height so page returns <= standardBentoHeight and verify contentY resets to 0 and rejects programmatic scroll
-                barPageScrollCheck.contentY = 48;
-                wait(40);
                 SettingsLayoutManager.resetAll();
                 wait(150);
-                check(barPageScrollCheck.exceedsStandardHeight === false && barPageScrollCheck.interactive === false,
-                    "After resetting module height back <= standardBentoHeight, interactive must return to false");
-                check(Math.abs(barPageScrollCheck.contentY) <= 1,
-                    "When interactive becomes false, contentY must reset to 0, got: " + barPageScrollCheck.contentY);
-                barPageScrollCheck.contentY = 120;
-                wait(30);
-                check(Math.abs(barPageScrollCheck.contentY) <= 1,
-                    "Non-interactive ContentPage must clamp programmatic contentY back to 0, got: " + barPageScrollCheck.contentY);
 
-                // Verify standardBentoHeight reactivity and Themes & Style / Custom Theme non-scrolling across fontSizeScale changes (0.85, 1.25, 1.0)
-                const stdAt10 = SettingsMaterialPreset.standardBentoHeight;
-                Config.setNestedValue("appearance.typography.sizeScale", 0.85);
-                wait(150);
-                check(SettingsMaterialPreset.standardBentoHeight < stdAt10 - 15,
-                    "SettingsMaterialPreset.standardBentoHeight must reactively decrease when sizeScale=0.85 even off ThemesConfig, got: "
-                    + SettingsMaterialPreset.standardBentoHeight + " vs " + stdAt10);
-                overlay.overlayCurrentPage = 4;
+                // Verify single-column iRiS maxContentWidth reactivity across fontSizeScale changes (0.85, 1.0, 1.25)
+                openOverlayPage(4);
                 tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 4 && overlay.pageHost.currentItem !== null, 6000);
                 wait(150);
-                const themesAt085 = overlay.pageHost.currentItem;
-                themesAt085.activeSection = "colors";
-                wait(120);
-                check(themesAt085.exceedsStandardHeight === false && themesAt085.interactive === false,
-                    "Themes & Style ('colors') at sizeScale=0.85 must not scroll, got body="
-                    + themesAt085.pageContentBodyHeight + " standard=" + themesAt085.standardPageBodyHeight);
-                themesAt085.activeSection = "advanced";
+                const themesScalePage = overlay.pageHost.currentItem;
+                const maxW10 = themesScalePage.maxContentWidth;
+                Config.setNestedValue("appearance.typography.sizeScale", 0.85);
                 wait(150);
-                check(themesAt085.exceedsStandardHeight === false && themesAt085.interactive === false,
-                    "Custom Theme ('advanced') at sizeScale=0.85 must not scroll, got body="
-                    + themesAt085.pageContentBodyHeight + " standard=" + themesAt085.standardPageBodyHeight);
-
+                const maxW085 = themesScalePage.maxContentWidth;
+                check(maxW085 < maxW10 - 40 && themesScalePage.verticalScrollBar.visible === false,
+                    "iRiS single-column maxContentWidth must scale down at sizeScale=0.85 (" + maxW085 + " vs " + maxW10 + ")");
                 Config.setNestedValue("appearance.typography.sizeScale", 1.25);
                 wait(150);
-                check(themesAt085.exceedsStandardHeight === false && themesAt085.interactive === false,
-                    "Custom Theme ('advanced') at sizeScale=1.25 must not scroll, got body="
-                    + themesAt085.pageContentBodyHeight + " standard=" + themesAt085.standardPageBodyHeight);
-                themesAt085.activeSection = "colors";
-                wait(150);
-                check(themesAt085.exceedsStandardHeight === false && themesAt085.interactive === false,
-                    "Themes & Style ('colors') at sizeScale=1.25 must not scroll, got body="
-                    + themesAt085.pageContentBodyHeight + " standard=" + themesAt085.standardPageBodyHeight);
-
+                const maxW125 = themesScalePage.maxContentWidth;
+                check(maxW125 > maxW10 + 40 && themesScalePage.verticalScrollBar.visible === false,
+                    "iRiS single-column maxContentWidth must scale up at sizeScale=1.25 (" + maxW125 + " vs " + maxW10 + ")");
                 Config.setNestedValue("appearance.typography.sizeScale", 1.0);
                 wait(150);
 
                 // Verify embedded ContentPages inside Loaders (AbyssPopupsConfig page 33 & AbyssConfig page 2 'bar' section) do not get crushed to 0 height
-                overlay.overlayCurrentPage = 33;
+                openOverlayPage(33);
                 tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 33 && overlay.pageHost.currentItem !== null, 6000);
                 wait(200);
                 const popupsPage33 = overlay.pageHost.currentItem;
@@ -1062,7 +1131,7 @@ Window {
                     "AbyssPopupsConfig (page 33) embedded InterfaceConfig Loader must not be collapsed to 0 height, got body="
                     + popupsPage33.pageContentBodyHeight + " sharedPopupsHeight=" + popupsPage33.sharedPopupsHeight);
 
-                overlay.overlayCurrentPage = 2;
+                openOverlayPage(2);
                 tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 2 && overlay.pageHost.currentItem !== null, 6000);
                 wait(120);
                 const barPageForButtons = overlay.pageHost.currentItem;
@@ -1171,6 +1240,8 @@ Window {
                     "First Escape while moduleCustomizePopover is open must close only the popover and keep editMode active");
 
                 // Verify width-only narrowing (customHeight === 0) auto-scales content AND reduces card height proportionally without blank space
+                SettingsLayoutManager.resizeModule(themeCards[1].moduleId, { column: "right" });
+                wait(80);
                 SettingsLayoutManager.resizeModule(flowModId, {
                     column: "left",
                     widthRatio: 0.5,
@@ -1181,6 +1252,8 @@ Window {
                     "Narrowing module width below 380px must auto-scale content (< 0.85), got: " + flowCard.contentScaleFactor + " width=" + flowCard.renderedCardWidth);
                 check(flowCard.renderedCardHeight < naturalFlowHeight - 40,
                     "Narrowing module width with auto-scale must proportionally shrink card height without dead bottom space (" + flowCard.renderedCardHeight + " vs " + naturalFlowHeight + ")");
+                SettingsLayoutManager.resetModule(themeCards[1].moduleId);
+                wait(80);
 
                 // Resize both widthRatio and customHeight smaller than natural height on a Flow-containing module
                 SettingsLayoutManager.resizeModule(flowModId, {
@@ -1216,11 +1289,11 @@ Window {
                     "autoFitPageModules (Reset Page) must reset customHeight to 0 on all page modules");
                 check(flowCard.moduleWidthRatio === 0 && themeCards[1].moduleWidthRatio === 0,
                     "autoFitPageModules (Reset Page) must reset widthRatio to 0 on all page modules");
-                // In editMode the bottom-docked dock adds a scroll reserve; body height still fits the standard budget
+                // Natural iRiS layout: outer Flickable scrolls only when content overflows viewport or Edit Mode adds dock reserve
                 check(themesPageForResize.exceedsStandardHeight === false
-                    && themesPageForResize.interactive === (themesPageForResize._editScrollReserve > 0),
-                    "After autoFitPageModules on Themes & Style, page must return to standardBentoHeight without scrolling, got body="
-                    + themesPageForResize.pageContentBodyHeight + " standard=" + themesPageForResize.standardPageBodyHeight);
+                    && themesPageForResize.interactive === (themesPageForResize.overflowsViewport || themesPageForResize._editScrollReserve > 0),
+                    "After autoFitPageModules on Themes & Style, page must fit without artificial Bento stretching, got body="
+                    + themesPageForResize.pageContentBodyHeight + " overflows=" + themesPageForResize.overflowsViewport);
 
                 // Verify Canvas mode module reset immediately restores default Canvas dimensions instead of staying stuck at custom canvasW/canvasH
                 SettingsLayoutManager.updatePageLayoutConfig(4, "", { layoutMode: "canvas" });
@@ -1238,25 +1311,23 @@ Window {
                 SettingsLayoutManager.autoFitPageModules(4, "");
                 wait(120);
 
-                // Verify Custom Theme sub-tab ('advanced') height parity (<= 824px viewport budget) and full Edit Mode support
+                // Verify Custom Theme sub-tab ('advanced') iRiS natural height and full Edit Mode support
                 const colorsBodyHeight = themesPageForResize.pageContentBodyHeight;
-                check(colorsBodyHeight >= 780 && colorsBodyHeight <= 824,
-                    "Themes & Style ('colors') body height must fit 1920x1200 viewport (780..824px), got: " + colorsBodyHeight);
+                check(colorsBodyHeight > 400,
+                    "Themes & Style ('colors') body height must be > 400px, got: " + colorsBodyHeight);
 
                 themesPageForResize.activeSection = "advanced";
                 wait(180);
                 const customThemeCard = SettingsLayoutManager._liveCardsByModuleId["p4:custom-theme-editor"];
                 check(customThemeCard !== null && customThemeCard !== undefined && customThemeCard.visible && customThemeCard._cardSubTabActive,
                     "Custom Theme Editor ('p4:custom-theme-editor') must be registered and active on 'advanced' sub-tab");
-                const advancedBodyHeight = themesPageForResize.pageContentBodyHeight;
-                check(Math.abs(advancedBodyHeight - colorsBodyHeight) <= 2 && advancedBodyHeight <= 824,
-                    "Custom Theme ('advanced') body height must match Themes & Style ('colors') and stay <= 824px, got advanced="
-                    + advancedBodyHeight + " colors=" + colorsBodyHeight);
-                // In editMode the bottom-docked dock adds a scroll reserve; body height still fits the standard budget
-                check(themesPageForResize.exceedsStandardHeight === false
-                    && themesPageForResize.interactive === (themesPageForResize._editScrollReserve > 0),
-                    "Custom Theme ('advanced') must fit within standardPageBodyHeight without scrolling, got body="
-                    + advancedBodyHeight + " standard=" + themesPageForResize.standardPageBodyHeight);
+                const naturalCustomThemeHeight = customThemeCard.renderedCardHeight;
+                check(naturalCustomThemeHeight > 400 && themesPageForResize.exceedsStandardHeight === false,
+                    "Custom Theme ('advanced') natural height must be > 400px and exceedsStandardHeight=false, got cardH="
+                    + naturalCustomThemeHeight + " body=" + themesPageForResize.pageContentBodyHeight);
+                check(themesPageForResize.interactive === (themesPageForResize.overflowsViewport || themesPageForResize._editScrollReserve > 0),
+                    "Custom Theme ('advanced') interactive state must reflect viewport overflow or Edit dock reserve, got interactive="
+                    + themesPageForResize.interactive + " overflows=" + themesPageForResize.overflowsViewport);
 
                 SettingsLayoutManager.selectedModuleId = "p4:custom-theme-editor";
                 wait(80);
@@ -1265,10 +1336,14 @@ Window {
                 check(customThemeCustomizeBtn !== null && customThemeCustomizeBtn.visible && customThemeHandleS !== null && customThemeHandleS.visible,
                     "Custom Theme Editor card must expose moduleCustomizeButton and resize handles in Edit Mode");
 
+                SettingsLayoutManager.innerEditMode = true;
+                wait(100);
                 const customThemeInnerOverlays = findAllInnerOverlays(customThemeCard).filter(o => o.visible);
-                check(customThemeInnerOverlays.length >= 3,
-                    "Custom Theme Editor inner card containers (left-col, right-col, bottom-grid) must expose visible reorder/sizing overlays in Bento Edit Mode, got: "
+                check(customThemeInnerOverlays.length >= 1,
+                    "Custom Theme Editor (SettingsGroup plate stack) must expose its visible inner reorder overlay when innerEditMode=true, got: "
                     + customThemeInnerOverlays.length);
+                SettingsLayoutManager.innerEditMode = false;
+                wait(80);
 
                 SettingsLayoutManager.resizeModule("p4:custom-theme-editor", { customHeight: 624 });
                 wait(120);
@@ -1277,8 +1352,8 @@ Window {
 
                 SettingsLayoutManager.autoFitPageModules(4, "");
                 wait(120);
-                check(customThemeCard.moduleCustomHeight === 0 && Math.abs(customThemeCard.renderedCardHeight - colorsBodyHeight) <= 2,
-                    "autoFitPageModules on Custom Theme must restore standard height (" + colorsBodyHeight + "), got: " + customThemeCard.renderedCardHeight);
+                check(customThemeCard.moduleCustomHeight === 0 && Math.abs(customThemeCard.renderedCardHeight - naturalCustomThemeHeight) <= 4,
+                    "autoFitPageModules on Custom Theme must restore natural height (" + naturalCustomThemeHeight + "), got: " + customThemeCard.renderedCardHeight);
                 themesPageForResize.activeSection = "colors";
                 wait(100);
 
@@ -1458,8 +1533,8 @@ Window {
                 const utilSecContent = findByObjectName(utilCard, "sectionContent");
                 check(utilCard !== null && utilSecContent !== null && utilDisc !== null,
                     "System Utilities card / sectionContent / discovery bar not found");
-                check(utilCard.width > 900 && Math.abs(utilSecContent.width - (utilCard.width - 22)) <= 2 && Math.abs(utilDisc.width - utilSecContent.width) <= 2,
-                    "System Utilities inner sectionContent and discovery bar must fill full card width, got cardW="
+                check(utilCard.width > 800 && Math.abs(utilSecContent.width - (utilCard.width - SettingsMaterialPreset.cardPadding * 2)) <= 2 && Math.abs(utilDisc.width - utilSecContent.width) <= 2,
+                    "System Utilities inner sectionContent and discovery bar must fill full iRiS card width, got cardW="
                     + utilCard.width + " secContentW=" + utilSecContent.width + " discW=" + utilDisc.width);
                 verifySlotsContainment(AppLauncher.utilitySlotDefinitions(), "UtilitySlots");
 
@@ -1469,19 +1544,19 @@ Window {
                     "System Utilities 2-column grid must have equal column widths: left=" + (curManageUser ? curManageUser.width : 0)
                     + " right=" + (curNetwork ? curNetwork.width : 0));
 
-                // Entering editMode on a single-card sub-tab must keep the card at 100% full width (not squished to 50% by empty rightBentoColumn)
+                // Entering editMode on a single-card sub-tab must keep the card at 100% full iRiS width
                 SettingsLayoutManager.beginEditMode();
                 wait(120);
-                check(utilCard.width > 900 && Math.abs(utilSecContent.width - (utilCard.width - 22)) <= 2,
+                check(utilCard.width > 800 && Math.abs(utilSecContent.width - (utilCard.width - SettingsMaterialPreset.cardPadding * 2)) <= 2,
                     "Single-card System Utilities must remain full-width in editMode, got cardW=" + utilCard.width + " secContentW=" + utilSecContent.width);
 
-                // Resizing a full-width card to widthRatio=0.5 (~497px wide, contentFlickable ~475px >= 468px single Bento column)
-                // must lay out at 475px with contentScaleFactor === 1.0 (not shrunk to 0.49x!), and slots must still contain their badges/buttons
-                SettingsLayoutManager.resizeModule(utilCard.moduleId, { widthRatio: 0.5 });
+                // Resizing an 860px iRiS card to widthRatio=0.6 (~516px wide, content ~484px >= 468px threshold)
+                // must lay out with contentScaleFactor === 1.0 and slots must still contain their badges/buttons
+                SettingsLayoutManager.resizeModule(utilCard.moduleId, { widthRatio: 0.6 });
                 wait(150);
                 check(Math.abs(utilCard.contentScaleFactor - 1.0) < 0.02,
-                    "Full-width card resized to widthRatio=0.5 (~475px content width >= 468px Bento column) must keep contentScaleFactor=1.0, got: " + utilCard.contentScaleFactor);
-                verifySlotsContainment(AppLauncher.utilitySlotDefinitions(), "UtilitySlotsAtHalfWidth");
+                    "Card resized to widthRatio=0.6 (~484px content width >= 468px threshold) must keep contentScaleFactor=1.0, got: " + utilCard.contentScaleFactor);
+                verifySlotsContainment(AppLauncher.utilitySlotDefinitions(), "UtilitySlotsAtNarrowWidth");
                 SettingsLayoutManager.resetModule(utilCard.moduleId);
                 wait(120);
 
@@ -1539,6 +1614,187 @@ Window {
                 SettingsLayoutManager.cancelEditMode();
                 wait(100);
 
+                // --- Test 17: iRiS Natural Content Height (standardBentoHeight === 0) + 1280x900 Viewport Overflow Scroll,
+                // ---          DefaultAppsConfig Hidden Scroll, CheatsheetConfig Compact Add Keybind + Hidden Scroll,
+                // ---          NiriConfig 3 Sub-Tabs, GeneralConfig Merged ---
+                check(SettingsMaterialPreset.standardBentoHeight === 0,
+                    "iRiS Settings must use natural height with standardBentoHeight === 0, got: " + SettingsMaterialPreset.standardBentoHeight);
+
+                overlay.overlayCurrentPage = 39;
+                tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 39 && overlay.pageHost.currentItem !== null, 6000);
+                wait(120);
+                const appPageCheck = overlay.pageHost.currentItem;
+                appPageCheck.activeSection = "primary";
+                wait(120);
+                const appFlick = findByObjectName(appPageCheck, "defaultAppsPrimaryFlickable");
+                const appBar = findByObjectName(appPageCheck, "defaultAppsPrimaryScrollBar");
+                check(appFlick !== null && appBar !== null && appBar.visible === false && appBar.policy === 1,
+                    "DefaultAppsConfig primary Flickable must exist with hidden AlwaysOff vertical scrollbar");
+                check(appPageCheck.exceedsStandardHeight === false,
+                    "DefaultAppsConfig outer ContentPage must stay within standard height (internal scroll handles overflow)");
+
+                overlay.overlayCurrentPage = 9;
+                tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 9 && overlay.pageHost.currentItem !== null, 6000);
+                wait(120);
+                const cheatPage = overlay.pageHost.currentItem;
+                const cheatFlick = findByObjectName(cheatPage, "cheatsheetScrollFlickable");
+                const cheatBar = findByObjectName(cheatPage, "cheatsheetVerticalScrollBar");
+                const addCard = findByObjectName(cheatPage, "addKeybindCard");
+                const addToggle = findByObjectName(cheatPage, "addKeybindCompactToggle");
+                check(cheatFlick !== null && cheatBar !== null && cheatBar.visible === false && cheatBar.policy === 1,
+                    "CheatsheetConfig must use hidden AlwaysOff cheatsheetScrollFlickable scrollbar");
+                check(cheatPage.addKeybindExpanded === false && addCard !== null && addToggle !== null,
+                    "CheatsheetConfig Add keybind must start collapsed as compact clickable row");
+                check(addCard.implicitHeight <= 72,
+                    "Collapsed Add keybind card implicitHeight must stay compact (~56px), got: " + addCard.implicitHeight);
+                addToggle.clicked();
+                wait(260);
+                check(cheatPage.addKeybindExpanded === true,
+                    "Clicking addKeybindCompactToggle must expand Add keybind form");
+
+                overlay.overlayCurrentPage = 12;
+                tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 12 && overlay.pageHost.currentItem !== null, 6000);
+                wait(120);
+                const niriPage = overlay.pageHost.currentItem;
+                check(niriPage.settingsTaskNavigator && niriPage.settingsTaskNavigator.options.length === 3,
+                    "NiriConfig must expose 3 sub-tabs (Displays & Monitors, Windows & Tiling, Input)");
+                check(niriPage.activateSettingsSearchSection("Monitors") && niriPage.activeSection === "displays",
+                    "NiriConfig search for Monitors must route to displays");
+                check(niriPage.activateSettingsSearchSection("Windows & Tiling") && niriPage.activeSection === "windows",
+                    "NiriConfig search for Windows & Tiling must route to windows");
+                check(niriPage.activateSettingsSearchSection("Touchpad") && niriPage.activeSection === "input",
+                    "NiriConfig search for Touchpad must route to input");
+
+                overlay.overlayCurrentPage = 1;
+                tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 1 && overlay.pageHost.currentItem !== null, 6000);
+                wait(120);
+                const genPage = overlay.pageHost.currentItem;
+                check(genPage.settingsTaskNavigator && genPage.settingsTaskNavigator.showTabBar === false,
+                    "GeneralConfigCore must consolidate safety and audio into a single Bento view without sub-tab bar");
+                check(genPage.activateSettingsSearchSection("safety") === true && genPage.activateSettingsSearchSection("audio") === true,
+                    "GeneralConfigCore must keep search deep-link handlers for both safety and audio");
+
+                // --- Test 18: Default SettingsGroup Layout.fillHeight === false, 2-Column Bento Symmetry (<= 28px) & Zero Vertical Stretch Voids (gap <= 32px) ---
+                const freshGroup = Qt.createQmlObject('import QtQuick; import QtQuick.Layouts; import qs.modules.common.widgets; SettingsGroup { readonly property bool defaultFillHeight: Layout.fillHeight }', host);
+                check(freshGroup !== null && freshGroup.defaultFillHeight === false,
+                    "SettingsGroup must default to Layout.fillHeight === false, got: " + (freshGroup ? freshGroup.defaultFillHeight : "null"));
+                freshGroup.destroy();
+
+                function assertNoStretchVoids(pageItem, pageIdx) {
+                    const violations = [];
+                    function inspectContainer(container, kind, label) {
+                        const kids = [];
+                        const ch = container.children || [];
+                        for (let i = 0; i < ch.length; i++) {
+                            const c = ch[i];
+                            if (!c || !c.visible || c.height <= 1 || c.width <= 1) continue;
+                            const cn = String(c);
+                            if (cn.indexOf("SettingsInnerReorderOverlay") >= 0 || (cn.indexOf("Loader") >= 0 && c.z >= 20)) continue;
+                            if (c.objectName === "settingsInnerReorderOverlay") continue;
+                            kids.push(c);
+                        }
+                        kids.sort((a, b) => a.y !== b.y ? (a.y - b.y) : (a.x - b.x));
+                        const rows = [];
+                        for (let i = 0; i < kids.length; i++) {
+                            const k = kids[i];
+                            if (rows.length === 0) {
+                                rows.push({ top: k.y, bottom: k.y + k.height });
+                            } else {
+                                const prev = rows[rows.length - 1];
+                                if (k.y < prev.bottom - 2) {
+                                    prev.bottom = Math.max(prev.bottom, k.y + k.height);
+                                } else {
+                                    rows.push({ top: k.y, bottom: k.y + k.height });
+                                }
+                            }
+                        }
+                        for (let r = 1; r < rows.length; r++) {
+                            const gap = rows[r].top - rows[r - 1].bottom;
+                            if (gap > 32) {
+                                violations.push("page " + pageIdx + " " + kind + "(" + label + ") gap=" + Math.round(gap) + "px");
+                            }
+                        }
+                    }
+                    function walkTree(node, cardTitle) {
+                        if (!node || !node.visible) return;
+                        if (node.objectName === "hiddenCardsPark") return;
+                        let curTitle = cardTitle;
+                        if (node.hasOwnProperty("moduleId") && node.hasOwnProperty("bentoColumn")) {
+                            curTitle = node.title || node.moduleId;
+                        }
+                        if (node.objectName === "settingsGroupContent") {
+                            inspectContainer(node, "SettingsGroup", curTitle);
+                        } else if (node.objectName === "sectionContent") {
+                            inspectContainer(node, "SettingsCardSection", curTitle);
+                        }
+                        const ch = node.children || [];
+                        for (let i = 0; i < ch.length; i++) {
+                            walkTree(ch[i], curTitle);
+                        }
+                    }
+                    walkTree(pageItem, "page-" + pageIdx);
+                    check(violations.length === 0, "Detected vertical stretch voids (>32px): " + violations.join("; "));
+                }
+
+                for (const pIdx of [22, 23, 10, 2, 33, 3, 4, 25]) {
+                    overlay.overlayCurrentPage = pIdx;
+                    tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === pIdx && overlay.pageHost.currentItem !== null && !overlay.pageHost.error, 6000);
+                    wait(160);
+                    const curPageItem = overlay.pageHost.currentItem;
+                    if (pIdx === 4 && curPageItem.hasOwnProperty("activeSection")) {
+                        curPageItem.activeSection = "colors";
+                        wait(120);
+                    }
+                    check(curPageItem.exceedsStandardHeight === false,
+                        "iRiS page " + pIdx + " must keep exceedsStandardHeight === false");
+                    assertNoStretchVoids(curPageItem, pIdx);
+                    if (pIdx === 4 && curPageItem.hasOwnProperty("activeSection")) {
+                        curPageItem.activeSection = "advanced";
+                        wait(160);
+                        check(curPageItem.exceedsStandardHeight === false,
+                            "iRiS page 4 ('advanced') must keep exceedsStandardHeight === false");
+                        assertNoStretchVoids(curPageItem, 4);
+                        curPageItem.activeSection = "colors";
+                    }
+                }
+
+                // Dynamically shrink Settings window to 1280x900 and verify EffectsConfig viewport-overflow scrolling + AlwaysOff internal scrolls
+                root.width = 1280;
+                root.height = 900;
+                wait(180);
+                overlay.overlayCurrentPage = 25;
+                tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 25 && overlay.pageHost.currentItem !== null, 6000);
+                wait(150);
+                const effects1280 = overlay.pageHost.currentItem;
+                check(effects1280.availableBentoBodyHeight > 0
+                        && effects1280.targetBentoHeight <= effects1280.availableBentoBodyHeight,
+                    "1280x900 Settings viewport must clamp targetBentoHeight to availableBentoBodyHeight: target="
+                    + effects1280.targetBentoHeight + " avail=" + effects1280.availableBentoBodyHeight);
+                check(effects1280.exceedsStandardHeight === false
+                        && effects1280.overflowsViewport === true
+                        && effects1280.interactive === true
+                        && effects1280.verticalScrollBar.visible === false,
+                    "1280x900 EffectsConfig (~1060px natural height) must keep exceedsStandardHeight=false while enabling silent viewport-overflow scroll (overflowsViewport="
+                    + effects1280.overflowsViewport + " interactive=" + effects1280.interactive
+                    + " body=" + effects1280.pageContentBodyHeight + " avail=" + effects1280.availableBentoBodyHeight
+                    + " std=" + effects1280.standardPageBodyHeight + ")");
+
+                overlay.overlayCurrentPage = 39;
+                tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 39 && overlay.pageHost.currentItem !== null, 6000);
+                wait(120);
+                const appPage1280 = overlay.pageHost.currentItem;
+                const appBar1280 = findByObjectName(appPage1280, "defaultAppsPrimaryScrollBar");
+                check(appBar1280 !== null && appBar1280.visible === false && appBar1280.policy === 1,
+                    "1280x900 DefaultAppsConfig internal scrollbar must stay hidden AlwaysOff");
+
+                overlay.overlayCurrentPage = 9;
+                tryVerify(() => overlay.pageHost && overlay.pageHost.currentIndex === 9 && overlay.pageHost.currentItem !== null, 6000);
+                wait(120);
+                const cheatPage1280 = overlay.pageHost.currentItem;
+                const cheatBar1280 = findByObjectName(cheatPage1280, "cheatsheetVerticalScrollBar");
+                check(cheatBar1280 !== null && cheatBar1280.visible === false && cheatBar1280.policy === 1,
+                    "1280x900 CheatsheetConfig internal scrollbar must stay hidden AlwaysOff");
+
                 console.info("SETTINGS_MODULAR_LAYOUT_RUNTIME_PASS");
             } catch (e) {
                 console.error("SETTINGS_MODULAR_LAYOUT_RUNTIME_FAIL", e.message, e.stack);
@@ -1580,7 +1836,7 @@ Window {
             base_env[f"XDG_{kind.upper()}_HOME"] = str(folder / kind)
         sock = "wayland-alis-headless-settings"
         kwin = subprocess.Popen(
-            ["kwin_wayland", "--virtual", "--socket", sock, "--width", "1280", "--height", "900"],
+            ["kwin_wayland", "--no-lockscreen", "--no-global-shortcuts", "--virtual", "--socket", sock, "--width", "1920", "--height", "1680"],
             env=base_env,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,

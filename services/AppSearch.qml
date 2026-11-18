@@ -180,7 +180,20 @@ Singleton {
     property int _preppedIconsRevision: -1
     // Plain JS memo fields have no QML NOTIFY signal. Lazy construction from a
     // property binding must not synchronously invalidate that same binding.
-    property var _lazyPrepared: ({namesRevision:-1,iconsRevision:-1,names:[],icons:[]})
+    property var _lazyPrepared: ({
+        namesRevision: -1,
+        iconsRevision: -1,
+        decoratedRevision: -1,
+        iconGuessesRevision: -1,
+        queryMemoRevision: -1,
+        activeQueryMask: 0,
+        names: [],
+        icons: [],
+        candidateScratch: [],
+        decoratedByEntry: new Map(),
+        queryMemo: new Map(),
+        iconGuesses: ({})
+    })
     // Reverse-lookup maps for matching running windows to desktop entries
     // Key: lowercased startupClass/exec-basename/desktop-id-stem → DesktopEntry
     property var _startupClassMap: ({})
@@ -271,28 +284,55 @@ Singleton {
         _desktopIdStemMap = idMap;
     }
 
-    function _ensurePreppedNames(): var {
-        if (root._lazyPrepared.namesRevision === root._cacheRevision)
-            return root._lazyPrepared.names
-
-        const entries = root._cachedList
-        const prepared = new Array(entries.length)
-        for (let i = 0; i < entries.length; ++i) {
-            prepared[i] = {
-                name: Fuzzy.prepare(`${entries[i].name} `),
-                nameLower: root._cachedNameLowers[i] ?? "",
-                entry: entries[i]
-            }
+    function _asciiCharMask(str: string): int {
+        let mask = 0
+        for (let i = 0; i < str.length; ++i) {
+            const c = str.charCodeAt(i) | 32
+            if (c >= 97 && c <= 122)
+                mask |= (1 << (c - 97))
         }
-        const revision = root._cacheRevision
-        root._lazyPrepared.names = prepared
-        root._lazyPrepared.namesRevision = revision
-        Qt.callLater(() => {
-            if (root._cacheRevision !== revision) return
-            root._cachedPreppedNames = prepared
-            root._preppedNamesRevision = revision
-        })
-        return prepared
+        return mask
+    }
+
+    function _ensurePreppedNames(): var {
+        const qMask = root._lazyPrepared.activeQueryMask
+        root._lazyPrepared.activeQueryMask = 0
+
+        let prepared = root._lazyPrepared.names
+        if (root._lazyPrepared.namesRevision !== root._cacheRevision) {
+            const entries = root._cachedList
+            prepared = new Array(entries.length)
+            for (let i = 0; i < entries.length; ++i) {
+                const lower = root._cachedNameLowers[i] ?? ""
+                prepared[i] = {
+                    name: Fuzzy.prepare(`${entries[i].name} `),
+                    nameLower: lower,
+                    charMask: root._asciiCharMask(lower),
+                    entry: entries[i]
+                }
+            }
+            const revision = root._cacheRevision
+            root._lazyPrepared.names = prepared
+            root._lazyPrepared.namesRevision = revision
+            Qt.callLater(() => {
+                if (root._cacheRevision !== revision) return
+                root._cachedPreppedNames = prepared
+                root._preppedNamesRevision = revision
+            })
+        }
+
+        if (qMask === 0)
+            return prepared
+
+        const scratch = root._lazyPrepared.candidateScratch
+        let writeIdx = 0
+        for (let i = 0; i < prepared.length; ++i) {
+            const item = prepared[i]
+            if ((item.charMask & qMask) === qMask)
+                scratch[writeIdx++] = item
+        }
+        scratch.length = writeIdx
+        return scratch
     }
 
     function _ensurePreppedIcons(): var {
@@ -333,9 +373,27 @@ Singleton {
             top.pop()
     }
 
+    function _memoizeQueryResult(memoKey: string, list): var {
+        const memo = root._lazyPrepared.queryMemo
+        if (memo.size >= 24)
+            memo.clear()
+        memo.set(memoKey, list)
+        return list.slice()
+    }
+
     function fuzzyQuery(search: string, limit): var {
         if (_cachedList.length === 0) return []
         if (!search || search.trim() === "") return []
+
+        if (root._lazyPrepared.queryMemoRevision !== root._cacheRevision) {
+            root._lazyPrepared.queryMemo.clear()
+            root._lazyPrepared.queryMemoRevision = root._cacheRevision
+        }
+        const normLimit = (limit > 0) ? Number(limit) : 0
+        const memoKey = `${root.sloppySearch ? 1 : 0}|${root.scoreThreshold}|${normLimit}|${search}`
+        const hit = root._lazyPrepared.queryMemo.get(memoKey)
+        if (hit !== undefined)
+            return hit.slice()
 
         const searchLower = search.toLowerCase().trim()
 
@@ -361,7 +419,7 @@ Singleton {
                     if (score > root.scoreThreshold)
                         root._insertTopScored(top, { entry: obj, score: score }, limit)
                 }
-                return top.map(item => root._decorateEntry(item.entry))
+                return root._memoizeQueryResult(memoKey, top.map(item => root._decorateEntry(item.entry)))
             }
 
             const entries = _cachedList
@@ -392,12 +450,15 @@ Singleton {
             }
             results.sort((a, b) => b.score - a.score)
 
-            return results.map(item => root._decorateEntry(item.entry))
+            return root._memoizeQueryResult(memoKey, results.map(item => root._decorateEntry(item.entry)))
         }
+
+        // Fast 26-bit ASCII character bitmask pre-filter before Fuzzy.go:
+        // any entry missing an ASCII letter in `search` cannot match fuzzysort.
+        root._lazyPrepared.activeQueryMask = root._asciiCharMask(searchLower)
 
         // Hybrid approach: combine fuzzysort with smart scoring
         const fuzzyResults = Fuzzy.go(search, root._ensurePreppedNames(), {
-            all: true,
             key: "name",
             threshold: -10000 // Get all results, we'll filter ourselves
         })
@@ -422,7 +483,7 @@ Singleton {
 
                 root._insertTopScored(top, { entry: entry, score: score }, limit)
             }
-            return top.map(item => root._decorateEntry(item.entry))
+            return root._memoizeQueryResult(memoKey, top.map(item => root._decorateEntry(item.entry)))
         }
 
         const scoredResults = fuzzyResults.map(r => {
@@ -440,11 +501,10 @@ Singleton {
             return { entry, score }
         }).sort((a, b) => b.score - a.score)
 
-        return scoredResults.map(item => root._decorateEntry(item.entry))
+        return root._memoizeQueryResult(memoKey, scoredResults.map(item => root._decorateEntry(item.entry)))
     }
 
-    function _decorateEntry(entry): var {
-        if (!entry) return null
+    function _buildDecoratedEntry(entry): var {
         return {
             id: entry.id ?? "",
             name: entry.name ?? "",
@@ -458,6 +518,20 @@ Singleton {
                 root.launchEntry(entry)
             }
         }
+    }
+
+    function _decorateEntry(entry): var {
+        if (!entry) return null
+        if (_lazyPrepared.decoratedRevision !== root._cacheRevision) {
+            _lazyPrepared.decoratedByEntry = new Map()
+            _lazyPrepared.decoratedRevision = root._cacheRevision
+        }
+        let cached = _lazyPrepared.decoratedByEntry.get(entry)
+        if (!cached) {
+            cached = _buildDecoratedEntry(entry)
+            _lazyPrepared.decoratedByEntry.set(entry, cached)
+        }
+        return cached
     }
 
     function launchEntry(entry): bool {
@@ -723,6 +797,21 @@ Singleton {
         if (!str || str.length == 0) return "image-missing";
         if (str.startsWith("file://")) return str.substring(7);
         if (str.startsWith("/")) return str;
+
+        if (_lazyPrepared.iconGuessesRevision !== root._cacheRevision) {
+            _lazyPrepared.iconGuesses = ({});
+            _lazyPrepared.iconGuessesRevision = root._cacheRevision;
+        }
+        const cache = _lazyPrepared.iconGuesses;
+        if (Object.prototype.hasOwnProperty.call(cache, str))
+            return cache[str];
+
+        const resolved = _guessIconUncached(str);
+        cache[str] = resolved;
+        return resolved;
+    }
+
+    function _guessIconUncached(str) {
 
         // Quickshell's desktop entry lookup
         const entry = DesktopEntries.heuristicLookup(str);

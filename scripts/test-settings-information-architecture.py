@@ -41,15 +41,86 @@ def main() -> None:
         page_indices = [index for group in groups for index in group["pages"]]
         assert len(page_indices) == len(set(page_indices)), "duplicate default page"
         if family == "abyss":
-            excluded = {0, 5, 8, 13, 14, 16, 17, 18, 19, 20, 21, 26, 27, 28, 29, 30, 31, 32, 34, 35, 36}
+            excluded = {0, 5, 8, 13, 14, 15, 16, 17, 18, 19, 20, 21, 26, 27, 28, 29, 30, 31, 32, 34, 35, 36}
             expected = set(range(40)) - excluded
         else:
-            excluded = {0, 5, 8, 13, 14, 16, 17, 18, 19, 20, 21, 27, 28, 29}
+            excluded = {0, 5, 8, 13, 14, 15, 16, 17, 18, 19, 20, 21, 27, 28, 29}
             expected = (set(range(30)) - excluded) | {37, 38, 39}
         assert set(page_indices) == expected
         if family == "abyss":
             assert next(group for group in groups if group["label"] == "Abyss & Bar")["pages"] == [2, 33, 37, 24]
-            assert next(group for group in groups if group["label"] == "Panels & Dock")["pages"] == [22, 23]
+        assert next(group for group in groups if group["label"] == "Panels & Dock")["pages"] == [22, 23, 10, 11]
+        assert next(group for group in groups if group["label"] == "Display & Windows")["pages"] == [12]
+
+    nav_js = read("modules/settings/SettingsNavigation.js")
+    nav_driver = nav_js + r"""
+const assert = require("assert");
+assert.strictEqual(SCHEMA_VERSION, 14);
+const defaults = [
+    { label: "Abyss & Bar", pages: [2, 33, 37, 24] },
+    { label: "Appearance", pages: [4, 3, 25] },
+    { label: "Panels & Dock", pages: [22, 23, 10, 11] },
+    { label: "Display & Windows", pages: [12] },
+    { label: "System & Power", pages: [1, 7] },
+    { label: "Integrations", pages: [38] },
+    { label: "Applications", pages: [39] },
+    { label: "Tools & Shortcuts", pages: [6, 9] }
+];
+const retired = [0, 5, 8, 13, 14, 15, 16, 17, 18, 19, 20, 21, 26, 27, 28, 29, 30, 31, 32, 34, 35, 36];
+
+// Pre-v14 saved state with "Abyss" label, retired 14/15/16, 33 & 10/11 in Display & Windows
+const rawV13 = JSON.stringify({
+    version: 13,
+    groups: [
+        { label: "Abyss", pages: [2, 37, 24] },
+        { label: "Appearance", pages: [4, 3, 25] },
+        { label: "Panels & Dock", pages: [22, 23, 16] },
+        { label: "Display & Windows", pages: [15, 33, 12, 14, 10, 11] },
+        { label: "System & Power", pages: [1, 7] },
+        { label: "Integrations", pages: [38] },
+        { label: "Applications", pages: [39] },
+        { label: "Tools & Shortcuts", pages: [6, 9] }
+    ],
+    hidden: [7, 14, 15, 16],
+    names: { "12": "My Displays" }
+});
+const resV13 = arrange(rawV13, defaults, 40, [0, 5, 8, 13, 17, 18, 19, 20, 21, 26, 27, 28, 29, 30, 31, 32, 34, 35, 36]);
+assert.strictEqual(resV13.version, 14);
+const groupByLabel = (res, lbl) => res.groups.find(g => g.label === lbl);
+assert.deepStrictEqual(groupByLabel(resV13, "Display & Windows").pages, [12]);
+assert.deepStrictEqual(groupByLabel(resV13, "Abyss").pages, [2, 33, 37, 24]);
+assert.deepStrictEqual(groupByLabel(resV13, "Panels & Dock").pages, [22, 23, 10, 11]);
+const allV13Pages = resV13.groups.flatMap(g => g.pages);
+for (const r of [14, 15, 16]) {
+    assert(!allV13Pages.includes(r), "Retired page " + r + " leaked into groups");
+    assert(!resV13.hidden.includes(r), "Retired page " + r + " leaked into hidden");
+}
+assert.deepStrictEqual(resV13.hidden, [7]);
+assert.deepStrictEqual(resV13.names, { "12": "My Displays" });
+
+// Already migrated v14 custom arrangement stays intact
+const rawV14Custom = JSON.stringify({
+    version: 14,
+    groups: [
+        { label: "Abyss & Bar", pages: [2, 33, 37, 24] },
+        { label: "Appearance", pages: [4, 3, 25] },
+        { label: "Panels & Dock", pages: [22, 23, 11] },
+        { label: "Display & Windows", pages: [12] },
+        { label: "Custom Shell", pages: [10] },
+        { label: "System & Power", pages: [1, 7] },
+        { label: "Integrations", pages: [38] },
+        { label: "Applications", pages: [39] },
+        { label: "Tools & Shortcuts", pages: [6, 9] }
+    ],
+    hidden: []
+});
+const resV14 = arrange(rawV14Custom, defaults, 40, retired);
+assert.strictEqual(resV14.version, 14);
+assert.deepStrictEqual(groupByLabel(resV14, "Custom Shell").pages, [10]);
+console.log("NAV_V14_OK");
+"""
+    nav_out = subprocess.check_output(["node", "-e", nav_driver], text=True)
+    assert "NAV_V14_OK" in nav_out, nav_out
 
     require(arrangement, "layoutSchemaVersion: 13", "navigation migration")
     require(arrangement, "const untouchedStock =", "navigation migration")
@@ -104,11 +175,20 @@ def main() -> None:
     system = read("modules/settings/GeneralConfigCore.qml")
     sidebars = read("modules/settings/SidebarsConfig.qml")
     services = read("modules/settings/ServicesConfig.qml")
+    niri = read("modules/settings/NiriConfig.qml")
+    tools = read("modules/settings/ToolsConfig.qml")
     for token in ('settingsTaskSection: "screen"',
                   'Config.setNestedValue("bar.bottom"',
                   'Config.setNestedValue("bar.vertical"'):
         forbid(quick, token, "Quick ownership")
     forbid(registry, "QuickConfigHugOnly", "retired Quick compatibility")
+    forbid(tools, 'Config.setNestedValue("osd.', "moved OSD ownership to Popups")
+    forbid(tools, "On-screen display (OSD)", "moved OSD card to Popups")
+    require(data, "legacyHiddenIndexes: [0, 5, 8, 13, 14, 15, 16,", "retired Overview/Monitors/Dashboard indices 14, 15, 16")
+    require(niri, 'Translation.tr("Displays & Monitors")', "merged Displays & Monitors tab")
+    require(niri, 'Translation.tr("Windows & Tiling")', "Niri Windows & Tiling tab")
+    require(niri, "embeddedArrangementOnly: true", "embedded Monitor Arrangement in NiriConfig")
+    require(niri, 'Config.setNestedValue("display.primaryMonitor"', "primary monitor selector in NiriConfig")
     for retired_key in ("_retired-18", "_retired-19", "_retired-21",
                         "_retired-27", "_retired-28", "_retired-30",
                         "_retired-31", "_retired-35", "_retired-36"):

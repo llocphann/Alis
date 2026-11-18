@@ -288,6 +288,17 @@ QtObject {
         records: integrationAllowed ? root.records : []
     }
     readonly property int capacity: 40
+    readonly property bool surfacesSettled: {
+        const keys = Object.keys(participants)
+        for (let i = 0; i < keys.length; ++i) {
+            const p = participants[keys[i]]
+            if (!p || p.geometry === null || p.geometry === undefined)
+                continue
+            if (!Boolean(p.surfaceSettled))
+                return false
+        }
+        return true
+    }
     readonly property var records: moduleRecords.concat((() => {
         const mapped = Object.keys(participants)
             .map(key => participants[key]?.geometry ? Object.assign({},participants[key].geometry,{mass:participants[key].mass}) : null)

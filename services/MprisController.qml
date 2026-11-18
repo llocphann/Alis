@@ -387,6 +387,22 @@ Singleton {
 		return players[0] ?? null;
 	}
 
+	property MprisPlayer playingPlayer: {
+		const _ = _playbackStateVersion;
+		const visiblePlayers = displayPlayers ?? [];
+		for (let i = 0; i < visiblePlayers.length; i++) {
+			if (visiblePlayers[i]?.isPlaying) return visiblePlayers[i];
+		}
+		for (let i = 0; i < players.length; i++) {
+			if (players[i]?.isPlaying) return players[i];
+		}
+		for (const rawPlayer of Mpris.players.values) {
+			if (rawPlayer?.isPlaying && root.isRealPlayer(rawPlayer))
+				return rawPlayer;
+		}
+		return null;
+	}
+
 	readonly property bool isYtMusicActive: false
 	
 	property bool hasPlasmaIntegration: false
@@ -1386,6 +1402,7 @@ Singleton {
 	}
 
 	property bool isPlaying: this.activePlayer && this.activePlayer.isPlaying;
+	readonly property bool anyAudioPlaying: Boolean(this.playingPlayer?.isPlaying) || Boolean(this.isPlaying) || Boolean(Audio.hasActivePlayback);
 	property bool canTogglePlaying: this.activePlayer?.canTogglePlaying ?? false;
 	function togglePlaying(): void {
 		if (this.canTogglePlaying) {

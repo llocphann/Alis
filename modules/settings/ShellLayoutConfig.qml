@@ -89,47 +89,45 @@ ContentPage {
         title: Translation.tr("Live shell layout")
 
         SettingsGroup {
-            StyledText {
-                Layout.fillWidth: true
-                text: Translation.tr("Arrange persistent surfaces here or on the desktop; both use live layout.")
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                wrapMode: Text.Wrap
-            }
-
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 12
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    spacing: 3
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Arrange persistent surfaces here or on the desktop; both use live layout.")
+                        color: Appearance.colors.colOnLayer1
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        wrapMode: Text.Wrap
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Family") + ": " + root.activeFamily
+                            + (ShellEditSession.targetOutputName.length > 0
+                                ? " · " + ShellEditSession.targetOutputName : "")
+                        color: Appearance.colors.colSubtext
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        elide: Text.ElideRight
+                    }
+                }
 
                 RippleButtonWithIcon {
+                    Layout.alignment: Qt.AlignVCenter
                     materialIcon: "edit"
                     mainText: ShellEditSession.active
                         ? Translation.tr("Done editing")
                         : Translation.tr("Edit live")
                     onClicked: root.toggleLiveEditor()
                 }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Translation.tr("Family") + ": " + root.activeFamily
-                        + (ShellEditSession.targetOutputName.length > 0
-                            ? " · " + ShellEditSession.targetOutputName : "")
-                    color: Appearance.colors.colSubtext
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    horizontalAlignment: Text.AlignRight
-                    elide: Text.ElideRight
-                }
             }
         }
     }
-
-    GridLayout {
-        id: shellLayoutTwoColumnGrid
-        Layout.fillWidth: true
-        columns: 1
-        uniformCellWidths: false
-        columnSpacing: 14
-        rowSpacing: 14
 
     Repeater {
         model: root.surfaces
@@ -139,7 +137,6 @@ ContentPage {
             required property var modelData
 
             Layout.fillWidth: true
-            Layout.preferredWidth: 1
             Layout.alignment: Qt.AlignTop
 
             readonly property string surfaceId: modelData.id
@@ -155,7 +152,7 @@ ContentPage {
             SettingsGroup {
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: 10
 
                     ArrangeChip {
                         icon: surfaceSection.modelData.icon
@@ -174,11 +171,13 @@ ContentPage {
 
                     StyledText {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         text: root.scopeLabel(
                             surfaceSection.currentState?.scope ?? "")
                         color: Appearance.colors.colSubtext
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         horizontalAlignment: Text.AlignRight
+                        elide: Text.ElideRight
                     }
 
                     RippleButtonWithIcon {
@@ -241,90 +240,105 @@ ContentPage {
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     wrapMode: Text.Wrap
                 }
-            }
 
-            SettingsGroup {
-                visible: surfaceSection.sidebarRole
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    StyledText {
-                        Layout.preferredWidth: 150
-                        text: Translation.tr("Height mode")
-                        color: Appearance.colors.colOnLayer1
-                    }
-
-                    StyledComboBox {
-                        Layout.fillWidth: true
-                        readonly property var modeOptions: [
-                            { displayName: Translation.tr("Full"), value: "full" },
-                            { displayName: Translation.tr("Fit"), value: "fit" },
-                            { displayName: Translation.tr("Custom"), value: "custom" }
-                        ]
-                        model: modeOptions
-                        textRole: "displayName"
-                        currentIndex: {
-                            const mode = surfaceSection.currentState?.sizeMode ?? "full"
-                            const index = modeOptions.findIndex(option => option.value === mode)
-                            return index >= 0 ? index : 0
-                        }
-                        onActivated: index => {
-                            if (index >= 0 && index < modeOptions.length)
-                                ShellLayoutController.setProperty(
-                                    surfaceSection.surfaceId, "sizeMode",
-                                    modeOptions[index].value,
-                                    ShellEditSession.targetOutputName)
-                        }
-                    }
+                SettingsDivider {
+                    visible: surfaceSection.sidebarRole
                 }
 
-                RowLayout {
+                ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 10
+                    visible: surfaceSection.sidebarRole
+                    spacing: SettingsMaterialPreset.rowSpacing
 
-                    StyledText {
-                        Layout.preferredWidth: 150
-                        text: Translation.tr("Custom height")
-                        color: Appearance.colors.colOnLayer1
-                    }
-
-                    StyledSpinBox {
+                    RowLayout {
                         Layout.fillWidth: true
-                        from: 320
-                        to: 2160
-                        stepSize: 10
-                        value: surfaceSection.currentState?.customHeight ?? 720
-                        onValueModified: ShellLayoutController.setProperty(
-                            surfaceSection.surfaceId, "height", value,
-                            ShellEditSession.targetOutputName)
+                        spacing: 12
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            text: Translation.tr("Height mode")
+                            color: Appearance.colors.colOnLayer1
+                            font.pixelSize: Appearance.font.pixelSize.small
+                        }
+
+                        StyledComboBox {
+                            Layout.preferredWidth: 180
+                            readonly property var modeOptions: [
+                                { displayName: Translation.tr("Full"), value: "full" },
+                                { displayName: Translation.tr("Fit"), value: "fit" },
+                                { displayName: Translation.tr("Custom"), value: "custom" }
+                            ]
+                            model: modeOptions
+                            textRole: "displayName"
+                            currentIndex: {
+                                const mode = surfaceSection.currentState?.sizeMode ?? "full"
+                                const index = modeOptions.findIndex(option => option.value === mode)
+                                return index >= 0 ? index : 0
+                            }
+                            onActivated: index => {
+                                if (index >= 0 && index < modeOptions.length)
+                                    ShellLayoutController.setProperty(
+                                        surfaceSection.surfaceId, "sizeMode",
+                                        modeOptions[index].value,
+                                        ShellEditSession.targetOutputName)
+                            }
+                        }
                     }
-                }
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
+                    SettingsDivider {}
 
-                    StyledText {
-                        Layout.preferredWidth: 150
-                        text: Translation.tr("Width")
-                        color: Appearance.colors.colOnLayer1
-                    }
-
-                    StyledSpinBox {
+                    RowLayout {
                         Layout.fillWidth: true
-                        from: 320
-                        to: 900
-                        stepSize: 10
-                        value: surfaceSection.currentState?.width ?? 460
-                        onValueModified: ShellLayoutController.setProperty(
-                            surfaceSection.surfaceId, "thickness", value,
-                            ShellEditSession.targetOutputName)
+                        spacing: 12
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            text: Translation.tr("Custom height")
+                            color: Appearance.colors.colOnLayer1
+                            font.pixelSize: Appearance.font.pixelSize.small
+                        }
+
+                        StyledSpinBox {
+                            Layout.preferredWidth: 140
+                            from: 320
+                            to: 2160
+                            stepSize: 10
+                            value: surfaceSection.currentState?.customHeight ?? 720
+                            onValueModified: ShellLayoutController.setProperty(
+                                surfaceSection.surfaceId, "height", value,
+                                ShellEditSession.targetOutputName)
+                        }
+                    }
+
+                    SettingsDivider {}
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            text: Translation.tr("Width")
+                            color: Appearance.colors.colOnLayer1
+                            font.pixelSize: Appearance.font.pixelSize.small
+                        }
+
+                        StyledSpinBox {
+                            Layout.preferredWidth: 140
+                            from: 320
+                            to: 900
+                            stepSize: 10
+                            value: surfaceSection.currentState?.width ?? 460
+                            onValueModified: ShellLayoutController.setProperty(
+                                surfaceSection.surfaceId, "thickness", value,
+                                ShellEditSession.targetOutputName)
+                        }
                     }
                 }
             }
         }
-    }
     }
 }

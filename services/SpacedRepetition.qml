@@ -8,6 +8,7 @@ import Quickshell
 import Quickshell.Io
 import "SpacedRepetitionEngine.js" as Engine
 import "SpacedRepetitionLexicon.js" as Lexicon
+import "SpacedRepetitionPrompts.js" as Prompts
 
 Singleton {
     id: root
@@ -42,8 +43,13 @@ Singleton {
     property var _smartModeState: ({ bag: [], lastMode: "" })
     property bool _rollingSmartMode: false
     property bool cardRevealed: false
+    property bool presentationActive: false
+    property bool interactionLocked: false
+    property string _lastCurrentCardId: ""
     property var _undoStack: []
     property real _sessionClockMs: Date.now()
+    property double _lastClockRefreshMs: 0
+    readonly property bool _delegatedToIntegration: AlisIntergration.spacedRepetitionEnabled
 
     readonly property bool canUndoReview: root._undoStack.length > 0
     readonly property bool boostActive: root.boostMode.length > 0
@@ -62,7 +68,7 @@ Singleton {
         root.cardRevealed = false
     }
 
-    function syncConfiguredStudyDirection(): void {
+    function syncConfiguredStudyDirection(allowRoll = true): void {
         const raw = String(root.configuredStudyDirection ?? "both").trim().toLowerCase()
         if (raw === "reverse"
                 || raw === "reverse_flashcard"
@@ -87,7 +93,8 @@ Singleton {
             root.studyMode = "flashcard"
         } else {
             root.smartMixEnabled = true
-            root.rollNextStudyMode()
+            if (allowRoll)
+                root.rollNextStudyMode()
         }
     }
 
@@ -196,7 +203,13 @@ Singleton {
             if (dName !== "all" && card.deck !== dName) return false
             if (root.leechesOnly && !card.isLeech && (Number(card.lapses) || 0) < root.options.leechThreshold) return false
             if (q.length > 0) {
-                const hay = `${card.term ?? ""} ${card.front ?? ""} ${card.meaning ?? ""} ${card.back ?? ""} ${card.definitionEn ?? ""} ${card.meaningVi ?? ""} ${card.example ?? ""} ${card.cefrLevel ?? ""} ${card.deck ?? ""} ${card.notes ?? ""} ${card.morphologyText ?? ""} ${(card.collocations ?? []).join(" ")}`.toLowerCase()
+                let hay = card._searchHay
+                if (typeof hay !== "string") {
+                    hay = `${card.term ?? ""} ${card.front ?? ""} ${card.meaning ?? ""} ${card.back ?? ""} ${card.definitionEn ?? ""} ${card.meaningVi ?? ""} ${card.example ?? ""} ${card.cefrLevel ?? ""} ${card.deck ?? ""} ${card.notes ?? ""} ${card.morphologyText ?? ""} ${(card.collocations ?? []).join(" ")}`.toLowerCase()
+                    try {
+                        Object.defineProperty(card, "_searchHay", { value: hay, enumerable: false, configurable: true })
+                    } catch (e) {}
+                }
                 if (!hay.includes(q)) return false
             }
             return true
@@ -212,21 +225,48 @@ Singleton {
     property string _lastSavedJson: ""
 
     Component.onCompleted: {
-        loadFromFile()
+        if (Config.ready && !root._delegatedToIntegration)
+            loadFromFile()
+    }
+
+    Connections {
+        target: Config
+        function onReadyChanged(): void {
+            if (Config.ready && !root.ready && !root._delegatedToIntegration)
+                root.loadFromFile()
+        }
+    }
+
+    on_DelegatedToIntegrationChanged: {
+        if (root._delegatedToIntegration) {
+            saveTimer.stop()
+            root._savePending = false
+            root._saveQueued = false
+            return
+        }
+        if (Config.ready && !root.ready && !root._delegatedToIntegration)
+            root.loadFromFile()
     }
 
     onCurrentCardChanged: {
-        root.cardRevealed = false
+        const nextId = String(root.currentCard?.id ?? "")
+        if (nextId !== root._lastCurrentCardId) {
+            root._lastCurrentCardId = nextId
+            root.cardRevealed = false
+        }
     }
 
     Timer {
         id: clockRefreshTimer
         interval: 60000
-        running: true
+        running: !root._delegatedToIntegration && root.presentationActive && !root.interactionLocked && !root.cardRevealed
         repeat: true
         onTriggered: {
+            if (root._delegatedToIntegration || root.interactionLocked || root.cardRevealed)
+                return
             const now = Date.now()
             if (Engine.civilDayKey(now) !== Engine.civilDayKey(root._sessionClockMs)) {
+                root._lastClockRefreshMs = now
                 root._sessionClockMs = now
                 return
             }
@@ -236,13 +276,21 @@ Singleton {
                 const due = Number(c.dueAt) || 0
                 return iv > 0 && iv < 1 && due > root._sessionClockMs && due <= now
             })
-            if (hasExpiredStep)
+            if (hasExpiredStep) {
+                root._lastClockRefreshMs = now
                 root._sessionClockMs = now
+            }
         }
     }
 
-    function refreshClock(): void {
-        root._sessionClockMs = Date.now()
+    function refreshClock(force = false): void {
+        if (!force && (root._delegatedToIntegration || root.interactionLocked || root.cardRevealed))
+            return
+        const now = Date.now()
+        if (!force && root._lastClockRefreshMs > 0 && (now - root._lastClockRefreshMs) < 30000)
+            return
+        root._lastClockRefreshMs = now
+        root._sessionClockMs = now
     }
 
     function formatMorphology(cardOrMorphology): string {
@@ -311,7 +359,8 @@ Singleton {
 
     function renderClozeQuestion(card): string {
         if (!card) return ""
-        return Engine.renderClozeFront(card.clozeText || card.example || "", card.term || card.front || "")
+        const front = Engine.renderClozeFront(card.clozeText || card.example || "", card.term || card.front || "")
+        return Prompts.maskAnswer(front, card, false)
     }
 
     function renderClozeAnswer(card): string {
@@ -372,6 +421,7 @@ Singleton {
         const active = cleanId ? root.cards.find(item => item && item.id === cleanId) : root.currentCard
         if (!active) return false
         const now = Date.now()
+        root._lastClockRefreshMs = now
         root._sessionClockMs = now
         const wasNew = (Number(active.reps) || 0) === 0 && active.state === "new"
         const prevCardSnapshot = JSON.parse(JSON.stringify(active))
@@ -442,6 +492,7 @@ Singleton {
 
     function addCard(payload): var {
         const now = Date.now()
+        root._lastClockRefreshMs = now
         root._sessionClockMs = now
         const allocatedId = `sr-card-${root.nextId++}`
         const normalized = Engine.normalizeCard(
@@ -525,6 +576,7 @@ Singleton {
         if (!Array.isArray(parsed) || parsed.length === 0)
             return 0
         const now = Date.now()
+        root._lastClockRefreshMs = now
         root._sessionClockMs = now
         const created = []
         for (let i = 0; i < parsed.length; i++) {
@@ -730,6 +782,12 @@ Singleton {
     readonly property bool persistenceBusy: root._saving || root._saveQueued || root._savePending
 
     function scheduleSave(): void {
+        if (root._delegatedToIntegration) {
+            saveTimer.stop()
+            root._savePending = false
+            root._saveQueued = false
+            return
+        }
         if (root._saving || initDirProc.running) {
             root._saveQueued = true
             return
@@ -740,7 +798,7 @@ Singleton {
 
     Timer {
         id: saveTimer
-        interval: 40
+        interval: 180
         repeat: false
         onTriggered: root.saveToFile()
     }
@@ -756,13 +814,16 @@ Singleton {
     }
 
     function loadFromFile(): void {
+        if (!Config.ready || root._delegatedToIntegration)
+            return
         srFileView.reload()
     }
 
     function saveToFile(): void {
         saveTimer.stop()
-        if (!root.ready) {
+        if (!root.ready || root._delegatedToIntegration) {
             root._savePending = false
+            root._saveQueued = false
             return
         }
         if (root._saving || initDirProc.running) {
@@ -799,11 +860,11 @@ Singleton {
 
     FileView {
         id: srFileView
-        path: Qt.resolvedUrl(root.filePath)
-        watchChanges: true
+        path: (Config.ready && !root._delegatedToIntegration) ? Qt.resolvedUrl(root.filePath) : ""
+        watchChanges: !root._delegatedToIntegration
         printErrors: false
         onLoaded: {
-            if (root._saving || root._saveQueued || root._savePending) return
+            if (root._delegatedToIntegration || root._saving || root._saveQueued || root._savePending) return
             const rawText = srFileView.text()
             if (!rawText || rawText.trim() === "") {
                 if (root.ready && root.cards.length > 0) {
@@ -815,17 +876,26 @@ Singleton {
                 root.retainedStorageFields = seeded.retainedStorageFields
                 root.nextId = seeded.nextId
                 root.cards = seeded.cards
-                root.syncConfiguredStudyDirection()
+                root.syncConfiguredStudyDirection(false)
                 root.ready = true
                 if (root.smartMixEnabled)
                     root.rollNextStudyMode()
                 root.scheduleSave()
                 return
             }
-            if (rawText === root._lastSavedJson && root.ready)
+            const trimmedRaw = rawText.trim()
+            if ((rawText === root._lastSavedJson || (root._lastSavedJson && trimmedRaw === root._lastSavedJson.trim())) && root.ready)
                 return
             try {
                 const parsed = JSON.parse(rawText)
+                // File watcher echoes and formatting-only saves must not restart
+                // Smart Mix or discard the answer currently staged by the user.
+                if (root.ready && root._lastSavedJson
+                        && JSON.stringify(parsed, null, 2) === root._lastSavedJson.trim()) {
+                    root._lastSavedJson = rawText
+                    root.errorMessage = ""
+                    return
+                }
                 const migrated = Engine.migrateStorage(parsed, Date.now(), root.options, Lexicon.analyzeTerm)
                 if (root.ready && root.cards.length > 0) {
                     let maxMemRev = 0
@@ -849,20 +919,22 @@ Singleton {
                 root.cards = migrated.cards
                 root._lastSavedJson = rawText
                 root.errorMessage = ""
-                root.syncConfiguredStudyDirection()
-                if (root.retainedStorageFields?.reviewMode || root.retainedStorageFields?.studyMode) {
-                    const legacyMode = Engine.normalizeStudyMode(root.retainedStorageFields.reviewMode || root.retainedStorageFields.studyMode)
-                    const shouldRollSmart = root.smartMixEnabled && (
-                        (legacyMode === "flashcard" && root.studyQueue.length > 1)
-                        || (legacyMode === "matching" && root.studyQueue.length > 0 && root.studyQueue.length < 5)
-                    )
-                    if (!shouldRollSmart) {
-                        root.studyMode = legacyMode
-                    } else {
+                if (!root.ready) {
+                    root.syncConfiguredStudyDirection(false)
+                    if (root.retainedStorageFields?.reviewMode || root.retainedStorageFields?.studyMode) {
+                        const legacyMode = Engine.normalizeStudyMode(root.retainedStorageFields.reviewMode || root.retainedStorageFields.studyMode)
+                        const shouldRollSmart = root.smartMixEnabled && (
+                            (legacyMode === "flashcard" && root.studyQueue.length > 1)
+                            || (legacyMode === "matching" && root.studyQueue.length > 0 && root.studyQueue.length < 5)
+                        )
+                        if (!shouldRollSmart) {
+                            root.studyMode = legacyMode
+                        } else {
+                            root.rollNextStudyMode()
+                        }
+                    } else if (root.smartMixEnabled) {
                         root.rollNextStudyMode()
                     }
-                } else if (root.smartMixEnabled) {
-                    root.rollNextStudyMode()
                 }
                 root.ready = true
                 if (root.serializeStorage() !== rawText) {
@@ -875,7 +947,7 @@ Singleton {
                     root.historyByDay = fallback.historyByDay
                     root.nextId = fallback.nextId
                     root.cards = fallback.cards
-                    root.syncConfiguredStudyDirection()
+                    root.syncConfiguredStudyDirection(false)
                     if (root.smartMixEnabled)
                         root.rollNextStudyMode()
                     root.ready = true
@@ -883,13 +955,14 @@ Singleton {
             }
         }
         onLoadFailed: (error) => {
+            if (root._delegatedToIntegration) return
             if (error === FileViewError.FileNotFound) {
                 const seeded = Engine.migrateStorage(null, Date.now(), root.options, Lexicon.analyzeTerm)
                 root.historyByDay = seeded.historyByDay
                 root.retainedStorageFields = seeded.retainedStorageFields
                 root.nextId = seeded.nextId
                 root.cards = seeded.cards
-                root.syncConfiguredStudyDirection()
+                root.syncConfiguredStudyDirection(false)
                 if (root.smartMixEnabled)
                     root.rollNextStudyMode()
                 root.ready = true

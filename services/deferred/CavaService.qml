@@ -78,11 +78,12 @@ Singleton {
     }
 
     readonly property string playerDesktopEntry: {
-        const player = MprisController.activePlayer
+        const player = MprisController.playingPlayer ?? MprisController.activePlayer
         return player?.desktopEntry || player?.identity || "__alis_music_player__"
     }
     readonly property string playerTrackTitle: {
-        return MprisController.activePlayer?.trackTitle || ""
+        const player = MprisController.playingPlayer ?? MprisController.activePlayer
+        return player?.trackTitle || ""
     }
 
     function _afterSubscriptionChange(wasActive: bool): void {
@@ -269,6 +270,18 @@ Singleton {
             if (MprisController.isPlaying)
                 root._scheduleSourceRefresh()
         }
+        function onAnyAudioPlayingChanged(): void {
+            if (MprisController.anyAudioPlaying)
+                root._scheduleSourceRefresh()
+        }
+    }
+
+    Connections {
+        target: Audio
+        function onActivePlaybackSignatureChanged(): void {
+            if (Audio.hasActivePlayback)
+                root._scheduleSourceRefresh()
+        }
     }
 
     Timer {
@@ -284,7 +297,7 @@ Singleton {
         repeat: false
         onTriggered: {
             root.audioSignalActive = false
-            if (root.active && MprisController.isPlaying)
+            if (root.active && MprisController.anyAudioPlaying)
                 root._scheduleSourceRefresh()
         }
     }

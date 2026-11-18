@@ -12,42 +12,63 @@ FooterRectangle {
 
     // Battery button
     WBorderlessButton {
+        objectName: "waffleActionCenterBatteryButton"
         visible: Battery.available
+        implicitWidth: batteryContentRow.implicitWidth + Looks.dp(18)
+        implicitHeight: Looks.dp(36)
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
-        anchors.leftMargin: Looks.dp(12)
+        anchors.leftMargin: Looks.dp(10)
+        onClicked: WaffleNavigation.openSettings("system", "Battery")
 
-        contentItem: Row {
-            spacing: Looks.dp(4)
+        contentItem: Item {
+            Row {
+                id: batteryContentRow
+                anchors.centerIn: parent
+                spacing: Looks.dp(6)
 
-            FluentIcon {
-                anchors.verticalCenter: parent.verticalCenter
-                icon: WIcons.batteryLevelIcon ?? "battery-0"
                 FluentIcon {
-                    anchors.fill: parent
-                    icon: WIcons.batteryIcon ?? "battery-0"
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: WIcons.batteryLevelIcon ?? "battery-0"
+                    FluentIcon {
+                        anchors.fill: parent
+                        icon: WIcons.batteryIcon ?? "battery-0"
+                    }
+                }
+                WText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: `${Math.round((Battery?.percentage ?? 0) * 100)}%`
                 }
             }
-            WText {
-                anchors.verticalCenter: parent.verticalCenter
-                text: `${Math.round((Battery?.percentage ?? 0) * 100)}%`
-            }
+        }
+
+        WToolTip {
+            text: Translation.tr("Battery settings")
         }
     }
 
     // Settings button
     WBorderlessButton {
+        objectName: "waffleActionCenterSettingsButton"
+        implicitWidth: Looks.dp(36)
+        implicitHeight: Looks.dp(36)
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
-        anchors.rightMargin: Looks.dp(12)
+        anchors.rightMargin: Looks.dp(10)
 
-        onClicked: {
-            GlobalStates.waffleActionCenterOpen = false;
-            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"]);
+        onClicked: WaffleNavigation.openSettings()
+
+        contentItem: Item {
+            FluentIcon {
+                anchors.centerIn: parent
+                icon: "settings"
+                implicitSize: Looks.dp(18)
+            }
         }
 
-        contentItem: FluentIcon {
-            icon: "settings"
+        WToolTip {
+            text: Translation.tr("All settings")
         }
     }
 }

@@ -86,6 +86,9 @@ ShellRoot {
    DesktopWidgetEditToolbar {
     id:toolbar;windowContext:context;safeBounds:home;manager:managerState;fallbackParent:home
    }
+   WidgetManagerPanel {
+    id:managerPanel;visible:false;canvasWidth:home.width;canvasHeight:home.height
+   }
   }
   AbyssField { id:field;anchors.fill:parent;z:-1;edgeInsets:window.nativeInsets;records:liquid.records }
   HOST
@@ -148,9 +151,11 @@ ShellRoot {
     toolbar.activeTab="power"
     const powerChip=root.find(toolbar,i=>i.objectName==="widgetDockPowerEnableChip")
     if(!root.check(powerChip!==null,"Power & Displays tab exposes power saving toggle"))return
-    toolbar.activeTab="custom"
-    const createBtn=root.find(toolbar,i=>i.objectName==="widgetDockCustomCreateButton")
-    if(!root.check(createBtn!==null,"Custom tab exposes Create Custom Widget button"))return
+    if(!root.check(root.find(toolbar,i=>i.objectName==="widgetDockTabCustom")===null,"Bottom dock omits duplicate Custom tab"))return
+    if(!root.check(root.find(toolbar,i=>i.objectName==="widgetDockInspectorButton")===null,"Abyss Stage mode hides non-Stage Inspector chip"))return
+    const mgrCreateInput=root.find(managerPanel,i=>i.objectName==="widgetDockCustomCreateInput")
+    const mgrCreateBtn=root.find(managerPanel,i=>i.objectName==="widgetDockCustomCreateButton")
+    if(!root.check(mgrCreateInput!==null && mgrCreateBtn!==null,"WidgetManagerPanel exposes Create Custom Widget input and button"))return
     toolbar.activeTab="widgets"
 
     root.captureThen("bottom",()=>{
@@ -194,12 +199,33 @@ ShellRoot {
     if(!root.check(!toolbar.hosted && toolbar.parent===home && dock.embeddedSurface===false,"Waffle uses non-Abyss bottom-connected dock fallback"))return
     if(!root.check(dock.bottomLeftRadius===0 && dock.bottomRightRadius===0 && Math.abs((toolbar.y+toolbar.height)-home.safeBottom)<=1,"non-Abyss fallback anchors flush to bottom of safeBounds"))return
     if(!root.check(toolbar.height>=164 && toolbar.height<=176,"non-Abyss fallback expanded height (~168px)"))return
+    const inspectorBtn=root.find(toolbar,i=>i.objectName==="widgetDockInspectorButton")
+    if(!root.check(inspectorBtn!==null && inspectorBtn.visible,"Waffle non-Stage mode exposes compact Inspector toggle chip"))return
+    const cancelBtn=root.find(toolbar,i=>i.objectName==="widgetDockCancelButton")
+    if(!root.check(cancelBtn!==null && cancelBtn.visible,"Widget dock exposes Cancel button"))return
+    // Verify Cancel / Esc rollback reverts edit-session mutations without saving
+    const weatherBeforeCancel=DesktopWidgetLayout.enabled("A","weather",false)
+    const snapBeforeCancel=Config.getNestedValue("background.widgets.editGrid.snap",true)
+    const powerBeforeCancel=Config.getNestedValue("background.widgets.powerSaving.enable",true)
+    const customBeforeCancel=Config.getNestedValue("background.widgets.custom.rollbackProbe.testFlag",false)
+    DesktopWidgetLayout.setEnabled("A","weather",!weatherBeforeCancel)
+    Config.setNestedValue("background.widgets.editGrid.snap",!snapBeforeCancel)
+    Config.setNestedValue("background.widgets.powerSaving.enable",!powerBeforeCancel)
+    Config.setNestedValue("background.widgets.custom.rollbackProbe.testFlag",!customBeforeCancel)
+    dock.cancelClicked()
+    if(!root.check(!GlobalStates.widgetEditMode && !managerState.shown,"Cancel exits widget edit mode and closes manager"))return
+    if(!root.check(DesktopWidgetLayout.enabled("A","weather",false)===weatherBeforeCancel,"Cancel rolls back widget placement/enable changes"))return
+    if(!root.check(Config.getNestedValue("background.widgets.editGrid.snap",true)===snapBeforeCancel,"Cancel rolls back editGrid changes"))return
+    if(!root.check(Config.getNestedValue("background.widgets.powerSaving.enable",true)===powerBeforeCancel,"Cancel rolls back powerSaving changes"))return
+    if(!root.check(Config.getNestedValue("background.widgets.custom.rollbackProbe.testFlag",false)===customBeforeCancel,"Cancel rolls back customWidgetData changes"))return
+    GlobalStates.setWidgetEditMode(true)
     toolbar.trayExpanded=false
     if(!root.check(toolbar.height===54,"non-Abyss fallback collapsed height (54px)"))return
     GlobalStates.registerDesktopWidgetEditor("A",home)
     GlobalStates.unregisterDesktopWidgetEditor("A",toolbar)
     if(!root.check(GlobalStates.desktopWidgetEditors.A===home,"retiring item cannot unregister replacement output"))return
     GlobalStates.unregisterDesktopWidgetEditor("A",home)
+    GlobalStates.commitWidgetEditMode()
     console.info("WIDGET_EDITOR_PASS");Qt.quit();return
    }
    root.step++

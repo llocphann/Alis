@@ -3,8 +3,12 @@
 
 from __future__ import annotations
 
+from contextlib import nullcontext
 import json
+import os
+import struct
 import tempfile
+import zlib
 from pathlib import Path
 from native_test_session import private_wayland, run_qs
 
@@ -558,10 +562,29 @@ Window {
                 const pendingBadge0 = findChild(srView, "srMcOptionPendingBadge-0");
                 check(srView.answerRevealed === false && srView.pendingChoiceIndex === 0 && !!pendingBadge0 && pendingBadge0.visible,
                     "Pressing 'A' in MC mode before reveal must stage option A (index 0) and show Space badge");
+                // Regression: pressing 'd' / 'D' repeatedly in MC mode (with Smart Mix enabled) never jumps exercise or card
+                const mcCardIdBeforeD = SpacedRepetition.currentCard.id;
+                SpacedRepetition.smartMixEnabled = true;
+                for (const dKey of [Qt.Key_D, Qt.Key_D]) {
+                    keyClick(dKey);
+                    wait(40);
+                    check(SpacedRepetition.studyMode === "mc" && SpacedRepetition.currentCard.id === mcCardIdBeforeD
+                        && srView.answerRevealed === false && srView.pendingChoiceIndex === 3,
+                        "Pressing 'd' in MC mode must stage option D without jumping exercise or card");
+                }
+                check(SpacedRepetition.interactionLocked === true,
+                    "Staging option D in MC mode must set SpacedRepetition.interactionLocked === true");
+                keyClick(Qt.Key_A);
+                wait(40);
                 keyClick(Qt.Key_Space);
                 wait(60);
                 check(srView.answerRevealed === true && srView.selectedChoiceIndex === 0,
                     "Pressing Space after staging an option in MC mode must confirm selection and reveal the answer");
+                keyClick(Qt.Key_D);
+                wait(40);
+                check(SpacedRepetition.studyMode === "mc" && SpacedRepetition.currentCard.id === mcCardIdBeforeD && srView.answerRevealed === true,
+                    "Pressing 'd' after MC reveal (before grading) must not jump to another exercise");
+                SpacedRepetition.smartMixEnabled = false;
                 check(enViRow.visible === false,
                     "Bottom EN|VI definition row must be hidden in Multiple Choice mode since options already show definitions");
                 for (let idx = 0; idx < 4; idx++) {
@@ -829,6 +852,69 @@ ShellRoot {
 '''
 
 
+OFFSCREEN_CONTEXT_MENU_STUB = """import QtQuick
+Loader {
+    id: root
+    active: false
+    property var model: []
+    property Item anchorItem: parent
+    property real padding: 4
+    property bool noSmoothClosing: false
+    property bool closeOnFocusLost: true
+    property bool keyboardGrab: true
+    property bool closeOnHoverLost: true
+    property bool closeOnHoverLostAfterEntered: false
+    property int closeOnHoverLostDelay: 500
+    property bool anchorHovered: false
+    property bool closeOnOutsideClick: false
+    property var anchorRect: null
+    property var popupAdjustment: null
+    property bool scaleContent: false
+    property bool cursorSlide: false
+    property var cursorAnchorWindow: null
+    property real cursorAnchorX: 0
+    property real cursorAnchorY: 0
+    property real visualMargin: 8
+    property bool popupAbove: true
+    property int popupSide: 0
+    property real ambientShadowWidth: 1
+    property color panelFallbackColor: "transparent"
+    property real panelRadius: 8
+    property real panelBorderWidth: 0
+    property color panelBorderColor: "transparent"
+    signal focusCleared()
+    function grabFocus() {}
+    function close() { root.active = false }
+    function requestOpen() { root.active = true }
+    function requestOpenAt(x, y, newModel) { if (newModel !== undefined) root.model = newModel; root.active = true }
+}
+"""
+
+
+def _install_offscreen_modules_overlay(folder: Path, host_root: Path) -> None:
+    mod_link = folder / "modules"
+    if mod_link.is_symlink():
+        mod_link.unlink()
+    mod_link.mkdir(parents=True, exist_ok=True)
+    for child in (host_root / "modules").iterdir():
+        if child.name == "common":
+            common_dir = mod_link / "common"
+            common_dir.mkdir(parents=True, exist_ok=True)
+            for cchild in child.iterdir():
+                if cchild.name == "widgets":
+                    w_dir = common_dir / "widgets"
+                    w_dir.mkdir(parents=True, exist_ok=True)
+                    for wchild in cchild.iterdir():
+                        if wchild.name == "ContextMenu.qml":
+                            (w_dir / "ContextMenu.qml").write_text(OFFSCREEN_CONTEXT_MENU_STUB, encoding="utf-8")
+                        else:
+                            (w_dir / wchild.name).symlink_to(wchild)
+                else:
+                    (common_dir / cchild.name).symlink_to(cchild)
+        else:
+            (mod_link / child.name).symlink_to(child)
+
+
 def main() -> None:
     with tempfile.TemporaryDirectory(prefix="alis-sr-runtime-") as tmp:
         folder = Path(tmp)
@@ -845,10 +931,34 @@ def main() -> None:
             (folder / name).symlink_to(ROOT / name)
         (folder / "shell.qml").write_text(QML, encoding="utf-8")
 
-        with private_wayland(folder, capture_focus=True) as env:
+        def build_offscreen_env() -> dict[str, str]:
+            e = dict(os.environ, QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND=os.environ.get("QT_QUICK_BACKEND", "software"))
+            for k in ("WAYLAND_DISPLAY", "DISPLAY", "NIRI_SOCKET", "HYPRLAND_INSTANCE_SIGNATURE"):
+                e.pop(k, None)
+            for kind in ("config", "state", "cache", "data"):
+                d = folder / kind
+                d.mkdir(parents=True, exist_ok=True)
+                e[f"XDG_{kind.upper()}_HOME"] = str(d)
+            return e
+
+        use_offscreen = os.environ.get("QT_QPA_PLATFORM") == "offscreen"
+        native_wayland = False
+        ctx = nullcontext(build_offscreen_env()) if use_offscreen else private_wayland(folder, capture_focus=True)
+        try:
+            env = ctx.__enter__()
+            if not use_offscreen and env is not None:
+                native_wayland = True
+        except RuntimeError:
+            ctx = nullcontext(build_offscreen_env())
+            env = ctx.__enter__()
+            native_wayland = False
+
+        try:
             if env is None:
                 print("SKIP: Spaced Repetition runtime test requires a private Niri backend")
                 raise SystemExit(0)
+            if not native_wayland:
+                _install_offscreen_modules_overlay(folder, ROOT)
 
             for cfg_rel in ("config/alis/config.json", "config/illogical-impulse/config.json"):
                 cfg_file = folder / cfg_rel
@@ -892,19 +1002,39 @@ def main() -> None:
                 print(restarted.stdout)
                 raise SystemExit(1)
 
-            (folder / "shell.qml").write_text(ABYSS_PERIMETER_QML, encoding="utf-8")
-            abyss_res = run_qs(folder, dict(env, QSG_RHI_BACKEND="opengl"), timeout=30)
-            if (
-                abyss_res.returncode
-                or "SR_ABYSS_PERIMETER_PASS" not in abyss_res.stdout
-                or has_failure(abyss_res.stdout)
-            ):
-                print(abyss_res.stdout)
-                raise SystemExit(1)
+            abyss_stdout = ""
+            if native_wayland:
+                # Real images are a prerequisite for ThumbnailImage's fallback path.
+                # Keep them private: shared/missing /tmp/wall*.png caused unrelated
+                # image errors and binding loops to fail the input regression gate.
+                abyss_qml = ABYSS_PERIMETER_QML
+                def png_chunk(kind, data):
+                    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+                for index, rgb in enumerate(((24, 80, 128), (80, 48, 120), (40, 100, 64)), 1):
+                    image_path = folder / ("wall%d.png" % index)
+                    image_path.write_bytes(b"\x89PNG\r\n\x1a\n"
+                        + png_chunk(b"IHDR", struct.pack(">IIBBBBB", 32, 24, 8, 2, 0, 0, 0))
+                        + png_chunk(b"IDAT", zlib.compress((b"\x00" + bytes(rgb) * 32) * 24))
+                        + png_chunk(b"IEND", b""))
+                    abyss_qml = abyss_qml.replace("/tmp/wall%d.png" % index, str(image_path))
+                (folder / "shell.qml").write_text(abyss_qml, encoding="utf-8")
+                abyss_res = run_qs(folder, dict(env, QSG_RHI_BACKEND="opengl"), timeout=30)
+                if (
+                    abyss_res.returncode
+                    or "SR_ABYSS_PERIMETER_PASS" not in abyss_res.stdout
+                    or has_failure(abyss_res.stdout)
+                ):
+                    print(abyss_res.stdout)
+                    raise SystemExit(1)
+                abyss_stdout = abyss_res.stdout
+            else:
+                print("SKIP: SR_ABYSS_PERIMETER_STAGE requires native Wayland + OpenGL (offscreen mode ran SR_RUNTIME_PASS + SR_RUNTIME_RESTART_PASS)")
 
-            for line in (result.stdout + restarted.stdout + abyss_res.stdout).splitlines():
+            for line in (result.stdout + restarted.stdout + abyss_stdout).splitlines():
                 if any(tag in line for tag in ("SR_RUNTIME_PASS", "SR_RUNTIME_RESTART_PASS", "SR_ABYSS_PERIMETER_PASS")):
                     print(line)
+        finally:
+            ctx.__exit__(None, None, None)
 
 
 if __name__ == "__main__":

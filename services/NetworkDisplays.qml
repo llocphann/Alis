@@ -20,6 +20,7 @@ Singleton {
     property string phase: "idle"
     property string statusMessage: ""
     property string lastError: ""
+    property string firewallWarning: ""
     property bool scanning: false
     property bool backendAvailable: false
     property bool streamReady: false
@@ -110,6 +111,14 @@ Singleton {
         if (message) statusMessage = message
     }
 
+    function _streamFailureMessage(): string {
+        if (root.firewallWarning.length > 0)
+            return root.firewallWarning;
+        if (root.activeName.toLowerCase().indexOf("samsung") !== -1)
+            return "Samsung TV closed stream. Turn off Autorun Multi View Mirroring on TV (or open Source → Connection Guide → PC) for fullscreen PC cast.";
+        return "TV stream failed. Check receiver, codecs and screencast portal.";
+    }
+
     function _poll(): void {
         if (!activeUnit || phase === "disconnecting" || statusProcess.running) return
         statusProcess.command = ["python3", bridge, "status", activeUnit]
@@ -121,6 +130,7 @@ Singleton {
         stdout: StdioCollector { id: scanOutput }
         onExited: exitCode => {
             const data = exitCode === 0 ? root._parse(scanOutput.text) : null
+            root.firewallWarning = String(data?.firewallWarning ?? "")
             if (!data || !data.ok) {
                 root.scanning = false
                 scanRetry.stop()
@@ -194,10 +204,12 @@ Singleton {
         onExited: exitCode => {
             if (root.phase === "disconnecting" || !root.activeUnit) return
             const data = exitCode === 0 ? root._parse(statusOutput.text) : null
+            if (data?.firewallWarning !== undefined)
+                root.firewallWarning = String(data.firewallWarning ?? "")
             root._connectChecks++
             if (data?.sinkState === "error") {
                 const failedUnit = root.activeUnit
-                root.lastError = "TV stream failed. Check receiver, codecs and screencast portal."
+                root.lastError = root._streamFailureMessage()
                 root._reset("")
                 if (failedUnit && !cleanupProcess.running) {
                     cleanupProcess.command = ["python3", bridge, "stop", failedUnit]
@@ -232,7 +244,12 @@ Singleton {
                 return
             }
             if (data?.state === "failed" || data?.result === "exit-code") {
-                root.lastError = "TV stream failed. Check receiver, codecs and screencast portal."
+                root.lastError = root._streamFailureMessage()
+                root._reset("")
+                return
+            }
+            if (root.phase === "service-active" && data?.state === "inactive") {
+                root.lastError = root._streamFailureMessage()
                 root._reset("")
                 return
             }
@@ -240,7 +257,9 @@ Singleton {
             // before registration; bounded grace instead of a false Connected.
             root._inactiveReads++
             if (root._inactiveReads <= 4) return
-            root.lastError = "TV stream is inactive; retry Connect or use Open app."
+            root.lastError = root.activeName.toLowerCase().indexOf("samsung") !== -1
+                ? root._streamFailureMessage()
+                : "TV stream is inactive; retry Connect or use Open app."
             root._reset("")
         }
     }

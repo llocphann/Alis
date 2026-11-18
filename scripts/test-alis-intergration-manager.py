@@ -348,4 +348,56 @@ for raw in ("null", "[]", '{"ok":"true"}', '{"ok":true,"installed":false,"manage
         except ValueError:
             pass
 
+# Large GitHub /commits/main JSON payload (> 256 KB, e.g. 4.2 MB multi-file diff)
+# must succeed via MAX_COMMIT_META without throwing download limit errors, and
+# > MAX_COMMIT_META falls back cleanly to /git/ref/heads/main commit ref.
+large_sha = "c" * 40
+large_commit_json = json.dumps({
+    "sha": large_sha,
+    "files": [{"filename": "big.diff", "patch": "x" * (4 * 1024 * 1024)}],
+}).encode("utf-8")
+assert len(large_commit_json) > 4 * 1024 * 1024
+seen_limits = []
+
+
+def fake_large_request(url, limit):
+    seen_limits.append((url, limit))
+    assert url == manager.API
+    assert limit == manager.MAX_COMMIT_META
+    assert len(large_commit_json) <= limit
+    return large_commit_json
+
+
+with patch.object(manager, "request_bytes", side_effect=fake_large_request):
+    assert manager.latest_sha() == large_sha
+assert seen_limits == [(manager.API, manager.MAX_COMMIT_META)]
+
+fallback_sha = "d" * 40
+fallback_calls = []
+
+
+def fake_fallback_request(url, limit):
+    fallback_calls.append((url, limit))
+    if url == manager.API:
+        raise ValueError("Package download exceeds the configured limit")
+    assert url == manager.API_REF
+    return json.dumps({"object": {"type": "commit", "sha": fallback_sha}}).encode("utf-8")
+
+
+with patch.object(manager, "request_bytes", side_effect=fake_fallback_request):
+    assert manager.latest_sha() == fallback_sha
+assert fallback_calls == [(manager.API, manager.MAX_COMMIT_META), (manager.API_REF, 256 * 1024)]
+
+# Compiled assets/bin/alis-nexus (> 2 MB) unpacks cleanly within MAX_FILE_SIZE,
+# while files exceeding MAX_FILE_SIZE are still rejected.
+large_bin = b"\x7fELF" + (b"0" * (2 * 1024 * 1024 + 512 * 1024))
+unpacked_bin = manager.unpack(make_tar([("assets/bin/alis-nexus", large_bin)]))
+assert unpacked_bin["assets/bin/alis-nexus"] == large_bin
+
+try:
+    manager.unpack(make_tar([("assets/bin/alis-nexus", b"\0" * (manager.MAX_FILE_SIZE + 1))]))
+    raise AssertionError("File larger than MAX_FILE_SIZE accepted")
+except ValueError as error:
+    assert "Oversized package file" in str(error)
+
 print("ALIS_INTERGRATION_MANAGER_PASS explicit install/update/rollback/remove, immutable SHA, package validation, no shell/privilege")

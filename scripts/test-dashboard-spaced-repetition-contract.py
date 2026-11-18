@@ -18,13 +18,27 @@ const fs = require("fs");
 const vm = require("vm");
 const assert = require("assert");
 
-const lexiconCode = fs.readFileSync("services/SpacedRepetitionLexicon.js", "utf8")
+const essentialCode = fs.readFileSync("services/SpacedRepetitionEssential4000.js", "utf8")
     .replace(/^\.pragma\s+library\s*$/m, "");
+const promptsCode = fs.readFileSync("services/SpacedRepetitionPrompts.js", "utf8")
+    .replace(/^\.pragma\s+library\s*$/m, "");
+const lexiconCode = fs.readFileSync("services/SpacedRepetitionLexicon.js", "utf8")
+    .replace(/^\.pragma\s+library\s*$/m, "")
+    .replace(/^\.import\s+"SpacedRepetitionEssential4000\.js"\s+as\s+Essential4000\s*$/m, "");
 const engineCode = fs.readFileSync("services/SpacedRepetitionEngine.js", "utf8")
     .replace(/^\.pragma\s+library\s*$/m, "")
+    .replace(/^\.import\s+"SpacedRepetitionEssential4000\.js"\s+as\s+Essential4000\s*$/m, "")
     .replace(/^\.import\s+"SpacedRepetitionLexicon\.js"\s+as\s+Lexicon\s*$/m, "");
 
-const sandbox = { console, Math, Date, JSON, Array, Object, String, Number, Boolean, RegExp };
+const essentialSandbox = { console, Math, Date, JSON, Array, Object, String, Number, Boolean, RegExp };
+vm.createContext(essentialSandbox);
+vm.runInContext(essentialCode, essentialSandbox, { filename: "SpacedRepetitionEssential4000.js" });
+
+const promptsSandbox = { console, Math, Date, JSON, Array, Object, String, Number, Boolean, RegExp };
+vm.createContext(promptsSandbox);
+vm.runInContext(promptsCode, promptsSandbox, { filename: "SpacedRepetitionPrompts.js" });
+
+const sandbox = { console, Math, Date, JSON, Array, Object, String, Number, Boolean, RegExp, Essential4000: essentialSandbox, Prompts: promptsSandbox };
 vm.createContext(sandbox);
 vm.runInContext(lexiconCode, sandbox, { filename: "SpacedRepetitionLexicon.js" });
 sandbox.Lexicon = sandbox;
@@ -261,7 +275,7 @@ assert.strictEqual(hardQueue[0].id, lapsedCard.id);
 
 // 7. Test Idempotent Storage Migration & Legacy Data Preservation
 const freshMigrated = sandbox.migrateStorage(null, nowMs);
-assert.strictEqual(freshMigrated.schemaVersion, 4);
+assert.strictEqual(freshMigrated.schemaVersion, 5);
 assert.strictEqual(freshMigrated.cards.length, 86, "Fresh storage should seed 8 starter EN/DE/knowledge cards + 78 Unit 01-04 vocabulary cards");
 const unitDecks = new Set(freshMigrated.cards.filter(c => c.deck.startsWith("Unit ")).map(c => c.deck));
 assert.strictEqual(unitDecks.size, 0, "No card should retain 'Unit 01..04' deck name; all English vocabulary cards must be unified under 'English Vocabulary'");
@@ -297,7 +311,7 @@ const v3UserWithUnit = sandbox.migrateStorage({
         dueDate: "2026-11-18"
     }]
 }, nowMs);
-assert.strictEqual(v3UserWithUnit.schemaVersion, 4);
+assert.strictEqual(v3UserWithUnit.schemaVersion, 5);
 assert.strictEqual(Object.keys(v3UserWithUnit.historyByDay).length, 0);
 const upgradedAllot = v3UserWithUnit.cards.find(c => c.term === "allot");
 assert.strictEqual(upgradedAllot.deck, "English Vocabulary");
@@ -340,7 +354,7 @@ assert.strictEqual(JSON.stringify(migratedOnce), JSON.stringify(migratedTwice), 
 
 // 8. Regression: German adjectives (e.g. nachhaltig, wichtig, freundlich) must never get article 'der'
 const nachhaltigInfo = sandbox.analyzeTerm("nachhaltig", "de");
-assert.strictEqual(nachhaltigInfo.pos, "adj");
+assert.strictEqual(nachhaltigInfo.pos, "adjective");
 assert.strictEqual(nachhaltigInfo.article, "");
 assert.strictEqual(nachhaltigInfo.displayTerm, "nachhaltig");
 assert.strictEqual(sandbox.inferGermanArticle("nachhaltig"), "");
@@ -635,6 +649,81 @@ const normalizedLateAgain = sandbox.normalizeCard(lateAgainCard, 1, lateNightMs 
 assert.strictEqual(normalizedLateAgain.dueAt, lateNightMs + 10 * 60000, "normalizeCard must not overwrite sub-day <10m dueAt when dueAt crosses midnight");
 const lateQueueBeforeMidnight = sandbox.buildStudyQueue([normalizedLateAgain], { options: baseOpts }, lateNightMs + 60000);
 assert.strictEqual(lateQueueBeforeMidnight.length, 1, "Sub-day learning card rated at 23:55 must remain in session queue at 23:56");
+
+// 17. Full 3,603-card Essential 4000 leak & collocation audit + stale-v5 lexiconRevision upgrade + O(1) lookup benchmark
+const allEssentialIds = Object.keys(sandbox.Essential4000.CARDS_BY_ID);
+assert.strictEqual(allEssentialIds.length, 3603, `Expected 3603 Essential 4000 entries, got ${allEssentialIds.length}`);
+const t0Lookup = Date.now();
+for (const cid of allEssentialIds) {
+    const entry = sandbox.Essential4000.lookupByCardId(cid);
+    assert.ok(entry && entry.word && entry.definitionEn && entry.meaningVi, `Incomplete entry ${cid}`);
+    const cardProbe = { id: cid, term: entry.word, front: entry.word, headword: entry.word, clozeText: entry.clozeText };
+    const preAnswerDef = sandbox.Prompts.maskAnswer(entry.definitionEn, cardProbe, false);
+    assert.strictEqual(sandbox.Prompts.containsAnswerForm(preAnswerDef, cardProbe), false,
+        `Answer leaked in pre-answer masked definitionEn on ${cid} (${entry.word}): ${preAnswerDef}`);
+    const clozeFront = sandbox.Prompts.maskAnswer(sandbox.renderClozeFront(entry.clozeText, entry.word), cardProbe, false);
+    assert.ok(clozeFront.includes("["), `Missing cloze blank on ${cid} (${entry.word}): ${clozeFront}`);
+    assert.strictEqual(sandbox.Prompts.containsAnswerForm(clozeFront, cardProbe), false,
+        `Answer leaked in rendered clozeFront on ${cid} (${entry.word}): ${clozeFront}`);
+    for (const col of (entry.collocations || [])) {
+        const phrase = String(col).split(/\s+(?:—|–|-)\s+/)[0].trim();
+        if (entry.pos === "noun") {
+            assert.ok(!/^to\s+[a-z-]+$/i.test(phrase), `Invalid 'to <noun>' collocation on ${cid}: ${col}`);
+        }
+        if (entry.pos === "verb") {
+            assert.ok(!/^(?:a|an)\s+[a-z-]+$/i.test(phrase), `Invalid 'a <verb>' collocation on ${cid}: ${col}`);
+        }
+    }
+}
+const lookupElapsedMs = Date.now() - t0Lookup;
+assert.ok(lookupElapsedMs < 5000, `3603 card cold audit took too long: ${lookupElapsedMs}ms`);
+const t0Warm = Date.now();
+for (const cid of allEssentialIds) {
+    const entry = sandbox.Essential4000.lookupByCardId(cid);
+    sandbox.Prompts.maskAnswer(entry.definitionEn, entry, false);
+}
+const warmElapsedMs = Date.now() - t0Warm;
+assert.ok(warmElapsedMs < 250, `3603 card warm O(1) lookup + mask took too long: ${warmElapsedMs}ms`);
+
+// Stale schemaVersion=5 user file (lexiconRevision missing) upgrades definitions/cloze while preserving SRS state
+const staleV5Payload = {
+    schemaVersion: 5,
+    nextId: 4000,
+    historyByDay: { "2026-11-16": { reviewed: 9, passed: 8, newStudied: 4, reviewsDone: 5 } },
+    cards: [{
+        id: "sr-b01-u01-10",
+        category: "vocabulary",
+        deck: "English Vocabulary",
+        language: "en",
+        term: "hide",
+        pos: "verb",
+        level: "A2",
+        meaning: "To hide is to try not to let others see you.",
+        definitionEn: "To hide is to try not to let others see you.",
+        meaningVi: "trốn",
+        clozeText: "The other children will {{c1::hide::verb — trốn}} while you count to a hundred.",
+        state: "young",
+        reps: 4,
+        lapses: 1,
+        interval: 9,
+        ease: 255,
+        dueAt: day2MorningMs,
+        dueDate: "2026-11-09",
+        lastReviewedAt: day0EveningMs,
+        notes: "keep my note"
+    }]
+};
+const repairedStaleV5 = sandbox.migrateStorage(staleV5Payload, day1MorningMs, baseOpts, sandbox.analyzeTerm);
+assert.strictEqual(repairedStaleV5.retainedStorageFields.lexiconRevision, 2);
+assert.strictEqual(sandbox.Prompts.containsAnswerForm(repairedStaleV5.cards[0].definitionEn, { term: "hide" }), false,
+    `Stale v5 hide definition must be repaired, got: ${repairedStaleV5.cards[0].definitionEn}`);
+assert.strictEqual(repairedStaleV5.cards[0].reps, 4);
+assert.strictEqual(repairedStaleV5.cards[0].lapses, 1);
+assert.strictEqual(repairedStaleV5.cards[0].interval, 9);
+assert.strictEqual(repairedStaleV5.cards[0].ease, 255);
+assert.strictEqual(repairedStaleV5.cards[0].dueDate, "2026-11-09");
+assert.strictEqual(repairedStaleV5.cards[0].lastReviewedAt, day0EveningMs);
+assert.strictEqual(repairedStaleV5.cards[0].notes, "keep my note");
 
 console.log("SR_ENGINE_UNIT_PASS");
 """

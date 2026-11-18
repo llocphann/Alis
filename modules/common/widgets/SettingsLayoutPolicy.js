@@ -1,6 +1,9 @@
 .pragma library
 
-var SCHEMA_VERSION = 2;
+var SCHEMA_VERSION = 3;
+var REWORKED_BENTO_PAGES = Object.freeze([1, 12, 22, 24, 25, 37, 38, 39]);
+var REWORKED_COLUMN_RESET_PAGES = Object.freeze([1, 12, 22, 24, 37, 38, 39]);
+var RETIRED_SUB_TABS = Object.freeze(["safety", "audio", "color", "Alis Nexus", "management"]);
 
 function slugify(text) {
     var s = String(text || "").trim().toLowerCase();
@@ -298,7 +301,9 @@ function parseState(raw) {
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
         return base;
 
-    var isLegacyV1 = (!parsed.version || parsed.version < 2);
+    var parsedVersion = Number(parsed.version || 0);
+    var isLegacyV1 = (!parsed.version || parsedVersion < 2);
+    var isLegacyPreV3 = (!parsed.version || parsedVersion < 3);
     if (parsed.modules && typeof parsed.modules === "object" && !Array.isArray(parsed.modules)) {
         var mKeys = Object.keys(parsed.modules);
         for (var i = 0; i < mKeys.length; i++) {
@@ -313,6 +318,17 @@ function parseState(raw) {
                 normMod.canvasX = -1;
                 normMod.canvasY = -1;
             }
+            if (isLegacyPreV3) {
+                if (RETIRED_SUB_TABS.indexOf(normMod.originSubTab) >= 0)
+                    normMod.originSubTab = "";
+                if (RETIRED_SUB_TABS.indexOf(normMod.targetSubTab) >= 0)
+                    normMod.targetSubTab = "";
+                var sameOriginPage = (normMod.targetPageIndex === normMod.originPageIndex && !normMod.targetCustomTabId);
+                if (sameOriginPage && REWORKED_BENTO_PAGES.indexOf(normMod.originPageIndex) >= 0 && normMod.customHeight > 0)
+                    normMod.customHeight = 0;
+                if (sameOriginPage && REWORKED_COLUMN_RESET_PAGES.indexOf(normMod.originPageIndex) >= 0 && normMod.column !== "auto")
+                    normMod.column = "auto";
+            }
             base.modules[mk] = normMod;
         }
     }
@@ -323,7 +339,13 @@ function parseState(raw) {
             var pk = pKeys[j];
             if (!pk)
                 continue;
-            base.pageLayouts[pk] = normalizePageLayoutEntry(parsed.pageLayouts[pk]);
+            var normPageLayout = normalizePageLayoutEntry(parsed.pageLayouts[pk]);
+            if (isLegacyPreV3 && pk === "page:1") {
+                normPageLayout.deletedSubTabs = normPageLayout.deletedSubTabs.filter(function(stKey) {
+                    return stKey !== "safety";
+                });
+            }
+            base.pageLayouts[pk] = normPageLayout;
         }
     }
 

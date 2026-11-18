@@ -16,7 +16,7 @@ Item {
     required property int requestedIndex
     property bool loadEnabled: true
     property bool backgroundWarmup: false
-    property int cacheLimit: 2
+    property int cacheLimit: (Config.options?.performance?.lowPower ?? false) ? 2 : 6
 
     function _syncAvailablePages(): void {
         SettingsLayoutManager.availablePages = root.pages ?? []
@@ -58,6 +58,8 @@ Item {
             item._updateCardTabs()
         if (typeof item._scheduleCardTabsUpdate === "function")
             item._scheduleCardTabsUpdate()
+        if (typeof item.scrollToIrisSection === "function")
+            Qt.callLater(() => { if (item) item.scrollToIrisSection(sectionValue) })
     }
 
     function _applySectionToPage(targetPageIndex: int, targetSection: string): void {
@@ -484,7 +486,6 @@ Item {
                 && root._pendingIndex < 0
                 && !root._transitionRunning
             z: index === root._pendingIndex ? 1 : 0
-            layer.enabled: root._transitionRunning && visible
 
             // Register each real Loader without forcing item creation. Cached
             // pages remain loaded-hidden; evicted pages become unloaded.
@@ -499,7 +500,7 @@ Item {
                 } else if (item && typeof item._restorePersistedSection === "function") {
                     item._restorePersistedSection()
                 }
-                if (item && typeof item._updateCardTabs === "function" && !item.embedded) {
+                if (item && typeof item._updateCardTabs === "function" && !item.embedded && !item._initialCardTabsSynced) {
                     item._updateCardTabs()
                 }
                 if (root.currentItem && root.currentItem !== item && typeof root.currentItem._scheduleCardTabsUpdate === "function") {

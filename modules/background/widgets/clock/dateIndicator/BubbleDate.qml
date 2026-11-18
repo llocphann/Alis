@@ -12,7 +12,7 @@ Item {
     property real targetSize: 0
     property alias text: bubbleText.text
 
-    text: Qt.locale().toString(DateTime.clock.date, root.isMonth ? "MM" : "d")
+    text: Qt.locale().toString(DateTime.todayDate, root.isMonth ? "MM" : "d")
 
     // These bubbles sit at the clock corners over bare wallpaper with no plate. A soft
     // contact shadow (the shell's own shadow vocabulary) detaches them from any

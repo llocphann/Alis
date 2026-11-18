@@ -108,6 +108,7 @@ Item {
         contentItem: WText {
             text: Translation.tr("Cancel")
             horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
             font.pixelSize: Looks.font.pixelSize.large
             color: root.colForeground
         }

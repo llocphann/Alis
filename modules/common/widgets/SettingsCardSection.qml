@@ -41,8 +41,48 @@ Item {
     property bool _hasNextActiveCard: false
     property bool _preventBentoReparent: false
     property string bentoColumn: ""
+    property int irisSectionNumber: 0
+    property int irisSectionTotal: 0
+    readonly property string irisNumberText: (root.irisSectionNumber > 0 && root.irisSectionTotal > 0)
+        ? ((root.irisSectionNumber < 10 ? "0" : "") + String(root.irisSectionNumber) + " / " + (root.irisSectionTotal < 10 ? "0" : "") + String(root.irisSectionTotal))
+        : ""
     property bool _consumesBentoExtraHeight: false
     property real _bentoExtraHeight: 0
+    function _nodeWantsVerticalExpand(ch, depth) {
+        if (!ch || !ch.visible || !ch.Layout || !ch.Layout.fillHeight || (depth || 0) > 8)
+            return false;
+        if (ch.objectName === "settingsInnerReorderOverlay")
+            return false;
+        if (ch._hasFillHeightChild !== undefined)
+            return Boolean(ch._hasFillHeightChild);
+        var isRow = (ch instanceof RowLayout) || String(ch).indexOf("QQuickRowLayout") === 0;
+        var isLayout = isRow
+            || (ch instanceof ColumnLayout)
+            || (ch instanceof GridLayout)
+            || (ch instanceof StackLayout)
+            || String(ch).indexOf("Layout") >= 0;
+        if (isLayout) {
+            var sub = ch.children || [];
+            for (var i = 0; i < sub.length; i++) {
+                var child = sub[i];
+                if (isRow && child && !(child instanceof Flickable) && String(child).indexOf("ScrollView") < 0 && !(child instanceof ColumnLayout) && child.implicitWidth !== undefined && child.implicitWidth <= 4 && child.width <= 4)
+                    continue;
+                if (root._nodeWantsVerticalExpand(child, (depth || 0) + 1))
+                    return true;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    readonly property bool _hasExpandableChild: {
+        var kids = sectionContent.children;
+        for (var i = 0; i < kids.length; i++) {
+            if (root._nodeWantsVerticalExpand(kids[i], 0))
+                return true;
+        }
+        return false;
+    }
     property var _peerModuleIds: []
 
     // Deterministic module ID for layout persistence and cross-tab moves
@@ -109,7 +149,7 @@ Item {
     readonly property bool wideMode: card.width >= 680
     readonly property int effectiveInnerColumns: root.innerColumns > 0
         ? root.innerColumns
-        : (root.wideMode && sectionContent.children.length > 1 ? 2 : 1)
+        : 1
 
     // Ensure foreign-hosted or sub-tab-moved cards remain visible even if their origin page had a conditional visible binding
     Binding {
@@ -368,6 +408,11 @@ Item {
     }
 
     onNaturalCardImplicitHeightChanged: {
+        if (root.isCanvasMode && root._resizePreviewCanvasH <= 0 && ((root.moduleConfig?.canvasH ?? 0) <= 0)) {
+            const nextH = Math.max(120, Math.round(root.naturalCardImplicitHeight));
+            if (Math.abs(root.height - nextH) > 1)
+                root.height = nextH;
+        }
         var host = root._currentHostPage ? root._currentHostPage : root._topPage;
         if (root.visible && host && !host._isDestroying && typeof host._scheduleBentoHeightSync === "function") {
             host._scheduleBentoHeightSync();
@@ -438,7 +483,7 @@ Item {
 
     // Lightweight Material offset shadow avoids a GPU-blurred shadow per card.
     Rectangle {
-        visible: Appearance.effectsEnabled
+        visible: Appearance.effectsEnabled && !SettingsMaterialPreset.waffle
         opacity: root._cardSubTabActive ? 1 : 0
         x: card.x + 0.5
         y: card.y + 1.5
@@ -449,36 +494,12 @@ Item {
         z: -1
     }
 
-    // Subtle Material left accent bar when expanded.
+    // Legacy left accent bar retired in favor of iRiS numbered plate headers
     Rectangle {
         id: accentBar
-        visible: root._cardSubTabActive && root.showHeader
-        anchors {
-            left: card.left
-            top: card.top
-            bottom: card.bottom
-            leftMargin: 0
-            topMargin: SettingsMaterialPreset.cardRadius
-            bottomMargin: SettingsMaterialPreset.cardRadius
-        }
-        width: 2
-        radius: 1
-        color: SettingsMaterialPreset.accentColor
-        opacity: root.expanded
-            ? 0.6
-            : (headerMouseArea.containsMouse ? 0.3 : 0)
-        z: 1
-        Behavior on opacity {
-            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-        Behavior on width {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
-        }
-        Behavior on color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
+        visible: false
+        width: 0
+        height: 0
     }
 
     Rectangle {
@@ -499,17 +520,28 @@ Item {
                 : Math.max(root._effectiveCardHeight, root.height - root._bottomGap))
         implicitHeight: (root.expanded ? (root._effectiveCustomHeight > 0 ? Math.max(48, root._effectiveCustomHeight - root.chromeImplicitHeight) : contentContainer._scaledNaturalContentHeight) : 0) + root.chromeImplicitHeight
         radius: root.flatEmbedded ? 0 : SettingsMaterialPreset.cardRadius
-        color: root.flatEmbedded ? "transparent" : SettingsMaterialPreset.cardColor
-        border.width: (root.flatEmbedded || Config.options?.panelFamily === "abyss") ? 0 : 1
-        border.color: SettingsMaterialPreset.cardBorderColor
+        color: "transparent"
+        border.width: Config.options?.panelFamily === "abyss" ? 0 : 1
+        border.color: root.flatEmbedded ? "transparent" : SettingsMaterialPreset.cardBorderColor
 
-        Behavior on color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-        Behavior on border.color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        Rectangle {
+            id: plateBg
+            anchors.fill: parent
+            radius: parent.radius
+            visible: !root.flatEmbedded
+            color: SettingsMaterialPreset.cardColor
+            border.width: 1
+            border.color: SettingsMaterialPreset.cardBorderColor
+            z: -1
+
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+            Behavior on border.color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
         }
         Behavior on border.width {
             enabled: Appearance.animationsEnabled
@@ -537,7 +569,7 @@ Item {
                 id: headerBackground
                 visible: root.showHeader
                 Layout.fillWidth: true
-                implicitHeight: headerRow.implicitHeight + SettingsMaterialPreset.headerPaddingY * 2
+                implicitHeight: headerRow.implicitHeight + SettingsMaterialPreset.headerPaddingY * 2 + (root.expanded && !root.flatEmbedded ? 6 : 0)
                 radius: SettingsMaterialPreset.headerRadius
                 color: headerMouseArea.containsMouse && root.effectiveCollapsible
                     ? SettingsMaterialPreset.headerHoverColor
@@ -547,12 +579,52 @@ Item {
                     animation: ColorAnimation { duration: Appearance.animation.stateChange.duration; easing.type: Appearance.animation.stateChange.type; easing.bezierCurve: Appearance.animation.stateChange.bezierCurve }
                 }
 
+                Rectangle {
+                    visible: root.expanded && !root.flatEmbedded
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.leftMargin: 2
+                    anchors.rightMargin: 2
+                    height: 1
+                    color: SettingsMaterialPreset.plateDividerColor
+                }
+
                 RowLayout {
                     id: headerRow
-                    anchors.fill: parent
-                    anchors.leftMargin: SettingsMaterialPreset.headerPaddingX
-                    anchors.rightMargin: SettingsMaterialPreset.headerPaddingX
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        top: parent.top
+                        bottom: parent.bottom
+                        leftMargin: 4
+                        rightMargin: 4
+                        bottomMargin: root.expanded && !root.flatEmbedded ? 6 : 0
+                    }
                     spacing: 8
+
+                    // iRiS numbered section badge (01 / N)
+                    Rectangle {
+                        visible: !SettingsMaterialPreset.waffle && root.irisNumberText.length > 0 && !root.flatEmbedded
+                        Layout.alignment: Qt.AlignVCenter
+                        implicitWidth: irisNumLabel.implicitWidth + 12
+                        implicitHeight: Math.round(20 * Appearance.fontSizeScale)
+                        radius: Math.round(implicitHeight / 2)
+                        color: Qt.alpha(Appearance.colors.colPrimary, 0.12)
+                        border.width: 1
+                        border.color: Qt.alpha(Appearance.colors.colPrimary, 0.24)
+
+                        StyledText {
+                            id: irisNumLabel
+                            anchors.centerIn: parent
+                            text: root.irisNumberText
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.weight: Font.DemiBold
+                            font.letterSpacing: 0.4
+                            font.features: ({ "tnum": 1 })
+                            color: Appearance.colors.colPrimary
+                        }
+                    }
 
                     // Icon with expand-state color
                     Loader {
@@ -586,6 +658,7 @@ Item {
                     }
 
                     StyledText {
+                        font.family: SettingsMaterialPreset.fontFamily
                         Layout.alignment: Qt.AlignVCenter
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
@@ -742,9 +815,9 @@ Item {
                             ? Math.max(0, Math.round((contentFlickable.width - width * contentContainer._scaleFactor) / 2))
                             : 0
                         width: contentContainer._baseContentWidth
-                        height: (root._hasExplicitHeight || contentContainer.height > implicitHeight)
+                        height: (root._hasExplicitHeight && root._hasExpandableChild)
                             ? Math.max(implicitHeight, Math.floor(contentContainer.height / Math.max(0.35, contentContainer._scaleFactor)))
-                            : ((!root.isCanvasMode && (root._consumesBentoExtraHeight || root._bentoExtraHeight > 0))
+                            : ((!root.isCanvasMode && root._consumesBentoExtraHeight && root._hasExpandableChild)
                                 ? (implicitHeight + Math.max(0, root._bentoExtraHeight))
                                 : implicitHeight)
                         spacing: root.compactMode
@@ -760,11 +833,19 @@ Item {
                         }
                     }
 
-                    SettingsInnerReorderOverlay {
+                    Loader {
+                        id: innerReorderOverlayLoader
                         anchors.fill: sectionContent
-                        targetLayout: sectionContent
-                        containerId: root.moduleId ? (root.moduleId + ":direct") : ""
-                        activeInSettings: root.moduleId.length > 0 && root._participatesInLayout
+                        z: 22
+                        active: root.moduleId.length > 0 && root._participatesInLayout
+                            && (SettingsLayoutManager.editMode
+                                || SettingsLayoutManager.hasInnerCustomizations(root.moduleId + ":direct"))
+                        sourceComponent: SettingsInnerReorderOverlay {
+                            anchors.fill: parent
+                            targetLayout: sectionContent
+                            containerId: root.moduleId ? (root.moduleId + ":direct") : ""
+                            activeInSettings: root.moduleId.length > 0 && root._participatesInLayout
+                        }
                     }
                 }
             }

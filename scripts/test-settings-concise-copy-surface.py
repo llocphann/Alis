@@ -25,9 +25,14 @@ assert "paragraph-length explanation" in README
 assert 'active: AlisIntergration.nexusEnabled' in NEXUS
 assert 'source: AlisIntergration.settingsSource("nexus")' in NEXUS
 
-overlay_start = OVERLAY.index("id: overlayContentContainer")
-overlay_end = OVERLAY.index("// ── Page header", overlay_start)
-overlay_content = OVERLAY[overlay_start:overlay_end]
+def _container_head(text: str, container_id: str) -> str:
+    start = text.index(f"id: {container_id}")
+    clip_pos = text.find("clip: true", start)
+    end = (clip_pos + len("clip: true")) if clip_pos != -1 and clip_pos - start < 600 else (start + 320)
+    return text[start:end]
+
+
+overlay_content = _container_head(OVERLAY, "overlayContentContainer")
 assert 'color: "transparent"' in overlay_content
 assert "Appearance.colors.colLayer0" not in overlay_content
 assert "colSurfaceContainerLow" not in overlay_content
@@ -38,9 +43,7 @@ window_surface_end = WINDOW.index("Shortcut {", window_surface_start)
 window_surface = WINDOW[window_surface_start:window_surface_end]
 assert 'color: root.uiReady ? Appearance.colors.colLayer0 : "transparent"' in window_surface
 
-window_start = WINDOW.index("id: contentContainer")
-window_end = WINDOW.index("// ── Page header", window_start)
-window_content = WINDOW[window_start:window_end]
+window_content = _container_head(WINDOW, "contentContainer")
 assert 'color: "transparent"' in window_content
 assert "Appearance.colors.colLayer0" not in window_content
 assert "colSurfaceContainerLow" not in window_content
@@ -153,11 +156,10 @@ SHARED_SETTINGS_HELP = {
     "BackgroundConfig.qml": (
         "Choose wallpaper reveal direction.",
         "Wallpaper source, rotation, motion and effects.",
-        "Parallax uses internal rendering for synchronized motion.",
         "Waffle: use Waffle Style for backgrounds. Backdrop applies to both.",
-        "Fit the entire backdrop; mismatched aspect ratios may show bars.",
-        "Update theme colors on wallpaper changes (slower).",
         "Blur video/GIF wallpapers; may increase GPU load.",
+        "Regenerate theme colors on shuffle",
+        "Derive theme colors from backdrop",
     ),
 }
 for page, hints in SHARED_SETTINGS_HELP.items():
@@ -181,16 +183,16 @@ AI_AND_INTEGRATION_HELP = {
     "modules/waffle/settings/pages/WAiPage.qml": (
         "No custom providers; add one only if unsupported.",
         "Typed tools preview changes; raw commands require Advanced mode.",
-        "Local only: use on-device models (Ollama, LM Studio).",
+        "No local models. Start Ollama or LM Studio to chat privately without an account or key.",
     ),
     "modules/settings/IntegrationsConfig.qml": (
         "Paste a compatible ICS/iCal feed URL; no account sign-in within Alis.",
     ),
     "modules/settings/GeneralConfigCore.qml": (
-        "Power, cooling, language, input and safety settings.",
+        "Audio, battery, time, window behavior and lock screen security.",
     ),
     "modules/settings/BackgroundConfig.qml": (
-        "Use a custom backdrop for theme colors; disable Use main wallpaper.",
+        "Change the backdrop wallpaper (used for overview/blur)",
     ),
 }
 for path, hints in AI_AND_INTEGRATION_HELP.items():
@@ -211,19 +213,21 @@ for path in ("modules/settings/AiConfig.qml", "modules/waffle/settings/pages/WAi
 # autostarts, compositor scope and reduced-motion/theme caveats.
 RUNTIME_SETTINGS_HELP = {
     "ServicesConfig.qml": (
-        "System, network, search, updates and data sources.",
+        "Idle, weather, search and update services.",
         "Run setup in a terminal for full output; off updates silently with bar status.",
-        "Enter city or coordinates; blank uses IP. Weather: wttr.in/Open-Meteo; air quality: Open-Meteo.",
+        "Turn off display after this many seconds of inactivity (0 = never)",
         "Check for shell updates and notify on the bar.",
-        "Tolerates typos but may misread acronyms (e.g., GIMP).",
+        "Show warning color when available updates exceed this number",
     ),
     "InterfaceConfig.qml": (
-        "Panels, notifications, widgets and floating tools.",
+        "Panels, notifications and window switcher.",
         "Sync badges with live popup count, including externally cleared alerts; off uses manual count.",
         "Hover bottom-right for history; assigned compositor hot corners take priority.",
         "Mark history read and retract matching toasts (shared read flag).",
         "No timezones yet; add or reorder regional suggestions.",
         "Silence daily popups; notifications remain in history.",
+        "On-screen display (OSD)",
+        "Media OSD",
     ),
     "AutostartConfig.qml": (
         "Manage startup apps and commands written to niri.",
@@ -234,16 +238,16 @@ RUNTIME_SETTINGS_HELP = {
     ),
     "NiriConfig.qml": (
         "Tune displays, input, layout and rules; unconfirmed display previews revert.",
-        "Common niri options are validated; advanced options remain in raw KDL.",
-        "Maximize a lone tiled window; restore its size when another opens.",
+        "Displays & Monitors",
+        "Windows & Tiling",
         "Display previews revert after 15 seconds unless confirmed.",
+        "Fallback output for single-screen surfaces.",
         "Choose an app preset or custom command.",
-        "Gap from tiled windows to the Screen Edge/Bar; Edge thickness is reserved separately.",
-        "Higher stiffness reacts faster; damping reduces bounce.",
+        "Rounding applied to window corners (0 = square)",
+        "1.0 is normal speed. Higher values make every animation slower.",
     ),
     "ThemesConfig.qml": (
-        "Material colors, typography, motion and advanced themes.",
-        "Choose light/dark from wallpaper brightness; overrides manual mode on wallpaper change.",
+        "Material colors, typography, motion and custom theme editor.",
         "Use complementary shell colors; external apps retain their colors.",
     ),
     "BarConfig.qml": (
@@ -265,10 +269,10 @@ for page, hints in RUNTIME_SETTINGS_HELP.items():
 TOOLS_WIDGET_HELP = {
     "ToolsConfig.qml": (
         "Capture, selection and overlay settings by tool.",
-        "Snip menu remembers action/shape; dedicated shortcuts stay fixed. Recording is never remembered; off defaults to rectangle capture.",
-        "Local image processing estimates object bounds (no AI); may be inaccurate.",
+        "Screen Snipping, OCR & Lens",
+        "10 MB fits Discord Free. A safety margin is applied automatically.",
         "Two-pass H.264 makes a smaller copy; original stays intact. Higher CPU load.",
-        "Show media actions and Pill track changes; in games, manual skips only.",
+        "Creates a separate Discord-ready copy after recording",
     ),
     "QuickConfig.qml": (
         "Choose separate capture folders; detailed paths in Tools.",
@@ -288,6 +292,13 @@ for page, hints in TOOLS_WIDGET_HELP.items():
     for hint in hints:
         assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
         assert EN_US.get(hint) == hint, (page, hint)
+
+tools_src = (ROOT / "modules" / "settings" / "ToolsConfig.qml").read_text(encoding="utf-8")
+assert "On-screen display (OSD)" not in tools_src, "OSD moved from ToolsConfig to Popups"
+abyss_style_src = (ROOT / "modules" / "abyss" / "settings" / "AbyssStyleSettings.qml").read_text(encoding="utf-8")
+for osd_hint in ("On-screen display (OSD)", "Media OSD"):
+    assert f"Translation.tr({json.dumps(osd_hint, ensure_ascii=False)})" in abyss_style_src, osd_hint
+    assert EN_US.get(osd_hint) == osd_hint, osd_hint
 
 
 # Waffle is a supported, independently selectable Settings frontend.
@@ -320,7 +331,7 @@ for page, hints in OPTIONAL_SETTINGS_HELP.items():
         assert EN_US.get(hint) == hint, (page, hint)
 companion_source = (ROOT / "modules/settings/CompanionConfig.qml").read_text(encoding="utf-8")
 assert "active: AlisCompanion.available" in companion_source
-assert "source: AlisCompanion.settingsSource" in companion_source
+assert "AlisCompanion.settingsSource" in companion_source
 assert "onClicked: AlisCompanion.refresh()" in companion_source
 for name, dynamic_source in (
     ("ThinkfanSettings.qml", 'AlisIntergration.settingsSource("thinkfan")'),
@@ -347,5 +358,70 @@ for page, hints in OTHER_SETTINGS_HELP.items():
     for hint in hints:
         assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
         assert EN_US.get(hint) == hint, (page, hint)
+
+# Anti-stretch / iRiS single-column plate contract: SettingsGroup defaults to Layout.fillHeight: false,
+# standardBentoHeight is retired, and adapted pages never inject bentoColumn, standardBentoHeight,
+# _equalizedTargetHeight, or Item { Layout.fillHeight: true } spacers.
+import re
+SETTINGS_GROUP = (ROOT / "modules" / "common" / "widgets" / "SettingsGroup.qml").read_text(encoding="utf-8")
+assert "Layout.fillHeight: false" in SETTINGS_GROUP, "SettingsGroup.qml must default to Layout.fillHeight: false"
+
+PRESET_SRC = (ROOT / "modules" / "common" / "widgets" / "SettingsMaterialPreset.qml").read_text(encoding="utf-8")
+assert "readonly property real standardBentoHeight: 0" in PRESET_SRC, "standardBentoHeight clamp must be retired"
+
+SPACER_RE = re.compile(r"\bItem\s*\{\s*Layout\.fillHeight\s*:\s*true\s*\}")
+for rel_page in (
+    "modules/settings/DockConfig.qml",
+    "modules/settings/SidebarsConfig.qml",
+    "modules/settings/ModulesConfig.qml",
+    "modules/settings/AbyssConfig.qml",
+    "modules/abyss/settings/AbyssStyleSettings.qml",
+    "modules/settings/InterfaceConfig.qml",
+    "modules/settings/BackgroundConfig.qml",
+    "modules/settings/EffectsConfig.qml",
+    "modules/settings/AdvancedConfig.qml",
+    "modules/settings/NiriConfig.qml",
+    "modules/settings/MonitorVisibilityConfig.qml",
+    "modules/settings/GeneralConfig.qml",
+    "modules/settings/GeneralConfigCore.qml",
+    "modules/settings/ServicesConfig.qml",
+    "modules/settings/IntegrationsConfig.qml",
+    "modules/settings/DefaultAppsConfig.qml",
+    "modules/settings/AutostartConfig.qml",
+    "modules/settings/ToolsConfig.qml",
+    "modules/settings/CheatsheetConfig.qml",
+    "modules/settings/AboutConfig.qml",
+    "modules/settings/AudioConfig.qml",
+    "modules/settings/BluetoothConfig.qml",
+):
+    page_src = (ROOT / rel_page).read_text(encoding="utf-8")
+    assert "_equalizedTargetHeight" not in page_src, f"{rel_page} must not use _equalizedTargetHeight stretch hack"
+    assert "bentoColumn:" not in page_src, f"{rel_page} must use iRiS single-column plates without bentoColumn"
+    assert "standardBentoHeight" not in page_src, f"{rel_page} must not clamp height via standardBentoHeight"
+    assert not SPACER_RE.search(page_src), f"{rel_page} must not inject Item {{ Layout.fillHeight: true }} stretch spacers"
+
+dock_src = (ROOT / "modules" / "settings" / "DockConfig.qml").read_text(encoding="utf-8")
+for dock_label in ("Dock & Indicators", "Local Music (MPD)", "Canvas & Media Popups"):
+    assert f"Translation.tr({json.dumps(dock_label, ensure_ascii=False)})" in dock_src, dock_label
+    assert EN_US.get(dock_label) == dock_label, dock_label
+
+for osd_key in ("Keyboard OSD popup", "Caps Lock OSD", "Num Lock OSD", "Layout switch OSD"):
+    assert f"Translation.tr({json.dumps(osd_key, ensure_ascii=False)})" in abyss_style_src, osd_key
+    assert EN_US.get(osd_key) == osd_key, osd_key
+
+interface_src = (ROOT / "modules" / "settings" / "InterfaceConfig.qml").read_text(encoding="utf-8")
+for notif_key in ("Notification center", "Collapse empty history", "Notification chime"):
+    assert f"Translation.tr({json.dumps(notif_key, ensure_ascii=False)})" in interface_src, notif_key
+    assert EN_US.get(notif_key) == notif_key, notif_key
+
+for new_page, concise_keys in (
+    ("AboutConfig.qml", ("Alis Desktop Shell", "System & Session", "Quick Links")),
+    ("AudioConfig.qml", ("Output", "Input", "App Volume Mixer", "Volume Protection & Event Sounds")),
+    ("BluetoothConfig.qml", ("Bluetooth Adapter", "Paired Devices", "Available Devices")),
+):
+    src = (ROOT / "modules" / "settings" / new_page).read_text(encoding="utf-8")
+    for k in concise_keys:
+        assert f"Translation.tr({json.dumps(k, ensure_ascii=False)})" in src, (new_page, k)
+        assert EN_US.get(k) == k, (new_page, k)
 
 print("Settings concise-copy/shared-surface contract: PASS")

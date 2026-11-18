@@ -100,11 +100,23 @@ WPanelPageColumn {
                 WBorderlessButton {
                     implicitHeight: 28
                     implicitWidth: backRow.implicitWidth + 16
-                    contentItem: RowLayout {
-                        id: backRow
-                        spacing: 4
-                        FluentIcon { icon: "chevron-left"; implicitSize: 12 }
-                        WText { text: Translation.tr("Back"); font.pixelSize: Looks.font.pixelSize.small }
+                    contentItem: Item {
+                        Row {
+                            id: backRow
+                            anchors.centerIn: parent
+                            spacing: 5
+                            FluentIcon {
+                                anchors.verticalCenter: parent.verticalCenter
+                                icon: "chevron-left"
+                                implicitSize: 12
+                            }
+                            WText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                verticalAlignment: Text.AlignVCenter
+                                text: Translation.tr("Back")
+                                font.pixelSize: Looks.font.pixelSize.small
+                            }
+                        }
                     }
                     onClicked: root.back()
                 }
@@ -120,10 +132,11 @@ WPanelPageColumn {
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 36
-                radius: height / 2
+                radius: Looks.radius.medium
                 color: Looks.colors.inputBg
                 border.width: 1
                 border.color: Looks.colors.bg2Border
+                clip: true
 
                 RowLayout {
                     anchors.fill: parent
@@ -152,6 +165,14 @@ WPanelPageColumn {
                             font.pixelSize: Looks.font.pixelSize.normal
                         }
                     }
+                }
+
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: filterInput.activeFocus ? 2 : 1
+                    color: filterInput.activeFocus ? Looks.colors.accent : Looks.colors.accentUnfocused
                 }
             }
 

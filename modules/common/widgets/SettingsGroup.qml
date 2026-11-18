@@ -10,9 +10,45 @@ Rectangle {
     property alias spacing: content.spacing
 
     Layout.fillWidth: true
-    Layout.fillHeight: true
+    Layout.fillHeight: false
     Layout.minimumWidth: 0
     implicitHeight: content.implicitHeight + SettingsMaterialPreset.groupPadding * 2
+
+    function _nodeWantsVerticalExpand(ch, depth) {
+        if (!ch || !ch.visible || !ch.Layout || !ch.Layout.fillHeight || (depth || 0) > 8)
+            return false;
+        if (ch.objectName === "settingsInnerReorderOverlay")
+            return false;
+        if (ch._hasFillHeightChild !== undefined)
+            return Boolean(ch._hasFillHeightChild);
+        var isRow = (ch instanceof RowLayout) || String(ch).indexOf("QQuickRowLayout") === 0;
+        var isLayout = isRow
+            || (ch instanceof ColumnLayout)
+            || (ch instanceof GridLayout)
+            || (ch instanceof StackLayout)
+            || String(ch).indexOf("Layout") >= 0;
+        if (isLayout) {
+            var sub = ch.children || [];
+            for (var i = 0; i < sub.length; i++) {
+                var child = sub[i];
+                if (isRow && child && !(child instanceof Flickable) && String(child).indexOf("ScrollView") < 0 && !(child instanceof ColumnLayout) && child.implicitWidth !== undefined && child.implicitWidth <= 4 && child.width <= 4)
+                    continue;
+                if (root._nodeWantsVerticalExpand(child, (depth || 0) + 1))
+                    return true;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    readonly property bool _hasFillHeightChild: {
+        var kids = content.children;
+        for (var i = 0; i < kids.length; i++) {
+            if (root._nodeWantsVerticalExpand(kids[i], 0))
+                return true;
+        }
+        return false;
+    }
 
     radius: SettingsMaterialPreset.groupRadius
     color: SettingsMaterialPreset.groupColor
@@ -99,17 +135,32 @@ Rectangle {
         id: content
         objectName: "settingsGroupContent"
         anchors {
-            fill: parent
-            margins: SettingsMaterialPreset.groupPadding
+            left: parent.left
+            right: parent.right
+            top: parent.top
+            leftMargin: SettingsMaterialPreset.groupPadding
+            rightMargin: SettingsMaterialPreset.groupPadding
+            topMargin: SettingsMaterialPreset.groupPadding
         }
+        height: (root.Layout.fillHeight && root._hasFillHeightChild)
+            ? Math.max(implicitHeight, root.height - SettingsMaterialPreset.groupPadding * 2)
+            : implicitHeight
         spacing: SettingsMaterialPreset.groupSpacing
     }
 
-    SettingsInnerReorderOverlay {
+    Loader {
+        id: groupInnerReorderLoader
         anchors.fill: content
-        targetLayout: content
-        containerId: root.groupLayoutId
-        activeInSettings: root._inSettingsCard && root.groupLayoutId.length > 0
-        isGroupContainer: true
+        z: 22
+        active: root._inSettingsCard && root.groupLayoutId.length > 0
+            && (SettingsLayoutManager.editMode
+                || SettingsLayoutManager.hasInnerCustomizations(root.groupLayoutId))
+        sourceComponent: SettingsInnerReorderOverlay {
+            anchors.fill: parent
+            targetLayout: content
+            containerId: root.groupLayoutId
+            activeInSettings: root._inSettingsCard && root.groupLayoutId.length > 0
+            isGroupContainer: true
+        }
     }
 }

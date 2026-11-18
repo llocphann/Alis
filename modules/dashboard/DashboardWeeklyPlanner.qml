@@ -27,13 +27,13 @@ Item {
     property bool _inlineEventsLoaded: false
     property var _pendingInlineEvent: null
     property bool _initialized: false
-    readonly property string todayKey: Qt.formatDate(DateTime.clock.date,"yyyy-MM-dd")
+    readonly property string todayKey: Qt.formatDate(DateTime.todayDate,"yyyy-MM-dd")
     // A tab reactivation should not replace today's date object just because
     // the wall clock advanced by a few seconds. That unnecessarily invalidates
     // Planner.project(), the seven-day grid, and event delegates mid-slide.
     function refreshFollowingToday(): void {
         if (!root._initialized || !root.followToday) return
-        const today = DateTime.clock.date
+        const today = DateTime.todayDate
         if (Qt.formatDate(root.selectedDate, "yyyy-MM-dd")
                 !== Qt.formatDate(today, "yyyy-MM-dd"))
             root.selectedDate = today
@@ -166,7 +166,7 @@ Item {
         // recurring group backwards into its other already-past occurrences.
         return targets.filter(target=>Selection.gestureKey(target)===Selection.gestureKey(row)
             || (target.event?.recurrence || "none")==="none"
-            || new Date(target.startDate)>=DateTime.clock.date)
+            || new Date(target.startDate)>=DateTime.minuteDate)
     }
     function clickPlannerEvent(row,modifiers): void {
         const ctrl=!!(modifiers & Qt.ControlModifier)
@@ -569,6 +569,20 @@ Item {
                         }
                     }
                     Action {
+                        objectName:"plannerExercisesAction"
+                        visible:AlisIntergration.exercisesTrackerEnabled
+                        symbol:"fitness_center"
+                        Accessible.name:Translation.tr("Exercises Tracker")
+                        onClicked:{
+                            const dk=Qt.formatDate(root.selectedDate,"yyyy-MM-dd")
+                            if (AlisIntergration.exercisesTracker)
+                                AlisIntergration.exercisesTracker.openDashboardTracker(dk)
+                            else
+                                GlobalStates.dashboardPageId="exercisesTracker"
+                        }
+                        StyledToolTip { text: Translation.tr("Open date in Exercises Tracker") }
+                    }
+                    Action {
                         objectName:"plannerTodoAction"
                         symbol:"checklist"
                         Accessible.name:Translation.tr("To Do")
@@ -655,7 +669,7 @@ Item {
                         required property var modelData
                         required property int index
                         x:44+index*root.columnWidth;width:root.columnWidth;height:viewport.contentHeight
-                        readonly property bool today:Qt.formatDate(modelData.date,"yyyy-MM-dd")===Qt.formatDate(DateTime.clock.date,"yyyy-MM-dd")
+                        readonly property bool today:Qt.formatDate(modelData.date,"yyyy-MM-dd")===root.todayKey
                         Rectangle {anchors.fill:parent;color:dayColumn.today?Qt.alpha(Appearance.colors.colPrimary,.045):"transparent"}
                         Rectangle {
                             id:dayHeader
@@ -1093,7 +1107,7 @@ Item {
                         }
                         Rectangle {
                             visible:dayColumn.today && root.presentationActive
-                            x:0;y:root.gridTop+(DateTime.clock.date-dayColumn.modelData.date)/3600000*root.hourHeight
+                            x:0;y:root.gridTop+(DateTime.minuteDate-dayColumn.modelData.date)/3600000*root.hourHeight
                             width:parent.width;height:2;color:Appearance.colors.colPrimary
                         }
                     }

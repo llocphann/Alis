@@ -46,7 +46,7 @@ WindowDialog {
             const external=CalendarSync.getEventsForDate(date) || []
             cells.push({date:date,day:date.getDate(),
                 currentMonth:date.getMonth()===month && date.getFullYear()===year,
-                today:date.toDateString()===DateTime.clock.date.toDateString(),
+                today:date.toDateString()===DateTime.todayDate.toDateString(),
                 eventCount:local.length+external.length,
                 eventColors:local.map(()=>Appearance.colors.colPrimary)
                     .concat(external.map(e=>e.sourceColor || Appearance.colors.colPrimary))})
@@ -719,7 +719,7 @@ WindowDialog {
                     responsiveMinCellSize: 30
                     responsiveMaxCellSize: 42
                     viewingDate: root.plannerViewMonth
-                    today: DateTime.clock.date
+                    today: DateTime.todayDate
                     calendarCells: root.plannerCalendarCells
                     selectedDate: root.eventDate
                     multiSelectedDates: root.plannerSelectedDateKeys

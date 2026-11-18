@@ -19,7 +19,7 @@ import qs.modules.common
 Singleton {
     id: root
 
-    readonly property var legacyHiddenIndexes: [0, 5, 8, 13, 14, 16, 17, 18, 19, 20, 21, 27, 28, 29, 30, 31, 32, 34, 35, 36]
+    readonly property var legacyHiddenIndexes: [0, 5, 8, 13, 14, 15, 16, 17, 18, 19, 20, 21, 27, 28, 29, 30, 31, 32, 34, 35, 36]
 
     readonly property var pages: [
         {
@@ -36,11 +36,7 @@ Singleton {
             icon: "browse",
             desc: Translation.tr("Audio, power, fan control, language, lock"),
             essential: true,
-            component: "modules/settings/GeneralConfig.qml",
-            subTabs: [
-                { value: "audio", name: Translation.tr("Audio, Power & Time"), icon: "volume_up" },
-                { value: "safety", name: Translation.tr("Lock Screen & Security"), icon: "lock" }
-            ]
+            component: "modules/settings/GeneralConfig.qml"
         },
         {
             key: "bar",
@@ -135,8 +131,9 @@ Singleton {
             essential: false,
             component: "modules/settings/NiriConfig.qml",
             subTabs: [
-                { value: "displays", name: Translation.tr("Displays & Windows"), icon: "desktop_windows" },
-                { value: "input", name: Translation.tr("Mouse & Touchpad"), icon: "mouse" }
+                { value: "displays", name: Translation.tr("Displays & Monitors"), icon: "desktop_windows" },
+                { value: "windows", name: Translation.tr("Windows & Tiling"), icon: "grid_view" },
+                { value: "input", name: Translation.tr("Input"), icon: "mouse" }
             ]
         },
         null, // Index 13: retired About.
@@ -229,6 +226,7 @@ Singleton {
         {key:"companion",name:Translation.tr("Companion"),icon:"water_drop",desc:Translation.tr("Aqua and Octo appearance, personality and movement"),essential:true,component:"modules/settings/CompanionConfig.qml"}
         ,{key: "integrations",name:Translation.tr("Integrations"),icon:"extension",desc:Translation.tr("Nexus, calendar and connected applications"),essential:false,component:"modules/settings/IntegrationsConfig.qml"}
         ,{key: "default-apps",name:Translation.tr("Applications"),icon:"apps",desc:Translation.tr("Default apps, utilities, portable AppImage/tar.gz and startup apps"),essential:true,component:"modules/settings/DefaultAppsConfig.qml",subTabs:[{value:"primary",name:Translation.tr("Default Apps"),icon:"apps"},{value:"utilities",name:Translation.tr("System Utilities"),icon:"tune"},{value:"autostart",name:Translation.tr("Autostart"),icon:"rocket_launch"}]}
+        ,{key: "about",name:Translation.tr("About"),icon:"info",desc:Translation.tr("System, shell version and quick diagnostics"),essential:false,component:"modules/settings/AboutConfig.qml"}
     ]
 
     // v7 information architecture: navigation reflects the user's intent,
@@ -237,8 +235,8 @@ Singleton {
     readonly property var defaultCategories: [
         { label: Config.options?.panelFamily === "abyss" ? Translation.tr("Abyss & Bar") : Translation.tr("Bar & Shell"), pages: Config.options?.panelFamily === "abyss" ? [2, 33, 37, 24] : [2, 26, 37, 24] },
         { label: Translation.tr("Appearance"), pages: [4, 3, 25] },
-        { label: Translation.tr("Panels & Dock"), pages: [22, 23] },
-        { label: Translation.tr("Display & Windows"), pages: [15, 12, 10, 11] },
+        { label: Translation.tr("Panels & Dock"), pages: [22, 23, 10, 11] },
+        { label: Translation.tr("Display & Windows"), pages: [12] },
         { label: Translation.tr("System & Power"), pages: [1, 7] },
         { label: Translation.tr("Integrations"), pages: [38] },
         { label: Translation.tr("Applications"), pages: [39] },
@@ -247,10 +245,18 @@ Singleton {
 
     readonly property var _arrangement: Navigation.arrange(
         Config.options?.settingsUi?.categories ?? "", defaultCategories,
-        pages.length, legacyHiddenIndexes)
+        40, legacyHiddenIndexes)
     readonly property var categories: _arrangement.groups
     readonly property var hiddenPages: _arrangement.hidden
     readonly property var customPageNames: _arrangement.names ?? ({})
+
+    readonly property var irisClusters: [
+        { id: "shell", label: Translation.tr("SHELL"), pages: Config.options?.panelFamily === "abyss" ? [2, 33, 37, 24] : [2, 26, 37, 24] },
+        { id: "appearance", label: Translation.tr("APPEARANCE"), pages: [4, 3, 25] },
+        { id: "desktop", label: Translation.tr("DESKTOP"), pages: [22, 23, 10, 11, 12] },
+        { id: "tools", label: Translation.tr("TOOLS"), pages: [39, 38, 6, 9] },
+        { id: "system", label: Translation.tr("SYSTEM"), pages: [1, 7, 40] }
+    ]
 
     function iconForPage(idx) {
         return (idx >= 0 && idx < pages.length) ? (pages[idx]?.icon ?? "settings") : "settings";
@@ -1007,20 +1013,6 @@ Singleton {
             keywords: ["music", "local", "mpd", "mpris", "library", "playlist", "queue", "sidebar"]
         },
         {
-            pageIndex: 6, pageName: root.pages[6].name,
-            section: Translation.tr("On-screen display"),
-            label: Translation.tr("OSD timeout"),
-            description: Translation.tr("How long the volume, brightness and media OSD stays visible"),
-            keywords: ["osd", "volume", "brightness", "media", "timeout", "duration"]
-        },
-        {
-            pageIndex: 6, pageName: root.pages[6].name,
-            section: Translation.tr("On-screen display"),
-            label: Translation.tr("Media OSD"),
-            description: Translation.tr("Control explicit media feedback; automatic changes stay hidden during games"),
-            keywords: ["osd", "media", "music", "player", "shortcuts", "track", "fullscreen", "game", "automatic", "skip"]
-        },
-        {
             pageIndex: 23, pageName: root.pages[23].name,
             section: Translation.tr("Overview"),
             label: Translation.tr("Workspace hover"),
@@ -1082,13 +1074,6 @@ Singleton {
             label: Translation.tr("Screenshots folder"),
             description: Translation.tr("Choose where Alis screenshots are saved"),
             keywords: ["screenshot", "snip", "capture", "save", "path", "folder", "directory", "destination"]
-        },
-        {
-            pageIndex: 6, pageName: root.pages[6].name,
-            section: Translation.tr("On-screen display"),
-            label: Translation.tr("On-screen display"),
-            description: Translation.tr("Volume and brightness OSD settings"),
-            keywords: ["osd", "on", "screen", "display", "volume", "brightness"]
         },
         {
             pageIndex: 24, pageName: root.pages[24].name,
@@ -1496,9 +1481,30 @@ Singleton {
             description: Translation.tr("Enable or disable individual compositor animations"),
             keywords: ["animation", "toggle", "enable", "disable", "compositor", "transition"]
         },
-        { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Monitor arrangement"), label: Translation.tr("Arrange monitors"), description: Translation.tr("Drag displays to match the physical layout of your desk"), keywords: ["monitor", "display", "arrange", "layout", "position", "drag", "niri", "output", "screen", "snap"] },
-        { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Overview placement"), label: Translation.tr("Active screen only"), description: Translation.tr("Open the overview on the monitor where it was invoked"), keywords: ["overview", "monitor", "screen", "focused", "active", "output"] },
+        { pageIndex: 12, pageName: root.pages[12].name, section: Translation.tr("Displays & Monitors"), label: Translation.tr("Arrange monitors"), description: Translation.tr("Drag displays to match the physical layout of your desk"), keywords: ["monitor", "display", "arrange", "layout", "position", "drag", "niri", "output", "screen", "snap"] },
+        { pageIndex: 12, pageName: root.pages[12].name, section: Translation.tr("Displays & Monitors"), label: Translation.tr("Active screen only"), description: Translation.tr("Open the overview on the monitor where it was invoked"), keywords: ["overview", "monitor", "screen", "focused", "active", "output"] },
         { pageIndex: 33, pageName: root.pages[33].name, section: Translation.tr("Popups"), label: Translation.tr("Notification surfaces and OSD indicators"), description: Translation.tr("Choose which monitors show transient notifications, the notification center and OSD feedback"), keywords: ["monitor", "visibility", "notifications", "center", "history", "osd", "popups", "secondary", "workspace"] },
+        {
+            pageIndex: 33, pageName: root.pages[33].name,
+            section: Translation.tr("Popups"),
+            label: Translation.tr("OSD timeout"),
+            description: Translation.tr("How long the volume, brightness and media OSD stays visible"),
+            keywords: ["osd", "volume", "brightness", "media", "timeout", "duration"]
+        },
+        {
+            pageIndex: 33, pageName: root.pages[33].name,
+            section: Translation.tr("Popups"),
+            label: Translation.tr("Media OSD"),
+            description: Translation.tr("Control explicit media feedback; automatic changes stay hidden during games"),
+            keywords: ["osd", "media", "music", "player", "shortcuts", "track", "fullscreen", "game", "automatic", "skip"]
+        },
+        {
+            pageIndex: 33, pageName: root.pages[33].name,
+            section: Translation.tr("Popups"),
+            label: Translation.tr("On-screen display"),
+            description: Translation.tr("Volume and brightness OSD settings"),
+            keywords: ["osd", "on", "screen", "display", "volume", "brightness"]
+        },
         { pageIndex: 22, pageName: root.pages[22].name, section: Translation.tr("Dashboard"), label: Translation.tr("Dashboard"), description: Translation.tr("Centered welcome hub panel with configurable widgets"), keywords: ["dashboard", "hub", "welcome", "panel", "home", "greeting"] },
         { pageIndex: 22, pageName: root.pages[22].name, section: Translation.tr("Dashboard"), label: Translation.tr("Panel width"), description: Translation.tr("Dashboard width as a percentage of the screen"), keywords: ["dashboard", "width", "size", "ratio", "screen"] },
         { pageIndex: 22, pageName: root.pages[22].name, section: Translation.tr("Dashboard"), label: Translation.tr("Panel height"), description: Translation.tr("Dashboard height as a percentage of the screen"), keywords: ["dashboard", "height", "size", "ratio", "screen", "scroll"] },
@@ -1530,7 +1536,8 @@ Singleton {
         },
         { pageIndex: 25, pageName: root.pages[25].name, section: Translation.tr("Blur and glass"), label: Translation.tr("Default blur backend"), description: Translation.tr("Let the style choose, use wallpaper glass, compositor blur, or disable blur"), keywords: ["effects", "blur", "backend", "wallpaper", "compositor", "style", "glass"] },
         { pageIndex: 25, pageName: root.pages[25].name, section: Translation.tr("Per-area overrides"), label: Translation.tr("Bars, dock, panels, islands and widgets"), description: Translation.tr("Override the blur backend independently for each shell area"), keywords: ["effects", "area", "bar", "dock", "panel", "island", "widget"] },
-        { pageIndex: 25, pageName: root.pages[25].name, section: Translation.tr("Motion and power"), label: Translation.tr("Reduce animations"), description: Translation.tr("Use immediate reduced-motion state changes"), keywords: ["motion", "animation", "reduce", "accessibility", "performance"] }
+        { pageIndex: 25, pageName: root.pages[25].name, section: Translation.tr("Motion and power"), label: Translation.tr("Reduce animations"), description: Translation.tr("Use immediate reduced-motion state changes"), keywords: ["motion", "animation", "reduce", "accessibility", "performance"] },
+        { pageIndex: 40, pageName: root.pages[40].name, section: Translation.tr("Overview"), label: Translation.tr("About Alis"), description: Translation.tr("Shell version, compositor, hardware and runtime diagnostics"), keywords: ["about", "version", "alis", "quickshell", "niri", "kernel", "cpu", "memory", "diagnostics", "info"] }
         ]
         return _staticSearchIndex
     }

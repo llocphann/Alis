@@ -99,6 +99,14 @@ def main() -> int:
             assert ":root[lwtheme] .zen-browser-generic-background" in tcss
             assert "--zen-primary-color: #ffb4ac !important;" in tcss
             assert "--zen-primary-color: var(--lwt-tab-line-color) !important;" in tcss
+            assert "--tab-border-color-selected: #ffb4ac !important;" in tcss
+            assert '.tabbrowser-tab[zen-essential="true"]' in tcss
+            assert "#zen-essentials .tabbrowser-tab" in tcss
+            assert "#zen-essentials-container .tabbrowser-tab" in tcss
+            assert ".tab-background::before" in tcss
+            assert ".tab-background::after" in tcss
+            assert "background: none !important;" in tcss
+            assert "outline: 1px solid var(--lwt-tab-line-color, #ffb4ac) !important;" in tcss
             # Guarantee zero CSS custom-property cycles in :root[lwtheme]
             import re as _re
             lw_section = tcss.split(":root[lwtheme],", 1)[1].split("}", 1)[0]

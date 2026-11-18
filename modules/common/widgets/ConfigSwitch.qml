@@ -3,6 +3,7 @@ import qs.modules.common
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import qs.modules.waffle.looks as Waffle
 
 RippleButton {
     id: root
@@ -20,8 +21,11 @@ RippleButton {
     Layout.minimumWidth: 0
     // Settings rows inherit the enclosing panel fill, like sliders and labels.
     colBackground: "transparent"
-    implicitHeight: contentItem.implicitHeight + 6 * 2
+    buttonRadius: SettingsMaterialPreset.waffle ? 6 : (abyssStyle ? Math.min(18,height/2) : Appearance?.rounding?.small ?? 4)
+    colBackgroundHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navHoverColor : (abyssStyle ? Qt.alpha(Appearance.colors.colPrimary,.24) : Appearance.colLayer1Hover)
+    implicitHeight: contentItem.implicitHeight + (SettingsMaterialPreset.waffle ? 8 : 6) * 2
     font.pixelSize: Appearance.font.pixelSize.small
+    font.family: SettingsMaterialPreset.fontFamily
     Accessible.checkable: true
     Accessible.checked: root.checked
     Accessible.description: root.description
@@ -118,7 +122,7 @@ RippleButton {
                 font: root.font
                 marquee: true
                 maximumLineCount: 1
-                color: Appearance.colors.colOnSurface
+                color: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.textColor : Appearance.colors.colOnSurface
                 opacity: root.enabled ? 1 : 0.4
             }
 
@@ -128,23 +132,43 @@ RippleButton {
                 Layout.minimumWidth: 0
                 text: root.description
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
+                color: SettingsMaterialPreset.secondaryTextColor
                 opacity: root.enabled ? 0.9 : 0.4
                 wrapMode: Text.WordWrap
             }
         }
-        StyledSwitch {
+        Loader {
             id: switchWidget
-            down: root.down
-            scale: 0.6
+            objectName: "settingsSwitchIndicator"
+            Layout.alignment: Qt.AlignVCenter
             Layout.fillWidth: false
             Layout.minimumWidth: implicitWidth
             Layout.preferredWidth: implicitWidth
             Layout.maximumWidth: implicitWidth
-            checkable: false
-            focusPolicy: Qt.NoFocus
-            checked: root.checked
-            onClicked: root.clicked()
+            sourceComponent: SettingsMaterialPreset.waffle ? waffleSwitch : materialSwitch
+
+            Component {
+                id: waffleSwitch
+                Waffle.WSwitch {
+                    objectName: "waffleSettingsSwitch"
+                    down: root.down
+                    checkable: false
+                    focusPolicy: Qt.NoFocus
+                    checked: root.checked
+                    onClicked: root.clicked()
+                }
+            }
+            Component {
+                id: materialSwitch
+                StyledSwitch {
+                    down: root.down
+                    scale: 0.6
+                    checkable: false
+                    focusPolicy: Qt.NoFocus
+                    checked: root.checked
+                    onClicked: root.clicked()
+                }
+            }
         }
     }
 }
