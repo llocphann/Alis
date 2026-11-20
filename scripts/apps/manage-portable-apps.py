@@ -143,6 +143,31 @@ _CURRENT_OP_ACTIVE = False
 _PROGRESS_PIPE_FD = -1
 _PROGRESS_PIPE_BROKEN = False
 _LAUNCHER_PID = 0
+_PROGRESS_THROTTLE_LOCK = threading.Lock()
+_LAST_PROGRESS_KEY: tuple[str, str, str] | None = None
+_LAST_PROGRESS_PCT: int = -2
+_LAST_PROGRESS_MONO: dict[tuple[str, str, str], float] = {}
+_LAST_STATUS_KEY: tuple[Any, ...] | None = None
+_LAST_STATUS_MONO: float = 0.0
+
+
+def _lower_worker_priority() -> None:
+    """Reduce CPU and disk I/O priority of heavy background update/hash tasks."""
+    try:
+        os.nice(10)
+    except Exception:
+        pass
+    ionice_bin = shutil.which("ionice")
+    if ionice_bin:
+        try:
+            subprocess.run(
+                [ionice_bin, "-c", "3", "-p", str(os.getpid())],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=1.0,
+            )
+        except Exception:
+            pass
 
 
 def _format_bytes(n: int) -> str:
@@ -215,7 +240,34 @@ def _emit_progress(
     write_status_file: bool = True,
 ) -> None:
     global _CURRENT_OP_ACTIVE, _PROGRESS_PIPE_FD, _PROGRESS_PIPE_BROKEN
+    global _LAST_PROGRESS_KEY, _LAST_PROGRESS_PCT, _LAST_STATUS_KEY, _LAST_STATUS_MONO
     pct_val = max(-1, min(100, int(round(percent)))) if percent >= 0 else -1
+    mono_now = time.monotonic()
+    key = (action, app_id, stage)
+    with _PROGRESS_THROTTLE_LOCK:
+        same_stream = key == _LAST_PROGRESS_KEY
+        last_mono = _LAST_PROGRESS_MONO.get(key, 0.0)
+        is_edge_pct = pct_val <= 0 or pct_val >= 100
+        if (
+            same_stream
+            and include_apps is None
+            and not is_edge_pct
+            and (mono_now - last_mono) < 0.20
+        ):
+            return
+        _LAST_PROGRESS_KEY = key
+        _LAST_PROGRESS_PCT = pct_val
+        _LAST_PROGRESS_MONO[key] = mono_now
+        should_write_status = bool(write_status_file) and (
+            _LAST_STATUS_KEY != key
+            or is_edge_pct
+            or include_apps is not None
+            or (mono_now - _LAST_STATUS_MONO) >= 0.45
+        )
+        if should_write_status:
+            _LAST_STATUS_KEY = key
+            _LAST_STATUS_MONO = mono_now
+
     now_ts = time.time()
     payload: dict[str, Any] = {
         "type": "progress",
@@ -248,7 +300,7 @@ def _emit_progress(
             sys.stderr.flush()
         except OSError:
             pass
-    if write_status_file:
+    if should_write_status:
         _CURRENT_OP_ACTIVE = True
         _write_operation_status(
             {
@@ -269,8 +321,14 @@ def _emit_progress(
 
 
 def _complete_operation_status(action: str, result: dict[str, Any]) -> None:
-    global _CURRENT_OP_ACTIVE
+    global _CURRENT_OP_ACTIVE, _LAST_PROGRESS_KEY, _LAST_PROGRESS_PCT, _LAST_STATUS_KEY, _LAST_STATUS_MONO
     _CURRENT_OP_ACTIVE = False
+    with _PROGRESS_THROTTLE_LOCK:
+        _LAST_PROGRESS_KEY = None
+        _LAST_PROGRESS_PCT = -2
+        _LAST_PROGRESS_MONO.clear()
+        _LAST_STATUS_KEY = None
+        _LAST_STATUS_MONO = 0.0
     _write_operation_status(
         {
             "running": False,
@@ -3776,6 +3834,7 @@ def _run_detached_bg_survive(action_name: str, fn: Any, rest: list[str]) -> dict
                 os.close(devnull_fd)
         except OSError:
             pass
+        _lower_worker_priority()
         try:
             fn(rest)
         except Exception as exc:

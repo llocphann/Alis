@@ -19,10 +19,82 @@ Scope {
     property string directory: ""
     property string _scanSignature: ""
     property int _scanRevision: 0
+    property string _lastRawOutput: ""
     property var _pendingRefresh: null
     property var _lastScanOrder: null
+    readonly property var _pathIndexCache: ({ staticMap: Object.create(null), animatedMap: Object.create(null) })
 
     signal refreshed()
+
+    function _normPath(rawPath: string): string {
+        let p = String(rawPath ?? "").trim()
+        if (!p)
+            return ""
+        if (p.startsWith("file://")) {
+            p = p.slice(7)
+            try {
+                p = decodeURIComponent(p)
+            } catch (_e) {}
+        }
+        return p.replace(/\/+$/, "")
+    }
+
+    function _buildPathIndex(items) {
+        const map = Object.create(null)
+        for (let i = 0; i < items.length; ++i) {
+            const norm = root._normPath(items[i]?.path)
+            if (norm && map[norm] === undefined)
+                map[norm] = i
+        }
+        return map
+    }
+
+    function _applyPathIndex(staticMap, animatedMap): void {
+        root._pathIndexCache.staticMap = staticMap ?? Object.create(null)
+        root._pathIndexCache.animatedMap = animatedMap ?? Object.create(null)
+    }
+
+    function indexOfPath(normPath: string, mode: string): int {
+        const clean = root._normPath(normPath)
+        if (!clean)
+            return -1
+        const map = mode === "animated" ? root._pathIndexCache.animatedMap : root._pathIndexCache.staticMap
+        const idx = map ? map[clean] : undefined
+        return idx !== undefined ? idx : -1
+    }
+
+    function _buildRoots(path: string, extraPaths = []): var {
+        const cleanPath = FileUtils.trimFileProtocol(String(path ?? ""))
+        if (!cleanPath)
+            return null
+        const roots = [cleanPath]
+        for (const rawExtra of (extraPaths ?? [])) {
+            const extra = FileUtils.trimFileProtocol(String(rawExtra ?? ""))
+            if (!extra) continue
+            const redundant = roots.some(existing => {
+                const existingPrefix = existing.endsWith("/") ? existing : existing + "/"
+                const extraPrefix = extra.endsWith("/") ? extra : extra + "/"
+                return extra === existing || extra.startsWith(existingPrefix)
+                    || existing.startsWith(extraPrefix)
+            })
+            if (!redundant) roots.push(extra)
+        }
+        return { cleanPath, roots, signature: JSON.stringify(roots) }
+    }
+
+    function _findCommand(roots): var {
+        return [
+            "/usr/bin/nice", "-n", "10",
+            "find", "-L", ...roots, "-type", "f", "(",
+            "-iname", "*.jpg", "-o", "-iname", "*.jpeg", "-o",
+            "-iname", "*.png", "-o", "-iname", "*.webp", "-o",
+            "-iname", "*.avif", "-o", "-iname", "*.bmp", "-o",
+            "-iname", "*.svg", "-o", "-iname", "*.gif", "-o",
+            "-iname", "*.mp4", "-o", "-iname", "*.webm", "-o",
+            "-iname", "*.mkv", "-o", "-iname", "*.avi", "-o",
+            "-iname", "*.mov", ")", "-print0"
+        ]
+    }
 
     function ensureColorTags(): void {
         if (colorTagsProcess.running || root._lastScanRoots.length === 0)
@@ -39,33 +111,42 @@ Scope {
     }
 
     function refresh(path: string, extraPaths = [], force = false): void {
-        const cleanPath = FileUtils.trimFileProtocol(String(path ?? ""))
-        if (!cleanPath) return
+        const spec = root._buildRoots(path, extraPaths)
+        if (!spec) return
+        const { cleanPath, roots, signature } = spec
 
-        // Scan the configured root plus every other folder the user is actually
-        // working in. Deriving roots from one source made the list unstable:
-        // videos appeared only while a wallpaper from their folder happened to
-        // be applied.
-        const roots = [cleanPath]
-        for (const rawExtra of (extraPaths ?? [])) {
-            const extra = FileUtils.trimFileProtocol(String(rawExtra ?? ""))
-            if (!extra) continue
-            // Skip anything already covered by, or covering, an accepted root.
-            const redundant = roots.some(existing => {
-                const existingPrefix = existing.endsWith("/") ? existing : existing + "/"
-                const extraPrefix = extra.endsWith("/") ? extra : extra + "/"
-                return extra === existing || extra.startsWith(existingPrefix)
-                    || existing.startsWith(extraPrefix)
-            })
-            if (!redundant) roots.push(extra)
-        }
-
-        const signature = JSON.stringify(roots)
         // Even a cache hit is a newer choice than a queued folder.
         root._pendingRefresh = null
         if (!force && signature === root._scanSignature
                 && (root.staticEntries.length > 0 || root.animatedEntries.length > 0))
             return
+
+        if (!force) {
+            const prefix = cleanPath.endsWith("/") ? cleanPath : cleanPath + "/"
+            const cached = Wallpapers.getCachedLibraryScan(signature)
+            if (cached && cached.prefix === prefix) {
+                root.directory = cleanPath
+                root._scanSignature = signature
+                root._scanRevision++
+                root._lastScanRoots = roots
+                root._lastRawOutput = cached.rawOutput ?? ""
+                root._lastScanOrder = cached.scanOrder ?? null
+                root._applyPathIndex(cached.staticIndexMap, cached.animatedIndexMap)
+                const clone = entry => ({
+                    path: entry.path,
+                    name: entry.name,
+                    relativePath: entry.relativePath,
+                    kind: entry.kind,
+                    searchKey: entry.searchKey
+                })
+                root.staticEntries = (cached.staticEntries ?? []).map(clone)
+                root.animatedEntries = (cached.animatedEntries ?? []).map(clone)
+                root.scanning = false
+                Wallpapers.preloadKnownThumbnails()
+                root.refreshed()
+                return
+            }
+        }
 
         if (root.scanning) {
             root._pendingRefresh = ({ path: cleanPath, extraPaths, force })
@@ -78,17 +159,17 @@ Scope {
         root._lastScanRoots = roots
         root.scanning = true
         Wallpapers.preloadKnownThumbnails()
-        colorTagsTimer.restart()
-        scanProcess.exec([
-            "find", "-L", ...roots, "-type", "f", "(",
-            "-iname", "*.jpg", "-o", "-iname", "*.jpeg", "-o",
-            "-iname", "*.png", "-o", "-iname", "*.webp", "-o",
-            "-iname", "*.avif", "-o", "-iname", "*.bmp", "-o",
-            "-iname", "*.svg", "-o", "-iname", "*.gif", "-o",
-            "-iname", "*.mp4", "-o", "-iname", "*.webm", "-o",
-            "-iname", "*.mkv", "-o", "-iname", "*.avi", "-o",
-            "-iname", "*.mov", ")", "-print0"
-        ])
+        scanProcess.exec(root._findCommand(roots))
+    }
+
+    function silentSync(path: string, extraPaths = []): void {
+        if (root.scanning || silentScanProcess.running)
+            return
+        const spec = root._buildRoots(path, extraPaths)
+        if (!spec || spec.signature !== root._scanSignature)
+            return
+        silentScanProcess._syncSignature = spec.signature
+        silentScanProcess.exec(root._findCommand(spec.roots))
     }
 
     function consume(rawOutput: string, separator = "\n"): void {
@@ -129,13 +210,38 @@ Scope {
                 staticItems.push(entry)
         }
         if (!sameScan) {
-            const byName = (left, right) => left.relativePath.localeCompare(right.relativePath)
-            staticItems.sort(byName)
-            animatedItems.sort(byName)
+            const sortEntries = items => {
+                const paired = items.map(entry => ({
+                    key: entry.relativePath.toLowerCase(),
+                    rel: entry.relativePath,
+                    entry
+                }))
+                paired.sort((left, right) =>
+                    left.key < right.key ? -1 : (left.key > right.key ? 1 : (left.rel < right.rel ? -1 : (left.rel > right.rel ? 1 : 0))))
+                for (let i = 0; i < paired.length; ++i)
+                    items[i] = paired[i].entry
+            }
+            sortEntries(staticItems)
+            sortEntries(animatedItems)
             // Reuse only the order of an identical scan. Refresh still publishes
             // fresh entries, including when an image was replaced at the same path.
             root._lastScanOrder = { raw: rawOutput, prefix, separator, localeName,
                 paths: staticItems.concat(animatedItems).map(entry => entry.path) }
+        }
+        const staticIndexMap = root._buildPathIndex(staticItems)
+        const animatedIndexMap = root._buildPathIndex(animatedItems)
+        root._lastRawOutput = rawOutput
+        root._applyPathIndex(staticIndexMap, animatedIndexMap)
+        if (root._scanSignature && separator === "\0") {
+            Wallpapers.setCachedLibraryScan(root._scanSignature, {
+                rawOutput,
+                prefix,
+                scanOrder: root._lastScanOrder,
+                staticEntries: staticItems,
+                animatedEntries: animatedItems,
+                staticIndexMap,
+                animatedIndexMap
+            })
         }
         root.staticEntries = staticItems
         root.animatedEntries = animatedItems
@@ -169,6 +275,21 @@ Scope {
             if (!running && root.scanning) {
                 root._scanSignature = ""
                 root._finishScan()
+            }
+        }
+    }
+
+    Process {
+        id: silentScanProcess
+        property string _syncSignature: ""
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (root.scanning || silentScanProcess._syncSignature !== root._scanSignature)
+                    return
+                if (text === root._lastRawOutput)
+                    return
+                if (text.length > 0 || root.staticEntries.length > 0 || root.animatedEntries.length > 0)
+                    root.consume(text, "\0")
             }
         }
     }

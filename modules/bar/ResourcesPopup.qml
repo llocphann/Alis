@@ -268,11 +268,11 @@ StyledPopup {
                 Item { width: cpuColumn.width; height: 0 }
             }
 
-            // 1. Header: Fan icon + Fan | RPM readout
+            // 1. Header: Fan icon + Fan | RPM readout + Profile toggle
             Item {
                 Layout.fillWidth: true
-                implicitHeight: 22
-                height: 22
+                implicitHeight: 24
+                height: 24
 
                 RowLayout {
                     anchors.fill: parent
@@ -296,13 +296,12 @@ StyledPopup {
                         Layout.alignment: Qt.AlignVCenter
                     }
 
-                    Item { Layout.fillWidth: true }
-
                     MaterialSymbol {
                         text: "speed"
                         iconSize: Appearance.font.pixelSize.small
                         color: Appearance.colors.colOnSurfaceVariant
                         opacity: 0.75
+                        Layout.leftMargin: 4
                         Layout.alignment: Qt.AlignVCenter
                     }
 
@@ -328,7 +327,7 @@ StyledPopup {
                         }
 
                         StyledText {
-                            anchors.right: parent.right
+                            anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             text: (popup.presentationActive && ThinkFanService.fanRpm >= 0)
                                 ? String(ThinkFanService.fanRpm)
@@ -336,6 +335,35 @@ StyledPopup {
                             font.weight: Font.Bold
                             font.pixelSize: Appearance.font.pixelSize.normal
                             color: Appearance.colors.colOnSurface
+                        }
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    StyledText {
+                        text: Translation.tr("Profile")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.colors.colOnSurfaceVariant
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    StyledSwitch {
+                        id: followProfileSwitch
+                        checked: popup.followPowerProfileActive
+                        enabled: Config.ready
+                        Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                        onToggled: {
+                            const nextEnabled = checked
+                            Config.setNestedValue("powerProfiles.fanControl.enabled", nextEnabled)
+                            ThinkFanService.setProfileFanControlEnabled(nextEnabled)
+                            if (!nextEnabled && popup.thinkFanManaged && popup.thinkFanCanApply) {
+                                ThinkFanService.applyProfile("firmware")
+                            }
+                            checked = Qt.binding(() => popup.followPowerProfileActive)
+                        }
+
+                        StyledToolTip {
+                            text: Translation.tr("Follow power profile")
                         }
                     }
                 }
@@ -517,43 +545,6 @@ StyledPopup {
                                         : Appearance.colors.colOnSurfaceVariant
                                 }
                             }
-                        }
-                    }
-                }
-            }
-
-            // 4. Follow power profile row (aligned left-to-right, no Auto toggle)
-            Item {
-                Layout.fillWidth: true
-                implicitHeight: 24
-                height: 24
-
-                RowLayout {
-                    anchors.fill: parent
-                    spacing: 8
-
-                    StyledText {
-                        text: Translation.tr("Follow power profile")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSurfaceVariant
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    StyledSwitch {
-                        id: followProfileSwitch
-                        checked: popup.followPowerProfileActive
-                        enabled: Config.ready
-                        Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                        onToggled: {
-                            const nextEnabled = checked
-                            Config.setNestedValue("powerProfiles.fanControl.enabled", nextEnabled)
-                            ThinkFanService.setProfileFanControlEnabled(nextEnabled)
-                            if (!nextEnabled && popup.thinkFanManaged && popup.thinkFanCanApply) {
-                                ThinkFanService.applyProfile("firmware")
-                            }
-                            checked = Qt.binding(() => popup.followPowerProfileActive)
                         }
                     }
                 }

@@ -17,6 +17,38 @@ ContentPage {
 
     property string appSearchText: ""
     property string serviceSearchText: ""
+    property string _effectiveAppSearch: ""
+    property string _effectiveServiceSearch: ""
+    onAppSearchTextChanged: {
+        if (appSearchText.trim().length === 0) {
+            appSearchDebounce.stop()
+            _effectiveAppSearch = ""
+        } else {
+            appSearchDebounce.restart()
+        }
+    }
+    onServiceSearchTextChanged: {
+        if (serviceSearchText.trim().length === 0) {
+            serviceSearchDebounce.stop()
+            _effectiveServiceSearch = ""
+        } else {
+            serviceSearchDebounce.restart()
+        }
+    }
+
+    Timer {
+        id: appSearchDebounce
+        interval: 80
+        repeat: false
+        onTriggered: root._effectiveAppSearch = root.appSearchText
+    }
+
+    Timer {
+        id: serviceSearchDebounce
+        interval: 80
+        repeat: false
+        onTriggered: root._effectiveServiceSearch = root.serviceSearchText
+    }
     property bool showAllServices: false
     property string newServiceInput: ""
     property var userServices: []
@@ -214,19 +246,36 @@ ContentPage {
 
     readonly property var filteredDesktopApps: {
         const all = AppSearch.list
-        const q = root.appSearchText.trim().toLowerCase()
+        const q = root._effectiveAppSearch.trim().toLowerCase()
         const filtered = q.length === 0 ? all.slice() : all.filter(e =>
             (e.name && e.name.toLowerCase().includes(q)) ||
             (e.id && e.id.toLowerCase().includes(q)) ||
             (e.genericName && e.genericName.toLowerCase().includes(q)) ||
             (e.comment && e.comment.toLowerCase().includes(q))
         )
-        return filtered.slice().sort((a, b) => {
-            const aOn = Autostart.isAppOn(a)
-            const bOn = Autostart.isAppOn(b)
-            if (aOn !== bOn) return aOn ? -1 : 1
-            return (a.name || a.id || "").localeCompare(b.name || b.id || "")
+        const checkEnabled = (Autostart.entries?.length ?? 0) > 0 || (Autostart.externalLines?.length ?? 0) > 0
+        const paired = filtered.map(app => {
+            const label = String(app.name || app.id || "")
+            return {
+                app: app,
+                on: checkEnabled && Autostart.isAppOn(app),
+                sortKey: label.toLowerCase(),
+                rawLabel: label
+            }
         })
+        paired.sort((a, b) => {
+            if (a.on !== b.on)
+                return a.on ? -1 : 1
+            if (a.sortKey < b.sortKey) return -1
+            if (a.sortKey > b.sortKey) return 1
+            if (a.rawLabel < b.rawLabel) return -1
+            if (a.rawLabel > b.rawLabel) return 1
+            return 0
+        })
+        const out = new Array(paired.length)
+        for (let i = 0; i < paired.length; ++i)
+            out[i] = paired[i].app
+        return out
     }
 
     function isBuiltInSystemStartupLine(lineObj): bool {
@@ -265,7 +314,7 @@ ContentPage {
 
     readonly property var filteredUserServices: {
         const all = root.userServices ?? []
-        const q = root.serviceSearchText.trim().toLowerCase()
+        const q = root._effectiveServiceSearch.trim().toLowerCase()
         return all.filter(svc => {
             if (!svc)
                 return false

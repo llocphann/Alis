@@ -400,6 +400,29 @@ Singleton {
     property real thumbnailGenerationProgress: 0
     property var _knownThumbnailOutputs: ({})
     property bool _knownThumbnailsPreloaded: false
+    readonly property var _libraryScanCache: ({ order: [], entries: {} })
+
+    function getCachedLibraryScan(signature: string) {
+        const sig = String(signature ?? "")
+        if (!sig)
+            return null
+        return root._libraryScanCache.entries[sig] ?? null
+    }
+
+    function setCachedLibraryScan(signature: string, payload): void {
+        const sig = String(signature ?? "")
+        if (!sig || !payload)
+            return
+        const cache = root._libraryScanCache
+        if (!cache.entries[sig]) {
+            cache.order.push(sig)
+            while (cache.order.length > 4) {
+                const oldest = cache.order.shift()
+                delete cache.entries[oldest]
+            }
+        }
+        cache.entries[sig] = payload
+    }
 
     signal changed()
     signal folderChanged()

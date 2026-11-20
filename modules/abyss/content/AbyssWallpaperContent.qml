@@ -290,6 +290,16 @@ FocusScope {
         }
     }
 
+    Timer {
+        id: deferredSyncTimer
+        interval: 1500
+        repeat: false
+        onTriggered: {
+            if (GlobalStates.wallpaperLauncherOpen && root.visible)
+                library.silentSync(browseFolder || Directories.wallpapersPath, root._extraScanRoots())
+        }
+    }
+
     function _normWallpaperPath(rawPath: string): string {
         let p = String(rawPath ?? "").trim()
         if (!p)
@@ -319,7 +329,8 @@ FocusScope {
         } else if (GlobalStates.wallpaperLauncherMode === "static" && root.activeTab === "animated") {
             root.activeTab = "static"
         }
-        root.refreshLibrary(true)
+        root.refreshLibrary(false)
+        deferredSyncTimer.restart()
         carousel._needsInitialCenter = true
         carousel.syncCurrentIndex()
         focusDeferTimer.alsoSyncCarousel = true
@@ -334,6 +345,7 @@ FocusScope {
             root._beginSession()
     }
     Component.onDestruction: {
+        deferredSyncTimer.stop()
         Wallpapers.cancelWallpaperPreview()
         GlobalStates.setSettingsNativeDialogVisible("wallpaperLauncherFolder", false)
     }
@@ -341,10 +353,12 @@ FocusScope {
     Connections {
         target: GlobalStates
         function onWallpaperLauncherOpenChanged(): void {
-            if (GlobalStates.wallpaperLauncherOpen)
+            if (GlobalStates.wallpaperLauncherOpen) {
                 root._beginSession()
-            else
+            } else {
+                deferredSyncTimer.stop()
                 Wallpapers.cancelWallpaperPreview()
+            }
         }
         function onWallpaperLauncherModeChanged(): void {
             if (["static", "animated"].includes(GlobalStates.wallpaperLauncherMode)
@@ -554,7 +568,7 @@ FocusScope {
                 spacing: 10
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
-                cacheBuffer: 720
+                cacheBuffer: 360
                 highlightMoveDuration: Appearance.animationsEnabled ? 180 : 0
 
                 property var entries: root.libraryEntries
@@ -660,7 +674,14 @@ FocusScope {
                     }
                     carousel._lastFavouritesRevSeen = Wallpapers.favouritesRevision
                     const curNorm = root._normWallpaperPath(carousel.currentWallpaperPath)
-                    const idx = list.findIndex(entry => root._normWallpaperPath(entry?.path) === curNorm)
+                    const hasFilter = carousel._effectiveSearchText.trim().length > 0
+                        || carousel.selectedColor.trim().length > 0
+                        || carousel.favouritesOnly
+                    let idx = (!hasFilter && list === root.libraryEntries)
+                        ? library.indexOfPath(curNorm, root.mode)
+                        : -1
+                    if (idx < 0 || idx >= list.length || root._normWallpaperPath(list[idx]?.path) !== curNorm)
+                        idx = list.findIndex(entry => root._normWallpaperPath(entry?.path) === curNorm)
                     const targetIdx = Math.max(0, idx)
                     carousel.currentIndex = targetIdx
                     if (carousel.width > 0 && carousel.count > targetIdx) {
@@ -809,8 +830,8 @@ FocusScope {
                                 objectName: "wallpaperCardImage"
                                 anchors.fill: parent
                                 sourcePath: cardDelegate.modelData.path
-                                sourceSize.width: Math.max(1, Math.ceil(cardFrame.width * 2))
-                                sourceSize.height: Math.max(1, Math.ceil(cardFrame.height * 2))
+                                sourceSize.width: Math.min(256, Math.max(160, Math.round((cardFrame.width > 0 ? cardFrame.width : 164) * 1.4)))
+                                sourceSize.height: Math.min(160, Math.max(96, Math.round((cardFrame.height > 0 ? cardFrame.height : 92) * 1.4)))
                                 fillMode: Image.PreserveAspectCrop
                                 generateThumbnail: true
                                 mipmap: false

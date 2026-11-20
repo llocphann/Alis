@@ -45,13 +45,13 @@ ContentPage {
     }
 
     onContentYChanged: {
-        if (!root._autostartMounted && root.contentY > 40)
+        if (!root._autostartMounted && root.contentY > 180)
             root._autostartMounted = true
     }
 
     Timer {
         id: deferredDiscoveryTimer
-        interval: 16
+        interval: 180
         repeat: false
         running: false
         onTriggered: {
@@ -147,16 +147,7 @@ ContentPage {
         implicitWidth: iconSize
         implicitHeight: iconSize
 
-        readonly property string resolvedPath: {
-            const raw = String(iconRoot.iconName ?? "").trim()
-            if (!raw)
-                return ""
-            if (raw.startsWith("file://"))
-                return raw
-            if (raw.startsWith("/"))
-                return "file://" + raw
-            return Quickshell.iconPath(raw, true) ?? ""
-        }
+        readonly property string resolvedPath: AppLauncher.resolveIconPath(iconRoot.iconName)
 
         IconImage {
             id: sysIcon
@@ -992,7 +983,7 @@ ContentPage {
     Loader {
         id: autostartLoader
         active: root._autostartMounted
-        asynchronous: false
+        asynchronous: root.activeSection !== "autostart" && status !== Loader.Ready
         visible: root._autostartMounted
         Layout.fillWidth: true
         Layout.preferredWidth: -1

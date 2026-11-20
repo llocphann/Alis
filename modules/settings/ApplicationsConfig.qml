@@ -174,13 +174,24 @@ ContentPage {
         AppLauncher.setUpdateSource(appId, source)
     }
 
+    Timer {
+        id: initialListDeferTimer
+        interval: 140
+        repeat: false
+        onTriggered: {
+            if (!AppLauncher.busy && !AppLauncher.portableAppsLoaded)
+                root.refreshList()
+        }
+    }
+
     Component.onCompleted: {
         root._recoverLegacyStalePickerBusy()
         if (!AppLauncher.busy && !AppLauncher.portableAppsLoaded)
-            root.refreshList()
+            initialListDeferTimer.restart()
     }
 
     Component.onDestruction: {
+        initialListDeferTimer.stop()
         if (root._localPickerLockHeld) {
             root._localPickerLockHeld = false
             GlobalStates.setSettingsNativeDialogVisible("applicationsFilePicker", false)
@@ -193,14 +204,18 @@ ContentPage {
         property bool accent: false
         property bool secondary: false
         property real maxPillWidth: 0
+        property real minPillWidth: 0
         readonly property real naturalWidth: pillLabel.implicitWidth + 12
-        implicitHeight: 20
-        implicitWidth: pillRoot.maxPillWidth > 0
+        readonly property real clampedNaturalWidth: pillRoot.maxPillWidth > 0
             ? Math.min(pillRoot.maxPillWidth, pillRoot.naturalWidth)
             : pillRoot.naturalWidth
-        Layout.minimumWidth: pillRoot.maxPillWidth > 0 ? Math.min(48, pillRoot.naturalWidth) : pillRoot.naturalWidth
+        implicitHeight: 20
+        implicitWidth: Math.max(pillRoot.minPillWidth, pillRoot.clampedNaturalWidth)
+        Layout.minimumWidth: pillRoot.maxPillWidth > 0
+            ? Math.max(pillRoot.minPillWidth, Math.min(48, pillRoot.naturalWidth))
+            : implicitWidth
         Layout.preferredWidth: implicitWidth
-        Layout.maximumWidth: pillRoot.maxPillWidth > 0 ? pillRoot.maxPillWidth : pillRoot.naturalWidth
+        Layout.maximumWidth: pillRoot.maxPillWidth > 0 ? Math.max(pillRoot.minPillWidth, pillRoot.maxPillWidth) : implicitWidth
         radius: Appearance.rounding.full
         clip: true
         color: pillRoot.accent
@@ -653,6 +668,7 @@ ContentPage {
                                     Image {
                                         id: appIconImg
                                         anchors.fill: parent
+                                        asynchronous: true
                                         source: appRow.iconFileUrl
                                         sourceSize.width: 56
                                         sourceSize.height: 56
@@ -679,7 +695,7 @@ ContentPage {
                                     clip: true
 
                                     readonly property real fixedPillsWidth: (kindPill.visible ? kindPill.naturalWidth + 6 : 0)
-                                        + (zsyncPill.visible ? zsyncPill.naturalWidth + 6 : 0)
+                                        + (zsyncPill.visible ? Math.max(zsyncPill.naturalWidth, zsyncPill.minPillWidth) + 6 : 0)
                                     readonly property real minNameReserved: Math.min(
                                         appNameLabel.implicitWidth,
                                         Math.max(68, Math.floor(width * 0.42))
@@ -724,6 +740,7 @@ ContentPage {
                                         objectName: "portableUpdateBadge_" + String(appRow.modelData?.id ?? appRow.index)
                                         anchors.verticalCenter: parent.verticalCenter
                                         visible: appRow.isUpdateSupported || appRow.isThisAppUpdating
+                                        minPillWidth: appRow.isThisAppUpdating ? 78 : 0
                                         badgeText: {
                                             if (appRow.isThisAppUpdating) {
                                                 const pct = root.progressPercent >= 0 ? `${Math.max(0, Math.min(100, root.progressPercent))}%` : "…"

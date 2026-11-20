@@ -26,6 +26,74 @@ Singleton {
     property string _syncStdout: ""
     property string _pendingSyncSlot: ""
 
+    readonly property var _discoveryIndex: ({
+        appsRef: null,
+        byIdentityOrDesktop: Object.create(null),
+        byExactCmd: Object.create(null),
+        byNativeExecBin: Object.create(null),
+        byAnyExecBin: Object.create(null),
+        summaryRev: -1,
+        summaryLoaded: false,
+        summaryAppsRef: null,
+        summaryBySlot: Object.create(null),
+        iconPathByRaw: Object.create(null)
+    })
+
+    function _ensureDiscoveryIndex() {
+        const all = root.discoveredApps ?? []
+        const idx = root._discoveryIndex
+        if (idx.appsRef === all)
+            return idx
+        const byIdentityOrDesktop = Object.create(null)
+        const byExactCmd = Object.create(null)
+        const byNativeExecBin = Object.create(null)
+        const byAnyExecBin = Object.create(null)
+        for (let i = 0; i < all.length; ++i) {
+            const a = all[i]
+            if (!a)
+                continue
+            if (a.identityKey && !byIdentityOrDesktop[a.identityKey])
+                byIdentityOrDesktop[a.identityKey] = a
+            if (a.desktopId && !byIdentityOrDesktop[a.desktopId])
+                byIdentityOrDesktop[a.desktopId] = a
+            if (a.exec && !byExactCmd[a.exec])
+                byExactCmd[a.exec] = a
+            if (a.desktopId && !byExactCmd[a.desktopId])
+                byExactCmd[a.desktopId] = a
+            if (a.appId && !byExactCmd[a.appId])
+                byExactCmd[a.appId] = a
+            if (a.execBin) {
+                if (!a.isFlatpak && !byNativeExecBin[a.execBin])
+                    byNativeExecBin[a.execBin] = a
+                if (!byAnyExecBin[a.execBin])
+                    byAnyExecBin[a.execBin] = a
+            }
+        }
+        idx.appsRef = all
+        idx.byIdentityOrDesktop = byIdentityOrDesktop
+        idx.byExactCmd = byExactCmd
+        idx.byNativeExecBin = byNativeExecBin
+        idx.byAnyExecBin = byAnyExecBin
+        idx.summaryAppsRef = null
+        return idx
+    }
+
+    function resolveIconPath(rawName: string): string {
+        const raw = String(rawName ?? "").trim()
+        if (!raw)
+            return ""
+        if (raw.startsWith("file://"))
+            return raw
+        if (raw.startsWith("/"))
+            return "file://" + raw
+        const cache = root._discoveryIndex.iconPathByRaw
+        if (Object.prototype.hasOwnProperty.call(cache, raw))
+            return cache[raw]
+        const resolved = Quickshell.iconPath(raw, true) ?? ""
+        cache[raw] = resolved
+        return resolved
+    }
+
     readonly property string _helperScript: Quickshell.shellPath("scripts/default_apps_helper.py")
 
     Connections {
@@ -514,19 +582,19 @@ Singleton {
         const idKey = root.configuredDesktopId(slotId)
         const cmd = root.commandFor(slotId)
         const all = root.discoveredApps ?? []
+        const idx = root._ensureDiscoveryIndex()
 
         if (idKey.length > 0) {
-            const byKey = all.find(a => a.identityKey === idKey || a.desktopId === idKey)
+            const byKey = idx.byIdentityOrDesktop[idKey]
             if (byKey)
                 return byKey
         }
         if (cmd.length > 0) {
-            const exact = all.find(a => a.exec === cmd || a.desktopId === cmd || (a.appId && a.appId === cmd))
+            const exact = idx.byExactCmd[cmd]
             if (exact)
                 return exact
             if (!cmd.includes(" ")) {
-                const byBin = all.find(a => !a.isFlatpak && a.execBin === cmd)
-                    ?? all.find(a => a.execBin === cmd)
+                const byBin = idx.byNativeExecBin[cmd] ?? idx.byAnyExecBin[cmd]
                 if (byBin)
                     return byBin
             }
@@ -554,6 +622,26 @@ Singleton {
 
     function selectedAppSummary(slotId: string): var {
         void(root._configRevision)
+        void(root.discoveryLoaded)
+        void(root.discoveredApps)
+        const cache = root._discoveryIndex
+        if (cache.summaryRev !== root._configRevision
+                || cache.summaryLoaded !== root.discoveryLoaded
+                || cache.summaryAppsRef !== root.discoveredApps) {
+            cache.summaryRev = root._configRevision
+            cache.summaryLoaded = root.discoveryLoaded
+            cache.summaryAppsRef = root.discoveredApps
+            cache.summaryBySlot = Object.create(null)
+        }
+        if (Object.prototype.hasOwnProperty.call(cache.summaryBySlot, slotId))
+            return cache.summaryBySlot[slotId]
+
+        const result = root._computeSelectedAppSummary(slotId)
+        cache.summaryBySlot[slotId] = result
+        return result
+    }
+
+    function _computeSelectedAppSummary(slotId: string): var {
         const def = root.slotDefinition(slotId)
         const cmd = root.commandFor(slotId)
         const idKey = root.configuredDesktopId(slotId)
@@ -1235,6 +1323,8 @@ Singleton {
     property bool _portableProcExited: false
     property int _portableLastExitCode: 0
     property bool _portableCommandActive: false
+    property string _lastAppsDigest: ""
+    readonly property var _progressCoalesce: ({ pending: null })
 
     readonly property int updatesAvailableCount: {
         let count = 0
@@ -1246,9 +1336,21 @@ Singleton {
         return count
     }
 
+    function _setPortableAppsIfChanged(nextApps: var): void {
+        const clean = Array.isArray(nextApps) ? nextApps : []
+        const digest = JSON.stringify(clean)
+        if (!root.portableAppsLoaded || digest !== root._lastAppsDigest) {
+            root._lastAppsDigest = digest
+            root.apps = clean
+            root.portableAppsLoaded = true
+        }
+    }
+
     function setManagedAppsManual(list: var): void {
         root._manualAppsOverride = true
-        root.apps = Array.isArray(list) ? list : []
+        const clean = Array.isArray(list) ? list : []
+        root._lastAppsDigest = JSON.stringify(clean)
+        root.apps = clean
         root.portableAppsLoaded = true
     }
 
@@ -1288,7 +1390,7 @@ Singleton {
         }
     }
 
-    function _handlePortableProgressEvent(ev: var): void {
+    function _applyPortableProgressEventNow(ev: var): void {
         if (!ev)
             return
         const act = String(ev.action ?? "").trim()
@@ -1322,9 +1424,31 @@ Singleton {
             }
         }
         if (Array.isArray(ev.apps) && !root._manualAppsOverride) {
-            root.apps = ev.apps
-            root.portableAppsLoaded = true
+            root._setPortableAppsIfChanged(ev.apps)
         }
+    }
+
+    function _handlePortableProgressEvent(ev: var): void {
+        if (!ev)
+            return
+        const act = String(ev.action ?? "").trim()
+        const aid = String(ev.appId ?? "").trim()
+        const stg = String(ev.stage ?? "").trim()
+        const pct = typeof ev.percent === "number" ? Math.round(ev.percent) : -1
+        const urgent = (act.length > 0 && act !== root.busyAction)
+            || (aid.length > 0 && aid !== root.busyAppId)
+            || (stg.length > 0 && stg !== root.progressStage)
+            || pct === 0
+            || pct >= 100
+            || Array.isArray(ev.apps)
+        if (urgent || !portableProgressTimer.running) {
+            root._progressCoalesce.pending = null
+            root._applyPortableProgressEventNow(ev)
+            if (pct > 0 && pct < 100)
+                portableProgressTimer.restart()
+            return
+        }
+        root._progressCoalesce.pending = ev
     }
 
     function _applyPortableResult(parsed: var): void {
@@ -1332,8 +1456,7 @@ Singleton {
             return
         if (Array.isArray(parsed.apps)) {
             if (!(root._manualAppsOverride && root._lastPortableAction === "list")) {
-                root.apps = parsed.apps
-                root.portableAppsLoaded = true
+                root._setPortableAppsIfChanged(parsed.apps)
             }
         }
         if (parsed.added || parsed.removed || (Array.isArray(parsed.updated) && parsed.updated.length > 0)) {
@@ -1396,6 +1519,12 @@ Singleton {
         if (!root._portableProcExited || !root._portableStdoutDone)
             return
         portableFinalizeFallbackTimer.stop()
+        portableProgressTimer.stop()
+        if (root._progressCoalesce.pending) {
+            const pendingEv = root._progressCoalesce.pending
+            root._progressCoalesce.pending = null
+            root._applyPortableProgressEventNow(pendingEv)
+        }
         root._releasePortablePickerLock()
         if (root._lastPortableAction !== "list") {
             root.statusMessage = ""
@@ -1426,8 +1555,7 @@ Singleton {
         root.progressDetail = ""
         root.progressStage = ""
         if (shouldRefreshDiscovery) {
-            root.refreshDiscovery()
-            Autostart.refresh()
+            portablePostOpRefreshTimer.restart()
         }
     }
 
@@ -1591,6 +1719,31 @@ Singleton {
             return
         root._manualAppsOverride = false
         root._startPortableCommand(["set-update-source", target, String(source ?? "").trim()], "set-update-source", target)
+    }
+
+    Timer {
+        id: portableProgressTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (root._progressCoalesce.pending) {
+                const ev = root._progressCoalesce.pending
+                root._progressCoalesce.pending = null
+                root._applyPortableProgressEventNow(ev)
+                if (root.busy)
+                    portableProgressTimer.restart()
+            }
+        }
+    }
+
+    Timer {
+        id: portablePostOpRefreshTimer
+        interval: 250
+        repeat: false
+        onTriggered: {
+            root.refreshDiscovery()
+            Autostart.refresh()
+        }
     }
 
     Timer {

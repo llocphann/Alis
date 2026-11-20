@@ -119,6 +119,12 @@ StyledImage {
         else if (directUrl.length === 0)
             root._clearResolvedThumbnail()
 
+        if (Wallpapers._knownThumbnailsPreloaded) {
+            root._queuedThumbnailCheck = ""
+            root._ensureThumbnail()
+            return
+        }
+
         root._queuedThumbnailCheck = normalizedThumbnailPath
         root._startThumbnailCheck()
     }
