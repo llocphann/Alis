@@ -222,8 +222,7 @@ MouseArea {
 
         Item {
             id: indicatorGlyph
-            readonly property bool useHourglass: (TimerService?.hourglassStyleActive ?? true)
-                && !root.showPinnedIdle
+            readonly property bool useHourglass: !root.showPinnedIdle
                 && (root.pomodoroActive || root.countdownActive)
             readonly property real activeProgress: root.pomodoroActive
                 ? (TimerService.pomodoroSecondsLeft / Math.max(1, TimerService.pomodoroLapDuration))

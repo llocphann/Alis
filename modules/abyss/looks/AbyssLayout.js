@@ -564,6 +564,31 @@ function stripDepth(placements, edge, options, fontScale) {
         return Math.max(depth,crossBase*p.depth+16);
     },0);
 }
+function modulePaintedDepth(p, edge, options, fontScale, thickness, minimum) {
+    if (!p || !p.enabled || p.edge !== edge) return 0;
+    var size = moduleSize(p, options);
+    if (size <= 0) return 0;
+    var measured = options?.extents?.[p.id];
+    if (!options?.editing && Number.isFinite(measured) && measured <= 0) return 0;
+    var unified = isUnifiedKind(p.kind);
+    if (unified && unifiedLauncherMode(options, p.kind) !== "module") return 0;
+    var horizontal = edge === "top" || edge === "bottom";
+    var fs = bounded(fontScale, 1, .7, 2);
+    var natural = Number.isFinite(measured) && !(options?.editing && measured < 1)
+        ? Math.max(0, measured)
+        : extent(p.kind, !horizontal) * fs;
+    var rot = normalizeRotation(p.rotation, edge);
+    var parallel = isParallelToEdge(edge, rot);
+    var cross = parallel ? 32 * fs * size : natural * size;
+    var protrude = Math.max(0, Number(p.protrudeOffset) || 0);
+    if (unified) {
+        var pad = unifiedSurfacePad(p, options);
+        var edgeFloor = edgeThickness(options, edge, thickness) + 4;
+        return Math.ceil(Math.max(edgeFloor, cross + pad * 2) + protrude);
+    }
+    var depthMul = Number(p.depth) > 0 ? Number(p.depth) : 1;
+    return Math.ceil(Math.max(minimum || 0, cross * depthMul + 16, cross + 16) + protrude);
+}
 function edgeInsetsForModules(placements, options, fontScale, thickness, minimum, reservation) {
     if (placements.length && options?._widthFrame)
         return Object.assign({},reservation ? options._widthFrame.reservationInsets : options._widthFrame.paintInsets);
@@ -574,18 +599,23 @@ function edgeInsetsForModules(placements, options, fontScale, thickness, minimum
         // already supply localSurfaces; only Wayland reservations span the
         // whole side to keep application windows clear of that foreground.
         if(!reservation && insets[edge]===0)return;
-        // Tiny feature launchers are local Edge affordances; they must never
-        // thicken a whole edge's workspace/window padding or exclusive zone.
+        // Tiny feature launchers are local Edge affordances that keep the
+        // painted edge strip thin; Wayland reservations still protect active
+        // module bumps so application windows never overlap them.
         var enabled = placements.filter(function(p) {
             return p.enabled && p.edge===edge && !isUnifiedKind(p.kind)
                 && moduleSize(p,options)>0;
         });
-        if (!enabled.length) return;
-        // Wayland reserves a whole edge. Local paint still reserves enough room
-        // for its module so application windows cannot obscure that foreground.
-        if (reservation || (options?.edgeWidthAffectsModules?.[edge]!==false
-                && (enabled.length!==1 || options?.singleModuleExpansion?.[edge]!=="local")))
+        if (enabled.length && (reservation || (options?.edgeWidthAffectsModules?.[edge]!==false
+                && (enabled.length!==1 || options?.singleModuleExpansion?.[edge]!=="local"))))
             insets[edge] = Math.max(insets[edge],minimum,stripDepth(enabled,edge,options,fontScale));
+        if (reservation) {
+            placements.forEach(function(p) {
+                var painted = modulePaintedDepth(p, edge, options, fontScale, thickness, minimum);
+                if (painted > insets[edge])
+                    insets[edge] = painted;
+            });
+        }
     });
     return insets;
 }

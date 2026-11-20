@@ -290,6 +290,13 @@ Item {
     readonly property color headerTodayInk: ColorUtils.ensureReadable(
         headerAccent, abyssPanel ? AbyssStyle.contentLayer : Appearance.colors.colLayer0, 4.5)
     readonly property color headerDivider: Qt.alpha(headerInk, .16)
+    readonly property color activePillBg: root.headerAccent
+    readonly property color activePillInk: ColorUtils.ensureReadable(
+        Appearance.colors.colOnPrimary, root.activePillBg, 5.5)
+    readonly property color inactivePillBg: ColorUtils.tonalStep(
+        root.headerSurface, ColorUtils.relativeLuminance(root.headerSurface) < 0.35 ? 0.08 : -0.06, 1.08)
+    readonly property color inactivePillHoverBg: ColorUtils.tonalStep(
+        root.headerSurface, ColorUtils.relativeLuminance(root.headerSurface) < 0.35 ? 0.14 : -0.10, 1.12)
     signal requestEventsDialog(var event)
     Connections {
         target: root.localBackend
@@ -525,15 +532,17 @@ Item {
         id:action
         property string label: ""
         property string symbol: ""
-        property color buttonInk: root.ink
+        property color buttonInk: toggled ? root.activePillInk : root.ink
         implicitHeight:34 * Appearance.fontSizeScale
         implicitWidth:label.length
             ? actionRow.implicitWidth + 18 * Appearance.fontSizeScale
             : 34 * Appearance.fontSizeScale
         buttonRadius:12 * Appearance.fontSizeScale
         Accessible.name:label.length ? label : symbol
-        colBackground:toggled ? Appearance.colors.colSecondaryContainer : "transparent"
-        colBackgroundHover:Appearance.colors.colLayer1Hover
+        colBackground:"transparent"
+        colBackgroundHover:root.inactivePillHoverBg
+        colBackgroundToggled:root.activePillBg
+        colBackgroundToggledHover:Qt.lighter(root.activePillBg, 1.08)
         // Qt Controls gives contentItem the available button rectangle.
         // Centre the actual glyph/text row within it for equal margins.
         contentItem: Item {
@@ -552,6 +561,8 @@ Item {
                 }
                 StyledText {
                     visible:action.label.length>0
+                    horizontalAlignment:Text.AlignHCenter
+                    verticalAlignment:Text.AlignVCenter
                     text:action.label
                     color:action.buttonInk
                     font.pixelSize:Appearance.font.pixelSize.small
@@ -648,23 +659,22 @@ Item {
                         objectName:"plannerModeWeek"
                         toggled:root.viewMode==="week"
                         implicitHeight:34 * Appearance.fontSizeScale
-                        implicitWidth:modeWeekText.implicitWidth + 16 * Appearance.fontSizeScale
+                        implicitWidth:modeWeekText.implicitWidth + 18 * Appearance.fontSizeScale
                         buttonRadius:12 * Appearance.fontSizeScale
                         Accessible.name:Translation.tr("Week")
-                        colBackground:toggled ? Appearance.colors.colSecondaryContainer : "transparent"
-                        colBackgroundHover:Appearance.colors.colLayer1Hover
+                        colBackground:root.inactivePillBg
+                        colBackgroundHover:root.inactivePillHoverBg
+                        colBackgroundToggled:root.activePillBg
+                        colBackgroundToggledHover:Qt.lighter(root.activePillBg, 1.08)
                         onClicked:root.setViewMode("week")
-                        contentItem:Item {
-                            implicitWidth:modeWeekText.implicitWidth
-                            implicitHeight:modeWeekText.implicitHeight
-                            StyledText {
-                                id:modeWeekText
-                                anchors.centerIn:parent
-                                text:Translation.tr("Week")
-                                font.pixelSize:Appearance.font.pixelSize.small
-                                font.weight:modeWeekButton.toggled ? Font.DemiBold : Font.Normal
-                                color:root.headerInk
-                            }
+                        contentItem:StyledText {
+                            id:modeWeekText
+                            horizontalAlignment:Text.AlignHCenter
+                            verticalAlignment:Text.AlignVCenter
+                            text:Translation.tr("Week")
+                            font.pixelSize:Appearance.font.pixelSize.small
+                            font.weight:modeWeekButton.toggled ? Font.DemiBold : Font.Medium
+                            color:modeWeekButton.toggled ? root.activePillInk : root.headerInk
                         }
                     }
                     RippleButton {
@@ -672,23 +682,22 @@ Item {
                         objectName:"plannerModeYear"
                         toggled:root.viewMode==="year"
                         implicitHeight:34 * Appearance.fontSizeScale
-                        implicitWidth:modeYearText.implicitWidth + 16 * Appearance.fontSizeScale
+                        implicitWidth:modeYearText.implicitWidth + 18 * Appearance.fontSizeScale
                         buttonRadius:12 * Appearance.fontSizeScale
                         Accessible.name:Translation.tr("Year")
-                        colBackground:toggled ? Appearance.colors.colSecondaryContainer : "transparent"
-                        colBackgroundHover:Appearance.colors.colLayer1Hover
+                        colBackground:root.inactivePillBg
+                        colBackgroundHover:root.inactivePillHoverBg
+                        colBackgroundToggled:root.activePillBg
+                        colBackgroundToggledHover:Qt.lighter(root.activePillBg, 1.08)
                         onClicked:root.setViewMode("year")
-                        contentItem:Item {
-                            implicitWidth:modeYearText.implicitWidth
-                            implicitHeight:modeYearText.implicitHeight
-                            StyledText {
-                                id:modeYearText
-                                anchors.centerIn:parent
-                                text:Translation.tr("Year")
-                                font.pixelSize:Appearance.font.pixelSize.small
-                                font.weight:modeYearButton.toggled ? Font.DemiBold : Font.Normal
-                                color:root.headerInk
-                            }
+                        contentItem:StyledText {
+                            id:modeYearText
+                            horizontalAlignment:Text.AlignHCenter
+                            verticalAlignment:Text.AlignVCenter
+                            text:Translation.tr("Year")
+                            font.pixelSize:Appearance.font.pixelSize.small
+                            font.weight:modeYearButton.toggled ? Font.DemiBold : Font.Medium
+                            color:modeYearButton.toggled ? root.activePillInk : root.headerInk
                         }
                     }
                     Action {
@@ -868,7 +877,7 @@ Item {
                                     z:1
                                 }
                                 Accessible.name:modelData.event.title+(modelData.source==="external"?" · Read-only":"")
-                                contentItem:StyledText {text:allDayButton.modelData.event.title;color:root.ink;elide:Text.ElideRight;font.pixelSize:Appearance.font.pixelSize.smallest}
+                                contentItem:StyledText {text:allDayButton.modelData.event.title;color:root.ink;horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter;elide:Text.ElideRight;font.pixelSize:Appearance.font.pixelSize.smallest}
                                 onClicked:root.editOccurrence(modelData)
                                 property bool dragMoved:false
                                 property bool dragArmed:false
@@ -1251,7 +1260,9 @@ Item {
                         anchorDate:root.selectedDate
                         rangeMode:root.yearRangeMode
                         localBackend:root.localBackend
+                        externalBackend:root.externalBackend
                         eventsRevision:root._eventsRevision
+                        externalRevision:root._eventsRevision
                         abyssPanel:root.abyssPanel
                         ink:root.ink
                         mutedInk:root.mutedInk

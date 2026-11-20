@@ -1885,6 +1885,11 @@ apply_qt_runtime_env() {
     [[ -z "${QSG_ATLAS_WIDTH:-}" ]] && export QSG_ATLAS_WIDTH=1024
     [[ -z "${QSG_ATLAS_HEIGHT:-}" ]] && export QSG_ATLAS_HEIGHT=1024
 
+    # Keep a CPU-side shadow copy of Qt glyph caches so long-lived Wayland/Mesa
+    # sessions do not corrupt native/SDF text glyphs across atlas updates.
+    [[ -z "${QML_USE_GLYPHCACHE_WORKAROUND:-}" ]] && export QML_USE_GLYPHCACHE_WORKAROUND=1
+    [[ -z "${QT_ENABLE_GLYPH_CACHE_WORKAROUND:-}" ]] && export QT_ENABLE_GLYPH_CACHE_WORKAROUND=1
+
     # jemalloc heap tuning for Quickshell (/usr/bin/quickshell links libjemalloc.so.2).
     if [[ -z "${_ALIS_ORIG_MALLOC_CONF_SET+x}" ]]; then
         if [[ -n "${MALLOC_CONF+x}" ]]; then

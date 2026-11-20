@@ -241,7 +241,7 @@ Item {
     }
 
     readonly property color _heatFutureColor: ColorUtils.applyAlpha(Appearance.colors.colLayer2Base, 0.22)
-    readonly property color _heatEmptyColor: ColorUtils.mix(root.colAnalyticsSubBoxBg, root.colText, 0.92)
+    readonly property color _heatEmptyColor: ColorUtils.tonalStep(root.colAnalyticsSubBoxBg, 0.018, 1.05)
     readonly property color _heatLevel1Color: ColorUtils.mix(root.colAnalyticsSubBoxBg, Appearance.colors.colPrimary, 0.68)
     readonly property color _heatLevel2Color: ColorUtils.mix(root.colAnalyticsSubBoxBg, Appearance.colors.colPrimary, 0.46)
     readonly property color _heatLevel3Color: ColorUtils.mix(root.colAnalyticsSubBoxBg, Appearance.colors.colPrimary, 0.24)
@@ -262,47 +262,82 @@ Item {
     readonly property bool alisEverywhere: Appearance.alisEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
+    readonly property color colMainBg: ColorUtils.applyAlpha(
+        Qt.color(Appearance.colors.colLayer1Base).valid
+            ? Appearance.colors.colLayer1Base
+            : Appearance.colors.colLayer0Base,
+        1.0
+    )
+    readonly property bool isDarkSurface: Appearance.m3colors.darkmode
+        || ColorUtils.relativeLuminance(root.colMainBg) < 0.35
+
     // Match DashCard.qml surface & border tokens so cards blend seamlessly with the rest of the Dashboard
     readonly property color colSurface: abyss
         ? AbyssStyle.contentLayer
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : alisEverywhere ? Appearance.alis.colLayer1
         : auroraEverywhere ? Appearance.aurora.colSubSurface
-        : Appearance.colors.colLayer1
+        : ColorUtils.applyAlpha(root.colMainBg, 1.0)
     readonly property color colSurfaceElevated: abyss
-        ? Qt.alpha(AbyssStyle.textColor, 0.06)
+        ? ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colMainBg, 0.068, 1.12), Math.max(0.92, root.colSurface.a))
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : alisEverywhere ? Appearance.alis.colLayer2
-        : Appearance.colors.colLayer2
-    // Auto-themed Analytics column hierarchy derived directly from Appearance.colors:
-    // colAnalyticsColumnBg <= colAnalyticsCardBg <= colAnalyticsSubBoxBg < colSurfaceElevated
-    readonly property color colAnalyticsColumnBg: ColorUtils.applyAlpha(
-        Appearance.colors.colLayer1Base,
+        : ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colMainBg, 0.068, 1.12), Math.max(0.92, root.colSurface.a))
+    readonly property color colBoxHover: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.092 : -0.055, 1.14),
+        Math.max(0.95, root.colSurface.a)
+    )
+    readonly property color colCardGradTop: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.032 : -0.008, 1.08),
         root.colSurface.a
     )
-    readonly property color colAnalyticsCardBg: {
-        const layer1 = Appearance.colors.colLayer1Base
-        const upperLayer = root.relativeLuminance(Appearance.colors.colLayer2Base) > root.relativeLuminance(layer1)
-            ? Appearance.colors.colLayer2Base
-            : (root.relativeLuminance(Appearance.colors.colLayer0Base) > root.relativeLuminance(layer1)
-                ? Appearance.colors.colLayer0Base
-                : Qt.lighter(layer1, 1.08))
-        return ColorUtils.applyAlpha(ColorUtils.mix(layer1, upperLayer, 0.68), root.colSurface.a)
-    }
-    readonly property color colAnalyticsSubBoxBg: {
-        const layer1 = Appearance.colors.colLayer1Base
-        const upperLayer = root.relativeLuminance(Appearance.colors.colLayer2Base) > root.relativeLuminance(layer1)
-            ? Appearance.colors.colLayer2Base
-            : (root.relativeLuminance(Appearance.colors.colLayer0Base) > root.relativeLuminance(layer1)
-                ? Appearance.colors.colLayer0Base
-                : Qt.lighter(layer1, 1.12))
-        return ColorUtils.applyAlpha(ColorUtils.mix(layer1, upperLayer, 0.42), root.colSurface.a)
-    }
+    readonly property color colCardGradBottom: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.012 : -0.024, 1.04),
+        root.colSurface.a
+    )
+    readonly property color colBoxGradTop: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.064 : -0.020, 1.12),
+        Math.max(0.92, root.colSurface.a)
+    )
+    readonly property color colBoxGradBottom: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.042 : -0.042, 1.08),
+        Math.max(0.92, root.colSurface.a)
+    )
+    readonly property color colInputGradTop: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.088 : -0.032, 1.14),
+        Math.max(0.94, root.colSurface.a)
+    )
+    readonly property color colInputGradBottom: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.064 : -0.054, 1.10),
+        Math.max(0.94, root.colSurface.a)
+    )
+    readonly property color colActivePillInk: ColorUtils.ensureReadable(
+        Appearance.colors.colOnPrimary,
+        Appearance.colors.colPrimary,
+        5.0
+    )
+    // Auto-themed Analytics column hierarchy derived directly from Appearance.colors via HSL tonal steps:
+    // colAnalyticsColumnBg <= colAnalyticsCardBg <= colAnalyticsSubBoxBg < colSurfaceElevated
+    readonly property color colAnalyticsColumnBg: ColorUtils.applyAlpha(
+        root.colMainBg,
+        root.colSurface.a
+    )
+    readonly property color colAnalyticsCardBg: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colMainBg, 0.024, 1.06),
+        root.colSurface.a
+    )
+    readonly property color colAnalyticsSubBoxBg: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colMainBg, 0.048, 1.10),
+        root.colSurface.a
+    )
     readonly property color colAnalyticsBorder: ColorUtils.applyAlpha(
         Appearance.colors.colOutlineVariant,
-        0.20
+        0.24
     )
-    readonly property color colBorder: Qt.alpha(root.colText, 0.07)
+    readonly property color colBorder: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.24 : -0.24, 1.10),
+        0.07
+    )
     readonly property color colText: abyss
         ? (Appearance.m3colors.darkmode ? AbyssStyle.textColor : "#000000")
         : Appearance.angelEverywhere ? Appearance.angel.colText
@@ -1665,7 +1700,7 @@ Item {
             : root.colSurfaceElevated
         colBackgroundHover: activeChip
             ? Qt.alpha(chip.badgeColor, 0.24)
-            : Qt.alpha(root.colText, 0.10)
+            : root.colBoxHover
         colBackgroundToggled: Qt.alpha(chip.badgeColor, 0.18)
         colBackgroundToggledHover: Qt.alpha(chip.badgeColor, 0.26)
         Rectangle {
@@ -1727,6 +1762,10 @@ Item {
         cursorVisible: activeFocus
         background: Rectangle {
             color: styledField.colBackground
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: root.colInputGradTop }
+                GradientStop { position: 1.0; color: root.colInputGradBottom }
+            }
             radius: Appearance.rounding.full
             border.width: styledField.activeFocus ? 1.5 : 0
             border.color: styledField.activeFocus ? Appearance.colors.colPrimary : "transparent"
@@ -1741,7 +1780,7 @@ Item {
         implicitHeight: 22
         implicitWidth: Math.min(morphPill.maxStripWidth, morphRow.implicitWidth + 16)
         radius: 6
-        color: Qt.alpha(root.colText, 0.05)
+        color: root.colAnalyticsSubBoxBg
         border.width: 0
         Row {
             id: morphRow
@@ -1772,7 +1811,7 @@ Item {
         implicitWidth: 38
         implicitHeight: 20
         radius: 5
-        color: Qt.alpha(root.colText, 0.06)
+        color: root.colSurfaceElevated
         StyledText {
             anchors.centerIn: parent
             text: parent.label
@@ -1792,6 +1831,10 @@ Item {
             implicitHeight: topBarLayout.implicitHeight + 16
             radius: Appearance.rounding.small
             color: root.colSurface
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: root.colCardGradTop }
+                GradientStop { position: 1.0; color: root.colCardGradBottom }
+            }
             border.width: 0
 
             RowLayout {
@@ -1976,6 +2019,10 @@ Item {
             implicitHeight: filterBarLayout.implicitHeight + 14
             radius: Appearance.rounding.small
             color: root.colSurface
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: root.colCardGradTop }
+                GradientStop { position: 1.0; color: root.colCardGradBottom }
+            }
             border.width: 0
 
             RowLayout {
@@ -2202,6 +2249,10 @@ Item {
                         visible: root.showStudyArenaCard
                         radius: Appearance.rounding.small
                         color: root.colSurface
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: root.colCardGradTop }
+                            GradientStop { position: 1.0; color: root.colCardGradBottom }
+                        }
                         border.width: 0
                         clip: true
 
@@ -2508,7 +2559,7 @@ Item {
                                                                 radius: 5
                                                                 color: (matchWordBtn.modelData.matched || matchWordBtn.isSelected || matchWordBtn.isMismatch)
                                                                     ? Qt.alpha(matchWordBtn.stateAccent, 0.24)
-                                                                    : Qt.alpha(root.colText, 0.08)
+                                                                    : root.colBoxHover
                                                                 StyledText {
                                                                     anchors.centerIn: parent
                                                                     text: String(matchWordBtn.index + 1)
@@ -2705,7 +2756,7 @@ Item {
                                                                 radius: 6
                                                                 color: (matchDefBtn.modelData.matched || matchDefBtn.isSelected || matchDefBtn.isMismatch)
                                                                     ? Qt.alpha(matchDefBtn.stateAccent, 0.24)
-                                                                    : Qt.alpha(root.colText, 0.08)
+                                                                    : root.colBoxHover
                                                                 StyledText {
                                                                     anchors.centerIn: parent
                                                                     text: ["A", "B", "C", "D", "E", "F"][matchDefBtn.index] ?? String(matchDefBtn.index + 1)
@@ -2748,7 +2799,7 @@ Item {
                                                                 implicitWidth: distractorBadgeText.implicitWidth + 10
                                                                 implicitHeight: 20
                                                                 radius: 5
-                                                                color: Qt.alpha(root.colText, 0.08)
+                                                                color: root.colBoxHover
                                                                 StyledText {
                                                                     id: distractorBadgeText
                                                                     anchors.centerIn: parent
@@ -3076,6 +3127,10 @@ Item {
                                         implicitHeight: Math.max(34, topExampleRow.implicitHeight + 14)
                                         radius: Appearance.rounding.small
                                         color: Qt.alpha(Appearance.colors.colPrimary, 0.09)
+                                        gradient: Gradient {
+                                            GradientStop { position: 0.0; color: ColorUtils.applyAlpha(ColorUtils.mix(root.colBoxGradTop, Appearance.colors.colPrimary, 0.88), Math.max(0.92, root.colSurface.a)) }
+                                            GradientStop { position: 1.0; color: ColorUtils.applyAlpha(ColorUtils.mix(root.colBoxGradBottom, Appearance.colors.colPrimary, 0.92), Math.max(0.92, root.colSurface.a)) }
+                                        }
                                         border.width: 1
                                         border.color: Qt.alpha(Appearance.colors.colPrimary, 0.24)
 
@@ -3285,7 +3340,7 @@ Item {
                                             implicitHeight: 28
                                             implicitWidth: clozeZeroRow.implicitWidth + 18
                                             buttonRadius: Appearance.rounding.full
-                                            colBackground: Qt.alpha(root.colText, 0.06)
+                                            colBackground: root.colSurfaceElevated
                                             colBackgroundHover: Qt.alpha(Appearance.colors.colPrimary, 0.14)
                                             onClicked: root.triggerStudyShortcut("cloze-reveal", true)
 
@@ -3379,7 +3434,7 @@ Item {
                                             ? Qt.alpha(Appearance.colors.colPrimary, isPending ? 0.20 : 0.14)
                                             : isRight || isChosen
                                             ? colBackground
-                                            : Qt.alpha(root.colText, 0.10)
+                                            : root.colBoxHover
 
                                         onClicked: root.selectMultipleChoiceOption(index)
 
@@ -3415,7 +3470,7 @@ Item {
                                                         radius: 6
                                                         color: (root.answerRevealed && (mcOptionBtn.isRight || mcOptionBtn.isChosen)) || mcOptionBtn.isPending
                                                             ? Qt.alpha(mcOptionBtn.stateAccent, 0.24)
-                                                            : Qt.alpha(root.colText, 0.08)
+                                                            : root.colBoxHover
                                                         StyledText {
                                                             anchors.centerIn: parent
                                                             text: ["A", "B", "C", "D"][mcOptionBtn.index] ?? String(mcOptionBtn.index + 1)
@@ -3975,6 +4030,10 @@ Item {
                         visible: !root.showStudyArenaCard
                         radius: Appearance.rounding.small
                         color: root.colSurface
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: root.colCardGradTop }
+                            GradientStop { position: 1.0; color: root.colCardGradBottom }
+                        }
                         border.width: 0
 
                         ColumnLayout {
@@ -4051,6 +4110,10 @@ Item {
                     visible: root.width >= 860
                     radius: Appearance.rounding.small
                     color: root.colSurface
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: root.colCardGradTop }
+                        GradientStop { position: 1.0; color: root.colCardGradBottom }
+                    }
                     border.width: 0
 
                     ColumnLayout {
@@ -4266,6 +4329,10 @@ Item {
                                 implicitHeight: srConsistencyCol.implicitHeight + 12
                                 radius: Appearance.rounding.small
                                 color: root.colAnalyticsCardBg
+                                gradient: Gradient {
+                                    GradientStop { position: 0.0; color: root.colCardGradTop }
+                                    GradientStop { position: 1.0; color: root.colCardGradBottom }
+                                }
                                 border.width: 1
                                 border.color: root.colAnalyticsBorder
 
@@ -4341,6 +4408,10 @@ Item {
                                         implicitHeight: consistencyConfigCol.implicitHeight + 12
                                         radius: 6
                                         color: root.colAnalyticsSubBoxBg
+                                        gradient: Gradient {
+                                            GradientStop { position: 0.0; color: root.colBoxGradTop }
+                                            GradientStop { position: 1.0; color: root.colBoxGradBottom }
+                                        }
                                         border.width: 1
                                         border.color: root.colAnalyticsBorder
 
@@ -4522,6 +4593,10 @@ Item {
                                 implicitHeight: srHeatmapCol.implicitHeight + 12
                                 radius: Appearance.rounding.small
                                 color: root.colAnalyticsCardBg
+                                gradient: Gradient {
+                                    GradientStop { position: 0.0; color: root.colCardGradTop }
+                                    GradientStop { position: 1.0; color: root.colCardGradBottom }
+                                }
                                 border.width: 1
                                 border.color: root.colAnalyticsBorder
 
@@ -4838,7 +4913,7 @@ Item {
                                                 Layout.fillWidth: true
                                                 implicitHeight: 3
                                                 radius: 1.5
-                                                color: Qt.alpha(root.colText, 0.06)
+                                                color: root.colAnalyticsSubBoxBg
 
                                                 Rectangle {
                                                     readonly property real viewRatio: Math.max(0.12, Math.min(1, srHeatmapFlick.width / Math.max(1, srHeatmapFlick.contentWidth)))
@@ -4917,6 +4992,10 @@ Item {
                                 implicitHeight: srBreakdownCol.implicitHeight + 12
                                 radius: Appearance.rounding.small
                                 color: root.colAnalyticsCardBg
+                                gradient: Gradient {
+                                    GradientStop { position: 0.0; color: root.colCardGradTop }
+                                    GradientStop { position: 1.0; color: root.colCardGradBottom }
+                                }
                                 border.width: 1
                                 border.color: root.colAnalyticsBorder
 
@@ -4946,15 +5025,17 @@ Item {
                                                 color: isScopeActive
                                                     ? Appearance.colors.colPrimary
                                                     : scopeBtnMouse.containsMouse
-                                                        ? ColorUtils.mix(root.colAnalyticsSubBoxBg, Appearance.colors.colPrimary, 0.85)
+                                                        ? root.colBoxHover
                                                         : root.colAnalyticsSubBoxBg
 
                                                 StyledText {
                                                     anchors.centerIn: parent
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
                                                     text: modelData.label
                                                     font.pixelSize: Appearance.font.pixelSize.smallest
                                                     font.weight: isScopeActive ? Font.Bold : Font.Medium
-                                                    color: isScopeActive ? Appearance.colors.colOnPrimary : root.colSubtext
+                                                    color: isScopeActive ? root.colActivePillInk : root.colSubtext
                                                 }
 
                                                 MouseArea {
@@ -4979,6 +5060,10 @@ Item {
                                             implicitHeight: 36
                                             radius: 6
                                             color: root.colAnalyticsSubBoxBg
+                                            gradient: Gradient {
+                                                GradientStop { position: 0.0; color: root.colBoxGradTop }
+                                                GradientStop { position: 1.0; color: root.colBoxGradBottom }
+                                            }
                                             ColumnLayout {
                                                 anchors.centerIn: parent
                                                 spacing: 0
@@ -5004,6 +5089,10 @@ Item {
                                             implicitHeight: 36
                                             radius: 6
                                             color: root.colAnalyticsSubBoxBg
+                                            gradient: Gradient {
+                                                GradientStop { position: 0.0; color: root.colBoxGradTop }
+                                                GradientStop { position: 1.0; color: root.colBoxGradBottom }
+                                            }
                                             ColumnLayout {
                                                 anchors.centerIn: parent
                                                 spacing: 0
@@ -5029,6 +5118,10 @@ Item {
                                             implicitHeight: 36
                                             radius: 6
                                             color: root.colAnalyticsSubBoxBg
+                                            gradient: Gradient {
+                                                GradientStop { position: 0.0; color: root.colBoxGradTop }
+                                                GradientStop { position: 1.0; color: root.colBoxGradBottom }
+                                            }
                                             ColumnLayout {
                                                 anchors.centerIn: parent
                                                 spacing: 0
@@ -5259,6 +5352,10 @@ Item {
                                 implicitHeight: srForecastCol.implicitHeight + 12
                                 radius: Appearance.rounding.small
                                 color: root.colAnalyticsCardBg
+                                gradient: Gradient {
+                                    GradientStop { position: 0.0; color: root.colCardGradTop }
+                                    GradientStop { position: 1.0; color: root.colCardGradBottom }
+                                }
                                 border.width: 1
                                 border.color: root.colAnalyticsBorder
 
@@ -5401,6 +5498,10 @@ Item {
                     Layout.preferredWidth: 1
                     radius: Appearance.rounding.small
                     color: root.colSurface
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: root.colCardGradTop }
+                        GradientStop { position: 1.0; color: root.colCardGradBottom }
+                    }
                     border.width: 0
 
                     Flickable {
@@ -5520,6 +5621,10 @@ Item {
                                 implicitHeight: liveAnalysisCol.implicitHeight + 16
                                 radius: Appearance.rounding.small
                                 color: root.colSurfaceElevated
+                                gradient: Gradient {
+                                    GradientStop { position: 0.0; color: root.colBoxGradTop }
+                                    GradientStop { position: 1.0; color: root.colBoxGradBottom }
+                                }
                                 border.width: 0
 
                                 ColumnLayout {
@@ -5557,7 +5662,7 @@ Item {
                                             implicitHeight: 24
                                             implicitWidth: previewPosText.implicitWidth + 14
                                             radius: Appearance.rounding.full
-                                            color: Qt.alpha(root.colText, 0.06)
+                                            color: root.colAnalyticsSubBoxBg
                                             StyledText {
                                                 id: previewPosText
                                                 anchors.centerIn: parent
@@ -5806,14 +5911,15 @@ Item {
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 text: "add_task"
                                                 iconSize: 18
-                                                color: Appearance.colors.colOnPrimary
+                                                color: root.colActivePillInk
                                             }
                                             StyledText {
                                                 anchors.verticalCenter: parent.verticalCenter
+                                                horizontalAlignment: Text.AlignHCenter
                                                 text: Translation.tr("Add Card")
                                                 font.pixelSize: Appearance.font.pixelSize.small
                                                 font.weight: Font.Bold
-                                                color: Appearance.colors.colOnPrimary
+                                                color: root.colActivePillInk
                                             }
                                         }
                                     }
@@ -5830,6 +5936,10 @@ Item {
                     Layout.preferredWidth: 1
                     radius: Appearance.rounding.small
                     color: root.colSurface
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: root.colCardGradTop }
+                        GradientStop { position: 1.0; color: root.colCardGradBottom }
+                    }
                     border.width: 0
 
                     ColumnLayout {
@@ -5953,7 +6063,7 @@ Item {
                                                 Layout.fillWidth: true
                                                 implicitHeight: guideCodeText.implicitHeight + 10
                                                 radius: 6
-                                                color: Qt.alpha(root.colText, 0.06)
+                                                color: root.colAnalyticsSubBoxBg
                                                 StyledText {
                                                     id: guideCodeText
                                                     anchors.fill: parent
@@ -5992,6 +6102,10 @@ Item {
                             Layout.preferredHeight: 145
                             radius: Appearance.rounding.small
                             color: root.colSurfaceElevated
+                            gradient: Gradient {
+                                GradientStop { position: 0.0; color: root.colInputGradTop }
+                                GradientStop { position: 1.0; color: root.colInputGradBottom }
+                            }
                             border.width: bulkInputArea.activeFocus ? 1.5 : 0
                             border.color: bulkInputArea.activeFocus ? Appearance.colors.colPrimary : "transparent"
 
@@ -6113,6 +6227,10 @@ Item {
                     Rectangle {
                         radius: Appearance.rounding.small
                         color: root.colSurface
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: root.colCardGradTop }
+                            GradientStop { position: 1.0; color: root.colCardGradBottom }
+                        }
                         border.width: 0
 
                         ColumnLayout {
@@ -6242,7 +6360,7 @@ Item {
                                         implicitHeight: 20
                                         implicitWidth: deckTagText.implicitWidth + 12
                                         radius: Appearance.rounding.full
-                                        color: Qt.alpha(root.colText, 0.06)
+                                        color: root.colAnalyticsSubBoxBg
                                         StyledText {
                                             id: deckTagText
                                             anchors.centerIn: parent
@@ -6287,7 +6405,7 @@ Item {
                                     Rectangle {
                                         Layout.fillWidth: true
                                         height: 1
-                                        color: Qt.alpha(root.colText, 0.06)
+                                        color: root.colBorder
                                     }
 
                                     RowLayout {

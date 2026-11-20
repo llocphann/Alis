@@ -14,7 +14,24 @@ Item {
     implicitWidth: contentColumn.implicitWidth
 
     property bool editMode: !TimerService.countdownRunning && TimerService.countdownSecondsLeft === TimerService.countdownDuration
+    property bool settingsOpen: false
 
+    Connections {
+        target: TimerService
+        function onCountdownRunningChanged(): void {
+            if (TimerService.countdownRunning)
+                root.settingsOpen = false
+        }
+    }
+
+    readonly property color _colLayer: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer2
+        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+        : Appearance.colors.colLayer2
+    readonly property color _colLayerHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
+        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
+        : Appearance.colors.colLayer2Hover
     readonly property color _colAccent: Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.alisEverywhere ? Appearance.alis.colPrimary
         : Appearance.colors.colPrimary
@@ -40,11 +57,10 @@ Item {
 
         Item {
             id: timerDeck
+            visible: !root.settingsOpen || TimerService.countdownRunning
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredHeight: TimerService.hourglassStyleActive
-                ? (root.compactMode ? 128 : 160)
-                : (root.compactMode ? 108 : 138)
+            Layout.preferredHeight: root.compactMode ? 128 : 160
 
             readonly property real progress:
                 TimerService.countdownDuration > 0
@@ -66,69 +82,15 @@ Item {
                 }
             }
 
-            // 1-click timer visual style cycler (Turned -> Matrix -> Square -> Classic)
-            RippleButton {
-                id: countdownStyleButton
-                objectName: "countdownStyleButton"
-                anchors.top: parent.top
-                anchors.right: parent.right
-                z: 2
-                implicitWidth: countdownStyleRow.implicitWidth + 14
-                implicitHeight: 22
-                buttonRadius: height / 2
-                colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2
-                    : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
-                    : Appearance.colors.colLayer2
-                colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
-                    : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
-                    : Appearance.colors.colLayer2Hover
-                onClicked: TimerService.cycleVisualStyle()
-
-                contentItem: Row {
-                    id: countdownStyleRow
-                    anchors.centerIn: parent
-                    spacing: 4
-
-                    MaterialSymbol {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: TimerService.visualStyle === "matrix"
-                            ? "grain"
-                            : (TimerService.visualStyle === "square"
-                                ? "grid_view"
-                                : (TimerService.visualStyle === "classic"
-                                    ? "donut_large"
-                                    : "hourglass_top"))
-                        iconSize: 13
-                        color: root._colAccent
-                    }
-
-                    StyledText {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: TimerService.visualStyleLabel(TimerService.visualStyle)
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.weight: Font.Medium
-                        color: root._colSubtext
-                    }
-                }
-
-                StyledToolTip {
-                    text: Translation.tr("Switch timer style (T)")
-                }
-            }
-
             RowLayout {
                 id: countdownDeckRow
                 anchors.centerIn: parent
-                anchors.verticalCenterOffset: TimerService.hourglassStyleActive ? 8 : 0
-                width: Math.min(parent.width - 12, TimerService.hourglassStyleActive ? 318 : 310)
+                width: Math.min(parent.width - 12, 318)
                 spacing: root.compactMode ? 8 : 14
 
                 HourglassVisual {
                     id: countdownHourglass
                     objectName: "countdownHourglass"
-                    visible: TimerService.hourglassStyleActive
                     Layout.alignment: Qt.AlignVCenter
                     Layout.preferredWidth: root.compactMode ? 78 : 104
                     Layout.preferredHeight: root.compactMode ? 96 : 126
@@ -312,48 +274,6 @@ Item {
                     }
                 }
 
-                // Countdown uses a segmented runway instead of a circular dial.
-                // Segments extinguish from right to left as time elapses.
-                Item {
-                    visible: !TimerService.hourglassStyleActive
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 8
-                    Layout.topMargin: root.compactMode ? 3 : 5
-
-                    Row {
-                        id: segmentRow
-                        anchors.fill: parent
-                        spacing: 3
-
-                        Repeater {
-                            model: 16
-
-                            Rectangle {
-                                required property int index
-                                readonly property bool activeSegment:
-                                    root.editMode
-                                    || index < Math.ceil(
-                                        timerDeck.progress * 16)
-                                width: Math.max(3,
-                                    (segmentRow.width - 45) / 16)
-                                height: 6
-                                radius: height / 2
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: activeSegment
-                                    ? root._colAccent : root._colTrack
-                                opacity: activeSegment ? 1 : 0.7
-
-                                Behavior on color {
-                                    enabled: Appearance.animationsEnabled
-                                    ColorAnimation {
-                                        duration: Appearance.animation.elementMoveFast.duration
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.topMargin: 2
@@ -382,11 +302,99 @@ Item {
             }
         }
 
+        // Inline Style Customize card (Turned, Matrix, Square)
+        Item {
+            id: countdownSettingsCard
+            objectName: "countdownSettingsCard"
+            readonly property bool active: root.settingsOpen && !TimerService.countdownRunning
+            readonly property real targetHeight: active ? settingsInner.implicitHeight + (root.compactMode ? 16 : 20) : 0
+            visible: active || Layout.maximumHeight > 0
+            Layout.fillWidth: true
+            Layout.maximumWidth: Math.max(0, root.width - 16)
+            Layout.leftMargin: 8
+            Layout.rightMargin: 8
+            Layout.topMargin: active ? 4 : 0
+            Layout.bottomMargin: active ? (root.compactMode ? 6 : 8) : 0
+            Layout.preferredHeight: targetHeight
+            Layout.maximumHeight: targetHeight
+            clip: true
+
+            Behavior on Layout.maximumHeight {
+                enabled: Appearance.animationsEnabled && !root.compactMode
+                animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                    : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
+                    : Appearance.rounding.normal
+                color: root._colLayer
+                border.width: 1
+                border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+                    : Appearance.alisEverywhere ? Appearance.alis.colBorder
+                    : Appearance.colors.colLayer0Border
+            }
+
+            ColumnLayout {
+                id: settingsInner
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    verticalCenter: parent.verticalCenter
+                    margins: root.compactMode ? 10 : 12
+                }
+                spacing: 8
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Style")
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    font.weight: Font.Medium
+                    color: root._colSubtext
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Repeater {
+                        model: TimerService.visualStyles
+
+                        RippleButton {
+                            required property string modelData
+                            readonly property bool selected: TimerService.visualStyle === modelData
+                            readonly property color _chipActiveInk: ColorUtils.ensureReadable(Appearance.colors.colOnPrimary, root._colAccent, 5.0)
+                            objectName: "countdownStyleChip_" + modelData
+                            toggled: selected
+                            Layout.fillWidth: true
+                            implicitHeight: 30
+                            buttonRadius: Appearance.rounding.small
+                            colBackground: Appearance.colors.colLayer1
+                            colBackgroundHover: root._colLayerHover
+                            colBackgroundToggled: root._colAccent
+                            colBackgroundToggledHover: Qt.lighter(root._colAccent, 1.08)
+                            onClicked: TimerService.setVisualStyle(modelData)
+
+                            contentItem: StyledText {
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                text: TimerService.visualStyleLabel(modelData)
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                font.weight: selected ? Font.DemiBold : Font.Medium
+                                color: selected ? _chipActiveInk : root._colText
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         Row {
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: root.compactMode ? 4 : 10
             spacing: 6
-            opacity: root.editMode ? 1 : 0
+            opacity: root.editMode && !root.settingsOpen ? 1 : 0
             visible: opacity > 0
             Behavior on opacity {
                 enabled: Appearance.animationsEnabled
@@ -404,6 +412,9 @@ Item {
 
                 RippleButton {
                     required property var modelData
+                    readonly property bool selected: root.editMode && TimerService.countdownDuration === modelData.seconds
+                    readonly property color _presetInk: ColorUtils.ensureReadable(Appearance.colors.colOnPrimary, root._colAccent, 5.0)
+                    toggled: selected
                     implicitHeight: root.compactMode ? 28 : 30
                     implicitWidth: 45
                     buttonRadius: Appearance.rounding.small
@@ -413,6 +424,8 @@ Item {
                     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover
+                    colBackgroundToggled: root._colAccent
+                    colBackgroundToggledHover: Qt.lighter(root._colAccent, 1.08)
                     colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
                         : Appearance.alisEverywhere ? Appearance.alis.colLayer2Active
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
@@ -423,21 +436,40 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                         text: modelData.label
                         font.pixelSize: Appearance.font.pixelSize.smaller
-                        font.weight: Font.Medium
-                        color: Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer2
+                        font.weight: selected ? Font.DemiBold : Font.Medium
+                        color: selected
+                            ? _presetInk
+                            : (Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer2)
                     }
                 }
             }
         }
 
         RowLayout {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: root.editMode ? (root.compactMode ? 6 : 8) : 0
-            spacing: 10
+            id: countdownControlsRow
+            readonly property bool tightControls: root.width > 0 && root.width < 300
+            Layout.fillWidth: true
+            Layout.maximumWidth: Math.max(0, root.width - 12)
+            Layout.leftMargin: 6
+            Layout.rightMargin: 6
+            Layout.topMargin: (root.editMode && !root.settingsOpen) ? (root.compactMode ? 6 : 8) : 0
+            spacing: tightControls ? 6 : 10
+
+            // Mirror trailing Customize button so Start/Reset stay centered.
+            Item {
+                Layout.preferredWidth: Math.max(0, Math.min(
+                    countdownCustomizeButton.implicitWidth,
+                    root.width - (countdownStartButton.implicitWidth + countdownResetButton.implicitWidth + countdownCustomizeButton.implicitWidth + (countdownControlsRow.tightControls ? 36 : 48))))
+                Layout.preferredHeight: 1
+            }
+
+            Item { Layout.fillWidth: true }
 
             RippleButton {
-                Layout.preferredHeight: 35
-                Layout.preferredWidth: 90
+                id: countdownStartButton
+                Layout.alignment: Qt.AlignVCenter
+                implicitHeight: 35
+                implicitWidth: countdownControlsRow.tightControls ? 78 : 90
                 buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                 onClicked: TimerService.toggleCountdown()
                 enabled: TimerService.countdownDuration > 0
@@ -480,13 +512,13 @@ Item {
 
             RippleButton {
                 id: countdownResetButton
-                Layout.preferredHeight: 35
-                Layout.preferredWidth: 90
+                Layout.alignment: Qt.AlignVCenter
+                implicitHeight: 35
+                implicitWidth: countdownControlsRow.tightControls ? 74 : 90
                 buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                 onClicked: {
                     TimerService.resetCountdown()
-                    if (TimerService.hourglassStyleActive)
-                        countdownHourglass.triggerFlip()
+                    countdownHourglass.triggerFlip()
                 }
                 enabled: TimerService.countdownSecondsLeft < TimerService.countdownDuration || TimerService.countdownRunning
                 colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
@@ -525,6 +557,39 @@ Item {
                                 : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2
                                 : Appearance.colors.colOnErrorContainer
                     }
+                }
+            }
+
+            Item { Layout.fillWidth: true }
+
+            RippleButton {
+                id: countdownCustomizeButton
+                objectName: "countdownCustomizeButton"
+                Layout.alignment: Qt.AlignVCenter
+                implicitWidth: root.compactMode ? 34 : 36
+                implicitHeight: root.compactMode ? 34 : 36
+                buttonRadius: height / 2
+                enabled: !TimerService.countdownRunning
+                toggled: root.settingsOpen
+                colBackground: root._colLayer
+                colBackgroundHover: Appearance.colors.colPrimaryContainerHover
+                colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+                onClicked: root.settingsOpen = !root.settingsOpen
+
+                contentItem: Item {
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: root.settingsOpen ? "close" : "tune"
+                        iconSize: 20
+                        color: root.settingsOpen
+                            ? Appearance.colors.colOnPrimaryContainer
+                            : root._colText
+                    }
+                }
+
+                StyledToolTip {
+                    text: Translation.tr("Customize timer")
                 }
             }
         }

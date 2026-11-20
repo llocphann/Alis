@@ -77,8 +77,7 @@ BarButton {
 
             Item {
                 id: waffleTimerIconSlot
-                readonly property bool useHourglass: (TimerService?.hourglassStyleActive ?? true)
-                    && (root.pomodoroActive || root.countdownActive)
+                readonly property bool useHourglass: (root.pomodoroActive || root.countdownActive)
                 readonly property real activeProgress: root.pomodoroActive
                     ? ((TimerService?.pomodoroSecondsLeft ?? 0) / Math.max(1, TimerService?.pomodoroLapDuration ?? 1))
                     : (root.countdownActive

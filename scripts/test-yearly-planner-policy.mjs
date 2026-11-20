@@ -157,4 +157,116 @@ assert.deepEqual(
     { startIso: "2026-06-10", endIso: "2026-06-10" }
 );
 
+// 3. Multi-slot occurrences[], External CalendarSync, Weekly/Daily dots + Monthly/Yearly bars + FutureSchedule parity
+const parityLocal = [
+    {
+        id: 20,
+        title: "Truy Bài",
+        startDate: new Date(2026, 10, 16, 6, 15, 0).toISOString(),
+        endDate: new Date(2026, 10, 16, 7, 0, 0).toISOString(),
+        recurrence: "daily",
+        allDay: false,
+    },
+    {
+        id: 21,
+        title: "10-Grade Class",
+        recurrence: "weekly",
+        allDay: false,
+        occurrences: [
+            {
+                startDate: new Date(2026, 10, 19, 15, 30, 0).toISOString(),
+                endDate: new Date(2026, 10, 19, 17, 0, 0).toISOString(),
+            },
+            {
+                startDate: new Date(2026, 10, 21, 15, 30, 0).toISOString(),
+                endDate: new Date(2026, 10, 21, 17, 0, 0).toISOString(),
+            },
+        ],
+    },
+    {
+        id: 22,
+        title: "Monthly Rent",
+        startDate: new Date(2026, 9, 5, 8, 0, 0).toISOString(),
+        endDate: new Date(2026, 9, 5, 9, 0, 0).toISOString(),
+        recurrence: "monthly",
+        allDay: false,
+    },
+    {
+        id: 23,
+        title: "Multi-Slot Exam",
+        recurrence: "none",
+        allDay: false,
+        occurrences: [
+            {
+                startDate: new Date(2026, 10, 10, 9, 0, 0).toISOString(),
+                endDate: new Date(2026, 10, 10, 11, 0, 0).toISOString(),
+            },
+            {
+                startDate: new Date(2026, 10, 12, 14, 0, 0).toISOString(),
+                endDate: new Date(2026, 10, 12, 16, 0, 0).toISOString(),
+            },
+        ],
+    },
+];
+const parityExternal = [
+    {
+        uid: "ics-holiday-1",
+        title: "External Conference",
+        startDate: localMidnight(2026, 11, 25),
+        endDate: localMidnight(2026, 11, 27),
+        allDay: true,
+        sourceColor: "#18B4C4",
+    },
+];
+
+const futureSrc = fs.readFileSync(
+    fileURLToPath(new URL("../services/EventFutureSchedule.js", import.meta.url)),
+    "utf8"
+);
+const futureCtx = vm.createContext({ Map, Set });
+vm.runInContext(futureSrc, futureCtx);
+
+const parityBoard = p.projectYearBoard(parityLocal, new Date(2026, 10, 1), "calendar", "2026-11-21", "", {
+    externalEvents: parityExternal,
+    futureSchedule: futureCtx,
+    showRecurring: true,
+    showExternal: true,
+});
+
+// Multi-Slot Exam yields 2 distinct bars on Nov 10 and Nov 12
+const examBars = parityBoard.spans.filter((s) => s.title === "Multi-Slot Exam");
+assert.equal(examBars.length, 2, "Both occurrences[] slots must appear in Yearly board");
+
+// External ICS event appears as read-only bar spanning Nov 25..26
+const extBars = parityBoard.spans.filter((s) => s.title === "External Conference");
+assert.equal(extBars.length, 1);
+assert.equal(extBars[0].readOnly, true);
+assert.equal(extBars[0].dayCount, 2);
+
+// Monthly recurring event expands as bars across Oct, Nov, Dec (3 months)
+const monthlyBars = parityBoard.spans.filter((s) => s.title === "Monthly Rent");
+assert.equal(monthlyBars.length, 3, "Monthly recurring must project Oct, Nov, Dec bars");
+
+// Weekly/Daily recurring appear cleanly in per-day recurringItems without cluttering bars
+const nov21Cell = parityBoard.months[10].days[20]; // Nov 21 (Saturday)
+const nov21RecTitles = nov21Cell.recurringItems.map((r) => r.title);
+assert.ok(nov21RecTitles.includes("Truy Bài"), "Nov 21 has daily Truy Bài recurring indicator");
+assert.ok(nov21RecTitles.includes("10-Grade Class"), "Nov 21 has weekly Sat 10-Grade Class indicator");
+const nov19Cell = parityBoard.months[10].days[18]; // Nov 19 (Thursday)
+assert.ok(
+    nov19Cell.recurringItems.some((r) => r.title === "10-Grade Class"),
+    "Nov 19 has second occurrence slot of weekly 10-Grade Class"
+);
+assert.ok(parityBoard.dayItemsMap["2026-11-25"].some((i) => i.title === "External Conference"));
+
+// Toggle showRecurring=false hides compact recurring dots while keeping explicit bars
+const hiddenRecBoard = p.projectYearBoard(parityLocal, new Date(2026, 10, 1), "calendar", "2026-11-21", "", {
+    externalEvents: parityExternal,
+    futureSchedule: futureCtx,
+    showRecurring: false,
+    showExternal: true,
+});
+assert.equal(hiddenRecBoard.months[10].days[20].recurringItems.length, 0);
+assert.equal(hiddenRecBoard.spans.filter((s) => s.title === "Multi-Slot Exam").length, 2);
+
 console.log(`PASS YearlyPlannerPolicy: ${process.env.TZ}`);

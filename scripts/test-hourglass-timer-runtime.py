@@ -105,18 +105,24 @@ Window {
             try {
                 waitFor(() => Config.ready && Persistent.ready, 4000)
 
-                // 1. Default style contract
+                // 1. Default style contract & legacy "classic" migration fallback
                 check(TimerService.visualStyle === "turned", "Expected default style 'turned', got: " + TimerService.visualStyle)
-                check(TimerService.hourglassStyleActive === true, "Expected hourglassStyleActive true by default")
+                check(TimerService.visualStyles.length === 3 && TimerService.visualStyles.indexOf("classic") === -1,
+                    "visualStyles must contain only turned, matrix, square")
+                Config.setNestedValue("time.visualStyle", "classic")
+                wait(30)
+                check(TimerService.visualStyle === "turned", "Legacy 'classic' config must fall back to 'turned', got: " + TimerService.visualStyle)
 
                 const pHourglass = findChildByObjectName(pomodoroPanel, "pomodoroHourglass")
                 const cHourglass = findChildByObjectName(countdownPanel, "countdownHourglass")
                 const pBtn = findChildByObjectName(pomodoroPanel, "pomodoroStyleButton")
                 const cBtn = findChildByObjectName(countdownPanel, "countdownStyleButton")
+                const cCustBtn = findChildByObjectName(countdownPanel, "countdownCustomizeButton")
 
-                check(!!pHourglass && pHourglass.visible === true, "pomodoroHourglass should exist and be visible in 'turned'")
-                check(!!cHourglass && cHourglass.visible === true, "countdownHourglass should exist and be visible in 'turned'")
-                check(!!pBtn && !!cBtn, "Style cycler buttons should exist on both Pomodoro & Countdown")
+                check(!!pHourglass && pHourglass.visible === true, "pomodoroHourglass should always exist and be visible")
+                check(!!cHourglass && cHourglass.visible === true, "countdownHourglass should always exist and be visible")
+                check(!pBtn && !cBtn, "Outer style switcher buttons must be completely removed")
+                check(!!cCustBtn, "Countdown Customize button must exist")
 
                 // 2. Quarter-step math & style support on HourglassBarIcon
                 probeBarIcon.progress = 1.0
@@ -139,29 +145,46 @@ Window {
                     wait(10)
                 }
 
-                // 3. Cycling styles via buttons & Key_T across turned -> matrix -> square -> classic -> turned
-                pBtn.clicked()
-                wait(30)
-                check(TimerService.visualStyle === "matrix", "Expected 'matrix' after Pomodoro click, got " + TimerService.visualStyle)
-                check(Config.options.time.visualStyle === "matrix", "Config.options.time.visualStyle should persist 'matrix'")
-
-                cBtn.clicked()
-                wait(30)
-                check(TimerService.visualStyle === "square", "Expected 'square' after Countdown click, got " + TimerService.visualStyle)
-
+                // 3. Key_T must NOT cycle styles; Customize chips switch & are horizontally centered
                 widget.forceActiveFocus()
                 keyClick(Qt.Key_T)
                 wait(30)
-                check(TimerService.visualStyle === "classic", "Expected 'classic' after Key_T, got " + TimerService.visualStyle)
-                check(TimerService.hourglassStyleActive === false, "hourglassStyleActive false in classic")
-                check(pHourglass.visible === false && cHourglass.visible === false, "Hourglasses hidden in classic style")
+                check(TimerService.visualStyle === "turned", "Key_T must not switch visualStyle, got " + TimerService.visualStyle)
 
-                // Clicking Settings chip restores 'turned'
+                pomodoroPanel.settingsOpen = true
+                wait(40)
+                const chipMatrix = findChildByObjectName(pomodoroPanel, "pomodoroStyleChip_matrix")
+                check(!!chipMatrix, "Pomodoro Customize style chip 'matrix' must exist")
+                check(chipMatrix.contentItem.horizontalAlignment === Text.AlignHCenter, "Pomodoro style chip text must be HCenter aligned")
+                chipMatrix.clicked()
+                wait(30)
+                check(TimerService.visualStyle === "matrix", "Expected 'matrix' after Pomodoro Customize chip click, got " + TimerService.visualStyle)
+                check(Config.options.time.visualStyle === "matrix", "Config.options.time.visualStyle should persist 'matrix'")
+
+                cCustBtn.clicked()
+                wait(40)
+                check(countdownPanel.settingsOpen === true, "Clicking Countdown Customize button must open style card")
+                const cChipSquare = findChildByObjectName(countdownPanel, "countdownStyleChip_square")
+                check(!!cChipSquare, "Countdown Customize style chip 'square' must exist")
+                check(cChipSquare.contentItem.horizontalAlignment === Text.AlignHCenter, "Countdown style chip text must be HCenter aligned")
+                cChipSquare.clicked()
+                wait(30)
+                check(TimerService.visualStyle === "square", "Expected 'square' after Countdown Customize chip click, got " + TimerService.visualStyle)
+
                 const chipTurned = findChildByObjectName(pomodoroPanel, "pomodoroStyleChip_turned")
                 check(!!chipTurned, "Settings style chip 'turned' must exist")
                 chipTurned.clicked()
                 wait(30)
-                check(TimerService.visualStyle === "turned" && TimerService.hourglassStyleActive === true, "Settings chip restores turned")
+                pomodoroPanel.settingsOpen = false
+                cCustBtn.clicked()
+                wait(30)
+                check(countdownPanel.settingsOpen === false, "Toggling Customize closes Countdown style card")
+                check(TimerService.visualStyle === "turned" && pHourglass.visible === true && cHourglass.visible === true, "Settings chip restores turned and closes back to hourglass")
+
+                TimerService.cycleVisualStyle()
+                TimerService.cycleVisualStyle()
+                TimerService.cycleVisualStyle()
+                check(TimerService.visualStyle === "turned", "cycleVisualStyle must loop 3 styles back to turned")
 
                 // 4. Visual flip & overtime/paused states
                 for (const s of ["turned", "matrix", "square"]) {
@@ -192,6 +215,7 @@ Window {
 
 # Verify bar indicator wiring contracts (PanelWindow tooltips require virtual/real Wayland)
 ti_src = (ROOT / "modules" / "bar" / "TimerIndicator.qml").read_text()
+assert "hourglassStyleActive" not in ti_src, "TimerIndicator.qml must always use HourglassBarIcon (no Classic branch)"
 for req in (
     "HourglassBarIcon {",
     'objectName: "barHourglassIcon"',
@@ -201,6 +225,7 @@ for req in (
     assert req in ti_src, f"TimerIndicator.qml missing hourglass contract: {req}"
 
 tb_src = (ROOT / "modules" / "waffle" / "bar" / "TimerButton.qml").read_text()
+assert "hourglassStyleActive" not in tb_src, "TimerButton.qml must always use HourglassBarIcon (no Classic branch)"
 for req in (
     "HourglassBarIcon {",
     'objectName: "waffleBarHourglassIcon"',

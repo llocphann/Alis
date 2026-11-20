@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Silent offscreen Quickshell pixel + contract check for Quick Actions icons."""
+"""Silent offscreen Quickshell pixel + stress check for Quick Actions & bar icons."""
+import glob
 import json
 import os
+import re
 import struct
 import tempfile
 import zlib
@@ -10,14 +12,28 @@ from native_test_session import run_qs
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# 1. Source contracts: MaterialSymbol & IconToolbarButton must default to Text.NativeRendering
+# 1. Source contracts: MaterialSymbol & IconToolbarButton use Text.CurveRendering
+#    so Material Symbols render directly as GPU Bezier curves (zero bitmap glyph
+#    atlas overflow/corruption over long-lived Wayland sessions), while Nerd/JP
+#    glyphs stay on QtRendering, and scripts/alis + ShellExec manage glyph workarounds.
 ms_src = (ROOT / "modules" / "common" / "widgets" / "MaterialSymbol.qml").read_text()
-assert "property int textRenderType: Text.NativeRendering" in ms_src, (
-    "MaterialSymbol.qml must default textRenderType to Text.NativeRendering"
+assert "property int textRenderType: Text.CurveRendering" in ms_src, (
+    "MaterialSymbol.qml must default textRenderType to Text.CurveRendering"
+)
+assert "_effectiveRenderType" in ms_src and "Text.QtRendering" in ms_src, (
+    "MaterialSymbol.qml must route Nerd/JP glyphs away from CurveRendering to Text.QtRendering"
 )
 itb_src = (ROOT / "modules" / "common" / "widgets" / "IconToolbarButton.qml").read_text()
-assert "property int iconRenderType: Text.NativeRendering" in itb_src, (
-    "IconToolbarButton.qml must default iconRenderType to Text.NativeRendering"
+assert "property int iconRenderType: Text.CurveRendering" in itb_src, (
+    "IconToolbarButton.qml must default iconRenderType to Text.CurveRendering"
+)
+alis_cli = (ROOT / "scripts" / "alis").read_text()
+assert "QML_USE_GLYPHCACHE_WORKAROUND=1" in alis_cli and "QT_ENABLE_GLYPH_CACHE_WORKAROUND=1" in alis_cli, (
+    "scripts/alis must export glyph cache workarounds for long-running Wayland sessions"
+)
+shell_exec = (ROOT / "modules" / "common" / "functions" / "ShellExec.qml").read_text()
+assert "QML_USE_GLYPHCACHE_WORKAROUND" in shell_exec and "QT_ENABLE_GLYPH_CACHE_WORKAROUND" in shell_exec, (
+    "ShellExec.qml must sanitize glyph cache workaround env vars for launched apps"
 )
 
 ICONS = [
@@ -43,11 +59,29 @@ ICONS = [
     "local_fire_department",
     "tune",
     "more_horiz",
+    "keep",
+    "push_pin",
+    "rainy",
+    "memory",
+    "notifications",
+    "sticky_note_2",
     # Control icons that "keyboard" must remain visually distinct from:
     "work",
     "mail",
     "calendar_today",
+    "inbox",
 ]
+
+# Collect 300+ unique Material Symbol ligatures from QML sources for flood stress test
+stress_set = set()
+for qml_file in (ROOT / "modules").rglob("*.qml"):
+    txt = qml_file.read_text(errors="ignore")
+    for m in re.finditer(r"MaterialSymbol\s*\{[^}]*\}", txt, re.S):
+        for s in re.findall(r"\"([a-z][a-z0-9_]{2,28})\"", m.group(0)):
+            if s not in ("transparent", "normal", "small", "large", "center", "left", "right", "top", "bottom"):
+                stress_set.add(s)
+STRESS_ICONS = sorted(stress_set - set(ICONS))[:320]
+assert len(STRESS_ICONS) >= 250, f"Expected >= 250 extra icons for stress test, got {len(STRESS_ICONS)}"
 
 QML = r'''
 pragma ComponentBehavior: Bound
@@ -59,19 +93,25 @@ import qs.modules.common.widgets
 Window {
     id: root
     visible: true
-    width: 1100
-    height: 120
+    width: 1200
+    height: 620
     color: "#11161d"
 
     readonly property var glyphNames: %s
+    readonly property var stressNames: %s
     readonly property string outDir: %s
+    property bool stressLoaded: false
+    property real stressFill: 0
+    property real stressAngle: 0
 
     Component.onCompleted: Quickshell.watchFiles = false
 
     Row {
         id: strip
-        anchors.centerIn: parent
-        spacing: 12
+        anchors.top: parent.top
+        anchors.topMargin: 12
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing: 6
 
         Repeater {
             id: rep
@@ -87,12 +127,35 @@ Window {
                     text: modelData
                     iconSize: 20
                     color: "#ffffff"
+                    rotation: root.stressAngle
+                    fill: (modelData === "keep" || modelData === "mic") && root.stressLoaded ? root.stressFill : 0
+                    animateFill: modelData === "keep" || modelData === "mic"
+                }
+            }
+        }
+    }
+
+    Loader {
+        active: root.stressLoaded
+        anchors { top: strip.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: parent.bottom; margins: 12 }
+        sourceComponent: Flow {
+            width: 1170
+            spacing: 2
+            Repeater {
+                model: root.stressNames
+                MaterialSymbol {
+                    required property string modelData
+                    text: modelData
+                    iconSize: 20
+                    fill: 1
+                    color: "#9aa9c4"
                 }
             }
         }
     }
 
     Timer {
+        id: initTimer
         interval: 150
         running: true
         onTriggered: {
@@ -104,6 +167,38 @@ Window {
                     res.saveToFile(root.outDir + "/" + name + ".png")
                     pending--
                     if (pending === 0) {
+                        root.stressLoaded = true
+                        root.stressFill = 1
+                        stressMidTimer.start()
+                    }
+                })
+            }
+        }
+    }
+
+    Timer {
+        id: stressMidTimer
+        interval: 220
+        running: false
+        onTriggered: {
+            root.stressFill = 0
+            stressAfterTimer.start()
+        }
+    }
+
+    Timer {
+        id: stressAfterTimer
+        interval: 450
+        running: false
+        onTriggered: {
+            let pending = rep.count
+            for (let i = 0; i < rep.count; i++) {
+                const item = rep.itemAt(i)
+                const name = root.glyphNames[i]
+                item.grabToImage(function(res) {
+                    res.saveToFile(root.outDir + "/" + name + "_after.png")
+                    pending--
+                    if (pending === 0) {
                         console.info("QUICK_ACTIONS_ICONS_CAPTURED")
                         Qt.quit()
                     }
@@ -112,7 +207,7 @@ Window {
         }
     }
 }
-''' % (json.dumps(ICONS), json.dumps("__OUT_DIR__"))
+''' % (json.dumps(ICONS), json.dumps(STRESS_ICONS), json.dumps("__OUT_DIR__"))
 
 
 def read_rgba_png(path: Path):
@@ -232,9 +327,17 @@ with tempfile.TemporaryDirectory(prefix="alis-icons-test-") as tmp:
         masks[name] = (fg_count, bbox_w, bbox_h, density, mask)
 
     kb_mask = masks["keyboard"][4]
-    for other in ("work", "mail", "calendar_today"):
+    for other in ("work", "mail", "calendar_today", "inbox"):
         diff = sum(1 for a, b in zip(kb_mask, masks[other][4]) if a != b)
         assert diff >= 25, f"'keyboard' too close to '{other}' (diff={diff}px)"
 
+    # Verify zero glyph corruption after 300+ extra icons & fill toggle stress
+    for name in ICONS:
+        after_path = out_dir / f"{name}_after.png"
+        assert after_path.exists(), f"Missing stress-after PNG for {name}"
+        _, _, after_mask, _, _ = read_rgba_png(after_path)
+        drift = sum(1 for a, b in zip(masks[name][4], after_mask) if a != b)
+        assert drift == 0, f"{name}: glyph corrupted after 300+ icon stress (drift={drift}px)"
+
     kb = masks["keyboard"]
-    print(f"QUICK_ACTIONS_ICONS_PASS count={len(ICONS)} keyboard_bbox={kb[1]}x{kb[2]} density={kb[3]:.2f}")
+    print(f"QUICK_ACTIONS_ICONS_PASS count={len(ICONS)} stress_extra={len(STRESS_ICONS)} keyboard_bbox={kb[1]}x{kb[2]} density={kb[3]:.2f}")

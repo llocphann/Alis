@@ -59,9 +59,6 @@ Item {
                 currentTab = Math.max(currentTab - 1, 0)
             }
             event.accepted = true
-        } else if (event.key === Qt.Key_T && event.modifiers === Qt.NoModifier) {
-            TimerService.cycleVisualStyle()
-            event.accepted = true
         } else if (event.key === Qt.Key_Space || event.key === Qt.Key_S) {
             if (currentTab === 0) TimerService.togglePomodoro()
             else if (currentTab === 1) TimerService.toggleCountdown()

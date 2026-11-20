@@ -15,7 +15,9 @@ Item {
     property bool animateChange: false  // Compatibility with StyledText
     property bool forceNerd: false  // Force Nerd Font rendering (text is already a glyph)
     property bool animateFill: false
-    property int textRenderType: Text.NativeRendering
+    // Material Symbols use GPU vector curves (zero bitmap glyph atlas, immune to
+    // long-run QImageTextureGlyphCache UV corruption); Nerd/JP keep SDF QtRendering.
+    property int textRenderType: Text.CurveRendering
     
     // Use Nerd Font only when explicitly requested.
     readonly property bool useNerd: forceNerd
@@ -26,6 +28,10 @@ Item {
     // a Material Symbols name — lets registry icons be kanji/katakana.
     readonly property bool useJp: text.startsWith("jp:")
     readonly property string jpGlyph: useJp ? text.slice(3) : ""
+
+    readonly property int _effectiveRenderType: (root.useJp || (root.useNerd && root.hasNerdGlyph))
+        ? (root.textRenderType === Text.CurveRendering ? Text.QtRendering : root.textRenderType)
+        : root.textRenderType
     
     // Nerd fonts need slightly larger size to match Material Symbols visually
     readonly property real effectiveFontSize: Math.max(1, Math.round((useNerd && hasNerdGlyph) ? iconSize * 1.1 : iconSize))
@@ -56,7 +62,7 @@ Item {
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
 
-        renderType: root.textRenderType
+        renderType: root._effectiveRenderType
         font {
             hintingPreference: (root.useNerd && root.hasNerdGlyph) ? Font.PreferFullHinting : Font.PreferNoHinting
             family: root.useJp ? "Zen Kaku Gothic New"

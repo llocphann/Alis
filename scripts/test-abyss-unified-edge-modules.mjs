@@ -180,8 +180,10 @@ check(layout.unifiedLauncherMode({launcherMode:"edgebar",notesTimersMode:"module
 check(layout.unifiedLauncherMode({launcherMode:"module",notificationActivityMode:"edgebar"},
     "notificationActivity")==="edgebar","new Notifications override wins legacy choice");
 
-// Tiny local launcher bumps must not distort window padding on *any* side.
-// Real module geometry must still generate a bounded local paint Surface.
+// Active Module-Icon Edgebar launchers keep the painted edge strip thin
+// while reserving enough Wayland exclusiveZone spacing on their active edge
+// so application windows never overlap their local bump; in Edgebar hover
+// mode ("edgebar"), both paint and reservation return to thin edge width.
 for(const edge of edges) {
     const local=layout.normalize([
         {id:"nt",kind:"notesTimers",edge,position:.22,showIcon:true},
@@ -193,14 +195,51 @@ for(const edge of edges) {
     const width=1920,height=1080;
     const values=layout.edgeInsetsForModules(local,opts,1,16,48,false);
     const reserved=layout.edgeInsetsForModules(local,opts,1,16,48,true);
-    for(const side of edges) {
-        check(values[side]===16,`local ${edge} icon cannot change ${side} paint padding`);
-        check(reserved[side]===16,`local ${edge} icon cannot change ${side} window padding`);
-    }
     const records=layout.geometry(local,width,height,opts,1);
     const surfaces=layout.localSurfaces(records,width,height,opts,1,48);
-    check(surfaces.filter(p=>p.edge===edge).length>=1,
+    const edgeSurfaces=surfaces.filter(p=>p.edge===edge);
+    check(edgeSurfaces.length>=1,
         `icon bodies still have localized screen-edge paint on ${edge}`);
+    const maxBumpDepth=Math.max(...edgeSurfaces.map(s=>s.depth));
+    for(const side of edges) {
+        check(values[side]===16,`local ${edge} icon cannot change ${side} paint padding`);
+        if(side===edge) {
+            check(reserved[side]>=Math.ceil(maxBumpDepth),
+                `active Edgebar launcher on ${edge} must reserve >= painted bump depth (${maxBumpDepth}), got ${reserved[side]}`);
+            check(reserved[side]===Math.ceil(maxBumpDepth),
+                `active Edgebar launcher on ${edge} must match painted bump depth (${Math.ceil(maxBumpDepth)}), got ${reserved[side]}`);
+        } else {
+            check(reserved[side]===16,`local ${edge} icon cannot change unrelated ${side} window padding`);
+        }
+    }
+    // Thin 10px Edge still reserves exact compact bump depth (~36px, below 48px)
+    const thinOpts={...opts,edgeThickness:10,edgeThicknesses:{top:10,right:10,bottom:10,left:10}};
+    const thinPaint=layout.edgeInsetsForModules(local,thinOpts,1,10,48,false);
+    const thinReserved=layout.edgeInsetsForModules(local,thinOpts,1,10,48,true);
+    const thinSurfaces=layout.localSurfaces(layout.geometry(local,width,height,thinOpts,1),width,height,thinOpts,1,48).filter(p=>p.edge===edge);
+    const thinBump=Math.max(...thinSurfaces.map(s=>s.depth));
+    check(thinPaint[edge]===10,`10px Edge paint remains thin (10px), got ${thinPaint[edge]}`);
+    check(thinReserved[edge]>=Math.ceil(thinBump)&&thinReserved[edge]<48,
+        `10px Edge reserves compact bump depth (${thinBump} < 48), got ${thinReserved[edge]}`);
+    const hoverOpts={...opts,launcherMode:"edgebar"};
+    const hoverValues=layout.edgeInsetsForModules(local,hoverOpts,1,16,48,false);
+    const hoverReserved=layout.edgeInsetsForModules(local,hoverOpts,1,16,48,true);
+    for(const side of edges) {
+        check(hoverValues[side]===16,`edgebar hover paint padding must stay 16 on ${side}`);
+        check(hoverReserved[side]===16,`edgebar hover reservation must stay 16 on ${side}`);
+    }
+    // Regular scaled or protruding modules (even with 0px edge) must reserve >= local bump depth
+    const regular=layout.normalize([
+        {id:"clk",kind:"clock",edge,position:.5,size:1.5,protrudeOffset:10}
+    ],edge);
+    const regOpts={edgeThickness:0,edgeThicknesses:{top:0,right:0,bottom:0,left:0},
+        edgeWidthAffectsModules:{top:false,right:false,bottom:false,left:false}};
+    const regRecords=layout.geometry(regular,width,height,regOpts,1);
+    const regSurfaces=layout.localSurfaces(regRecords,width,height,regOpts,1,48);
+    const regReserved=layout.edgeInsetsForModules(regular,regOpts,1,0,48,true);
+    const regMaxDepth=Math.max(...regSurfaces.map(s=>s.depth));
+    check(regReserved[edge]>=Math.ceil(regMaxDepth),
+        `scaled/protruding module on ${edge} must reserve >= painted bump depth (${regMaxDepth}), got ${regReserved[edge]}`);
 }
 // The persisted JsonAdapter values must override old per-output icon settings
 // without changing physical placement or silently throwing away a legacy

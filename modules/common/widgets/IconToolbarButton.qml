@@ -7,7 +7,7 @@ import qs.modules.common
 ToolbarButton {
     id: iconBtn
     implicitWidth: height
-    property int iconRenderType: Text.NativeRendering
+    property int iconRenderType: Text.CurveRendering
 
     colBackgroundToggled: Appearance.colors.colSecondaryContainer
     colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover

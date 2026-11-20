@@ -5,7 +5,6 @@ import qs.modules.common.widgets
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Shapes
 import QtQuick.Layouts
 import Quickshell
 
@@ -115,11 +114,13 @@ Item {
             colRipple: root._colLayerActive
             enabled: adjustRow.currentValue > adjustRow.minValue
             onClicked: Config.setNestedValue(adjustRow.configPath, Math.max(adjustRow.minValue, adjustRow.currentValue - adjustRow.step))
-            contentItem: MaterialSymbol {
-                anchors.centerIn: parent
-                text: "remove"
-                iconSize: 16
-                color: enabled ? root._colText : root._colTextSecondary
+            contentItem: Item {
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "remove"
+                    iconSize: 16
+                    color: enabled ? root._colText : root._colTextSecondary
+                }
             }
         }
         Rectangle {
@@ -186,11 +187,13 @@ Item {
             colRipple: root._colLayerActive
             enabled: adjustRow.currentValue < adjustRow.maxValue
             onClicked: Config.setNestedValue(adjustRow.configPath, Math.min(adjustRow.maxValue, adjustRow.currentValue + adjustRow.step))
-            contentItem: MaterialSymbol {
-                anchors.centerIn: parent
-                text: "add"
-                iconSize: 16
-                color: enabled ? root._colText : root._colTextSecondary
+            contentItem: Item {
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "add"
+                    iconSize: 16
+                    color: enabled ? root._colText : root._colTextSecondary
+                }
             }
         }
     }
@@ -493,11 +496,13 @@ Item {
                                     root.tagSearchText = ""
                                     tagSearchInput.text = ""
                                 }
-                                contentItem: MaterialSymbol {
-                                    anchors.centerIn: parent
-                                    text: "add"
-                                    iconSize: 14
-                                    color: Appearance.colors.colOnPrimary
+                                contentItem: Item {
+                                    MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        text: "add"
+                                        iconSize: 14
+                                        color: Appearance.colors.colOnPrimary
+                                    }
                                 }
                             }
                         }
@@ -580,11 +585,13 @@ Item {
                                         colBackground: "transparent"
                                         colBackgroundHover: root._colLayerHover
                                         onClicked: TimerService.removeTag(tagName)
-                                        contentItem: MaterialSymbol {
-                                            anchors.centerIn: parent
-                                            text: "close"
-                                            iconSize: 13
-                                            color: root._colTextSecondary
+                                        contentItem: Item {
+                                            MaterialSymbol {
+                                                anchors.centerIn: parent
+                                                text: "close"
+                                                iconSize: 13
+                                                color: root._colTextSecondary
+                                            }
                                         }
                                     }
                                 }
@@ -671,26 +678,15 @@ Item {
                 }
             }
 
-            // Open orbital focus arc: intentionally not a generic 360° timer
-            // ring. The bottom gap carries the session rhythm and keeps the time
-            // readout visually lighter in compact Dashboard layouts.
+            // Hourglass stage (Turned / Matrix / Square)
             Item {
                 id: focusDial
                 visible: !root.settingsOpen && !root.tagMenuOpen
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: TimerService.hourglassStyleActive
-                    ? Math.min(Math.max(196, flickable.width - 16), root.compactMode ? 248 : 272)
-                    : (root.compactMode
-                        ? Math.min(184, Math.max(148,
-                            Math.min(flickable.width * 0.52, (flickable.height - 66) * 1.22)))
-                        : 190)
-                Layout.preferredHeight: TimerService.hourglassStyleActive
-                    ? (root.compactMode
-                        ? Math.max(122, Math.min(150, flickable.height - 68))
-                        : 168)
-                    : (root.compactMode
-                        ? Math.max(128, Math.min(Layout.preferredWidth, flickable.height - 68))
-                        : Layout.preferredWidth)
+                Layout.preferredWidth: Math.min(Math.max(196, flickable.width - 16), root.compactMode ? 248 : 272)
+                Layout.preferredHeight: root.compactMode
+                    ? Math.max(122, Math.min(150, flickable.height - 68))
+                    : 168
                 Layout.bottomMargin: root.compactMode ? 0 : 2
 
                 readonly property string timerText: {
@@ -722,17 +718,6 @@ Item {
                                 / TimerService.pomodoroLapDuration))
                         : 0
                 property real displayProgress: rawProgress
-                readonly property real orbitStrokeWidth: 5
-                // Preserve sub-pixel geometry for the curve renderer instead
-                // of quantizing the ellipse to whole pixels at compact sizes.
-                readonly property real arcCenterX: width / 2
-                readonly property real arcCenterY: height / 2 - 4
-                readonly property real arcRadiusY:
-                    Math.max(46, Math.min(height / 2 - 8, (width / 2 - 8) * 0.80, 86 * 0.80))
-                readonly property real arcRadiusX:
-                    Math.max(58, Math.min(width / 2 - 8, arcRadiusY / 0.80, 86))
-                readonly property real startAngle: 155
-                readonly property real sweepAngle: 230
 
                 Behavior on displayProgress {
                     enabled: Appearance.animationsEnabled
@@ -742,70 +727,11 @@ Item {
                     }
                 }
 
-                Shape {
-                    visible: !TimerService.hourglassStyleActive
-                    anchors.fill: parent
-                    antialiasing: true
-                    preferredRendererType: Shape.CurveRenderer
-
-                    ShapePath {
-                        fillColor: "transparent"
-                        strokeColor: root._colTrack
-                        strokeWidth: focusDial.orbitStrokeWidth
-                        capStyle: ShapePath.RoundCap
-
-                        PathAngleArc {
-                            centerX: focusDial.arcCenterX
-                            centerY: focusDial.arcCenterY
-                            radiusX: focusDial.arcRadiusX
-                            radiusY: focusDial.arcRadiusY
-                            startAngle: focusDial.startAngle
-                            sweepAngle: focusDial.sweepAngle
-                        }
-                    }
-
-                    ShapePath {
-                        fillColor: "transparent"
-                        strokeColor: root._colAccent
-                        strokeWidth: focusDial.orbitStrokeWidth
-                        capStyle: ShapePath.RoundCap
-
-                        PathAngleArc {
-                            centerX: focusDial.arcCenterX
-                            centerY: focusDial.arcCenterY
-                            radiusX: focusDial.arcRadiusX
-                            radiusY: focusDial.arcRadiusY
-                            startAngle: focusDial.startAngle
-                            sweepAngle: focusDial.sweepAngle
-                                * focusDial.displayProgress
-                        }
-                    }
-                }
-
-                Rectangle {
-                    readonly property real angle:
-                        (focusDial.startAngle
-                            + focusDial.sweepAngle * focusDial.displayProgress)
-                            * Math.PI / 180
-                    width: 8
-                    height: 8
-                    radius: width / 2
-                    color: root._colAccent
-                    border.width: 1
-                    border.color: root._colLayer
-                    visible: !TimerService.hourglassStyleActive && focusDial.displayProgress > 0.002
-                    x: focusDial.arcCenterX
-                        + focusDial.arcRadiusX * Math.cos(angle) - width / 2
-                    y: focusDial.arcCenterY
-                        + focusDial.arcRadiusY * Math.sin(angle) - height / 2
-                }
-
                 // Hourglass stage (Turned / Matrix / Square)
                 RowLayout {
                     id: hourglassStage
-                    visible: TimerService.hourglassStyleActive
                     anchors.fill: parent
-                    anchors.topMargin: root.compactMode ? 18 : 20
+                    anchors.topMargin: root.compactMode ? 4 : 6
                     spacing: root.compactMode ? 10 : 14
 
                     HourglassVisual {
@@ -867,142 +793,18 @@ Item {
                                     height: 5
                                     radius: height / 2
                                     color: current || complete ? root._colAccent : root._colTrack
-                                }
-                            }
-                        }
-                    }
-                }
 
-                // 1-click timer visual style cycler (Turned -> Matrix -> Square -> Classic)
-                RippleButton {
-                    id: pomodoroStyleButton
-                    objectName: "pomodoroStyleButton"
-                    anchors.top: parent.top
-                    anchors.right: parent.right
-                    z: 2
-                    implicitWidth: stylePillRow.implicitWidth + 14
-                    implicitHeight: 22
-                    buttonRadius: height / 2
-                    colBackground: root._colLayer
-                    colBackgroundHover: root._colLayerHover
-                    onClicked: TimerService.cycleVisualStyle()
-
-                    contentItem: Row {
-                        id: stylePillRow
-                        anchors.centerIn: parent
-                        spacing: 4
-
-                        MaterialSymbol {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: TimerService.visualStyle === "matrix"
-                                ? "grain"
-                                : (TimerService.visualStyle === "square"
-                                    ? "grid_view"
-                                    : (TimerService.visualStyle === "classic"
-                                        ? "donut_large"
-                                        : "hourglass_top"))
-                            iconSize: 13
-                            color: root._colAccent
-                        }
-
-                        StyledText {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: TimerService.visualStyleLabel(TimerService.visualStyle)
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.weight: Font.Medium
-                            color: root._colTextSecondary
-                        }
-                    }
-
-                    StyledToolTip {
-                        text: Translation.tr("Switch timer style (T)")
-                    }
-                }
-
-                ColumnLayout {
-                    visible: !TimerService.hourglassStyleActive
-                    anchors.centerIn: parent
-                    anchors.verticalCenterOffset: root.compactMode ? 9 : 8
-                    spacing: 2
-
-                    StyledText {
-                        Layout.alignment: Qt.AlignHCenter
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        text: {
-                            const minutes = Math.floor(
-                                TimerService.pomodoroSecondsLeft / 60)
-                                .toString().padStart(2, '0')
-                            const seconds = Math.floor(
-                                TimerService.pomodoroSecondsLeft % 60)
-                                .toString().padStart(2, '0')
-                            return `${minutes}:${seconds}`
-                        }
-                        font.pixelSize: Math.round(
-                            (root.compactMode ? 31 : 34)
-                                * Appearance.fontSizeScale)
-                        font.weight: Font.Medium
-                        font.family: Appearance.font.family.numbers
-                        color: root._colText
-                    }
-
-                    StyledText {
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.maximumWidth: focusDial.arcRadiusX * 1.75
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        elide: Text.ElideRight
-                        text: {
-                            const phaseLabel = TimerService.pomodoroLongBreak
-                                ? Translation.tr("Long break")
-                                : TimerService.pomodoroBreak
-                                    ? Translation.tr("Break")
-                                    : Translation.tr("Focus")
-                            const phaseMins = Math.max(1, Math.round(TimerService.pomodoroLapDuration / 60))
-                            const stateLabel = TimerService.pomodoroRunning
-                                ? (TimerService.pomodoroPaused ? Translation.tr("paused") : Translation.tr("running"))
-                                : Translation.tr("ready")
-                            return `${phaseLabel} (${phaseMins}m) · ${stateLabel}`
-                        }
-                        font.pixelSize: root.compactMode
-                            ? Appearance.font.pixelSize.smallest
-                            : Appearance.font.pixelSize.smaller
-                        font.weight: Font.Medium
-                        color: root._colTextSecondary
-                    }
-
-                    Row {
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.topMargin: 5
-                        Layout.bottomMargin: Math.round(focusDial.arcRadiusY * 0.56)
-                        spacing: 5
-
-                        Repeater {
-                            model: Math.max(1,
-                                TimerService.cyclesBeforeLongBreak)
-
-                            Rectangle {
-                                required property int index
-                                readonly property bool current:
-                                    index === TimerService.pomodoroCycle
-                                readonly property bool complete:
-                                    index < TimerService.pomodoroCycle
-                                width: current ? 15 : 5
-                                height: 5
-                                radius: height / 2
-                                color: current || complete
-                                    ? root._colAccent : root._colTrack
-
-                                Behavior on width {
-                                    enabled: Appearance.animationsEnabled
-                                    NumberAnimation {
-                                        duration: Appearance.animation.elementMoveFast.duration
+                                    Behavior on width {
+                                        enabled: Appearance.animationsEnabled
+                                        NumberAnimation {
+                                            duration: Appearance.animation.elementMoveFast.duration
+                                        }
                                     }
-                                }
-                                Behavior on color {
-                                    enabled: Appearance.animationsEnabled
-                                    ColorAnimation {
-                                        duration: Appearance.animation.elementMoveFast.duration
+                                    Behavior on color {
+                                        enabled: Appearance.animationsEnabled
+                                        ColorAnimation {
+                                            duration: Appearance.animation.elementMoveFast.duration
+                                        }
                                     }
                                 }
                             }
@@ -1111,16 +913,16 @@ Item {
                                     id: presetBtn
                                     required property var modelData
                                     readonly property bool isPresetActive: TimerService.activePreset === modelData.key
+                                    readonly property color _presetActiveInk: ColorUtils.ensureReadable(Appearance.colors.colOnPrimary, root._colAccent, 5.0)
+                                    toggled: isPresetActive
                                     Layout.fillWidth: true
                                     Layout.minimumWidth: 0
                                     implicitHeight: root.compactMode ? 25 : 28
                                     buttonRadius: Appearance.rounding.small
-                                    colBackground: isPresetActive
-                                        ? root._colAccent
-                                        : Appearance.colors.colLayer1
-                                    colBackgroundHover: isPresetActive
-                                        ? root._colAccent
-                                        : root._colLayerHover
+                                    colBackground: Appearance.colors.colLayer1
+                                    colBackgroundHover: root._colLayerHover
+                                    colBackgroundToggled: root._colAccent
+                                    colBackgroundToggledHover: Qt.lighter(root._colAccent, 1.08)
                                     onClicked: TimerService.applyPomodoroPreset(modelData.key)
 
                                     contentItem: Item {
@@ -1136,7 +938,7 @@ Item {
                                                 font.pixelSize: Appearance.font.pixelSize.smallest
                                                 font.weight: isPresetActive ? Font.Bold : Font.Medium
                                                 verticalAlignment: Text.AlignVCenter
-                                                color: isPresetActive ? Appearance.colors.colOnPrimary : root._colText
+                                                color: isPresetActive ? presetBtn._presetActiveInk : root._colText
                                             }
                                             StyledText {
                                                 visible: presetBtn.width >= 88
@@ -1145,7 +947,7 @@ Item {
                                                 font.pixelSize: Appearance.font.pixelSize.smallest
                                                 verticalAlignment: Text.AlignVCenter
                                                 color: isPresetActive
-                                                    ? ColorUtils.transparentize(Appearance.colors.colOnPrimary, 0.2)
+                                                    ? ColorUtils.transparentize(presetBtn._presetActiveInk, 0.2)
                                                     : root._colTextSecondary
                                             }
                                         }
@@ -1222,7 +1024,7 @@ Item {
                             }
                         }
 
-                        // Timer visual style selector (Turned, Matrix, Square, Classic)
+                        // Timer visual style selector (Turned, Matrix, Square)
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 6
@@ -1244,20 +1046,25 @@ Item {
                                     RippleButton {
                                         required property string modelData
                                         readonly property bool selected: TimerService.visualStyle === modelData
+                                        readonly property color _chipActiveInk: ColorUtils.ensureReadable(Appearance.colors.colOnPrimary, root._colAccent, 5.0)
                                         objectName: "pomodoroStyleChip_" + modelData
+                                        toggled: selected
                                         Layout.fillWidth: true
                                         implicitHeight: 28
                                         buttonRadius: Appearance.rounding.small
-                                        colBackground: selected ? root._colAccent : root._colLayer
-                                        colBackgroundHover: selected ? root._colAccent : root._colLayerHover
+                                        colBackground: root._colLayer
+                                        colBackgroundHover: root._colLayerHover
+                                        colBackgroundToggled: root._colAccent
+                                        colBackgroundToggledHover: Qt.lighter(root._colAccent, 1.08)
                                         onClicked: TimerService.setVisualStyle(modelData)
 
                                         contentItem: StyledText {
-                                            anchors.centerIn: parent
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
                                             text: TimerService.visualStyleLabel(modelData)
                                             font.pixelSize: Appearance.font.pixelSize.smaller
                                             font.weight: selected ? Font.DemiBold : Font.Medium
-                                            color: selected ? Appearance.colors.colOnPrimary : root._colText
+                                            color: selected ? _chipActiveInk : root._colText
                                         }
                                     }
                                 }
@@ -1340,8 +1147,7 @@ Item {
 
                     onClicked: {
                         TimerService.resetPomodoro()
-                        if (TimerService.hourglassStyleActive)
-                            pomodoroHourglass.triggerFlip()
+                        pomodoroHourglass.triggerFlip()
                     }
                     enabled: (TimerService.pomodoroSecondsLeft < TimerService.pomodoroLapDuration) || TimerService.pomodoroCycle > 0 || TimerService.pomodoroBreak
 
@@ -1389,15 +1195,16 @@ Item {
                     colBackgroundHover: root._colLayerHover
                     onClicked: {
                         TimerService.skipPomodoroPhase()
-                        if (TimerService.hourglassStyleActive)
-                            pomodoroHourglass.triggerFlip()
+                        pomodoroHourglass.triggerFlip()
                     }
 
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "skip_next"
-                        iconSize: 19
-                        color: root._colText
+                    contentItem: Item {
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: "skip_next"
+                            iconSize: 19
+                            color: root._colText
+                        }
                     }
 
                     StyledToolTip {
@@ -1414,22 +1221,25 @@ Item {
                     implicitHeight: root.compactMode ? 34 : 36
                     buttonRadius: height / 2
                     enabled: !TimerService.pomodoroRunning
-                    colBackground: root.settingsOpen
-                        ? Appearance.colors.colPrimaryContainer
-                        : root._colLayer
+                    toggled: root.settingsOpen
+                    colBackground: root._colLayer
                     colBackgroundHover: Appearance.colors.colPrimaryContainerHover
+                    colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                    colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
                     onClicked: {
                         root.settingsOpen = !root.settingsOpen
                         if (root.settingsOpen) root.tagMenuOpen = false
                     }
 
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: root.settingsOpen ? "close" : "tune"
-                        iconSize: 20
-                        color: root.settingsOpen
-                            ? Appearance.colors.colOnPrimaryContainer
-                            : root._colText
+                    contentItem: Item {
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: root.settingsOpen ? "close" : "tune"
+                            iconSize: 20
+                            color: root.settingsOpen
+                                ? Appearance.colors.colOnPrimaryContainer
+                                : root._colText
+                        }
                     }
 
                     StyledToolTip {

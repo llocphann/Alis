@@ -580,4 +580,25 @@ Singleton {
         // Ensure it's still readable (WCAG AA for large text is 3:1)
         return ensureReadable(dimmed, bg, 3.0);
     }
+
+    /**
+     * Derives a tonal step directly from the main canvas background by shifting
+     * HSL lightness while preserving/slightly boosting hue saturation so UI cards,
+     * boxes, and inputs never collapse into flat neutral gray.
+     *
+     * @param {color} baseColor - Main canvas background color.
+     * @param {number} lightnessDelta - Positive for lighter, negative for darker.
+     * @param {number} satBoost - Saturation multiplier (default 1.08).
+     * @returns {color} Derived tonal color.
+     */
+    function tonalStep(baseColor, lightnessDelta, satBoost = 1.08) {
+        var c = Qt.color(baseColor);
+        if (!c.valid)
+            return c;
+        var achromatic = c.hslHue < 0 || c.hslSaturation < 0.005;
+        var h = achromatic ? 0 : c.hslHue;
+        var s = achromatic ? 0 : clamp01(c.hslSaturation * Number(satBoost ?? 1.08));
+        var l = clamp01(c.hslLightness + Number(lightnessDelta || 0));
+        return Qt.hsla(h, s, l, c.a);
+    }
 }

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Regression contract for the compact timer visual language."""
+"""Regression contract for the Hourglass-only compact timer visual language."""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 POMODORO = ROOT / "modules" / "sidebarRight" / "pomodoro" / "PomodoroTimer.qml"
 COUNTDOWN = ROOT / "modules" / "sidebarRight" / "pomodoro" / "CountdownTimer.qml"
 WIDGET = ROOT / "modules" / "sidebarRight" / "pomodoro" / "PomodoroWidget.qml"
+TIMER_SVC = ROOT / "services" / "TimerService.qml"
 PILL_TAB = ROOT / "modules" / "common" / "widgets" / "PillTabBar.qml"
 
 
@@ -18,55 +19,56 @@ def require(source: str, token: str, message: str) -> None:
         fail(message + " (" + token + ")")
 
 
+def forbid(source: str, token: str, message: str) -> None:
+    if token in source:
+        fail(message + " (" + token + ")")
+
+
 pomodoro = POMODORO.read_text(encoding="utf-8")
 countdown = COUNTDOWN.read_text(encoding="utf-8")
 widget = WIDGET.read_text(encoding="utf-8")
+timer_svc = TIMER_SVC.read_text(encoding="utf-8")
 pill_tab = PILL_TAB.read_text(encoding="utf-8")
 
-# Pomodoro owns an open orbital arc, not the generic full CircularProgress dial.
-if "CircularProgress {" in pomodoro:
-    fail("Pomodoro must not regress to the generic full circular timer")
+# Classic timer styles, outer style cyclers, and Key_T must be completely removed.
+forbid(pomodoro, "CircularProgress {", "Pomodoro must not regress to CircularProgress")
+forbid(pomodoro, "import QtQuick.Shapes", "Pomodoro must remove Classic Shape dial")
+forbid(pomodoro, "PathAngleArc {", "Pomodoro must remove Classic PathAngleArc")
+forbid(pomodoro, "pomodoroStyleButton", "Pomodoro must remove outer style switcher button")
+forbid(pomodoro, "hourglassStyleActive", "Pomodoro must not branch on removed hourglassStyleActive")
+
+forbid(countdown, "CircularProgress {", "Countdown must not regress to CircularProgress")
+forbid(countdown, "id: segmentRow", "Countdown must remove Classic segmented runway")
+forbid(countdown, "countdownStyleButton", "Countdown must remove outer style switcher button")
+forbid(countdown, "hourglassStyleActive", "Countdown must not branch on removed hourglassStyleActive")
+
+forbid(widget, "Qt.Key_T", "PomodoroWidget must remove Qt.Key_T outer style shortcut")
+forbid(timer_svc, "hourglassStyleActive", "TimerService must remove hourglassStyleActive")
+require(timer_svc, 'visualStyles: ["turned", "matrix", "square"]', "TimerService must expose only the 3 Hourglass styles")
+
 for token in (
-    "import QtQuick.Shapes",
-    "id: focusDial",
-    "readonly property real orbitStrokeWidth: 5",
-    "readonly property real arcCenterX: width / 2",
-    "readonly property real arcCenterY: height / 2 - 4",
-    "preferredRendererType: Shape.CurveRenderer",
-    "readonly property real arcRadiusX:",
-    "readonly property real arcRadiusY:",
-    "readonly property real startAngle: 155",
-    "readonly property real sweepAngle: 230",
-    "PathAngleArc {",
-    "strokeColor: root._colAccent",
-    "strokeWidth: focusDial.orbitStrokeWidth",
-    "anchors.verticalCenterOffset: root.compactMode ? 9 : 8",
-    "(root.compactMode ? 31 : 34)",
-    "width: 8",
-    "border.width: 1",
-    "border.color: root._colLayer",
+    'objectName: "pomodoroHourglass"',
+    "HourglassVisual {",
     "TimerService.cyclesBeforeLongBreak",
     "index === TimerService.pomodoroCycle",
+    'objectName: "pomodoroStyleChip_" + modelData',
+    "horizontalAlignment: Text.AlignHCenter",
+    "verticalAlignment: Text.AlignVCenter",
 ):
-    require(pomodoro, token, "Pomodoro orbital focus presentation missing")
+    require(pomodoro, token, "Pomodoro Hourglass & Customize contract missing")
 
-if "width: parent.width + 8" in pomodoro:
-    fail("Pomodoro endpoint must not regress to a soft halo marker")
-
-# Countdown intentionally uses a linear segmented runway so Timer and Pomodoro
-# remain recognizably related without sharing the same timer-ring silhouette.
-if "CircularProgress {" in countdown:
-    fail("Countdown Timer must not regress to a generic circular timer")
 for token in (
     "id: timerDeck",
     "readonly property real progress:",
-    "id: segmentRow",
-    "model: 16",
-    "activeSegment:",
-    "timerDeck.progress * 16",
+    'objectName: "countdownHourglass"',
+    'objectName: "countdownSettingsCard"',
+    'objectName: "countdownCustomizeButton"',
+    'objectName: "countdownStyleChip_" + modelData',
+    "horizontalAlignment: Text.AlignHCenter",
+    "verticalAlignment: Text.AlignVCenter",
     'Translation.tr("Set duration")',
 ):
-    require(countdown, token, "Countdown segmented runway presentation missing")
+    require(countdown, token, "Countdown Hourglass & Customize contract missing")
 
 # Timer mode pages are lazy: the first Timers reveal constructs only the
 # currently selected face, then visited faces stay resident for this widget

@@ -279,12 +279,11 @@ Singleton {
     property int pomodoroSecondsLeft: pomodoroLapDuration
     property int pomodoroCycle: Persistent.states?.timer?.pomodoro?.cycle ?? 0
 
-    readonly property var visualStyles: ["turned", "matrix", "square", "classic"]
+    readonly property var visualStyles: ["turned", "matrix", "square"]
     readonly property string visualStyle: {
         const s = String(Config.options?.time?.visualStyle ?? "turned").toLowerCase()
         return root.visualStyles.indexOf(s) >= 0 ? s : "turned"
     }
-    readonly property bool hourglassStyleActive: root.visualStyle !== "classic"
 
     function setVisualStyle(style: string): void {
         const normalized = String(style || "turned").toLowerCase()
@@ -301,7 +300,6 @@ Singleton {
         const s = String(style || root.visualStyle).toLowerCase()
         if (s === "matrix") return "Matrix"
         if (s === "square") return "Square"
-        if (s === "classic") return "Classic"
         return "Turned"
     }
 

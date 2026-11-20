@@ -9,6 +9,8 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.abyss.looks
 import "YearlyPlannerPolicy.js" as YearlyPolicy
+import "PlannerEventPalette.js" as EventPalette
+import "../../services/EventFutureSchedule.js" as FutureSchedule
 
 Item {
     id: root
@@ -16,8 +18,12 @@ Item {
     property date anchorDate: new Date()
     property string rangeMode: "calendar" // "calendar" | "rolling"
     property var localBackend: Events
+    property var externalBackend: CalendarSync
     property int eventsRevision: 0
+    property int externalRevision: 0
+    property bool showRecurring: true
 
+    readonly property bool isDarkSurface: ColorUtils.relativeLuminance(root.headerSurface) < 0.35
     property bool abyssPanel: (Config.options?.panelFamily ?? "ii") === "abyss"
     property color ink: ColorUtils.ensureReadable(
         abyssPanel ? AbyssStyle.text : Appearance.colors.colOnLayer1,
@@ -32,12 +38,20 @@ Item {
     property color headerSurface: abyssPanel
         ? AbyssStyle.surfaceDeep : Qt.alpha(Appearance.colors.colLayer0Base, 1)
 
+    Connections {
+        target: root.externalBackend
+        ignoreUnknownSignals: true
+        function onEventsUpdated(): void { root.externalRevision++ }
+    }
+
     property string searchQuery: ""
     property bool searchOpen: false
 
     // Quick Plan Editor state
     property bool editorOpen: false
     property int editingEventId: -1
+    property string editingKey: ""
+    property bool editingReadOnly: false
     property string draftKind: "plan"
     property string draftTitle: ""
     property string draftStartIso: ""
@@ -46,6 +60,7 @@ Item {
     property string draftNotes: ""
     property string draftColor: ""
     property var draftChecklist: []
+    property var selectedDayItems: []
     property string draftError: ""
     property bool deleteConfirmPending: false
 
@@ -66,14 +81,21 @@ Item {
 
     readonly property string todayIso: YearlyPolicy.toIsoDate(new Date())
     readonly property var boardData: {
-        const _rev = root.eventsRevision
+        const _rev = root.eventsRevision + root.externalRevision
         const eventsList = root.localBackend?.list ?? []
+        const extList = root.externalBackend?.events ?? []
         return YearlyPolicy.projectYearBoard(
             eventsList,
             root.anchorDate,
             root.rangeMode,
             root.todayIso,
-            root.searchQuery
+            root.searchQuery,
+            {
+                externalEvents: extList,
+                futureSchedule: FutureSchedule,
+                showRecurring: root.showRecurring,
+                showExternal: true
+            }
         )
     }
 
@@ -108,9 +130,17 @@ Item {
         checklistInput.text = ""
     }
 
+    function _itemsForIso(isoDate): var {
+        const map = root.boardData?.dayItemsMap
+        return (map && Array.isArray(map[isoDate])) ? map[isoDate] : []
+    }
+
     function openNewPlanForDate(isoDate): void {
         const cleanIso = YearlyPolicy.parseIsoDate(isoDate) ? isoDate : root.todayIso
         root.editingEventId = -1
+        root.editingKey = ""
+        root.editingReadOnly = false
+        root.selectedDayItems = root._itemsForIso(cleanIso)
         root.draftKind = "plan"
         root.draftTitle = ""
         root.draftStartIso = cleanIso
@@ -129,7 +159,12 @@ Item {
     function openEditorForSpan(span): void {
         if (!span)
             return
-        root.editingEventId = Number(span.id ?? -1)
+        const isExt = span.readOnly === true || span.source === "external"
+        const rawNum = Number(span.rawId ?? span.id)
+        root.editingReadOnly = isExt
+        root.editingKey = String(span.key || "")
+        root.editingEventId = !isExt && Number.isFinite(rawNum) ? rawNum : -1
+        root.selectedDayItems = root._itemsForIso(span.startIso || root.todayIso)
         root.draftKind = span.kind || "plan"
         root.draftTitle = span.title || ""
         root.draftStartIso = span.startIso || root.todayIso
@@ -150,6 +185,9 @@ Item {
 
     function closeEditor(): void {
         root.editorOpen = false
+        root.editingKey = ""
+        root.editingReadOnly = false
+        root.selectedDayItems = []
         root.draftError = ""
         root.deleteConfirmPending = false
     }
@@ -198,6 +236,8 @@ Item {
     }
 
     function saveDraft(): bool {
+        if (root.editingReadOnly)
+            return false
         const cleanTitle = String(titleInput.text || "").trim()
         const sIso = String(startDateInput.text || root.draftStartIso).trim()
         const eIso = String(endDateInput.text || root.draftEndIso).trim()
@@ -258,16 +298,26 @@ Item {
         root.closeEditor()
     }
 
-    function resolveBarColor(colorHex): color {
+    function resolveBarColor(colorHex, sourceEvent, source): color {
         const clean = String(colorHex || "").trim()
-        if (!clean.length)
-            return root.headerAccent
-        const parsed = Qt.color(clean)
-        return parsed.valid ? parsed : root.headerAccent
+        if (clean.length) {
+            const parsed = Qt.color(clean)
+            if (parsed.valid)
+                return parsed
+        }
+        if (sourceEvent) {
+            const swatch = EventPalette.eventSwatch(sourceEvent, source || "local")
+            if (swatch) {
+                const swCol = Qt.color(swatch)
+                if (swCol.valid)
+                    return swCol
+            }
+        }
+        return root.headerAccent
     }
 
     function contrastOnBar(barCol): color {
-        return barCol.hslLightness > 0.62 ? "#11161d" : "#f7f9fc"
+        return ColorUtils.ensureReadable("#f7f9fc", barCol, 5.0)
     }
 
     function formatShortDate(iso): string {
@@ -302,12 +352,22 @@ Item {
         property string label: ""
         property string symbol: ""
         property bool activeTint: false
-        property color fgColor: activeTint ? Appearance.colors.colOnPrimary : root.ink
+        readonly property color activeBg: root.headerAccent
+        readonly property color activeInk: ColorUtils.ensureReadable(
+            Appearance.colors.colOnPrimary, activeBg, 5.5)
+        readonly property color idleBg: ColorUtils.tonalStep(
+            root.headerSurface, root.isDarkSurface ? 0.08 : -0.06, 1.08)
+        readonly property color idleHoverBg: ColorUtils.tonalStep(
+            root.headerSurface, root.isDarkSurface ? 0.14 : -0.10, 1.12)
+        property color fgColor: activeTint ? activeInk : root.ink
+        toggled: activeTint
         implicitHeight: Math.round(26 * Appearance.fontSizeScale)
         implicitWidth: pillRow.implicitWidth + 16
         buttonRadius: height / 2
-        colBackground: activeTint ? root.headerAccent : Qt.alpha(root.ink, 0.08)
-        colBackgroundHover: activeTint ? Qt.lighter(root.headerAccent, 1.08) : Qt.alpha(root.ink, 0.14)
+        colBackground: idleBg
+        colBackgroundHover: idleHoverBg
+        colBackgroundToggled: activeBg
+        colBackgroundToggledHover: Qt.lighter(activeBg, 1.08)
 
         contentItem: Item {
             implicitWidth: pillRow.implicitWidth
@@ -326,6 +386,8 @@ Item {
                 StyledText {
                     visible: pillBtn.label.length > 0
                     anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                     text: pillBtn.label
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     font.weight: pillBtn.activeTint ? Font.DemiBold : Font.Medium
@@ -465,7 +527,7 @@ Item {
                     onClicked: root.openEditorForSpan(root.boardData.summary.lastPlan)
                 }
 
-                // Calendar | Rolling 12 toggle
+                // Calendar | Rolling 12 toggle + Recurring daily/weekly dots filter
                 Row {
                     spacing: 3
                     PillButton {
@@ -480,6 +542,17 @@ Item {
                         activeTint: root.rangeMode === "rolling"
                         onClicked: root.requestRangeModeChange("rolling")
                     }
+                }
+
+                PillButton {
+                    objectName: "yearlyRecurringToggle"
+                    visible: root.boardData.summary.recurringCount > 0 || !root.showRecurring
+                    symbol: "repeat"
+                    label: root.boardData.summary.recurringCount > 0
+                        ? Translation.tr("Recurring · %1").arg(root.boardData.summary.recurringCount)
+                        : Translation.tr("Recurring")
+                    activeTint: root.showRecurring
+                    onClicked: root.showRecurring = !root.showRecurring
                 }
 
                 // Search toggle / inline input
@@ -528,11 +601,13 @@ Item {
                             colBackground: "transparent"
                             colBackgroundHover: Qt.alpha(root.ink, 0.14)
                             onClicked: root.clearOrCloseSearch()
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "close"
-                                iconSize: 12
-                                color: root.mutedInk
+                            contentItem: Item {
+                                MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: "close"
+                                    iconSize: 12
+                                    color: root.mutedInk
+                                }
                             }
                         }
                     }
@@ -571,7 +646,7 @@ Item {
                 text: root.formatShortDate(root.dragPreviewStartIso) + " → " + root.formatShortDate(root.dragPreviewEndIso)
                 font.pixelSize: Appearance.font.pixelSize.smallest
                 font.weight: Font.DemiBold
-                color: Appearance.colors.colOnPrimary
+                color: ColorUtils.ensureReadable(Appearance.colors.colOnPrimary, root.headerAccent, 5.5)
             }
         }
 
@@ -754,6 +829,40 @@ Item {
                                                 color: Qt.alpha(root.ink, 0.05)
                                             }
 
+                                            // Compact colored recurring indicators (Daily/Weekly series)
+                                            Row {
+                                                id: dayRecDotsRow
+                                                objectName: "yearlyDayRecurringDots"
+                                                visible: dayCell.validDay && (dayCell.dayObj?.recurringItems?.length ?? 0) > 0
+                                                anchors {
+                                                    bottom: parent.bottom
+                                                    bottomMargin: 2
+                                                    horizontalCenter: parent.horizontalCenter
+                                                }
+                                                spacing: 2
+                                                z: 2
+
+                                                Repeater {
+                                                    model: (dayCell.dayObj?.recurringItems ?? []).slice(0, 3)
+                                                    delegate: Rectangle {
+                                                        required property var modelData
+                                                        width: 4
+                                                        height: 4
+                                                        radius: 2
+                                                        color: root.resolveBarColor(modelData.color, modelData.sourceEvent, modelData.source)
+                                                    }
+                                                }
+
+                                                StyledText {
+                                                    visible: (dayCell.dayObj?.recurringItems?.length ?? 0) > 3
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: "+" + String((dayCell.dayObj?.recurringItems?.length ?? 0) - 3)
+                                                    font.pixelSize: 8
+                                                    font.weight: Font.Bold
+                                                    color: root.mutedInk
+                                                }
+                                            }
+
                                             MouseArea {
                                                 id: cellHover
                                                 anchors.fill: parent
@@ -769,6 +878,19 @@ Item {
                                                         const dt = YearlyPolicy.parseIsoDate(dayCell.dayObj.iso)
                                                         if (dt)
                                                             root.requestJumpToWeek(dt)
+                                                    }
+                                                }
+
+                                                StyledToolTip {
+                                                    extraVisibleCondition: (dayCell.dayObj?.recurringItems?.length ?? 0) > 0
+                                                    text: {
+                                                        const items = dayCell.dayObj?.recurringItems ?? []
+                                                        if (!items.length) return ""
+                                                        const lines = items.slice(0, 5).map(it =>
+                                                            "• " + (it.timeLabel ? it.timeLabel + " " : "") + it.title)
+                                                        if (items.length > 5)
+                                                            lines.push("+" + (items.length - 5) + " more")
+                                                        return dayCell.dayObj.iso + "\n" + lines.join("\n")
                                                     }
                                                 }
                                             }
@@ -792,7 +914,8 @@ Item {
 
                                             readonly property var seg: modelData
                                             readonly property var span: modelData.span
-                                            readonly property color baseCol: root.resolveBarColor(span.color)
+                                            readonly property bool editableSpan: !span.readOnly && !span.virtual
+                                            readonly property color baseCol: root.resolveBarColor(span.color, span.sourceEvent, span.source)
                                             readonly property color fgCol: root.contrastOnBar(baseCol)
                                             readonly property real baseX: (seg.startDay - 1) * root.dayColWidth + (seg.wrapLeft ? 0 : 1.5)
                                             readonly property real baseWidth: Math.max(8, seg.dayLength * root.dayColWidth - (seg.wrapLeft ? 0 : 1.5) - (seg.wrapRight ? 0 : 1.5))
@@ -814,8 +937,8 @@ Item {
                                             height: 16
                                             radius: 5
                                             color: baseCol
-                                            opacity: span.isPast ? 0.65 : (barMouse.containsMouse || root.editingEventId === span.id ? 1.0 : 0.92)
-                                            border.width: root.editingEventId === span.id ? 1.5 : 0
+                                            opacity: span.isPast ? 0.65 : (barMouse.containsMouse || (root.editingKey.length > 0 && root.editingKey === span.key) || root.editingEventId === span.rawId ? 1.0 : 0.92)
+                                            border.width: ((root.editingKey.length > 0 && root.editingKey === span.key) || (!planBar.span.readOnly && root.editingEventId === span.rawId)) ? 1.5 : 0
                                             border.color: root.ink
 
                                             // Flatten rounded corners cleanly when wrapped across month boundaries
@@ -892,7 +1015,7 @@ Item {
                                                     planBar.draggingBody = false
                                                 }
                                                 onPositionChanged: mouse => {
-                                                    if (!pressed) return
+                                                    if (!pressed || !planBar.editableSpan) return
                                                     const curX = mapToItem(monthRow, mouse.x, mouse.y).x
                                                     const dx = curX - pressGlobalX
                                                     if (!moved && Math.abs(dx) < 5) return
@@ -902,13 +1025,13 @@ Item {
                                                     const deltaDays = Math.round(dx / root.dayColWidth)
                                                     const shifted = YearlyPolicy.shiftSpanRange(planBar.span.startIso, planBar.span.endIso, deltaDays)
                                                     if (shifted) {
-                                                        root.dragEventId = planBar.span.id
+                                                        root.dragEventId = Number(planBar.span.rawId ?? -1)
                                                         root.dragPreviewStartIso = shifted.startIso
                                                         root.dragPreviewEndIso = shifted.endIso
                                                     }
                                                 }
                                                 onReleased: {
-                                                    const wasMoved = moved
+                                                    const wasMoved = moved && planBar.editableSpan
                                                     const deltaDays = Math.round(planBar.dragDeltaX / root.dayColWidth)
                                                     moved = false
                                                     planBar.draggingBody = false
@@ -919,8 +1042,8 @@ Item {
                                                     if (wasMoved && deltaDays !== 0) {
                                                         const shifted = YearlyPolicy.shiftSpanRange(planBar.span.startIso, planBar.span.endIso, deltaDays)
                                                         if (shifted && root.localBackend && typeof root.localBackend.rescheduleYearlyRange === "function")
-                                                            root.localBackend.rescheduleYearlyRange(planBar.span.id, shifted.startIso, shifted.endIso)
-                                                    } else if (!wasMoved) {
+                                                            root.localBackend.rescheduleYearlyRange(Number(planBar.span.rawId), shifted.startIso, shifted.endIso)
+                                                    } else if (!moved) {
                                                         root.openEditorForSpan(planBar.span)
                                                     }
                                                 }
@@ -939,7 +1062,7 @@ Item {
 
                                             // Left edge resize handle
                                             MouseArea {
-                                                visible: !planBar.seg.wrapLeft && planBar.width >= 20
+                                                visible: planBar.editableSpan && !planBar.seg.wrapLeft && planBar.width >= 20
                                                 anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
                                                 width: 6
                                                 z: 2
@@ -959,7 +1082,7 @@ Item {
                                                     const candidate = YearlyPolicy.addDaysIso(planBar.span.startIso, deltaDays)
                                                     const next = YearlyPolicy.resizeSpanRange(planBar.span.startIso, planBar.span.endIso, "start", candidate)
                                                     if (next) {
-                                                        root.dragEventId = planBar.span.id
+                                                        root.dragEventId = Number(planBar.span.rawId ?? -1)
                                                         root.dragPreviewStartIso = next.startIso
                                                         root.dragPreviewEndIso = next.endIso
                                                     }
@@ -975,14 +1098,14 @@ Item {
                                                         const candidate = YearlyPolicy.addDaysIso(planBar.span.startIso, deltaDays)
                                                         const next = YearlyPolicy.resizeSpanRange(planBar.span.startIso, planBar.span.endIso, "start", candidate)
                                                         if (next && root.localBackend && typeof root.localBackend.rescheduleYearlyRange === "function")
-                                                            root.localBackend.rescheduleYearlyRange(planBar.span.id, next.startIso, next.endIso)
+                                                            root.localBackend.rescheduleYearlyRange(Number(planBar.span.rawId), next.startIso, next.endIso)
                                                     }
                                                 }
                                             }
 
                                             // Right edge resize handle
                                             MouseArea {
-                                                visible: !planBar.seg.wrapRight && planBar.width >= 20
+                                                visible: planBar.editableSpan && !planBar.seg.wrapRight && planBar.width >= 20
                                                 anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
                                                 width: 6
                                                 z: 2
@@ -1002,7 +1125,7 @@ Item {
                                                     const candidate = YearlyPolicy.addDaysIso(planBar.span.endIso, deltaDays)
                                                     const next = YearlyPolicy.resizeSpanRange(planBar.span.startIso, planBar.span.endIso, "end", candidate)
                                                     if (next) {
-                                                        root.dragEventId = planBar.span.id
+                                                        root.dragEventId = Number(planBar.span.rawId ?? -1)
                                                         root.dragPreviewStartIso = next.startIso
                                                         root.dragPreviewEndIso = next.endIso
                                                     }
@@ -1018,7 +1141,7 @@ Item {
                                                         const candidate = YearlyPolicy.addDaysIso(planBar.span.endIso, deltaDays)
                                                         const next = YearlyPolicy.resizeSpanRange(planBar.span.startIso, planBar.span.endIso, "end", candidate)
                                                         if (next && root.localBackend && typeof root.localBackend.rescheduleYearlyRange === "function")
-                                                            root.localBackend.rescheduleYearlyRange(planBar.span.id, next.startIso, next.endIso)
+                                                            root.localBackend.rescheduleYearlyRange(Number(planBar.span.rawId), next.startIso, next.endIso)
                                                     }
                                                 }
                                             }
@@ -1026,6 +1149,7 @@ Item {
                                             StyledToolTip {
                                                 text: {
                                                     let tip = planBar.span.title + " (" + planBar.span.startIso + " → " + planBar.span.endIso + ", " + planBar.span.dayCount + "d)"
+                                                    if (planBar.span.readOnly) tip += " · " + Translation.tr("External calendar")
                                                     if (planBar.span.place.length) tip += "\n" + planBar.span.place
                                                     if (planBar.span.checklistTotal > 0) tip += "\n" + planBar.span.checklistDone + "/" + planBar.span.checklistTotal + " checklist"
                                                     return tip
@@ -1076,7 +1200,9 @@ Item {
                             Layout.fillWidth: true
                             StyledText {
                                 Layout.fillWidth: true
-                                text: root.editingEventId >= 0 ? Translation.tr("Edit plan") : Translation.tr("New plan")
+                                text: root.editingReadOnly
+                                    ? Translation.tr("External event (read-only)")
+                                    : (root.editingEventId >= 0 ? Translation.tr("Edit plan") : Translation.tr("New plan"))
                                 font.pixelSize: Appearance.font.pixelSize.normal
                                 font.weight: Font.Bold
                                 color: root.ink
@@ -1088,11 +1214,85 @@ Item {
                                 colBackground: "transparent"
                                 colBackgroundHover: Qt.alpha(root.ink, 0.1)
                                 onClicked: root.closeEditor()
-                                contentItem: MaterialSymbol {
-                                    anchors.centerIn: parent
-                                    text: "close"
-                                    iconSize: 16
-                                    color: root.mutedInk
+                                contentItem: Item {
+                                    MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        text: "close"
+                                        iconSize: 16
+                                        color: root.mutedInk
+                                    }
+                                }
+                            }
+                        }
+
+                        // Scheduled items on this day (parity with Weekly Planner)
+                        ColumnLayout {
+                            objectName: "yearlyDayScheduleList"
+                            visible: root.selectedDayItems.length > 0
+                            Layout.fillWidth: true
+                            spacing: 4
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: Translation.tr("Scheduled on %1 (%2)").arg(root.draftStartIso).arg(root.selectedDayItems.length)
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                font.weight: Font.DemiBold
+                                color: root.mutedInk
+                            }
+
+                            Repeater {
+                                model: root.selectedDayItems
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    implicitHeight: 26
+                                    radius: 6
+                                    color: dayItemMouse.containsMouse ? Qt.alpha(root.ink, 0.09) : Qt.alpha(root.ink, 0.05)
+
+                                    RowLayout {
+                                        anchors { fill: parent; leftMargin: 8; rightMargin: 8 }
+                                        spacing: 6
+                                        Rectangle {
+                                            width: 6; height: 6; radius: 3
+                                            color: root.resolveBarColor(modelData.color, modelData.sourceEvent, modelData.source)
+                                        }
+                                        StyledText {
+                                            text: modelData.timeLabel || ""
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            font.family: Appearance.font.family.numbers
+                                            color: root.mutedInk
+                                            visible: text.length > 0
+                                        }
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            elide: Text.ElideRight
+                                            text: modelData.title
+                                            font.pixelSize: Appearance.font.pixelSize.smaller
+                                            color: root.ink
+                                        }
+                                        StyledText {
+                                            visible: modelData.readOnly === true || modelData.isRecurring === true
+                                            text: modelData.readOnly === true ? Translation.tr("EXT") : modelData.recurrence.toUpperCase()
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            font.weight: Font.Bold
+                                            color: root.headerTodayInk
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: dayItemMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (modelData.isRecurring) {
+                                                const dt = YearlyPolicy.parseIsoDate(root.draftStartIso)
+                                                if (dt) root.requestJumpToWeek(dt)
+                                            } else if (modelData.span) {
+                                                root.openEditorForSpan(modelData.span)
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1160,7 +1360,7 @@ Item {
                                         buttonRadius: 6
                                         colBackground: Qt.alpha(root.ink, 0.07)
                                         onClicked: root.stepDraftDate("start", -1)
-                                        contentItem: StyledText { anchors.centerIn: parent; text: "−"; color: root.ink }
+                                        contentItem: StyledText { horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: "−"; color: root.ink }
                                     }
                                     CompactField {
                                         id: startDateInput
@@ -1175,7 +1375,7 @@ Item {
                                         buttonRadius: 6
                                         colBackground: Qt.alpha(root.ink, 0.07)
                                         onClicked: root.stepDraftDate("start", 1)
-                                        contentItem: StyledText { anchors.centerIn: parent; text: "+"; color: root.ink }
+                                        contentItem: StyledText { horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: "+"; color: root.ink }
                                     }
                                 }
                             }
@@ -1197,7 +1397,7 @@ Item {
                                         buttonRadius: 6
                                         colBackground: Qt.alpha(root.ink, 0.07)
                                         onClicked: root.stepDraftDate("end", -1)
-                                        contentItem: StyledText { anchors.centerIn: parent; text: "−"; color: root.ink }
+                                        contentItem: StyledText { horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: "−"; color: root.ink }
                                     }
                                     CompactField {
                                         id: endDateInput
@@ -1212,7 +1412,7 @@ Item {
                                         buttonRadius: 6
                                         colBackground: Qt.alpha(root.ink, 0.07)
                                         onClicked: root.stepDraftDate("end", 1)
-                                        contentItem: StyledText { anchors.centerIn: parent; text: "+"; color: root.ink }
+                                        contentItem: StyledText { horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: "+"; color: root.ink }
                                     }
                                 }
                             }
@@ -1292,17 +1492,22 @@ Item {
                                 spacing: 6
 
                                 RippleButton {
+                                    toggled: checkRow.modelData.done
                                     implicitWidth: 22
                                     implicitHeight: 22
                                     buttonRadius: 5
-                                    colBackground: checkRow.modelData.done ? root.headerAccent : Qt.alpha(root.ink, 0.08)
+                                    colBackground: Qt.alpha(root.ink, 0.08)
+                                    colBackgroundToggled: root.headerAccent
+                                    colBackgroundToggledHover: Qt.lighter(root.headerAccent, 1.08)
                                     onClicked: root.toggleChecklistEntry(checkRow.index)
-                                    contentItem: MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        visible: checkRow.modelData.done
-                                        text: "check"
-                                        iconSize: 14
-                                        color: Appearance.colors.colOnPrimary
+                                    contentItem: Item {
+                                        MaterialSymbol {
+                                            anchors.centerIn: parent
+                                            visible: checkRow.modelData.done
+                                            text: "check"
+                                            iconSize: 14
+                                            color: ColorUtils.ensureReadable(Appearance.colors.colOnPrimary, root.headerAccent, 5.5)
+                                        }
                                     }
                                 }
 
@@ -1322,11 +1527,13 @@ Item {
                                     colBackground: "transparent"
                                     colBackgroundHover: Qt.alpha(root.ink, 0.1)
                                     onClicked: root.removeChecklistEntry(checkRow.index)
-                                    contentItem: MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        text: "close"
-                                        iconSize: 12
-                                        color: root.mutedInk
+                                    contentItem: Item {
+                                        MaterialSymbol {
+                                            anchors.centerIn: parent
+                                            text: "close"
+                                            iconSize: 12
+                                            color: root.mutedInk
+                                        }
                                     }
                                 }
                             }
@@ -1366,6 +1573,7 @@ Item {
 
                             PillButton {
                                 objectName: "yearlySaveButton"
+                                visible: !root.editingReadOnly
                                 symbol: "check"
                                 label: Translation.tr("Save")
                                 activeTint: true
@@ -1374,7 +1582,7 @@ Item {
 
                             PillButton {
                                 objectName: "yearlyCancelButton"
-                                label: Translation.tr("Cancel")
+                                label: root.editingReadOnly ? Translation.tr("Close") : Translation.tr("Cancel")
                                 onClicked: root.closeEditor()
                             }
 
@@ -1392,7 +1600,7 @@ Item {
 
                             PillButton {
                                 objectName: "yearlyDeleteButton"
-                                visible: root.editingEventId >= 0
+                                visible: !root.editingReadOnly && root.editingEventId >= 0
                                 symbol: "delete"
                                 label: root.deleteConfirmPending ? Translation.tr("Confirm") : ""
                                 fgColor: root.deleteConfirmPending ? Appearance.colors.colError : root.mutedInk
