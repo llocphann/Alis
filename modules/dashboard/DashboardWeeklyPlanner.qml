@@ -301,10 +301,64 @@ Item {
         target: root.externalBackend
         function onEventsUpdated() {root._eventsRevision++}
     }
+    property string viewMode: "week"
+    property string yearRangeMode: "calendar"
+
+    function setViewMode(mode: string): void {
+        const normalized = mode === "year" ? "year" : "week"
+        if (root.viewMode === normalized)
+            return
+        root.viewMode = normalized
+        if (normalized === "week") {
+            Qt.callLater(root.scrollWorkingHours)
+        } else {
+            root.clearEventSelection()
+            if (root.sideView === "events")
+                root.sideView = ""
+        }
+        root.storeBrowser()
+    }
+
+    function setYearRangeMode(mode: string): void {
+        const normalized = mode === "rolling" ? "rolling" : "calendar"
+        if (root.yearRangeMode === normalized)
+            return
+        root.yearRangeMode = normalized
+        root.storeBrowser()
+    }
+
+    function changeYearPeriod(delta: int): void {
+        const base = root.selectedDate instanceof Date && !isNaN(root.selectedDate.getTime())
+            ? root.selectedDate : new Date()
+        root.followToday = false
+        if (root.yearRangeMode === "rolling") {
+            root.selectedDate = new Date(base.getFullYear(), base.getMonth() + delta, 1, 12, 0, 0, 0)
+        } else {
+            root.selectedDate = new Date(base.getFullYear() + delta, base.getMonth(), Math.min(base.getDate(), 28), 12, 0, 0, 0)
+        }
+        root.storeBrowser()
+    }
+
+    function navigatePeriod(delta: int): void {
+        if (root.viewMode === "year")
+            root.changeYearPeriod(delta)
+        else
+            root.changeWeek(delta)
+    }
+
+    function jumpToWeekDate(date): void {
+        const dt = date instanceof Date && !isNaN(date.getTime()) ? date : new Date()
+        root.followToday = false
+        root.selectedDate = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 12, 0, 0, 0)
+        root.setViewMode("week")
+    }
+
     function storeBrowser(): void {
         if (_initialized) GlobalStates.dashboardPlannerBrowser={
             date:selectedDate.toISOString(),followToday:followToday,
-            sideView:sideView==="events"?"":sideView
+            sideView:sideView==="events"?"":sideView,
+            viewMode:viewMode,
+            yearRangeMode:yearRangeMode
         }
     }
     function openInlineEventEditor(arg): void {
@@ -448,11 +502,22 @@ Item {
         return viewport.contentX!==before
     }
     Keys.onPressed: event => {
+        if (root.viewMode === "year") {
+            if (event.key === Qt.Key_PageUp) {navigatePeriod(-1);event.accepted=true}
+            else if (event.key === Qt.Key_PageDown) {navigatePeriod(1);event.accepted=true}
+            else if (event.key === Qt.Key_Home) {showToday();event.accepted=true}
+            else if (event.key === Qt.Key_Slash && event.modifiers === Qt.NoModifier && yearlyPlannerLoader.item) {
+                yearlyPlannerLoader.item.focusSearch()
+                event.accepted=true
+            }
+            else event.accepted=false
+            return
+        }
         // Unhandled editor keys must never navigate the week underneath a form.
         if (root.handleSelectionKey(event)) {event.accepted=true;return}
         if (root.sideView === "events") { event.accepted = false; return }
-        if (event.key === Qt.Key_PageUp) {changeWeek(-1);event.accepted=true}
-        else if (event.key === Qt.Key_PageDown) {changeWeek(1);event.accepted=true}
+        if (event.key === Qt.Key_PageUp) {navigatePeriod(-1);event.accepted=true}
+        else if (event.key === Qt.Key_PageDown) {navigatePeriod(1);event.accepted=true}
         else if (event.key === Qt.Key_Home) {showToday();event.accepted=true}
         else event.accepted=false
     }
@@ -518,15 +583,15 @@ Item {
                     Action {
                         objectName:"plannerPreviousWeek"
                         symbol:"chevron_left"
-                        Accessible.name:Translation.tr("Previous week")
-                        onClicked:root.changeWeek(-1)
+                        Accessible.name:root.viewMode==="year" ? Translation.tr("Previous period") : Translation.tr("Previous week")
+                        onClicked:root.navigatePeriod(-1)
                     }
                     Action {label:Translation.tr("Today");onClicked:root.showToday()}
                     Action {
                         objectName:"plannerNextWeek"
                         symbol:"chevron_right"
-                        Accessible.name:Translation.tr("Next week")
-                        onClicked:root.changeWeek(1)
+                        Accessible.name:root.viewMode==="year" ? Translation.tr("Next period") : Translation.tr("Next week")
+                        onClicked:root.navigatePeriod(1)
                     }
                 }
                 StyledText {
@@ -538,8 +603,18 @@ Item {
                         - 20*Appearance.fontSizeScale)
                     height:parent.height
                     visible:!plannerToolbar.compact
-                    text:Qt.formatDate(root.days[0].date,"d MMM") + " – "
-                        + Qt.formatDate(root.days[6].date,"d MMM yyyy")
+                    text: {
+                        if (root.viewMode==="year") {
+                            if (root.yearRangeMode==="rolling") {
+                                const startM=new Date(root.selectedDate.getFullYear(),root.selectedDate.getMonth(),1,12,0,0,0)
+                                const endM=new Date(root.selectedDate.getFullYear(),root.selectedDate.getMonth()+11,1,12,0,0,0)
+                                return Qt.formatDate(startM,"MMM yyyy") + " – " + Qt.formatDate(endM,"MMM yyyy")
+                            }
+                            return String(root.selectedDate.getFullYear())
+                        }
+                        return Qt.formatDate(root.days[0].date,"d MMM") + " – "
+                            + Qt.formatDate(root.days[6].date,"d MMM yyyy")
+                    }
                     horizontalAlignment:Text.AlignHCenter
                     font.weight:Font.Bold
                     font.pixelSize:Appearance.font.pixelSize.normal
@@ -566,6 +641,54 @@ Item {
                         onClicked:root.confirmOrDeleteSelected()
                         StyledToolTip {
                             text:"Ctrl+Click to toggle · Shift+Click for range · Ctrl/Shift+drag background to select · Delete twice to confirm"
+                        }
+                    }
+                    RippleButton {
+                        id:modeWeekButton
+                        objectName:"plannerModeWeek"
+                        toggled:root.viewMode==="week"
+                        implicitHeight:34 * Appearance.fontSizeScale
+                        implicitWidth:modeWeekText.implicitWidth + 16 * Appearance.fontSizeScale
+                        buttonRadius:12 * Appearance.fontSizeScale
+                        Accessible.name:Translation.tr("Week")
+                        colBackground:toggled ? Appearance.colors.colSecondaryContainer : "transparent"
+                        colBackgroundHover:Appearance.colors.colLayer1Hover
+                        onClicked:root.setViewMode("week")
+                        contentItem:Item {
+                            implicitWidth:modeWeekText.implicitWidth
+                            implicitHeight:modeWeekText.implicitHeight
+                            StyledText {
+                                id:modeWeekText
+                                anchors.centerIn:parent
+                                text:Translation.tr("Week")
+                                font.pixelSize:Appearance.font.pixelSize.small
+                                font.weight:modeWeekButton.toggled ? Font.DemiBold : Font.Normal
+                                color:root.headerInk
+                            }
+                        }
+                    }
+                    RippleButton {
+                        id:modeYearButton
+                        objectName:"plannerModeYear"
+                        toggled:root.viewMode==="year"
+                        implicitHeight:34 * Appearance.fontSizeScale
+                        implicitWidth:modeYearText.implicitWidth + 16 * Appearance.fontSizeScale
+                        buttonRadius:12 * Appearance.fontSizeScale
+                        Accessible.name:Translation.tr("Year")
+                        colBackground:toggled ? Appearance.colors.colSecondaryContainer : "transparent"
+                        colBackgroundHover:Appearance.colors.colLayer1Hover
+                        onClicked:root.setViewMode("year")
+                        contentItem:Item {
+                            implicitWidth:modeYearText.implicitWidth
+                            implicitHeight:modeYearText.implicitHeight
+                            StyledText {
+                                id:modeYearText
+                                anchors.centerIn:parent
+                                text:Translation.tr("Year")
+                                font.pixelSize:Appearance.font.pixelSize.small
+                                font.weight:modeYearButton.toggled ? Font.DemiBold : Font.Normal
+                                color:root.headerInk
+                            }
                         }
                     }
                     Action {
@@ -621,6 +744,7 @@ Item {
             Flickable {
                 id: viewport
                 objectName: "weeklyPlannerViewport"
+                visible:root.viewMode==="week"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumWidth:0
@@ -1114,6 +1238,33 @@ Item {
                 }
             }
             Loader {
+                id:yearlyPlannerLoader
+                objectName:"yearlyPlannerLoader"
+                visible:root.viewMode==="year"
+                active:root.viewMode==="year"
+                Layout.fillWidth:true
+                Layout.fillHeight:true
+                Layout.minimumWidth:0
+                Layout.preferredWidth:1
+                sourceComponent:Component {
+                    DashboardYearlyPlanner {
+                        anchorDate:root.selectedDate
+                        rangeMode:root.yearRangeMode
+                        localBackend:root.localBackend
+                        eventsRevision:root._eventsRevision
+                        abyssPanel:root.abyssPanel
+                        ink:root.ink
+                        mutedInk:root.mutedInk
+                        headerAccent:root.headerAccent
+                        headerTodayInk:root.headerTodayInk
+                        headerDivider:root.headerDivider
+                        headerSurface:root.headerSurface
+                        onRequestRangeModeChange:mode=>root.setYearRangeMode(mode)
+                        onRequestJumpToWeek:dt=>root.jumpToWeekDate(dt)
+                    }
+                }
+            }
+            Loader {
                 id:sidePanel
                 objectName:"plannerSharedSidePanel"
                 Layout.fillHeight:root.width>=760
@@ -1171,11 +1322,14 @@ Item {
         if(saved.date)selectedDate=new Date(saved.date)
         followToday=saved.followToday ?? true
         sideView=["todo","notes"].includes(saved.sideView)?saved.sideView:""
+        viewMode=saved.viewMode==="year"?"year":"week"
+        yearRangeMode=saved.yearRangeMode==="rolling"?"rolling":"calendar"
         _initialized=true
         refreshFollowingToday()
         storeBrowser()
         if ((root.days || []).some(day => (day?.timed?.length ?? 0) > 0))
             root._initialAutoScrollPending=false
-        Qt.callLater(root.scrollWorkingHours)
+        if (root.viewMode==="week")
+            Qt.callLater(root.scrollWorkingHours)
     }
 }

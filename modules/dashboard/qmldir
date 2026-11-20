@@ -22,3 +22,4 @@ DashboardHeader 1.0 DashboardHeader.qml
 DashboardMusic 1.0 DashboardMusic.qml
 DashboardSpacedRepetition 1.0 DashboardSpacedRepetition.qml
 DashboardWeeklyPlanner 1.0 DashboardWeeklyPlanner.qml
+DashboardYearlyPlanner 1.0 DashboardYearlyPlanner.qml

@@ -220,14 +220,45 @@ MouseArea {
         spacing: 4 * Appearance.sizes.barModuleScale
         layoutDirection: root.contentRotation < 0 ? Qt.RightToLeft : Qt.LeftToRight
 
-        MaterialSymbol {
-            text: root.showPinnedIdle ? "schedule" : root.iconName
-            iconSize: Math.round(Appearance.font.pixelSize.normal * Appearance.sizes.barModuleScale)
-            rotation: -root.contentRotation
-            color: root.paused
+        Item {
+            id: indicatorGlyph
+            readonly property bool useHourglass: (TimerService?.hourglassStyleActive ?? true)
+                && !root.showPinnedIdle
+                && (root.pomodoroActive || root.countdownActive)
+            readonly property real activeProgress: root.pomodoroActive
+                ? (TimerService.pomodoroSecondsLeft / Math.max(1, TimerService.pomodoroLapDuration))
+                : (root.countdownActive
+                    ? (TimerService.countdownSecondsLeft / Math.max(1, TimerService.countdownDuration))
+                    : 1.0)
+            readonly property color glyphColor: root.paused
                 ? Appearance.colors.colOnLayer1Inactive
                 : root.accentColor
+
+            implicitWidth: barMaterialIcon.implicitWidth
+            implicitHeight: barMaterialIcon.implicitHeight
             Layout.alignment: Qt.AlignVCenter
+            rotation: -root.contentRotation
+
+            MaterialSymbol {
+                id: barMaterialIcon
+                anchors.centerIn: parent
+                visible: !indicatorGlyph.useHourglass
+                text: root.showPinnedIdle ? "schedule" : root.iconName
+                iconSize: Math.round(Appearance.font.pixelSize.normal * Appearance.sizes.barModuleScale)
+                color: indicatorGlyph.glyphColor
+            }
+
+            HourglassBarIcon {
+                id: barHourglassIcon
+                objectName: "barHourglassIcon"
+                anchors.centerIn: parent
+                visible: indicatorGlyph.useHourglass
+                visualStyle: TimerService?.visualStyle ?? "turned"
+                progress: indicatorGlyph.activeProgress
+                paused: root.paused
+                color: indicatorGlyph.glyphColor
+                iconSize: barMaterialIcon.iconSize
+            }
 
             SequentialAnimation on opacity {
                 running: root.visible && (root.QsWindow.window?.visible ?? true) && root.pomodoroActive && root.pomodoroRunning && !(TimerService?.pomodoroBreak ?? false)

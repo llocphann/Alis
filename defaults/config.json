@@ -1740,7 +1740,8 @@
             "longBreak": 900
         },
         "secondPrecision": false,
-        "shortDateFormat": "dd/MM"
+        "shortDateFormat": "dd/MM",
+        "visualStyle": "turned"
     },
     "wallpaperSelector": {
         "selectionTarget": "main",

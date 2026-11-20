@@ -42,7 +42,9 @@ Item {
             id: timerDeck
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredHeight: root.compactMode ? 108 : 138
+            Layout.preferredHeight: TimerService.hourglassStyleActive
+                ? (root.compactMode ? 128 : 160)
+                : (root.compactMode ? 108 : 138)
 
             readonly property real progress:
                 TimerService.countdownDuration > 0
@@ -64,10 +66,85 @@ Item {
                 }
             }
 
-            ColumnLayout {
+            // 1-click timer visual style cycler (Turned -> Matrix -> Square -> Classic)
+            RippleButton {
+                id: countdownStyleButton
+                objectName: "countdownStyleButton"
+                anchors.top: parent.top
+                anchors.right: parent.right
+                z: 2
+                implicitWidth: countdownStyleRow.implicitWidth + 14
+                implicitHeight: 22
+                buttonRadius: height / 2
+                colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                    : Appearance.colors.colLayer2
+                colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
+                    : Appearance.colors.colLayer2Hover
+                onClicked: TimerService.cycleVisualStyle()
+
+                contentItem: Row {
+                    id: countdownStyleRow
+                    anchors.centerIn: parent
+                    spacing: 4
+
+                    MaterialSymbol {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: TimerService.visualStyle === "matrix"
+                            ? "grain"
+                            : (TimerService.visualStyle === "square"
+                                ? "grid_view"
+                                : (TimerService.visualStyle === "classic"
+                                    ? "donut_large"
+                                    : "hourglass_top"))
+                        iconSize: 13
+                        color: root._colAccent
+                    }
+
+                    StyledText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: TimerService.visualStyleLabel(TimerService.visualStyle)
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.weight: Font.Medium
+                        color: root._colSubtext
+                    }
+                }
+
+                StyledToolTip {
+                    text: Translation.tr("Switch timer style (T)")
+                }
+            }
+
+            RowLayout {
+                id: countdownDeckRow
                 anchors.centerIn: parent
-                width: Math.min(parent.width - 24, 310)
-                spacing: root.compactMode ? 4 : 5
+                anchors.verticalCenterOffset: TimerService.hourglassStyleActive ? 8 : 0
+                width: Math.min(parent.width - 12, TimerService.hourglassStyleActive ? 318 : 310)
+                spacing: root.compactMode ? 8 : 14
+
+                HourglassVisual {
+                    id: countdownHourglass
+                    objectName: "countdownHourglass"
+                    visible: TimerService.hourglassStyleActive
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.preferredWidth: root.compactMode ? 78 : 104
+                    Layout.preferredHeight: root.compactMode ? 96 : 126
+                    visualStyle: TimerService.visualStyle
+                    progress: timerDeck.progress
+                    running: TimerService.countdownRunning
+                    paused: TimerService.countdownPaused
+                    accentColor: root._colAccent
+                    textColor: root._colText
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 130
+                    Layout.alignment: Qt.AlignVCenter
+                    spacing: root.compactMode ? 4 : 5
 
                 // Editable time display with separate minutes and seconds.
                 RowLayout {
@@ -238,6 +315,7 @@ Item {
                 // Countdown uses a segmented runway instead of a circular dial.
                 // Segments extinguish from right to left as time elapses.
                 Item {
+                    visible: !TimerService.hourglassStyleActive
                     Layout.fillWidth: true
                     Layout.preferredHeight: 8
                     Layout.topMargin: root.compactMode ? 3 : 5
@@ -299,6 +377,7 @@ Item {
                         font.family: Appearance.font.family.numbers
                         color: root._colSubtext
                     }
+                }
                 }
             }
         }
@@ -404,7 +483,11 @@ Item {
                 Layout.preferredHeight: 35
                 Layout.preferredWidth: 90
                 buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
-                onClicked: TimerService.resetCountdown()
+                onClicked: {
+                    TimerService.resetCountdown()
+                    if (TimerService.hourglassStyleActive)
+                        countdownHourglass.triggerFlip()
+                }
                 enabled: TimerService.countdownSecondsLeft < TimerService.countdownDuration || TimerService.countdownRunning
                 colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.alisEverywhere ? Appearance.alis.colLayer2

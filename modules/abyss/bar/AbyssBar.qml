@@ -185,12 +185,19 @@ Item {
         const next=Layout.widthFrame(activePlacements,width,height,configuredLayoutOptions,
             Appearance.fontSizeScale,AbyssStyle.barThickness,AbyssStyle.neckRadius,
             AbyssStyle.perimeterRadius+AbyssStyle.neckRadius+AbyssStyle.connectionDepth+32)
-        const key=JSON.stringify(["top","right","bottom","left"].map(e=>configuredLayoutOptions.edgeWidthAffectsModules?.[e]!==false))
-        const contextKey=JSON.stringify([outputName,edge,width,height,
-            ["top","right","bottom","left"].map(e=>Layout.edgeThickness(configuredLayoutOptions,e))])
+        const affects = configuredLayoutOptions.edgeWidthAffectsModules
+        const key = (affects?.top !== false ? "1" : "0")
+            + (affects?.right !== false ? "1" : "0")
+            + (affects?.bottom !== false ? "1" : "0")
+            + (affects?.left !== false ? "1" : "0")
+        const contextKey = outputName + "|" + edge + "|" + width + "|" + height + "|"
+            + Layout.edgeThickness(configuredLayoutOptions, "top") + "|"
+            + Layout.edgeThickness(configuredLayoutOptions, "right") + "|"
+            + Layout.edgeThickness(configuredLayoutOptions, "bottom") + "|"
+            + Layout.edgeThickness(configuredLayoutOptions, "left")
         const sameContext=contextKey===widthContextKey
         widthContextKey=contextKey
-        if(widthMorphActive && sameContext && key===widthModeKey) {
+        if((widthMorphActive || (root.editing && root.draggedIds.length > 0)) && sameContext && key===widthModeKey) {
             targetFrame=next
             return
         }
@@ -286,7 +293,7 @@ Item {
     property int revision: 0
     // Optional local expansion shares the output field; it has no extra painter.
     readonly property var capacityNotices: editing ? [] : Layout.capacityNotices(layoutRecords,width,height,Appearance.fontSizeScale)
-    readonly property var clearanceDeformations: widthMorphActive ? presentedFrame.deformations : Layout.localSurfaces(baseRenderedRecords.concat(capacityNotices),width,height,targetFrame?.options ?? configuredLayoutOptions,Appearance.fontSizeScale,AbyssStyle.barThickness)
+    readonly property var clearanceDeformations: widthMorphActive ? presentedFrame.deformations : (root.editing ? deformations : Layout.localSurfaces(baseRenderedRecords.concat(capacityNotices),width,height,targetFrame?.options ?? configuredLayoutOptions,Appearance.fontSizeScale,AbyssStyle.barThickness))
     readonly property var deformations: widthMorphActive ? presentedFrame.deformations : Layout.localSurfaces(renderedRecords.concat(capacityNotices),width,height,targetFrame?.options ?? configuredLayoutOptions,Appearance.fontSizeScale,AbyssStyle.barThickness)
 
     property var moduleIds: []
@@ -302,8 +309,23 @@ Item {
     }
     function syncModuleIds(): void {
         const next=activePlacements.filter(p=>p.enabled).map(p=>p.id)
-        if (JSON.stringify(next)!==JSON.stringify(moduleIds)) moduleIds=next
+        let changed = next.length !== moduleIds.length
+        if (!changed) {
+            for (let i = 0; i < next.length; ++i) {
+                if (next[i] !== moduleIds[i]) {
+                    changed = true
+                    break
+                }
+            }
+        }
+        if (changed) moduleIds=next
         refreshWidthFrame()
+    }
+    onEditingChanged: {
+        if (!editing) {
+            for (let i = 0; i < modules.count; ++i)
+                modules.itemAt(i)?.invalidateInputRegion()
+        }
     }
     function itemForId(id): var { return modules.itemAt(moduleIds.indexOf(id)) }
     onActivePlacementsChanged: syncModuleIds()
@@ -366,6 +388,8 @@ Item {
             // announce source-bound changes, including same-pixel fractional
             // moves. Do not broaden the region to the full-output host.
             function invalidateInputRegion(): void {
+                if (root.editing)
+                    return
                 if (inputRegion) inputRegion.changed()
             }
             onXChanged: invalidateInputRegion()
@@ -423,8 +447,8 @@ Item {
                 : module.attachedEdge === "right" ? -cavaProtrusion : 0
             readonly property bool animatePlacement: !root.widthMorphActive && motionReady && motionEdge===attachedEdge && motionWidth===width && Appearance.animationsEnabled
                 && !placement?.locked && !root.draggedIds.includes(modelData)
-            Behavior on x { enabled:module.animatePlacement && module.motionHeight===module.height && module.cavaProtrusion < 0.01; NumberAnimation { id:xMotion;duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }
-            Behavior on y { enabled:module.animatePlacement && (module.motionHeight===module.height || module.kind==="cava"); NumberAnimation { id:yMotion;duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }
+            Behavior on x { enabled:module.animatePlacement && module.motionHeight===module.height && module.cavaProtrusion < 0.01; NumberAnimation { id:xMotion;duration:root.draggedIds.length > 0 ? 75 : Math.min(140,Appearance.animation.elementMove.duration);easing.type:root.draggedIds.length > 0 ? Easing.OutQuad : Easing.OutCubic } }
+            Behavior on y { enabled:module.animatePlacement && (module.motionHeight===module.height || module.kind==="cava"); NumberAnimation { id:yMotion;duration:root.draggedIds.length > 0 ? 75 : Math.min(140,Appearance.animation.elementMove.duration);easing.type:root.draggedIds.length > 0 ? Easing.OutQuad : Easing.OutCubic } }
             readonly property bool placementAnimating: xMotion.running || yMotion.running
             onPlacementAnimatingChanged: root._adjustModuleMotion(placementAnimating ? 1 : -1)
             x: (geometry?.content.x ?? 0) + cavaShiftX

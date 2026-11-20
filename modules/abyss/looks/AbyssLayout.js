@@ -262,22 +262,65 @@ function snapMove(placements, id, x, y, width, height, options, fontScale) {
     var low=own.edgeStart,high=own.edgeEnd;
     var center = selected.position*usable;
     var gap = bounded(options?.gap,8,0,32);
-    var targets = [{center:length/2,line:length/2,label:"Center"},
-        {center:low+own.span/2,line:low,label:"Start"},
-        {center:high-own.span/2,line:high,label:"End"}];
-    geometry(moved.filter(function(p) { return p.id!==id; }),width,height,options,fontScale)
-        .filter(function(p) { return p.edge===selected.edge; }).forEach(function(p) {
-        targets.push({center:p.along-gap-own.span/2,line:p.along-gap,label:Math.round(gap)+" px gap"});
-        targets.push({center:p.along+p.span+gap+own.span/2,line:p.along+p.span+gap,label:Math.round(gap)+" px gap"});
+    var targets = [
+        {center:length/2,line:length/2,label:"Center",priority:0},
+        {center:low+own.span/2,line:low,label:"Start",priority:1},
+        {center:high-own.span/2,line:high,label:"End",priority:1},
+        {center:length*0.25,line:length*0.25,label:"25%",priority:3},
+        {center:length*0.75,line:length*0.75,label:"75%",priority:3}
+    ];
+    var otherRecords = geometry(moved.filter(function(p) { return p.id!==id; }),width,height,options,fontScale);
+    var sameEdge = otherRecords.filter(function(p) { return p.edge===selected.edge; })
+        .sort(function(a,b) { return a.along-b.along; });
+    sameEdge.forEach(function(p) {
+        targets.push({center:p.along-gap-own.span/2,line:p.along-gap,label:Math.round(gap)+" px gap",priority:2});
+        targets.push({center:p.along+p.span+gap+own.span/2,line:p.along+p.span+gap,label:Math.round(gap)+" px gap",priority:2});
     });
-    var target = targets.filter(function(t) { return t.center-own.span/2>=low && t.center+own.span/2<=high; })
-        .sort(function(a,b) { return Math.abs(a.center-center)-Math.abs(b.center-center); })[0];
+    for (var sIdx = 0; sIdx + 1 < sameEdge.length; sIdx++) {
+        var prevMod = sameEdge[sIdx], nextMod = sameEdge[sIdx + 1];
+        var freeBand = nextMod.along - (prevMod.along + prevMod.span);
+        if (freeBand >= own.span + 4) {
+            var eqCenter = (prevMod.along + prevMod.span + nextMod.along) / 2;
+            var halfGap = Math.round((freeBand - own.span) / 2);
+            targets.push({center:eqCenter,line:eqCenter,label:"Equal "+halfGap+" px",priority:1});
+        }
+    }
+    var opposite = selected.edge==="top" ? "bottom" : selected.edge==="bottom" ? "top" : selected.edge==="left" ? "right" : "left";
+    otherRecords.filter(function(p) { return p.edge===opposite; }).forEach(function(p) {
+        var oppCenter = p.along + p.span/2;
+        targets.push({center:oppCenter,line:oppCenter,label:"Mirror",priority:2});
+    });
+    var target = targets.filter(function(t) { return t.center-own.span/2>=low-0.5 && t.center+own.span/2<=high+0.5; })
+        .sort(function(a,b) {
+            var da = Math.abs(a.center-center), db = Math.abs(b.center-center);
+            if (Math.abs(da-db) < 0.75) return (a.priority ?? 2) - (b.priority ?? 2);
+            return da - db;
+        })[0];
     if (!target || Math.abs(target.center-center)>10) return {placements:moved,guides:[]};
     moved = moved.map(function(p) { return p.id===id ? Object.assign({},p,{position:target.center/usable}) : p; });
-    var actual = geometry(moved,width,height,options,fontScale).find(function(p) { return p.id===id; });
-    // Do not show a misleading guide when collision packing prevented this snap.
-    return {placements:moved,guides:Math.abs(actual.along+actual.span/2-target.center)<1
-        ? [{horizontal:horizontal,along:target.line,label:target.label}] : []};
+    var actualRecords = geometry(moved,width,height,options,fontScale);
+    var actual = actualRecords.find(function(p) { return p.id===id; });
+    if (!actual || Math.abs(actual.along+actual.span/2-target.center)>=1)
+        return {placements:moved,guides:[]};
+    var outGuides = [{horizontal:horizontal,along:target.line,label:target.label}];
+    var settledEdge = actualRecords.filter(function(p) { return p.edge===selected.edge && p.id!==id; })
+        .sort(function(a,b) { return a.along-b.along; });
+    var leftNeighbor = null, rightNeighbor = null;
+    settledEdge.forEach(function(r) {
+        if (r.along + r.span <= actual.along + 0.5) leftNeighbor = r;
+        else if (!rightNeighbor && r.along >= actual.along + actual.span - 0.5) rightNeighbor = r;
+    });
+    if (leftNeighbor) {
+        var lGap = Math.round(actual.along - (leftNeighbor.along + leftNeighbor.span));
+        if (lGap >= 2 && lGap <= 360)
+            outGuides.push({kind:"spacing",horizontal:horizontal,edge:selected.edge,from:leftNeighbor.along+leftNeighbor.span,to:actual.along,gapPx:lGap,label:lGap+" px"});
+    }
+    if (rightNeighbor) {
+        var rGap = Math.round(rightNeighbor.along - (actual.along + actual.span));
+        if (rGap >= 2 && rGap <= 360)
+            outGuides.push({kind:"spacing",horizontal:horizontal,edge:selected.edge,from:actual.along+actual.span,to:rightNeighbor.along,gapPx:rGap,label:rGap+" px"});
+    }
+    return {placements:moved,guides:outGuides};
 }
 // Capture the displayed center and compression, not a neighbor-dependent aligned
 // group's future position. Anchors are normalized independently on each output.
@@ -1082,4 +1125,112 @@ function widthFrameBetween(from,to,t) {
     });
     return {records:records,deformations:shapes,morphDeformations:shapes,paintInsets:paint,reservationInsets:reservation,
         options:to.options,width:to.width,height:to.height,radius:to.radius,support:to.support};
+}
+
+function alignEdgeModules(placements, targetIds, fallbackEdge, mode, width, height, options, fontScale) {
+    function deny(msg) { return { placements: placements, rejected: msg }; }
+    var ids = Array.from(new Set(Array.from(targetIds || [])));
+    var targetPlacements = ids.map(function(id) { return placements.find(function(p) { return p.id === id; }); })
+        .filter(function(p) { return !!p && p.enabled !== false; });
+    var activeEdge = targetPlacements.length > 0 && targetPlacements.every(function(p) { return p.edge === targetPlacements[0].edge; })
+        ? targetPlacements[0].edge
+        : (["top","right","bottom","left"].indexOf(fallbackEdge) >= 0 ? fallbackEdge : "top");
+
+    if (targetPlacements.length > 0 && targetPlacements.some(function(p) { return p.edge !== activeEdge; }))
+        return deny("Select modules on one Edge to auto-align");
+
+    var useWholeEdge = (mode === "distribute" || mode === "packStart" || mode === "packEnd")
+        ? targetPlacements.length < 2
+        : targetPlacements.length === 0;
+    var candidatePool = useWholeEdge
+        ? placements.filter(function(p) { return p.enabled !== false && p.edge === activeEdge && !p.locked; })
+        : targetPlacements;
+    if (candidatePool.length === 0)
+        return deny("No unlocked modules available on this Edge");
+    if (candidatePool.some(function(p) { return p.locked; }))
+        return deny("Unlock every selected module before auto-aligning");
+
+    var horizontal = activeEdge === "top" || activeEdge === "bottom";
+    var length = horizontal ? width : height;
+    if (length <= 0)
+        return deny("Output geometry is not ready");
+
+    var records = geometry(placements, width, height, options, fontScale);
+    var recMap = {};
+    records.forEach(function(r) { recMap[r.id] = r; });
+
+    var items = candidatePool.map(function(p) { return recMap[p.id]; })
+        .filter(function(r) { return !!r && r.span > 0; })
+        .sort(function(a, b) { return a.along - b.along || a.id.localeCompare(b.id); });
+    if (items.length === 0)
+        return deny("Select visible modules on this Edge");
+
+    var low = items[0].edgeStart;
+    var high = items[0].edgeEnd;
+    var gap = bounded(options?.gap, 8, 0, 32);
+    var totalSpan = items.reduce(function(sum, r) { return sum + r.span; }, 0);
+    var updates = {};
+
+    if (mode === "center") {
+        if (items.length === 1) {
+            updates[items[0].id] = { position: 0.5, alignment: "center" };
+        } else {
+            var groupWidth = totalSpan + gap * (items.length - 1);
+            var start = Math.max(low, Math.min(high - groupWidth, (low + high - groupWidth) / 2));
+            var cursor = start;
+            items.forEach(function(r) {
+                updates[r.id] = { position: (cursor + r.span / 2) / length, alignment: "free" };
+                cursor += r.span + gap;
+            });
+        }
+    } else if (mode === "distribute") {
+        if (items.length < 2) {
+            updates[items[0].id] = { position: 0.5, alignment: "center" };
+        } else {
+            var freeSpace = Math.max(0, (high - low) - totalSpan);
+            var stepGap = freeSpace / (items.length + 1);
+            var distCursor = low + stepGap;
+            items.forEach(function(r) {
+                updates[r.id] = { position: (distCursor + r.span / 2) / length, alignment: "free" };
+                distCursor += r.span + stepGap;
+            });
+        }
+    } else if (mode === "packStart") {
+        var sCursor = low;
+        items.forEach(function(r) {
+            updates[r.id] = { position: (sCursor + r.span / 2) / length, alignment: items.length === 1 ? "start" : "free" };
+            sCursor += r.span + gap;
+        });
+    } else if (mode === "packEnd") {
+        var eCursor = high;
+        for (var k = items.length - 1; k >= 0; k--) {
+            var r = items[k];
+            updates[r.id] = { position: (eCursor - r.span / 2) / length, alignment: items.length === 1 ? "end" : "free" };
+            eCursor -= (r.span + gap);
+        }
+    } else if (mode === "mirror") {
+        var oppositeEdge = activeEdge === "top" ? "bottom" : activeEdge === "bottom" ? "top" : activeEdge === "left" ? "right" : "left";
+        var oppCenters = records.filter(function(r) { return r.edge === oppositeEdge && r.span > 0; })
+            .map(function(r) { return r.along + r.span / 2; });
+        items.forEach(function(r) {
+            var curCenter = r.along + r.span / 2;
+            var nextCenter = length - curCenter;
+            if (oppCenters.length > 0 && items.length === 1) {
+                oppCenters.sort(function(a, b) { return Math.abs(a - curCenter) - Math.abs(b - curCenter); });
+                nextCenter = oppCenters[0];
+            }
+            nextCenter = Math.max(low + r.span / 2, Math.min(high - r.span / 2, nextCenter));
+            updates[r.id] = { position: nextCenter / length, alignment: "free" };
+        });
+    } else {
+        return deny("Unsupported align mode");
+    }
+
+    var proposed = normalize(placements.map(function(p) {
+        return updates[p.id] ? Object.assign({}, p, updates[p.id]) : p;
+    }), "top");
+    var failures = conflicts(geometry(proposed, width, height, options, fontScale));
+    if (failures.length)
+        return deny(failures[0]);
+    return { placements: proposed, rejected: "" };
 }

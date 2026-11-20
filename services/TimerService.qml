@@ -279,6 +279,32 @@ Singleton {
     property int pomodoroSecondsLeft: pomodoroLapDuration
     property int pomodoroCycle: Persistent.states?.timer?.pomodoro?.cycle ?? 0
 
+    readonly property var visualStyles: ["turned", "matrix", "square", "classic"]
+    readonly property string visualStyle: {
+        const s = String(Config.options?.time?.visualStyle ?? "turned").toLowerCase()
+        return root.visualStyles.indexOf(s) >= 0 ? s : "turned"
+    }
+    readonly property bool hourglassStyleActive: root.visualStyle !== "classic"
+
+    function setVisualStyle(style: string): void {
+        const normalized = String(style || "turned").toLowerCase()
+        Config.setNestedValue("time.visualStyle", root.visualStyles.indexOf(normalized) >= 0 ? normalized : "turned")
+    }
+
+    function cycleVisualStyle(): void {
+        const idx = root.visualStyles.indexOf(root.visualStyle)
+        const nextIdx = (idx + 1) % root.visualStyles.length
+        root.setVisualStyle(root.visualStyles[nextIdx])
+    }
+
+    function visualStyleLabel(style: string): string {
+        const s = String(style || root.visualStyle).toLowerCase()
+        if (s === "matrix") return "Matrix"
+        if (s === "square") return "Square"
+        if (s === "classic") return "Classic"
+        return "Turned"
+    }
+
     // When focusTime changes and timer is not running, reset pomodoroSecondsLeft
     onFocusTimeChanged: {
         if (!pomodoroRunning && !pomodoroBreak) {

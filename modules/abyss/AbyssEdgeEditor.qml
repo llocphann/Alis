@@ -458,6 +458,8 @@ Item {
             + 2*editorBody.padding
     property var guides: []
     property bool snapEnabled: true
+    property bool rulerEnabled: true
+    property var _pendingPointerDrag: null
     property bool outputOnly: true
     property bool editingPopups: false
     readonly property var galleryEntries: {
@@ -573,6 +575,8 @@ Item {
     }
 
     function relocateToolbar(): void {
+        if (root._dragging)
+            return
         const next = bestToolbarEdge()
         if (next !== toolbarEdge)
             toolbarEdge = next
@@ -676,7 +680,19 @@ Item {
         feedback=""
     }
     function clearDrag(): void {
-        _dragContext=null;_dragToken++;_dragOrigin=null;_dragRecords=null;_dragRequest=null;_dragging=false}
+        _pendingPointerDrag=null;_dragContext=null;_dragToken++;_dragOrigin=null;_dragRecords=null;_dragRequest=null;_dragging=false}
+    function _flushPendingPointerDrag(): void {
+        const pending = root._pendingPointerDrag
+        root._pendingPointerDrag = null
+        if (!pending || !root._dragging)
+            return
+        root.move(pending.id, pending.x, pending.y, pending.snap)
+    }
+    FrameAnimation {
+        id: dragFramePump
+        running: root.visible && root._dragging && root._pendingPointerDrag !== null
+        onTriggered: root._flushPendingPointerDrag()
+    }
     function reflowGroup(): void {
         if(_groupReflowQueued || !_dragging || !multiSelect || !_dragRequest || _groupReflowBudget<=0)return
         _groupReflowQueued=true
@@ -691,6 +707,7 @@ Item {
         })
     }
     function endDrag(): void {
+        root._flushPendingPointerDrag()
         const request=_dragRequest,token=_dragToken
         if(multiSelect && _dragging && request) {
             // The destination's mature module reports a new natural span when
@@ -700,10 +717,10 @@ Item {
                 if(!root || root._dragToken!==token || !root._dragging)return
                 root.move(request.id,request.x,request.y,request.snap,true)
                 if(remaining>0)Qt.callLater(()=>settle(remaining-1))
-                else {root.clearDrag();root.guides=[];root.queueHistory()}
+                else {root.clearDrag();root.guides=[];root.scheduleToolbarRelocation();root.queueHistory()}
             }
             Qt.callLater(()=>settle(2))
-        } else {clearDrag();guides=[];queueHistory()}
+        } else {clearDrag();guides=[];scheduleToolbarRelocation();queueHistory()}
     }
     function _clonePlacementItems(sourceList): var {
         if (!Array.isArray(sourceList))
@@ -859,11 +876,25 @@ Item {
         editingEdge = draft.find(p => p.id===id)?.edge ?? editingEdge
         root.scheduleToolbarRelocation()
         const now = Date.now()
-        if (now-lastImpulse > 80) {
+        if (now-lastImpulse > 140) {
             const p = draft.find(p => p.id === id)
-            controller.impulse(p.edge,p.position*(p.edge === "top" || p.edge === "bottom" ? width : height),90,.35,1,"drag")
+            controller.impulse(p.edge,p.position*(p.edge === "top" || p.edge === "bottom" ? width : height),90,.22,1,"drag")
             lastImpulse = now
         }
+    }
+    function autoAlign(mode: string): void {
+        if (_dragging) {
+            feedback = "Finish moving the module before auto-aligning"
+            return
+        }
+        rememberHistory()
+        const options = Object.assign({}, draftOptions, {extents: moduleLayer.measuredExtents, editing: true})
+        const result = Placement.alignEdgeModules(draft, targetIds, editingEdge, mode, width, height, options, Appearance.fontSizeScale)
+        feedback = result.rejected || ""
+        if (result.rejected)
+            return
+        draft = result.placements
+        queueHistory()
     }
     function moduleGlyph(kind): string {
         switch (kind) {
@@ -1113,7 +1144,12 @@ Item {
                         if(delta<Math.max(6,8*Appearance.fontSizeScale))return
                         movedBeyondThreshold=true
                     }
-                    root.move(handle.modelData,point.x,point.y,!(mouse.modifiers & Qt.ShiftModifier))
+                    root._pendingPointerDrag = {
+                        id: handle.modelData,
+                        x: point.x,
+                        y: point.y,
+                        snap: !(mouse.modifiers & Qt.ShiftModifier)
+                    }
                 }
             }
         }
@@ -1122,21 +1158,33 @@ Item {
         model: root.guides
         Item {
             required property var modelData
+            visible: !root.rulerEnabled && (!modelData.kind || modelData.kind === "line")
             anchors.fill: parent
             Rectangle {
-                x: modelData.horizontal ? modelData.along : 0
-                y: modelData.horizontal ? 0 : modelData.along
+                x: modelData.horizontal ? Number(modelData.along ?? 0) : 0
+                y: modelData.horizontal ? 0 : Number(modelData.along ?? 0)
                 width: modelData.horizontal ? 1 : root.width
                 height: modelData.horizontal ? root.height : 1
                 color: AbyssStyle.accent; opacity: .6
             }
             AbyssLabel {
-                text: modelData.label
-                x: modelData.horizontal ? modelData.along+8 : root.width/2
-                y: modelData.horizontal ? 76 : modelData.along+8
+                text: modelData.label ?? ""
+                x: modelData.horizontal ? Number(modelData.along ?? 0)+8 : root.width/2
+                y: modelData.horizontal ? 76 : Number(modelData.along ?? 0)+8
                 color: AbyssStyle.accent
             }
         }
+    }
+    AbyssLayoutRuler {
+        id: layoutRuler
+        objectName: "abyssLayoutRuler"
+        editorVisible: root.visible
+        rulerEnabled: root.rulerEnabled
+        activeEdge: root.editingEdge
+        guides: root.guides
+        records: root.moduleLayer?.renderedRecords ?? root.moduleLayer?.layoutRecords ?? []
+        targetIds: root.targetIds
+        edgeThickness: Placement.edgeThickness(root.draftOptions, root.editingEdge, AbyssStyle.perimeterThickness)
     }
     // Anchor hints paint only; the work area remains click-through in edit mode.
     // The hint for the Edge that owns the editor must stay outside its body,
@@ -1605,6 +1653,15 @@ Item {
                         onClicked: root.snapEnabled = !root.snapEnabled
                     },
                     DockTogglePill {
+                        objectName: root.useHorizontalDock ? "abyssDockRulerToggle" : ""
+                        icon: "straighten"
+                        active: root.rulerEnabled
+                        tooltipText: root.rulerEnabled
+                            ? Translation.tr("Layout ruler & smart guides · on")
+                            : Translation.tr("Layout ruler & smart guides · off")
+                        onClicked: root.rulerEnabled = !root.rulerEnabled
+                    },
+                    DockTogglePill {
                         objectName: root.useHorizontalDock ? "abyssEditorOutputOnly" : ""
                         icon: "monitor"
                         active: root.outputOnly
@@ -1904,6 +1961,82 @@ Item {
                                         ? "Mixed alignment" : currentText
                                     enabled: root.targets.length > 0 && !root.anyTargetLocked
                                     onActivated: root.change("alignment", currentValue)
+                                }
+
+                                // Auto-Align & Distribute strip for Screen Edge modules
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssAutoAlignCenter" : ""
+                                    text: "Auto-center"
+                                    glyph: "format_align_center"
+                                    compact: true
+                                    editorSquare: true
+                                    description: Translation.tr("Center selected module(s) on Edge")
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    enabled: !root.anyTargetLocked && root.draft.some(p => p.enabled !== false && p.edge === root.editingEdge && !p.locked)
+                                    onClicked: root.autoAlign("center")
+                                }
+
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssAutoDistribute" : ""
+                                    text: "Distribute evenly"
+                                    glyph: "horizontal_distribute"
+                                    compact: true
+                                    editorSquare: true
+                                    description: Translation.tr("Distribute unlocked modules evenly along Edge")
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    enabled: !root.anyTargetLocked && root.draft.some(p => p.enabled !== false && p.edge === root.editingEdge && !p.locked)
+                                    onClicked: root.autoAlign("distribute")
+                                }
+
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssAutoMirror" : ""
+                                    text: "Mirror align"
+                                    glyph: "flip"
+                                    compact: true
+                                    editorSquare: true
+                                    description: Translation.tr("Align symmetrically across opposite Edge or midpoint")
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    enabled: !root.anyTargetLocked && root.draft.some(p => p.enabled !== false && p.edge === root.editingEdge && !p.locked)
+                                    onClicked: root.autoAlign("mirror")
+                                }
+
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssAutoPackStart" : ""
+                                    text: "Pack start"
+                                    glyph: "align_horizontal_left"
+                                    compact: true
+                                    editorSquare: true
+                                    description: Translation.tr("Pack Edge modules neatly toward start")
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    enabled: !root.anyTargetLocked && root.draft.some(p => p.enabled !== false && p.edge === root.editingEdge && !p.locked)
+                                    onClicked: root.autoAlign("packStart")
+                                }
+
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssAutoPackEnd" : ""
+                                    text: "Pack end"
+                                    glyph: "align_horizontal_right"
+                                    compact: true
+                                    editorSquare: true
+                                    description: Translation.tr("Pack Edge modules neatly toward end")
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    enabled: !root.anyTargetLocked && root.draft.some(p => p.enabled !== false && p.edge === root.editingEdge && !p.locked)
+                                    onClicked: root.autoAlign("packEnd")
                                 }
 
                                 AbyssButton {

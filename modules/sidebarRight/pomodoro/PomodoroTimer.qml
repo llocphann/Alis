@@ -678,14 +678,42 @@ Item {
                 id: focusDial
                 visible: !root.settingsOpen && !root.tagMenuOpen
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: root.compactMode
-                    ? Math.min(184, Math.max(148,
-                        Math.min(flickable.width * 0.52, (flickable.height - 66) * 1.22)))
-                    : 190
-                Layout.preferredHeight: root.compactMode
-                    ? Math.max(128, Math.min(Layout.preferredWidth, flickable.height - 68))
-                    : Layout.preferredWidth
+                Layout.preferredWidth: TimerService.hourglassStyleActive
+                    ? Math.min(Math.max(196, flickable.width - 16), root.compactMode ? 248 : 272)
+                    : (root.compactMode
+                        ? Math.min(184, Math.max(148,
+                            Math.min(flickable.width * 0.52, (flickable.height - 66) * 1.22)))
+                        : 190)
+                Layout.preferredHeight: TimerService.hourglassStyleActive
+                    ? (root.compactMode
+                        ? Math.max(122, Math.min(150, flickable.height - 68))
+                        : 168)
+                    : (root.compactMode
+                        ? Math.max(128, Math.min(Layout.preferredWidth, flickable.height - 68))
+                        : Layout.preferredWidth)
                 Layout.bottomMargin: root.compactMode ? 0 : 2
+
+                readonly property string timerText: {
+                    const minutes = Math.floor(
+                        TimerService.pomodoroSecondsLeft / 60)
+                        .toString().padStart(2, '0')
+                    const seconds = Math.floor(
+                        TimerService.pomodoroSecondsLeft % 60)
+                        .toString().padStart(2, '0')
+                    return `${minutes}:${seconds}`
+                }
+                readonly property string phaseStatusText: {
+                    const phaseLabel = TimerService.pomodoroLongBreak
+                        ? Translation.tr("Long break")
+                        : TimerService.pomodoroBreak
+                            ? Translation.tr("Break")
+                            : Translation.tr("Focus")
+                    const phaseMins = Math.max(1, Math.round(TimerService.pomodoroLapDuration / 60))
+                    const stateLabel = TimerService.pomodoroRunning
+                        ? (TimerService.pomodoroPaused ? Translation.tr("paused") : Translation.tr("running"))
+                        : Translation.tr("ready")
+                    return `${phaseLabel} (${phaseMins}m) · ${stateLabel}`
+                }
 
                 readonly property real rawProgress:
                     TimerService.pomodoroLapDuration > 0
@@ -715,6 +743,7 @@ Item {
                 }
 
                 Shape {
+                    visible: !TimerService.hourglassStyleActive
                     anchors.fill: parent
                     antialiasing: true
                     preferredRendererType: Shape.CurveRenderer
@@ -764,14 +793,134 @@ Item {
                     color: root._colAccent
                     border.width: 1
                     border.color: root._colLayer
-                    visible: focusDial.displayProgress > 0.002
+                    visible: !TimerService.hourglassStyleActive && focusDial.displayProgress > 0.002
                     x: focusDial.arcCenterX
                         + focusDial.arcRadiusX * Math.cos(angle) - width / 2
                     y: focusDial.arcCenterY
                         + focusDial.arcRadiusY * Math.sin(angle) - height / 2
                 }
 
+                // Hourglass stage (Turned / Matrix / Square)
+                RowLayout {
+                    id: hourglassStage
+                    visible: TimerService.hourglassStyleActive
+                    anchors.fill: parent
+                    anchors.topMargin: root.compactMode ? 18 : 20
+                    spacing: root.compactMode ? 10 : 14
+
+                    HourglassVisual {
+                        id: pomodoroHourglass
+                        objectName: "pomodoroHourglass"
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: root.compactMode ? 88 : 108
+                        Layout.preferredHeight: root.compactMode ? 104 : 132
+                        visualStyle: TimerService.visualStyle
+                        progress: focusDial.displayProgress
+                        running: TimerService.pomodoroRunning
+                        paused: TimerService.pomodoroPaused
+                        isBreak: TimerService.pomodoroBreak
+                        accentColor: root._colAccent
+                        textColor: root._colText
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: 4
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            horizontalAlignment: Text.AlignLeft
+                            text: focusDial.timerText
+                            font.pixelSize: Math.round(
+                                (root.compactMode ? 31 : 34)
+                                    * Appearance.fontSizeScale)
+                            font.weight: Font.Medium
+                            font.family: Appearance.font.family.numbers
+                            color: root._colText
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            horizontalAlignment: Text.AlignLeft
+                            elide: Text.ElideRight
+                            text: focusDial.phaseStatusText
+                            font.pixelSize: root.compactMode
+                                ? Appearance.font.pixelSize.smallest
+                                : Appearance.font.pixelSize.smaller
+                            font.weight: Font.Medium
+                            color: root._colTextSecondary
+                        }
+
+                        Row {
+                            Layout.topMargin: 4
+                            spacing: 5
+
+                            Repeater {
+                                model: Math.max(1, TimerService.cyclesBeforeLongBreak)
+
+                                Rectangle {
+                                    required property int index
+                                    readonly property bool current: index === TimerService.pomodoroCycle
+                                    readonly property bool complete: index < TimerService.pomodoroCycle
+                                    width: current ? 15 : 5
+                                    height: 5
+                                    radius: height / 2
+                                    color: current || complete ? root._colAccent : root._colTrack
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 1-click timer visual style cycler (Turned -> Matrix -> Square -> Classic)
+                RippleButton {
+                    id: pomodoroStyleButton
+                    objectName: "pomodoroStyleButton"
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    z: 2
+                    implicitWidth: stylePillRow.implicitWidth + 14
+                    implicitHeight: 22
+                    buttonRadius: height / 2
+                    colBackground: root._colLayer
+                    colBackgroundHover: root._colLayerHover
+                    onClicked: TimerService.cycleVisualStyle()
+
+                    contentItem: Row {
+                        id: stylePillRow
+                        anchors.centerIn: parent
+                        spacing: 4
+
+                        MaterialSymbol {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: TimerService.visualStyle === "matrix"
+                                ? "grain"
+                                : (TimerService.visualStyle === "square"
+                                    ? "grid_view"
+                                    : (TimerService.visualStyle === "classic"
+                                        ? "donut_large"
+                                        : "hourglass_top"))
+                            iconSize: 13
+                            color: root._colAccent
+                        }
+
+                        StyledText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: TimerService.visualStyleLabel(TimerService.visualStyle)
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.weight: Font.Medium
+                            color: root._colTextSecondary
+                        }
+                    }
+
+                    StyledToolTip {
+                        text: Translation.tr("Switch timer style (T)")
+                    }
+                }
+
                 ColumnLayout {
+                    visible: !TimerService.hourglassStyleActive
                     anchors.centerIn: parent
                     anchors.verticalCenterOffset: root.compactMode ? 9 : 8
                     spacing: 2
@@ -1072,6 +1221,48 @@ Item {
                                 onCheckedChanged: Config.setNestedValue("sounds.pomodoro", checked)
                             }
                         }
+
+                        // Timer visual style selector (Turned, Matrix, Square, Classic)
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: Translation.tr("Style")
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                color: root._colTextSecondary
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                Repeater {
+                                    model: TimerService.visualStyles
+
+                                    RippleButton {
+                                        required property string modelData
+                                        readonly property bool selected: TimerService.visualStyle === modelData
+                                        objectName: "pomodoroStyleChip_" + modelData
+                                        Layout.fillWidth: true
+                                        implicitHeight: 28
+                                        buttonRadius: Appearance.rounding.small
+                                        colBackground: selected ? root._colAccent : root._colLayer
+                                        colBackgroundHover: selected ? root._colAccent : root._colLayerHover
+                                        onClicked: TimerService.setVisualStyle(modelData)
+
+                                        contentItem: StyledText {
+                                            anchors.centerIn: parent
+                                            text: TimerService.visualStyleLabel(modelData)
+                                            font.pixelSize: Appearance.font.pixelSize.smaller
+                                            font.weight: selected ? Font.DemiBold : Font.Medium
+                                            color: selected ? Appearance.colors.colOnPrimary : root._colText
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1147,7 +1338,11 @@ Item {
                     implicitWidth: controlsRow.tightControls ? 66 : 78
                     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
 
-                    onClicked: TimerService.resetPomodoro()
+                    onClicked: {
+                        TimerService.resetPomodoro()
+                        if (TimerService.hourglassStyleActive)
+                            pomodoroHourglass.triggerFlip()
+                    }
                     enabled: (TimerService.pomodoroSecondsLeft < TimerService.pomodoroLapDuration) || TimerService.pomodoroCycle > 0 || TimerService.pomodoroBreak
 
                     font.pixelSize: Appearance.font.pixelSize.larger
@@ -1192,7 +1387,11 @@ Item {
                     buttonRadius: height / 2
                     colBackground: root._colLayer
                     colBackgroundHover: root._colLayerHover
-                    onClicked: TimerService.skipPomodoroPhase()
+                    onClicked: {
+                        TimerService.skipPomodoroPhase()
+                        if (TimerService.hourglassStyleActive)
+                            pomodoroHourglass.triggerFlip()
+                    }
 
                     contentItem: MaterialSymbol {
                         anchors.centerIn: parent

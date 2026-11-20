@@ -920,6 +920,196 @@ Singleton {
         }
     }
 
+    function _parseIsoLocalMidnight(isoStr) {
+        const clean = String(isoStr || "").trim()
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(clean)
+        if (!m) return null
+        const y = parseInt(m[1], 10)
+        const mo = parseInt(m[2], 10)
+        const d = parseInt(m[3], 10)
+        const dt = new Date(y, mo - 1, d, 0, 0, 0, 0)
+        if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d)
+            return null
+        return dt
+    }
+
+    function _formatLocalIsoDate(date) {
+        if (!(date instanceof Date) || !Number.isFinite(date.getTime()))
+            return ""
+        const y = date.getFullYear()
+        const m = String(date.getMonth() + 1).padStart(2, "0")
+        const d = String(date.getDate()).padStart(2, "0")
+        return `${y}-${m}-${d}`
+    }
+
+    function _normalizeChecklist(items) {
+        if (!Array.isArray(items)) return []
+        const result = []
+        for (let i = 0; i < items.length; i++) {
+            const raw = items[i]
+            if (!raw || typeof raw !== "object") continue
+            const text = String(raw.text || "").trim()
+            if (!text.length) continue
+            result.push({ text: text, done: raw.done === true })
+        }
+        return result
+    }
+
+    function addYearlyPlan(fields) {
+        if (!root.ready) return -1
+        const title = String(fields?.title ?? "").trim()
+        if (!title.length) return -1
+        const startIso = String(fields?.startIso ?? "").trim()
+        const endIso = String(fields?.endIso ?? startIso).trim()
+        const startDay = root._parseIsoLocalMidnight(startIso)
+        const endDay = root._parseIsoLocalMidnight(endIso)
+        if (!startDay || !endDay || endDay.getTime() < startDay.getTime())
+            return -1
+
+        const exclusiveEnd = new Date(endDay.getFullYear(), endDay.getMonth(), endDay.getDate() + 1, 0, 0, 0, 0)
+        const rawKind = String(fields?.plannerKind ?? "plan").toLowerCase()
+        const kind = (rawKind === "trip" || rawKind === "milestone") ? rawKind : "plan"
+        const startTs = startDay.toISOString()
+        const endTs = exclusiveEnd.toISOString()
+
+        const event = {
+            id: root.nextId++,
+            title: title,
+            description: String(fields?.description ?? fields?.notes ?? ""),
+            dateTime: startTs,
+            startDate: startTs,
+            endDate: endTs,
+            allDay: true,
+            category: String(fields?.category || (kind === "trip" ? "travel" : kind === "milestone" ? "deadline" : "general")),
+            priority: String(fields?.priority || "normal"),
+            reminderMinutes: fields?.reminderMinutes ?? 0,
+            recurrence: "none",
+            notified: false,
+            reminderNotified: false,
+            createdAt: new Date().toISOString(),
+            plannerKind: kind,
+            place: String(fields?.place ?? "").trim(),
+            color: String(fields?.color ?? "").trim(),
+            checklist: root._normalizeChecklist(fields?.checklist)
+        }
+        root.list.push(event)
+        root.list = root.list.slice(0)
+        root.eventAdded(event)
+        if (!root._checkingDue) root.saveToFile()
+        return event.id
+    }
+
+    function updateYearlyPlan(id, fields) {
+        if (!root.ready) return false
+        const index = root.list.findIndex(e => e.id === id)
+        if (index < 0) return false
+        const prev = root.list[index]
+        let updated = Object.assign({}, prev)
+
+        if (fields && "title" in fields) {
+            const cleanTitle = String(fields.title ?? "").trim()
+            if (!cleanTitle.length) return false
+            updated.title = cleanTitle
+        }
+        if (fields && ("description" in fields || "notes" in fields))
+            updated.description = String(fields.description ?? fields.notes ?? "")
+        if (fields && "plannerKind" in fields) {
+            const rawKind = String(fields.plannerKind ?? "plan").toLowerCase()
+            updated.plannerKind = (rawKind === "trip" || rawKind === "milestone") ? rawKind : "plan"
+        }
+        if (fields && "place" in fields)
+            updated.place = String(fields.place ?? "").trim()
+        if (fields && "color" in fields)
+            updated.color = String(fields.color ?? "").trim()
+        if (fields && "checklist" in fields)
+            updated.checklist = root._normalizeChecklist(fields.checklist)
+
+        if (fields && ("startIso" in fields || "endIso" in fields)) {
+            const fallbackIso = root._formatLocalIsoDate(new Date(prev.startDate || prev.dateTime))
+            const startIso = String(fields.startIso ?? fallbackIso).trim()
+            const endIso = String(fields.endIso ?? startIso).trim()
+            const startDay = root._parseIsoLocalMidnight(startIso)
+            const endDay = root._parseIsoLocalMidnight(endIso)
+            if (!startDay || !endDay || endDay.getTime() < startDay.getTime())
+                return false
+            const exclusiveEnd = new Date(endDay.getFullYear(), endDay.getMonth(), endDay.getDate() + 1, 0, 0, 0, 0)
+            const startTs = startDay.toISOString()
+            const endTs = exclusiveEnd.toISOString()
+            updated.allDay = true
+            updated.startDate = startTs
+            updated.dateTime = startTs
+            updated.endDate = endTs
+            if (Array.isArray(prev.occurrences) && prev.occurrences.length > 0) {
+                const slots = Occurrences.entries(prev)
+                if (slots[0]) {
+                    slots[0].startDate = startTs
+                    slots[0].endDate = endTs
+                    updated = Occurrences.store(updated, slots)
+                }
+            }
+        }
+
+        root.list[index] = updated
+        root.list = root.list.slice(0)
+        root.eventUpdated(updated)
+        root.saveToFile()
+        return true
+    }
+
+    function rescheduleYearlyRange(id, startIso, endIso) {
+        if (!root.ready) return false
+        const index = root.list.findIndex(e => e.id === id)
+        if (index < 0) return false
+        const startDay = root._parseIsoLocalMidnight(startIso)
+        const endDay = root._parseIsoLocalMidnight(endIso)
+        if (!startDay || !endDay || endDay.getTime() < startDay.getTime())
+            return false
+
+        const prev = root.list[index]
+        let newStart = startDay
+        let newEnd = new Date(endDay.getFullYear(), endDay.getMonth(), endDay.getDate() + 1, 0, 0, 0, 0)
+
+        if (prev.allDay !== true) {
+            const oldStart = new Date(prev.startDate || prev.dateTime)
+            const oldEnd = new Date(prev.endDate || prev.startDate || prev.dateTime)
+            if (Number.isFinite(oldStart.getTime())) {
+                newStart = new Date(
+                    startDay.getFullYear(), startDay.getMonth(), startDay.getDate(),
+                    oldStart.getHours(), oldStart.getMinutes(), oldStart.getSeconds(), oldStart.getMilliseconds()
+                )
+            }
+            if (Number.isFinite(oldEnd.getTime())) {
+                newEnd = new Date(
+                    endDay.getFullYear(), endDay.getMonth(), endDay.getDate(),
+                    oldEnd.getHours(), oldEnd.getMinutes(), oldEnd.getSeconds(), oldEnd.getMilliseconds()
+                )
+            }
+            if (newEnd.getTime() <= newStart.getTime())
+                newEnd = new Date(newStart.getTime() + 3600000)
+        }
+
+        const startTs = newStart.toISOString()
+        const endTs = newEnd.toISOString()
+        let updated = Object.assign({}, prev, {
+            startDate: startTs,
+            dateTime: startTs,
+            endDate: endTs
+        })
+        if (Array.isArray(prev.occurrences) && prev.occurrences.length > 0) {
+            const slots = Occurrences.entries(prev)
+            if (slots[0]) {
+                slots[0].startDate = startTs
+                slots[0].endDate = endTs
+                updated = Occurrences.store(updated, slots)
+            }
+        }
+        root.list[index] = updated
+        root.list = root.list.slice(0)
+        root.eventUpdated(updated)
+        root.saveToFile()
+        return true
+    }
+
     // getPriorityColor removed — was dead code with hardcoded colors.
     // EventCard already resolves priority colors via Appearance tokens.
 }

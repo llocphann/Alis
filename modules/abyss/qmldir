@@ -14,3 +14,4 @@ AbyssCorners 1.0 AbyssCorners.qml
 AbyssGenericPopupPresenter 1.0 AbyssGenericPopupPresenter.qml
 AbyssPyramidCoordinator 1.0 AbyssPyramidCoordinator.qml
 AlisCompanionSurface 1.0 AlisCompanionSurface.qml
+AbyssLayoutRuler 1.0 AbyssLayoutRuler.qml

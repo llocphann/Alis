@@ -75,9 +75,39 @@ BarButton {
             anchors.centerIn: parent
             spacing: 6
 
-            FluentIcon {
+            Item {
+                id: waffleTimerIconSlot
+                readonly property bool useHourglass: (TimerService?.hourglassStyleActive ?? true)
+                    && (root.pomodoroActive || root.countdownActive)
+                readonly property real activeProgress: root.pomodoroActive
+                    ? ((TimerService?.pomodoroSecondsLeft ?? 0) / Math.max(1, TimerService?.pomodoroLapDuration ?? 1))
+                    : (root.countdownActive
+                        ? ((TimerService?.countdownSecondsLeft ?? 0) / Math.max(1, TimerService?.countdownDuration ?? 1))
+                        : 1.0)
                 anchors.verticalCenter: parent.verticalCenter
-                icon: root.iconName
+                implicitWidth: Math.max(14, fluentTimerIcon.implicitWidth)
+                implicitHeight: Math.max(14, fluentTimerIcon.implicitHeight)
+
+                FluentIcon {
+                    id: fluentTimerIcon
+                    anchors.centerIn: parent
+                    visible: !waffleTimerIconSlot.useHourglass
+                    icon: root.iconName
+                }
+
+                HourglassBarIcon {
+                    id: waffleHourglassIcon
+                    objectName: "waffleBarHourglassIcon"
+                    anchors.centerIn: parent
+                    visible: waffleTimerIconSlot.useHourglass
+                    visualStyle: TimerService?.visualStyle ?? "turned"
+                    progress: waffleTimerIconSlot.activeProgress
+                    paused: root.pomodoroActive
+                        ? (TimerService?.pomodoroPaused ?? false)
+                        : (TimerService?.countdownPaused ?? false)
+                    color: fluentTimerIcon.color
+                    iconSize: Math.max(14, Math.round(fluentTimerIcon.implicitHeight))
+                }
 
                 SequentialAnimation on opacity {
                     running: root.pomodoroActive && !(TimerService?.pomodoroBreak ?? false)

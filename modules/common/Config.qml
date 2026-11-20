@@ -2944,6 +2944,7 @@ Singleton {
                     property int longBreak: 900
                 }
                 property bool secondPrecision: false
+                property string visualStyle: "turned"
             }
 
             property JsonObject wallpapers: JsonObject {

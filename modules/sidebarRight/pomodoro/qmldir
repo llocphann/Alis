@@ -3,3 +3,4 @@ CountdownTimer 1.0 CountdownTimer.qml
 PomodoroTimer 1.0 PomodoroTimer.qml
 PomodoroWidget 1.0 PomodoroWidget.qml
 Stopwatch 1.0 Stopwatch.qml
+HourglassVisual 1.0 HourglassVisual.qml
