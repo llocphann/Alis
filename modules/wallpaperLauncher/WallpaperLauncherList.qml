@@ -105,6 +105,19 @@ PathView {
     model: root.filteredEntries
     onFilteredEntriesChanged: root.syncCurrentIndexAndPreview()
 
+    function _normPath(rawPath: string): string {
+        let p = String(rawPath ?? "").trim()
+        if (!p)
+            return ""
+        if (p.startsWith("file://")) {
+            p = p.slice(7)
+            try {
+                p = decodeURIComponent(p)
+            } catch (_e) {}
+        }
+        return p.replace(/\/+$/, "")
+    }
+
     function syncCurrentIndex(): void {
         const list = root.filteredEntries ?? []
         if (list.length === 0) {
@@ -118,7 +131,8 @@ PathView {
             return
         }
         root._lastFavouritesRevSeen = Wallpapers.favouritesRevision
-        const index = list.findIndex(entry => entry.path === root.currentWallpaperPath)
+        const curNorm = root._normPath(root.currentWallpaperPath)
+        const index = list.findIndex(entry => root._normPath(entry?.path) === curNorm)
         root.currentIndex = Math.max(0, index)
     }
 

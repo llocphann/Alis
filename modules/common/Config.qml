@@ -1315,6 +1315,7 @@ Singleton {
                 property string preferredProfile: ""
                 property JsonObject fanControl: JsonObject {
                     property bool enabled: false
+                    property bool managed: false
                     property int powerSaver: 0
                     property int balanced: 0
                     property int performance: 0

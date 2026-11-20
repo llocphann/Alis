@@ -113,6 +113,7 @@ Singleton {
     property real volume: 1
     property bool shuffleMode: false
     property int repeatMode: 0
+    property int nextQueueIndex: -1
     property var _queueRequests: []
     property var _enqueueRequests: []
     property var _bulkEnqueueRequests: []
@@ -329,9 +330,9 @@ Singleton {
     readonly property bool hasCurrentTrack:
         currentIndex >= 0 && currentIndex < activeQueue.length
     readonly property bool canGoPrevious:
-        hasCurrentTrack && (currentIndex > 0 || repeatMode === 2 || currentPosition > 3)
+        hasCurrentTrack && (currentIndex > 0 || repeatMode === 2 || (shuffleMode && activeQueue.length > 1) || currentPosition > 3)
     readonly property bool canGoNext:
-        hasCurrentTrack && (currentIndex < activeQueue.length - 1 || repeatMode === 2)
+        hasCurrentTrack && (currentIndex < activeQueue.length - 1 || repeatMode === 2 || (shuffleMode && activeQueue.length > 1))
 
     readonly property string nativeDispatchPath: Directories.scriptsPath + "/native-dispatch"
 
@@ -426,6 +427,11 @@ Singleton {
         if (Number.isFinite(mpdVolume) && mpdVolume >= 0)
             volume = Math.max(0, Math.min(1, mpdVolume / 100))
         shuffleMode = String(status.random ?? "0") === "1"
+        if (typeof nextQueueIndex === "number") {
+            const rawNext = String(status.nextsong ?? "").trim()
+            const parsedNext = rawNext.length > 0 ? Number(rawNext) : -1
+            nextQueueIndex = Number.isFinite(parsedNext) && parsedNext >= 0 ? Math.floor(parsedNext) : -1
+        }
         repeatMode = String(status.single ?? "0") === "1"
             ? 1
             : (String(status.repeat ?? "0") === "1" ? 2 : 0)
@@ -876,7 +882,11 @@ Singleton {
             String(track?.uri ?? track?.path ?? "").length > 0)
         if (valid.length === 0) return
 
-        index = Math.max(0, Math.min(valid.length - 1, Number(index) || 0))
+        const rawIndex = Number(index)
+        if (Number.isFinite(rawIndex) && rawIndex < 0)
+            index = Math.floor(Math.random() * valid.length)
+        else
+            index = Math.max(0, Math.min(valid.length - 1, Number.isFinite(rawIndex) ? Math.floor(rawIndex) : 0))
         activeQueue = valid
         activeQueueName = String(name ?? "")
         root._beginTrackTransition(valid[index], index)
@@ -1033,7 +1043,10 @@ Singleton {
     function next(): void {
         let predictedIdx = -1
         let predictedTrack = null
-        if (!shuffleMode && activeQueue.length > 0 && currentIndex >= 0) {
+        if (shuffleMode && typeof nextQueueIndex === "number" && nextQueueIndex >= 0 && nextQueueIndex < activeQueue.length) {
+            predictedIdx = nextQueueIndex
+            predictedTrack = activeQueue[predictedIdx]
+        } else if (!shuffleMode && activeQueue.length > 0 && currentIndex >= 0) {
             if (currentIndex + 1 < activeQueue.length)
                 predictedIdx = currentIndex + 1
             else if (repeatMode === 2)
@@ -1042,6 +1055,10 @@ Singleton {
                 predictedTrack = activeQueue[predictedIdx]
         }
         root._beginTrackTransition(predictedTrack, predictedIdx)
+        if (mpdConnected) {
+            _sendMpd("next", [])
+            return
+        }
         const player = mprisPlayer
         if (!mpdMutationPending && player && MprisController.canGoNextForPlayer(player)) {
             MprisController.nextForPlayer(player, false)
@@ -1067,6 +1084,10 @@ Singleton {
                 predictedTrack = activeQueue[predictedIdx]
         }
         root._beginTrackTransition(predictedTrack, predictedIdx)
+        if (mpdConnected) {
+            _sendMpd("previous", [])
+            return
+        }
         const player = mprisPlayer
         if (!mpdMutationPending && player && MprisController.canGoPreviousForPlayer(player)) {
             MprisController.previousForPlayer(player, false)

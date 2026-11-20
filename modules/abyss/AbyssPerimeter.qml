@@ -925,42 +925,42 @@ Scope {
             onRawStageDockWidthChanged: {
                 if (window.editStageMode.length > 0 && window.rawStageDockWidth > 200) {
                     window.latchedStageDockWidth = Math.round(window.rawStageDockWidth)
-                    if (window.editStageProgress < 0.98)
+                    if (window.editStageProgress <= 0.0001)
                         window.animatedStageDockWidth = window.latchedStageDockWidth
                 }
             }
             onRawStageDockHeightChanged: {
                 if (window.editStageMode.length > 0 && window.rawStageDockHeight > 40) {
                     window.latchedStageDockHeight = Math.round(window.rawStageDockHeight)
-                    if (window.editStageProgress < 0.98)
+                    if (window.editStageProgress <= 0.0001)
                         window.animatedStageDockHeight = window.latchedStageDockHeight
                 }
             }
             onRawStageLeftDockWidthChanged: {
                 if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard") && window.rawStageLeftDockWidth > 160) {
                     window.latchedStageLeftDockWidth = Math.round(window.rawStageLeftDockWidth)
-                    if (window.editStageProgress < 0.98)
+                    if (window.editStageProgress <= 0.0001)
                         window.animatedStageLeftDockWidth = window.latchedStageLeftDockWidth
                 }
             }
             onRawStageLeftDockHeightChanged: {
                 if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard") && window.rawStageLeftDockHeight > 120) {
                     window.latchedStageLeftDockHeight = Math.round(window.rawStageLeftDockHeight)
-                    if (window.editStageProgress < 0.98)
+                    if (window.editStageProgress <= 0.0001)
                         window.animatedStageLeftDockHeight = window.latchedStageLeftDockHeight
                 }
             }
             onRawStageRightDockWidthChanged: {
                 if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard" || window.widgetManagerRightOpen) && window.rawStageRightDockWidth > 160) {
                     window.latchedStageRightDockWidth = Math.round(window.rawStageRightDockWidth)
-                    if (window.editStageProgress < 0.98)
+                    if (window.editStageProgress <= 0.0001)
                         window.animatedStageRightDockWidth = window.latchedStageRightDockWidth
                 }
             }
             onRawStageRightDockHeightChanged: {
                 if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard" || window.widgetManagerRightOpen) && window.rawStageRightDockHeight > 120) {
                     window.latchedStageRightDockHeight = Math.round(window.rawStageRightDockHeight)
-                    if (window.editStageProgress < 0.98)
+                    if (window.editStageProgress <= 0.0001)
                         window.animatedStageRightDockHeight = window.latchedStageRightDockHeight
                 }
             }
@@ -994,7 +994,17 @@ Scope {
                 enabled: AbyssStyle.motionEnabled && window.editStageProgress >= 0.98 && window.editStageMode.length > 0
                 NumberAnimation { duration: AbyssStyle.motionFast; easing.type: Easing.OutCubic }
             }
-            property real editStageProgress: window.editStageMode.length > 0 ? 1 : 0
+            property bool _stageAnimArmed: false
+            Timer {
+                id: stageAnimArmTimer
+                interval: 16
+                repeat: false
+                onTriggered: {
+                    if (window.editStageMode.length > 0)
+                        window._stageAnimArmed = true
+                }
+            }
+            property real editStageProgress: (window.editStageMode.length > 0 && window._stageAnimArmed) ? 1 : 0
             Behavior on editStageProgress {
                 enabled: AbyssStyle.motionEnabled
                 NumberAnimation { duration: AbyssStyle.motionNormal; easing.type: Easing.OutCubic }
@@ -1018,29 +1028,29 @@ Scope {
                         window.latchedStageDockWidth = Math.round(window.rawStageDockWidth)
                     if (window.rawStageDockHeight > 40)
                         window.latchedStageDockHeight = Math.round(window.rawStageDockHeight)
-                    if (window.editStageProgress < 0.98) {
+                    if (window.editStageProgress <= 0.0001) {
                         window.animatedStageDockWidth = window.latchedStageDockWidth
                         window.animatedStageDockHeight = window.latchedStageDockHeight
                     }
                     if (window.editStageMode === "abyss" || window.editStageMode === "dashboard") {
                         if (window.rawStageLeftDockWidth > 160) {
                             window.latchedStageLeftDockWidth = Math.round(window.rawStageLeftDockWidth)
-                            if (window.editStageProgress < 0.98)
+                            if (window.editStageProgress <= 0.0001)
                                 window.animatedStageLeftDockWidth = window.latchedStageLeftDockWidth
                         }
                         if (window.rawStageLeftDockHeight > 120) {
                             window.latchedStageLeftDockHeight = Math.round(window.rawStageLeftDockHeight)
-                            if (window.editStageProgress < 0.98)
+                            if (window.editStageProgress <= 0.0001)
                                 window.animatedStageLeftDockHeight = window.latchedStageLeftDockHeight
                         }
                         if (window.rawStageRightDockWidth > 160) {
                             window.latchedStageRightDockWidth = Math.round(window.rawStageRightDockWidth)
-                            if (window.editStageProgress < 0.98)
+                            if (window.editStageProgress <= 0.0001)
                                 window.animatedStageRightDockWidth = window.latchedStageRightDockWidth
                         }
                         if (window.rawStageRightDockHeight > 120) {
                             window.latchedStageRightDockHeight = Math.round(window.rawStageRightDockHeight)
-                            if (window.editStageProgress < 0.98)
+                            if (window.editStageProgress <= 0.0001)
                                 window.animatedStageRightDockHeight = window.latchedStageRightDockHeight
                         }
                     } else if (window.widgetManagerRightOpen) {
@@ -1077,6 +1087,7 @@ Scope {
             onEditStageModeChanged: {
                 window._coalescingStageSync = true
                 if (window.editStageMode.length > 0) {
+                    const freshEntry = window.retainedEditStageMode.length === 0 && window.editStageProgress <= 0.0001
                     window.retainedEditStageMode = window.editStageMode
                     if (window.rawStageDockWidth > 200) {
                         window.latchedStageDockWidth = Math.round(window.rawStageDockWidth)
@@ -1102,8 +1113,18 @@ Scope {
                         window.latchedStageRightDockHeight = Math.round(window.rawStageRightDockHeight)
                         window.animatedStageRightDockHeight = window.latchedStageRightDockHeight
                     }
+                    if (freshEntry && AbyssStyle.motionEnabled) {
+                        window._stageAnimArmed = false
+                        stageAnimArmTimer.restart()
+                    } else {
+                        stageAnimArmTimer.stop()
+                        window._stageAnimArmed = true
+                    }
+                } else {
+                    stageAnimArmTimer.stop()
+                    window._stageAnimArmed = false
                 }
-                if (window.editStageMode === "widgets" || window.editStageMode === "abyss" || window.editStageMode === "wallpaper")
+                if (window.editStageMode === "widgets" || window.editStageMode === "abyss")
                     DesktopEditStage.park(window.outputName)
                 else if (DesktopEditStage.parkedOutput === window.outputName)
                     DesktopEditStage.unpark()
@@ -1124,6 +1145,7 @@ Scope {
             readonly property bool stageCapturesDesktop: window.editStageMode === "abyss"
                 || window.editStageMode === "dashboard"
                 || window.editStageMode === "settings"
+                || (window.editStageMode === "wallpaper" && window.desktopHasApps)
             readonly property bool stageHostActive: window.visible && window.presented && Config.ready && DesktopEditStage.stageEnabled
             onStageHostActiveChanged: DesktopEditStage.setHost(window.outputName, window.stageHostActive)
             onOutputNameChanged: {
@@ -2773,15 +2795,12 @@ Scope {
                     window._editStageWarmReady = true
                 }
             }
-            Image {
+            Item {
                 id: stageDesktopWallpaperFallback
                 z: -2
                 anchors.fill: parent
-                visible: window.editStageVisible && !window.widgetStageEditing && !window.wallpaperStageEditing && window.desktopHasApps
-                asynchronous: true
-                smooth: true
-                fillMode: Image.PreserveAspectCrop
-                source: {
+                visible: window.editStageVisible && !window.widgetStageEditing && window.desktopHasApps
+                readonly property string targetSource: {
                     if (!visible)
                         return "";
                     if (Wallpapers.internalPreviewActive && Wallpapers.internalPreviewPath.length > 0
@@ -2800,7 +2819,82 @@ Scope {
                     }
                     return WallpaperListener.wallpaperUrlForScreen(window.screen);
                 }
-                sourceSize: Qt.size(Math.min(1920, Math.max(1, window.width)), Math.min(1080, Math.max(1, window.height)))
+                property int _activeSlot: 0
+                property string _displayedSource: ""
+                onTargetSourceChanged: {
+                    const nextUrl = String(targetSource ?? "");
+                    if (!nextUrl)
+                        return;
+                    if (!visible || _displayedSource === "") {
+                        const activeImg = _activeSlot === 0 ? fallbackImg0 : fallbackImg1;
+                        activeImg.source = nextUrl;
+                        _displayedSource = nextUrl;
+                        return;
+                    }
+                    if (nextUrl === _displayedSource)
+                        return;
+                    const standbySlot = _activeSlot === 0 ? 1 : 0;
+                    const standbyImg = standbySlot === 0 ? fallbackImg0 : fallbackImg1;
+                    if (String(standbyImg.source) === nextUrl && standbyImg.status === Image.Ready) {
+                        _displayedSource = nextUrl;
+                        _activeSlot = standbySlot;
+                    } else {
+                        standbyImg.source = nextUrl;
+                    }
+                }
+                onVisibleChanged: {
+                    if (!visible) {
+                        _displayedSource = "";
+                        return;
+                    }
+                    if (targetSource && _displayedSource !== targetSource) {
+                        const activeImg = _activeSlot === 0 ? fallbackImg0 : fallbackImg1;
+                        activeImg.source = targetSource;
+                        _displayedSource = targetSource;
+                    }
+                }
+                Image {
+                    id: fallbackImg0
+                    anchors.fill: parent
+                    asynchronous: true
+                    smooth: true
+                    fillMode: Image.PreserveAspectCrop
+                    sourceSize: Qt.size(Math.min(1920, Math.max(1, window.width)), Math.min(1080, Math.max(1, window.height)))
+                    opacity: stageDesktopWallpaperFallback._activeSlot === 0 ? 1 : 0
+                    z: stageDesktopWallpaperFallback._activeSlot === 0 ? 1 : 0
+                    Behavior on opacity {
+                        enabled: Appearance.animationsEnabled && stageDesktopWallpaperFallback.visible
+                        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                    }
+                    onStatusChanged: {
+                        if (status === Image.Ready && stageDesktopWallpaperFallback._activeSlot === 1
+                                && String(source) === stageDesktopWallpaperFallback.targetSource) {
+                            stageDesktopWallpaperFallback._displayedSource = String(source);
+                            stageDesktopWallpaperFallback._activeSlot = 0;
+                        }
+                    }
+                }
+                Image {
+                    id: fallbackImg1
+                    anchors.fill: parent
+                    asynchronous: true
+                    smooth: true
+                    fillMode: Image.PreserveAspectCrop
+                    sourceSize: Qt.size(Math.min(1920, Math.max(1, window.width)), Math.min(1080, Math.max(1, window.height)))
+                    opacity: stageDesktopWallpaperFallback._activeSlot === 1 ? 1 : 0
+                    z: stageDesktopWallpaperFallback._activeSlot === 1 ? 1 : 0
+                    Behavior on opacity {
+                        enabled: Appearance.animationsEnabled && stageDesktopWallpaperFallback.visible
+                        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                    }
+                    onStatusChanged: {
+                        if (status === Image.Ready && stageDesktopWallpaperFallback._activeSlot === 0
+                                && String(source) === stageDesktopWallpaperFallback.targetSource) {
+                            stageDesktopWallpaperFallback._displayedSource = String(source);
+                            stageDesktopWallpaperFallback._activeSlot = 1;
+                        }
+                    }
+                }
             }
             AbyssField {
                 id: field
@@ -2987,7 +3081,7 @@ Scope {
                 z: 500
                 anchors.fill: parent
                 card: window.editCard
-                warmBackdrop: window._editStageWarmReady
+                warmBackdrop: window._editStageWarmReady || GlobalStates.deferredPanelsReady
             }
             Item {
                 id: stageLeftEditDock

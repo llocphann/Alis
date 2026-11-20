@@ -120,6 +120,7 @@ Item {
     readonly property var playlists: root.backend?.playlists ?? []
     readonly property var activeQueue: root.backend?.activeQueue ?? []
     readonly property int currentQueueIndex: Number(root.backend?.currentIndex ?? -1)
+    readonly property int nextQueueIndex: Number(root.backend?.nextQueueIndex ?? -1)
     readonly property string currentTrackTitle: String(root.backend?.currentTitle ?? "")
     readonly property string currentTrackArtist: String(root.backend?.currentArtist ?? "")
     readonly property string currentTrackAlbum: String(root.backend?.currentAlbum ?? "")
@@ -726,6 +727,14 @@ Item {
         if (entry.kind === "track" && entry.track) {
             if (root.sourceMode === "queue" && entry.queueIndex !== undefined) {
                 root._safeJumpTo(entry.queueIndex);
+            } else if (root.allResultTracks.length > 1) {
+                const trackId = String(entry.track.uri ?? entry.track.path ?? entry.track.id ?? "");
+                const targetIdx = root.allResultTracks.findIndex(item =>
+                    String(item?.uri ?? item?.path ?? item?.id ?? "") === trackId);
+                if (targetIdx >= 0)
+                    root._safePlayQueue(root.allResultTracks, targetIdx, root.heroMeta.title);
+                else
+                    root._safeEnqueueTrack(entry.track, true);
             } else {
                 root._safeEnqueueTrack(entry.track, true);
             }
@@ -758,7 +767,7 @@ Item {
                 icon: "play_arrow",
                 action: () => {
                     if (tracks.length === 1) root._safeEnqueueTrack(tracks[0], true);
-                    else root._safePlayQueue(tracks, 0, "");
+                    else root._safePlayQueue(tracks, root.shuffleActive ? -1 : 0, "");
                 }
             });
             actions.push({
@@ -795,7 +804,7 @@ Item {
                 icon: "play_arrow",
                 action: () => {
                     const t = Library.selectedTracks(root.libraryTracks, ["d:" + folderPath], root.libraryIndex);
-                    root._safePlayQueue(t, 0, folderPath);
+                    root._safePlayQueue(t, root.shuffleActive ? -1 : 0, folderPath);
                 }
             });
         }
@@ -1825,7 +1834,7 @@ Item {
                                                     labelText: Translation.tr("Play All")
                                                     primaryFill: true
                                                     enabled: root.libraryTracks.length > 0
-                                                    onClicked: root._safePlayQueue(root.libraryTracks, 0, Translation.tr("Library"))
+                                                    onClicked: root._safePlayQueue(root.libraryTracks, root.shuffleActive ? -1 : 0, Translation.tr("Library"))
                                                 }
                                                 SonoraPillButton {
                                                     iconName: "queue_music"
@@ -2129,7 +2138,7 @@ Item {
                                             iconName: "play_arrow"
                                             labelText: Translation.tr("Play")
                                             enabled: root.allResultTracks.length > 0
-                                            onClicked: root._safePlayQueue(root.allResultTracks, 0, root.heroMeta.title)
+                                            onClicked: root._safePlayQueue(root.allResultTracks, root.shuffleActive ? -1 : 0, root.heroMeta.title)
                                         }
 
                                         SonoraPillButton {
@@ -2137,7 +2146,7 @@ Item {
                                             visible: root.selectedTracks.length > 0
                                             iconName: "playlist_play"
                                             labelText: Translation.tr("Play Selected (%1)").arg(root.selectedTracks.length)
-                                            onClicked: root._safePlayQueue(root.selectedTracks, 0, Translation.tr("Selection"))
+                                            onClicked: root._safePlayQueue(root.selectedTracks, root.shuffleActive ? -1 : 0, Translation.tr("Selection"))
                                         }
 
                                         SonoraPillButton {
@@ -2535,6 +2544,7 @@ Item {
                                     required property var modelData
                                     required property int index
                                     readonly property bool isCurrent: index === root.currentQueueIndex
+                                    readonly property bool isUpNext: !isCurrent && root.shuffleActive && index === root.nextQueueIndex
                                     width: queueList.width - (root.showMusicScrollbars ? 8 : 0)
                                     height: 38
 
@@ -2543,7 +2553,9 @@ Item {
                                         radius: 5
                                         color: qDelegate.isCurrent
                                             ? ColorUtils.applyAlpha(root.accent, 0.14)
-                                            : (qMa.containsMouse ? root.colSurfaceHover : "transparent")
+                                            : (qDelegate.isUpNext
+                                                ? ColorUtils.applyAlpha(root.accent, 0.06)
+                                                : (qMa.containsMouse ? root.colSurfaceHover : "transparent"))
 
                                         MouseArea {
                                             id: qMa
@@ -2569,14 +2581,26 @@ Item {
                                                 Layout.fillWidth: true
                                                 Layout.minimumWidth: 0
                                                 spacing: 0
-                                                StyledText {
+                                                RowLayout {
                                                     Layout.fillWidth: true
-                                                    text: String(qDelegate.modelData?.title || qDelegate.modelData?.uri || "")
-                                                    font.family: root.uiFont
-                                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                                    font.weight: qDelegate.isCurrent ? Font.DemiBold : Font.Normal
-                                                    color: qDelegate.isCurrent ? root.accent : root.colText
-                                                    elide: Text.ElideRight
+                                                    spacing: 4
+                                                    StyledText {
+                                                        Layout.fillWidth: true
+                                                        text: String(qDelegate.modelData?.title || qDelegate.modelData?.uri || "")
+                                                        font.family: root.uiFont
+                                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                                        font.weight: (qDelegate.isCurrent || qDelegate.isUpNext) ? Font.DemiBold : Font.Normal
+                                                        color: qDelegate.isCurrent ? root.accent : root.colText
+                                                        elide: Text.ElideRight
+                                                    }
+                                                    StyledText {
+                                                        visible: qDelegate.isUpNext
+                                                        text: Translation.tr("Next")
+                                                        font.family: root.uiFont
+                                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                                        font.weight: Font.DemiBold
+                                                        color: root.accent
+                                                    }
                                                 }
                                                 StyledText {
                                                     Layout.fillWidth: true

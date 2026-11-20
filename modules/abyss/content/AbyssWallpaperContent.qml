@@ -290,14 +290,38 @@ FocusScope {
         }
     }
 
+    function _normWallpaperPath(rawPath: string): string {
+        let p = String(rawPath ?? "").trim()
+        if (!p)
+            return ""
+        if (p.startsWith("file://")) {
+            p = p.slice(7)
+            try {
+                p = decodeURIComponent(p)
+            } catch (_e) {}
+        }
+        return p.replace(/\/+$/, "")
+    }
+
     function _beginSession(): void {
+        const curPath = root._normWallpaperPath(root.currentWallpaperPath)
         root.initialWallpaperPath = String(root.currentWallpaperPath ?? "")
         root.undoStack = []
-        if (GlobalStates.wallpaperLauncherMode === "animated" && root.activeTab === "static")
+        if (curPath.length > 0) {
+            const curIsAnim = Wallpapers.isVideoFile(curPath) || /\.gif$/i.test(curPath)
+            const curTab = curIsAnim ? "animated" : "static"
+            if (GlobalStates.wallpaperLauncherMode !== curTab)
+                GlobalStates.wallpaperLauncherMode = curTab
+            if (root.activeTab !== curTab)
+                root.activeTab = curTab
+        } else if (GlobalStates.wallpaperLauncherMode === "animated" && root.activeTab === "static") {
             root.activeTab = "animated"
-        else if (GlobalStates.wallpaperLauncherMode === "static" && root.activeTab === "animated")
+        } else if (GlobalStates.wallpaperLauncherMode === "static" && root.activeTab === "animated") {
             root.activeTab = "static"
+        }
         root.refreshLibrary(true)
+        carousel._needsInitialCenter = true
+        carousel.syncCurrentIndex()
         focusDeferTimer.alsoSyncCarousel = true
         focusDeferTimer.restart()
     }
@@ -610,7 +634,17 @@ FocusScope {
                 }
 
                 model: carousel.filteredEntries
+                property bool _needsInitialCenter: false
                 onFilteredEntriesChanged: carousel.syncCurrentIndexAndPreview()
+                onWidthChanged: if (_needsInitialCenter && width > 0 && count > 0) centerSettleTimer.restart()
+                onCountChanged: if (_needsInitialCenter && width > 0 && count > 0) centerSettleTimer.restart()
+
+                Timer {
+                    id: centerSettleTimer
+                    interval: 16
+                    repeat: false
+                    onTriggered: carousel.syncCurrentIndex()
+                }
 
                 function syncCurrentIndex(): void {
                     const list = carousel.filteredEntries ?? []
@@ -625,9 +659,16 @@ FocusScope {
                         return
                     }
                     carousel._lastFavouritesRevSeen = Wallpapers.favouritesRevision
-                    const idx = list.findIndex(entry => entry.path === carousel.currentWallpaperPath)
-                    carousel.currentIndex = Math.max(0, idx)
-                    carousel.positionViewAtIndex(carousel.currentIndex, ListView.Contain)
+                    const curNorm = root._normWallpaperPath(carousel.currentWallpaperPath)
+                    const idx = list.findIndex(entry => root._normWallpaperPath(entry?.path) === curNorm)
+                    const targetIdx = Math.max(0, idx)
+                    carousel.currentIndex = targetIdx
+                    if (carousel.width > 0 && carousel.count > targetIdx) {
+                        carousel.positionViewAtIndex(targetIdx, ListView.Center)
+                        carousel._needsInitialCenter = false
+                    } else {
+                        centerSettleTimer.restart()
+                    }
                 }
 
                 function syncCurrentIndexAndPreview(): void {

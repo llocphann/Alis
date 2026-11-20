@@ -141,6 +141,7 @@ Singleton {
                 property string date: ""
                 property string mood: ""
                 property string energy: ""
+                property string weight: ""
             }
 
             // No task titles or note content. Updated only after a consented offer.

@@ -137,6 +137,98 @@ Singleton {
         root.stages = next;
     }
 
+    // Cached rest geometry avoids recomputing static layout/fit math on every animation frame.
+    // Stored inside one constant JS wrapper object so cache updates never emit QML property-change signals.
+    readonly property var _restGeomCache: ({ key: "", val: null })
+
+    function _computeRestGeometry(
+        width: real,
+        height: real,
+        dockWidth: real,
+        dockHeight: real,
+        leftDockWidth: real,
+        leftDockHeight: real,
+        rightDockWidth: real,
+        rightDockHeight: real
+    ): var {
+        const key = `${width}|${height}|${dockWidth}|${dockHeight}|${leftDockWidth}|${leftDockHeight}|${rightDockWidth}|${rightDockHeight}|${root.maxRestScale}|${root.topMargin}|${root.bottomMargin}|${root.sideMargin}|${root.edgeClearanceMargin}`;
+        const cache = root._restGeomCache;
+        if (cache.key === key && cache.val)
+            return cache.val;
+
+        const restBezel = 5;
+        const hasBottom = (Number(dockHeight) || 0) > 0 && (Number(dockWidth) || 0) > 0;
+        const dockH = hasBottom
+            ? Math.round(Math.max(48, Math.min(height * 0.42, Number(dockHeight))))
+            : 0;
+
+        const hasLeft = (Number(leftDockWidth) || 0) > 0 && (Number(leftDockHeight) || 0) > 0;
+        const leftW = hasLeft
+            ? Math.round(Math.max(200, Math.min(width * 0.28, Number(leftDockWidth))))
+            : 0;
+
+        const hasRight = (Number(rightDockWidth) || 0) > 0 && (Number(rightDockHeight) || 0) > 0;
+        const rightW = hasRight
+            ? Math.round(Math.max(200, Math.min(width * 0.28, Number(rightDockWidth))))
+            : 0;
+
+        const minEdgeGap = root.edgeClearanceMargin;
+        const maxSideNeed = Math.max(
+            root.sideMargin,
+            hasLeft ? (leftW + restBezel + minEdgeGap) : 0,
+            hasRight ? (rightW + restBezel + minEdgeGap) : 0
+        );
+        const sideMaxScale = (width - 2 * maxSideNeed) / width;
+        const bottomNeed = hasBottom ? (dockH + restBezel + minEdgeGap) : root.bottomMargin;
+        const vertMaxScale = (height - root.topMargin - bottomNeed) / height;
+        const fit = Math.max(0.45, Math.min(root.maxRestScale, sideMaxScale, vertMaxScale));
+        const sRest = Math.round(width * fit) / width;
+        const restW = Math.round(width * sRest);
+        const restH = Math.round(height * sRest);
+        const restX = Math.round((width - restW) / 2);
+        const availVertSpace = Math.max(0, height - root.topMargin - bottomNeed - restH);
+        const restY = Math.round(root.topMargin + availVertSpace * 0.5);
+
+        const maxDockW = Math.max(240, Math.min(width - 2 * root.sideMargin, Math.round(restW * 0.80)));
+        const requestedDockW = Number(dockWidth) > 0 ? Number(dockWidth) : maxDockW;
+        const dockW = hasBottom
+            ? Math.round(Math.min(maxDockW, Math.max(Math.min(maxDockW, 240), requestedDockW)))
+            : 0;
+        const dockRestX = Math.round(restX + (restW - dockW) / 2);
+        const dockRestY = Math.round(restY + restH + restBezel);
+        const dockClosedY = height + 12;
+
+        const maxSideDockH = Math.max(120, Math.min(height - 2 * root.topMargin, Math.round(restH * 0.80)));
+        const minSideDockH = Math.min(maxSideDockH, 120);
+        const leftH = hasLeft
+            ? Math.round(Math.max(minSideDockH, Math.min(maxSideDockH, Number(leftDockHeight))))
+            : 0;
+        const leftRestX = Math.round(restX - restBezel - leftW);
+        const leftClosedX = -leftW - 12;
+        const leftDockY = hasLeft
+            ? Math.round(Math.max(root.topMargin, Math.min(height - root.topMargin - leftH, restY + (restH - leftH) / 2)))
+            : Math.round(height / 2);
+
+        const rightH = hasRight
+            ? Math.round(Math.max(minSideDockH, Math.min(maxSideDockH, Number(rightDockHeight))))
+            : 0;
+        const rightRestX = Math.round(restX + restW + restBezel);
+        const rightClosedX = width + 12;
+        const rightDockY = hasRight
+            ? Math.round(Math.max(root.topMargin, Math.min(height - root.topMargin - rightH, restY + (restH - rightH) / 2)))
+            : Math.round(height / 2);
+
+        const computed = {
+            restBezel, hasBottom, dockW, dockH, dockRestX, dockRestY, dockClosedY,
+            hasLeft, leftW, leftH, leftRestX, leftClosedX, leftDockY,
+            hasRight, rightW, rightH, rightRestX, rightClosedX, rightDockY,
+            sRest, restX, restY
+        };
+        cache.key = key;
+        cache.val = computed;
+        return computed;
+    }
+
     function cardForGeometry(
         w: real,
         h: real,
@@ -189,99 +281,34 @@ Singleton {
             };
         }
 
+        const g = root._computeRestGeometry(width, height, dockWidth, dockHeight, leftDockWidth, leftDockHeight, rightDockWidth, rightDockHeight);
         const lp = Number(leftProgress) >= 0 ? Math.max(0, Math.min(1, Number(leftProgress) || 0)) : p;
         const rp = Number(rightProgress) >= 0 ? Math.max(0, Math.min(1, Number(rightProgress) || 0)) : p;
-        const restBezel = 5;
-        const bezel = restBezel * p;
+        const bezel = g.restBezel * p;
         const cornerRadius = 14 * p;
 
-        const hasBottom = (Number(dockHeight) || 0) > 0 && (Number(dockWidth) || 0) > 0;
-        const dockH = hasBottom
-            ? Math.round(Math.max(48, Math.min(height * 0.42, Number(dockHeight))))
-            : 0;
-
-        const hasLeft = (Number(leftDockWidth) || 0) > 0 && (Number(leftDockHeight) || 0) > 0;
-        const leftW = hasLeft
-            ? Math.round(Math.max(200, Math.min(width * 0.28, Number(leftDockWidth))))
-            : 0;
-
-        const hasRight = (Number(rightDockWidth) || 0) > 0 && (Number(rightDockHeight) || 0) > 0;
-        const rightW = hasRight
-            ? Math.round(Math.max(200, Math.min(width * 0.28, Number(rightDockWidth))))
-            : 0;
-
-        // Keep Desktop horizontally centered while sizing docks flexibly to their content
-        // and preserving clean clearances from the outer physical edges.
-        const minEdgeGap = root.edgeClearanceMargin;
-        const maxSideNeed = Math.max(
-            root.sideMargin,
-            hasLeft ? (leftW + restBezel + minEdgeGap) : 0,
-            hasRight ? (rightW + restBezel + minEdgeGap) : 0
-        );
-        const sideMaxScale = (width - 2 * maxSideNeed) / width;
-        const bottomNeed = hasBottom ? (dockH + restBezel + minEdgeGap) : root.bottomMargin;
-        const vertMaxScale = (height - root.topMargin - bottomNeed) / height;
-        const fit = Math.max(0.45, Math.min(root.maxRestScale, sideMaxScale, vertMaxScale));
-        const sRest = Math.round(width * fit) / width;
-        const restW = Math.round(width * sRest);
-        const restH = Math.round(height * sRest);
-        const restX = Math.round((width - restW) / 2);
-        const availVertSpace = Math.max(0, height - root.topMargin - bottomNeed - restH);
-        const restY = Math.round(root.topMargin + availVertSpace * 0.5);
-
-        const s = 1 + (sRest - 1) * p;
-        const x = restX * p;
-        const y = restY * p;
+        const s = 1 + (g.sRest - 1) * p;
+        const x = g.restX * p;
+        const y = g.restY * p;
         const stageW = width * s;
         const stageH = height * s;
         const right = x + stageW;
         const bottom = y + stageH;
 
-        // Content-driven dock dimensions capped at 80% of the shrunk Desktop span,
-        // with pure edge-slide trajectories (zero scale/grow/shrink).
-        const maxDockW = Math.max(240, Math.min(width - 2 * root.sideMargin, Math.round(restW * 0.80)));
-        const requestedDockW = Number(dockWidth) > 0 ? Number(dockWidth) : maxDockW;
-        const dockW = hasBottom
-            ? Math.round(Math.min(maxDockW, Math.max(Math.min(maxDockW, 240), requestedDockW)))
-            : 0;
-        const dockRestX = Math.round(restX + (restW - dockW) / 2);
-        const dockRestY = Math.round(restY + restH + restBezel);
-        const dockClosedY = height + 12;
-        const dockX = dockRestX;
-        const dockY = hasBottom ? Math.round(dockClosedY + (dockRestY - dockClosedY) * p) : dockClosedY;
-
-        const maxSideDockH = Math.max(120, Math.min(height - 2 * root.topMargin, Math.round(restH * 0.80)));
-        const minSideDockH = Math.min(maxSideDockH, 120);
-        const leftH = hasLeft
-            ? Math.round(Math.max(minSideDockH, Math.min(maxSideDockH, Number(leftDockHeight))))
-            : 0;
-        const leftRestX = Math.round(restX - restBezel - leftW);
-        const leftClosedX = -leftW - 12;
-        const leftDockX = hasLeft && lp > 0.0001
-            ? Math.round(leftClosedX + (leftRestX - leftClosedX) * lp)
-            : leftClosedX;
-        const leftDockY = hasLeft
-            ? Math.round(Math.max(root.topMargin, Math.min(height - root.topMargin - leftH, restY + (restH - leftH) / 2)))
-            : Math.round(height / 2);
-
-        const rightH = hasRight
-            ? Math.round(Math.max(minSideDockH, Math.min(maxSideDockH, Number(rightDockHeight))))
-            : 0;
-        const rightRestX = Math.round(restX + restW + restBezel);
-        const rightClosedX = width + 12;
-        const rightDockX = hasRight && rp > 0.0001
-            ? Math.round(rightClosedX + (rightRestX - rightClosedX) * rp)
-            : rightClosedX;
-        const rightDockY = hasRight
-            ? Math.round(Math.max(root.topMargin, Math.min(height - root.topMargin - rightH, restY + (restH - rightH) / 2)))
-            : Math.round(height / 2);
+        const dockY = g.hasBottom ? Math.round(g.dockClosedY + (g.dockRestY - g.dockClosedY) * p) : g.dockClosedY;
+        const leftDockX = g.hasLeft && lp > 0.0001
+            ? Math.round(g.leftClosedX + (g.leftRestX - g.leftClosedX) * lp)
+            : g.leftClosedX;
+        const rightDockX = g.hasRight && rp > 0.0001
+            ? Math.round(g.rightClosedX + (g.rightRestX - g.rightClosedX) * rp)
+            : g.rightClosedX;
 
         return {
             active: true,
             mode: String(mode ?? ""),
             p: p,
             s: s,
-            rest: sRest,
+            rest: g.sRest,
             x: x,
             y: y,
             width: stageW,
@@ -291,20 +318,20 @@ Singleton {
             cornerRadius: cornerRadius,
             bezel: bezel,
             dockRadius: root.configuredDockRadius,
-            dockX: dockX,
+            dockX: g.dockRestX,
             dockY: dockY,
-            dockWidth: dockW,
-            dockHeight: dockH,
-            dockBottom: dockY + dockH,
+            dockWidth: g.dockW,
+            dockHeight: g.dockH,
+            dockBottom: dockY + g.dockH,
             leftDockX: leftDockX,
-            leftDockY: leftDockY,
-            leftDockWidth: leftW,
-            leftDockHeight: leftH,
+            leftDockY: g.leftDockY,
+            leftDockWidth: g.leftW,
+            leftDockHeight: g.leftH,
             leftProgress: lp,
             rightDockX: rightDockX,
-            rightDockY: rightDockY,
-            rightDockWidth: rightW,
-            rightDockHeight: rightH,
+            rightDockY: g.rightDockY,
+            rightDockWidth: g.rightW,
+            rightDockHeight: g.rightH,
             rightProgress: rp
         };
     }

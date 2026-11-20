@@ -45,8 +45,16 @@ Scope {
     function close() { GlobalStates.cheatsheetOpen = false; }
     function toggle() { GlobalStates.cheatsheetOpen = !GlobalStates.cheatsheetOpen; }
 
+    function focusPrimarySurface(): void {
+        cheatsheetBackground.forceActiveFocus()
+    }
+
     function armFocusLoss(): void {
         root._focusLossArmed = false
+        if (root.embeddedHost) {
+            focusArmTimer.stop()
+            return
+        }
         focusArmTimer.restart()
     }
 
@@ -55,7 +63,7 @@ Scope {
         interval: 180
         repeat: false
         onTriggered: {
-            if (!root.cheatsheetOpen)
+            if (!root.cheatsheetOpen || root.embeddedHost)
                 return
             root._niriFocusBaseline = Number(NiriService.activeWindow?.id ?? -1)
             root._focusLossArmed = true
@@ -65,11 +73,11 @@ Scope {
     Connections {
         target: NiriService
         function onActiveWindowChanged(): void {
-            if (!CompositorService.isNiri || !root.cheatsheetOpen
+            if (root.embeddedHost || !CompositorService.isNiri || !root.cheatsheetOpen
                     || !root._focusLossArmed)
                 return
             const focusedId = Number(NiriService.activeWindow?.id ?? -1)
-            if (focusedId !== root._niriFocusBaseline)
+            if (focusedId >= 0 && focusedId !== root._niriFocusBaseline)
                 root.close()
         }
     }
@@ -77,7 +85,7 @@ Scope {
     CompositorFocusGrab {
         windows: root.focusWindow ? [root.focusWindow] : []
         active: CompositorService.isHyprland && root.cheatsheetOpen
-            && root.focusWindow !== null
+            && root.focusWindow !== null && !root.embeddedHost
         onCleared: if (root.cheatsheetOpen) root.close()
     }
 
@@ -347,9 +355,10 @@ Scope {
                             model: root.pages.length
                             delegate: Loader {
                                 anchors.fill: parent
-                                active: true
+                                active: root.cheatsheetOpen && (index === root.currentPage || status === Loader.Ready)
+                                asynchronous: status !== Loader.Ready
                                 source: root.pages[index].component
-                                visible: index === root.currentPage
+                                visible: index === root.currentPage && status === Loader.Ready
                                 opacity: visible ? 1 : 0
 
                                 Behavior on opacity {

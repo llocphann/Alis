@@ -2041,6 +2041,7 @@ Scope {
 
                     Loader {
                         id: editToolbarLoader
+                        asynchronous: status !== Loader.Ready && !GlobalStates.widgetEditMode
                         active: GlobalStates.widgetEditMode || editControlsOverlay.visible || bgRoot.editStageVisible || editControlsOverlay._warmWidgetsReady
                         function _syncToolbar(): void {
                             if (active) {
@@ -2071,6 +2072,7 @@ Scope {
                     Loader {
                         id: widgetManagerPanel
                         objectName: "desktopWidgetManagerLoader"
+                        asynchronous: status !== Loader.Ready && !GlobalStates.widgetEditMode && !shown
                         property bool shown: false
                         property Item externalDockParent: null
                         readonly property bool externallyDocked: externalDockParent !== null

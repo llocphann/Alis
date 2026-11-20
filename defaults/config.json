@@ -2305,6 +2305,7 @@
         "preferredProfile": "",
         "fanControl": {
             "enabled": false,
+            "managed": false,
             "powerSaver": 0,
             "balanced": 0,
             "performance": 0
