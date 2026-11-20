@@ -1,6 +1,6 @@
 # Contributing to Alis
 
-Alis is being developed on top of the cleaned Alis runtime baseline. The current architectural target and perimeter constraints live in [README.md](README.md) and [ARCHITECTURE.md](ARCHITECTURE.md); do not infer feature completion from those target documents alone.
+Alis is developed on top of the active Alis runtime baseline. The current architecture, surface ownership contracts, and directory structure live in [ARCHITECTURE.md](ARCHITECTURE.md) and [STRUCTURE.md](STRUCTURE.md); do not infer unimplemented roadmap items from architectural overview notes alone.
 
 ## Branch model
 
@@ -74,7 +74,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) and [STRUCTURE.md](STRUCTURE.md) for the 
 
 The target shell has eight configurable perimeter placements: top-left, top-center, top-right, left-edge, right-edge, bottom-left, bottom-center, and bottom-right.
 
-The preset documented in README is only a default composition. Modules must not acquire hard dependencies on a specific slot, and documentation must not describe a default placement as an architectural lock. Left/right sidebars are intended to be centered, content/config-sized edge surfaces rather than mandatory full-edge panels.
+The preset shown in [README.md](README.md) is only an example showcase. Modules must not acquire hard dependencies on a specific slot, and [ARCHITECTURE.md](ARCHITECTURE.md) must not describe a default placement as an architectural lock. Left/right sidebars are intended to be centered, content/config-sized edge surfaces rather than mandatory full-edge panels.
 
 When touching this area, distinguish clearly between architecture that is specified and functionality that is actually implemented on the current `dev` HEAD.
 

@@ -16,11 +16,11 @@ def check(condition: bool, message: str) -> None:
 
 
 def main() -> None:
-    readme = read("README.md")
-    check("### 2.1 Locked ownership contract — single Caelestia-style inverted frame" in readme
-          and "Normal Bar mode owns only the Bar body" in readme
-          and "`scripts/test-shell-surface-contracts.py` is the regression gate" in readme,
-          "README must retain the maintainer-approved single-owner perimeter contract")
+    arch = read("ARCHITECTURE.md")
+    check("### 2.1 Locked ownership contract — single Caelestia-style inverted frame" in arch
+          and "Normal Bar mode owns only the Bar body" in arch
+          and "`scripts/test-shell-surface-contracts.py` is the regression gate" in arch,
+          "ARCHITECTURE.md must retain the maintainer-approved single-owner perimeter contract")
 
     styled_popup = read("modules/bar/StyledPopup.qml")
     abyss_frame = read("modules/common/perimeter/ConnectedSurfaceAbyssFrame.qml")

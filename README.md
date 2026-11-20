@@ -2,52 +2,59 @@
 
 # Alis `1.0.0`
 
-**A responsive, Material You & Abyssal Wayland desktop shell built on Quickshell + Niri + Rust.**
+**A responsive, Material You & Abyssal Wayland desktop shell built on Quickshell, Niri, and Rust.**
 
 [![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-7aa2f7?style=flat-square)](VERSION)
-[![Quickshell v0.3.2](https://img.shields.io/badge/Quickshell-v0.3.2-9ece6a?style=flat-square)](#architecture--repository-layout)
+[![Quickshell v0.3.2](https://img.shields.io/badge/Quickshell-v0.3.2-9ece6a?style=flat-square)](ARCHITECTURE.md)
 [![Wayland · Niri](https://img.shields.io/badge/Wayland-Niri-bb9af7?style=flat-square)](#quick-start)
-[![Rust Native Backend](https://img.shields.io/badge/Rust-alis--native-f7768e?style=flat-square)](#architecture--repository-layout)
+[![Rust Native Backend](https://img.shields.io/badge/Rust-alis--native-f7768e?style=flat-square)](#ecosystem-repositories)
 
-[Preset Gallery](#preset-showcase) · [Highlights](#key-features) · [Quick Start](#quick-start) · [Ecosystem](#ecosystem-repositories) · [Development Model](#development-model--release-cadence) · [Contracts](#architecture--regression-contracts)
+[Visual Showcase](#visual-showcase) · [Key Highlights](#key-highlights) · [Quick Start](#quick-start) · [Ecosystem](#ecosystem-repositories) · [Documentation](#documentation)
 
 </div>
 
 ---
 
 > **Transparency & Release Cadence**
-> - **LLM-Assisted Engineering:** Alis, along with its optional companion and integration packages, was **designed and built with the assistance of Large Language Models (LLMs)** for architecture iteration, QML/Rust implementation, shader prototyping, and automated regression testing.
-> - **Update Schedule:** New feature releases and maintenance updates are published on a **quarterly, semi-annual, or annual** cadence rather than continuous rolling drops.
+> - **LLM-Assisted Engineering:** Alis, alongside its optional companion and integration packages, was **designed and built with the assistance of Large Language Models (LLMs)** for QML/Rust architecture iteration, shader prototyping, and automated testing under maintainer review.
+> - **Release Schedule:** Alis `1.0.0` establishes the baseline release. Feature updates and maintenance releases are delivered on a **quarterly, semi-annual, or annual** cadence.
 
 ---
 
-## Preset Showcase
+## Visual Showcase
 
-Alis ships with adaptive Material You (`auto`) wallpaper extraction alongside curated multi-palette presets and two distinct shell families (**Abyss** perimeter chrome and **Waffle** Windows-11-inspired taskbar).
+Alis ships with adaptive Material You (`auto`) wallpaper extraction, curated light and dark palettes, and two distinct panel families: **Abyss** (continuous connected perimeter chrome) and **Waffle** (Windows 11-inspired taskbar and launcher).
 
 | Abyss · Auto Wallpaper Palette | Angel · Twilight Warm Minimal |
 | :---: | :---: |
 | ![Abyss Auto Preset](assets/screenshots/preset-abyss-auto.png) | ![Angel Twilight Preset](assets/screenshots/preset-angel-twilight.png) |
-| Adaptive wallpaper-derived palette, Abyss perimeter rails, live Clock widget, and desktop chrome. | Warm amber twilight palette with halo wallpaper contrast and low-glare desktop framing. |
+| Adaptive wallpaper-derived palette, connected Abyss perimeter chrome, and live Quick Settings. | Warm amber twilight theme with low-glare desktop clock and minimalist framing. |
 
-| Catppuccin Mocha | Kanagawa · Live Edit Stage |
+| Regalia Ivory · Unified Dashboard | Sonora-Inspired Local Music & Equalizer |
 | :---: | :---: |
-| ![Catppuccin Mocha Preset](assets/screenshots/preset-catppuccin-mocha.png) | ![Kanagawa Edit Stage](assets/screenshots/preset-kanagawa-edit-stage.png) |
-| Lavender accents paired with centered bottom dock and subtle top status modules. | Interactive Desktop Edit Stage with 3-edge docks (`Popups & Panels`, `Screen Edge`, `Modules`). |
+| ![Regalia Ivory Dashboard](assets/screenshots/preset-regalia-ivory.png) | ![Local Music Showcase](assets/screenshots/showcase-local-music.png) |
+| Crisp card layout for Weather, Calendar, To Do, Notifications, Agenda, GitHub, System & Audio. | Collapsible library sidebar, artwork grid, search bar, and synced Lyrics stacked over the 10-band EQ. |
 
-| Regalia Ivory · Unified Dashboard | Gruvbox Material · Waffle Taskbar |
+| Kanagawa · Live Desktop Edit Stage | Abyss Panel Style · Compact Settings |
 | :---: | :---: |
-| ![Regalia Ivory Dashboard](assets/screenshots/preset-regalia-ivory.png) | ![Gruvbox Waffle Taskbar](assets/screenshots/preset-gruvbox-waffle.png) |
-| Light parchment surface tokens driving Dashboard calendar, weather, EQ, and To-Do cards. | Optional `Waffle` panel family with centered taskbar, start launcher, and widget tray. |
+| ![Kanagawa Edit Stage](assets/screenshots/preset-kanagawa-edit-stage.png) | ![Abyss Settings Showcase](assets/screenshots/showcase-settings.png) |
+| Synchronized Desktop Edit Stage with centered desktop preview and external edge docks. | Dashboard-sized Settings overlay with centered section tabs and clean single-column control plates. |
+
+| Catppuccin Mocha · Night Skies | Gruvbox Material · Waffle Taskbar |
+| :---: | :---: |
+| ![Catppuccin Mocha Preset](assets/screenshots/preset-catppuccin-mocha.png) | ![Gruvbox Waffle Taskbar](assets/screenshots/preset-gruvbox-waffle.png) |
+| Pastel lavender contrast over night photography with floating centered Abyss dock. | Switch anytime to the Waffle family with taskbar, Start Menu, and Start-Menu-sized Dashboard. |
 
 ---
 
-## Key Features
+## Key Highlights
 
-- **Abyssal Frame & Unified Customization Stages:** Smooth `OutCubic` Desktop Edit Stage for configuring Abyss Screen Edges (`Top`, `Bottom`, `Left`, `Right`), Popups & Panels (`<= 80%` centered flexible docks), Dashboard layouts (`Modules`, `Tabs`, `Layout & Grid`), and Desktop Widgets with snap-grid overlays and batch Canvas rendering.
-- **Rust-Accelerated Native Daemons:** High-frequency wallpaper color quantization (`alis-theme`), input/shortcut helpers (`alis-inputd`), MPD metadata bridge (`alis-mpdd`), and native utilities (`alis-native`) keep Qt/QML UI threads responsive with idle warmup and zero-bounce sidebar slides.
-- **Dynamic Presets & Application Auto-Theming:** Instant switching across built-in palettes (`auto`, `angel`, `catppuccin-mocha`, `kanagawa`, `regalia-ivory`, `gruvbox-material`, and more) synced cleanly to GTK, Qt, terminals, and Neovim.
-- **Modular 3-Repo Design (Optional Add-ons, Default-Off):** Keep the core shell standalone or attach [Alis-Companion](https://github.com/llocphann/Alis-Companion) (Aqua/Octo pet, standalone `/swarm`, Voice, MCP/Skills/RAG) and [Alis-Intergration](https://github.com/llocphann/Alis-Intergration) (Nexus vault/knowledge suite, battery/thermal controls, hardware helpers).
+- **Connected Abyssal Chrome & Flexible Customization:** Customize Screen Edges, Popups & Panels, Dashboard widget grids, and Desktop Widgets cleanly from a synchronized Desktop Edit Stage (`Super + G` / Edit buttons) with pure slide transitions.
+- **Sonora-Inspired Local Music Player:** Browse local tracks, albums, artists, genres, folders, and playlists with hardware-friendly MPD playback, synced Lyrics stacked cleanly over a 10-band Equalizer, and shuffle/queue controls.
+- **Responsive Dashboard & Compact Settings:** Clean responsive card projection adapts to any screen ratio, paired with compact Settings featuring single-column forms, lazy wallpaper baking for Favourites transitions, and fast indexed wallpaper search.
+- **In-Desktop Capture & Inline Annotation:** Capture screenshots (`Super + Shift + S`), screen recordings, or OCR directly on the full-scale desktop with an auto-hiding compact toolbar and direct pen, highlight, arrow, shape, and text annotations.
+- **Rust-Accelerated System Plumbing:** Native Rust daemons (`alis-theme`, `alis-inputd`, `alis-mpdd`, `alis-native`) keep Qt/QML rendering responsive while automatically syncing derived color themes to GTK, Qt, terminals, and editors.
+- **Optional Modular Add-ons (Default-Off):** Keep the desktop clean out of the box or enable [Alis-Companion](https://github.com/llocphann/Alis-Companion) (3D liquid desktop pets, AI assistant & Nexus RAG) and [Alis-Intergration](https://github.com/llocphann/Alis-Intergration) (Nexus vault suite, Spaced Repetition, Exercises Tracker, TLP & Thinkfan).
 
 ---
 
@@ -56,7 +63,7 @@ Alis ships with adaptive Material You (`auto`) wallpaper extraction alongside cu
 ### Prerequisites
 
 - **Compositor:** `niri` (Wayland session)
-- **Runtime:** Pinned `quickshell` (`v0.3.2` toolchain via `alis-deps`)
+- **Runtime:** Quickshell (`v0.3.2` via `alis-deps`)
 - **Toolchain:** `rust` / `cargo`, `python3`, `fish`, `git`
 
 ### Install on Arch Linux / CachyOS
@@ -67,21 +74,24 @@ cd Alis
 ./setup install
 ```
 
-Start or inspect the user service:
+Check or restart the supervised user service:
 
 ```bash
 systemctl --user status alis.service
+alis restart
 ```
 
-### Default Keybindings (Niri)
+### Default Keybindings
 
 | Shortcut | Action |
 | :--- | :--- |
-| `Super + Space` / Launcher | App & action search |
+| `Super + Space` | App & command launcher |
 | `Super + W` | Wallpaper & theme picker |
 | `Super + G` | Overview / Workspace switcher |
-| `Super + E` | File manager (configurable, including Yazi) |
-| `Super + ,` | Settings window |
+| `Super + Shift + S` | Screenshot, Recording & OCR region tool |
+| `Super + E` | File manager |
+| `Super + ,` | Settings |
+| `Super + /` | Keyboard & cheatsheet popup |
 
 ---
 
@@ -89,47 +99,20 @@ systemctl --user status alis.service
 
 | Repository | Branch | Scope |
 | :--- | :--- | :--- |
-| [Alis](https://github.com/llocphann/Alis) | `dev` / `stable` | Core Quickshell desktop shell, Abyss chrome, Dashboard, Settings, and Rust backend |
-| [Alis-Companion](https://github.com/llocphann/Alis-Companion) | `main` | Optional AI pet companion (`Aqua` / `Octo`), standalone `/swarm`, Pocket, and Skills/MCP |
-| [Alis-Intergration](https://github.com/llocphann/Alis-Intergration) | `main` | Optional Obsidian/Nexus workspace, Graph view, EasyEffects/TLP/Thinkfan hardware integrations |
+| **[Alis](https://github.com/llocphann/Alis)** | `stable` / `dev` | Core desktop shell, Abyss & Waffle panel families, Dashboard, Local Music, Capture, Settings & Rust daemons |
+| **[Alis-Companion](https://github.com/llocphann/Alis-Companion)** | `main` | Optional Aqua & Octo 3D desktop companions, local-first AI agent, Voice, Nexus RAG & standalone `/swarm` |
+| **[Alis-Intergration](https://github.com/llocphann/Alis-Intergration)** | `main` | Optional Nexus Vault workspace, Spaced Repetition flashcards, Exercises Tracker, TLP & Thinkfan plugins |
 
 ---
 
-## Development Model & Release Cadence
+## Documentation
 
-1. **Designed with LLM Assistance:** Core refactoring, QML layout engineering, performance profiling, automated runtime tests, and documentation were crafted iteratively in collaboration with Large Language Models under maintainer review.
-2. **Release Schedule:** Alis `1.0.0` marks the stable baseline. Subsequent updates and new features are delivered on a **quarterly, semi-annual, or annual** schedule.
-3. **Architecture References:** See [ARCHITECTURE.md](ARCHITECTURE.md), [STRUCTURE.md](STRUCTURE.md), and [CHANGELOG.md](CHANGELOG.md) for subsystem details and version history.
+- [ARCHITECTURE.md](ARCHITECTURE.md) — Panel families, singletons, theming pipeline, IPC targets, and surface contracts
+- [STRUCTURE.md](STRUCTURE.md) — Codebase directory guide and conventions
+- [CONTRIBUTING.md](CONTRIBUTING.md) — Branch model (`dev` / `stable`), development workflow, and checks
+- [CHANGELOG.md](CHANGELOG.md) — Version history and notable updates
 
----
-
-## Architecture & Regression Contracts
-
-The sections below document invariant shell ownership, copy brevity, and equalizer boundaries verified by automated repository checks.
-
-### Settings Copy & Surface Ownership
-
-- **Settings copy stays terse.** Section descriptions, helper lines, and control subtitles use only a few words or one short clause. Do not add paragraph-length explanation blocks inside Settings views.
-- **Settings base surface has one owner.** Root window chrome and navigation rail ownership stay centralized so embedded and standalone Settings panes remain consistent.
-
-### 2.1 Locked ownership contract — single Caelestia-style inverted frame
-
-- In normal shell operation, Abyss renders the inverted corner/edge frame around the desktop while Normal Bar mode owns only the Bar body and active dock pills without duplicating peripheral backdrop layers.
-- `scripts/test-shell-surface-contracts.py` is the regression gate guarding surface ownership, exclusive layer interactions, and edge anchoring.
-
-## Equalizer implementation status
-
-### Implemented
-
-- `EqualizerService.qml` provides the Phase 1 backend/service contract and is disabled by default.
-
-### Stabilizing
-
-- Dashboard EQ preset visualization and per-preset EasyEffects synchronization hardening.
-
-### Planned
-
-- Live spectrum DSP feedback loops, custom curve persistence upgrades, and extended Sink profile routing remain planned/deferred rather than current release prerequisites.
+Active issues and feature requests are tracked on [GitHub Issues](https://github.com/llocphann/Alis/issues).
 
 ---
 

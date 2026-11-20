@@ -8,19 +8,10 @@ import json
 ROOT = Path(__file__).resolve().parents[1]
 ISSUES = "github.com/llocphann/Alis/issues"
 
-# These compatibility pages are pointers, not writable task ledgers.
-for name in (
-    "to-do/README.md",
-    "to-do/cloud-bot/README.md",
-    "to-do/cloud-bot/NEW_FEATURES.md",
-    "to-do/cloud-bot/REWORK_OPTIMIZATION.md",
-    "to-do/cloud-bot/ISSUES.md",
-):
-    text = (ROOT / name).read_text(encoding="utf-8")
-    assert ISSUES in text, f"{name}: direct GitHub Issues link missing"
-    assert not re.search(r"(?m)^\s*- \[[ xX]\] \*\*[A-Z][A-Z0-9]+-[FRI]\d{2}\b", text), (
-        f"{name}: active task checklist must live in GitHub Issues"
-    )
+# Retired Markdown task ledgers must remain absent; if any file appears under
+# to-do/, verify it cannot carry active task checklists.
+todo_dir = ROOT / "to-do"
+assert not todo_dir.exists(), "Retired to-do/ ledger directory must not be reintroduced"
 
 agent = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
 for required in ("search", "Issues", "Awaiting Owner verification",
@@ -47,4 +38,4 @@ for name, expected_type in (
     assert f'labels: ["{expected_type}"]' in form, f"{name}: wrong type label"
     assert form.count("required: true") <= 2, f"{name}: issue intake too verbose"
 
-print("ALIS_ISSUE_WORKFLOW_PASS (5 pointers, built-in labels, 3 forms, colored palette)")
+print("ALIS_ISSUE_WORKFLOW_PASS (no retired to-do/, built-in labels, 3 forms, colored palette)")

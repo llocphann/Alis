@@ -22,8 +22,8 @@ alis/
 │   │   └── widgets/              # Reusable widgets + qmldir
 │   ├── bar/                      # Classic Bar runtime
 │   ├── background/               # Wallpaper + desktop widgets/items
-│   ├── dashboard/                # Dashboard, Music, Weekly Planner, Custom Tabs & optional Spaced Repetition
-│   ├── regionSelector/           # Region selection (Screenshot, Recording, OCR)
+│   ├── dashboard/                # Dashboard, Sonora-inspired Local Music, Weekly Planner, Custom Tabs, optional Spaced Repetition & Exercises Tracker
+│   ├── regionSelector/           # Region selection (in-desktop auto-hiding compact toolbar + inline capture editor, Recording, OCR)
 │   ├── sidebarLeft/              # Intelligence (AI/Companion), Translator, Tools, News
 │   ├── sidebarRight/             # Toggles, calendar, notifications
 │   ├── settings/                 # Config UI pages
@@ -66,15 +66,15 @@ The live tree intentionally has no Orbit, Mascot, Workspace Strip, `barM3`, Pill
 
 **modules/dock/:** the ii-family application Dock. Panel is the canonical supported Dock surface style; legacy persisted style values are normalized to `panel` during startup.
 
-**modules/waffle/:** Windows 11-style panel family with its own bottom taskbar, Start menu, action center, notification center, visual tokens, and settings. Waffle is a separate family rather than a Dock or Classic Bar style.
+**modules/waffle/:** Windows 11-style panel family with Start-Menu-sized Dashboard, Win11-style Settings, bottom taskbar, Start menu, action center, notification center, and visual tokens (`modules/waffle/looks/`). Waffle is a separate family rather than a Dock or Classic Bar style.
 
 **modules/abyss/:** independent perimeter-centric liquid family. `AbyssPerimeter.qml` owns one painter per output; `AbyssBodyHost.qml` owns lazy content and bounded input without painting; `looks/AbyssGeometry.js` and `looks/AbyssField.frag(.qsb)` own topology; `looks/AbyssStyle.qml` centralizes palette, motion and effects. Critical/specialist fallbacks share implementations rather than backend copies.
 
-**modules/dashboard/:** unified Dashboard surface hosting the main `Dashboard` widget grid, `Music`, `Weekly Planner`, user-managed `Custom Tabs` (`Create`, `Rename`, `Delete` via `DashboardEditToolbar.qml`), and the optional `Spaced Repetition` tab loaded from `Alis-Intergration`.
+**modules/dashboard/:** unified Dashboard surface hosting the main `Dashboard` widget grid, Sonora-inspired Local `Music` (merged Lyrics + EQ pane), `Weekly Planner`, user-managed `Custom Tabs` (`Create`, `Rename`, `Delete` via `DashboardEditToolbar.qml`), and optional `Spaced Repetition` / `Exercises Tracker` tabs loaded from `Alis-Intergration`.
 
-**modules/sidebarLeft/:** Left Sidebar hosting `Intelligence` (AI / `Alis-Companion` unified chat view), `Translator`, `Tools`, and `News` on the shared `edgeSurfaceColor` Abyss surface palette.
+**modules/sidebarLeft/:** Left Sidebar hosting `Intelligence` (AI / `Alis-Companion` unified chat view + inline `Pocket` + Right Sidebar `/swarm`), `Translator`, `Tools`, and `News` on the shared `edgeSurfaceColor` Abyss surface palette.
 
-**modules/regionSelector/:** `Super+Shift+S` region selection overlay (`Screenshot` + `Rect` default active tab, `Recording`, `OCR`) with compositor-isolated post-capture notification.
+**modules/regionSelector/:** `Super+Shift+S` full-screen region selection inside the Desktop (`Screenshot` + `Rect` default active tab, `Recording`, `OCR`) with an auto-hiding compact Recording-sized toolbar, inline capture annotation editor, and compositor-isolated post-capture notification.
 
 **modules/background/:** per-output desktop surface, wallpaper renderer, desktop items, and desktop widgets.
 

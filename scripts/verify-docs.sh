@@ -198,26 +198,26 @@ if [ -f "$router" ] && [ -f "$install_doc" ] \
   fi
 fi
 
-# 9. If the Phase 1 Equalizer service exists, README must distinguish the
+# 9. If the Phase 1 Equalizer service exists, ARCHITECTURE.md must distinguish the
 #    implemented backend contract from stabilization work and deferred UI scope.
 #    This prevents roadmap text from regressing to treating all Equalizer work as
 #    either fully shipped or entirely hypothetical.
 equalizer_service="services/deferred/EqualizerService.qml"
-readme="README.md"
+arch_doc="ARCHITECTURE.md"
 echo "[roadmap] Equalizer implementation states"
-if [ -f "$equalizer_service" ] && [ -f "$readme" ]; then
+if [ -f "$equalizer_service" ] && [ -f "$arch_doc" ]; then
   grep -Fq 'property bool enabled: false' "$equalizer_service" \
     || note "EqualizerService no longer exposes the disabled-by-default Phase 1 contract"
-  grep -Fq '## Equalizer implementation status' "$readme" \
-    || note "README no longer has an Equalizer implementation-status section"
+  grep -Fq '## Equalizer implementation status' "$arch_doc" \
+    || note "ARCHITECTURE.md no longer has an Equalizer implementation-status section"
   for state in Implemented Stabilizing Planned; do
-    grep -Fq "### $state" "$readme" \
-      || note "README Equalizer roadmap no longer distinguishes $state work"
+    grep -Fq "### $state" "$arch_doc" \
+      || note "ARCHITECTURE.md Equalizer roadmap no longer distinguishes $state work"
   done
-  grep -Fq '`EqualizerService.qml` provides the Phase 1 backend/service contract and is disabled by default.' "$readme" \
-    || note "README no longer identifies the implemented disabled-by-default Equalizer Phase 1 backend"
-  grep -Fq 'planned/deferred rather than current release prerequisites' "$readme" \
-    || note "README no longer keeps the future Equalizer presentation outside current release prerequisites"
+  grep -Fq '`EqualizerService.qml` provides the Phase 1 backend/service contract and is disabled by default.' "$arch_doc" \
+    || note "ARCHITECTURE.md no longer identifies the implemented disabled-by-default Equalizer Phase 1 backend"
+  grep -Fq 'planned/deferred rather than current release prerequisites' "$arch_doc" \
+    || note "ARCHITECTURE.md no longer keeps the future Equalizer presentation outside current release prerequisites"
 fi
 
 # 10. Release documentation must mirror the optional-package ownership gates.

@@ -101,17 +101,17 @@ Item {
         "todo", "media", "weather", "calendar", "agenda", "notes"
     ]
     readonly property var _defaultGeometry: ({
-        welcome:       { x: 0.00, y: 0.00, w: 0.30, h: 0.18, visible: true },
-        clock:         { x: 0.00, y: 0.19, w: 0.30, h: 0.14, visible: true },
-        system:        { x: 0.00, y: 0.34, w: 0.30, h: 0.17, visible: true },
-        github:        { x: 0.00, y: 0.52, w: 0.30, h: 0.12, visible: true },
-        notifications: { x: 0.31, y: 0.00, w: 0.35, h: 0.25, visible: true },
-        agenda:         { x: 0.31, y: 0.26, w: 0.35, h: 0.13, visible: true },
-        todo:           { x: 0.31, y: 0.40, w: 0.35, h: 0.24, visible: true },
-        media:          { x: 0.67, y: 0.00, w: 0.33, h: 0.62, visible: true },
-        weather:        { x: 0.67, y: 0.64, w: 0.33, h: 0.36, visible: true },
-        calendar:       { x: 0.00, y: 0.65, w: 0.66, h: 0.35, visible: true },
-        notes:          { x: 0.67, y: 0.77, w: 0.33, h: 0.23, visible: false }
+        welcome:       { x: 0.00, y: 0.00, w: 0.295, h: 0.17, visible: true },
+        clock:         { x: 0.00, y: 0.19, w: 0.295, h: 0.13, visible: true },
+        system:        { x: 0.00, y: 0.34, w: 0.295, h: 0.16, visible: true },
+        github:        { x: 0.00, y: 0.52, w: 0.295, h: 0.11, visible: true },
+        notifications: { x: 0.31, y: 0.00, w: 0.345, h: 0.24, visible: true },
+        agenda:        { x: 0.31, y: 0.26, w: 0.345, h: 0.12, visible: true },
+        todo:          { x: 0.31, y: 0.40, w: 0.345, h: 0.23, visible: true },
+        media:         { x: 0.67, y: 0.00, w: 0.33,  h: 0.63, visible: true },
+        weather:       { x: 0.67, y: 0.65, w: 0.33,  h: 0.35, visible: true },
+        calendar:      { x: 0.00, y: 0.65, w: 0.655, h: 0.35, visible: true },
+        notes:         { x: 0.67, y: 0.77, w: 0.33,  h: 0.23, visible: false }
     })
 
     readonly property var _widgetMap: ({

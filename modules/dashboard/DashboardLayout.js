@@ -70,6 +70,60 @@ function freeRect(desired, minimum, width, height, obstacles, gap, shrink, plain
     }); });
     return best;
 }
+function fitAvailableSlot(desired, minimum, width, height, obstacles, gap) {
+    if (minimum.width > width || minimum.height > height) return null;
+    var g = typeof gap === "number" && Number.isFinite(gap) ? Math.max(0, gap) : 0;
+    var xs = [desired.x, 0], ys = [desired.y, 0];
+    obstacles.forEach(function(other) {
+        xs.push(other.x + other.width + g);
+        ys.push(other.y + other.height + g);
+    });
+    function uniq(arr) {
+        var out = [], seen = {};
+        for (var i = 0; i < arr.length; i++) {
+            var v = Math.round(arr[i] * 1000) / 1000;
+            if (!seen[v]) { seen[v] = true; out.push(arr[i]); }
+        }
+        return out;
+    }
+    xs = uniq(xs);
+    ys = uniq(ys);
+    var best = null, score = Infinity;
+    for (var xi = 0; xi < xs.length; xi++) {
+        var x = xs[xi];
+        if (x < 0 || x + minimum.width > width + .001) continue;
+        var ws = [desired.width, width - x];
+        for (var oi = 0; oi < obstacles.length; oi++) {
+            var availW = obstacles[oi].x - g - x;
+            if (availW >= minimum.width - .001) ws.push(availW);
+        }
+        ws = uniq(ws);
+        for (var yi = 0; yi < ys.length; yi++) {
+            var y = ys[yi];
+            if (y < 0 || y + minimum.height > height + .001) continue;
+            var hs = [desired.height, height - y];
+            for (var oj = 0; oj < obstacles.length; oj++) {
+                var availH = obstacles[oj].y - g - y;
+                if (availH >= minimum.height - .001) hs.push(availH);
+            }
+            hs = uniq(hs);
+            for (var wi = 0; wi < ws.length; wi++) {
+                var w = Math.min(desired.width, Math.max(minimum.width, Math.min(width - x, ws[wi])));
+                if (w < minimum.width - .001 || x + w > width + .001) continue;
+                for (var hi = 0; hi < hs.length; hi++) {
+                    var h = Math.min(desired.height, Math.max(minimum.height, Math.min(height - y, hs[hi])));
+                    if (h < minimum.height - .001 || y + h > height + .001) continue;
+                    var r = { x: x, y: y, width: w, height: h };
+                    if (obstacles.some(function(other) { return overlaps(r, other, g); })) continue;
+                    var cost = Math.pow(x - desired.x, 2) + Math.pow(y - desired.y, 2)
+                        + 4 * (Math.pow(w - desired.width, 2) + Math.pow(h - desired.height, 2));
+                    if (cost < score) { best = r; score = cost; }
+                }
+            }
+        }
+    }
+    return best;
+}
 function project(entries, viewportWidth, viewportHeight, minimums, gap, reference) {
     // The live viewport bounds the layout; never write projections back into
     // the user's saved percentages. Reuse the saved positions before trying
@@ -87,7 +141,9 @@ function project(entries, viewportWidth, viewportHeight, minimums, gap, referenc
             var desired={x:Math.min(width-w,bounded(entry.x,0,0,1)*width),
                 y:Math.min(height-h,bounded(entry.y,0,0,1)*height),
                 width:w,height:h};
-            var best=freeRect(desired,min,width,height,obstacles,gap,true,true);
+            var best=freeRect(desired,min,width,height,obstacles,gap,false,true);
+            if(!best) best=fitAvailableSlot(desired,min,width,height,obstacles,gap);
+            if(!best) best=freeRect(desired,min,width,height,obstacles,gap,true,true);
             if(!best){overflow.push(entry.id);return;}
             rects[entry.id]=best;obstacles.push(best);
         });

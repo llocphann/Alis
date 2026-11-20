@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-README = (ROOT / "README.md").read_text(encoding="utf-8")
+ARCH = (ROOT / "ARCHITECTURE.md").read_text(encoding="utf-8")
 INTEGRATIONS = (ROOT / "modules" / "settings" / "IntegrationsConfig.qml").read_text(encoding="utf-8")
 NEXUS = (ROOT / "modules" / "settings" / "NexusThemeSettings.qml").read_text(encoding="utf-8")
 SERVICES = (ROOT / "modules" / "settings" / "ServicesConfig.qml").read_text(encoding="utf-8")
@@ -16,9 +16,9 @@ WINDOW = (ROOT / "settings.qml").read_text(encoding="utf-8")
 SCREEN_EDGE = (ROOT / "modules" / "screenCorners" / "ScreenEdges.qml").read_text(encoding="utf-8")
 BAR = (ROOT / "modules" / "bar" / "BarContent.qml").read_text(encoding="utf-8")
 
-assert "Settings copy stays terse." in README
-assert "only a few words or one short clause" in README
-assert "paragraph-length explanation" in README
+assert "Settings copy stays terse." in ARCH
+assert "only a few words or one short clause" in ARCH
+assert "paragraph-length explanation" in ARCH
 
 # Alis-Intergration tests its owned vault labels/help and native field behavior. Core
 # must retain the disabled-by-default wrapper instead of a duplicate editor.
@@ -69,7 +69,7 @@ assert "readonly property color surfaceFillColor: Appearance.colors.colLayer0" i
 assert "CF.ColorUtils.applyAlpha(" not in focus_surface
 
 assert 'Translation.tr("Panel background opacity (%)")' not in MODULES
-assert "Settings base surface has one owner." in README
+assert "Settings base surface has one owner." in ARCH
 
 # Standalone Settings must handle Config already being ready before
 # Connections.onReadyChanged can observe the transition, just like shell.qml.

@@ -36,7 +36,7 @@ Three mutually exclusive UI families are switchable at runtime (`Super+Shift+W`)
 Family URL loaders isolate inactive visual trees. Services/models remain shared.
 Abyss is not an Abyss Island implementation; its original single SDF owns physical
 perimeter, panel union and final silhouette shadow. Critical and specialist
-fallbacks are documented in [STRUCTURE.md](STRUCTURE.md) and [README.md](README.md).
+fallbacks are documented in [STRUCTURE.md](STRUCTURE.md) and below.
 
 The retired Bar renderer families (Islands, Scenic, Frame, M3 and Pill) are not runtime alternatives. Shared `island`, `pill` and `m3*` names may still appear where they describe unrelated live skins, widget shapes, Material color tokens, or other non-Bar behavior.
 
@@ -75,8 +75,8 @@ modules/
 │   └── widgets/              # Reusable widgets + qmldir
 ├── bar/                      # Classic Bar runtime
 ├── background/               # Wallpaper + desktop widgets/items
-├── dashboard/                # Dashboard, Music, Weekly Planner, Custom Tabs & optional Spaced Repetition
-├── regionSelector/           # Region selection (Screenshot, Recording, OCR)
+├── dashboard/                # Dashboard, Sonora-inspired Local Music, Weekly Planner, Custom Tabs, optional Spaced Repetition & Exercises Tracker
+├── regionSelector/           # Region selection (in-desktop auto-hiding compact toolbar + inline capture editor, Recording, OCR)
 ├── sidebarLeft/              # Intelligence (AI/Companion), Translator, Tools, News
 ├── sidebarRight/             # Toggles, calendar, notifications
 ├── settings/                 # Config UI pages
@@ -174,7 +174,7 @@ Waffle is a panel family, not a Dock style, and must not be folded into Dock sty
 | `DesktopWidgetLayout` | Per-output desktop-widget layout |
 | `LyricsService` | Synchronized media lyrics |
 | `AlisCompanion` | Optional [Alis-Companion](https://github.com/llocphann/Alis-Companion) package loader & Host API 1 bridge |
-| `AlisIntergration` | Optional [Alis-Intergration](https://github.com/llocphann/Alis-Intergration) plugin loader (`tlp`, `thinkfan`, `nexus`, `spaced_repetition`) |
+| `AlisIntergration` | Optional [Alis-Intergration](https://github.com/llocphann/Alis-Intergration) plugin loader (`tlp`, `thinkfan`, `nexus`, `spaced_repetition`, `exercises_tracker`) |
 | `SpacedRepetition` | Spaced Repetition proxy/bridge delegating to the optional `spaced_repetition` plugin when enabled |
 
 Wallpaper pickers apply through `Wallpapers.applySelectionTarget()`. Live preview goes through `Wallpapers.previewWallpaper()` and does not write config or regenerate colors. `modules/background/Background.qml` owns the per-output desktop surface; desktop widget instances are mapped through `Config.options.background.widgets.outputOverrides`, `screenList`, and `layerOrder`.
@@ -267,7 +267,37 @@ Material connected presentation retains its existing ownership boundary:
 - **Connected popup presentation is active by default** for existing ii bar popups through `StyledPopup.qml`. `ConnectedSurfaceGeometry` and `ConnectedSurfaceRevealClip` retain the slide-only lifecycle, while `ConnectedSurfaceAbyssFrame` renders the exact Abyss v2.31.0 SDF union in the Overlay window using Top-layer Bar/Screen Edge owner records without repainting those owners. `ConnectedSurfaceBodyMask` keeps compositor input on the revealed rounded body only. Legacy `ConnectedSurfaceFrame` / `ConnectedSurfaceMask` remain available for Waffle and non-cutover shared surfaces; they are no longer the ii StyledPopup renderer.
 - **Retired `iiPerimeter` composition remains absent.** Abyss is an independent family with its own output-local renderer, not a reactivation of that cutover. Material ScreenEdges keeps the same locked FrameWindow ownership, rounded workspace opening, Bar-owned inset rules and reservation windows; its healthy paint backend is now the texture-free `ScreenEdgeField` analytic SDF, with the former Shape/MultiEffect renderer retained only as a lazy shader-error fallback.
 
-Detailed contracts and local visual acceptance steps live in [README.md](README.md) and `scripts/test-shell-surface-contracts.py`.
+Detailed contracts and local visual acceptance steps live below and in `scripts/test-shell-surface-contracts.py`.
+
+---
+
+## Surface Ownership & Copy Contracts
+
+The sections below document invariant shell ownership, copy brevity, and equalizer boundaries verified by automated repository checks.
+
+### Settings Copy & Surface Ownership
+
+- **Settings copy stays terse.** Section descriptions, helper lines, and control subtitles use only a few words or one short clause. Do not add paragraph-length explanation blocks inside Settings views.
+- **Settings base surface has one owner.** Root window chrome and navigation rail ownership stay centralized so embedded and standalone Settings panes remain consistent.
+
+### 2.1 Locked ownership contract — single Caelestia-style inverted frame
+
+- In normal shell operation, Abyss renders the inverted corner/edge frame around the desktop while Normal Bar mode owns only the Bar body and active dock pills without duplicating peripheral backdrop layers.
+- `scripts/test-shell-surface-contracts.py` is the regression gate guarding surface ownership, exclusive layer interactions, and edge anchoring.
+
+## Equalizer implementation status
+
+### Implemented
+
+- `EqualizerService.qml` provides the Phase 1 backend/service contract and is disabled by default.
+
+### Stabilizing
+
+- Dashboard EQ preset visualization and per-preset EasyEffects synchronization hardening.
+
+### Planned
+
+- Live spectrum DSP feedback loops, custom curve persistence upgrades, and extended Sink profile routing remain planned/deferred rather than current release prerequisites.
 
 ## Localization Contract
 
