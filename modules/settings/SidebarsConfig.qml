@@ -55,31 +55,41 @@ ContentPage {
         id: sizing
         required property string role
         readonly property var state: ShellLayoutController.currentState(role, "")
-        WindowDialogSlider {
-            text: "Width"
+        GridLayout {
             Layout.fillWidth: true
-            from: 320
-            to: 900
-            stepSize: 1
-            value: sizing.state.width
-            valueText: Math.round(value) + " px"
-            onMoved: ShellLayoutController.setProperty(sizing.role, "thickness", value, "")
-        }
-        WindowDialogSlider {
-            text: "Height"
-            Layout.fillWidth: true
-            from: 320
-            to: 2160
-            stepSize: 1
-            value: sizing.state.customHeight
-            valueText: Math.round(value) + " px"
-            onMoved: {
-                if (sizing.state.sizeMode !== "custom") {
-                    ShellLayoutController.setProperty(sizing.role, "sizeMode", "custom", "");
-                    if (sizing.role === "featureSidebar")
-                        Config.setNestedValue("sidebar.collapseWidgetsTab", false);
+            columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+            uniformCellWidths: columns > 1
+            columnSpacing: 16
+            rowSpacing: 8
+
+            WindowDialogSlider {
+                text: "Width"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                from: 320
+                to: 900
+                stepSize: 1
+                value: sizing.state.width
+                valueText: Math.round(value) + " px"
+                onMoved: ShellLayoutController.setProperty(sizing.role, "thickness", value, "")
+            }
+            WindowDialogSlider {
+                text: "Height"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                from: 320
+                to: 2160
+                stepSize: 1
+                value: sizing.state.customHeight
+                valueText: Math.round(value) + " px"
+                onMoved: {
+                    if (sizing.state.sizeMode !== "custom") {
+                        ShellLayoutController.setProperty(sizing.role, "sizeMode", "custom", "");
+                        if (sizing.role === "featureSidebar")
+                            Config.setNestedValue("sidebar.collapseWidgetsTab", false);
+                    }
+                    ShellLayoutController.setProperty(sizing.role, "height", value, "");
                 }
-                ShellLayoutController.setProperty(sizing.role, "height", value, "");
             }
         }
     }
@@ -317,25 +327,35 @@ ContentPage {
 
             ContentSubsection {
                 title: Translation.tr("Left Edgebar size")
-                WindowDialogSlider {
-                    text: "Width"
+                GridLayout {
                     Layout.fillWidth: true
-                    from: 280
-                    to: 720
-                    stepSize: 10
-                    value: Config.options?.quickNotes?.popupWidth ?? 420
-                    valueText: Math.round(value) + " px"
-                    onMoved: Config.setNestedValue("quickNotes.popupWidth", value)
-                }
-                WindowDialogSlider {
-                    text: "Height"
-                    Layout.fillWidth: true
-                    from: 300
-                    to: 640
-                    stepSize: 10
-                    value: Config.options?.quickNotes?.popupHeight ?? 300
-                    valueText: Math.round(value) + " px"
-                    onMoved: Config.setNestedValue("quickNotes.popupHeight", value)
+                    columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                    uniformCellWidths: columns > 1
+                    columnSpacing: 16
+                    rowSpacing: 8
+
+                    WindowDialogSlider {
+                        text: "Width"
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        from: 280
+                        to: 720
+                        stepSize: 10
+                        value: Config.options?.quickNotes?.popupWidth ?? 420
+                        valueText: Math.round(value) + " px"
+                        onMoved: Config.setNestedValue("quickNotes.popupWidth", value)
+                    }
+                    WindowDialogSlider {
+                        text: "Height"
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        from: 300
+                        to: 640
+                        stepSize: 10
+                        value: Config.options?.quickNotes?.popupHeight ?? 300
+                        valueText: Math.round(value) + " px"
+                        onMoved: Config.setNestedValue("quickNotes.popupHeight", value)
+                    }
                 }
                 // contract: Config.setNestedValue("quickNotes.popupWidth",value) Config.setNestedValue("quickNotes.popupHeight",value)
             }
@@ -401,25 +421,35 @@ ContentPage {
 
             ContentSubsection {
                 title: Translation.tr("Right Edgebar size")
-                WindowDialogSlider {
-                    text: "Width"
+                GridLayout {
                     Layout.fillWidth: true
-                    from: 320
-                    to: 760
-                    stepSize: 10
-                    value: Config.options?.notificationCenter?.popupWidth ?? 420
-                    valueText: Math.round(value) + " px"
-                    onMoved: Config.setNestedValue("notificationCenter.popupWidth", value)
-                }
-                WindowDialogSlider {
-                    text: "Height"
-                    Layout.fillWidth: true
-                    from: 260
-                    to: 900
-                    stepSize: 10
-                    value: Config.options?.notificationCenter?.popupHeight ?? 560
-                    valueText: Math.round(value) + " px"
-                    onMoved: Config.setNestedValue("notificationCenter.popupHeight", value)
+                    columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                    uniformCellWidths: columns > 1
+                    columnSpacing: 16
+                    rowSpacing: 8
+
+                    WindowDialogSlider {
+                        text: "Width"
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        from: 320
+                        to: 760
+                        stepSize: 10
+                        value: Config.options?.notificationCenter?.popupWidth ?? 420
+                        valueText: Math.round(value) + " px"
+                        onMoved: Config.setNestedValue("notificationCenter.popupWidth", value)
+                    }
+                    WindowDialogSlider {
+                        text: "Height"
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        from: 260
+                        to: 900
+                        stepSize: 10
+                        value: Config.options?.notificationCenter?.popupHeight ?? 560
+                        valueText: Math.round(value) + " px"
+                        onMoved: Config.setNestedValue("notificationCenter.popupHeight", value)
+                    }
                 }
                 // contract: Config.setNestedValue("notificationCenter.popupWidth",value) Config.setNestedValue("notificationCenter.popupHeight",value)
             }

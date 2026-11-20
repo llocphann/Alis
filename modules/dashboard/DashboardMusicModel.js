@@ -1,7 +1,20 @@
 .pragma library
 
-const _trackMeta = new WeakMap()
-const _libraryCache = new WeakMap()
+// The widget owns one index per immutable source. Replacing the source releases
+// its metadata, folder listings and search results together.
+function createIndex(tracks) {
+    return {
+        tracks: tracks ?? [],
+        byUri: Object.create(null),
+        genres: null,
+        roots: null,
+        albums: null,
+        artists: null,
+        contents: new Map(),
+        lastQuery: "",
+        lastMatches: []
+    }
+}
 
 function _foldSearch(value) {
     const lower = String(value ?? "").toLowerCase()
@@ -32,60 +45,42 @@ function _computeLabels(track) {
     return values.size > 0 ? Array.from(values) : [""]
 }
 
-function _meta(track) {
+function _meta(track, index) {
     if (!track || typeof track !== "object") return null
-    let cached = _trackMeta.get(track)
-    if (cached !== undefined) return cached
     const uri = String(track.uri ?? track.path ?? "")
+    const cached = index?.byUri[uri]
+    if (cached && cached.track === track) return cached
     const name = String(track.title || track.uri || "")
     const parentFolder = _computeTrackFolder(track)
     const trackLabels = _computeLabels(track)
-    const searchRaw = [track.title, track.artist, track.album, track.folder]
-        .map(value => String(value ?? "").toLowerCase())
-        .join(" ")
-    const searchFolded = _foldSearch(searchRaw)
-    cached = {
+    const meta = {
+        track,
         uri,
         name,
         folder: parentFolder,
         labels: trackLabels,
-        searchRaw,
-        searchFolded
+        searchRaw: null,
+        searchFolded: null
     }
-    _trackMeta.set(track, cached)
-    return cached
-}
-
-function _lib(tracks) {
-    if (!Array.isArray(tracks)) return null
-    let cached = _libraryCache.get(tracks)
-    if (cached !== undefined) return cached
-    cached = {
-        genres: null,
-        roots: null,
-        contents: new Map()
-    }
-    _libraryCache.set(tracks, cached)
-    return cached
+    if (index) index.byUri[uri] = meta
+    return meta
 }
 
 function trackFolder(track) {
-    const meta = _meta(track)
-    return meta ? meta.folder : _computeTrackFolder(track)
+    return _computeTrackFolder(track)
 }
 
 function labels(track) {
-    const meta = _meta(track)
-    return meta ? meta.labels : _computeLabels(track)
+    return _computeLabels(track)
 }
 
-function genres(tracks) {
-    const lib = _lib(tracks)
+function genres(tracks, index) {
+    const lib = index && index.tracks === tracks ? index : null
     if (lib && lib.genres) return lib.genres
     const values = new Map()
     for (const track of tracks ?? []) {
         if (!track) continue
-        for (const label of labels(track)) values.set(label, (values.get(label) ?? 0) + 1)
+        for (const label of (_meta(track, index)?.labels ?? labels(track))) values.set(label, (values.get(label) ?? 0) + 1)
     }
     const result = Array.from(values, ([key, count]) => ({key, count}))
         .sort((a, b) => a.key.localeCompare(b.key))
@@ -93,14 +88,14 @@ function genres(tracks) {
     return result
 }
 
-function contents(tracks, path) {
+function contents(tracks, path, index) {
     const current = folder(path), prefix = current ? current + "/" : ""
-    const lib = _lib(tracks)
+    const lib = index && index.tracks === tracks ? index : null
     if (lib && lib.contents.has(current)) return lib.contents.get(current)
     const children = new Map(), files = []
     for (const track of tracks ?? []) {
         if (!track) continue
-        const meta = _meta(track)
+        const meta = _meta(track, index)
         const parent = meta ? meta.folder : trackFolder(track)
         if (parent === current) {
             files.push({kind: "track", track, name: meta ? meta.name : String(track.title || track.uri || "")})
@@ -123,10 +118,10 @@ function contents(tracks, path) {
     return result
 }
 
-function roots(tracks) {
-    const lib = _lib(tracks)
+function roots(tracks, index) {
+    const lib = index && index.tracks === tracks ? index : null
     if (lib && lib.roots) return lib.roots
-    const entries = contents(tracks, "")
+    const entries = contents(tracks, "", index)
     const directories = []
     let rootTrackCount = 0
     for (const entry of entries) {
@@ -139,14 +134,14 @@ function roots(tracks) {
     return directories
 }
 
-function results(tracks, mode, genre, path) {
+function results(tracks, mode, genre, path, index) {
     if (mode === "genre") {
         const selected = new Set(Array.isArray(genre) ? genre : [genre])
         if (selected.size === 0) return []
         const out = []
         for (const track of tracks ?? []) {
             if (!track) continue
-            const meta = _meta(track)
+            const meta = _meta(track, index)
             const trackLabels = meta ? meta.labels : labels(track)
             if (trackLabels.some(label => selected.has(label)))
                 out.push({kind: "track", track, name: meta ? meta.name : String(track.title || track.uri || "")})
@@ -154,11 +149,11 @@ function results(tracks, mode, genre, path) {
         return out
     }
     if (mode !== "folder") return []
-    if (!Array.isArray(path)) return contents(tracks, path)
+    if (!Array.isArray(path)) return contents(tracks, path, index)
     if (path.length === 0) return []
-    if (path.length === 1) return contents(tracks, path[0])
+    if (path.length === 1) return contents(tracks, path[0], index)
     const entries = new Map()
-    for (const current of path) for (const entry of contents(tracks, current)) {
+    for (const current of path) for (const entry of contents(tracks, current, index)) {
         const entryKey = key(entry)
         if (!entries.has(entryKey)) entries.set(entryKey, entry)
     }
@@ -170,16 +165,32 @@ function parent(path) {
     return value.substring(0, Math.max(0, value.lastIndexOf("/")))
 }
 
-function matching(tracks, query) {
+function matching(tracks, query, index) {
     const text = String(query ?? "").trim().toLowerCase()
     if (!text) return tracks ?? []
     const folded = _foldSearch(text)
     return (tracks ?? []).filter(track => {
         if (!track) return false
-        const meta = _meta(track)
+        const meta = _meta(track, index)
         if (!meta) return false
+        if (meta.searchRaw === null) {
+            meta.searchRaw = [track.title, track.artist, track.album, track.folder]
+                .map(value => String(value ?? "").toLowerCase()).join(" ")
+            meta.searchFolded = _foldSearch(meta.searchRaw)
+        }
         return meta.searchRaw.includes(text) || (folded.length > 0 && meta.searchFolded.includes(folded))
     })
+}
+
+function search(index, rawQuery) {
+    const query = String(rawQuery ?? "").trim().toLowerCase()
+    if (!query) return index.tracks
+    if (query === index.lastQuery) return index.lastMatches
+    const extendsPrevious = index.lastQuery.length > 0 && query.startsWith(index.lastQuery)
+    const pool = extendsPrevious ? index.lastMatches : index.tracks
+    index.lastMatches = matching(pool, query, index)
+    index.lastQuery = query
+    return index.lastMatches
 }
 
 function key(entry) {
@@ -225,7 +236,7 @@ function _folderMatches(path, folderSet) {
     return false
 }
 
-function selectedTracks(tracks, keys) {
+function selectedTracks(tracks, keys, index) {
     if (!keys || keys.length === 0 || !tracks || tracks.length === 0) return []
     const selected = new Set(keys)
     const folderSet = new Set()
@@ -236,12 +247,161 @@ function selectedTracks(tracks, keys) {
     const seen = new Set()
     return (tracks ?? []).filter(track => {
         if (!track) return false
-        const meta = _meta(track)
+        const meta = _meta(track, index)
         const uri = meta ? meta.uri : String(track.uri ?? track.path ?? "")
         if (seen.has(uri)) return false
         const path = meta ? meta.folder : trackFolder(track)
         if (!(selected.has("t:" + uri) || _folderMatches(path, folderSet))) return false
         seen.add(uri)
         return true
+    })
+}
+
+function formatDuration(seconds) {
+    const raw = Number(seconds)
+    if (!Number.isFinite(raw) || raw <= 0) return "0:00"
+    const whole = Math.floor(raw)
+    const hours = Math.floor(whole / 3600)
+    const mins = Math.floor((whole % 3600) / 60)
+    const secs = whole % 60
+    const pad2 = n => (n < 10 ? "0" + n : String(n))
+    return hours > 0 ? `${hours}:${pad2(mins)}:${pad2(secs)}` : `${mins}:${pad2(secs)}`
+}
+
+function totalDuration(tracks) {
+    let sum = 0
+    for (const track of tracks ?? []) {
+        const d = Number(track?.duration ?? 0)
+        if (Number.isFinite(d) && d > 0) sum += d
+    }
+    return sum
+}
+
+function albums(tracks, index) {
+    const lib = index && index.tracks === tracks ? index : null
+    if (lib && lib.albums) return lib.albums
+    const map = new Map()
+    for (const track of tracks ?? []) {
+        if (!track) continue
+        const albumName = String(track.album ?? "").trim() || trackFolder(track) || "Unknown Album"
+        const trackArtist = String(track.artist ?? "").trim()
+        const dur = Number(track.duration ?? 0)
+        const safeDur = Number.isFinite(dur) && dur > 0 ? dur : 0
+        const art = String(track.art ?? "")
+        const artUrl = String(track.artUrl ?? "")
+        let entry = map.get(albumName)
+        if (!entry) {
+            entry = {
+                key: albumName,
+                name: albumName,
+                artist: trackArtist,
+                _multipleArtists: false,
+                art,
+                artUrl,
+                trackCount: 0,
+                totalDuration: 0,
+                tracks: []
+            }
+            map.set(albumName, entry)
+        } else {
+            if (trackArtist && entry.artist && trackArtist !== entry.artist)
+                entry._multipleArtists = true
+            else if (trackArtist && !entry.artist)
+                entry.artist = trackArtist
+            if (!entry.art && art) entry.art = art
+            if (!entry.artUrl && artUrl) entry.artUrl = artUrl
+        }
+        entry.tracks.push(track)
+        entry.trackCount++
+        entry.totalDuration += safeDur
+    }
+    const result = Array.from(map.values()).map(entry => ({
+        key: entry.key,
+        name: entry.name,
+        artist: entry._multipleArtists ? "Various Artists" : (entry.artist || "Unknown Artist"),
+        art: entry.art,
+        artUrl: entry.artUrl,
+        trackCount: entry.trackCount,
+        totalDuration: entry.totalDuration,
+        tracks: entry.tracks
+    })).sort((a, b) => a.name.localeCompare(b.name))
+    if (lib) lib.albums = result
+    return result
+}
+
+function artists(tracks, index) {
+    const lib = index && index.tracks === tracks ? index : null
+    if (lib && lib.artists) return lib.artists
+    const map = new Map()
+    for (const track of tracks ?? []) {
+        if (!track) continue
+        const artistName = String(track.artist ?? "").trim() || "Unknown Artist"
+        const albumName = String(track.album ?? "").trim()
+        const art = String(track.art ?? "")
+        const artUrl = String(track.artUrl ?? "")
+        let entry = map.get(artistName)
+        if (!entry) {
+            entry = {
+                key: artistName,
+                name: artistName,
+                art,
+                artUrl,
+                _albums: new Set(),
+                trackCount: 0,
+                tracks: []
+            }
+            map.set(artistName, entry)
+        } else {
+            if (!entry.art && art) entry.art = art
+            if (!entry.artUrl && artUrl) entry.artUrl = artUrl
+        }
+        if (albumName) entry._albums.add(albumName)
+        entry.tracks.push(track)
+        entry.trackCount++
+    }
+    const result = Array.from(map.values()).map(entry => ({
+        key: entry.key,
+        name: entry.name,
+        art: entry.art,
+        artUrl: entry.artUrl,
+        albumCount: entry._albums.size,
+        trackCount: entry.trackCount,
+        tracks: entry.tracks
+    })).sort((a, b) => a.name.localeCompare(b.name))
+    if (lib) lib.artists = result
+    return result
+}
+
+function sortEntries(entries, field, ascending) {
+    const list = (entries ?? []).slice()
+    const keyName = String(field ?? "default")
+    const dir = ascending === false ? -1 : 1
+    if (keyName === "default")
+        return dir < 0 ? list.reverse() : list
+    return list.sort((a, b) => {
+        if (a?.kind !== b?.kind && (a?.kind === "folder" || b?.kind === "folder"))
+            return a?.kind === "folder" ? -1 : 1
+        let cmp = 0
+        if (keyName === "duration") {
+            const da = Number(a?.duration ?? a?.totalDuration ?? a?.track?.duration ?? 0) || 0
+            const db = Number(b?.duration ?? b?.totalDuration ?? b?.track?.duration ?? 0) || 0
+            cmp = da - db
+        } else if (keyName === "artist") {
+            const aa = String(a?.artist ?? a?.track?.artist ?? "")
+            const ab = String(b?.artist ?? b?.track?.artist ?? "")
+            cmp = aa.localeCompare(ab)
+        } else if (keyName === "album") {
+            const la = String(a?.album ?? a?.track?.album ?? "")
+            const lb = String(b?.album ?? b?.track?.album ?? "")
+            cmp = la.localeCompare(lb)
+        } else {
+            const ta = String(a?.name ?? a?.title ?? a?.track?.title ?? a?.track?.uri ?? "")
+            const tb = String(b?.name ?? b?.title ?? b?.track?.title ?? b?.track?.uri ?? "")
+            cmp = ta.localeCompare(tb)
+        }
+        if (cmp !== 0) return cmp * dir
+        const fa = String(a?.name ?? a?.track?.title ?? a?.track?.uri ?? "")
+        const fb = String(b?.name ?? b?.track?.title ?? b?.track?.uri ?? "")
+        return fa.localeCompare(fb) * dir
     })
 }

@@ -7,6 +7,9 @@ import qs.services
 // Native ownership only. SettingsOverlay retains the single mature content tree.
 PanelWindow {
     property var controller: null
+    screen: Quickshell.screens.length > 0
+        ? (Quickshell.screens.find(s => s.name === GlobalStates.settingsOverlayPresentationOutput) ?? Quickshell.screens[0])
+        : null
     visible: controller?.settingsOpen || controller?._closeAnimRunning || false
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "quickshell:settingsOverlay"

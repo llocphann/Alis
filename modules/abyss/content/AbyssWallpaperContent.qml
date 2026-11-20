@@ -128,7 +128,7 @@ FocusScope {
         root.activeTab = nextMode
         GlobalStates.wallpaperLauncherSearchText = ""
         root.focusPrimarySurface()
-        Qt.callLater(carousel.syncCurrentIndexAndPreview)
+        syncIndexTimer.restart()
     }
 
     function toggleColorFilter(colorId: string): void {
@@ -569,7 +569,7 @@ FocusScope {
                         void Wallpapers.favouritesRevision
                         favDb = Wallpapers.favouritesDb ?? {}
                     }
-                    const tagMap = carousel.colorTagsByPath ?? {}
+                    const tagMap = color ? (carousel.colorTagsByPath ?? {}) : null
                     const tokens = query ? query.split(/\s+/).filter(Boolean) : []
                     const matchesEntry = entry => {
                         if (favOnly) {
@@ -595,8 +595,9 @@ FocusScope {
                     const primary = src.filter(matchesEntry)
                     if ((!query && !favOnly) || !carousel.fallbackEntries || carousel.fallbackEntries.length === 0)
                         return primary
-                    const seen = new Set(primary.map(e => e.path))
-                    const secondary = carousel.fallbackEntries.filter(e => !seen.has(e.path) && matchesEntry(e))
+                    const seen = Object.create(null)
+                    for (const entry of primary) seen[entry.path] = true
+                    const secondary = carousel.fallbackEntries.filter(e => !seen[e.path] && matchesEntry(e))
                     return primary.concat(secondary)
                 }
 

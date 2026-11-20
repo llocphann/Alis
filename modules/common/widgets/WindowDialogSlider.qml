@@ -33,6 +33,7 @@ RowLayout {
         visible: root.text.length > 0
         Layout.fillWidth: true
         Layout.minimumWidth: 0
+        Layout.horizontalStretchFactor: 4
         Layout.alignment: Qt.AlignVCenter
         elide: Text.ElideRight
         text: ""
@@ -40,17 +41,18 @@ RowLayout {
 
     StyledSlider {
         id: sliderWidget
-        Layout.fillWidth: !sliderName.visible && !sliderWidget.isVertical && sliderWidget.customLength <= 0
+        Layout.fillWidth: !sliderWidget.isVertical && sliderWidget.customLength <= 0
+        Layout.horizontalStretchFactor: 5
         Layout.preferredWidth: sliderWidget.isVertical
             ? sliderWidget.implicitWidth
             : (sliderWidget.customLength > 0
                 ? sliderWidget.customLength
-                : (sliderName.visible ? Math.round(185 * Appearance.fontSizeScale) : -1))
+                : (sliderName.visible ? Math.round(280 * Appearance.fontSizeScale) : -1))
         Layout.maximumWidth: sliderWidget.isVertical
             ? sliderWidget.implicitWidth
             : (sliderWidget.customLength > 0
                 ? sliderWidget.customLength
-                : (sliderName.visible ? Math.round(210 * Appearance.fontSizeScale) : 16777215))
+                : (sliderName.visible ? Math.round(440 * Appearance.fontSizeScale) : 16777215))
         Layout.minimumWidth: sliderWidget.isVertical
             ? sliderWidget.implicitWidth
             : Math.min(sliderWidget.customLength > 0 ? sliderWidget.customLength : Math.round(110 * Appearance.fontSizeScale), Math.round(96 * Appearance.fontSizeScale))

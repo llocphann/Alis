@@ -225,6 +225,9 @@ function moduleSize(placement, options) {
     var width = isUnifiedKind(placement.kind) ? Math.max(12,inheritedWidth) : inheritedWidth;
     return (placement.customSize ? placement.size : edgeSize(options,placement.edge)*width/16)*bounded(options?.size,1,.6,1.8);
 }
+function unifiedSurfacePad(placement, options) {
+    return Math.max(4, Math.round(8 * Math.min(1.5, Math.max(0.5, moduleSize(placement, options)))));
+}
 function project(x, y, width, height, preferredEdge) {
     var distances = [y,width-x,height-y,x];
     var index = distances.indexOf(Math.min.apply(null,distances));
@@ -550,13 +553,18 @@ function localSurfaces(records, width, height, options, fontScale, minimum) {
             && records.filter(function(other) { return other.edge===p.edge && !isUnifiedKind(other.kind); }).length===1;
     }).map(function(p) {
         // Geometry records express depth in pixels, unlike placement depth's
-        // multiplier. Derive the paint extent from the packed foreground.
+        // multiplier. Derive the paint extent from the packed foreground so
+        // resizing unified launchers scales both their icon and local bump.
+        var unified = isUnifiedKind(p.kind);
+        var pad = unified ? unifiedSurfacePad(p, options) : 8;
         var protrude = Math.max(0, Number(p.protrudeOffset) || 0);
-        var depth = Math.max(minimum,(p.vertical ? p.content.width : p.content.height)+16) + protrude;
-        var surface = p.edge==="top" ? {x:p.along-8,y:-50,width:p.span+16,height:depth+50}
-            : p.edge==="bottom" ? {x:p.along-8,y:height-depth,width:p.span+16,height:depth+50}
-            : p.edge==="left" ? {x:-50,y:p.along-8,width:depth+50,height:p.span+16}
-            : {x:width-depth,y:p.along-8,width:depth+50,height:p.span+16};
+        var cross = p.vertical ? p.content.width : p.content.height;
+        var edgeFloor = unified ? edgeThickness(options, p.edge) + 4 : minimum;
+        var depth = Math.max(edgeFloor, cross + pad * 2) + protrude;
+        var surface = p.edge==="top" ? {x:p.along-pad,y:-50,width:p.span+pad*2,height:depth+50}
+            : p.edge==="bottom" ? {x:p.along-pad,y:height-depth,width:p.span+pad*2,height:depth+50}
+            : p.edge==="left" ? {x:-50,y:p.along-pad,width:depth+50,height:p.span+pad*2}
+            : {x:width-depth,y:p.along-pad,width:depth+50,height:p.span+pad*2};
         var along=p.along,span=p.span;
         var corner=p.joinCorner ? cornerForModule(records,p.id,width,height) : "";
         if(corner) {
@@ -577,6 +585,8 @@ function localSurfaces(records, width, height, options, fontScale, minimum) {
         var radius=options?.edgeModuleRadii?.[p.edge];
         if((options?.edgeWidthAffectsModules?.[p.edge]===false || edgeThickness(options,p.edge)===0) && Number.isFinite(Number(radius)) && Number(radius)>=0)
             record.radius=bounded(radius,0,0,64);
+        else if(unified && depth < minimum)
+            record.radius=Math.max(4,Math.round(depth * 0.42));
         return record;
     });
     var result=[],nearby=bounded(options?.gap,8,0,32)+16;
@@ -860,7 +870,7 @@ function packGeometry(placements, width, height, options, fontScale, bounds) {
                 p.designSpan = m.designSpan*itemScale;
                 p.designCross = m.designCross*itemScale;
             }
-            var inset = 8;
+            var inset = isUnifiedKind(p.kind) ? unifiedSurfacePad(p, options) : 8;
             p.content = horizontal ? {x:p.along,y:edge==="top"?inset:height-inset-cross,width:p.span,height:cross}
                 : {x:edge==="left"?inset:width-inset-cross,y:p.along,width:cross,height:p.span};
             result.push(p);
@@ -1020,7 +1030,8 @@ function widthExpandSurface(shape,members,records) {
     members.forEach(function(id) {
         var r=records.find(function(rec){return rec.id===id;});
         if(!r || !(r.content.width>0 && r.content.height>0))return;
-        var rx=r.content.x-8,ry=r.content.y-8,rr=r.content.x+r.content.width+8,rb=r.content.y+r.content.height+8;
+        var pad = isUnifiedKind(r.kind) ? Math.min(8, Math.max(4, Math.round(Math.min(r.content.width, r.content.height) * 0.25))) : 8;
+        var rx=r.content.x-pad,ry=r.content.y-pad,rr=r.content.x+r.content.width+pad,rb=r.content.y+r.content.height+pad;
         var sx=Math.min(s.x,rx),sy=Math.min(s.y,ry);
         s={x:sx,y:sy,width:Math.max(s.x+s.width,rr)-sx,height:Math.max(s.y+s.height,rb)-sy};
     });

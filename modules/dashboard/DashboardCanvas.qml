@@ -18,6 +18,7 @@ Item {
     clip: false
 
     property bool editMode: false
+    property bool menuPresentation: false
     property bool presentationActive: true
     property bool warmContent: false
     readonly property bool widgetsReady: {
@@ -38,6 +39,8 @@ Item {
     }
     readonly property bool responsiveWorkspace: (Config.options?.panelFamily ?? "abyss") === "abyss"
     readonly property var workspace: {
+        if (root.menuPresentation && !root.editMode)
+            return root._menuTiles()
         if (!responsiveWorkspace) return {width:Math.max(1,width),height:Math.max(1,height),rects:({}),overflow:[]}
         const entries=root._allIds.map(id=>root._entryFor(id)), minimums=({})
         for (const id of root._allIds) minimums[id]=root._minimumSize(id)
@@ -728,11 +731,46 @@ Item {
             height: Math.max(1, Math.min(root.height, 32))
         }
     }
+    property var _menuHeightHints: ({})
+    function refreshMenuHeightHints() {
+        if (!root.menuPresentation) return
+        const hints = {}
+        for (let i = 0; i < moduleRepeater.count; ++i) {
+            const card = moduleRepeater.itemAt(i)
+            if (card && card.menuHeightHint > 0) hints[String(card.modelData)] = card.menuHeightHint
+        }
+        if (JSON.stringify(hints) !== JSON.stringify(root._menuHeightHints))
+            root._menuHeightHints = hints
+    }
+    // Present saved widgets in reading order while preserving their freeform edit geometry.
+    function _menuTiles() {
+        const widgetEntries = root._allIds.map(id => root._entryFor(id))
+            .filter(entry => entry.visible !== false)
+            .sort((a, b) => a.y - b.y || a.x - b.x)
+        const gap = 10
+        const columns = root.width >= 500 ? 2 : 1
+        const tileWidth = Math.max(1, Math.floor((root.width - (columns - 1) * gap) / columns))
+        const bottoms = Array(columns).fill(0)
+        const rects = {}
+        for (const entry of widgetEntries) {
+            const column = bottoms.indexOf(Math.min(...bottoms))
+            const tileHeight = Math.max(root._contentComfortSize(entry.id).height,
+                root._menuHeightHints[entry.id] ?? 0,
+                Math.min(350, Math.max(112, Math.round(entry.h * root.height))))
+            rects[entry.id] = {x: column * (tileWidth + gap), y: bottoms[column],
+                width: tileWidth, height: tileHeight}
+            bottoms[column] += tileHeight + gap
+        }
+        return {width: Math.max(1, root.width),
+            height: Math.max(root.height, Math.max(...bottoms) - gap), rects: rects, overflow: []}
+    }
+
     function _contentComfortSize(id) {
         // Responsive content is laid out at a comfortable virtual size when
         // the owner deliberately makes a card smaller. The loaded widget is
         // scaled *inside* that card rather than clamped or cropped.
         switch (id) {
+        case "welcome": return {width:190,height:142}
         case "media": return {width:220,height:185}
         case "calendar": return {width:215,height:155}
         case "weather": return {width:170,height:135}
@@ -1980,10 +2018,18 @@ Item {
         return false
     }
 
-    Item {
+    Flickable {
         id: viewport
+        objectName: "dashboardTileViewport"
         anchors.fill: parent
-        clip: root.responsiveWorkspace
+        contentWidth: width
+        contentHeight: canvas.height
+        interactive: root.menuPresentation && !root.editMode && contentHeight > height
+        flickableDirection: Flickable.VerticalFlick
+        boundsBehavior: Flickable.StopAtBounds
+        clip: root.responsiveWorkspace || root.menuPresentation
+        onInteractiveChanged: if (!interactive) contentY = 0
+        ScrollIndicator.vertical: ScrollIndicator { visible: viewport.interactive }
         Item {
         id: canvas
         width:root.workspace.width;height:root.workspace.height
@@ -2019,6 +2065,9 @@ Item {
 
             delegate: Item {
                 id: cardWrap
+                readonly property int menuHeightHint: root.menuPresentation
+                    ? Math.ceil(moduleContent.item?.implicitHeight ?? 0) : 0
+                onMenuHeightHintChanged: if (root.menuPresentation) Qt.callLater(root.refreshMenuHeightHints)
                 required property var modelData
                 readonly property var px: root._rectPixels(String(modelData))
                 property alias moduleItem: moduleContent.item

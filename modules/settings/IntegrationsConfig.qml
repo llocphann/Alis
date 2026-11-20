@@ -1075,30 +1075,41 @@ ContentPage {
                             spacing: SettingsMaterialPreset.pageSpacing
                             visible: root.selectedPlugin !== null || !root.isModalPluginInstalled
 
-                            Rectangle {
-                                id: capabilityTabsRail
-                                objectName: "integrationCapabilityTabs"
+                            Item {
+                                id: capabilityTabsWrapper
                                 Layout.fillWidth: true
                                 Layout.minimumWidth: 0
                                 visible: root.selectedPlugin !== null && root.capabilityTabs.length > 1
-                                readonly property real railPadding: Config.options?.panelFamily === "abyss" ? SettingsMaterialPreset.taskTabPadding : 0
+                                readonly property bool abyssStyle: Config.options?.panelFamily === "abyss"
+                                readonly property real railPadding: abyssStyle ? SettingsMaterialPreset.taskTabPadding : 0
                                 implicitHeight: capabilityTabsArray.implicitHeight + railPadding * 2
-                                color: Config.options?.panelFamily === "abyss" ? SettingsMaterialPreset.taskRailColor : "transparent"
-                                radius: SettingsMaterialPreset.taskRailRadius
 
-                                ConfigSelectionArray {
-                                    id: capabilityTabsArray
-                                    objectName: "settingsTaskOptions"
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    anchors.margins: capabilityTabsRail.railPadding
-                                    y: capabilityTabsRail.railPadding
-                                    enableSettingsSearch: false
-                                    options: root.capabilityTabs
-                                    currentValue: root.selectedCapability?.id ?? ""
-                                    taskNavigation: true
-                                    useAbyssPillShape: false
-                                    onSelected: value => root.selectCapability(value)
+                                Rectangle {
+                                    id: capabilityTabsRail
+                                    objectName: "integrationCapabilityTabs"
+                                    x: capabilityTabsWrapper.abyssStyle ? Math.round((parent.width - width) / 2) : 0
+                                    y: 0
+                                    width: capabilityTabsWrapper.abyssStyle
+                                        ? Math.min(parent.width, Math.ceil(capabilityTabsArray.implicitWidth) + capabilityTabsWrapper.railPadding * 2)
+                                        : parent.width
+                                    height: parent.height
+                                    color: capabilityTabsWrapper.abyssStyle ? SettingsMaterialPreset.taskRailColor : "transparent"
+                                    radius: SettingsMaterialPreset.taskRailRadius
+
+                                    ConfigSelectionArray {
+                                        id: capabilityTabsArray
+                                        objectName: "settingsTaskOptions"
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.margins: capabilityTabsWrapper.railPadding
+                                        y: capabilityTabsWrapper.railPadding
+                                        enableSettingsSearch: false
+                                        options: root.capabilityTabs
+                                        currentValue: root.selectedCapability?.id ?? ""
+                                        taskNavigation: true
+                                        useAbyssPillShape: false
+                                        onSelected: value => root.selectCapability(value)
+                                    }
                                 }
                             }
 
@@ -1210,9 +1221,14 @@ ContentPage {
                 }
             }
 
-            ConfigRow {
-                uniform: true
+            GridLayout {
+                Layout.fillWidth: true
+                columns: !root.abyssTaskStyle || width >= upcomingDays.implicitWidth + eventIndicators.implicitWidth + columnSpacing ? 2 : 1
+                uniformCellWidths: !root.abyssTaskStyle || width >= 2 * Math.max(upcomingDays.implicitWidth, eventIndicators.implicitWidth) + columnSpacing
+                columnSpacing: 4
+                rowSpacing: 4
                 ConfigSpinBox {
+                    id: upcomingDays
                     icon: "date_range"
                     text: Translation.tr("Upcoming days to show")
                     value: Config.options?.calendar?.upcomingDays ?? 3
@@ -1224,6 +1240,7 @@ ContentPage {
                 }
 
                 ConfigSpinBox {
+                    id: eventIndicators
                     icon: "more_horiz"
                     text: Translation.tr("Maximum indicators per edge")
                     value: Config.options?.calendar?.maxEventDots ?? 3

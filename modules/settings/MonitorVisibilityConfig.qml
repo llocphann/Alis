@@ -12,6 +12,7 @@ ContentPage {
     settingsPageIndex: 15
     settingsPageName: Translation.tr("Monitors")
     property bool embeddedArrangementOnly: false
+    property bool settingsFormPreview: false
     embedded: embeddedArrangementOnly
     readonly property bool arrangementChromeVisible: !embeddedArrangementOnly
     // Fill the Utilities viewport up to its page indicators, rather than
@@ -21,7 +22,7 @@ ContentPage {
         embeddedArrangementOnly ? Math.max(80, height - 55) : 292
     readonly property real settingsArrangementCanvasHeight: 320
     readonly property real arrangementVisualScale:
-        embeddedArrangementOnly ? 0.65 : 0.70
+        settingsFormPreview ? 1 : embeddedArrangementOnly ? 0.65 : 0.70
     readonly property string _legacyPrimaryMonitorHint: Translation.tr("Primary monitor sets the fallback output; display controls are in Compositor.")
 
     property string activeSection: "outputs"

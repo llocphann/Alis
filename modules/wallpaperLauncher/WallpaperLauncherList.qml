@@ -45,7 +45,7 @@ PathView {
             void Wallpapers.favouritesRevision
             favDb = Wallpapers.favouritesDb ?? {}
         }
-        const tagMap = colorTagsByPath ?? {}
+        const tagMap = color ? (colorTagsByPath ?? {}) : null
         const tokens = query ? query.split(/\s+/).filter(Boolean) : []
         const matchesEntry = entry => {
             if (favOnly) {
@@ -71,8 +71,9 @@ PathView {
         const primary = entries.filter(matchesEntry)
         if ((!query && !favOnly) || !fallbackEntries || fallbackEntries.length === 0)
             return primary
-        const seen = new Set(primary.map(e => e.path))
-        const secondary = fallbackEntries.filter(e => !seen.has(e.path) && matchesEntry(e))
+        const seen = Object.create(null)
+        for (const entry of primary) seen[entry.path] = true
+        const secondary = fallbackEntries.filter(e => !seen[e.path] && matchesEntry(e))
         return primary.concat(secondary)
     }
     readonly property int visibleItems: {
@@ -126,6 +127,16 @@ PathView {
         previewDebounce.restart()
     }
 
+    function scheduleIndexSync(): void {
+        syncTimer.restart()
+    }
+
+    Timer {
+        id: syncTimer
+        interval: 0
+        onTriggered: root.syncCurrentIndexAndPreview()
+    }
+
     function moveSelection(delta: int): void {
         if (count <= 0) return
         const steps = Math.abs(delta)
@@ -161,21 +172,21 @@ PathView {
 
     Component.onCompleted: {
         root._effectiveSearchText = root.searchText
-        Qt.callLater(syncCurrentIndexAndPreview)
+        syncTimer.restart()
     }
     Component.onDestruction: Wallpapers.cancelWallpaperPreview()
-    onCurrentWallpaperPathChanged: Qt.callLater(syncCurrentIndexAndPreview)
+    onCurrentWallpaperPathChanged: syncTimer.restart()
     onSearchTextChanged: {
         if (searchText.trim().length === 0 || (entries?.length ?? 0) <= 200) {
             searchDebounce.stop()
             root._effectiveSearchText = searchText
-            Qt.callLater(syncCurrentIndexAndPreview)
+            syncTimer.restart()
         } else {
             searchDebounce.restart()
         }
     }
-    onSelectedColorChanged: Qt.callLater(syncCurrentIndexAndPreview)
-    onFavouritesOnlyChanged: Qt.callLater(syncCurrentIndexAndPreview)
+    onSelectedColorChanged: syncTimer.restart()
+    onFavouritesOnlyChanged: syncTimer.restart()
     // The desktop always shows the highlighted card, however the highlight
     // moved — navigation, search filtering, or switching Static/Animated.
     onCurrentIndexChanged: previewDebounce.restart()

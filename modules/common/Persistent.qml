@@ -14,17 +14,27 @@ Singleton {
     property bool ready: false
     property string previousHyprlandInstanceSignature: ""
     property bool isNewHyprlandInstance: previousHyprlandInstanceSignature !== states.hyprlandInstanceSignature
+    FileView {
+        id: bootIdFile
+        path: "/proc/sys/kernel/random/boot_id"
+        blockLoading: true
+        printErrors: false
+    }
     readonly property string currentSessionSignature: {
+        // Display names, login session numbers and compositor PIDs can repeat after reboot.
+        const bootId = bootIdFile.text().trim()
+        if (!bootId) return ""
+        const xdg = Quickshell.env("XDG_SESSION_ID") || ""
+        const prefix = bootId + ":" + xdg + ":"
         const niri = Quickshell.env("NIRI_SOCKET") || ""
         if (niri.length > 0)
-            return "niri:" + niri
+            return prefix + "niri:" + niri
         const hypr = Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") || ""
         if (hypr.length > 0)
-            return "hypr:" + hypr
-        const xdg = Quickshell.env("XDG_SESSION_ID") || ""
+            return prefix + "hypr:" + hypr
         const wl = Quickshell.env("WAYLAND_DISPLAY") || ""
         if (xdg.length > 0 || wl.length > 0)
-            return "wl:" + xdg + ":" + wl
+            return prefix + "wl:" + wl
         return ""
     }
 

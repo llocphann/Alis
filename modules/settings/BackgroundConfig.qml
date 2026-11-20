@@ -6,6 +6,7 @@ import Quickshell
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import "../common/widgets/SettingsLayoutPolicy.js" as LayoutPolicy
 import qs.modules.common.functions
 
 ContentPage {
@@ -432,16 +433,18 @@ ContentPage {
             SettingsDivider {}
 
             GridLayout {
+                id: motionSwitchGrid
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                columns: width >= 460 ? 3 : 1
-                uniformCellWidths: columns > 1
+                columns: Config.options?.panelFamily === "abyss"
+                    ? LayoutPolicy.fittedControlColumns(motionSwitchGrid, 3) : (width >= 460 ? 3 : 1)
+                uniformCellWidths: Config.options?.panelFamily !== "abyss" && columns > 1
                 columnSpacing: Appearance.sizes.spacingSmall
                 rowSpacing: Appearance.sizes.spacingSmall
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
                     Layout.minimumWidth: 0
                     buttonIcon: "play_circle"
                     text: Translation.tr("Animated wallpapers")
@@ -455,7 +458,7 @@ ContentPage {
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
                     Layout.minimumWidth: 0
                     visible: Config.options?.background?.enableAnimation ?? true
                     buttonIcon: "battery_saver"
@@ -470,7 +473,7 @@ ContentPage {
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
                     Layout.minimumWidth: 0
                     visible: Config.options?.background?.enableAnimation ?? true
                     buttonIcon: "blur_on"
@@ -516,16 +519,18 @@ ContentPage {
             SettingsDivider {}
 
             GridLayout {
+                id: shuffleGrid
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                columns: width >= 440 ? 2 : 1
-                uniformCellWidths: columns === 2
+                columns: Config.options?.panelFamily === "abyss"
+                    ? LayoutPolicy.fittedControlColumns(shuffleGrid, 2) : (width >= 440 ? 2 : 1)
+                uniformCellWidths: Config.options?.panelFamily !== "abyss" && columns === 2
                 columnSpacing: Appearance.sizes.spacingSmall
                 rowSpacing: Appearance.sizes.spacingSmall
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
                     Layout.minimumWidth: 0
                     buttonIcon: "autorenew"
                     text: Translation.tr("Auto-shuffle")
@@ -536,7 +541,7 @@ ContentPage {
 
                 ConfigSpinBox {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
                     Layout.minimumWidth: 0
                     enabled: Config.options?.background?.autoWallpaper?.enable ?? false
                     icon: "timer"
@@ -551,7 +556,7 @@ ContentPage {
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
                     Layout.minimumWidth: 0
                     enabled: Config.options?.background?.autoWallpaper?.enable ?? false
                     buttonIcon: "palette"
@@ -562,7 +567,7 @@ ContentPage {
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
                     Layout.minimumWidth: 0
                     buttonIcon: "folder_open"
                     text: Translation.tr("System file dialog")

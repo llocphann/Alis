@@ -1448,11 +1448,13 @@ Scope {
                         // Navigation rail with labels
                         Rectangle {
                             id: navColumn
+                            readonly property bool compact: SettingsMaterialPreset.useCompactNav(
+                                settingsCard.width, root.navEditMode || SettingsLayoutManager.editMode)
                             objectName: "settingsOverlayNavColumn"
                             Layout.fillHeight: true
                             Layout.preferredWidth: SettingsMaterialPreset.waffle
                                 ? Math.min(SettingsMaterialPreset.waffleRailWidth, Math.max(216, Math.round(settingsCard.width * 0.24)))
-                                : 204
+                                : (compact ? SettingsMaterialPreset.compactNavWidth : 204)
                             radius: Appearance.rounding.normal
                             color: "transparent"
 
@@ -1525,6 +1527,7 @@ Scope {
 
                                         delegate: RippleButton {
                                             id: navHeadingGroup
+                                            Accessible.name: navHeadingGroup.headingTitle
                                             required property int index
                                             required property var modelData
                                             readonly property string headingTitle: String(navHeadingGroup.modelData?.label ?? "")
@@ -1594,14 +1597,20 @@ Scope {
                                     color: SettingsMaterialPreset.accentColor
                                 }
 
-                                contentItem: RowLayout {
+                                            StyledToolTip {
+                                                position: "right"
+                                                extraVisibleCondition: navColumn.compact
+                                                text: navHeadingGroup.headingTitle
+                                            }
+
+                                            contentItem: RowLayout {
                                                 anchors.fill: parent
-                                                anchors.leftMargin: 10
-                                                anchors.rightMargin: 10
+                                                anchors.leftMargin: navColumn.compact ? 0 : 10
+                                                anchors.rightMargin: navColumn.compact ? 0 : 10
                                                 spacing: 9
 
                                                 MaterialSymbol {
-                                                    Layout.alignment: Qt.AlignVCenter
+                                                    Layout.alignment: navColumn.compact ? Qt.AlignCenter : Qt.AlignVCenter
                                                     text: navHeadingGroup.groupPages.length > 0
                                                         ? SettingsPageRegistry.iconForPage(navHeadingGroup.groupPages[0].realIndex)
                                                         : "folder"
@@ -1613,6 +1622,7 @@ Scope {
                                                 }
 
                                                 StyledText {
+                                                    visible: !navColumn.compact
                                                     Layout.alignment: Qt.AlignVCenter
                                                     Layout.fillWidth: true
                                                     verticalAlignment: Text.AlignVCenter
@@ -1637,6 +1647,7 @@ Scope {
 
                                         delegate: RippleButton {
                                             id: overlayCustomNavBtn
+                                            Accessible.name: overlayCustomNavBtn.tabLabel
                                             required property int index
                                             required property var modelData
                                             readonly property string tabId: String(modelData?.id ?? "")
@@ -1678,14 +1689,20 @@ Scope {
                                                 SettingsLayoutManager.activeCustomTabId = tabId
                                             }
 
+                                            StyledToolTip {
+                                                position: "right"
+                                                extraVisibleCondition: navColumn.compact
+                                                text: overlayCustomNavBtn.tabLabel
+                                            }
+
                                             contentItem: RowLayout {
                                                 anchors.fill: parent
-                                                anchors.leftMargin: 10
-                                                anchors.rightMargin: 6
+                                                anchors.leftMargin: navColumn.compact ? 0 : 10
+                                                anchors.rightMargin: navColumn.compact ? 0 : 6
                                                 spacing: 8
 
                                                 MaterialSymbol {
-                                                    Layout.alignment: Qt.AlignVCenter
+                                                    Layout.alignment: navColumn.compact ? Qt.AlignCenter : Qt.AlignVCenter
                                                     text: String(overlayCustomNavBtn.modelData?.icon || "dashboard_customize")
                                                     iconSize: 18
                                                     color: overlayCustomNavBtn.isActiveCustomTab
@@ -1694,6 +1711,7 @@ Scope {
                                                 }
 
                                                 StyledText {
+                                                    visible: !navColumn.compact
                                                     Layout.alignment: Qt.AlignVCenter
                                                     Layout.fillWidth: true
                                                     verticalAlignment: Text.AlignVCenter
@@ -1843,6 +1861,7 @@ Scope {
 
                                 RippleButton {
                                     id: overlayLayoutEditToggle
+                                    Accessible.name: SettingsLayoutManager.editMode ? Translation.tr("Done layout") : Translation.tr("Edit layout")
                                     objectName: "overlayLayoutEditToggle"
                                     readonly property color editSurface: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedColor : Appearance.colors.colPrimaryContainer
                                     readonly property color editSurfaceHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedHoverColor : Appearance.colors.colPrimaryContainerHover
@@ -1864,12 +1883,12 @@ Scope {
 
                                     contentItem: RowLayout {
                                         anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 8
+                                        anchors.leftMargin: navColumn.compact ? 0 : 10
+                                        anchors.rightMargin: navColumn.compact ? 0 : 8
                                         spacing: 10
 
                                         MaterialSymbol {
-                                            Layout.alignment: Qt.AlignVCenter
+                                            Layout.alignment: navColumn.compact ? Qt.AlignCenter : Qt.AlignVCenter
                                             text: SettingsLayoutManager.editMode ? "done" : "space_dashboard"
                                             iconSize: 18
                                             color: SettingsLayoutManager.editMode
@@ -1878,6 +1897,7 @@ Scope {
                                         }
 
                                         StyledText {
+                                            visible: !navColumn.compact
                                             Layout.alignment: Qt.AlignVCenter
                                             Layout.fillWidth: true
                                             verticalAlignment: Text.AlignVCenter
@@ -1903,6 +1923,7 @@ Scope {
 
                                 RippleButton {
                                     id: overlayNavEditToggle
+                                    Accessible.name: root.navEditMode ? Translation.tr("Done") : Translation.tr("Edit navigation")
                                     readonly property color editSurface: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedColor : Appearance.colors.colPrimaryContainer
                                     readonly property color editSurfaceHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedHoverColor : Appearance.colors.colPrimaryContainerHover
                                     readonly property color editForeground: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.textColor : Appearance.colors.colOnPrimaryContainer
@@ -1919,12 +1940,12 @@ Scope {
 
                                     contentItem: RowLayout {
                                         anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 8
+                                        anchors.leftMargin: navColumn.compact ? 0 : 10
+                                        anchors.rightMargin: navColumn.compact ? 0 : 8
                                         spacing: 10
 
                                         MaterialSymbol {
-                                            Layout.alignment: Qt.AlignVCenter
+                                            Layout.alignment: navColumn.compact ? Qt.AlignCenter : Qt.AlignVCenter
                                             text: root.navEditMode ? "done" : "edit"
                                             iconSize: 18
                                             color: root.navEditMode
@@ -1933,6 +1954,7 @@ Scope {
                                         }
 
                                         StyledText {
+                                            visible: !navColumn.compact
                                             Layout.alignment: Qt.AlignVCenter
                                             Layout.fillWidth: true
                                             verticalAlignment: Text.AlignVCenter
@@ -1958,6 +1980,7 @@ Scope {
 
                                 RippleButton {
                                     id: overlayWindowToggle
+                                    Accessible.name: Translation.tr("Window")
                                     Layout.fillWidth: true
                                     implicitHeight: 36
                                     buttonRadius: SettingsMaterialPreset.navItemRadius
@@ -1972,18 +1995,19 @@ Scope {
 
                                     contentItem: RowLayout {
                                         anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 8
+                                        anchors.leftMargin: navColumn.compact ? 0 : 10
+                                        anchors.rightMargin: navColumn.compact ? 0 : 8
                                         spacing: 10
 
                                         MaterialSymbol {
-                                            Layout.alignment: Qt.AlignVCenter
+                                            Layout.alignment: navColumn.compact ? Qt.AlignCenter : Qt.AlignVCenter
                                             text: "open_in_new"
                                             iconSize: 18
                                             color: SettingsMaterialPreset.secondaryTextColor
                                         }
 
                                         StyledText {
+                                            visible: !navColumn.compact
                                             Layout.alignment: Qt.AlignVCenter
                                             Layout.fillWidth: true
                                             verticalAlignment: Text.AlignVCenter
@@ -2394,7 +2418,11 @@ Scope {
         function onReadyChanged() { root.initializeNavigation() }
     }
 
-    Component.onCompleted: root.initializeNavigation()
+    Component.onCompleted: {
+        root.initializeNavigation()
+        if (GlobalStates.settingsOverlayOpen)
+            root.consumeSettingsDeepLink()
+    }
 
     // One continuous tab list; saved category metadata only supplies ordering.
     readonly property var overlayPages: SettingsPageRegistry.pages.map(p => {

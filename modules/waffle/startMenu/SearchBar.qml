@@ -13,7 +13,7 @@ FooterRectangle {
     id: root
 
     property real horizontalPadding: 32
-    property real verticalPadding: 16
+    property real verticalPadding: Looks.startMenuSearchPadding
     property bool searching: text.length > 0
     property alias searchInput: searchInput
     property alias text: searchInput.text
@@ -47,7 +47,7 @@ FooterRectangle {
             rightMargin: root.horizontalPadding
             verticalCenter: parent.verticalCenter
         }
-        implicitHeight: 32
+        implicitHeight: Looks.startMenuSearchFieldHeight
         color: "transparent"
         radius: height / 2
         border.width: 1

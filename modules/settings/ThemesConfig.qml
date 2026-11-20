@@ -220,7 +220,7 @@ ContentPage {
                         text: "Filter curated presets or follow wallpaper brightness automatically"
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         color: Appearance.colors.colSubtext
-                        elide: Text.ElideRight
+                        wrapMode: Text.WordWrap
                     }
                 }
 
@@ -974,10 +974,34 @@ ContentPage {
             ContentSubsection {
                 title: Translation.tr("Font Families")
 
-                ConfigRow {
-                    uniform: true
+                GridLayout {
+                    id: familyGrid
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    columnSpacing: 8
+                    rowSpacing: 8
+                    uniformCellWidths: columns === 3 && width >= 3 * Math.max(mainFontSelector.readableWidth,
+                        titleFontSelector.readableWidth, monoFontSelector.readableWidth) + 2 * columnSpacing
+                    readonly property real firstPairWidth: mainFontSelector.readableWidth
+                        + titleFontSelector.readableWidth + columnSpacing
+                    columns: width >= firstPairWidth + monoFontSelector.readableWidth + columnSpacing ? 3
+                        : width >= firstPairWidth ? 2 : 1
 
-                    FontSelector {
+                    component FamilySelector: FontSelector {
+                        // FontSelector's trigger places its content inside 12px and 8px side margins.
+                        readonly property real readableWidth: implicitWidth + 20
+                        Layout.minimumWidth: 0
+                        Layout.preferredWidth: readableWidth
+
+                        HoverHandler { id: fontHover }
+                        StyledToolTip {
+                            extraVisibleCondition: false
+                            alternativeVisibleCondition: fontHover.hovered && parent.width < parent.readableWidth
+                            text: parent.selectedFont
+                        }
+                    }
+
+                    FamilySelector {
                         id: mainFontSelector
                         label: Translation.tr("Main")
                         icon: "font_download"
@@ -992,7 +1016,7 @@ ContentPage {
                         }
                     }
 
-                    FontSelector {
+                    FamilySelector {
                         id: titleFontSelector
                         label: Translation.tr("Title")
                         icon: "title"
@@ -1007,8 +1031,9 @@ ContentPage {
                         }
                     }
 
-                    FontSelector {
+                    FamilySelector {
                         id: monoFontSelector
+                        Layout.columnSpan: familyGrid.columns === 2 ? 2 : 1
                         label: Translation.tr("Mono")
                         icon: "terminal"
                         selectedFont: Config.options?.appearance?.typography?.monospaceFont ?? "JetBrains Mono NF"

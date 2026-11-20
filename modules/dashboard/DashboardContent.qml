@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.waffle.looks as Waffle
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.sidebarRight.events
@@ -18,6 +19,7 @@ Item {
     property int screenWidth: 1920
     property int screenHeight: 1080
     property bool embeddedSurface: false
+    property bool waffleMenu: false
     property bool warmContent: false
     property bool presentationActive: GlobalStates.dashboardOpen || GlobalStates.overviewOpen
     readonly property bool contentReady: dashboardCanvas.widgetsReady
@@ -543,22 +545,32 @@ Item {
 
     Rectangle {
         id: background
+        objectName: "dashboardSurfaceBackground"
         anchors.fill: parent
         clip: true
-        color: root.embeddedSurface ? "transparent" : Appearance.colors.colLayer0
-        radius: root.embeddedSurface ? 0 : Appearance.rounding.large
-        border.width: 0
-        border.color: "transparent"
+        color: root.embeddedSurface ? "transparent"
+            : root.waffleMenu ? Waffle.Looks.colors.bgPanelFooterBase : Appearance.colors.colLayer0
+        radius: root.embeddedSurface ? 0 : root.waffleMenu ? Waffle.Looks.radius.large : Appearance.rounding.large
+        border.width: root.waffleMenu ? 1 : 0
+        border.color: root.waffleMenu ? Waffle.Looks.colors.bg2Border : "transparent"
+
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            visible: !root.embeddedSurface && root.waffleMenu
+            color: Waffle.Looks.colors.bgPanelBody
+        }
 
         ColumnLayout {
             id: mainColumn
-            readonly property bool compact: false
+            readonly property bool compact: root.waffleMenu
             anchors.fill: parent
             anchors.margins: root.embeddedSurface ? 0 : (compact ? 12 : 16)
             spacing: compact ? 8 : 12
 
             DashboardHeader {
                 id: dashboardHeader
+                waffleMenu: root.waffleMenu
                 Layout.fillWidth: true
                 visible: root.showHeader || root.pageIds.length > 1
                 showActions: root.showHeader
@@ -601,6 +613,13 @@ Item {
                     else
                         root.canvasController?.beginEditMode();
                 }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 1
+                visible: root.waffleMenu && dashboardHeader.visible
+                color: Waffle.Looks.colors.bgPanelSeparator
             }
 
             Item {
@@ -656,6 +675,7 @@ Item {
                     x: -pages.slideProgress * pages.width
                     DashboardCanvas {
                         id: dashboardCanvas
+                        menuPresentation: root.waffleMenu
                         width: pages.width
                         height: pages.height
                         x: root.pageIds.indexOf("dashboard") * pages.width
@@ -788,6 +808,7 @@ Item {
                                     || (root.warmContent
                                         && root.currentPageId === customTabHost.modelData.id)
                                 sourceComponent: DashboardCanvas {
+                                    menuPresentation: root.waffleMenu
                                     customTabId: customTabHost.modelData.id
                                     warmContent: root.warmContent
                                     presentationActive: root.presentationActive

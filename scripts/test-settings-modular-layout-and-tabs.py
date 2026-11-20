@@ -1483,7 +1483,7 @@ Window {
                 verifySlotsContainment(AppLauncher.primarySlotDefinitions(), "PrimarySlots");
 
                 // Verify Portable Applications (ApplicationsConfig) inside DefaultAppsConfig 2-column grid:
-                // 1) Long app name without Default slot pill uses >45% of titleTagsRow width (not prematurely truncated at 42%)
+                // 1) Plain names fit naturally, and names longer than the row can use all space before the format badge.
                 // 2) Portable app with AppImage + zsync + long "Default: Office Documents (.docx, .xlsx, .pptx)" badge keeps app name >= 48px and never overflows
                 AppLauncher.selectDiscoveredApp("officeSuite", mockPortableOfficeApp);
                 portableSec.managedApps = [
@@ -1494,6 +1494,13 @@ Window {
                         hasZsync: false,
                         installed: true,
                         execPath: "/tmp/plain.AppImage"
+                    },
+                    {
+                        id: "portable-overflow",
+                        name: "Portable Application Suite With Multiple Long Product Names ".repeat(6),
+                        kind: "appimage",
+                        installed: true,
+                        execPath: "/tmp/overflow.AppImage"
                     },
                     {
                         id: "portable-zsync",
@@ -1513,9 +1520,23 @@ Window {
                 const zsyncRemoveBtn = findByObjectName(portableSec, "removeApplicationBtn_portable-zsync");
                 check(plainCard !== null && plainName !== null && zsyncCard !== null && zsyncName !== null && zsyncDefBadge !== null && zsyncRemoveBtn !== null,
                     "Expected portableAppCard elements to be instantiated in ApplicationsConfig");
-                check(plainName.width > plainName.parent.width * 0.48,
-                    "Portable app name without Default badge must not be prematurely truncated at 42% of row width: nameW="
-                    + plainName.width + " rowW=" + plainName.parent.width);
+                const overflowName = findByObjectName(portableSec, "portableAppName_portable-overflow");
+                check(overflowName !== null, "Expected the overflowing portable app fixture");
+                function verifyPlainPortableName(name) {
+                    const row = name.parent;
+                    const badges = Array.from(row.children).filter(child => child !== name && child.visible);
+                    const usable = row.width - badges.reduce((sum, badge) => sum + badge.width + row.spacing, 0);
+                    const expected = Math.min(name.implicitWidth, usable);
+                    check(Math.abs(name.width - expected) <= 1,
+                        "Portable app name must take its natural width or all space before the badges: actual="
+                        + name.width + " expected=" + expected + " row=" + row.width);
+                    check(name.truncated === (name.implicitWidth > usable + 1),
+                        "Portable app name should elide only when the visible badges leave insufficient space");
+                }
+                verifyPlainPortableName(plainName);
+                verifyPlainPortableName(overflowName);
+                check(overflowName.truncated && overflowName.width > overflowName.parent.width * 0.48,
+                    "Overflowing portable name must use more than 48% of its row before eliding");
                 check(zsyncName.width >= 48 && zsyncDefBadge.visible,
                     "Portable app name with AppImage + zsync + Default: Office Documents badge must remain >= 48px wide, got: " + zsyncName.width);
                 const zsyncBadgeRightInRow = zsyncDefBadge.x + zsyncDefBadge.width;
@@ -1524,6 +1545,17 @@ Window {
                 const zsyncRemoveBox = zsyncRemoveBtn.mapToItem(zsyncCard, 0, 0);
                 check((zsyncRemoveBox.x + zsyncRemoveBtn.width) <= (zsyncCard.width - 5.5),
                     "Portable app remove button must stay inside card right border: btnRight=" + (zsyncRemoveBox.x + zsyncRemoveBtn.width) + " cardW=" + zsyncCard.width);
+
+                const fullWindowWidth = root.width;
+                const fullTitleWidth = overflowName.parent.width;
+                root.width = 960;
+                tryVerify(() => overflowName.parent.width < fullTitleWidth - 100, 3000);
+                verifyPlainPortableName(plainName);
+                verifyPlainPortableName(overflowName);
+                root.width = fullWindowWidth;
+                tryVerify(() => Math.abs(overflowName.parent.width - fullTitleWidth) <= 1, 3000);
+                verifyPlainPortableName(plainName);
+                verifyPlainPortableName(overflowName);
 
                 // Switch to System Utilities ('utilities'): verify full-width inner layout and equal 2-column grid widths
                 appsPage39.activeSection = "utilities";

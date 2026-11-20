@@ -91,6 +91,9 @@ ShellRoot {
     renderFrame(dashboard,"short lists no-overflow frame")
     const names=["musicResultList","musicQueueList","musicLyricsList","musicGenreList","musicFolderList","musicPlaylistList"]
     for(const name of names){
+     if(name==="musicResultList")music.openAllSongs()
+     if(name==="musicQueueList")music.rightDrawerTab="queue"
+     if(name==="musicLyricsList")music.rightDrawerTab="lyrics"
      if(name==="musicGenreList")music.libraryTab="genre"
      if(name==="musicFolderList"||name==="musicPlaylistList")music.libraryTab="folder"
      renderFrame(dashboard,"visible short list "+name)
@@ -101,6 +104,9 @@ ShellRoot {
     fake.libraryTracks=[];fake.activeQueue=[];fake.playlists=[];fake.localLyricsLines=[]
     renderFrame(dashboard,"empty lists no-overflow frame")
     for(const name of names){
+     if(name==="musicResultList")music.openAllSongs()
+     if(name==="musicQueueList")music.rightDrawerTab="queue"
+     if(name==="musicLyricsList")music.rightDrawerTab="lyrics"
      if(name==="musicGenreList")music.libraryTab="genre"
      if(name==="musicFolderList"||name==="musicPlaylistList")music.libraryTab="folder"
      renderFrame(dashboard,"empty list "+name)
@@ -137,6 +143,8 @@ ShellRoot {
    music.query="Track";music.sourceMode="search"
    renderFrame(dashboard,"long Music frame pending")
    for(const name of ["musicResultList","musicQueueList","musicLyricsList","musicGenreList","musicFolderList","musicPlaylistList"]){
+    if(name==="musicQueueList")music.rightDrawerTab="queue"
+    if(name==="musicLyricsList")music.rightDrawerTab="lyrics"
     if(name==="musicGenreList")music.libraryTab="genre"
     if(name==="musicFolderList" || name==="musicPlaylistList")music.libraryTab="folder"
     const scroll=findChild(music,name)
@@ -197,6 +205,8 @@ ShellRoot {
    check(horizontal!==null && horizontal.ScrollBar.horizontal.policy===ScrollBar.AlwaysOff,
     "horizontal Music scrollbar should be hidden")
    for(const name of listNames){
+    if(name==="musicQueueList")music.rightDrawerTab="queue"
+    if(name==="musicLyricsList")music.rightDrawerTab="lyrics"
     if(name==="musicGenreList")music.libraryTab="genre"
     if(name==="musicFolderList"||name==="musicPlaylistList")music.libraryTab="folder"
     renderFrame(dashboard,"hidden list pre-pan allocation")

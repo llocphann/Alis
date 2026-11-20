@@ -7,7 +7,11 @@ Rectangle {
     id: root
 
     default property alias contentData: content.data
-    property alias spacing: content.spacing
+    property alias spacing: content.rowSpacing
+    // Keep the same visual parent and declaration order for saved editor IDs.
+    property int fieldColumns: 1
+    readonly property int activeColumns: fieldColumns > 1 && !SettingsLayoutManager.editMode
+        && !SettingsLayoutManager.hasInnerCustomizations(groupLayoutId) ? fieldColumns : 1
 
     Layout.fillWidth: true
     Layout.fillHeight: false
@@ -131,8 +135,11 @@ Rectangle {
         // Pagination is handled at ContentPage level.
     }
 
-    ColumnLayout {
+    GridLayout {
         id: content
+        columns: root.activeColumns
+        uniformCellWidths: columns > 1
+        columnSpacing: columns > 1 ? 20 * Appearance.fontSizeScale : 0
         objectName: "settingsGroupContent"
         anchors {
             left: parent.left
@@ -145,7 +152,7 @@ Rectangle {
         height: (root.Layout.fillHeight && root._hasFillHeightChild)
             ? Math.max(implicitHeight, root.height - SettingsMaterialPreset.groupPadding * 2)
             : implicitHeight
-        spacing: SettingsMaterialPreset.groupSpacing
+        rowSpacing: SettingsMaterialPreset.groupSpacing
     }
 
     Loader {

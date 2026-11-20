@@ -21,7 +21,9 @@ RowLayout {
     property int decimals: (root.stepSize > 0 && root.stepSize < 1) ? 2 : 0
     property string displayValue: ""
     property string valueText: root.displayValue.length > 0 ? root.displayValue : (Number(root.value).toFixed(root.decimals) + root.unit)
-    property real sliderWidth: Math.round(190 * Appearance.fontSizeScale)
+    // A positive value requests a fixed track. Otherwise the layout shares
+    // the available width between the label and track, up to the desktop cap.
+    property real sliderWidth: 0
     property string settingsSearchLabel: root.text
     property string settingsSearchDescription: root.description
     property string settingsSearchOptionId: ""
@@ -38,6 +40,9 @@ RowLayout {
     RowLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
+        Layout.preferredWidth: Math.max(80, labelColumn.implicitWidth + (root.icon.length > 0 ? Appearance.font.pixelSize.large + 8 : 0))
+        Layout.maximumWidth: Math.round((root.description.length > 0 ? 360 : 280) * Appearance.fontSizeScale)
+        Layout.horizontalStretchFactor: 2
         spacing: 8
 
         OptionalMaterialSymbol {
@@ -81,13 +86,15 @@ RowLayout {
 
     StyledSlider {
         id: sliderWidget
-        Layout.fillWidth: false
+        readonly property real requestedWidth: customLength > 0 ? customLength : root.sliderWidth
+        Layout.fillWidth: !isVertical && requestedWidth <= 0
+        Layout.horizontalStretchFactor: Layout.fillWidth ? 6 : -1
         Layout.preferredWidth: sliderWidget.isVertical
             ? sliderWidget.implicitWidth
-            : (sliderWidget.customLength > 0 ? sliderWidget.customLength : root.sliderWidth)
+            : (requestedWidth > 0 ? requestedWidth : Math.round(280 * Appearance.fontSizeScale))
         Layout.maximumWidth: sliderWidget.isVertical
             ? sliderWidget.implicitWidth
-            : (sliderWidget.customLength > 0 ? sliderWidget.customLength : Math.round(220 * Appearance.fontSizeScale))
+            : (requestedWidth > 0 ? requestedWidth : 16777215)
         Layout.minimumWidth: sliderWidget.isVertical
             ? sliderWidget.implicitWidth
             : Math.min(sliderWidget.customLength > 0 ? sliderWidget.customLength : Math.round(96 * Appearance.fontSizeScale), Math.round(96 * Appearance.fontSizeScale))

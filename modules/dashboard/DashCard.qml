@@ -4,6 +4,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.abyss.looks
+import qs.modules.waffle.looks as Waffle
 
 /**
  * Shared Material card surface for Dashboard modules.
@@ -20,6 +21,7 @@ Rectangle {
     default property alias content: inner.data
 
     readonly property bool compact: false
+    readonly property bool waffleSurface: Config.options?.panelFamily === "waffle"
     readonly property real cardOpacity: Math.max(0.3, Math.min(1,
         Config.options?.dashboard?.appearance?.cardOpacity ?? 1))
     readonly property bool showTitle: true
@@ -31,22 +33,24 @@ Rectangle {
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
     readonly property bool zzzEverywhere: Appearance.zzzEverywhere
 
-    readonly property color colText: Appearance.colors.colOnSurface
-    readonly property color colSubtext: Appearance.colors.colOnSurfaceVariant
-    readonly property color colAccent: Appearance.colors.colPrimary
+    readonly property color colText: waffleSurface ? Waffle.Looks.colors.fg : Appearance.colors.colOnSurface
+    readonly property color colSubtext: waffleSurface ? Waffle.Looks.colors.subfg : Appearance.colors.colOnSurfaceVariant
+    readonly property color colAccent: waffleSurface ? Waffle.Looks.colors.accent : Appearance.colors.colPrimary
 
     Layout.fillWidth: true
     implicitHeight: contentColumn.implicitHeight + root.pad * 2
 
-    radius: Appearance.rounding.small
-    readonly property color sidebarRaisedSurface: Config.options?.panelFamily === "abyss" ? AbyssStyle.contentLayer : Appearance.colors.colLayer1
+    radius: root.waffleSurface ? Waffle.Looks.radius.medium : Appearance.rounding.small
+    readonly property color sidebarRaisedSurface: root.waffleSurface
+        ? Waffle.Looks.colors.bg1
+        : (Config.options?.panelFamily === "abyss" ? AbyssStyle.contentLayer : Appearance.colors.colLayer1)
     color: root.cardOpacity >= 0.999
         ? root.sidebarRaisedSurface
         : ColorUtils.applyAlpha(
             root.sidebarRaisedSurface,
             root.cardOpacity * root.sidebarRaisedSurface.a)
-    border.width: 0
-    border.color: "transparent"
+    border.width: root.waffleSurface ? 1 : 0
+    border.color: root.waffleSurface ? Waffle.Looks.colors.bg1Border : "transparent"
     clip: true
 
     Behavior on color {
@@ -80,6 +84,7 @@ Rectangle {
             StyledText {
                 Layout.fillWidth: true
                 text: root.title
+                font.family: root.waffleSurface ? Waffle.Looks.font.family.ui : Appearance.font.family.main
                 font.pixelSize: Appearance.font.pixelSize.normal
                 font.weight: Font.Medium
                 color: root.colText

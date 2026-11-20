@@ -5,6 +5,7 @@ import Quickshell
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import "../common/widgets/SettingsLayoutPolicy.js" as LayoutPolicy
 
 ContentPage {
     id: root
@@ -169,20 +170,18 @@ ContentPage {
         title: Translation.tr("Per-area Overrides")
 
         SettingsGroup {
-            Repeater {
-                model: root.areaDescriptors
-                delegate: ColumnLayout {
-                    required property var modelData
-                    required property int index
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    spacing: SettingsMaterialPreset.groupSpacing
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 16
+                rowSpacing: 8
 
-                    SettingsDivider {
-                        visible: index > 0
-                    }
-
-                    RowLayout {
+                Repeater {
+                    model: root.areaDescriptors
+                    delegate: RowLayout {
+                        required property var modelData
+                        required property int index
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
                         spacing: 10
@@ -200,7 +199,7 @@ ContentPage {
                             elide: Text.ElideRight
                         }
                         StyledComboBox {
-                            Layout.preferredWidth: Math.min(220, Math.max(168, Math.round(parent.width * 0.34)))
+                            Layout.preferredWidth: Math.min(200, Math.max(148, Math.round(parent.width * 0.42)))
                             readonly property var options: [{ displayName: Translation.tr("Inherit"), value: "inherit" }].concat(root.backendOptions)
                             model: options
                             textRole: "displayName"
@@ -224,15 +223,17 @@ ContentPage {
 
         SettingsGroup {
             GridLayout {
+                id: wallpaperEffectFlags
                 Layout.fillWidth: true
-                columns: width >= 460 ? 3 : 1
-                uniformCellWidths: columns > 1
+                columns: Config.options?.panelFamily === "abyss"
+                    ? LayoutPolicy.fittedControlColumns(wallpaperEffectFlags, 3) : (width >= 460 ? 3 : 1)
+                uniformCellWidths: Config.options?.panelFamily !== "abyss" && columns > 1
                 columnSpacing: 12
                 rowSpacing: 8
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
                     Layout.minimumWidth: 0
                     buttonIcon: "blur_on"
                     text: Translation.tr("Blur behind windows")
@@ -243,7 +244,7 @@ ContentPage {
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
                     Layout.minimumWidth: 0
                     buttonIcon: "water_drop"
                     text: Translation.tr("Wallpaper ripple")
@@ -253,7 +254,7 @@ ContentPage {
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
                     Layout.minimumWidth: 0
                     buttonIcon: "opacity"
                     text: Translation.tr("Transparency")
@@ -266,16 +267,18 @@ ContentPage {
             SettingsDivider {}
 
             GridLayout {
+                id: wallpaperEffectValues
                 Layout.fillWidth: true
-                columns: width >= 520 ? 3 : 1
-                uniformCellWidths: columns > 1
+                columns: Config.options?.panelFamily === "abyss"
+                    ? LayoutPolicy.fittedControlColumns(wallpaperEffectValues, 3) : (width >= 520 ? 3 : 1)
+                uniformCellWidths: Config.options?.panelFamily !== "abyss" && columns > 1
                 columnSpacing: 12
                 rowSpacing: 8
 
                 ConfigSpinBox {
                     enabled: Config.options?.background?.effects?.enableBlur ?? false
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
                     Layout.minimumWidth: 0
                     icon: "blur_medium"
                     text: Translation.tr("Blur radius")
@@ -288,7 +291,7 @@ ContentPage {
 
                 ConfigSpinBox {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
                     Layout.minimumWidth: 0
                     icon: "brightness_6"
                     text: Translation.tr("Dim (%)")
@@ -302,7 +305,7 @@ ContentPage {
 
                 ConfigSpinBox {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
                     Layout.minimumWidth: 0
                     icon: "brightness_low"
                     text: Translation.tr("Window dim (%)")

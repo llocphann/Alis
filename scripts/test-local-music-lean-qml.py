@@ -24,7 +24,7 @@ def main():
     args = parser.parse_args()
     source = (ROOT / "services/LocalMusic.qml").read_text()
     functions = "\n".join(re.search(r"^    function " + name + r"\(.*?^    }", source, re.M | re.S)[0]
-                          for name in ["_applyCurrentTrack", "_applyPayload"])
+                          for name in ["_safeValidDuration", "_safeBoundedPosition", "_reanchorLyricsPosition", "_probeCurrentDuration", "_applyCurrentTrack", "_applyPayload"])
     with tempfile.TemporaryDirectory(prefix="alis-lean-qv4-") as name:
         folder = Path(name)
         (folder / "services").mkdir()
@@ -51,8 +51,9 @@ import Quickshell
 import Quickshell.Io
 import qs.services
 ShellRoot {
- id:root
+ id:harness
  component Snapshot: QtObject {
+  id:root
   property bool mpdConnected:false
   property string error:"before"
   property string mpdHost:"private.invalid"
@@ -62,6 +63,7 @@ ShellRoot {
   property var playlists:[]
   property var activeQueue:[]
   property string mpdState:"stop"
+  readonly property bool playing: mpdState === "play"
   property int currentIndex:-1
   property int resumeIndex:-1
   property real currentPosition:0
@@ -71,10 +73,21 @@ ShellRoot {
   property int repeatMode:0
   property string currentUri:""
   property string currentPath:""
+  property int currentQueueId:-1
   property string currentTitle:""
   property string currentArtist:""
   property string currentAlbum:""
   property string currentArt:""
+  property real _lastMpdPositionSampleMs:0
+  property real _ignoreMprisUntilMs:0
+  property var _probedDurations:({})
+  property real _lyricsAnchorPos:0
+  property real _lyricsAnchorMs:0
+  property real _lyricsLivePos:0
+  property var mprisPlayer:null
+  property QtObject mprisGateExpiryTimer: QtObject { function restart() {} }
+  property QtObject _durationProbeProc: QtObject { property bool running:false; property string targetPath:""; property string output:""; property var command:[] }
+  function mprisMatchesCurrentTrack(): bool { return false }
   __FUNCTIONS__
  }
  Snapshot {id:before}
@@ -89,7 +102,7 @@ ShellRoot {
  function parity(){
   const keys=["mpdConnected","error","detectedLibraryFolder","libraryTracks","playlists","activeQueue",
     "mpdState","currentIndex","resumeIndex","currentPosition","currentDuration","volume","shuffleMode",
-    "repeatMode","currentUri","currentPath","currentTitle","currentArtist","currentAlbum","currentArt"]
+    "repeatMode","currentUri","currentPath","currentQueueId","currentTitle","currentArtist","currentAlbum","currentArt"]
   for(const state of ["play","pause","stop"])for(const song of [-1,0,2,99])for(const library of [false,true]){
    const a=JSON.parse(full.text()),b=JSON.parse(lean.text())
    a.status.state=b.status.state=state;a.status.song=b.status.song=song
@@ -119,14 +132,14 @@ ShellRoot {
   timings.push({round:round,mode:label,milliseconds:Date.now()-start,iterations:8})
  }
  Timer {interval:50;running:true;repeat:true;onTriggered:{try{
-  if(root.round===0)root.parity()
+  if(harness.round===0)harness.parity()
   if(Quickshell.env("FIXTURE_BENCHMARK")==="1"){
-   if(root.round%2===0){root.measure("full");root.measure("lean")}
-   else{root.measure("lean");root.measure("full")}
+   if(harness.round%2===0){harness.measure("full");harness.measure("lean")}
+   else{harness.measure("lean");harness.measure("full")}
   }
-  root.round++
-  if(root.round===(Quickshell.env("FIXTURE_BENCHMARK")==="1"?8:1)){
-   console.info("LEAN_QML_RESULT",JSON.stringify({checks:root.checks,timings:root.timings,scope:"QV4 synthetic JSON parse and production interpreter methods; no GPU or whole-shell gain"}))
+  harness.round++
+  if(harness.round===(Quickshell.env("FIXTURE_BENCHMARK")==="1"?8:1)){
+   console.info("LEAN_QML_RESULT",JSON.stringify({checks:harness.checks,timings:harness.timings,scope:"QV4 synthetic JSON parse and production interpreter methods; no GPU or whole-shell gain"}))
    Qt.quit()
   }
  }catch(e){console.error("LEAN_QML_FAIL",e.message,e.stack);Qt.quit()}}}

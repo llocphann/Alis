@@ -1268,9 +1268,10 @@ ApplicationWindow {
                 id: navRailWrapper
                 objectName: "settingsWindowNavRail"
                 Layout.fillHeight: true
+                readonly property bool compact: SettingsMaterialPreset.useCompactNav(windowMainFrame.width, root.navEditMode || SettingsLayoutManager.editMode)
                 readonly property real targetRailWidth: SettingsMaterialPreset.waffle
                     ? Math.min(SettingsMaterialPreset.waffleRailWidth, Math.max(216, Math.round(windowMainFrame.width * 0.24)))
-                    : 204
+                    : (compact ? SettingsMaterialPreset.compactNavWidth : 204)
                 Layout.preferredWidth: targetRailWidth
                 implicitWidth: targetRailWidth
 
@@ -1337,6 +1338,7 @@ ApplicationWindow {
 
                             delegate: RippleButton {
                                 id: navHeadingGroup
+                                Accessible.name: navHeadingGroup.headingTitle
                                 required property int index
                                 required property var modelData
                                 readonly property string headingTitle: String(navHeadingGroup.modelData?.label ?? "")
@@ -1406,6 +1408,12 @@ ApplicationWindow {
                                     color: SettingsMaterialPreset.accentColor
                                 }
 
+                                StyledToolTip {
+                                    position: "right"
+                                    extraVisibleCondition: navRailWrapper.compact
+                                    text: navHeadingGroup.headingTitle
+                                }
+
                                 contentItem: RowLayout {
                                     anchors.fill: parent
                                     anchors.leftMargin: 10
@@ -1413,7 +1421,7 @@ ApplicationWindow {
                                     spacing: 9
 
                                     MaterialSymbol {
-                                        Layout.alignment: Qt.AlignVCenter
+                                        Layout.alignment: navRailWrapper.compact ? Qt.AlignCenter : Qt.AlignVCenter
                                         text: navHeadingGroup.groupPages.length > 0
                                             ? SettingsPageRegistry.iconForPage(navHeadingGroup.groupPages[0].realIndex)
                                             : "folder"
@@ -1425,6 +1433,7 @@ ApplicationWindow {
                                     }
 
                                     StyledText {
+                                        visible: !navRailWrapper.compact
                                         Layout.alignment: Qt.AlignVCenter
                                         Layout.fillWidth: true
                                         verticalAlignment: Text.AlignVCenter
@@ -1449,6 +1458,7 @@ ApplicationWindow {
 
                             delegate: RippleButton {
                                 id: windowCustomNavBtn
+                                Accessible.name: windowCustomNavBtn.tabLabel
                                 required property int index
                                 required property var modelData
                                 readonly property string tabId: String(modelData?.id ?? "")
@@ -1490,14 +1500,20 @@ ApplicationWindow {
                                     SettingsLayoutManager.activeCustomTabId = tabId
                                 }
 
+                                StyledToolTip {
+                                    position: "right"
+                                    extraVisibleCondition: navRailWrapper.compact
+                                    text: windowCustomNavBtn.tabLabel
+                                }
+
                                 contentItem: RowLayout {
                                     anchors.fill: parent
                                     anchors.leftMargin: 10
-                                    anchors.rightMargin: 6
+                                    anchors.rightMargin: navRailWrapper.compact ? 10 : 6
                                     spacing: 8
 
                                     MaterialSymbol {
-                                        Layout.alignment: Qt.AlignVCenter
+                                        Layout.alignment: navRailWrapper.compact ? Qt.AlignCenter : Qt.AlignVCenter
                                         text: String(windowCustomNavBtn.modelData?.icon || "dashboard_customize")
                                         iconSize: 18
                                         color: windowCustomNavBtn.isActiveCustomTab
@@ -1506,6 +1522,7 @@ ApplicationWindow {
                                     }
 
                                     StyledText {
+                                        visible: !navRailWrapper.compact
                                         Layout.alignment: Qt.AlignVCenter
                                         Layout.fillWidth: true
                                         verticalAlignment: Text.AlignVCenter
@@ -1651,6 +1668,7 @@ ApplicationWindow {
 
                     RippleButton {
                         id: windowLayoutEditToggle
+                        Accessible.name: windowLayoutEditToggleLabel.text
                         objectName: "windowLayoutEditToggle"
                         readonly property color editSurface: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedColor : Appearance.colors.colPrimaryContainer
                         readonly property color editSurfaceHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedHoverColor : Appearance.colors.colPrimaryContainerHover
@@ -1673,11 +1691,11 @@ ApplicationWindow {
                         contentItem: RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 10
-                            anchors.rightMargin: 8
+                            anchors.rightMargin: navRailWrapper.compact ? 10 : 8
                             spacing: 10
 
                             MaterialSymbol {
-                                Layout.alignment: Qt.AlignVCenter
+                                Layout.alignment: navRailWrapper.compact ? Qt.AlignCenter : Qt.AlignVCenter
                                 text: SettingsLayoutManager.editMode ? "done" : "space_dashboard"
                                 iconSize: 18
                                 color: SettingsLayoutManager.editMode
@@ -1686,6 +1704,8 @@ ApplicationWindow {
                             }
 
                             StyledText {
+                                id: windowLayoutEditToggleLabel
+                                visible: !navRailWrapper.compact
                                 Layout.alignment: Qt.AlignVCenter
                                 Layout.fillWidth: true
                                 verticalAlignment: Text.AlignVCenter
@@ -1713,6 +1733,7 @@ ApplicationWindow {
 
                     RippleButton {
                         id: navEditToggle
+                        Accessible.name: navEditToggleLabel.text
                         readonly property color editSurface: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedColor : Appearance.colors.colPrimaryContainer
                         readonly property color editSurfaceHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedHoverColor : Appearance.colors.colPrimaryContainerHover
                         readonly property color editForeground: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.textColor : Appearance.colors.colOnPrimaryContainer
@@ -1730,11 +1751,11 @@ ApplicationWindow {
                         contentItem: RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 10
-                            anchors.rightMargin: 8
+                            anchors.rightMargin: navRailWrapper.compact ? 10 : 8
                             spacing: 10
 
                             MaterialSymbol {
-                                Layout.alignment: Qt.AlignVCenter
+                                Layout.alignment: navRailWrapper.compact ? Qt.AlignCenter : Qt.AlignVCenter
                                 text: root.navEditMode ? "done" : "edit"
                                 iconSize: 18
                                 color: root.navEditMode
@@ -1743,6 +1764,8 @@ ApplicationWindow {
                             }
 
                             StyledText {
+                                id: navEditToggleLabel
+                                visible: !navRailWrapper.compact
                                 Layout.alignment: Qt.AlignVCenter
                                 Layout.fillWidth: true
                                 verticalAlignment: Text.AlignVCenter
@@ -1770,6 +1793,7 @@ ApplicationWindow {
 
                     RippleButton {
                         id: configFileBtn
+                        Accessible.name: configFileBtnLabel.text
                         property bool justCopied: false
                         Layout.fillWidth: true
                         implicitHeight: 36
@@ -1793,17 +1817,19 @@ ApplicationWindow {
                         contentItem: RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 10
-                            anchors.rightMargin: 8
+                            anchors.rightMargin: navRailWrapper.compact ? 10 : 8
                             spacing: 10
 
                             MaterialSymbol {
-                                Layout.alignment: Qt.AlignVCenter
-                                text: configFileBtn.justCopied ? "check" : "edit"
+                                Layout.alignment: navRailWrapper.compact ? Qt.AlignCenter : Qt.AlignVCenter
+                                text: configFileBtn.justCopied ? "check" : (navRailWrapper.compact ? "description" : "edit")
                                 iconSize: 18
                                 color: SettingsMaterialPreset.secondaryTextColor
                             }
 
                             StyledText {
+                                id: configFileBtnLabel
+                                visible: !navRailWrapper.compact
                                 Layout.alignment: Qt.AlignVCenter
                                 Layout.fillWidth: true
                                 verticalAlignment: Text.AlignVCenter
@@ -1825,6 +1851,7 @@ ApplicationWindow {
 
                     RippleButton {
                         id: overlayToggleBtn
+                        Accessible.name: overlayToggleBtnLabel.text
                         Layout.fillWidth: true
                         implicitHeight: 36
                         buttonRadius: SettingsMaterialPreset.navItemRadius
@@ -1839,17 +1866,19 @@ ApplicationWindow {
                         contentItem: RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 10
-                            anchors.rightMargin: 8
+                            anchors.rightMargin: navRailWrapper.compact ? 10 : 8
                             spacing: 10
 
                             MaterialSymbol {
-                                Layout.alignment: Qt.AlignVCenter
+                                Layout.alignment: navRailWrapper.compact ? Qt.AlignCenter : Qt.AlignVCenter
                                 text: "layers"
                                 iconSize: 18
                                 color: SettingsMaterialPreset.secondaryTextColor
                             }
 
                             StyledText {
+                                id: overlayToggleBtnLabel
+                                visible: !navRailWrapper.compact
                                 Layout.alignment: Qt.AlignVCenter
                                 Layout.fillWidth: true
                                 verticalAlignment: Text.AlignVCenter

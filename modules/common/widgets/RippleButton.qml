@@ -63,7 +63,7 @@ Button {
         if (!root.buttonHovered && targetColor.a === 0 && hoverColor.a > 0)
             targetColor = ColorUtils.applyAlpha(hoverColor, 0)
 
-        return ColorUtils.transparentize(targetColor, root.enabled ? 0 : 1)
+        return ColorUtils.transparentize(targetColor, root.enabled ? 0 : (root.toggled ? 0.65 : 1))
     }
     property color rippleColor: root.toggled ? colRippleToggled : colRipple
 

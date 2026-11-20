@@ -84,7 +84,7 @@ WBarAttachedPanelContent {
             SearchBar {
                 id: searchBar
                 Layout.fillWidth: true
-                implicitWidth: Looks.dp(600)
+                implicitWidth: Looks.startMenuPageWidth
                 horizontalPadding: root.searching
                     ? Looks.dp(16)
                     : Looks.dp(24)
@@ -97,8 +97,8 @@ WBarAttachedPanelContent {
             }
             
             Item {
-                implicitHeight: Looks.dp(520)
-                implicitWidth: Looks.dp(600)
+                implicitHeight: Looks.startMenuPageHeight
+                implicitWidth: Looks.startMenuPageWidth
                 Layout.fillWidth: true
                 clip: true
 

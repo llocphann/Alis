@@ -59,7 +59,7 @@ ContentPage {
                 GridLayout {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    columns: width >= 360 ? 2 : 1
+                    columns: width >= (Config.options?.panelFamily === "abyss" ? 580 * Appearance.fontSizeScale : 360) ? 2 : 1
                     uniformCellWidths: columns === 2
                     columnSpacing: 10
                     rowSpacing: 8
@@ -383,7 +383,7 @@ ContentPage {
                 GridLayout {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    columns: width >= 360 ? 2 : 1
+                    columns: width >= (Config.options?.panelFamily === "abyss" ? 580 * Appearance.fontSizeScale : 360) ? 2 : 1
                     uniformCellWidths: columns === 2
                     columnSpacing: 10
                     rowSpacing: 8

@@ -14,7 +14,7 @@ const keyBody=source.match(/Keys.onPressed:event=>\{([\s\S]*?)\n    \}/)[1];
 const GlobalStates={wallpaperLauncherMode:'static',wallpaperLauncherSearchText:'saved query',wallpaperLauncherOpen:true};
 let focus=0,sync=0;
 const Qt={Key_Escape:1,Key_Left:2,Key_Up:3,Key_Right:4,Key_Down:5,Key_Return:6,Key_Enter:7,Key_Tab:8,Key_Backtab:9,ControlModifier:1,callLater:fn=>fn()};
-const context={GlobalStates,Qt,carousel:{syncCurrentIndexAndPreview:()=>sync++},moveSelection:()=>{},activateCurrent:()=>{}};
+const context={GlobalStates,Qt,carousel:{scheduleIndexSync:()=>sync++},moveSelection:()=>{},activateCurrent:()=>{}};
 vm.createContext(context);
 context.setMode=mode=>{context.nextMode=mode;vm.runInContext('(function(){'+modeBody+'})()',context)};
 function mount(){

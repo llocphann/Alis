@@ -6,6 +6,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import "../../common/widgets/SettingsLayoutPolicy.js" as LayoutPolicy
 import qs.modules.abyss.looks
 import "../../common/PanelFamilyPolicy.js" as FamilyPolicy
 import "../looks/AbyssWave.js" as Wave
@@ -34,6 +35,8 @@ ColumnLayout {
         && root.sections.includes("waves") && root.sections.includes("spectrum")
         && root.sections.includes("interaction")
     readonly property var waveValues: Wave.parameters(Config.options?.abyss?.waves)
+    // Each column needs room for a label, a usable track, and a numeric value.
+    readonly property real pairedSliderWidth: 340 * Appearance.fontSizeScale
 
     function spectrumChange(key, value): void {
         const options = Config.options?.abyss?.spectrum
@@ -73,7 +76,7 @@ ColumnLayout {
         Layout.preferredWidth: 1
         Layout.minimumWidth: 0
         spacing: 8
-        implicitHeight: Math.round(32 * Appearance.fontSizeScale)
+        implicitHeight: Math.max(Math.round(32 * Appearance.fontSizeScale), slider.implicitHeight)
 
         Item {
             visible: row.toggleIcon.length > 0
@@ -100,6 +103,7 @@ ColumnLayout {
         }
 
         StyledText {
+            Layout.fillWidth: slider.isVertical || slider.customLength > 0
             Layout.preferredWidth: (row.toggleIcon.length > 0 ? 172 : 188) * Appearance.fontSizeScale
             Layout.minimumWidth: 84 * Appearance.fontSizeScale
             Layout.alignment: Qt.AlignVCenter
@@ -110,8 +114,10 @@ ColumnLayout {
         }
 
         StyledSlider {
-            Layout.fillWidth: true
-            Layout.minimumWidth: 64 * Appearance.fontSizeScale
+            id: slider
+            Layout.fillWidth: !isVertical && customLength <= 0
+            Layout.minimumWidth: isVertical ? implicitWidth : Math.min(64 * Appearance.fontSizeScale, implicitWidth)
+            Layout.maximumWidth: isVertical || customLength > 0 ? implicitWidth : Infinity
             Layout.alignment: Qt.AlignVCenter
             configuration: StyledSlider.Configuration.S
             from: row.from
@@ -262,9 +268,9 @@ ColumnLayout {
             SettingsDivider {}
 
             GridLayout {
+                id: qualitySwitches
                 Layout.fillWidth: true
-                columns: width >= 460 ? 3 : 1
-                uniformCellWidths: columns > 1
+                columns: LayoutPolicy.fittedControlColumns(qualitySwitches, 3)
                 columnSpacing: 12
                 rowSpacing: 6
 
@@ -387,7 +393,7 @@ ColumnLayout {
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: width >= 520 ? 2 : 1
+                columns: width >= 2 * root.pairedSliderWidth + columnSpacing ? 2 : 1
                 uniformCellWidths: columns === 2
                 columnSpacing: 16
                 rowSpacing: 6
@@ -501,7 +507,7 @@ ColumnLayout {
             GridLayout {
                 id: wavesCommonSlidersGrid
                 Layout.fillWidth: true
-                columns: width >= 520 ? 2 : 1
+                columns: width >= 2 * root.pairedSliderWidth + columnSpacing ? 2 : 1
                 uniformCellWidths: columns === 2
                 columnSpacing: 16
                 rowSpacing: 6
@@ -529,8 +535,8 @@ ColumnLayout {
             GridLayout {
                 id: wavesCommonSwitchesGrid
                 Layout.fillWidth: true
-                columns: width >= 460 ? 3 : 1
-                uniformCellWidths: columns > 1
+                columns: LayoutPolicy.fittedControlColumns(wavesCommonSwitchesGrid, 3)
+                uniformCellWidths: false
                 columnSpacing: 12
                 rowSpacing: 6
 
@@ -567,7 +573,7 @@ ColumnLayout {
                 id: wavesCustomGrid
                 Layout.fillWidth: true
                 visible: (Config.options?.abyss?.waves?.preset ?? "balanced") === "custom"
-                columns: width >= 520 ? 2 : 1
+                columns: width >= 2 * root.pairedSliderWidth + columnSpacing ? 2 : 1
                 uniformCellWidths: columns === 2
                 columnSpacing: 16
                 rowSpacing: 6
@@ -586,7 +592,7 @@ ColumnLayout {
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: width >= 520 ? 2 : 1
+                columns: width >= 2 * root.pairedSliderWidth + columnSpacing ? 2 : 1
                 uniformCellWidths: columns === 2
                 columnSpacing: 16
                 rowSpacing: 6
@@ -1107,7 +1113,7 @@ ColumnLayout {
 
                 GridLayout {
                     Layout.fillWidth: true
-                    columns: width >= 360 ? 2 : 1
+                    columns: width >= 540 * Appearance.fontSizeScale ? 2 : 1
                     uniformCellWidths: columns === 2
                     columnSpacing: 10
                     rowSpacing: 8

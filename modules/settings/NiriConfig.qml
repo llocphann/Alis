@@ -1509,6 +1509,11 @@ ContentPage {
         }
     }
 
+    component NiriFieldSlider: StyledSlider {
+        Layout.fillWidth: !isVertical && customLength <= 0
+        Layout.maximumWidth: isVertical || customLength > 0 ? implicitWidth : Math.round(520 * Appearance.fontSizeScale)
+    }
+
     SettingsTaskNavigator {
         showTabBar: true
         showIntro: false
@@ -1535,15 +1540,17 @@ ContentPage {
         title: Translation.tr("Monitors & Arrangement")
 
         SettingsGroup {
+            id: arrangementFields
+            fieldColumns: width >= 700 * Appearance.fontSizeScale ? 2 : 1
             MonitorVisibilityConfig {
                 id: niriArrangementEmbed
                 visible: CompositorService.isNiri
                 embeddedArrangementOnly: true
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                Layout.preferredHeight: 320
-                implicitHeight: 320
-                height: 320
+                settingsFormPreview: true
+                Layout.preferredHeight: implicitHeight
+                implicitHeight: niriOutputNames().length > 1 ? 300 : 215
                 interactive: false
                 activeSection: "outputs"
             }
@@ -1553,8 +1560,8 @@ ContentPage {
                 visible: !CompositorService.isNiri
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                Layout.preferredHeight: 280
-                implicitHeight: 280
+                Layout.preferredHeight: implicitHeight
+                implicitHeight: 184 * Appearance.fontSizeScale
                 radius: Appearance.rounding.normal
                 color: Appearance.colors.colLayer1
                 border.width: 1
@@ -1763,41 +1770,55 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Scale")
+            GridLayout {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                visible: root.currentOutput !== null
+                columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 16
+                rowSpacing: 12
 
-                Flow {
+                ContentSubsection {
                     Layout.fillWidth: true
-                    spacing: 6
-                    visible: root.currentOutput !== null
+                    Layout.minimumWidth: 0
+                    Layout.alignment: Qt.AlignTop
+                    title: Translation.tr("Scale")
 
-                    Repeater {
-                        model: [0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
-                        delegate: RippleButton {
-                            required property real modelData
-                            readonly property bool activeScale: Math.abs((root.currentOutput?.scale ?? 1.0) - modelData) < 0.01
-                            enabled: !root.displayControlsLocked
-                            implicitHeight: 28
-                            implicitWidth: Math.max(52, scalePillLabel.implicitWidth + 18)
-                            buttonRadius: Appearance.rounding.full
-                            toggled: activeScale
-                            onClicked: root.safeApplyOutput("scale", "scale", String(modelData))
-                            contentItem: StyledText {
-                                id: scalePillLabel
-                                anchors.centerIn: parent
-                                text: Math.round(parent.modelData * 100) + "%"
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                font.family: Appearance.font.family.monospace
-                                color: parent.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Repeater {
+                            model: [0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
+                            delegate: RippleButton {
+                                required property real modelData
+                                readonly property bool activeScale: Math.abs((root.currentOutput?.scale ?? 1.0) - modelData) < 0.01
+                                enabled: !root.displayControlsLocked
+                                implicitHeight: 28
+                                implicitWidth: Math.max(52, scalePillLabel.implicitWidth + 18)
+                                buttonRadius: Appearance.rounding.full
+                                toggled: activeScale
+                                colBackground: Appearance.colors.colLayer2
+                                colBackgroundHover: Appearance.colors.colLayer2Hover
+                                colBackgroundToggled: Appearance.colors.colPrimary
+                                colBackgroundToggledHover: Appearance.colors.colPrimaryHover
+                                onClicked: root.safeApplyOutput("scale", "scale", String(modelData))
+                                contentItem: StyledText {
+                                    id: scalePillLabel
+                                    anchors.centerIn: parent
+                                    text: Math.round(parent.modelData * 100) + "%"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.family: Appearance.font.family.monospace
+                                    color: parent.toggled
+                                        ? (parent.enabled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1)
+                                        : Appearance.colors.colOnLayer1
+                                }
                             }
                         }
                     }
-                }
-
-                ConfigRow {
-                    uniform: true
 
                     StyledComboBox {
                         id: scaleCombo
@@ -1807,6 +1828,13 @@ ContentPage {
                         textRole: "displayName"
                         onActivated: root.safeApplyOutput("scale", "scale", String(model[currentIndex].value))
                     }
+                }
+
+                ContentSubsection {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.alignment: Qt.AlignTop
+                    title: Translation.tr("Rotation")
 
                     StyledComboBox {
                         id: rotationCombo
@@ -2253,9 +2281,8 @@ ContentPage {
                 Layout.fillWidth: true
                 spacing: 8
 
-                StyledSlider {
+                NiriFieldSlider {
                     id: nightTempSlider
-                    Layout.fillWidth: true
                     from: 1200
                     to: 6500
                     stepSize: 100
@@ -2313,6 +2340,8 @@ ContentPage {
         title: Translation.tr("Window Rules")
 
     SettingsGroup {
+            id: rulesFields
+            fieldColumns: width >= 700 * Appearance.fontSizeScale ? 2 : 1
         ContentSubsection {
             title: Translation.tr("Corner radius")
             tooltip: Translation.tr("Rounding applied to window corners (0 = square)")
@@ -2321,9 +2350,8 @@ ContentPage {
                 Layout.fillWidth: true
                 spacing: 8
 
-                StyledSlider {
+                NiriFieldSlider {
                     id: cornerRadiusSlider
-                    Layout.fillWidth: true
                     from: 0
                     to: 32
                     value: root.windowRulesData?.corner_radius ?? 16
@@ -2356,9 +2384,8 @@ ContentPage {
                 Layout.fillWidth: true
                 spacing: 8
 
-                StyledSlider {
+                NiriFieldSlider {
                     id: inactiveOpacitySlider
-                    Layout.fillWidth: true
                     from: 0
                     to: 100
                     value: Math.round((root.windowRulesData?.inactive_opacity ?? 0.9) * 100)
@@ -2384,6 +2411,7 @@ ContentPage {
         }
 
         ConfigRow {
+            Layout.columnSpan: rulesFields.activeColumns
             uniform: true
 
             SettingsSwitch {
@@ -2419,8 +2447,11 @@ ContentPage {
         title: Translation.tr("Motion & Animations")
 
         SettingsGroup {
+            id: motionFields
+            fieldColumns: width >= 700 * Appearance.fontSizeScale ? 2 : 1
             Rectangle {
                 id: motionPreviewStage
+                Layout.alignment: Qt.AlignTop
                 objectName: "niriMotionPreviewStage"
                 Layout.fillWidth: true
                 implicitHeight: 92
@@ -2524,9 +2555,8 @@ ContentPage {
                 Layout.fillWidth: true
                 spacing: 8
 
-                StyledSlider {
+                NiriFieldSlider {
                     id: slowdownSlider
-                    Layout.fillWidth: true
                     from: 50
                     to: 500
                     value: Math.round((root.animationsData?.slowdown ?? 1.0) * 100)
@@ -3127,7 +3157,10 @@ ContentPage {
         title: Translation.tr("Mouse")
 
     SettingsGroup {
+            id: mouseFields
+            fieldColumns: width >= 700 * Appearance.fontSizeScale ? 2 : 1
         ConfigRow {
+            Layout.columnSpan: mouseFields.activeColumns
             uniform: true
             SettingsSwitch {
                 id: focusFollowsMouseSwitch
@@ -3155,6 +3188,7 @@ ContentPage {
         }
 
         ConfigRow {
+            Layout.columnSpan: mouseFields.activeColumns
             uniform: true
 
             SettingsSwitch {
@@ -3183,6 +3217,7 @@ ContentPage {
         }
 
         ConfigRow {
+            Layout.columnSpan: mouseFields.activeColumns
             uniform: true
 
             SettingsSwitch {
@@ -3210,9 +3245,10 @@ ContentPage {
             }
         }
 
-        SettingsDivider {}
+        SettingsDivider { Layout.columnSpan: mouseFields.activeColumns }
 
         ConfigRow {
+            Layout.columnSpan: mouseFields.activeColumns
             uniform: true
 
             ConfigSpinBox {
@@ -3240,6 +3276,7 @@ ContentPage {
         }
 
         ContentSubsection {
+            Layout.columnSpan: mouseFields.activeColumns
             title: Translation.tr("Mouse acceleration & speed")
 
             ConfigSelectionArray {
@@ -3257,9 +3294,8 @@ ContentPage {
                 Layout.fillWidth: true
                 spacing: 8
 
-                StyledSlider {
+                NiriFieldSlider {
                     id: mouseSpeedSlider
-                    Layout.fillWidth: true
                     from: -100
                     to: 100
                     value: Math.round((root.mouseData?.accel_speed ?? 0) * 100)
@@ -3284,7 +3320,7 @@ ContentPage {
             }
         }
 
-        SettingsDivider {}
+        SettingsDivider { Layout.columnSpan: mouseFields.activeColumns }
 
         ContentSubsection {
             Layout.fillWidth: true
@@ -3313,9 +3349,8 @@ ContentPage {
             Layout.fillWidth: true
             spacing: 8
 
-            StyledSlider {
+            NiriFieldSlider {
                 id: cursorSizeSlider
-                Layout.fillWidth: true
                 from: 16
                 to: 48
                 value: root.cursorData?.size ?? 24
@@ -3798,9 +3833,8 @@ ContentPage {
                     Layout.fillWidth: true
                     spacing: 8
 
-                    StyledSlider {
+                    NiriFieldSlider {
                         id: touchpadSpeedSlider
-                        Layout.fillWidth: true
                         from: -100
                         to: 100
                         value: Math.round((root.touchpadData?.accel_speed ?? 0) * 100)
@@ -3944,9 +3978,8 @@ ContentPage {
                     Layout.fillWidth: true
                     spacing: 8
 
-                    StyledSlider {
+                    NiriFieldSlider {
                         id: trackpointSpeedSlider
-                        Layout.fillWidth: true
                         from: -100
                         to: 100
                         value: Math.round((root.trackpointData?.accel_speed ?? 0) * 100)

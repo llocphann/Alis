@@ -6,8 +6,13 @@ import qs.modules.common
 import qs.modules.common.widgets
 
 SettingsGroup {
-    ConfigRow {
-        uniform: true
+    GridLayout {
+        id: libraryGrid
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        columns: width >= 520 * Appearance.fontSizeScale ? 2 : 1
+        columnSpacing: 12
+        rowSpacing: 8
 
         ContentSubsection {
             Layout.fillWidth: true
@@ -19,17 +24,19 @@ SettingsGroup {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 36
+                    Layout.minimumWidth: 0
+                    implicitHeight: Math.max(36, pathText.implicitHeight + 12)
                     radius: Appearance.rounding.small
                     color: Appearance.colors.colLayer2
 
                     StyledText {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        verticalAlignment: Text.AlignVCenter
+                        id: pathText
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.margins: 12
+                        wrapMode: Text.Wrap
                         text: LocalMusic.libraryFolder
-                        elide: Text.ElideMiddle
                         color: Appearance.colors.colSubtext
                     }
                 }
@@ -52,9 +59,13 @@ SettingsGroup {
 
         ContentSubsection {
             Layout.fillWidth: true
+            Layout.minimumWidth: portControl.implicitWidth
+            Layout.preferredWidth: portControl.implicitWidth
+            Layout.maximumWidth: libraryGrid.columns === 2 ? portControl.implicitWidth : Infinity
             title: Translation.tr("MPD")
 
             ConfigSpinBox {
+                id: portControl
                 Layout.fillWidth: true
                 text: Translation.tr("Port")
                 value: Config.options?.sidebar?.music?.mpdPort ?? 6600

@@ -67,6 +67,14 @@ Singleton {
         maximum = maximum ?? 1.18
         return Math.round(value * root.barScale(screen, minimum, maximum) * root.fontScale)
     }
+    readonly property int startMenuPageWidth: dp(600)
+    readonly property int startMenuPageHeight: dp(520)
+    readonly property int startMenuSearchPadding: 16
+    readonly property int startMenuSearchFieldHeight: 32
+    readonly property int startMenuPaneWidth: startMenuPageWidth + 2
+    readonly property int startMenuPaneHeight: startMenuPageHeight
+        + startMenuSearchFieldHeight + 2 * startMenuSearchPadding + 2
+
     function dp(value) {
         return Math.round(value * root.fontScale)
     }

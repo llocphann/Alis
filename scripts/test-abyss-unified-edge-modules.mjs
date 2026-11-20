@@ -378,4 +378,46 @@ for (const kind of ["notesTimers","notificationActivity"]) {
             "waffle family not controlled by Abyss access mode");
     }
 }
+
+// Resizing QuickNotes or Notifications must scale the Screen Edge / Corner bump
+// continuously alongside the icon, rather than clamping depth flat at 48px.
+for (const edge of edges) {
+    for (const kind of ["notesTimers", "notificationActivity"]) {
+        for (const thickness of [10, 16]) {
+            let prevDepth = 0, prevSpan = 0;
+            for (const scale of [0.6, 0.8, 1.0, 1.4, 1.8]) {
+                const mod = layout.normalize([{ id: kind, kind, edge, position: 0.1, showIcon: true, joinCorner: false }], edge);
+                const opts = {
+                    edgeThickness: thickness,
+                    edgeThicknesses: { [edge]: -1 },
+                    edgeSizes: { [edge]: scale },
+                    edgeWidthAffectsModules: { [edge]: false },
+                    size: 1
+                };
+                const records = layout.geometry(mod, 1920, 1080, opts, 1);
+                const surfaces = layout.localSurfaces(records, 1920, 1080, opts, 1, 48);
+                check(surfaces.length === 1, `unified resize surface missing ${kind} ${edge}`);
+                const s = surfaces[0];
+                const surfaceSpan = edge === "top" || edge === "bottom" ? s.surface.width : s.surface.height;
+                check(s.depth > prevDepth && surfaceSpan > prevSpan,
+                    `unified surface must grow monotonically at thickness=${thickness} scale=${scale} (${s.depth} vs ${prevDepth})`);
+                if (thickness === 16 && scale === 1.0)
+                    check(Math.abs(s.depth - 48) < 0.01, "default 16px/1.0x depth preserves 48px baseline");
+                prevDepth = s.depth;
+                prevSpan = surfaceSpan;
+            }
+        }
+        // Custom size overrides on a unified corner-joined module must also scale depth.
+        let prevCustomDepth = 0;
+        for (const custom of [0.6, 1.0, 1.5]) {
+            const cornerMod = layout.normalize([{ id: kind, kind, edge, position: 0.05, customSize: true, size: custom, joinCorner: true }], edge);
+            const opts = { edgeThickness: 10, edgeWidthAffectsModules: { [edge]: false } };
+            const records = layout.geometry(cornerMod, 1920, 1080, opts, 1);
+            const surfaces = layout.localSurfaces(records, 1920, 1080, opts, 1, 48);
+            check(surfaces.length === 1 && surfaces[0].depth > prevCustomDepth,
+                `corner-joined unified customSize=${custom} did not scale bump depth`);
+            prevCustomDepth = surfaces[0].depth;
+        }
+    }
+}
 console.log("ABYSS_R15_LAYOUT_POLICY_PASS",checks);

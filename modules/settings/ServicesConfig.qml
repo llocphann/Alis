@@ -58,42 +58,56 @@ ContentPage {
         title: Translation.tr("Idle, Sleep & GPU")
 
         SettingsGroup {
-            ConfigSpinBox {
-                icon: "monitor"
-                text: Translation.tr("Screen off") + ` (${value > 0 ? Math.floor(value/60) + "m " + (value%60) + "s" : Translation.tr("disabled")})`
-                value: Config.options?.idle?.screenOffTimeout ?? 300
-                from: 0
-                to: 3600
-                stepSize: 30
-                onValueChanged: Config.setNestedValue("idle.screenOffTimeout", value)
-                StyledToolTip {
-                    text: Translation.tr("Turn off display after this many seconds of inactivity (0 = never)")
-                }
-            }
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 16
+                rowSpacing: 8
 
-            ConfigSpinBox {
-                icon: "lock"
-                text: Translation.tr("Lock screen") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
-                value: Config.options?.idle?.lockTimeout ?? 600
-                from: 0
-                to: 3600
-                stepSize: 60
-                onValueChanged: Config.setNestedValue("idle.lockTimeout", value)
-                StyledToolTip {
-                    text: Translation.tr("Lock screen after this many seconds of inactivity (0 = never)")
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    icon: "monitor"
+                    text: Translation.tr("Screen off") + ` (${value > 0 ? Math.floor(value/60) + "m " + (value%60) + "s" : Translation.tr("disabled")})`
+                    value: Config.options?.idle?.screenOffTimeout ?? 300
+                    from: 0
+                    to: 3600
+                    stepSize: 30
+                    onValueChanged: Config.setNestedValue("idle.screenOffTimeout", value)
+                    StyledToolTip {
+                        text: Translation.tr("Turn off display after this many seconds of inactivity (0 = never)")
+                    }
                 }
-            }
 
-            ConfigSpinBox {
-                icon: "dark_mode"
-                text: Translation.tr("Suspend") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
-                value: Config.options?.idle?.suspendTimeout ?? 0
-                from: 0
-                to: 7200
-                stepSize: 60
-                onValueChanged: Config.setNestedValue("idle.suspendTimeout", value)
-                StyledToolTip {
-                    text: Translation.tr("Suspend system after this many seconds of inactivity (0 = never)")
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    icon: "lock"
+                    text: Translation.tr("Lock screen") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
+                    value: Config.options?.idle?.lockTimeout ?? 600
+                    from: 0
+                    to: 3600
+                    stepSize: 60
+                    onValueChanged: Config.setNestedValue("idle.lockTimeout", value)
+                    StyledToolTip {
+                        text: Translation.tr("Lock screen after this many seconds of inactivity (0 = never)")
+                    }
+                }
+
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    icon: "dark_mode"
+                    text: Translation.tr("Suspend") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
+                    value: Config.options?.idle?.suspendTimeout ?? 0
+                    from: 0
+                    to: 7200
+                    stepSize: 60
+                    onValueChanged: Config.setNestedValue("idle.suspendTimeout", value)
+                    StyledToolTip {
+                        text: Translation.tr("Suspend system after this many seconds of inactivity (0 = never)")
+                    }
                 }
             }
 
@@ -123,37 +137,49 @@ ContentPage {
                 onCheckedChanged: Config.setNestedValue("idle.onBattery.enable", checked)
             }
 
-            ConfigSpinBox {
+            GridLayout {
+                Layout.fillWidth: true
                 visible: Config.options?.idle?.onBattery?.enable ?? false
-                icon: "lock_clock"
-                text: Translation.tr("Battery: screen off") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
-                value: Config.options?.idle?.onBattery?.screenOffTimeout ?? 120
-                from: 0
-                to: 3600
-                stepSize: 30
-                onValueChanged: Config.setNestedValue("idle.onBattery.screenOffTimeout", value)
-            }
+                columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 16
+                rowSpacing: 8
 
-            ConfigSpinBox {
-                visible: Config.options?.idle?.onBattery?.enable ?? false
-                icon: "lock"
-                text: Translation.tr("Battery: lock") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
-                value: Config.options?.idle?.onBattery?.lockTimeout ?? 300
-                from: 0
-                to: 7200
-                stepSize: 30
-                onValueChanged: Config.setNestedValue("idle.onBattery.lockTimeout", value)
-            }
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    icon: "lock_clock"
+                    text: Translation.tr("Battery: screen off") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
+                    value: Config.options?.idle?.onBattery?.screenOffTimeout ?? 120
+                    from: 0
+                    to: 3600
+                    stepSize: 30
+                    onValueChanged: Config.setNestedValue("idle.onBattery.screenOffTimeout", value)
+                }
 
-            ConfigSpinBox {
-                visible: Config.options?.idle?.onBattery?.enable ?? false
-                icon: "dark_mode"
-                text: Translation.tr("Battery: suspend") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
-                value: Config.options?.idle?.onBattery?.suspendTimeout ?? 600
-                from: 0
-                to: 7200
-                stepSize: 60
-                onValueChanged: Config.setNestedValue("idle.onBattery.suspendTimeout", value)
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    icon: "lock"
+                    text: Translation.tr("Battery: lock") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
+                    value: Config.options?.idle?.onBattery?.lockTimeout ?? 300
+                    from: 0
+                    to: 7200
+                    stepSize: 30
+                    onValueChanged: Config.setNestedValue("idle.onBattery.lockTimeout", value)
+                }
+
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    icon: "dark_mode"
+                    text: Translation.tr("Battery: suspend") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
+                    value: Config.options?.idle?.onBattery?.suspendTimeout ?? 600
+                    from: 0
+                    to: 7200
+                    stepSize: 60
+                    onValueChanged: Config.setNestedValue("idle.onBattery.suspendTimeout", value)
+                }
             }
 
             SettingsDivider {}
@@ -240,42 +266,56 @@ ContentPage {
         title: Translation.tr("Updates")
 
         SettingsGroup {
-            ConfigSpinBox {
-                icon: "av_timer"
-                text: Translation.tr("Check interval") + ` (${value}m)`
-                value: Config.options?.updates?.checkInterval ?? 120
-                from: 15
-                to: 1440
-                stepSize: 15
-                onValueChanged: Config.setNestedValue("updates.checkInterval", value)
-                StyledToolTip {
-                    text: Translation.tr("How often to check for system updates (in minutes)")
-                }
-            }
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 16
+                rowSpacing: 8
 
-            ConfigSpinBox {
-                icon: "notifications"
-                text: Translation.tr("Show icon threshold")
-                value: Config.options?.updates?.adviseUpdateThreshold ?? 10
-                from: 1
-                to: 200
-                stepSize: 5
-                onValueChanged: Config.setNestedValue("updates.adviseUpdateThreshold", value)
-                StyledToolTip {
-                    text: Translation.tr("Show update icon in bar when available updates exceed this number")
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    icon: "av_timer"
+                    text: Translation.tr("Check interval") + ` (${value}m)`
+                    value: Config.options?.updates?.checkInterval ?? 120
+                    from: 15
+                    to: 1440
+                    stepSize: 15
+                    onValueChanged: Config.setNestedValue("updates.checkInterval", value)
+                    StyledToolTip {
+                        text: Translation.tr("How often to check for system updates (in minutes)")
+                    }
                 }
-            }
 
-            ConfigSpinBox {
-                icon: "warning"
-                text: Translation.tr("Warning threshold")
-                value: Config.options?.updates?.stronglyAdviseUpdateThreshold ?? 50
-                from: 10
-                to: 500
-                stepSize: 10
-                onValueChanged: Config.setNestedValue("updates.stronglyAdviseUpdateThreshold", value)
-                StyledToolTip {
-                    text: Translation.tr("Show warning color when available updates exceed this number")
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    icon: "notifications"
+                    text: Translation.tr("Show icon threshold")
+                    value: Config.options?.updates?.adviseUpdateThreshold ?? 10
+                    from: 1
+                    to: 200
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue("updates.adviseUpdateThreshold", value)
+                    StyledToolTip {
+                        text: Translation.tr("Show update icon in bar when available updates exceed this number")
+                    }
+                }
+
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    icon: "warning"
+                    text: Translation.tr("Warning threshold")
+                    value: Config.options?.updates?.stronglyAdviseUpdateThreshold ?? 50
+                    from: 10
+                    to: 500
+                    stepSize: 10
+                    onValueChanged: Config.setNestedValue("updates.stronglyAdviseUpdateThreshold", value)
+                    StyledToolTip {
+                        text: Translation.tr("Show warning color when available updates exceed this number")
+                    }
                 }
             }
 
@@ -307,24 +347,36 @@ ContentPage {
                 wrapMode: Text.WordWrap
             }
 
-            SettingsSwitch {
-                buttonIcon: "toggle_on"
-                text: Translation.tr("Enable shell update checker")
-                checked: Config.options?.shellUpdates?.enabled ?? true
-                onCheckedChanged: Config.setNestedValue("shellUpdates.enabled", checked)
-            }
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 16
+                rowSpacing: 8
 
-            ConfigSpinBox {
-                icon: "schedule"
-                text: Translation.tr("Check interval") + ` (${value}m)`
-                value: Config.options?.shellUpdates?.checkIntervalMinutes ?? 360
-                from: 30
-                to: 1440
-                stepSize: 30
-                onValueChanged: Config.setNestedValue("shellUpdates.checkIntervalMinutes", value)
-                enabled: Config.options?.shellUpdates?.enabled ?? true
-                StyledToolTip {
-                    text: Translation.tr("How often to check for Alis updates (in minutes). Default: 360 (6 hours)")
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "toggle_on"
+                    text: Translation.tr("Enable shell update checker")
+                    checked: Config.options?.shellUpdates?.enabled ?? true
+                    onCheckedChanged: Config.setNestedValue("shellUpdates.enabled", checked)
+                }
+
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    icon: "schedule"
+                    text: Translation.tr("Check interval") + ` (${value}m)`
+                    value: Config.options?.shellUpdates?.checkIntervalMinutes ?? 360
+                    from: 30
+                    to: 1440
+                    stepSize: 30
+                    onValueChanged: Config.setNestedValue("shellUpdates.checkIntervalMinutes", value)
+                    enabled: Config.options?.shellUpdates?.enabled ?? true
+                    StyledToolTip {
+                        text: Translation.tr("How often to check for Alis updates (in minutes). Default: 360 (6 hours)")
+                    }
                 }
             }
 
@@ -793,35 +845,57 @@ ContentPage {
                 }
             }
 
-            ColumnLayout {
+            GridLayout {
                 Layout.fillWidth: true
-                spacing: 4
+                columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 16
+                rowSpacing: 8
                 enabled: Config.options?.bar?.weather?.enable ?? false
 
-                StyledText {
-                    text: Translation.tr("City (leave empty to auto-detect)")
-                    color: Appearance.colors.colOnSurfaceVariant
-                    font.pixelSize: Appearance.font.pixelSize.small
-                }
-
-                MaterialTextField {
-                    id: weatherCityInput
+                ColumnLayout {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    Layout.maximumHeight: 44
-                    wrapMode: TextEdit.NoWrap
-                    placeholderText: Translation.tr("e.g. Buenos Aires, London, Tokyo")
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.colors.colOnSurface
-                    placeholderTextColor: Appearance.colors.colSubtext
-                    text: Config.options?.bar?.weather?.city ?? ""
-                    background: Rectangle {
-                        color: Appearance.colors.colLayer1
-                        radius: Appearance.rounding.small
-                        border.width: weatherCityInput.activeFocus ? 2 : 1
-                        border.color: weatherCityInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
+                    spacing: 4
+
+                    StyledText {
+                        text: Translation.tr("City (leave empty to auto-detect)")
+                        color: Appearance.colors.colOnSurfaceVariant
+                        font.pixelSize: Appearance.font.pixelSize.small
                     }
-                    onTextEdited: Config.setNestedValue("bar.weather.city", text)
+
+                    MaterialTextField {
+                        id: weatherCityInput
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        Layout.maximumHeight: 44
+                        wrapMode: TextEdit.NoWrap
+                        placeholderText: Translation.tr("e.g. Buenos Aires, London, Tokyo")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.colors.colOnSurface
+                        placeholderTextColor: Appearance.colors.colSubtext
+                        text: Config.options?.bar?.weather?.city ?? ""
+                        background: Rectangle {
+                            color: Appearance.colors.colLayer1
+                            radius: Appearance.rounding.small
+                            border.width: weatherCityInput.activeFocus ? 2 : 1
+                            border.color: weatherCityInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
+                        }
+                        onTextEdited: Config.setNestedValue("bar.weather.city", text)
+                    }
+                }
+
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.alignment: Qt.AlignBottom
+                    icon: "update"
+                    text: Translation.tr("Weather update interval (min)")
+                    value: Config.options?.bar?.weather?.fetchInterval ?? 10
+                    from: 5
+                    to: 60
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue("bar.weather.fetchInterval", value)
                 }
             }
 
@@ -845,31 +919,42 @@ ContentPage {
                 }
             }
 
-            ConfigSpinBox {
-                icon: "update"
-                text: Translation.tr("Weather update interval (min)")
-                value: Config.options?.bar?.weather?.fetchInterval ?? 10
-                from: 5
-                to: 60
-                stepSize: 5
-                onValueChanged: Config.setNestedValue("bar.weather.fetchInterval", value)
-                enabled: Config.options?.bar?.weather?.enable ?? false
-            }
-
             SettingsDivider {}
 
             ContentSubsection {
                 title: Translation.tr("Search surface & Web engine")
 
-                ConfigSelectionArray {
-                    currentValue: Config.options?.search?.style ?? "default"
-                    onSelected: newValue => {
-                        Config.setNestedValue("search.style", newValue);
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                    uniformCellWidths: columns > 1
+                    columnSpacing: 16
+                    rowSpacing: 8
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        currentValue: Config.options?.search?.style ?? "default"
+                        onSelected: newValue => {
+                            Config.setNestedValue("search.style", newValue);
+                        }
+                        options: [
+                            { displayName: Translation.tr("Default"), icon: "search", value: "default" },
+                            { displayName: Translation.tr("Island"), icon: "blur_on", value: "island" }
+                        ]
                     }
-                    options: [
-                        { displayName: Translation.tr("Default"), icon: "search", value: "default" },
-                        { displayName: Translation.tr("Island"), icon: "blur_on", value: "island" }
-                    ]
+
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        icon: "mic"
+                        text: Translation.tr("Voice search clip (s)")
+                        value: Config.options?.voiceSearch?.duration ?? 5
+                        from: 2
+                        to: 30
+                        stepSize: 1
+                        onValueChanged: Config.setNestedValue("voiceSearch.duration", value)
+                    }
                 }
 
                 MaterialTextField {
@@ -936,16 +1021,6 @@ ContentPage {
                         checked: Config.options?.search?.globalActions?.enableMedia ?? true
                         onCheckedChanged: Config.setNestedValue("search.globalActions.enableMedia", checked)
                     }
-                }
-
-                ConfigSpinBox {
-                    icon: "mic"
-                    text: Translation.tr("Voice search clip (s)")
-                    value: Config.options?.voiceSearch?.duration ?? 5
-                    from: 2
-                    to: 30
-                    stepSize: 1
-                    onValueChanged: Config.setNestedValue("voiceSearch.duration", value)
                 }
             }
         }

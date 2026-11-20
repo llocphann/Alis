@@ -103,7 +103,8 @@ ContentPage {
     GridLayout {
         id: twoColumnGrid
         Layout.fillWidth: true
-        columns: (root.twoColumnModulesBar || root.twoColumnPopups) && width >= 620 ? 2 : 1
+        columns: (root.twoColumnModulesBar && width >= 620)
+            || (root.twoColumnPopups && width >= 920 * Appearance.fontSizeScale) ? 2 : 1
         uniformCellWidths: columns === 2
         columnSpacing: 14
         rowSpacing: 14
@@ -166,6 +167,8 @@ ContentPage {
         }
         ColumnLayout {
             id: rightPopupsColumn
+            Layout.fillHeight: false
+            Layout.maximumHeight: implicitHeight
             visible: controls.activeSection === "popups"
             Layout.preferredWidth: 1
             Layout.fillWidth: true
@@ -174,6 +177,8 @@ ContentPage {
 
             Loader {
                 id: popupNotificationSettings
+                Layout.fillHeight: false
+                Layout.maximumHeight: item?.implicitHeight ?? 0
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignTop
                 Layout.preferredHeight: item?.implicitHeight ?? 0
@@ -204,7 +209,7 @@ ContentPage {
                     GridLayout {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
-                        columns: width >= 360 ? 2 : 1
+                        columns: width >= 720 * Appearance.fontSizeScale ? 2 : 1
                         uniformCellWidths: columns === 2
                         columnSpacing: 10
                         rowSpacing: 8

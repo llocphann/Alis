@@ -82,7 +82,7 @@ FocusScope {
         GlobalStates.wallpaperLauncherMode=nextMode
         GlobalStates.wallpaperLauncherSearchText=""
         if(typeof root!=="undefined")root.focusPrimarySurface()
-        Qt.callLater(carousel.syncCurrentIndexAndPreview)
+        carousel.scheduleIndexSync()
     }
     function focusPrimarySurface():void {
         search.focus=false
@@ -116,13 +116,24 @@ FocusScope {
         function status():string {return root.statusJson()}
     }
     onBrowseFolderChanged:if(GlobalStates.wallpaperLauncherOpen)refreshLibrary(true)
-    onVisibleChanged:if(visible)Qt.callLater(root.focusPrimarySurface)
-    onEnabledChanged:if(enabled)Qt.callLater(root.focusPrimarySurface)
-    Component.onCompleted:{if(GlobalStates.wallpaperLauncherOpen){refreshLibrary(true);Qt.callLater(()=>{root.focusPrimarySurface();carousel.syncCurrentIndexAndPreview()})}}
+    Timer {
+        id: focusTimer
+        interval: 0
+        onTriggered: root.focusPrimarySurface()
+    }
+    onVisibleChanged:if(visible)focusTimer.restart()
+    onEnabledChanged:if(enabled)focusTimer.restart()
+    Component.onCompleted: {
+        if (GlobalStates.wallpaperLauncherOpen) {
+            refreshLibrary(true)
+            focusTimer.restart()
+            carousel.scheduleIndexSync()
+        }
+    }
     Component.onDestruction:GlobalStates.setSettingsNativeDialogVisible("wallpaperLauncherFolder",false)
     Connections {
         target:GlobalStates
-        function onWallpaperLauncherOpenChanged():void {if(GlobalStates.wallpaperLauncherOpen){root.refreshLibrary(true);Qt.callLater(root.focusPrimarySurface)}}
+        function onWallpaperLauncherOpenChanged():void {if(GlobalStates.wallpaperLauncherOpen){root.refreshLibrary(true);focusTimer.restart()}}
     }
     FolderDialog {
         id:folderPicker

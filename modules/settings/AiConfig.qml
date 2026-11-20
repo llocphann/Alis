@@ -89,7 +89,7 @@ ContentPage {
         ? toolModeFallbackCard.naturalCardImplicitHeight
         : 0
     readonly property real companionTargetHeight: {
-        if (!companionAiHostCard.visible)
+        if (!companionAiHostCard.visible || Config.options?.panelFamily === "abyss")
             return 0;
         if (!root.twoColBento)
             return Math.max(360, Math.round(root.targetBentoHeight * 0.52));
@@ -107,6 +107,8 @@ ContentPage {
         );
     }
     readonly property real providersTargetHeight: {
+        if (Config.options?.panelFamily === "abyss")
+            return Math.max(320, Math.round(320 * Appearance.fontSizeScale));
         if (!root.twoColBento)
             return 280;
         return Math.max(
@@ -533,6 +535,8 @@ ContentPage {
             ? promptRulesContainerCard.chromeImplicitHeight
             : (SettingsMaterialPreset.cardPadding * 2 + SettingsMaterialPreset.groupSpacing + Math.round(27 * Appearance.fontSizeScale))
         readonly property real promptTextBoxHeight: {
+            if (Config.options?.panelFamily === "abyss")
+                return Math.round(185 * Appearance.fontSizeScale);
             const avail = root.promptRulesTargetHeight
                 - promptRulesContainerCard._effectiveChromeH
                 - SettingsMaterialPreset.groupPadding * 2

@@ -24,6 +24,11 @@ QtObject {
     readonly property color navSelectedTextColor: waffle ? Waffle.Looks.colors.fg : Appearance.colors.colOnPrimaryContainer
     readonly property int navItemRadius: waffle ? 6 : Appearance.rounding.small
     readonly property int waffleRailWidth: 280
+    readonly property int compactNavWidth: 56
+
+    function useCompactNav(surfaceWidth: real, editing: bool): bool {
+        return Config.options?.panelFamily === "abyss" && !editing && surfaceWidth > 0 && surfaceWidth < 910
+    }
     readonly property int searchRadius: waffle ? 4 : Appearance.rounding.full
     readonly property color searchColor: waffle ? cardColor : Appearance.colors.colLayer0
     readonly property color searchBottomLineColor: Waffle.Looks.dark ? "#8a8a8a" : "#868686"
@@ -42,7 +47,8 @@ QtObject {
         : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius + 1
         : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
         : Appearance.rounding.normal
-    readonly property int cardPadding: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tilePadding : 14) * Appearance.fontSizeScale)
+    readonly property int cardPadding: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tilePadding
+        : Config.options?.panelFamily === "abyss" ? 12 : 14) * Appearance.fontSizeScale)
 
     // ── Card header ──
     readonly property int headerRadius: waffle ? 4 : Appearance.angelEverywhere ? Appearance.angel.roundingSmall

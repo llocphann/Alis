@@ -126,8 +126,14 @@ Item {
         readonly property color introCardColor: root.abyssTaskStyle ? SettingsMaterialPreset.cardColor : Appearance.colors.colLayer1
 
         Rectangle {
+            id: settingsTaskRail
             objectName: "settingsTaskRail"
-            anchors.fill: parent
+            x: root.abyssTaskStyle ? Math.round((parent.width - width) / 2) : 0
+            y: 0
+            width: root.abyssTaskStyle
+                ? Math.min(parent.width, Math.ceil(taskOptions.implicitWidth) + parent.padding * 2)
+                : parent.width
+            height: parent.height
             visible: root.abyssTaskStyle
             color: SettingsMaterialPreset.taskRailColor
             radius: SettingsMaterialPreset.taskRailRadius
@@ -136,8 +142,8 @@ Item {
         ConfigSelectionArray {
             id: taskOptions
             objectName: "settingsTaskOptions"
-            anchors.left: parent.left
-            anchors.right: parent.right
+            anchors.left: settingsTaskRail.left
+            anchors.right: settingsTaskRail.right
             anchors.margins: parent.padding
             y: parent.padding
             currentValue: root.currentValue

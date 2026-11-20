@@ -50,3 +50,61 @@ assert.equal(model.selectedTracks(tracks,['d:Jazz']).length,2,'selected folder e
 assert.equal(model.selectedTracks(tracks,['d:Jazz','t:Jazz/two.flac']).length,2,'selected files and folders must not duplicate playback');
 assert.equal(model.matching(tracks,'LiVe')[0],tracks[0],'search preserves playback identity');
 console.log('DASHBOARD_MUSIC_MODEL_PASS empty/genre/folder/drilldown/Unicode/root-files/prefix-boundary/identity/immutable-input');
+
+const queue = [
+ {uri:'__proto__',title:'One',artist:'Nhóm Đá',folder:'First',genre:'A'},
+ {uri:'__proto__',title:'Two',artist:'Other',folder:'Second',genre:'B'},
+ {path:'constructor',title:'Three',folder:'Third'},
+ {uri:'',title:'Four',folder:'Fourth'},
+ {uri:'',title:'Five',folder:'Fifth'}
+];
+const queueIndex = model.createIndex(queue);
+assert.equal(model.genres(queue,queueIndex),model.genres(queue,queueIndex));
+assert.equal(model.contents(queue,'',queueIndex),model.contents(queue,'/',queueIndex));
+for (const row of queue) {
+ const result = model.search(queueIndex,row.title);
+ assert.equal(result.length,1);
+ assert.equal(result[0],row,'duplicate or empty URI must retain the matching queue item');
+ assert.equal(model.contents(queue,row.folder,queueIndex)[0].track,row);
+}
+assert.equal(model.search(queueIndex,'nhom')[0],queue[0]);
+assert.equal(model.search(queueIndex,'nhom da')[0],queue[0]);
+assert.equal(model.search(queueIndex,'Nhó')[0],queue[0],'shorter query is recomputed');
+assert.equal(model.search(queueIndex,''),queue);
+const nextQueue = [{...queue[0],artist:'Replacement'}];
+const nextIndex = model.createIndex(nextQueue);
+assert.equal(model.search(nextIndex,'nhom').length,0);
+assert.equal(model.search(nextIndex,'replacement')[0],nextQueue[0]);
+
+// Sonora helper tests: formatDuration, totalDuration, albums, artists, sortEntries
+assert.equal(model.formatDuration(0),'0:00');
+assert.equal(model.formatDuration(-5),'0:00');
+assert.equal(model.formatDuration(65),'1:05');
+assert.equal(model.formatDuration(3661),'1:01:01');
+const catalog = [
+ {uri:'a/1.flac',folder:'A',title:'Zeta',artist:'Beta',album:'First',duration:120,art:'/art/1.png'},
+ {uri:'a/2.flac',folder:'A',title:'Alpha',artist:'Beta',album:'First',duration:95,artUrl:'file:///art/1.png'},
+ {uri:'b/3.flac',folder:'B',title:'Mid',artist:'Alpha',album:'__proto__',duration:200}
+];
+const catIdx = model.createIndex(catalog);
+assert.equal(model.totalDuration(catalog),415);
+const albumCards = model.albums(catalog,catIdx);
+assert.equal(model.albums(catalog,catIdx),albumCards,'album cache must return identical array');
+assert.equal(albumCards.length,2);
+assert.equal(albumCards[0].name,'__proto__');
+assert.equal(albumCards[1].name,'First');
+assert.equal(albumCards[1].artist,'Beta');
+assert.equal(albumCards[1].trackCount,2);
+assert.equal(albumCards[1].totalDuration,215);
+assert.equal(albumCards[1].tracks[0],catalog[0],'album tracks preserve source identity');
+const artistCards = model.artists(catalog,catIdx);
+assert.equal(model.artists(catalog,catIdx),artistCards,'artist cache must return identical array');
+assert.equal(artistCards[0].name,'Alpha');
+assert.equal(artistCards[0].albumCount,1);
+assert.equal(artistCards[1].name,'Beta');
+assert.equal(artistCards[1].trackCount,2);
+const trackEntries = catalog.map(t=>({kind:'track',track:t,name:t.title}));
+assert.deepEqual(model.sortEntries(trackEntries,'title',true).map(e=>e.track.title),['Alpha','Mid','Zeta']);
+assert.deepEqual(model.sortEntries(trackEntries,'title',false).map(e=>e.track.title),['Zeta','Mid','Alpha']);
+assert.deepEqual(model.sortEntries(trackEntries,'duration',true).map(e=>e.track.duration),[95,120,200]);
+console.log('DASHBOARD_MUSIC_MODEL_SONORA_PASS');

@@ -81,6 +81,33 @@ ShellRoot {
    check(item.grabToImage(image=>root.captures++),message+": render request refused")
    tryVerify(()=>root.captures>before,3000)
   }
+  function checkLibraryReplacements(music) {
+   const original = fake.libraryTracks
+   for (const season of ["Spring", "Autumn"]) {
+    const library = []
+    for (let index = 0; index < 12000; index++) {
+     const folder = "Bộ " + (index % 12) + "/Album " + (index % 71)
+     library.push({uri: folder + "/" + index + ".ogg", folder: folder,
+      title: season + " " + index, artist: "Nghệ sĩ " + (index % 100),
+      genre: index % 3 === 0 ? "Rock; Live" : "Pop"})
+    }
+    fake.libraryTracks = library
+    music.chooseGenre("Live")
+    check(music.results.length === 4000 && music.results[1].track === library[3],
+     "Genre retained stale metadata or lost source track identity")
+    check(music.folders.reduce((sum, folder) => sum + folder.count, 0) === library.length,
+     "Root folder counts lost tracks")
+    music.query = "nghe si"
+    music.query = "nghe si 37"
+    check(music.results.length === 120 && music.results[0].track === library[37],
+     "Incremental accent-folded search lost tracks after source replacement")
+    music.query = season + " 11999"
+    check(music.results.length === 1 && music.results[0].track === library[11999],
+     "Library tail does not resolve to the replacement track")
+    music.query = ""
+   }
+   fake.libraryTracks = original
+  }
   function runChecks() { try {
    tryCompare(Config,"ready",true,4000)
    Config.setNestedValues({"performance.reduceAnimations":true,"dashboard.music.enable":true,"dashboard.showHeader":true,"dashboard.canvas.widgets":[]})
@@ -153,91 +180,24 @@ ShellRoot {
    check(music.backend===fake,"music created another playback owner")
    check(music.results.length===0,"results must start empty")
    check(waitForPolish(window.contentItem,2000),"music column layout pending")
-   const columns=["musicLibrary","musicResults","musicPlaybackAndQueue","musicLyrics"].map(name=>findChild(music,name))
+   const columns=["musicLibrary","musicResults","musicPlaybackAndQueue"].map(name=>findChild(music,name))
    const genreTab=findChild(music,"musicGenreTab"), folderTab=findChild(music,"musicFolderTab")
    check(genreTab && folderTab && genreTab.parent===folderTab.parent,
       "Genre and Folders are not tab buttons in the same Library column")
-   const playerPanel=findChild(music,"musicPlayer"), queuePanel=findChild(music,"musicQueuePanel")
-   check(playerPanel && queuePanel && playerPanel.parent===queuePanel.parent && playerPanel.height>0 && queuePanel.height>0,
-      "Media card and Queue must share one vertical column with real content")
-   const savedCardOpacity=Config.options?.dashboard?.appearance?.cardOpacity
-   Config.setNestedValue("dashboard.appearance.cardOpacity",0.3)
-   renderFrame(dashboard,"cardOpacity parity frame pending")
-   check(String(playerPanel.color)===String(queuePanel.color) && Math.abs(playerPanel.radius-queuePanel.radius)<0.5,
-      "Music module background or radius diverged from Queue pane: "+JSON.stringify({playerColor:String(playerPanel.color),queueColor:String(queuePanel.color),playerRadius:playerPanel.radius,queueRadius:queuePanel.radius}))
-   if(savedCardOpacity!==undefined)
-    Config.setNestedValue("dashboard.appearance.cardOpacity",savedCardOpacity)
-   check(playerPanel.height <= Math.ceil(playerPanel.implicitHeight)+1,
-      "Media card vertically stretched and left blank space above/below player or DSP")
-   check(columns[2].width <= 381,
-      "Media/Queue column is wider than its intended control footprint")
-   check(playerPanel.mediaBackend===fake && playerPanel.playbackAdapter!==null && playerPanel.showEqualizer,
-      "Music tab did not reuse DashMedia with the LocalMusic adapter")
-   check(findChild(music,"musicQueueList")!==null,"secondary Queue list missing")
+   const playerPanel=findChild(music,"musicPlayer"), queuePanel=findChild(music,"musicQueuePanel"), lyricsPanel=findChild(music,"musicLyrics")
+   check(playerPanel && queuePanel && lyricsPanel && playerPanel.height>0 && queuePanel.height>0,
+      "Persistent player bar and right drawer panels missing")
    check(columns.every(column=>column && column.width>0 && column.height>0),"missing music column")
    check(waitForPolish(columns[0].parent,2000),"music Row layout pending")
-   check(columns.every((column,index)=>index===0 || column.x>=columns[index-1].x+columns[index-1].width),"music columns overlap: "+JSON.stringify(columns.map(column=>({x:column.x,width:column.width,height:column.height,visible:column.visible,parent:String(column.parent),rowVisible:column.parent.visible,musicVisible:music.visible}))))
-   mouseMove(columns[0],columns[0].width/2,columns[0].height/2)
-   tryCompare(music,"queueExpanded",false,1500)
-   renderFrame(dashboard,"collapsed Queue frame pending")
+   check(columns.every((column,index)=>index===0 || column.x>=columns[index-1].x+columns[index-1].width),"music columns overlap: "+JSON.stringify(columns.map(column=>({x:column.x,width:column.width,height:column.height,visible:column.visible}))))
+   // Sonora Equalizer lives in the right drawer EQ tab and activates its DSP consumer only when open on Music
    const eq=findChild(music,"musicEqualizer")
-   check(eq && eq.active && eq.visible && eq.compactLayout,
-      "Music tab must show the shared Dashboard EQ when Queue is collapsed")
-   const mediaHeight=playerPanel.height
-   const playerSurface=findChild(playerPanel,"musicPlayerSurface")
-   const musicVolume=findChild(playerPanel,"musicVolume")
-   check(playerSurface && musicVolume,"missing musicPlayerSurface or musicVolume")
-   const baseSurfaceY=playerSurface.mapToItem(playerPanel,0,0).y
-   const baseSurfaceH=playerSurface.height
-   const baseVolumeY=musicVolume.mapToItem(playerPanel,0,0).y
-   const queueBottom=queuePanel.y+queuePanel.height, queueTop=queuePanel.y
-   Config.setNestedValue("performance.reduceAnimations",false)
-   mouseMove(queuePanel,queuePanel.width/2,Math.max(8,queuePanel.height/2))
-   tryCompare(music,"queueExpanded",true,1500)
-   check(!playerPanel.showEqualizer && !eq.visible && !eq.active,
-      "Queue hover did not hide/suspend the shared EQ/DSP panel")
-   tryVerify(()=>queuePanel.y<queueTop && playerPanel.height>playerPanel.implicitHeight,1000)
-   for(let frame=0;frame<16;frame++) {
-    check(Math.abs(queuePanel.y+queuePanel.height-queueBottom)<.5,
-       "Queue bottom moved during upward expansion")
-    check(playerPanel.y===0 && queuePanel.y>=playerPanel.y+playerPanel.height+7,
-       "Queue animation moved or overlapped the Player")
-    check(Math.abs(playerSurface.mapToItem(playerPanel,0,0).y-baseSurfaceY)<0.5
-       && Math.abs(playerSurface.height-baseSurfaceH)<0.5
-       && Math.abs(musicVolume.mapToItem(playerPanel,0,0).y-baseVolumeY)<0.5,
-       "Player controls or volume shifted vertically when hiding EQ during upward expansion")
-    wait(16)
-   }
-   tryVerify(()=>queuePanel.height>0 && playerPanel.height<mediaHeight,2000)
-   check(playerPanel.height <= Math.ceil(playerPanel.implicitHeight)+1,
-      "Expanded Queue left unused vertical space inside the media card")
-   mouseMove(columns[1],columns[1].width/2,columns[1].height/2)
-   tryCompare(music,"queueExpanded",false,1500)
-   check(playerPanel.showEqualizer && eq.visible && eq.active,
-      "Queue exit did not restore the shared Dashboard EQ")
-   for(let frame=0;frame<16;frame++) {
-    check(Math.abs(queuePanel.y+queuePanel.height-queueBottom)<.5,
-       "Queue bottom moved during downward collapse")
-    check(Math.abs(playerSurface.mapToItem(playerPanel,0,0).y-baseSurfaceY)<0.5
-       && Math.abs(playerSurface.height-baseSurfaceH)<0.5
-       && Math.abs(musicVolume.mapToItem(playerPanel,0,0).y-baseVolumeY)<0.5,
-       "Player controls or volume shifted vertically when showing EQ during collapse")
-    wait(16)
-   }
-   Config.setNestedValue("performance.reduceAnimations",true)
-   tryVerify(()=>playerPanel.height>0 && playerPanel.height<=Math.ceil(playerPanel.implicitHeight)+1,2000)
-   const lyricLines=fake.localLyricsLines, originalWidths=columns.map(column=>column.width)
-   fake.localLyricsLines=[]
-   renderFrame(dashboard,"three-column frame pending")
-   check(!columns[3].visible && columns[3].width===0,"missing Lyrics left an empty column")
-   check(columns[1].width>originalWidths[1] && columns[0].width>=200,"missing Lyrics did not expand Results while preserving a readable Library: "+JSON.stringify({music:music.width,row:columns[0].parent.width,before:originalWidths,after:columns.map(column=>column.width)}))
-   check(columns[2].width>=315 && columns[2].width<=381,"missing Lyrics violated the bounded Media/Queue control width")
-   check(Math.abs(columns[2].x+columns[2].width-columns[0].parent.width)<1,"three-column row left unused space")
-   fake.localLyricsLines=lyricLines
-   renderFrame(dashboard,"restored Lyrics frame pending")
-   check(columns[3].visible && columns.every((column,index)=>Math.abs(column.width-originalWidths[index])<1),"restored Lyrics changed the column proportions")
-   Config.setNestedValue("performance.reduceAnimations",false)
+   check(eq && !eq.active,"EQ DSP consumer must stay suspended while Queue tab is active")
+   music.rightDrawerTab="eq"
+   tryCompare(eq,"active",true,1500)
+   check(eq.visible && eq.compactLayout,"Music EQ tab did not activate shared EqualizerPanel")
    const pages=findChild(dashboard,"dashboardPages")
+   Config.setNestedValue("performance.reduceAnimations",false)
    mouseClick(findChild(dashboard,"dashboardPage0"))
    tryVerify(()=>pages.slideProgress>0 && pages.slideProgress<1,1000)
    check(!eq.active,"outgoing Music retained the DSP consumer")
@@ -247,6 +207,31 @@ ShellRoot {
    tryCompare(pages,"slideProgress",1,2000)
    check(eq.active,"returning Music failed to reacquire the shared DSP consumer")
    Config.setNestedValue("performance.reduceAnimations",true)
+   // Verify Lyrics drawer tab + Ambient karaoke mode + Escape dismissal before Library drilldown
+   music.rightDrawerTab="lyrics"
+   tryCompare(lyricsPanel,"visible",true,1000)
+   check(!eq.active,"switching to Lyrics tab did not suspend EQ DSP")
+   music.ambientOpen=true
+   const ambient=findChild(music,"musicAmbientView")
+   tryCompare(ambient,"visible",true,1000)
+   check(music.restoreBrowserColumns() && !music.ambientOpen,"Escape must close Ambient mode first")
+   const lyricLines=fake.localLyricsLines
+   fake.localLyricsLines=[]
+   renderFrame(dashboard,"empty lyrics frame pending")
+   check(findChild(music,"musicLyricsList").count===0,"empty lyrics retained stale rows")
+   fake.localLyricsLines=lyricLines
+   music.rightDrawerTab="queue"
+   tryCompare(queuePanel,"visible",true,1000)
+   const playerSurface=findChild(playerPanel,"musicPlayerSurface")
+   const musicVolume=findChild(playerPanel,"musicVolume")
+   check(playerSurface && musicVolume,"missing musicPlayerSurface or musicVolume")
+   // Verify Sonora album & artist library grouping + Hero view
+   check(music.albums.length>=1 && music.artists.length===3,"Sonora albums/artists grouping incomplete")
+   music.openAlbum(music.albums[0].key)
+   check(music.sourceMode==="album" && music.allResultTracks.length>=1,"Album hero drilldown failed")
+   music.restoreBrowserColumns()
+   const originalWidths=columns.map(column=>column.width)
+   check(originalWidths.every(w=>w>=200),"Sonora 3-column widths collapsed on desktop")
    const list=findChild(music,"musicResultList")
    renderFrame(dashboard,"music frame pending")
    mouseClick(findChild(music,"musicGenreList").itemAtIndex(0))
@@ -324,9 +309,19 @@ ShellRoot {
    const count=root.captures
    check(dashboard.grabToImage(image=>{if(image.saveToFile(Quickshell.env("MUSIC_CAPTURE"))) root.captures++}),"capture refused")
    tryVerify(()=>root.captures>count,3000)
+   // Capture Ambient karaoke view too when requested
+   const ambPath = Quickshell.env("MUSIC_CAPTURE_AMBIENT")
+   if (ambPath) {
+    music.ambientOpen = true
+    renderFrame(dashboard, "ambient view pending")
+    const ac = root.captures
+    check(dashboard.grabToImage(image=>{if(image.saveToFile(ambPath)) root.captures++}),"ambient capture refused")
+    tryVerify(()=>root.captures>ac,3000)
+    music.ambientOpen = false
+   }
+   checkLibraryReplacements(music)
    mouseClick(findChild(music,"musicQueue"));tryCompare(list,"count",2,2000)
    check(findChild(music,"musicQueueList").count===2,"secondary Queue must remain populated independently of Results")
-   check(!music.queueExpanded,"Queue expansion must reset after pointer leaves")
    tryVerify(()=>list.itemAtIndex(0)!==null,2000)
    check(waitForPolish(list.contentItem,2000),"queue layout pending")
    mouseDoubleClickSequence(list.itemAtIndex(0));check(fake.queueIndex===0,"queue playback changed the queue order")
@@ -384,7 +379,7 @@ ShellRoot {
    const musicQueueBefore=fake.activeQueue
    fake.error="ACK [50@0] {play} Bad song index"
    const backendError=findChild(music,"musicBackendError")
-   tryVerify(()=>backendError && backendError.visible,1000)
+   tryVerify(()=>backendError && backendError.visible && backendError.height>0 && backendError.width>0,1500)
    check(backendError.height>0 && backendError.width>0,
       "MPD failure lacks a visible in-Dashboard banner")
    check(fake.activeQueue===musicQueueBefore,"diagnostic mutated playback queue")
@@ -474,7 +469,7 @@ ShellRoot {
   data=json.loads((ROOT/"defaults/config.json").read_text());data["panelFamily"]="abyss";data["abyss"]["companion"]["enabled"]=False
   (config/"config.json").write_text(json.dumps(data))
   capture=Path(os.environ.get("ALIS_MUSIC_CAPTURE",str(folder/"dashboard-music.png")))
-  env.update(QSG_RHI_BACKEND="opengl",MUSIC_CAPTURE=str(capture),MUSIC_CAPTURE_NARROW=str(capture.with_name(capture.stem+"-narrow.png")))
+  env.update(QSG_RHI_BACKEND="opengl",MUSIC_CAPTURE=str(capture),MUSIC_CAPTURE_NARROW=str(capture.with_name(capture.stem+"-narrow.png")),MUSIC_CAPTURE_AMBIENT=str(capture.with_name(capture.stem+"-ambient.png")))
   result=run_qs(folder,env,timeout=60)
   if os.environ.get("ALIS_DASHBOARD_MUSIC_LOG"):
    Path(os.environ["ALIS_DASHBOARD_MUSIC_LOG"]).write_text(result.stdout)

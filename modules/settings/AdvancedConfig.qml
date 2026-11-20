@@ -69,7 +69,9 @@ ContentPage {
         id: advancedTwoColumnGrid
         objectName: "advancedTwoColumnGrid"
         Layout.fillWidth: true
-        columns: width >= 620 ? 2 : 1
+        readonly property real cavaCardWidth: cavaSwitch.implicitWidth + resetCavaButton.implicitWidth + cavaActionRow.spacing
+            + 2 * (SettingsMaterialPreset.cardPadding + SettingsMaterialPreset.groupPadding)
+        columns: width >= (Config.options?.panelFamily === "abyss" ? 2 * cavaCardWidth + columnSpacing : 620) ? 2 : 1
         uniformCellWidths: columns === 2
         columnSpacing: 14
         rowSpacing: 14
@@ -348,6 +350,7 @@ ContentPage {
 
             SettingsGroup {
                 RowLayout {
+                    id: cavaActionRow
                     Layout.fillWidth: true
                     spacing: 8
 
@@ -365,6 +368,7 @@ ContentPage {
                     }
 
                     RippleButton {
+                        id: resetCavaButton
                         Layout.preferredHeight: 30
                         implicitWidth: resetCavaRow.implicitWidth + 20
                         buttonRadius: Appearance.rounding.small

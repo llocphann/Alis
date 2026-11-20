@@ -1,6 +1,7 @@
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.waffle.looks as Waffle
 import qs.modules.common.widgets
 import QtQuick
 import Quickshell
@@ -10,6 +11,7 @@ import Quickshell.Hyprland
 
 Scope {
     id: root
+    readonly property alias dashboardWindow: panelRoot
     property bool _presentedOpen: false
     property bool _contentPresented: GlobalStates.dashboardOpen
     property bool _renderUpdatesNeeded: GlobalStates.dashboardOpen
@@ -54,7 +56,7 @@ Scope {
     )
     readonly property bool isWaffle: Config.options?.panelFamily === "waffle"
     readonly property bool barAtBottom: isWaffle
-        ? (Config.options?.waffles?.bar?.bottom ?? false)
+        ? (Config.options?.waffles?.bar?.bottom ?? true)
         : (Config.options?.bar?.bottom ?? false)
     readonly property real barReservedSpace: (isWaffle ? 48 : Appearance.sizes.baseBarHeight) + Appearance.sizes.hyprlandGapsOut * 2
     readonly property real topReservedSpace: safePadding
@@ -65,8 +67,14 @@ Scope {
     readonly property real availablePanelWidth: Math.max(480, screenWidth - safePadding * 2)
     readonly property real widthRatio: Math.min(0.9, Math.max(0.4, Config.options?.dashboard?.widthRatio ?? 0.72))
     readonly property real heightRatio: Math.min(0.9, Math.max(0.45, Config.options?.dashboard?.heightRatio ?? 0.72))
-    readonly property real panelWidth: Math.round(Math.min(availablePanelWidth, screenWidth * widthRatio))
-    readonly property real panelHeight: Math.round(Math.min(availablePanelHeight, screenHeight * heightRatio))
+    readonly property real menuMargin: Waffle.Looks.dp(12)
+    readonly property real waffleBarClearance: (isWaffle && (GlobalStates.barOpen ?? true)) ? 48 : 0
+    readonly property real panelWidth: isWaffle
+        ? Math.min(Waffle.Looks.startMenuPaneWidth, Math.max(1, panelRoot.width - 2 * menuMargin))
+        : Math.round(Math.min(availablePanelWidth, screenWidth * widthRatio))
+    readonly property real panelHeight: isWaffle
+        ? Math.min(Waffle.Looks.startMenuPaneHeight, Math.max(1, panelRoot.height - waffleBarClearance - 2 * menuMargin))
+        : Math.round(Math.min(availablePanelHeight, screenHeight * heightRatio))
 
     PanelWindow {
         id: panelRoot
@@ -258,16 +266,18 @@ Scope {
                 }
             ]
 
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.verticalCenterOffset: Math.round((root.topReservedSpace - root.bottomReservedSpace) / 2)
+            x: root.isWaffle && (Config.options?.waffles?.bar?.leftAlignApps ?? false)
+                ? root.menuMargin : Math.round((parent.width - width) / 2)
+            y: root.isWaffle
+                ? (root.barAtBottom ? parent.height - root.waffleBarClearance - height - root.menuMargin : root.waffleBarClearance + root.menuMargin)
+                : Math.round((parent.height - height + root.topReservedSpace - root.bottomReservedSpace) / 2)
 
             width: root.panelWidth
             readonly property real editToolbarReserve:
                 ((item?.editMode ?? false) || (item?.tabNamingActive ?? false))
                     ? Math.max(0, Number(item?.editToolbarHeight ?? 0) - 1)
                     : 0
-            height: Math.min(root.availablePanelHeight,
+            height: root.isWaffle ? root.panelHeight : Math.min(root.availablePanelHeight,
                 root.panelHeight + contentLoader.editToolbarReserve)
 
             opacity: 1
@@ -296,6 +306,7 @@ Scope {
 
                 DashboardContent {
                     id: standaloneContent
+                    waffleMenu: root.isWaffle
                     // Keep media/equalizer presentation alive through the full
                     // exit slide; _contentPresented drops only after the card is
                     // no longer visible.

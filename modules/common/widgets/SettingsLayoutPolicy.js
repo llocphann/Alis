@@ -5,6 +5,22 @@ var REWORKED_BENTO_PAGES = Object.freeze([1, 12, 22, 24, 25, 37, 38, 39]);
 var REWORKED_COLUMN_RESET_PAGES = Object.freeze([1, 12, 22, 24, 37, 38, 39]);
 var RETIRED_SUB_TABS = Object.freeze(["safety", "audio", "color", "Alis Nexus", "management"]);
 
+// Qt lays out visible controls in declaration order. Measure the widest
+// control in each prospective column before fitting the grid to its card.
+function fittedControlColumns(grid, limit) {
+    const controls = Array.from(grid.children).filter(item => item.visible && item.implicitWidth > 0);
+    for (let count = Math.min(limit, controls.length); count > 1; --count) {
+        const widths = Array(count).fill(0);
+        for (let i = 0; i < controls.length; ++i) {
+            const column = i % count;
+            widths[column] = Math.max(widths[column], Math.ceil(controls[i].implicitWidth));
+        }
+        const needed = widths.reduce((sum, width) => sum + width, (count - 1) * grid.columnSpacing);
+        if (grid.width >= needed) return count;
+    }
+    return 1;
+}
+
 function slugify(text) {
     var s = String(text || "").trim().toLowerCase();
     s = s.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");

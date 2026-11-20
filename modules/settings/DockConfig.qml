@@ -329,107 +329,120 @@ ContentPage {
 
             SettingsDivider {}
 
-            ContentSubsection {
-                title: Translation.tr("Dock position")
+            GridLayout {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                columns: width >= 720 * Appearance.fontSizeScale ? 2 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 18
+                rowSpacing: 12
 
-                ConfigSelectionArray {
-                    currentValue: Config.options?.dock?.position ?? "bottom"
-                    onSelected: newValue => Config.setNestedValue("dock.position", newValue)
-                    options: [
-                        { displayName: Translation.tr("Left"), icon: "arrow_back", value: "left" },
-                        { displayName: Translation.tr("Top"), icon: "arrow_upward", value: "top" },
-                        { displayName: Translation.tr("Bottom"), icon: "arrow_downward", value: "bottom" },
-                        { displayName: Translation.tr("Right"), icon: "arrow_forward", value: "right" }
-                    ]
-                }
+                ContentSubsection {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.alignment: Qt.AlignTop
+                    title: Translation.tr("Dock position")
 
-                ConfigRow {
-                    uniform: true
-                    ConfigSpinBox {
-                        icon: "height"
-                        text: Translation.tr("Dock height (px)")
-                        value: Config.options.dock.height ?? 60
-                        from: 40
-                        to: 100
-                        stepSize: 5
-                        onValueChanged: Config.setNestedValue("dock.height", value)
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.dock?.position ?? "bottom"
+                        onSelected: newValue => Config.setNestedValue("dock.position", newValue)
+                        options: [
+                            { displayName: Translation.tr("Left"), icon: "arrow_back", value: "left" },
+                            { displayName: Translation.tr("Top"), icon: "arrow_upward", value: "top" },
+                            { displayName: Translation.tr("Bottom"), icon: "arrow_downward", value: "bottom" },
+                            { displayName: Translation.tr("Right"), icon: "arrow_forward", value: "right" }
+                        ]
                     }
 
-                    ConfigSpinBox {
-                        icon: "aspect_ratio"
-                        text: Translation.tr("Icon size (px)")
-                        value: Config.options.dock.iconSize ?? 35
-                        from: 20
-                        to: 60
-                        stepSize: 5
-                        onValueChanged: Config.setNestedValue("dock.iconSize", value)
-                    }
-                }
-            }
-
-            SettingsDivider {}
-
-            ContentSubsection {
-                title: Translation.tr("Reveal behavior")
-                tooltip: Translation.tr("Hover reveals the Dock at the edge; Empty workspace shows it on an empty desktop.")
-
-                ConfigSelectionArray {
-                    currentValue: Config.options?.dock?.hoverToReveal ?? true
-                    onSelected: newValue => Config.setNestedValue("dock.hoverToReveal", newValue)
-                    options: [
-                        { displayName: Translation.tr("Hover"), icon: "highlight_mouse_cursor", value: true },
-                        { displayName: Translation.tr("Empty workspace"), icon: "desktop_windows", value: false }
-                    ]
-                }
-
-                ConfigRow {
-                    id: revealModeToggles
-                    uniform: true
-
-                    SettingsSwitch {
-                        buttonIcon: "desktop_windows"
-                        text: Translation.tr("Show on desktop")
-                        enabled: !(Config.options?.dock?.hoverToReveal ?? true)
-                        checked: Config.options?.dock?.showOnDesktop ?? true
-                        onCheckedChanged: Config.setNestedValue("dock.showOnDesktop", checked)
-                        StyledToolTip {
-                            text: Translation.tr("Show dock when no window is focused (Empty workspace mode only)")
+                    ConfigRow {
+                        uniform: true
+                        ConfigSpinBox {
+                            icon: "height"
+                            text: Translation.tr("Dock height (px)")
+                            value: Config.options.dock.height ?? 60
+                            from: 40
+                            to: 100
+                            stepSize: 5
+                            onValueChanged: Config.setNestedValue("dock.height", value)
                         }
-                    }
 
-                    SettingsSwitch {
-                        buttonIcon: "keep"
-                        text: Translation.tr("Pinned on startup")
-                        enabled: !(Config.options?.dock?.hoverToReveal ?? true)
-                        checked: Config.options.dock.pinnedOnStartup
-                        onCheckedChanged: Config.setNestedValue("dock.pinnedOnStartup", checked)
-                        StyledToolTip {
-                            text: Translation.tr("Keep dock visible at all times (Empty workspace mode only)")
+                        ConfigSpinBox {
+                            icon: "aspect_ratio"
+                            text: Translation.tr("Icon size (px)")
+                            value: Config.options.dock.iconSize ?? 35
+                            from: 20
+                            to: 60
+                            stepSize: 5
+                            onValueChanged: Config.setNestedValue("dock.iconSize", value)
                         }
                     }
                 }
 
-                ConfigRow {
-                    uniform: true
+                ContentSubsection {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.alignment: Qt.AlignTop
+                    title: Translation.tr("Reveal behavior")
+                    tooltip: Translation.tr("Hover reveals the Dock at the edge; Empty workspace shows it on an empty desktop.")
 
-                    ConfigSpinBox {
-                        icon: "vertical_align_bottom"
-                        text: Translation.tr("Reveal edge (px)")
-                        value: Config.options?.dock?.hoverRegionHeight ?? 2
-                        from: 1
-                        to: 16
-                        stepSize: 1
-                        onValueChanged: Config.setNestedValue("dock.hoverRegionHeight", value)
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.dock?.hoverToReveal ?? true
+                        onSelected: newValue => Config.setNestedValue("dock.hoverToReveal", newValue)
+                        options: [
+                            { displayName: Translation.tr("Hover"), icon: "highlight_mouse_cursor", value: true },
+                            { displayName: Translation.tr("Empty workspace"), icon: "desktop_windows", value: false }
+                        ]
                     }
 
-                    ConfigSpinBox {
-                        icon: "filter_5"
-                        text: Translation.tr("Max window dots")
-                        value: Config.options?.dock?.maxIndicatorDots ?? 5
-                        from: 1
-                        to: 10
-                        stepSize: 1
-                        onValueChanged: Config.setNestedValue("dock.maxIndicatorDots", value)
+                    ConfigRow {
+                        id: revealModeToggles
+                        uniform: true
+
+                        SettingsSwitch {
+                            buttonIcon: "desktop_windows"
+                            text: Translation.tr("Show on desktop")
+                            enabled: !(Config.options?.dock?.hoverToReveal ?? true)
+                            checked: Config.options?.dock?.showOnDesktop ?? true
+                            onCheckedChanged: Config.setNestedValue("dock.showOnDesktop", checked)
+                            StyledToolTip {
+                                text: Translation.tr("Show dock when no window is focused (Empty workspace mode only)")
+                            }
+                        }
+
+                        SettingsSwitch {
+                            buttonIcon: "keep"
+                            text: Translation.tr("Pinned on startup")
+                            enabled: !(Config.options?.dock?.hoverToReveal ?? true)
+                            checked: Config.options.dock.pinnedOnStartup
+                            onCheckedChanged: Config.setNestedValue("dock.pinnedOnStartup", checked)
+                            StyledToolTip {
+                                text: Translation.tr("Keep dock visible at all times (Empty workspace mode only)")
+                            }
+                        }
+                    }
+
+                    ConfigRow {
+                        uniform: true
+
+                        ConfigSpinBox {
+                            icon: "vertical_align_bottom"
+                            text: Translation.tr("Reveal edge (px)")
+                            value: Config.options?.dock?.hoverRegionHeight ?? 2
+                            from: 1
+                            to: 16
+                            stepSize: 1
+                            onValueChanged: Config.setNestedValue("dock.hoverRegionHeight", value)
+                        }
+
+                        ConfigSpinBox {
+                            icon: "filter_5"
+                            text: Translation.tr("Max window dots")
+                            value: Config.options?.dock?.maxIndicatorDots ?? 5
+                            from: 1
+                            to: 10
+                            stepSize: 1
+                            onValueChanged: Config.setNestedValue("dock.maxIndicatorDots", value)
+                        }
                     }
                 }
             }
@@ -1196,16 +1209,43 @@ ContentPage {
         title: Translation.tr("Canvas & Media Popups")
 
         SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("Canvas grid style")
-                ConfigSelectionArray {
-                    currentValue: Config.options?.dashboard?.canvas?.gridStyle ?? "dots"
-                    onSelected: val => Config.setNestedValue("dashboard.canvas.gridStyle", val)
-                    options: [
-                        { displayName: Translation.tr("Dots"), icon: "grain", value: "dots" },
-                        { displayName: Translation.tr("Lines"), icon: "grid_4x4", value: "lines" },
-                        { displayName: Translation.tr("Hidden"), icon: "visibility_off", value: "none" }
-                    ]
+            GridLayout {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 16
+                rowSpacing: 10
+
+                ContentSubsection {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.alignment: Qt.AlignTop
+                    title: Translation.tr("Canvas grid style")
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.dashboard?.canvas?.gridStyle ?? "dots"
+                        onSelected: val => Config.setNestedValue("dashboard.canvas.gridStyle", val)
+                        options: [
+                            { displayName: Translation.tr("Dots"), icon: "grain", value: "dots" },
+                            { displayName: Translation.tr("Lines"), icon: "grid_4x4", value: "lines" },
+                            { displayName: Translation.tr("Hidden"), icon: "visibility_off", value: "none" }
+                        ]
+                    }
+                }
+
+                ContentSubsection {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.alignment: Qt.AlignTop
+                    title: Translation.tr("Media popup placement")
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.media?.popupMode ?? "dock"
+                        onSelected: val => Config.setNestedValue("media.popupMode", val)
+                        options: [
+                            { displayName: Translation.tr("Dock"), icon: "call_to_action", value: "dock" },
+                            { displayName: Translation.tr("Bar"), icon: "web_asset", value: "bar" }
+                        ]
+                    }
                 }
             }
 
@@ -1248,31 +1288,18 @@ ContentPage {
                     checked: Config.options?.osd?.mediaEnabled ?? true
                     onCheckedChanged: Config.setNestedValue("osd.mediaEnabled", checked)
                 }
-            }
 
-            SettingsDivider {}
-
-            ConfigSpinBox {
-                icon: "grid_on"
-                text: Translation.tr("Grid size (px)")
-                value: Config.options?.dashboard?.canvas?.gridSize ?? 24
-                from: 12
-                to: 48
-                stepSize: 4
-                onValueChanged: Config.setNestedValue("dashboard.canvas.gridSize", value)
-            }
-
-            SettingsDivider {}
-
-            ContentSubsection {
-                title: Translation.tr("Media popup placement")
-                ConfigSelectionArray {
-                    currentValue: Config.options?.media?.popupMode ?? "dock"
-                    onSelected: val => Config.setNestedValue("media.popupMode", val)
-                    options: [
-                        { displayName: Translation.tr("Dock"), icon: "call_to_action", value: "dock" },
-                        { displayName: Translation.tr("Bar"), icon: "web_asset", value: "bar" }
-                    ]
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.preferredWidth: 1
+                    icon: "grid_on"
+                    text: Translation.tr("Grid size (px)")
+                    value: Config.options?.dashboard?.canvas?.gridSize ?? 24
+                    from: 12
+                    to: 48
+                    stepSize: 4
+                    onValueChanged: Config.setNestedValue("dashboard.canvas.gridSize", value)
                 }
             }
         }

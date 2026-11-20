@@ -27,6 +27,7 @@ const lexiconCode = fs.readFileSync("services/SpacedRepetitionLexicon.js", "utf8
     .replace(/^\.import\s+"SpacedRepetitionEssential4000\.js"\s+as\s+Essential4000\s*$/m, "");
 const engineCode = fs.readFileSync("services/SpacedRepetitionEngine.js", "utf8")
     .replace(/^\.pragma\s+library\s*$/m, "")
+    .replace(/^\.import\s+"SpacedRepetitionPrompts\.js"\s+as\s+Prompts\s*$/m, "")
     .replace(/^\.import\s+"SpacedRepetitionEssential4000\.js"\s+as\s+Essential4000\s*$/m, "")
     .replace(/^\.import\s+"SpacedRepetitionLexicon\.js"\s+as\s+Lexicon\s*$/m, "");
 

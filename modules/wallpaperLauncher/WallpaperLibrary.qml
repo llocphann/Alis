@@ -10,20 +10,25 @@ import Quickshell.Io
 Scope {
     id: root
 
-    property list<var> staticEntries: []
-    property list<var> animatedEntries: []
+    // The views filter complete snapshots. Keep their records in the JS engine.
+    property var staticEntries: []
+    property var animatedEntries: []
     property var colorTagsByPath: ({})
     property var _lastScanRoots: []
     property bool scanning: false
     property string directory: ""
     property string _scanSignature: ""
+    property int _scanRevision: 0
     property var _pendingRefresh: null
+    property var _lastScanOrder: null
 
     signal refreshed()
 
     function ensureColorTags(): void {
         if (colorTagsProcess.running || root._lastScanRoots.length === 0)
             return
+        colorTagsTimer.stop()
+        colorTagsProcess.revision = root._scanRevision
         colorTagsProcess.exec([
             "/usr/bin/nice", "-n", "19",
             `${Directories.scriptsPath}/native-dispatch`,
@@ -56,17 +61,20 @@ Scope {
         }
 
         const signature = JSON.stringify(roots)
+        // Even a cache hit is a newer choice than a queued folder.
+        root._pendingRefresh = null
         if (!force && signature === root._scanSignature
                 && (root.staticEntries.length > 0 || root.animatedEntries.length > 0))
             return
 
-        if (scanProcess.running) {
+        if (root.scanning) {
             root._pendingRefresh = ({ path: cleanPath, extraPaths, force })
             return
         }
 
         root.directory = cleanPath
         root._scanSignature = signature
+        root._scanRevision++
         root._lastScanRoots = roots
         root.scanning = true
         Wallpapers.preloadKnownThumbnails()
@@ -79,25 +87,30 @@ Scope {
             "-iname", "*.svg", "-o", "-iname", "*.gif", "-o",
             "-iname", "*.mp4", "-o", "-iname", "*.webm", "-o",
             "-iname", "*.mkv", "-o", "-iname", "*.avi", "-o",
-            "-iname", "*.mov", ")", "-print"
+            "-iname", "*.mov", ")", "-print0"
         ])
     }
 
-    function consume(rawOutput: string): void {
+    function consume(rawOutput: string, separator = "\n"): void {
         const staticItems = []
         const animatedItems = []
         const prefix = root.directory.endsWith("/") ? root.directory : root.directory + "/"
+        const localeName = Qt.locale().name
+        const previous = root._lastScanOrder
+        const sameScan = previous && previous.raw === rawOutput && previous.prefix === prefix
+            && previous.separator === separator && previous.localeName === localeName
+        const records = sameScan ? previous.paths : rawOutput.split(separator)
         // Scan roots can overlap (the current wallpaper's folder may contain the
         // configured root), so the same file can be printed twice.
-        const seen = ({})
-        for (const rawLine of String(rawOutput ?? "").split("\n")) {
-            const path = rawLine.trim()
-            if (!path || seen[path]) continue
-            seen[path] = true
-            const lower = path.toLowerCase()
-            const isVideo = [".mp4", ".webm", ".mkv", ".avi", ".mov"]
-                .some(extension => lower.endsWith(extension))
-            const isGif = lower.endsWith(".gif")
+        const seen = sameScan ? null : Object.create(null)
+        const videoExtensions = new Set([".mp4", ".webm", ".mkv", ".avi", ".mov"])
+        for (const record of records) {
+            const path = !sameScan && separator === "\n" ? record.trim() : record
+            if (!path || (seen && seen[path])) continue
+            if (seen) seen[path] = true
+            const extension = path.slice(path.lastIndexOf(".")).toLowerCase()
+            const isVideo = videoExtensions.has(extension)
+            const isGif = extension === ".gif"
             const name = FileUtils.fileNameForPath(path)
             const relativePath = path.startsWith(prefix) ? path.slice(prefix.length) : path
             const kind = isVideo ? "video" : isGif ? "gif" : "static"
@@ -115,32 +128,48 @@ Scope {
             else
                 staticItems.push(entry)
         }
-        const byName = (left, right) => left.relativePath.localeCompare(right.relativePath)
-        staticItems.sort(byName)
-        animatedItems.sort(byName)
+        if (!sameScan) {
+            const byName = (left, right) => left.relativePath.localeCompare(right.relativePath)
+            staticItems.sort(byName)
+            animatedItems.sort(byName)
+            // Reuse only the order of an identical scan. Refresh still publishes
+            // fresh entries, including when an image was replaced at the same path.
+            root._lastScanOrder = { raw: rawOutput, prefix, separator, localeName,
+                paths: staticItems.concat(animatedItems).map(entry => entry.path) }
+        }
         root.staticEntries = staticItems
         root.animatedEntries = animatedItems
         root.refreshed()
     }
 
+    function _finishScan(): void {
+        root.scanning = false
+        // Observers may synchronously request a newer scan on this transition.
+        const pending = root._pendingRefresh
+        if (!root.scanning && pending)
+            root.refresh(pending.path, pending.extraPaths, pending.force)
+    }
+
     Process {
         id: scanProcess
         stdout: StdioCollector {
-            onStreamFinished: root.consume(text)
+            onStreamFinished: root.consume(text, "\0")
         }
         onExited: (exitCode, exitStatus) => {
-            root.scanning = false
             // One unreadable root makes find exit nonzero even though the other
             // roots produced results — only report empty when nothing was found.
             if (exitCode !== 0 && root.staticEntries.length === 0
                     && root.animatedEntries.length === 0)
                 root.refreshed()
 
-            const pending = root._pendingRefresh
-            root._pendingRefresh = null
-            if (pending)
-                Qt.callLater(() => root.refresh(pending.path,
-                    pending.extraPaths, pending.force))
+            root._finishScan()
+        }
+        onRunningChanged: {
+            // Quickshell reports a failed start without an exited signal.
+            if (!running && root.scanning) {
+                root._scanSignature = ""
+                root._finishScan()
+            }
         }
     }
 
@@ -153,14 +182,19 @@ Scope {
 
     Process {
         id: colorTagsProcess
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const parsed = JSON.parse(String(text ?? "{}").trim() || "{}")
-                    if (parsed && typeof parsed === "object")
-                        root.colorTagsByPath = Object.assign({}, root.colorTagsByPath, parsed)
-                } catch (e) {}
+        property int revision
+        stdout: StdioCollector { id: tagOutput; waitForEnd: true }
+        onExited: exitCode => {
+            if (revision !== root._scanRevision) {
+                root.ensureColorTags()
+                return
             }
+            if (exitCode !== 0) return
+            try {
+                const tags = JSON.parse(tagOutput.text)
+                if (tags && typeof tags === "object" && !Array.isArray(tags))
+                    root.colorTagsByPath = tags
+            } catch (e) {}
         }
     }
 }

@@ -640,30 +640,16 @@ ShellRoot {
         function current(): int { return GlobalStates.settingsOverlayCurrentPage }
     }
 
-    // Settings overlay panel (loaded only when overlay mode is enabled).
-    // overlayStyle picks the chrome; two sibling loaders instead of a
-    // conditional `component:` so only the selected one is ever constructed.
-    // Any unrecognised style falls back to the nav rail.
-    LazyLoader {
-        id: settingsRailLoader
-        readonly property bool loaderConfigured:
-            Config.ready
+    // Qt's Loader responds to both mode and URL changes. The URL-based
+    // Quickshell LazyLoader can activate before its new source is available
+    // when switching families, leaving the Settings request without a host.
+    Loader {
+        id: settingsOverlayLoader
+        active: Config.ready
             && Config.options?.panelFamily !== "abyss"
             && GlobalStates.useSettingsOverlay()
-            && (Config.options?.settingsUi?.overlayStyle ?? "rail") !== "focus"
-        active: loaderConfigured
-        source: loaderConfigured ? "modules/settings/SettingsOverlay.qml" : ""
-    }
-
-    LazyLoader {
-        id: settingsFocusLoader
-        readonly property bool loaderConfigured:
-            Config.ready
-            && Config.options?.panelFamily !== "abyss"
-            && GlobalStates.useSettingsOverlay()
-            && (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
-        active: loaderConfigured
-        source: loaderConfigured ? "modules/settings/SettingsFocus.qml" : ""
+        source: (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
+            ? "modules/settings/SettingsFocus.qml" : "modules/settings/SettingsOverlay.qml"
     }
 
     // === Panel Loaders ===

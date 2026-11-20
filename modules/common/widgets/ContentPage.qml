@@ -1973,7 +1973,7 @@ StyledFlickable {
         || SettingsLayoutManager.draggingModule
     readonly property real maxContentWidth: root._usesMultiColumnOverride
         ? Math.min(1320, Math.max(860, root.width - 40))
-        : Math.min(Math.max(320, root.width - (SettingsMaterialPreset.waffle ? 56 : 40)), Math.round((SettingsMaterialPreset.waffle ? 980 : 860) * Appearance.fontSizeScale))
+        : Math.round(1280 * Appearance.fontSizeScale)
     readonly property real _horizontalMargin: {
         if (root.embedded) return 0
         const w = root.width
@@ -2061,7 +2061,6 @@ StyledFlickable {
             visible: false
         }
 
-        // Single-Row Centered Sub-Tab Bar (supports click + horizontal scroll / mouse wheel + drag-and-drop module target)
         Item {
             id: subTabBarContainer
             objectName: "settingsSubTabBarContainer"
@@ -2074,7 +2073,8 @@ StyledFlickable {
 
             Rectangle {
                 id: subTabTrack
-                x: SettingsMaterialPreset.waffle ? 0 : Math.round((parent.width - width) / 2)
+                objectName: "settingsSectionTabTrack"
+                x: root.abyssTaskStyle ? Math.round((parent.width - width) / 2) : 0
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(parent.width, subTabRow.implicitWidth + (SettingsMaterialPreset.waffle ? 0 : 8))
                 height: 40

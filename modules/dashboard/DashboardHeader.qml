@@ -6,6 +6,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.abyss.looks
+import qs.modules.waffle.looks as Waffle
 
 /**
  * Dashboard navigation: uptime at left, page dots at center, actions at right.
@@ -16,6 +17,11 @@ Item {
     // a new implicit size after Edit changes its children; it must not resize
     // the visible page header or the widget canvas.
     implicitHeight: Math.max(32, showActions ? actions.implicitHeight : 0)
+        + (separateNavigation ? 36 : 0)
+    property bool waffleMenu: false
+    onWaffleMenuChanged: pageDotsRow.forceLayout()
+    readonly property bool separateNavigation: waffleMenu && showActions && pageCount > 1
+        && (editMode || (width - pages.width) / 2 < actions.implicitWidth + 8)
 
     property bool editMode: false
     property bool showActions: true
@@ -137,20 +143,24 @@ Item {
     readonly property bool alisEverywhere: Appearance.alisEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
     readonly property bool showPowerButtons: true
-    readonly property color colText: abyss ? (Appearance.m3colors.darkmode ? AbyssStyle.textColor : "#000000") : Appearance.angelEverywhere ? Appearance.angel.colText : alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer0
-    readonly property color colSubtext: abyss ? (Appearance.m3colors.darkmode ? AbyssStyle.textColorMuted : Qt.alpha("#000000", .66)) : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary : alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
+    readonly property color colText: waffleMenu ? Waffle.Looks.colors.fg : (abyss ? (Appearance.m3colors.darkmode ? AbyssStyle.textColor : "#000000") : Appearance.angelEverywhere ? Appearance.angel.colText : alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer0)
+    readonly property color colSubtext: waffleMenu ? Waffle.Looks.colors.subfg : (abyss ? (Appearance.m3colors.darkmode ? AbyssStyle.textColorMuted : Qt.alpha("#000000", .66)) : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary : alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext)
 
     component HeaderButton: RippleButton {
         id: headerButton
         property alias iconName: headerSymbol.text
         property string tooltip: ""
-        implicitWidth: root.narrow ? 30 : 38
-        implicitHeight: root.narrow ? 30 : 38
-        buttonRadius: toggled ? Appearance.rounding.normal : Appearance.rounding.full
-        colBackground: root.abyss ? Qt.alpha(AbyssStyle.accent, .05) : Appearance.angelEverywhere ? Appearance.angel.colGlassCard : root.alisEverywhere ? Appearance.alis.colLayer1 : root.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1
-        colBackgroundHover: root.abyss ? Qt.alpha(AbyssStyle.accent, .12) : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : root.alisEverywhere ? Appearance.alis.colLayer1Hover : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
-        colBackgroundToggled: Appearance.colors.colSecondaryContainer
-        colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
+        implicitWidth: root.waffleMenu ? (root.narrow ? 30 : 34) : (root.narrow ? 30 : 38)
+        implicitHeight: root.waffleMenu ? (root.narrow ? 30 : 34) : (root.narrow ? 30 : 38)
+        buttonRadius: root.waffleMenu ? Waffle.Looks.radius.medium : (toggled ? Appearance.rounding.normal : Appearance.rounding.full)
+        colBackground: root.waffleMenu
+            ? Waffle.Looks.colors.bg1
+            : (root.abyss ? Qt.alpha(AbyssStyle.accent, .05) : Appearance.angelEverywhere ? Appearance.angel.colGlassCard : root.alisEverywhere ? Appearance.alis.colLayer1 : root.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1)
+        colBackgroundHover: root.waffleMenu
+            ? Waffle.Looks.colors.bg1Hover
+            : (root.abyss ? Qt.alpha(AbyssStyle.accent, .12) : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : root.alisEverywhere ? Appearance.alis.colLayer1Hover : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover)
+        colBackgroundToggled: root.waffleMenu ? Waffle.Looks.colors.accent : Appearance.colors.colSecondaryContainer
+        colBackgroundToggledHover: root.waffleMenu ? Waffle.Looks.colors.accentHover : Appearance.colors.colSecondaryContainerHover
         Behavior on buttonRadius {
             enabled: Appearance.animationsEnabled
             NumberAnimation {
@@ -159,12 +169,22 @@ Item {
                 easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
             }
         }
+        Rectangle {
+            anchors.fill: parent
+            radius: headerButton.buttonEffectiveRadius
+            color: "transparent"
+            visible: root.waffleMenu
+            border.width: 1
+            border.color: headerButton.toggled ? Waffle.Looks.colors.accent : Waffle.Looks.colors.bg1Border
+        }
         contentItem: MaterialSymbol {
             id: headerSymbol
             anchors.centerIn: parent
             iconSize: 20
             horizontalAlignment: Text.AlignHCenter
-            color: headerButton.toggled ? Appearance.colors.colOnSecondaryContainer : root.colText
+            color: headerButton.toggled
+                ? (root.waffleMenu ? Waffle.Looks.colors.accentFg : Appearance.colors.colOnSecondaryContainer)
+                : root.colText
         }
         StyledToolTip {
             text: headerButton.tooltip
@@ -175,7 +195,8 @@ Item {
         id: actions
         visible: root.showActions
         anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenter: root.separateNavigation ? undefined : parent.verticalCenter
+        anchors.top: root.separateNavigation ? parent.top : undefined
         spacing: root.narrow ? 3 : 8
 
         HeaderButton {
@@ -208,7 +229,14 @@ Item {
             onClicked: {
                 GlobalStates.dashboardOpen = false;
                 GlobalStates.overviewOpen = false;
-                Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"]);
+                if (GlobalStates.useSettingsOverlay()) {
+                    GlobalStates.settingsOverlayTargetOutput = GlobalStates.resolveOutputName("", []);
+                    GlobalStates.settingsOverlayRequestedSection = "";
+                    GlobalStates.settingsOverlayRequestedPage = -1;
+                    GlobalStates.settingsOverlayOpen = true;
+                } else {
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings-window"]);
+                }
             }
         }
         HeaderButton {
@@ -232,8 +260,42 @@ Item {
             }
         }
     }
+    Flickable {
+        id: menuNavigation
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: 32
+        visible: root.separateNavigation
+        clip: true
+        contentWidth: Math.max(width, pages.width + (root.editMode ? 104 : 0))
+        contentHeight: height
+        interactive: visible && contentWidth > width
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.HorizontalFlick
+
+        function revealCurrentPage() {
+            if (!interactive) {
+                contentX = 0
+                return
+            }
+            const tabItem = pageRepeater.itemAt(root.currentPage)
+            const left = pages.x + (tabItem ? tabItem.x : root.currentPage * (root.pageDotButtonWidth + pages.spacing))
+            const tabWidth = tabItem ? tabItem.width : root.pageDotButtonWidth
+            contentX = Math.min(Math.max(0, contentWidth - width),
+                Math.max(0, Math.min(left, Math.max(contentX, left + tabWidth - width))))
+        }
+        onContentWidthChanged: Qt.callLater(revealCurrentPage)
+        onWidthChanged: Qt.callLater(revealCurrentPage)
+        Connections {
+            target: root
+            function onCurrentPageChanged() { menuNavigation.revealCurrentPage() }
+        }
+        Item { id: menuStrip; width: menuNavigation.contentWidth; height: menuNavigation.height }
+    }
     RowLayout {
         id: pages
+        parent: root.separateNavigation ? menuStrip : root
         objectName: "dashboardPageDots"
         anchors.centerIn: parent
         spacing: 4
@@ -246,22 +308,25 @@ Item {
             Repeater {
                 id:pageRepeater
                 model: root.pageCount
+                onItemAdded: pageDotsRow.forceLayout()
+                onItemRemoved: pageDotsRow.forceLayout()
+                onCountChanged: pageDotsRow.forceLayout()
                 delegate: RippleButton {
                     id:pageButton
                     required property int index
                     objectName: "dashboardPage" + index
-                    x: index * (root.pageDotButtonWidth + pages.spacing)
-                    implicitWidth: root.pageDotButtonWidth
-                    implicitHeight: 32
-                    buttonRadius: 16
+                    implicitWidth: root.waffleMenu ? Math.max(56, waffleTabLabel.implicitWidth + 18) : root.pageDotButtonWidth
+                    implicitHeight: root.waffleMenu ? 28 : 32
+                    buttonRadius: root.waffleMenu ? Waffle.Looks.radius.medium : 16
                     enabled: root.reorderAllowed || (root.navigationAllowed && !root.editMode)
                     focusPolicy:Qt.StrongFocus
                     Accessible.name:root.pageLabel(root.pageIds[index])
-                    colBackground: "transparent"
-                    colBackgroundHover: Qt.alpha(root.colText, .08)
+                    colBackground: (root.waffleMenu && index === root.currentPage) ? Waffle.Looks.colors.bg1 : "transparent"
+                    colBackgroundHover: root.waffleMenu ? Waffle.Looks.colors.bg1Hover : Qt.alpha(root.colText, .08)
                     contentItem: Item {
                         Rectangle {
                             objectName: "dashboardPageDot" + index
+                            visible: !root.waffleMenu
                             anchors.centerIn: parent
                             width: root.pageDotDiameter
                             height: root.pageDotDiameter
@@ -269,6 +334,16 @@ Item {
                             // Every base dot stays visible: the selected highlight
                             // travels above them instead of swapping colors at once.
                             color: Qt.alpha(root.colText, .35)
+                        }
+                        StyledText {
+                            id: waffleTabLabel
+                            visible: root.waffleMenu
+                            anchors.centerIn: parent
+                            text: root.pageLabel(root.pageIds[index])
+                            font.family: Waffle.Looks.font.family.ui
+                            font.pixelSize: Waffle.Looks.font.pixelSize.small
+                            font.weight: index === root.currentPage ? Font.DemiBold : Font.Normal
+                            color: index === root.currentPage ? root.colText : root.colSubtext
                         }
                     }
                     onClicked: if(!root.editMode && root.navigationAllowed)root.pageRequested(index)
@@ -381,24 +456,50 @@ Item {
     Rectangle {
         id: activePageIndicator
         objectName: "dashboardActivePageIndicator"
+        parent: root.separateNavigation ? menuStrip : root
         z: 10
-        width: root.pageDotDiameter
-        height: root.pageDotDiameter
-        radius: width / 2
-        color: root.colText
+        readonly property Item currentTabItem: (root.currentPage >= 0 && root.currentPage < pageRepeater.count)
+            ? pageRepeater.itemAt(root.currentPage) : null
+        width: root.waffleMenu
+            ? Math.max(16, (currentTabItem?.width ?? 36) - 18)
+            : root.pageDotDiameter
+        height: root.waffleMenu ? 3 : root.pageDotDiameter
+        radius: root.waffleMenu ? 1.5 : width / 2
+        color: root.waffleMenu ? Waffle.Looks.colors.accent : root.colText
         visible: pages.visible && root.currentPage >= 0
             && root.currentPage < root.pageCount
-        anchors.verticalCenter: pages.verticalCenter
+        anchors.verticalCenter: root.waffleMenu ? undefined : pages.verticalCenter
+        anchors.bottom: root.waffleMenu ? pages.bottom : undefined
         // Use the *same* position animated by Dashboard's page strip: this
         // removes the one-frame extinguish/relight effect and cannot lag,
         // overshoot separately, or trigger any additional animation work.
-        x: pages.x + (root.pageDotButtonWidth - width) / 2
-            + Math.max(0, Math.min(root.pageCount - 1, root.indicatorProgress))
-                * (root.pageDotButtonWidth + pages.spacing)
+        x: root.waffleMenu
+            ? pages.x + (currentTabItem ? currentTabItem.x + Math.round((currentTabItem.width - width) / 2) : 0)
+            : pages.x + (root.pageDotButtonWidth - width) / 2
+                + Math.max(0, Math.min(root.pageCount - 1, root.indicatorProgress))
+                    * (root.pageDotButtonWidth + pages.spacing)
+        Behavior on x {
+            enabled: root.waffleMenu && Appearance.animationsEnabled
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
+    }
+    MaterialSymbol {
+        id: tabReorderHandle
+        objectName: "dashboardTabReorderHandle"
+        parent: root.separateNavigation ? menuStrip : root
+        visible:root.reorderAllowed
+        anchors.right:pages.left;anchors.rightMargin:2
+        anchors.verticalCenter:pages.verticalCenter
+        text:"drag_indicator";iconSize:16;color:root.colSubtext
     }
     RippleButton {
         id: defaultTabButton
         objectName: "dashboardSetDefaultTab"
+        parent: root.separateNavigation ? menuStrip : root
         visible: root.editMode
         // Desired left-to-right order: Set Default, reorder grip, page dots.
         anchors.right: tabReorderHandle.left
@@ -437,16 +538,9 @@ Item {
                 : Translation.tr("Set this as default tab after inactivity")
         }
     }
-    MaterialSymbol {
-        id: tabReorderHandle
-        objectName: "dashboardTabReorderHandle"
-        visible:root.reorderAllowed
-        anchors.right:pages.left;anchors.rightMargin:2
-        anchors.verticalCenter:pages.verticalCenter
-        text:"drag_indicator";iconSize:16;color:root.colSubtext
-    }
     Rectangle {
         objectName:"dashboardTabInsertion"
+        parent: root.separateNavigation ? menuStrip : root
         visible:root.draggingPage && root.dragTarget>=0
         x:pages.x+(pageRepeater.itemAt(root.dragTarget)?.x ?? 0)
             +(root.dragTarget>root.pageIds.indexOf(root.dragPageId)?24:0)-2
@@ -465,8 +559,11 @@ Item {
         id: uptime
         visible: root.showActions
         anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        width: Math.min(implicitWidth, Math.max(0, root.width / 2 - pages.width / 2 - 12))
+        anchors.verticalCenter: root.separateNavigation ? undefined : parent.verticalCenter
+        anchors.top: root.separateNavigation ? parent.top : undefined
+        height: root.separateNavigation ? actions.height : implicitHeight
+        width: Math.min(implicitWidth, Math.max(0, root.separateNavigation
+            ? actions.x - 8 : Math.min(pages.x - 12, root.width / 2 - pages.width / 2 - 12)))
         spacing: 8
 
         MaterialSymbol {
@@ -478,6 +575,7 @@ Item {
             Layout.fillWidth: true
             elide: Text.ElideRight
             text: Translation.tr("Uptime: %1").arg(DateTime.uptime)
+            font.family: root.waffleMenu ? Waffle.Looks.font.family.ui : Appearance.font.family.main
             font.pixelSize: Appearance.font.pixelSize.small
             color: root.colSubtext
         }
