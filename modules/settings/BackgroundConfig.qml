@@ -716,11 +716,15 @@ ContentPage {
 
                         StyledText {
                             Layout.fillWidth: true
-                            text: Wallpapers.wallfxStatusMessage.length > 0
-                                ? Wallpapers.wallfxStatusMessage
-                                : (Wallpapers.wallfxAiAvailable
-                                    ? `${Wallpapers.favouriteCount} ♥ Favourites · ${Wallpapers.wallfxPerfilCached} character outlines cached`
-                                    : `${Wallpapers.favouriteCount} ♥ Favourites · Using cellular contagion spread (AI character cutout optional)`)
+                            text: Wallpapers.wallfxAiInstalling
+                                ? Translation.tr("Installing AI cutout…")
+                                : Wallpapers.wallfxBakingFavourites
+                                    ? Translation.tr("Syncing favourite outlines…")
+                                    : Wallpapers.wallfxStatusMessage.length > 0
+                                        ? Wallpapers.wallfxStatusMessage
+                                        : Wallpapers.wallfxAiAvailable
+                                            ? Translation.tr("%1 ♥ · %2 outlines ready · Auto-sync").arg(Wallpapers.favouriteCount).arg(Wallpapers.wallfxPerfilCached)
+                                            : Translation.tr("%1 ♥ · Spread mode · AI outline optional").arg(Wallpapers.favouriteCount)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: Appearance.colors.colOnLayer1
                             wrapMode: Text.WordWrap
@@ -734,16 +738,6 @@ ContentPage {
                                 ? Translation.tr("Installing...")
                                 : Translation.tr("Install AI Cutout")
                             onClicked: Wallpapers.installWallfxAi()
-                        }
-
-                        RippleButtonWithIcon {
-                            visible: Wallpapers.wallfxAiAvailable
-                            enabled: !Wallpapers.wallfxBakingFavourites
-                            materialIcon: "auto_fix_high"
-                            mainText: Wallpapers.wallfxBakingFavourites
-                                ? Translation.tr("Baking...")
-                                : Translation.tr("Bake Favourites")
-                            onClicked: Wallpapers.bakeFavouriteWallpapers()
                         }
                     }
                 }

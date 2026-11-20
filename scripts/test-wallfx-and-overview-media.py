@@ -30,6 +30,10 @@ def main() -> None:
     assert 'root._activeShader = "alisMelt"' in crossfader, "non-favourite must fall back to alisMelt"
     assert 'root._activeShader = "wallfx"' in crossfader, "favourite must activate wallfx shader"
     assert 'value: "wallfx"' in bg_config and "Outline (Favourites)" in bg_config
+    assert "Bake Favourites" not in bg_config, "manual Bake Favourites button should be removed"
+    assert "Install AI Cutout" in bg_config and "visible: !Wallpapers.wallfxAiAvailable" in bg_config
+    assert "_bakeSingleFavouriteAsync" not in wallpapers_qml, "detached racy bake helper must be replaced by save-gated sync"
+    assert "syncFavouriteWallpapers()" in wallpapers_qml and "pruneWallfxFavourites()" in wallpapers_qml
     assert 'objectName:"wallpaperCardFavourite"' in launcher_item
     assert "favouritesOnly" in launcher_list and 'objectName:"wallpaperFavouritesFilter"' in launcher_content
     assert "Wallpapers.ensureVideoFirstFrame(wallpaperPathRaw)" in overview_niri
@@ -110,7 +114,68 @@ def main() -> None:
         assert perfil_json["eligible"] is True and perfil_json["mode"] == "perfil" and perfil_json["modeId"] == 1
         assert perfil_json["sdRange"] == 16.0 and perfil_json["lineW"] == 2.2
 
-    print("WALLFX_AND_OVERVIEW_MEDIA_PASS: favourite-only gate, contagio spread, perfil outline bake, video/gif overview")
+        # 5. sync-favourites fast path when already baked
+        r_sync_fast = subprocess.run(
+            ["/usr/bin/python3", str(helper), "sync-favourites", str(fav_file), str(tmp_path)],
+            env=bake_env,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        sync_fast_json = json.loads(r_sync_fast.stdout.strip())
+        assert sync_fast_json["bakedNow"] == 0 and sync_fast_json["perfilReady"] == 1 and sync_fast_json["perfilCached"] == 1
+
+        # 6. Unfavourite cleans up cached outline artifacts via prune
+        fav_file.write_text(json.dumps({}), encoding="utf-8")
+        r_prune = subprocess.run(
+            ["/usr/bin/python3", str(helper), "prune", str(fav_file), str(tmp_path)],
+            env=base_env,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        prune_json = json.loads(r_prune.stdout.strip())
+        assert prune_json["pruned"] >= 1 and prune_json["perfilCached"] == 0
+        assert not Path(perfil_json["field"]).exists() and not Path(perfil_json["line"]).exists()
+
+        # 7. Adding favourite back + auto-sync bakes cleanly, and legacy basename-only entry is resolved & preserved
+        wp_legacy = tmp_path / "legacy_hero.png"
+        img.save(wp_legacy)
+        fav_file.write_text(json.dumps({str(wp_fav): True, wp_fav.name: True, wp_legacy.name: True}), encoding="utf-8")
+        r_sync_auto = subprocess.run(
+            ["/usr/bin/python3", str(helper), "sync-favourites", str(fav_file), str(tmp_path)],
+            env=bake_env,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        sync_auto_json = json.loads(r_sync_auto.stdout.strip())
+        assert sync_auto_json["bakedNow"] == 2 and sync_auto_json["perfilReady"] == 2 and sync_auto_json["perfilCached"] == 2
+
+        # Pruning without wallpapers_root must still preserve legacy basename-only favourite via meta img basename
+        r_prune_keep = subprocess.run(
+            ["/usr/bin/python3", str(helper), "prune", str(fav_file)],
+            env=base_env,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        prune_keep_json = json.loads(r_prune_keep.stdout.strip())
+        assert prune_keep_json["pruned"] == 0 and prune_keep_json["perfilCached"] == 2
+
+        # Clean removal of one favourite leaves the other intact
+        fav_file.write_text(json.dumps({str(wp_fav): True, wp_fav.name: True}), encoding="utf-8")
+        r_prune_one = subprocess.run(
+            ["/usr/bin/python3", str(helper), "prune", str(fav_file), str(tmp_path)],
+            env=base_env,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        prune_one_json = json.loads(r_prune_one.stdout.strip())
+        assert prune_one_json["pruned"] == 1 and prune_one_json["perfilCached"] == 1
+
+    print("WALLFX_AND_OVERVIEW_MEDIA_PASS: favourite-only gate, contagio spread, perfil auto-sync/prune, legacy basename preservation, video/gif overview")
 
 
 if __name__ == "__main__":

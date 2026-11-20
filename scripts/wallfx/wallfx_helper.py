@@ -17,8 +17,10 @@ import json
 import math
 import os
 import random
+import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 HOME = os.path.expanduser("~")
@@ -522,10 +524,17 @@ def resolve_for_wallpaper(img_path: str, fav_override: bool | None = None, fav_f
     }
 
 
-def bake_favourites_only(fav_file: str | None = None, wallpapers_root: str | None = None) -> dict:
+_KEY_FILE_RE = re.compile(r"^([0-9a-f]{16})(?:-campo\.png|-linea\.png|-mascara\.png|\.json|\.lock)$")
+
+
+def _collect_favourite_paths(
+    fav_file: str | None = None,
+    wallpapers_root: str | None = None,
+) -> tuple[list[str], dict[str, bool], set[str]]:
     fav_db = load_favourites(fav_file)
     candidates: list[str] = []
     seen: set[str] = set()
+    resolved_basenames: set[str] = set()
 
     for key in fav_db:
         if os.path.isabs(key) and os.path.isfile(key) and key.lower().endswith(STATIC_EXTS):
@@ -533,12 +542,18 @@ def bake_favourites_only(fav_file: str | None = None, wallpapers_root: str | Non
             if real not in seen:
                 seen.add(real)
                 candidates.append(real)
+            resolved_basenames.add(os.path.basename(key))
+            resolved_basenames.add(os.path.basename(real))
 
-    # Resolve legacy basename-only favourite entries inside wallpapers_root if provided
+    # Only walk wallpapers_root when legacy basename-only entries exist that have no
+    # matching resolved absolute path in favourites.json (keeps 2.5k+ wallpaper trees instant).
     unresolved_basenames = {
-        k for k in fav_db if not os.path.isabs(k) and k.lower().endswith(STATIC_EXTS)
+        k
+        for k in fav_db
+        if not os.path.isabs(k) and k.lower().endswith(STATIC_EXTS) and k not in resolved_basenames
     }
     if unresolved_basenames and wallpapers_root and os.path.isdir(wallpapers_root):
+        found_basenames: set[str] = set()
         for dirpath, _, filenames in os.walk(wallpapers_root):
             for fn in filenames:
                 if fn in unresolved_basenames:
@@ -546,23 +561,185 @@ def bake_favourites_only(fav_file: str | None = None, wallpapers_root: str | Non
                     if full not in seen:
                         seen.add(full)
                         candidates.append(full)
+                    found_basenames.add(fn)
+        unresolved_basenames -= found_basenames
 
-    ensure_spread_pool(3)
-    baked_ok = 0
-    baked_contagio = 0
-    for path in candidates:
-        res = _bake_perfil_pure_or_cv2(path)
-        if res:
-            baked_ok += 1
-        else:
-            baked_contagio += 1
+    return candidates, fav_db, unresolved_basenames
+
+
+def _has_cached_perfil_or_decided(img_path: str) -> tuple[bool, bool]:
+    perfil_dir = os.path.join(CACHE_DIR, "perfil")
+    key = _key_for_image(img_path)
+    base = os.path.join(perfil_dir, key)
+    meta_path = base + ".json"
+    campo_path = base + "-campo.png"
+    linea_path = base + "-linea.png"
+    if not os.path.isfile(meta_path):
+        return False, False
+    try:
+        meta = json.loads(Path(meta_path).read_text(encoding="utf-8"))
+        if not meta.get("ok"):
+            return True, False
+        if os.path.isfile(campo_path) and os.path.isfile(linea_path):
+            return True, True
+    except Exception:
+        pass
+    return False, False
+
+
+def _remove_key_artifacts(perfil_dir: str, key: str) -> bool:
+    import fcntl
+
+    lock_path = os.path.join(perfil_dir, f"{key}.lock")
+    targets = (
+        os.path.join(perfil_dir, f"{key}-campo.png"),
+        os.path.join(perfil_dir, f"{key}-linea.png"),
+        os.path.join(perfil_dir, f"{key}-mascara.png"),
+        os.path.join(perfil_dir, f"{key}.json"),
+    )
+    lock_fh = None
+    try:
+        if os.path.exists(lock_path):
+            lock_fh = open(lock_path, "r+", encoding="utf-8")
+            try:
+                fcntl.flock(lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                return False
+        for path in targets:
+            try:
+                os.unlink(path)
+            except FileNotFoundError:
+                pass
+        try:
+            os.unlink(lock_path)
+        except FileNotFoundError:
+            pass
+        return True
+    except OSError:
+        return False
+    finally:
+        if lock_fh is not None:
+            try:
+                lock_fh.close()
+            except OSError:
+                pass
+
+
+def prune_non_favourites(fav_file: str | None = None, wallpapers_root: str | None = None) -> dict:
+    candidates, _, unresolved_basenames = _collect_favourite_paths(fav_file, wallpapers_root)
+    valid_keys = {_key_for_image(p) for p in candidates}
+    perfil_dir = os.path.join(CACHE_DIR, "perfil")
+    pruned = 0
+    if os.path.isdir(perfil_dir):
+        now = time.time()
+        keys_found: set[str] = set()
+        for fn in os.listdir(perfil_dir):
+            if ".tmp.png" in fn:
+                fp = os.path.join(perfil_dir, fn)
+                try:
+                    if now - os.stat(fp).st_mtime > 120:
+                        os.unlink(fp)
+                except OSError:
+                    pass
+                continue
+            m = _KEY_FILE_RE.match(fn)
+            if m:
+                keys_found.add(m.group(1))
+        for key in keys_found:
+            if key in valid_keys:
+                continue
+            # Preserve legacy basename-only favourite caches if wallpapers_root was unavailable
+            if unresolved_basenames:
+                meta_path = os.path.join(perfil_dir, f"{key}.json")
+                if os.path.isfile(meta_path):
+                    try:
+                        img = str(json.loads(Path(meta_path).read_text(encoding="utf-8")).get("img") or "")
+                        if (
+                            img
+                            and os.path.basename(img) in unresolved_basenames
+                            and os.path.isfile(img)
+                            and _key_for_image(img) == key
+                        ):
+                            continue
+                    except Exception:
+                        pass
+            if _remove_key_artifacts(perfil_dir, key):
+                pruned += 1
+        perfil_count = sum(1 for fn in os.listdir(perfil_dir) if fn.endswith("-campo.png"))
+    else:
+        perfil_count = 0
 
     return {
+        "pruned": pruned,
+        "perfilCached": perfil_count,
         "favouritesTotal": len(candidates),
-        "perfilReady": baked_ok,
-        "contagioFallback": baked_contagio,
         "aiAvailable": _ai_available(),
     }
+
+
+def sync_favourites(fav_file: str | None = None, wallpapers_root: str | None = None) -> dict:
+    prune_res = prune_non_favourites(fav_file=fav_file, wallpapers_root=wallpapers_root)
+    candidates, _, _ = _collect_favourite_paths(fav_file, wallpapers_root)
+
+    ready_count = 0
+    fallback_count = 0
+    missing: list[str] = []
+    for path in candidates:
+        decided, is_ok = _has_cached_perfil_or_decided(path)
+        if decided:
+            if is_ok:
+                ready_count += 1
+            else:
+                fallback_count += 1
+        else:
+            missing.append(path)
+
+    ai_ok = _ai_available()
+    if not missing or not ai_ok:
+        return {
+            "favouritesTotal": len(candidates),
+            "perfilReady": ready_count,
+            "perfilCached": prune_res["perfilCached"],
+            "contagioFallback": fallback_count + (len(missing) if not ai_ok else 0),
+            "pruned": prune_res["pruned"],
+            "bakedNow": 0,
+            "aiAvailable": ai_ok,
+        }
+
+    _reexec_in_venv_if_needed()
+    try:
+        os.nice(19)
+    except OSError:
+        pass
+    ensure_spread_pool(3)
+    baked_now = 0
+    for path in missing:
+        res = _bake_perfil_pure_or_cv2(path)
+        if res:
+            ready_count += 1
+            baked_now += 1
+        else:
+            fallback_count += 1
+
+    perfil_dir = os.path.join(CACHE_DIR, "perfil")
+    perfil_count = (
+        sum(1 for fn in os.listdir(perfil_dir) if fn.endswith("-campo.png"))
+        if os.path.isdir(perfil_dir)
+        else 0
+    )
+    return {
+        "favouritesTotal": len(candidates),
+        "perfilReady": ready_count,
+        "perfilCached": perfil_count,
+        "contagioFallback": fallback_count,
+        "pruned": prune_res["pruned"],
+        "bakedNow": baked_now,
+        "aiAvailable": _ai_available(),
+    }
+
+
+def bake_favourites_only(fav_file: str | None = None, wallpapers_root: str | None = None) -> dict:
+    return sync_favourites(fav_file=fav_file, wallpapers_root=wallpapers_root)
 
 
 def get_status() -> dict:
@@ -629,11 +806,15 @@ def main(argv: list[str]) -> int:
         res = _bake_perfil_pure_or_cv2(rest[0], force="--force" in rest)
         print(json.dumps({"ok": bool(res), "paths": list(res) if res else []}))
         return 0 if res else 1
-    if cmd == "bake-favourites":
-        _reexec_in_venv_if_needed()
+    if cmd == "prune":
         fav_file = rest[0] if len(rest) >= 1 and rest[0] else None
         wall_root = rest[1] if len(rest) >= 2 and rest[1] else None
-        print(json.dumps(bake_favourites_only(fav_file=fav_file, wallpapers_root=wall_root)))
+        print(json.dumps(prune_non_favourites(fav_file=fav_file, wallpapers_root=wall_root)))
+        return 0
+    if cmd in ("sync-favourites", "bake-favourites"):
+        fav_file = rest[0] if len(rest) >= 1 and rest[0] else None
+        wall_root = rest[1] if len(rest) >= 2 and rest[1] else None
+        print(json.dumps(sync_favourites(fav_file=fav_file, wallpapers_root=wall_root)))
         return 0
     print(json.dumps({"error": f"unknown command: {cmd}"}), file=sys.stderr)
     return 2

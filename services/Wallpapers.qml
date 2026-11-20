@@ -1382,6 +1382,10 @@ Singleton {
     property int wallfxPerfilCached: 0
     property int wallfxSpreadReady: 0
     property string wallfxStatusMessage: ""
+    property string _wallfxPendingSaveAction: ""
+    property bool _wallfxResyncQueued: false
+    property bool _wallfxBootSynced: false
+    property bool _favouritesLoadedOnce: false
 
     function isFavourite(path: string): bool {
         void root.favouritesRevision
@@ -1401,21 +1405,30 @@ Singleton {
         if (currentlyFav) {
             delete nextDb[clean]
             delete nextDb[base]
+            if (root._wallfxPendingSaveAction !== "sync")
+                root._wallfxPendingSaveAction = "prune"
         } else {
             nextDb[clean] = true
             nextDb[base] = true
+            if (!root.isVideoFile(clean) && !clean.toLowerCase().endsWith(".gif") && root.wallfxAiAvailable)
+                root._wallfxPendingSaveAction = "sync"
         }
         root.favouritesDb = nextDb
         root.favouritesRevision++
         _saveSharedFavouritesDebounce.restart()
-        if (!currentlyFav && !root.isVideoFile(clean) && !clean.toLowerCase().endsWith(".gif")) {
-            if (root.wallfxAiAvailable || (Config.options?.background?.transition?.type === "wallfx"))
-                root._bakeSingleFavouriteAsync(clean)
-        }
         return !currentlyFav
     }
 
     property string _lastSavedFavouritesPayload: ""
+
+    function _maybeScheduleBootWallfxSync(): void {
+        if (root._wallfxBootSynced || !root._favouritesLoadedOnce || root.wallfxAiInstalling)
+            return
+        if (root.wallfxAiAvailable || root.wallfxPerfilCached > 0) {
+            root._wallfxBootSynced = true
+            _wallfxBootSyncTimer.restart()
+        }
+    }
 
     FileView {
         id: sharedFavouritesFileView
@@ -1424,19 +1437,35 @@ Singleton {
         printErrors: false
         onFileChanged: reload()
         onLoaded: {
+            const firstLoad = !root._favouritesLoadedOnce
+            root._favouritesLoadedOnce = true
+            let changedExternally = false
             try {
                 const raw = String(sharedFavouritesFileView.text() ?? "").trim()
-                if (raw.length > 0) {
-                    if (raw === root._lastSavedFavouritesPayload)
-                        return
+                if (raw.length > 0 && raw !== root._lastSavedFavouritesPayload) {
                     const parsed = JSON.parse(raw)
                     if (parsed && typeof parsed === "object") {
                         root._lastSavedFavouritesPayload = raw
                         root.favouritesDb = parsed
                         root.favouritesRevision++
+                        changedExternally = !firstLoad
                     }
                 }
             } catch (e) {}
+            if (firstLoad) {
+                root._maybeScheduleBootWallfxSync()
+            } else if (changedExternally) {
+                if (root.wallfxAiAvailable)
+                    _wallfxAutoSyncDebounce.restart()
+                else if (root.wallfxPerfilCached > 0)
+                    root.pruneWallfxFavourites()
+            }
+        }
+        onLoadFailed: {
+            if (!root._favouritesLoadedOnce) {
+                root._favouritesLoadedOnce = true
+                root._maybeScheduleBootWallfxSync()
+            }
         }
     }
 
@@ -1459,15 +1488,31 @@ Singleton {
 
     Process {
         id: _saveSharedFavouritesProc
+        onExited: (exitCode) => {
+            const action = root._wallfxPendingSaveAction
+            root._wallfxPendingSaveAction = ""
+            if (exitCode !== 0)
+                return
+            if (action === "sync") {
+                _wallfxAutoSyncDebounce.restart()
+            } else if (action === "prune") {
+                root.pruneWallfxFavourites()
+            }
+        }
     }
 
-    function _bakeSingleFavouriteAsync(cleanPath: string): void {
-        if (!cleanPath) return
-        Quickshell.execDetached([
-            "/usr/bin/nice", "-n", "19", "/usr/bin/python3",
-            root.wallfxHelperPath, "resolve", cleanPath,
-            "--favourite", "1", "--favourites-file", root.favouritesCachePath
-        ])
+    Timer {
+        id: _wallfxAutoSyncDebounce
+        interval: 450
+        repeat: false
+        onTriggered: root.syncFavouriteWallpapers()
+    }
+
+    Timer {
+        id: _wallfxBootSyncTimer
+        interval: 2200
+        repeat: false
+        onTriggered: root.syncFavouriteWallpapers()
     }
 
     function refreshWallfxStatus(): void {
@@ -1479,22 +1524,48 @@ Singleton {
     function installWallfxAi(): void {
         if (root.wallfxAiInstalling) return
         root.wallfxAiInstalling = true
-        root.wallfxStatusMessage = Translation.tr("Installing AI cutout environment & BiRefNet-Lite model...")
+        root.wallfxStatusMessage = Translation.tr("Installing AI cutout…")
         _wallfxInstallProc.command = ["/usr/bin/bash", root.wallfxInstallScriptPath]
         _wallfxInstallProc.running = true
     }
 
-    function bakeFavouriteWallpapers(): void {
-        if (root.wallfxBakingFavourites) return
+    function pruneWallfxFavourites(): void {
+        if (root.wallfxBakingFavourites) {
+            root._wallfxResyncQueued = true
+            return
+        }
+        if (_wallfxPruneProc.running) {
+            root._wallfxResyncQueued = true
+            return
+        }
+        const wpRoot = FileUtils.trimFileProtocol(Config.options?.wallpapers?.directory || Directories.wallpapersPath)
+        _wallfxPruneProc.command = [
+            "/usr/bin/python3", root.wallfxHelperPath, "prune",
+            root.favouritesCachePath, wpRoot
+        ]
+        _wallfxPruneProc.running = true
+    }
+
+    function syncFavouriteWallpapers(): void {
+        if (root.wallfxAiInstalling) return
+        if (root.wallfxBakingFavourites || _wallfxPruneProc.running) {
+            root._wallfxResyncQueued = true
+            return
+        }
+        root._wallfxBootSynced = true
         root.wallfxBakingFavourites = true
-        root.wallfxStatusMessage = Translation.tr("Baking character outlines for Favourite wallpapers...")
+        root.wallfxStatusMessage = ""
         const wpRoot = FileUtils.trimFileProtocol(Config.options?.wallpapers?.directory || Directories.wallpapersPath)
         _wallfxBakeAllProc.command = [
-            "/usr/bin/nice", "-n", "19", "/usr/bin/python3",
-            root.wallfxHelperPath, "bake-favourites",
+            "/usr/bin/ionice", "-c", "3", "/usr/bin/nice", "-n", "19", "/usr/bin/python3",
+            root.wallfxHelperPath, "sync-favourites",
             root.favouritesCachePath, wpRoot
         ]
         _wallfxBakeAllProc.running = true
+    }
+
+    function bakeFavouriteWallpapers(): void {
+        root.syncFavouriteWallpapers()
     }
 
     Process {
@@ -1507,6 +1578,31 @@ Singleton {
                     root.wallfxPerfilCached = Number(info.perfilCached ?? 0)
                     root.wallfxSpreadReady = Number(info.spreadReady ?? 0)
                 } catch (e) {}
+                root._maybeScheduleBootWallfxSync()
+            }
+        }
+    }
+
+    Process {
+        id: _wallfxPruneProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const res = JSON.parse((text ?? "").trim() || "{}")
+                    if (res.perfilCached !== undefined)
+                        root.wallfxPerfilCached = Number(res.perfilCached)
+                    if (res.aiAvailable !== undefined)
+                        root.wallfxAiAvailable = Boolean(res.aiAvailable)
+                } catch (e) {}
+            }
+        }
+        onExited: () => {
+            if (root._wallfxResyncQueued) {
+                root._wallfxResyncQueued = false
+                if (root.wallfxAiAvailable)
+                    Qt.callLater(root.syncFavouriteWallpapers)
+                else
+                    Qt.callLater(root.pruneWallfxFavourites)
             }
         }
     }
@@ -1516,11 +1612,11 @@ Singleton {
         onExited: (exitCode) => {
             root.wallfxAiInstalling = false
             if (exitCode === 0) {
-                root.wallfxStatusMessage = Translation.tr("AI cutout ready. Baking Favourite wallpapers...")
-                root.refreshWallfxStatus()
-                root.bakeFavouriteWallpapers()
+                root.wallfxAiAvailable = true
+                root.wallfxStatusMessage = ""
+                root.syncFavouriteWallpapers()
             } else {
-                root.wallfxStatusMessage = Translation.tr("Failed to install AI cutout environment (check uv / network).")
+                root.wallfxStatusMessage = Translation.tr("Failed to install AI cutout.")
                 root.refreshWallfxStatus()
             }
         }
@@ -1532,13 +1628,23 @@ Singleton {
             onStreamFinished: {
                 try {
                     const res = JSON.parse((text ?? "").trim() || "{}")
-                    root.wallfxStatusMessage = `${res.perfilReady ?? 0}/${res.favouritesTotal ?? 0} Favourite outlines ready`
+                    if (res.perfilCached !== undefined || res.perfilReady !== undefined)
+                        root.wallfxPerfilCached = Number(res.perfilCached ?? res.perfilReady ?? 0)
+                    if (res.aiAvailable !== undefined)
+                        root.wallfxAiAvailable = Boolean(res.aiAvailable)
                 } catch (e) {}
             }
         }
-        onExited: () => {
+        onExited: (exitCode) => {
             root.wallfxBakingFavourites = false
-            root.refreshWallfxStatus()
+            if (exitCode !== 0 && !root._wallfxResyncQueued)
+                root.wallfxStatusMessage = Translation.tr("Failed to sync favourite outlines.")
+            if (root._wallfxResyncQueued) {
+                root._wallfxResyncQueued = false
+                Qt.callLater(root.syncFavouriteWallpapers)
+            } else {
+                root.refreshWallfxStatus()
+            }
         }
     }
 
