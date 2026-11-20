@@ -97,13 +97,19 @@ def check_static_contracts() -> None:
                 f"must set horizontalAlignment: Text.AlignHCenter"
             )
 
-    # 3. Tonal elevation invariant (zero flat white/gray mixes)
+    # 3. Stepped solid tonal elevation invariant (anchored on colLayer0Base, zero per-box Gradient, zero flat white/gray mixes)
     for tonal_path in (
         ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
         INTERGRATION_ROOT / "modules/dashboard/DashboardExercisesTracker.qml",
     ):
         tsrc = tonal_path.read_text(encoding="utf-8")
+        assert "Appearance.colors.colLayer0Base" in tsrc, (
+            f"{tonal_path.name} must anchor stepped surfaces on auto-theming Appearance.colors.colLayer0Base"
+        )
         assert "ColorUtils.tonalStep(" in tsrc, f"{tonal_path.name} must derive elevation via ColorUtils.tonalStep"
+        assert "Gradient" not in tsrc and "gradient:" not in tsrc, (
+            f"{tonal_path.name} must use stacked stepped solid layers, never internal per-box Gradient blocks"
+        )
         assert "Qt.alpha(AbyssStyle.textColor, 0.06)" not in tsrc, (
             f"{tonal_path.name} must not use gray AbyssStyle.textColor alpha overlay"
         )

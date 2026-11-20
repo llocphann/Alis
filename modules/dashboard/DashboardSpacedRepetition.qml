@@ -241,7 +241,7 @@ Item {
     }
 
     readonly property color _heatFutureColor: ColorUtils.applyAlpha(Appearance.colors.colLayer2Base, 0.22)
-    readonly property color _heatEmptyColor: ColorUtils.tonalStep(root.colAnalyticsSubBoxBg, 0.018, 1.05)
+    readonly property color _heatEmptyColor: ColorUtils.tonalStep(root.colAnalyticsSubBoxBg, root.tonalDir * 0.018, 1.05)
     readonly property color _heatLevel1Color: ColorUtils.mix(root.colAnalyticsSubBoxBg, Appearance.colors.colPrimary, 0.68)
     readonly property color _heatLevel2Color: ColorUtils.mix(root.colAnalyticsSubBoxBg, Appearance.colors.colPrimary, 0.46)
     readonly property color _heatLevel3Color: ColorUtils.mix(root.colAnalyticsSubBoxBg, Appearance.colors.colPrimary, 0.24)
@@ -262,72 +262,55 @@ Item {
     readonly property bool alisEverywhere: Appearance.alisEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
-    readonly property color colMainBg: ColorUtils.applyAlpha(
-        Qt.color(Appearance.colors.colLayer1Base).valid
-            ? Appearance.colors.colLayer1Base
-            : Appearance.colors.colLayer0Base,
+    readonly property color colRootBg: ColorUtils.applyAlpha(
+        Qt.color(Appearance.colors.colLayer0Base).valid
+            ? Appearance.colors.colLayer0Base
+            : Appearance.colors.colLayer1Base,
         1.0
     )
     readonly property bool isDarkSurface: Appearance.m3colors.darkmode
-        || ColorUtils.relativeLuminance(root.colMainBg) < 0.35
+        || ColorUtils.relativeLuminance(root.colRootBg) < 0.35
+    // Step lighter from the auto-themed root background while headroom exists; subtly step darker on near-white canvases
+    readonly property real tonalDir: Qt.color(root.colRootBg).hslLightness > 0.86 ? -1 : 1
 
-    // Match DashCard.qml surface & border tokens so cards blend seamlessly with the rest of the Dashboard
+    // Layer 1 (main cards on Layer 0 root): solid flat tonal step +3.2% HSL from colRootBg
     readonly property color colSurface: abyss
-        ? AbyssStyle.contentLayer
+        ? ColorUtils.applyAlpha(
+            ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.032, 1.05),
+            AbyssStyle.contentLayer.a
+        )
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : alisEverywhere ? Appearance.alis.colLayer1
         : auroraEverywhere ? Appearance.aurora.colSubSurface
-        : ColorUtils.applyAlpha(root.colMainBg, 1.0)
+        : ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.032, 1.05), 1.0)
+    // Layer 3+ (elevated options, chips, composer inputs): solid flat step from colRootBg
     readonly property color colSurfaceElevated: abyss
-        ? ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colMainBg, 0.068, 1.12), Math.max(0.92, root.colSurface.a))
+        ? ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.115, 1.13), Math.max(0.92, root.colSurface.a))
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : alisEverywhere ? Appearance.alis.colLayer2
-        : ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colMainBg, 0.068, 1.12), Math.max(0.92, root.colSurface.a))
+        : ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.115, 1.13), Math.max(0.92, root.colSurface.a))
+    // Layer 4 (hover & micro-badges inside elevated boxes)
     readonly property color colBoxHover: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.092 : -0.055, 1.14),
+        ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.145, 1.15),
         Math.max(0.95, root.colSurface.a)
-    )
-    readonly property color colCardGradTop: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.032 : -0.008, 1.08),
-        root.colSurface.a
-    )
-    readonly property color colCardGradBottom: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.012 : -0.024, 1.04),
-        root.colSurface.a
-    )
-    readonly property color colBoxGradTop: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.064 : -0.020, 1.12),
-        Math.max(0.92, root.colSurface.a)
-    )
-    readonly property color colBoxGradBottom: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.042 : -0.042, 1.08),
-        Math.max(0.92, root.colSurface.a)
-    )
-    readonly property color colInputGradTop: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.088 : -0.032, 1.14),
-        Math.max(0.94, root.colSurface.a)
-    )
-    readonly property color colInputGradBottom: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.064 : -0.054, 1.10),
-        Math.max(0.94, root.colSurface.a)
     )
     readonly property color colActivePillInk: ColorUtils.ensureReadable(
         Appearance.colors.colOnPrimary,
         Appearance.colors.colPrimary,
         5.0
     )
-    // Auto-themed Analytics column hierarchy derived directly from Appearance.colors via HSL tonal steps:
-    // colAnalyticsColumnBg <= colAnalyticsCardBg <= colAnalyticsSubBoxBg < colSurfaceElevated
+    // Stepped flat tonal layers for Analytics column:
+    // colAnalyticsColumnBg (Layer 1) <= colAnalyticsCardBg (Layer 2) <= colAnalyticsSubBoxBg (Layer 3) < colSurfaceElevated
     readonly property color colAnalyticsColumnBg: ColorUtils.applyAlpha(
-        root.colMainBg,
+        ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.032, 1.05),
         root.colSurface.a
     )
     readonly property color colAnalyticsCardBg: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colMainBg, 0.024, 1.06),
+        ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.064, 1.08),
         root.colSurface.a
     )
     readonly property color colAnalyticsSubBoxBg: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colMainBg, 0.048, 1.10),
+        ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.096, 1.11),
         root.colSurface.a
     )
     readonly property color colAnalyticsBorder: ColorUtils.applyAlpha(
@@ -335,7 +318,7 @@ Item {
         0.24
     )
     readonly property color colBorder: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colMainBg, root.isDarkSurface ? 0.24 : -0.24, 1.10),
+        ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.24, 1.10),
         0.07
     )
     readonly property color colText: abyss
@@ -1762,10 +1745,6 @@ Item {
         cursorVisible: activeFocus
         background: Rectangle {
             color: styledField.colBackground
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: root.colInputGradTop }
-                GradientStop { position: 1.0; color: root.colInputGradBottom }
-            }
             radius: Appearance.rounding.full
             border.width: styledField.activeFocus ? 1.5 : 0
             border.color: styledField.activeFocus ? Appearance.colors.colPrimary : "transparent"
@@ -1831,10 +1810,6 @@ Item {
             implicitHeight: topBarLayout.implicitHeight + 16
             radius: Appearance.rounding.small
             color: root.colSurface
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: root.colCardGradTop }
-                GradientStop { position: 1.0; color: root.colCardGradBottom }
-            }
             border.width: 0
 
             RowLayout {
@@ -2019,10 +1994,6 @@ Item {
             implicitHeight: filterBarLayout.implicitHeight + 14
             radius: Appearance.rounding.small
             color: root.colSurface
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: root.colCardGradTop }
-                GradientStop { position: 1.0; color: root.colCardGradBottom }
-            }
             border.width: 0
 
             RowLayout {
@@ -2249,10 +2220,6 @@ Item {
                         visible: root.showStudyArenaCard
                         radius: Appearance.rounding.small
                         color: root.colSurface
-                        gradient: Gradient {
-                            GradientStop { position: 0.0; color: root.colCardGradTop }
-                            GradientStop { position: 1.0; color: root.colCardGradBottom }
-                        }
                         border.width: 0
                         clip: true
 
@@ -3126,11 +3093,7 @@ Item {
                                             && Boolean(root.backend.currentCard?.example || root.backend.currentCard?.clozeText)
                                         implicitHeight: Math.max(34, topExampleRow.implicitHeight + 14)
                                         radius: Appearance.rounding.small
-                                        color: Qt.alpha(Appearance.colors.colPrimary, 0.09)
-                                        gradient: Gradient {
-                                            GradientStop { position: 0.0; color: ColorUtils.applyAlpha(ColorUtils.mix(root.colBoxGradTop, Appearance.colors.colPrimary, 0.88), Math.max(0.92, root.colSurface.a)) }
-                                            GradientStop { position: 1.0; color: ColorUtils.applyAlpha(ColorUtils.mix(root.colBoxGradBottom, Appearance.colors.colPrimary, 0.92), Math.max(0.92, root.colSurface.a)) }
-                                        }
+                                        color: ColorUtils.applyAlpha(ColorUtils.mix(root.colSurfaceElevated, Appearance.colors.colPrimary, 0.88), Math.max(0.92, root.colSurface.a))
                                         border.width: 1
                                         border.color: Qt.alpha(Appearance.colors.colPrimary, 0.24)
 
@@ -4030,10 +3993,6 @@ Item {
                         visible: !root.showStudyArenaCard
                         radius: Appearance.rounding.small
                         color: root.colSurface
-                        gradient: Gradient {
-                            GradientStop { position: 0.0; color: root.colCardGradTop }
-                            GradientStop { position: 1.0; color: root.colCardGradBottom }
-                        }
                         border.width: 0
 
                         ColumnLayout {
@@ -4110,10 +4069,6 @@ Item {
                     visible: root.width >= 860
                     radius: Appearance.rounding.small
                     color: root.colSurface
-                    gradient: Gradient {
-                        GradientStop { position: 0.0; color: root.colCardGradTop }
-                        GradientStop { position: 1.0; color: root.colCardGradBottom }
-                    }
                     border.width: 0
 
                     ColumnLayout {
@@ -4329,10 +4284,6 @@ Item {
                                 implicitHeight: srConsistencyCol.implicitHeight + 12
                                 radius: Appearance.rounding.small
                                 color: root.colAnalyticsCardBg
-                                gradient: Gradient {
-                                    GradientStop { position: 0.0; color: root.colCardGradTop }
-                                    GradientStop { position: 1.0; color: root.colCardGradBottom }
-                                }
                                 border.width: 1
                                 border.color: root.colAnalyticsBorder
 
@@ -4408,10 +4359,6 @@ Item {
                                         implicitHeight: consistencyConfigCol.implicitHeight + 12
                                         radius: 6
                                         color: root.colAnalyticsSubBoxBg
-                                        gradient: Gradient {
-                                            GradientStop { position: 0.0; color: root.colBoxGradTop }
-                                            GradientStop { position: 1.0; color: root.colBoxGradBottom }
-                                        }
                                         border.width: 1
                                         border.color: root.colAnalyticsBorder
 
@@ -4593,10 +4540,6 @@ Item {
                                 implicitHeight: srHeatmapCol.implicitHeight + 12
                                 radius: Appearance.rounding.small
                                 color: root.colAnalyticsCardBg
-                                gradient: Gradient {
-                                    GradientStop { position: 0.0; color: root.colCardGradTop }
-                                    GradientStop { position: 1.0; color: root.colCardGradBottom }
-                                }
                                 border.width: 1
                                 border.color: root.colAnalyticsBorder
 
@@ -4992,10 +4935,6 @@ Item {
                                 implicitHeight: srBreakdownCol.implicitHeight + 12
                                 radius: Appearance.rounding.small
                                 color: root.colAnalyticsCardBg
-                                gradient: Gradient {
-                                    GradientStop { position: 0.0; color: root.colCardGradTop }
-                                    GradientStop { position: 1.0; color: root.colCardGradBottom }
-                                }
                                 border.width: 1
                                 border.color: root.colAnalyticsBorder
 
@@ -5060,10 +4999,6 @@ Item {
                                             implicitHeight: 36
                                             radius: 6
                                             color: root.colAnalyticsSubBoxBg
-                                            gradient: Gradient {
-                                                GradientStop { position: 0.0; color: root.colBoxGradTop }
-                                                GradientStop { position: 1.0; color: root.colBoxGradBottom }
-                                            }
                                             ColumnLayout {
                                                 anchors.centerIn: parent
                                                 spacing: 0
@@ -5089,10 +5024,6 @@ Item {
                                             implicitHeight: 36
                                             radius: 6
                                             color: root.colAnalyticsSubBoxBg
-                                            gradient: Gradient {
-                                                GradientStop { position: 0.0; color: root.colBoxGradTop }
-                                                GradientStop { position: 1.0; color: root.colBoxGradBottom }
-                                            }
                                             ColumnLayout {
                                                 anchors.centerIn: parent
                                                 spacing: 0
@@ -5118,10 +5049,6 @@ Item {
                                             implicitHeight: 36
                                             radius: 6
                                             color: root.colAnalyticsSubBoxBg
-                                            gradient: Gradient {
-                                                GradientStop { position: 0.0; color: root.colBoxGradTop }
-                                                GradientStop { position: 1.0; color: root.colBoxGradBottom }
-                                            }
                                             ColumnLayout {
                                                 anchors.centerIn: parent
                                                 spacing: 0
@@ -5352,10 +5279,6 @@ Item {
                                 implicitHeight: srForecastCol.implicitHeight + 12
                                 radius: Appearance.rounding.small
                                 color: root.colAnalyticsCardBg
-                                gradient: Gradient {
-                                    GradientStop { position: 0.0; color: root.colCardGradTop }
-                                    GradientStop { position: 1.0; color: root.colCardGradBottom }
-                                }
                                 border.width: 1
                                 border.color: root.colAnalyticsBorder
 
@@ -5498,10 +5421,6 @@ Item {
                     Layout.preferredWidth: 1
                     radius: Appearance.rounding.small
                     color: root.colSurface
-                    gradient: Gradient {
-                        GradientStop { position: 0.0; color: root.colCardGradTop }
-                        GradientStop { position: 1.0; color: root.colCardGradBottom }
-                    }
                     border.width: 0
 
                     Flickable {
@@ -5621,10 +5540,6 @@ Item {
                                 implicitHeight: liveAnalysisCol.implicitHeight + 16
                                 radius: Appearance.rounding.small
                                 color: root.colSurfaceElevated
-                                gradient: Gradient {
-                                    GradientStop { position: 0.0; color: root.colBoxGradTop }
-                                    GradientStop { position: 1.0; color: root.colBoxGradBottom }
-                                }
                                 border.width: 0
 
                                 ColumnLayout {
@@ -5936,10 +5851,6 @@ Item {
                     Layout.preferredWidth: 1
                     radius: Appearance.rounding.small
                     color: root.colSurface
-                    gradient: Gradient {
-                        GradientStop { position: 0.0; color: root.colCardGradTop }
-                        GradientStop { position: 1.0; color: root.colCardGradBottom }
-                    }
                     border.width: 0
 
                     ColumnLayout {
@@ -6102,10 +6013,6 @@ Item {
                             Layout.preferredHeight: 145
                             radius: Appearance.rounding.small
                             color: root.colSurfaceElevated
-                            gradient: Gradient {
-                                GradientStop { position: 0.0; color: root.colInputGradTop }
-                                GradientStop { position: 1.0; color: root.colInputGradBottom }
-                            }
                             border.width: bulkInputArea.activeFocus ? 1.5 : 0
                             border.color: bulkInputArea.activeFocus ? Appearance.colors.colPrimary : "transparent"
 
@@ -6227,10 +6134,6 @@ Item {
                     Rectangle {
                         radius: Appearance.rounding.small
                         color: root.colSurface
-                        gradient: Gradient {
-                            GradientStop { position: 0.0; color: root.colCardGradTop }
-                            GradientStop { position: 1.0; color: root.colCardGradBottom }
-                        }
                         border.width: 0
 
                         ColumnLayout {
