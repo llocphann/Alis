@@ -241,7 +241,7 @@ Item {
     }
 
     readonly property color _heatFutureColor: ColorUtils.applyAlpha(Appearance.colors.colLayer2Base, 0.22)
-    readonly property color _heatEmptyColor: ColorUtils.tonalStep(root.colAnalyticsSubBoxBg, root.tonalDir * 0.018, 1.05)
+    readonly property color _heatEmptyColor: ColorUtils.tonalStep(root.colAnalyticsSubBoxBg, root.tonalDir * 0.014, 1.04)
     readonly property color _heatLevel1Color: ColorUtils.mix(root.colAnalyticsSubBoxBg, Appearance.colors.colPrimary, 0.68)
     readonly property color _heatLevel2Color: ColorUtils.mix(root.colAnalyticsSubBoxBg, Appearance.colors.colPrimary, 0.46)
     readonly property color _heatLevel3Color: ColorUtils.mix(root.colAnalyticsSubBoxBg, Appearance.colors.colPrimary, 0.24)
@@ -262,36 +262,35 @@ Item {
     readonly property bool alisEverywhere: Appearance.alisEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
-    readonly property color colRootBg: ColorUtils.applyAlpha(
-        Qt.color(Appearance.colors.colLayer0Base).valid
-            ? Appearance.colors.colLayer0Base
-            : Appearance.colors.colLayer1Base,
+    // Anchor Layer 1 directly on Home Dashboard card color (DashCard / colLayer1Base)
+    // and gently lift nested tiers by ~2.0% HSL so inner layers stay cohesive and restful.
+    readonly property color colCardBase: ColorUtils.applyAlpha(
+        Qt.color(Appearance.colors.colLayer1Base).valid
+            ? Appearance.colors.colLayer1Base
+            : Appearance.colors.colLayer0Base,
         1.0
     )
     readonly property bool isDarkSurface: Appearance.m3colors.darkmode
-        || ColorUtils.relativeLuminance(root.colRootBg) < 0.35
-    // Step lighter from the auto-themed root background while headroom exists; subtly step darker on near-white canvases
-    readonly property real tonalDir: Qt.color(root.colRootBg).hslLightness > 0.86 ? -1 : 1
+        || ColorUtils.relativeLuminance(root.colCardBase) < 0.35
+    // Step lighter while headroom exists; subtly step deeper on near-white canvases
+    readonly property real tonalDir: Qt.color(root.colCardBase).hslLightness > 0.86 ? -1 : 1
 
-    // Layer 1 (main cards on Layer 0 root): solid flat tonal step +3.2% HSL from colRootBg
+    // Layer 1 (main cards): matches Home Dashboard DashCard (AbyssStyle.contentLayer / colLayer1)
     readonly property color colSurface: abyss
-        ? ColorUtils.applyAlpha(
-            ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.032, 1.05),
-            AbyssStyle.contentLayer.a
-        )
+        ? AbyssStyle.contentLayer
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : alisEverywhere ? Appearance.alis.colLayer1
         : auroraEverywhere ? Appearance.aurora.colSubSurface
-        : ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.032, 1.05), 1.0)
-    // Layer 3+ (elevated options, chips, composer inputs): solid flat step from colRootBg
+        : Appearance.colors.colLayer1
+    // Layer 3+ (elevated options, chips, composer inputs): +5.2% HSL from Home Dashboard card base
     readonly property color colSurfaceElevated: abyss
-        ? ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.115, 1.13), Math.max(0.92, root.colSurface.a))
+        ? ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.052, 1.08), Math.max(0.92, root.colSurface.a))
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : alisEverywhere ? Appearance.alis.colLayer2
-        : ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.115, 1.13), Math.max(0.92, root.colSurface.a))
-    // Layer 4 (hover & micro-badges inside elevated boxes)
+        : ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.052, 1.08), Math.max(0.92, root.colSurface.a))
+    // Layer 4 (hover & micro-badges inside elevated boxes): +7.4% HSL
     readonly property color colBoxHover: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.145, 1.15),
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.074, 1.10),
         Math.max(0.95, root.colSurface.a)
     )
     readonly property color colActivePillInk: ColorUtils.ensureReadable(
@@ -302,15 +301,15 @@ Item {
     // Stepped flat tonal layers for Analytics column:
     // colAnalyticsColumnBg (Layer 1) <= colAnalyticsCardBg (Layer 2) <= colAnalyticsSubBoxBg (Layer 3) < colSurfaceElevated
     readonly property color colAnalyticsColumnBg: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.032, 1.05),
+        root.colCardBase,
         root.colSurface.a
     )
     readonly property color colAnalyticsCardBg: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.064, 1.08),
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.020, 1.04),
         root.colSurface.a
     )
     readonly property color colAnalyticsSubBoxBg: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.096, 1.11),
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.040, 1.07),
         root.colSurface.a
     )
     readonly property color colAnalyticsBorder: ColorUtils.applyAlpha(
@@ -318,7 +317,7 @@ Item {
         0.24
     )
     readonly property color colBorder: ColorUtils.applyAlpha(
-        ColorUtils.tonalStep(root.colRootBg, root.tonalDir * 0.24, 1.10),
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.22, 1.10),
         0.07
     )
     readonly property color colText: abyss
