@@ -2115,7 +2115,13 @@
             "nexusEnabled": false,
             "referenceVault": "",
             "voiceAutoSend": true,
-            "voiceTtsEnabled": false
+            "voiceTtsEnabled": false,
+            "ambientMascotEnabled": true,
+            "ambientVisualPeek": false,
+            "temperature": 0.7,
+            "hasTemperatureOverride": false,
+            "ragUseNexus": true,
+            "plannerRemindersEnabled": false
         },
         "companion": {
             "enabled": false,

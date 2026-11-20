@@ -778,6 +778,12 @@ Singleton {
                     property string referenceVault: ""
                     property bool voiceAutoSend: true
                     property bool voiceTtsEnabled: false
+                    property bool ambientMascotEnabled: true
+                    property bool ambientVisualPeek: false
+                    property real temperature: 0.7
+                    property bool hasTemperatureOverride: false
+                    property bool ragUseNexus: true
+                    property bool plannerRemindersEnabled: false
                 }
                 property JsonObject companion: JsonObject {
                     property bool enabled: false

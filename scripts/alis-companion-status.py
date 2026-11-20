@@ -30,7 +30,7 @@ def inspect(shell_root, data_home=None):
     try:
         if not manifest.is_file():
             return result
-        if manifest.stat().st_size > 16384:
+        if manifest.stat().st_size > 65536:
             raise ValueError("oversized manifest")
         data = json.loads(manifest.read_text())
         if not isinstance(data, dict):

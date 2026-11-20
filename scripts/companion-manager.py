@@ -52,7 +52,7 @@ def installed_revision(data_home):
         if not release.is_relative_to((data_root / "releases").resolve()):
             return ""
         manifest = release / "manifest.json"
-        if manifest.stat().st_size > 16384:
+        if manifest.stat().st_size > 65536:
             return ""
         info = json.loads(manifest.read_text())
         if info.get("id") != "alis-companion" or type(info.get("hostApi")) is not int or info["hostApi"] != 1:
