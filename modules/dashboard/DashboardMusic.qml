@@ -74,7 +74,25 @@ Item {
     property bool sidebarCollapsed: false
     property bool libraryExpanded: true
     property bool rightDrawerOpen: true
-    property string rightDrawerTab: "queue" // queue | lyrics | eq
+    property string rightDrawerTab: "queue" // queue | lyrics (also accepts legacy "eq")
+    readonly property bool lyricsEqTabActive: root.rightDrawerTab === "lyrics" || root.rightDrawerTab === "eq"
+    readonly property string activeSidebarKey: {
+        if (root.sourceMode === "search" || root.viewMode === "search")
+            return "search";
+        if (root.sourceMode === "songs" || root.viewMode === "songs")
+            return "songs";
+        if (root.sourceMode === "album" || root.viewMode === "albums")
+            return "albums";
+        if (root.sourceMode === "artist" || root.viewMode === "artists")
+            return "artists";
+        if (root.sourceMode === "queue" || root.viewMode === "queue")
+            return "queue";
+        if (root.sourceMode === "genre" || root.viewMode === "genre")
+            return "genre";
+        if (root.sourceMode === "folder" || root.sourceMode === "playlist" || root.viewMode === "folder")
+            return "folder";
+        return "home";
+    }
     property bool ambientOpen: false
     readonly property bool narrowLayout: width > 0 && width < 780
 
@@ -505,11 +523,11 @@ Item {
     function switchLibraryTab(tab): void {
         const normalized = tab === "folder" ? "folder" : "genre";
         root.libraryTab = normalized;
-        if (normalized === "genre" && root.selectedGenres.length > 0) {
-            root.sourceMode = "genre";
+        if (normalized === "genre") {
+            root.sourceMode = root.selectedGenres.length > 0 ? "genre" : "";
             root.viewMode = "genre";
-        } else if (normalized === "folder" && (root.selectedFolders.length > 0 || root.resultFolder.length > 0)) {
-            root.sourceMode = "folder";
+        } else {
+            root.sourceMode = (root.selectedFolders.length > 0 || root.resultFolder.length > 0) ? "folder" : "";
             root.viewMode = "folder";
         }
         root._saveBrowserState();
@@ -1257,14 +1275,14 @@ Item {
                         SidebarNavItem {
                             iconName: "home"
                             labelText: Translation.tr("Home")
-                            activeItem: root.viewMode === "home" && root.sourceMode === ""
+                            activeItem: root.activeSidebarKey === "home"
                             onClicked: root.navigateHome()
                         }
 
                         SidebarNavItem {
                             iconName: "search"
                             labelText: Translation.tr("Search")
-                            activeItem: root.sourceMode === "search"
+                            activeItem: root.activeSidebarKey === "search"
                             onClicked: {
                                 root.sourceMode = "search";
                                 root.viewMode = "search";
@@ -1319,7 +1337,7 @@ Item {
                                 Layout.preferredWidth: 1
                                 iconName: "music_note"
                                 labelText: Translation.tr("Songs")
-                                activeItem: root.sourceMode === "songs"
+                                activeItem: root.activeSidebarKey === "songs"
                                 onClicked: root.openAllSongs()
                             }
 
@@ -1328,7 +1346,7 @@ Item {
                                 Layout.preferredWidth: 1
                                 iconName: "album"
                                 labelText: Translation.tr("Albums")
-                                activeItem: root.viewMode === "albums"
+                                activeItem: root.activeSidebarKey === "albums"
                                 onClicked: root.openAlbumsGrid()
                             }
 
@@ -1337,7 +1355,7 @@ Item {
                                 Layout.preferredWidth: 1
                                 iconName: "person"
                                 labelText: Translation.tr("Artists")
-                                activeItem: root.viewMode === "artists"
+                                activeItem: root.activeSidebarKey === "artists"
                                 onClicked: root.openArtistsGrid()
                             }
 
@@ -1347,7 +1365,7 @@ Item {
                                 objectName: "musicGenreTab"
                                 iconName: "category"
                                 labelText: Translation.tr("Genres")
-                                activeItem: root.libraryTab === "genre"
+                                activeItem: root.activeSidebarKey === "genre"
                                 onClicked: root.switchLibraryTab("genre")
                             }
 
@@ -1357,7 +1375,7 @@ Item {
                                 objectName: "musicFolderTab"
                                 iconName: "folder"
                                 labelText: Translation.tr("Folders")
-                                activeItem: root.libraryTab === "folder"
+                                activeItem: root.activeSidebarKey === "folder"
                                 onClicked: root.switchLibraryTab("folder")
                             }
 
@@ -1367,15 +1385,9 @@ Item {
                                 objectName: "musicQueue"
                                 iconName: "playlist_play"
                                 labelText: Translation.tr("Queue")
-                                activeItem: root.sourceMode === "queue"
+                                activeItem: root.activeSidebarKey === "queue"
                                 onClicked: root.openQueueBrowser()
                             }
-                        }
-
-                        SidebarNavItem {
-                            iconName: "settings"
-                            labelText: Translation.tr("Settings")
-                            onClicked: GlobalStates.openSettingsSection(22, "")
                         }
 
                         Rectangle {
@@ -2377,7 +2389,7 @@ Item {
                         anchors.margins: 8
                         spacing: 8
 
-                        // Segmented Switch Header: Queue | Lyrics | EQ + Clear
+                        // Segmented Switch Header: Queue | Lyrics & EQ (centered full-width equal tabs)
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 4
@@ -2385,15 +2397,17 @@ Item {
                             Repeater {
                                 model: [
                                     { id: "queue", label: Translation.tr("Queue") },
-                                    { id: "lyrics", label: Translation.tr("Lyrics") },
-                                    { id: "eq", label: Translation.tr("EQ") }
+                                    { id: "lyrics", label: Translation.tr("Lyrics & EQ") }
                                 ]
                                 delegate: RippleButton {
                                     id: drawerTabBtn
                                     required property var modelData
-                                    readonly property bool active: root.rightDrawerTab === modelData.id
-                                    implicitHeight: 26
-                                    implicitWidth: tabLbl.implicitWidth + 14
+                                    readonly property bool active: drawerTabBtn.modelData.id === "lyrics"
+                                        ? root.lyricsEqTabActive
+                                        : !root.lyricsEqTabActive
+                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 1
+                                    implicitHeight: 28
                                     buttonRadius: root.isWaffle ? Waffle.Looks.radius.small : Appearance.rounding.full
                                     colBackground: active ? ColorUtils.applyAlpha(root.accent, 0.20) : root.colSurface
                                     colBackgroundHover: root.colSurfaceHover
@@ -2401,6 +2415,8 @@ Item {
                                     contentItem: StyledText {
                                         id: tabLbl
                                         anchors.centerIn: parent
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
                                         text: drawerTabBtn.modelData.label
                                         font.family: root.uiFont
                                         font.pixelSize: Appearance.font.pixelSize.smallest
@@ -2409,32 +2425,12 @@ Item {
                                     }
                                 }
                             }
-
-                            Item { Layout.fillWidth: true }
-
-                            RippleButton {
-                                visible: root.rightDrawerTab === "queue" && root.activeQueue.length > 0
-                                implicitHeight: 24
-                                implicitWidth: clrTxt.implicitWidth + 10
-                                buttonRadius: 4
-                                colBackground: "transparent"
-                                colBackgroundHover: root.colSurfaceHover
-                                onClicked: root._safeClearQueue()
-                                contentItem: StyledText {
-                                    id: clrTxt
-                                    anchors.centerIn: parent
-                                    text: Translation.tr("Clear")
-                                    font.family: root.uiFont
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    color: root.colSubtext
-                                }
-                            }
                         }
 
                         // QUEUE TAB (objectName: "musicQueuePanel" + "musicQueueList")
                         ColumnLayout {
                             objectName: "musicQueuePanel"
-                            visible: root.rightDrawerTab === "queue"
+                            visible: !root.lyricsEqTabActive
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             spacing: 6
@@ -2492,12 +2488,36 @@ Item {
                                 }
                             }
 
-                            StyledText {
-                                text: Translation.tr("UP NEXT (%1)").arg(root.activeQueue.length)
-                                font.family: root.uiFont
-                                font.pixelSize: Appearance.font.pixelSize.smallest
-                                font.weight: Font.DemiBold
-                                color: root.colSubtext
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: Translation.tr("UP NEXT (%1)").arg(root.activeQueue.length)
+                                    font.family: root.uiFont
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    font.weight: Font.DemiBold
+                                    color: root.colSubtext
+                                }
+
+                                RippleButton {
+                                    visible: root.activeQueue.length > 0
+                                    implicitHeight: 22
+                                    implicitWidth: clrTxt.implicitWidth + 10
+                                    buttonRadius: 4
+                                    colBackground: "transparent"
+                                    colBackgroundHover: root.colSurfaceHover
+                                    onClicked: root._safeClearQueue()
+                                    contentItem: StyledText {
+                                        id: clrTxt
+                                        anchors.centerIn: parent
+                                        text: Translation.tr("Clear")
+                                        font.family: root.uiFont
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        color: root.colSubtext
+                                    }
+                                }
                             }
 
                             ListView {
@@ -2589,94 +2609,106 @@ Item {
                             }
                         }
 
-                        // LYRICS TAB (objectName: "musicLyrics" + "musicLyricsList")
-                        Item {
-                            id: musicLyricsPane
-                            objectName: "musicLyrics"
-                            visible: root.rightDrawerTab === "lyrics"
+                        // MERGED LYRICS + EQUALIZER TAB (Lyrics takes majority top space; compact EQ below)
+                        ColumnLayout {
+                            id: musicLyricsEqPanel
+                            visible: root.lyricsEqTabActive
                             Layout.fillWidth: true
                             Layout.fillHeight: true
+                            spacing: 6
 
-                            ListView {
-                                id: lyricsList
-                                objectName: "musicLyricsList"
-                                anchors.fill: parent
-                                clip: true
-                                spacing: 4
-                                model: root.lyricsLines
-                                currentIndex: root.lyricsActiveIndex
-                                boundsBehavior: Flickable.StopAtBounds
-                                ScrollBar.vertical: SonoraScrollBar { orientation: Qt.Vertical }
+                            Item {
+                                id: musicLyricsPane
+                                objectName: "musicLyrics"
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                Layout.minimumHeight: 96
 
-                                onCurrentIndexChanged: {
-                                    if (currentIndex >= 0 && currentIndex < count)
-                                        positionViewAtIndex(currentIndex, ListView.Center);
-                                }
+                                ListView {
+                                    id: lyricsList
+                                    objectName: "musicLyricsList"
+                                    anchors.fill: parent
+                                    clip: true
+                                    spacing: 4
+                                    model: root.lyricsLines
+                                    currentIndex: root.lyricsActiveIndex
+                                    boundsBehavior: Flickable.StopAtBounds
+                                    ScrollBar.vertical: SonoraScrollBar { orientation: Qt.Vertical }
 
-                                delegate: Item {
-                                    id: lyrDelegate
-                                    required property var modelData
-                                    required property int index
-                                    readonly property bool isCurrent: index === root.lyricsActiveIndex
-                                    width: lyricsList.width - (root.showMusicScrollbars ? 8 : 0)
-                                    height: lyrTxt.implicitHeight + 10
+                                    onCurrentIndexChanged: {
+                                        if (currentIndex >= 0 && currentIndex < count)
+                                            positionViewAtIndex(currentIndex, ListView.Center);
+                                    }
 
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        radius: 6
-                                        color: lyrMa.containsMouse ? root.colSurfaceHover : "transparent"
-                                        StyledText {
-                                            id: lyrTxt
+                                    delegate: Item {
+                                        id: lyrDelegate
+                                        required property var modelData
+                                        required property int index
+                                        readonly property bool isCurrent: index === root.lyricsActiveIndex
+                                        width: lyricsList.width - (root.showMusicScrollbars ? 8 : 0)
+                                        height: lyrTxt.implicitHeight + 10
+
+                                        Rectangle {
                                             anchors.fill: parent
-                                            anchors.margins: 4
-                                            text: String(lyrDelegate.modelData?.text ?? "")
-                                            wrapMode: Text.WordWrap
-                                            font.family: root.uiFont
-                                            font.pixelSize: lyrDelegate.isCurrent ? Appearance.font.pixelSize.normal : Appearance.font.pixelSize.smaller
-                                            font.weight: lyrDelegate.isCurrent ? Font.Bold : Font.Normal
-                                            color: lyrDelegate.isCurrent ? root.colText : ColorUtils.applyAlpha(root.colSubtext, 0.72)
-                                        }
-                                        MouseArea {
-                                            id: lyrMa
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                if (lyrDelegate.modelData?.time !== undefined)
-                                                    root._safeSeek(Number(lyrDelegate.modelData.time));
+                                            radius: 6
+                                            color: lyrMa.containsMouse ? root.colSurfaceHover : "transparent"
+                                            StyledText {
+                                                id: lyrTxt
+                                                anchors.fill: parent
+                                                anchors.margins: 4
+                                                text: String(lyrDelegate.modelData?.text ?? "")
+                                                wrapMode: Text.WordWrap
+                                                font.family: root.uiFont
+                                                font.pixelSize: lyrDelegate.isCurrent ? Appearance.font.pixelSize.normal : Appearance.font.pixelSize.smaller
+                                                font.weight: lyrDelegate.isCurrent ? Font.Bold : Font.Normal
+                                                color: lyrDelegate.isCurrent ? root.colText : ColorUtils.applyAlpha(root.colSubtext, 0.72)
+                                            }
+                                            MouseArea {
+                                                id: lyrMa
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    if (lyrDelegate.modelData?.time !== undefined)
+                                                        root._safeSeek(Number(lyrDelegate.modelData.time));
+                                                }
                                             }
                                         }
                                     }
                                 }
+
+                                StyledText {
+                                    anchors.centerIn: parent
+                                    width: parent.width - 24
+                                    horizontalAlignment: Text.AlignHCenter
+                                    wrapMode: Text.WordWrap
+                                    visible: root.lyricsLines.length === 0
+                                    text: Translation.tr("No local lyrics found for this track")
+                                    font.family: root.uiFont
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    color: root.colSubtext
+                                }
                             }
 
-                            StyledText {
-                                anchors.centerIn: parent
-                                width: parent.width - 24
-                                horizontalAlignment: Text.AlignHCenter
-                                wrapMode: Text.WordWrap
-                                visible: root.lyricsLines.length === 0
-                                text: Translation.tr("No local lyrics found for this track")
-                                font.family: root.uiFont
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: root.colSubtext
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 1
+                                color: ColorUtils.applyAlpha(root.colBorder, 0.35)
                             }
-                        }
 
-                        // EQUALIZER TAB (shared EqualizerPanel — active ONLY while drawer & EQ tab shown)
-                        Item {
-                            visible: root.rightDrawerTab === "eq"
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: false
+                                Layout.preferredHeight: musicEqPanel.implicitHeight
+                                Layout.maximumHeight: musicEqPanel.implicitHeight
 
-                            EqualizerPanel {
-                                id: musicEqPanel
-                                objectName: "musicEqualizer"
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.top: parent.top
-                                compactLayout: true
-                                active: root.presentationActive && root.rightDrawerOpen && root.rightDrawerTab === "eq"
+                                EqualizerPanel {
+                                    id: musicEqPanel
+                                    objectName: "musicEqualizer"
+                                    anchors.fill: parent
+                                    compactLayout: true
+                                    active: root.presentationActive && root.rightDrawerOpen && root.lyricsEqTabActive
+                                }
                             }
                         }
                     }
@@ -2876,38 +2908,14 @@ Item {
                         spacing: 4
 
                         RippleButton {
-                            visible: musicPlayerBar.width >= 600
-                            implicitWidth: 26
-                            implicitHeight: 26
-                            buttonRadius: Appearance.rounding.small
-                            colBackground: root.rightDrawerOpen && root.rightDrawerTab === "eq" ? ColorUtils.applyAlpha(root.accent, 0.2) : "transparent"
-                            colBackgroundHover: root.colSurfaceHover
-                            onClicked: {
-                                if (root.rightDrawerOpen && root.rightDrawerTab === "eq")
-                                    root.rightDrawerOpen = false;
-                                else {
-                                    root.rightDrawerTab = "eq";
-                                    root.rightDrawerOpen = true;
-                                }
-                            }
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "equalizer"
-                                iconSize: 16
-                                color: root.rightDrawerOpen && root.rightDrawerTab === "eq" ? root.accent : root.colSubtext
-                            }
-                            StyledToolTip { text: Translation.tr("Equalizer") }
-                        }
-
-                        RippleButton {
                             visible: musicPlayerBar.width >= 560
                             implicitWidth: 26
                             implicitHeight: 26
                             buttonRadius: Appearance.rounding.small
-                            colBackground: root.rightDrawerOpen && root.rightDrawerTab === "lyrics" ? ColorUtils.applyAlpha(root.accent, 0.2) : "transparent"
+                            colBackground: root.rightDrawerOpen && root.lyricsEqTabActive ? ColorUtils.applyAlpha(root.accent, 0.2) : "transparent"
                             colBackgroundHover: root.colSurfaceHover
                             onClicked: {
-                                if (root.rightDrawerOpen && root.rightDrawerTab === "lyrics")
+                                if (root.rightDrawerOpen && root.lyricsEqTabActive)
                                     root.rightDrawerOpen = false;
                                 else {
                                     root.rightDrawerTab = "lyrics";
@@ -2918,9 +2926,9 @@ Item {
                                 anchors.centerIn: parent
                                 text: "lyrics"
                                 iconSize: 16
-                                color: root.rightDrawerOpen && root.rightDrawerTab === "lyrics" ? root.accent : root.colSubtext
+                                color: root.rightDrawerOpen && root.lyricsEqTabActive ? root.accent : root.colSubtext
                             }
-                            StyledToolTip { text: Translation.tr("Lyrics") }
+                            StyledToolTip { text: Translation.tr("Lyrics & EQ") }
                         }
 
                         MaterialSymbol {

@@ -13,6 +13,12 @@ Item {
     required property var tabButtonList
     property real maxWidth: -1
     property int compactThreshold: 4
+    property real barHeight: 40
+    property real tabIconSize: 22
+    property real tabHorizontalPadding: 10
+    property real tabLabelPixelSize: Appearance.font.pixelSize.normal
+    property real compactButtonSpacing: 4
+    property real tabRadius: -1
     readonly property bool compactMode: (root.tabButtonList?.length ?? 0) >= root.compactThreshold
     // Emitted only for direct user interaction (click/wheel), never for
     // programmatic setCurrentIndex — lets consumers persist explicit choices.
@@ -129,7 +135,7 @@ Item {
     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
     Layout.minimumWidth: 0
     implicitWidth: root.maxWidth > 0 ? Math.min(groupContainer.implicitWidth, root.maxWidth) : groupContainer.implicitWidth
-    implicitHeight: 40
+    implicitHeight: root.barHeight
 
     Flickable {
         id: flick
@@ -152,13 +158,13 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 readonly property real padding: 0
                 implicitWidth: contentItem.implicitWidth + padding * 2
-                height: 40
+                height: root.barHeight
                 x: flick.contentWidth > flick.width ? 0 : Math.max(0, (flick.width - width) / 2)
 
                 Rectangle {
                     id: groupBackground
                     anchors.fill: parent
-                    radius: height / 2
+                    radius: root.tabRadius >= 0 ? root.tabRadius : height / 2
                     color: Appearance.colors.colSurfaceContainer
                     border.width: 0
                     border.color: "transparent"
@@ -180,7 +186,7 @@ Item {
                     border.color: "transparent"
                     implicitWidth: targetItem ? targetItem.implicitWidth : 0
                     implicitHeight: targetItem ? targetItem.implicitHeight : 0
-                    radius: height / 2
+                    radius: root.tabRadius >= 0 ? root.tabRadius : height / 2
                     anchors.verticalCenter: parent.verticalCenter
 
                     // Animate Material surface changes without changing ownership.
@@ -231,7 +237,7 @@ Item {
                 Row {
                     id: contentItem
                     z: 2
-                    spacing: 4
+                    spacing: root.compactButtonSpacing
                     x: groupContainer.padding
                     anchors.verticalCenter: parent.verticalCenter
 
@@ -247,6 +253,11 @@ Item {
                             readonly property bool beingDragged: root.reorderDragIndex === index
                             readonly property bool dropTarget: root.reorderHoverIndex === index
                                 && root.reorderDragIndex >= 0 && root.reorderDragIndex !== index
+                            tabHeight: root.barHeight
+                            iconSize: root.tabIconSize
+                            horizontalPadding: root.tabHorizontalPadding
+                            labelPixelSize: root.tabLabelPixelSize
+                            buttonRadius: root.tabRadius >= 0 ? root.tabRadius : height / 2
                             current: index == root.currentIndex
                             showLabel: !root.compactMode || current
                             text: modelData.name

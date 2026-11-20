@@ -39,6 +39,15 @@ integrations=data.get("integrations")
 if not isinstance(integrations,dict):integrations={};data["integrations"]=integrations
 options=integrations.get("alisIntergration")
 if not isinstance(options,dict):options={};integrations["alisIntergration"]=options
+legacy_hadalird=integrations.get("hadalird")
+if isinstance(legacy_hadalird,dict):
+    if not isinstance(options.get("nexus"),bool):
+        h_nex=legacy_hadalird.get("nexus",legacy_hadalird.get(legacy_key))
+        if isinstance(h_nex,bool):options["nexus"]=h_nex
+    for hk in ("tlp","thinkfan"):
+        if not isinstance(options.get(hk),bool) and isinstance(legacy_hadalird.get(hk),bool):
+            options[hk]=legacy_hadalird[hk]
+    del integrations["hadalird"]
 if legacy_key in options:
     if not isinstance(options.get("nexus"),bool) and isinstance(options.get(legacy_key),bool):
         options["nexus"]=options[legacy_key]

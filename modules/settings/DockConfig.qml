@@ -354,9 +354,17 @@ ContentPage {
                         ]
                     }
 
-                    ConfigRow {
-                        uniform: true
+                    GridLayout {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        columns: width >= 560 * Appearance.fontSizeScale ? 2 : 1
+                        uniformCellWidths: columns > 1
+                        columnSpacing: 12
+                        rowSpacing: 8
+
                         ConfigSpinBox {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
                             icon: "height"
                             text: Translation.tr("Dock height (px)")
                             value: Config.options.dock.height ?? 60
@@ -367,6 +375,8 @@ ContentPage {
                         }
 
                         ConfigSpinBox {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
                             icon: "aspect_ratio"
                             text: Translation.tr("Icon size (px)")
                             value: Config.options.dock.iconSize ?? 35
@@ -421,10 +431,17 @@ ContentPage {
                         }
                     }
 
-                    ConfigRow {
-                        uniform: true
+                    GridLayout {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        columns: width >= 560 * Appearance.fontSizeScale ? 2 : 1
+                        uniformCellWidths: columns > 1
+                        columnSpacing: 12
+                        rowSpacing: 8
 
                         ConfigSpinBox {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
                             icon: "vertical_align_bottom"
                             text: Translation.tr("Reveal edge (px)")
                             value: Config.options?.dock?.hoverRegionHeight ?? 2
@@ -435,6 +452,8 @@ ContentPage {
                         }
 
                         ConfigSpinBox {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
                             icon: "filter_5"
                             text: Translation.tr("Max window dots")
                             value: Config.options?.dock?.maxIndicatorDots ?? 5

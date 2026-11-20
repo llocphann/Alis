@@ -12,9 +12,12 @@ RippleButton {
     Accessible.checkable: true
     Accessible.checked: root.current
     property bool showLabel: true
+    property real tabHeight: 40
+    property real iconSize: 22
+    property real labelPixelSize: Appearance.font.pixelSize.normal
     horizontalPadding: 10
 
-    implicitHeight: 40
+    implicitHeight: root.tabHeight
     readonly property real _iconOnlyImplicitWidth: icon.implicitWidth + horizontalPadding * 2
     implicitWidth: contentRow.implicitWidth + horizontalPadding * 2
     buttonRadius: height / 2
@@ -49,7 +52,7 @@ RippleButton {
             MaterialSymbol {
                 id: icon
                 anchors.verticalCenter: parent.verticalCenter
-                iconSize: 22
+                iconSize: root.iconSize
                 text: root.materialSymbol
 
                 color: root.current ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnSurface
@@ -80,6 +83,7 @@ RippleButton {
                     verticalAlignment: Text.AlignVCenter
                     text: root.text
                     font.family: Appearance.font.family.main
+                    font.pixelSize: root.labelPixelSize
                     font.weight: root.current ? Font.Medium : Font.Normal
                     color: root.current ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnSurface
                 }

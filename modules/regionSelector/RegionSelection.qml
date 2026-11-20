@@ -9,6 +9,7 @@ import qs.modules.waffle.regionSelector as WaffleRegion
 import qs.services
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects as GE
 import Quickshell
 import Quickshell.Io
@@ -312,39 +313,64 @@ PanelWindow {
     property real regionX: Math.min(dragStartX, draggingX)
     property real regionY: Math.min(dragStartY, draggingY)
 
-    readonly property bool useStageMode: (Config.options?.panelFamily ?? "abyss") === "abyss"
-        && DesktopEditStage.stageEnabled
-    property real screenshotStageProgress: (root.useStageMode && root.visible && root.screenshotReady) ? 1 : 0
-    Behavior on screenshotStageProgress {
-        enabled: Appearance.animationsEnabled
-        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-    }
-    readonly property real desiredStageDockWidth: Math.max(420, Math.round(regionSelectionControls.implicitWidth + 16))
-    readonly property real desiredStageDockHeight: Math.max(54, Math.round(regionSelectionControls.implicitHeight + 6))
-    readonly property var stageCard: root.useStageMode
-        ? DesktopEditStage.cardForGeometry(
-            root.width,
-            root.height,
-            "screenshot",
-            root.screenshotStageProgress,
-            root.desiredStageDockWidth,
-            root.desiredStageDockHeight,
-            0, 0, 0, 0, 0, 0
-        )
-        : null
+    readonly property bool useStageMode: false
+    property real screenshotStageProgress: 0
+    readonly property var stageCard: null
 
     function toStageX(mx: real): real {
-        if (!root.useStageMode || !root.stageCard || !(root.stageCard.s > 0.01))
-            return mx;
-        const mapped = (mx - root.stageCard.x) / root.stageCard.s;
-        return Math.max(0, Math.min(root.width, mapped));
+        return mx;
     }
 
     function toStageY(my: real): real {
-        if (!root.useStageMode || !root.stageCard || !(root.stageCard.s > 0.01))
-            return my;
-        const mapped = (my - root.stageCard.y) / root.stageCard.s;
-        return Math.max(0, Math.min(root.height, mapped));
+        return my;
+    }
+
+    // Inline on-screenshot editing & auto-hiding proximity toolbar state
+    property string annotationTool: ""
+    property color annotationColor: Appearance.colors.colPrimary
+    property real annotationStrokeWidth: 4
+    property bool colorStripOpen: false
+    property bool toolbarHovered: false
+    property bool colorStripHovered: false
+    property bool edgeProximityActive: false
+    property bool _annotatedExportInFlight: false
+    readonly property bool pointerActionActive: root.dragging
+        || liveAnnotationCanvas.drawing
+        || liveAnnotationCanvas.textEditing
+    readonly property bool toolbarRevealed: root.visible
+        && root.screenshotReady
+        && !root.pointerActionActive
+        && (root.edgeProximityActive || root.toolbarHovered || root.colorStripHovered || root.colorStripOpen)
+
+    Timer {
+        id: toolbarHideGraceTimer
+        interval: 200
+        repeat: false
+        onTriggered: {
+            if (!root.toolbarHovered && !root.colorStripHovered && !root.colorStripOpen)
+                root.edgeProximityActive = false;
+        }
+    }
+
+    function _updateEdgeProximity(mx: real, my: real): void {
+        if (root.pointerActionActive) {
+            toolbarHideGraceTimer.stop();
+            root.edgeProximityActive = false;
+            return;
+        }
+        const nearBottom = my >= Math.max(0, root.height - (root.screenEdgeThickness + 56));
+        const nearTop = my <= 60;
+        const inZone = regionSelectionControls.useWaffle ? nearTop : nearBottom;
+        if (inZone) {
+            toolbarHideGraceTimer.stop();
+            root.edgeProximityActive = true;
+        } else if (root.edgeProximityActive && !root.toolbarHovered && !root.colorStripHovered && !root.colorStripOpen) {
+            toolbarHideGraceTimer.restart();
+        }
+    }
+
+    function _restoreKeyboardFocus(): void {
+        keyScopeRect.forceActiveFocus();
     }
 
     Component.onCompleted: {
@@ -438,6 +464,10 @@ PanelWindow {
         const ry = Math.round(root.regionY * root.monitorScale);
         const rw = Math.round(root.regionWidth * root.monitorScale);
         const rh = Math.round(root.regionHeight * root.monitorScale);
+        if (liveAnnotationCanvas.hasAnnotations && root.action !== RegionSelection.SnipAction.Record && root.action !== RegionSelection.SnipAction.RecordWithSound) {
+            root.exportAnnotatedCapture(rx, ry, rw, rh);
+            return;
+        }
         const cropBase = `magick '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' `
             + `-crop ${rw}x${rh}+${rx}+${ry}`
         const cropToStdout = `${cropBase} -`
@@ -501,6 +531,47 @@ PanelWindow {
         root.snip();
     }
 
+    function exportAnnotatedCapture(rx: real, ry: real, rw: real, rh: real): void {
+        if (root._annotatedExportInFlight)
+            return;
+        liveAnnotationCanvas.commitActiveText();
+        root._restoreKeyboardFocus();
+        const targetW = Math.max(1, Math.round(root.width * root.monitorScale));
+        const targetH = Math.max(1, Math.round(root.height * root.monitorScale));
+        const cropW = rw > 0 ? rw : targetW;
+        const cropH = rh > 0 ? rh : targetH;
+        const cropX = rw > 0 ? rx : 0;
+        const cropY = rh > 0 ? ry : 0;
+        const compositedPath = `${root.screenshotDir}/annotated-live-${root.screen.name}.png`;
+        root._annotatedExportInFlight = true;
+        const accepted = annotatedExportContainer.grabToImage(function(result) {
+            const saved = result.saveToFile(compositedPath);
+            root._annotatedExportInFlight = false;
+            if (!saved) {
+                Quickshell.execDetached(["/usr/bin/notify-send", "Screenshot failed", "Could not composite annotated capture", "-a", "Screenshot", "-t", "3000"]);
+                root.dismiss();
+                return;
+            }
+            const escapedComposite = StringUtils.shellSingleQuoteEscape(compositedPath);
+            const escapedOrig = StringUtils.shellSingleQuoteEscape(root.screenshotPath);
+            const cropBase = `magick '${escapedComposite}' -crop ${cropW}x${cropH}+${cropX}+${cropY}`;
+            const cleanup = `/usr/bin/rm -f '${escapedOrig}' '${escapedComposite}'`;
+            const screenshotSaveDir = StringUtils.shellSingleQuoteEscape(Directories.screenshotsPath);
+
+            if (root.action === RegionSelection.SnipAction.CharRecognition) {
+                snipProc.command = ["/usr/bin/bash", "-c", `${cropBase} '${escapedComposite}' && /usr/bin/tesseract '${escapedComposite}' stdout -l $(/usr/bin/tesseract --list-langs | /usr/bin/awk 'NR>1{print $1}' | /usr/bin/tr '\\n' '+' | /usr/bin/sed 's/\\+$/\\n/') | tee >(/usr/bin/wl-copy --primary) | /usr/bin/wl-copy && ${cleanup} && /usr/bin/notify-send "Text recognized" "OCR text copied to clipboard" -a "OCR" -i edit-find -t 3000`];
+            } else {
+                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropBase} - | tee "$_ss" | /usr/bin/wl-copy && echo -n "$_ss" | /usr/bin/wl-copy --primary && ${cleanup} && /usr/bin/sleep 0.08 && /usr/bin/notify-send "Screenshot copied" "${cropW}x${cropH} annotated capture saved to $_ss" -a "Screenshot" -i camera-photo -t 3000`];
+            }
+            snipProc.startDetached();
+            root.dismiss();
+        }, Qt.size(targetW, targetH));
+        if (!accepted) {
+            root._annotatedExportInFlight = false;
+            root.dismiss();
+        }
+    }
+
     Process {
         id: snipProc
     }
@@ -522,14 +593,37 @@ PanelWindow {
     }
 
     Rectangle {
+        id: keyScopeRect
         anchors.fill: parent
         color: "transparent"
 
+        HoverHandler {
+            onPointChanged: root._updateEdgeProximity(point.position.x, point.position.y)
+        }
+
         focus: root.visible
-        Keys.onPressed: (event) => { // Esc to close
+        Keys.onPressed: (event) => {
             if (event.key === Qt.Key_Escape) {
-                root.dismiss();
+                if (liveAnnotationCanvas.textEditing) {
+                    liveAnnotationCanvas.cancelActiveText();
+                } else if (root.colorStripOpen) {
+                    root.colorStripOpen = false;
+                } else if (root.annotationTool.length > 0) {
+                    root.annotationTool = "";
+                } else {
+                    root.dismiss();
+                }
+                event.accepted = true;
+                return;
             }
+            if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                    && !liveAnnotationCanvas.textEditing
+                    && liveAnnotationCanvas.hasAnnotations) {
+                event.accepted = true;
+                root.exportAnnotatedCapture(0, 0, Math.round(root.screen.width * root.monitorScale), Math.round(root.screen.height * root.monitorScale));
+                return;
+            }
+            liveAnnotationCanvas.handleKey(event);
         }
 
         Item {
@@ -537,34 +631,51 @@ PanelWindow {
             objectName: "screenshotStageViewport"
             width: root.width
             height: root.height
-            transform: [
-                Scale {
-                    xScale: root.useStageMode && root.stageCard ? root.stageCard.s : 1
-                    yScale: root.useStageMode && root.stageCard ? root.stageCard.s : 1
-                },
-                Translate {
-                    x: root.useStageMode && root.stageCard ? root.stageCard.x : 0
-                    y: root.useStageMode && root.stageCard ? root.stageCard.y : 0
-                }
-            ]
 
-            Image {
+            Item {
+                id: annotatedExportContainer
                 anchors.fill: parent
-                source: root.visible && root.screenshotReady ? `file://${root.screenshotPath}` : ""
-                fillMode: Image.PreserveAspectFit
-                cache: false
+                z: 1
+
+                Image {
+                    id: frozenScreenshot
+                    anchors.fill: parent
+                    source: root.visible && root.screenshotReady ? `file://${root.screenshotPath}` : ""
+                    fillMode: Image.PreserveAspectFit
+                    cache: false
+                }
+
+                RegionAnnotationCanvas {
+                    id: liveAnnotationCanvas
+                    objectName: "regionLiveAnnotationCanvas"
+                    anchors.fill: parent
+                    z: 2
+                    imageSource: frozenScreenshot.source
+                    tool: root.annotationTool
+                    strokeColor: root.annotationColor
+                    strokeWidth: root.annotationStrokeWidth
+                    interactive: root.annotationTool.length > 0
+                    handleInternalPointer: false
+                    onToolSelected: (nextTool) => {
+                        root.annotationTool = nextTool;
+                        if (nextTool.length === 0)
+                            root.colorStripOpen = false;
+                    }
+                    onEditingTextFinished: root._restoreKeyboardFocus()
+                }
             }
 
             // Clip only the dim/selection-guide rendering to the workspace
-            // interior in full-output mode; in stage mode cover the full shrunk desktop.
+            // interior so it does not repaint the persistent Bar/Screen Edge.
             Item {
                 id: selectionVisualViewport
                 z: 2
-                x: root.useStageMode ? 0 : root.screenshotLeftOwnerInset
-                y: root.useStageMode ? 0 : root.screenshotTopOwnerInset
-                width: Math.max(0, root.width - (root.useStageMode ? 0 : (root.screenshotLeftOwnerInset + root.screenshotRightOwnerInset)))
-                height: Math.max(0, root.height - (root.useStageMode ? 0 : (root.screenshotTopOwnerInset + root.screenshotBottomOwnerInset)))
+                x: root.screenshotLeftOwnerInset
+                y: root.screenshotTopOwnerInset
+                width: Math.max(0, root.width - (root.screenshotLeftOwnerInset + root.screenshotRightOwnerInset))
+                height: Math.max(0, root.height - (root.screenshotTopOwnerInset + root.screenshotBottomOwnerInset))
                 clip: true
+                visible: root.annotationTool.length === 0 || root.dragging || (root.regionWidth > 0 && root.regionHeight > 0)
                 // Keep layer.enabled off during interactive region selection so
                 // full-screen FBO + OpacityMask re-renders do not stall every
                 // 1px mouse movement event.
@@ -605,7 +716,7 @@ PanelWindow {
             // Window regions
             Repeater {
                 model: ScriptModel {
-                    values: root.enableWindowRegions ? root.windowRegions : []
+                    values: root.enableWindowRegions && root.annotationTool.length === 0 ? root.windowRegions : []
                 }
                 delegate: TargetRegion {
                     z: 2
@@ -625,7 +736,7 @@ PanelWindow {
             // Layer regions
             Repeater {
                 model: ScriptModel {
-                    values: root.enableLayerRegions ? root.layerRegions : []
+                    values: root.enableLayerRegions && root.annotationTool.length === 0 ? root.layerRegions : []
                 }
                 delegate: TargetRegion {
                     z: 3
@@ -644,7 +755,7 @@ PanelWindow {
             // Content regions
             Repeater {
                 model: ScriptModel {
-                    values: root.enableContentRegions ? root.imageRegions : []
+                    values: root.enableContentRegions && root.annotationTool.length === 0 ? root.imageRegions : []
                 }
                 delegate: TargetRegion {
                     z: 4
@@ -660,28 +771,28 @@ PanelWindow {
             }
         }
 
-        AbyssEditStageFrame {
-            id: screenshotEditStageFrame
-            objectName: "screenshotEditStageFrame"
-            z: 50
-            visible: root.useStageMode && Boolean(root.stageCard?.active)
-            anchors.fill: parent
-            card: root.stageCard ?? ({ p: 0 })
-        }
-
         MouseArea {
             id: mouseArea
             z: 60
             anchors.fill: parent
-            cursorShape: Qt.CrossCursor
+            cursorShape: root.annotationTool === "text" ? Qt.IBeamCursor : Qt.CrossCursor
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             hoverEnabled: true
 
-            // Controls
             onPressed: (mouse) => {
                 if (imageDetectionProcess.running) imageDetectionProcess.running = false;
+                // Pressing on canvas starts a user action -> collapse & suppress toolbar until idle hover returns.
+                toolbarHideGraceTimer.stop();
+                root.edgeProximityActive = false;
+                root.colorStripOpen = false;
                 const sx = root.toStageX(mouse.x);
                 const sy = root.toStageY(mouse.y);
+
+                if (root.annotationTool.length > 0 && mouse.button === Qt.LeftButton) {
+                    liveAnnotationCanvas.startStroke(sx, sy, mouse.modifiers);
+                    return;
+                }
+
                 root.dragStartX = sx;
                 root.dragStartY = sy;
                 root.draggingX = sx;
@@ -693,6 +804,13 @@ PanelWindow {
                 root.mouseButton = mouse.button;
             }
             onReleased: (mouse) => {
+                if (liveAnnotationCanvas.drawing) {
+                    liveAnnotationCanvas.endStroke();
+                    return;
+                }
+                if (root.annotationTool.length > 0 && mouse.button === Qt.LeftButton) {
+                    return;
+                }
                 root.dragging = false;
                 // Detect if it was a click -> Try to select targeted region
                 if (root.draggingX === root.dragStartX && root.draggingY === root.dragStartY) {
@@ -719,11 +837,21 @@ PanelWindow {
                 }
                 root.snip();
             }
+            onCanceled: () => {
+                liveAnnotationCanvas.cancelStroke();
+                root.dragging = false;
+            }
             onPositionChanged: (mouse) => {
                 const sx = root.toStageX(mouse.x);
                 const sy = root.toStageY(mouse.y);
+                root._updateEdgeProximity(mouse.x, mouse.y);
+                if (liveAnnotationCanvas.drawing) {
+                    liveAnnotationCanvas.moveStroke(sx, sy, mouse.modifiers);
+                    return;
+                }
                 if (!root.dragging) {
-                    root.updateTargetedRegion(sx, sy);
+                    if (root.annotationTool.length === 0)
+                        root.updateTargetedRegion(sx, sy);
                     return;
                 }
                 root.draggingX = sx;
@@ -736,13 +864,34 @@ PanelWindow {
             }
         }
 
-        // Material ii fallback uses one connected Abyss body that grows directly from
-        // the physical bottom Screen Edge when stage mode is inactive.
+        // Subtle bottom reveal indicator when toolbar is auto-hidden and user is idle
+        Rectangle {
+            id: bottomRevealCue
+            objectName: "screenshotToolbarCue"
+            z: 9996
+            visible: !regionSelectionControls.useWaffle && !root.useStageMode && opacity > 0.01
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: root.screenEdgeThickness + 4
+            width: 38
+            height: 3
+            radius: 1.5
+            color: Appearance.colors.colOnLayer0
+            opacity: (!root.toolbarRevealed && !root.pointerActionActive && root.screenshotReady) ? 0.42 : 0
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+            }
+        }
+
+        // Material ii / Abyss uses one connected Abyss body that grows directly from
+        // the physical bottom Screen Edge and tucks smoothly off-screen until hovered.
         ConnectedSurfaceAbyssEdgeSurface {
             id: regionControlsAbyss
             z: 9998
             anchors.fill: parent
             visible: !regionSelectionControls.useWaffle && !root.useStageMode
+                && (regionSelectionControls.y < root.height - root.screenEdgeThickness + 1)
             edge: "bottom"
             ownerThickness: root.screenEdgeThickness
             paintOverlap: Math.min(
@@ -766,61 +915,138 @@ PanelWindow {
             shadowColor: root.screenEdgeShadowColor
         }
 
+        // Compact Abyss popover strip for stroke color + width above toolbar
+        Rectangle {
+            id: colorStylePopover
+            objectName: "screenshotColorStylePopover"
+            z: 10000
+            visible: root.colorStripOpen && root.toolbarRevealed
+            width: styleRow.implicitWidth + 16
+            height: 34
+            radius: 12
+            color: Appearance.colors.colLayer0
+            border.width: 1
+            border.color: Appearance.colors.colLayer0Border
+            x: Math.max(root.screenEdgeThickness + 8, Math.min(parent.width - width - root.screenEdgeThickness - 8,
+                Math.round(regionSelectionControls.x + regionSelectionControls.width * 0.52 - width / 2)))
+            y: regionSelectionControls.y - height - 6
+
+            HoverHandler {
+                onHoveredChanged: {
+                    root.colorStripHovered = hovered;
+                    if (!hovered)
+                        toolbarHideGraceTimer.restart();
+                }
+            }
+
+            RowLayout {
+                id: styleRow
+                anchors.centerIn: parent
+                spacing: 6
+
+                Repeater {
+                    model: liveAnnotationCanvas.palette
+                    delegate: Rectangle {
+                        id: swatchDot
+                        required property var modelData
+                        Layout.alignment: Qt.AlignVCenter
+                        implicitWidth: 16
+                        implicitHeight: 16
+                        radius: 8
+                        color: modelData
+                        border.width: String(root.annotationColor) === String(modelData) ? 2 : 1
+                        border.color: String(root.annotationColor) === String(modelData)
+                            ? Appearance.colors.colOnLayer0
+                            : Appearance.colors.colLayer0Border
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -2
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.annotationColor = swatchDot.modelData
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.alignment: Qt.AlignVCenter
+                    implicitWidth: 1
+                    implicitHeight: 16
+                    color: Appearance.colors.colOutlineVariant
+                    opacity: 0.4
+                }
+
+                Repeater {
+                    model: [
+                        { "label": "S", "width": 2 },
+                        { "label": "M", "width": 4 },
+                        { "label": "L", "width": 8 }
+                    ]
+                    delegate: RippleButton {
+                        id: widthBtn
+                        required property var modelData
+                        Layout.alignment: Qt.AlignVCenter
+                        implicitWidth: 24
+                        implicitHeight: 22
+                        buttonRadius: 8
+                        toggled: Math.abs(root.annotationStrokeWidth - modelData.width) < 0.5
+                        colBackground: "transparent"
+                        colBackgroundHover: Qt.alpha(AbyssStyle.accent, 0.16)
+                        colBackgroundToggled: Qt.alpha(AbyssStyle.accent, 0.28)
+                        onClicked: root.annotationStrokeWidth = widthBtn.modelData.width
+                        contentItem: StyledText {
+                            anchors.centerIn: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            text: widthBtn.modelData.label
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.weight: Font.DemiBold
+                            color: widthBtn.toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                        }
+                    }
+                }
+            }
+        }
+
         Item {
             id: regionSelectionControls
             objectName: "regionSelectionControls"
             z: 9999
             readonly property bool useWaffle: Config.options?.panelFamily === "waffle"
-            readonly property real shellPadding: useWaffle ? 0 : (root.useStageMode ? 4 : 8)
+            readonly property real shellPadding: useWaffle ? 0 : 4
             implicitWidth: controlsLoader.implicitWidth + shellPadding * 2
             implicitHeight: controlsLoader.implicitHeight + shellPadding * 2
-            visible: root.useStageMode ? (root.screenshotStageProgress > 0.001) : true
-            opacity: root.useStageMode ? 1 : fallbackOpacity
-            property real fallbackOpacity: 0
+            visible: true
+            opacity: fallbackOpacity
+            property real fallbackOpacity: root.toolbarRevealed ? 1 : 0
 
-            x: root.useStageMode && root.stageCard
-                ? root.stageCard.dockX
-                : Math.round((parent.width - width) / 2)
-            y: root.useStageMode && root.stageCard
-                ? root.stageCard.dockY
-                : (useWaffle ? fallbackTopMargin : (parent.height - height - fallbackBottomMargin))
-            width: root.useStageMode && root.stageCard && root.stageCard.dockWidth > 0
-                ? root.stageCard.dockWidth
-                : implicitWidth
-            height: root.useStageMode && root.stageCard && root.stageCard.dockHeight > 0
-                ? root.stageCard.dockHeight
-                : implicitHeight
+            x: Math.round((parent.width - width) / 2)
+            y: useWaffle ? fallbackTopMargin : (parent.height - height - fallbackBottomMargin)
+            width: implicitWidth
+            height: implicitHeight
 
-            property real fallbackTopMargin: -implicitHeight
-            property real fallbackBottomMargin: -implicitHeight
+            property real fallbackTopMargin: root.toolbarRevealed ? 16 : -(implicitHeight + 16)
+            property real fallbackBottomMargin: root.toolbarRevealed ? root.screenEdgeThickness : -(implicitHeight + 16)
 
-            function triggerFallbackReveal(): void {
-                if (root.useStageMode || !root.visible)
-                    return;
-                if (regionSelectionControls.useWaffle) {
-                    regionSelectionControls.fallbackTopMargin = 16;
-                } else {
-                    regionSelectionControls.fallbackBottomMargin = root.screenEdgeThickness;
-                }
-                regionSelectionControls.fallbackOpacity = 1;
-            }
-
-            Component.onCompleted: Qt.callLater(regionSelectionControls.triggerFallbackReveal)
-
-            Connections {
-                target: root
-                function onVisibleChanged() {
-                    regionSelectionControls.triggerFallbackReveal();
+            HoverHandler {
+                onHoveredChanged: {
+                    root.toolbarHovered = hovered;
+                    if (!hovered)
+                        toolbarHideGraceTimer.restart();
+                    else
+                        toolbarHideGraceTimer.stop();
                 }
             }
+
             Behavior on fallbackOpacity {
-                animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
             }
             Behavior on fallbackTopMargin {
-                animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Easing.OutCubic }
             }
             Behavior on fallbackBottomMargin {
-                animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Easing.OutCubic }
             }
 
             Loader {
@@ -829,20 +1055,33 @@ PanelWindow {
                 sourceComponent: regionSelectionControls.useWaffle ? waffleControls : materialControls
             }
 
-            // Material ii / Abyss stage controls
+            // Material ii / Abyss compact connected controls
             Component {
                 id: materialControls
                 Row {
-                    spacing: 4
+                    spacing: 2
 
                     OptionsToolbar {
                         enableShadow: false
                         transparent: true
                         action: root.action
                         selectionMode: root.selectionMode
+                        annotationTool: root.annotationTool
+                        annotationColor: root.annotationColor
+                        annotationStrokeWidth: root.annotationStrokeWidth
+                        hasAnnotations: liveAnnotationCanvas.hasAnnotations
+                        canUndo: liveAnnotationCanvas.canUndo
+                        canRedo: liveAnnotationCanvas.canRedo
+                        stylePopoverOpen: root.colorStripOpen
                         onActionChanged: if (action !== undefined && root.action !== action) root.action = action
                         onSelectionModeChanged: if (selectionMode !== undefined && root.selectionMode !== selectionMode) root.selectionMode = selectionMode
-                        onDismiss: root.dismiss();
+                        onAnnotationToolChanged: if (root.annotationTool !== annotationTool) root.annotationTool = annotationTool
+                        onStylePopoverOpenChanged: if (root.colorStripOpen !== stylePopoverOpen) root.colorStripOpen = stylePopoverOpen
+                        onUndoRequested: liveAnnotationCanvas.undo()
+                        onRedoRequested: liveAnnotationCanvas.redo()
+                        onClearAnnotationsRequested: liveAnnotationCanvas.clearAll()
+                        onSaveAnnotatedRequested: root.exportAnnotatedCapture(0, 0, Math.round(root.screen.width * root.monitorScale), Math.round(root.screen.height * root.monitorScale))
+                        onDismiss: root.dismiss()
                         onFullscreenRequested: root.snipFullscreen()
                         onColorPickerRequested: {
                             // Dismiss before the Alis picker captures the desktop.
@@ -851,19 +1090,29 @@ PanelWindow {
                         }
                     }
 
-                    FloatingActionButton {
+                    RippleButton {
                         id: closeFab
+                        objectName: "regionCloseButton"
+                        property string iconText: "close"
                         anchors.verticalCenter: parent.verticalCenter
-                        baseSize: 40
-                        iconText: "close"
-                        onClicked: root.dismiss();
-                        StyledToolTip {
-                            text: Translation.tr("Close")
-                        }
+                        implicitWidth: 30
+                        implicitHeight: 30
+                        buttonRadius: (Config.options?.panelFamily === "abyss") ? 12 : Appearance.rounding.full
                         colBackground: Appearance.colors.colTertiaryContainer
                         colBackgroundHover: Appearance.colors.colTertiaryContainerHover
                         colRipple: Appearance.colors.colTertiaryContainerActive
-                        colOnBackground: Appearance.colors.colOnTertiaryContainer
+                        onClicked: root.dismiss()
+                        contentItem: MaterialSymbol {
+                            anchors.centerIn: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            text: closeFab.iconText
+                            iconSize: 17
+                            color: Appearance.colors.colOnTertiaryContainer
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("Close (Esc)")
+                            visible: closeFab.buttonHovered
+                        }
                     }
                 }
             }

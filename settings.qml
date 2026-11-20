@@ -665,15 +665,24 @@ ApplicationWindow {
     }
 
     readonly property real waffleBarReserve: Config.options?.panelFamily === "waffle" ? 48 : 0
-    readonly property real targetWindowWidth: Math.round(Math.min(
-        1600,
-        Math.max(900, (Screen.width > 0 ? Screen.width : 1920) * 0.90),
-        Math.max(750, (Screen.width > 0 ? Screen.width : 1920) - 48)))
+    readonly property real _screenW: Screen.width > 0 ? Screen.width : 1920
+    readonly property real targetWindowWidth: Config.options?.panelFamily === "waffle"
+        ? Math.round(Math.min(
+            1600,
+            Math.max(900, root._screenW * 0.90),
+            Math.max(750, root._screenW - 48)))
+        : Math.round(Math.min(
+            Math.max(750, root._screenW - 48),
+            root._screenW * (Config.options?.dashboard?.widthRatio ?? 0.72) + 40))
     readonly property real _screenAvailHeight: Math.max(0, (Screen.height > 0 ? Screen.height : 1200) - root.waffleBarReserve)
-    readonly property real targetWindowHeight: Math.round(Math.max(560, Math.min(
-        Math.round(1280 * Math.max(1, Appearance.fontSizeScale)),
-        Math.round(root._screenAvailHeight * 0.92),
-        Math.max(500, root._screenAvailHeight - 40))))
+    readonly property real targetWindowHeight: Config.options?.panelFamily === "waffle"
+        ? Math.round(Math.max(560, Math.min(
+            Math.round(1280 * Math.max(1, Appearance.fontSizeScale)),
+            Math.round(root._screenAvailHeight * 0.92),
+            Math.max(500, root._screenAvailHeight - 40))))
+        : Math.round(Math.min(
+            Math.max(500, root._screenAvailHeight - 40),
+            root._screenAvailHeight * (Config.options?.dashboard?.heightRatio ?? 0.72) + 40))
 
     function handleEscape(): bool {
         if (SettingsLayoutManager.editMode)
@@ -791,7 +800,7 @@ ApplicationWindow {
                 leftMargin: 20
                 rightMargin: 20
             }
-            height: root.navEditMode ? 58 : 44
+            height: root.navEditMode ? 54 : 42
 
             Behavior on height {
                 enabled: Appearance.animationsEnabled
@@ -804,7 +813,7 @@ ApplicationWindow {
 
             readonly property real headerGap: root.navEditMode ? 8 : 12
             readonly property real identityWidth: root.navEditMode ? 176 : 190
-            readonly property real actionsWidth: Math.max(112, actionsRow.implicitWidth)
+            readonly property real actionsWidth: root.navEditMode ? 88 : 0
             readonly property bool defaultOrder: SettingsChromeLayout.headerOrder.join(",") === "identity,search,actions"
 
             function searchWidth(): real {
@@ -1153,91 +1162,13 @@ ApplicationWindow {
 
             Item {
                 id: headerActions
+                visible: root.navEditMode
                 parent: SettingsChromeLayout.columnFor("actions") === 0 ? settingsHeaderSlot0
                     : SettingsChromeLayout.columnFor("actions") === 1 ? settingsHeaderSlot1
                     : settingsHeaderSlot2
                 anchors.fill: parent
                 anchors.topMargin: root.navEditMode ? 8 : 6
                 anchors.bottomMargin: root.navEditMode ? 8 : 6
-
-                RowLayout {
-                    id: actionsRow
-                    anchors.fill: parent
-                    spacing: 4
-
-                    RippleButton {
-                        id: windowEditSettingsLayoutBtn
-                        objectName: SettingsMaterialPreset.waffle ? "" : "windowEditSettingsLayoutButton"
-                        buttonRadius: Appearance.rounding.full
-                        implicitWidth: 35
-                        implicitHeight: 35
-                        toggled: SettingsLayoutManager.editMode
-                        colBackground: "transparent"
-                        colBackgroundHover: Appearance.colors.colLayer1Hover
-                        colBackgroundToggled: Appearance.colors.colPrimaryContainer
-                        colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
-                        onClicked: {
-                            if (SettingsLayoutManager.editMode)
-                                SettingsLayoutManager.commitEditMode()
-                            else
-                                SettingsLayoutManager.beginEditMode()
-                        }
-                        contentItem: MaterialSymbol {
-                            anchors.centerIn: parent
-                            horizontalAlignment: Text.AlignHCenter
-                            text: SettingsLayoutManager.editMode ? "check" : "space_dashboard"
-                            iconSize: 20
-                            color: SettingsLayoutManager.editMode
-                                ? Appearance.colors.colOnPrimaryContainer
-                                : Appearance.colors.colOnSurfaceVariant
-                        }
-                        StyledToolTip {
-                            text: SettingsLayoutManager.editMode
-                                ? Translation.tr("Finish editing Settings layout")
-                                : Translation.tr("Edit Settings layout & cards")
-                        }
-                    }
-
-                    RippleButton {
-                        visible:Config.options?.panelFamily === "abyss"
-                        buttonRadius:Appearance.rounding.full;implicitWidth:35;implicitHeight:35
-                        onClicked:Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),"ipc","call","abyss","editLayout"])
-                        contentItem:MaterialSymbol {anchors.centerIn:parent;text:"dashboard_customize";iconSize:20}
-                        StyledToolTip {text:Translation.tr("Edit Abyss Layout")}
-                    }
-
-                    RippleButton {
-                        buttonRadius: Appearance.rounding.full
-                        implicitWidth: 35
-                        implicitHeight: 35
-                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "lock", "activate"])
-                        contentItem: MaterialSymbol {
-                            anchors.centerIn: parent
-                            horizontalAlignment: Text.AlignHCenter
-                            text: "lock"
-                            iconSize: 20
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("Lock session")
-                        }
-                    }
-
-                    RippleButton {
-                        buttonRadius: Appearance.rounding.full
-                        implicitWidth: 35
-                        implicitHeight: 35
-                        onClicked: root.close()
-                        contentItem: MaterialSymbol {
-                            anchors.centerIn: parent
-                            horizontalAlignment: Text.AlignHCenter
-                            text: "close"
-                            iconSize: 20
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("Close Settings")
-                        }
-                    }
-                }
 
                 SettingsChromeEditFrame {
                     anchors.fill: parent
@@ -1669,7 +1600,7 @@ ApplicationWindow {
                     RippleButton {
                         id: windowLayoutEditToggle
                         Accessible.name: windowLayoutEditToggleLabel.text
-                        objectName: "windowLayoutEditToggle"
+                        objectName: SettingsMaterialPreset.waffle ? "windowLayoutEditToggle" : "windowEditSettingsLayoutButton"
                         readonly property color editSurface: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedColor : Appearance.colors.colPrimaryContainer
                         readonly property color editSurfaceHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedHoverColor : Appearance.colors.colPrimaryContainerHover
                         readonly property color editForeground: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.textColor : Appearance.colors.colOnPrimaryContainer

@@ -442,7 +442,7 @@ ContentPage {
 
                 GridLayout {
                     Layout.fillWidth: true
-                    columns: width >= 430 ? 2 : 1
+                    columns: width >= 560 * Appearance.fontSizeScale ? 2 : 1
                     uniformCellWidths: false
                     columnSpacing: 8
                     rowSpacing: 6

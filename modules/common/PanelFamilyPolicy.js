@@ -181,6 +181,30 @@ function migrateNexusConfig(options) {
     }
 
     if (options.integrations && typeof options.integrations === "object") {
+        if (options.integrations.hadalird && typeof options.integrations.hadalird === "object") {
+            var legacyHadalird = options.integrations.hadalird;
+            if (!options.integrations.alisIntergration || typeof options.integrations.alisIntergration !== "object")
+                options.integrations.alisIntergration = {};
+            var aiOpts = options.integrations.alisIntergration;
+            if (!Object.prototype.hasOwnProperty.call(aiOpts, "nexus")) {
+                var hadalirdNexus = legacyHadalird.nexus !== undefined
+                    ? legacyHadalird.nexus
+                    : legacyHadalird[legacyKey];
+                if (hadalirdNexus !== undefined) {
+                    aiOpts.nexus = (hadalirdNexus === true);
+                    out["integrations.alisIntergration.nexus"] = aiOpts.nexus;
+                }
+            }
+            var hwKeys = ["tlp", "thinkfan"];
+            for (var h = 0; h < hwKeys.length; ++h) {
+                var hk = hwKeys[h];
+                if (!Object.prototype.hasOwnProperty.call(aiOpts, hk) && legacyHadalird[hk] !== undefined) {
+                    aiOpts[hk] = (legacyHadalird[hk] === true);
+                    out["integrations.alisIntergration." + hk] = aiOpts[hk];
+                }
+            }
+            delete options.integrations.hadalird;
+        }
         if (options.integrations.alisIntergration && typeof options.integrations.alisIntergration === "object"
                 && Object.prototype.hasOwnProperty.call(options.integrations.alisIntergration, legacyKey)) {
             var curPluginVal = options.integrations.alisIntergration.nexus;

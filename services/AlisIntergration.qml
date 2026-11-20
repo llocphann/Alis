@@ -57,6 +57,59 @@ Singleton {
     readonly property var nexus: session?.nexus ?? null
     readonly property var spacedRepetition: session?.spacedRepetition ?? null
     readonly property var exercisesTracker: session?.exercisesTracker ?? null
+    property string _pendingNexusIpcAction: ""
+
+    function _runNexusAction(action: string): void {
+        if (!root.nexus)
+            return
+        if (action === "toggle") root.nexus.toggle()
+        else if (action === "open") root.nexus.open()
+        else if (action === "openOverlay") root.nexus.openOverlay()
+        else if (action === "openWindow") root.nexus.openWindow()
+        else if (action === "close") root.nexus.close()
+        else if (action === "daily") { root.nexus.open(); root.nexus.openDailyNote() }
+    }
+
+    function _dispatchNexusIpc(action: string): void {
+        if (root.nexus) {
+            root._pendingNexusIpcAction = ""
+            pendingNexusIpcTimer.stop()
+            root._runNexusAction(action)
+            return
+        }
+        if (!Config.ready || probe.running || (root.nexusEnabled && (!worker.active || worker.status === Loader.Loading))) {
+            root._pendingNexusIpcAction = action
+            pendingNexusIpcTimer.restart()
+            return
+        }
+        if (action !== "close") {
+            Quickshell.execDetached([
+                "/usr/bin/notify-send",
+                "Nexus is disabled",
+                root.isPluginInstalled("nexus")
+                    ? "Enable Nexus in Settings -> Integrations to open it."
+                    : "Install the Nexus integration in Settings -> Integrations.",
+                "-a", "Alis Nexus",
+                "-t", "3500"
+            ])
+        }
+    }
+
+    onNexusChanged: {
+        if (root.nexus && root._pendingNexusIpcAction.length > 0) {
+            const action = root._pendingNexusIpcAction
+            root._pendingNexusIpcAction = ""
+            pendingNexusIpcTimer.stop()
+            root._runNexusAction(action)
+        }
+    }
+
+    Timer {
+        id: pendingNexusIpcTimer
+        interval: 6000
+        repeat: false
+        onTriggered: root._pendingNexusIpcAction = ""
+    }
 
     function isPluginInstalled(pluginId): bool {
         if (!available || loadFailed)
@@ -387,12 +440,12 @@ Singleton {
     }
     IpcHandler {
         target: "nexus"
-        function toggle(): void { if (root.nexus) root.nexus.toggle() }
-        function open(): void { if (root.nexus) root.nexus.open() }
-        function openOverlay(): void { if (root.nexus) root.nexus.openOverlay() }
-        function openWindow(): void { if (root.nexus) root.nexus.openWindow() }
-        function close(): void { if (root.nexus) root.nexus.close() }
-        function daily(): void { if (root.nexus) { root.nexus.open(); root.nexus.openDailyNote() } }
+        function toggle(): void { root._dispatchNexusIpc("toggle") }
+        function open(): void { root._dispatchNexusIpc("open") }
+        function openOverlay(): void { root._dispatchNexusIpc("openOverlay") }
+        function openWindow(): void { root._dispatchNexusIpc("openWindow") }
+        function close(): void { root._dispatchNexusIpc("close") }
+        function daily(): void { root._dispatchNexusIpc("daily") }
     }
     IpcHandler {
         target: "exercises-tracker"

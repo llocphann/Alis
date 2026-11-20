@@ -61,8 +61,9 @@ Item {
     readonly property real configuredHeight: Math.round(Math.max(320,
         Math.min(root.baseConfiguredHeight,
             root.availableHeight - 24 - root.editToolbarReserve)))
+    readonly property bool showSearchBar: dashboardContent.currentPageId === "dashboard" || root.searching
     readonly property real searchOnlyHeight: Math.min(root.configuredHeight, Math.max(searchWidget.collapsedHeight + 24, searchWidget.implicitHeight + 24))
-    readonly property real dashboardContentHeight: Math.max(240, root.configuredHeight - searchWidget.collapsedHeight - 36)
+    readonly property real dashboardContentHeight: Math.max(240, root.configuredHeight - (root.showSearchBar ? (searchWidget.collapsedHeight + 36) : 24))
 
     readonly property bool screenEdgeShadowEnabled:
         Config.options?.appearance?.screenEdge?.physicalShadow?.enabled ?? true
@@ -98,9 +99,7 @@ Item {
         onActivated: root.handleEscape()
     }
     function focusSearchInput(): void {
-        if (dashboardContent.currentPageId === "spacedRepetition"
-                && root.searchingText.length === 0
-                && !(GlobalStates.overviewSearchPrefix?.length > 0)) {
+        if (!root.showSearchBar && !(GlobalStates.overviewSearchPrefix?.length > 0)) {
             dashboardContent.focusPrimarySurface()
             return
         }
@@ -288,7 +287,7 @@ Item {
             x: 12
             y: 12
             width: Math.max(0, dashContainer.width - 24)
-            height: root.embeddedSurface ? Math.max(0,dashContainer.height-searchWidget.collapsedHeight-36) : root.dashboardContentHeight
+            height: root.embeddedSurface ? Math.max(0, dashContainer.height - (root.showSearchBar ? (searchWidget.collapsedHeight + 36) : 24)) : root.dashboardContentHeight
             clip: true
             visible: root.dashboardOpacity > 0.001
             opacity: root.dashboardOpacity
@@ -312,6 +311,8 @@ Item {
             anchors.bottomMargin: 12
             width: Math.max(0, dashContainer.width - 24)
             height: implicitHeight
+            visible: root.showSearchBar
+            enabled: root.showSearchBar
             embeddedSurface: true
             panelVisible: root.panelVisible
             directBottomAttachment: false

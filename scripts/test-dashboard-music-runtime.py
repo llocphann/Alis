@@ -207,10 +207,11 @@ ShellRoot {
    tryCompare(pages,"slideProgress",1,2000)
    check(eq.active,"returning Music failed to reacquire the shared DSP consumer")
    Config.setNestedValue("performance.reduceAnimations",true)
-   // Verify Lyrics drawer tab + Ambient karaoke mode + Escape dismissal before Library drilldown
+   // Verify merged Lyrics & EQ drawer tab (Lyrics above compact EQ) + Ambient karaoke mode + Escape dismissal
    music.rightDrawerTab="lyrics"
    tryCompare(lyricsPanel,"visible",true,1000)
-   check(!eq.active,"switching to Lyrics tab did not suspend EQ DSP")
+   renderFrame(dashboard,"merged lyrics and eq frame pending")
+   check(eq.active && eq.visible && lyricsPanel.height>eq.height,"merged Lyrics & EQ tab did not keep Lyrics larger above compact EQ")
    music.ambientOpen=true
    const ambient=findChild(music,"musicAmbientView")
    tryCompare(ambient,"visible",true,1000)
@@ -222,6 +223,7 @@ ShellRoot {
    fake.localLyricsLines=lyricLines
    music.rightDrawerTab="queue"
    tryCompare(queuePanel,"visible",true,1000)
+   check(!eq.active,"switching to Queue tab did not suspend EQ DSP")
    const playerSurface=findChild(playerPanel,"musicPlayerSurface")
    const musicVolume=findChild(playerPanel,"musicVolume")
    check(playerSurface && musicVolume,"missing musicPlayerSurface or musicVolume")

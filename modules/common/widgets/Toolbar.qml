@@ -14,6 +14,7 @@ Item {
     property bool enableShadow: true
     property bool transparent: false  // When true, no background (for nested in panels with blur)
     property real padding: 8
+    property real minBackgroundHeight: 56
     property alias colBackground: background.color
     property alias spacing: toolbarLayout.spacing
     default property alias contentData: toolbarLayout.data
@@ -55,7 +56,7 @@ Item {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
-        implicitHeight: 56
+        implicitHeight: Math.max(root.minBackgroundHeight, toolbarLayout.implicitHeight + root.padding * 2)
         implicitWidth: toolbarLayout.implicitWidth + root.padding * 2
         radius: height / 2
         Behavior on radius {

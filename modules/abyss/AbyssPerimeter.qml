@@ -2444,9 +2444,15 @@ Scope {
                     && GlobalStates.settingsOverlayPresentationOutput === window.outputName
                 largeSurface: true
                 edgeInsets: window.bodyInsets(edge,along,span)
-                span: Geometry.horizontal(edge) ? Math.min(1600,Math.max(900,window.width*.9)) : Math.max(560, Math.min(Math.round(1280 * Math.max(1, Appearance.fontSizeScale)), Math.round(window.height * .92), window.height - 40))
+                readonly property real _dashSpan: Geometry.horizontal(edge)
+                    ? Math.round(window.width * (Config.options?.dashboard?.widthRatio ?? 0.72) + 40)
+                    : Math.round(window.height * (Config.options?.dashboard?.heightRatio ?? 0.72) + 40)
+                readonly property real _dashDepth: Geometry.horizontal(edge)
+                    ? Math.round(window.height * (Config.options?.dashboard?.heightRatio ?? 0.72) + 40)
+                    : Math.round(window.width * (Config.options?.dashboard?.widthRatio ?? 0.72) + 40)
+                span: _dashSpan
                 along: window.positionAlong(identity,edge,span,((Geometry.horizontal(edge) ? window.width : window.height)-span)/2)
-                depth: Geometry.horizontal(edge) ? Math.max(560, Math.min(Math.round(1280 * Math.max(1, Appearance.fontSizeScale)), Math.round(window.height * .92), window.height - 40)) : Math.min(1600,Math.max(900,window.width*.9))
+                depth: _dashDepth
                 source: "content/AbyssSettingsContent.qml"
                 onCloseRequested: GlobalStates.settingsOverlayOpen = false
             }
@@ -2722,6 +2728,16 @@ Scope {
                 { host: settings, enabled: true },
                 { host: nexusBody, enabled: Boolean(AlisIntergration.nexusEnabled) }
             ]
+            Connections {
+                target: AlisIntergration
+                function onNexusEnabledChanged() {
+                    if (AlisIntergration.nexusEnabled && !nexusBody.backgroundPreload) {
+                        const nexusIdx = window._warmupQueue.findIndex(e => e.host === nexusBody);
+                        if (nexusIdx >= 0 && window._warmupCursor > nexusIdx)
+                            window._warmupCursor = nexusIdx;
+                    }
+                }
+            }
             Connections {
                 target: DesktopEditStage
                 function onWallpaperStageEnabledChanged() {

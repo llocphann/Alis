@@ -34,7 +34,7 @@ QtObject {
     readonly property color searchBottomLineColor: Waffle.Looks.dark ? "#8a8a8a" : "#868686"
 
     // ── Page layout (iRiS single-column plate cadence / Win11 4px card stack) ──
-    readonly property int pageSpacing: Math.round((waffle ? 4 : Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : 16) * Appearance.fontSizeScale)
+    readonly property int pageSpacing: Math.round((waffle ? 4 : Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : Config.options?.panelFamily === "abyss" ? 12 : 16) * Appearance.fontSizeScale)
     // Legacy compatibility no-ops (Bento forced-height equalization retired in favor of iRiS single-column plates)
     property real _measuredThemesBentoHeight: 0
     property real _measuredThemesFontScale: -1
@@ -48,7 +48,7 @@ QtObject {
         : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
         : Appearance.rounding.normal
     readonly property int cardPadding: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tilePadding
-        : Config.options?.panelFamily === "abyss" ? 12 : 14) * Appearance.fontSizeScale)
+        : Config.options?.panelFamily === "abyss" ? 10 : 14) * Appearance.fontSizeScale)
 
     // ── Card header ──
     readonly property int headerRadius: waffle ? 4 : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
@@ -65,7 +65,7 @@ QtObject {
         : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
         : Appearance.alisEverywhere ? Appearance.alis.roundingSmall
         : Appearance.rounding.small
-    readonly property int groupPadding: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tilePadding : 10) * Appearance.fontSizeScale)
+    readonly property int groupPadding: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tilePadding : Config.options?.panelFamily === "abyss" ? 8 : 10) * Appearance.fontSizeScale)
     readonly property int groupSpacing: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : 6) * Appearance.fontSizeScale)
 
     // ── Colors ──

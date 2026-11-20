@@ -32,7 +32,7 @@ expect(music, 'objectName: "musicLibrary"', 'objectName: "musicGenreTab"',
        'objectName: "musicQueueList"', 'onDoubleClicked: root._safeJumpTo(qDelegate.index)',
        'objectName: "musicLyrics"', 'objectName: "musicAmbientView"',
        'EqualizerPanel {', 'objectName: "musicEqualizer"',
-       'active: root.presentationActive && root.rightDrawerOpen && root.rightDrawerTab === "eq"')
+       'active: root.presentationActive && root.rightDrawerOpen && root.lyricsEqTabActive')
 expect(pages, 'function handleEscape(): bool', 'root.canvasController?.cancelEditMode()',
        'musicPage.item?.restoreBrowserColumns()', 'orientation: Qt.Horizontal',
        'PagePolicy.advance(', 'GlobalStates.dashboardPageId',

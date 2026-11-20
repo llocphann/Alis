@@ -870,19 +870,29 @@ Scope {
                     && !(Config.options?.waffles?.bar?.bottom ?? true)) ? settingsCard.waffleBarReserve : 0
                 readonly property real waffleWorkHeight: Math.max(0, settingsPanel.height - settingsCard.waffleBarReserve)
 
-                readonly property real maxCardWidth: root.embeddedHost ? root.embeddedHost.width : Math.round(Math.min(
-                    1600,
-                    Math.max(900, settingsPanel.width * 0.90),
-                    Math.max(0, settingsPanel.width - 48)))
+                readonly property real maxCardWidth: root.embeddedHost
+                    ? root.embeddedHost.width
+                    : (Config.options?.panelFamily === "waffle"
+                        ? Math.round(Math.min(
+                            1600,
+                            Math.max(900, settingsPanel.width * 0.90),
+                            Math.max(0, settingsPanel.width - 48)))
+                        : Math.round(Math.min(
+                            Math.max(480, settingsPanel.width - 48),
+                            settingsPanel.width * (Config.options?.dashboard?.widthRatio ?? 0.72) + 40)))
                 readonly property real _panelAvailHeight: Config.options?.panelFamily === "waffle"
                     ? settingsCard.waffleWorkHeight
                     : settingsPanel.height
                 readonly property real maxCardHeight: root.embeddedHost
                     ? root.embeddedHost.height
-                    : Math.round(Math.max(560, Math.min(
-                        Math.round(1280 * Math.max(1, Appearance.fontSizeScale)),
-                        Math.round(settingsCard._panelAvailHeight * 0.92),
-                        Math.max(0, settingsCard._panelAvailHeight - 40))))
+                    : (Config.options?.panelFamily === "waffle"
+                        ? Math.round(Math.max(560, Math.min(
+                            Math.round(1280 * Math.max(1, Appearance.fontSizeScale)),
+                            Math.round(settingsCard._panelAvailHeight * 0.92),
+                            Math.max(0, settingsCard._panelAvailHeight - 40))))
+                        : Math.round(Math.min(
+                            Math.max(360, settingsCard._panelAvailHeight - 40),
+                            settingsCard._panelAvailHeight * (Config.options?.dashboard?.heightRatio ?? 0.72) + 40)))
                 // Structural connected chrome: the same Material surface token as
                 // Screen Edge. Preserve colLayer0's global transparency as-is.
                 readonly property color surfaceFillColor: Appearance.colors.colLayer0
@@ -972,10 +982,10 @@ Scope {
                         id: overlayHeader
                         visible: !SettingsMaterialPreset.waffle
                         Layout.fillWidth: true
-                        Layout.preferredHeight: root.navEditMode ? 58 : 44
+                        Layout.preferredHeight: root.navEditMode ? 54 : 42
                         Layout.leftMargin: 4
                         Layout.rightMargin: 4
-                        Layout.bottomMargin: 12
+                        Layout.bottomMargin: 8
 
                         function slotBlock(index: int): string {
                             return SettingsChromeLayout.headerOrder[index] ?? ""
@@ -983,7 +993,7 @@ Scope {
 
                         readonly property real headerGap: root.navEditMode ? 8 : 12
                         readonly property real identityWidth: root.navEditMode ? 176 : 190
-                        readonly property real actionsWidth: Math.max(112, overlayHeaderActionsRow.implicitWidth)
+                        readonly property real actionsWidth: root.navEditMode ? 88 : 0
                         readonly property bool defaultOrder: SettingsChromeLayout.headerOrder.join(",") === "identity,search,actions"
 
                         function searchWidth(): real {
@@ -1338,94 +1348,13 @@ Scope {
 
                         Item {
                             id: overlayHeaderActions
+                            visible: root.navEditMode
                             parent: SettingsChromeLayout.columnFor("actions") === 0 ? overlayHeaderSlot0
                                 : SettingsChromeLayout.columnFor("actions") === 1 ? overlayHeaderSlot1
                                 : overlayHeaderSlot2
                             anchors.fill: parent
                             anchors.topMargin: root.navEditMode ? 10 : 4
                             anchors.bottomMargin: root.navEditMode ? 10 : 4
-
-                            RowLayout {
-                                id: overlayHeaderActionsRow
-                                anchors.fill: parent
-                                spacing: 4
-
-                                RippleButton {
-                                    id: editSettingsLayoutBtn
-                                    objectName: SettingsMaterialPreset.waffle ? "" : "overlayEditSettingsLayoutButton"
-                                    buttonRadius: Appearance.rounding.full
-                                    implicitWidth: 36
-                                    implicitHeight: 36
-                                    toggled: SettingsLayoutManager.editMode
-                                    colBackground: "transparent"
-                                    colBackgroundHover: Appearance.colors.colLayer1Hover
-                                    colBackgroundToggled: Appearance.colors.colPrimaryContainer
-                                    colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
-                                    onClicked: {
-                                        if (SettingsLayoutManager.editMode)
-                                            SettingsLayoutManager.commitEditMode()
-                                        else
-                                            SettingsLayoutManager.beginEditMode()
-                                    }
-                                    contentItem: MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        horizontalAlignment: Text.AlignHCenter
-                                        text: SettingsLayoutManager.editMode ? "check" : "space_dashboard"
-                                        iconSize: 20
-                                        color: SettingsLayoutManager.editMode
-                                            ? Appearance.colors.colOnPrimaryContainer
-                                            : Appearance.colors.colOnSurfaceVariant
-                                    }
-                                    StyledToolTip {
-                                        text: SettingsLayoutManager.editMode
-                                            ? Translation.tr("Finish editing Settings layout")
-                                            : Translation.tr("Edit Settings layout & cards")
-                                    }
-                                }
-
-                                RippleButton {
-                                    id: editAbyssLayout
-                                    visible: Config.options?.panelFamily === "abyss"
-                                    implicitWidth: 36; implicitHeight: 36
-                                    onClicked: GlobalStates.startAbyssEditing()
-                                    contentItem: MaterialSymbol { text:"edit";iconSize:20;horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter;color:Appearance.colors.colOnSurfaceVariant }
-                                    StyledToolTip { text:"Edit Abyss layout" }
-                                    }
-
-                                RippleButton {
-                                    buttonRadius: Appearance.rounding.full
-                                    implicitWidth: 36
-                                    implicitHeight: 36
-                                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "lock", "activate"])
-                                    contentItem: MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        horizontalAlignment: Text.AlignHCenter
-                                        text: "lock"
-                                        iconSize: 20
-                                        color: Appearance.colors.colOnSurfaceVariant
-                                    }
-                                    StyledToolTip {
-                                        text: Translation.tr("Lock session")
-                                    }
-                                }
-
-                                RippleButton {
-                                    buttonRadius: Appearance.rounding.full
-                                    implicitWidth: 36
-                                    implicitHeight: 36
-                                    onClicked: GlobalStates.settingsOverlayOpen = false
-                                    contentItem: MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        horizontalAlignment: Text.AlignHCenter
-                                        text: "close"
-                                        iconSize: 20
-                                        color: Appearance.colors.colOnSurfaceVariant
-                                    }
-                                    StyledToolTip {
-                                        text: Translation.tr("Close Settings")
-                                    }
-                                }
-                            }
 
                             SettingsChromeEditFrame {
                                 anchors.fill: parent
@@ -1862,7 +1791,7 @@ Scope {
                                 RippleButton {
                                     id: overlayLayoutEditToggle
                                     Accessible.name: SettingsLayoutManager.editMode ? Translation.tr("Done layout") : Translation.tr("Edit layout")
-                                    objectName: "overlayLayoutEditToggle"
+                                    objectName: SettingsMaterialPreset.waffle ? "overlayLayoutEditToggle" : "overlayEditSettingsLayoutButton"
                                     readonly property color editSurface: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedColor : Appearance.colors.colPrimaryContainer
                                     readonly property color editSurfaceHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedHoverColor : Appearance.colors.colPrimaryContainerHover
                                     readonly property color editForeground: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.textColor : Appearance.colors.colOnPrimaryContainer

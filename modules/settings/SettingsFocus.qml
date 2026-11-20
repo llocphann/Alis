@@ -1171,36 +1171,6 @@ Scope {
                                 }
                             }
                         }
-
-                        RippleButton {
-                            id: editAbyssLayout
-                            visible: Config.options?.panelFamily === "abyss"
-                            implicitWidth: 36; implicitHeight: 36
-                            onClicked: GlobalStates.startAbyssEditing()
-                            contentItem: MaterialSymbol { text:"edit";iconSize:20;horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter;color:Appearance.colors.colOnSurfaceVariant }
-                            StyledToolTip { text:"Edit Abyss layout" }
-                            }
-
-                        RippleButton {
-                            implicitWidth:36;implicitHeight:36
-                            onClicked:Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),"lock","activate"])
-                            contentItem:MaterialSymbol { text:"lock";iconSize:20;horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter;color:Appearance.colors.colOnSurfaceVariant }
-                            StyledToolTip { text:"Lock" }
-                        }
-                        RippleButton {
-                            implicitWidth: 34
-                            implicitHeight: 34
-                            buttonRadius: Appearance.rounding.full
-                            colBackground: "transparent"
-                            colBackgroundHover: Appearance.colors.colLayer1Hover
-                            onClicked: GlobalStates.settingsOverlayOpen = false
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "close"
-                                iconSize: 19
-                                color: Appearance.colors.colOnSurfaceVariant
-                            }
-                        }
                     }
 
                 }

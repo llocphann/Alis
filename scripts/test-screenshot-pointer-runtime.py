@@ -94,7 +94,16 @@ ShellRoot {
    console.info("CAPTURE_PHASE", "cancel");
    for(let i=0;i<10;i++){
     openSelection(RegionSelection.SnipAction.Copy,true)
-    const close=visual(selector.item.contentItem,item=>item.iconText==="close")
+    const s=selector.item
+    const area=visual(s.contentItem,item=>item.cursorShape===Qt.CrossCursor)
+    const controls=visual(s.contentItem,item=>item.objectName==="regionSelectionControls")
+    check(!s.useStageMode,"screenshot overlay must not shrink Desktop into stage mode")
+    check(!s.toolbarRevealed,"screenshot toolbar must start auto-hidden")
+    check(controls && controls.height<=42,"screenshot toolbar height exceeded compact 42px budget: "+(controls?.height))
+    mouseMove(area,Math.round(area.width/2),area.height-8,20)
+    tryVerify(()=>s.toolbarRevealed && controls.y+controls.height<=s.height,1500)
+    check(s.toolbarRevealed,"hovering near bottom edge did not reveal screenshot toolbar")
+    const close=visual(s.contentItem,item=>item.iconText==="close")
     check(close,"actual close toolbar action missing")
     mouseClick(close);wait(40)
     check(!GlobalStates.regionSelectorOpen && selector.item===null,"canceled selector leaked a window")
@@ -104,7 +113,21 @@ ShellRoot {
    for(let i=0;i<10;i++){
     openSelection(RegionSelection.SnipAction.Copy,true)
     const s=selector.item
-    releaseRegion(s);wait(220)
+    if(i===0){
+     const area=visual(s.contentItem,item=>item.cursorShape===Qt.CrossCursor)
+     const controls=visual(s.contentItem,item=>item.objectName==="regionSelectionControls")
+     mouseMove(area,Math.round(area.width/2),area.height-8,20)
+     tryVerify(()=>s.toolbarRevealed && controls.y+controls.height<=s.height,1500)
+    }
+    const area=visual(s.contentItem,item=>item.cursorShape===Qt.CrossCursor)
+    mousePress(area,60,60,Qt.LeftButton)
+    check(!s.toolbarRevealed,"screenshot toolbar did not hide immediately on action start")
+    mouseMove(area,140,110,20)
+    mouseMove(area,220,156,20)
+    check(s.dragging && s.regionWidth===160 && s.regionHeight===96,"pointer did not update selected region")
+    check(!s.toolbarRevealed,"screenshot toolbar must stay hidden while dragging")
+    mouseRelease(area,220,156,Qt.LeftButton)
+    wait(220)
     check(!GlobalStates.regionSelectorOpen && selector.item===null,"copy did not release selector")
     Cliphist.refresh();wait(350);root.copies++
    }
@@ -139,7 +162,7 @@ ShellRoot {
  Timer {interval:100;running:true;onTriggered:test.runChecks()}
 }
 ''')
- with private_wayland(p) as env:
+ with private_wayland(p, need_niri=True) as env:
   if env is None: raise SystemExit('SKIP: private Wayland needed')
   runtime=p/'private-runtime';runtime.mkdir(mode=0o700)
   env=dict(env,CAPTURE_TEST_ROOT=str(p),WAYLAND_DISPLAY=str(Path(env['XDG_RUNTIME_DIR'])/env['WAYLAND_DISPLAY']),XDG_RUNTIME_DIR=str(runtime))
