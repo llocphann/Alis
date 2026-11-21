@@ -86,6 +86,7 @@ Singleton {
     Loader {
         id: sessionLoader
         active: root.enabled
+        asynchronous: status !== Loader.Ready && Quickshell.env("QT_QUICK_BACKEND") !== "software"
         onStatusChanged: if(status===Loader.Error) root.failLoad()
         onActiveChanged: {
             if (active) setSource(root.sessionSource,{host:root})

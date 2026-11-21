@@ -27,8 +27,40 @@ Singleton {
     property bool _initialized: false
     property bool _historyReady: false
     property var _pendingIngress: []
+    readonly property int maxStoredNotifications: 250
     // Guard against re-entrant discardNotification calls (server dismiss → onNotificationChanged → discard again)
     property var _discardingIds: new Set()
+
+    function _trimNotificationHistory(): void {
+        if (root.list.length <= root.maxStoredNotifications)
+            return
+        let changed = false
+        while (root.list.length > root.maxStoredNotifications) {
+            let removeIdx = root.list.findIndex(n => n && n.urgency !== "critical")
+            if (removeIdx < 0)
+                removeIdx = 0
+            const victim = root.list[removeIdx]
+            root.list.splice(removeIdx, 1)
+            changed = true
+            if (victim) {
+                const vid = victim.notificationId
+                root._discardingIds.add(vid)
+                if (victim.timer) {
+                    victim.timer.stop()
+                    victim.timer.destroy()
+                    victim.timer = null
+                }
+                if (victim.notification) {
+                    victim.notification.dismiss()
+                    victim.notification = null
+                }
+                victim.destroy()
+                Qt.callLater(() => root._discardingIds.delete(vid))
+            }
+        }
+        if (changed)
+            root.scheduleHistorySave()
+    }
 
     component Notif: QtObject {
         id: wrapper
@@ -250,7 +282,7 @@ Singleton {
             if (json !== null)
                 records.push(json)
         })
-        return JSON.stringify(records, null, 2)
+        return JSON.stringify(records)
     }
 
     onListChanged: {
@@ -537,6 +569,7 @@ Singleton {
             return
         }
         root.list = [...root.list, newNotifObject]
+        root._trimNotificationHistory()
 
         if ((Config.options?.sounds?.notifications ?? true) && !root.silent && !suppressSound) {
             Audio.playEvent(isCrit ? "notificationCritical" : "notification")
@@ -587,7 +620,8 @@ Singleton {
             console.warn("[Notifications] Failed to create notification wrapper")
             return
         }
-        root.list = [...root.list, newNotifObject];
+        root.list = [...root.list, newNotifObject]
+        root._trimNotificationHistory();
 
         // Optional notification sound
         if ((Config.options?.sounds?.notifications ?? true) && !root.silent
@@ -656,8 +690,10 @@ Singleton {
                 notif.timer = null;
             }
             root.list.splice(index, 1);
-            notifFileView.setText(stringifyList(root.list));
+            root.scheduleHistorySave();
             triggerListChange();
+            if (notif.notification)
+                notif.notification = null;
             // Destroy the Notif QML object to prevent memory leak
             notif.destroy();
         }
@@ -933,6 +969,7 @@ Singleton {
                     "urgency": notif.urgency,
                 });
             }).filter(notif => notif !== null);
+            root._trimNotificationHistory()
             // Find largest notificationId
             let maxId = 0
             root.list.forEach((notif) => {
@@ -956,6 +993,13 @@ Singleton {
                 console.log("[Notifications] Error loading file: " + error)
                 root._finishHistory(0)
             }
+        }
+    }
+
+    Component.onDestruction: {
+        if (historySaveTimer.running) {
+            historySaveTimer.stop()
+            notifFileView.setText(stringifyList(root.list))
         }
     }
 }

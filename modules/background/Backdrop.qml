@@ -209,7 +209,7 @@ Variants {
                 anchors.fill: parent
                 anchors.margins: parent.mediaMargin
                 fillMode: backdropWindow.imageFillMode
-                source: backdropWindow.wallpaperIsGif && backdropWindow.wallpaperPathRaw
+                source: (!backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsGif && backdropWindow.wallpaperPathRaw)
                     ? (backdropWindow.wallpaperPathRaw.startsWith("file://")
                         ? backdropWindow.wallpaperPathRaw
                         : "file://" + backdropWindow.wallpaperPathRaw)
@@ -336,22 +336,22 @@ Variants {
                 anchors.fill: parent
                 anchors.margins: parent.mediaMargin
                 fillMode: backdropWindow.imageFillMode
-                source: backdropWindow.wallpaperIsGif ? gifWallpaper.source : wallpaper.source
+                source: (backdropWindow.useAuroraStyle && !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo)
+                    ? wallpaper.source : ""
                 asynchronous: true
                 cache: false
                 smooth: true
                 mipmap: false
                 visible: backdropWindow.useAuroraStyle && status === Image.Ready && !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo
                 // Aurora is always blurred at full strength, so both the decoded
-                // source and the effect's own texture run at half resolution. The
-                // blur radius is halved with them (blurMax counts source pixels),
-                // which keeps the visible blur identical.
+                // source and the effect's own texture run at reduced resolution. The
+                // blur radius is scaled with them, keeping the visible blur identical.
                 sourceSize.width: Math.round((backdropWindow.screen?.width ?? 1920) * 0.5)
                 sourceSize.height: Math.round((backdropWindow.screen?.height ?? 1080) * 0.5)
 
                 layer.enabled: visible && Appearance.effectsEnabled
                 layer.smooth: true
-                layer.textureSize: Qt.size(Math.round(width * 0.5), Math.round(height * 0.5))
+                layer.textureSize: Qt.size(Math.max(64, Math.round(width * 0.25)), Math.max(64, Math.round(height * 0.25)))
                 layer.effect: MultiEffect {
                     source: auroraWallpaper
                     anchors.fill: source
@@ -370,7 +370,11 @@ Variants {
                 anchors.fill: parent
                 anchors.margins: parent.mediaMargin
                 fillMode: backdropWindow.imageFillMode
-                source: backdropWindow.wallpaperIsGif ? gifWallpaper.source : ""
+                source: (backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsGif && backdropWindow.wallpaperPathRaw)
+                    ? (backdropWindow.wallpaperPathRaw.startsWith("file://")
+                        ? backdropWindow.wallpaperPathRaw
+                        : "file://" + backdropWindow.wallpaperPathRaw)
+                    : ""
                 asynchronous: true
                 cache: false
                 smooth: true
@@ -407,7 +411,7 @@ Variants {
 
                 layer.enabled: visible && Appearance.effectsEnabled
                 layer.smooth: true
-                layer.textureSize: Qt.size(Math.round(width * 0.5), Math.round(height * 0.5))
+                layer.textureSize: Qt.size(Math.max(64, Math.round(width * 0.25)), Math.max(64, Math.round(height * 0.25)))
                 layer.effect: MultiEffect {
                     source: auroraFrozenVideoWallpaper
                     anchors.fill: source

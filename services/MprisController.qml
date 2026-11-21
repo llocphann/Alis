@@ -291,11 +291,17 @@ Singleton {
 		}
 	}
 
+	property int _mpdBridgeRetryCount: 0
+	property string _lastStreamNodesSig: ""
+
 	Timer {
 		id: _mpdBridgeRetry
-		interval: 30000
+		interval: Math.min(120000, 30000 * Math.pow(2, Math.min(2, root._mpdBridgeRetryCount)))
 		repeat: false
 		onTriggered: {
+			if (root._mpdBridgeRetryCount >= 4)
+				return
+			root._mpdBridgeRetryCount = root._mpdBridgeRetryCount + 1
 			root._mpdBridgeStartAttempted = false
 			if (root._mpdBridgeAvailable !== 0 && !_mpdMprisProbeProc.running)
 				_mpdMprisProbeProc.running = true
@@ -304,10 +310,10 @@ Singleton {
 
 	Timer {
 		id: _streamMetadataRefresh
-		interval: 120
+		interval: 1000
 		repeat: false
 		onTriggered: {
-			if (!_streamMetadataProc.running)
+			if (!_streamMetadataProc.running && (Audio.outputAppNodes?.length ?? 0) > 0)
 				_streamMetadataProc.running = true
 		}
 	}
@@ -347,11 +353,28 @@ Singleton {
 	Connections {
 		target: Audio
 		function onOutputAppNodesChanged(): void {
-			if ((Audio.outputAppNodes?.length ?? 0) > 0) {
-				_streamMetadataRefresh.restart()
+			const nodes = Audio.outputAppNodes ?? []
+			if (nodes.length === 0) {
+				root._lastStreamNodesSig = ""
+				root._streamMetadataById = ({})
 				return
 			}
-			root._streamMetadataById = ({})
+			const sigParts = []
+			let missingCached = false
+			for (let i = 0; i < nodes.length; ++i) {
+				const n = nodes[i]
+				if (!n) continue
+				const nid = Number(n.id ?? 0)
+				const props = n.properties ?? {}
+				sigParts.push(`${nid}:${props["application.name"] ?? ""}:${props["media.name"] ?? ""}`)
+				if (nid > 0 && !root._streamMetadataById[nid])
+					missingCached = true
+			}
+			const nextSig = sigParts.join("|")
+			if (!missingCached && nextSig === root._lastStreamNodesSig)
+				return
+			root._lastStreamNodesSig = nextSig
+			_streamMetadataRefresh.restart()
 		}
 	}
 	

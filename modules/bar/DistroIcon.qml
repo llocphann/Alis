@@ -77,9 +77,11 @@ Item {
     }
 
     Timer {
-        interval: 2800
+        id: logoSwapTimer
+        interval: 18000
         repeat: true
         running: root.abyssMode && root.visible && AbyssStyle.motionEnabled
+            && !AbyssRenderPolicy.powerSaver
             && !GlobalStates.screenLocked && (root.QsWindow.window?.visible ?? true)
         onTriggered: root.showAbyssMark = !root.showAbyssMark
     }
@@ -87,8 +89,11 @@ Item {
     HoverHandler {
         id: statusHover
         onHoveredChanged: {
-            if (root.abyssMode)
+            if (root.abyssMode) {
                 root.abyssControlsHoverChanged(hovered)
+                if (hovered && root.visible && AbyssStyle.motionEnabled)
+                    root.showAbyssMark = !root.showAbyssMark
+            }
         }
     }
     Component.onDestruction: root.abyssControlsHoverChanged(false)

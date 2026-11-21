@@ -244,6 +244,21 @@ ContentPage {
                 }
             }
 
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    Layout.minimumWidth: 0
+                    buttonIcon: "memory"
+                    text: Translation.tr("Keep panels warm in RAM")
+                    checked: Config.options?.performance?.keepPanelsWarm ?? false
+                    onCheckedChanged: Config.setNestedValue("performance.keepPanelsWarm", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Keep closed panels and Dashboard tabs loaded permanently for instant reopen. Turn off to auto-unload after 4 minutes idle.")
+                    }
+                }
+            }
+
             ConfigSpinBox {
                 icon: "speed"
                 text: Translation.tr("Resource poll") + ` (${(value / 1000).toFixed(1)}s)`

@@ -1091,7 +1091,7 @@ Item {
                     source: visible ? ("file://" + delegateItem.filePath) : ""
                     playing: visible
                     asynchronous: true
-                    cache: true
+                    cache: false
                 }
 
                 // Video first-frame preview

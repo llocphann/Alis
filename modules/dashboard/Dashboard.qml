@@ -312,8 +312,8 @@ Scope {
                     // no longer visible.
                     presentationActive: root._contentPresented
                     x: 0
-                    y: standaloneEditToolbar.visible
-                        ? Math.max(0, standaloneEditToolbar.height - 1)
+                    y: (standaloneEditToolbarLoader.item?.visible ?? false)
+                        ? Math.max(0, (standaloneEditToolbarLoader.item?.height ?? 0) - 1)
                         : 0
                     width: parent.width
                     height: Math.max(0, parent.height - y)
@@ -321,16 +321,34 @@ Scope {
                     screenHeight: panelRoot.screen?.height ?? 1080
                 }
 
-                DashboardEditToolbar {
-                    id: standaloneEditToolbar
+                Loader {
+                    id: standaloneEditToolbarLoader
                     z: 8
-                    canvasController: standaloneContent.canvasController
-                    tabController: standaloneContent
+                    active: standaloneContent.editMode
+                    source: active ? Qt.resolvedUrl("DashboardEditToolbar.qml") : ""
                     width: Math.min(
-                        standaloneEditToolbar.implicitWidth,
+                        item?.implicitWidth ?? 620,
                         Math.max(1, standaloneContent.width - 32))
                     x: Math.round((parent.width - width) / 2)
                     y: 0
+                    Binding {
+                        target: standaloneEditToolbarLoader.item
+                        property: "canvasController"
+                        when: standaloneEditToolbarLoader.status === Loader.Ready && standaloneEditToolbarLoader.item !== null
+                        value: standaloneContent.canvasController
+                    }
+                    Binding {
+                        target: standaloneEditToolbarLoader.item
+                        property: "tabController"
+                        when: standaloneEditToolbarLoader.status === Loader.Ready && standaloneEditToolbarLoader.item !== null
+                        value: standaloneContent
+                    }
+                    Binding {
+                        target: standaloneEditToolbarLoader.item
+                        property: "width"
+                        when: standaloneEditToolbarLoader.status === Loader.Ready && standaloneEditToolbarLoader.item !== null
+                        value: standaloneEditToolbarLoader.width
+                    }
                 }
             }
         }

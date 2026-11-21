@@ -3,6 +3,7 @@ import QtQuick.Window
 import QtQml.Models
 import Quickshell
 import qs
+import qs.services
 import qs.modules.common
 import qs.modules.abyss.looks
 import "looks/AbyssGeometry.js" as Geometry
@@ -56,15 +57,47 @@ Item {
     // Idle-gated staggered warmup after startup: activates the Loader with
     // asynchronous: true while closed so the first open never stutters.
     property bool backgroundPreload: false
+    property bool idleUnloadEnabled: false
+    property int idleUnloadMs: 240000
+    property bool _idleEvicted: false
     onRetainAfterFirstOpenChanged: if (!retainAfterFirstOpen) openedOnce = false
+    onIdleUnloadEnabledChanged: {
+        if (!idleUnloadEnabled) {
+            _idleEvicted = false
+            idleUnloadTimer.stop()
+        }
+    }
     onWarmContentChanged: if (!warmContent) { warmExpiry.stop(); warmHeld=false }
     onVisualResidentChanged: {
         if (visualResident) {
+            _idleEvicted = false
+            idleUnloadTimer.stop()
             warmExpiry.stop()
             if (retainAfterFirstOpen) openedOnce = true
         } else {
             if (!semanticOpen && !open) activationOrder = 0
             if (warmHeld && !retainAfterFirstOpen && !backgroundPreload) warmExpiry.restart()
+        }
+    }
+    Timer {
+        id: idleUnloadTimer
+        interval: root.idleUnloadMs
+        repeat: false
+        running: root.idleUnloadEnabled && !root.visualResident && !root.residentContent && content.active
+        onTriggered: {
+            root._idleEvicted = true
+            root.backgroundPreload = false
+            root.openedOnce = false
+        }
+    }
+    Connections {
+        target: MemoryPressureService
+        function onPressureExceeded(): void {
+            if (root.idleUnloadEnabled && !root.visualResident && !root.residentContent && content.active) {
+                root._idleEvicted = true
+                root.backgroundPreload = false
+                root.openedOnce = false
+            }
         }
     }
     Timer {
@@ -845,8 +878,9 @@ Item {
         // A space-constrained body retains drafts/focus state while hidden. It
         // unloads only after a semantic close and completion of the reveal.
         active: !root.embeddedItem
-            && (root.residentContent || root.visualResident || root.warmHeld || root.backgroundPreload
-                || (root.retainAfterFirstOpen === true && root.openedOnce === true))
+            && (root.residentContent || root.visualResident
+                || (!root._idleEvicted && (root.warmHeld || root.backgroundPreload
+                    || (root.retainAfterFirstOpen === true && root.openedOnce === true))))
             && GlobalStates.deferredPanelsReady
         source: root.source
         asynchronous: (Quickshell.env("QT_QUICK_BACKEND") !== "software")

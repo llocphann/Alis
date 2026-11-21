@@ -443,7 +443,7 @@ require "$dash_media" 'active: root.hasPlayer' 'Dashboard shared PlayerControl m
 require "$dash_media" 'PlayerControl {' 'Dashboard media must reuse the canonical shared player surface'
 require "$dash_welcome" 'layer.enabled: root.visible && status === Image.Ready' 'Dashboard avatar mask must stay circular through the visible exit slide and sleep once hidden'
 require "$dash_welcome" 'mipmap: false' 'Dashboard avatar must not generate unused mipmaps'
-require "$ii_panels" 'keepLoaded: true' 'Dashboard must remain preloaded and resident'
+require "$ii_panels" 'keepLoaded: Boolean(Config.options?.performance?.keepPanelsWarm ?? false)' 'Dashboard residency must follow Config.options.performance.keepPanelsWarm'
 reject "$ii_panels" 'property bool retainAfterUse:' 'ii shared on-demand loader must not restore arbitrary post-use retention'
 reject "$ii_panels" 'property int retainIdleMs:' 'ii shared on-demand loader must not restore five-minute idle retention'
 reject "$ii_panels" 'property Timer retainIdle:' 'ii shared on-demand loader must not allocate a retention timer per surface'

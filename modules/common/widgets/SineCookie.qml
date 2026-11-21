@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
+import Quickshell.Services.UPower
 import qs.modules.common
 import qs.services
 
@@ -15,6 +16,8 @@ Item {
     property alias strokeWidth: shapePath.strokeWidth
     property bool constantlyRotate: false
     property bool powerActive: WidgetPowerManager.widgetsActive
+    readonly property bool powerSaver: (typeof PowerProfiles !== "undefined" && PowerProfiles.profile === PowerProfile.PowerSaver)
+        || Boolean(Config.options?.performance?.lowPower ?? false)
 
     implicitWidth: implicitSize
     implicitHeight: implicitSize
@@ -22,8 +25,8 @@ Item {
     property real shapeRotation: 0
 
     Loader {
-        // Only load FrameAnimation when actively rotating AND power is on
-        active: constantlyRotate && root.powerActive && root.visible && Appearance.animationsEnabled
+        // Only load FrameAnimation when actively rotating AND not paused in power-saver
+        active: constantlyRotate && root.powerActive && root.visible && Appearance.animationsEnabled && !root.powerSaver
         sourceComponent: FrameAnimation {
             running: true
             onTriggered: {
@@ -40,6 +43,10 @@ Item {
         id: shape
         anchors.fill: parent
         preferredRendererType: Shape.CurveRenderer
+        transformOrigin: Item.Center
+        rotation: root.constantlyRotate
+            ? (root.shapeRotation * 180 / Math.PI) / Math.max(1, root.sides)
+            : 0
 
         ShapePath {
             id: shapePath
@@ -56,7 +63,7 @@ Item {
                     var radius = root.implicitSize / 2 - root.amplitude
                     for (var i = 0; i <= steps; i++) {
                         var angle = (i / steps) * 2 * Math.PI
-                        var rotatedAngle = angle * root.sides + Math.PI/2 + (root.shapeRotation * root.constantlyRotate)
+                        var rotatedAngle = angle * root.sides + Math.PI/2
                         var wave = Math.sin(rotatedAngle) * root.amplitude
                         var x = Math.cos(angle) * (radius + wave) + cx
                         var y = Math.sin(angle) * (radius + wave) + cy

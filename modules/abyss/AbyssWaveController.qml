@@ -1,4 +1,6 @@
 import QtQuick
+import qs
+import qs.services
 import qs.modules.common
 import qs.modules.abyss.looks
 import "looks/AbyssWave.js" as Wave
@@ -25,6 +27,7 @@ Item {
     property bool idleDisturbance: false
     property int idlePoint: 0
     readonly property bool motionAllowed: presented && AbyssStyle.motionEnabled && wavesEnabled
+        && !AbyssRenderPolicy.powerSaver && !GameMode.active && !GlobalStates.screenLocked
     readonly property bool audioAllowed: presented && AbyssStyle.motionEnabled && audioEnabled
     readonly property bool integrationAllowed: motionAllowed || audioAllowed
     signal configurationChanged()

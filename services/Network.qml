@@ -231,7 +231,7 @@ Singleton {
     // Debounce timer for network status updates
     Timer {
         id: _updateDebounce
-        interval: 200
+        interval: 450
         repeat: false
         onTriggered: root._doUpdate()
     }
@@ -247,6 +247,8 @@ Singleton {
     }
 
     property bool _destroying: false
+    property double _subscriberStartedMs: 0
+    property int _subscriberBackoffMs: 2000
 
     function _wifiNetworkKey(network): string {
         if (!network)
@@ -262,6 +264,10 @@ Singleton {
     }
 
     function _scheduleSubscriberRestart(): void {
+        if (root._subscriberStartedMs > 0 && (Date.now() - root._subscriberStartedMs) > 10000)
+            root._subscriberBackoffMs = 2000
+        else
+            root._subscriberBackoffMs = Math.min(60000, root._subscriberBackoffMs * 2)
         if (!root._destroying)
             subscriberRestart.restart()
     }
@@ -280,7 +286,7 @@ Singleton {
 
     Timer {
         id: subscriberRestart
-        interval: 2000
+        interval: root._subscriberBackoffMs
         repeat: false
         onTriggered: root._startSubscriber()
     }
@@ -303,10 +309,24 @@ Singleton {
             console.warn("[Network] Failed to start nmcli monitor; retrying")
             root._scheduleSubscriberRestart()
         }
-        onStarted: subscriber.startObserved = true
+        onStarted: {
+            subscriber.startObserved = true
+            root._subscriberStartedMs = Date.now()
+        }
         onExited: root._scheduleSubscriberRestart()
         stdout: SplitParser {
-            onRead: root.update()
+            onRead: line => {
+                const s = String(line ?? "").trim().toLowerCase()
+                if (!s)
+                    return
+                if (s.includes("connected") || s.includes("connecting")
+                        || s.includes("unavailable") || s.includes("connectivity")
+                        || s.includes("primary") || s.includes("enabled")
+                        || s.includes("disabled") || s.includes("removed")
+                        || s.includes("using connection")) {
+                    root.update()
+                }
+            }
         }
     }
 

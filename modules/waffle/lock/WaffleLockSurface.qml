@@ -107,6 +107,7 @@ MouseArea {
         source: root._wallpaperPath && !root.wallpaperIsGif ? root._wallpaperPath : ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
+        sourceSize: Qt.size(Math.max(1, Math.round(width)), Math.max(1, Math.round(height)))
         cache: false // Don't retain in QPixmapCache after lock surface destroys (#163)
         visible: !root.wallpaperIsGif
         

@@ -921,8 +921,9 @@ Item {
             source: artBox.artSource
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
-            cache: true
+            cache: false
             smooth: true
+            sourceSize: Qt.size(Math.max(1, Math.round(artBox.width)), Math.max(1, Math.round(artBox.height)))
             visible: artBox.artSource.length > 0 && status === Image.Ready
             layer.enabled: artBox.circular
             layer.effect: OpacityMask {
@@ -3025,6 +3026,9 @@ Item {
             anchors.fill: parent
             source: root.ambientOpen ? root.currentTrackArt : ""
             fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            cache: false
+            sourceSize: Qt.size(128, 128)
             visible: false
         }
 

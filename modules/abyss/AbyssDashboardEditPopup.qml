@@ -23,14 +23,15 @@ Item {
     objectName: "abyssDashboardEditPopup"
     z: 90
 
+    readonly property var toolbar: toolbarLoader.item
     readonly property real desiredWidth: Math.min(
         2400,
-        Math.max(620, Math.ceil(toolbar.desiredBottomDockWidth)))
-    readonly property real desiredHeight: toolbar.implicitHeight
-    readonly property real desiredLeftDockWidth: toolbar.desiredLeftDockWidth
-    readonly property real desiredLeftDockHeight: toolbar.desiredLeftDockHeight
-    readonly property real desiredRightDockWidth: toolbar.desiredRightDockWidth
-    readonly property real desiredRightDockHeight: toolbar.desiredRightDockHeight
+        Math.max(620, Math.ceil(toolbar?.desiredBottomDockWidth ?? 620)))
+    readonly property real desiredHeight: toolbar?.implicitHeight ?? 56
+    readonly property real desiredLeftDockWidth: toolbar?.desiredLeftDockWidth ?? 0
+    readonly property real desiredLeftDockHeight: toolbar?.desiredLeftDockHeight ?? 0
+    readonly property real desiredRightDockWidth: toolbar?.desiredRightDockWidth ?? 0
+    readonly property real desiredRightDockHeight: toolbar?.desiredRightDockHeight ?? 0
     readonly property bool editing: canvasController?.editMode ?? false
     readonly property bool naming: tabController?.tabNamingActive ?? false
     readonly property bool controlsVisible: root.editing || root.naming
@@ -41,12 +42,12 @@ Item {
     property real revealProgress: revealRequested ? 1 : 0
 
     readonly property real maxParentWidth: (parent?.width ?? 0) > 24
-        ? parent.width - 24 : toolbar.implicitWidth
+        ? parent.width - 24 : (toolbar?.implicitWidth ?? 620)
     readonly property real preferredMaxWidth: (contentRect?.width ?? 0) > 0
         ? Math.max(Math.min(maxParentWidth, 880), contentRect.width)
         : maxParentWidth
     readonly property real targetWidth: Math.min(
-        toolbar.implicitWidth, preferredMaxWidth, maxParentWidth)
+        toolbar?.implicitWidth ?? 620, preferredMaxWidth, maxParentWidth)
     readonly property real targetX: Math.max(12, Math.min(
         (parent?.width ?? 0) - targetWidth - 12,
         (contentRect?.width ?? 0) > 0
@@ -98,7 +99,7 @@ Item {
 
     x: stageHosted ? 0 : presentationRect.x
     y: stageHosted ? 0 : presentationRect.y
-    width: stageHosted ? (stageDockParent?.width ?? toolbar.desiredBottomDockWidth) : presentationRect.width
+    width: stageHosted ? (stageDockParent?.width ?? (toolbar?.desiredBottomDockWidth ?? 620)) : presentationRect.width
     height: stageHosted ? (stageDockParent?.height ?? desiredHeight) : presentationRect.height
     readonly property real slideOffset: stageHosted ? 0 : height * (1 - revealProgress)
     readonly property real revealedHeight: stageHosted ? height : height * revealProgress
@@ -161,18 +162,73 @@ Item {
     // Escape belongs to the Perimeter PanelWindow, never this reparented
     // editor (delegates onActivated: root.canvasController.cancelEditMode()).
     // Having both WindowShortcuts for Overview makes them ambiguous.
-    DashboardEditToolbar {
-        id: toolbar
+    Loader {
+        id: toolbarLoader
         width: root.width
         height: root.height
         y: root.slideOffset
-        visible: root.visible
-        canvasController: root.canvasController
-        tabController: root.tabController
-        splitSideDocks: root.stageLeftHost !== null && root.stageRightHost !== null
-        leftDockParent: root.stageLeftHost
-        rightDockParent: root.stageRightHost
-        embeddedSurface: true
-        compactHeight: (root.body?.height ?? root.QsWindow?.window?.height ?? 1080) < 720
+        active: root.controlsVisible || root.visible
+        source: active ? Qt.resolvedUrl("../dashboard/DashboardEditToolbar.qml") : ""
+        onLoaded: if (root.controlsVisible) Qt.callLater(() => root.rememberRequestedRect())
+        Binding {
+            target: toolbarLoader.item
+            property: "width"
+            when: toolbarLoader.status === Loader.Ready && toolbarLoader.item !== null
+            value: root.width
+        }
+        Binding {
+            target: toolbarLoader.item
+            property: "height"
+            when: toolbarLoader.status === Loader.Ready && toolbarLoader.item !== null
+            value: root.height
+        }
+        Binding {
+            target: toolbarLoader.item
+            property: "visible"
+            when: toolbarLoader.status === Loader.Ready && toolbarLoader.item !== null
+            value: root.visible
+        }
+        Binding {
+            target: toolbarLoader.item
+            property: "canvasController"
+            when: toolbarLoader.status === Loader.Ready && toolbarLoader.item !== null
+            value: root.canvasController
+        }
+        Binding {
+            target: toolbarLoader.item
+            property: "tabController"
+            when: toolbarLoader.status === Loader.Ready && toolbarLoader.item !== null
+            value: root.tabController
+        }
+        Binding {
+            target: toolbarLoader.item
+            property: "splitSideDocks"
+            when: toolbarLoader.status === Loader.Ready && toolbarLoader.item !== null
+            value: root.stageLeftHost !== null && root.stageRightHost !== null
+        }
+        Binding {
+            target: toolbarLoader.item
+            property: "leftDockParent"
+            when: toolbarLoader.status === Loader.Ready && toolbarLoader.item !== null
+            value: root.stageLeftHost
+        }
+        Binding {
+            target: toolbarLoader.item
+            property: "rightDockParent"
+            when: toolbarLoader.status === Loader.Ready && toolbarLoader.item !== null
+            value: root.stageRightHost
+        }
+        Binding {
+            target: toolbarLoader.item
+            property: "embeddedSurface"
+            when: toolbarLoader.status === Loader.Ready && toolbarLoader.item !== null
+            value: true
+        }
+        Binding {
+            target: toolbarLoader.item
+            property: "compactHeight"
+            when: toolbarLoader.status === Loader.Ready && toolbarLoader.item !== null
+            value: (root.body?.height ?? root.QsWindow?.window?.height ?? 1080) < 720
+        }
     }
 }

@@ -2033,10 +2033,19 @@ Scope {
                         id: widgetStageWarmupTimer
                         interval: 2600
                         repeat: false
-                        running: !editControlsOverlay._warmWidgetsReady
+                        running: (Config.options?.performance?.keepPanelsWarm ?? false)
+                            && !editControlsOverlay._warmWidgetsReady
                             && GlobalStates.deferredPanelsReady
                             && !GlobalStates.screenLocked
                         onTriggered: editControlsOverlay._warmWidgetsReady = true
+                    }
+                    Connections {
+                        target: Config.options?.performance ?? null
+                        function onKeepPanelsWarmChanged(): void {
+                            if (!(Config.options?.performance?.keepPanelsWarm ?? false)
+                                    && !GlobalStates.widgetEditMode && !widgetManagerPanel.shown)
+                                editControlsOverlay._warmWidgetsReady = false
+                        }
                     }
 
                     Loader {

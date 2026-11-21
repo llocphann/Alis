@@ -2266,14 +2266,22 @@ Item {
                     }
                 }
 
-                ResizeHandle { widgetId: String(cardWrap.modelData); edge: "n"; cardItem: cardWrap }
-                ResizeHandle { widgetId: String(cardWrap.modelData); edge: "s"; cardItem: cardWrap }
-                ResizeHandle { widgetId: String(cardWrap.modelData); edge: "e"; cardItem: cardWrap }
-                ResizeHandle { widgetId: String(cardWrap.modelData); edge: "w"; cardItem: cardWrap }
-                ResizeHandle { widgetId: String(cardWrap.modelData); edge: "nw"; cardItem: cardWrap }
-                ResizeHandle { widgetId: String(cardWrap.modelData); edge: "ne"; cardItem: cardWrap }
-                ResizeHandle { widgetId: String(cardWrap.modelData); edge: "sw"; cardItem: cardWrap }
-                ResizeHandle { widgetId: String(cardWrap.modelData); edge: "se"; cardItem: cardWrap }
+                Loader {
+                    anchors.fill: parent
+                    z: 35
+                    active: root.editMode && cardWrap.selected
+                    sourceComponent: Item {
+                        anchors.fill: parent
+                        ResizeHandle { widgetId: String(cardWrap.modelData); edge: "n"; cardItem: cardWrap }
+                        ResizeHandle { widgetId: String(cardWrap.modelData); edge: "s"; cardItem: cardWrap }
+                        ResizeHandle { widgetId: String(cardWrap.modelData); edge: "e"; cardItem: cardWrap }
+                        ResizeHandle { widgetId: String(cardWrap.modelData); edge: "w"; cardItem: cardWrap }
+                        ResizeHandle { widgetId: String(cardWrap.modelData); edge: "nw"; cardItem: cardWrap }
+                        ResizeHandle { widgetId: String(cardWrap.modelData); edge: "ne"; cardItem: cardWrap }
+                        ResizeHandle { widgetId: String(cardWrap.modelData); edge: "sw"; cardItem: cardWrap }
+                        ResizeHandle { widgetId: String(cardWrap.modelData); edge: "se"; cardItem: cardWrap }
+                    }
+                }
             }
         }
 

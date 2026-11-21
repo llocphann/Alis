@@ -131,12 +131,34 @@ Singleton {
         )
     }
 
-    readonly property var analytics: Engine.computeAnalytics(
-        root.cards,
-        root.historyByDay,
-        root._sessionClockMs,
-        root.options
-    )
+    readonly property var _batchGuard: ({ active: false })
+    property int _dataRevision: 0
+    property var _cachedAnalytics: ({ dueCountsByDay: ({}), counts: ({}), decks: [], streakDays: 0, todayReviewed: 0, retentionRate: 100, averageEase: 250, levels: ({}), masteredLevels: ({}) })
+    property var _cachedStudyQueue: []
+
+    function _applyDataState(nextCards, nextHistory): void {
+        root._batchGuard.active = true
+        if (nextHistory !== undefined)
+            root.historyByDay = nextHistory
+        if (nextCards !== undefined)
+            root.cards = nextCards
+        root._batchGuard.active = false
+        root._dataRevision = root._dataRevision + 1
+    }
+
+    readonly property var analytics: {
+        const _rev = root._dataRevision
+        if (root._batchGuard.active)
+            return root._cachedAnalytics
+        const res = Engine.computeAnalytics(
+            root.cards,
+            root.historyByDay,
+            root._sessionClockMs,
+            root.options
+        )
+        root._cachedAnalytics = res
+        return res
+    }
 
     readonly property var decks: root.analytics.decks ?? []
     readonly property int totalCount: root.analytics.counts?.total ?? 0
@@ -157,9 +179,12 @@ Singleton {
     readonly property var masteredLevelBreakdown: root.analytics.masteredLevels ?? ({})
 
     readonly property var studyQueue: {
+        const _rev = root._dataRevision
+        if (root._batchGuard.active)
+            return root._cachedStudyQueue
         const todayKey = Engine.civilDayKey(root._sessionClockMs)
         const todayStats = root.historyByDay[todayKey] ?? { newStudied: 0, reviewsDone: 0 }
-        return Engine.buildStudyQueue(
+        const res = Engine.buildStudyQueue(
             root.cards,
             {
                 category: root.filterCategory,
@@ -175,6 +200,8 @@ Singleton {
             root._sessionClockMs,
             root.options
         )
+        root._cachedStudyQueue = res
+        return res
     }
 
     readonly property var currentCard: root.studyQueue.length > 0 ? root.studyQueue[0] : null
@@ -224,15 +251,28 @@ Singleton {
     property bool _saveQueued: false
     property string _lastSavedJson: ""
 
+    function ensureLoaded(): void {
+        if (!root.ready)
+            root.loadFromFile()
+    }
+
     Component.onCompleted: {
-        if (Config.ready && !root._delegatedToIntegration)
+        if (Config.ready && AlisIntergration.initialProbeDone && !root._delegatedToIntegration)
             loadFromFile()
     }
 
     Connections {
         target: Config
         function onReadyChanged(): void {
-            if (Config.ready && !root.ready && !root._delegatedToIntegration)
+            if (Config.ready && AlisIntergration.initialProbeDone && !root.ready && !root._delegatedToIntegration)
+                root.loadFromFile()
+        }
+    }
+
+    Connections {
+        target: AlisIntergration
+        function onInitialProbeDoneChanged(): void {
+            if (Config.ready && AlisIntergration.initialProbeDone && !root.ready && !root._delegatedToIntegration)
                 root.loadFromFile()
         }
     }
@@ -242,9 +282,13 @@ Singleton {
             saveTimer.stop()
             root._savePending = false
             root._saveQueued = false
+            root.retainedStorageFields = ({})
+            root._lastSavedJson = ""
+            root._applyDataState([], ({}))
+            root.ready = false
             return
         }
-        if (Config.ready && !root.ready && !root._delegatedToIntegration)
+        if (Config.ready && AlisIntergration.initialProbeDone && !root.ready && !root._delegatedToIntegration)
             root.loadFromFile()
     }
 
@@ -289,6 +333,23 @@ Singleton {
         const now = Date.now()
         if (!force && root._lastClockRefreshMs > 0 && (now - root._lastClockRefreshMs) < 30000)
             return
+        if (force || root._lastClockRefreshMs === 0)
+            root._lastClockRefreshMs = now
+        if (!force) {
+            if (Engine.civilDayKey(now) !== Engine.civilDayKey(root._sessionClockMs)) {
+                root._lastClockRefreshMs = now
+                root._sessionClockMs = now
+                return
+            }
+            const hasExpiredStep = root.cards.some(c => {
+                if (!c) return false
+                const iv = Number(c.interval) || 0
+                const due = Number(c.dueAt) || 0
+                return iv > 0 && iv < 1 && due > root._sessionClockMs && due <= now
+            })
+            if (!hasExpiredStep)
+                return
+        }
         root._lastClockRefreshMs = now
         root._sessionClockMs = now
     }
@@ -456,8 +517,7 @@ Singleton {
             studyMode: prevModeSnapshot,
             smartModeState: prevSmartStateSnapshot
         }])
-        root.cards = nextCards
-        root.historyByDay = nextHistory
+        root._applyDataState(nextCards, nextHistory)
         root.cardRevealed = false
         if (advanceMode && root.smartMixEnabled) {
             root.rollNextStudyMode()
@@ -478,8 +538,7 @@ Singleton {
         const stack = root._undoStack.slice()
         const last = stack.pop()
         root._undoStack = stack
-        root.cards = root.cards.map(item => item.id === last.card.id ? last.card : item)
-        root.historyByDay = last.historyByDay
+        root._applyDataState(root.cards.map(item => item.id === last.card.id ? last.card : item), last.historyByDay)
         if (last.smartModeState)
             root._smartModeState = last.smartModeState
         if (last.studyMode)
@@ -810,11 +869,11 @@ Singleton {
             cards: root.cards,
             historyByDay: root.historyByDay
         })
-        return JSON.stringify(payload, null, 2)
+        return JSON.stringify(payload)
     }
 
     function loadFromFile(): void {
-        if (!Config.ready || root._delegatedToIntegration)
+        if (!Config.ready || !AlisIntergration.initialProbeDone || root._delegatedToIntegration)
             return
         srFileView.reload()
     }
@@ -860,7 +919,7 @@ Singleton {
 
     FileView {
         id: srFileView
-        path: (Config.ready && !root._delegatedToIntegration) ? Qt.resolvedUrl(root.filePath) : ""
+        path: (Config.ready && AlisIntergration.initialProbeDone && !root._delegatedToIntegration) ? Qt.resolvedUrl(root.filePath) : ""
         watchChanges: !root._delegatedToIntegration
         printErrors: false
         onLoaded: {
@@ -872,10 +931,9 @@ Singleton {
                     return
                 }
                 const seeded = Engine.migrateStorage(null, Date.now(), root.options, Lexicon.analyzeTerm)
-                root.historyByDay = seeded.historyByDay
                 root.retainedStorageFields = seeded.retainedStorageFields
                 root.nextId = seeded.nextId
-                root.cards = seeded.cards
+                root._applyDataState(seeded.cards, seeded.historyByDay)
                 root.syncConfiguredStudyDirection(false)
                 root.ready = true
                 if (root.smartMixEnabled)
@@ -891,7 +949,7 @@ Singleton {
                 // File watcher echoes and formatting-only saves must not restart
                 // Smart Mix or discard the answer currently staged by the user.
                 if (root.ready && root._lastSavedJson
-                        && JSON.stringify(parsed, null, 2) === root._lastSavedJson.trim()) {
+                        && JSON.stringify(parsed) === root._lastSavedJson.trim()) {
                     root._lastSavedJson = rawText
                     root.errorMessage = ""
                     return
@@ -913,10 +971,9 @@ Singleton {
                         return
                     }
                 }
-                root.historyByDay = migrated.historyByDay
                 root.retainedStorageFields = migrated.retainedStorageFields
                 root.nextId = migrated.nextId
-                root.cards = migrated.cards
+                root._applyDataState(migrated.cards, migrated.historyByDay)
                 root._lastSavedJson = rawText
                 root.errorMessage = ""
                 if (!root.ready) {
@@ -937,16 +994,15 @@ Singleton {
                     }
                 }
                 root.ready = true
-                if (root.serializeStorage() !== rawText) {
+                if (migrated.needsSave) {
                     root.scheduleSave()
                 }
             } catch (e) {
                 root.errorMessage = Translation.tr("Could not parse Spaced Repetition storage file.")
                 if (!root.ready) {
                     const fallback = Engine.migrateStorage(null, Date.now(), root.options, Lexicon.analyzeTerm)
-                    root.historyByDay = fallback.historyByDay
                     root.nextId = fallback.nextId
-                    root.cards = fallback.cards
+                    root._applyDataState(fallback.cards, fallback.historyByDay)
                     root.syncConfiguredStudyDirection(false)
                     if (root.smartMixEnabled)
                         root.rollNextStudyMode()
@@ -958,10 +1014,9 @@ Singleton {
             if (root._delegatedToIntegration) return
             if (error === FileViewError.FileNotFound) {
                 const seeded = Engine.migrateStorage(null, Date.now(), root.options, Lexicon.analyzeTerm)
-                root.historyByDay = seeded.historyByDay
                 root.retainedStorageFields = seeded.retainedStorageFields
                 root.nextId = seeded.nextId
-                root.cards = seeded.cards
+                root._applyDataState(seeded.cards, seeded.historyByDay)
                 root.syncConfiguredStudyDirection(false)
                 if (root.smartMixEnabled)
                     root.rollNextStudyMode()

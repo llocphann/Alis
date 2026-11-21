@@ -115,9 +115,8 @@ Item {
     OnDemandPanelLoader {
         identifier: "iiDashboard"
         open: GlobalStates.dashboardOpen
-        // Lazy until first use, then resident for the shell session. Dashboard
-        // owns its own hidden render/input gating while closed.
-        keepLoaded: true
+        // Lazy until first use; residency follows Config.options.performance.keepPanelsWarm.
+        keepLoaded: Boolean(Config.options?.performance?.keepPanelsWarm ?? false)
         source: "../dashboard/Dashboard.qml"
     }
     DeferredPanelLoader { identifier: "iiMediaControls"; component: MediaControls {} }

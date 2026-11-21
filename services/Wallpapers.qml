@@ -441,10 +441,22 @@ Singleton {
 
     Timer {
         id: _preloadThumbnailsBootTimer
-        interval: 650
-        running: true
+        interval: 100
+        running: false
         repeat: false
         onTriggered: root.preloadKnownThumbnails()
+    }
+
+    Connections {
+        target: GlobalStates
+        function onWallpaperLauncherOpenChanged(): void {
+            if (GlobalStates.wallpaperLauncherOpen && !root._knownThumbnailsPreloaded)
+                _preloadThumbnailsBootTimer.restart()
+        }
+        function onWallpaperSelectorOpenChanged(): void {
+            if (GlobalStates.wallpaperSelectorOpen && !root._knownThumbnailsPreloaded)
+                _preloadThumbnailsBootTimer.restart()
+        }
     }
 
     Process {

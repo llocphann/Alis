@@ -1301,6 +1301,7 @@ Singleton {
 
             property JsonObject performance: JsonObject {
                 property bool lowPower: false
+                property bool keepPanelsWarm: false
                 property bool reduceAnimations: false
                 property bool memoryMonitoring: true
                 property int jsgcThreshold: 300

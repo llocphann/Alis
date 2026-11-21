@@ -375,6 +375,8 @@ Item {
                                 anchors.fill: parent
                                 source: root.wallpaperPath
                                 asynchronous: true
+                                cache: false
+                                sourceSize: Qt.size(Math.max(1, Math.round(workspace.width)), Math.max(1, Math.round(workspace.height)))
                                 fillMode: Image.PreserveAspectCrop
                                 // Visible as unblurred fallback when effects are disabled
                                 visible: !Appearance.effectsEnabled
@@ -767,6 +769,8 @@ Item {
                             source: windowItem.windowData
                                 ? AppSearch.getIconSource(windowItem.windowData.app_id || windowItem.windowData.appId || "")
                                 : ""
+                            asynchronous: true
+                            sourceSize: Qt.size(Math.max(16, Math.round(width)), Math.max(16, Math.round(height)))
                             fillMode: Image.PreserveAspectFit
                             opacity: windowPreview.visible ? (root.taskViewMode ? 0 : 0.6) : 1.0
                             Behavior on opacity {

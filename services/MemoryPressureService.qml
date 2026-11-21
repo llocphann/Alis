@@ -82,6 +82,9 @@ Singleton {
             console.log("[MemoryPressure]", ...args)
     }
 
+    property double _lastPressureSignalMs: 0
+    signal pressureExceeded()
+
     function _applyMapsText(rawText: string): void {
         let deleted = 0
         let total = 0
@@ -107,6 +110,11 @@ Singleton {
 
         if (root.currentDeletedMappings >= root.deletedMappingsThreshold) {
             _log("threshold exceeded:", root.currentDeletedMappings, ">=", root.deletedMappingsThreshold)
+            const nowMs = Date.now()
+            if (nowMs - root._lastPressureSignalMs >= 60000) {
+                root._lastPressureSignalMs = nowMs
+                root.pressureExceeded()
+            }
             root._notifyUser()
         }
     }

@@ -7,6 +7,7 @@ import qs.modules.common
 Singleton {
     id: root
     property bool available: false
+    property bool initialProbeDone: false
     property bool loadFailed: false
     property string diagnostic: "not-installed"
     property string packageRoot: ""
@@ -294,6 +295,7 @@ Singleton {
     Loader {
         id: worker
         active: root.enabled
+        asynchronous: status !== Loader.Ready
         onActiveChanged: {
             if (active) setSource(root.packageRoot + "/AlisSession.qml", {host:root})
             else source = ""
@@ -329,7 +331,17 @@ Singleton {
                 } catch (_error) {
                     root.available=false;root.diagnostic="invalid-package";root.canRollback=false
                     root.installedPlugins=[];root.installedPluginIds=[];root.settingsEntries=({});root.pluginMetadataAvailable=false
+                } finally {
+                    root.initialProbeDone = true
                 }
+            }
+        }
+        onExited: {
+            if (!root.initialProbeDone) {
+                Qt.callLater(() => {
+                    if (!probe.running && !root.initialProbeDone)
+                        root.initialProbeDone = true
+                })
             }
         }
     }

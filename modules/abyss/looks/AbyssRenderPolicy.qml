@@ -9,6 +9,8 @@ Singleton {
     readonly property string powerProfile: PowerProfiles.profile === PowerProfile.PowerSaver
         ? "power-saver" : PowerProfiles.profile === PowerProfile.Performance
             ? "performance" : "balanced"
+    readonly property bool powerSaver: powerProfile === "power-saver"
+        || Boolean(Config.options?.performance?.lowPower ?? false)
     readonly property string abyssQuality: Policy.abyss(Config.options?.abyss?.quality,
         Config.options?.abyss?.autoQuality ?? false,powerProfile)
     readonly property string aquaQuality: Policy.aqua(Config.options?.abyss?.companion?.renderQuality,

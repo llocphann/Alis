@@ -265,14 +265,21 @@ Item {
 
             // Pausable marquee: hold at start, then glide left continuously.
             // Hover pauses mid-scroll; on exit it resumes from the paused position.
+            readonly property bool powerSaver: {
+                if (Boolean(Config.options?.performance?.lowPower ?? false))
+                    return true
+                return typeof AbyssRenderPolicy !== "undefined" && Boolean(AbyssRenderPolicy?.powerSaver)
+            }
             readonly property bool shouldAnimateMarquee: titleScroller.visible
                 && (root.QsWindow.window?.visible ?? false)
                 && titleScroller.overflowing
                 && Appearance.animationsEnabled
+                && (!powerSaver || _marqueeHovered)
                 && (root.activePlayer?.isPlaying ?? false)
             property bool _marqueeHolding: true
             property bool _marqueeHovered: false
             property bool _marqueeReady: false
+            property int _marqueePasses: 0
             Component.onCompleted: {
                 _marqueeReady = true
                 resetMarquee()
@@ -284,6 +291,7 @@ Item {
                 if (!_marqueeReady) return
                 holdTimer.stop()
                 scrollAnim.stop()
+                _marqueePasses = 0
                 marqueeRow.x = titleScroller.restingX
                 _marqueeHolding = true
                 _startHoldTimer()
@@ -291,6 +299,7 @@ Item {
 
             function _startHoldTimer() {
                 if (!titleScroller.shouldAnimateMarquee || _marqueeHovered) return
+                if (titleScroller.powerSaver || titleScroller._marqueePasses >= 2) return
                 holdTimer.start()
             }
 
@@ -312,8 +321,9 @@ Item {
                 duration: Math.max(3500, titleScroller.loopDistance * 42)
                 easing.type: Easing.Linear
                 // Gate on running — binding setPaused() on a stopped animation warns.
-                paused: titleScroller._marqueeHovered && scrollAnim.running
+                paused: titleScroller._marqueeHovered && scrollAnim.running && !titleScroller.powerSaver
                 onFinished: {
+                    titleScroller._marqueePasses = titleScroller._marqueePasses + 1
                     marqueeRow.x = titleScroller.restingX
                     titleScroller._marqueeHolding = true
                     titleScroller._startHoldTimer()
@@ -332,7 +342,7 @@ Item {
                     scrollAnim.stop()
                     marqueeRow.x = titleScroller.restingX
                     _marqueeHolding = true
-                } else if (overflowing && !_marqueeHovered) {
+                } else if (overflowing && !_marqueeHovered && _marqueePasses < 2) {
                     _startHoldTimer()
                 }
             }
@@ -343,9 +353,18 @@ Item {
                     titleScroller._marqueeHovered = hovered
                     if (hovered) {
                         holdTimer.stop()
+                        if (titleScroller.powerSaver && titleScroller.overflowing && Appearance.animationsEnabled && !scrollAnim.running) {
+                            titleScroller._marqueeHolding = false
+                            marqueeRow.x = 0
+                            scrollAnim.start()
+                        }
                     } else {
                         if (titleScroller.overflowing && Appearance.animationsEnabled) {
-                            if (titleScroller._marqueeHolding) {
+                            if (titleScroller.powerSaver) {
+                                scrollAnim.stop()
+                                marqueeRow.x = titleScroller.restingX
+                                titleScroller._marqueeHolding = true
+                            } else if (titleScroller._marqueeHolding) {
                                 titleScroller._startHoldTimer()
                             }
                             // NumberAnimation.paused is already false, so it resumes

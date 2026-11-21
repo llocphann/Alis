@@ -22,7 +22,20 @@ Item {
     property bool waffleMenu: false
     property bool warmContent: false
     property bool presentationActive: GlobalStates.dashboardOpen || GlobalStates.overviewOpen
-    readonly property bool contentReady: dashboardCanvas.widgetsReady
+    readonly property bool contentReady: {
+        if (root.currentPageId === "dashboard")
+            return dashboardCanvas.widgetsReady
+        if (root.currentPageId === "music")
+            return musicPage.status === Loader.Ready
+        if (root.currentPageId === "weeklyPlanner")
+            return plannerPage.status === Loader.Ready
+        if (root.currentPageId === "spacedRepetition")
+            return spacedRepetitionPage.status === Loader.Ready
+        if (root.currentPageId === "exercisesTracker")
+            return exercisesTrackerPage.status === Loader.Ready
+        const index = root.customTabs.findIndex(tab => tab.id === root.currentPageId)
+        return index < 0 || (customPagesRepeater.itemAt(index)?.pageReady ?? true)
+    }
 
     readonly property bool musicEnabled: Config.options?.dashboard?.music?.enable ?? true
     readonly property bool spacedRepetitionPluginManaged: AlisIntergration.available
@@ -97,6 +110,56 @@ Item {
     property bool plannerVisited: currentPageId === "weeklyPlanner"
     property bool spacedRepetitionVisited: currentPageId === "spacedRepetition"
     property bool exercisesTrackerVisited: currentPageId === "exercisesTracker"
+    property double _musicLastActiveMs: currentPageId === "music" ? Date.now() : 0
+    property double _plannerLastActiveMs: currentPageId === "weeklyPlanner" ? Date.now() : 0
+    property double _srLastActiveMs: currentPageId === "spacedRepetition" ? Date.now() : 0
+    property double _exLastActiveMs: currentPageId === "exercisesTracker" ? Date.now() : 0
+    property string _prevPageId: currentPageId
+    function _touchDashboardTabTimestamp(pageId): void {
+        const now = Date.now()
+        if (pageId === "music") _musicLastActiveMs = now
+        else if (pageId === "weeklyPlanner") _plannerLastActiveMs = now
+        else if (pageId === "spacedRepetition") _srLastActiveMs = now
+        else if (pageId === "exercisesTracker") _exLastActiveMs = now
+    }
+    function _evictIdleDashboardTabs(forceAllInactive): void {
+        if (Config.options?.performance?.keepPanelsWarm ?? false)
+            return
+        const now = Date.now()
+        const ttl = 240000
+        if (root.musicVisited && !(root.presentationActive && root.currentPageId === "music")
+                && (forceAllInactive || (_musicLastActiveMs > 0 && now - _musicLastActiveMs >= ttl))) {
+            root.musicVisited = false
+            root._musicLastActiveMs = 0
+        }
+        if (root.plannerVisited && !(root.presentationActive && root.currentPageId === "weeklyPlanner")
+                && (forceAllInactive || (_plannerLastActiveMs > 0 && now - _plannerLastActiveMs >= ttl))) {
+            root.plannerVisited = false
+            root._plannerLastActiveMs = 0
+        }
+        if (root.spacedRepetitionVisited && !(root.presentationActive && root.currentPageId === "spacedRepetition")
+                && (forceAllInactive || (_srLastActiveMs > 0 && now - _srLastActiveMs >= ttl))) {
+            root.spacedRepetitionVisited = false
+            root._srLastActiveMs = 0
+        }
+        if (root.exercisesTrackerVisited && !(root.presentationActive && root.currentPageId === "exercisesTracker")
+                && (forceAllInactive || (_exLastActiveMs > 0 && now - _exLastActiveMs >= ttl))) {
+            root.exercisesTrackerVisited = false
+            root._exLastActiveMs = 0
+        }
+    }
+    Timer {
+        id: tabIdleEvictTimer
+        interval: 30000
+        repeat: true
+        running: !(Config.options?.performance?.keepPanelsWarm ?? false)
+            && (root.musicVisited || root.plannerVisited || root.spacedRepetitionVisited || root.exercisesTrackerVisited)
+        onTriggered: root._evictIdleDashboardTabs(false)
+    }
+    Connections {
+        target: MemoryPressureService
+        function onPressureExceeded(): void { root._evictIdleDashboardTabs(true) }
+    }
     readonly property var exercisesTrackerItem: exercisesTrackerPage.item
     property string _pendingPageId: ""
     property string _synchronousPageId: ""
@@ -160,6 +223,11 @@ Item {
         root._customDialogShown = false
     }
     onCurrentPageIdChanged: {
+        if (root._prevPageId !== currentPageId) {
+            root._touchDashboardTabTimestamp(root._prevPageId)
+            root._prevPageId = currentPageId
+        }
+        root._touchDashboardTabTimestamp(currentPageId)
         if (_pendingPageId.length && _pendingPageId !== currentPageId)
             _pendingPageId = ""
         if (_pendingNewEditId.length && currentPageId !== _pendingNewEditId)
@@ -323,6 +391,7 @@ Item {
         Config.setNestedValue("dashboard.lastHiddenAtMs", Date.now())
     }
     onPresentationActiveChanged: {
+        root._touchDashboardTabTimestamp(root.currentPageId)
         if (root.presentationActive) root.sessionShown()
         else {
             // A hidden Dashboard may be unloaded before a deferred Timer fires.
@@ -685,13 +754,13 @@ Item {
                             || (root.pageIds.indexOf("dashboard") >= 0
                                 && Math.abs(pages.slideProgress - root.pageIds.indexOf("dashboard")) < 0.999))
                         layer.enabled: visible && Math.abs(pages.pagePosition - root.currentPage) > 0.001
-                        warmContent: root.warmContent
+                        warmContent: root.warmContent && root.currentPageId === "dashboard"
                         onRequestEventsDialog: event => root.openAgendaDialog(event)
                     }
                     Loader {
                         id: musicPage
                         objectName: "dashboardMusicPageLoader"
-                        asynchronous: root._synchronousPageId !== "music"
+                        asynchronous: root._synchronousPageId !== "music" && status !== Loader.Ready
                         onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("music")
                         width: pages.width
                         height: pages.height
@@ -701,16 +770,25 @@ Item {
                         layer.enabled: visible && Math.abs(pages.pagePosition - root.currentPage) > 0.001
                         active: root.musicEnabled && (root.musicVisited || root._pendingPageId === "music")
                             && (root.presentationActive || root.warmContent)
-                        sourceComponent: DashboardMusic {
-                            backend: root.musicBackend ?? LocalMusic
-                            presentationActive: root.presentationActive && root.currentPageId === "music"
+                        source: active ? Qt.resolvedUrl("DashboardMusic.qml") : ""
+                        Binding {
+                            target: musicPage.item
+                            property: "backend"
+                            when: musicPage.status === Loader.Ready && musicPage.item !== null
+                            value: root.musicBackend ?? LocalMusic
+                        }
+                        Binding {
+                            target: musicPage.item
+                            property: "presentationActive"
+                            when: musicPage.status === Loader.Ready && musicPage.item !== null
+                            value: root.presentationActive && root.currentPageId === "music"
                         }
                     }
                     // Handle page gestures above the canvas and its scrollable widgets.
                     Loader {
                         id:plannerPage
                         objectName: "dashboardPlannerPageLoader"
-                        asynchronous: root._synchronousPageId !== "weeklyPlanner"
+                        asynchronous: root._synchronousPageId !== "weeklyPlanner" && status !== Loader.Ready
                         onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("weeklyPlanner")
                         width:pages.width;height:pages.height
                         x:root.pageIds.indexOf("weeklyPlanner")*pages.width
@@ -719,17 +797,27 @@ Item {
                         layer.enabled:visible && Math.abs(pages.pagePosition-root.currentPage)>0.001
                         active:(root.plannerVisited || root._pendingPageId === "weeklyPlanner")
                             && (root.presentationActive || root.warmContent)
-                        sourceComponent:DashboardWeeklyPlanner {
-                            presentationActive:root.presentationActive && (root.currentPageId==="weeklyPlanner"
-                                || (root.pageIds.indexOf("weeklyPlanner")>=0
-                                    && Math.abs(pages.slideProgress-root.pageIds.indexOf("weeklyPlanner"))<0.999))
-                            onRequestEventsDialog:event=>root.openPlannerEventEditor(event)
+                        source: active ? Qt.resolvedUrl("DashboardWeeklyPlanner.qml") : ""
+                        Binding {
+                            target: plannerPage.item
+                            property: "presentationActive"
+                            when: plannerPage.status === Loader.Ready && plannerPage.item !== null
+                            value: root.presentationActive && (root.currentPageId === "weeklyPlanner"
+                                || (root.pageIds.indexOf("weeklyPlanner") >= 0
+                                    && Math.abs(pages.slideProgress - root.pageIds.indexOf("weeklyPlanner")) < 0.999))
+                        }
+                        Connections {
+                            target: plannerPage.item
+                            ignoreUnknownSignals: true
+                            function onRequestEventsDialog(event) {
+                                root.openPlannerEventEditor(event)
+                            }
                         }
                     }
                     Loader {
                         id: spacedRepetitionPage
                         objectName: "dashboardSpacedRepetitionPageLoader"
-                        asynchronous: root._synchronousPageId !== "spacedRepetition"
+                        asynchronous: root._synchronousPageId !== "spacedRepetition" && status !== Loader.Ready
                         onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("spacedRepetition")
                         onLoaded: if (root.presentationActive && root.currentPageId === "spacedRepetition") Qt.callLater(() => root.focusPrimarySurface())
                         onVisibleChanged: if (visible && root.presentationActive && root.currentPageId === "spacedRepetition") Qt.callLater(() => root.focusPrimarySurface())
@@ -742,8 +830,12 @@ Item {
                         active: root.spacedRepetitionEnabled
                             && (root.spacedRepetitionVisited || root._pendingPageId === "spacedRepetition")
                             && (root.presentationActive || root.warmContent)
-                        sourceComponent: DashboardSpacedRepetition {
-                            presentationActive: root.presentationActive && (root.currentPageId === "spacedRepetition"
+                        source: active ? (AlisIntergration.spacedRepetitionDashboardSource() || Qt.resolvedUrl("DashboardSpacedRepetition.qml")) : ""
+                        Binding {
+                            target: spacedRepetitionPage.item
+                            property: "presentationActive"
+                            when: spacedRepetitionPage.status === Loader.Ready && spacedRepetitionPage.item !== null
+                            value: root.presentationActive && (root.currentPageId === "spacedRepetition"
                                 || (root.pageIds.indexOf("spacedRepetition") >= 0
                                     && Math.abs(pages.slideProgress - root.pageIds.indexOf("spacedRepetition")) < 0.999))
                         }

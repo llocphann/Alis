@@ -1429,6 +1429,7 @@
         "blurBackend": "auto",
         "compositorBlur": true,
         "jsgcThreshold": 300,
+        "keepPanelsWarm": false,
         "lowPower": false,
         "memoryMonitoring": true,
         "memoryWarningNotification": false,

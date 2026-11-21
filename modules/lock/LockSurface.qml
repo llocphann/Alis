@@ -80,6 +80,7 @@ MouseArea {
         source: root.useSafeBlurPipeline ? "" : root._staticWallpaperPath
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
+        sourceSize: Qt.size(Math.max(1, Math.round(width)), Math.max(1, Math.round(height)))
         // Don't retain decoded pixmap in QPixmapCache after the lock surface
         // is destroyed — wallpaper is only ever rendered while locked, and
         // global QPixmapCache entries are one of the JSGC mapping leak vectors
@@ -109,6 +110,7 @@ MouseArea {
         source: root.useSafeBlurPipeline && !root.wallpaperIsGif && !root.wallpaperIsVideo ? root._staticWallpaperPath : ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
+        sourceSize: Qt.size(Math.max(1, Math.round(width)), Math.max(1, Math.round(height)))
         // Same as backgroundWallpaper — don't retain in QPixmapCache (#163).
         cache: false
         visible: false

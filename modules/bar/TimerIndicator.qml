@@ -260,10 +260,14 @@ MouseArea {
             }
 
             SequentialAnimation on opacity {
-                running: root.visible && (root.QsWindow.window?.visible ?? true) && root.pomodoroActive && root.pomodoroRunning && !(TimerService?.pomodoroBreak ?? false)
-                loops: Animation.Infinite
-                NumberAnimation { to: 0.5; duration: 800; easing.type: Easing.InOutSine }
-                NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
+                id: pomodoroAttentionPulse
+                running: root.visible && (root.QsWindow.window?.visible ?? true)
+                    && root.pomodoroActive && root.pomodoroRunning
+                    && !(TimerService?.pomodoroBreak ?? false)
+                    && !AbyssRenderPolicy.powerSaver
+                loops: 2
+                NumberAnimation { to: 0.5; duration: 700; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 1.0; duration: 700; easing.type: Easing.InOutSine }
             }
         }
 

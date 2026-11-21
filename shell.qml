@@ -663,7 +663,8 @@ ShellRoot {
 
     LazyLoader {
         id: altSwitcherRouterLoader
-        active: Config.ready
+        loading: Config.ready
+        activeAsync: Config.ready
         source: "modules/altSwitcher/AltSwitcherNoVisual.qml"
     }
 
@@ -686,17 +687,20 @@ ShellRoot {
     // One owner here is valid whichever family is loaded.
     LazyLoader {
         id: regionSelectorRouterLoader
-        active: Config.ready
+        loading: Config.ready
+        activeAsync: Config.ready
         source: "modules/regionSelector/RegionSelectorRouter.qml"
     }
     LazyLoader {
         id: tilingOverlayRouterLoader
-        active: Config.ready
+        loading: Config.ready
+        activeAsync: Config.ready
         source: "modules/tilingOverlay/TilingOverlayRouter.qml"
     }
     LazyLoader {
         id: wallpaperSelectorRouterLoader
-        active: Config.ready
+        loading: Config.ready
+        activeAsync: Config.ready
         source: "modules/wallpaperSelector/WallpaperSelectorRouter.qml"
     }
 
@@ -851,7 +855,8 @@ ShellRoot {
         property string latchedSource: ""
         onLoaderConfiguredChanged: if (loaderConfigured) latchedSource = target.source
         Component.onCompleted: if (loaderConfigured) latchedSource = target.source
-        active: loaderConfigured && latchedSource !== ""
+        loading: loaderConfigured && latchedSource !== ""
+        activeAsync: loaderConfigured && latchedSource !== ""
         source: loaderConfigured ? target.source : latchedSource
     }
     LazyLoader {
@@ -885,7 +890,8 @@ ShellRoot {
     // Close confirmation dialog (always loaded, handles IPC)
     LazyLoader {
         id: closeConfirmLoader
-        active: Config.ready
+        loading: Config.ready
+        activeAsync: Config.ready
         source: "modules/closeConfirm/CloseConfirm.qml"
     }
 

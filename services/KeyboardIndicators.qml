@@ -386,9 +386,12 @@ Singleton {
         }
     }
 
+    property double _evdevStartedMs: 0
+    property int _evdevBackoffMs: 1000
+
     Timer {
         id: evdevRestartTimer
-        interval: 1000
+        interval: root._evdevBackoffMs
         running: false
         repeat: false
         onTriggered: {
@@ -420,17 +423,25 @@ Singleton {
                 return;
 
             root._log("evdev monitor failed to start");
+            root._evdevBackoffMs = Math.min(60000, root._evdevBackoffMs * 2);
             if (root.usingEvdev) {
                 evdevRestartTimer.restart();
                 return;
             }
             root._enableSysfsFallback();
         }
-        onStarted: evdevMonitorProc.startObserved = true
+        onStarted: {
+            evdevMonitorProc.startObserved = true;
+            root._evdevStartedMs = Date.now();
+        }
         onExited: (exitCode, exitStatus) => {
             if (root._destroying)
                 return;
 
+            if (root._evdevStartedMs > 0 && (Date.now() - root._evdevStartedMs) > 10000)
+                root._evdevBackoffMs = 1000;
+            else
+                root._evdevBackoffMs = Math.min(60000, root._evdevBackoffMs * 2);
             root._log("evdev monitor exited", exitCode, exitStatus);
             if (root.usingEvdev) {
                 evdevRestartTimer.restart();
@@ -528,7 +539,7 @@ Singleton {
     }
 
     Connections {
-        target: HyprlandXkb
+        target: CompositorService.isHyprland ? HyprlandXkb : null
 
         function onCurrentLayoutNameChanged() {
             if (!root.currentLayoutName.length)

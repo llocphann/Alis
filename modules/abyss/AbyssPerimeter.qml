@@ -665,7 +665,7 @@ Scope {
                     probeMaskProxy: window._probeMaskProxy,
                     probeUnmapped: window._probeUnmapped,
                     barInputRegionCount: bar.inputRegions.length,
-                    editorRegionCount: editor.regions.length,
+                    editorRegionCount: editorLoader.item?.regions?.length ?? 0,
                     liquidPresented: Boolean(liquid.presented),
                     liquidPopupsOpen: Boolean(liquid.popupsOpen),
                     // Read only on explicit IPC snapshot: distinguish lost
@@ -854,7 +854,7 @@ Scope {
             readonly property real rawStageDockWidth: {
                 const mode = window.displayEditStageMode
                 if (mode === "abyss")
-                    return editor.desiredDockWidth
+                    return editorLoader.item?.desiredDockWidth ?? 960
                 if (mode === "widgets")
                     return window.externalWidgetEditor?.desiredDockWidth ?? 960
                 if (mode === "dashboard")
@@ -868,7 +868,7 @@ Scope {
             readonly property real rawStageDockHeight: {
                 const mode = window.displayEditStageMode
                 if (mode === "abyss")
-                    return editor.desiredDockHeight
+                    return editorLoader.item?.desiredDockHeight ?? 218
                 if (mode === "widgets")
                     return window.externalWidgetEditor?.desiredDockHeight ?? 168
                 if (mode === "dashboard")
@@ -889,7 +889,7 @@ Scope {
             readonly property real rawStageLeftDockWidth: {
                 const mode = window.displayEditStageMode
                 if (mode === "abyss")
-                    return editor.desiredLeftDockWidth
+                    return editorLoader.item?.desiredLeftDockWidth ?? 0
                 if (mode === "dashboard")
                     return window.activeDashboardEditItem?.editLeftDockWidth ?? 0
                 return 0
@@ -897,7 +897,7 @@ Scope {
             readonly property real rawStageLeftDockHeight: {
                 const mode = window.displayEditStageMode
                 if (mode === "abyss")
-                    return editor.desiredLeftDockHeight
+                    return editorLoader.item?.desiredLeftDockHeight ?? 0
                 if (mode === "dashboard")
                     return window.activeDashboardEditItem?.editLeftDockHeight ?? 0
                 return 0
@@ -905,7 +905,7 @@ Scope {
             readonly property real rawStageRightDockWidth: {
                 const mode = window.displayEditStageMode
                 if (mode === "abyss")
-                    return editor.desiredRightDockWidth
+                    return editorLoader.item?.desiredRightDockWidth ?? 0
                 if (mode === "widgets")
                     return window.externalWidgetEditor?.desiredRightDockWidth ?? 380
                 if (mode === "dashboard")
@@ -915,7 +915,7 @@ Scope {
             readonly property real rawStageRightDockHeight: {
                 const mode = window.displayEditStageMode
                 if (mode === "abyss")
-                    return editor.desiredRightDockHeight
+                    return editorLoader.item?.desiredRightDockHeight ?? 0
                 if (mode === "widgets")
                     return window.externalWidgetEditor?.desiredRightDockHeight ?? 560
                 if (mode === "dashboard")
@@ -1216,7 +1216,7 @@ Scope {
                 Region { x: window.overlayPopupBounds.x; y: window.overlayPopupBounds.y; width: window.presented && field.ready && window.overlayPopupActive ? window.overlayPopupBounds.width : 0; height: window.overlayPopupBounds.height }
                 Region { regions: window.presented && field.ready && bar.visible ? bar.inputRegions : [] }
                 Region { regions: companionExtension.inputRegions }
-                Region { regions: window.presented && field.ready && editor.visible ? editor.regions : [] }
+                Region { regions: window.presented && field.ready && (editorLoader.item?.visible ?? false) ? (editorLoader.item?.regions ?? []) : [] }
                 Region { item: window.presented && revealTrigger.visible ? revealTrigger : emptyInput }
                 Region { item: window.presented && dockTrigger.visible ? dockTrigger : emptyInput }
                 Region { x: widgetEditorBody.inputBounds.x; y: widgetEditorBody.inputBounds.y; width: window.presented && field.ready ? widgetEditorBody.inputBounds.width : 0; height: widgetEditorBody.inputBounds.height }
@@ -1358,7 +1358,7 @@ Scope {
                     utility.presented ? utility : null,
                     dialogBody.presented ? dialogBody : null,
                     popup.presented ? popup : null,
-                    editor.visible ? editor : null,
+                    (editorLoader.item?.visible ?? false) ? editorLoader.item : null,
                     window.editStageVisible ? stageEditDock : null,
                     window.editStageVisible ? stageLeftEditDock : null,
                     window.editStageVisible ? stageRightEditDock : null,
@@ -1398,8 +1398,8 @@ Scope {
                     return
                 if (window.isFocusInsidePresentedBody(window.activeWindowFocusItem))
                     return
-                if (editor.visible && editor.enabled) {
-                    editor.forceActiveFocus()
+                if ((editorLoader.item?.visible ?? false) && editorLoader.item.enabled) {
+                    editorLoader.item.forceActiveFocus()
                     if (window.isFocusInsidePresentedBody(window.activeWindowFocusItem))
                         return
                 }
@@ -1572,8 +1572,8 @@ Scope {
                         if (event) event.accepted = true
                         return
                     }
-                    if (editor.visible) {
-                        editor.finish(false)
+                    if (editorLoader.item?.visible ?? false) {
+                        editorLoader.item.finish(false)
                         if (event) event.accepted = true
                         return
                     }
@@ -1600,19 +1600,39 @@ Scope {
                     if (event) event.accepted = true
                 }
             }
-            readonly property alias edgeEditor: editor
-            AbyssEdgeEditor {
-                id: editor
+            readonly property var edgeEditor: editorLoader.item
+            Loader {
+                id: editorLoader
                 z: 30
                 anchors.fill: parent
-                visible: window.editorOpen && window.presented && field.ready
-                outputName: window.outputName
-                moduleLayer: bar
-                controller: liquid
-                edgeInsets: window.nativeInsets
-                externalDockParent: DesktopEditStage.stageEnabled ? stageAbyssDockContainer : null
-                externalLeftDockParent: DesktopEditStage.stageEnabled ? stageLeftAbyssDockContainer : null
-                externalRightDockParent: DesktopEditStage.stageEnabled ? stageRightAbyssDockContainer : null
+                asynchronous: status !== Loader.Ready && !window.editorOpen
+                active: window.editorOpen || window._keepPanelsWarm
+                function _syncEditor(): void {
+                    if (active) {
+                        if (!item) {
+                            setSource("AbyssEdgeEditor.qml", {
+                                outputName: window.outputName,
+                                moduleLayer: bar,
+                                controller: liquid,
+                                visible: window.editorOpen && window.presented && field.ready,
+                                edgeInsets: window.nativeInsets,
+                                externalDockParent: DesktopEditStage.stageEnabled ? stageAbyssDockContainer : null,
+                                externalLeftDockParent: DesktopEditStage.stageEnabled ? stageLeftAbyssDockContainer : null,
+                                externalRightDockParent: DesktopEditStage.stageEnabled ? stageRightAbyssDockContainer : null
+                            })
+                        }
+                    } else if (source.toString().length > 0) {
+                        source = ""
+                    }
+                }
+                Component.onCompleted: _syncEditor()
+                onActiveChanged: _syncEditor()
+                Binding { target: editorLoader.item; when: editorLoader.item !== null; property: "visible"; value: window.editorOpen && window.presented && field.ready }
+                Binding { target: editorLoader.item; when: editorLoader.item !== null; property: "outputName"; value: window.outputName }
+                Binding { target: editorLoader.item; when: editorLoader.item !== null; property: "edgeInsets"; value: window.nativeInsets }
+                Binding { target: editorLoader.item; when: editorLoader.item !== null; property: "externalDockParent"; value: DesktopEditStage.stageEnabled ? stageAbyssDockContainer : null }
+                Binding { target: editorLoader.item; when: editorLoader.item !== null; property: "externalLeftDockParent"; value: DesktopEditStage.stageEnabled ? stageLeftAbyssDockContainer : null }
+                Binding { target: editorLoader.item; when: editorLoader.item !== null; property: "externalRightDockParent"; value: DesktopEditStage.stageEnabled ? stageRightAbyssDockContainer : null }
             }
             property string transientPopupHoverKind: ""
             AbyssBar {
@@ -1624,10 +1644,10 @@ Scope {
                 popupObstacleRects: window.popupObstacleRects
                 basePaintInsets: window.paintInsets
                 edge: root.barEdge
-                editing: editor.visible || window.widgetStageEditing
-                draggedIds: editor._dragging ? editor.targetIds : []
-                draftPlacements: editor.visible ? editor.draft : null
-                draftOptions: editor.visible ? editor.draftOptions : null
+                editing: (editorLoader.item?.visible ?? false) || window.widgetStageEditing
+                draggedIds: (editorLoader.item?._dragging ?? false) ? (editorLoader.item?.targetIds ?? []) : []
+                draftPlacements: (editorLoader.item?.visible ?? false) ? (editorLoader.item?.draft ?? null) : null
+                draftOptions: (editorLoader.item?.visible ?? false) ? (editorLoader.item?.draftOptions ?? null) : null
                 visible: window.presented && field.ready && (window.editorOpen || root.barOnOutput(window.outputName))
                 opacity: GlobalStates.abyssColdPerimeterRecreatePending ? 0 : 1
                 anchors.fill: parent
@@ -1741,7 +1761,7 @@ Scope {
                 // that handle acquire body hover and keep itself alive during
                 // the gesture. Pin/keyboard requests remain independent.
                 sourceInputRegions: (bar.visible ? bar.inputRegions : []).concat(
-                    editor.visible ? editor.inputRegions : [])
+                    (editorLoader.item?.visible ?? false) ? (editorLoader.item?.inputRegions ?? []) : [])
             }
             readonly property var sideObstacles: {
                 // Keep the filter phase before either selected record read.
@@ -2424,6 +2444,7 @@ Scope {
                 stableContentSize: true
                 warmContent: true
                 retainAfterFirstOpen: true
+                idleUnloadEnabled: !window._keepPanelsWarm
                 identity: "aux"
                 controller: liquid
                 anchors.fill: parent
@@ -2456,6 +2477,7 @@ Scope {
                 stableContentSize: true
                 warmContent: true
                 retainAfterFirstOpen: true
+                idleUnloadEnabled: !window._keepPanelsWarm
                 monotonicNotificationReveal: true
                 identity: "settings"
                 controller: liquid
@@ -2483,6 +2505,7 @@ Scope {
                 stableContentSize: true
                 warmContent: true
                 retainAfterFirstOpen: true
+                idleUnloadEnabled: !window._keepPanelsWarm
                 monotonicNotificationReveal: true
                 identity: "dashboard"
                 controller: liquid
@@ -2504,6 +2527,7 @@ Scope {
                 stableContentSize: true
                 warmContent: Boolean(AlisIntergration.nexusEnabled)
                 retainAfterFirstOpen: Boolean(AlisIntergration.nexusEnabled)
+                idleUnloadEnabled: !window._keepPanelsWarm
                 monotonicNotificationReveal: true
                 identity: "nexus"
                 controller: liquid
@@ -2527,6 +2551,7 @@ Scope {
                 id: controls
                 stableContentSize: true
                 retainAfterFirstOpen: true
+                idleUnloadEnabled: !window._keepPanelsWarm
                 identity: "controls"
                 controller: liquid
                 anchors.fill: parent
@@ -2651,7 +2676,7 @@ Scope {
                     ? ModuleLayout.adjacentEdge({edge:edge,along:along,span:span},window.width,window.height) : ""
                 outputName: window.outputName
                 open: (window.presented || window.physicalOsdRequested) && field.ready && (Config.options?.enabledPanels ?? []).includes("abyssOnScreenDisplay")
-                    && !(editor.visible && editor.editingPopups)
+                    && !((editorLoader.item?.visible ?? false) && (editorLoader.item?.editingPopups ?? false))
                     && (GlobalStates.osdVolumeOpen || GlobalStates.osdBrightnessOpen || GlobalStates.osdMicOpen || GlobalStates.osdMediaOpen || GlobalStates.osdKeyboardLayoutOpen)
                     && Geometry.targets(window.outputName,Config.options?.osd?.screenList ?? [],Quickshell.screens.map(s => s.name))
                 edgeInsets: window.physicalOsdResident ? window.physicalInsets : window.bodyInsets(edge,along,span)
@@ -2741,19 +2766,29 @@ Scope {
                 && !window.anyBodyVisualResident
                 && !liquid.popupsOpen
                 && !companionExtension.motionBusy
+            readonly property bool _keepPanelsWarm: Boolean(Config.options?.performance?.keepPanelsWarm ?? false)
             property int _warmupCursor: 0
             property bool _editStageWarmReady: false
+            on_KeepPanelsWarmChanged: {
+                if (_keepPanelsWarm) {
+                    const idx = window._warmupQueue.findIndex(e => e.enabled && e.host && !e.host.backgroundPreload)
+                    if (idx >= 0 && window._warmupCursor > idx)
+                        window._warmupCursor = idx
+                } else if (!window.editStageVisible) {
+                    window._editStageWarmReady = false
+                }
+            }
             readonly property var _warmupQueue: [
                 { host: leftPanel, enabled: (Config.options?.enabledPanels ?? []).includes("abyssSidebarLeft") },
                 { host: rightPanel, enabled: (Config.options?.enabledPanels ?? []).includes("abyssSidebarRight") },
-                { host: dashboardBody, enabled: (Config.options?.enabledPanels ?? []).includes("iiDashboard") },
-                { host: settings, enabled: true },
-                { host: nexusBody, enabled: Boolean(AlisIntergration.nexusEnabled) }
+                { host: dashboardBody, enabled: window._keepPanelsWarm && (Config.options?.enabledPanels ?? []).includes("iiDashboard") },
+                { host: settings, enabled: window._keepPanelsWarm },
+                { host: nexusBody, enabled: window._keepPanelsWarm && Boolean(AlisIntergration.nexusEnabled) }
             ]
             Connections {
                 target: AlisIntergration
                 function onNexusEnabledChanged() {
-                    if (AlisIntergration.nexusEnabled && !nexusBody.backgroundPreload) {
+                    if (window._keepPanelsWarm && AlisIntergration.nexusEnabled && !nexusBody.backgroundPreload) {
                         const nexusIdx = window._warmupQueue.findIndex(e => e.host === nexusBody);
                         if (nexusIdx >= 0 && window._warmupCursor > nexusIdx)
                             window._warmupCursor = nexusIdx;
@@ -2771,7 +2806,7 @@ Scope {
                 id: backgroundWarmupTimer
                 interval: window._warmupCursor === 0 ? 3200 : 1100
                 repeat: true
-                running: window.warmupIdle && (window._warmupCursor < window._warmupQueue.length || !window._editStageWarmReady)
+                running: window.warmupIdle && (window._warmupCursor < window._warmupQueue.length || (window._keepPanelsWarm && !window._editStageWarmReady))
                 onTriggered: {
                     if (!window.warmupIdle)
                         return
@@ -2790,9 +2825,10 @@ Scope {
                             return
                         }
                         window._warmupCursor++
-                        return
+                        continue
                     }
-                    window._editStageWarmReady = true
+                    if (window._keepPanelsWarm)
+                        window._editStageWarmReady = true
                 }
             }
             Item {
@@ -3081,7 +3117,7 @@ Scope {
                 z: 500
                 anchors.fill: parent
                 card: window.editCard
-                warmBackdrop: window._editStageWarmReady || GlobalStates.deferredPanelsReady
+                warmBackdrop: window.editStageVisible || (window._keepPanelsWarm && window._editStageWarmReady)
             }
             Item {
                 id: stageLeftEditDock

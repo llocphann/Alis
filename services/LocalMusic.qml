@@ -17,8 +17,11 @@ Singleton {
             && GlobalStates.dashboardPage === 1
     readonly property int fallbackPollIntervalMs: root.uiDemand ? 900 : 30000
     onUiDemandChanged: {
-        if (root.uiDemand)
+        if (root.uiDemand) {
             Qt.callLater(root._refreshPresentedStatus)
+            if (root.playing)
+                root._reanchorLyricsPosition(root.currentPosition, true)
+        }
     }
 
     function _refreshPresentedStatus(): void {
@@ -1270,12 +1273,22 @@ Singleton {
         }
     }
 
+    property double _mpdDaemonStartedMs: 0
+    property int _mpdDaemonBackoffMs: 1500
+    property double _mpdSubscribeStartedMs: 0
+    property int _mpdSubscribeBackoffMs: 500
+
     Process {
         id: _mpdDaemonProc
+        onStarted: root._mpdDaemonStartedMs = Date.now()
         onExited: (_code, _status) => {
             root._mpdSubscriptionActive = false
             if (_mpdSubscriptionProc.running)
                 _mpdSubscriptionProc.running = false
+            if (root._mpdDaemonStartedMs > 0 && (Date.now() - root._mpdDaemonStartedMs) > 10000)
+                root._mpdDaemonBackoffMs = 1500
+            else
+                root._mpdDaemonBackoffMs = Math.min(60000, root._mpdDaemonBackoffMs * 2)
             if (root.enabled && root._nativeMpdEligible)
                 mpdDaemonRetryTimer.restart()
         }
@@ -1289,8 +1302,13 @@ Singleton {
             onRead: line => root._handleMpdEvent(line)
         }
 
+        onStarted: root._mpdSubscribeStartedMs = Date.now()
         onExited: (_code, _status) => {
             root._mpdSubscriptionActive = false
+            if (root._mpdSubscribeStartedMs > 0 && (Date.now() - root._mpdSubscribeStartedMs) > 10000)
+                root._mpdSubscribeBackoffMs = 500
+            else
+                root._mpdSubscribeBackoffMs = Math.min(60000, root._mpdSubscribeBackoffMs * 2)
             if (root.enabled && root._nativeMpdEligible)
                 mpdSubscribeRetryTimer.restart()
         }
@@ -1298,7 +1316,7 @@ Singleton {
 
     Timer {
         id: mpdDaemonRetryTimer
-        interval: 1500
+        interval: root._mpdDaemonBackoffMs
         repeat: false
         onTriggered: {
             if (root.enabled && root._nativeMpdEligible && !_mpdDaemonProc.running)
@@ -1308,7 +1326,7 @@ Singleton {
 
     Timer {
         id: mpdSubscribeRetryTimer
-        interval: 500
+        interval: root._mpdSubscribeBackoffMs
         repeat: false
         onTriggered: {
             if (root.enabled && root._nativeMpdEligible && !_mpdSubscriptionProc.running)
@@ -1325,10 +1343,21 @@ Singleton {
     }
 
     Timer {
+        id: mprisBackgroundNudgeTimer
+        interval: 1000
+        repeat: true
+        running: root.enabled && root.playing && !root.uiDemand && root.mprisAvailable
+        onTriggered: {
+            root._lastMprisNudgeMs = Date.now()
+            root.mprisPlayer?.positionChanged()
+        }
+    }
+
+    Timer {
         id: lyricsLiveTimer
         interval: 33
         repeat: true
-        running: root.enabled && root.playing
+        running: root.enabled && root.playing && root.uiDemand
         onTriggered: {
             const now = Date.now()
             if (root.mprisAvailable && (now - root._lastMprisNudgeMs) >= 480) {
