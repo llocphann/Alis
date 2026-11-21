@@ -770,7 +770,20 @@ Item {
                         layer.enabled: visible && Math.abs(pages.pagePosition - root.currentPage) > 0.001
                         active: root.musicEnabled && (root.musicVisited || root._pendingPageId === "music")
                             && (root.presentationActive || root.warmContent)
-                        source: active ? Qt.resolvedUrl("DashboardMusic.qml") : ""
+                        function _syncMusicSource(): void {
+                            if (active) {
+                                if (!item) {
+                                    setSource(Qt.resolvedUrl("DashboardMusic.qml"), {
+                                        backend: root.musicBackend ?? LocalMusic,
+                                        presentationActive: root.presentationActive && root.currentPageId === "music"
+                                    })
+                                }
+                            } else if (source.toString().length > 0) {
+                                source = ""
+                            }
+                        }
+                        Component.onCompleted: _syncMusicSource()
+                        onActiveChanged: _syncMusicSource()
                         Binding {
                             target: musicPage.item
                             property: "backend"
