@@ -192,7 +192,9 @@ Singleton {
         candidateScratch: [],
         decoratedByEntry: new Map(),
         queryMemo: new Map(),
-        iconGuesses: ({})
+        iconGuesses: ({}),
+        identityRules: [],
+        identityRulesKey: null
     })
     // Reverse-lookup maps for matching running windows to desktop entries
     // Key: lowercased startupClass/exec-basename/desktop-id-stem → DesktopEntry
@@ -772,14 +774,11 @@ Singleton {
     // leave every window's identity untouched. The configured desktopId is
     // intentionally not resolved during parsing: desktop entries can load
     // after the first window event.
-    property var _identityRules: []
-    property var _identityRulesKey: null
-
     function _parseIdentityRules(): var {
         const rules = Config.options?.windows?.appIdentityRules ?? []
         const key = JSON.stringify(rules)
-        if (root._identityRulesKey === key)
-            return root._identityRules
+        if (root._lazyPrepared.identityRulesKey === key)
+            return root._lazyPrepared.identityRules
         const parsed = []
         for (const rule of rules) {
             if (!rule || typeof rule !== "object") continue
@@ -802,8 +801,8 @@ Singleton {
             if (!valid) continue
             parsed.push({ appIdRe: appIdRe, titleRe: titleRe, desktopId: desktopId })
         }
-        root._identityRules = parsed
-        root._identityRulesKey = key
+        root._lazyPrepared.identityRules = parsed
+        root._lazyPrepared.identityRulesKey = key
         return parsed
     }
 
