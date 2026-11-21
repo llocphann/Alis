@@ -1185,8 +1185,8 @@ Scope {
             WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen ? WlrLayer.Bottom : PolkitService.active ? WlrLayer.Top : (window.physicalOsdResident || (CompositorService.isNiri && window.presented) || window.editorOpen || Boolean(window.editStageVisible) || wallpaperBody.open || (keyboardBody.open && (Config.options?.osk?.keepOnTop ?? false)) || utility.open || liquid.popupsOpen || toastBody.open || dialogBody.open || companionExtension.editing || settings.open || dashboardBody.open || Boolean(window.nexusOpen) || controls.open || (window.fullscreenCovered && window.presented)) ? WlrLayer.Overlay : WlrLayer.Top
             WlrLayershell.keyboardFocus: !window.presented || !field.ready || GlobalStates.regionSelectorOpen || GlobalStates.settingsNativeDialogOpen || PolkitService.active || window.overviewDragging || companionExtension.curiosityOwned
                 ? WlrKeyboardFocus.None
-                : (window.editorOpen || window.wallpaperStageEditing || (utility.presented && utility.ready) || liquid.popupExclusiveFocus || (popup.presented && (popup.contentItem.item?.keyboardFocus ?? false)) || (dialogBody.presented && dialogBody.ready) || (aux.presented && aux.ready) || (wallpaperBody.presented && wallpaperBody.ready) || (clipboardBody.presented && clipboardBody.ready) || (settings.presented && settings.ready) || (dashboardBody.presented && dashboardBody.ready) || (nexusBody.presented && nexusBody.ready) || (controls.presented && controls.ready) || (companionExtension.editing && !companionExtension.keyboardFocusOnDemand)) ? WlrKeyboardFocus.Exclusive
-                : (window.widgetStageEditing || companionExtension.keyboardFocusOnDemand || liquid.popupOnDemandFocus || (leftPanel.presented && leftPanel.ready) || (rightPanel.presented && rightPanel.ready) || (popup.presented && popup.ready && popup.activeKind !== "dockAppMenu") || (notification.presented && notification.ready && notification.contentKind === "center"))
+                : (window.editorOpen || window.wallpaperStageEditing || (utility.presented && (utility.ready || utility.loadingPresentationActive)) || liquid.popupExclusiveFocus || (popup.presented && (popup.contentItem.item?.keyboardFocus ?? false)) || (dialogBody.presented && dialogBody.ready) || (aux.presented && (aux.ready || aux.loadingPresentationActive)) || (wallpaperBody.presented && (wallpaperBody.ready || wallpaperBody.loadingPresentationActive)) || (clipboardBody.presented && (clipboardBody.ready || clipboardBody.loadingPresentationActive)) || (settings.presented && (settings.ready || settings.loadingPresentationActive)) || (dashboardBody.presented && (dashboardBody.ready || dashboardBody.loadingPresentationActive)) || (nexusBody.presented && (nexusBody.ready || nexusBody.loadingPresentationActive)) || (controls.presented && (controls.ready || controls.loadingPresentationActive)) || (companionExtension.editing && !companionExtension.keyboardFocusOnDemand)) ? WlrKeyboardFocus.Exclusive
+                : (window.widgetStageEditing || companionExtension.keyboardFocusOnDemand || liquid.popupOnDemandFocus || (leftPanel.presented && (leftPanel.ready || leftPanel.loadingPresentationActive)) || (rightPanel.presented && (rightPanel.ready || rightPanel.loadingPresentationActive)) || (popup.presented && popup.ready && popup.activeKind !== "dockAppMenu") || (notification.presented && notification.ready && notification.contentKind === "center"))
                     ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
             anchors { top: true; bottom: true; left: true; right: true }
             Item { id: emptyInput; width: 0; height: 0 }
@@ -1438,9 +1438,9 @@ Scope {
                     popup
                 ].concat(sidebarAndPopupPeers)
                 for (const host of candidateHosts) {
-                    if (!host || !host.presented || !host.acceptsInput || !host.ready)
+                    if (!host || !host.presented || !host.acceptsInput || !(host.ready || host.loadingPresentationActive))
                         continue
-                    const item = host.embeddedItem ?? host.contentItem?.item ?? null
+                    const item = host.ready ? (host.embeddedItem ?? host.contentItem?.item ?? null) : null
                     if (item && typeof item.focusPrimarySurface === "function") {
                         item.focusPrimarySurface()
                     } else if (item && item.visible && item.enabled) {
@@ -2024,6 +2024,9 @@ Scope {
                 // Reveal clips a final-size Sidebar; controls never reflow per frame.
                 stableContentSize: true
                 monotonicNotificationReveal: true
+                showLoadingSurface: true
+                loadingTitle: Translation.tr("Sidebar")
+                loadingIcon: "view_sidebar"
                 // Its painted padding/shoulders also retain the hover lease.
                 includeEdgeConnection: true
                 identity: "leftPanel"
@@ -2064,6 +2067,9 @@ Scope {
                 // Reveal clips a final-size Sidebar; controls never reflow per frame.
                 stableContentSize: true
                 monotonicNotificationReveal: true
+                showLoadingSurface: true
+                loadingTitle: Translation.tr("Quick Panel")
+                loadingIcon: "tune"
                 includeEdgeConnection: true
                 identity: "rightPanel"
                 connectionSourceRect: rightReveal.available
@@ -2246,11 +2252,21 @@ Scope {
                             ?? Qt.rect(0,0,0,0)
                     connectionSourceRect: {
                         const source=hostedPopup?._liquidAnchor
+                        if (source?.liquidController !== liquid)
+                            return Qt.rect(0,0,0,0)
+                        if (source?.cornerWrap === true) {
+                            const arm = Geometry.horizontal(edge)
+                                ? source.geometry?.wrapHorizontalRect
+                                : source.geometry?.wrapVerticalRect
+                            if (arm && arm.width > 0 && arm.height > 0)
+                                return Qt.rect(arm.x, arm.y, arm.width, arm.height)
+                            return Qt.rect(source.x, source.y, source.width, source.height)
+                        }
                         const region=source?.inputRegion
                         // Visual anchors intentionally include the Bar's full
                         // thickness. Only its real, output-owned source pixels
                         // bound the hover corridor across the remaining gap.
-                        return source?.liquidController===liquid && region
+                        return region
                             ? Qt.rect(region.x,region.y,region.width,region.height)
                             : Qt.rect(0,0,0,0)
                     }
@@ -2532,6 +2548,9 @@ Scope {
                 id:wallpaperBody;identity:"wallpaper"
                 // Reveal clips the customization dock instead of resizing its cards and search row.
                 stableContentSize:true
+                showLoadingSurface:true
+                loadingTitle:Translation.tr("Wallpaper")
+                loadingIcon:"wallpaper"
                 controller:liquid;anchors.fill:parent;outputName:window.outputName
                 edge:window.positionEdge(identity,"bottom")
                 open:window.wallpaperLauncherTargetOpen && !DesktopEditStage.wallpaperStageEnabled
@@ -2552,6 +2571,9 @@ Scope {
             AbyssBodyHost {
                 id: clipboardBody
                 stableContentSize: true
+                showLoadingSurface: true
+                loadingTitle: Translation.tr("Clipboard")
+                loadingIcon: "content_paste"
                 identity: "clipboard"
                 controller: liquid
                 anchors.fill: parent
@@ -2573,6 +2595,11 @@ Scope {
             AbyssBodyHost {
                 id: aux
                 stableContentSize: true
+                showLoadingSurface: true
+                loadingTitle: GlobalStates.overviewMode === "taskview"
+                    ? Translation.tr("Task View")
+                    : Translation.tr("Overview")
+                loadingIcon: "space_dashboard"
                 warmContent: true
                 retainAfterFirstOpen: true
                 idleUnloadEnabled: !window._keepPanelsWarm
@@ -2606,6 +2633,9 @@ Scope {
             AbyssBodyHost {
                 id: settings
                 stableContentSize: true
+                showLoadingSurface: true
+                loadingTitle: Translation.tr("Settings")
+                loadingIcon: "tune"
                 warmContent: true
                 retainAfterFirstOpen: true
                 idleUnloadEnabled: !window._keepPanelsWarm
@@ -2634,6 +2664,23 @@ Scope {
             AbyssBodyHost {
                 id: dashboardBody
                 stableContentSize: true
+                showLoadingSurface: true
+                loadingTitle: {
+                    const pid = String(GlobalStates.dashboardPageId ?? "dashboard")
+                    if (pid === "music") return Translation.tr("Local Music")
+                    if (pid === "weeklyPlanner") return Translation.tr("Planner")
+                    if (pid === "spacedRepetition") return Translation.tr("Spaced Repetition")
+                    if (pid === "exercisesTracker") return Translation.tr("Exercises")
+                    return Translation.tr("Dashboard")
+                }
+                loadingIcon: {
+                    const pid = String(GlobalStates.dashboardPageId ?? "dashboard")
+                    if (pid === "music") return "music_note"
+                    if (pid === "weeklyPlanner") return "calendar_month"
+                    if (pid === "spacedRepetition") return "school"
+                    if (pid === "exercisesTracker") return "fitness_center"
+                    return "dashboard"
+                }
                 warmContent: true
                 retainAfterFirstOpen: true
                 idleUnloadEnabled: !window._keepPanelsWarm
@@ -2656,6 +2703,9 @@ Scope {
             AbyssBodyHost {
                 id: nexusBody
                 stableContentSize: true
+                showLoadingSurface: true
+                loadingTitle: Translation.tr("Nexus")
+                loadingIcon: "hub"
                 warmContent: Boolean(AlisIntergration.nexusEnabled)
                 retainAfterFirstOpen: Boolean(AlisIntergration.nexusEnabled)
                 idleUnloadEnabled: !window._keepPanelsWarm
@@ -2681,6 +2731,9 @@ Scope {
             AbyssBodyHost {
                 id: controls
                 stableContentSize: true
+                showLoadingSurface: true
+                loadingTitle: Translation.tr("Control Panel")
+                loadingIcon: "tune"
                 retainAfterFirstOpen: true
                 idleUnloadEnabled: !window._keepPanelsWarm
                 identity: "controls"
@@ -2842,6 +2895,9 @@ Scope {
             AbyssBodyHost {
                 id: utility
                 stableContentSize: true
+                showLoadingSurface: true
+                loadingTitle: Translation.tr("Utilities")
+                loadingIcon: "widgets"
                 property string retainedKind: "session"
                 z: 15
                 identity: "utility"

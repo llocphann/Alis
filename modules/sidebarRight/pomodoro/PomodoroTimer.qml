@@ -104,6 +104,9 @@ Item {
             font.pixelSize: Appearance.font.pixelSize.small
             color: root._colTextSecondary
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            elide: Text.ElideRight
+            maximumLineCount: 1
         }
         RippleButton {
             implicitWidth: root.compactMode ? 24 : 28
@@ -198,40 +201,80 @@ Item {
         }
     }
 
+    // Responsive layout metrics driven by the host Edgebar / Sidebar viewport
+    readonly property real _viewportWidth: Math.max(0, flickable.width)
+    readonly property real _viewportHeight: Math.max(0, flickable.height)
+    readonly property real _sideInset: _viewportWidth > 0 && _viewportWidth < 300 ? 6
+        : (_viewportWidth < 420 ? 10 : 14)
+    readonly property real _contentWidth: _viewportWidth > 0
+        ? Math.min(Math.max(0, _viewportWidth - _sideInset * 2), 520)
+        : 0
+    readonly property bool _tightWidth: _viewportWidth > 0 && _viewportWidth < 320
+    readonly property bool _wideLayout: _viewportWidth >= 460
+    readonly property bool _tallLayout: _viewportHeight >= 280
+    readonly property bool _stackedDial: _viewportWidth > 0 && _viewportWidth < 295 && _viewportHeight >= 280
+    readonly property real _controlHeight: _tallLayout && !_tightWidth ? 38 : (root.compactMode ? 34 : 35)
+    readonly property real _topPadding: _viewportHeight > 220
+        ? Math.min(12, Math.max(2, Math.round((_viewportHeight - 200) * 0.04)))
+        : (root.compactMode ? 0 : 2)
+    readonly property real _bottomPadding: _viewportHeight > 220
+        ? Math.min(14, Math.max(2, Math.round((_viewportHeight - 200) * 0.05)))
+        : (root.compactMode ? 2 : 4)
+    readonly property real _stageAvailHeight: Math.max(
+        108,
+        _viewportHeight - (22 + _topPadding + 4) - (_controlHeight + _bottomPadding + 4))
+    readonly property real _hourglassHeight: {
+        if (_viewportWidth <= 0 || _viewportHeight <= 0)
+            return root.compactMode ? 104 : 132
+        if (_stackedDial)
+            return Math.max(84, Math.min(168, Math.round(Math.min(_stageAvailHeight * 0.48, _contentWidth * 0.62))))
+        return Math.max(76, Math.min(184, Math.round(Math.min(_stageAvailHeight * 0.80, _contentWidth * 0.42))))
+    }
+    readonly property real _hourglassWidth: Math.round(_hourglassHeight * 120 / 144)
+    readonly property real _stageSpacing: _stackedDial
+        ? Math.max(8, Math.min(16, Math.round(_stageAvailHeight * 0.045)))
+        : (_tightWidth ? 10 : (_wideLayout ? 20 : 14))
+    readonly property real _readoutMaxWidth: _stackedDial
+        ? Math.max(120, _contentWidth - 8)
+        : Math.max(104, _contentWidth - _hourglassWidth - _stageSpacing)
+    readonly property int _timerFontSize: {
+        const baseSize = Math.max(24, Math.min(48, Math.round(_hourglassHeight * 0.29)))
+        const scaled = Math.round(baseSize * Appearance.fontSizeScale)
+        const widthCap = _viewportWidth > 0 ? Math.max(22, Math.floor(_readoutMaxWidth / 2.95)) : scaled
+        return Math.min(scaled, widthCap)
+    }
+
     StyledFlickable {
         id: flickable
         anchors.fill: parent
-        // The settings face replaces the dial, keeping all duration controls
-        // within the compact popup's normal height.
-        contentHeight: (root.centerMode && contentColumn.implicitHeight <= flickable.height)
-            ? flickable.height
-            : contentColumn.implicitHeight
+        // Fill viewport height so top header, centered hourglass stage, and
+        // bottom controls distribute cleanly across any Edgebar size, while
+        // falling back to scrolling if content ever exceeds a tiny viewport.
+        contentHeight: contentColumn.height
         clip: true
         interactive: contentColumn.implicitHeight > flickable.height
 
         ColumnLayout {
             id: contentColumn
             width: flickable.width
+            height: Math.max(implicitHeight, flickable.height)
             spacing: 0
-            // Center vertically via y offset — safe from polish loops because
-            // implicitHeight here is the column's own intrinsic size (no spacers),
-            // and flickable.height is an external reference that doesn't depend on us.
-            y: (root.centerMode && implicitHeight < flickable.height)
-                ? Math.max(0, (flickable.height - implicitHeight) / 2)
-                : 0
 
             // Study-Tracker Focus Timer Header: Title + Subject/Tag Pill + Today Sessions Badge
             RowLayout {
-                Layout.fillWidth: true
-                Layout.maximumWidth: Math.max(0, flickable.width - 20)
-                Layout.leftMargin: 10
-                Layout.rightMargin: 10
-                Layout.topMargin: root.compactMode ? 0 : 2
+                id: focusHeaderRow
+                objectName: "pomodoroFocusHeader"
+                readonly property int _chipHeight: Math.max(22, Math.ceil(Appearance.font.pixelSize.smallest * 1.9))
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: root._contentWidth
+                Layout.maximumWidth: root._contentWidth
+                Layout.topMargin: root._topPadding
                 Layout.bottomMargin: root.compactMode ? 2 : 4
-                spacing: 6
+                spacing: root._tightWidth ? 4 : 6
 
                 StyledText {
                     id: focusHeaderLabel
+                    visible: !(root._tightWidth && todayBadge.visible)
                     Layout.alignment: Qt.AlignVCenter
                     text: Translation.tr("FOCUS")
                     font.pixelSize: Appearance.font.pixelSize.smallest
@@ -246,13 +289,17 @@ Item {
                     id: activeTagPill
                     objectName: "pomodoroActiveTagPill"
                     Layout.alignment: Qt.AlignVCenter
-                    readonly property real maxAllowedWidth: Math.max(56, Math.min(160,
-                        flickable.width - 20 - focusHeaderLabel.implicitWidth
+                    Layout.minimumWidth: 0
+                    clip: true
+                    readonly property real maxAllowedWidth: Math.max(40, Math.min(180,
+                        root._contentWidth
+                            - (focusHeaderLabel.visible ? focusHeaderLabel.implicitWidth + focusHeaderRow.spacing : 0)
                             - presetChip.implicitWidth
-                            - (todayBadge.visible ? todayBadge.implicitWidth + 6 : 0) - 18))
+                            - (todayBadge.visible ? todayBadge.implicitWidth + focusHeaderRow.spacing : 0)
+                            - focusHeaderRow.spacing * 3))
                     implicitWidth: Math.min(maxAllowedWidth, Math.ceil(tagPillRow.implicitWidth) + 16)
-                    implicitHeight: 22
-                    radius: 11
+                    implicitHeight: focusHeaderRow._chipHeight
+                    radius: implicitHeight / 2
                     color: tagPillMouse.containsMouse || root.tagMenuOpen
                         ? root._colLayerHover
                         : root._colLayer
@@ -286,8 +333,9 @@ Item {
                             font.weight: Font.DemiBold
                             verticalAlignment: Text.AlignVCenter
                             color: root._colText
-                            Layout.maximumWidth: Math.max(24, activeTagPill.maxAllowedWidth - 41)
+                            Layout.maximumWidth: Math.max(12, activeTagPill.maxAllowedWidth - 46)
                             elide: Text.ElideRight
+                            maximumLineCount: 1
                         }
 
                         MaterialSymbol {
@@ -315,7 +363,10 @@ Item {
                     }
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                }
 
                 // Preset badge + Today's focus summary
                 Rectangle {
@@ -323,8 +374,8 @@ Item {
                     Layout.alignment: Qt.AlignVCenter
                     visible: TimerService.todaySessions > 0
                     implicitWidth: Math.ceil(todayBadgeRow.implicitWidth) + 14
-                    implicitHeight: 22
-                    radius: 11
+                    implicitHeight: focusHeaderRow._chipHeight
+                    radius: implicitHeight / 2
                     color: ColorUtils.transparentize(root._colAccent, 0.86)
 
                     RowLayout {
@@ -354,8 +405,8 @@ Item {
                     id: presetChip
                     Layout.alignment: Qt.AlignVCenter
                     implicitWidth: Math.ceil(presetChipText.implicitWidth) + 14
-                    implicitHeight: 22
-                    radius: 11
+                    implicitHeight: focusHeaderRow._chipHeight
+                    radius: implicitHeight / 2
                     color: presetChipMouse.containsMouse || root.settingsOpen
                         ? root._colLayerHover
                         : root._colLayer
@@ -395,12 +446,11 @@ Item {
             // Collapsible Study-Tracker Subject / Tag Manager Drawer
             Item {
                 id: tagMenuContainer
-                readonly property int maxDrawerHeight: Math.max(96, flickable.height - 28)
+                readonly property int maxDrawerHeight: Math.max(96, flickable.height - 32 - root._topPadding)
                 readonly property int desiredDrawerHeight: Math.min(tagMenuColumn.implicitHeight + 12, maxDrawerHeight)
-                Layout.fillWidth: true
-                Layout.maximumWidth: Math.max(0, flickable.width - 16)
-                Layout.leftMargin: 8
-                Layout.rightMargin: 8
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: root._contentWidth
+                Layout.maximumWidth: root._contentWidth
                 Layout.bottomMargin: root.tagMenuOpen ? 4 : 0
                 Layout.preferredHeight: root.tagMenuOpen ? desiredDrawerHeight : 0
                 Layout.maximumHeight: root.tagMenuOpen ? desiredDrawerHeight : 0
@@ -678,16 +728,27 @@ Item {
                 }
             }
 
+            // Keep tag drawer anchored directly under the header on tall surfaces
+            Item {
+                visible: root.tagMenuOpen
+                Layout.fillHeight: true
+                Layout.minimumHeight: 0
+            }
+
             // Hourglass stage (Turned / Matrix / Square)
             Item {
                 id: focusDial
+                objectName: "pomodoroFocusDial"
                 visible: !root.settingsOpen && !root.tagMenuOpen
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: Math.min(Math.max(196, flickable.width - 16), root.compactMode ? 248 : 272)
-                Layout.preferredHeight: root.compactMode
-                    ? Math.max(122, Math.min(150, flickable.height - 68))
-                    : 168
-                Layout.bottomMargin: root.compactMode ? 0 : 2
+                Layout.preferredWidth: root._contentWidth
+                Layout.maximumWidth: root._contentWidth
+                Layout.fillHeight: true
+                Layout.minimumHeight: Math.max(
+                    104,
+                    root._stackedDial
+                        ? (root._hourglassHeight + root._stageSpacing + readoutColumn.implicitHeight + 8)
+                        : Math.max(root._hourglassHeight, readoutColumn.implicitHeight) + 8)
 
                 readonly property string timerText: {
                     const minutes = Math.floor(
@@ -727,19 +788,23 @@ Item {
                     }
                 }
 
-                // Hourglass stage (Turned / Matrix / Square)
-                RowLayout {
+                // Hourglass stage (Turned / Matrix / Square) — optically centered
+                // as one cohesive unit, stacking vertically on narrow+tall sizes.
+                GridLayout {
                     id: hourglassStage
-                    anchors.fill: parent
-                    anchors.topMargin: root.compactMode ? 4 : 6
-                    spacing: root.compactMode ? 10 : 14
+                    objectName: "pomodoroHourglassStage"
+                    anchors.centerIn: parent
+                    width: Math.min(parent.width, implicitWidth)
+                    columns: root._stackedDial ? 1 : 2
+                    columnSpacing: root._stageSpacing
+                    rowSpacing: root._stageSpacing
 
                     HourglassVisual {
                         id: pomodoroHourglass
                         objectName: "pomodoroHourglass"
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.preferredWidth: root.compactMode ? 88 : 108
-                        Layout.preferredHeight: root.compactMode ? 104 : 132
+                        Layout.alignment: root._stackedDial ? Qt.AlignHCenter : Qt.AlignVCenter
+                        Layout.preferredWidth: root._hourglassWidth
+                        Layout.preferredHeight: root._hourglassHeight
                         visualStyle: TimerService.visualStyle
                         progress: focusDial.displayProgress
                         running: TimerService.pomodoroRunning
@@ -750,37 +815,41 @@ Item {
                     }
 
                     ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-                        spacing: 4
+                        id: readoutColumn
+                        Layout.alignment: root._stackedDial ? Qt.AlignHCenter : Qt.AlignVCenter
+                        Layout.maximumWidth: root._readoutMaxWidth
+                        spacing: root._tallLayout ? 6 : 4
 
                         StyledText {
-                            Layout.fillWidth: true
-                            horizontalAlignment: Text.AlignLeft
+                            Layout.alignment: root._stackedDial ? Qt.AlignHCenter : Qt.AlignLeft
+                            Layout.maximumWidth: root._readoutMaxWidth
+                            horizontalAlignment: root._stackedDial ? Text.AlignHCenter : Text.AlignLeft
                             text: focusDial.timerText
-                            font.pixelSize: Math.round(
-                                (root.compactMode ? 31 : 34)
-                                    * Appearance.fontSizeScale)
+                            font.pixelSize: root._timerFontSize
                             font.weight: Font.Medium
                             font.family: Appearance.font.family.numbers
                             color: root._colText
                         }
 
                         StyledText {
-                            Layout.fillWidth: true
-                            horizontalAlignment: Text.AlignLeft
+                            Layout.alignment: root._stackedDial ? Qt.AlignHCenter : Qt.AlignLeft
+                            Layout.maximumWidth: root._readoutMaxWidth
+                            horizontalAlignment: root._stackedDial ? Text.AlignHCenter : Text.AlignLeft
                             elide: Text.ElideRight
                             text: focusDial.phaseStatusText
-                            font.pixelSize: root.compactMode
-                                ? Appearance.font.pixelSize.smallest
-                                : Appearance.font.pixelSize.smaller
+                            font.pixelSize: root._tallLayout
+                                ? Appearance.font.pixelSize.small
+                                : (root.compactMode
+                                    ? Appearance.font.pixelSize.smallest
+                                    : Appearance.font.pixelSize.smaller)
                             font.weight: Font.Medium
                             color: root._colTextSecondary
                         }
 
                         Row {
-                            Layout.topMargin: 4
-                            spacing: 5
+                            Layout.alignment: root._stackedDial ? Qt.AlignHCenter : Qt.AlignLeft
+                            Layout.topMargin: root._tallLayout ? 6 : 4
+                            spacing: root._tallLayout ? 6 : 5
 
                             Repeater {
                                 model: Math.max(1, TimerService.cyclesBeforeLongBreak)
@@ -789,8 +858,8 @@ Item {
                                     required property int index
                                     readonly property bool current: index === TimerService.pomodoroCycle
                                     readonly property bool complete: index < TimerService.pomodoroCycle
-                                    width: current ? 15 : 5
-                                    height: 5
+                                    width: current ? (root._tallLayout ? 18 : 15) : (root._tallLayout ? 6 : 5)
+                                    height: root._tallLayout ? 6 : 5
                                     radius: height / 2
                                     color: current || complete ? root._colAccent : root._colTrack
 
@@ -813,34 +882,11 @@ Item {
                 }
             }
 
-            // Study-Tracker Linear Progress Bar
-            Rectangle {
-                id: progressTrack
-                visible: !root.settingsOpen && !root.tagMenuOpen
-                Layout.fillWidth: true
-                Layout.maximumWidth: Math.max(0, flickable.width - 32)
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
-                Layout.bottomMargin: root.compactMode ? 4 : 8
-                implicitHeight: 5
-                radius: 2.5
-                color: root._colTrack
-
-                Rectangle {
-                    id: progressFill
-                    height: parent.height
-                    radius: parent.radius
-                    width: Math.max(0, Math.min(parent.width,
-                        parent.width * (1.0 - focusDial.displayProgress)))
-                    color: TimerService.pomodoroBreak
-                        ? Appearance.colors.colSecondary
-                        : root._colAccent
-
-                    Behavior on width {
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-                    }
-                }
+            // Center settings card vertically when opened on a tall Edgebar
+            Item {
+                visible: settingsCard.active
+                Layout.fillHeight: true
+                Layout.minimumHeight: 0
             }
 
             // The compact settings face uses the dial's space in this viewport.
@@ -848,16 +894,18 @@ Item {
                 id: settingsCard
                 readonly property bool active: root.settingsOpen && !TimerService.pomodoroRunning && !root.tagMenuOpen
                 readonly property real fullCardHeight: settingsInner.implicitHeight + (root.compactMode ? 12 : 16)
+                readonly property real maxAvailableHeight: Math.max(
+                    120,
+                    flickable.height - (22 + root._topPadding + 8) - (root._controlHeight + root._bottomPadding + 8))
                 readonly property real targetHeight: active
                     ? (root.compactMode
-                        ? Math.min(fullCardHeight, Math.max(128, flickable.height - 64))
+                        ? Math.min(fullCardHeight, maxAvailableHeight)
                         : fullCardHeight)
                     : 0
                 visible: active || Layout.maximumHeight > 0
-                Layout.fillWidth: true
-                Layout.maximumWidth: Math.max(0, flickable.width - 16)
-                Layout.leftMargin: 8
-                Layout.rightMargin: 8
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: root._contentWidth
+                Layout.maximumWidth: root._contentWidth
                 Layout.topMargin: active ? 2 : 0
                 Layout.bottomMargin: active ? (root.compactMode ? 4 : 6) : 0
                 Layout.preferredHeight: targetHeight
@@ -916,6 +964,7 @@ Item {
                                     readonly property color _presetActiveInk: ColorUtils.ensureReadable(Appearance.colors.colOnPrimary, root._colAccent, 5.0)
                                     toggled: isPresetActive
                                     Layout.fillWidth: true
+                                    Layout.preferredWidth: 1
                                     Layout.minimumWidth: 0
                                     implicitHeight: root.compactMode ? 25 : 28
                                     buttonRadius: Appearance.rounding.small
@@ -1050,9 +1099,11 @@ Item {
                                         objectName: "pomodoroStyleChip_" + modelData
                                         toggled: selected
                                         Layout.fillWidth: true
+                                        Layout.preferredWidth: 1
+                                        Layout.minimumWidth: 0
                                         implicitHeight: 28
                                         buttonRadius: Appearance.rounding.small
-                                        colBackground: root._colLayer
+                                        colBackground: Appearance.colors.colLayer1
                                         colBackgroundHover: root._colLayerHover
                                         colBackgroundToggled: root._colAccent
                                         colBackgroundToggledHover: Qt.lighter(root._colAccent, 1.08)
@@ -1061,6 +1112,8 @@ Item {
                                         contentItem: StyledText {
                                             horizontalAlignment: Text.AlignHCenter
                                             verticalAlignment: Text.AlignVCenter
+                                            elide: Text.ElideRight
+                                            maximumLineCount: 1
                                             text: TimerService.visualStyleLabel(modelData)
                                             font.pixelSize: Appearance.font.pixelSize.smaller
                                             font.weight: selected ? Font.DemiBold : Font.Medium
@@ -1074,36 +1127,70 @@ Item {
                 }
             }
 
+            // Balance vertical centering for settings card on tall Edgebar
+            Item {
+                visible: settingsCard.active
+                Layout.fillHeight: true
+                Layout.minimumHeight: 0
+            }
+
             // Start/Pause + Reset + Skip + Customize buttons
             RowLayout {
                 id: controlsRow
-                readonly property bool tightControls: flickable.width > 0 && flickable.width < 320
+                objectName: "pomodoroControlsRow"
+                readonly property bool tightControls: root._tightWidth
+                readonly property int _btnFontSize: tightControls
+                    ? Math.min(Appearance.font.pixelSize.normal, 15)
+                    : Appearance.font.pixelSize.normal
+                readonly property real _iconBtnSize: tightControls ? 32 : root._controlHeight
+                readonly property real _desiredStartW: Math.max(
+                    tightControls ? 74 : (root._wideLayout ? 102 : 88),
+                    Math.ceil(startButtonLabel.implicitWidth) + (tightControls ? 18 : 24))
+                readonly property real _desiredResetW: Math.max(
+                    tightControls ? 64 : (root._wideLayout ? 86 : 78),
+                    Math.ceil(resetButtonLabel.implicitWidth) + (tightControls ? 16 : 22))
+                readonly property real _availTextBtnsW: Math.max(
+                    80, root._contentWidth - _iconBtnSize * 2 - spacing * 3)
+                readonly property real _textScale: (_desiredStartW + _desiredResetW) > _availTextBtnsW
+                    ? (_availTextBtnsW / (_desiredStartW + _desiredResetW))
+                    : 1.0
+                readonly property real _startW: Math.floor(_desiredStartW * _textScale)
+                readonly property real _resetW: Math.floor(_desiredResetW * _textScale)
+                readonly property real _buttonsTotalWidth: _startW + _resetW + _iconBtnSize * 2
+                readonly property bool _canMirrorCustomize:
+                    (root._contentWidth - _buttonsTotalWidth - spacing * 6) >= _iconBtnSize
                 visible: !root.tagMenuOpen
-                Layout.fillWidth: true
-                Layout.maximumWidth: Math.max(0, flickable.width - 12)
-                Layout.leftMargin: 6
-                Layout.rightMargin: 6
-                spacing: tightControls ? 6 : 8
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: root._contentWidth
+                Layout.maximumWidth: root._contentWidth
+                Layout.topMargin: 2
+                Layout.bottomMargin: root._bottomPadding
+                spacing: tightControls ? 5 : (root._wideLayout ? 10 : 8)
 
-                // Mirror the trailing Customize button when width permits so
-                // Start / Reset / Skip stay centered under the focus dial without
-                // overflowing narrow (280px) popups.
+                // Mirror the trailing Customize button only when full symmetry
+                // fits cleanly; on narrow (280px) popups, center the entire
+                // 4-button row evenly with zero lopsided left offset.
                 Item {
-                    Layout.preferredWidth: Math.max(0, Math.min(
-                        customizeButton.implicitWidth,
-                        flickable.width - (startButton.implicitWidth + resetButton.implicitWidth + skipButton.implicitWidth + customizeButton.implicitWidth + (controlsRow.tightControls ? 48 : 60))))
+                    visible: controlsRow._canMirrorCustomize
+                    Layout.preferredWidth: controlsRow._iconBtnSize
                     Layout.preferredHeight: 1
                 }
 
-                Item { Layout.fillWidth: true }
+                Item { Layout.fillWidth: true; Layout.minimumWidth: 0 }
 
                 RippleButton {
                     id: startButton
+                    objectName: "pomodoroStartButton"
                     Layout.alignment: Qt.AlignVCenter
+                    leftPadding: 6
+                    rightPadding: 6
                     contentItem: StyledText {
+                        id: startButtonLabel
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Appearance.font.pixelSize.normal
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                        font.pixelSize: controlsRow._btnFontSize
                         font.weight: Font.Medium
                         text: TimerService.pomodoroRunning ? (TimerService.pomodoroPaused ? Translation.tr("Resume") : Translation.tr("Pause")) : (TimerService.pomodoroSecondsLeft === TimerService.focusTime) ? Translation.tr("Start") : Translation.tr("Resume")
                         color: TimerService.pomodoroRunning && !TimerService.pomodoroPaused
@@ -1116,8 +1203,8 @@ Item {
                             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
                         }
                     }
-                    implicitHeight: root.compactMode ? 34 : 35
-                    implicitWidth: controlsRow.tightControls ? 74 : 88
+                    implicitHeight: root._controlHeight
+                    implicitWidth: controlsRow._startW
                     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                     font.pixelSize: Appearance.font.pixelSize.larger
                     onClicked: TimerService.togglePomodoro()
@@ -1140,9 +1227,10 @@ Item {
 
                 RippleButton {
                     id: resetButton
+                    objectName: "pomodoroResetButton"
                     Layout.alignment: Qt.AlignVCenter
-                    implicitHeight: root.compactMode ? 34 : 35
-                    implicitWidth: controlsRow.tightControls ? 66 : 78
+                    implicitHeight: root._controlHeight
+                    implicitWidth: controlsRow._resetW
                     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
 
                     onClicked: {
@@ -1170,10 +1258,15 @@ Item {
                             color: root._colLayer
                         }
                         StyledText {
+                            id: resetButtonLabel
                             anchors.fill: parent
+                            anchors.leftMargin: 6
+                            anchors.rightMargin: 6
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
-                            font.pixelSize: Appearance.font.pixelSize.normal
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
+                            font.pixelSize: controlsRow._btnFontSize
                             font.weight: Font.Medium
                             text: Translation.tr("Reset")
                             color: !resetButton.enabled
@@ -1187,9 +1280,10 @@ Item {
 
                 RippleButton {
                     id: skipButton
+                    objectName: "pomodoroSkipButton"
                     Layout.alignment: Qt.AlignVCenter
-                    implicitWidth: root.compactMode ? 34 : 35
-                    implicitHeight: root.compactMode ? 34 : 35
+                    implicitWidth: controlsRow._iconBtnSize
+                    implicitHeight: root._controlHeight
                     buttonRadius: height / 2
                     colBackground: root._colLayer
                     colBackgroundHover: root._colLayerHover
@@ -1212,13 +1306,18 @@ Item {
                     }
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    visible: controlsRow._canMirrorCustomize
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                }
 
                 RippleButton {
                     id: customizeButton
+                    objectName: "pomodoroCustomizeButton"
                     Layout.alignment: Qt.AlignVCenter
-                    implicitWidth: root.compactMode ? 34 : 36
-                    implicitHeight: root.compactMode ? 34 : 36
+                    implicitWidth: controlsRow._iconBtnSize
+                    implicitHeight: root._controlHeight
                     buttonRadius: height / 2
                     enabled: !TimerService.pomodoroRunning
                     toggled: root.settingsOpen
@@ -1245,6 +1344,12 @@ Item {
                     StyledToolTip {
                         text: Translation.tr("Customize timer")
                     }
+                }
+
+                Item {
+                    visible: !controlsRow._canMirrorCustomize
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                 }
             }
         }

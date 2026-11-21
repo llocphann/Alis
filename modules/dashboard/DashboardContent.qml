@@ -22,7 +22,9 @@ Item {
     property bool waffleMenu: false
     property bool warmContent: false
     property bool presentationActive: GlobalStates.dashboardOpen || GlobalStates.overviewOpen
-    readonly property bool contentReady: {
+    property bool _firstSurfaceReady: false
+    property bool _surfaceCompleted: false
+    readonly property bool _rawContentReady: {
         if (root.currentPageId === "dashboard")
             return dashboardCanvas.widgetsReady
         if (root.currentPageId === "music")
@@ -36,6 +38,13 @@ Item {
         const index = root.customTabs.findIndex(tab => tab.id === root.currentPageId)
         return index < 0 || (customPagesRepeater.itemAt(index)?.pageReady ?? true)
     }
+    function _syncFirstSurfaceReady(): void {
+        if (root._surfaceCompleted && root._rawContentReady && (root.presentationActive || root.warmContent))
+            root._firstSurfaceReady = true
+    }
+    on_RawContentReadyChanged: root._syncFirstSurfaceReady()
+    onWarmContentChanged: if (warmContent) root._syncFirstSurfaceReady()
+    readonly property bool contentReady: _firstSurfaceReady || _rawContentReady
 
     readonly property bool musicEnabled: Config.options?.dashboard?.music?.enable ?? true
     readonly property bool spacedRepetitionPluginManaged: AlisIntergration.available
@@ -392,8 +401,10 @@ Item {
     }
     onPresentationActiveChanged: {
         root._touchDashboardTabTimestamp(root.currentPageId)
-        if (root.presentationActive) root.sessionShown()
-        else {
+        if (root.presentationActive) {
+            root.sessionShown()
+            root._syncFirstSurfaceReady()
+        } else {
             // A hidden Dashboard may be unloaded before a deferred Timer fires.
             root.flushPageSelection()
             root._pendingPageId = ""
@@ -419,6 +430,8 @@ Item {
             root.selectPageAsync(root.pageIds.includes(legacy) ? legacy : root.pageIds[0])
         }
         if (root.presentationActive) root.sessionShown()
+        root._surfaceCompleted = true
+        root._syncFirstSurfaceReady()
     }
     Component.onDestruction: {
         if (root._sessionWasVisible) {
@@ -965,6 +978,40 @@ Item {
                         enabled: root.navigationAllowed
                         onWheel: event => root.handlePageWheel(event, true)
                     }
+                }
+
+                AlisLoadingScreen {
+                    id: dashboardTabLoadingScreen
+                    objectName: "dashboardTabLoadingScreen"
+                    anchors.fill: parent
+                    z: 90
+                    readonly property string loadingTargetId: root._pendingPageId.length > 0
+                        ? root._pendingPageId : root.currentPageId
+                    readonly property bool tabLoading: root.presentationActive
+                        && ((root._pendingPageId.length > 0 && !root.pendingPageReady)
+                            || (!root._rawContentReady && (!root.embeddedSurface || root._firstSurfaceReady)))
+                    loading: tabLoading
+                    title: {
+                        const tid = loadingTargetId
+                        if (tid === "music") return Translation.tr("Local Music")
+                        if (tid === "weeklyPlanner") return Translation.tr("Planner")
+                        if (tid === "spacedRepetition") return Translation.tr("Spaced Repetition")
+                        if (tid === "exercisesTracker") return Translation.tr("Exercises")
+                        if (tid === "dashboard") return Translation.tr("Dashboard")
+                        const custom = root.customTabs.find(t => t.id === tid)
+                        return custom ? String(custom.name ?? Translation.tr("Dashboard")) : Translation.tr("Dashboard")
+                    }
+                    icon: {
+                        const tid = loadingTargetId
+                        if (tid === "music") return "music_note"
+                        if (tid === "weeklyPlanner") return "calendar_month"
+                        if (tid === "spacedRepetition") return "school"
+                        if (tid === "exercisesTracker") return "fitness_center"
+                        if (tid === "dashboard") return "dashboard"
+                        return "dashboard_customize"
+                    }
+                    fillSurface: true
+                    backdropOpacity: 0.86
                 }
             }
         }

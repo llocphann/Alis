@@ -539,7 +539,7 @@ Loader {
                                         Component {
                                             id: iconImageComp
                                             IconImage {
-                                                source: Quickshell.iconPath(menuBtn.modelData.iconName ?? "", "application-x-executable")
+                                                source: AppSearch.resolveIcon(menuBtn.modelData.iconName ?? "", "application-x-executable")
                                                 implicitSize: Appearance.font.pixelSize.normal
                                             }
                                         }

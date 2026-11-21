@@ -86,15 +86,22 @@ Item {
 
             PillTabBar {
                 id: tabBar
+                objectName: "timerModeTabBar"
                 anchors.horizontalCenter: parent.horizontalCenter
                 // Compact corner mode gets enough width for Pomodoro/Timer/
-                // Stopwatch without changing the popup's outer dimensions.
+                // Stopwatch without changing the popup's outer dimensions,
+                // scaling smoothly across customized Edgebar widths.
                 readonly property real _baseMaxWidth: root.compactMode ? 296 : 260
                 readonly property real _pinnedAvailableWidth:
                     parent.width - (pinButton.width + 6) * 2
-                width: Math.max(root.compactMode ? 210 : 150, Math.min(
+                readonly property real _availableWidth:
+                    Math.max(0, root.showPinButton ? _pinnedAvailableWidth : parent.width)
+                readonly property real _targetWidth: Math.max(
                     _baseMaxWidth + (root.showPinButton ? 12 : 16),
-                    root.showPinButton ? _pinnedAvailableWidth : parent.width))
+                    Math.min(440, Math.round(parent.width * 0.78)))
+                width: Math.min(_availableWidth, Math.max(
+                    Math.min(root.compactMode ? 210 : 150, _availableWidth),
+                    _targetWidth))
                 pillHeight: root.compactMode ? 28 : 30
                 currentIndex: root.currentTab
                 tabs: root.tabButtonList.map(item => ({

@@ -1,6 +1,8 @@
+import qs
 import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
+import Quickshell
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -22,40 +24,52 @@ MouseArea {
     }
     property bool vertical: false
     property real contentRotation: 0
+    property bool editPreview: GlobalStates.abyssEditing
+        && (Config.options?.panelFamily ?? "abyss") === "abyss"
+        && (GlobalStates.abyssEditorTargetOutput === ""
+            || !root.QsWindow.window?.screen?.name
+            || GlobalStates.abyssEditorTargetOutput === root.QsWindow.window.screen.name)
 
-    readonly property bool contentAvailable: ShellUpdates.showUpdate || ShellUpdates.isUpdating
+    readonly property bool liveContentAvailable: ShellUpdates.showUpdate || ShellUpdates.isUpdating
+    readonly property bool showEditPreview: editPreview && !liveContentAvailable
+    readonly property bool contentAvailable: liveContentAvailable || showEditPreview
+    readonly property real _targetImplicitWidth: root.contentAvailable
+        ? (root.vertical ? 34 * Appearance.sizes.barModuleScale : pill.width) : 0
+    property real _animatedImplicitWidth: _targetImplicitWidth
+    Behavior on _animatedImplicitWidth {
+        // No lingering empty slot while the update status disappears.
+        // Edit-mode sample preview snaps immediately so naturalSpan is ready on frame 0.
+        enabled: Appearance.animationsEnabled && root.contentAvailable && !root.showEditPreview
+        animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+    }
     visible: root.contentAvailable
     implicitWidth: root.contentAvailable
-        ? (root.vertical ? 34 * Appearance.sizes.barModuleScale : pill.width) : 0
+        ? (root.showEditPreview ? _targetImplicitWidth : _animatedImplicitWidth) : 0
     implicitHeight: root.vertical
         ? (root.contentAvailable ? 34 * Appearance.sizes.barModuleScale : 0)
         : Appearance.sizes.barHeight
 
-    Behavior on implicitWidth {
-        // No lingering empty slot while the update status disappears.
-        enabled: Appearance.animationsEnabled && root.contentAvailable
-        animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
-    }
-
-    hoverEnabled: true
-    cursorShape: ShellUpdates.isUpdating ? Qt.ArrowCursor : Qt.PointingHandCursor
+    hoverEnabled: !root.showEditPreview
+    cursorShape: (root.showEditPreview || ShellUpdates.isUpdating) ? Qt.ArrowCursor : Qt.PointingHandCursor
     acceptedButtons: Qt.LeftButton | Qt.RightButton
-    activeFocusOnTab: root.visible && !ShellUpdates.isUpdating
+    activeFocusOnTab: root.visible && !ShellUpdates.isUpdating && !root.showEditPreview
 
     Accessible.role: Accessible.Button
     Accessible.name: ShellUpdates.isUpdating
         ? Translation.tr("Updating Alis") : Translation.tr("Alis update available")
-    Accessible.focusable: root.visible && !ShellUpdates.isUpdating
+    Accessible.focusable: root.visible && !ShellUpdates.isUpdating && !root.showEditPreview
 
     readonly property color accentColor: Appearance.colors.colPrimary
 
     function activatePrimary(): void {
+        if (root.showEditPreview)
+            return
         if (!ShellUpdates.isUpdating)
             ShellUpdates.openOverlay()
     }
 
     Keys.onPressed: event => {
-        if (ShellUpdates.isUpdating || event.isAutoRepeat
+        if (root.showEditPreview || ShellUpdates.isUpdating || event.isAutoRepeat
                 || (event.key !== Qt.Key_Return
                     && event.key !== Qt.Key_Enter
                     && event.key !== Qt.Key_Space))
@@ -65,7 +79,7 @@ MouseArea {
     }
 
     onClicked: (mouse) => {
-        if (ShellUpdates.isUpdating) return;
+        if (root.showEditPreview || ShellUpdates.isUpdating) return;
 
         if (mouse.button === Qt.RightButton) {
             ShellUpdates.dismiss()
@@ -136,31 +150,43 @@ MouseArea {
 
             SequentialAnimation on opacity {
                 loops: Animation.Infinite
-                running: !ShellUpdates.isUpdating && root.containsMouse
+                running: !ShellUpdates.isUpdating && !root.showEditPreview && root.containsMouse
                     && root.visible && (root.Window.window?.visible ?? true)
                 NumberAnimation { to: 0.5; duration: 800; easing.type: Easing.InOutSine }
                 NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
             }
         }
 
-        StyledText {
-            visible: !root.vertical && text !== ""
-            text: {
-                if (ShellUpdates.isUpdating) {
-                    if (ShellUpdates.updateStep > 0 && ShellUpdates.updateTotalSteps > 0) {
-                        return ShellUpdates.updateStep + "/" + ShellUpdates.updateTotalSteps
-                    }
-                    return "" // Just spinner if no steps known
-                }
-                return ShellUpdates.commitsBehind > 0
-                    ? ShellUpdates.commitsBehind.toString()
-                    : "!"
-            }
-            font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * Appearance.sizes.barModuleScale)
-            font.weight: Font.DemiBold
-            rotation: -root.contentRotation
-            color: root.accentColor
+        Item {
+            readonly property bool verticalContent: Math.abs(root.contentRotation) === 90
+            visible: !root.vertical && updateBadgeText.text !== ""
             Layout.alignment: Qt.AlignVCenter
+            implicitWidth: verticalContent ? updateBadgeText.implicitHeight : updateBadgeText.implicitWidth
+            implicitHeight: verticalContent ? updateBadgeText.implicitWidth : updateBadgeText.implicitHeight
+
+            StyledText {
+                id: updateBadgeText
+                objectName: "shellUpdateBadgeText"
+                anchors.centerIn: parent
+                horizontalAlignment: Text.AlignHCenter
+                text: {
+                    if (ShellUpdates.isUpdating) {
+                        if (ShellUpdates.updateStep > 0 && ShellUpdates.updateTotalSteps > 0) {
+                            return ShellUpdates.updateStep + "/" + ShellUpdates.updateTotalSteps
+                        }
+                        return "" // Just spinner if no steps known
+                    }
+                    if (root.showEditPreview)
+                        return "3"
+                    return ShellUpdates.commitsBehind > 0
+                        ? ShellUpdates.commitsBehind.toString()
+                        : "!"
+                }
+                font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * Appearance.sizes.barModuleScale)
+                font.weight: Font.DemiBold
+                rotation: -root.contentRotation
+                color: root.accentColor
+            }
         }
     }
 
@@ -168,6 +194,7 @@ MouseArea {
     StyledPopup {
         id: updatePopup
         hoverTarget: root
+        hoverActivates: !root.showEditPreview
         alternativeVisibleCondition: root.activeFocus && !root._pointerFocused
 
         // Wrapper caps implicitWidth so StyledPopup doesn't grow unbounded

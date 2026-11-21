@@ -214,6 +214,7 @@ Scope {
             // the widget tree mounted and hide only its paint after the exit
             // slide so long-idle reopens reuse the same live component state.
             active: true
+            asynchronous: (Quickshell.env("QT_QUICK_BACKEND") !== "software") && status !== Loader.Ready
             visible: root._contentPresented
 
             // Keep the top-level Dashboard out of an extra FBO during motion.
@@ -295,6 +296,7 @@ Scope {
 
             sourceComponent: Item {
                 id: standaloneDashboardHost
+                visible: contentLoader.status === Loader.Ready
 
                 property alias editMode: standaloneContent.editMode
                 readonly property bool tabNamingActive: standaloneContent.tabNamingActive
@@ -310,7 +312,7 @@ Scope {
                     // Keep media/equalizer presentation alive through the full
                     // exit slide; _contentPresented drops only after the card is
                     // no longer visible.
-                    presentationActive: root._contentPresented
+                    presentationActive: root._contentPresented && contentLoader.status === Loader.Ready
                     x: 0
                     y: (standaloneEditToolbarLoader.item?.visible ?? false)
                         ? Math.max(0, (standaloneEditToolbarLoader.item?.height ?? 0) - 1)
@@ -369,6 +371,60 @@ Scope {
                     }
                 }
             }
+        }
+
+        // Immediate cold-open loading shell for standalone / Waffle Dashboard
+        // while contentLoader is asynchronously incubating.
+        Rectangle {
+            id: dashboardLoadingShell
+            objectName: "standaloneDashboardLoadingShell"
+            readonly property bool activeLoading: root._contentPresented && contentLoader.status !== Loader.Ready
+            visible: activeLoading
+            z: 2
+            x: contentLoader.x
+            y: contentLoader.y
+            width: contentLoader.width
+            height: contentLoader.height
+            clip: true
+            color: root.isWaffle ? Waffle.Looks.colors.bgPanelBody : Appearance.colors.colLayer0
+            radius: root.isWaffle ? Waffle.Looks.radius.large : Appearance.rounding.large
+            border.width: root.isWaffle ? 1 : 0
+            border.color: root.isWaffle ? Waffle.Looks.colors.bg2Border : "transparent"
+            transform: Translate { y: contentLoader.panelTranslateY }
+
+            AlisLoadingScreen {
+                id: standaloneLoadingScreen
+                objectName: "standaloneDashboardLoadingScreen"
+                anchors.fill: parent
+                loading: dashboardLoadingShell.activeLoading
+                fillSurface: !root.isWaffle
+                surfaceRadius: dashboardLoadingShell.radius
+                title: {
+                    const pid = GlobalStates.dashboardPageId
+                    if (pid === "music") return Translation.tr("Local Music")
+                    if (pid === "weeklyPlanner") return Translation.tr("Planner")
+                    if (pid === "spacedRepetition") return Translation.tr("Spaced Repetition")
+                    if (pid === "exercisesTracker") return Translation.tr("Exercises")
+                    return Translation.tr("Dashboard")
+                }
+                icon: {
+                    const pid = GlobalStates.dashboardPageId
+                    if (pid === "music") return "music_note"
+                    if (pid === "weeklyPlanner") return "calendar_month"
+                    if (pid === "spacedRepetition") return "school"
+                    if (pid === "exercisesTracker") return "fitness_center"
+                    return "dashboard"
+                }
+            }
+        }
+
+        Shortcut {
+            id: loadingEscapeShortcut
+            sequences: ["Escape"]
+            context: Qt.WindowShortcut
+            autoRepeat: false
+            enabled: GlobalStates.dashboardOpen && contentLoader.status !== Loader.Ready
+            onActivated: panelRoot.hide()
         }
     }
 

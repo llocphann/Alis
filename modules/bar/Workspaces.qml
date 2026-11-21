@@ -613,9 +613,7 @@ Item {
                     }
                     readonly property string biggestWindowAppClass: !biggestWindow
                         ? ""
-                        : (CompositorService.isNiri
-                            ? String(biggestWindow.app_id || biggestWindow.appId || "")
-                            : String(biggestWindow.class || ""))
+                        : AppSearch.resolveWindowIdentity(biggestWindow)
                     property var mainAppIconSource: biggestWindowAppClass.length > 0
                         ? AppSearch.getIconSource(biggestWindowAppClass)
                         : ""
@@ -892,7 +890,7 @@ Item {
                     implicitWidth: workspaceButtonWidth
                     implicitHeight: workspaceButtonWidth
                     
-                    property string appIconSource: AppSearch.getIconSource(columnButton.modelData?.app_id ?? "")
+                    property string appIconSource: AppSearch.getIconSource(AppSearch.resolveWindowIdentity(columnButton.modelData))
                     property bool isActive: columnButton.index === root.currentWindowIndex
                     property color dotColor: isActive ? root.workspaceOnPrimary : root.workspaceOnSecondaryContainer
 

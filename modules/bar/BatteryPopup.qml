@@ -25,6 +25,7 @@ StyledPopup {
         }
     }
 
+    Component.onCompleted: root._syncTelemetryLease()
     onPresentationActiveChanged: root._syncTelemetryLease()
     Component.onDestruction: {
         if (root._subscribedTelemetry) {
@@ -126,11 +127,16 @@ StyledPopup {
         return parts.length > 0 ? parts.join(" · ") : Translation.tr("Hardware cell")
     }
 
-    ColumnLayout {
-        id: columnLayout
-        anchors.centerIn: parent
-        implicitWidth: 288
-        spacing: 8
+    Item {
+        id: popupBody
+        objectName: "batteryPopupContent"
+        implicitWidth: 292
+        implicitHeight: columnLayout.implicitHeight
+
+        ColumnLayout {
+            id: columnLayout
+            anchors.fill: parent
+            spacing: 8
 
         // ─── Hero Charge Card (Layer 1) ───
         Rectangle {
@@ -540,6 +546,7 @@ StyledPopup {
                     }
                 }
             }
+        }
         }
     }
 }

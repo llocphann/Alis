@@ -2,6 +2,8 @@ import QtQuick
 import Quickshell
 import qs
 import qs.services
+import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.abyss
 
 Item {
@@ -11,7 +13,10 @@ Item {
     property bool _everActivated: false
     readonly property bool _participantActive: Boolean(participant && (participant.open || (participant.progress ?? 0) > 0.001))
     readonly property bool _warmupRequested: Boolean(participant?.backgroundPreload)
-    readonly property bool contentReady: !_warmupRequested || _participantActive || workspaceLoader.status === Loader.Ready
+    readonly property bool _hostOwnsLoadingSurface: Boolean(participant?.showLoadingSurface)
+    readonly property bool contentReady: _hostOwnsLoadingSurface
+        ? (workspaceLoader.status === Loader.Ready || (!_participantActive && !_warmupRequested))
+        : (!_warmupRequested || _participantActive || workspaceLoader.status === Loader.Ready)
     readonly property string _targetSource: AlisIntergration.nexusEnabled ? AlisIntergration.nexusWorkspaceSource() : ""
 
     function _syncWorkspaceSource(): void {
@@ -94,5 +99,15 @@ Item {
                 }
             }
         }
+    }
+
+    AlisLoadingScreen {
+        objectName: "nexusWorkspaceLoadingScreen"
+        anchors.fill: parent
+        z: 30
+        loading: root._participantActive && !root._hostOwnsLoadingSurface && workspaceLoader.status !== Loader.Ready
+        title: Translation.tr("Nexus")
+        icon: "hub"
+        fillSurface: false
     }
 }

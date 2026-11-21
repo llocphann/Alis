@@ -1,4 +1,5 @@
 module qs.modules.abyss.bar
 AbyssBar 1.0 AbyssBar.qml
 AbyssBarModule 1.0 AbyssBarModule.qml
+AbyssCornerWrapContent 1.0 AbyssCornerWrapContent.qml
 AbyssWorkspaces 1.0 AbyssWorkspaces.qml

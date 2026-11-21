@@ -59,7 +59,7 @@ Button {
                 id: appIcon
                 Layout.leftMargin: Looks.radius.large - root.padding + Looks.dp(2)
                 Layout.alignment: Qt.AlignVCenter
-                iconName: root.toplevel ? AppSearch.guessIcon(root.toplevel.appId) : ""
+                iconName: root.toplevel ? AppSearch.guessIcon(AppSearch.resolveWindowIdentity(root.toplevel)) : ""
                 implicitSize: Looks.dp(16)
             }
 
@@ -100,7 +100,7 @@ Button {
                 WAppIcon {
                     anchors.centerIn: parent
                     visible: !previewImage.hasPreview
-                    iconName: root.toplevel ? AppSearch.guessIcon(root.toplevel.appId) : ""
+                    iconName: root.toplevel ? AppSearch.guessIcon(AppSearch.resolveWindowIdentity(root.toplevel)) : ""
                     implicitSize: Looks.dp(64)
                     opacity: 0.5
                 }

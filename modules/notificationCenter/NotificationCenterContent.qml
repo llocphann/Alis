@@ -18,6 +18,9 @@ Item {
     readonly property bool searchVisible:
         !root.popupPresentation && Notifications.list.length > 3
 
+    readonly property bool compactHeight: root.height > 0 && root.height < 260
+    readonly property bool narrowWidth: root.width > 0 && root.width < 320
+
     signal openCenterRequested()
     signal searchFocusRequested()
     signal externalNavigationRequested()
@@ -34,11 +37,11 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 10
+        spacing: root.compactHeight ? 6 : 10
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: root.narrowWidth ? 6 : 8
 
             MaterialSymbol {
                 text: Notifications.silent ? "notifications_paused" : "notifications"
@@ -48,6 +51,7 @@ Item {
 
             ColumnLayout {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 spacing: 0
 
                 StyledText {
@@ -56,6 +60,8 @@ Item {
                     color: Appearance.colors.colOnLayer1
                     font.pixelSize: Appearance.font.pixelSize.small
                     font.weight: Font.DemiBold
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
                 }
 
                 StyledText {
@@ -67,6 +73,8 @@ Item {
                     color: Appearance.colors.colOnLayer1
                     opacity: 0.78
                     font.pixelSize: Appearance.font.pixelSize.smallest
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
                 }
             }
 
@@ -80,12 +88,14 @@ Item {
                 enabled: Notifications.unread > 0
                 onClicked: Notifications.markAllRead()
 
-                contentItem: MaterialSymbol {
-                    anchors.centerIn: parent
-                    text: "done_all"
-                    iconSize: 17
-                    color: parent.enabled
-                        ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
+                contentItem: Item {
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "done_all"
+                        iconSize: 17
+                        color: Notifications.unread > 0
+                            ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
+                    }
                 }
 
                 StyledToolTip { text: Translation.tr("Mark all as read") }
@@ -101,11 +111,13 @@ Item {
                 colRipple: Appearance.colors.colLayer1Active
                 onClicked: root.openCenterRequested()
 
-                contentItem: MaterialSymbol {
-                    anchors.centerIn: parent
-                    text: "open_in_new"
-                    iconSize: 17
-                    color: Appearance.colors.colOnLayer1
+                contentItem: Item {
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "open_in_new"
+                        iconSize: 17
+                        color: Appearance.colors.colOnLayer1
+                    }
                 }
 
                 StyledToolTip { text: Translation.tr("Open notification center") }
@@ -154,8 +166,10 @@ Item {
 
             MaterialPlaceholderMessage {
                 anchors.centerIn: parent
-                maximumWidth: Math.min(280, parent.width - 24)
-                compact: true
+                maximumWidth: Math.min(
+                    Math.max(220, Math.round(parent.width * 0.72)),
+                    Math.max(120, parent.width - 24))
+                compact: root.popupPresentation || root.compactHeight || root.narrowWidth
                 shown: Notifications.list.length === 0
                     || (root.searchVisible && searchField.text.trim().length > 0
                         && listview.count === 0)
@@ -200,15 +214,17 @@ Item {
                     : Appearance.colors.colLayer2Active
                 onClicked: Notifications.toggleSilent()
 
-                contentItem: MaterialSymbol {
-                    anchors.centerIn: parent
-                    text: Notifications.silent
-                        ? "notifications_active" : "notifications_off"
-                    iconSize: root.popupPresentation ? 17 : 20
-                    fill: 1
-                    color: Notifications.silent
-                        ? Appearance.colors.colOnPrimaryContainer
-                        : Appearance.colors.colOnLayer2
+                contentItem: Item {
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: Notifications.silent
+                            ? "notifications_active" : "notifications_off"
+                        iconSize: root.popupPresentation ? 17 : 20
+                        fill: 1
+                        color: Notifications.silent
+                            ? Appearance.colors.colOnPrimaryContainer
+                            : Appearance.colors.colOnLayer2
+                    }
                 }
 
                 StyledToolTip { text: notificationModeButton.buttonText }
@@ -226,12 +242,14 @@ Item {
                 enabled: Notifications.list.length > 0
                 onClicked: Notifications.discardAllNotifications()
 
-                contentItem: MaterialSymbol {
-                    anchors.centerIn: parent
-                    text: "delete_sweep"
-                    iconSize: root.popupPresentation ? 17 : 20
-                    fill: 1
-                    color: Appearance.colors.colOnLayer2
+                contentItem: Item {
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "delete_sweep"
+                        iconSize: root.popupPresentation ? 17 : 20
+                        fill: 1
+                        color: Appearance.colors.colOnLayer2
+                    }
                 }
 
                 StyledToolTip { text: clearAllButton.buttonText }

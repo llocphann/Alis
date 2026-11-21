@@ -363,6 +363,7 @@ DashCard {
                 width: tabShell.halfWidth - tabShell.inset
                 height: tabShell.innerHeight
                 z: 4
+                clip: true
 
                 Row {
                     id: leftTabLabel
@@ -381,8 +382,13 @@ DashCard {
 
                     StyledText {
                         anchors.verticalCenter: parent.verticalCenter
+                        width: Math.min(implicitWidth, Math.max(0,
+                            tabShell.halfWidth - tabShell.inset - tabShell.badgeSize
+                                - tabShell.tabIconSize - tabShell.labelSpacing - 20))
                         text: Translation.tr("Unfinished")
-                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.pixelSize: root.narrowLayout
+                            ? Appearance.font.pixelSize.smaller
+                            : Appearance.font.pixelSize.small
                         font.weight: Font.Medium
                         color: root.currentTab === 0
                             ? Appearance.colors.colOnPrimaryContainer
@@ -422,6 +428,7 @@ DashCard {
                 width: tabShell.halfWidth - tabShell.inset
                 height: tabShell.innerHeight
                 z: 4
+                clip: true
 
                 Row {
                     id: rightTabLabel
@@ -440,8 +447,13 @@ DashCard {
 
                     StyledText {
                         anchors.verticalCenter: parent.verticalCenter
+                        width: Math.min(implicitWidth, Math.max(0,
+                            tabShell.halfWidth - tabShell.inset - tabShell.badgeSize
+                                - tabShell.tabIconSize - tabShell.labelSpacing - 20))
                         text: Translation.tr("Done")
-                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.pixelSize: root.narrowLayout
+                            ? Appearance.font.pixelSize.smaller
+                            : Appearance.font.pixelSize.small
                         font.weight: Font.Medium
                         color: root.currentTab === 1
                             ? Appearance.colors.colOnPrimaryContainer

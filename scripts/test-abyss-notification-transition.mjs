@@ -231,7 +231,8 @@ same('notification slide-under clip does not also fade out its contents',
     host.includes('root.pyramidPresentationActive || root.monotonicNotificationReveal')
     && host.includes('Math.min(1,root.progress*1.5)'),true);
 same('existing availability/readiness guard stays active',
-    host.includes('property real availabilityProgress: presented && ready ? 1 : 0'),true);
+    host.includes('property bool showLoadingSurface: false')
+    && host.includes('property real availabilityProgress: presented && (ready || (showLoadingSurface && GlobalStates.deferredPanelsReady)) ? 1 : 0'),true);
 same('pyramid close and reversal still track normalized external progress',
     host.includes('root.externalProgress') && host.includes('root.pyramidClosing')
     && host.includes('root.pyramidReopening'),true);

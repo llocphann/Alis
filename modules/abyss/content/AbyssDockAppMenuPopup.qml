@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
 import qs
+import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.abyss.looks
@@ -98,7 +99,7 @@ ColumnLayout {
                                 Component {
                                     id: appIcon
                                     IconImage {
-                                        source: Quickshell.iconPath(
+                                        source: AppSearch.resolveIcon(
                                             rowLoader.modelData?.iconName ?? "",
                                             "application-x-executable")
                                         implicitSize: 16

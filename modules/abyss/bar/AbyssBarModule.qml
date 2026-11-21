@@ -5,6 +5,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs.modules.bar as Shared
 import qs.modules.bar.weather
 import qs.modules.abyss.looks
@@ -22,11 +23,21 @@ Item {
     property string popupJoinedEdge: ""
     property bool vertical: false
     property bool compact: false
+    property bool editing: GlobalStates.abyssEditing
+        && (GlobalStates.abyssEditorTargetOutput === "" || GlobalStates.abyssEditorTargetOutput === root.outputName)
     // Presentation-only: false retains the hover target and user data.
     property bool showIcon: true
     signal notesEditorFocusChanged(string outputName, bool focused)
     property real contentScale: 1
     property int moduleRotation: -1
+    property bool cornerWrap: false
+    property string wrapCorner: "topLeft"
+    property real wrapThickness: 32 * Appearance.fontSizeScale
+    property real wrapArcRadius: 22
+    property bool detached: false
+    property string detachedShape: "pill"
+    property real innerSpan: 0
+    property real innerCross: 0
     readonly property int effectiveRotation: moduleRotation >= 0
         ? ((Math.round(moduleRotation / 90) * 90) % 360 + 360) % 360
         : (attachedEdge === "left" ? 270 : attachedEdge === "right" ? 90 : 0)
@@ -41,6 +52,16 @@ Item {
     }
     function unregisterCompanionPopup(popup): void {
         if (companionPopup === popup) companionPopup = null
+    }
+    readonly property bool contentAvailable: {
+        if (root.cornerWrap)
+            return cornerWrapLoader.item ? (cornerWrapLoader.item.contentAvailable ?? true)
+                : (root.editing || (root.kind !== "timer" && root.kind !== "shellUpdate"))
+        const item = feature
+        if (!item) return root.editing || (root.kind !== "timer" && root.kind !== "shellUpdate")
+        if (root.kind === "timer" || root.kind === "shellUpdate")
+            return Boolean(item.contentAvailable)
+        return true
     }
     readonly property real naturalSpan: {
         const item = feature
@@ -59,18 +80,90 @@ Item {
     signal request(string kind)
     signal hoverRequest(string kind)
     signal hoverState(string kind, bool hovered)
+    function containsPointerPoint(px: real, py: real): bool {
+        if (width <= 0 || height <= 0 || px < 0 || py < 0 || px > width || py > height)
+            return false
+        if (!root.cornerWrap)
+            return true
+        if (cornerWrapLoader.item)
+            return cornerWrapLoader.item.containsArmPoint(px, py)
+        const strip = Math.max(24, root.wrapThickness) + 3
+        const mirrorX = root.wrapCorner === "topRight" || root.wrapCorner === "bottomRight"
+        const mirrorY = root.wrapCorner === "bottomLeft" || root.wrapCorner === "bottomRight"
+        const inHorizontalArm = mirrorY ? (py >= height - strip) : (py <= strip)
+        const inVerticalArm = mirrorX ? (px >= width - strip) : (px <= strip)
+        return inHorizontalArm || inVerticalArm
+    }
+    containmentMask: QtObject {
+        function contains(point: point): bool {
+            return root.containsPointerPoint(point.x, point.y)
+        }
+    }
     HoverHandler {
         id: hoverTracker
         onHoveredChanged: root.interaction(hovered ? .35 : -.15)
     }
     PointHandler { acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton; onActiveChanged: root.interaction(active ? 1 : -.3) }
+
+    // Detached floating circle / rounded pill surface (iNiR iRiS island aesthetic).
+    // Lives strictly outside AbyssField localSurfaces so it never melts back into the screen edge.
+    StyledRectangularShadow {
+        target: detachedPillBg
+        radius: detachedPillBg.radius
+        visible: root.detached && !root.cornerWrap && root.contentAvailable
+            && !Appearance.gameModeMinimal
+            && AbyssStyle.quality !== "performance"
+            && (Config.options?.appearance?.screenEdge?.physicalShadow?.enabled ?? true)
+        blur: Math.max(4, Math.min(20, Math.round((Config.options?.appearance?.screenEdge?.physicalShadow?.size ?? 15) * 0.75)))
+        spread: 0
+        offset: Qt.vector2d(0, 2)
+        color: Qt.alpha(Appearance.m3colors.m3shadow, Math.max(0.18, Math.min(0.65, Number(Config.options?.appearance?.screenEdge?.physicalShadow?.opacity ?? 0.70) * 0.65)))
+    }
+    Rectangle {
+        id: detachedPillBg
+        objectName: "abyssDetachedPillSurface"
+        anchors.fill: parent
+        visible: root.detached && !root.cornerWrap && root.contentAvailable
+        radius: Math.min(width, height) * 0.5
+        readonly property real tonalDir: Appearance.colors.colLayer1Base.hslLightness > 0.86 ? -1.0 : 1.0
+        readonly property color steppedBase: ColorUtils.tonalStep(
+            Appearance.colors.colLayer1Base,
+            tonalDir * (root.hovered ? 0.042 : 0.022),
+            1.06)
+        color: Qt.alpha(steppedBase, Math.max(0.78, AbyssStyle.contentOpacity))
+        border.width: 1
+        border.color: root.hovered
+            ? Qt.alpha(AbyssStyle.accent, 0.56)
+            : Qt.alpha(Appearance.colors.colOutlineVariant, Appearance.m3colors.darkmode ? 0.34 : 0.42)
+        Behavior on color { enabled: AbyssStyle.motionEnabled; ColorAnimation { duration: AbyssStyle.motionFast } }
+        Behavior on border.color { enabled: AbyssStyle.motionEnabled; ColorAnimation { duration: AbyssStyle.motionFast } }
+
+        // Subtle inner hairline rim matching Abyss / iRiS floating island sheen
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: 1
+            radius: Math.max(0, parent.radius - 1)
+            color: "transparent"
+            border.width: 1
+            border.color: Qt.alpha(AbyssStyle.specular, root.hovered ? 0.22 : 0.12)
+            visible: Appearance.effectsEnabled && AbyssStyle.quality !== "performance"
+        }
+    }
+
     Loader {
         id: content
+        active: !root.cornerWrap
+        visible: !root.cornerWrap
         // Explicit real-valued centering avoids anchor-line rounding at
         // fractional extents, which moves a rotated hit rectangle by .5px.
         x: (root.width-width)/2
         y: (root.height-height)/2
-        width: (root.contentVertical ? root.height : root.width)/Math.max(.01,root.contentScale)
+        readonly property real designWidthPx: root.detached
+            ? ((root.contentVertical === root.vertical)
+                ? (root.innerSpan > 0 ? root.innerSpan : root.width)
+                : (root.innerCross > 0 ? root.innerCross : root.height))
+            : (root.contentVertical ? root.height : root.width)
+        width: designWidthPx/Math.max(.01,root.contentScale)
         height: 32*Appearance.fontSizeScale
         scale: root.contentScale
         rotation: root.contentRotation
@@ -86,6 +179,25 @@ Item {
             : root.kind === "shellUpdate" ? update : root.kind === "weather" ? weather
             : root.kind === "notesTimers" ? notesTimers
             : root.kind === "notificationActivity" ? notificationActivity : taskbar
+    }
+    Loader {
+        id: cornerWrapLoader
+        objectName: "abyssCornerWrapContentLoader"
+        anchors.fill: parent
+        active: root.cornerWrap
+        visible: root.cornerWrap
+        sourceComponent: AbyssCornerWrapContent {
+            kind: root.kind
+            outputName: root.outputName
+            editing: root.editing
+            wrapCorner: root.wrapCorner
+            wrapThickness: root.wrapThickness
+            wrapArcRadius: root.wrapArcRadius
+            contentScale: root.contentScale
+            onRequest: k => root.request(k)
+            onHoverRequest: k => root.hoverRequest(k)
+            onHoverState: (k, h) => root.hoverState(k, h)
+        }
     }
     Component { id: resources; Shared.Resources { contentRotation: root.contentRotation } }
     Component { id: clock; Shared.ClockWidget { sharedTypography:true; showDate: Config.options?.bar?.verbose ?? true; contentRotation: root.contentRotation } }
@@ -248,8 +360,8 @@ Item {
             }
         }
     }
-    Component { id: timer; Shared.TimerIndicator { vertical: false; contentRotation: root.contentRotation } }
-    Component { id: update; Shared.ShellUpdateIndicator { vertical: false; contentRotation: root.contentRotation } }
+    Component { id: timer; Shared.TimerIndicator { vertical: false; contentRotation: root.contentRotation; editPreview: root.editing } }
+    Component { id: update; Shared.ShellUpdateIndicator { vertical: false; contentRotation: root.contentRotation; editPreview: root.editing } }
     Component { id: weather; WeatherBar { vertical: false; contentRotation: root.contentRotation } }
     Component {
         id: workspaces

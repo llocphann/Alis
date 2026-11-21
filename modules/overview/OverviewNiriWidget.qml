@@ -767,7 +767,7 @@ Item {
                             }
                             height: width
                             source: windowItem.windowData
-                                ? AppSearch.getIconSource(windowItem.windowData.app_id || windowItem.windowData.appId || "")
+                                ? AppSearch.getIconSource(AppSearch.resolveWindowIdentity(windowItem.windowData))
                                 : ""
                             asynchronous: true
                             sourceSize: Qt.size(Math.max(16, Math.round(width)), Math.max(16, Math.round(height)))

@@ -6,34 +6,21 @@ import qs.modules.common.widgets
 
 // No independent timer or minimum duration. The host reports whether the
 // requested page is not yet Ready, even while the previous page remains onscreen.
+// Replaces the retired floating gear indicator with the shared AlisLoadingScreen.
 Item {
     id: root
     property bool loading: false
+    property string title: ""
+    property string icon: "tune"
     visible: root.loading
 
-    Item {
-        anchors.centerIn: parent
-        width: 64
-        height: width
-
-        // Static ring gives the gear a legible silhouette without creating
-        // a separate surface or competing with the Settings card elevation.
-        Rectangle {
-            anchors.fill: parent
-            radius: width / 2
-            color: "transparent"
-            border.width: 1
-            border.color: SettingsMaterialPreset.accentColor
-            opacity: 0.24
-        }
-
-        // Shared indicator uses a 0.8 glyph/box ratio: 50 -> 40 px gear.
-        // Only the glyph rotates; the ring never animates or scales.
-        MaterialLoadingIndicator {
-            anchors.centerIn: parent
-            implicitSize: 50
-            color: SettingsMaterialPreset.accentColor
-            loading: root.loading
-        }
+    AlisLoadingScreen {
+        anchors.fill: parent
+        loading: root.loading
+        title: root.title
+        icon: (root.icon.length > 0 && root.icon !== "settings") ? root.icon : "tune"
+        accentColor: SettingsMaterialPreset.accentColor
+        fillSurface: true
+        backdropOpacity: 0.86
     }
 }

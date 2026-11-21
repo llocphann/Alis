@@ -322,7 +322,11 @@ PanelWindow {
         }
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Escape) {
-                root.cancelled(root.requestId)
+                if (root.loupeLocked) {
+                    root.loupeLocked = false
+                } else {
+                    root.cancelled(root.requestId)
+                }
                 event.accepted = true
             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
                 if (root.sampledColor)
@@ -421,7 +425,18 @@ PanelWindow {
             }
             onClicked: event => {
                 if (event.button === Qt.RightButton) {
-                    root.cancelled(root.requestId)
+                    if (!root.ready) return
+                    if (root.loupeLocked) {
+                        root.loupeLocked = false
+                    } else {
+                        if (!root.keyboardMoved
+                                || Math.abs(event.x - lastMouseX) >= 0.5
+                                || Math.abs(event.y - lastMouseY) >= 0.5) {
+                            sampleAtCoords(event.x, event.y, true)
+                        }
+                        root.loupeLocked = true
+                        root.overlayActivated(root.screen?.name ?? "")
+                    }
                 } else if (root.ready) {
                     if (root.loupeLocked) {
                         root.loupeLocked = false
@@ -475,24 +490,27 @@ PanelWindow {
             }
         }
 
-        // ─── Circular Auto-Themed Color Loupe + Companion Studio Deck ───
+        // ─── Compact Circular Auto-Themed Color Loupe + Right-Click Locked Studio Deck ───
         Item {
             id: loupeCluster
             objectName: "colorPickerCircularPopup"
             visible: root.ready && root.isActiveOverlay
 
-            readonly property real circleDiameter: 236
-            readonly property real deckHeight: root.recallableRecents.length > 0 ? 116 : 92
-            readonly property real gapBetween: 8
-            readonly property bool flipLeft: root.cursorX + circleDiameter + 28 > overlayRoot.width
-            readonly property bool flipAbove: root.cursorY + circleDiameter + deckHeight + gapBetween + 28 > overlayRoot.height
+            readonly property real circleDiameter: 176
+            readonly property real deckWidth: 196
+            readonly property real deckHeight: root.recallableRecents.length > 0 ? 74 : 54
+            readonly property real gapBetween: 6
+            readonly property real activeDeckExtent: root.loupeLocked ? (deckHeight + gapBetween) : 0
+            readonly property real clusterWidth: root.loupeLocked ? Math.max(circleDiameter, deckWidth) : circleDiameter
+            readonly property bool flipLeft: root.cursorX + clusterWidth + 20 > overlayRoot.width
+            readonly property bool flipAbove: root.cursorY + circleDiameter + activeDeckExtent + 20 > overlayRoot.height
 
-            width: circleDiameter
-            height: circleDiameter + gapBetween + deckHeight
+            width: clusterWidth
+            height: circleDiameter + activeDeckExtent
             x: Math.max(10, Math.min(overlayRoot.width - width - 10,
-                flipLeft ? (root.cursorX - width - 22) : (root.cursorX + 22)))
+                flipLeft ? (root.cursorX - width - 16) : (root.cursorX + 16)))
             y: Math.max(10, Math.min(overlayRoot.height - height - 10,
-                flipAbove ? (root.cursorY - height - 18) : (root.cursorY + 18)))
+                flipAbove ? (root.cursorY - height - 12) : (root.cursorY + 12)))
 
             // Main Circular Loupe Body
             Rectangle {
@@ -500,24 +518,28 @@ PanelWindow {
                 objectName: "colorPickerCircularLoupe"
                 width: loupeCluster.circleDiameter
                 height: loupeCluster.circleDiameter
-                x: 0
-                y: loupeCluster.flipAbove ? (loupeCluster.deckHeight + loupeCluster.gapBetween) : 0
+                x: Math.round((loupeCluster.width - width) * 0.5)
+                y: (root.loupeLocked && loupeCluster.flipAbove) ? (loupeCluster.deckHeight + loupeCluster.gapBetween) : 0
                 radius: width * 0.5
                 color: root.colLayer0
-                border.width: 4
+                border.width: 3
                 border.color: root.sampledColor || root.colPrimary
 
-                // Absorb clicks inside the locked circular body so near-misses never unlock & jump the loupe
+                // Absorb left-clicks while locked; right-click anywhere on the loupe exits Lock & closes popup
                 MouseArea {
                     anchors.fill: parent
                     enabled: root.loupeLocked
-                    acceptedButtons: Qt.LeftButton
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onClicked: event => {
+                        if (event.button === Qt.RightButton)
+                            root.loupeLocked = false
+                    }
                 }
 
                 // Inner Alis theme hairline ring separating the live color halo from the shell
                 Rectangle {
                     anchors.fill: parent
-                    anchors.margins: 4
+                    anchors.margins: 3
                     radius: width * 0.5
                     color: "transparent"
                     border.width: 1
@@ -528,91 +550,100 @@ PanelWindow {
                 Row {
                     id: topBezelRow
                     anchors.top: parent.top
-                    anchors.topMargin: 15
+                    anchors.topMargin: 13
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 4
+                    spacing: 3
 
                     Rectangle {
-                        height: 17
-                        width: zoomBadgeText.implicitWidth + 10
-                        radius: 8.5
+                        height: 14
+                        width: zoomBadgeText.implicitWidth + 7
+                        radius: 7
                         color: root.colLayer1
                         Text {
                             id: zoomBadgeText
                             anchors.centerIn: parent
                             text: `${root.gridCount}×`
                             color: root.colPrimary
-                            font.pixelSize: 10
+                            font.pixelSize: 8
                             font.weight: Font.Bold
                             font.family: "monospace"
                         }
                         MouseArea {
                             anchors.fill: parent
                             enabled: root.loupeLocked
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root._adjustZoom(1)
+                            onClicked: event => {
+                                if (event.button === Qt.RightButton) { root.loupeLocked = false; return }
+                                root._adjustZoom(1)
+                            }
                         }
                     }
 
                     Rectangle {
-                        height: 17
-                        width: avgBadgeText.implicitWidth + 10
-                        radius: 8.5
+                        height: 14
+                        width: avgBadgeText.implicitWidth + 7
+                        radius: 7
                         color: root.sampleBoxSize > 1 ? root.colPrimary : root.colLayer1
                         Text {
                             id: avgBadgeText
                             anchors.centerIn: parent
                             text: root.sampleBoxSize === 1 ? "1px" : `${root.sampleBoxSize}×${root.sampleBoxSize}`
                             color: root.sampleBoxSize > 1 ? root.colOnPrimary : root.colSubtext
-                            font.pixelSize: 10
+                            font.pixelSize: 8
                             font.weight: Font.DemiBold
                             font.family: "monospace"
                         }
                         MouseArea {
                             anchors.fill: parent
                             enabled: root.loupeLocked
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root._cycleSampleBox()
+                            onClicked: event => {
+                                if (event.button === Qt.RightButton) { root.loupeLocked = false; return }
+                                root._cycleSampleBox()
+                            }
                         }
                     }
 
                     Rectangle {
                         visible: root.loupeLocked
-                        height: 17
-                        width: lockBadgeText.implicitWidth + 8
-                        radius: 8.5
+                        height: 14
+                        width: lockBadgeText.implicitWidth + 6
+                        radius: 7
                         color: root.colSecondary
                         Text {
                             id: lockBadgeText
                             anchors.centerIn: parent
                             text: "LOCK"
                             color: root.colOnPrimary
-                            font.pixelSize: 9
+                            font.pixelSize: 8
                             font.weight: Font.Bold
                             font.family: "monospace"
                         }
                         MouseArea {
                             anchors.fill: parent
                             enabled: root.loupeLocked
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
                             cursorShape: Qt.PointingHandCursor
                             onClicked: root.loupeLocked = false
                         }
                     }
                 }
 
-                // Circularly Masked Magnifier Lens (143x143 Canvas with native 2D circular clip — crisp on both GPU & software)
+                // Circularly Masked Magnifier Lens (100x100 Canvas with native 2D circular clip — crisp on both GPU & software)
                 Item {
                     id: lensMaskContainer
-                    width: 143
-                    height: 143
+                    width: 100
+                    height: 100
                     anchors.centerIn: parent
-                    anchors.verticalCenterOffset: -6
+                    anchors.verticalCenterOffset: -2
 
                     Canvas {
                         id: magnifier
                         objectName: "colorPickerMagnifierCanvas"
-                        width: 143
-                        height: 143
+                        width: 100
+                        height: 100
                         antialiasing: true
                         onPaint: {
                             if (!sampler.ready) return
@@ -682,22 +713,19 @@ PanelWindow {
                     }
                 }
 
-                // Bottom bezel readout pill: swatch + compact HEX + format tag
-                // Positioned at y = 192..214 (dy_bot = 96, inner chord width = 119.2px)
-                // and capped to <= 114px so it stays 100% inside the circular bezel.
+                // Bottom bezel readout pill: swatch + compact HEX (stays 100% inside inner circle chord with zero clipping)
                 Rectangle {
                     id: loupeReadoutPill
                     objectName: "colorPickerLoupeReadoutPill"
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 22
+                    anchors.bottomMargin: 15
                     anchors.horizontalCenter: parent.horizontalCenter
-                    height: 22
-                    width: Math.min(114, readoutRow.implicitWidth + 12)
-                    radius: 11
+                    height: 18
+                    width: Math.min(76, readoutRow.implicitWidth + 10)
+                    radius: 9
                     color: root.colLayer1
                     border.width: 1
                     border.color: Qt.alpha(root.colOutline, 0.7)
-                    clip: true
 
                     Row {
                         id: readoutRow
@@ -706,9 +734,9 @@ PanelWindow {
 
                         Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 10
-                            height: 10
-                            radius: 5
+                            width: 8
+                            height: 8
+                            radius: 4
                             color: root.sampledColor || "transparent"
                             border.width: 1
                             border.color: Qt.alpha(root.colOnLayer0, 0.6)
@@ -718,19 +746,67 @@ PanelWindow {
                             anchors.verticalCenter: parent.verticalCenter
                             text: root.sampledColor || "#000000"
                             color: root.colOnLayer0
-                            font.pixelSize: 11
+                            font.pixelSize: 9
                             font.weight: Font.Bold
                             font.family: "monospace"
                         }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: root.loupeLocked
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: event => {
+                            if (event.button === Qt.RightButton) { root.loupeLocked = false; return }
+                            if (root.sampledColor) root._commitPick(root.sampledColor)
+                        }
+                    }
+                }
+            }
+
+            // ─── Compact Right-Click Locked Studio Deck (Full Readout · WCAG · Harmonies · Recent Recall) ───
+            Rectangle {
+                id: studioDeck
+                objectName: "colorPickerStudioDeck"
+                visible: root.loupeLocked
+                width: loupeCluster.deckWidth
+                height: loupeCluster.deckHeight
+                x: Math.round((loupeCluster.width - width) * 0.5)
+                y: loupeCluster.flipAbove ? 0 : (loupeCluster.circleDiameter + loupeCluster.gapBetween)
+                radius: 14
+                color: root.colLayer0
+                border.width: 1
+                border.color: root.colPrimary
+
+                // Absorb left-clicks while locked; right-click exits Lock & closes popup
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: root.loupeLocked
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onClicked: event => {
+                        if (event.button === Qt.RightButton)
+                            root.loupeLocked = false
+                    }
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 7
+                    spacing: 4
+
+                    // Row 1: Format badge + full formatted value (click to cycle format) + pixel coordinates
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
 
                         Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            height: 14
-                            width: fmtTagText.implicitWidth + 6
-                            radius: 7
+                            height: 18
+                            implicitWidth: deckFmtText.implicitWidth + 8
+                            radius: 9
                             color: root.colPrimary
                             Text {
-                                id: fmtTagText
+                                id: deckFmtText
                                 anchors.centerIn: parent
                                 text: root.activeFormat
                                 color: root.colOnPrimary
@@ -741,60 +817,31 @@ PanelWindow {
                             MouseArea {
                                 anchors.fill: parent
                                 enabled: root.loupeLocked
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root._cycleFormat()
+                                onClicked: event => {
+                                    if (event.button === Qt.RightButton) { root.loupeLocked = false; return }
+                                    root._cycleFormat()
+                                }
                             }
                         }
-                    }
-                }
-            }
-
-            // ─── Companion Auto-Themed Studio Deck (Full Readout · WCAG · Harmonies · Recent Recall) ───
-            Rectangle {
-                id: studioDeck
-                objectName: "colorPickerStudioDeck"
-                width: loupeCluster.circleDiameter
-                height: loupeCluster.deckHeight
-                x: 0
-                y: loupeCluster.flipAbove ? 0 : (loupeCluster.circleDiameter + loupeCluster.gapBetween)
-                radius: 16
-                color: root.colLayer0
-                border.width: 1
-                border.color: root.loupeLocked ? root.colPrimary : Qt.alpha(root.colOutline, 0.75)
-
-                // Absorb background clicks while locked so missing a small swatch never jumps the loupe away
-                MouseArea {
-                    anchors.fill: parent
-                    enabled: root.loupeLocked
-                    acceptedButtons: Qt.LeftButton
-                }
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 5
-
-                    // Row 1: Full formatted value (copy payload — click to cycle format when locked) + pixel coordinates
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
 
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
-                            height: 20
-                            radius: 10
+                            height: 18
+                            radius: 9
                             color: root.colLayer1
 
                             Text {
                                 anchors.fill: parent
-                                anchors.leftMargin: 8
-                                anchors.rightMargin: 8
+                                anchors.leftMargin: 5
+                                anchors.rightMargin: 5
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                                 text: root.formattedColor || root.sampledColor
                                 color: root.colOnLayer0
-                                font.pixelSize: 10
+                                font.pixelSize: 9
                                 font.weight: Font.Bold
                                 font.family: "monospace"
                                 elide: Text.ElideRight
@@ -803,8 +850,12 @@ PanelWindow {
                             MouseArea {
                                 anchors.fill: parent
                                 enabled: root.loupeLocked
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root._cycleFormat()
+                                onClicked: event => {
+                                    if (event.button === Qt.RightButton) { root.loupeLocked = false; return }
+                                    root._cycleFormat()
+                                }
                             }
                         }
 
@@ -813,20 +864,20 @@ PanelWindow {
                             Layout.alignment: Qt.AlignVCenter
                             text: root.currentPixelX >= 0 ? `${root.currentPixelX},${root.currentPixelY}` : ""
                             color: root.colSubtext
-                            font.pixelSize: 9
+                            font.pixelSize: 8
                             font.family: "monospace"
                         }
                     }
 
-                    // Row 2: WCAG contrast badges + 5 live harmony swatches (keys 1-5 or click when locked)
+                    // Row 2: WCAG contrast badges + 5 live harmony swatches (click or keys 1-5)
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 4
+                        spacing: 3
 
                         Rectangle {
-                            height: 18
-                            implicitWidth: wcagWText.implicitWidth + 8
-                            radius: 9
+                            height: 17
+                            implicitWidth: wcagWText.implicitWidth + 6
+                            radius: 8.5
                             color: root.colLayer2
                             Text {
                                 id: wcagWText
@@ -840,9 +891,9 @@ PanelWindow {
                         }
 
                         Rectangle {
-                            height: 18
-                            implicitWidth: wcagBText.implicitWidth + 8
-                            radius: 9
+                            height: 17
+                            implicitWidth: wcagBText.implicitWidth + 6
+                            radius: 8.5
                             color: root.colLayer2
                             Text {
                                 id: wcagBText
@@ -858,16 +909,16 @@ PanelWindow {
                         Item { Layout.fillWidth: true }
 
                         Row {
-                            spacing: 4
+                            spacing: 3
                             Layout.alignment: Qt.AlignVCenter
 
                             Repeater {
                                 model: root.harmonySwatches
                                 delegate: Rectangle {
                                     required property var modelData
-                                    width: 19
-                                    height: 18
-                                    radius: 6
+                                    width: 18
+                                    height: 17
+                                    radius: 5
                                     color: modelData.hex
                                     border.width: harmonyMouse.containsMouse && root.loupeLocked ? 2 : 1
                                     border.color: harmonyMouse.containsMouse && root.loupeLocked
@@ -886,21 +937,25 @@ PanelWindow {
                                         id: harmonyMouse
                                         anchors.fill: parent
                                         enabled: root.loupeLocked
+                                        acceptedButtons: Qt.LeftButton | Qt.RightButton
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: root._commitPick(modelData.hex)
+                                        onClicked: event => {
+                                            if (event.button === Qt.RightButton) { root.loupeLocked = false; return }
+                                            root._commitPick(modelData.hex)
+                                        }
                                     }
                                 }
                             }
                         }
                     }
 
-                    // Row 3 (when history exists): Interactive Recent Colors recall strip (keys 6-0 or click when locked)
+                    // Row 3 (when history exists): Interactive Recent Colors recall strip
                     RowLayout {
                         objectName: "colorPickerRecentRow"
                         visible: root.recallableRecents.length > 0
                         Layout.fillWidth: true
-                        spacing: 4
+                        spacing: 3
 
                         Text {
                             Layout.alignment: Qt.AlignVCenter
@@ -914,16 +969,16 @@ PanelWindow {
                         Item { Layout.fillWidth: true }
 
                         Row {
-                            spacing: 4
+                            spacing: 3
                             Layout.alignment: Qt.AlignVCenter
 
                             Repeater {
                                 model: root.recallableRecents
                                 delegate: Rectangle {
                                     required property var modelData
-                                    width: 24
-                                    height: 18
-                                    radius: 6
+                                    width: 22
+                                    height: 17
+                                    radius: 5
                                     color: modelData.hex
                                     border.width: recentMouse.containsMouse && root.loupeLocked ? 2 : 1
                                     border.color: recentMouse.containsMouse && root.loupeLocked
@@ -942,25 +997,17 @@ PanelWindow {
                                         id: recentMouse
                                         anchors.fill: parent
                                         enabled: root.loupeLocked
+                                        acceptedButtons: Qt.LeftButton | Qt.RightButton
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: root._commitPick(modelData.hex)
+                                        onClicked: event => {
+                                            if (event.button === Qt.RightButton) { root.loupeLocked = false; return }
+                                            root._commitPick(modelData.hex)
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-
-                    // Bottom Row: Concise hotkey hint
-                    Text {
-                        Layout.fillWidth: true
-                        horizontalAlignment: Text.AlignHCenter
-                        text: root.recallableRecents.length > 0
-                            ? "Wheel Zoom · Tab Fmt · L Lock · 1-5 / 6-0"
-                            : "Wheel Zoom · Tab Fmt · A Avg · L Lock · 1-5"
-                        color: root.colSubtext
-                        font.pixelSize: 9
-                        elide: Text.ElideRight
                     }
                 }
             }

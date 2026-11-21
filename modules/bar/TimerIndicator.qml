@@ -22,6 +22,11 @@ MouseArea {
     }
     property bool vertical: false
     property real contentRotation: 0
+    property bool editPreview: GlobalStates.abyssEditing
+        && (Config.options?.panelFamily ?? "abyss") === "abyss"
+        && (GlobalStates.abyssEditorTargetOutput === ""
+            || !root.QsWindow.window?.screen?.name
+            || GlobalStates.abyssEditorTargetOutput === root.QsWindow.window.screen.name)
     readonly property bool verticalContent: Math.abs(root.contentRotation) === 90
 
     readonly property bool pinnedToBar: Persistent.states?.timer?.pinnedToBar ?? false
@@ -41,7 +46,8 @@ MouseArea {
     readonly property bool anyActive: pomodoroActive || countdownActive || stopwatchActive
 
     readonly property bool showPinnedIdle: pinnedToBar && !anyActive
-    readonly property bool contentAvailable: anyActive || showPinnedIdle
+    readonly property bool showEditPreview: editPreview && !anyActive && !showPinnedIdle
+    readonly property bool contentAvailable: anyActive || showPinnedIdle || showEditPreview
 
     readonly property bool currentRunning: {
         if (root.pomodoroActive) return root.pomodoroRunning && !(TimerService?.pomodoroPaused ?? false)
@@ -72,6 +78,8 @@ MouseArea {
             const s = secs % 60
             return `${mins.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
         }
+        if (showEditPreview)
+            return "25:00"
         return ""
     }
 
@@ -86,8 +94,8 @@ MouseArea {
     }
 
     readonly property color accentColor: {
-        if (pomodoroActive) {
-            return (TimerService?.pomodoroBreak ?? false)
+        if (pomodoroActive || showEditPreview) {
+            return (pomodoroActive && (TimerService?.pomodoroBreak ?? false))
                 ? Appearance.colors.colTertiary
                 : Appearance.colors.colPrimary
         }
@@ -96,23 +104,26 @@ MouseArea {
         return Appearance.colors.colOnLayer1
     }
 
+    readonly property real _targetImplicitWidth: root.contentAvailable
+        ? (root.vertical ? 34 * Appearance.sizes.barModuleScale : pill.width + 4 * Appearance.sizes.barModuleScale) : 0
+    property real _animatedImplicitWidth: _targetImplicitWidth
     visible: root.contentAvailable
     implicitWidth: root.contentAvailable
-        ? (root.vertical ? 34 * Appearance.sizes.barModuleScale : pill.width + 4 * Appearance.sizes.barModuleScale) : 0
+        ? (root.showEditPreview ? _targetImplicitWidth : _animatedImplicitWidth) : 0
     implicitHeight: root.vertical
         ? (root.contentAvailable ? 34 * Appearance.sizes.barModuleScale : 0)
         : Appearance.sizes.barHeight
 
-    hoverEnabled: true
-    cursorShape: Qt.PointingHandCursor
+    hoverEnabled: !root.showEditPreview
+    cursorShape: root.showEditPreview ? Qt.ArrowCursor : Qt.PointingHandCursor
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-    activeFocusOnTab: root.visible
+    activeFocusOnTab: root.visible && !root.showEditPreview
 
     Accessible.role: Accessible.Button
     Accessible.name: root.showPinnedIdle
         ? Translation.tr("Timer")
         : Translation.tr("Timer %1").arg(root.timeText)
-    Accessible.focusable: root.visible
+    Accessible.focusable: root.visible && !root.showEditPreview
 
     function openTimerPanel(): void {
         GlobalStates.openSidebarRight(root.QsWindow.window?.screen?.name ?? "")
@@ -134,6 +145,8 @@ MouseArea {
     }
 
     function activatePrimary(): void {
+        if (root.showEditPreview)
+            return
         if (!root.anyActive && root.showPinnedIdle) {
             root.openTimerPanel()
             return
@@ -148,7 +161,7 @@ MouseArea {
     }
 
     Keys.onPressed: event => {
-        if (event.isAutoRepeat
+        if (root.showEditPreview || event.isAutoRepeat
                 || (event.key !== Qt.Key_Return
                     && event.key !== Qt.Key_Enter
                     && event.key !== Qt.Key_Space))
@@ -158,6 +171,8 @@ MouseArea {
     }
 
     onClicked: (mouse) => {
+        if (root.showEditPreview)
+            return
         if (mouse.button === Qt.LeftButton) {
             root.activatePrimary()
             return
@@ -168,9 +183,10 @@ MouseArea {
         }
     }
 
-    Behavior on implicitWidth {
+    Behavior on _animatedImplicitWidth {
         // Closing immediately releases Screen Edge geometry and hit testing.
-        enabled: Appearance.animationsEnabled && root.contentAvailable
+        // Edit-mode sample preview snaps immediately so naturalSpan is ready on frame 0.
+        enabled: Appearance.animationsEnabled && root.contentAvailable && !root.showEditPreview
         NumberAnimation {
             duration: Appearance.animation.elementMoveFast.duration
             easing.type: Appearance.animation.elementMoveFast.type
@@ -223,12 +239,12 @@ MouseArea {
         Item {
             id: indicatorGlyph
             readonly property bool useHourglass: !root.showPinnedIdle
-                && (root.pomodoroActive || root.countdownActive)
+                && ((root.pomodoroActive || root.countdownActive) || root.showEditPreview)
             readonly property real activeProgress: root.pomodoroActive
                 ? (TimerService.pomodoroSecondsLeft / Math.max(1, TimerService.pomodoroLapDuration))
                 : (root.countdownActive
                     ? (TimerService.countdownSecondsLeft / Math.max(1, TimerService.countdownDuration))
-                    : 1.0)
+                    : (root.showEditPreview ? 0.65 : 1.0))
             readonly property color glyphColor: root.paused
                 ? Appearance.colors.colOnLayer1Inactive
                 : root.accentColor
@@ -279,6 +295,7 @@ MouseArea {
 
             StyledText {
                 id: timerLabel
+                objectName: "timerIndicatorLabel"
                 anchors.centerIn: parent
                 horizontalAlignment: Text.AlignHCenter
                 text: root.verticalContent
@@ -324,6 +341,7 @@ MouseArea {
     // Tooltip
     TimerIndicatorTooltip {
         hoverTarget: root
+        hoverActivates: !root.showEditPreview
         alternativeVisibleCondition: root.activeFocus && !root._pointerFocused
         pomodoroActive: root.pomodoroActive
         countdownActive: root.countdownActive

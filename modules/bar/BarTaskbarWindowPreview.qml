@@ -64,7 +64,7 @@ Button {
                 id: appIcon
                 Layout.alignment: Qt.AlignVCenter
                 source: {
-                    const appId = root.toplevel?.appId ?? "";
+                    const appId = root.toplevel ? AppSearch.resolveWindowIdentity(root.toplevel) : "";
                     const de = AppSearch.lookupDesktopEntry(appId);
                     const icon = de?.icon || AppSearch.guessIcon(appId);
                     const resolved = IconThemeService.smartIconName(icon, appId);

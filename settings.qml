@@ -2035,6 +2035,8 @@ ApplicationWindow {
                     SettingsPageLoadingOverlay {
                         anchors.fill: parent
                         loading: pagesStack.loading && !pagesStack.error
+                        title: String(root.pages?.[root.currentPage]?.name ?? "")
+                        icon: String(root.pages?.[root.currentPage]?.icon ?? "tune")
                         z: 15
                     }
 

@@ -73,8 +73,17 @@ Each panel uses `PanelLoader` (`LazyLoader` wrapper), activating only when `Conf
 
 ### Process-Isolated Circular Color Picker (`color-picker-worker.qml`, `services/ColorPicker*.qml`)
 - Runs one disposable Quickshell worker process per pick (`ColorPickerService.qml`) so Wayland screencopy teardown never touches the long-lived shell process.
-- Receives live Alis theme tokens and recent picks via `ALIS_COLOR_PICKER_THEME` to render a **circular auto-themed magnifier loupe** (`ColorPickerOverlay.qml`) backed by single-readback region sampling (`ColorPickerSampler.qml`).
-- Supports immediate center-screen display upon capture readiness, dynamic wheel zoom (`5×`–`19×`), `1px` / `3×3` / `5×5` area averaging, `HEX` / `RGB` / `HSL` / `OKLCH` / `HSV` format cycling, live WCAG contrast ratios, 5 one-key color harmonies (`1`–`5`), interactive recent color recall (`6`–`0`), loupe lock/inspect mode (`L`) for direct mouse swatch/control clicks, pixel-accurate arrow stepping, and automatic `wl-copy` + `cliphist` sync.
+- Receives live Alis theme tokens and recent picks via `ALIS_COLOR_PICKER_THEME` to render a **compact circular auto-themed magnifier loupe** (`ColorPickerOverlay.qml`) backed by single-readback region sampling (`ColorPickerSampler.qml`).
+- Displays only the compact circular loupe while sampling; the details popup deck (full formatted string, coordinates, WCAG contrast badges, 5 harmonies, and recent picks) stays hidden until locked via right-click (no inline shortcut footer in the popup).
+- **Controls & Shortcuts**:
+  - `Left-Click` / `Enter` / `Space`: pick & copy active color (`wl-copy` + `cliphist` sync).
+  - `Right-Click` (or `L`): lock current pixel and open the compact details popup; `Right-Click` again unlocks and closes the popup.
+  - `Esc`: when locked, exits Lock mode and closes the popup; press `Esc` again when unlocked to close the Color Picker.
+  - `Scroll Wheel` / `+` / `-`: adjust magnification (`5×`–`19×`).
+  - `Tab` / `F`: cycle output format (`HEX` / `RGB` / `HSL` / `OKLCH` / `HSV`).
+  - `A`: cycle sample averaging (`1px` / `3×3` / `5×5`); `G`: toggle pixel grid overlay.
+  - `1`–`5`: pick one of the 5 live harmony swatches; `6`–`0`: recall up to 5 recent colors.
+  - `Arrow Keys` (`Shift + Arrow` for `10px`): pixel-accurate reticle stepping.
 
 ### Dashboard, Local Music, Planners & Capture (`modules/dashboard/`, `modules/regionSelector/`)
 - **Dashboard (`modules/dashboard/`)**: 4-column responsive widget grid, Sonora-inspired **Local Music** browser (embedded library sidebar, synced Lyrics stacked above a 10-band EQ with live electric-arc curve visualization in `EqualizerPanel.qml`), **Weekly & Yearly Planners**, user-managed **Custom Tabs**, and optional **Spaced Repetition** / **Exercises Tracker** tabs hosted from `Alis-Intergration`.

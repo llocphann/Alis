@@ -97,6 +97,93 @@ function isParallelToEdge(edge, rotation) {
     var verticalRot = isVerticalRotation(normalizeRotation(rotation, edge));
     return horizontal ? !verticalRot : verticalRot;
 }
+function canCornerWrap(kind) {
+    return catalog.indexOf(String(kind)) >= 0 && !isUnifiedKind(kind);
+}
+function canDetachModule(kind) {
+    return catalog.indexOf(String(kind)) >= 0;
+}
+function cornerWrapCorner(placement) {
+    if (!placement) return "";
+    var pos = bounded(placement.position, 0.5, 0, 1);
+    if (placement.edge === "top") return pos < 0.5 ? "topLeft" : "topRight";
+    if (placement.edge === "bottom") return pos < 0.5 ? "bottomLeft" : "bottomRight";
+    if (placement.edge === "left") return pos < 0.5 ? "topLeft" : "bottomLeft";
+    if (placement.edge === "right") return pos < 0.5 ? "topRight" : "bottomRight";
+    return "topLeft";
+}
+function cornerEdges(corner) {
+    if (corner === "topRight") return { horizontal: "top", vertical: "right", hStart: false, vStart: true };
+    if (corner === "bottomLeft") return { horizontal: "bottom", vertical: "left", hStart: true, vStart: false };
+    if (corner === "bottomRight") return { horizontal: "bottom", vertical: "right", hStart: false, vStart: false };
+    return { horizontal: "top", vertical: "left", hStart: true, vStart: true };
+}
+function isCircleDetachedKind(kind, span, cross) {
+    if (isUnifiedKind(kind) || kind === "distroIcon") return true;
+    return Math.max(span, cross) <= Math.min(span, cross) * 1.18;
+}
+function detachedOuterSize(kind, rawAlong, rawCross, parallel, fs, size) {
+    var padCross = Math.max(3, Math.round(4 * fs * size));
+    if (isCircleDetachedKind(kind, rawAlong, rawCross)) {
+        var diameter = Math.max(Math.round(rawCross + padCross * 2), Math.round(rawAlong + padCross * 2));
+        return { shape: "circle", along: diameter, cross: diameter };
+    }
+    var padAlong = Math.max(8, Math.round(10 * fs * size));
+    return {
+        shape: "pill",
+        along: Math.round(rawAlong + (parallel ? padAlong : padCross) * 2),
+        cross: Math.round(rawCross + (parallel ? padCross : padAlong) * 2)
+    };
+}
+function detachedNaturalSpan(p, options, fs, horizontal) {
+    var measured = options?.extents?.[p.id];
+    if (Number.isFinite(measured) && !(options?.editing && measured < 1))
+        return Math.max(0, measured);
+    if (isUnifiedKind(p.kind) || p.kind === "distroIcon")
+        return 32 * fs;
+    return extent(p.kind, !horizontal) * fs;
+}
+function detachedEdgeOffset(edge, options, fontScale, attachedStripDepth) {
+    var fs = bounded(fontScale, 1, 0.7, 2);
+    var bare = edgeThickness(options, edge);
+    var strip = Math.max(bare, Number(attachedStripDepth) || 0);
+    var gap = Math.round((strip > 0 ? 8 : 10) * fs);
+    return strip + gap;
+}
+function cornerWrapMetrics(p, width, height, options, fontScale) {
+    var fs = bounded(fontScale, 1, 0.7, 2);
+    var size = moduleSize(p, options);
+    var measured = options?.extents?.[p.id];
+    var natural = Number.isFinite(measured) && !(options?.editing && measured < 1)
+        ? Math.max(0, measured)
+        : extent(p.kind, false) * fs;
+    var designSpan = Math.max(40 * fs * size, natural * size);
+    var thickness = Math.max(24 * fs, 32 * fs * size);
+    var contentScale = Math.max(0.6, Math.min(1.8, thickness / Math.max(1, 32 * fs)));
+    var inset = 8;
+    var maxArmH = Math.max(thickness + 16, Math.min(width * 0.42, width - inset * 2));
+    var maxArmV = Math.max(thickness + 16, Math.min(height * 0.42, height - inset * 2));
+    var baseArc = Math.max(14, bounded(options?.cornerRadius, 28, 12, 64) * 0.72);
+    var halfT = Math.max(12, thickness * 0.5);
+    var endPad = Math.max(8, halfT * 0.55);
+    var minLabelArm = p.kind === "timer"
+        ? Math.ceil(halfT + baseArc + endPad * 0.5 + 35 * fs * contentScale + 8)
+        : (p.kind === "shellUpdate"
+            ? Math.ceil(halfT + baseArc + endPad * 0.5 + 40 * fs * contentScale + 8)
+            : 0);
+    var desiredArm = Math.max(thickness + 28 * fs * size, minLabelArm, Math.round(designSpan * 0.56 + thickness * 0.48));
+    var armH = Math.min(maxArmH, desiredArm);
+    var armV = Math.min(maxArmV, desiredArm);
+    var arcRadius = Math.max(14, Math.min(Math.min(armH, armV) - thickness * 0.5, baseArc));
+    return {
+        designSpan: designSpan,
+        thickness: thickness,
+        inset: inset,
+        armH: armH,
+        armV: armV,
+        arcRadius: arcRadius
+    };
+}
 function normalize(list, fallbackEdge) {
     var seen = {};
     return Array.from(list || []).filter(function(p) {
@@ -107,18 +194,23 @@ function normalize(list, fallbackEdge) {
         return true;
     }).slice(0,24).map(function(p) {
         var edge = ["top","right","bottom","left"].indexOf(p.edge)>=0 ? p.edge : fallbackEdge;
+        var cornerWrap = p.cornerWrap === true && canCornerWrap(p.kind);
+        var detached = !cornerWrap && p.detached === true && canDetachModule(p.kind);
+        var joinCorner = !cornerWrap && !detached && p.joinCorner === true;
         var item = {id:String(p.id || p.kind),kind:String(p.kind),
             edge:edge,
             position:bounded(p.position,0.5,0,1),enabled:p.enabled !== false,
             alignment:["start","center","end"].indexOf(p.alignment)>=0 ? p.alignment : "free",
             customSize:p.customSize === true || (p.customSize === undefined && Number.isFinite(Number(p.size)) && Number(p.size)!==1),
             size:bounded(p.size,1,0.6,1.8),depth:bounded(p.depth,1,0.5,2),
-            influence:bounded(p.influence,1,0,2),compact:p.compact === true,joinCorner:p.joinCorner === true,
+            influence:bounded(p.influence,1,0,2),compact:p.compact === true,joinCorner:joinCorner,
             showIcon:p.showIcon !== false,
             locked:p.locked === true,
             lockPosition:p.locked === true ? bounded(p.lockPosition,bounded(p.position,.5,0,1),0,1) : undefined,
             lockScale:p.locked === true ? bounded(p.lockScale,1,.01,1) : undefined};
         if (hasExplicitRotation(p.rotation)) item.rotation = normalizeRotation(p.rotation, edge);
+        if (cornerWrap) item.cornerWrap = true;
+        if (detached) item.detached = true;
         return item;
     });
 }
@@ -218,8 +310,19 @@ function edgeThickness(options, edge, fallback) {
     return Number.isFinite(Number(value)) && Number(value)>=0 ? bounded(value,inherited,0,40) : inherited;
 }
 function moduleSize(placement, options) {
-    var inheritedWidth=options?.edgeWidthAffectsModules?.[placement.edge]===false
-        ? bounded(options?.edgeThickness,16,10,40) : edgeThickness(options,placement.edge);
+    var fallbackWidth = Number(options?.edgeThickness) > 0
+        ? bounded(options?.edgeThickness, 16, 10, 40) : 16;
+    var edgeW = edgeThickness(options, placement.edge);
+    var inheritedWidth;
+    if (placement.detached === true || placement.cornerWrap === true) {
+        inheritedWidth = options?.edgeWidthAffectsModules?.[placement.edge] === false
+            ? fallbackWidth
+            : (edgeW > 0 ? edgeW : fallbackWidth);
+    } else if (options?.edgeWidthAffectsModules?.[placement.edge] === false) {
+        inheritedWidth = bounded(options?.edgeThickness, 16, 10, 40);
+    } else {
+        inheritedWidth = edgeW;
+    }
     // Unified launchers must retain a bounded physical hover target when the
     // decorative Edge is 0px. Hiding their icon never removes the hit zone.
     var width = isUnifiedKind(placement.kind) ? Math.max(12,inheritedWidth) : inheritedWidth;
@@ -235,13 +338,24 @@ function project(x, y, width, height, preferredEdge) {
     index=["top","right","bottom","left"].indexOf(edge);
     return {edge:edge,position:bounded((index%2===0 ? x : y)/Math.max(1,index%2===0 ? width : height),.5,0,1)};
 }
+function projectCorner(x, y, width, height) {
+    var isTop = y <= height * 0.5;
+    var isLeft = x <= width * 0.5;
+    return {
+        edge: isTop ? "top" : "bottom",
+        position: isLeft ? 0.05 : 0.95
+    };
+}
 function move(placements, id, x, y, width, height, preferredEdge) {
     if (placements.some(function(p) { return p.id===id && p.locked; })) return normalize(placements,"top");
-    var location = project(x,y,width,height,preferredEdge);
+    var targetItem = placements.find(function(p) { return p.id===id; });
+    var location = targetItem?.cornerWrap === true
+        ? projectCorner(x, y, width, height)
+        : project(x,y,width,height,preferredEdge);
     return normalize(placements.map(function(p) {
         if (p.id!==id) return p;
         var next = Object.assign({},p,location,{alignment:"free"});
-        if (hasExplicitRotation(p.rotation) || location.edge!==p.edge)
+        if (p.cornerWrap !== true && (hasExplicitRotation(p.rotation) || location.edge!==p.edge))
             next.rotation = effectiveRotation(p);
         return next;
     }),"top");
@@ -252,7 +366,7 @@ function snapMove(placements, id, x, y, width, height, options, fontScale) {
     if (placements.some(function(p) { return p.id===id && p.locked; })) return {placements:normalize(placements,"top"),guides:[],rejected:"Unlock this module before moving it"};
     var moved = move(placements,id,x,y,width,height,options?.dragEdge);
     var selected = moved.find(function(p) { return p.id===id; });
-    if (!selected) return {placements:moved,guides:[]};
+    if (!selected || selected.cornerWrap === true) return {placements:moved,guides:[]};
     var horizontal = selected.edge==="top" || selected.edge==="bottom";
     var length = horizontal ? width : height;
     var usable = length;
@@ -336,12 +450,19 @@ function lockPlacement(p,record,locked,width,height,options,fontScale) {
     if(!locked)return Object.assign({},p,{locked:false});
     if(p.locked)return p;
     var horizontal=p.edge==="top" || p.edge==="bottom",length=horizontal ? width : height;
+    var fs=bounded(fontScale,1,.7,2);
     var measured=options?.extents?.[p.id];
-    var natural=Number.isFinite(measured) && !(options?.editing && measured<1) ? Math.max(0,measured)
-        : extent(p.kind,!horizontal)*bounded(fontScale,1,.7,2);
+    var natural=p.detached===true
+        ? detachedNaturalSpan(p,options,fs,horizontal)
+        : (Number.isFinite(measured) && !(options?.editing && measured<1) ? Math.max(0,measured)
+            : extent(p.kind,!horizontal)*fs);
     var size=moduleSize(p,options);
     var parallel=isParallelToEdge(p.edge,p.rotation);
-    var base=(parallel ? natural : 32*bounded(fontScale,1,.7,2))*size;
+    var rawAlong=(parallel ? natural : 32*fs)*size;
+    var rawCross=(parallel ? 32*fs : natural)*size;
+    var base=p.detached===true
+        ? detachedOuterSize(p.kind,rawAlong,rawCross,parallel,fs,size).along
+        : rawAlong;
     return Object.assign({},p,{locked:true,
         lockPosition:record && length>0 ? (record.along+record.span/2)/length : p.position,
         lockScale:record && base>0 ? record.span/base : 1});
@@ -412,7 +533,7 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
     function deny(message) {return {placements:placements,rejected:message};}
     if(!items.length)return deny("Select a module first");
     if(items.some(function(p) {return !p;}))return deny("The selection changed. Select the modules again.");
-    var placementKeys=["edge","position","alignment","size","customSize","depth"];
+    var placementKeys=["edge","position","alignment","size","customSize","depth","cornerWrap","detached"];
     if(placementKeys.indexOf(action)>=0 && items.some(function(p) {return p.locked;}))
         return deny("Unlock every selected module before changing its placement or size");
     // Icon appearance is only adjustable in Settings > Module behavior.
@@ -420,10 +541,16 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
         return deny("This action cannot be applied to modules");
     if(action==="rotation" && items.some(function(p) {return !canRotateModule(p.kind);}))
         return deny("This module type does not support manual rotation");
+    if(action==="rotation" && items.some(function(p) {return p.cornerWrap===true;}))
+        return deny("Straighten corner-wrapped modules before rotating");
+    if(action==="cornerWrap" && value && items.some(function(p) {return !canCornerWrap(p.kind);}))
+        return deny("This module type cannot bend around a corner");
+    if(action==="detached" && value && items.some(function(p) {return !canDetachModule(p.kind);}))
+        return deny("This module type cannot detach from the Screen Edge");
     var records=(action==="locked" || action==="joinCorner") && value ? (displayedRecords || geometry(placements,width,height,options,fontScale)) : [];
     if(action==="locked" && value && conflicts(records).length)return deny(conflicts(records)[0]);
     if(action==="joinCorner" && value && items.some(function(p) {
-        return !cornerForModule(records,p.id,width,height);
+        return p.detached === true || p.cornerWrap === true || !cornerForModule(records,p.id,width,height);
     }))return deny("Every selected module must be beside a corner to connect the group");
     var proposed=placements.filter(function(p) {return action!=="remove" || selection.ids.indexOf(p.id)<0;})
         .map(function(p) {
@@ -438,6 +565,27 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
             if(action==="edge" && (hasExplicitRotation(p.rotation) || value!==p.edge))update.rotation=effectiveRotation(p);
             if(action==="rotation")update.rotation=(value==="step" || value===undefined || value===null)
                 ? nextRotation(effectiveRotation(p)) : normalizeRotation(value,p.edge);
+            if(action==="cornerWrap") {
+                if (value) {
+                    update.cornerWrap = true;
+                    update.detached = false;
+                    update.joinCorner = false;
+                    update.alignment = "free";
+                    if (Math.abs((p.position ?? 0.5) - 0.5) < 0.05)
+                        update.position = 0.05;
+                } else {
+                    update.cornerWrap = false;
+                }
+            }
+            if(action==="detached") {
+                if (value) {
+                    update.detached = true;
+                    update.cornerWrap = false;
+                    update.joinCorner = false;
+                } else {
+                    update.detached = false;
+                }
+            }
             return Object.assign({},p,update);
         });
     proposed=normalize(proposed,"top");
@@ -552,35 +700,51 @@ function saveProfile(options, outputName, placements, gap, outputOnly, edgeSizes
 }
 function stripDepth(placements, edge, options, fontScale) {
     var horizontal = edge === "top" || edge === "bottom";
-    return placements.filter(function(p) { return p.enabled && p.edge===edge; }).reduce(function(depth,p) {
+    return placements.filter(function(p) { return p.enabled && p.edge===edge && p.detached!==true && p.cornerWrap!==true; }).reduce(function(depth,p) {
         var size = moduleSize(p,options);
         if (size <= 0) return depth;
+        var measured = options?.extents?.[p.id];
+        if (!options?.editing && Number.isFinite(measured) && measured <= 0) return depth;
         var rot = normalizeRotation(p.rotation,edge);
         var parallel = isParallelToEdge(edge,rot);
-        var measured = options?.extents?.[p.id];
         var natural = Number.isFinite(measured) && !(options?.editing && measured<1) ? Math.max(0,measured)
             : extent(p.kind,!horizontal)*bounded(fontScale,1,.7,2);
         var crossBase = parallel ? 32*bounded(fontScale,1,.7,2)*size : natural*size;
         return Math.max(depth,crossBase*p.depth+16);
     },0);
 }
-function modulePaintedDepth(p, edge, options, fontScale, thickness, minimum) {
-    if (!p || !p.enabled || p.edge !== edge) return 0;
+function modulePaintedDepth(p, edge, options, fontScale, thickness, minimum, attachedStripDepth) {
+    if (!p || !p.enabled) return 0;
     var size = moduleSize(p, options);
     if (size <= 0) return 0;
     var measured = options?.extents?.[p.id];
     if (!options?.editing && Number.isFinite(measured) && measured <= 0) return 0;
+    var fs = bounded(fontScale, 1, .7, 2);
+    if (p.cornerWrap === true) {
+        var ce = cornerEdges(cornerWrapCorner(p));
+        if (ce.horizontal !== edge && ce.vertical !== edge) return 0;
+        var cwThickness = Math.max(24 * fs, 32 * fs * size);
+        return Math.ceil(Math.max(minimum || 0, cwThickness + 16));
+    }
+    if (p.edge !== edge) return 0;
     var unified = isUnifiedKind(p.kind);
     if (unified && unifiedLauncherMode(options, p.kind) !== "module") return 0;
     var horizontal = edge === "top" || edge === "bottom";
-    var fs = bounded(fontScale, 1, .7, 2);
-    var natural = Number.isFinite(measured) && !(options?.editing && measured < 1)
-        ? Math.max(0, measured)
-        : extent(p.kind, !horizontal) * fs;
+    var natural = p.detached === true
+        ? detachedNaturalSpan(p, options, fs, horizontal)
+        : (Number.isFinite(measured) && !(options?.editing && measured < 1)
+            ? Math.max(0, measured)
+            : extent(p.kind, !horizontal) * fs);
     var rot = normalizeRotation(p.rotation, edge);
     var parallel = isParallelToEdge(edge, rot);
     var cross = parallel ? 32 * fs * size : natural * size;
     var protrude = Math.max(0, Number(p.protrudeOffset) || 0);
+    if (p.detached === true) {
+        var along = parallel ? natural * size : 32 * fs * size;
+        var outer = detachedOuterSize(p.kind, along, cross, parallel, fs, size);
+        var offset = detachedEdgeOffset(edge, options, fontScale, attachedStripDepth);
+        return Math.ceil(offset + outer.cross + 6 + protrude);
+    }
     if (unified) {
         var pad = unifiedSurfacePad(p, options);
         var edgeFloor = edgeThickness(options, edge, thickness) + 4;
@@ -599,19 +763,26 @@ function edgeInsetsForModules(placements, options, fontScale, thickness, minimum
         // already supply localSurfaces; only Wayland reservations span the
         // whole side to keep application windows clear of that foreground.
         if(!reservation && insets[edge]===0)return;
-        // Tiny feature launchers are local Edge affordances that keep the
-        // painted edge strip thin; Wayland reservations still protect active
-        // module bumps so application windows never overlap them.
+        // Tiny feature launchers, detached floating pills, and corner-wrapped
+        // modules keep the painted edge strip thin; Wayland reservations still
+        // protect them so application windows never overlap them.
         var enabled = placements.filter(function(p) {
-            return p.enabled && p.edge===edge && !isUnifiedKind(p.kind)
-                && moduleSize(p,options)>0;
+            if (!p.enabled || p.edge!==edge || isUnifiedKind(p.kind)
+                || p.detached===true || p.cornerWrap===true
+                || moduleSize(p,options)<=0) return false;
+            var measured = options?.extents?.[p.id];
+            return options?.editing || !Number.isFinite(measured) || measured > 0;
         });
+        var attachedStrip = insets[edge];
+        if (enabled.length && (options?.edgeWidthAffectsModules?.[edge]!==false
+                && (enabled.length!==1 || options?.singleModuleExpansion?.[edge]!=="local")))
+            attachedStrip = Math.max(attachedStrip, minimum, stripDepth(enabled,edge,options,fontScale));
         if (enabled.length && (reservation || (options?.edgeWidthAffectsModules?.[edge]!==false
                 && (enabled.length!==1 || options?.singleModuleExpansion?.[edge]!=="local"))))
             insets[edge] = Math.max(insets[edge],minimum,stripDepth(enabled,edge,options,fontScale));
         if (reservation) {
             placements.forEach(function(p) {
-                var painted = modulePaintedDepth(p, edge, options, fontScale, thickness, minimum);
+                var painted = modulePaintedDepth(p, edge, options, fontScale, thickness, minimum, attachedStrip);
                 if (painted > insets[edge])
                     insets[edge] = painted;
             });
@@ -620,10 +791,35 @@ function edgeInsetsForModules(placements, options, fontScale, thickness, minimum
     return insets;
 }
 function localSurfaces(records, width, height, options, fontScale, minimum) {
-    records=records.filter(function(p) {return !p.capacityConflict && (!isUnifiedKind(p.kind) || options?.editing || unifiedLauncherMode(options,p.kind)==="module");});
-    var surfaces=records.filter(function(p) {
+    records=records.filter(function(p) {return !p.capacityConflict && p.detached !== true && (!isUnifiedKind(p.kind) || options?.editing || unifiedLauncherMode(options,p.kind)==="module");});
+    var cornerWrapSurfaces = [];
+    records.forEach(function(p) {
+        if (p.cornerWrap !== true) return;
+        var ce = cornerEdges(p.wrapCorner || cornerWrapCorner(p));
+        var pad = 8;
+        var bandDepth = Math.max(minimum || 0, (p.wrapThickness || 32) + pad * 2);
+        var armH = (p.wrapArmH || 96) + pad * 2;
+        var armV = (p.wrapArmV || 96) + pad * 2;
+        var hSurface = ce.horizontal === "top"
+            ? {x: ce.hStart ? -50 : width - armH, y: -50, width: armH + 50, height: bandDepth + 50}
+            : {x: ce.hStart ? -50 : width - armH, y: height - bandDepth, width: armH + 50, height: bandDepth + 50};
+        var vSurface = ce.vertical === "left"
+            ? {x: -50, y: ce.vStart ? -50 : height - armV, width: bandDepth + 50, height: armV + 50}
+            : {x: width - bandDepth, y: ce.vStart ? -50 : height - armV, width: bandDepth + 50, height: armV + 50};
+        var hRec = {ownerId: p.id, kind: p.kind, edge: ce.horizontal, surface: hSurface, content: p.wrapHorizontalRect || p.content,
+            span: armH, along: ce.hStart ? 0 : width - armH, depth: bandDepth, progress: 1, mass: 1, cornerWrapArm: true};
+        var vRec = {ownerId: p.id, kind: p.kind, edge: ce.vertical, surface: vSurface, content: p.wrapVerticalRect || p.content,
+            span: armV, along: ce.vStart ? 0 : height - armV, depth: bandDepth, progress: 1, mass: 1, cornerWrapArm: true};
+        var hRadius = options?.edgeModuleRadii?.[ce.horizontal];
+        if (Number.isFinite(Number(hRadius)) && Number(hRadius) >= 0) hRec.radius = bounded(hRadius, 0, 0, 64);
+        var vRadius = options?.edgeModuleRadii?.[ce.vertical];
+        if (Number.isFinite(Number(vRadius)) && Number(vRadius) >= 0) vRec.radius = bounded(vRadius, 0, 0, 64);
+        cornerWrapSurfaces.push(hRec, vRec);
+    });
+    var linearRecords = records.filter(function(p) { return p.cornerWrap !== true; });
+    var surfaces=linearRecords.filter(function(p) {
         return isUnifiedKind(p.kind) || edgeThickness(options,p.edge)===0 || Number(p.protrudeOffset)>.5 || options?.edgeWidthAffectsModules?.[p.edge]===false || options?.singleModuleExpansion?.[p.edge]==="local"
-            && records.filter(function(other) { return other.edge===p.edge && !isUnifiedKind(other.kind); }).length===1;
+            && linearRecords.filter(function(other) { return other.edge===p.edge && !isUnifiedKind(other.kind); }).length===1;
     }).map(function(p) {
         // Geometry records express depth in pixels, unlike placement depth's
         // multiplier. Derive the paint extent from the packed foreground so
@@ -639,7 +835,7 @@ function localSurfaces(records, width, height, options, fontScale, minimum) {
             : p.edge==="left" ? {x:-50,y:p.along-pad,width:depth+50,height:p.span+pad*2}
             : {x:width-depth,y:p.along-pad,width:depth+50,height:p.span+pad*2};
         var along=p.along,span=p.span;
-        var corner=p.joinCorner ? cornerForModule(records,p.id,width,height) : "";
+        var corner=p.joinCorner ? cornerForModule(linearRecords,p.id,width,height) : "";
         if(corner) {
             var horizontal=p.edge==="top" || p.edge==="bottom";
             var length=horizontal ? width : height;
@@ -676,7 +872,7 @@ function localSurfaces(records, width, height, options, fontScale, minimum) {
             previous.surface={x:x,y:y,width:Math.max(a.x+a.width,b.x+b.width)-x,height:Math.max(a.y+a.height,b.y+b.height)-y};
         } else result.push(record);
     });
-    return result;
+    return cornerWrapSurfaces.concat(result);
 }
 function clearanceInsets(insets, localRecords, edge, along, span, popupOwnerKind) {
     var result=Object.assign({},insets);
@@ -689,6 +885,29 @@ function clearanceInsets(insets, localRecords, edge, along, span, popupOwnerKind
             result[edge]=Math.max(result[edge],record.depth);
     });
     return result;
+}
+function detachedClearanceRecords(records, width, height) {
+    var out = [];
+    Array.from(records || []).forEach(function(p) {
+        if (!p || p.capacityConflict || p.detached !== true || !p.content) return;
+        var c = p.content;
+        if (!(c.width > 0 && c.height > 0)) return;
+        var innerDepth = p.edge === "top" ? (c.y + c.height)
+            : p.edge === "bottom" ? (height - c.y)
+            : p.edge === "left" ? (c.x + c.width)
+            : (width - c.x);
+        if (!(innerDepth > 0)) return;
+        out.push({
+            kind: "",
+            ownerKind: p.kind,
+            edge: p.edge,
+            along: p.along,
+            span: p.span,
+            depth: Math.ceil(innerDepth + 6),
+            detachedClearance: true
+        });
+    });
+    return out;
 }
 // Solve contiguous unlocked groups in the free intervals between immutable
 // reservations. A bounded dynamic program preserves their relative order and
@@ -851,6 +1070,76 @@ function packLockedEdge(list,sizes,length,gap,options,horizontal,low,high) {
     }
     return {error:"Not enough space around locked modules. Undo this change or unlock a module."};
 }
+function packCornerWrapRecords(placements, width, height, options, fontScale, bounds) {
+    var result = [];
+    var gap = bounded(options?.gap, 8, 0, 32);
+    var cornerOwners = {};
+    var cornerList = placements.filter(function(p) {
+        if (!p.enabled || p.cornerWrap !== true || moduleSize(p, options) <= 0) return false;
+        var measured = options?.extents?.[p.id];
+        return options?.editing || !Number.isFinite(measured) || measured > 0;
+    });
+    cornerList.forEach(function(p) {
+        var corner = cornerWrapCorner(p);
+        cornerOwners[corner] = (cornerOwners[corner] || 0) + 1;
+    });
+    cornerList.forEach(function(p) {
+        var corner = cornerWrapCorner(p);
+        var ce = cornerEdges(corner);
+        var m = cornerWrapMetrics(p, width, height, options, fontScale);
+        var inset = m.inset, armH = m.armH, armV = m.armV, thickness = m.thickness;
+        var content, hRect, vRect;
+        if (corner === "topLeft") {
+            content = { x: inset, y: inset, width: armH, height: armV };
+            hRect = { x: inset, y: inset, width: armH, height: thickness };
+            vRect = { x: inset, y: inset, width: thickness, height: armV };
+        } else if (corner === "topRight") {
+            content = { x: width - inset - armH, y: inset, width: armH, height: armV };
+            hRect = { x: width - inset - armH, y: inset, width: armH, height: thickness };
+            vRect = { x: width - inset - thickness, y: inset, width: thickness, height: armV };
+        } else if (corner === "bottomLeft") {
+            content = { x: inset, y: height - inset - armV, width: armH, height: armV };
+            hRect = { x: inset, y: height - inset - thickness, width: armH, height: thickness };
+            vRect = { x: inset, y: height - inset - armV, width: thickness, height: armV };
+        } else {
+            content = { x: width - inset - armH, y: height - inset - armV, width: armH, height: armV };
+            hRect = { x: width - inset - armH, y: height - inset - thickness, width: armH, height: thickness };
+            vRect = { x: width - inset - thickness, y: height - inset - armV, width: thickness, height: armV };
+        }
+        var horizontal = p.edge === "top" || p.edge === "bottom";
+        var rec = Object.assign({}, p, {
+            cornerWrap: true,
+            wrapCorner: corner,
+            wrapThickness: thickness,
+            wrapArmH: armH,
+            wrapArmV: armV,
+            wrapArcRadius: m.arcRadius,
+            wrapHorizontalRect: hRect,
+            wrapVerticalRect: vRect,
+            vertical: !horizontal,
+            along: horizontal ? content.x : content.y,
+            span: horizontal ? armH : armV,
+            designSpan: m.designSpan,
+            designCross: thickness,
+            depth: thickness,
+            edgeStart: inset,
+            edgeEnd: (horizontal ? width : height) - inset,
+            content: content
+        });
+        if (cornerOwners[corner] > 1) {
+            rec.capacityConflict = "Only one corner-wrapped module can occupy each corner";
+        } else if (bounds) {
+            var hReserve = inset + armH + gap;
+            var vReserve = inset + armV + gap;
+            if (hReserve > bounds[ce.horizontal][ce.hStart ? "start" : "end"])
+                bounds[ce.horizontal][ce.hStart ? "start" : "end"] = hReserve;
+            if (vReserve > bounds[ce.vertical][ce.vStart ? "start" : "end"])
+                bounds[ce.vertical][ce.vStart ? "start" : "end"] = vReserve;
+        }
+        result.push(rec);
+    });
+    return result;
+}
 function packGeometry(placements, width, height, options, fontScale, bounds) {
     var result = [];
     ["top","right","bottom","left"].forEach(function(edge) {
@@ -858,31 +1147,58 @@ function packGeometry(placements, width, height, options, fontScale, bounds) {
         var length = horizontal ? width : height;
         var low=bounds[edge].start,high=length-bounds[edge].end;
         var gap = bounded(options?.gap,8,0,32);
+        var fs = bounded(fontScale,1,0.7,2);
         // A measured empty module must not keep a zero-span placement:
         // even a zero-sized record consumes gaps and can leave a tiny
         // deformation at Screen Edges. Preserve edit-mode placeholders.
         var list = placements.filter(function(p) {
-            if (!p.enabled || p.edge !== edge || moduleSize(p,options) <= 0) return false;
+            if (!p.enabled || p.edge !== edge || p.cornerWrap === true || moduleSize(p,options) <= 0) return false;
             var measured = options?.extents?.[p.id];
             return options?.editing || !Number.isFinite(measured) || measured > 0;
         })
             .sort(function(a,b) { return a.position-b.position || a.id.localeCompare(b.id); });
+        var hasDetached = list.some(function(p) { return p.detached === true; });
+        var attachedStripDepth = 0;
+        if (hasDetached && edgeThickness(options, edge) > 0 && options?.edgeWidthAffectsModules?.[edge] !== false) {
+            var attachedEnabled = list.filter(function(p) { return p.detached !== true && !isUnifiedKind(p.kind); });
+            if (attachedEnabled.length > 0 && (attachedEnabled.length !== 1 || options?.singleModuleExpansion?.[edge] !== "local"))
+                attachedStripDepth = Math.max(edgeThickness(options, edge), stripDepth(attachedEnabled, edge, options, fontScale));
+        }
         var metrics = list.map(function(p) {
             var measured = options?.extents?.[p.id];
-            var natural = Number.isFinite(measured) && !(options?.editing && measured<1) ? Math.max(0,measured)
-                : extent(p.kind,!horizontal)*bounded(fontScale,1,0.7,2);
+            var natural = p.detached === true
+                ? detachedNaturalSpan(p, options, fs, horizontal)
+                : (Number.isFinite(measured) && !(options?.editing && measured<1) ? Math.max(0,measured)
+                    : extent(p.kind,!horizontal)*fs);
             var size = moduleSize(p,options);
             var designSpan = natural*size;
-            var designCross = 32*bounded(fontScale,1,0.7,2)*size;
+            var designCross = 32*fs*size;
             var rot = normalizeRotation(p.rotation,edge);
             var parallel = isParallelToEdge(edge,rot);
+            var rawAlong = parallel ? designSpan : designCross;
+            var rawCross = parallel ? designCross : designSpan;
+            if (p.detached === true) {
+                var outer = detachedOuterSize(p.kind, rawAlong, rawCross, parallel, fs, size);
+                return {
+                    designSpan: designSpan,
+                    designCross: designCross,
+                    innerAlong: rawAlong,
+                    innerCross: rawCross,
+                    detached: true,
+                    detachedShape: outer.shape,
+                    rotation: rot,
+                    parallel: parallel,
+                    alongSize: outer.along,
+                    crossSize: outer.cross
+                };
+            }
             return {
                 designSpan: designSpan,
                 designCross: designCross,
                 rotation: rot,
                 parallel: parallel,
-                alongSize: parallel ? designSpan : designCross,
-                crossSize: parallel ? designCross : designSpan
+                alongSize: rawAlong,
+                crossSize: rawCross
             };
         });
         var sizes = metrics.map(function(m) { return m.alongSize; });
@@ -937,15 +1253,29 @@ function packGeometry(placements, width, height, options, fontScale, bounds) {
             var itemScale = p.layoutScale ?? scale;
             p.edgeStart=low;p.edgeEnd=high;
             if (hasExplicitRotation(p.rotation)) p.rotation = m ? m.rotation : normalizeRotation(p.rotation,edge);
-            var defaultCross = 32*bounded(fontScale,1,.7,2)*moduleSize(p,options)*itemScale;
+            var defaultCross = 32*fs*moduleSize(p,options)*itemScale;
             var cross = m ? m.crossSize*itemScale : defaultCross;
             if (m && !m.parallel) {
                 p.designSpan = m.designSpan*itemScale;
                 p.designCross = m.designCross*itemScale;
             }
-            var inset = isUnifiedKind(p.kind) ? unifiedSurfacePad(p, options) : 8;
-            p.content = horizontal ? {x:p.along,y:edge==="top"?inset:height-inset-cross,width:p.span,height:cross}
-                : {x:edge==="left"?inset:width-inset-cross,y:p.along,width:cross,height:p.span};
+            if (p.detached === true && m && m.detached) {
+                var detachOff = detachedEdgeOffset(edge, options, fontScale, attachedStripDepth);
+                p.detached = true;
+                p.detachedShape = m.detachedShape;
+                p.detachedRadius = Math.min(p.span, cross) * 0.5;
+                p.innerSpan = m.innerAlong * itemScale;
+                p.innerCross = m.innerCross * itemScale;
+                p.designSpan = m.designSpan * itemScale;
+                p.designCross = m.designCross * itemScale;
+                p.detachOffset = detachOff;
+                p.content = horizontal ? {x:p.along,y:edge==="top"?detachOff:height-detachOff-cross,width:p.span,height:cross}
+                    : {x:edge==="left"?detachOff:width-detachOff-cross,y:p.along,width:cross,height:p.span};
+            } else {
+                var inset = isUnifiedKind(p.kind) ? unifiedSurfacePad(p, options) : 8;
+                p.content = horizontal ? {x:p.along,y:edge==="top"?inset:height-inset-cross,width:p.span,height:cross}
+                    : {x:edge==="left"?inset:width-inset-cross,y:p.along,width:cross,height:p.span};
+            }
             result.push(p);
         });
     });
@@ -985,11 +1315,12 @@ function adjacentEdge(record,width,height) {
 // Foreground packing and popup anchors remain independent of this paint weld.
 function cornerForModule(records,id,width,height) {
     var own=records.find(function(p) {return p.id===id && p.span>0;});
+    if(!own || own.detached === true || own.cornerWrap === true) return "";
     var corner=adjacentEdge(own,width,height);
     if(!corner) return "";
     var start=corner==="left" || corner==="top";
     var closer=records.some(function(p) {
-        return p.id!==id && p.edge===own.edge && p.span>0
+        return p.id!==id && p.edge===own.edge && p.span>0 && p.cornerWrap !== true
             && (start ? p.along<own.along : p.along+p.span>own.along+own.span);
     });
     return closer ? "" : corner;
@@ -1007,6 +1338,7 @@ function geometry(placements,width,height,options,fontScale) {
         var inset=cornerInset(options,fontScale,edge==="top"||edge==="bottom" ? width : height);
         bounds[edge]={start:inset,end:inset};
     });
+    var cornerRecords = packCornerWrapRecords(placements,width,height,options,fontScale,bounds);
     var corners=[["top","left","start","start"],["top","right","end","start"],
         ["bottom","left","start","end"],["bottom","right","end","end"]];
     var gap=bounded(options?.gap,8,0,32),records=[];
@@ -1018,25 +1350,31 @@ function geometry(placements,width,height,options,fontScale) {
                 records.filter(function(r) {return r.edge===pair[1]&&!r.capacityConflict;}).forEach(function(b) {
                     var x=a.content,y=b.content;
                     if(x.x>=y.x+y.width+gap || y.x>=x.x+x.width+gap || x.y>=y.y+y.height+gap || y.y>=x.y+x.height+gap)return;
-                    var h=y.width+8+gap,v=x.height+8+gap;
+                    var h=Math.max(y.width+8, pair[1]==="left" ? y.x+y.width : width-y.x)+gap;
+                    var v=Math.max(x.height+8, pair[0]==="top" ? x.y+x.height : height-x.y)+gap;
                     if(h>bounds[pair[0]][pair[2]]){bounds[pair[0]][pair[2]]=h;changed=true;}
                     if(v>bounds[pair[1]][pair[3]]){bounds[pair[1]][pair[3]]=v;changed=true;}
                 });
             });
         });
-        if(!changed)return records;
+        if(!changed)return cornerRecords.length ? cornerRecords.concat(records) : records;
     }
-    return packGeometry(placements,width,height,options,fontScale,bounds);
+    var finalRecords = packGeometry(placements,width,height,options,fontScale,bounds);
+    return cornerRecords.length ? cornerRecords.concat(finalRecords) : finalRecords;
 }
 // Preserve the grab point in the full component's coordinates across edges.
 // The active Edge has a small hysteresis band, avoiding corner tie oscillation.
 function dragContext(record,x,y) {
+    if (record && record.cornerWrap === true)
+        return {edge:record.edge,originX:x,originY:y,dx:0,dy:0,along:0,cross:0,cornerWrap:true};
     var c=record.content,dx=x-c.x-c.width/2,dy=y-c.y-c.height/2;
     return {edge:record.edge,originX:x,originY:y,dx:dx,dy:dy,
         along:record.vertical ? (record.edge==="left"?-dy:dy) : dx,
         cross:record.vertical ? (record.edge==="left"?dx:-dx) : dy};
 }
 function dragPoint(context,x,y,width,height,fontScale) {
+    if (context && context.cornerWrap === true)
+        return {edge: y <= height * 0.5 ? "top" : "bottom", x: x, y: y};
     var edges=["top","right","bottom","left"],distances=[y,width-x,height-y,x];
     var nearest=distances.indexOf(Math.min.apply(null,distances)),current=edges.indexOf(context.edge);
     var stationary=Number.isFinite(context.originX) && Math.hypot(x-context.originX,y-context.originY)<4*bounded(fontScale,1,.7,2);
@@ -1093,8 +1431,10 @@ function widthRecord(a,b,t,frame,surface) {
     return result;
 }
 function widthMembers(shape,records) {
+    if (shape && shape.cornerWrapArm === true) return [];
     return records.filter(function(r) {
-        return r.edge===shape.edge && r.along+r.span/2>=shape.along-0.01
+        return r.detached !== true && r.cornerWrap !== true
+            && r.edge===shape.edge && r.along+r.span/2>=shape.along-0.01
             && r.along+r.span/2<=shape.along+shape.span+0.01;
     }).map(function(r){return r.id;});
 }
@@ -1131,9 +1471,19 @@ function widthFrameBetween(from,to,t) {
     // One source owner per backing: duplicating a joined shape changes the
     // ordered smooth union even when the duplicate rectangles are identical.
     var used=[],shapes=fromShapes.map(function(a) {
+        if (a && a.cornerWrapArm === true) {
+            var cwIdx = toShapes.findIndex(function(b, i) {
+                return used.indexOf(i) < 0 && b && b.cornerWrapArm === true
+                    && b.ownerId === a.ownerId && b.edge === a.edge;
+            });
+            if (cwIdx >= 0) used.push(cwIdx);
+            var cwB = cwIdx >= 0 ? toShapes[cwIdx] : widthCollapsed(a, to, true);
+            return widthRecord(a, cwB, t, to, true);
+        }
         var members=widthMembers(a,from.records);
         var index=toShapes.findIndex(function(b,i) {
-            return used.indexOf(i)<0 && widthMembers(b,to.records).some(function(id){return members.indexOf(id)>=0;});
+            return used.indexOf(i)<0 && !(b && b.cornerWrapArm === true)
+                && widthMembers(b,to.records).some(function(id){return members.indexOf(id)>=0;});
         });
         if(index>=0) {
             used.push(index);
@@ -1144,6 +1494,10 @@ function widthFrameBetween(from,to,t) {
     });
     toShapes.forEach(function(b,i) {
         if(used.indexOf(i)<0) {
+            if (b && b.cornerWrapArm === true) {
+                shapes.push(widthRecord(widthCollapsed(b,to,true),b,t,to,true));
+                return;
+            }
             var members=widthMembers(b,to.records);
             shapes.push(widthExpandSurface(widthRecord(widthCollapsed(b,to,true),b,t,to,true),members,records));
         }
@@ -1172,8 +1526,10 @@ function alignEdgeModules(placements, targetIds, fallbackEdge, mode, width, heig
     var useWholeEdge = (mode === "distribute" || mode === "packStart" || mode === "packEnd")
         ? targetPlacements.length < 2
         : targetPlacements.length === 0;
+    if (!useWholeEdge && targetPlacements.some(function(p) { return p.cornerWrap === true; }))
+        return deny("Straighten corner-wrapped modules before auto-aligning");
     var candidatePool = useWholeEdge
-        ? placements.filter(function(p) { return p.enabled !== false && p.edge === activeEdge && !p.locked; })
+        ? placements.filter(function(p) { return p.enabled !== false && p.edge === activeEdge && !p.locked && p.cornerWrap !== true; })
         : targetPlacements;
     if (candidatePool.length === 0)
         return deny("No unlocked modules available on this Edge");

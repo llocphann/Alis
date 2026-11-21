@@ -5,6 +5,7 @@ import Quickshell
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.abyss.looks
 import "looks/AbyssGeometry.js" as Geometry
 import "looks/AbyssPyramidMotion.js" as PyramidMotion
@@ -244,14 +245,21 @@ Item {
     property var obstacles: []
     property string source: ""
     property string contentKind: ""
+    // Opt-in immediate popup reveal with AlisLoadingScreen while heavy async
+    // content is still incubating (Dashboard, Settings, Nexus, etc.).
+    property bool showLoadingSurface: false
+    property string loadingTitle: ""
+    property string loadingIcon: "waves"
+    readonly property bool loadingPresentationActive: root.showLoadingSurface
+        && root.presented && GlobalStates.deferredPanelsReady && !root.ready
     // External presenters such as StyledPopup own their own reveal fraction.
     // Keep that motion independent from allocator availability: otherwise the
     // host's Behavior would re-animate every incoming reveal frame.
     property real externalProgress: -1
     // Loading is driven by semantic open below. Wait for its content before
-    // starting reveal so a cold load cannot consume the animation behind an
-    // empty panel; warm content and embedded items remain ready immediately.
-    property real availabilityProgress: presented && ready ? 1 : 0
+    // starting reveal unless showLoadingSurface opts into an immediate loading
+    // screen presentation while async incubation completes.
+    property real availabilityProgress: presented && (ready || (showLoadingSurface && GlobalStates.deferredPanelsReady)) ? 1 : 0
     property real progress: (externalProgress >= 0
         ? Math.max(0,Math.min(1,externalProgress)) : 1) * availabilityProgress
     readonly property var requestedRecord: Geometry.panel(width,height,edgeInsets,edge,requestedAlong,span,depth,1,padding,[],largeSurface)
@@ -341,7 +349,7 @@ Item {
     // seam stays at the physical Edge. Keep the bridge between both interactive.
     readonly property var connectionInsets: root.controller?.edgeInsets ?? root.edgeInsets
     readonly property rect inputBounds: {
-        if (!root.acceptsInput || !root.ready) return Qt.rect(0,0,0,0)
+        if (!root.acceptsInput || !(root.ready || root.loadingPresentationActive)) return Qt.rect(0,0,0,0)
         const c=(root.largeSurface && !root.includeEdgeConnection && root.semanticOpen)
             ? root.targetRecord.content
             : root.record.content
@@ -355,7 +363,7 @@ Item {
         return Qt.rect(region.x,region.y,region.width,region.height)
     }
     readonly property rect sourceBridge: {
-        if (!root.includeEdgeConnection || !root.acceptsInput || !root.ready)
+        if (!root.includeEdgeConnection || !root.acceptsInput || !(root.ready || root.loadingPresentationActive))
             return Qt.rect(0,0,0,0)
         const r=Geometry.popupSourceBridge(root.connectionSourceRect,root.inputBounds,
             root.width,root.height,root.connectionInsets,root.edge)
@@ -662,6 +670,8 @@ Item {
         Qt.callLater(root.QsWindow.window.ensureEscapeFocus)
     onReadyChanged: if (typeof root.QsWindow?.window?.ensureEscapeFocus === "function")
         Qt.callLater(root.QsWindow.window.ensureEscapeFocus)
+    onLoadingPresentationActiveChanged: if (typeof root.QsWindow?.window?.ensureEscapeFocus === "function")
+        Qt.callLater(root.QsWindow.window.ensureEscapeFocus)
     property int escapeKeyCount: 0
     Keys.onEscapePressed: event => {
         root.escapeKeyCount++
@@ -788,7 +798,7 @@ Item {
         }
         x: bounds.x; y: bounds.y
         width: bounds.width; height: bounds.height
-        enabled: root.acceptsInput && root.ready
+        enabled: root.acceptsInput && (root.ready || root.loadingPresentationActive)
         containmentMask: QtObject {
             function contains(point: point): bool {
                 const x=point.x+inputFrame.x,y=point.y+inputFrame.y
@@ -854,11 +864,33 @@ Item {
             height: root.pyramidPresentationActive
                 ? fullRect.height : (root.stableContentSize
                     ? root.targetRecord.content.height : contentFrame.height)
+            opacity: root.loadingPresentationActive ? 0 : 1
+            Behavior on opacity {
+                enabled: root.showLoadingSurface && Appearance.animationsEnabled
+                NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+            }
             layer.enabled: root.largeSurface
                 && (Quickshell.env("QT_QUICK_BACKEND") !== "software")
                 && GraphicsInfo.api !== GraphicsInfo.Software
                 && root.progress > 0.001 && root.progress < 0.999
             layer.smooth: true
+        }
+
+        AlisLoadingScreen {
+            id: bodyLoadingScreen
+            objectName: "abyssBodyLoadingScreen"
+            anchors.fill: parent
+            z: 40
+            loading: root.loadingPresentationActive
+            title: root.loadingTitle
+            icon: root.loadingIcon
+            fillSurface: false
+            opacity: root.loadingPresentationActive ? 1 : 0
+            visible: root.showLoadingSurface && (root.loadingPresentationActive || bodyLoadingScreen.opacity > 0.001)
+            Behavior on opacity {
+                enabled: root.showLoadingSurface && Appearance.animationsEnabled
+                NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+            }
         }
     }
     Loader {
@@ -886,7 +918,7 @@ Item {
         asynchronous: (Quickshell.env("QT_QUICK_BACKEND") !== "software")
             && status !== Loader.Ready
             && !root.residentContent
-            && (root.backgroundPreload || root.largeSurface)
+            && (root.backgroundPreload || root.largeSurface || root.showLoadingSurface)
         clip: true
         opacity: 1
         enabled: root.acceptsInput

@@ -59,13 +59,28 @@ Item {
 
                 readonly property bool tightTab:
                     tab.width > 0 && tab.width < 90
+                readonly property real _badgeMinSize: root.pillHeight <= 30 ? 18 : 20
+                readonly property real _badgeRightMargin: root.pillHeight <= 30 ? 6 : 8
+                readonly property real _badgeWidth: tab.hasBadge
+                    ? Math.max(_badgeMinSize, Math.ceil(badgeText.implicitWidth) + 8)
+                    : 0
+                readonly property real _badgeReservedRight: tab.hasBadge
+                    ? (_badgeWidth + _badgeRightMargin + 4)
+                    : 0
+                readonly property real _sidePad: tab.tightTab ? 4 : (root.pillHeight <= 30 ? 5 : 8)
+                readonly property real _iconSlot: tab.hasIcon
+                    ? (tab.tightTab ? 17 : (root.pillHeight <= 30 ? 19 : 22))
+                    : 0
 
-                // Center icon + label as one visual unit. Optional badges are
-                // anchored independently so their width can never push the tab
-                // title off-center.
+                // Center icon + label as one visual unit inside the safe pill
+                // inset (excluding any trailing badge width so labels never
+                // crowd the curved capsule edge or collide with multi-digit counts).
                 Row {
                     id: centeredTabLabel
                     anchors.centerIn: parent
+                    anchors.horizontalCenterOffset: tab.hasBadge
+                        ? Math.round((tab._sidePad - tab._badgeReservedRight) / 2)
+                        : 0
                     spacing: tab.tightTab ? 3 : (root.pillHeight <= 30 ? 4 : 5)
 
                     MaterialSymbol {
@@ -85,16 +100,19 @@ Item {
                         // while preserving the centered icon+text unit.
                         width: Math.min(implicitWidth, Math.max(0,
                             tab.width
-                                - (tab.hasIcon ? (tab.tightTab ? 17 : (root.pillHeight <= 30 ? 19 : 22)) : 0)
-                                - (tab.hasBadge ? (root.pillHeight <= 30 ? 28 : 34) : (tab.tightTab ? 6 : 8))))
+                                - tab._iconSlot
+                                - tab._sidePad
+                                - (tab.hasBadge ? tab._badgeReservedRight : tab._sidePad)))
                         text: tab.modelData.label ?? ""
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
                         maximumLineCount: 1
-                        font.pixelSize: (root.pillHeight <= 30 || root.tabs.length >= 3 || tab.tightTab)
-                            ? Appearance.font.pixelSize.smaller
-                            : Appearance.font.pixelSize.small
+                        font.pixelSize: tab.tightTab
+                            ? Math.max(10, Appearance.font.pixelSize.smaller - 1)
+                            : ((root.pillHeight <= 30 || root.tabs.length >= 3)
+                                ? Appearance.font.pixelSize.smaller
+                                : Appearance.font.pixelSize.small)
                         font.weight: tab.selected ? Font.DemiBold : Font.Normal
                         color: tab.selected
                             ? Appearance.colors.colOnPrimaryContainer
@@ -103,18 +121,22 @@ Item {
                 }
 
                 Rectangle {
+                    id: tabCountBadge
                     visible: tab.hasBadge
                     anchors.right: parent.right
-                    anchors.rightMargin: root.pillHeight <= 30 ? 6 : 8
+                    anchors.rightMargin: tab._badgeRightMargin
                     anchors.verticalCenter: parent.verticalCenter
-                    implicitWidth: root.pillHeight <= 30 ? 18 : 20
-                    implicitHeight: root.pillHeight <= 30 ? 18 : 20
+                    implicitWidth: tab._badgeWidth
+                    width: implicitWidth
+                    implicitHeight: tab._badgeMinSize
+                    height: implicitHeight
                     radius: height / 2
                     color: tab.selected
                         ? Appearance.colors.colPrimary
                         : Appearance.colors.colLayer2
 
                     StyledText {
+                        id: badgeText
                         anchors.centerIn: parent
                         text: String(tab.modelData.count ?? 0)
                         font.pixelSize: Appearance.font.pixelSize.smallest

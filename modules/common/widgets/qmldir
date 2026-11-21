@@ -4,6 +4,7 @@ AbyssCustomizationTile 1.0 AbyssCustomizationTile.qml
 AddressBar 1.0 AddressBar.qml
 AddressBreadcrumb 1.0 AddressBreadcrumb.qml
 AgendaTodoLink 1.0 AgendaTodoLink.qml
+AlisLoadingScreen 1.0 AlisLoadingScreen.qml
 AngelPartialBorder 1.0 AngelPartialBorder.qml
 BarModuleOrderEditor 1.0 BarModuleOrderEditor.qml
 ButtonGroup 1.0 ButtonGroup.qml

@@ -479,7 +479,7 @@ Item {
             active: false
             source: root._sourceFor(index)
             asynchronous: index !== root._currentIndex || root.backgroundWarmup
-                || ((Quickshell.env("QT_QUICK_BACKEND") !== "software") && status === Loader.Loading)
+                || ((Quickshell.env("QT_QUICK_BACKEND") !== "software") && status !== Loader.Ready)
             visible: active && !root.showingCustomTab && (index === root._currentIndex || index === root._pendingIndex)
             enabled: !root.showingCustomTab
                 && index === root._currentIndex

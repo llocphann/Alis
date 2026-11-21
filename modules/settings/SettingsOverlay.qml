@@ -2160,6 +2160,8 @@ Scope {
                             SettingsPageLoadingOverlay {
                                 anchors.fill: overlayPagesHost
                                 loading: overlayPagesHost.loading && !overlayPagesHost.error
+                                title: String(root.overlayPages?.[root.overlayCurrentPage]?.name ?? "")
+                                icon: String(root.overlayPages?.[root.overlayCurrentPage]?.icon ?? "tune")
                                 z: 15
                             }
 

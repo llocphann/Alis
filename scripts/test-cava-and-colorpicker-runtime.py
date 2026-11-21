@@ -34,6 +34,7 @@ ShellRoot {
     id: root
     property int checks: 0
     property var pickedEvents: []
+    property var cancelledEvents: []
 
     function check(cond, msg) {
         root.checks++
@@ -53,8 +54,8 @@ ShellRoot {
     Window {
         id: win
         visible: true
-        width: 800
-        height: 600
+        width: 840
+        height: 640
         color: "#111820"
 
         BarCavaEqualizerModule {
@@ -63,36 +64,45 @@ ShellRoot {
             height: 28
             visible: true
         }
-    }
 
-    // Load offscreen-adapted copy of production ColorPickerOverlay.qml with required requestId
-    Loader {
-        id: overlayLoader
-        Component.onCompleted: {
-            setSource("ColorPickerOverlayOffscreen.qml", {
-                requestId: 42,
-                width: 800,
-                height: 600,
-                isActiveOverlay: true,
-                themePalette: ({
-                    darkmode: true,
-                    colLayer0: "#14161b",
-                    colLayer1: "#1c1f26",
-                    colLayer2: "#242832",
-                    colPrimary: "#89b4fa",
-                    colOnPrimary: "#0d1117",
-                    colSecondary: "#94e2d5",
-                    colOnLayer0: "#e6eaf2",
-                    colSubtext: "#9ea6b8",
-                    colOutline: "#333947",
-                    recentColors: ["#FF5500", "#00CC88", "#3366FF", "#EEAA22", "#CC44AA"]
+        // Load offscreen-adapted copy of production ColorPickerOverlay.qml inside active window
+        // Offset by (20,20) so offscreen default cursor (8,8) starts outside the overlay, testing
+        // the center-screen (400,300) initial sample before any mouse motion.
+        Loader {
+            id: overlayLoader
+            x: 20
+            y: 20
+            width: 800
+            height: 600
+            Component.onCompleted: {
+                setSource("ColorPickerOverlayOffscreen.qml", {
+                    requestId: 42,
+                    width: 800,
+                    height: 600,
+                    isActiveOverlay: true,
+                    themePalette: ({
+                        darkmode: true,
+                        colLayer0: "#14161b",
+                        colLayer1: "#1c1f26",
+                        colLayer2: "#242832",
+                        colPrimary: "#89b4fa",
+                        colOnPrimary: "#0d1117",
+                        colSecondary: "#94e2d5",
+                        colOnLayer0: "#e6eaf2",
+                        colSubtext: "#9ea6b8",
+                        colOutline: "#333947",
+                        recentColors: ["#FF5500", "#00CC88", "#3366FF", "#EEAA22", "#CC44AA"]
+                    })
                 })
-            })
-        }
-        onLoaded: {
-            item.picked.connect((reqId, val, fmt) => {
-                root.pickedEvents.push({ reqId: reqId, val: val, fmt: fmt })
-            })
+            }
+            onLoaded: {
+                item.picked.connect((reqId, val, fmt) => {
+                    root.pickedEvents.push({ reqId: reqId, val: val, fmt: fmt })
+                })
+                item.cancelled.connect((reqId) => {
+                    root.cancelledEvents.push(reqId)
+                })
+            }
         }
     }
 
@@ -153,11 +163,13 @@ ShellRoot {
                 root.check(barEq.mirrorBars === true, "mirrorBars should reactively become true when config mirror=true")
                 Config.setNestedValue("bar.cava.mirror", false)
 
-                // ── 2. ColorPickerOverlay: Immediate Visibility on Ready, Recent Recall, Lock Mode ──
+                // ── 2. ColorPickerOverlay: Immediate Visibility on Ready, Compact Right-Click Lock Popup, Double-Esc ──
                 const cp = overlayLoader.item
                 const popupItem = root.findByObjectName(cp.contentItem, "colorPickerCircularPopup")
+                const studioDeck = root.findByObjectName(cp.contentItem, "colorPickerStudioDeck")
                 const recentRow = root.findByObjectName(cp.contentItem, "colorPickerRecentRow")
                 root.check(popupItem !== null, "colorPickerCircularPopup not found")
+                root.check(studioDeck !== null, "colorPickerStudioDeck not found")
                 root.check(recentRow !== null, "colorPickerRecentRow not found")
 
                 // Before sampler is ready, circular popup stays hidden
@@ -171,8 +183,10 @@ ShellRoot {
                 tryVerify(() => cp.ready === true, 4000)
                 wait(40)
 
-                // Circular popup MUST immediately appear at screen center BEFORE any mouse movement!
+                // Circular popup MUST immediately appear at screen center BEFORE any mouse movement,
+                // while studioDeck stays hidden until locked via right-click!
                 root.check(popupItem.visible === true, "Circular popup must become visible immediately on ready even before mouse move")
+                root.check(studioDeck.visible === false, "Studio deck popup must stay hidden until right-click lock")
                 root.check(Math.abs(cp.cursorX - 400) < 1 && Math.abs(cp.cursorY - 300) < 1,
                     "Initial cursor should default to screen center (400,300), got (" + cp.cursorX + "," + cp.cursorY + ")")
                 const overlayItem = cp.contentItem.children.find(c => c && c.children && c.children.length >= 3)
@@ -183,7 +197,35 @@ ShellRoot {
                 root.check(cp.recallableRecents.length === 5, "Expected 5 recallableRecents, got " + cp.recallableRecents.length)
                 root.check(cp.recallableRecents[0].key === "6" && cp.recallableRecents[0].hex === "#FF5500", "Recent key 6 mismatch")
                 root.check(cp.recallableRecents[4].key === "0" && cp.recallableRecents[4].hex === "#CC44AA", "Recent key 0 mismatch")
-                root.check(recentRow.visible === true, "Recent recall row should be visible when recentColors present")
+
+                // Right-click locks loupe & opens studioDeck (revealing recentRow); right-click again unlocks & closes deck
+                mouseClick(overlayItem, 120, 120, Qt.RightButton)
+                wait(20)
+                root.check(cp.loupeLocked === true && studioDeck.visible === true && recentRow.visible === true,
+                    "Right-click must automatically lock loupe and reveal studioDeck & recentRow")
+                mouseClick(overlayItem, 120, 120, Qt.RightButton)
+                wait(20)
+                root.check(cp.loupeLocked === false && studioDeck.visible === false && root.cancelledEvents.length === 0,
+                    "Second right-click must unlock & hide studioDeck without cancelling Color Picker")
+
+                // Right-click lock -> 1st Esc unlocks & closes popup -> 2nd Esc cancels Color Picker
+                const prevTcParent = tc.parent
+                tc.parent = overlayItem
+                win.requestActivate()
+                overlayItem.forceActiveFocus()
+                wait(40)
+                mouseClick(overlayItem, 120, 120, Qt.RightButton)
+                wait(20)
+                root.check(cp.loupeLocked === true && studioDeck.visible === true, "Re-locking via right-click failed")
+                keyClick(Qt.Key_Escape)
+                wait(20)
+                root.check(cp.loupeLocked === false && studioDeck.visible === false && root.cancelledEvents.length === 0,
+                    "First Esc while locked must exit Lock & close popup without cancelling (locked=" + cp.loupeLocked + " cancelled=" + root.cancelledEvents.length + " focus=" + overlayItem.activeFocus + ")")
+                keyClick(Qt.Key_Escape)
+                wait(20)
+                root.check(root.cancelledEvents.length === 1 && root.cancelledEvents[0] === 42,
+                    "Second Esc while unlocked must cancel Color Picker, got " + JSON.stringify(root.cancelledEvents))
+                tc.parent = prevTcParent
 
                 // Format cycling across all 5 formats
                 root.check(cp.formatColor("#FF5500", "HEX") === "#FF5500", "HEX format failed")
@@ -204,14 +246,14 @@ ShellRoot {
                 // Lock toggle & multi-monitor deactivation reset
                 root.check(cp.loupeLocked === false, "loupeLocked should default false")
                 cp.loupeLocked = true
-                root.check(cp.loupeLocked === true, "loupeLocked toggle failed")
+                root.check(cp.loupeLocked === true && studioDeck.visible === true, "loupeLocked toggle failed")
                 cp.isActiveOverlay = false
                 wait(20)
-                root.check(popupItem.visible === false && cp.loupeLocked === false,
+                root.check(popupItem.visible === false && cp.loupeLocked === false && studioDeck.visible === false,
                     "Deactivating overlay on multi-monitor must hide popup and clear loupeLocked")
                 cp.isActiveOverlay = true
                 wait(20)
-                root.check(popupItem.visible === true, "Re-activating overlay must show popup immediately")
+                root.check(popupItem.visible === true && studioDeck.visible === false, "Re-activating overlay must show compact loupe without locked deck")
 
                 // ── 3. Battery Service Telemetry Sanity ──
                 root.check(typeof Battery.available === "boolean", "Battery.available type invalid")
@@ -251,7 +293,7 @@ def _adapt_overlay_for_offscreen(src_text: str) -> str:
     # ColorPickerOverlay's real QML UI, bindings, hotkeys & sampler execute offscreen.
     out = src_text
     out = out.replace("import Quickshell.Wayland\n", "")
-    out = out.replace("PanelWindow {\n", "Window {\n    property var screen: ({ name: 'OFFSCREEN-1' })\n")
+    out = out.replace("PanelWindow {\n", "Item {\n    property var screen: ({ name: 'OFFSCREEN-1' })\n    property color color\n    readonly property Item contentItem: root\n")
     out = re.sub(r"^\s*exclusionMode:.*\n", "", out, flags=re.MULTILINE)
     out = re.sub(r"^\s*anchors\s*\{[^}]*\}\s*\n", "", out, flags=re.MULTILINE)
     out = re.sub(r"^\s*WlrLayershell\.[^\n]*\n", "", out, flags=re.MULTILINE)

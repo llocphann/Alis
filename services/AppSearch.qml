@@ -538,6 +538,11 @@ Singleton {
         if (!entry) return false
 
         const rawEntry = entry.originalEntry ?? entry
+        if ((entry.isBuiltInShellApp === true || rawEntry?.isBuiltInShellApp === true)
+                && typeof entry.execute === "function") {
+            entry.execute()
+            return true
+        }
         const desktopId = String(entry.id ?? rawEntry?.id ?? "").trim()
         const displayName = String(entry.name ?? rawEntry?.name ?? desktopId).trim()
         const workingDirectory = String(entry.workingDirectory ?? rawEntry?.workingDirectory ?? "").trim()
@@ -629,6 +634,33 @@ Singleton {
     function lookupDesktopEntry(appId) {
         void root._cacheRevision;
         if (!appId || appId.length === 0) return null;
+
+        const trimmedLower = String(appId).trim().toLowerCase();
+        if (trimmedLower === "alis-nexus" || trimmedLower === "alis nexus") {
+            const exactNexus = _desktopIdStemMap["alis-nexus"]
+                ?? _startupClassMap["alis-nexus"]
+                ?? _execBasenameMap["alis-nexus"];
+            if (exactNexus) {
+                return exactNexus;
+            }
+            return {
+                id: "alis-nexus",
+                name: "Alis Nexus",
+                genericName: "Knowledge Workspace",
+                comment: "Alis Nexus Vault Workspace",
+                icon: Quickshell.shellPath("assets/icons/alis-nexus.svg"),
+                noDisplay: false,
+                isBuiltInShellApp: true,
+                execute: function() {
+                    if (typeof AlisIntergration !== "undefined") {
+                        if (AlisIntergration.nexus && typeof AlisIntergration.nexus.openWindow === "function")
+                            AlisIntergration.nexus.openWindow();
+                        else if (typeof AlisIntergration._dispatchNexusIpc === "function")
+                            AlisIntergration._dispatchNexusIpc("openWindow");
+                    }
+                }
+            };
+        }
 
         // 1. Quickshell's built-in heuristic (handles simple cases)
         const entry = DesktopEntries.heuristicLookup(appId);
@@ -780,7 +812,7 @@ Singleton {
     // window's reported app_id unless a configured rule (or built-in Alis shell
     // surface rule, such as Alis Nexus) remaps it.
     function resolveWindowIdentity(toplevel): string {
-        const appId = String(toplevel?.appId ?? toplevel?.app_id ?? "")
+        const appId = String(toplevel?.appId ?? toplevel?.app_id ?? toplevel?.class ?? "")
         const title = String(toplevel?.title ?? "").trim()
         if (appId.length === 0 && title.length === 0) return appId
         const rules = root._parseIdentityRules()
@@ -795,7 +827,7 @@ Singleton {
             || lowerId === "qs"
             || lowerId === "alis"
             || lowerId.includes("quickshell")
-        if (isShellHostId && /^alis\s+nexus\b/i.test(title)) {
+        if (isShellHostId && /\balis\s+nexus\b/i.test(title)) {
             return "alis-nexus"
         }
         return appId

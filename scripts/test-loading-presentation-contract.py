@@ -43,23 +43,19 @@ assert "_hidePending" not in task
 assert "Component.onCompleted:" in task
 
 page = read("modules/common/widgets/SettingsPageLoadingOverlay.qml")
-assert "MaterialLoadingIndicator {" in page
+screen = read("modules/common/widgets/AlisLoadingScreen.qml")
+assert "AlisLoadingScreen {" in page, "Settings page loading overlay must use AlisLoadingScreen"
+assert "MaterialLoadingIndicator {" not in page, "Retired gear indicator must not remain in SettingsPageLoadingOverlay"
+assert 'text: "settings"' not in screen, "AlisLoadingScreen must not render a spinning settings gear"
+assert "AlisLoadingScreen 1.0 AlisLoadingScreen.qml" in qmldir
 assert "LoadingText {" not in page
-assert "property string text:" not in page
 assert "SettingsMaterialPreset.cardColor" not in page
 assert "SettingsMaterialPreset.cardRadius" not in page
 assert "showDelayTimer" not in page and "_shown" not in page
 assert "visible: root.loading" in page and "loading: root.loading" in page
-assert 'color: "transparent"' in page
-assert "border.color: SettingsMaterialPreset.accentColor" in page
-assert "color: SettingsMaterialPreset.accentColor" in page
-import re
-ring = re.search(r"Item\s*\{\s*anchors.centerIn: parent\s*width: (\d+)\s*height: width", page)
-glyph = re.search(r"MaterialLoadingIndicator\s*\{[^}]*implicitSize: (\d+)", page, re.S)
-assert ring and glyph, "Floating Gear must size its ring and glyph"
-assert 60 <= int(ring[1]) <= 68
-assert 36 <= int(glyph[1]) * 0.8 <= 40
-assert "RotationAnimation on rotation" not in page, "Ring must remain static"
+assert "accentColor: SettingsMaterialPreset.accentColor" in page
+assert "PathAngleArc {" in screen and "ColorUtils.tonalStep(" in screen
+assert "running: root.activeAnimation" in screen
 
 host = read("modules/settings/SettingsPageHost.qml")
 assert 'import "SettingsPageLoadingState.js" as PageLoadState' in host

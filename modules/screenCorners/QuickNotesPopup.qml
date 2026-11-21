@@ -225,7 +225,7 @@ Bar.StyledPopup {
 
         ColumnLayout {
             anchors.fill: parent
-            spacing: 6
+            spacing: contentRoot.height >= 420 ? 8 : 6
 
             Item {
                 id: tabDock
@@ -255,10 +255,17 @@ Bar.StyledPopup {
 
                 PillTabBar {
                     id: mainTabs
+                    objectName: "quickNotesMainTabs"
+                    readonly property real _pinGap: popupPinButton.width + 8
+                    readonly property real _asymmetricAvail:
+                        Math.max(0, contentRoot.width - _pinGap)
+                    readonly property real _preferredWidth: Math.min(
+                        360, Math.max(212, Math.round(contentRoot.width * 0.68)))
                     anchors.top: parent.top
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: Math.min(276, Math.max(
-                        180, contentRoot.width - (popupPinButton.width + 8) * 2))
+                    width: Math.min(_preferredWidth, _asymmetricAvail)
+                    x: Math.max(0, Math.min(
+                        Math.round((contentRoot.width - width) / 2),
+                        Math.floor(contentRoot.width - _pinGap - width)))
                     pillHeight: 30
                     currentIndex: root.selectedMainTab
                     tabs: [
@@ -288,10 +295,12 @@ Bar.StyledPopup {
 
                 Item {
                     id: notesTraySlot
+                    objectName: "quickNotesTraySlot"
                     anchors.top: mainTabs.bottom
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: Math.min(248, Math.max(
-                        160, contentRoot.width - 24))
+                    anchors.horizontalCenter: mainTabs.horizontalCenter
+                    width: Math.min(mainTabs.width, Math.max(
+                        Math.min(140, mainTabs.width),
+                        Math.round(mainTabs.width * 0.90)))
                     // 32px = 4px visual separation + 28px pill. The entire
                     // extent collapses continuously so the editor receives
                     // space back without a final discrete jump.

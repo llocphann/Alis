@@ -38,7 +38,7 @@ Item {
     function cavaAdjustedGeometry(rec): var {
         const baseAlong = Number(rec?.along ?? 0)
         const baseSpan = Number(rec?.span ?? 0)
-        if (root.editing || !rec || rec.kind !== "cava")
+        if (root.editing || !rec || rec.kind !== "cava" || rec.cornerWrap === true || rec.detached === true)
             return { protrudeOffset: 0, along: baseAlong, span: baseSpan }
         if ((rec.edge !== "left" && rec.edge !== "right") || baseSpan <= 0)
             return { protrudeOffset: 0, along: baseAlong, span: baseSpan }
@@ -224,7 +224,11 @@ Item {
     Connections {
         target:Appearance
         function onAnimationsEnabledChanged(){if(!Appearance.animationsEnabled)root.finishWidthMorph()}
-        function onFontSizeScaleChanged(){root.refreshWidthFrame()}
+        function onFontSizeScaleChanged(){
+            for (let i = 0; i < modules.count; ++i)
+                modules.itemAt(i)?.syncMeasuredSpan()
+            root.refreshWidthFrame()
+        }
     }
     Connections {
         target:AbyssStyle
@@ -262,6 +266,7 @@ Item {
     readonly property var baseRenderedRecords: {
         const revision=root.revision
         return presentedLayoutRecords.map(record=>{
+            if(record.cornerWrap===true)return record
             if(!root.editing && record.kind==="cava")return record
             const item=itemForId(record.id)
             if(!item)return record
@@ -272,8 +277,9 @@ Item {
     readonly property var renderedRecords: {
         const revision=root.revision
         return presentedLayoutRecords.map(record=>{
+            if(record.cornerWrap===true)return record
             const item=itemForId(record.id)
-            if(!root.editing && record.kind==="cava") {
+            if(!root.editing && record.kind==="cava" && record.detached !== true) {
                 const adj=root.cavaAdjustedGeometry(record)
                 const along=item ? (record.vertical ? item.y : item.x) : adj.along
                 const span=item ? (record.vertical ? item.height : item.width) : adj.span
@@ -293,7 +299,8 @@ Item {
     property int revision: 0
     // Optional local expansion shares the output field; it has no extra painter.
     readonly property var capacityNotices: editing ? [] : Layout.capacityNotices(layoutRecords,width,height,Appearance.fontSizeScale)
-    readonly property var clearanceDeformations: widthMorphActive ? presentedFrame.deformations : (root.editing ? deformations : Layout.localSurfaces(baseRenderedRecords.concat(capacityNotices),width,height,targetFrame?.options ?? configuredLayoutOptions,Appearance.fontSizeScale,AbyssStyle.barThickness))
+    readonly property var clearanceDeformations: (widthMorphActive ? presentedFrame.deformations : (root.editing ? deformations : Layout.localSurfaces(baseRenderedRecords.concat(capacityNotices),width,height,targetFrame?.options ?? configuredLayoutOptions,Appearance.fontSizeScale,AbyssStyle.barThickness)))
+        .concat(Layout.detachedClearanceRecords(baseRenderedRecords, width, height))
     readonly property var deformations: widthMorphActive ? presentedFrame.deformations : Layout.localSurfaces(renderedRecords.concat(capacityNotices),width,height,targetFrame?.options ?? configuredLayoutOptions,Appearance.fontSizeScale,AbyssStyle.barThickness)
 
     property var moduleIds: []
@@ -355,7 +362,7 @@ Item {
             readonly property bool unifiedEdgeLauncher:
                 (module.kind === "notesTimers" || module.kind === "notificationActivity")
             readonly property bool moduleIconHitOnly:
-                module.unifiedEdgeLauncher && module.showIcon
+                module.unifiedEdgeLauncher && module.showIcon && !module.detached
             readonly property real moduleIconHitSize: Math.max(1,
                 Math.min(module.width,module.height,
                     30*Appearance.fontSizeScale*module.contentScale))
@@ -365,23 +372,42 @@ Item {
             readonly property Region inputRegion: Region {
                 // Module Icon mode owns only the painted glyph, never the
                 // physical screen strip. A hidden module gets zero input;
-                // its legacy corner is mounted separately in Edgebar mode.
+                // Corner-wrapped modules own strictly their two arm strips so
+                // the inner workspace quadrant remains 100% click-through.
                 x: module.moduleIconHitOnly
                     ? Math.floor(module.x+(module.width-module.moduleIconHitSize)/2)
                     : Math.floor(module.x)
                 y: module.moduleIconHitOnly
                     ? Math.floor(module.y+(module.height-module.moduleIconHitSize)/2)
                     : Math.floor(module.y)
-                width: module.visible && module.enabled
+                width: !module.cornerWrap && module.visible && module.enabled
                         && (!module.unifiedEdgeLauncher || module.showIcon)
                     ? Math.max(0,module.moduleIconHitOnly
                         ? Math.ceil(module.x+(module.width+module.moduleIconHitSize)/2)-x
                         : Math.ceil(module.x+module.width)-x) : 0
-                height: module.visible && module.enabled
+                height: !module.cornerWrap && module.visible && module.enabled
                         && (!module.unifiedEdgeLauncher || module.showIcon)
                     ? Math.max(0,module.moduleIconHitOnly
                         ? Math.ceil(module.y+(module.height+module.moduleIconHitSize)/2)-y
                         : Math.ceil(module.y+module.height)-y) : 0
+                Region {
+                    readonly property var hr: module.geometry?.wrapHorizontalRect ?? null
+                    x: hr ? Math.floor(hr.x) : 0
+                    y: hr ? Math.floor(hr.y) : 0
+                    width: module.cornerWrap && module.visible && module.enabled && hr
+                        ? Math.max(0, Math.ceil(hr.x + hr.width) - Math.floor(hr.x)) : 0
+                    height: module.cornerWrap && module.visible && module.enabled && hr
+                        ? Math.max(0, Math.ceil(hr.y + hr.height) - Math.floor(hr.y)) : 0
+                }
+                Region {
+                    readonly property var vr: module.geometry?.wrapVerticalRect ?? null
+                    x: vr ? Math.floor(vr.x) : 0
+                    y: vr ? Math.floor(vr.y) : 0
+                    width: module.cornerWrap && module.visible && module.enabled && vr
+                        ? Math.max(0, Math.ceil(vr.x + vr.width) - Math.floor(vr.x)) : 0
+                    height: module.cornerWrap && module.visible && module.enabled && vr
+                        ? Math.max(0, Math.ceil(vr.y + vr.height) - Math.floor(vr.y)) : 0
+                }
             }
             // Quickshell Region documents cases where geometry does not
             // invalidate its compositor mask automatically. Explicitly
@@ -398,17 +424,53 @@ Item {
             onHeightChanged: {invalidateInputRegion();settleDimensionChange()}
             onVisibleChanged: invalidateInputRegion()
             onEnabledChanged: invalidateInputRegion()
+            onCornerWrapChanged: {invalidateInputRegion();settleDimensionChange();syncMeasuredSpan()}
+            onDetachedChanged: {invalidateInputRegion();settleDimensionChange()}
+            onGeometryChanged: if (module.cornerWrap) invalidateInputRegion()
             onUnifiedEdgeLauncherChanged: invalidateInputRegion()
             onModuleIconHitOnlyChanged: invalidateInputRegion()
             onModuleIconHitSizeChanged: invalidateInputRegion()
             readonly property var geometry: root.presentedLayoutRecords.find(rec => rec.id === modelData)
+            editing: root.editing
             liquidController: root.liquidController
             attachedEdge: placement?.edge ?? "top"
+            cornerWrap: placement?.cornerWrap === true && (geometry === undefined || geometry.cornerWrap === true)
+            wrapCorner: String(geometry?.wrapCorner ?? Layout.cornerWrapCorner(placement) ?? "topLeft")
+            wrapThickness: Number(geometry?.wrapThickness ?? (32 * Appearance.fontSizeScale))
+            wrapArcRadius: Number(geometry?.wrapArcRadius ?? 22)
+            detached: placement?.detached === true && geometry?.detached === true
+            detachedShape: String(geometry?.detachedShape ?? "pill")
+            innerSpan: Number(geometry?.innerSpan ?? 0)
+            innerCross: Number(geometry?.innerCross ?? 0)
             moduleRotation: placement?.rotation !== undefined ? Layout.normalizeRotation(placement.rotation, attachedEdge) : -1
-            popupJoinedEdge: placement?.joinCorner ? Layout.adjacentEdge(geometry,root.width,root.height) : ""
-            contentScale: ((geometry?.designSpan ?? geometry?.span) ?? 0)/Math.max(1,naturalSpan)
-            onNaturalSpanChanged: if (root) root.measure(modelData,naturalSpan)
-            Component.onCompleted: {if (root) root.measure(modelData,naturalSpan);Qt.callLater(rearmMotion)}
+            popupJoinedEdge: placement?.joinCorner ? Layout.adjacentEdge(geometry,root.width,root.height)
+                : (cornerWrap
+                    ? ((attachedEdge === "top" || attachedEdge === "bottom")
+                        ? Layout.cornerEdges(wrapCorner).vertical
+                        : Layout.cornerEdges(wrapCorner).horizontal)
+                    : "")
+            contentScale: cornerWrap
+                ? Math.max(0.6, Math.min(1.8, wrapThickness / Math.max(1, 32 * Appearance.fontSizeScale)))
+                : (naturalSpan > 0 ? (((geometry?.designSpan ?? geometry?.span) ?? 0) / naturalSpan) : 1)
+            function syncMeasuredSpan(): void {
+                if (!root)
+                    return
+                if (module.cornerWrap || placement?.cornerWrap === true) {
+                    if (!module.contentAvailable)
+                        root.measure(modelData, 0)
+                    else
+                        root.measure(modelData, Layout.extent(module.kind, false) * Appearance.fontSizeScale)
+                    return
+                }
+                if (!module.feature && module.contentAvailable)
+                    return
+                root.measure(modelData, naturalSpan)
+            }
+            onNaturalSpanChanged: syncMeasuredSpan()
+            onContentAvailableChanged: syncMeasuredSpan()
+            onFeatureChanged: syncMeasuredSpan()
+            onPlacementChanged: syncMeasuredSpan()
+            Component.onCompleted: {syncMeasuredSpan();Qt.callLater(rearmMotion)}
             kind: placement?.kind ?? "clock"
             outputName: root.outputName
             vertical: placement?.edge === "left" || placement?.edge === "right"

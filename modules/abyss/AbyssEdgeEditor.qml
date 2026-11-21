@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Shapes
 import Quickshell
 import qs
 import qs.services
@@ -325,6 +326,7 @@ Item {
     }
     readonly property real editorActionSize: 30 * Appearance.fontSizeScale
     readonly property real rotateActionSize: editorActionSize
+    readonly property real moduleFeatureActionSize: editorActionSize
     // Compact actions also keep Save/Cancel reachable on narrow horizontal
     // toolbars, where four normal squares alone exceed the viewport.
     readonly property bool compactHeaderActions: !toolbarOnHorizontalEdge
@@ -360,8 +362,14 @@ Item {
     readonly property bool allTargetsLocked: targets.length>0 && targets.every(p=>p.locked)
     readonly property bool allTargetsDisabled: targets.length>0 && targets.every(p=>!p.enabled)
     readonly property bool allTargetsCustom: targets.length>0 && targets.every(p=>p.customSize)
+    readonly property bool canCornerWrapSelection: targets.length>0
+        && targets.every(p=>Placement.canCornerWrap(p.kind))
+    readonly property bool allTargetsCornerWrap: targets.length>0 && targets.every(p=>p.cornerWrap===true)
+    readonly property bool canDetachSelection: targets.length>0
+        && targets.every(p=>Placement.canDetachModule(p.kind))
+    readonly property bool allTargetsDetached: targets.length>0 && targets.every(p=>p.detached===true)
     readonly property bool canRotateSelection: targets.length>0
-        && targets.every(p=>Placement.canRotateModule(p.kind))
+        && targets.every(p=>Placement.canRotateModule(p.kind) && p.cornerWrap!==true)
     readonly property int selectedRotation: selected
         ? Placement.effectiveRotation(selected) : 0
     readonly property bool mixedSelectionRotation: multiSelect
@@ -668,6 +676,7 @@ Item {
     function lockSelection(): void {batch("locked",!allTargetsLocked)}
     function rotateSelection(): void {
         if(!targets.length){feedback="Select a module first";return}
+        if(targets.some(p=>p.cornerWrap===true)){feedback="Straighten corner-wrapped modules before rotating";return}
         if(!canRotateSelection){feedback="This module type does not support manual rotation";return}
         batch("rotation","step")
     }
@@ -818,7 +827,7 @@ Item {
         refreshHandles()
     }
     function change(key,value): void {
-        if(multiSelect || key==="rotation"){batch(key,value);return}
+        if(multiSelect || key==="rotation" || key==="cornerWrap" || key==="detached"){batch(key,value);return}
         if(selected?.locked && ["edge","position","alignment","size","customSize","depth"].includes(key)) {
             feedback="Unlock this module before changing its placement or size";return
         }
@@ -1052,15 +1061,37 @@ Item {
             objectName:"abyssModuleHandle"
             required property string modelData
             readonly property var record: (root.moduleLayer.renderedRecords ?? root.moduleLayer.layoutRecords).find(p => p.id === modelData)
+            readonly property bool isCornerWrap: record?.cornerWrap === true
+            readonly property bool isDetached: record?.detached === true
             readonly property Region inputRegion: Region {
                 x:Math.floor(handle.x);y:Math.floor(handle.y)
-                width:root.editingPopups || !handle.visible ? 0 : Math.ceil(handle.x+handle.width)-Math.floor(handle.x)
-                height:root.editingPopups || !handle.visible ? 0 : Math.ceil(handle.y+handle.height)-Math.floor(handle.y)
+                width:handle.isCornerWrap || root.editingPopups || !handle.visible ? 0 : Math.ceil(handle.x+handle.width)-Math.floor(handle.x)
+                height:handle.isCornerWrap || root.editingPopups || !handle.visible ? 0 : Math.ceil(handle.y+handle.height)-Math.floor(handle.y)
+                Region {
+                    readonly property var hr: handle.record?.wrapHorizontalRect ?? null
+                    x: hr ? Math.floor(hr.x) : 0
+                    y: hr ? Math.floor(hr.y) : 0
+                    width: handle.isCornerWrap && !root.editingPopups && handle.visible && hr
+                        ? Math.max(0, Math.ceil(hr.x + hr.width) - Math.floor(hr.x)) : 0
+                    height: handle.isCornerWrap && !root.editingPopups && handle.visible && hr
+                        ? Math.max(0, Math.ceil(hr.y + hr.height) - Math.floor(hr.y)) : 0
+                }
+                Region {
+                    readonly property var vr: handle.record?.wrapVerticalRect ?? null
+                    x: vr ? Math.floor(vr.x) : 0
+                    y: vr ? Math.floor(vr.y) : 0
+                    width: handle.isCornerWrap && !root.editingPopups && handle.visible && vr
+                        ? Math.max(0, Math.ceil(vr.x + vr.width) - Math.floor(vr.x)) : 0
+                    height: handle.isCornerWrap && !root.editingPopups && handle.visible && vr
+                        ? Math.max(0, Math.ceil(vr.y + vr.height) - Math.floor(vr.y)) : 0
+                }
             }
             function invalidateRegion(): void {if(inputRegion)inputRegion.changed()}
             onXChanged:invalidateRegion();onYChanged:invalidateRegion()
             onWidthChanged:invalidateRegion();onHeightChanged:invalidateRegion()
             onVisibleChanged:invalidateRegion()
+            onIsCornerWrapChanged:invalidateRegion()
+            onRecordChanged:if (isCornerWrap) invalidateRegion()
             x: record?.content.x ?? 0; y: record?.content.y ?? 0
             width: record?.content.width ?? 0; height: record?.content.height ?? 0
             visible: record !== undefined && !record.capacityConflict && !root.editingPopups
@@ -1082,11 +1113,96 @@ Item {
                 }
             }
             Rectangle {
+                visible: !handle.isCornerWrap
                 anchors.fill: parent; anchors.margins: -3
                 color: Qt.alpha(AbyssStyle.accent,drag.pressed ? .22 : root.targetIds.includes(handle.modelData) ? .18 : .08)
-                radius: 8
+                radius: handle.isDetached ? Math.min(width, height) * 0.5 : 8
                 border.width: root.targetIds.includes(handle.modelData) ? 2 : 1
                 border.color: Qt.alpha(AbyssStyle.accent,.6)
+            }
+            // Seamless L-shaped selection outline for corner-wrapped modules
+            // (rounded outer corner + concave inner fillet matching wrapCorner/wrapArcRadius, zero overlap seam)
+            Shape {
+                id: cornerWrapOutline
+                objectName: "abyssCornerWrapOutline"
+                visible: handle.isCornerWrap && handle.width > 0 && handle.height > 0
+                    && !!handle.record?.wrapHorizontalRect && !!handle.record?.wrapVerticalRect
+                x: -3
+                y: -3
+                width: handle.width + 6
+                height: handle.height + 6
+                antialiasing: true
+                preferredRendererType: Shape.CurveRenderer
+                readonly property string corner: String(handle.record?.wrapCorner ?? "topLeft")
+                readonly property real safeW: Math.max(8, width)
+                readonly property real safeH: Math.max(8, height)
+                readonly property real armT: Math.max(4, Math.min(Math.min(safeW, safeH) - 2, (handle.record?.wrapThickness ?? 32) + 6))
+                readonly property real outerR: Math.max(0, Math.min(14, armT * 0.45))
+                readonly property real tipR: Math.max(0, Math.min(10, armT * 0.45, Math.max(0, safeW - armT) * 0.45, Math.max(0, safeH - armT) * 0.45))
+                readonly property real innerR: Math.max(0, Math.min(Number(handle.record?.wrapArcRadius ?? 18), Math.max(0, safeW - armT - tipR), Math.max(0, safeH - armT - tipR)))
+                transform: Scale {
+                    origin.x: cornerWrapOutline.width * 0.5
+                    origin.y: cornerWrapOutline.height * 0.5
+                    xScale: (cornerWrapOutline.corner === "topRight" || cornerWrapOutline.corner === "bottomRight") ? -1 : 1
+                    yScale: (cornerWrapOutline.corner === "bottomLeft" || cornerWrapOutline.corner === "bottomRight") ? -1 : 1
+                }
+                ShapePath {
+                    fillColor: Qt.alpha(AbyssStyle.accent, drag.pressed ? .22 : root.targetIds.includes(handle.modelData) ? .18 : .08)
+                    strokeWidth: root.targetIds.includes(handle.modelData) ? 2 : 1
+                    strokeColor: Qt.alpha(AbyssStyle.accent, .65)
+                    joinStyle: ShapePath.RoundJoin
+                    capStyle: ShapePath.RoundCap
+                    startX: cornerWrapOutline.outerR
+                    startY: 0
+                    PathLine { x: cornerWrapOutline.safeW - cornerWrapOutline.tipR; y: 0 }
+                    PathArc {
+                        x: cornerWrapOutline.safeW
+                        y: cornerWrapOutline.tipR
+                        radiusX: cornerWrapOutline.tipR
+                        radiusY: cornerWrapOutline.tipR
+                        direction: PathArc.Clockwise
+                    }
+                    PathLine { x: cornerWrapOutline.safeW; y: cornerWrapOutline.armT - cornerWrapOutline.tipR }
+                    PathArc {
+                        x: cornerWrapOutline.safeW - cornerWrapOutline.tipR
+                        y: cornerWrapOutline.armT
+                        radiusX: cornerWrapOutline.tipR
+                        radiusY: cornerWrapOutline.tipR
+                        direction: PathArc.Clockwise
+                    }
+                    PathLine { x: cornerWrapOutline.armT + cornerWrapOutline.innerR; y: cornerWrapOutline.armT }
+                    PathArc {
+                        x: cornerWrapOutline.armT
+                        y: cornerWrapOutline.armT + cornerWrapOutline.innerR
+                        radiusX: cornerWrapOutline.innerR
+                        radiusY: cornerWrapOutline.innerR
+                        direction: PathArc.Counterclockwise
+                    }
+                    PathLine { x: cornerWrapOutline.armT; y: cornerWrapOutline.safeH - cornerWrapOutline.tipR }
+                    PathArc {
+                        x: cornerWrapOutline.armT - cornerWrapOutline.tipR
+                        y: cornerWrapOutline.safeH
+                        radiusX: cornerWrapOutline.tipR
+                        radiusY: cornerWrapOutline.tipR
+                        direction: PathArc.Clockwise
+                    }
+                    PathLine { x: cornerWrapOutline.tipR; y: cornerWrapOutline.safeH }
+                    PathArc {
+                        x: 0
+                        y: cornerWrapOutline.safeH - cornerWrapOutline.tipR
+                        radiusX: cornerWrapOutline.tipR
+                        radiusY: cornerWrapOutline.tipR
+                        direction: PathArc.Clockwise
+                    }
+                    PathLine { x: 0; y: cornerWrapOutline.outerR }
+                    PathArc {
+                        x: cornerWrapOutline.outerR
+                        y: 0
+                        radiusX: cornerWrapOutline.outerR
+                        radiusY: cornerWrapOutline.outerR
+                        direction: PathArc.Clockwise
+                    }
+                }
             }
             MaterialSymbol {
                 anchors.right:parent.right;anchors.top:parent.top
@@ -1103,6 +1219,19 @@ Item {
                 id: drag
                 anchors.fill: parent
                 cursorShape:handle.record?.locked ? Qt.ArrowCursor : pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                containmentMask: QtObject {
+                    function contains(point: point): bool {
+                        if (!handle.isCornerWrap)
+                            return point.x >= 0 && point.y >= 0 && point.x <= handle.width && point.y <= handle.height
+                        const sx = handle.x + point.x
+                        const sy = handle.y + point.y
+                        const hr = handle.record?.wrapHorizontalRect
+                        const vr = handle.record?.wrapVerticalRect
+                        const inH = hr && sx >= hr.x - 3 && sx <= hr.x + hr.width + 3 && sy >= hr.y - 3 && sy <= hr.y + hr.height + 3
+                        const inV = vr && sx >= vr.x - 3 && sx <= vr.x + vr.width + 3 && sy >= vr.y - 3 && sy <= vr.y + vr.height + 3
+                        return Boolean(inH || inV)
+                    }
+                }
                 property bool deferCollapse: false
                 property bool movedBeyondThreshold: false
                 property real pressRootX: 0
@@ -1818,12 +1947,38 @@ Item {
                             color: Qt.alpha(Appearance.colors.colLayer2, 0.46)
                             border.width: 1
                             border.color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.22)
+                            clip: true
 
-                            RowLayout {
-                                id: dockModuleInspectorLayout
+                            Flickable {
+                                id: dockModuleInspectorScroll
                                 anchors.fill: parent
                                 anchors.leftMargin: 8
                                 anchors.rightMargin: 8
+                                clip: true
+                                flickableDirection: Flickable.HorizontalFlick
+                                boundsBehavior: Flickable.StopAtBounds
+                                contentWidth: Math.max(width, dockModuleInspectorLayout.implicitWidth)
+                                contentHeight: height
+                                interactive: contentWidth > width + 1
+
+                                WheelHandler {
+                                    enabled: dockModuleInspectorScroll.contentWidth > dockModuleInspectorScroll.width + 1
+                                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                    onWheel: event => {
+                                        const delta = Math.abs(event.angleDelta.x) > Math.abs(event.angleDelta.y)
+                                            ? event.angleDelta.x : event.angleDelta.y
+                                        const maxX = Math.max(0, dockModuleInspectorScroll.contentWidth - dockModuleInspectorScroll.width)
+                                        dockModuleInspectorScroll.contentX = Math.max(0, Math.min(maxX, dockModuleInspectorScroll.contentX - delta * 0.45))
+                                        event.accepted = true
+                                    }
+                                }
+
+                            RowLayout {
+                                id: dockModuleInspectorLayout
+                                x: 0
+                                y: 0
+                                width: Math.max(dockModuleInspectorScroll.width, implicitWidth)
+                                height: dockModuleInspectorScroll.height
                                 spacing: 4 * Appearance.fontSizeScale
 
                                 StyledComboBox {
@@ -2119,6 +2274,44 @@ Item {
                                 }
 
                                 AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssModuleCornerWrap" : ""
+                                    text: root.allTargetsCornerWrap
+                                        ? Translation.tr("Straighten module")
+                                        : Translation.tr("Bend around corner")
+                                    glyph: "border_style"
+                                    compact: true
+                                    editorSquare: true
+                                    checkable: true
+                                    description: Translation.tr("Bend this module around the nearest screen corner to hug both horizontal and vertical edges.")
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    checked: root.allTargetsCornerWrap
+                                    enabled: root.canCornerWrapSelection && !root.anyTargetLocked
+                                    onToggled: root.change("cornerWrap", checked)
+                                }
+
+                                AbyssButton {
+                                    objectName: root.useHorizontalDock ? "abyssModuleDetached" : ""
+                                    text: root.allTargetsDetached
+                                        ? Translation.tr("Attach to Screen Edge")
+                                        : Translation.tr("Detach as floating pill")
+                                    glyph: "buttons_alt"
+                                    compact: true
+                                    editorSquare: true
+                                    checkable: true
+                                    description: Translation.tr("Detach this module from the Screen Edge as an independent floating circle icon or rounded pill.")
+                                    Layout.preferredWidth: 28 * Appearance.fontSizeScale
+                                    Layout.preferredHeight: 28 * Appearance.fontSizeScale
+                                    Layout.maximumWidth: root.editorActionSize
+                                    Layout.maximumHeight: root.editorActionSize
+                                    checked: root.allTargetsDetached
+                                    enabled: root.canDetachSelection && !root.anyTargetLocked
+                                    onToggled: root.change("detached", checked)
+                                }
+
+                                AbyssButton {
                                     objectName: root.useHorizontalDock ? "abyssSelectionRemove" : ""
                                     text: "Remove"
                                     glyph: "delete"
@@ -2203,6 +2396,7 @@ Item {
                                     enabled: root.targetIds.length > 0
                                     onClicked: root.clearSelection()
                                 }
+                            }
                             }
                         }
                     }
@@ -3302,6 +3496,45 @@ Item {
                         onClicked:root.clearSelection()
                         }
                     }
+                            RowLayout {
+                            id:moduleShapeModesRow
+                            Layout.fillWidth:false;Layout.minimumWidth:0
+                            Layout.preferredWidth:moduleEditorColumn.controlsSpan
+                            Layout.maximumWidth:moduleEditorColumn.controlsSpan
+                            spacing:4*Appearance.fontSizeScale
+                            AbyssButton {
+                            objectName:!root.useHorizontalDock ? "abyssModuleCornerWrap" : ""
+                            text:root.allTargetsCornerWrap
+                                ? Translation.tr("Straighten module")
+                                : Translation.tr("Bend around corner")
+                            glyph:"border_style"
+                            compact:true;editorSquare:true;checkable:true
+                            description:Translation.tr("Bend this module around the nearest screen corner to hug both horizontal and vertical edges.")
+                            Layout.preferredWidth:root.moduleFeatureActionSize
+                            Layout.preferredHeight:root.moduleFeatureActionSize
+                            Layout.maximumWidth:root.moduleFeatureActionSize
+                            Layout.maximumHeight:root.moduleFeatureActionSize
+                            checked:root.allTargetsCornerWrap
+                            enabled:root.canCornerWrapSelection && !root.anyTargetLocked
+                            onToggled:root.change("cornerWrap",checked)
+                            }
+                            AbyssButton {
+                            objectName:!root.useHorizontalDock ? "abyssModuleDetached" : ""
+                            text:root.allTargetsDetached
+                                ? Translation.tr("Attach to Screen Edge")
+                                : Translation.tr("Detach as floating pill")
+                            glyph:"buttons_alt"
+                            compact:true;editorSquare:true;checkable:true
+                            description:Translation.tr("Detach this module from the Screen Edge as an independent floating circle icon or rounded pill.")
+                            Layout.preferredWidth:root.moduleFeatureActionSize
+                            Layout.preferredHeight:root.moduleFeatureActionSize
+                            Layout.maximumWidth:root.moduleFeatureActionSize
+                            Layout.maximumHeight:root.moduleFeatureActionSize
+                            checked:root.allTargetsDetached
+                            enabled:root.canDetachSelection && !root.anyTargetLocked
+                            onToggled:root.change("detached",checked)
+                            }
+                            }
                             GridLayout {
                             id:selectedModuleControls
                             objectName:"abyssEditorSelectedFields"
