@@ -281,6 +281,13 @@ Item {
     // Match the pinned date and All-day headings to the Weekly Planner
     // background color so initial/scrolled timed events never show through.
     readonly property bool abyssPanel: Config.options?.panelFamily === "abyss"
+    readonly property color colCardBase: ColorUtils.applyAlpha(
+        Qt.color(Appearance.colors.colLayer1Base).valid
+            ? Appearance.colors.colLayer1Base
+            : Appearance.colors.colLayer0Base,
+        1.0
+    )
+    readonly property real tonalDir: Qt.color(root.colCardBase).hslLightness > 0.86 ? -1 : 1
     readonly property color headerSurface: abyssPanel
         ? AbyssStyle.surfaceDeep : Qt.alpha(Appearance.colors.colLayer0Base, 1)
     readonly property color headerInk: root.ink
@@ -289,14 +296,17 @@ Item {
         ? AbyssStyle.accent : Appearance.colors.colPrimary
     readonly property color headerTodayInk: ColorUtils.ensureReadable(
         headerAccent, abyssPanel ? AbyssStyle.contentLayer : Appearance.colors.colLayer0, 4.5)
-    readonly property color headerDivider: Qt.alpha(headerInk, .16)
+    readonly property color headerDivider: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.22, 1.10), .16)
+    readonly property color colGridHairline: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.22, 1.10), .14)
     readonly property color activePillBg: root.headerAccent
     readonly property color activePillInk: ColorUtils.ensureReadable(
         Appearance.colors.colOnPrimary, root.activePillBg, 5.5)
     readonly property color inactivePillBg: ColorUtils.tonalStep(
-        root.headerSurface, ColorUtils.relativeLuminance(root.headerSurface) < 0.35 ? 0.08 : -0.06, 1.08)
+        root.colCardBase, root.tonalDir * 0.022, 1.04)
     readonly property color inactivePillHoverBg: ColorUtils.tonalStep(
-        root.headerSurface, ColorUtils.relativeLuminance(root.headerSurface) < 0.35 ? 0.14 : -0.10, 1.12)
+        root.colCardBase, root.tonalDir * 0.044, 1.07)
     signal requestEventsDialog(var event)
     Connections {
         target: root.localBackend
@@ -946,7 +956,7 @@ Item {
                             delegate: Rectangle {
                                 required property int index
                                 x:0;y:root.gridTop+index*root.hourHeight;width:dayColumn.width;height:1
-                                color:Qt.alpha(root.ink,.09)
+                                color:root.colGridHairline
                                 StyledText {
                                     visible:dayColumn.modelData.minutes!==1440
                                     x:3;y:2;text:Qt.formatTime(new Date(dayColumn.modelData.date.getTime()+index*3600000),"hh:mm")
@@ -954,7 +964,7 @@ Item {
                                 }
                             }
                         }
-                        Rectangle {x:0;y:root.gridTop;width:1;height:dayColumn.modelData.minutes/60*root.hourHeight;color:Qt.alpha(root.ink,.09)}
+                        Rectangle {x:0;y:root.gridTop;width:1;height:dayColumn.modelData.minutes/60*root.hourHeight;color:root.colGridHairline}
                         MouseArea {
                             objectName:"plannerCreateSlot"
                             x:0;y:root.gridTop;width:parent.width;height:dayColumn.modelData.minutes/60*root.hourHeight

@@ -16,6 +16,7 @@ from native_test_session import run_qs
 
 ROOT = Path(__file__).resolve().parents[1]
 INTERGRATION_ROOT = ROOT.parent / "Alis-Intergration"
+COMPANION_ROOT = ROOT.parent / "Alis-Companion"
 
 QML_TARGETS = [
     ROOT / "modules/sidebarRight/pomodoro/PomodoroTimer.qml",
@@ -97,25 +98,102 @@ def check_static_contracts() -> None:
                 f"must set horizontalAlignment: Text.AlignHCenter"
             )
 
-    # 3. Stepped solid tonal elevation invariant (Layer 1 matches Home Dashboard colLayer1Base, gentle steps, zero per-box Gradient)
-    for tonal_path in (
+    # 3. Stepped solid tonal elevation invariant (Layer 1 matches Home Dashboard colLayer1Base, gentle steps, zero neutral washes / flat-card Gradients)
+    tonal_synced_files = (
         ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
+        ROOT / "modules/dashboard/DashboardYearlyPlanner.qml",
+        ROOT / "modules/dashboard/DashboardWeeklyPlanner.qml",
+        ROOT / "modules/dashboard/DashboardMusic.qml",
+        ROOT / "modules/dashboard/DashboardHeader.qml",
+        ROOT / "modules/dashboard/DashboardEditToolbar.qml",
+        INTERGRATION_ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
         INTERGRATION_ROOT / "modules/dashboard/DashboardExercisesTracker.qml",
-    ):
+        COMPANION_ROOT / "modules/abyss/companion/AquaTalkCloud.qml",
+        COMPANION_ROOT / "modules/abyss/companion/AquaSwarmPane.qml",
+        COMPANION_ROOT / "modules/abyss/companion/AquaPocketPane.qml",
+    )
+    no_gradient_files = {
+        ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
+        INTERGRATION_ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
+        INTERGRATION_ROOT / "modules/dashboard/DashboardExercisesTracker.qml",
+        ROOT / "modules/dashboard/DashboardYearlyPlanner.qml",
+        COMPANION_ROOT / "modules/abyss/companion/AquaSwarmPane.qml",
+        COMPANION_ROOT / "modules/abyss/companion/AquaPocketPane.qml",
+    }
+    abyss_card_files = {
+        ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
+        INTERGRATION_ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
+        INTERGRATION_ROOT / "modules/dashboard/DashboardExercisesTracker.qml",
+        COMPANION_ROOT / "modules/abyss/companion/AquaSwarmPane.qml",
+        COMPANION_ROOT / "modules/abyss/companion/AquaPocketPane.qml",
+    }
+    abyss_surface_re = re.compile(
+        r"(?:^|[\s,{])(?:color|colBackground|colBackgroundHover)\s*:[^\n]*Qt\.alpha\(AbyssStyle\.textColor\b",
+        re.M,
+    )
+    companion_btn_surface_re = re.compile(
+        r"(?:^|[\s,{])(?:colBackground|colBackgroundHover)\s*:[^\n]*Qt\.alpha\(AbyssStyle\.textColor\b",
+        re.M,
+    )
+    companion_low_alpha_fill_re = re.compile(
+        r"(?:^|[\s,{])color\s*:[^\n]*Qt\.alpha\(AbyssStyle\.textColor,\s*0?\.0\d",
+        re.M,
+    )
+    ink_alpha_re = re.compile(r"Qt\.alpha\((?:root\.)?ink\b")
+
+    for tonal_path in tonal_synced_files:
+        assert tonal_path.exists(), f"Missing synced QML target: {tonal_path}"
         tsrc = tonal_path.read_text(encoding="utf-8")
         assert "Appearance.colors.colLayer1Base" in tsrc, (
             f"{tonal_path.name} must anchor Layer 1 stepped surfaces on Home Dashboard Appearance.colors.colLayer1Base"
         )
         assert "ColorUtils.tonalStep(" in tsrc, f"{tonal_path.name} must derive elevation via ColorUtils.tonalStep"
-        assert "Gradient" not in tsrc and "gradient:" not in tsrc, (
-            f"{tonal_path.name} must use stacked stepped solid layers, never internal per-box Gradient blocks"
-        )
-        assert "Qt.alpha(AbyssStyle.textColor, 0.06)" not in tsrc, (
-            f"{tonal_path.name} must not use gray AbyssStyle.textColor alpha overlay"
-        )
-        assert 'root.isDarkSurface ? "#ffffff" : "#000000"' not in tsrc, (
-            f"{tonal_path.name} must not wash elevated boxes with neutral #ffffff/#000000 mixes"
-        )
+        if tonal_path in no_gradient_files:
+            assert "Gradient" not in tsrc and "gradient:" not in tsrc, (
+                f"{tonal_path.name} must use stacked stepped solid layers, never internal per-box Gradient blocks"
+            )
+        if tonal_path.name == "DashboardMusic.qml":
+            assert "Qt.rgba(1, 1, 1, 0.04)" not in tsrc and "Qt.rgba(1, 1, 1, 0.08)" not in tsrc, (
+                "DashboardMusic.qml must not use neutral Qt.rgba(1, 1, 1, ...) surface washes"
+            )
+        if tonal_path.name == "DashboardYearlyPlanner.qml":
+            assert not ink_alpha_re.search(tsrc), (
+                "DashboardYearlyPlanner.qml must not use Qt.alpha(ink/root.ink, ...) washes"
+            )
+        if tonal_path.name == "DashboardHeader.qml":
+            assert "Qt.alpha(root.colText, .08)" not in tsrc and "Qt.alpha(root.colText, 0.08)" not in tsrc, (
+                "DashboardHeader.qml must not use Qt.alpha(root.colText, 0.08) neutral hover fills"
+            )
+        if tonal_path.name == "DashboardEditToolbar.qml":
+            assert (
+                "Qt.alpha(Appearance.colors.colOnLayer1, 0.10)" not in tsrc
+                and "Qt.alpha(Appearance.colors.colOnLayer1, 0.08)" not in tsrc
+            ), "DashboardEditToolbar.qml must not use Qt.alpha(colOnLayer1, ...) hover fills"
+        if tonal_path in abyss_card_files:
+            assert not abyss_surface_re.search(tsrc), (
+                f"{tonal_path.name} must not use gray AbyssStyle.textColor alpha surface fills"
+            )
+            if tonal_path.name in ("DashboardSpacedRepetition.qml", "DashboardExercisesTracker.qml"):
+                assert 'root.isDarkSurface ? "#ffffff" : "#000000"' not in tsrc, (
+                    f"{tonal_path.name} must not wash elevated boxes with neutral #ffffff/#000000 mixes"
+                )
+        if tonal_path.name == "AquaTalkCloud.qml":
+            assert not companion_btn_surface_re.search(tsrc), (
+                "AquaTalkCloud.qml must not use Qt.alpha(AbyssStyle.textColor, ...) button fills"
+            )
+            assert not companion_low_alpha_fill_re.search(tsrc), (
+                "AquaTalkCloud.qml must not use low-alpha Qt.alpha(AbyssStyle.textColor, 0.0x) box fills"
+            )
+
+    sr_marker = "property bool _captureLoaded: false"
+    alis_sr_src = (ROOT / "modules/dashboard/DashboardSpacedRepetition.qml").read_text(encoding="utf-8")
+    integ_sr_src = (INTERGRATION_ROOT / "modules/dashboard/DashboardSpacedRepetition.qml").read_text(encoding="utf-8")
+    assert sr_marker in alis_sr_src and sr_marker in integ_sr_src, (
+        "Both Alis and Alis-Intergration DashboardSpacedRepetition.qml must define _captureLoaded marker"
+    )
+    assert alis_sr_src.split(sr_marker, 1)[1] == integ_sr_src.split(sr_marker, 1)[1], (
+        "DashboardSpacedRepetition.qml body diverged between Alis and Alis-Intergration"
+    )
 
     # 4. Hourglass-only Timers (no classic arc style or Key_T shortcut)
     for timer_file in (
@@ -132,14 +210,97 @@ def check_static_contracts() -> None:
         )
 
 
+OFFSCREEN_CONTEXT_MENU_STUB = """import QtQuick
+Loader {
+    id: root
+    active: false
+    property var model: []
+    property Item anchorItem: parent
+    property real padding: 4
+    property bool noSmoothClosing: false
+    property bool closeOnFocusLost: true
+    property bool keyboardGrab: true
+    property bool closeOnHoverLost: true
+    property bool closeOnHoverLostAfterEntered: false
+    property int closeOnHoverLostDelay: 500
+    property bool anchorHovered: false
+    property bool closeOnOutsideClick: false
+    property var anchorRect: null
+    property var popupAdjustment: null
+    property bool scaleContent: false
+    property bool cursorSlide: false
+    property var cursorAnchorWindow: null
+    property real cursorAnchorX: 0
+    property real cursorAnchorY: 0
+    property real visualMargin: 8
+    property bool popupAbove: true
+    property int popupSide: 0
+    property real ambientShadowWidth: 1
+    property color panelFallbackColor: "transparent"
+    property real panelRadius: 8
+    property real panelBorderWidth: 0
+    property color panelBorderColor: "transparent"
+    signal focusCleared()
+    function grabFocus() {}
+    function close() { root.active = false }
+    function requestOpen() { root.active = true }
+    function requestOpenAt(x, y, newModel) { if (newModel !== undefined) root.model = newModel; root.active = true }
+}
+"""
+
+
+def _install_offscreen_modules_overlay(folder: Path, host_root: Path) -> None:
+    mod_link = folder / "modules"
+    if mod_link.is_symlink():
+        mod_link.unlink()
+    mod_link.mkdir(parents=True, exist_ok=True)
+    for child in (host_root / "modules").iterdir():
+        if child.name == "common":
+            common_dir = mod_link / "common"
+            common_dir.mkdir(parents=True, exist_ok=True)
+            for cchild in child.iterdir():
+                if cchild.name == "widgets":
+                    w_dir = common_dir / "widgets"
+                    w_dir.mkdir(parents=True, exist_ok=True)
+                    for wchild in cchild.iterdir():
+                        if wchild.name == "ContextMenu.qml":
+                            (w_dir / "ContextMenu.qml").write_text(OFFSCREEN_CONTEXT_MENU_STUB, encoding="utf-8")
+                        else:
+                            (w_dir / wchild.name).symlink_to(wchild)
+                else:
+                    (common_dir / cchild.name).symlink_to(cchild)
+        else:
+            (mod_link / child.name).symlink_to(child)
+
+
 def check_tonal_step_runtime() -> None:
     shell_qml = """
 import QtQuick
 import Quickshell
+import qs.services
 import qs.modules.common.functions
 
 ShellRoot {
     Component.onCompleted: Quickshell.watchFiles = false
+    QtObject {
+        id: canvasStub
+        property bool editMode: false
+        property string gridStyle: "dots"
+        property int gridSize: 24
+        property bool snapToGrid: true
+        property bool autoAdjustSize: false
+        property string selectedId: ""
+    }
+    Window {
+        id: probeWin
+        visible: false
+        width: 1200
+        height: 800
+        Item {
+            id: probeHost
+            anchors.fill: parent
+        }
+    }
     Timer {
         interval: 30
         running: true
@@ -175,12 +336,62 @@ ShellRoot {
                 Qt.exit(5)
                 return
             }
+
+            const modulesToCompile = [
+                "modules/dashboard/DashboardHeader.qml",
+                "modules/dashboard/DashboardEditToolbar.qml",
+                "modules/dashboard/DashboardMusic.qml",
+                "modules/dashboard/DashboardYearlyPlanner.qml",
+                "modules/dashboard/DashboardWeeklyPlanner.qml",
+                "modules/dashboard/DashboardSpacedRepetition.qml",
+                "optional/alis-companion/modules/abyss/companion/AquaPocketPane.qml",
+                "optional/alis-companion/modules/abyss/companion/AquaSwarmPane.qml",
+                "optional/alis-companion/modules/abyss/companion/AquaTalkCloud.qml"
+            ]
+            const compiled = {}
+            for (const rel of modulesToCompile) {
+                const comp = Qt.createComponent(Qt.resolvedUrl(rel))
+                if (comp.status !== Component.Ready) {
+                    console.error("QML_COMPILE_FAIL", rel, comp.errorString())
+                    Qt.exit(6)
+                    return
+                }
+                compiled[rel] = comp
+            }
+
+            const instChecks = [
+                { rel: "modules/dashboard/DashboardHeader.qml", props: ["colCardBase", "colHoverTonal"], args: {} },
+                { rel: "modules/dashboard/DashboardEditToolbar.qml", props: ["colCardBase", "colHoverTonal"], args: { canvasController: canvasStub } },
+                { rel: "modules/dashboard/DashboardMusic.qml", props: ["colCardBase", "colSurface", "colSurfaceHover"], args: { backend: LocalMusic } }
+            ]
+            for (const spec of instChecks) {
+                const comp = compiled[spec.rel]
+                const obj = comp.createObject(probeHost, spec.args)
+                if (!obj) {
+                    console.error("QML_INSTANTIATE_FAIL", spec.rel, comp.errorString())
+                    Qt.exit(7)
+                    return
+                }
+                for (const propName of spec.props) {
+                    const c = Qt.color(obj[propName])
+                    if (!c.valid) {
+                        console.error("TONAL_PROP_INVALID", spec.rel, propName, obj[propName])
+                        obj.destroy()
+                        Qt.exit(8)
+                        return
+                    }
+                }
+                obj.destroy()
+            }
+
             console.info("TONAL_STEP_RUNTIME_PASS", JSON.stringify({
                 darkHue: Number(lifted.hslHue.toFixed(4)),
                 darkSat: Number(lifted.hslSaturation.toFixed(4)),
                 darkLight: Number(lifted.hslLightness.toFixed(4)),
                 lightSat: Number(lightStep.hslSaturation.toFixed(4)),
                 lightLight: Number(lightStep.hslLightness.toFixed(4)),
+                compiledCount: modulesToCompile.length,
+                instantiatedCount: instChecks.length
             }))
             Qt.quit()
         }
@@ -189,8 +400,11 @@ ShellRoot {
 """
     with tempfile.TemporaryDirectory(prefix="alis-tonal-contract-") as tmp:
         folder = Path(tmp)
-        for entry in ["modules", "services", "qmldir", "GlobalStates.qml", "assets", "scripts", "defaults", "translations"]:
+        for entry in ["services", "qmldir", "GlobalStates.qml", "assets", "scripts", "defaults", "translations"]:
             (folder / entry).symlink_to(ROOT / entry)
+        _install_offscreen_modules_overlay(folder, ROOT)
+        (folder / "optional").mkdir(exist_ok=True)
+        (folder / "optional" / "alis-companion").symlink_to(COMPANION_ROOT)
         (folder / "shell.qml").write_text(shell_qml, encoding="utf-8")
         config = folder / "config" / "alis"
         config.mkdir(parents=True, exist_ok=True)

@@ -25,15 +25,26 @@ Item {
     readonly property bool isAbyss: Config.options?.panelFamily === "abyss"
 
     // Palette tokens shared cleanly across Abyss / Material / Waffle
+    readonly property color colCardBase: ColorUtils.applyAlpha(
+        Qt.color(Appearance.colors.colLayer1Base).valid
+            ? Appearance.colors.colLayer1Base
+            : Appearance.colors.colLayer0Base,
+        1.0
+    )
+    readonly property real tonalDir: Qt.color(root.colCardBase).hslLightness > 0.86 ? -1 : 1
     readonly property color colBg: root.isWaffle
         ? Waffle.Looks.colors.bgPanelFooterBase
         : (root.isAbyss ? AbyssStyle.contentLayer : Appearance.colors.colLayer1)
     readonly property color colSurface: root.isWaffle
         ? Waffle.Looks.colors.bg1
-        : (root.isAbyss ? Qt.rgba(1, 1, 1, 0.04) : Appearance.colors.colLayer2)
+        : (root.isAbyss
+            ? ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.022, 1.04), Math.max(0.92, root.colBg.a))
+            : Appearance.colors.colLayer2)
     readonly property color colSurfaceHover: root.isWaffle
         ? Waffle.Looks.colors.bg1Hover
-        : (root.isAbyss ? Qt.rgba(1, 1, 1, 0.08) : Appearance.colors.colLayer2Hover)
+        : (root.isAbyss
+            ? ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.044, 1.07), Math.max(0.95, root.colBg.a))
+            : Appearance.colors.colLayer2Hover)
     readonly property color colBorder: root.isWaffle
         ? Waffle.Looks.colors.bg1Border
         : Appearance.colors.colLayer0Border

@@ -4,6 +4,7 @@ import Quickshell
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.abyss.looks
 import qs.modules.waffle.looks as Waffle
@@ -145,6 +146,17 @@ Item {
     readonly property bool showPowerButtons: true
     readonly property color colText: waffleMenu ? Waffle.Looks.colors.fg : (abyss ? (Appearance.m3colors.darkmode ? AbyssStyle.textColor : "#000000") : Appearance.angelEverywhere ? Appearance.angel.colText : alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer0)
     readonly property color colSubtext: waffleMenu ? Waffle.Looks.colors.subfg : (abyss ? (Appearance.m3colors.darkmode ? AbyssStyle.textColorMuted : Qt.alpha("#000000", .66)) : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary : alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext)
+    readonly property color colCardBase: ColorUtils.applyAlpha(
+        Qt.color(Appearance.colors.colLayer1Base).valid
+            ? Appearance.colors.colLayer1Base
+            : Appearance.colors.colLayer0Base,
+        1.0
+    )
+    readonly property real tonalDir: Qt.color(root.colCardBase).hslLightness > 0.86 ? -1 : 1
+    readonly property color colHoverTonal: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.044, 1.07),
+        0.92
+    )
 
     component HeaderButton: RippleButton {
         id: headerButton
@@ -322,7 +334,7 @@ Item {
                     focusPolicy:Qt.StrongFocus
                     Accessible.name:root.pageLabel(root.pageIds[index])
                     colBackground: (root.waffleMenu && index === root.currentPage) ? Waffle.Looks.colors.bg1 : "transparent"
-                    colBackgroundHover: root.waffleMenu ? Waffle.Looks.colors.bg1Hover : Qt.alpha(root.colText, .08)
+                    colBackgroundHover: root.waffleMenu ? Waffle.Looks.colors.bg1Hover : root.colHoverTonal
                     contentItem: Item {
                         Rectangle {
                             objectName: "dashboardPageDot" + index
@@ -406,7 +418,7 @@ Item {
             enabled: root.editMode
             focusPolicy: Qt.StrongFocus
             colBackground: "transparent"
-            colBackgroundHover: Qt.alpha(root.colText, .08)
+            colBackgroundHover: root.colHoverTonal
             onClicked: root.createTabRequested()
             contentItem: MaterialSymbol {
                 text: "add"
@@ -424,7 +436,7 @@ Item {
             implicitHeight: 30
             buttonRadius: Appearance.rounding.full
             colBackground: "transparent"
-            colBackgroundHover: Qt.alpha(root.colText, .08)
+            colBackgroundHover: root.colHoverTonal
             onClicked: if (customTabActions.targetCustomTabId.length > 0) root.renameTabRequested(customTabActions.targetCustomTabId)
             contentItem: MaterialSymbol {
                 text: "drive_file_rename_outline"
@@ -442,7 +454,7 @@ Item {
             implicitHeight: 30
             buttonRadius: Appearance.rounding.full
             colBackground: "transparent"
-            colBackgroundHover: Qt.alpha(root.colText, .08)
+            colBackgroundHover: root.colHoverTonal
             onClicked: if (customTabActions.targetCustomTabId.length > 0) root.deleteTabRequested(customTabActions.targetCustomTabId)
             contentItem: MaterialSymbol {
                 text: "delete_outline"

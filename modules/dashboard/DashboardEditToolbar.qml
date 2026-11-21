@@ -19,6 +19,17 @@ Rectangle {
     property Item rightDockParent: null
     property string activeDockTab: "modules"
     property string moduleSearchQuery: ""
+    readonly property color colCardBase: ColorUtils.applyAlpha(
+        Qt.color(Appearance.colors.colLayer1Base).valid
+            ? Appearance.colors.colLayer1Base
+            : Appearance.colors.colLayer0Base,
+        1.0
+    )
+    readonly property real tonalDir: Qt.color(root.colCardBase).hslLightness > 0.86 ? -1 : 1
+    readonly property color colHoverTonal: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.044, 1.07),
+        0.92
+    )
 
     readonly property real desiredLeftDockWidth: (root.splitSideDocks && root.tabController !== null)
         ? Math.ceil(leftTabsDock.implicitWidth) : 0
@@ -1000,7 +1011,7 @@ Rectangle {
                 : (pillMouse.containsMouse && pillRoot.enabled
                     ? (pillRoot.destructive
                         ? Qt.alpha(Appearance.colors.colError, 0.18)
-                        : Qt.alpha(Appearance.colors.colOnLayer1, 0.10))
+                        : root.colHoverTonal)
                     : Qt.alpha(Appearance.colors.colLayer3, 0.56)))
         border.width: 1
         border.color: pillRoot.activeFocus
@@ -1323,7 +1334,7 @@ Rectangle {
                                     color: current
                                         ? ColorUtils.mix(Appearance.colors.colPrimaryContainer, Appearance.colors.colPrimary, 0.68)
                                         : (pagePillMouse.containsMouse
-                                            ? Qt.alpha(Appearance.colors.colOnLayer1, 0.08)
+                                            ? root.colHoverTonal
                                             : Qt.alpha(Appearance.colors.colLayer3, 0.46))
                                     border.width: 1
                                     border.color: pagePill.activeFocus
@@ -1538,7 +1549,7 @@ Rectangle {
                                             color: selectedStyle
                                                 ? ColorUtils.mix(Appearance.colors.colPrimaryContainer, Appearance.colors.colPrimary, 0.70)
                                                 : (styleMouse.containsMouse
-                                                    ? Qt.alpha(Appearance.colors.colOnLayer1, 0.08)
+                                                    ? root.colHoverTonal
                                                     : "transparent")
 
                                             Row {

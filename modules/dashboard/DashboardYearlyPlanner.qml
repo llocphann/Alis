@@ -34,9 +34,44 @@ Item {
     property color headerAccent: abyssPanel ? AbyssStyle.accent : Appearance.colors.colPrimary
     property color headerTodayInk: ColorUtils.ensureReadable(
         headerAccent, abyssPanel ? AbyssStyle.contentLayer : Appearance.colors.colLayer0, 4.5)
-    property color headerDivider: Qt.alpha(ink, 0.16)
+    property color headerDivider: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.22, 1.10), 0.20)
     property color headerSurface: abyssPanel
         ? AbyssStyle.surfaceDeep : Qt.alpha(Appearance.colors.colLayer0Base, 1)
+    readonly property color colCardBase: ColorUtils.applyAlpha(
+        Qt.color(Appearance.colors.colLayer1Base).valid
+            ? Appearance.colors.colLayer1Base
+            : Appearance.colors.colLayer0Base,
+        1.0
+    )
+    readonly property real tonalDir: Qt.color(root.colCardBase).hslLightness > 0.86 ? -1 : 1
+    // Layer 1 matches Home Dashboard DashCard (AbyssStyle.contentLayer / colLayer1)
+    readonly property color colDrawerBg: abyssPanel ? AbyssStyle.contentLayer : Appearance.colors.colLayer1
+    readonly property color colLayer2: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.022, 1.04),
+        Math.max(0.92, root.colDrawerBg.a)
+    )
+    readonly property color colLayer3: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.044, 1.07),
+        Math.max(0.94, root.colDrawerBg.a)
+    )
+    readonly property color colLayer4: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.068, 1.09),
+        Math.max(0.96, root.colDrawerBg.a)
+    )
+    readonly property color colFieldBorder: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.22, 1.12),
+        root.isDarkSurface ? 0.42 : 0.36
+    )
+    readonly property color colGridHairline: ColorUtils.applyAlpha(
+        ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.22, 1.10),
+        0.14
+    )
+    readonly property real gridDir: Qt.color(root.headerSurface).hslLightness > 0.86 ? -1 : 1
+    readonly property color colGridHeaderCell: ColorUtils.tonalStep(root.headerSurface, root.gridDir * 0.015, 1.03)
+    readonly property color colGridPastCell: ColorUtils.tonalStep(root.headerSurface, root.gridDir * 0.010, 1.02)
+    readonly property color colGridWeekendCell: ColorUtils.tonalStep(root.headerSurface, root.gridDir * 0.016, 1.03)
+    readonly property color colGridMutedCell: ColorUtils.tonalStep(root.headerSurface, root.gridDir * 0.022, 1.04)
 
     Connections {
         target: root.externalBackend
@@ -355,10 +390,8 @@ Item {
         readonly property color activeBg: root.headerAccent
         readonly property color activeInk: ColorUtils.ensureReadable(
             Appearance.colors.colOnPrimary, activeBg, 5.5)
-        readonly property color idleBg: ColorUtils.tonalStep(
-            root.headerSurface, root.isDarkSurface ? 0.08 : -0.06, 1.08)
-        readonly property color idleHoverBg: ColorUtils.tonalStep(
-            root.headerSurface, root.isDarkSurface ? 0.14 : -0.10, 1.12)
+        readonly property color idleBg: root.colLayer2
+        readonly property color idleHoverBg: root.colLayer3
         property color fgColor: activeTint ? activeInk : root.ink
         toggled: activeTint
         implicitHeight: Math.round(26 * Appearance.fontSizeScale)
@@ -405,9 +438,9 @@ Item {
 
         implicitHeight: Math.round(32 * Appearance.fontSizeScale)
         radius: Appearance.rounding.small
-        color: Qt.alpha(root.ink, 0.07)
+        color: root.colLayer3
         border.width: fieldInput.activeFocus ? 1.5 : 1
-        border.color: fieldInput.activeFocus ? root.headerAccent : Qt.alpha(root.ink, 0.14)
+        border.color: fieldInput.activeFocus ? root.headerAccent : root.colFieldBorder
 
         TextInput {
             id: fieldInput
@@ -458,7 +491,7 @@ Item {
                     height: Math.round(26 * Appearance.fontSizeScale)
                     width: statsRow.implicitWidth + 14
                     radius: height / 2
-                    color: Qt.alpha(root.ink, 0.05)
+                    color: root.colLayer2
 
                     Row {
                         id: statsRow
@@ -562,7 +595,7 @@ Item {
                     height: Math.round(26 * Appearance.fontSizeScale)
                     width: Math.min(200, Math.max(140, root.width * 0.22))
                     radius: height / 2
-                    color: Qt.alpha(root.ink, 0.08)
+                    color: root.colLayer3
                     border.width: searchInput.activeFocus ? 1 : 0
                     border.color: root.headerAccent
 
@@ -599,7 +632,7 @@ Item {
                             implicitHeight: 18
                             buttonRadius: 9
                             colBackground: "transparent"
-                            colBackgroundHover: Qt.alpha(root.ink, 0.14)
+                            colBackgroundHover: root.colLayer4
                             onClicked: root.clearOrCloseSearch()
                             contentItem: Item {
                                 MaterialSymbol {
@@ -756,7 +789,7 @@ Item {
                                 Rectangle {
                                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
                                     height: 1
-                                    color: Qt.alpha(root.ink, 0.08)
+                                    color: root.colGridHairline
                                 }
 
                                 // Left Month label cell
@@ -767,7 +800,7 @@ Item {
                                         const now = new Date()
                                         return (monthRow.modelData.year === now.getFullYear() && monthRow.modelData.monthIndex === now.getMonth())
                                             ? Qt.alpha(root.headerAccent, 0.12)
-                                            : Qt.alpha(root.ink, 0.03)
+                                            : root.colGridHeaderCell
                                     }
 
                                     StyledText {
@@ -810,14 +843,14 @@ Item {
                                             height: monthRow.height - 1
                                             color: {
                                                 if (!validDay)
-                                                    return Qt.alpha(root.ink, 0.04)
+                                                    return root.colGridMutedCell
                                                 if (dayObj.isToday)
                                                     return Qt.alpha(root.headerAccent, 0.20)
                                                 if (cellHover.containsMouse)
                                                     return Qt.alpha(root.headerAccent, 0.10)
                                                 if (dayObj.isPast)
-                                                    return Qt.alpha(root.ink, dayObj.isWeekend ? 0.045 : 0.025)
-                                                return dayObj.isWeekend ? Qt.alpha(root.ink, 0.03) : "transparent"
+                                                    return dayObj.isWeekend ? root.colGridMutedCell : root.colGridPastCell
+                                                return dayObj.isWeekend ? root.colGridWeekendCell : "transparent"
                                             }
                                             border.width: dayObj?.isToday ? 1 : 0
                                             border.color: root.headerAccent
@@ -826,7 +859,7 @@ Item {
                                             Rectangle {
                                                 anchors { top: parent.top; bottom: parent.bottom; right: parent.right }
                                                 width: 1
-                                                color: Qt.alpha(root.ink, 0.05)
+                                                color: root.colGridHairline
                                             }
 
                                             // Compact colored recurring indicators (Daily/Weekly series)
@@ -1176,7 +1209,7 @@ Item {
                 Layout.maximumWidth: root.width
                 Layout.preferredHeight: root.width < 760 ? Math.min(340, Math.round(root.height * 0.56)) : -1
                 radius: Appearance.rounding.normal
-                color: Qt.alpha(root.ink, 0.04)
+                color: root.colDrawerBg
                 border.width: 1
                 border.color: root.headerDivider
                 clip: true
@@ -1212,7 +1245,7 @@ Item {
                                 implicitHeight: 26
                                 buttonRadius: 13
                                 colBackground: "transparent"
-                                colBackgroundHover: Qt.alpha(root.ink, 0.1)
+                                colBackgroundHover: root.colLayer3
                                 onClicked: root.closeEditor()
                                 contentItem: Item {
                                     MaterialSymbol {
@@ -1247,7 +1280,7 @@ Item {
                                     Layout.fillWidth: true
                                     implicitHeight: 26
                                     radius: 6
-                                    color: dayItemMouse.containsMouse ? Qt.alpha(root.ink, 0.09) : Qt.alpha(root.ink, 0.05)
+                                    color: dayItemMouse.containsMouse ? root.colLayer3 : root.colLayer2
 
                                     RowLayout {
                                         anchors { fill: parent; leftMargin: 8; rightMargin: 8 }
@@ -1358,7 +1391,8 @@ Item {
                                         implicitWidth: 22
                                         implicitHeight: 28
                                         buttonRadius: 6
-                                        colBackground: Qt.alpha(root.ink, 0.07)
+                                        colBackground: root.colLayer2
+                                        colBackgroundHover: root.colLayer3
                                         onClicked: root.stepDraftDate("start", -1)
                                         contentItem: StyledText { horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: "−"; color: root.ink }
                                     }
@@ -1373,7 +1407,8 @@ Item {
                                         implicitWidth: 22
                                         implicitHeight: 28
                                         buttonRadius: 6
-                                        colBackground: Qt.alpha(root.ink, 0.07)
+                                        colBackground: root.colLayer2
+                                        colBackgroundHover: root.colLayer3
                                         onClicked: root.stepDraftDate("start", 1)
                                         contentItem: StyledText { horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: "+"; color: root.ink }
                                     }
@@ -1395,7 +1430,8 @@ Item {
                                         implicitWidth: 22
                                         implicitHeight: 28
                                         buttonRadius: 6
-                                        colBackground: Qt.alpha(root.ink, 0.07)
+                                        colBackground: root.colLayer2
+                                        colBackgroundHover: root.colLayer3
                                         onClicked: root.stepDraftDate("end", -1)
                                         contentItem: StyledText { horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: "−"; color: root.ink }
                                     }
@@ -1410,7 +1446,8 @@ Item {
                                         implicitWidth: 22
                                         implicitHeight: 28
                                         buttonRadius: 6
-                                        colBackground: Qt.alpha(root.ink, 0.07)
+                                        colBackground: root.colLayer2
+                                        colBackgroundHover: root.colLayer3
                                         onClicked: root.stepDraftDate("end", 1)
                                         contentItem: StyledText { horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: "+"; color: root.ink }
                                     }
@@ -1496,7 +1533,8 @@ Item {
                                     implicitWidth: 22
                                     implicitHeight: 22
                                     buttonRadius: 5
-                                    colBackground: Qt.alpha(root.ink, 0.08)
+                                    colBackground: root.colLayer2
+                                    colBackgroundHover: root.colLayer3
                                     colBackgroundToggled: root.headerAccent
                                     colBackgroundToggledHover: Qt.lighter(root.headerAccent, 1.08)
                                     onClicked: root.toggleChecklistEntry(checkRow.index)
@@ -1525,7 +1563,7 @@ Item {
                                     implicitHeight: 20
                                     buttonRadius: 10
                                     colBackground: "transparent"
-                                    colBackgroundHover: Qt.alpha(root.ink, 0.1)
+                                    colBackgroundHover: root.colLayer3
                                     onClicked: root.removeChecklistEntry(checkRow.index)
                                     contentItem: Item {
                                         MaterialSymbol {
