@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import math
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -127,6 +129,47 @@ def build_plan(info: MediaInfo, budget_bytes: int, audio_kbps: int, max_dimensio
     return EncodePlan(budget_bytes, video_kbps, final_audio_kbps, width, height)
 
 
+def default_encode_threads() -> int:
+    return max(1, min(4, (os.cpu_count() or 4) // 4))
+
+
+def is_char_device(path: str) -> bool:
+    if not path:
+        return False
+    try:
+        return stat.S_ISCHR(os.stat(path).st_mode)
+    except OSError:
+        return False
+
+
+def resolve_vaapi_device(requested: str) -> str:
+    if requested and requested != "null" and is_char_device(requested):
+        return requested
+    if is_char_device("/dev/dri/renderD128"):
+        return "/dev/dri/renderD128"
+    for candidate in sorted(glob.glob("/dev/dri/renderD*")):
+        if is_char_device(candidate):
+            return candidate
+    return ""
+
+
+def has_ffmpeg_encoder(ffmpeg: str, encoder: str) -> bool:
+    proc = subprocess.run(
+        [ffmpeg, "-hide_banner", "-encoders"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return False
+    for line in proc.stdout.splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[1] == encoder:
+            return True
+    return False
+
+
 def ffmpeg_error(stderr: str, fallback: str) -> RuntimeError:
     detail = "\n".join((stderr or "").splitlines()[-12:])
     return RuntimeError(detail or fallback)
@@ -144,12 +187,14 @@ def run_ffmpeg(command: list[str], quiet: bool) -> None:
         raise ffmpeg_error(proc.stderr or "", f"{command[0]} failed with exit code {proc.returncode}")
 
 
-def video_args(plan: EncodePlan, preset: str, info: MediaInfo) -> list[str]:
+def video_args(plan: EncodePlan, preset: str, info: MediaInfo, threads: int) -> list[str]:
     args = [
         "-map", "0:v:0",
         "-sn",
         "-c:v", "libx264",
         "-preset", preset,
+        "-threads", str(threads),
+        "-x264-params", f"threads={threads}:lookahead-threads=1",
         "-b:v", f"{plan.video_kbps}k",
         "-maxrate", f"{plan.video_kbps}k",
         "-bufsize", f"{max(plan.video_kbps * 2, 2)}k",
@@ -160,16 +205,23 @@ def video_args(plan: EncodePlan, preset: str, info: MediaInfo) -> list[str]:
     return args
 
 
-def encode_attempt(ffmpeg: str, input_path: Path, output_path: Path, temp_output: Path, info: MediaInfo, plan: EncodePlan, preset: str, passlog: Path, quiet: bool) -> None:
-    common = [ffmpeg, "-hide_banner", "-nostdin", "-y", "-i", str(input_path)]
-    first_pass = common + video_args(plan, preset, info) + [
+def encode_attempt(ffmpeg: str, input_path: Path, output_path: Path, temp_output: Path, info: MediaInfo, plan: EncodePlan, preset: str, threads: int, passlog: Path, quiet: bool) -> None:
+    io_threads = str(min(2, threads))
+    common = [
+        ffmpeg, "-hide_banner", "-nostdin", "-y",
+        "-threads", io_threads,
+        "-filter_threads", io_threads,
+        "-i", str(input_path),
+    ]
+    vargs = video_args(plan, preset, info, threads)
+    first_pass = common + vargs + [
         "-pass", "1",
         "-passlogfile", str(passlog),
         "-an",
         "-f", "null",
         os.devnull,
     ]
-    second_pass = common + video_args(plan, preset, info) + [
+    second_pass = common + vargs + [
         "-pass", "2",
         "-passlogfile", str(passlog),
     ]
@@ -182,6 +234,56 @@ def encode_attempt(ffmpeg: str, input_path: Path, output_path: Path, temp_output
     temp_output.unlink(missing_ok=True)
     run_ffmpeg(first_pass, quiet)
     run_ffmpeg(second_pass, quiet)
+    if not temp_output.exists() or temp_output.stat().st_size <= 0:
+        raise RuntimeError("ffmpeg did not create an output file")
+    os.replace(temp_output, output_path)
+
+
+def encode_attempt_vaapi(ffmpeg: str, input_path: Path, output_path: Path, temp_output: Path, info: MediaInfo, plan: EncodePlan, vaapi_device: str, quiet: bool) -> None:
+    audio_flags = (
+        ["-map", "0:a:0?", "-c:a", "aac", "-b:a", f"{plan.audio_kbps}k", "-ac", "2"]
+        if info.has_audio and plan.audio_kbps > 0
+        else ["-an"]
+    )
+    tail = audio_flags + ["-map_metadata", "0", "-movflags", "+faststart", str(temp_output)]
+
+    hw_decode_cmd = [
+        ffmpeg, "-hide_banner", "-nostdin", "-y",
+        "-threads", "2", "-filter_threads", "2",
+        "-hwaccel", "vaapi",
+        "-hwaccel_device", vaapi_device,
+        "-hwaccel_output_format", "vaapi",
+        "-i", str(input_path),
+        "-map", "0:v:0", "-sn",
+        "-vf", f"scale_vaapi=w={plan.width}:h={plan.height}:format=nv12",
+        "-c:v", "h264_vaapi",
+        "-rc_mode", "VBR",
+        "-b:v", f"{plan.video_kbps}k",
+        "-maxrate", f"{plan.video_kbps}k",
+        "-bufsize", f"{max(plan.video_kbps * 2, 2)}k",
+    ] + tail
+
+    sw_decode_cmd = [
+        ffmpeg, "-hide_banner", "-nostdin", "-y",
+        "-threads", "2", "-filter_threads", "2",
+        "-vaapi_device", vaapi_device,
+        "-i", str(input_path),
+        "-map", "0:v:0", "-sn",
+        "-vf", f"format=nv12,hwupload,scale_vaapi=w={plan.width}:h={plan.height}:format=nv12",
+        "-c:v", "h264_vaapi",
+        "-rc_mode", "VBR",
+        "-b:v", f"{plan.video_kbps}k",
+        "-maxrate", f"{plan.video_kbps}k",
+        "-bufsize", f"{max(plan.video_kbps * 2, 2)}k",
+    ] + tail
+
+    temp_output.unlink(missing_ok=True)
+    try:
+        run_ffmpeg(hw_decode_cmd, quiet)
+    except RuntimeError:
+        temp_output.unlink(missing_ok=True)
+        run_ffmpeg(sw_decode_cmd, quiet)
+
     if not temp_output.exists() or temp_output.stat().st_size <= 0:
         raise RuntimeError("ffmpeg did not create an output file")
     os.replace(temp_output, output_path)
@@ -222,15 +324,36 @@ def compress(args: argparse.Namespace) -> dict:
             "targetBytes": target_bytes,
         }
 
+    threads = args.threads if args.threads > 0 else default_encode_threads()
+    vaapi_device = resolve_vaapi_device(args.hardware_device)
+    use_vaapi = (
+        args.acceleration in ("auto", "gpu")
+        and bool(vaapi_device)
+        and has_ffmpeg_encoder(ffmpeg, "h264_vaapi")
+    )
+    retries = max(0, args.retries)
+
     temp_output = output_path.with_name(f".{output_path.stem}.tmp-{os.getpid()}{output_path.suffix or '.mp4'}")
     last_error = None
     with tempfile.TemporaryDirectory(prefix="alis-discord-compress-") as temp_dir:
-        for attempt in range(max(0, args.retries) + 1):
+        for attempt in range(retries + 1):
             attempt_budget = max(1, int(budget_bytes * (0.88 ** attempt)))
             plan = build_plan(info, attempt_budget, args.audio_kbps, args.max_dimension)
             passlog = Path(temp_dir) / f"pass-{attempt}"
+            try_vaapi = use_vaapi and (attempt == 0 or attempt < retries or args.acceleration == "gpu")
+            encoder_used = "h264_vaapi" if try_vaapi else "libx264"
             try:
-                encode_attempt(ffmpeg, input_path, output_path, temp_output, info, plan, args.preset, passlog, args.quiet)
+                if try_vaapi:
+                    try:
+                        encode_attempt_vaapi(ffmpeg, input_path, output_path, temp_output, info, plan, vaapi_device, args.quiet)
+                    except RuntimeError:
+                        if args.acceleration == "gpu":
+                            raise
+                        use_vaapi = False
+                        encoder_used = "libx264"
+                        encode_attempt(ffmpeg, input_path, output_path, temp_output, info, plan, args.preset, threads, passlog, args.quiet)
+                else:
+                    encode_attempt(ffmpeg, input_path, output_path, temp_output, info, plan, args.preset, threads, passlog, args.quiet)
                 size_bytes = output_path.stat().st_size
                 if size_bytes <= target_bytes:
                     return {
@@ -244,6 +367,7 @@ def compress(args: argparse.Namespace) -> dict:
                         "width": plan.width,
                         "height": plan.height,
                         "attempt": attempt + 1,
+                        "encoder": encoder_used,
                     }
                 last_error = RuntimeError(f"output exceeded target ({size_bytes} > {target_bytes})")
                 output_path.unlink(missing_ok=True)
@@ -266,8 +390,11 @@ def main() -> None:
     parser.add_argument("--audio-kbps", type=int, default=96)
     parser.add_argument("--preset", choices=PRESETS, default="slow")
     parser.add_argument("--max-dimension", type=int, default=1280)
+    parser.add_argument("--acceleration", choices=("auto", "gpu", "software"), default="auto")
+    parser.add_argument("--hardware-device", default="")
+    parser.add_argument("--threads", type=int, default=0)
     parser.add_argument("--retries", type=int, default=3)
-    parser.add_argument("--nice", type=int, default=5)
+    parser.add_argument("--nice", type=int, default=10)
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--json", action="store_true")

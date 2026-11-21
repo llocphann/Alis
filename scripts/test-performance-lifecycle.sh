@@ -532,7 +532,6 @@ require "$shell_updates" 'function check(): void {' 'manual shell update check A
 require "$shell_updates" 'fetchProc.running = true' 'manual and periodic shell update checks must continue to fetch the remote'
 require "$shell_updates" 'id: versionFile' 'shell update startup must read version.json in-process'
 require "$shell_updates" 'id: manifestFile' 'shell update startup must read manifest metadata in-process'
-require "$shell_updates" 'id: repoVersionFile' 'shell update startup must read the repo VERSION in-process'
 require "$shell_updates" 'id: updateResumeFile' 'shell update startup must check for a resume marker before spawning the staleness helper'
 reject "$shell_updates" 'id: loadRepoPathProc' 'shell update startup must not spawn cat for version.json'
 reject "$shell_updates" 'id: manifestInfoProc' 'shell update startup must not spawn a shell pipeline for manifest metadata'

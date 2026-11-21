@@ -98,7 +98,7 @@ test-prefix-install:
 		grep -Fq 'system_config_dir="$${ALIS_SYSTEM_RUNTIME_DIR:-/opt/alis/share/quickshell/alis}"' "$$runtime/scripts/alis"; \
 		grep -Fq 'RUNTIME_DIR_SYSTEM_LOCAL="$${ALIS_SYSTEM_RUNTIME_DIR_LOCAL:-/opt/alis/share/quickshell/alis}"' "$$runtime/sdata/lib/versioning.sh"; \
 		grep -Fq 'get_installed_update_strategy 2>/dev/null || true' "$$runtime/setup"; \
-		python3 -c 'import json, pathlib, sys; data=json.loads(pathlib.Path(sys.argv[1]).read_text()); assert data["version"] == pathlib.Path("VERSION").read_text().strip(); assert data["installMode"] == "package-managed"; assert data["updateStrategy"] == "package-manager"; assert data["packageManager"] == "manual"; assert "PREFIX=\"/opt/alis\"" in data["packageUpdateHint"]' "$$runtime/version.json"; \
+		python3 -c 'import json, pathlib, sys; data=json.loads(pathlib.Path(sys.argv[1]).read_text()); assert data["version"] == "rolling"; assert data["installMode"] == "package-managed"; assert data["updateStrategy"] == "package-manager"; assert data["packageManager"] == "manual"; assert "PREFIX=\"/opt/alis\"" in data["packageUpdateHint"]' "$$runtime/version.json"; \
 		grep -Fxq 'Exec=/opt/alis/bin/alis service restart' "$$stage/opt/alis/share/applications/alis.desktop"; \
 		grep -Fxq 'Exec=/opt/alis/bin/alis settings' "$$stage/opt/alis/share/applications/alis-settings.desktop"
 
@@ -110,11 +110,10 @@ test-package-docs:
 	@grep -Fq 'install -Dm644 LICENSE "$$out/share/licenses/alis/LICENSE"' nix/package.nix
 
 test-package-metadata:
-	@repo_version="$$(tr -d '[:space:]' < VERSION)"; \
-		git_version="$$(grep -m1 '^pkgver=' distro/arch/alis-shell-git/PKGBUILD | cut -d= -f2-)"; \
+	@git_version="$$(grep -m1 '^pkgver=' distro/arch/alis-shell-git/PKGBUILD | cut -d= -f2-)"; \
 		case "$$git_version" in \
-			"$$repo_version".r*) ;; \
-			*) printf 'alis-shell-git pkgver seed %s does not follow VERSION %s\n' "$$git_version" "$$repo_version" >&2; exit 1 ;; \
+			r*.g*) ;; \
+			*) printf 'alis-shell-git pkgver seed %s is not a valid rolling pkgver\n' "$$git_version" >&2; exit 1 ;; \
 		esac; \
 		srcinfo_version="$$(sed -n 's/^[[:space:]]*pkgver = //p' distro/arch/alis-shell-git/.SRCINFO | head -1)"; \
 		test "$$srcinfo_version" = "$$git_version"
@@ -145,7 +144,7 @@ install-shell:
 		's|^RUNTIME_DIR_SYSTEM_LOCAL=.*|RUNTIME_DIR_SYSTEM_LOCAL="$${ALIS_SYSTEM_RUNTIME_DIR_LOCAL:-$(SHELL_INSTALL_DIR)}"|' \
 		"$(DESTDIR)$(SHELL_INSTALL_DIR)/sdata/lib/versioning.sh"
 	@python3 -c 'from pathlib import Path; p=Path("$(DESTDIR)$(SHELL_INSTALL_DIR)/setup"); t=p.read_text(); m="sync_launcher_from_repo() {\n"; assert t.count(m) == 1, "expected one sync_launcher_from_repo definition"; g=m+"    if [[ \"$$(get_installed_update_strategy 2>/dev/null || true)\" == \"package-manager\" ]]; then\n        return 0\n    fi\n"; p.write_text(t.replace(m, g, 1))'
-	@version="$$(cat VERSION)"; \
+	@version="rolling"; \
 		commit="$$(git rev-parse --short HEAD 2>/dev/null || printf manual)"; \
 		installed_at="$$(date -Iseconds)"; \
 		python3 scripts/write-version-json.py \

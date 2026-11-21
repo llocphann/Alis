@@ -21,7 +21,6 @@ srcinfo_value() {
   sed -n "s/^[[:space:]]*${key} = //p" "$file" | head -1
 }
 
-repo_version="$(tr -d '[:space:]' < VERSION)"
 stable_pkg="distro/arch/alis-shell/PKGBUILD"
 stable_srcinfo="distro/arch/alis-shell/.SRCINFO"
 git_pkg="distro/arch/alis-shell-git/PKGBUILD"
@@ -72,15 +71,21 @@ for pair in \
   [[ "$recipe_rel" == "$srcinfo_rel" ]] || fail "$recipe pkgrel differs from $srcinfo"
 done
 
-[[ "$(recipe_value "$stable_pkg" pkgver)" == "$repo_version" ]] \
-  || fail 'alis-shell pkgver does not match VERSION'
-[[ "$(recipe_value "$meta_pkg" pkgver)" == "$repo_version" ]] \
-  || fail 'alis-meta pkgver does not match VERSION'
+stable_version="$(recipe_value "$stable_pkg" pkgver)"
+case "$stable_version" in
+  r*.g*) ;;
+  *) fail "alis-shell pkgver must be an unversioned rolling seed (r*.g*): $stable_version" ;;
+esac
+meta_version="$(recipe_value "$meta_pkg" pkgver)"
+case "$meta_version" in
+  r*.g*) ;;
+  *) fail "alis-meta pkgver must be an unversioned rolling seed (r*.g*): $meta_version" ;;
+esac
 
 git_version="$(recipe_value "$git_pkg" pkgver)"
 case "$git_version" in
-  "$repo_version".r*) ;;
-  *) fail "alis-shell-git pkgver seed does not follow VERSION: $git_version" ;;
+  r*.g*) ;;
+  *) fail "alis-shell-git pkgver seed must follow rolling r*.g*: $git_version" ;;
 esac
 
 source_ref="$(sed -n 's/^_source_ref="${ALIS_SOURCE_REF:-\([^}]*\)}"$/\1/p' "$stable_pkg")"
@@ -89,9 +94,6 @@ git cat-file -e "${source_ref}^{commit}" 2>/dev/null \
   || fail "alis-shell source ref is not a local commit: $source_ref"
 git merge-base --is-ancestor "$source_ref" HEAD \
   || fail "alis-shell source ref is not an ancestor of HEAD: $source_ref"
-source_version="$(git show "$source_ref:VERSION" | tr -d '[:space:]')"
-[[ "$source_version" == "$repo_version" ]] \
-  || fail "alis-shell source snapshot VERSION=$source_version, repository VERSION=$repo_version"
 for required_path in \
   shell.qml \
   qmldir \

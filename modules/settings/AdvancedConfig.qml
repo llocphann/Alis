@@ -546,7 +546,7 @@ ContentPage {
                         text: Translation.tr("Equalizer width")
                         value: Config.options?.bar?.cava?.width ?? 120
                         from: 48
-                        to: 360
+                        to: 480
                         stepSize: 8
                         onValueChanged: root.setCavaValue(
                             "bar.cava.width", value, false)

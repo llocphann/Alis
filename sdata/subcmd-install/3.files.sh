@@ -1144,15 +1144,11 @@ fi
 # Create version.json for ShellUpdates service
 #####################################################################################
 if [[ -n "${II_TARGET}" && -d "${II_TARGET}" ]]; then
-  REPO_VERSION=""
   REPO_COMMIT=""
-  if [[ -f "${REPO_ROOT}/VERSION" ]]; then
-    REPO_VERSION=$(cat "${REPO_ROOT}/VERSION" | tr -d '[:space:]')
-  fi
   if command -v git &>/dev/null && [[ -d "${REPO_ROOT}/.git" ]]; then
     REPO_COMMIT=$(git -C "${REPO_ROOT}" rev-parse --short HEAD 2>/dev/null || echo "")
   fi
-  write_version_info_json "${II_TARGET}/version.json" "${REPO_VERSION:-0.0.0}" "${REPO_COMMIT:-unknown}" "setup-install"
+  write_version_info_json "${II_TARGET}/version.json" "rolling" "${REPO_COMMIT:-unknown}" "setup-install"
   log_success "Version tracking configured"
 fi
 

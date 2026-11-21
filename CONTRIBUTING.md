@@ -194,11 +194,11 @@ When a persisted config or data format changes between versions:
 
 User-visible strings belong in the translation system. Follow existing keys and use `Translation.tr(...)` in QML where the surrounding code does so. Run the localization audit used by CI after translation changes.
 
-## Releases
+## Rolling Development
 
-Release preparation and publication are maintainer workflows. Validate using `bash scripts/validate-maintainer-local.sh` and update `version.json` and [CHANGELOG.md](CHANGELOG.md) together when cutting a release.
+Alis is maintained as an unversioned rolling desktop configuration on `dev`. Validate changes using `bash scripts/validate-maintainer-local.sh` and document notable updates in [CHANGELOG.md](CHANGELOG.md).
 
-Do not publish directly from `dev`, retarget the non-VCS Arch package to a moving branch, or bypass the release helper's preflight checks for routine releases.
+Do not publish unvalidated changes directly or bypass the maintainer validation checks.
 
 ## AI-assisted contributions
 

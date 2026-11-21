@@ -28,6 +28,7 @@ Item {
     property int idlePoint: 0
     readonly property bool motionAllowed: presented && AbyssStyle.motionEnabled && wavesEnabled
         && !AbyssRenderPolicy.powerSaver && !GameMode.active && !GlobalStates.screenLocked
+        && !RecorderStatus.isRecording
     readonly property bool audioAllowed: presented && AbyssStyle.motionEnabled && audioEnabled
     readonly property bool integrationAllowed: motionAllowed || audioAllowed
     signal configurationChanged()

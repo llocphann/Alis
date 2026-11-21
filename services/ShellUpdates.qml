@@ -513,10 +513,6 @@ Singleton {
 
         try {
             const json = JSON.parse(raw || "{}")
-                    // Extract version from version.json (always available even if VERSION file missing)
-                    if (json.version && json.version !== "0.0.0") {
-                        root.localVersion = json.version
-                    }
                     const storedCommit = String(json.commit ?? "").trim()
                     const storedDate = String(json.installedAt ?? json.installed_at ?? "").trim()
                     if (storedCommit.length > 0 && root.installedCommit.length === 0) {
@@ -812,49 +808,12 @@ Singleton {
             }
         }
         onExited: (exitCode, exitStatus) => {
-            // Also read local VERSION on startup
             root._loadLocalVersion()
         }
     }
 
-    // Step 1d: Read local VERSION on startup without spawning a shell helper.
-    FileView {
-        id: repoVersionFile
-        path: root.repoPath + "/VERSION"
-        watchChanges: false
-        blockLoading: true
-        printErrors: false
-    }
-
-    FileView {
-        id: configVersionFile
-        path: root.configDir + "/VERSION"
-        watchChanges: false
-        blockLoading: true
-        printErrors: false
-    }
-
     function _loadLocalVersion(): void {
-        let ver = ""
-        try {
-            repoVersionFile.reload()
-            ver = String(repoVersionFile.text() ?? "").trim()
-        } catch (error) {
-            ver = ""
-        }
-        if (ver.length === 0) {
-            try {
-                configVersionFile.reload()
-                ver = String(configVersionFile.text() ?? "").trim()
-            } catch (error) {
-                ver = ""
-            }
-        }
-        // Only override if we got a better version than what version.json gave us.
-        if (ver.length > 0 && ver !== root.localVersion)
-            root.localVersion = ver
-        print("[ShellUpdates] Local version: " + root.localVersion)
-
+        root.localVersion = ""
         if (root._startupRemoteCheckFresh()) {
             print("[ShellUpdates] Reusing fresh remote refs on startup; skipping network fetch")
             root._startLocalComparison()
@@ -1164,47 +1123,11 @@ Singleton {
             }
         }
         onExited: (exitCode, exitStatus) => {
-            remoteVersionProc.running = true
-        }
-    }
-
-    // Detail Step 2: Get remote VERSION
-    Process {
-        id: remoteVersionProc
-        running: false
-        command: [
-            ...root._gitCmd, "show",
-            "origin/" + root._remoteBranch + ":VERSION"
-        ]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.remoteVersion = (text ?? "").trim()
-            }
-        }
-        onExited: (exitCode, exitStatus) => {
-            localVersionProc.running = true
-        }
-    }
-
-    // Detail Step 3: Get local VERSION (try repo, then config dir, then version.json)
-    Process {
-        id: localVersionProc
-        running: false
-        command: [
-            "/usr/bin/bash", "-c",
-            "cat '" + root.repoPath + "/VERSION' 2>/dev/null || cat '" + root.configDir + "/VERSION' 2>/dev/null || echo ''"
-        ]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.localVersion = (text ?? "").trim()
-            }
-        }
-        onExited: (exitCode, exitStatus) => {
             remoteChangelogProc.running = true
         }
     }
 
-    // Detail Step 4: Get remote CHANGELOG.md (first 200 lines)
+    // Detail Step 2: Get remote CHANGELOG.md (first 200 lines)
     Process {
         id: remoteChangelogProc
         running: false

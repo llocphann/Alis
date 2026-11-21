@@ -30,24 +30,17 @@ require_clean_version() {
 }
 
 require_release_version_consistency() {
-  local version="$1"
-  local repo_version package_file package_version
-
-  [[ -f "$repo_root/VERSION" ]] || die "missing VERSION file"
-  repo_version="$(tr -d '[:space:]' < "$repo_root/VERSION")"
-  [[ "$repo_version" == "$version" ]] \
-    || die "VERSION=$repo_version does not match release version $version"
+  # Alis is maintained as an unversioned rolling branch without a VERSION file.
+  local package_file package_version
 
   for package_file in \
     "$repo_root/distro/arch/alis-shell/PKGBUILD" \
     "$repo_root/distro/arch/alis-meta/PKGBUILD" \
     "$repo_root/sdata/dist-arch/alis-deps/PKGBUILD"; do
-    [[ -f "$package_file" ]] || die "missing release package metadata: ${package_file#$repo_root/}"
+    [[ -f "$package_file" ]] || die "missing package metadata: ${package_file#$repo_root/}"
     package_version="$(grep -m1 '^pkgver=' "$package_file" | cut -d= -f2- || true)"
     [[ -n "$package_version" ]] \
       || die "missing pkgver in ${package_file#$repo_root/}"
-    [[ "$package_version" == "$version" ]] \
-      || die "${package_file#$repo_root/} pkgver=$package_version does not match release version $version"
   done
 }
 

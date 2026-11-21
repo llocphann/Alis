@@ -98,13 +98,9 @@ is_package_managed_version_file() {
 # Local Version Management
 #####################################################################################
 
-# Get current repo version from VERSION file
+# Get current repo version (unversioned rolling)
 get_repo_version() {
-    if [[ -f "$VERSION_FILE_REPO" ]]; then
-        head -1 "$VERSION_FILE_REPO" | tr -d '[:space:]'
-    else
-        echo "0.0.0"
-    fi
+    echo "rolling"
 }
 
 # Get current git commit hash
@@ -150,18 +146,9 @@ get_installed_version_json() {
 
 # Get just the version string
 get_installed_version() {
-    # For repo-link mode the runtime IS the repo — use live VERSION file,
-    # not the stale value frozen in version.json at last ./setup update.
     if [[ "$(get_installed_install_mode)" == "repo-link" ]]; then
-        local runtime_dir
-        runtime_dir="$(get_runtime_shell_dir)"
-        if [[ -n "$runtime_dir" && -f "$runtime_dir/VERSION" ]]; then
-            head -1 "$runtime_dir/VERSION" | tr -d '[:space:]'
-            return
-        elif [[ -f "$VERSION_FILE_REPO" ]]; then
-            get_repo_version
-            return
-        fi
+        echo "rolling"
+        return
     fi
 
     local version_file
@@ -175,12 +162,7 @@ get_installed_version() {
         fi
     fi
 
-    if [[ -f "${CONFIG_DIR}/version" ]]; then
-        # Fallback to old format
-        cat "${CONFIG_DIR}/version"
-    else
-        echo "0.0.0"
-    fi
+    echo "rolling"
 }
 
 # Get installed commit hash

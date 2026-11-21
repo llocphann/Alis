@@ -168,7 +168,32 @@ Item {
         height: root.height
         y: root.slideOffset
         active: root.controlsVisible || root.visible
-        source: active ? Qt.resolvedUrl("../dashboard/DashboardEditToolbar.qml") : ""
+        function _syncToolbar(): void {
+            if (active && root.canvasController) {
+                if (!item) {
+                    setSource(Qt.resolvedUrl("../dashboard/DashboardEditToolbar.qml"), {
+                        canvasController: root.canvasController,
+                        tabController: root.tabController,
+                        width: root.width,
+                        height: root.height,
+                        visible: root.visible,
+                        splitSideDocks: root.stageLeftHost !== null && root.stageRightHost !== null,
+                        leftDockParent: root.stageLeftHost,
+                        rightDockParent: root.stageRightHost,
+                        embeddedSurface: true,
+                        compactHeight: (root.body?.height ?? root.QsWindow?.window?.height ?? 1080) < 720
+                    })
+                }
+            } else if (source.toString().length > 0) {
+                source = ""
+            }
+        }
+        Component.onCompleted: _syncToolbar()
+        onActiveChanged: _syncToolbar()
+        Connections {
+            target: root
+            function onCanvasControllerChanged(): void { toolbarLoader._syncToolbar() }
+        }
         onLoaded: if (root.controlsVisible) Qt.callLater(() => root.rememberRequestedRect())
         Binding {
             target: toolbarLoader.item

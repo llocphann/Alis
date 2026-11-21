@@ -199,13 +199,15 @@ if [[ -d "$runtime_root/distro/arch" ]]; then
         "$runtime_root/distro/arch/alis-meta/PKGBUILD"
 
     step "version consistency"
-    version="$(cat "$runtime_root/VERSION")"
     for pkg in alis-shell alis-meta; do
         pkg_ver="$(grep -m1 '^pkgver=' "$runtime_root/distro/arch/$pkg/PKGBUILD" | cut -d= -f2)"
-        if [[ "$pkg_ver" != "$version" ]]; then
-            printf 'FAIL: %s pkgver=%s != VERSION=%s\n' "$pkg" "$pkg_ver" "$version" >&2
-            exit 1
-        fi
+        case "$pkg_ver" in
+            r*) ;;
+            *)
+                printf 'FAIL: %s pkgver=%s must be a rolling identifier (r*)\n' "$pkg" "$pkg_ver" >&2
+                exit 1
+                ;;
+        esac
     done
 fi
 

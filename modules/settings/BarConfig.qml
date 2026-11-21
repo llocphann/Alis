@@ -689,8 +689,8 @@ ContentPage {
 
         SettingsGroup {
             ContentSubsection {
-                title: Translation.tr("Window & Media")
-                visible: !root.isVertical
+                title: Translation.tr("Module widths")
+                visible: root.abyssContent || !root.isVertical
 
                 ConfigRow {
                     uniform: true
@@ -720,10 +720,47 @@ ContentPage {
                         onValueChanged: Config.setNestedValue("bar.media.width", value)
                     }
                 }
+
+                ConfigRow {
+                    uniform: true
+
+                    ConfigSpinBox {
+                        icon: "equalizer"
+                        text: Translation.tr("Cava Equalizer")
+                        value: Config.options?.bar?.cava?.width ?? 120
+                        from: 48
+                        to: 480
+                        stepSize: 8
+                        enabled: root.abyssContent || (Config.options?.bar?.modules?.cava ?? false)
+                        opacity: enabled ? 1 : 0.5
+                        onValueChanged: {
+                            if (value !== (Config.options?.bar?.cava?.width ?? 120))
+                                Config.setNestedValue("bar.cava.width", value)
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("Width of the Cava Equalizer module on the Bar / Screen Edge (px)")
+                        }
+                    }
+
+                    ConfigSpinBox {
+                        icon: "space_bar"
+                        text: Translation.tr("Cava bar spacing")
+                        value: Config.options?.bar?.cava?.barSpacing ?? 2
+                        from: 1
+                        to: 6
+                        stepSize: 1
+                        enabled: root.abyssContent || (Config.options?.bar?.modules?.cava ?? false)
+                        opacity: enabled ? 1 : 0.5
+                        onValueChanged: {
+                            if (value !== (Config.options?.bar?.cava?.barSpacing ?? 2))
+                                Config.setNestedValue("bar.cava.barSpacing", value)
+                        }
+                    }
+                }
             }
 
             SettingsDivider {
-                visible: !root.isVertical
+                visible: root.abyssContent || !root.isVertical
             }
 
             ContentSubsection {

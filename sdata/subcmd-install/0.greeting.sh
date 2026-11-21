@@ -55,14 +55,6 @@ detect_system() {
 
 detect_system
 
-# Read version from VERSION file
-DETECTED_VERSION="unknown"
-if [[ -f "${REPO_ROOT}/VERSION" ]]; then
-    DETECTED_VERSION="v$(cat "${REPO_ROOT}/VERSION" | tr -d '[:space:]')"
-elif [[ -f "VERSION" ]]; then
-    DETECTED_VERSION="v$(cat VERSION | tr -d '[:space:]')"
-fi
-
 #####################################################################################
 # Greeting Surface
 #####################################################################################
@@ -73,11 +65,10 @@ $HAS_GUM && local_visual_mode="gum"
 
 tui_hero_card \
     "Setup bootstrap" \
-    "Install ${DETECTED_VERSION} with a shell-native first run tuned for ${DETECTED_DISTRO}." \
+    "Install Alis with a shell-native first run tuned for ${DETECTED_DISTRO}." \
     "This flow prepares packages, services, theming, and user files before the runtime shell takes over."
 
 tui_badge_row \
-    "Version" "$DETECTED_VERSION" "accent" \
     "Distro" "$DETECTED_DISTRO_ID" "info" \
     "Session" "$DETECTED_SESSION" "muted" \
     "Compositor" "$DETECTED_DE" "accent-dim" \
@@ -87,7 +78,6 @@ tui_badge_row \
 echo ""
 
 system_snapshot=$(cat <<EOF
-Version        ${DETECTED_VERSION}
 Distro         ${DETECTED_DISTRO}
 Shell          ${DETECTED_SHELL}
 Session        ${DETECTED_SESSION}

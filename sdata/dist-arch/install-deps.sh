@@ -511,11 +511,11 @@ tui_info "Registering dependencies with pacman..."
 
 _meta_dir="./sdata/dist-arch/alis-deps"
 if [[ -f "$_meta_dir/PKGBUILD" ]]; then
-  _alis_ver="$(cat ./VERSION 2>/dev/null || echo '1.0.0')"
+  _alis_ver="r$(git rev-list --count HEAD 2>/dev/null || echo 0)"
   _meta_build_dir="$(mktemp -d)"
 
   # Build from a staged recipe so setup never rewrites a tracked PKGBUILD just
-  # to inject the current VERSION into the dependency-tracker package.
+  # to inject the rolling revision into the dependency-tracker package.
   if cp -- "$_meta_dir/PKGBUILD" "$_meta_build_dir/PKGBUILD"; then
     sed -i "s/^pkgver=.*/pkgver=${_alis_ver}/" "$_meta_build_dir/PKGBUILD"
 

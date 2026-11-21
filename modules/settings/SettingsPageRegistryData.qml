@@ -492,7 +492,7 @@ Singleton {
             section: Translation.tr("Audio spectrum"),
             label: Translation.tr("Bar audio spectrum"),
             description: Translation.tr("Bars, waves, frequency accents and dynamic curve fit"),
-            keywords: ["spectrum", "audio", "cava", "bars", "wave", "origin", "bottom", "top", "center", "mirror", "ribbon", "density", "gap", "smoothing", "edge", "curve", "headroom", "profile", "accent", "bass", "warm", "vocal", "treble", "smile"]
+            keywords: ["spectrum", "audio", "cava", "width", "equalizer width", "cava width", "bars", "wave", "origin", "bottom", "top", "center", "mirror", "ribbon", "density", "gap", "smoothing", "edge", "curve", "headroom", "profile", "accent", "bass", "warm", "vocal", "treble", "smile"]
         },
         {
             pageIndex: 2, pageName: root.pages[2].name,
@@ -1248,7 +1248,7 @@ Singleton {
             section: Translation.tr("Cava options"),
             label: Translation.tr("Cava color source and response"),
             description: Translation.tr("Theme, vibrant or album-art palettes for internal visualizers and standalone cava"),
-            keywords: ["cava", "visualizer", "spectrum", "audio", "palette", "vibrant", "saturated", "album", "cover", "sensitivity", "bars", "framerate", "stereo", "wave", "opacity", "reset"]
+            keywords: ["cava", "visualizer", "spectrum", "width", "equalizer width", "cava width", "audio", "palette", "vibrant", "saturated", "album", "cover", "sensitivity", "bars", "framerate", "stereo", "wave", "opacity", "reset"]
         },
         {
             pageIndex: 4, pageName: root.pages[4].name,

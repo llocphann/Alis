@@ -701,11 +701,13 @@ Scope {
 
                                         // Version
                                         StyledText {
+                                            visible: ShellUpdates.localVersion.length > 0
                                             text: Translation.tr("Version")
                                             font.pixelSize: Appearance.font.pixelSize.small
                                             color: root.subtextColor
                                         }
                                         StyledText {
+                                            visible: ShellUpdates.localVersion.length > 0
                                             text: ShellUpdates.localVersion.length > 0 ? ("v" + ShellUpdates.localVersion) : "\u2014"
                                             font {
                                                 pixelSize: Appearance.font.pixelSize.small

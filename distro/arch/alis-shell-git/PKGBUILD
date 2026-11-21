@@ -1,5 +1,5 @@
 pkgname=alis-shell-git
-pkgver=1.0.0.r0.g0000000
+pkgver=r0.g0000000
 pkgrel=1
 pkgdesc='Alis shell payload, launcher, and user service (git)'
 arch=('x86_64')
@@ -106,9 +106,7 @@ sha256sums=('SKIP')
 
 pkgver() {
   cd "${srcdir}/alis"
-  local base
-  base="$(tr -d '[:space:]' < VERSION)"
-  printf '%s.r%s.g%s' "$base" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+  printf 'r%s.g%s' "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
 }
 
 prepare() {

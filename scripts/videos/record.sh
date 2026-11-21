@@ -494,9 +494,13 @@ maybe_compress_recording() {
             --audio-kbps "$DISCORD_COMPRESS_AUDIO_BITRATE_KBPS"
             --preset "$DISCORD_COMPRESS_PRESET"
             --max-dimension "$DISCORD_COMPRESS_MAX_DIMENSION"
+            --acceleration "$ACCELERATION_MODE"
             --quiet
             --json
         )
+        if [[ -n "$HARDWARE_DEVICE" ]]; then
+            compress_cmd+=(--hardware-device "$HARDWARE_DEVICE")
+        fi
         if ! is_truthy "$DISCORD_COMPRESS_ONLY_IF_NEEDED"; then
             compress_cmd+=(--force)
         fi
@@ -564,28 +568,60 @@ is_default_recorder_value() {
     [[ -z "$value" || "$value" == "null" || "$value" == "$default_value" ]]
 }
 
+wf_recorder_supports_flag() {
+    local flag="$1"
+    local help_text
+    help_text="$(wf-recorder --help 2>&1 || true)"
+    grep -qE "(^|[[:space:]])${flag}([[:space:],]|$)" <<< "$help_text"
+}
+
+calc_software_encode_threads() {
+    local cpus=4
+    if command -v nproc >/dev/null 2>&1; then
+        cpus="$(nproc 2>/dev/null || printf '4')"
+    fi
+    if [[ ! "$cpus" =~ ^[0-9]+$ || "$cpus" -lt 1 ]]; then
+        cpus=4
+    fi
+    local cap=$(( cpus / 2 ))
+    (( cap < 2 )) && cap=2
+    (( cap > 4 )) && cap=4
+    (( cap > cpus )) && cap="$cpus"
+    printf '%s\n' "$cap"
+}
+
 build_common_args() {
+    local sw_threads
+    sw_threads="$(calc_software_encode_threads)"
+
     common_args=(
         -f "$output_file"
-        -t
-        -r "$FPS"
     )
+    if wf_recorder_supports_flag -t; then
+        common_args+=( -t )
+    fi
 
     if is_vaapi_codec "$VIDEO_CODEC"; then
         common_args+=(
             -c "$VIDEO_CODEC"
         )
         [[ -n "$HARDWARE_DEVICE" ]] && common_args+=( -d "$HARDWARE_DEVICE" )
-        [[ -n "$VAAPI_FILTER" ]] && common_args+=( -F "$VAAPI_FILTER" )
+        if [[ -n "$VAAPI_FILTER" && -n "$FPS" && "$VAAPI_FILTER" != *"fps="* ]]; then
+            common_args+=( -F "fps=${FPS},${VAAPI_FILTER}" )
+        else
+            common_args+=( -r "$FPS" )
+            [[ -n "$VAAPI_FILTER" ]] && common_args+=( -F "$VAAPI_FILTER" )
+        fi
         if [[ -n "$VIDEO_BITRATE_KBPS" ]]; then
             common_args+=( -p "b=${VIDEO_BITRATE_KBPS}k" )
         fi
     elif is_nvenc_codec "$VIDEO_CODEC"; then
-        common_args+=( -c "$VIDEO_CODEC" )
+        common_args+=( -r "$FPS" -c "$VIDEO_CODEC" )
         if [[ -n "$VIDEO_BITRATE_KBPS" ]]; then
             common_args+=( -p "b=${VIDEO_BITRATE_KBPS}k" )
         fi
     else
+        common_args+=( -r "$FPS" )
         common_args+=( --pixel-format "$PIXEL_FORMAT" )
         common_args+=( -c "$VIDEO_CODEC" )
         if [[ -n "$VIDEO_BITRATE_KBPS" ]]; then
@@ -594,6 +630,7 @@ build_common_args() {
         if [[ "$VIDEO_CODEC" == libx264* || "$VIDEO_CODEC" == libx265* ]]; then
             [[ -n "$VIDEO_PRESET" ]] && common_args+=( -p "preset=${VIDEO_PRESET}" )
             [[ -n "$VIDEO_CRF" ]] && common_args+=( -p "crf=${VIDEO_CRF}" )
+            common_args+=( -p "threads=${sw_threads}" )
         fi
     fi
 }
@@ -617,17 +654,23 @@ build_audio_args() {
 }
 
 build_safe_fallback_common_args() {
+    local sw_threads
+    sw_threads="$(calc_software_encode_threads)"
+
     fallback_common_args=(
         --pixel-format yuv420p
         -f "$output_file"
-        -t
         -r "$FPS"
     )
+    if wf_recorder_supports_flag -t; then
+        fallback_common_args+=( -t )
+    fi
     if has_ffmpeg_encoder libx264; then
         fallback_common_args+=(
             -c libx264
             -p preset=veryfast
             -p crf=23
+            -p "threads=${sw_threads}"
         )
     fi
 }

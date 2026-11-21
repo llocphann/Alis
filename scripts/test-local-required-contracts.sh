@@ -171,10 +171,11 @@ for staged_path in \
 done
 
 printf '== Arch dependency recipe identity ==\n'
-repo_version="$(tr -d '[:space:]' < VERSION)"
 deps_version="$(grep -m1 '^pkgver=' sdata/dist-arch/alis-deps/PKGBUILD | cut -d= -f2-)"
-[[ "$deps_version" == "$repo_version" ]] \
-    || fail "alis-deps pkgver=$deps_version does not match VERSION=$repo_version"
+case "$deps_version" in
+    r*.g*|r[0-9]*) ;;
+    *) fail "alis-deps pkgver=$deps_version must use an unversioned rolling seed (r*)" ;;
+esac
 
 printf '%s\n' '1..1'
 printf '%s\n' 'ok 1 - formerly hosted-only required local contracts are enforced in-repo'

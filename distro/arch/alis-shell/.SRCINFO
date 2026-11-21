@@ -1,6 +1,6 @@
 pkgbase = alis-shell
 	pkgdesc = Alis shell payload, launcher, and user service
-	pkgver = 1.0.0
+	pkgver = r0.g0000000
 	pkgrel = 1
 	url = https://github.com/llocphann/Alis
 	install = alis-shell.install
@@ -97,7 +97,7 @@ pkgbase = alis-shell
 	conflicts = noctalia-qs
 	conflicts = noctalia-shell
 	conflicts = cachyos-niri-noctalia
-	source = alis-1.0.0-v1.0.0.tar.gz::https://github.com/llocphann/Alis/archive/v1.0.0.tar.gz
+	source = alis-r0.g0000000-dev.tar.gz::https://github.com/llocphann/Alis/archive/dev.tar.gz
 	sha256sums = SKIP
 
 pkgname = alis-shell

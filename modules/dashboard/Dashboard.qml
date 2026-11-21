@@ -302,7 +302,7 @@ Scope {
                     return standaloneContent.handleEscape()
                 }
                 readonly property real editToolbarHeight:
-                    standaloneEditToolbar.implicitHeight
+                    standaloneEditToolbarLoader.item?.implicitHeight ?? 0
 
                 DashboardContent {
                     id: standaloneContent
@@ -325,7 +325,25 @@ Scope {
                     id: standaloneEditToolbarLoader
                     z: 8
                     active: standaloneContent.editMode
-                    source: active ? Qt.resolvedUrl("DashboardEditToolbar.qml") : ""
+                    function _syncToolbar(): void {
+                        if (active && standaloneContent.canvasController) {
+                            if (!item) {
+                                setSource(Qt.resolvedUrl("DashboardEditToolbar.qml"), {
+                                    canvasController: standaloneContent.canvasController,
+                                    tabController: standaloneContent,
+                                    width: standaloneEditToolbarLoader.width
+                                })
+                            }
+                        } else if (source.toString().length > 0) {
+                            source = ""
+                        }
+                    }
+                    Component.onCompleted: _syncToolbar()
+                    onActiveChanged: _syncToolbar()
+                    Connections {
+                        target: standaloneContent
+                        function onCanvasControllerChanged(): void { standaloneEditToolbarLoader._syncToolbar() }
+                    }
                     width: Math.min(
                         item?.implicitWidth ?? 620,
                         Math.max(1, standaloneContent.width - 32))

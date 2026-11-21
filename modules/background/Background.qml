@@ -2050,7 +2050,7 @@ Scope {
 
                     Loader {
                         id: editToolbarLoader
-                        asynchronous: status !== Loader.Ready && !GlobalStates.widgetEditMode
+                        asynchronous: !GlobalStates.widgetEditMode
                         active: GlobalStates.widgetEditMode || editControlsOverlay.visible || bgRoot.editStageVisible || editControlsOverlay._warmWidgetsReady
                         function _syncToolbar(): void {
                             if (active) {

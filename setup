@@ -643,8 +643,8 @@ show_version_info() {
     runtime_dir="$(get_runtime_shell_dir)"
     local runtime_dir_display="${runtime_dir:-"(missing)"}"
 
-    if [[ -n "$installed_repo_path" && -f "${installed_repo_path}/VERSION" ]]; then
-        repo_ver="$(head -1 "${installed_repo_path}/VERSION" | tr -d '[:space:]')"
+    if [[ -n "$installed_repo_path" && -d "$installed_repo_path" ]]; then
+        repo_ver="rolling"
         repo_commit="$(git -C "$installed_repo_path" rev-parse --short HEAD 2>/dev/null || echo "unknown")"
     else
         repo_ver=$(get_repo_version)
@@ -1035,8 +1035,8 @@ show_status() {
         fi
     fi
 
-    if [[ -n "$installed_repo_path" && -f "${installed_repo_path}/VERSION" ]]; then
-        repo_ver="$(head -1 "${installed_repo_path}/VERSION" | tr -d '[:space:]')"
+    if [[ -n "$installed_repo_path" && -d "$installed_repo_path" ]]; then
+        repo_ver="rolling"
         repo_commit="$(git -C "$installed_repo_path" rev-parse --short HEAD 2>/dev/null || echo "unknown")"
     else
         repo_ver=$(get_repo_version)

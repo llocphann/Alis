@@ -179,14 +179,22 @@ Item {
         }
     }
     component RecordingDot: Rectangle {
+        id: dotRect
         width: 8; height: 8; radius: 4
         color: Appearance.colors.colError
-        SequentialAnimation on opacity {
-            running: Appearance.animationsEnabled && root.owner.recordingStatus.isRecording && root.owner.presentationVisible
-                && root.owner.revealed && parent.visible
-            loops: Animation.Infinite
-            NumberAnimation { to: .2; duration: 800; easing.type: Easing.InOutSine }
-            NumberAnimation { to: 1; duration: 800; easing.type: Easing.InOutSine }
+        readonly property bool blinking: root.owner.recordingStatus.isRecording
+            && root.owner.presentationVisible
+            && root.owner.revealed
+            && dotRect.visible
+        onBlinkingChanged: {
+            if (!blinking)
+                dotRect.opacity = 1
+        }
+        Timer {
+            interval: 900
+            repeat: true
+            running: dotRect.blinking
+            onTriggered: dotRect.opacity = dotRect.opacity > 0.7 ? 0.35 : 1.0
         }
     }
     component OsdButton: RippleButton {

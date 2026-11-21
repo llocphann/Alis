@@ -1,15 +1,14 @@
 # Changelog
 
-All notable changes to Alis will be documented in this file.
+All notable changes to Alis are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Alis is maintained as a continuous rolling branch on `dev` without numbered releases.
 
-## [1.0.0] - 2026-11-13
+## Rolling Highlights
 
-Official stable 1.0.0 release introducing the hybrid Rust + pinned Quickshell v0.3.2 architecture, 3-edge Desktop Edit Stages, strict-lossless runtime anti-stutter optimizations, and multi-preset showcase across `Alis`, `Alis-Companion`, and `Alis-Intergration`.
+This rolling branch introduces the hybrid Rust + pinned Quickshell architecture, 3-edge Desktop Edit Stages, strict-lossless runtime anti-stutter optimizations, and multi-preset visual suite across `Alis`, `Alis-Companion`, and `Alis-Intergration`.
 
-> Designed and engineered with the assistance of Large Language Models (LLMs). Subsequent updates follow a quarterly, semi-annual, or annual release cadence.
+> Designed and engineered with 100% assistance from Large Language Models (LLMs).
 
 ### Added
 - **Split 3-Edge Edit Dashboard Stage & Flexible `<= 80%` Docks (`AbyssPerimeter`, `DashboardEditToolbar`, `AbyssCustomizationDock`, `AbyssEdgeEditor`)**: separated Edit Dashboard Mode across Bottom (`Modules`), Left (`Tabs`), and Right (`Layout & Grid`) screen edges while keeping Desktop horizontally centered; added flexible `contentPreferredWidth` expansion up to 80% of shrunk Desktop width.

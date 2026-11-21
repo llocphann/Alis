@@ -14,7 +14,7 @@ Item {
     property real contentRotation: 0
     readonly property bool contentAvailable: true
 
-    readonly property int configuredWidth: Math.max(48, Math.min(360, Number(Config.options?.bar?.cava?.width ?? 120)))
+    readonly property int configuredWidth: Math.max(48, Math.min(480, Number(Config.options?.bar?.cava?.width ?? 120)))
     readonly property int configuredHeight: Math.max(10, Math.min(30, Number(Config.options?.bar?.cava?.height ?? 22)))
     readonly property int barSpacing: Math.max(1, Math.min(6, Number(Config.options?.bar?.cava?.barSpacing ?? 2)))
     readonly property int barRadius: Math.max(0, Math.min(6, Number(Config.options?.bar?.cava?.barRadius ?? 2)))

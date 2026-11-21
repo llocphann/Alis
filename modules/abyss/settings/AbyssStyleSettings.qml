@@ -695,6 +695,48 @@ ColumnLayout {
                     onSelected: value => Config.setNestedValue("abyss.spectrum.edge", value)
                 }
             }
+
+            SettingsDivider {}
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 440 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 12
+                rowSpacing: 6
+
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    icon: "width_normal"
+                    text: Translation.tr("Cava module width (px)")
+                    value: Config.options?.bar?.cava?.width ?? 120
+                    from: 48
+                    to: 480
+                    stepSize: 8
+                    onValueChanged: {
+                        if (value !== (Config.options?.bar?.cava?.width ?? 120))
+                            Config.setNestedValue("bar.cava.width", value)
+                    }
+                    StyledToolTip { text: Translation.tr("Width of the Cava Equalizer module on the Bar / Screen Edge (px)") }
+                }
+
+                ConfigSpinBox {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    icon: "space_bar"
+                    text: Translation.tr("Cava bar spacing (px)")
+                    value: Config.options?.bar?.cava?.barSpacing ?? 2
+                    from: 1
+                    to: 6
+                    stepSize: 1
+                    onValueChanged: {
+                        if (value !== (Config.options?.bar?.cava?.barSpacing ?? 2))
+                            Config.setNestedValue("bar.cava.barSpacing", value)
+                    }
+                    StyledToolTip { text: Translation.tr("Gap between equalizer bars inside the module (px)") }
+                }
+            }
         }
     }
 
