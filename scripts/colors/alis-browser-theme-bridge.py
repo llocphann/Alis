@@ -303,8 +303,20 @@ async def run_server(gen_dir: Path, host: str, port: int, port_file: Path | None
         except NotImplementedError:
             pass
 
-    async with server:
+    try:
         await stop_event.wait()
+    finally:
+        server.close()
+        for writer in list(bridge.clients):
+            try:
+                writer.close()
+            except Exception:
+                pass
+        bridge.clients.clear()
+        try:
+            await asyncio.wait_for(server.wait_closed(), timeout=0.5)
+        except Exception:
+            pass
 
 
 def main() -> int:
