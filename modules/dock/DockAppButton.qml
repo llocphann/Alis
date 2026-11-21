@@ -587,7 +587,10 @@ DockButton {
             // Launch new instance
             {
                 iconName: IconThemeService.smartIconName(root.desktopEntry?.icon ?? "", appToplevel.originalAppId ?? appToplevel.appId),
-                text: root.desktopEntry?.name ?? StringUtils.toTitleCase(appToplevel.originalAppId ?? appToplevel.appId),
+                text: root.desktopEntry?.name
+                    ?? (String(appToplevel.originalAppId ?? appToplevel.appId ?? "").toLowerCase() === "alis-nexus"
+                        ? "Alis Nexus"
+                        : StringUtils.toTitleCase(appToplevel.originalAppId ?? appToplevel.appId)),
                 monochromeIcon: false,
                 action: () => root.launchFromDesktopEntry()
             },

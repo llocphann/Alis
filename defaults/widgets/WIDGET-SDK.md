@@ -1,7 +1,7 @@
 # Alis Widget SDK
 
-Custom desktop widgets that run on the Alis shell. Full QML access to 73 services,
-130+ UI components, and the entire Appearance token system.
+Custom desktop widgets that run on the Alis shell. Full QML access to 100+ services,
+190+ UI components, and the entire Appearance token system.
 
 Widgets live in `~/.config/alis/widgets/<name>/` and are loaded automatically.
 
@@ -95,10 +95,10 @@ AbstractBackgroundWidget {
 | `Quickshell` | Process, SystemClock, Quickshell.execDetached() |
 | `Quickshell.Io` | FileView, StdioCollector, SplitParser |
 | `qs` | Root module |
-| `qs.services` | All 73 service singletons (see Services section) |
+| `qs.services` | All 100+ service singletons (see Services section) |
 | `qs.modules.common` | Config, Appearance, Directories, GlobalStates |
 | `qs.modules.common.functions` | ColorUtils, StringUtils, DateUtils, FileUtils, ObjectUtils |
-| `qs.modules.common.widgets` | 130+ reusable UI components (see Components section) |
+| `qs.modules.common.widgets` | 190+ reusable UI components (see Components section) |
 | `qs.modules.background.widgets` | AbstractBackgroundWidget base class |
 
 ---
@@ -131,16 +131,22 @@ Weather.describeWeather(code)  // weather code → "Sunny", "Rain", etc
 
 ### Battery
 ```qml
-Battery.available     // bool — laptop has battery
-Battery.percentage    // 0.0-1.0
-Battery.isCharging    // bool
-Battery.isPluggedIn   // bool
-Battery.isLow         // bool (< 20%)
-Battery.isCritical    // bool (< 10%)
-Battery.isFull        // bool (> 95%)
-Battery.timeToEmpty   // minutes until empty
-Battery.timeToFull    // minutes until full
-Battery.energyRate    // watts
+Battery.available           // bool — laptop has battery (UPower or sysfs)
+Battery.percentage          // 0.0-1.0
+Battery.isCharging          // bool
+Battery.isPluggedIn         // bool
+Battery.onBattery           // bool — actively discharging
+Battery.isLow               // bool (<= configured low threshold)
+Battery.isCritical          // bool (<= configured critical threshold)
+Battery.isFull              // bool (>= configured full threshold)
+Battery.timeToEmpty         // seconds until empty (UPower or physics fallback)
+Battery.timeToFull          // seconds until full/charge limit
+Battery.energyRate          // watts (sysfs power_now / current*voltage or UPower)
+Battery.energyNowWh         // current stored energy in Wh (-1 if unavailable)
+Battery.energyFullWh        // full charge capacity in Wh
+Battery.healthPercent       // battery health percentage (0-100, -1 if unavailable)
+Battery.cycleCount          // charge cycle count (-1 if unavailable)
+Battery.voltageNowV         // live pack voltage in volts (-1 if unavailable)
 ```
 
 ### Audio
@@ -290,12 +296,14 @@ Graph {
 ```qml
 CavaProcess {
     id: cava
-    active: true  // starts cava subprocess
+    active: true  // leases the shared CavaService daemon
 }
 CavaVisualizer {
     width: 200; height: 60
     points: cava.points
-    barColor: Appearance.colors.colPrimary
+    colorLow: Appearance.colors.colSecondaryContainer
+    colorMed: Appearance.colors.colPrimary
+    colorHigh: Appearance.colors.colPrimary
     barRadius: Appearance.rounding.verysmall
 }
 ```
@@ -444,6 +452,7 @@ Behavior on opacity {
 ColorUtils.applyAlpha(color, 0.5)          // set alpha
 ColorUtils.mix(color1, color2, 0.3)        // blend colors
 ColorUtils.transparentize(color, amount)   // make more transparent
+ColorUtils.tonalStep(color, 0.022, 0.01)   // stepped solid tonal surface shift
 ```
 
 ---

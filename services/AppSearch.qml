@@ -777,17 +777,26 @@ Singleton {
 
     // Resolve the display identity of a running window. Accepts foreign-toplevel
     // handles (appId) and Niri window objects (app_id) alike. Returns the
-    // window's reported app_id unless a configured rule remaps it.
+    // window's reported app_id unless a configured rule (or built-in Alis shell
+    // surface rule, such as Alis Nexus) remaps it.
     function resolveWindowIdentity(toplevel): string {
         const appId = String(toplevel?.appId ?? toplevel?.app_id ?? "")
-        if (appId.length === 0) return appId
+        const title = String(toplevel?.title ?? "").trim()
+        if (appId.length === 0 && title.length === 0) return appId
         const rules = root._parseIdentityRules()
-        if (rules.length === 0) return appId
-        const title = String(toplevel?.title ?? "")
         for (const rule of rules) {
             if (rule.appIdRe && !rule.appIdRe.test(appId)) continue
             if (rule.titleRe && !rule.titleRe.test(title)) continue
             return rule.desktopId
+        }
+        const lowerId = appId.toLowerCase()
+        const isShellHostId = lowerId === ""
+            || lowerId === "quickshell"
+            || lowerId === "qs"
+            || lowerId === "alis"
+            || lowerId.includes("quickshell")
+        if (isShellHostId && /^alis\s+nexus\b/i.test(title)) {
+            return "alis-nexus"
         }
         return appId
     }
@@ -812,6 +821,10 @@ Singleton {
     }
 
     function _guessIconUncached(str) {
+        const lowerInput = String(str ?? "").trim().toLowerCase();
+        if (lowerInput === "alis-nexus" || lowerInput === "alis nexus") {
+            return Quickshell.shellPath("assets/icons/alis-nexus.svg");
+        }
 
         // Quickshell's desktop entry lookup
         const entry = DesktopEntries.heuristicLookup(str);

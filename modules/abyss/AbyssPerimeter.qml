@@ -1651,7 +1651,23 @@ Scope {
                 visible: window.presented && field.ready && (window.editorOpen || root.barOnOutput(window.outputName))
                 opacity: GlobalStates.abyssColdPerimeterRecreatePending ? 0 : 1
                 anchors.fill: parent
-                HoverHandler { id: barHover; blocking: false; onHoveredChanged: { if (hovered) { barClose.stop(); root.setBarRevealed(window.outputName,true) } else barClose.restart() } }
+                HoverHandler {
+                    id: barHover
+                    blocking: false
+                    onHoveredChanged: {
+                        const autoHideEnabled = Boolean(Config.options?.bar?.autoHide?.enable ?? false)
+                        if (hovered) {
+                            barClose.stop()
+                            liquid.cancelHoverSurfaceClose("abyssBar")
+                            if (autoHideEnabled) liquid.noteHoverSurfaceActive("abyssBar", true)
+                            root.setBarRevealed(window.outputName, true)
+                        } else {
+                            if (autoHideEnabled && !revealHover.hovered)
+                                liquid.noteHoverSurfaceLeave("abyssBar", true)
+                            barClose.restart()
+                        }
+                    }
+                }
                 onInteraction: (edge,along,span,strength) => liquid.impulse(edge,along,span,strength)
                 onLayoutRepairRequested: GlobalStates.startAbyssEditing(window.outputName)
                 onNotesEditorFocusChanged: (outputName, focused) => root.setQuickNotesEditorOutput(outputName, focused)
@@ -1717,16 +1733,42 @@ Scope {
                 y: root.barEdge === "bottom" ? window.height-height : 0
                 width: Geometry.horizontal(root.barEdge) ? window.width : AbyssStyle.perimeterThickness
                 height: Geometry.horizontal(root.barEdge) ? AbyssStyle.perimeterThickness : window.height
-                HoverHandler { id: revealHover; onHoveredChanged: { if (hovered) root.setBarRevealed(window.outputName,true); else barClose.restart() } }
+                HoverHandler {
+                    id: revealHover
+                    onHoveredChanged: {
+                        const autoHideEnabled = Boolean(Config.options?.bar?.autoHide?.enable ?? false)
+                        if (hovered) {
+                            barClose.stop()
+                            liquid.cancelHoverSurfaceClose("abyssBar")
+                            if (autoHideEnabled) liquid.noteHoverSurfaceActive("abyssBar", true)
+                            root.setBarRevealed(window.outputName, true)
+                        } else {
+                            if (autoHideEnabled && !barHover.hovered)
+                                liquid.noteHoverSurfaceLeave("abyssBar", true)
+                            barClose.restart()
+                        }
+                    }
+                }
             }
             Timer {
                 id: barClose; interval: 220; repeat: false
                 // Hover state is transient; popup ownership has its own leases.
-                // Clearing revealedBars while a popup is open lets the lease
-                // release hide the Bar immediately after the popup retracts,
-                // instead of leaving the Bar stuck open until another hover.
-                onTriggered: if (!barHover.hovered && !revealHover.hovered)
-                    root.setBarRevealed(window.outputName,false)
+                // Route auto-hide retraction through the shared FIFO close queue so
+                // an earlier-hovered Bar retracts before later-hovered peer surfaces.
+                onTriggered: {
+                    if (barHover.hovered || revealHover.hovered) return
+                    const autoHideEnabled = Boolean(Config.options?.bar?.autoHide?.enable ?? false)
+                    if (autoHideEnabled) {
+                        liquid.requestHoverSurfaceClose("abyssBar", () => {
+                            if (!barHover.hovered && !revealHover.hovered) {
+                                root.setBarRevealed(window.outputName, false)
+                                liquid.clearHoverSurface("abyssBar")
+                            }
+                        })
+                    } else {
+                        root.setBarRevealed(window.outputName, false)
+                    }
+                }
             }
             property real barProgress: root.barOnOutput(window.outputName) ? 1 : 0
             Behavior on barProgress {
@@ -1748,9 +1790,11 @@ Scope {
                 outputName: window.outputName
                 outputWidth: window.width
                 outputHeight: window.height
+                fifoWaitCapMs: Math.max(850, (Config.options?.notificationCenter?.closeGraceMs ?? 280) * 2 + 260)
                 presented: window.presented
                 presentationItem: field
                 dialogHost: dialogBody
+                fifoCloseStepMs: AbyssStyle.motionEnabled ? 160 : 1
                 edgeInsets: window.paintInsets
                 externalBlockers: companionExtension.obstacleRects
                 moduleRecords: bar.visible ? bar.deformations : []
@@ -1871,6 +1915,8 @@ Scope {
             component SidebarReveal: AbyssSidebarReveal {
                 required property string attachedEdge
                 required property var sidebarBody
+                controller: liquid
+                surfaceId: sidebarBody.identity
                 property bool peerOpen: false
                 readonly property bool horizontal: Geometry.horizontal(attachedEdge)
                 readonly property real triggerThickness: Math.max(AbyssStyle.perimeterThickness,
@@ -2228,21 +2274,42 @@ Scope {
 
                     readonly property bool directHovered:
                         popupContentHover.hovered
+                        || (hostedPopup?._anchorHovered ?? false)
                         || (hostedPopup?._anchorHover?.hovered ?? false)
+                        || (hostedPopup?.hoverTarget?.containsMouse ?? false)
                         || (hostedPopup?.moduleHoverActive ?? false)
+                    readonly property bool popupFifoAutoClosable:
+                        Boolean(hostedPopup?.fifoAutoClosable
+                            ?? (Boolean(hostedPopup?.hoverActivates ?? true)
+                                && !(hostedPopup?.alternativeVisibleCondition ?? false)))
                     readonly property bool pairedSidebarHovered:
                         open && ((vacancyRole === "quickNotes" && window.leftSidebarDirectInteracting)
                             || (vacancyRole === "notificationCenter" && window.rightSidebarDirectInteracting)
                             || (presentationKind === "workspaces" && (window.leftSidebarDirectInteracting || window.rightSidebarDirectInteracting)))
                     readonly property bool effectiveContentHovered:
                         popupContentHover.hovered || pairedSidebarHovered
+                    function _syncFifoHover(): void {
+                        if (!liquid) return
+                        if (directHovered || (open && effectiveContentHovered)) {
+                            liquid.noteHoverSurfaceActive(identity, popupFifoAutoClosable)
+                        } else if (!open) {
+                            liquid.clearHoverSurface(identity)
+                        } else {
+                            liquid.noteHoverSurfaceLeave(identity, popupFifoAutoClosable)
+                        }
+                    }
+                    onDirectHoveredChanged: _syncFifoHover()
+                    onPopupFifoAutoClosableChanged: if (open) _syncFifoHover()
+                    onOpenChanged: _syncFifoHover()
                     onEffectiveContentHoveredChanged: {
                         if (hostedPopup)
                             hostedPopup._contentHovered = effectiveContentHovered
+                        _syncFifoHover()
                     }
                     onHostedPopupChanged: {
                         if (hostedPopup)
                             hostedPopup._contentHovered = effectiveContentHovered
+                        _syncFifoHover()
                     }
                     HoverHandler {
                         id: popupContentHover
@@ -2336,8 +2403,36 @@ Scope {
                     if (popup.progress > 0.001 && popup.activeKind !== "dockAppMenu") result.push(popup.record)
                     return result
                 }
+                readonly property bool fifoAutoClosable:
+                    Boolean(Config.options?.dock?.hoverToReveal ?? false)
+                    && !dock.attachedPopupHold
+                    && !dock.latchedRequestDockShow
+                    && !((Config.options?.dock?.showOnDesktop ?? true) && !window.desktopHasApps && !ToplevelManager.activeToplevel?.activated)
+                    && !(GlobalStates.widgetEditMode && DesktopEditStage.hosted(window.outputName))
+                onOpenChanged: {
+                    if (!open && liquid)
+                        liquid.clearHoverSurface("dock")
+                }
                 source: "content/AbyssDockContent.qml"
-                HoverHandler { id: dockHover; parent: dock.hoverParent; onHoveredChanged: { if (hovered) { dockClose.stop(); window.dockHovered = true } else dockClose.restart() } }
+                HoverHandler {
+                    id: dockHover
+                    parent: dock.hoverParent
+                    onHoveredChanged: {
+                        if (hovered) {
+                            dockClose.stop()
+                            liquid.cancelHoverSurfaceClose("dock")
+                            window.dockHovered = true
+                            if (dock.fifoAutoClosable)
+                                liquid.noteHoverSurfaceActive("dock", true)
+                            else
+                                liquid.clearHoverSurface("dock")
+                        } else {
+                            if (!dockRevealHover.hovered && dock.fifoAutoClosable)
+                                liquid.noteHoverSurfaceLeave("dock", true)
+                            dockClose.restart()
+                        }
+                    }
+                }
             }
             Item {
                 id: dockTrigger
@@ -2348,9 +2443,45 @@ Scope {
                 height: Geometry.horizontal(window.dockEdge) ? AbyssStyle.perimeterThickness : dock.span
                 x: Geometry.horizontal(window.dockEdge) ? (window.width-width)/2 : window.dockEdge === "left" ? 0 : window.width-width
                 y: Geometry.horizontal(window.dockEdge) ? window.dockEdge === "top" ? 0 : window.height-height : (window.height-height)/2
-                HoverHandler { id: dockRevealHover; onHoveredChanged: { if (hovered) { dockClose.stop(); window.dockHovered = true } else dockClose.restart() } }
+                HoverHandler {
+                    id: dockRevealHover
+                    onHoveredChanged: {
+                        if (hovered) {
+                            dockClose.stop()
+                            liquid.cancelHoverSurfaceClose("dock")
+                            window.dockHovered = true
+                            if (dock.fifoAutoClosable)
+                                liquid.noteHoverSurfaceActive("dock", true)
+                            else
+                                liquid.clearHoverSurface("dock")
+                        } else {
+                            if (!dockHover.hovered && dock.fifoAutoClosable)
+                                liquid.noteHoverSurfaceLeave("dock", true)
+                            dockClose.restart()
+                        }
+                    }
+                }
             }
-            Timer { id: dockClose; interval: 260; repeat: false; onTriggered: if (!dockRevealHover.hovered && !dockHover.hovered) window.dockHovered = false }
+            Timer {
+                id: dockClose
+                interval: 260
+                repeat: false
+                onTriggered: {
+                    if (dockRevealHover.hovered || dockHover.hovered)
+                        return
+                    if (dock.fifoAutoClosable) {
+                        liquid.requestHoverSurfaceClose("dock", () => {
+                            if (!dockRevealHover.hovered && !dockHover.hovered) {
+                                window.dockHovered = false
+                                liquid.clearHoverSurface("dock")
+                            }
+                        })
+                    } else {
+                        window.dockHovered = false
+                        liquid.clearHoverSurface("dock")
+                    }
+                }
+            }
             AbyssBodyHost {
                 id:keyboardBody;identity:"keyboard"
                 stableContentSize:true

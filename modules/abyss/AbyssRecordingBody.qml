@@ -24,15 +24,13 @@ AbyssBodyHost {
     readonly property bool recoverable: root.available && root.recording && !GlobalStates.screenLocked
         && (root.recorder?.autoHide ?? false) && !(root.recorder?.revealed ?? true)
     identity: "recording"
-    // The recorder pill is already on-screen before a "Starting recording"
-    // notification is published. Give its fixed-size controls first choice
-    // of the shared Edge slot, so the notification moves into the free tier
-    // instead of moving the pill during both popup entry and exit.
-    // Dialogs retain their higher (2) priority; general notifications keep 0.
+    // Recording participates in the shared output-level Pyramid Popup stack
+    // (larger coexisting popups own the Screen Edge base while Recording stacks
+    // neatly above them and emerges/retracts along Pyramid contours).
     placementPriority: 1
-    // Stable higher-priority Recording pill may anchor a nearby Pyramid
-    // notification without being reordered by the Pyramid area comparator.
     pyramidAnchor: true
+    stackPolicy: "pyramid"
+    externalProgress: 1
     edge: "top"
     padding: 10
     placementCanResize: false
@@ -83,6 +81,18 @@ AbyssBodyHost {
         id: bodyHover
         parent: root.hoverParent
         enabled: root.open
+        onHoveredChanged: {
+            if (!root.controller) return
+            // RecordingOsd uses a 2s keep-visible timer before auto-hiding; keep
+            // autoClosable false here so unrelated fast-closing popups never stall
+            // on Recording while Recording still participates cleanly in Pyramid stacking.
+            if (hovered) root.controller.noteHoverSurfaceActive(root.identity, false)
+            else if (!wakeHover.hovered) root.controller.noteHoverSurfaceLeave(root.identity, false)
+        }
+    }
+    onOpenChanged: {
+        if (!open && root.controller)
+            root.controller.clearHoverSurface(root.identity)
     }
     Binding {
         target: root.recorder

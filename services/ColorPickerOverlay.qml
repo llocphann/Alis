@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 
@@ -7,9 +8,11 @@ PanelWindow {
     id: root
     objectName: "alisColorPickerOverlay-" + (screen?.name ?? "")
     required property int requestId
-    signal picked(int requestId, string value)
+    property var themePalette: ({})
+    signal picked(int requestId, string value, string formatted)
     signal cancelled(int requestId)
     signal failed(int requestId, string message)
+    signal overlayActivated(string screenName)
     visible: true
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
@@ -26,7 +29,226 @@ PanelWindow {
     property real cursorX: width * 0.5
     property real cursorY: height * 0.5
     property bool keyboardMoved: false
+    property bool isActiveOverlay: true
+    property bool loupeLocked: false
+    onIsActiveOverlayChanged: {
+        if (!isActiveOverlay) {
+            loupeLocked = false
+            keyboardMoved = false
+        }
+    }
     readonly property bool ready: sampler.ready
+
+    // Interactive studio controls (transcends hyprpicker)
+    readonly property var formatOrder: ["HEX", "RGB", "HSL", "OKLCH", "HSV"]
+    property int formatIndex: 0
+    readonly property string activeFormat: root.formatOrder[root.formatIndex] ?? "HEX"
+    readonly property var zoomRadii: [2, 3, 4, 5, 7, 9]
+    property int zoomStepIndex: 3 // default radius 5 => 11x11 grid
+    readonly property int gridRadius: root.zoomRadii[root.zoomStepIndex] ?? 5
+    readonly property int gridCount: root.gridRadius * 2 + 1
+    property int sampleBoxSize: 1 // 1, 3, or 5
+    property bool showPixelGrid: true
+
+    // Auto-themed Alis tokens passed from ColorPickerService (zero hardcoded dark box)
+    readonly property bool isDark: root.themePalette?.darkmode !== undefined
+        ? Boolean(root.themePalette.darkmode) : true
+    readonly property color colLayer0: root.themePalette?.colLayer0 ?? (root.isDark ? "#14161b" : "#f4f6fa")
+    readonly property color colLayer1: root.themePalette?.colLayer1 ?? (root.isDark ? "#1c1f26" : "#eaeef5")
+    readonly property color colLayer2: root.themePalette?.colLayer2 ?? (root.isDark ? "#242832" : "#dfe5f0")
+    readonly property color colPrimary: root.themePalette?.colPrimary ?? "#89b4fa"
+    readonly property color colOnPrimary: root.themePalette?.colOnPrimary ?? (root.isDark ? "#0d1117" : "#ffffff")
+    readonly property color colSecondary: root.themePalette?.colSecondary ?? "#94e2d5"
+    readonly property color colOnLayer0: root.themePalette?.colOnLayer0 ?? (root.isDark ? "#e6eaf2" : "#181b22")
+    readonly property color colSubtext: root.themePalette?.colSubtext ?? (root.isDark ? "#9ea6b8" : "#556070")
+    readonly property color colOutline: root.themePalette?.colOutline ?? (root.isDark ? "#333947" : "#c6cfde")
+    readonly property var recentColors: Array.isArray(root.themePalette?.recentColors) ? root.themePalette.recentColors : []
+
+    // ─── Color Space Math (RGB / HSL / HSV / OKLCH / WCAG / Harmonies) ───
+    function _parseHex(hex: string): var {
+        if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return null
+        return {
+            r: parseInt(hex.slice(1, 3), 16),
+            g: parseInt(hex.slice(3, 5), 16),
+            b: parseInt(hex.slice(5, 7), 16)
+        }
+    }
+
+    function _rgbToHex(r: real, g: real, b: real): string {
+        const cr = Math.max(0, Math.min(255, Math.round(r)))
+        const cg = Math.max(0, Math.min(255, Math.round(g)))
+        const cb = Math.max(0, Math.min(255, Math.round(b)))
+        return "#" + [cr, cg, cb].map(v => v.toString(16).padStart(2, "0")).join("").toUpperCase()
+    }
+
+    function _rgbToHsl(r: int, g: int, b: int): var {
+        const rn = r / 255, gn = g / 255, bn = b / 255
+        const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn)
+        const d = max - min
+        let h = 0
+        const l = (max + min) * 0.5
+        const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1))
+        if (d !== 0) {
+            if (max === rn) h = ((gn - bn) / d) % 6
+            else if (max === gn) h = (bn - rn) / d + 2
+            else h = (rn - gn) / d + 4
+            h *= 60
+            if (h < 0) h += 360
+        }
+        return { h: h, s: s * 100, l: l * 100 }
+    }
+
+    function _hslToHex(h: real, s: real, l: real): string {
+        const hn = ((h % 360) + 360) % 360
+        const sn = Math.max(0, Math.min(100, s)) / 100
+        const ln = Math.max(0, Math.min(100, l)) / 100
+        const c = (1 - Math.abs(2 * ln - 1)) * sn
+        const x = c * (1 - Math.abs((hn / 60) % 2 - 1))
+        const m = ln - c * 0.5
+        let r = 0, g = 0, b = 0
+        if (hn < 60) { r = c; g = x; b = 0 }
+        else if (hn < 120) { r = x; g = c; b = 0 }
+        else if (hn < 180) { r = 0; g = c; b = x }
+        else if (hn < 240) { r = 0; g = x; b = c }
+        else if (hn < 300) { r = x; g = 0; b = c }
+        else { r = c; g = 0; b = x }
+        return root._rgbToHex((r + m) * 255, (g + m) * 255, (b + m) * 255)
+    }
+
+    function _rgbToHsv(r: int, g: int, b: int): var {
+        const rn = r / 255, gn = g / 255, bn = b / 255
+        const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn)
+        const d = max - min
+        let h = 0
+        if (d !== 0) {
+            if (max === rn) h = ((gn - bn) / d) % 6
+            else if (max === gn) h = (bn - rn) / d + 2
+            else h = (rn - gn) / d + 4
+            h *= 60
+            if (h < 0) h += 360
+        }
+        const s = max === 0 ? 0 : (d / max) * 100
+        return { h: h, s: s, v: max * 100 }
+    }
+
+    function _srgbToLinear(c: real): real {
+        const v = c / 255
+        return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
+    }
+
+    function _rgbToOklch(r: int, g: int, b: int): var {
+        const lr = root._srgbToLinear(r)
+        const lg = root._srgbToLinear(g)
+        const lb = root._srgbToLinear(b)
+        const l = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb)
+        const m = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb)
+        const s = Math.cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb)
+        const L = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s
+        const a = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s
+        const bk = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s
+        const C = Math.sqrt(a * a + bk * bk)
+        let H = Math.atan2(bk, a) * (180 / Math.PI)
+        if (H < 0) H += 360
+        return { l: Math.max(0, Math.min(1, L)), c: C, h: H }
+    }
+
+    function formatColor(hex: string, fmt: string): string {
+        const rgb = root._parseHex(hex)
+        if (!rgb) return ""
+        if (fmt === "RGB")
+            return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`
+        if (fmt === "HSL") {
+            const hsl = root._rgbToHsl(rgb.r, rgb.g, rgb.b)
+            return `hsl(${Math.round(hsl.h)}, ${Math.round(hsl.s)}%, ${Math.round(hsl.l)}%)`
+        }
+        if (fmt === "OKLCH") {
+            const ok = root._rgbToOklch(rgb.r, rgb.g, rgb.b)
+            return `oklch(${(ok.l * 100).toFixed(1)}% ${ok.c.toFixed(3)} ${Math.round(ok.h)})`
+        }
+        if (fmt === "HSV") {
+            const hsv = root._rgbToHsv(rgb.r, rgb.g, rgb.b)
+            return `hsv(${Math.round(hsv.h)}, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%)`
+        }
+        return hex.toUpperCase()
+    }
+
+    readonly property string formattedColor: root.formatColor(root.sampledColor, root.activeFormat)
+
+    readonly property real relativeLuminance: {
+        const rgb = root._parseHex(root.sampledColor)
+        if (!rgb) return 0
+        return 0.2126 * root._srgbToLinear(rgb.r)
+            + 0.7152 * root._srgbToLinear(rgb.g)
+            + 0.0722 * root._srgbToLinear(rgb.b)
+    }
+    readonly property real contrastOnWhite: (1.0 + 0.05) / (root.relativeLuminance + 0.05)
+    readonly property real contrastOnBlack: (root.relativeLuminance + 0.05) / 0.05
+
+    readonly property var harmonySwatches: {
+        const rgb = root._parseHex(root.sampledColor)
+        if (!rgb) return []
+        const hsl = root._rgbToHsl(rgb.r, rgb.g, rgb.b)
+        return [
+            { key: "1", label: "Comp", hex: root._hslToHex(hsl.h + 180, hsl.s, hsl.l) },
+            { key: "2", label: "Ana-", hex: root._hslToHex(hsl.h - 30, hsl.s, hsl.l) },
+            { key: "3", label: "Ana+", hex: root._hslToHex(hsl.h + 30, hsl.s, hsl.l) },
+            { key: "4", label: "Tint", hex: root._hslToHex(hsl.h, Math.min(100, hsl.s * 0.92), Math.min(94, hsl.l + 20)) },
+            { key: "5", label: "Shade", hex: root._hslToHex(hsl.h, Math.min(100, hsl.s * 1.05), Math.max(8, hsl.l - 20)) }
+        ]
+    }
+
+    readonly property var recallableRecents: {
+        const keys = ["6", "7", "8", "9", "0"]
+        const out = []
+        const src = Array.isArray(root.recentColors) ? root.recentColors : []
+        for (let i = 0; i < src.length && out.length < keys.length; ++i) {
+            const hex = String(src[i] ?? "").trim().toUpperCase()
+            if (/^#[0-9A-F]{6}$/.test(hex))
+                out.push({ key: keys[out.length], hex: hex })
+        }
+        return out
+    }
+
+    function _swatchInkColor(hex: string): color {
+        const rgb = root._parseHex(hex)
+        if (!rgb) return "#FFFFFF"
+        const lum = 0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b
+        return lum > 145 ? "#101318" : "#FFFFFF"
+    }
+
+    function _commitPick(hex: string): void {
+        if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return
+        const upper = hex.toUpperCase()
+        const fmt = root.activeFormat === "HEX" ? "" : root.formatColor(upper, root.activeFormat)
+        root.picked(root.requestId, upper, fmt)
+    }
+
+    function _sampleAtPixel(px: int, py: int): string {
+        return root.sampleBoxSize > 1
+            ? sampler.averageColorAt(px, py, root.sampleBoxSize)
+            : sampler.colorAt(px, py)
+    }
+
+    function _adjustZoom(delta: int): void {
+        // delta > 0 = zoom IN (smaller radius / bigger pixels)
+        const next = Math.max(0, Math.min(root.zoomRadii.length - 1, root.zoomStepIndex - delta))
+        if (next !== root.zoomStepIndex) {
+            root.zoomStepIndex = next
+            magnifier.requestPaint()
+        }
+    }
+
+    function _cycleFormat(): void {
+        root.formatIndex = (root.formatIndex + 1) % root.formatOrder.length
+    }
+
+    function _cycleSampleBox(): void {
+        root.sampleBoxSize = root.sampleBoxSize === 1 ? 3 : (root.sampleBoxSize === 3 ? 5 : 1)
+        if (root.ready && root.currentPixelX >= 0 && root.currentPixelY >= 0) {
+            root.sampledColor = root._sampleAtPixel(root.currentPixelX, root.currentPixelY)
+            magnifier.requestPaint()
+        }
+    }
 
     function capture(): void {
         if (!screenCopy.hasContent || captureRequested)
@@ -70,7 +292,11 @@ PanelWindow {
     }
 
     Item {
-        anchors.fill: parent
+        id: overlayRoot
+        x: 0
+        y: 0
+        width: root.width
+        height: root.height
         focus: true
         function stepPixel(dx: int, dy: int): void {
             if (!root.ready || sampler.imageSize.width <= 0 || sampler.imageSize.height <= 0
@@ -90,7 +316,8 @@ PanelWindow {
             root.cursorX = ((nx + 0.5) / sampler.imageSize.width) * root.width
             root.cursorY = ((ny + 0.5) / sampler.imageSize.height) * root.height
             root.keyboardMoved = true
-            root.sampledColor = sampler.colorAt(nx, ny)
+            root.overlayActivated(root.screen?.name ?? "")
+            root.sampledColor = root._sampleAtPixel(nx, ny)
             magnifier.requestPaint()
         }
         Keys.onPressed: event => {
@@ -99,7 +326,37 @@ PanelWindow {
                 event.accepted = true
             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
                 if (root.sampledColor)
-                    root.picked(root.requestId, root.sampledColor)
+                    root._commitPick(root.sampledColor)
+                event.accepted = true
+            } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_F) {
+                root._cycleFormat()
+                event.accepted = true
+            } else if (event.key === Qt.Key_A) {
+                root._cycleSampleBox()
+                event.accepted = true
+            } else if (event.key === Qt.Key_G) {
+                root.showPixelGrid = !root.showPixelGrid
+                magnifier.requestPaint()
+                event.accepted = true
+            } else if (event.key === Qt.Key_L) {
+                root.loupeLocked = !root.loupeLocked
+                root.overlayActivated(root.screen?.name ?? "")
+                event.accepted = true
+            } else if (event.key === Qt.Key_Plus || event.key === Qt.Key_Equal) {
+                root._adjustZoom(1)
+                event.accepted = true
+            } else if (event.key === Qt.Key_Minus) {
+                root._adjustZoom(-1)
+                event.accepted = true
+            } else if (event.key >= Qt.Key_1 && event.key <= Qt.Key_5) {
+                const idx = event.key - Qt.Key_1
+                if (idx >= 0 && idx < root.harmonySwatches.length)
+                    root._commitPick(root.harmonySwatches[idx].hex)
+                event.accepted = true
+            } else if ((event.key >= Qt.Key_6 && event.key <= Qt.Key_9) || event.key === Qt.Key_0) {
+                const rIdx = event.key === Qt.Key_0 ? 4 : (event.key - Qt.Key_6)
+                if (rIdx >= 0 && rIdx < root.recallableRecents.length)
+                    root._commitPick(root.recallableRecents[rIdx].hex)
                 event.accepted = true
             } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Right
                     || event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
@@ -114,54 +371,99 @@ PanelWindow {
             id: pointer
             anchors.fill: parent
             hoverEnabled: true
-            cursorShape: Qt.CrossCursor
+            cursorShape: root.loupeLocked ? Qt.ArrowCursor : Qt.CrossCursor
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             property real lastMouseX: -1
             property real lastMouseY: -1
-            function updateSample(): void {
+            function sampleAtCoords(sx: real, sy: real, fromMouse: bool): void {
                 if (!root.ready || width <= 0 || height <= 0
                         || sampler.imageSize.width <= 0 || sampler.imageSize.height <= 0)
                     return
-                const p = sampler.pixelAt(mouseX, mouseY, width, height)
+                const cx = Math.max(0, Math.min(width - 1, sx))
+                const cy = Math.max(0, Math.min(height - 1, sy))
+                const p = sampler.pixelAt(cx, cy, width, height)
                 root.currentPixelX = p.x
                 root.currentPixelY = p.y
-                root.cursorX = mouseX
-                root.cursorY = mouseY
-                root.keyboardMoved = false
-                lastMouseX = mouseX
-                lastMouseY = mouseY
-                root.sampledColor = sampler.colorAt(p.x, p.y)
+                root.cursorX = cx
+                root.cursorY = cy
+                if (fromMouse) {
+                    root.keyboardMoved = false
+                    lastMouseX = cx
+                    lastMouseY = cy
+                    root.overlayActivated(root.screen?.name ?? "")
+                }
+                root.sampledColor = root._sampleAtPixel(p.x, p.y)
                 magnifier.requestPaint()
             }
-            onPositionChanged: if (root.ready) updateSample()
+            function updateSample(): void {
+                sampleAtCoords(mouseX, mouseY, true)
+            }
+            function initializeSample(): void {
+                if (!root.ready) return
+                if (containsMouse) {
+                    updateSample()
+                } else {
+                    sampleAtCoords(width * 0.5, height * 0.5, false)
+                }
+            }
+            onContainsMouseChanged: {
+                if (containsMouse && root.ready && !root.loupeLocked)
+                    updateSample()
+            }
+            onPositionChanged: {
+                if (!root.ready || root.loupeLocked) return
+                updateSample()
+            }
+            onWheel: wheel => {
+                if (wheel.angleDelta.y > 0) root._adjustZoom(1)
+                else if (wheel.angleDelta.y < 0) root._adjustZoom(-1)
+                wheel.accepted = true
+            }
             onClicked: event => {
-                if (event.button === Qt.RightButton) root.cancelled(root.requestId)
-                else if (root.ready) {
+                if (event.button === Qt.RightButton) {
+                    root.cancelled(root.requestId)
+                } else if (root.ready) {
+                    if (root.loupeLocked) {
+                        root.loupeLocked = false
+                        sampleAtCoords(event.x, event.y, true)
+                        return
+                    }
                     if (!root.keyboardMoved
                             || Math.abs(event.x - lastMouseX) >= 0.5
                             || Math.abs(event.y - lastMouseY) >= 0.5) {
                         updateSample()
                     }
-                    if (root.sampledColor) root.picked(root.requestId, root.sampledColor)
+                    if (root.sampledColor) root._commitPick(root.sampledColor)
                 }
             }
+            onWidthChanged: if (root.ready && root.currentPixelX < 0 && width > 0 && height > 0) initializeSample()
+            onHeightChanged: if (root.ready && root.currentPixelX < 0 && width > 0 && height > 0) initializeSample()
             Connections {
                 target: root
-                function onReadyChanged() { if (root.ready) pointer.updateSample() }
+                function onReadyChanged() {
+                    if (root.ready) {
+                        pointer.initializeSample()
+                        Qt.callLater(() => {
+                            if (root.ready && root.currentPixelX < 0)
+                                pointer.initializeSample()
+                        })
+                    }
+                }
             }
         }
 
+        // Precision cursor reticle when stepping via keyboard, locked, or awaiting initial mouse motion
         Rectangle {
             id: pixelReticle
-            visible: root.ready && root.keyboardMoved
-            width: 11
-            height: 11
-            radius: 5.5
+            visible: root.ready && root.isActiveOverlay && (root.keyboardMoved || root.loupeLocked || !pointer.containsMouse)
+            width: 13
+            height: 13
+            radius: 6.5
             x: root.cursorX - width * 0.5
             y: root.cursorY - height * 0.5
             color: "transparent"
             border.width: 2
-            border.color: "#FFFFFF"
+            border.color: root.colPrimary
             Rectangle {
                 anchors.centerIn: parent
                 width: 7
@@ -169,51 +471,499 @@ PanelWindow {
                 radius: 3.5
                 color: "transparent"
                 border.width: 1
-                border.color: "#000000"
+                border.color: "#FFFFFF"
             }
         }
 
-        Rectangle {
-            visible: root.ready && (pointer.containsMouse || root.keyboardMoved)
-            x: Math.max(0, Math.min(parent.width - width,
-                root.cursorX + (root.cursorX + width + 24 < parent.width ? 24 : -width - 24)))
-            y: Math.max(0, Math.min(parent.height - height, root.cursorY + 24))
-            width: 166
-            height: 196
-            color: "#1D2028"
-            border.color: "#D6DAE4"
-            radius: 8
-            Canvas {
-                id: magnifier
-                x: 11; y: 11; width: 143; height: 143
-                onPaint: {
-                    if (!sampler.ready) return
-                    const ctx = getContext("2d")
-                    const p = (root.currentPixelX >= 0 && root.currentPixelY >= 0)
-                        ? Qt.point(root.currentPixelX, root.currentPixelY)
-                        : sampler.pixelAt(root.cursorX, root.cursorY, root.width, root.height)
-                    ctx.clearRect(0, 0, width, height)
-                    // Draw discrete blocks so magnification cannot interpolate a color.
-                    for (let yy = -5; yy <= 5; ++yy)
-                        for (let xx = -5; xx <= 5; ++xx) {
-                            const sx = Math.max(0, Math.min(sampler.imageSize.width - 1, p.x + xx))
-                            const sy = Math.max(0, Math.min(sampler.imageSize.height - 1, p.y + yy))
-                            // drawImage applies the source image's DPR again on
-                            // some Qt versions. Fill a block with the original
-                            // pixel color so fractional/2x outputs have no gaps.
-                            ctx.fillStyle = sampler.colorAt(sx, sy) || "transparent"
-                            ctx.fillRect((xx + 5) * 13, (yy + 5) * 13, 13, 13)
+        // ─── Circular Auto-Themed Color Loupe + Companion Studio Deck ───
+        Item {
+            id: loupeCluster
+            objectName: "colorPickerCircularPopup"
+            visible: root.ready && root.isActiveOverlay
+
+            readonly property real circleDiameter: 236
+            readonly property real deckHeight: root.recallableRecents.length > 0 ? 116 : 92
+            readonly property real gapBetween: 8
+            readonly property bool flipLeft: root.cursorX + circleDiameter + 28 > overlayRoot.width
+            readonly property bool flipAbove: root.cursorY + circleDiameter + deckHeight + gapBetween + 28 > overlayRoot.height
+
+            width: circleDiameter
+            height: circleDiameter + gapBetween + deckHeight
+            x: Math.max(10, Math.min(overlayRoot.width - width - 10,
+                flipLeft ? (root.cursorX - width - 22) : (root.cursorX + 22)))
+            y: Math.max(10, Math.min(overlayRoot.height - height - 10,
+                flipAbove ? (root.cursorY - height - 18) : (root.cursorY + 18)))
+
+            // Main Circular Loupe Body
+            Rectangle {
+                id: circularLoupe
+                objectName: "colorPickerCircularLoupe"
+                width: loupeCluster.circleDiameter
+                height: loupeCluster.circleDiameter
+                x: 0
+                y: loupeCluster.flipAbove ? (loupeCluster.deckHeight + loupeCluster.gapBetween) : 0
+                radius: width * 0.5
+                color: root.colLayer0
+                border.width: 4
+                border.color: root.sampledColor || root.colPrimary
+
+                // Absorb clicks inside the locked circular body so near-misses never unlock & jump the loupe
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: root.loupeLocked
+                    acceptedButtons: Qt.LeftButton
+                }
+
+                // Inner Alis theme hairline ring separating the live color halo from the shell
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: 4
+                    radius: width * 0.5
+                    color: "transparent"
+                    border.width: 1
+                    border.color: Qt.alpha(root.colOutline, 0.72)
+                }
+
+                // Top bezel status strip: Zoom · Aperture · Lock (strictly within inner top chord)
+                Row {
+                    id: topBezelRow
+                    anchors.top: parent.top
+                    anchors.topMargin: 15
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 4
+
+                    Rectangle {
+                        height: 17
+                        width: zoomBadgeText.implicitWidth + 10
+                        radius: 8.5
+                        color: root.colLayer1
+                        Text {
+                            id: zoomBadgeText
+                            anchors.centerIn: parent
+                            text: `${root.gridCount}×`
+                            color: root.colPrimary
+                            font.pixelSize: 10
+                            font.weight: Font.Bold
+                            font.family: "monospace"
                         }
-                    ctx.strokeStyle = "#000000"
-                    ctx.lineWidth = 3
-                    ctx.strokeRect(65, 65, 13, 13)
-                    ctx.strokeStyle = "#FFFFFF"
-                    ctx.lineWidth = 1
-                    ctx.strokeRect(65, 65, 13, 13)
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: root.loupeLocked
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root._adjustZoom(1)
+                        }
+                    }
+
+                    Rectangle {
+                        height: 17
+                        width: avgBadgeText.implicitWidth + 10
+                        radius: 8.5
+                        color: root.sampleBoxSize > 1 ? root.colPrimary : root.colLayer1
+                        Text {
+                            id: avgBadgeText
+                            anchors.centerIn: parent
+                            text: root.sampleBoxSize === 1 ? "1px" : `${root.sampleBoxSize}×${root.sampleBoxSize}`
+                            color: root.sampleBoxSize > 1 ? root.colOnPrimary : root.colSubtext
+                            font.pixelSize: 10
+                            font.weight: Font.DemiBold
+                            font.family: "monospace"
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: root.loupeLocked
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root._cycleSampleBox()
+                        }
+                    }
+
+                    Rectangle {
+                        visible: root.loupeLocked
+                        height: 17
+                        width: lockBadgeText.implicitWidth + 8
+                        radius: 8.5
+                        color: root.colSecondary
+                        Text {
+                            id: lockBadgeText
+                            anchors.centerIn: parent
+                            text: "LOCK"
+                            color: root.colOnPrimary
+                            font.pixelSize: 9
+                            font.weight: Font.Bold
+                            font.family: "monospace"
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: root.loupeLocked
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.loupeLocked = false
+                        }
+                    }
+                }
+
+                // Circularly Masked Magnifier Lens (143x143 Canvas with native 2D circular clip — crisp on both GPU & software)
+                Item {
+                    id: lensMaskContainer
+                    width: 143
+                    height: 143
+                    anchors.centerIn: parent
+                    anchors.verticalCenterOffset: -6
+
+                    Canvas {
+                        id: magnifier
+                        objectName: "colorPickerMagnifierCanvas"
+                        width: 143
+                        height: 143
+                        antialiasing: true
+                        onPaint: {
+                            if (!sampler.ready) return
+                            const ctx = getContext("2d")
+                            const p = (root.currentPixelX >= 0 && root.currentPixelY >= 0)
+                                ? Qt.point(root.currentPixelX, root.currentPixelY)
+                                : sampler.pixelAt(root.cursorX, root.cursorY, root.width, root.height)
+                            const r = root.gridRadius
+                            const count = r * 2 + 1
+                            const cell = width / count
+                            const region = sampler.readRegion(p.x, p.y, r)
+                            ctx.clearRect(0, 0, width, height)
+                            ctx.save()
+                            ctx.beginPath()
+                            ctx.arc(width * 0.5, height * 0.5, width * 0.5 - 1, 0, Math.PI * 2)
+                            ctx.clip()
+                            if (region) {
+                                for (let yy = -r; yy <= r; ++yy) {
+                                    const py0 = Math.floor((yy + r) * cell)
+                                    const py1 = Math.floor((yy + r + 1) * cell)
+                                    const ch = Math.max(1, py1 - py0)
+                                    for (let xx = -r; xx <= r; ++xx) {
+                                        const px0 = Math.floor((xx + r) * cell)
+                                        const px1 = Math.floor((xx + r + 1) * cell)
+                                        const cw = Math.max(1, px1 - px0)
+                                        const rgb = sampler.regionPixelRgb(region, p.x + xx, p.y + yy)
+                                        ctx.fillStyle = rgb
+                                            ? `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`
+                                            : "transparent"
+                                        ctx.fillRect(px0, py0, cw, ch)
+                                    }
+                                }
+                            }
+                            if (root.showPixelGrid && cell >= 8) {
+                                ctx.strokeStyle = root.isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.10)"
+                                ctx.lineWidth = 1
+                                ctx.beginPath()
+                                for (let i = 1; i < count; ++i) {
+                                    const pos = Math.floor(i * cell) + 0.5
+                                    ctx.moveTo(pos, 0); ctx.lineTo(pos, height)
+                                    ctx.moveTo(0, pos); ctx.lineTo(width, pos)
+                                }
+                                ctx.stroke()
+                            }
+                            // Center sample box outline (1x1, 3x3, or 5x5)
+                            const halfBox = Math.floor(root.sampleBoxSize / 2)
+                            const boxStart = Math.floor((r - halfBox) * cell)
+                            const boxEnd = Math.floor((r + halfBox + 1) * cell)
+                            const boxW = Math.max(4, boxEnd - boxStart)
+                            ctx.strokeStyle = "#000000"
+                            ctx.lineWidth = 3
+                            ctx.strokeRect(boxStart, boxStart, boxW, boxW)
+                            ctx.strokeStyle = "#FFFFFF"
+                            ctx.lineWidth = 1.25
+                            ctx.strokeRect(boxStart, boxStart, boxW, boxW)
+                            ctx.restore()
+                        }
+                    }
+
+                    // Crisp circular lens rim
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: width * 0.5
+                        color: "transparent"
+                        border.width: 2
+                        border.color: Qt.alpha(root.colPrimary, 0.85)
+                    }
+                }
+
+                // Bottom bezel readout pill: swatch + compact HEX + format tag
+                // Positioned at y = 192..214 (dy_bot = 96, inner chord width = 119.2px)
+                // and capped to <= 114px so it stays 100% inside the circular bezel.
+                Rectangle {
+                    id: loupeReadoutPill
+                    objectName: "colorPickerLoupeReadoutPill"
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 22
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    height: 22
+                    width: Math.min(114, readoutRow.implicitWidth + 12)
+                    radius: 11
+                    color: root.colLayer1
+                    border.width: 1
+                    border.color: Qt.alpha(root.colOutline, 0.7)
+                    clip: true
+
+                    Row {
+                        id: readoutRow
+                        anchors.centerIn: parent
+                        spacing: 4
+
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 10
+                            height: 10
+                            radius: 5
+                            color: root.sampledColor || "transparent"
+                            border.width: 1
+                            border.color: Qt.alpha(root.colOnLayer0, 0.6)
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.sampledColor || "#000000"
+                            color: root.colOnLayer0
+                            font.pixelSize: 11
+                            font.weight: Font.Bold
+                            font.family: "monospace"
+                        }
+
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: 14
+                            width: fmtTagText.implicitWidth + 6
+                            radius: 7
+                            color: root.colPrimary
+                            Text {
+                                id: fmtTagText
+                                anchors.centerIn: parent
+                                text: root.activeFormat
+                                color: root.colOnPrimary
+                                font.pixelSize: 8
+                                font.weight: Font.Bold
+                                font.family: "monospace"
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                enabled: root.loupeLocked
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root._cycleFormat()
+                            }
+                        }
+                    }
                 }
             }
-            Rectangle { x: 11; y: 165; width: 18; height: 18; color: root.sampledColor || "transparent"; border.color: "white" }
-            Text { x: 38; y: 164; text: root.sampledColor; color: "white"; font.pixelSize: 16; font.family: "monospace" }
+
+            // ─── Companion Auto-Themed Studio Deck (Full Readout · WCAG · Harmonies · Recent Recall) ───
+            Rectangle {
+                id: studioDeck
+                objectName: "colorPickerStudioDeck"
+                width: loupeCluster.circleDiameter
+                height: loupeCluster.deckHeight
+                x: 0
+                y: loupeCluster.flipAbove ? 0 : (loupeCluster.circleDiameter + loupeCluster.gapBetween)
+                radius: 16
+                color: root.colLayer0
+                border.width: 1
+                border.color: root.loupeLocked ? root.colPrimary : Qt.alpha(root.colOutline, 0.75)
+
+                // Absorb background clicks while locked so missing a small swatch never jumps the loupe away
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: root.loupeLocked
+                    acceptedButtons: Qt.LeftButton
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 5
+
+                    // Row 1: Full formatted value (copy payload — click to cycle format when locked) + pixel coordinates
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            height: 20
+                            radius: 10
+                            color: root.colLayer1
+
+                            Text {
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 8
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                text: root.formattedColor || root.sampledColor
+                                color: root.colOnLayer0
+                                font.pixelSize: 10
+                                font.weight: Font.Bold
+                                font.family: "monospace"
+                                elide: Text.ElideRight
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                enabled: root.loupeLocked
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root._cycleFormat()
+                            }
+                        }
+
+                        Text {
+                            id: coordText
+                            Layout.alignment: Qt.AlignVCenter
+                            text: root.currentPixelX >= 0 ? `${root.currentPixelX},${root.currentPixelY}` : ""
+                            color: root.colSubtext
+                            font.pixelSize: 9
+                            font.family: "monospace"
+                        }
+                    }
+
+                    // Row 2: WCAG contrast badges + 5 live harmony swatches (keys 1-5 or click when locked)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        Rectangle {
+                            height: 18
+                            implicitWidth: wcagWText.implicitWidth + 8
+                            radius: 9
+                            color: root.colLayer2
+                            Text {
+                                id: wcagWText
+                                anchors.centerIn: parent
+                                text: `W${root.contrastOnWhite.toFixed(1)}`
+                                color: root.contrastOnWhite >= 4.5 ? root.colPrimary : root.colSubtext
+                                font.pixelSize: 9
+                                font.weight: Font.DemiBold
+                                font.family: "monospace"
+                            }
+                        }
+
+                        Rectangle {
+                            height: 18
+                            implicitWidth: wcagBText.implicitWidth + 8
+                            radius: 9
+                            color: root.colLayer2
+                            Text {
+                                id: wcagBText
+                                anchors.centerIn: parent
+                                text: `B${root.contrastOnBlack.toFixed(1)}`
+                                color: root.contrastOnBlack >= 4.5 ? root.colSecondary : root.colSubtext
+                                font.pixelSize: 9
+                                font.weight: Font.DemiBold
+                                font.family: "monospace"
+                            }
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        Row {
+                            spacing: 4
+                            Layout.alignment: Qt.AlignVCenter
+
+                            Repeater {
+                                model: root.harmonySwatches
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    width: 19
+                                    height: 18
+                                    radius: 6
+                                    color: modelData.hex
+                                    border.width: harmonyMouse.containsMouse && root.loupeLocked ? 2 : 1
+                                    border.color: harmonyMouse.containsMouse && root.loupeLocked
+                                        ? root.colPrimary : Qt.alpha(root.colOnLayer0, 0.35)
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: modelData.key
+                                        color: root._swatchInkColor(modelData.hex)
+                                        font.pixelSize: 9
+                                        font.weight: Font.Bold
+                                        font.family: "monospace"
+                                    }
+
+                                    MouseArea {
+                                        id: harmonyMouse
+                                        anchors.fill: parent
+                                        enabled: root.loupeLocked
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root._commitPick(modelData.hex)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Row 3 (when history exists): Interactive Recent Colors recall strip (keys 6-0 or click when locked)
+                    RowLayout {
+                        objectName: "colorPickerRecentRow"
+                        visible: root.recallableRecents.length > 0
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        Text {
+                            Layout.alignment: Qt.AlignVCenter
+                            text: "Recent"
+                            color: root.colSubtext
+                            font.pixelSize: 9
+                            font.weight: Font.DemiBold
+                            font.family: "monospace"
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        Row {
+                            spacing: 4
+                            Layout.alignment: Qt.AlignVCenter
+
+                            Repeater {
+                                model: root.recallableRecents
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    width: 24
+                                    height: 18
+                                    radius: 6
+                                    color: modelData.hex
+                                    border.width: recentMouse.containsMouse && root.loupeLocked ? 2 : 1
+                                    border.color: recentMouse.containsMouse && root.loupeLocked
+                                        ? root.colPrimary : Qt.alpha(root.colOnLayer0, 0.4)
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: modelData.key
+                                        color: root._swatchInkColor(modelData.hex)
+                                        font.pixelSize: 9
+                                        font.weight: Font.Bold
+                                        font.family: "monospace"
+                                    }
+
+                                    MouseArea {
+                                        id: recentMouse
+                                        anchors.fill: parent
+                                        enabled: root.loupeLocked
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root._commitPick(modelData.hex)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Bottom Row: Concise hotkey hint
+                    Text {
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignHCenter
+                        text: root.recallableRecents.length > 0
+                            ? "Wheel Zoom · Tab Fmt · L Lock · 1-5 / 6-0"
+                            : "Wheel Zoom · Tab Fmt · A Avg · L Lock · 1-5"
+                        color: root.colSubtext
+                        font.pixelSize: 9
+                        elide: Text.ElideRight
+                    }
+                }
+            }
         }
     }
 }

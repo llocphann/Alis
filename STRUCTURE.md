@@ -7,9 +7,11 @@ alis/
 ├── shell.qml                     # Root entry — loads services and selects panel family
 ├── ShellIiPanels.qml             # Material ii panel family
 ├── ShellWafflePanels.qml         # Windows 11 panel family
-├── ShellAbyssPanels.qml          # Perimeter Liquid Shell family
+├── ShellAbyssPanels.qml          # Perimeter Liquid Shell family (primary)
+├── ShellAbyssCriticalPanels.qml  # Critical Abyss lock/polkit/OSD composition
 ├── GlobalStates.qml              # Runtime UI state
 ├── FamilyTransitionOverlay.qml   # Animated family switch
+├── color-picker-worker.qml       # Disposable circular auto-themed Color Picker worker
 ├── settings.qml                  # Settings GUI
 ├── waffleSettings.qml            # Waffle-specific settings GUI
 ├── welcome.qml                   # First-run wizard
@@ -62,13 +64,13 @@ The live tree intentionally has no Orbit, Mascot, Workspace Strip, `barM3`, Pill
 
 **modules/common/perimeter/:** Connected Perimeter core substrate: topology and slot configuration, module registry/hosting, anchor publication/lookup, transient-surface routing, and connected geometry/input helpers. Existing bar popups consume this substrate through `modules/bar/StyledPopup.qml`; the retired full `iiPerimeter` runtime remains absent.
 
-**modules/bar/:** the sole ii-family Bar implementation. It supports top/bottom/left/right placement and Classic geometry modes (Hug, Float, Rectangle, Card). Existing bar popups use `StyledPopup.qml`, which provides the connected-surface presentation path without introducing a second popup framework.
+**modules/bar/:** the sole ii-family Bar implementation and shared edge-hosted widgets (`BarCavaEqualizerModule`, `BatteryPopup`, `StyledPopup`, `ClockWidget`, `Resources`, `Media`, `SysTray`). It supports top/bottom/left/right placement on the single canonical Hug surface. Existing bar popups use `StyledPopup.qml`, which provides connected-surface presentation (and rehosts directly into Abyss when active) without introducing a second popup framework.
 
-**modules/dock/:** the ii-family application Dock. Panel is the canonical supported Dock surface style; legacy persisted style values are normalized to `panel` during startup.
+**modules/dock/:** the ii-family and Abyss application Dock. Panel is the canonical supported Dock surface style; legacy persisted style values are normalized to `panel` during startup. Window identity resolution (`AppSearch.resolveWindowIdentity`) maps internal Quickshell surfaces such as `"Alis Nexus"` to dedicated icons (`assets/icons/alis-nexus.svg`).
 
 **modules/waffle/:** Windows 11-style panel family with Start-Menu-sized Dashboard, Win11-style Settings, bottom taskbar, Start menu, action center, notification center, and visual tokens (`modules/waffle/looks/`). Waffle is a separate family rather than a Dock or Classic Bar style.
 
-**modules/abyss/:** independent perimeter-centric liquid family. `AbyssPerimeter.qml` owns one painter per output; `AbyssBodyHost.qml` owns lazy content and bounded input without painting; `looks/AbyssGeometry.js` and `looks/AbyssField.frag(.qsb)` own topology; `looks/AbyssStyle.qml` centralizes palette, motion and effects. Critical/specialist fallbacks share implementations rather than backend copies.
+**modules/abyss/:** independent perimeter-centric liquid family. `AbyssPerimeter.qml` owns one painter per output; `AbyssSurfaceController.qml` owns multi-slot popups, vacancy borrowing, and the global FIFO hover-order close sequencer; `AbyssPyramidCoordinator.qml` coordinates Pyramid Popup stacking and contour transitions (including `AbyssRecordingBody.qml`); `AbyssBodyHost.qml` owns lazy content and bounded input without painting; `looks/AbyssGeometry.js`, `looks/AbyssBodyPlacement.js`, and `looks/AbyssField.frag(.qsb)` own topology; `looks/AbyssStyle.qml` centralizes palette, motion and effects. Critical/specialist fallbacks share implementations rather than backend copies.
 
 **modules/dashboard/:** unified Dashboard surface hosting the main `Dashboard` widget grid, Sonora-inspired Local `Music` (merged Lyrics + EQ pane), `Weekly Planner`, user-managed `Custom Tabs` (`Create`, `Rename`, `Delete` via `DashboardEditToolbar.qml`), and optional `Spaced Repetition` / `Exercises Tracker` tabs loaded from `Alis-Intergration`.
 

@@ -1,22 +1,22 @@
 # Security Policy
 
-## Supported versions
+## Supported branches
 
-`stable` is the supported user-facing branch. Security fixes may land on `dev` first while they are being integrated and validated, but `dev` is not a stable release line.
+`stable` is the supported user-facing branch. Security fixes land on `dev` first while they are being integrated and validated.
 
 ## Reporting a vulnerability
 
 Please report security vulnerabilities privately rather than opening a public issue with exploit details.
 
 1. Prefer GitHub private vulnerability reporting for this repository: <https://github.com/llocphann/Alis/security/advisories/new>.
-2. Include the affected revision/version, reproduction steps, impact, and any relevant logs with secrets removed.
+2. Include the affected commit SHA, reproduction steps, impact, and any relevant logs with secrets removed.
 3. If private vulnerability reporting is unavailable, contact the repository maintainer privately before publishing technical details.
 
 Do not include passwords, API tokens, private configuration values, or other credentials in a report.
 
 ## Privilege model
 
-The main Alis shell (compatible with Alis runtime IDs) runs as the logged-in user. However, the repository also ships narrowly scoped privileged helpers for operations that require system-level access.
+The main Alis shell runs as the logged-in user. Optional hardware-control helpers for ThinkPad power and thermal management live in the sibling [Alis-Intergration](https://github.com/llocphann/Alis-Intergration) repository:
 
 Current privileged integration surfaces include:
 

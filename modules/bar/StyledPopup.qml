@@ -158,6 +158,11 @@ LazyLoader {
     // User-requested close: keep the resident panel through the normal
     // slide-under retract tail instead of snapping it/fading it out.
     // Forced owner eviction still uses dismissPresentation() below.
+    function _liquidFifoId(): string {
+        if (!root._liquidController || !root._liquidController._popupSlot) return ""
+        const slot = root._liquidController._popupSlot(root)
+        return slot >= 0 ? ("styledPopup" + slot) : ""
+    }
     function retractPresentation(): void {
         companionLease = null
         _gracefulDismissal = true
@@ -166,7 +171,12 @@ LazyLoader {
         _bodyHovered = false
         _contentHovered = false
         hoverTransferTimer.stop()
-        if (_liquidController) _liquidController.releasePopupHover(root)
+        if (_liquidController) {
+            const fid = root._liquidFifoId()
+            if (fid.length > 0 && _liquidController.clearHoverSurface)
+                _liquidController.clearHoverSurface(fid)
+            _liquidController.releasePopupHover(root)
+        }
         if (_lingerVisible)
             _beginRetract()
         else
@@ -182,7 +192,12 @@ LazyLoader {
         _bodyHovered = false; _contentHovered = false
         _lingerVisible = false
         offsetScale = 1
-        if (_liquidController) _liquidController.releasePopupHover(root)
+        if (_liquidController) {
+            const fid = root._liquidFifoId()
+            if (fid.length > 0 && _liquidController.clearHoverSurface)
+                _liquidController.clearHoverSurface(fid)
+            _liquidController.releasePopupHover(root)
+        }
         requestClose()
     }
     property QtObject _liquidPresentationConnections: Connections {
@@ -243,6 +258,11 @@ LazyLoader {
     property bool barAutoHideHoldEnabled: true
     property int _barPopupHoverLeaseId: 0
     property bool alternativeVisibleCondition: false
+    // Whether this popup will auto-close after pointer hover leaves. Subclasses
+    // that put transient hover bridges (entryBridgeHeld / exitGraceHeld) inside
+    // alternativeVisibleCondition override this to exclude those transient holds
+    // so Abyss's global FIFO close sequencer waits for them in true hover order.
+    property bool fifoAutoClosable: root.hoverActivates && !root.alternativeVisibleCondition
     property bool closeOnOutsideClick: false
     // Keep the outside-click catcher below the popup when a surface needs to
     // remain pointer-interactive after the catcher maps (for example a text
@@ -495,6 +515,10 @@ LazyLoader {
             root._liquidSemanticHold = false
             hoverTransferTimer.stop()
             retractTimer.stop()
+            if (root._liquidController && root._liquidController.cancelHoverSurfaceClose) {
+                const fid = root._liquidFifoId()
+                if (fid.length > 0) root._liquidController.cancelHoverSurfaceClose(fid)
+            }
             root._lingerVisible = true
             if (!Appearance.animationsEnabled) {
                 root.offsetScale = 0
@@ -576,6 +600,18 @@ LazyLoader {
         interval: 90
         repeat: false
         onTriggered: {
+            if (root._liquidController && root._liquidController.requestHoverSurfaceClose
+                    && !root.requestedVisible && root._lingerVisible) {
+                const fid = root._liquidFifoId()
+                if (fid.length > 0 && root._liquidController.requestHoverSurfaceClose(fid, () => {
+                    if (!root || !root._live) return
+                    root._liquidSemanticHold = false
+                    if (!root.requestedVisible)
+                        root._beginRetract()
+                })) {
+                    return
+                }
+            }
             root._liquidSemanticHold = false
             if (!root.requestedVisible)
                 root._beginRetract()

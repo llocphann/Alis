@@ -100,6 +100,8 @@ Bar.StyledPopup {
         || root.exitGraceHeld
         || root.keyboardInteraction
         || (contentLoader.item?.dragActive ?? false)
+    fifoAutoClosable: root.hoverAllowed && !root.explicitForThisOutput
+        && !root.keyboardInteraction && !(contentLoader.item?.dragActive ?? false)
     keyboardFocus: root.keyboardInteraction
     closeOnOutsideClick: root.explicitForThisOutput || root.keyboardInteraction
     popupBackgroundMargin: 0
@@ -175,6 +177,13 @@ Bar.StyledPopup {
     }
 
     onRequestClose: root.dismissAndDisarm()
+
+    onPopupHoveredChanged: {
+        if (root.popupHovered && root.entryBridgeHeld) {
+            entryBridgeTimer.stop()
+            root.entryBridgeHeld = false
+        }
+    }
 
     onHoverAllowedChanged: {
         if (!hoverAllowed && !explicitForThisOutput) {

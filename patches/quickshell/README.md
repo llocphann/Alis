@@ -6,9 +6,9 @@ via the AUR.
 
 ## fix-extension-uaf.patch
 
-**Applies to:** QS 0.2.1 (commit `11a71d2` and nearby)
+**Applies to:** Pinned Quickshell (`v0.3.2`, applied automatically by `scripts/lib/quickshell-pinned-build.sh`)
 
-**Bug:** Hot-reload always crashes with SIGSEGV in
+**Bug:** Hot-reload crashes with SIGSEGV in
 `IpcHandlerRegistry::registerHandler()`.
 
 **Root cause:** `EngineGeneration::destroy()` deletes extensions (including

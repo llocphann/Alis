@@ -845,7 +845,7 @@
             "height": 22,
             "barSpacing": 2,
             "barRadius": 2,
-            "mirror": true
+            "mirror": false
         },
         "modules": {
             "activeWindow": true,

@@ -2152,7 +2152,7 @@ Singleton {
                     property int height: 22
                     property int barSpacing: 2
                     property int barRadius: 2
-                    property bool mirror: true
+                    property bool mirror: false
                 }
                 property JsonObject vignette: JsonObject {
                     property bool enabled: false

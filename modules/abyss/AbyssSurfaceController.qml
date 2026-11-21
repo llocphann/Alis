@@ -19,6 +19,180 @@ QtObject {
     function nextVacancyInteractionOrder(): int {
         return ++vacancyInteractionOrder
     }
+
+    // ─── Global FIFO Hover-Order Close Sequencer ───
+    // Surfaces that coexist via pointer hover (Edgebars, Sidebars, StyledPopups,
+    // Generic Popups, Dock, Recording) close in strict first-hovered-first-closed
+    // (FIFO) order whenever focus/hover leaves them together.
+    property int _fifoHoverSeq: 0
+    property var _fifoHoverState: ({})
+    property int fifoCloseStepMs: 160
+    property int fifoWaitCapMs: 850
+    property string _fifoLastClosedId: ""
+
+    readonly property Timer _fifoStaggerTimer: Timer {
+        interval: Math.max(1, root.fifoCloseStepMs)
+        repeat: false
+        onTriggered: root._drainFifoCloseQueue()
+    }
+    readonly property Timer _fifoWaitTimer: Timer {
+        interval: 28
+        repeat: false
+        onTriggered: root._drainFifoCloseQueue()
+    }
+    // 1-frame coalescing batch timer so multiple surfaces losing focus/hover in the
+    // same Qt event turn (arbitrary signal order) are always drained in strict FIFO hover order.
+    readonly property Timer _fifoBatchTimer: Timer {
+        interval: 16
+        repeat: false
+        onTriggered: root._drainFifoCloseQueue()
+    }
+
+    function hoverOrderFor(surfaceId): int {
+        const key = String(surfaceId ?? "")
+        return key.length > 0 ? Number(root._fifoHoverState[key]?.order ?? 0) : 0
+    }
+
+    function noteHoverSurfaceActive(surfaceId, autoClosable = true): void {
+        const key = String(surfaceId ?? "")
+        if (key.length === 0) return
+        const existing = root._fifoHoverState[key]
+        const next = Object.assign({}, root._fifoHoverState)
+        // Preserve the original first-hover sequence number while the surface remains open.
+        next[key] = {
+            order: (existing && existing.order > 0 && !existing.closing)
+                ? existing.order : (++root._fifoHoverSeq),
+            hovered: true,
+            autoClosable: Boolean(autoClosable),
+            pendingClose: false,
+            closing: false,
+            closeFn: null,
+            pendingSinceMs: 0
+        }
+        root._fifoHoverState = next
+        // Re-activating (or preserving via paired peer) an earlier surface
+        // immediately unblocks any later pending surface instead of waiting
+        // for the next wait-timer tick.
+        root._drainFifoCloseQueue()
+    }
+
+    function noteHoverSurfaceLeave(surfaceId, autoClosable = true): void {
+        const key = String(surfaceId ?? "")
+        const existing = key.length > 0 ? root._fifoHoverState[key] : null
+        if (!existing) return
+        const next = Object.assign({}, root._fifoHoverState)
+        next[key] = Object.assign({}, existing, {
+            hovered: false,
+            autoClosable: Boolean(autoClosable)
+        })
+        root._fifoHoverState = next
+    }
+
+    function cancelHoverSurfaceClose(surfaceId): void {
+        const key = String(surfaceId ?? "")
+        const existing = key.length > 0 ? root._fifoHoverState[key] : null
+        if (!existing || (!existing.pendingClose && !existing.closing)) return
+        const next = Object.assign({}, root._fifoHoverState)
+        next[key] = Object.assign({}, existing, {
+            pendingClose: false,
+            closing: false,
+            closeFn: null,
+            pendingSinceMs: 0
+        })
+        root._fifoHoverState = next
+        root._drainFifoCloseQueue()
+    }
+
+    function clearHoverSurface(surfaceId): void {
+        const key = String(surfaceId ?? "")
+        if (key.length === 0 || root._fifoHoverState[key] === undefined) return
+        const next = Object.assign({}, root._fifoHoverState)
+        delete next[key]
+        root._fifoHoverState = next
+        root._drainFifoCloseQueue()
+    }
+
+    function requestHoverSurfaceClose(surfaceId, closeFn): bool {
+        const key = String(surfaceId ?? "")
+        if (key.length === 0 || typeof closeFn !== "function")
+            return false
+        const existing = root._fifoHoverState[key]
+        const now = Date.now()
+        const next = Object.assign({}, root._fifoHoverState)
+        next[key] = {
+            order: (existing && existing.order > 0) ? existing.order : (++root._fifoHoverSeq),
+            hovered: false,
+            autoClosable: true,
+            pendingClose: true,
+            closing: false,
+            closeFn: closeFn,
+            pendingSinceMs: existing?.pendingSinceMs > 0 ? existing.pendingSinceMs : now
+        }
+        root._fifoHoverState = next
+        if (!root._fifoStaggerTimer.running && !root._fifoBatchTimer.running)
+            root._fifoBatchTimer.start()
+        return Boolean(root._fifoHoverState[key]?.pendingClose)
+    }
+
+    function _drainFifoCloseQueue(): void {
+        const state = root._fifoHoverState
+        const pendingKeys = []
+        for (const k of Object.keys(state)) {
+            if (state[k]?.pendingClose)
+                pendingKeys.push(k)
+        }
+        if (pendingKeys.length === 0) {
+            root._fifoWaitTimer.stop()
+            return
+        }
+        if (root._fifoStaggerTimer.running)
+            return
+
+        pendingKeys.sort((a, b) => (state[a].order - state[b].order) || a.localeCompare(b))
+        const candidateKey = pendingKeys[0]
+        const candidate = state[candidateKey]
+        const now = Date.now()
+
+        // If an earlier-hovered auto-closable surface ALSO lost hover and hasn't
+        // finished its own short dwell timer yet, wait briefly so it slides closed first.
+        let earlierUnhovered = false
+        for (const k of Object.keys(state)) {
+            if (k === candidateKey) continue
+            const other = state[k]
+            if (!other || other.order >= candidate.order) continue
+            if (other.autoClosable && !other.hovered && !other.closing && !other.pendingClose) {
+                earlierUnhovered = true
+                break
+            }
+        }
+        if (earlierUnhovered && (now - candidate.pendingSinceMs) < root.fifoWaitCapMs) {
+            root._fifoWaitTimer.restart()
+            return
+        }
+
+        root._fifoWaitTimer.stop()
+        const fn = candidate.closeFn
+        const next = Object.assign({}, state)
+        next[candidateKey] = Object.assign({}, candidate, {
+            pendingClose: false,
+            closing: true,
+            closeFn: null
+        })
+        root._fifoHoverState = next
+        root._fifoLastClosedId = candidateKey
+
+        // Arm stagger before invoking callback if additional queued/unhovered later peers exist.
+        const hasLaterWaiter = pendingKeys.length > 1 || Object.keys(next).some(k => {
+            if (k === candidateKey) return false
+            const other = next[k]
+            return Boolean(other && other.order > candidate.order && other.autoClosable && !other.hovered && !other.closing)
+        })
+        if (hasLaterWaiter)
+            root._fifoStaggerTimer.restart()
+
+        if (typeof fn === "function")
+            fn()
+    }
     readonly property var placementRequests: {
         const mapped = Object.keys(participants)
             .map(key => participants[key]?.placementRequest)

@@ -220,6 +220,10 @@ Item {
 
         open: root.resident
         externalProgress: root.revealProgress
+        onOpenChanged: {
+            if (!open && root.controller && root.controller.clearHoverSurface)
+                root.controller.clearHoverSurface(identity)
+        }
         onReadyChanged: if (ready) root.beginReveal()
         onCloseRequested: root.closeRequested(root.activeKind)
     }

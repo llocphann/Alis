@@ -71,6 +71,8 @@ Bar.StyledPopup {
     hoverActivates: root.hoverAllowed
     alternativeVisibleCondition: root.editorFocused || root.todoDialogOpen
         || root.entryBridgeHeld || root.popupPinned || root.escapeArmed
+    fifoAutoClosable: root.hoverAllowed && !root.editorFocused && !root.todoDialogOpen
+        && !root.popupPinned && !root.escapeArmed
     // Pre-arm click-to-focus before the first editor click. OnDemand does not
     // steal focus merely because the hover popup is visible.
     keyboardFocusOnDemand: true
@@ -140,6 +142,13 @@ Bar.StyledPopup {
         root.escapeArmed = false
         root.leaveEditorMode()
     }
+    onPopupHoveredChanged: {
+        if (root.popupHovered && root.entryBridgeHeld) {
+            entryBridgeTimer.stop()
+            root.entryBridgeHeld = false
+        }
+    }
+
     onPresentationActiveChanged: {
         if (presentationActive) {
             Qt.callLater(() => {

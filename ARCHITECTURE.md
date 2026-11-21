@@ -1,273 +1,246 @@
 # Alis Architecture
 
-> A complete desktop shell built on [Quickshell](https://quickshell.org/) for the [Niri](https://github.com/YaLTeR/niri) Wayland compositor.
+> A personal desktop shell built on [Quickshell](https://quickshell.org/) and Rust for the [Niri](https://github.com/YaLTeR/niri) Wayland compositor, centered on the Abyss Overlay perimeter.
 
-**Stack**: QML (Quickshell), Rust, Bash, Python
+**Stack**: QML (Quickshell), GLSL (single-SDF perimeter shader), Rust (`native/`), Bash, Python
 
-Originally forked from [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) (illogical-impulse). Secondary Hyprland support is maintained.
+Originally forked from [snowarch/iNiR](https://github.com/snowarch/iNiR) / [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) (*illogical-impulse*). Maintained as an unversioned rolling desktop configuration on `dev` (`stable` for promoted snapshots).
 
 ---
 
-## Entry Point
+## Entry Point & Startup Lifecycle
 
-`shell.qml` → `ShellRoot` (Quickshell-specific root, not Item/Window).
+`shell.qml` → `ShellRoot` (Quickshell root, not `Item`/`Window`).
 
 Startup flow:
-1. Environment pragmas configure Qt scale, WebEngine, etc.
-2. Singleton services force-instantiated via dummy property bindings.
-3. `Config.ready` triggers panel loading.
-4. Theme and icon services are applied via `Qt.callLater`.
-5. Hyprsunset, first-run wizard, and conflict killer are loaded.
+1. Environment pragmas configure Qt scale, WebEngine, and Wayland rendering behavior.
+2. Core singleton services force-instantiate (`Config`, `Appearance`, `GlobalStates`, `CompositorService`, `NiriService`, `Audio`, `Battery`, `Wallpapers`, `AppSearch`, `ColorPickerService`, etc.) while heavy optional/media backends (`CavaService`, `EqualizerService`) defer until demanded.
+3. `Config.ready` gates family panel loading (`ShellAbyssPanels.qml`, `ShellWafflePanels.qml`, or `ShellIiPanels.qml`).
+4. Theme and icon services (`MaterialThemeLoader`, `IconThemeService`) hydrate via `Qt.callLater`.
+5. Optional external packages (`AlisCompanion` and `AlisIntergration`) probe Host API 1 manifests only when explicitly enabled.
+
+---
 
 ## Panel Families
 
-Three mutually exclusive UI families are switchable at runtime (`Super+Shift+W`):
+Three mutually exclusive panel families are switchable at runtime (`Super+Shift+W`), with **Abyss** and **Waffle** as the public user-facing families (`ii` migrates to `abyss` while sharing the Material token substrate):
 
-| | **Material II** | **Waffle** | **Abyss** |
+| | **Abyss (Primary)** | **Waffle** | **Material II (Shared Substrate)** |
 |---|---|---|---|
-| Active when | normalized `panelFamily === "ii"` | `panelFamily === "waffle"` | `panelFamily === "abyss"` |
-| Visual tokens | `Appearance.*` | `Looks.*` | Palette-derived `AbyssStyle.*` |
-| Presentation | Layered Material surfaces | Windows-inspired Fluent surfaces | One perimeter-centric liquid body |
-| Bar | Classic, four edges | Windows-style taskbar | Five zones embedded in any edge |
-| Launcher | Overview | Start Menu | Edge-attached app/action search |
-| Right panel | Sidebar + Notification Center | Action Center + Notification Center | Control/history edge deformation |
-| Panels | `ii*` | `w*` and shared panels | `abyss*` and documented shared fallbacks |
+| Active when | `panelFamily === "abyss"` | `panelFamily === "waffle"` | normalized `panelFamily === "ii"` |
+| Visual tokens | Palette-derived `AbyssStyle.*` + `Appearance.*` | `Looks.*` | `Appearance.*` |
+| Presentation | One continuous SDF liquid Screen Edge perimeter | Windows 11-inspired Fluent surfaces | Layered Material surfaces |
+| Bar / Edge | Five embedded module zones on any Screen Edge + corner Edgebars | Centered bottom taskbar | Classic Hug bar, four edges |
+| Launcher / Dashboard | Edge-attached Overview, 4-column Dashboard, Local Music, Planners | Start-Menu-sized Dashboard & Search | Overview + Dashboard |
+| Sidebars | Centered edge-welded Feature (`sidebarLeft`) & System (`sidebarRight`) | Action Center + Notification Center | Connected sidebars |
+| Settings | Screen-Edge-welded Overlay Mode & floating Window Mode (`iRiS` plates) | Win11-style Settings (`waffleSettings.qml`) | Overlay / Window Settings |
 
-Family URL loaders isolate inactive visual trees. Services/models remain shared.
-Abyss is not an Abyss Island implementation; its original single SDF owns physical
-perimeter, panel union and final silhouette shadow. Critical and specialist
-fallbacks are documented in [STRUCTURE.md](STRUCTURE.md) and below.
+Family URL loaders isolate inactive visual trees while services and config remain shared.
 
-The retired Bar renderer families (Islands, Scenic, Frame, M3 and Pill) are not runtime alternatives. Shared `island`, `pill` and `m3*` names may still appear where they describe unrelated live skins, widget shapes, Material color tokens, or other non-Bar behavior.
+`Appearance.globalStyle` is runtime-clamped to `material`. Persisted legacy style values are migration input only and must not reactivate alternate shell-wide renderers. The retired Bar renderer families (`Islands`, `Scenic`, `Frame`, `M3`, and `Pill`) and retired modules (`Orbit`, `Mascot`, `Workspace Strip`) are absent from the live module graph.
 
-Each panel uses `PanelLoader` (LazyLoader wrapper):
-```qml
-PanelLoader {
-    identifier: "iiBar"
-    extraCondition: !(Config.options?.bar?.vertical ?? false)
-    component: Bar {}
-}
-```
+Each panel uses `PanelLoader` (`LazyLoader` wrapper), activating only when `Config.ready`, its identifier is present in `enabledPanels`, and its `extraCondition` holds.
 
-A panel loads only when `Config.ready`, its identifier is present in `enabledPanels`, and its `extraCondition` is true.
+---
 
-`Appearance.globalStyle` is runtime-clamped to `material`. Persisted legacy style values are migration input only and must not reactivate alternate shell-wide renderers.
+## Abyss Overlay Perimeter & Pyramid Popup Architecture
+
+`modules/abyss/` is the centerpiece presentation engine:
+
+- **Single-SDF Painter (`AbyssPerimeter.qml` + `looks/AbyssField.frag(.qsb)`)**: One output-local analytic SDF paints the inverted Screen Edge frame, embedded bar modules, corner Edgebars, popups, sidebars, Dashboard, Settings, Nexus overlay, and elevation shadows in one continuous union without per-box backdrop duplication.
+- **Controller & Allocator (`AbyssSurfaceController.qml`, `looks/AbyssBodyPlacement.js`, `looks/AbyssVacancyBorrowing.js`)**:
+  - Hosts up to 4 simultaneous mature `StyledPopup` slots (`styledPopup0..3`) plus generic popups (`AbyssGenericPopupPresenter`), sidebars (`leftPanel`, `rightPanel`), `dock`, `notification`, `osd`, `recording`, `dashboard`, `settings`, `nexus`, and `dialog`.
+  - Resolves non-overlapping placements around physical anchors, stacking inward or adapting sizes via activation-order-aware Vacancy Borrowing (e.g., Edgebar + Sidebar coexistence, Overview + dual Sidebars).
+- **Pyramid Popup Coordinator (`AbyssPyramidCoordinator.qml`, `looks/AbyssPyramidMotion.js`, `AbyssBodyHost.qml`)**:
+  - Within a same-edge tangent neighborhood, Pyramid participants (`StyledPopup` slots, `AbyssGenericPopupPresenter`, `notification`, `osd`, and `AbyssRecordingBody`) order by resting area so larger surfaces anchor the Screen Edge base while smaller surfaces stack cleanly inward as the apex, emerging from and retracting into the lower peer's contour.
+  - Closing snapshots preserve retract geometry while surviving peers reflow concurrently toward live allocator targets.
+- **Global FIFO Hover-Order Close Sequencer (`AbyssSurfaceController.qml`, `AbyssSidebarReveal.qml`, `StyledPopup.qml`, `AbyssPopupContent.qml`, `AbyssRecordingBody.qml`)**:
+  - Tracks first-hover activation order across all coexisting hover-driven surfaces (Edgebars, Sidebars, StyledPopups, Generic Popups, Dock, Recording).
+  - When pointer hover/focus leaves multiple coexisting surfaces together, they retract in strict **FIFO hover order** (whichever surface was hovered first slides closed first, followed by subsequent surfaces after a clean stagger). Re-hovering cancels pending close immediately; pinned/shortcut-opened surfaces never block transient closes.
+- **3-Edge Desktop Edit Stage (`DesktopEditStage`, `AbyssCustomizationDock`, `AbyssEdgeEditor`)**:
+  - Shrinks and horizontally centers the live desktop preview while docking external customization controls (`Popups & Panels` / `Tabs` on Left, `Modules` on Bottom, `Screen Edge` / `Layout & Grid` / `Manage Widgets` on Right) with flexible `<= 80%` sizing and monotonic slide motion.
+- **Reactive Surface Waves & Power Policy (`AbyssWaveController.qml`, `AbyssRenderPolicy.qml`)**:
+  - Feeds Cava audio spectrum and interaction impulses into perimeter wave crests while automatically throttling idle animations under `power-saver` and evicting idle heavy overlay trees after 4 minutes (configurable via `Keep panels warm in RAM`).
+
+---
+
+## Core Subsystems & Services
+
+### Screen Edge & Bar Modules (`modules/bar/`, `modules/abyss/bar/`)
+- **Cava Equalizer (`BarCavaEqualizerModule.qml` + `services/deferred/CavaService.qml`)**: Single shared Cava subprocess across all visualizers; resolves active MPRIS / PipeWire playback streams (`alis-native accel cava-config` / `scripts/cava/resolve_audio_source.py`), folds stereo Left/Right channel frames into a true left-to-right bass→mid→treble bar equalizer (or linear mono bins), honors `bar.cava.mirror`, normalizes against CavaService's adaptive `normalizationCeiling`, settles cleanly to a 2px baseline on silence, and gates C++ scene-graph transitions on `root.visible` with zero `FrameAnimation`.
+- **Battery Hardware Telemetry (`services/Battery.qml` + `modules/bar/BatteryPopup.qml`)**: Reads kernel sysfs `/sys/class/power_supply/<BAT>/uevent` and `charge_control_*_threshold` alongside UPower fallbacks to report accurate live wattage, voltage, remaining/full/design Wh capacity, health/wear percentage, cycle count, cell chemistry, physics-backed ETA fallbacks, charge-limit status, and quick `PowerProfiles` switching.
+- **Connected Bar Popups (`modules/bar/StyledPopup.qml`)**: Rehosted directly into Abyss's SDF field when Abyss is active, or rendered via `ConnectedSurfaceAbyssFrame` + `ConnectedSurfaceRevealClip` + `ConnectedSurfaceBodyMask` in classic `ii` mode.
+
+### Process-Isolated Circular Color Picker (`color-picker-worker.qml`, `services/ColorPicker*.qml`)
+- Runs one disposable Quickshell worker process per pick (`ColorPickerService.qml`) so Wayland screencopy teardown never touches the long-lived shell process.
+- Receives live Alis theme tokens and recent picks via `ALIS_COLOR_PICKER_THEME` to render a **circular auto-themed magnifier loupe** (`ColorPickerOverlay.qml`) backed by single-readback region sampling (`ColorPickerSampler.qml`).
+- Supports immediate center-screen display upon capture readiness, dynamic wheel zoom (`5×`–`19×`), `1px` / `3×3` / `5×5` area averaging, `HEX` / `RGB` / `HSL` / `OKLCH` / `HSV` format cycling, live WCAG contrast ratios, 5 one-key color harmonies (`1`–`5`), interactive recent color recall (`6`–`0`), loupe lock/inspect mode (`L`) for direct mouse swatch/control clicks, pixel-accurate arrow stepping, and automatic `wl-copy` + `cliphist` sync.
+
+### Dashboard, Local Music, Planners & Capture (`modules/dashboard/`, `modules/regionSelector/`)
+- **Dashboard (`modules/dashboard/`)**: 4-column responsive widget grid, Sonora-inspired **Local Music** browser (embedded library sidebar, synced Lyrics stacked above a 10-band EQ with live electric-arc curve visualization in `EqualizerPanel.qml`), **Weekly & Yearly Planners**, user-managed **Custom Tabs**, and optional **Spaced Repetition** / **Exercises Tracker** tabs hosted from `Alis-Intergration`.
+- **Region Selection (`modules/regionSelector/`)**: Full-screen `Super+Shift+S` capture (`Screenshot` + `Rect` default, `Recording`, `OCR`) with auto-hiding compact toolbar, inline capture annotation editor, and compositor-isolated post-capture notifications.
+- **Left & Right Sidebars (`modules/sidebarLeft/`, `modules/sidebarRight/`)**: Left Sidebar hosts `Intelligence` (AI / `Alis-Companion`), `Translator`, `Tools`, and `News`; Right Sidebar hosts Quick Settings, sliders, calendar, and notifications.
+
+### Production Rust Native Backend (`native/`)
+The `native/` Rust workspace provides the default production backend via `scripts/native-dispatch`:
+- **`alis-native`**: Fast accelerators (`cava-config`, `app-search`, `image-size`, `thumb-info`, plugin scanning, system telemetry).
+- **`alis-theme`**: Wallpaper dominant color & K-means color-tag extraction, Material palette generation, and native editor/terminal/Cava/GTK/Qt theme syncing (`editors.rs`, `colortags.rs`).
+- **`alis-mpdd`**: Persistent MPD IPC daemon with lean library snapshots (`--lean`) and automatic reconnect.
+- **`alis-inputd`**: Input/hotkey helper daemon.
+
+---
 
 ## Directory Structure
 
 ```text
 shell.qml                     # Root entry — loads services, selects panel family
-ShellIiPanels.qml             # Material ii family
-ShellWafflePanels.qml         # Windows 11 family
-ShellAbyssPanels.qml          # Perimeter Liquid Shell family
-GlobalStates.qml              # Runtime UI state
+ShellAbyssPanels.qml          # Abyss Perimeter Liquid Shell family (primary)
+ShellAbyssCriticalPanels.qml  # Critical Abyss lock/polkit/OSD composition
+ShellWafflePanels.qml         # Windows 11-inspired Waffle family
+ShellIiPanels.qml             # Shared Material ii family loader
+GlobalStates.qml              # Runtime UI & cross-surface coordination state
 FamilyTransitionOverlay.qml   # Animated family switch
-settings.qml                  # Settings GUI
-waffleSettings.qml            # Waffle-specific settings GUI
+color-picker-worker.qml       # Disposable process-isolated circular Color Picker worker
+settings.qml                  # Standalone Settings window
+waffleSettings.qml            # Waffle-specific Settings window
 welcome.qml                   # First-run wizard
 killDialog.qml                # Process kill confirmation
 
 modules/
 ├── common/                   # Shared infrastructure
-│   ├── Appearance.qml        # ii visual tokens
-│   ├── Config.qml            # Central JsonAdapter config
+│   ├── Appearance.qml        # Material-clamped visual tokens
+│   ├── Config.qml            # Central JsonAdapter config schema
+│   ├── functions/            # ColorUtils (tonalStep, WCAG), FileUtils, StringUtils
 │   ├── perimeter/            # Connected Perimeter core substrate
 │   └── widgets/              # Reusable widgets + qmldir
-├── bar/                      # Classic Bar runtime
-├── background/               # Wallpaper + desktop widgets/items
-├── dashboard/                # Dashboard, Sonora-inspired Local Music, Weekly Planner, Custom Tabs, optional Spaced Repetition & Exercises Tracker
-├── regionSelector/           # Region selection (in-desktop auto-hiding compact toolbar + inline capture editor, Recording, OCR)
+├── abyss/                    # Single-SDF perimeter, Pyramid v2, FIFO close, Edit Stage
+│   ├── looks/                # AbyssStyle, AbyssGeometry, AbyssBodyPlacement, AbyssField.frag
+│   ├── bar/                  # Five embedded Screen Edge module zones
+│   ├── content/              # Demand-loaded native overlay bodies
+│   └── settings/             # URL-loaded Abyss Style & output configuration
+├── bar/                      # Shared bar widgets (BarCavaEqualizerModule, BatteryPopup, StyledPopup, Clock, Tray)
+├── background/               # Per-output desktop surface, wallpaper renderer, desktop items/widgets
+├── dashboard/                # Dashboard grid, Local Music, Weekly/Yearly Planners, Custom Tabs
+├── mediaControls/            # BarMediaPopup, EqualizerPanel (10-band EQ DSP canvas)
+├── regionSelector/           # Screenshot, Recording, OCR & inline capture editor
+├── recordingOsd/             # Embedded Recording controls (hosted by AbyssRecordingBody)
 ├── sidebarLeft/              # Intelligence (AI/Companion), Translator, Tools, News
-├── sidebarRight/             # Toggles, calendar, notifications
-├── settings/                 # Config UI pages
-├── dock/                     # App dock
-├── overview/                 # Workspace overview + app search
-├── wallpaperSelector/        # Wallpaper selector (grid & coverflow with Vim h/j/k/l navigation)
-├── abyss/                    # Original geometry, field, content and settings
-│   ├── looks/                # Palette tokens, geometry policy and one shader
-│   ├── bar/                  # Five embedded module zones
-│   ├── content/              # Demand-loaded native bodies
-│   └── settings/             # URL-loaded Abyss Style
-├── waffle/                   # Windows 11 family
-│   ├── bar/                  # Bottom taskbar
-│   ├── startMenu/            # Start menu with search
-│   ├── actionCenter/         # Quick settings
-│   ├── notificationCenter/   # Notification list + calendar
-│   ├── looks/Looks.qml       # Waffle visual tokens
-│   └── ...
-└── ...
+├── sidebarRight/             # Quick Settings, Calendar, Notifications
+├── settings/                 # Compact iRiS-guided Settings pages + SettingsPageRegistry
+├── dock/                     # Panel Dock (AppSearch identity resolution, Alis Nexus icon)
+├── overview/                 # Workspace overview + app/action/math search
+├── wallpaperSelector/        # Wallpaper picker (Grid & Coverflow with Vim h/j/k/l + auto-baked favorites)
+└── waffle/                   # Windows 11 family (Taskbar, Start Menu Dashboard, Action Center, Settings)
 
-native/                       # Production Rust backend workspace (alis-native, alis-inputd, alis-mpdd, alis-theme)
-services/                     # Runtime singletons (+ AlisCompanion, AlisIntergration, SpacedRepetition, deferred/)
-scripts/                      # Shell/fish/python helpers and regression validators
-sdata/                        # Install/update lifecycle and migrations
-defaults/                     # Shipped defaults and Widget SDK
+native/                       # Production Rust workspace (alis-native, alis-inputd, alis-mpdd, alis-theme)
+services/                     # Runtime singletons (+ AlisCompanion, AlisIntergration, deferred/)
+scripts/                      # CLI (`alis`), theming, setup recipes, silent regression validators
+sdata/                        # Install/update lifecycle and append-only migrations
+defaults/                     # Shipped defaults, templates, and Widget SDK
 translations/                 # Canonical en_US shell UI catalog + validators
-assets/                       # Icons, wallpapers, systemd unit, desktop entry
+patches/                      # Local Quickshell stability patches
+assets/                       # Custom SVG icons (including alis-nexus.svg), screenshots, systemd unit
 ```
 
-Orbit, Mascot, Workspace Strip, and the retired Bar renderer modules are intentionally absent from the live module graph.
+---
 
-## Config System
+## Config System & Tonal Surface Hierarchy
 
 | Aspect | Details |
 |--------|---------|
 | Schema | `modules/common/Config.qml` — `JsonAdapter` |
 | Defaults | `defaults/config.json` |
-| User file | `~/.config/illogical-impulse/config.json` (legacy namespace from fork origin) |
-| Read | `Config.options.path.to.key` |
-| Write | `Config.setNestedValue("path.to.key", value)` |
-| Ready gate | `Config.ready` |
-| Hot reload | `watchChanges: true` |
-| Debounce | 50 ms for reads and writes |
+| User file | `~/.config/illogical-impulse/config.json` (preserved legacy namespace) |
+| Read / Write | `Config.options.path.to.key` / `Config.setNestedValue("path.to.key", value)` |
+| Ready gate | `Config.ready` (hot reload `watchChanges: true`, 50 ms debounce) |
 
-When adding a live config key, update together:
-1. `modules/common/Config.qml` schema/default.
-2. Consumer(s).
-3. Settings UI for the owning family.
-4. `defaults/config.json` only when the curated fresh-install preference differs.
+When adding a live config key, update together: `modules/common/Config.qml`, all consumers, owning Settings UI, and `defaults/config.json` (only if fresh-install default differs). Unknown/stale JSON keys must never recreate retired surfaces. `Config.qml` intentionally keeps `customWidgetData` persistence outside `JsonAdapter` to avoid VME teardown crashes.
 
-Unknown/stale JSON keys are not schema-backed runtime features and must not recreate retired surfaces. `Config.qml` also intentionally keeps the custom-widget persistence workaround outside the `JsonAdapter`; do not collapse `customWidgetData` into the adapter without re-validating the VME crash workaround.
+### Tonal Surface Layering
+All Material/Abyss UI surfaces follow a strict stepped solid tonal hierarchy anchored on `Appearance.colors.colLayer0Base` / `colLayer1Base` (matching Home Dashboard `DashCard`):
+- Primary container takes the auto-themed base surface (`colLayer0Base` / `colLayer1Base`).
+- Nested cards, metric tiles, and controls step gently via `ColorUtils.tonalStep(base, dir * 0.020..0.044, satBoost)` (~2.0%–2.2% HSL lightness per tier; lightening while headroom exists and gently deepening when `hslLightness > 0.86`).
+- Zero per-box decorative `Gradient` fills and zero flat neutral-gray washes; active toggle pills guarantee explicit `colBackgroundToggled` + WCAG `>= 5.0` contrast, centered icon+text alignment, and `Text.CurveRendering` for `MaterialSymbol`.
 
-## Classic Bar Baseline
-
-`modules/bar/` is the only ii Bar runtime. `modules/settings/BarConfig.qml` configures the same runtime rather than choosing a renderer family.
-
-Supported baseline behavior includes:
-- top, bottom, left, and right placement through `bar.bottom` + `bar.vertical`;
-- one structural Hug surface; persisted `bar.cornerStyle` and `bar.showBackground` values are normalized at startup and never become selectable renderers;
-- height, active rounding, background opacity, and borderless controls;
-- Screen Edge width/radius/physical-shadow controls colocated with Bar appearance because that frame owns the Bar's physical perimeter;
-- Classic audio spectrum settings;
-- auto-hide, edge reveal, push-windows, and Super-key reveal (`bar.autoHide.showWhenPressingSuper`);
-- clock, module order, workspaces, tray, resources, media, notifications, and utility modules.
-
-Existing bar popups use `modules/bar/StyledPopup.qml`. That popup abstraction now composes the shared Connected Perimeter geometry/frame/mask primitives, so connected edge-attached presentation is the default popup path without a new user-facing toggle.
-
-Waffle remains a separate panel family with its own taskbar settings and is not a Classic Bar appearance.
-
-## Dock Baseline
-
-The ii Dock remains a separate application surface from Waffle's taskbar. **Panel** is the only supported user-facing Dock style. `modules/settings/DockConfig.qml` no longer exposes Pill/macOS/Island/M3 style choices, and `SettingsPageRegistry.qml` normalizes legacy persisted `dock.style` values to `panel` during startup.
-
-The retired `qs.modules.pill` compatibility module is gone. Ricelin remains an active shared surface skin at `modules/common/widgets/RicelinSurface.qml`; Dock, Search, and Sidebar consumers use that canonical component or `Appearance` tokens directly instead of routing through Pill-era aliases.
-
-Waffle is a panel family, not a Dock style, and must not be folded into Dock style migration.
+---
 
 ## Key Singletons
 
 | Singleton | Domain |
 |-----------|--------|
-| `Config` | Shell-wide config read/write |
-| `Appearance` | ii/shared visual tokens |
-| `Translation` | English-only shell UI lookup (`en_US`) |
-| `GlobalStates` | Panel visibility state |
-| `DevNavigation` | Development-only semantic navigation |
-| `Looks` | Waffle visual tokens |
-| `NiriService` | Niri IPC, workspaces, windows |
-| `Audio` | PipeWire volume/mute/mixer |
-| `CompositorService` | Niri/Hyprland detection |
-| `Weather` | Weather polling and location |
-| `Network` | NetworkManager integration |
-| `Wallpapers` | Wallpaper management and theming |
-| `DesktopItems` | Desktop item persistence + undo |
-| `DesktopWidgetLayout` | Per-output desktop-widget layout |
+| `Config` | Shell-wide typed config persistence |
+| `Appearance` | Material-clamped visual tokens & motion timings |
+| `Translation` | English-only shell UI lookup (`translations/en_US.json`) |
+| `GlobalStates` | Cross-panel visibility, output routing & focus leases |
+| `DevNavigation` | Development-only semantic navigation (`alis dev ...`) |
+| `Looks` | Waffle family visual tokens |
+| `NiriService` / `CompositorService` | Niri IPC, workspaces, windows & compositor detection |
+| `Audio` / `MprisController` | PipeWire mixer, active playback tracking & MPRIS duration/seek sync |
+| `Battery` | Kernel sysfs `uevent` + UPower hardware telemetry & charge limits |
+| `ColorPickerService` | Disposable circular color picker worker orchestration & clipboard sync |
+| `AppSearch` / `IconThemeService` | Fuzzy app search, window identity remapping (including `alis-nexus`), icon lookup |
+| `Wallpapers` / `MaterialThemeLoader` | Wallpaper transitions, previews & auto-theme generation |
+| `Weather` / `Network` / `DateTime` | Polling services with coarse tick discipline |
+| `DesktopItems` / `DesktopWidgetLayout` | Per-output desktop items and grid layout persistence |
 | `LyricsService` | Synchronized media lyrics |
-| `AlisCompanion` | Optional [Alis-Companion](https://github.com/llocphann/Alis-Companion) package loader & Host API 1 bridge |
-| `AlisIntergration` | Optional [Alis-Intergration](https://github.com/llocphann/Alis-Intergration) plugin loader (`tlp`, `thinkfan`, `nexus`, `spaced_repetition`, `exercises_tracker`) |
-| `SpacedRepetition` | Spaced Repetition proxy/bridge delegating to the optional `spaced_repetition` plugin when enabled |
+| `AlisCompanion` | Optional [Alis-Companion](https://github.com/llocphann/Alis-Companion) Host API 1 loader |
+| `AlisIntergration` | Optional [Alis-Intergration](https://github.com/llocphann/Alis-Intergration) Host API 1 loader (`tlp`, `thinkfan`, `nexus`, `spaced_repetition`, `exercises_tracker`) |
+| `SpacedRepetition` | Optional proxy delegating to `Alis-Intergration`'s `spaced_repetition` plugin |
 
-Wallpaper pickers apply through `Wallpapers.applySelectionTarget()`. Live preview goes through `Wallpapers.previewWallpaper()` and does not write config or regenerate colors. `modules/background/Background.qml` owns the per-output desktop surface; desktop widget instances are mapped through `Config.options.background.widgets.outputOverrides`, `screenList`, and `layerOrder`.
+---
 
-These are stability boundaries: verify all dependents before reshaping them.
+## Classic Bar, Dock & Settings Compatibility
 
-## Settings Compatibility
+- **Classic Bar (`modules/bar/`)**: Sole `ii`-family Bar runtime supporting top/bottom/left/right placement and one structural Hug surface (`bar.cornerStyle` and `bar.showBackground` normalize at startup). `modules/settings/BarConfig.qml` colocates Bar and Screen Edge controls.
+- **Dock (`modules/dock/`)**: **Panel** is the sole supported Dock style (`SettingsPageRegistry.qml` normalizes legacy persisted `dock.style` values to `panel`). `AppSearch.resolveWindowIdentity(toplevel)` remaps Quickshell-hosted `"Alis Nexus"` floating windows to `"alis-nexus"` so the Dock displays `assets/icons/alis-nexus.svg`.
+- **Settings Compatibility (`SettingsPageRegistry.qml`)**: Preserves hidden compatibility slots for retired page indices (e.g., historical TLP index **28** redirects to **System**) and normalizes `language.ui` to canonical `en_US`.
 
-Settings page indices can be persisted externally, so retired slots remain compatibility concerns even when their UI is gone. The registry keeps retired indices hidden and redirects legacy selections instead of exposing the old feature pages. Historical TLP page index **28** continues to redirect to **System**.
-
-The same registry owns startup compatibility normalization for retired Dock style values and legacy shell UI locale values. `dock.style` converges to `panel`; `language.ui` converges to canonical `en_US`.
-
-This compatibility layer must never revive Orbit, Mascot, Workspace Strip, or a retired Bar renderer.
+---
 
 ## IPC System
 
-Handlers are registered with `IpcHandler { target: "name" }` and invoked with:
+Handlers register with `IpcHandler { target: "name" }` and are invoked via:
 
 ```text
 alis <target> <function> [args]
 ```
 
-The always-instantiated `dev` target provides session-only semantic navigation for lazy UI:
-- `list()` — registered destinations as JSON;
-- `open(destination)` — navigate to a named surface/view;
-- `close()` — close navigable surfaces;
-- `current()` — current destination or `"closed"`.
+The always-instantiated `dev` target exposes `list()`, `open(destination)`, `close()`, and `current()`. All IPC functions declare explicit return types. `taskview` remains a live route mapped to Overview/task-view.
 
-All IPC functions declare return types. Inspect `shell.qml` and service `IpcHandler` blocks for registered targets.
-
-`taskview` remains a live shell route and maps to the normal Overview/task-view state; it is not an Orbit compatibility route.
+---
 
 ## Theming Pipeline
 
-Colors flow:
+```text
+wallpaper image → alis-theme (Rust) / generate_colors_material.py → colors.json → MaterialThemeLoader → Appearance tokens → UI + external apps
+```
 
-`wallpaper image → generate_colors_material.py → colors.json → MaterialThemeLoader → Appearance tokens → UI`
+`scripts/colors/applycolor.sh` and `alis-theme` synchronize GTK, Qt, terminals, Zed, VS Code, Cava, Spotify, and Discord/Vesktop themes alongside shell surfaces. Names such as `m3primary` / `m3surface` are Material color-token identifiers, not a retired Bar renderer.
 
-Theme generation is orchestrated by `scripts/colors/applycolor.sh`, which updates supported terminal, prompt, launcher, GTK, browser/editor and related application themes.
+---
 
-Names such as `m3primary`, `m3surface`, etc. are Material color-token identifiers and are not the retired M3 Bar renderer.
-
-## Distribution
+## Distribution, Migrations & Daily Development
 
 ```bash
 git clone https://github.com/llocphann/Alis.git
 cd Alis
-./setup
-./setup install -y
-./setup update
-./setup doctor
-./setup rollback
+./setup install
 ```
 
-Two install modes are tracked in `version.json`:
-- **Repo-sync**: `./setup install` → syncs to `~/.config/quickshell/alis/`.
-- **Package-managed**: `make install` → copies to `/usr/share/quickshell/alis/`.
+- **Repo-sync install**: `./setup install` syncs into `~/.config/quickshell/alis/`.
+- **Package-managed install**: `make install` installs into `/usr/share/quickshell/alis/`.
+- **Migrations (`sdata/migrations/`)**: Append-only and idempotent; never rename, reorder, or delete existing migrations.
+- **Service management**: Alis runs supervised under `alis.service` (`systemd --user`). Use `alis restart`, `alis logs`, `alis status`, `alis doctor`, and `alis settings` — never run raw `qs kill -c alis` / `qs -c alis`.
+- **Silent verification**: Automated tests and stutter checks run via `bash scripts/validate-maintainer-local.sh` and offscreen/isolated harnesses (`env -u WAYLAND_DISPLAY -u DISPLAY QT_QPA_PLATFORM=offscreen ...`) without stealing desktop focus.
 
-User config for running QML remains at `~/.config/illogical-impulse/config.json`. Shell scripts/CLI default to `~/.config/alis/` with a legacy fallback; those namespaces are not yet unified.
-
-## Migrations
-
-Migrations live under `sdata/migrations/`.
-- append-only;
-- idempotent;
-- never rename/reorder/delete an existing migration;
-- choose the next number from the current highest migration.
-
-## Daily Development
-
-```bash
-alis run
-alis restart
-alis logs | tail -50
-alis status
-alis doctor
-alis settings
-
-alis <target> <function> [args...]
-alis overview toggle
-alis audio volumeUp
-```
-
-Never run raw `qs kill -c alis` / `qs -c alis` by hand. Alis runs under the compatibility unit `alis.service` (`systemd --user`); `alis restart` is the supported forced restart path.
+---
 
 ## Connected Perimeter Status
 
 Material connected presentation retains its existing ownership boundary:
 
-- **Connected popup presentation is active by default** for existing ii bar popups through `StyledPopup.qml`. `ConnectedSurfaceGeometry` and `ConnectedSurfaceRevealClip` retain the slide-only lifecycle, while `ConnectedSurfaceAbyssFrame` renders the exact Abyss v2.31.0 SDF union in the Overlay window using Top-layer Bar/Screen Edge owner records without repainting those owners. `ConnectedSurfaceBodyMask` keeps compositor input on the revealed rounded body only. Legacy `ConnectedSurfaceFrame` / `ConnectedSurfaceMask` remain available for Waffle and non-cutover shared surfaces; they are no longer the ii StyledPopup renderer.
-- **Retired `iiPerimeter` composition remains absent.** Abyss is an independent family with its own output-local renderer, not a reactivation of that cutover. Material ScreenEdges keeps the same locked FrameWindow ownership, rounded workspace opening, Bar-owned inset rules and reservation windows; its healthy paint backend is now the texture-free `ScreenEdgeField` analytic SDF, with the former Shape/MultiEffect renderer retained only as a lazy shader-error fallback.
-
-Detailed contracts and local visual acceptance steps live below and in `scripts/test-shell-surface-contracts.py`.
+- **Connected popup presentation is active by default** for existing `ii` bar popups through `StyledPopup.qml`. `ConnectedSurfaceGeometry` and `ConnectedSurfaceRevealClip` retain the slide-only lifecycle, while `ConnectedSurfaceAbyssFrame` renders the exact Abyss SDF union in the Overlay window using Top-layer Bar/Screen Edge owner records without repainting those owners. `ConnectedSurfaceBodyMask` keeps compositor input on the revealed rounded body only. Legacy `ConnectedSurfaceFrame` / `ConnectedSurfaceMask` remain available for Waffle and non-cutover shared surfaces; they are no longer the `ii` `StyledPopup` renderer.
+- **Retired `iiPerimeter` composition remains absent.** Abyss is an independent family with its own output-local renderer, not a reactivation of that cutover. Material ScreenEdges keeps the same locked `FrameWindow` ownership, rounded workspace opening, Bar-owned inset rules, and reservation windows; its healthy paint backend is the texture-free `ScreenEdgeField` analytic SDF, with the former Shape/MultiEffect renderer retained only as a lazy shader-error fallback.
 
 ---
 
@@ -298,16 +271,3 @@ The sections below document invariant shell ownership, copy brevity, and equaliz
 ### Planned
 
 - Live spectrum DSP feedback loops, custom curve persistence upgrades, and extended Sink profile routing remain planned/deferred rather than current release prerequisites.
-
-## Localization Contract
-
-Shell UI localization is English-only. `services/Translation.qml` exposes canonical `en_US`, loads `translations/en_US.json`, and does not scan or generate alternate locale catalogs. Legacy persisted `language.ui` values are normalized to `en_US` during startup. Locale/time formatting controls remain separate from shell UI language.
-
-## Known Harmless Warnings
-
-These log messages are safe to ignore:
-- `Failed to create DBusObjectManagerInterface for "org.bluez"` — no Bluetooth adapter;
-- `failed to register listener: ...PolicyKit1...` — another polkit agent running;
-- `QSGPlainTexture: Mipmap settings changed` — Qt cosmetic;
-- `Cannot open: file:///...coverart/...` — missing album-art cache;
-- `$HYPRLAND_INSTANCE_SIGNATURE is unset` — expected when running on Niri.

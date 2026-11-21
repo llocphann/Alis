@@ -297,7 +297,7 @@ Singleton {
         repeat: false
         onTriggered: {
             root.audioSignalActive = false
-            if (root.active && MprisController.anyAudioPlaying)
+            if (root.active && (MprisController.anyAudioPlaying || Audio.hasActivePlayback))
                 root._scheduleSourceRefresh()
         }
     }

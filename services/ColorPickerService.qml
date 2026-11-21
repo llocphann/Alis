@@ -1,6 +1,8 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 import qs
+import qs.modules.common
+import qs.modules.common.functions
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -11,6 +13,8 @@ Singleton {
     property int requestId: 0
     property string result: "cancelled"
     property var resultHistory: ({})
+    property var recentColors: []
+    property string lastFormattedValue: ""
     property string lastError: ""
     // Native capture/window objects belong exclusively to the disposable worker.
     readonly property var overlays: []
@@ -19,6 +23,50 @@ Singleton {
     property var workerReply: null
     property string pendingClipboardValue: ""
     signal picked(string value)
+
+    function _opaqueHexOr(c, fallback: string): string {
+        try {
+            if (c === null || c === undefined || c === "") return fallback
+            const col = Qt.color(c)
+            if (!col || isNaN(col.r) || isNaN(col.g) || isNaN(col.b)) return fallback
+            const h = v => Math.max(0, Math.min(255, Math.round(v * 255))).toString(16).padStart(2, "0")
+            return "#" + h(col.r) + h(col.g) + h(col.b)
+        } catch (e) {
+            return fallback
+        }
+    }
+
+    function _buildThemePayload(): string {
+        const colors = Appearance?.colors
+        const dark = Boolean(Appearance?.m3colors?.darkmode ?? true)
+        const base0 = root._opaqueHexOr(colors?.colLayer0Base ?? colors?.colLayer0, dark ? "#14161b" : "#f4f6fa")
+        const base1Raw = colors?.colLayer1Base ?? colors?.colLayer1
+        const base1Col = base1Raw ? Qt.color(base1Raw) : ColorUtils.tonalStep(base0, 0.021, 0.01)
+        const dir1 = (base1Col.hslLightness > 0.86) ? -1 : 1
+        const layer1 = root._opaqueHexOr(base1Col, dark ? "#1c1f26" : "#eaeef5")
+        const layer2 = root._opaqueHexOr(ColorUtils.tonalStep(layer1, dir1 * 0.022, 0.01), dark ? "#242832" : "#dfe5f0")
+        const payload = {
+            darkmode: dark,
+            colLayer0: base0,
+            colLayer1: layer1,
+            colLayer2: layer2,
+            colPrimary: root._opaqueHexOr(colors?.colPrimary, "#89b4fa"),
+            colOnPrimary: root._opaqueHexOr(colors?.colOnPrimary, dark ? "#0d1117" : "#ffffff"),
+            colSecondary: root._opaqueHexOr(colors?.colSecondary, "#94e2d5"),
+            colTertiary: root._opaqueHexOr(colors?.colTertiary, "#cba6f7"),
+            colOnLayer0: root._opaqueHexOr(colors?.colOnLayer0, dark ? "#e6eaf2" : "#181b22"),
+            colSubtext: root._opaqueHexOr(colors?.colSubtext, dark ? "#9ea6b8" : "#556070"),
+            colOutline: root._opaqueHexOr(colors?.colLayer0Border ?? colors?.colOutline, dark ? "#333947" : "#c6cfde"),
+            recentColors: Array.isArray(root.recentColors) ? root.recentColors.slice(0, 6) : []
+        }
+        return JSON.stringify(payload)
+    }
+
+    function _recordRecentColor(hex: string): void {
+        if (!/^#[0-9A-F]{6}$/.test(hex)) return
+        const next = [hex].concat((root.recentColors ?? []).filter(c => c !== hex)).slice(0, 6)
+        root.recentColors = next
+    }
 
     function start(): string {
         if (result === "pending") return String(requestId)
@@ -70,15 +118,22 @@ Singleton {
             "alis-colorpicker-copy", nextValue, Quickshell.shellDir]
         clipboardSync.running = true
     }
-    function finish(ticket: int, value: string): void {
+    function finish(ticket: int, value: string, formatted = ""): void {
         if (!active || result !== "pending" || ticket !== requestId || !/^#[0-9A-F]{6}$/.test(value)) return
+        const clipValue = (formatted && formatted.length > 0 && formatted.length <= 64) ? formatted : value
+        root.lastFormattedValue = clipValue
+        root._recordRecentColor(value)
         // The host retains clipboard ownership after the worker exits, and
         // publishes via wlr-data-control + cliphist so unfocused picks land in
         // both the compositor clipboard and Alis Clipboard History.
-        if (Quickshell.clipboardText === value)
+        if (Quickshell.clipboardText === clipValue)
             Quickshell.clipboardText = ""
-        Quickshell.clipboardText = value
-        syncClipboardHistory(value)
+        if (clipValue === value) {
+            Quickshell.clipboardText = value
+        } else {
+            Quickshell.clipboardText = clipValue
+        }
+        syncClipboardHistory(clipValue)
         settle(value)
         picked(value)
     }
@@ -115,9 +170,12 @@ Singleton {
             root.workerTicket = root.requestId
             root.workerReply = null
             root.active = true
-            worker.environment = ({ ALIS_COLOR_PICKER_TICKET: String(root.workerTicket),
+            worker.environment = ({
+                ALIS_COLOR_PICKER_TICKET: String(root.workerTicket),
+                ALIS_COLOR_PICKER_THEME: root._buildThemePayload(),
                 QS_CONFIG_NAME: null, QS_CONFIG_PATH: null, QS_MANIFEST: null,
-                QS_DISABLE_CRASH_HANDLER: "1" })
+                QS_DISABLE_CRASH_HANDLER: "1"
+            })
             worker.running = true
             deadline.restart()
         }
@@ -149,7 +207,8 @@ Singleton {
             if (code !== 0 || status !== 0 || !reply) {
                 root.fail(root.workerTicket, "Color picker stopped unexpectedly")
             } else if (reply.status === "picked") {
-                root.finish(root.workerTicket, reply.value)
+                const fmt = (typeof reply.formatted === "string") ? reply.formatted.trim() : ""
+                root.finish(root.workerTicket, reply.value, fmt)
             } else if (reply.status === "cancelled") {
                 root.settle("cancelled")
             } else {

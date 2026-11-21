@@ -32,17 +32,34 @@ FocusScope {
     signal closeRequested()
 
     function refreshIdleDismiss(): void {
+        const ctrl = root.participant?.controller ?? null
+        const pid = String(root.participant?.identity ?? "popup")
         if (!root.hoverDismissEnabled || !root.enabled) {
             idleDismiss.stop()
+            if (ctrl && ctrl.clearHoverSurface)
+                ctrl.clearHoverSurface(pid)
             return
         }
-        if (root.triggerHovered || popupHover.hovered || root.editorFocusHeld)
+        if (root.triggerHovered || popupHover.hovered || root.editorFocusHeld) {
             idleDismiss.stop()
-        else
+            if (ctrl && ctrl.cancelHoverSurfaceClose)
+                ctrl.cancelHoverSurfaceClose(pid)
+            if (ctrl && ctrl.noteHoverSurfaceActive)
+                ctrl.noteHoverSurfaceActive(pid, !root.editorFocusHeld)
+        } else {
+            if (ctrl && ctrl.noteHoverSurfaceLeave)
+                ctrl.noteHoverSurfaceLeave(pid, true)
             idleDismiss.restart()
+        }
     }
 
     Component.onCompleted: Qt.callLater(root.refreshIdleDismiss)
+    Component.onDestruction: {
+        const ctrl = root.participant?.controller ?? null
+        const pid = String(root.participant?.identity ?? "popup")
+        if (ctrl && ctrl.clearHoverSurface)
+            ctrl.clearHoverSurface(pid)
+    }
     onKindChanged: root.refreshIdleDismiss()
     onEnabledChanged: root.refreshIdleDismiss()
     onTriggerHoveredChanged: root.refreshIdleDismiss()
@@ -61,8 +78,19 @@ FocusScope {
         repeat: false
         onTriggered: {
             if (root.hoverDismissEnabled && root.enabled
-                    && !root.triggerHovered && !popupHover.hovered && !root.editorFocusHeld)
-                root.closeRequested()
+                    && !root.triggerHovered && !popupHover.hovered && !root.editorFocusHeld) {
+                const ctrl = root.participant?.controller ?? null
+                const pid = String(root.participant?.identity ?? "popup")
+                if (ctrl && ctrl.requestHoverSurfaceClose) {
+                    ctrl.requestHoverSurfaceClose(pid, () => {
+                        if (root.hoverDismissEnabled && root.enabled
+                                && !root.triggerHovered && !popupHover.hovered && !root.editorFocusHeld)
+                            root.closeRequested()
+                    })
+                } else {
+                    root.closeRequested()
+                }
+            }
         }
     }
     // Read only on explicit diagnostic IPC; no extra handler or sampling loop.
