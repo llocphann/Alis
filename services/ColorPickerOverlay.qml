@@ -276,6 +276,7 @@ PanelWindow {
     Image {
         source: root.capturedFrame?.url ?? ""
         visible: false
+        cache: false
         onStatusChanged: if (status === Image.Ready) {
             // grabToImage sizes are in logical pixels; the returned image has
             // the window's DPR. Read its real dimensions instead of multiplying
@@ -683,6 +684,7 @@ PanelWindow {
                         objectName: "colorPickerMagnifierCanvas"
                         width: loupeCluster.lensDiameter
                         height: loupeCluster.lensDiameter
+                        renderTarget: Canvas.Image
                         antialiasing: true
                         onPaint: {
                             if (!sampler.ready) return

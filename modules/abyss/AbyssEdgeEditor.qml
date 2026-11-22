@@ -368,14 +368,23 @@ Item {
     readonly property bool canDetachSelection: targets.length>0
         && targets.every(p=>Placement.canDetachModule(p.kind))
     readonly property bool allTargetsDetached: targets.length>0 && targets.every(p=>p.detached===true)
+    readonly property bool allTargetsCornerWrapCava: targets.length>0
+        && targets.every(p=>p.cornerWrap===true && Placement.canRotateCornerWrap(p.kind))
     readonly property bool canRotateSelection: targets.length>0
-        && targets.every(p=>Placement.canRotateModule(p.kind) && p.cornerWrap!==true)
+        && targets.every(p=>Placement.canRotateModule(p.kind) && (p.cornerWrap!==true || Placement.canRotateCornerWrap(p.kind)))
     readonly property int selectedRotation: selected
-        ? Placement.effectiveRotation(selected) : 0
+        ? (allTargetsCornerWrapCava
+            ? (Placement.effectiveRotation(selected) === 180 ? 180 : 0)
+            : Placement.effectiveRotation(selected))
+        : 0
     readonly property bool mixedSelectionRotation: multiSelect
-        && targets.some(p=>Placement.effectiveRotation(p)!==selectedRotation)
+        && targets.some(p => allTargetsCornerWrapCava
+            ? ((Placement.effectiveRotation(p) === 180) !== (selectedRotation === 180))
+            : (Placement.effectiveRotation(p) !== selectedRotation))
     readonly property string rotateActionText: !targets.length
         ? "Rotate 90°"
+        : allTargetsCornerWrapCava
+        ? (mixedSelectionRotation ? "Flip bars (mixed)" : (selectedRotation===180 ? "Flip bars (inward)" : "Flip bars (outward)"))
         : mixedSelectionRotation
         ? "Rotate 90° (mixed)"
         : "Rotate 90° ("+selectedRotation+"°)"
@@ -383,6 +392,10 @@ Item {
         ? "Select a module to rotate its orientation by 90°."
         : !canRotateSelection
         ? "This module type does not support manual rotation."
+        : allTargetsCornerWrapCava
+        ? (selectedRotation===180
+            ? "Bars grow inward from screen edges toward the desktop. Click to flip outward."
+            : "Bars grow outward from the desktop toward screen edges. Click to flip inward.")
         : mixedSelectionRotation
         ? "Rotate selected modules clockwise by 90° (mixed orientations)."
         : "Orientation: "+selectedRotation+"°. Click to rotate clockwise to "+Placement.nextRotation(selectedRotation)+"°."
@@ -677,7 +690,7 @@ Item {
     function lockSelection(): void {batch("locked",!allTargetsLocked)}
     function rotateSelection(): void {
         if(!targets.length){feedback="Select a module first";return}
-        if(targets.some(p=>p.cornerWrap===true)){feedback="Straighten corner-wrapped modules before rotating";return}
+        if(targets.some(p=>p.cornerWrap===true && !Placement.canRotateCornerWrap(p.kind))){feedback="Straighten corner-wrapped modules before rotating";return}
         if(!canRotateSelection){feedback="This module type does not support manual rotation";return}
         batch("rotation","step")
     }

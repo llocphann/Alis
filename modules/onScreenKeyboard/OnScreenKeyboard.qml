@@ -101,10 +101,10 @@ Scope { // Scope
         + (GlobalStates.notificationCenterOpen         ? (1 << 21) : 0)
 
     component OskControlButton: GroupButton {
-        baseWidth: 40
-        baseHeight: 40
+        baseWidth: 36
+        baseHeight: 34
         clickedWidth: baseWidth
-        clickedHeight: baseHeight + 10
+        clickedHeight: baseHeight + 4
         buttonRadius: Appearance.rounding.normal
     }
 
@@ -281,33 +281,39 @@ Scope { // Scope
                 RowLayout {
                     id: oskRowLayout
                     anchors.centerIn: parent
-                    spacing: 5
+                    spacing: 8
 
                     ColumnLayout {
-                        spacing: 2
+                        spacing: 6
 
                         VerticalButtonGroup {
-                            OskControlButton { // Pin (locks position)
+                            OskControlButton { // Pin (locks position; right-click toggles keepOnTop)
                                 toggled: root.pinned
                                 downAction: () => root.pinned = !root.pinned
-                                contentItem: MaterialSymbol {
-                                    text: root.pinned ? "lock" : "keep"
-                                    horizontalAlignment: Text.AlignHCenter
-                                    iconSize: Appearance.font.pixelSize.larger
-                                    color: root.pinned ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer0
-                                }
-                            }
-                            OskControlButton { // Keep on top of other overlays (launcher, sidebars, ...)
-                                toggled: root.keepOnTop
-                                downAction: () => Config.setNestedValue("osk.keepOnTop", !root.keepOnTop)
-                                contentItem: MaterialSymbol {
-                                    text: "flip_to_front"
-                                    horizontalAlignment: Text.AlignHCenter
-                                    iconSize: Appearance.font.pixelSize.larger
-                                    color: root.keepOnTop ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer0
+                                altAction: () => Config.setNestedValue("osk.keepOnTop", !root.keepOnTop)
+                                contentItem: Item {
+                                    anchors.fill: parent
+                                    MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        text: root.pinned ? "lock" : "keep"
+                                        iconSize: 18
+                                        color: root.pinned ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer0
+                                    }
+                                    Rectangle {
+                                        visible: root.keepOnTop
+                                        anchors.right: parent.right
+                                        anchors.bottom: parent.bottom
+                                        anchors.margins: 4
+                                        width: 4
+                                        height: 4
+                                        radius: 2
+                                        color: root.pinned ? Appearance.colors.colOnPrimary : Appearance.colors.colPrimary
+                                    }
                                 }
                                 StyledToolTip {
-                                    text: Translation.tr("Keep keyboard above launcher and other overlays")
+                                    text: root.pinned
+                                        ? Translation.tr("Unlock position")
+                                        : Translation.tr("Pin position")
                                 }
                             }
                             OskControlButton {
@@ -317,18 +323,22 @@ Scope { // Scope
                                 contentItem: MaterialSymbol {
                                     horizontalAlignment: Text.AlignHCenter
                                     text: "keyboard_hide"
-                                    iconSize: Appearance.font.pixelSize.larger
+                                    iconSize: 18
+                                    color: Appearance.colors.colOnLayer0
+                                }
+                                StyledToolTip {
+                                    text: Translation.tr("Hide keyboard")
                                 }
                             }
                         }
 
-                        // Drag handle
+                        // Sleek vertical drag pill
                         Item {
                             id: oskDragHandle
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            Layout.minimumHeight: 30
-                            opacity: root.pinned ? 0.25 : 0.6
+                            Layout.minimumHeight: 36
+                            opacity: root.pinned ? 0.22 : 0.56
 
                             Behavior on opacity {
                                 NumberAnimation {
@@ -337,11 +347,12 @@ Scope { // Scope
                                 }
                             }
 
-                            MaterialSymbol {
+                            Rectangle {
                                 anchors.centerIn: parent
-                                text: "drag_indicator"
-                                iconSize: Appearance.font.pixelSize.larger
-                                color: Appearance.colors.colOnLayer0
+                                width: 4
+                                height: Math.min(34, Math.max(18, parent.height * 0.42))
+                                radius: 2
+                                color: Appearance.colors.colSubtext
                             }
 
                             DragHandler {
@@ -364,11 +375,11 @@ Scope { // Scope
                     }
 
                     Rectangle {
-                        Layout.topMargin: 20
-                        Layout.bottomMargin: 20
+                        Layout.topMargin: 12
+                        Layout.bottomMargin: 12
                         Layout.fillHeight: true
                         implicitWidth: 1
-                        color: Appearance.colors.colOutlineVariant
+                        color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.24)
                     }
                     OskContent {
                         id: oskContent

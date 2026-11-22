@@ -89,6 +89,7 @@ Item {
             root._idleEvicted = true
             root.backgroundPreload = false
             root.openedOnce = false
+            MemoryPressureService.requestIdleGc()
         }
     }
     Connections {
@@ -98,6 +99,7 @@ Item {
                 root._idleEvicted = true
                 root.backgroundPreload = false
                 root.openedOnce = false
+                MemoryPressureService.requestIdleGc()
             }
         }
     }

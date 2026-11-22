@@ -10,8 +10,8 @@ import qs.modules.common.widgets
 
 // Calm, cohesive Alis loading surface used for deferred popups (Dashboard,
 // Settings, Nexus, Local Music, Overview, etc.) and slow Settings tab switches.
-// Uses stepped solid tonal layers, a round-capped fluid orbital arc, and a
-// gliding pill track; pauses all animations automatically when hidden.
+// Uses stepped solid tonal layers and a round-capped fluid orbital arc; pauses
+// all animations automatically when hidden.
 Item {
     id: root
     objectName: "alisLoadingScreen"
@@ -34,8 +34,6 @@ Item {
     readonly property real tonalDir: root.colBase.hslLightness > 0.86 ? -1.0 : 1.0
     readonly property color medallionFill: ColorUtils.tonalStep(
         Appearance.colors.colLayer1Base, root.tonalDir * 0.022, 1.06)
-    readonly property color trackFill: ColorUtils.tonalStep(
-        Appearance.colors.colLayer1Base, root.tonalDir * 0.044, 1.05)
 
     visible: root.loading
 
@@ -178,39 +176,6 @@ Item {
             font.pixelSize: Appearance.font.pixelSize.normal
             font.weight: Font.DemiBold
             color: Appearance.colors.colOnLayer0
-        }
-
-        // Indeterminate smooth gliding pill track
-        Rectangle {
-            id: progressTrack
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: 96 * Appearance.fontSizeScale
-            height: 3
-            radius: height * 0.5
-            color: root.trackFill
-            clip: true
-
-            Rectangle {
-                id: progressPill
-                height: parent.height
-                width: Math.round(parent.width * 0.38)
-                radius: height * 0.5
-                color: root.accentColor
-                property real slideNorm: 0.31
-                x: (progressTrack.width + width) * slideNorm - width
-
-                SequentialAnimation on slideNorm {
-                    running: root.activeAnimation
-                    loops: Animation.Infinite
-                    NumberAnimation {
-                        from: 0.0
-                        to: 1.0
-                        duration: 1120
-                        easing.type: Easing.InOutCubic
-                    }
-                    PauseAnimation { duration: 120 }
-                }
-            }
         }
 
         StyledText {

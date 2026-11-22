@@ -7,6 +7,9 @@ Canvas {
     width: 25
     height: 25
     opacity: 0
+    // Pure CPU image backing avoids GPU FBO allocation + readback stalls during
+    // initial screen capture and 60fps loupe pixel sampling.
+    renderTarget: Canvas.Image
     property url imageUrl
     property size imageSize
     property bool imageLoaded: false

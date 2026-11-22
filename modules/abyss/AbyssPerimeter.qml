@@ -3046,9 +3046,9 @@ Scope {
                 property string _displayedSource: ""
                 onTargetSourceChanged: {
                     const nextUrl = String(targetSource ?? "");
-                    if (!nextUrl)
+                    if (!nextUrl || !visible)
                         return;
-                    if (!visible || _displayedSource === "") {
+                    if (_displayedSource === "") {
                         const activeImg = _activeSlot === 0 ? fallbackImg0 : fallbackImg1;
                         activeImg.source = nextUrl;
                         _displayedSource = nextUrl;
@@ -3067,6 +3067,8 @@ Scope {
                 }
                 onVisibleChanged: {
                     if (!visible) {
+                        fallbackImg0.source = "";
+                        fallbackImg1.source = "";
                         _displayedSource = "";
                         return;
                     }
@@ -3080,6 +3082,7 @@ Scope {
                     id: fallbackImg0
                     anchors.fill: parent
                     asynchronous: true
+                    cache: false
                     smooth: true
                     fillMode: Image.PreserveAspectCrop
                     sourceSize: Qt.size(Math.min(1920, Math.max(1, window.width)), Math.min(1080, Math.max(1, window.height)))
@@ -3101,6 +3104,7 @@ Scope {
                     id: fallbackImg1
                     anchors.fill: parent
                     asynchronous: true
+                    cache: false
                     smooth: true
                     fillMode: Image.PreserveAspectCrop
                     sourceSize: Qt.size(Math.min(1920, Math.max(1, window.width)), Math.min(1080, Math.max(1, window.height)))

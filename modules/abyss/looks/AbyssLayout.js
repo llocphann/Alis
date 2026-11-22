@@ -100,6 +100,9 @@ function isParallelToEdge(edge, rotation) {
 function canCornerWrap(kind) {
     return catalog.indexOf(String(kind)) >= 0 && !isUnifiedKind(kind);
 }
+function canRotateCornerWrap(kind) {
+    return String(kind) === "cava";
+}
 function canDetachModule(kind) {
     return catalog.indexOf(String(kind)) >= 0;
 }
@@ -552,7 +555,7 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
         return deny("This action cannot be applied to modules");
     if(action==="rotation" && items.some(function(p) {return !canRotateModule(p.kind);}))
         return deny("This module type does not support manual rotation");
-    if(action==="rotation" && items.some(function(p) {return p.cornerWrap===true;}))
+    if(action==="rotation" && items.some(function(p) {return p.cornerWrap===true && !canRotateCornerWrap(p.kind);}))
         return deny("Straighten corner-wrapped modules before rotating");
     if(action==="cornerWrap" && value && items.some(function(p) {return !canCornerWrap(p.kind);}))
         return deny("This module type cannot bend around a corner");
@@ -574,14 +577,25 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
             var update={};update[action]=value;
             if(action==="customSize" && value && !p.customSize)update.size=edgeSize(options,p.edge);
             if(action==="edge" && (hasExplicitRotation(p.rotation) || value!==p.edge))update.rotation=effectiveRotation(p);
-            if(action==="rotation")update.rotation=(value==="step" || value===undefined || value===null)
-                ? nextRotation(effectiveRotation(p)) : normalizeRotation(value,p.edge);
+            if(action==="rotation") {
+                if (p.cornerWrap === true && canRotateCornerWrap(p.kind)) {
+                    if (value === "step" || value === undefined || value === null)
+                        update.rotation = effectiveRotation(p) === 180 ? 0 : 180;
+                    else
+                        update.rotation = normalizeRotation(value, p.edge) === 180 ? 180 : 0;
+                } else {
+                    update.rotation = (value==="step" || value===undefined || value===null)
+                        ? nextRotation(effectiveRotation(p)) : normalizeRotation(value,p.edge);
+                }
+            }
             if(action==="cornerWrap") {
                 if (value) {
                     update.cornerWrap = true;
                     update.detached = false;
                     update.joinCorner = false;
                     update.alignment = "free";
+                    if (canRotateCornerWrap(p.kind))
+                        update.rotation = effectiveRotation(p) === 180 ? 180 : 0;
                     if (Math.abs((p.position ?? 0.5) - 0.5) < 0.05)
                         update.position = 0.05;
                 } else {

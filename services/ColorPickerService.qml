@@ -22,7 +22,73 @@ Singleton {
     property int workerTicket: 0
     property var workerReply: null
     property string pendingClipboardValue: ""
+    property double _lastOverlayDismissMs: 0
+    property string _sandboxEntryPath: ""
+    property bool _workerLaunchedFromSandbox: false
+    property bool _sandboxFallbackRetried: false
+    readonly property string _workerEntryPath: root._sandboxEntryPath.length > 0
+        ? root._sandboxEntryPath
+        : (Quickshell.shellDir + "/color-picker-worker.qml")
     signal picked(string value)
+
+    function _markOverlayDismissed(isOpen: bool): void {
+        if (!isOpen)
+            root._lastOverlayDismissMs = Date.now()
+    }
+
+    function _computeLaunchDelayMs(): int {
+        const anyOverlayOpen = Boolean(
+            GlobalStates.sidebarLeftOpen
+            || GlobalStates.sidebarRightOpen
+            || GlobalStates.regionSelectorOpen
+            || GlobalStates.controlPanelOpen
+            || GlobalStates.overviewOpen
+            || GlobalStates.dashboardOpen
+            || GlobalStates.waffleActionCenterOpen
+            || GlobalStates.notificationCenterOpen
+            || GlobalStates.searchOpen)
+        if (anyOverlayOpen)
+            return 220
+        const sinceDismiss = root._lastOverlayDismissMs > 0
+            ? (Date.now() - root._lastOverlayDismissMs)
+            : 9999
+        if (sinceDismiss >= 0 && sinceDismiss < 220)
+            return Math.max(16, Math.round(220 - sinceDismiss))
+        return 1
+    }
+
+    function _prepareSandbox(): void {
+        if (sandboxPrep.running)
+            return
+        const shellDir = String(Quickshell.shellDir ?? "")
+        if (!shellDir)
+            return
+        const key = Qt.md5(shellDir).slice(0, 16)
+        sandboxPrep.command = [
+            "/usr/bin/sh", "-c",
+            "base=\"${XDG_CACHE_HOME:-${HOME:-/tmp}/.cache}/alis/colorpicker-sandbox\"; " +
+            "dir=\"$base/$2\"; " +
+            "mkdir -p \"$dir/services\" && " +
+            "ln -sfn \"$1/color-picker-worker.qml\" \"$dir/color-picker-worker.qml\" && " +
+            "for existing in \"$dir\"/services/ColorPicker*.qml; do " +
+            "[ -L \"$existing\" ] && [ ! -e \"$existing\" ] && rm -f \"$existing\"; " +
+            "done; " +
+            "tmp=\"$dir/services/qmldir.tmp.$$\"; " +
+            "{ printf 'module qs.services\\n'; " +
+            "for f in \"$1\"/services/ColorPicker*.qml; do " +
+            "[ -e \"$f\" ] || continue; b=$(basename \"$f\"); " +
+            "case \"$b\" in *Service.qml) continue ;; esac; " +
+            "ln -sfn \"$f\" \"$dir/services/$b\"; " +
+            "printf '%s 1.0 %s\\n' \"${b%.qml}\" \"$b\"; " +
+            "done; } > \"$tmp\" && mv -f \"$tmp\" \"$dir/services/qmldir\" && " +
+            "for old in \"$base\"/*; do " +
+            "[ -d \"$old\" ] && [ \"$old\" != \"$dir\" ] && [ ! -e \"$old/color-picker-worker.qml\" ] && rm -rf \"$old\"; " +
+            "done; " +
+            "printf '%s\\n' \"$dir/color-picker-worker.qml\"",
+            "alis-colorpicker-sandbox", shellDir, key
+        ]
+        sandboxPrep.running = true
+    }
 
     function _opaqueHexOr(c, fallback: string): string {
         try {
@@ -73,6 +139,10 @@ Singleton {
         requestId++
         result = "pending"
         lastError = ""
+        root._sandboxFallbackRetried = false
+        if (root._sandboxEntryPath.length === 0 && !sandboxPrep.running)
+            root._prepareSandbox()
+        launch.interval = root._computeLaunchDelayMs()
         launch.restart()
         return String(requestId)
     }
@@ -159,16 +229,47 @@ Singleton {
             exitGrace.restart()
         } catch (error) {}
     }
-    // Delay until the invoking sidebar/snipping overlay has dismissed. Wait for
-    // an older cancelled process to be reaped before reusing its transport.
+    Connections {
+        target: GlobalStates
+        function onSidebarLeftOpenChanged() { root._markOverlayDismissed(GlobalStates.sidebarLeftOpen) }
+        function onSidebarRightOpenChanged() { root._markOverlayDismissed(GlobalStates.sidebarRightOpen) }
+        function onRegionSelectorOpenChanged() { root._markOverlayDismissed(GlobalStates.regionSelectorOpen) }
+        function onControlPanelOpenChanged() { root._markOverlayDismissed(GlobalStates.controlPanelOpen) }
+        function onOverviewOpenChanged() { root._markOverlayDismissed(GlobalStates.overviewOpen) }
+        function onDashboardOpenChanged() { root._markOverlayDismissed(GlobalStates.dashboardOpen) }
+        function onWaffleActionCenterOpenChanged() { root._markOverlayDismissed(GlobalStates.waffleActionCenterOpen) }
+        function onNotificationCenterOpenChanged() { root._markOverlayDismissed(GlobalStates.notificationCenterOpen) }
+        function onSearchOpenChanged() { root._markOverlayDismissed(GlobalStates.searchOpen) }
+    }
+    // Build a minimal 3-file symlink sandbox in $XDG_CACHE_HOME once after shell
+    // startup so `qs -p` skips scanning the entire Alis QML tree (~6-15x faster launch).
+    Timer {
+        id: sandboxPrepTimer
+        interval: 800
+        running: true
+        onTriggered: root._prepareSandbox()
+    }
+    Process {
+        id: sandboxPrep
+        stdout: SplitParser {
+            onRead: line => {
+                const path = String(line ?? "").trim()
+                if (path.endsWith("/color-picker-worker.qml"))
+                    root._sandboxEntryPath = path
+            }
+        }
+    }
+    // Wait briefly only when an invoking sidebar/snipping overlay just dismissed,
+    // or while an older cancelled process finishes reaping.
     Timer {
         id: launch
-        interval: 300
+        interval: 1
         onTriggered: {
             if (root.result !== "pending") return
-            if (worker.running) { restart(); return }
+            if (worker.running) { interval = 40; restart(); return }
             root.workerTicket = root.requestId
             root.workerReply = null
+            root._workerLaunchedFromSandbox = (root._sandboxEntryPath.length > 0)
             root.active = true
             worker.environment = ({
                 ALIS_COLOR_PICKER_TICKET: String(root.workerTicket),
@@ -197,13 +298,22 @@ Singleton {
     }
     Process {
         id: worker
-        command: ["qs", "-p", Quickshell.shellDir + "/color-picker-worker.qml", "--no-color"]
+        command: ["qs", "-p", root._workerEntryPath, "--no-color"]
         stdout: SplitParser { onRead: line => root.readReply(line) }
         stderr: SplitParser { onRead: line => root.readReply(line) }
         onExited: (code, status) => {
             reap.stop()
             if (root.workerTicket !== root.requestId || root.result !== "pending") return
             const reply = root.workerReply
+            if (code !== 0 && !reply && root._workerLaunchedFromSandbox && !root._sandboxFallbackRetried) {
+                // Self-heal if $XDG_CACHE_HOME/alis/colorpicker-sandbox was cleared while shell was running.
+                root._sandboxFallbackRetried = true
+                root._sandboxEntryPath = ""
+                root._prepareSandbox()
+                launch.interval = 1
+                launch.restart()
+                return
+            }
             if (code !== 0 || status !== 0 || !reply) {
                 root.fail(root.workerTicket, "Color picker stopped unexpectedly")
             } else if (reply.status === "picked") {
@@ -217,10 +327,11 @@ Singleton {
         }
         onRunningChanged: if (!running && root.active) {
             // FailedToStart has no exited signal. Defer until a normal onExited
-            // has had its opportunity to settle this same ticket.
+            // (including a single-shot sandbox fallback retry) has had its chance
+            // to settle or relaunch this same ticket.
             const ticket = root.workerTicket
             Qt.callLater(() => {
-                if (!worker.running && ticket === root.requestId && root.result === "pending")
+                if (!worker.running && !launch.running && ticket === root.requestId && root.result === "pending")
                     root.fail(ticket, "Could not start color picker")
             })
         }

@@ -54,10 +54,12 @@ Item {
         return Qt.vector4d(radius(first),radius(first+1),radius(first+2),radius(first+3))
     }
     // Static texture provider; no offscreen pass or live screen capture.
+    // cache: false stops QPixmapCache from pinning replaced 2K/4K wallpapers in RAM.
     Image {
         id: wallpaperImage
         visible: false
         asynchronous: true
+        cache: false
         source: root.wallpaperUrl
         sourceSize.width: Math.min(2048,Math.ceil(root.width*root.renderScale))
         smooth: true

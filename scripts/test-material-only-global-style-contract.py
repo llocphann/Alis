@@ -2192,7 +2192,8 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
     ):
         require(on_screen_keyboard, token, "onScreenKeyboard/OnScreenKeyboard.qml")
     for token in (
-        ": Appearance.colors.colLayer1",
+        "ColorUtils.tonalStep(",
+        "Appearance.colors.colLayer1Base",
         "? Appearance.colors.colOnPrimary",
         ": Appearance.colors.colOnLayer1",
         "PhysicalKeyboardFeedback.pressedKeycodes",
@@ -2210,10 +2211,10 @@ console.log('Material surface ink: PASS (dark readability and light palette)');
 const vm=require('node:vm'),assert=require('node:assert/strict');
 const bindings=JSON.parse(process.argv[1]);
 for(const panelFamily of ['abyss','ii','waffle'])for(const shape of ['empty','normal'])for(const showPhysicalPress of [true,false]){
- const abyss=panelFamily==='abyss';const inputs={abyss,shape,showPhysicalPress,Appearance:{colors:{colLayer1:'material',colPrimary:'materialAccent'},colLayer1Active:'materialPressed',rounding:{small:8}},AbyssStyle:{surfaceRaised:'abyss',accent:'accent'},ColorUtils:{transparentize:color=>color+'Transparent'},Qt:{alpha:(color,a)=>color+':'+a}};
- const expected=shape==='empty' ? abyss ? 'transparent' : 'materialTransparent' : abyss ? showPhysicalPress ? 'accent:0.22' : 'abyss' : showPhysicalPress ? 'materialPressed' : 'material';
+ const abyss=panelFamily==='abyss';const inputs={abyss,shape,showPhysicalPress,_keyRestColor:'tonalRest',_keyPressColor:'tonalPressed',Appearance:{colors:{colLayer1:'material',colPrimary:'materialAccent'},rounding:{small:8}},ColorUtils:{transparentize:color=>color+'Transparent'}};
+ const expected=shape==='empty' ? 'materialTransparent' : showPhysicalPress ? 'tonalPressed' : 'tonalRest';
  assert.equal(vm.runInNewContext(bindings.colBackground,inputs),expected);
- assert.equal(vm.runInNewContext(bindings.colBackgroundToggled,inputs),abyss ? 'accent' : 'materialAccent');
+ assert.equal(vm.runInNewContext(bindings.colBackgroundToggled,inputs),'materialAccent');
  assert.equal(vm.runInNewContext(bindings.buttonRadius,inputs),8);
 }
 console.log('Onscreen keyboard palette and key shape: PASS (12 cases)');

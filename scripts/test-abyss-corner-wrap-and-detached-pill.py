@@ -259,12 +259,22 @@ for (const tc of [
     assert.equal(after.content.height, before.content.height, `locked detached ${tc.id} height unchanged`);
 }
 
-// 8d. Rotating a corner-wrapped module is rejected cleanly by checkedBatch
+// 8d. Rotating a non-cava corner-wrapped module is rejected cleanly by checkedBatch,
+//     while corner-wrapped Cava supports flipping bar direction (0° outward <-> 180° inward)
 {
     const cwRotBase = normalize([{ id: 'cwRot', kind: 'clock', edge: 'top', position: 0.05, cornerWrap: true }], 'top');
     const cwRotRes = checkedBatch(cwRotBase, ['cwRot'], 'rotation', 'step', 1920, 1080, { edgeThickness: 16 }, 1);
-    assert.ok(cwRotRes.rejected.includes('Straighten'), `checkedBatch must reject rotating cornerWrap module, got: ${cwRotRes.rejected}`);
+    assert.ok(cwRotRes.rejected.includes('Straighten'), `checkedBatch must reject rotating non-cava cornerWrap module, got: ${cwRotRes.rejected}`);
     assert.equal(cwRotRes.placements[0].rotation, undefined, 'rejected cornerWrap rotation must not mutate placement');
+
+    const cwCavaBase = normalize([{ id: 'cwCava', kind: 'cava', edge: 'bottom', position: 0.05, cornerWrap: true }], 'bottom');
+    const cwCavaFlip1 = checkedBatch(cwCavaBase, ['cwCava'], 'rotation', 'step', 1920, 1080, { edgeThickness: 16 }, 1);
+    assert.equal(cwCavaFlip1.rejected, '', `corner-wrapped cava flip should succeed, got: ${cwCavaFlip1.rejected}`);
+    assert.equal(cwCavaFlip1.placements[0].rotation, 180, 'first flip on cornerWrap cava must set rotation=180 (inward)');
+    assert.equal(cwCavaFlip1.placements[0].cornerWrap, true, 'flipping cornerWrap cava must keep cornerWrap=true');
+    const cwCavaFlip2 = checkedBatch(cwCavaFlip1.placements, ['cwCava'], 'rotation', 'step', 1920, 1080, { edgeThickness: 16 }, 1);
+    assert.equal(cwCavaFlip2.rejected, '', 'second flip on cornerWrap cava should succeed');
+    assert.equal(cwCavaFlip2.placements[0].rotation, 0, 'second flip on cornerWrap cava must return rotation=0 (outward)');
 }
 
 // 9. Mutual exclusivity in checkedBatch & saveProfile -> resolve roundtrip (both per-output AND global profiles)

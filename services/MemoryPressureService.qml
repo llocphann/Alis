@@ -83,7 +83,20 @@ Singleton {
     }
 
     property double _lastPressureSignalMs: 0
+    property double _lastIdleGcMs: 0
+    property int _lastAutoGcDeletedCount: 0
     signal pressureExceeded()
+
+    // Debounced, rate-limited GC triggered after heavy panel eviction or pressure events
+    // so unloaded QML trees/pixmaps actually release instead of lingering in JSGCHeap.
+    function requestIdleGc(): void {
+        if (!root.enabled)
+            return
+        const nowMs = Date.now()
+        if (nowMs - root._lastIdleGcMs < 30000)
+            return
+        _idleGcTimer.restart()
+    }
 
     function _applyMapsText(rawText: string): void {
         let deleted = 0
@@ -108,12 +121,22 @@ Singleton {
         root.currentDeletedMappings = deleted
         root.currentTotalMappings = total
 
+        const nowMs = Date.now()
+        const softThreshold = Math.max(24, Math.floor(root.deletedMappingsThreshold * 0.45))
+        if (deleted >= softThreshold
+                && (deleted - root._lastAutoGcDeletedCount >= 24 || nowMs - root._lastIdleGcMs >= 600000)) {
+            root._lastAutoGcDeletedCount = deleted
+            root._lastIdleGcMs = nowMs
+            gc()
+            _log("proactive gc() at soft threshold:", deleted)
+        }
+
         if (root.currentDeletedMappings >= root.deletedMappingsThreshold) {
             _log("threshold exceeded:", root.currentDeletedMappings, ">=", root.deletedMappingsThreshold)
-            const nowMs = Date.now()
             if (nowMs - root._lastPressureSignalMs >= 60000) {
                 root._lastPressureSignalMs = nowMs
                 root.pressureExceeded()
+                _idleGcTimer.restart()
             }
             root._notifyUser()
         }
@@ -156,6 +179,17 @@ Singleton {
         repeat: true
         running: root.enabled
         onTriggered: root._checkMemoryPressure()
+    }
+
+    Timer {
+        id: _idleGcTimer
+        interval: 1500
+        repeat: false
+        onTriggered: {
+            root._lastIdleGcMs = Date.now()
+            gc()
+            _log("idle eviction gc() completed")
+        }
     }
 
     Timer {

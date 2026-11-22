@@ -69,9 +69,12 @@ Item {
     CavaProcess {
         id: cavaProcess
         active: root.visible && (MprisController.anyAudioPlaying || Audio.hasActivePlayback)
-        sampleCount: Math.max(32, root.effectiveBarCount * (root.stereoSource ? 2 : 1))
+        sampleCount: Math.max(32, root.effectiveBarCount)
     }
 
+    property var _scratchA: []
+    property var _scratchB: []
+    property bool _scratchFlip: false
     readonly property var _idleNormalized: {
         const count = Math.max(1, root.effectiveBarCount)
         const out = new Array(count)
@@ -79,48 +82,38 @@ Item {
         return out
     }
 
-    // Fold stereo CAVA frames ([L_high..L_low, R_low..R_high]) into a canonical
-    // left-to-right bass -> mid -> treble bar equalizer, or bin mono frames
-    // linearly, settling cleanly to 0 baseline whenever audio is inactive.
-    function computeNormalizedBars(pts, ceilingValue, barCount, isStereo, signalActive): var {
+    // Upstream symmetric stereo presentation: CAVA outputs mirrored stereo frames
+    // ([L_high..L_low, R_low..R_high]) so mapping samples directly across bars
+    // keeps stereo bass symmetric at the center and highs tapering toward both edges,
+    // while mono mode maps linearly left-to-right and silence settles to 0.
+    function _fillNormalizedBars(pts, ceilingValue, barCount, isStereo, signalActive, out): var {
         const count = Math.max(1, Number(barCount) || 1)
-        const out = new Array(count)
+        out.length = count
         const len = pts ? pts.length : 0
         if (!signalActive || len <= 0) {
-            out.fill(0)
+            for (let i = 0; i < count; ++i) out[i] = 0
             return out
         }
         const ceiling = Math.max(1, Number(ceilingValue) || 20)
-        const foldStereo = Boolean(isStereo) && len >= 2
-        const freqBins = foldStereo ? Math.floor(len / 2) : len
-        const rightOffset = foldStereo ? (len - freqBins) : 0
-
-        function readBin(k) {
-            if (foldStereo) {
-                const leftSample = Math.max(0, Number(pts[freqBins - 1 - k] || 0))
-                const rightSample = Math.max(0, Number(pts[rightOffset + k] || 0))
-                return (leftSample + rightSample) * 0.5
-            }
-            return Math.max(0, Number(pts[k] || 0))
-        }
-
-        const upsample = count > freqBins && freqBins > 1
+        const upsample = count > len && len > 1
         for (let idx = 0; idx < count; ++idx) {
             let level = 0
             if (upsample) {
-                const pos = (idx * (freqBins - 1)) / Math.max(1, count - 1)
+                const pos = (idx * (len - 1)) / Math.max(1, count - 1)
                 const lo = Math.floor(pos)
-                const hi = Math.min(freqBins - 1, lo + 1)
+                const hi = Math.min(len - 1, lo + 1)
                 const frac = pos - lo
-                level = readBin(lo) * (1 - frac) + readBin(hi) * frac
+                const vLo = Math.max(0, Number(pts[lo] || 0))
+                const vHi = Math.max(0, Number(pts[hi] || 0))
+                level = vLo * (1 - frac) + vHi * frac
             } else {
-                const start = Math.floor(idx * freqBins / count)
-                const end = Math.min(freqBins, Math.max(start + 1, Math.ceil((idx + 1) * freqBins / count)))
+                const start = Math.floor(idx * len / count)
+                const end = Math.min(len, Math.max(start + 1, Math.ceil((idx + 1) * len / count)))
                 let sum = 0
                 let peak = 0
                 let cnt = 0
                 for (let k = start; k < end; ++k) {
-                    const s = readBin(k)
+                    const s = Math.max(0, Number(pts[k] || 0))
                     sum += s
                     if (s > peak) peak = s
                     cnt++
@@ -132,6 +125,10 @@ Item {
             out[idx] = clamped > 0.002 ? Math.pow(clamped, 0.82) : 0
         }
         return out
+    }
+
+    function computeNormalizedBars(pts, ceilingValue, barCount, isStereo, signalActive): var {
+        return root._fillNormalizedBars(pts, ceilingValue, barCount, isStereo, signalActive, new Array(Math.max(1, Number(barCount) || 1)))
     }
 
     readonly property var paletteColors: {
@@ -154,16 +151,36 @@ Item {
         )
     }
 
-    function barColorForIndex(idx: int, count: int, normVal: real): color {
+    // Precomputed per-bar palette (mirrored symmetrically in stereo mode) — zero per-frame Qt.rgba() churn.
+    readonly property var cachedBarColors: {
+        const count = Math.max(1, root.effectiveBarCount)
         const pal = root.paletteColors
-        if (!pal || pal.length === 0) return Appearance.colors.colPrimary
-        if (pal.length === 1) return pal[0]
-        const pos = count > 1 ? (idx / (count - 1)) : 0
-        const mix = Math.min(1, Math.max(0, pos * 0.55 + normVal * 0.45))
-        const scaled = mix * (pal.length - 1)
-        const lo = Math.max(0, Math.min(pal.length - 1, Math.floor(scaled)))
-        const hi = Math.max(0, Math.min(pal.length - 1, lo + 1))
-        return root._lerpColor(pal[lo], pal[hi], scaled - lo)
+        const out = new Array(count)
+        if (!pal || pal.length === 0) {
+            out.fill(Appearance.colors.colPrimary)
+            return out
+        }
+        if (pal.length === 1) {
+            out.fill(pal[0])
+            return out
+        }
+        const symmetric = root.stereoSource
+        for (let idx = 0; idx < count; ++idx) {
+            const linear = count > 1 ? (idx / (count - 1)) : 0
+            const pos = symmetric ? (1.0 - Math.abs(linear * 2.0 - 1.0)) : linear
+            const scaled = pos * (pal.length - 1)
+            const lo = Math.max(0, Math.min(pal.length - 1, Math.floor(scaled)))
+            const hi = Math.max(0, Math.min(pal.length - 1, lo + 1))
+            out[idx] = root._lerpColor(pal[lo], pal[hi], scaled - lo)
+        }
+        return out
+    }
+
+    function barColorForIndex(idx: int, count: int, normVal: real): color {
+        const cached = root.cachedBarColors
+        if (cached && idx >= 0 && idx < cached.length)
+            return cached[idx]
+        return Appearance.colors.colPrimary
     }
 
     Item {
@@ -174,17 +191,40 @@ Item {
         rotation: root.vertical ? 90 : 0
         clip: true
 
-        readonly property var targetNormalized: {
-            if (!root.visible || !cavaProcess.audioSignalActive)
-                return root._idleNormalized
-            return root.computeNormalizedBars(
+        // Imperative double-buffered frame rebuild (matching BarCavaVisualizer) avoids
+        // self-mutating QML binding loops and redundant ceiling-decay recomputation.
+        property var targetNormalized: root._idleNormalized
+
+        function rebuildTargetNormalized(): void {
+            if (!root.visible || !cavaProcess.audioSignalActive) {
+                if (targetNormalized !== root._idleNormalized)
+                    targetNormalized = root._idleNormalized
+                return
+            }
+            root._scratchFlip = !root._scratchFlip
+            const buf = root._scratchFlip ? root._scratchA : root._scratchB
+            targetNormalized = root._fillNormalizedBars(
                 cavaProcess.points,
                 cavaProcess.normalizationCeiling,
                 root.effectiveBarCount,
                 root.stereoSource,
-                true
+                true,
+                buf
             )
         }
+
+        Connections {
+            target: cavaProcess
+            function onPointsChanged(): void { barsContainer.rebuildTargetNormalized() }
+            function onAudioSignalActiveChanged(): void { barsContainer.rebuildTargetNormalized() }
+        }
+        Connections {
+            target: root
+            function onVisibleChanged(): void { barsContainer.rebuildTargetNormalized() }
+            function onEffectiveBarCountChanged(): void { barsContainer.rebuildTargetNormalized() }
+            function onStereoSourceChanged(): void { barsContainer.rebuildTargetNormalized() }
+        }
+        Component.onCompleted: barsContainer.rebuildTargetNormalized()
 
         Repeater {
             model: root.visible ? root.effectiveBarCount : 0
@@ -207,7 +247,7 @@ Item {
                     NumberAnimation { duration: 42; easing.type: Easing.OutQuad }
                 }
                 readonly property real activeBarHeight: Math.max(2, Math.round(normalizedPoint * barSlot.height))
-                readonly property color activeColor: root.barColorForIndex(index, root.effectiveBarCount, normalizedPoint)
+                readonly property color activeColor: root.barColorForIndex(index, root.effectiveBarCount, 0)
 
                 Rectangle {
                     width: barSlot.slotWidth

@@ -222,9 +222,29 @@ for id in "${windows_to_capture[@]}"; do
   fi
 done
 
-sleep 0.5
+expected_matches="${#preview_hashes[@]}"
+
+# Adaptive cliphist settle: wait until cliphist records all expected new entries
+# above before_id (typical 50-100ms for a single window), capped at 250ms (1 win)
+# or 350ms (multi-window batches) so multi-window entries do not slip past pass 1.
+max_wait_polls=5
+[[ $expected_matches -gt 1 ]] && max_wait_polls=7
+for (( _clip_wait = 1; _clip_wait <= max_wait_polls; ++_clip_wait )); do
+  sleep 0.05
+  [[ $expected_matches -le 0 ]] && break
+  new_entries=0
+  while IFS= read -r _w_entry; do
+    _w_id="${_w_entry%%$'\t'*}"
+    [[ "$_w_id" =~ ^[0-9]+$ ]] || continue
+    [[ "$_w_id" -gt "$before_id" ]] || break
+    new_entries=$((new_entries + 1))
+    [[ $new_entries -ge $expected_matches ]] && break
+  done < <("$cliphist_bin" list 2>/dev/null)
+  [[ $new_entries -ge $expected_matches ]] && break
+done
 
 max_cleanup=100
+deleted_matches=0
 
 # Delete only cliphist entries whose decoded bytes match a generated preview.
 # A user copy made during capture may have a newer ID too and must survive.
@@ -239,11 +259,15 @@ for _pass in 1 2; do
       entry_hash="$("$sha256_bin" "$decoded_entry" | cut -d' ' -f1)"
       if hash_matches_preview "$entry_hash"; then
         printf '%s\n' "$entry" | "$cliphist_bin" delete 2>/dev/null || true
+        deleted_matches=$((deleted_matches + 1))
       fi
       cleanup_count=$((cleanup_count + 1))
     fi
   done < <("$cliphist_bin" list 2>/dev/null)
-  [[ $_pass -eq 1 ]] && sleep 0.3
+  if [[ $_pass -eq 1 ]]; then
+    [[ $expected_matches -gt 0 && $deleted_matches -ge $expected_matches ]] && break
+    sleep 0.25
+  fi
 done
 
 # Restore only when Niri still owns the clipboard with one of our screenshots.

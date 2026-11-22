@@ -116,30 +116,37 @@ ShellRoot {
                 tryCompare(Config, "ready", true, 4000)
                 tryCompare(overlayLoader, "status", Loader.Ready, 4000)
 
-                // ── 1. BarCavaEqualizerModule: Stereo Folding, Mono Mode, Silence Baseline, Mirror ──
+                // ── 1. BarCavaEqualizerModule: Upstream Symmetric Stereo, Mono Mode, Silence Baseline, Mirror ──
                 // Stereo CAVA layout: [L_high(0), L_midH(1), L_midL(2), L_bass(3), R_bass(4), R_midL(5), R_midH(6), R_high(7)]
+                // Symmetric upstream presentation keeps center bass peaks symmetric and highs at both outer edges.
                 const stereoBass = barEq.computeNormalizedBars([0, 0, 0, 1000, 1000, 0, 0, 0], 1000, 4, true, true)
                 root.check(stereoBass.length === 4, "stereoBass length mismatch")
-                root.check(stereoBass[0] > 0.95 && stereoBass[1] === 0 && stereoBass[2] === 0 && stereoBass[3] === 0,
-                    "Stereo bass must map to leftmost bar 0, got " + JSON.stringify(stereoBass))
+                root.check(stereoBass[0] === 0 && stereoBass[3] === 0
+                    && stereoBass[1] > 0.6 && stereoBass[2] > 0.6
+                    && Math.abs(stereoBass[1] - stereoBass[2]) < 1e-6,
+                    "Stereo bass must map symmetrically to center bars 1 & 2, got " + JSON.stringify(stereoBass))
 
                 const stereoTreble = barEq.computeNormalizedBars([1000, 0, 0, 0, 0, 0, 0, 1000], 1000, 4, true, true)
-                root.check(stereoTreble[3] > 0.95 && stereoTreble[0] === 0 && stereoTreble[1] === 0 && stereoTreble[2] === 0,
-                    "Stereo treble must map to rightmost bar 3, got " + JSON.stringify(stereoTreble))
+                root.check(stereoTreble[0] > 0.6 && stereoTreble[3] > 0.6
+                    && Math.abs(stereoTreble[0] - stereoTreble[3]) < 1e-6
+                    && stereoTreble[1] === 0 && stereoTreble[2] === 0,
+                    "Stereo treble must map symmetrically to outer edge bars 0 & 3, got " + JSON.stringify(stereoTreble))
 
-                // Asymmetric L/R bass (left=1000, right=0) should average to ~0.56 shaped energy in bar 0
+                // Asymmetric L/R stereo (left bass=1000, right=0) preserves left/right stereo separation
                 const stereoAsym = barEq.computeNormalizedBars([0, 0, 0, 1000, 0, 0, 0, 0], 1000, 4, true, true)
-                root.check(stereoAsym[0] > 0.5 && stereoAsym[0] < 0.7 && stereoAsym[3] === 0,
-                    "Asymmetric stereo bass folding unexpected: " + JSON.stringify(stereoAsym))
+                root.check(stereoAsym[1] > 0.6 && stereoAsym[2] === 0 && stereoAsym[0] === 0 && stereoAsym[3] === 0,
+                    "Asymmetric stereo bass must remain on left center bar: " + JSON.stringify(stereoAsym))
 
-                // Upsampling stereo (count > freqBins, e.g. 8 bars from 4 stereo freqBins):
-                // linear interpolation must produce smooth strictly decreasing values, NOT duplicate staircase pairs!
-                const stereoUpsample = barEq.computeNormalizedBars([0, 300, 600, 1000, 1000, 600, 300, 0], 1000, 8, true, true)
-                root.check(stereoUpsample.length === 8
-                    && stereoUpsample[0] > stereoUpsample[1]
-                    && stereoUpsample[1] > stereoUpsample[2]
-                    && stereoUpsample[2] > stereoUpsample[3],
-                    "Upsampling stereo bars must interpolate smoothly without duplicate pairs: " + JSON.stringify(stereoUpsample))
+                // Upsampling symmetric stereo (count > len, e.g. 12 bars from 8 stereo bins):
+                // linear interpolation must produce smooth symmetric rise to center and fall to right edge!
+                const stereoUpsample = barEq.computeNormalizedBars([0, 300, 600, 1000, 1000, 600, 300, 0], 1000, 12, true, true)
+                root.check(stereoUpsample.length === 12
+                    && stereoUpsample[0] < stereoUpsample[2]
+                    && stereoUpsample[2] < stereoUpsample[5]
+                    && Math.abs(stereoUpsample[0] - stereoUpsample[11]) < 1e-6
+                    && Math.abs(stereoUpsample[2] - stereoUpsample[9]) < 1e-6
+                    && Math.abs(stereoUpsample[5] - stereoUpsample[6]) < 1e-6,
+                    "Upsampling stereo bars must interpolate smoothly and symmetrically: " + JSON.stringify(stereoUpsample))
 
                 // Mono mode linear mapping: [bass, lowMid, highMid, treble]
                 const monoBass = barEq.computeNormalizedBars([1000, 0, 0, 0], 1000, 4, false, true)

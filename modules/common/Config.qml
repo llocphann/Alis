@@ -2640,6 +2640,7 @@ Singleton {
                 property bool keepOverviewOpenOnWindowClick: true
                 property bool closeAfterWindowMove: true
                 property bool showPreviews: false
+                property bool livePreviews: true
                 property bool activeScreenOnly: true
                 property bool allAppsGrid: false
                 property string allAppsGridMode: "minimal"

@@ -31,6 +31,8 @@ Item {
     property real wrapThickness: 32 * Appearance.fontSizeScale
     property real wrapArcRadius: 22
     property real contentScale: 1
+    // Inherits rotation from parent Loader -> AbyssBarModule without coupling files.
+    property int moduleRotation: Number(parent?.parent?.moduleRotation ?? -1)
     readonly property bool contentAvailable: kindLoader.item
         ? (kindLoader.item.contentAvailable ?? true)
         : (root.editing || (root.kind !== "timer" && root.kind !== "shellUpdate"))
@@ -141,7 +143,7 @@ Item {
             : fallbackComp
     }
 
-    // ─── Cava Equalizer: Radial stereo-folded bars curving around the 90° corner ───
+    // ─── Cava Equalizer: Radial symmetric stereo bars curving around the 90° corner ───
     Component {
         id: cavaComp
         Item {
@@ -153,6 +155,8 @@ Item {
             readonly property int barSpacing: Math.max(1, Math.min(6, Number(Config.options?.bar?.cava?.barSpacing ?? 2)))
             readonly property int barRadius: Math.max(0, Math.min(6, Number(Config.options?.bar?.cava?.barRadius ?? 2)))
             readonly property bool mirrorBars: Boolean(Config.options?.bar?.cava?.mirror ?? false)
+            // Rotation 180° flips bar growth: from screen edges inward toward the desktop.
+            readonly property bool invertBars: root.moduleRotation === 180
             readonly property bool stereoSource: Config.options?.appearance?.cava?.stereo ?? true
             readonly property int configuredBarCount: Math.max(0, Math.min(200, Number(Config.options?.appearance?.cava?.bars ?? 0)))
 
@@ -174,58 +178,88 @@ Item {
                 return [Appearance.colors.colPrimary, Appearance.colors.colSecondary, Appearance.colors.colTertiary]
             }
 
-            function barColorForIndex(idx: int, count: int): color {
+            // Precompute bar palette once per count/theme change to avoid per-frame Qt.rgba() churn.
+            readonly property var cachedBarColors: {
+                const count = Math.max(1, cavaWrap.effectiveBarCount)
                 const pal = cavaWrap.paletteColors
-                if (!pal || pal.length === 0) return Appearance.colors.colPrimary
-                if (pal.length === 1) return pal[0]
-                const t = count > 1 ? idx / (count - 1) : 0
-                const scaled = t * (pal.length - 1)
-                const lo = Math.min(pal.length - 1, Math.floor(scaled))
-                const hi = Math.min(pal.length - 1, lo + 1)
-                const f = scaled - lo
-                const a = Qt.color(pal[lo])
-                const b = Qt.color(pal[hi])
-                return Qt.rgba(a.r + (b.r - a.r) * f, a.g + (b.g - a.g) * f, a.b + (b.b - a.b) * f, a.a + (b.a - a.a) * f)
+                const out = new Array(count)
+                if (!pal || pal.length === 0) {
+                    out.fill(Appearance.colors.colPrimary)
+                    return out
+                }
+                if (pal.length === 1) {
+                    out.fill(pal[0])
+                    return out
+                }
+                const symmetric = cavaWrap.stereoSource
+                for (let idx = 0; idx < count; ++idx) {
+                    const linear = count > 1 ? idx / (count - 1) : 0
+                    const t = symmetric ? (1.0 - Math.abs(linear * 2.0 - 1.0)) : linear
+                    const scaled = t * (pal.length - 1)
+                    const lo = Math.min(pal.length - 1, Math.floor(scaled))
+                    const hi = Math.min(pal.length - 1, lo + 1)
+                    const f = scaled - lo
+                    const a = Qt.color(pal[lo])
+                    const b = Qt.color(pal[hi])
+                    out[idx] = Qt.rgba(a.r + (b.r - a.r) * f, a.g + (b.g - a.g) * f, a.b + (b.b - a.b) * f, a.a + (b.a - a.a) * f)
+                }
+                return out
             }
 
-            function computeNormalizedBars(pts, ceilingValue, barCount, isStereo, signalActive): var {
-                const count = Math.max(1, Number(barCount) || 1)
+            function barColorForIndex(idx: int, count: int): color {
+                const cached = cavaWrap.cachedBarColors
+                if (cached && idx >= 0 && idx < cached.length)
+                    return cached[idx]
+                return Appearance.colors.colPrimary
+            }
+
+            property var _scratchA: []
+            property var _scratchB: []
+            property bool _scratchFlip: false
+            readonly property var _idleNormalized: {
+                const count = Math.max(1, cavaWrap.effectiveBarCount)
                 const out = new Array(count)
+                out.fill(0)
+                return out
+            }
+
+            // Upstream symmetric stereo presentation: CAVA outputs mirrored stereo
+            // [L_high..L_low, R_low..R_high] so mapping samples directly across bars
+            // places bass symmetrically at the center / corner apex and highs toward both tips.
+            function _fillNormalizedBars(pts, ceilingValue, barCount, isStereo, signalActive, out): var {
+                const count = Math.max(1, Number(barCount) || 1)
+                out.length = count
                 const len = pts ? pts.length : 0
                 if (!signalActive || len <= 0) {
-                    out.fill(0)
+                    for (let i = 0; i < count; ++i) out[i] = 0
                     return out
                 }
                 const ceiling = Math.max(1, Number(ceilingValue) || 20)
-                const foldStereo = Boolean(isStereo) && len >= 2
-                const freqBins = foldStereo ? Math.floor(len / 2) : len
-                const rightOffset = foldStereo ? (len - freqBins) : 0
-
-                function readBin(k) {
-                    if (foldStereo) {
-                        const leftSample = Math.max(0, Number(pts[freqBins - 1 - k] || 0))
-                        const rightSample = Math.max(0, Number(pts[rightOffset + k] || 0))
-                        return (leftSample + rightSample) * 0.5
-                    }
-                    return Math.max(0, Number(pts[k] || 0))
-                }
-
-                const upsample = count > freqBins && freqBins > 1
+                const upsample = count > len && len > 1
                 for (let idx = 0; idx < count; ++idx) {
                     let level = 0
                     if (upsample) {
-                        const pos = (idx / Math.max(1, count - 1)) * (freqBins - 1)
+                        const pos = (idx / Math.max(1, count - 1)) * (len - 1)
                         const lo = Math.floor(pos)
-                        const hi = Math.min(freqBins - 1, lo + 1)
+                        const hi = Math.min(len - 1, lo + 1)
                         const frac = pos - lo
-                        level = readBin(lo) * (1 - frac) + readBin(hi) * frac
+                        const vLo = Math.max(0, Number(pts[lo] || 0))
+                        const vHi = Math.max(0, Number(pts[hi] || 0))
+                        level = vLo * (1 - frac) + vHi * frac
                     } else {
-                        const binStart = Math.floor((idx * freqBins) / count)
-                        const binEnd = Math.max(binStart + 1, Math.floor(((idx + 1) * freqBins) / count))
-                        for (let k = binStart; k < binEnd && k < freqBins; ++k) {
-                            const v = readBin(k)
-                            if (v > level) level = v
+                        const binStart = Math.floor((idx * len) / count)
+                        const binEnd = Math.min(len, Math.max(binStart + 1, Math.ceil(((idx + 1) * len) / count)))
+                        let sum = 0
+                        let peak = 0
+                        let cnt = 0
+                        for (let k = binStart; k < binEnd; ++k) {
+                            const v = Math.max(0, Number(pts[k] || 0))
+                            sum += v
+                            if (v > peak) peak = v
+                            cnt++
                         }
+                        const avg = cnt > 0 ? (sum / cnt) : 0
+                        level = avg * 0.62 + peak * 0.38
                     }
                     const norm = Math.max(0, Math.min(1, level / ceiling))
                     out[idx] = norm > 0.002 ? Math.pow(norm, 0.82) : 0
@@ -233,23 +267,44 @@ Item {
                 return out
             }
 
+            function computeNormalizedBars(pts, ceilingValue, barCount, isStereo, signalActive): var {
+                return cavaWrap._fillNormalizedBars(pts, ceilingValue, barCount, isStereo, signalActive, new Array(Math.max(1, Number(barCount) || 1)))
+            }
+
             CavaProcess {
                 id: cornerCavaProc
                 active: cavaWrap.visible && cavaWrap.audioActive
-                sampleCount: Math.max(32, cavaWrap.effectiveBarCount * (cavaWrap.stereoSource ? 2 : 1))
+                sampleCount: Math.max(32, cavaWrap.effectiveBarCount)
+                onPointsChanged: cavaWrap._rebuildTargetNormalized()
+                onAudioSignalActiveChanged: cavaWrap._rebuildTargetNormalized()
             }
 
-            readonly property var targetNormalized: {
-                if (!cavaWrap.visible || !cornerCavaProc.audioSignalActive)
-                    return cavaWrap.computeNormalizedBars([], 20, cavaWrap.effectiveBarCount, cavaWrap.stereoSource, false)
-                return cavaWrap.computeNormalizedBars(
+            // Imperative double-buffered frame rebuild avoids self-mutating QML
+            // binding loops and redundant ceiling-decay recomputation.
+            property var targetNormalized: cavaWrap._idleNormalized
+
+            function _rebuildTargetNormalized(): void {
+                if (!cavaWrap.visible || !cornerCavaProc.audioSignalActive) {
+                    if (cavaWrap.targetNormalized !== cavaWrap._idleNormalized)
+                        cavaWrap.targetNormalized = cavaWrap._idleNormalized
+                    return
+                }
+                cavaWrap._scratchFlip = !cavaWrap._scratchFlip
+                const buf = cavaWrap._scratchFlip ? cavaWrap._scratchA : cavaWrap._scratchB
+                cavaWrap.targetNormalized = cavaWrap._fillNormalizedBars(
                     cornerCavaProc.points,
                     cornerCavaProc.normalizationCeiling,
                     cavaWrap.effectiveBarCount,
                     cavaWrap.stereoSource,
-                    true
+                    true,
+                    buf
                 )
             }
+
+            onVisibleChanged: cavaWrap._rebuildTargetNormalized()
+            onEffectiveBarCountChanged: cavaWrap._rebuildTargetNormalized()
+            onStereoSourceChanged: cavaWrap._rebuildTargetNormalized()
+            Component.onCompleted: cavaWrap._rebuildTargetNormalized()
 
             Repeater {
                 model: cavaWrap.effectiveBarCount
@@ -272,10 +327,13 @@ Item {
                     rotation: pt.angle
 
                     Rectangle {
+                        objectName: "cornerWrapCavaBar"
                         x: -cavaWrap.barWidth * 0.5
                         y: cavaWrap.mirrorBars
                             ? (-barNode.barH * 0.5)
-                            : (cavaWrap.maxBarHeight * 0.44 - barNode.barH)
+                            : cavaWrap.invertBars
+                                ? (-cavaWrap.maxBarHeight * 0.44)
+                                : (cavaWrap.maxBarHeight * 0.44 - barNode.barH)
                         width: cavaWrap.barWidth
                         height: barNode.barH
                         radius: Math.min(cavaWrap.barWidth * 0.5, cavaWrap.barRadius * root.contentScale)
