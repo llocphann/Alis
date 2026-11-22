@@ -196,24 +196,42 @@ impl AudioCapture {
         }
     }
 
-    fn open_pw_stream_target(target: &str, rate: u32, channels: u8, capture_sink: bool) -> Result<Self> {
-        let mut pw = Command::new("pw-cat");
-        pw.args([
-            "--record",
-            "--raw",
-            "--format",
-            "s16",
-            "--rate",
-            &rate.to_string(),
-            "--channels",
-            &channels.to_string(),
-            "--target",
-            target,
-        ]);
-        if capture_sink {
-            pw.args(["--stream-properties", "stream.capture.sink=true"]);
+    fn build_pw_cat_record_args(
+        target: Option<&str>,
+        rate: u32,
+        channels: u8,
+        capture_sink: bool,
+    ) -> Vec<String> {
+        let mut args = vec![
+            "--record".to_string(),
+            "--raw".to_string(),
+            "--format".to_string(),
+            "s16".to_string(),
+            "--rate".to_string(),
+            rate.to_string(),
+            "--channels".to_string(),
+            channels.to_string(),
+        ];
+        if let Some(dev) = target.filter(|s| !s.is_empty() && *s != "auto" && !s.starts_with('@')) {
+            args.push("--target".to_string());
+            args.push(dev.to_string());
         }
-        pw.arg("-");
+        if capture_sink {
+            args.push("-P".to_string());
+            args.push("stream.capture.sink=true".to_string());
+        }
+        args.push("-".to_string());
+        args
+    }
+
+    fn spawn_pw_cat_record(
+        target: Option<&str>,
+        rate: u32,
+        channels: u8,
+        capture_sink: bool,
+    ) -> std::io::Result<std::process::Child> {
+        let mut pw = Command::new("pw-cat");
+        pw.args(Self::build_pw_cat_record_args(target, rate, channels, capture_sink));
         pw.stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::null());
@@ -223,7 +241,12 @@ impl AudioCapture {
                 Ok(())
             });
         }
-        let mut child = pw.spawn().context("spawn pw-cat")?;
+        pw.spawn()
+    }
+
+    fn open_pw_stream_target(target: &str, rate: u32, channels: u8, capture_sink: bool) -> Result<Self> {
+        let mut child = Self::spawn_pw_cat_record(Some(target), rate, channels, capture_sink)
+            .context("spawn pw-cat")?;
         let stdout = child
             .stdout
             .take()
@@ -254,36 +277,9 @@ impl AudioCapture {
                 Ok(())
             });
         }
-        let mut child = cmd.spawn().or_else(|_| {
-            let mut pw = Command::new("pw-cat");
-            pw.args([
-                "--record",
-                "--raw",
-                "--format",
-                "s16",
-                "--rate",
-                &rate.to_string(),
-                "--channels",
-                &channels.to_string(),
-            ]);
-            if let Some(dev) = source.filter(|s| !s.is_empty() && *s != "auto" && !s.starts_with('@')) {
-                pw.args(["--target", dev]);
-            }
-            if capture_sink {
-                pw.args(["--stream-properties", "stream.capture.sink=true"]);
-            }
-            pw.arg("-");
-            pw.stdin(Stdio::null())
-                .stdout(Stdio::piped())
-                .stderr(Stdio::null());
-            unsafe {
-                pw.pre_exec(|| {
-                    libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM);
-                    Ok(())
-                });
-            }
-            pw.spawn()
-        })?;
+        let mut child = cmd
+            .spawn()
+            .or_else(|_| Self::spawn_pw_cat_record(source, rate, channels, capture_sink))?;
         let stdout = child
             .stdout
             .take()
@@ -487,6 +483,37 @@ fn parse_pw_stream_serial(raw: &str) -> Option<&str> {
     }
 }
 
+fn parse_sink_id_for_stream_serial(pactl_sink_inputs: &str, serial: &str) -> Option<String> {
+    let needle = format!("object.serial = \"{serial}\"");
+    let mut current_index: Option<&str> = None;
+    let mut current_sink: Option<String> = None;
+    let mut current_matches = false;
+
+    for raw_line in pactl_sink_inputs.lines() {
+        let trimmed = raw_line.trim();
+        if let Some(rest) = trimmed.strip_prefix("Sink Input #") {
+            if (current_matches || current_index == Some(serial)) && current_sink.is_some() {
+                return current_sink;
+            }
+            current_index = rest.split_whitespace().next();
+            current_sink = None;
+            current_matches = current_index == Some(serial);
+            continue;
+        }
+        if let Some(rest) = trimmed.strip_prefix("Sink:") {
+            current_sink = rest.split_whitespace().next().map(str::to_string);
+        } else if trimmed == needle {
+            current_matches = true;
+        }
+    }
+
+    if current_matches || current_index == Some(serial) {
+        current_sink
+    } else {
+        None
+    }
+}
+
 fn pw_stream_serial_exists(serial: &str) -> bool {
     let Ok(out) = Command::new("pactl").args(["list", "sink-inputs"]).output() else {
         return false;
@@ -507,6 +534,32 @@ fn pulse_source_exists(name: &str) -> Option<bool> {
         .lines()
         .any(|line| line.split_whitespace().nth(1) == Some(name));
     Some(found)
+}
+
+fn pw_stream_sink_monitor(serial: &str) -> Option<String> {
+    let sink_inputs = Command::new("pactl").args(["list", "sink-inputs"]).output().ok()?;
+    if !sink_inputs.status.success() {
+        return None;
+    }
+    let sink_id =
+        parse_sink_id_for_stream_serial(&String::from_utf8_lossy(&sink_inputs.stdout), serial)?;
+    let sinks = Command::new("pactl").args(["list", "short", "sinks"]).output().ok()?;
+    if !sinks.status.success() {
+        return None;
+    }
+    let sinks_text = String::from_utf8_lossy(&sinks.stdout);
+    let sink_name = sinks_text.lines().find_map(|line| {
+        let mut cols = line.split_whitespace();
+        let id = cols.next()?;
+        let name = cols.next()?;
+        (id == sink_id).then(|| name.to_string())
+    })?;
+    let monitor = format!("{sink_name}.monitor");
+    if pulse_source_exists(&monitor) == Some(false) {
+        None
+    } else {
+        Some(monitor)
+    }
 }
 
 fn resolve_default_monitor() -> String {
@@ -565,35 +618,67 @@ fn run_spectrum(mut args: SpectrumArgs) -> Result<i32> {
     let frames_per_read = ((rate / fps) as usize).max(256);
     let bytes_per_read = frames_per_read * (channels as usize) * 2;
 
-    // PipeWire stream serials (e.g. "1234.monitor" from `accel cava-config`) are
+    // PipeWire stream serials (e.g. "691.monitor" from `accel cava-config`) are
     // not valid PulseAudio source names — passing them to `pa_simple_new` makes
-    // pipewire-pulse silently fall back to the default microphone! Capture a live
-    // PipeWire stream via `pw-cat --target <serial>`, or fall back to the default
-    // output monitor source.
-    let mut capture = if let Some(serial) = raw_source.and_then(parse_pw_stream_serial) {
-        if pw_stream_serial_exists(serial)
-            && let Ok(cap) = AudioCapture::open_pw_stream_target(serial, rate, channels, true)
-        {
-            cap
+    // pipewire-pulse silently fall back to the default microphone. Prefer the
+    // owning sink's `.monitor` source via libpulse-simple, then `pw-cat`, and
+    // finally the default output monitor source.
+    let (mut capture, mut tried_default_fallback) =
+        if let Some(serial) = raw_source.and_then(parse_pw_stream_serial) {
+            if let Some(sink_monitor) = pw_stream_sink_monitor(serial)
+                && let Ok(cap) = AudioCapture::open(
+                    Some(&sink_monitor),
+                    rate,
+                    channels,
+                    bytes_per_read as u32,
+                    true,
+                )
+            {
+                (cap, false)
+            } else if pw_stream_serial_exists(serial)
+                && let Ok(cap) = AudioCapture::open_pw_stream_target(serial, rate, channels, true)
+            {
+                (cap, false)
+            } else {
+                let monitor = resolve_default_monitor();
+                (
+                    AudioCapture::open(Some(&monitor), rate, channels, bytes_per_read as u32, true)?,
+                    true,
+                )
+            }
         } else {
-            let monitor = resolve_default_monitor();
-            AudioCapture::open(Some(&monitor), rate, channels, bytes_per_read as u32, true)?
-        }
-    } else {
-        let resolved = match raw_source {
-            None | Some("") | Some("auto") | Some("@DEFAULT_MONITOR@") => resolve_default_monitor(),
-            Some(other) => {
-                // Guard against passing an unknown node name to pa_simple_new (which
-                // would silently attach to the microphone on pipewire-pulse).
-                if pulse_source_exists(other) == Some(false) {
-                    resolve_default_monitor()
-                } else {
-                    other.to_string()
+            let (resolved, is_default) = match raw_source {
+                None | Some("") | Some("auto") | Some("@DEFAULT_MONITOR@") => {
+                    (resolve_default_monitor(), true)
                 }
+                Some(other) => {
+                    // Guard against passing an unknown node name to pa_simple_new (which
+                    // would silently attach to the microphone on pipewire-pulse).
+                    if pulse_source_exists(other) == Some(false) {
+                        (resolve_default_monitor(), true)
+                    } else {
+                        (other.to_string(), false)
+                    }
+                }
+            };
+            match AudioCapture::open(Some(&resolved), rate, channels, bytes_per_read as u32, true) {
+                Ok(cap) => (cap, is_default),
+                Err(_) if !is_default => {
+                    let monitor = resolve_default_monitor();
+                    (
+                        AudioCapture::open(
+                            Some(&monitor),
+                            rate,
+                            channels,
+                            bytes_per_read as u32,
+                            true,
+                        )?,
+                        true,
+                    )
+                }
+                Err(err) => return Err(err),
             }
         };
-        AudioCapture::open(Some(&resolved), rate, channels, bytes_per_read as u32, true)?
-    };
 
     let fft_size = 2048usize;
     let mut ring_l = vec![0.0_f64; fft_size];
@@ -602,11 +687,23 @@ fn run_spectrum(mut args: SpectrumArgs) -> Result<i32> {
     let mut smoothed = vec![0.0_f64; bars];
     let mut agc_gain = 18.0_f64 * sensitivity;
     let mut line_buf = String::with_capacity(bars * 5);
+    let mut got_frame = false;
 
     while !STOP_REQUESTED.load(Ordering::SeqCst) {
         if capture.read_exact(&mut pcm).is_err() {
+            if !got_frame && !tried_default_fallback {
+                tried_default_fallback = true;
+                let monitor = resolve_default_monitor();
+                if let Ok(fallback) =
+                    AudioCapture::open(Some(&monitor), rate, channels, bytes_per_read as u32, true)
+                {
+                    capture = fallback;
+                    continue;
+                }
+            }
             break;
         }
+        got_frame = true;
         let sample_frames = pcm.len() / (2 * channels as usize);
         let shift = sample_frames.min(fft_size);
         ring_l.copy_within(shift.., 0);
@@ -733,7 +830,10 @@ pub fn run(command: AudioCommand) -> Result<i32> {
 
 #[cfg(test)]
 mod tests {
-    use super::{compute_bands, fft_radix2};
+    use super::{
+        AudioCapture, compute_bands, fft_radix2, parse_pw_stream_serial,
+        parse_sink_id_for_stream_serial,
+    };
 
     #[test]
     fn fft_detects_pure_sine_wave_bin() {
@@ -760,5 +860,50 @@ mod tests {
         let bands = compute_bands(&samples, sr, 32, n);
         assert_eq!(bands.len(), 32);
         assert!(bands.iter().copied().fold(0.0_f64, f64::max) > 0.2);
+    }
+
+    #[test]
+    fn pw_cat_record_args_use_short_properties_flag() {
+        let with_sink = AudioCapture::build_pw_cat_record_args(Some("691"), 44100, 2, true);
+        assert!(!with_sink.iter().any(|arg| arg == "--stream-properties"));
+        let prop_idx = with_sink.iter().position(|arg| arg == "-P").unwrap();
+        assert_eq!(with_sink[prop_idx + 1], "stream.capture.sink=true");
+        let target_idx = with_sink.iter().position(|arg| arg == "--target").unwrap();
+        assert_eq!(with_sink[target_idx + 1], "691");
+        assert_eq!(with_sink.last().map(String::as_str), Some("-"));
+
+        let without_sink =
+            AudioCapture::build_pw_cat_record_args(Some("@DEFAULT_MONITOR@"), 16000, 1, false);
+        assert!(!without_sink.iter().any(|arg| arg == "-P" || arg == "--target"));
+        assert_eq!(without_sink.last().map(String::as_str), Some("-"));
+    }
+
+    #[test]
+    fn parse_sink_id_for_stream_serial_extracts_sink() {
+        let fixture = "\
+Sink Input #691
+\tDriver: PipeWire
+\tSink: 33
+\tProperties:
+\t\tapplication.name = \"Zen\"
+\t\tobject.serial = \"691\"
+
+Sink Input #1799
+\tDriver: PipeWire
+\tSink: 84
+\tProperties:
+\t\tobject.serial = \"1799\"
+";
+        assert_eq!(
+            parse_sink_id_for_stream_serial(fixture, "691").as_deref(),
+            Some("33")
+        );
+        assert_eq!(
+            parse_sink_id_for_stream_serial(fixture, "1799").as_deref(),
+            Some("84")
+        );
+        assert_eq!(parse_sink_id_for_stream_serial(fixture, "9999"), None);
+        assert_eq!(parse_pw_stream_serial("691.monitor"), Some("691"));
+        assert_eq!(parse_pw_stream_serial("easyeffects_sink.monitor"), None);
     }
 }
