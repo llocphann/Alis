@@ -44,10 +44,11 @@ binds {
     // Re-focus the lock surface (workaround when input feels dead after suspend/resume).
     Mod+Ctrl+Shift+L allow-when-locked=true { spawn "alis" "lock" "focus"; }
 
-    // Region selector: screenshot / OCR / Google Lens search.
+    // Region selector: screenshot / OCR / Google Lens search / color picker.
     Mod+Shift+S { spawn "alis" "region" "screenshot"; }
     Mod+Shift+X { spawn "alis" "region" "ocr"; }
     Mod+Shift+A { spawn "alis" "region" "search"; }
+    Super+Shift+C repeat=false { spawn "alis" "ipc" "colorpicker" "start"; }
     // Unified snip menu (pick action/scope from the in-overlay toolbar).
     Ctrl+Shift+S { spawn "alis" "region" "menu"; }
 

@@ -206,12 +206,6 @@ Item {
     property int draggingWindowId: -1
     property int draggingFromWorkspace: -1
     property int draggingTargetWorkspace: -1
-    property int hoveredWindowId: -1
-    property int _liveRefreshCursor: 0
-    readonly property bool liveRefreshActive: root.presentationActive
-        && !root.taskViewMode
-        && root.draggingWindowId < 0
-        && WindowPreviewService.liveCaptureAllowed
 
     function resetDragState(): void {
         root.draggingWindowId = -1
@@ -245,41 +239,8 @@ Item {
     Connections {
         target: root
         function onPresentationActiveChanged() {
-            if (!root.presentationActive) {
-                root.hoveredWindowId = -1
+            if (!root.presentationActive)
                 root.closeWindowContext()
-            }
-        }
-    }
-
-    // Resource-bounded live pulse while Overview stays open: refreshes at most
-    // ONE hovered window (or gently round-robins across visible windows when idle),
-    // stopping instantaneously on close or Power Saver for 0% background cost.
-    Timer {
-        id: liveOverviewRefreshTimer
-        interval: 1800
-        repeat: true
-        running: root.liveRefreshActive
-        onTriggered: {
-            if (!root.liveRefreshActive)
-                return
-            const items = windowSpace.windowItems ?? []
-            if (items.length === 0)
-                return
-            if (root.hoveredWindowId > 0 && items.some(r => r.id === root.hoveredWindowId)) {
-                WindowPreviewService.refreshWindowIfStale(root.hoveredWindowId, 1600)
-                return
-            }
-            const count = items.length
-            const start = root._liveRefreshCursor % count
-            for (let off = 0; off < count; ++off) {
-                const idx = (start + off) % count
-                const candId = Number(items[idx]?.id ?? -1)
-                if (candId > 0 && WindowPreviewService.refreshWindowIfStale(candId, 3200)) {
-                    root._liveRefreshCursor = (idx + 1) % count
-                    return
-                }
-            }
         }
     }
 
@@ -835,17 +796,8 @@ Item {
                             acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                             property real pressX: 0
                             property real pressY: 0
-                            onEntered: {
-                                windowItem.hovered = true
-                                root.hoveredWindowId = windowItem.windowId
-                                if (root.liveRefreshActive)
-                                    WindowPreviewService.refreshWindowIfStale(windowItem.windowId, 2000)
-                            }
-                            onExited: {
-                                windowItem.hovered = false
-                                if (root.hoveredWindowId === windowItem.windowId)
-                                    root.hoveredWindowId = -1
-                            }
+                            onEntered: windowItem.hovered = true
+                            onExited: windowItem.hovered = false
                             onPressed: (mouse) => {
                                 if (!windowData)
                                     return

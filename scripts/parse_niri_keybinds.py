@@ -185,6 +185,7 @@ IPC_MAP = {
     ('region', 'menu'): 'Snip menu',
     ('region', 'recordWithSound'): 'Record region (with audio)',
     ('region', 'record'): 'Record region',
+    ('colorpicker', 'start'): 'Color picker',
     ('wallpaperSelector', 'toggle'): 'Wallpaper selector',
     ('settings', 'open'): 'Settings',
     ('cheatsheet', 'toggle'): 'Cheatsheet',
@@ -375,7 +376,7 @@ def categorize_keybind(kb: dict) -> str:
         target, func = alis_action
         if target in ('overlay', 'overview', 'clipboard', 'lock', 'wallpaperSelector', 'settings', 'cheatsheet', 'panelFamily', 'session', 'sidebarLeft', 'sidebarRight', 'aqua', 'wull', 'companion', 'ipc'):
             return 'Alis Shell'
-        if target == 'region':
+        if target in ('region', 'colorpicker'):
             return 'Screenshots'
         if target in ('launcher', 'browser', 'nexus') and func != 'close-window':
             return 'Applications'
@@ -395,7 +396,7 @@ def categorize_keybind(kb: dict) -> str:
         return 'Window Switcher'
 
     # Screenshots
-    if any(x in comment for x in ['screenshot', 'ocr', 'image search', 'snip menu', 'record region']):
+    if any(x in comment for x in ['screenshot', 'ocr', 'image search', 'snip menu', 'record region', 'color picker']):
         return 'Screenshots'
 
     # Applications

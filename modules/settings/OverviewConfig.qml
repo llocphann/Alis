@@ -184,29 +184,16 @@ ContentPage {
 
                     SettingsSwitch {
                         Layout.fillWidth: true
-                        buttonIcon: "autorenew"
-                        text: Translation.tr("Live refresh")
-                        enabled: Config.options?.overview?.showPreviews !== false
-                        checked: Config.options?.overview?.livePreviews !== false
-                        onCheckedChanged: Config.setNestedValue(
-                            "overview.livePreviews", checked)
-                        StyledToolTip {
-                            text: Translation.tr("Refresh visible Niri windows while Overview is open")
-                        }
-                    }
-                }
-
-                ConfigRow {
-                    uniform: true
-
-                    SettingsSwitch {
-                        Layout.fillWidth: true
                         buttonIcon: "looks_one"
                         text: Translation.tr("Workspace numbers")
                         checked: Config.options?.overview?.showWorkspaceNumbers ?? false
                         onCheckedChanged: Config.setNestedValue(
                             "overview.showWorkspaceNumbers", checked)
                     }
+                }
+
+                ConfigRow {
+                    uniform: true
 
                     SettingsSwitch {
                         Layout.fillWidth: true
@@ -216,10 +203,6 @@ ContentPage {
                         onCheckedChanged: Config.setNestedValue(
                             "overview.centerIcons", checked)
                     }
-                }
-
-                ConfigRow {
-                    uniform: true
 
                     SettingsSwitch {
                         Layout.fillWidth: true

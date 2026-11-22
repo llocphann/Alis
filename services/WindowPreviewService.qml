@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Services.UPower
 import qs
 import qs.services
 import qs.services.deferred
@@ -414,18 +413,10 @@ Singleton {
         }
 
         if (toDelete.length > 0) {
-            const nextTargeted = Object.assign({}, root._lastTargetedRefreshMs)
-            let targetedChanged = false
             for (const id of toDelete) {
                 delete previewCache[id]
                 root._dropOverviewWarmImage(id)
-                if (nextTargeted[id] !== undefined) {
-                    delete nextTargeted[id]
-                    targetedChanged = true
-                }
             }
-            if (targetedChanged)
-                root._lastTargetedRefreshMs = nextTargeted
             overviewWarmRequestedIds = overviewWarmRequestedIds.filter(id => windowIds.has(id))
             previewCache = Object.assign({}, previewCache)
 
@@ -525,8 +516,10 @@ Singleton {
         capturing = true
         Cliphist.suppressRefresh = true
 
-        // Build command with IDs (always use the bash helper so fish is not required)
-        const cmd = ["/usr/bin/bash", Quickshell.shellPath("scripts/capture-windows.sh")]
+        // Build command with IDs
+        const cmd = ShellExec.supportsFish()
+            ? ["/usr/bin/fish", Quickshell.shellPath("scripts/capture-windows.fish")]
+            : ["/usr/bin/bash", Quickshell.shellPath("scripts/capture-windows.sh")]
         for (const id of idsToCapture) {
             cmd.push(id.toString())
         }
@@ -620,7 +613,9 @@ Singleton {
         captureProcess.idsToCapture = ids
         captureProcess.publishedIds = []
         captureProcess.captureSessionKey = root.sessionKey
-        const cmd = ["/usr/bin/bash", Quickshell.shellPath("scripts/capture-windows.sh")]
+        const cmd = ShellExec.supportsFish()
+            ? ["/usr/bin/fish", Quickshell.shellPath("scripts/capture-windows.fish")]
+            : ["/usr/bin/bash", Quickshell.shellPath("scripts/capture-windows.sh")]
         // Pass the exact snapshot of requested IDs. The helper now fails if
         // even one ID is no longer available, so clean exit cannot falsely
         // publish a file left behind by a previous capture.
@@ -668,36 +663,6 @@ Singleton {
         onExited: (exitCode, exitStatus) => root._completeCapture(exitCode, exitStatus)
     }
 
-    // Bounded in-Overview live refresh gate (zero background polling or clipboard
-    // interference while Overview is closed, and auto-paused in Power Saver / Game Mode).
-    readonly property bool liveCaptureAllowed: CompositorService.isNiri
-        && (Config.options?.overview?.showPreviews !== false)
-        && (Config.options?.overview?.livePreviews !== false)
-        && !(GameMode.active ?? false)
-        && !(RecorderStatus.isRecording ?? false)
-        && !(Config.options?.performance?.lowPower ?? false)
-        && (PowerProfiles.profile !== PowerProfile.PowerSaver)
-    property var _lastTargetedRefreshMs: ({})
-
-    function refreshWindowIfStale(windowId: int, cooldownMs: int): bool {
-        const id = Number(windowId)
-        if (!Number.isSafeInteger(id) || id <= 0)
-            return false
-        if (!root.liveCaptureAllowed || !root.sessionReady || root.capturing)
-            return false
-        const minGap = Math.max(800, Number(cooldownMs) || 1800)
-        const nowMs = Date.now()
-        const lastForced = Number(root._lastTargetedRefreshMs[id] ?? 0)
-        const lastCached = Number(root.previewCache[id]?.timestamp ?? 0)
-        if (nowMs - Math.max(lastForced, lastCached) < minGap)
-            return false
-        const nextMap = Object.assign({}, root._lastTargetedRefreshMs)
-        nextMap[id] = nowMs
-        root._lastTargetedRefreshMs = nextMap
-        root.refreshForOverview([id])
-        return true
-    }
-
     Connections {
         target: MemoryPressureService
         function onPressureExceeded(): void {
@@ -706,6 +671,7 @@ Singleton {
         }
     }
 
+    // Clean up when window closes
     Connections {
         target: NiriService
         enabled: root.initialized  // Skip event processing until initialized

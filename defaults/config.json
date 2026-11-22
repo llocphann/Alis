@@ -1402,7 +1402,6 @@
         "enable": true,
         "focusAnimationDurationMs": 180,
         "focusAnimationEnable": true,
-        "livePreviews": true,
         "iconMaxSize": 0,
         "iconMinSize": 0,
         "keepOverviewOpenOnWindowClick": true,

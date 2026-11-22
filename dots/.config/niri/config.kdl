@@ -212,9 +212,9 @@ environment {
 // Import XDG_MENU_PREFIX to systemd for Dolphin/KDE app file associations
 spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX QT_IM_MODULE XMODIFIERS && kbuildsycoca6"
 
-spawn-at-startup "bash" "-c" "exec wl-paste --no-newline --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store"
-spawn-at-startup "bash" "-c" "exec wl-paste --type image --watch cliphist store"
-spawn-at-startup "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"
+spawn-at-startup "bash" "-c" "exec ~/.config/quickshell/alis/scripts/native-dispatch clipboard watch"
+// Built-in Quickshell Polkit agent is enabled by default; uncomment an external agent only if disabling it.
+// spawn-at-startup "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"
 // Alis is started by the user systemd service (alis.service), not spawn-at-startup.
 
 // ============================================================================
@@ -247,6 +247,7 @@ binds {
     Mod+Shift+S { spawn "qs" "-c" "alis" "ipc" "call" "region" "screenshot"; }
     Mod+Shift+X { spawn "qs" "-c" "alis" "ipc" "call" "region" "ocr"; }
     Mod+Shift+A { spawn "qs" "-c" "alis" "ipc" "call" "region" "search"; }
+    Super+Shift+C repeat=false { spawn "qs" "-c" "alis" "ipc" "call" "colorpicker" "start"; }
 
     // ii Wallpaper selector
     Ctrl+Alt+T { spawn "qs" "-c" "alis" "ipc" "call" "wallpaperSelector" "toggle"; }

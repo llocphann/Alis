@@ -396,7 +396,8 @@ Singleton {
             children: [{ keybinds: [
                 { mods: ["Super", "Shift"], key: "S", comment: "Screenshot region" },
                 { mods: ["Super", "Shift"], key: "X", comment: "OCR region" },
-                { mods: ["Super", "Shift"], key: "A", comment: "Reverse image search" }
+                { mods: ["Super", "Shift"], key: "A", comment: "Reverse image search" },
+                { mods: ["Super", "Shift"], key: "C", comment: "Color picker" }
             ]}]
         },
         {
