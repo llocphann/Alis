@@ -579,7 +579,7 @@ fn eval_func(name: &str, args: &[f64]) -> Result<f64> {
             let a = args[0].abs().round() as u64;
             let b = args[1].abs().round() as u64;
             let g = gcd_u64(a, b);
-            Ok(if g == 0 { 0.0 } else { ((a / g) * b) as f64 })
+            Ok(a.checked_div(g).map_or(0.0, |q| (q * b) as f64))
         }
         _ => bail!("unknown function '{name}'"),
     }
@@ -767,10 +767,8 @@ pub fn evaluate_expression(raw: &str) -> Result<String> {
         bail!("not a math expression");
     }
 
-    if let Some(conv_res) = try_eval_conversion_or_base(trimmed) {
-        if let Ok(formatted) = conv_res {
-            return Ok(formatted);
-        }
+    if let Some(Ok(formatted)) = try_eval_conversion_or_base(trimmed) {
+        return Ok(formatted);
     }
 
     // Handle `hex(255)`, `bin(42)`, `oct(64)` wrapper calls directly
@@ -792,14 +790,14 @@ pub fn evaluate_expression(raw: &str) -> Result<String> {
         Ok(v) => Ok(format_number(v)),
         Err(err) => {
             // Optional fallback to system qalc ONLY if installed AND expression contains digits
-            if trimmed.chars().any(|c| c.is_ascii_digit()) && Path::new("/usr/bin/qalc").exists() {
-                if let Ok(out) = Command::new("/usr/bin/qalc").args(["-t", trimmed]).output()
-                    && out.status.success()
-                {
-                    let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
-                    if !s.is_empty() && !s.contains("error:") && !s.contains("warning:") {
-                        return Ok(s);
-                    }
+            if trimmed.chars().any(|c| c.is_ascii_digit())
+                && Path::new("/usr/bin/qalc").exists()
+                && let Ok(out) = Command::new("/usr/bin/qalc").args(["-t", trimmed]).output()
+                && out.status.success()
+            {
+                let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if !s.is_empty() && !s.contains("error:") && !s.contains("warning:") {
+                    return Ok(s);
                 }
             }
             Err(err)

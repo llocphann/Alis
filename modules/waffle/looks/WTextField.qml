@@ -11,6 +11,9 @@ TextField {
     renderType: Text.NativeRendering
     verticalAlignment: Text.AlignVCenter
     color: Looks.colors.fg
+    readonly property string liveText: preeditText
+        ? (text.slice(0, cursorPosition) + preeditText + text.slice(cursorPosition))
+        : text
 
     palette {
         active: Looks.colors.accent

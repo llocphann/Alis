@@ -28,10 +28,24 @@ hex_to_rgb() {
   printf '%d, %d, %d' "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}"
 }
 
+declare -A _STEAM_COLORS=()
+_STEAM_COLORS_LOADED=0
+
+_load_steam_colors() {
+  (( _STEAM_COLORS_LOADED == 1 )) && return 0
+  _STEAM_COLORS_LOADED=1
+  [[ -f "$COLORS_JSON" ]] || return 0
+  local k v
+  while IFS=$'\t' read -r k v; do
+    [[ -n "$k" ]] && _STEAM_COLORS["$k"]="$v"
+  done < <(alis_json_kv_dump "$COLORS_JSON")
+}
+
 read_token() {
-  local token="$1" fallback="${2:-0, 0, 0}" hex
-  hex=$(jq -r ".${token} // empty" "$COLORS_JSON" 2>/dev/null) || true
-  if [[ -n "$hex" ]]; then
+  local token="$1" fallback="${2:-0, 0, 0}" hex=""
+  _load_steam_colors
+  hex="${_STEAM_COLORS[$token]:-}"
+  if [[ -n "$hex" && "$hex" != "false" ]]; then
     hex_to_rgb "$hex"
   else
     printf '%s' "$fallback"
@@ -39,6 +53,7 @@ read_token() {
 }
 
 generate_millennium_css_from_colors_json() {
+  _load_steam_colors
   cat <<EOCSS
 :root {
     --theme-color: "Matugen";
@@ -178,11 +193,9 @@ resolve_millennium_material_loopback_skin_dir() {
 }
 
 millennium_material_appearance() {
-  local mode
-  if [[ -f "$STATE_DIR/user/generated/theme-meta.json" ]] && command -v jq >/dev/null 2>&1; then
-    mode="$(jq -r '.mode // "dark"' "$STATE_DIR/user/generated/theme-meta.json" 2>/dev/null || printf dark)"
-  else
-    mode="dark"
+  local mode="dark"
+  if [[ -f "$STATE_DIR/user/generated/theme-meta.json" ]] && alis_json_available; then
+    mode="$(alis_json_pick "$STATE_DIR/user/generated/theme-meta.json" "dark" mode)"
   fi
   if [[ "$mode" == "light" ]]; then
     printf Light
@@ -193,9 +206,29 @@ millennium_material_appearance() {
 
 millennium_material_matugen_selected() {
   [[ -f "$MILLENNIUM_CONFIG" ]] || return 1
-  command -v jq >/dev/null 2>&1 || return 1
-  [[ "$(jq -r '.themes.activeTheme // empty' "$MILLENNIUM_CONFIG" 2>/dev/null)" == "$MILLENNIUM_THEME_DIR_NAME" ]] || return 1
-  [[ "$(jq -r --arg theme "$MILLENNIUM_THEME_CONDITION_NAME" '.themes.conditions[$theme].Color // empty' "$MILLENNIUM_CONFIG" 2>/dev/null)" == "Matugen" ]]
+  alis_json_available || return 1
+  if command -v jq >/dev/null 2>&1; then
+    [[ "$(jq -r '.themes.activeTheme // empty' "$MILLENNIUM_CONFIG" 2>/dev/null)" == "$MILLENNIUM_THEME_DIR_NAME" ]] || return 1
+    [[ "$(jq -r --arg theme "$MILLENNIUM_THEME_CONDITION_NAME" '.themes.conditions[$theme].Color // empty' "$MILLENNIUM_CONFIG" 2>/dev/null)" == "Matugen" ]]
+    return $?
+  fi
+  python3 - "$MILLENNIUM_CONFIG" "$MILLENNIUM_THEME_DIR_NAME" "$MILLENNIUM_THEME_CONDITION_NAME" <<'PY' 2>/dev/null
+import json, sys
+path, active_name, cond_name = sys.argv[1:4]
+with open(path, encoding="utf-8") as fh:
+    d = json.load(fh)
+themes = d.get("themes") if isinstance(d, dict) else None
+if not isinstance(themes, dict):
+    sys.exit(1)
+if themes.get("activeTheme") != active_name:
+    sys.exit(1)
+conds = themes.get("conditions")
+if not isinstance(conds, dict):
+    sys.exit(1)
+theme_cond = conds.get(cond_name)
+if not isinstance(theme_cond, dict) or theme_cond.get("Color") != "Matugen":
+    sys.exit(1)
+PY
 }
 
 set_millennium_material_matugen() {
@@ -252,7 +285,7 @@ deploy_millennium_material() {
     log_module "configured Millennium Material-Theme Matugen; no generated palette yet"
     return 0
   fi
-  command -v jq &>/dev/null || { log_module "jq not installed — cannot generate Steam Matugen CSS"; return 1; }
+  alis_json_available || { log_module "neither jq nor python3 installed — cannot generate Steam Matugen CSS"; return 1; }
 
   if [[ ! -f "$css_file" ||
         ( -f "$COLORS_JSON" && "$COLORS_JSON" -nt "$css_file" ) ||

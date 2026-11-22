@@ -219,12 +219,26 @@ ensure_aur_helper(){
 #####################################################################################
 
 install-python-packages(){
-  tui_info "Setting up Python virtual environment..."
+  local requirements_file="${REPO_ROOT}/sdata/uv/requirements.txt"
+  if [[ ! -f "$requirements_file" ]]; then
+    if declare -F get_runtime_shell_dir >/dev/null; then
+      requirements_file="$(get_runtime_shell_dir)/sdata/uv/requirements.txt"
+    else
+      requirements_file="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis/sdata/uv/requirements.txt"
+    fi
+  fi
+
+  if [[ ! -f "$requirements_file" ]] || ! grep -Eq '^[[:space:]]*[^#[:space:]]' "$requirements_file"; then
+    log_success "Core runtime uses native Rust helpers (no Python .venv required)"
+    return 0
+  fi
+
+  tui_info "Setting up optional Python virtual environment..."
 
   local venv_dir="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv"
 
   if ! command -v uv &>/dev/null; then
-    log_warning "uv not installed, skipping Python venv setup"
+    log_warning "uv not installed, skipping optional Python venv setup"
     return 0
   fi
 
@@ -244,24 +258,9 @@ install-python-packages(){
     }
   fi
 
-  # Install required packages from requirements.txt
-  # Try repo location first (during install), then target location (during doctor)
-  local requirements_file="${REPO_ROOT}/sdata/uv/requirements.txt"
-  if [[ ! -f "$requirements_file" ]]; then
-    if declare -F get_runtime_shell_dir >/dev/null; then
-      requirements_file="$(get_runtime_shell_dir)/sdata/uv/requirements.txt"
-    else
-      requirements_file="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis/sdata/uv/requirements.txt"
-    fi
-  fi
-
-  if [[ -f "$requirements_file" ]]; then
-    source "$venv_dir/bin/activate"
-    x uv pip install -r "$requirements_file"
-    deactivate
-  else
-    log_warning "requirements.txt not found"
-  fi
+  source "$venv_dir/bin/activate"
+  x uv pip install -r "$requirements_file"
+  deactivate
 
   log_success "Python venv ready at $venv_dir"
 }

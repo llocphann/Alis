@@ -28,17 +28,34 @@ def active_watchers(text: str) -> list[str]:
     return [line.strip() for line in text.splitlines() if WATCHER_RE.match(line)]
 
 
+NATIVE_WATCH_LINE = 'spawn-at-startup "bash" "-c" "exec ~/.config/quickshell/alis/scripts/native-dispatch clipboard watch"'
+NATIVE_WATCHER_RE = re.compile(
+    r'^(?![ \t]*//)[ \t]*(?:spawn-at-startup|spawn-sh-at-startup)\b'
+    r'.*native-dispatch[ \t]+clipboard[ \t]+watch.*$'
+)
+
+
+def active_native_watchers(text: str) -> list[str]:
+    return [line.strip() for line in text.splitlines() if NATIVE_WATCHER_RE.match(line)]
+
+
 def check_source_contract() -> None:
     defaults = DEFAULT_STARTUP.read_text(encoding="utf-8")
     dots = DOTS_NIRI.read_text(encoding="utf-8")
     migration_single = MIGRATION_SINGLE.read_text(encoding="utf-8")
     migration_newline = MIGRATION_NEWLINE.read_text(encoding="utf-8")
 
-    assert active_watchers(defaults) == [TEXT_LINE, IMAGE_LINE], (
-        "default Niri startup must own exactly one canonical text watcher and one image watcher"
+    assert active_native_watchers(defaults) == [NATIVE_WATCH_LINE], (
+        "default Niri startup must own exactly one native Rust clipboard watcher"
     )
-    assert active_watchers(dots) == [TEXT_LINE, IMAGE_LINE], (
-        "legacy dots fallback must not resurrect the untyped clipboard watcher"
+    assert active_watchers(defaults) == [], (
+        "default Niri startup must not launch legacy external wl-paste/cliphist watchers"
+    )
+    assert active_native_watchers(dots) == [NATIVE_WATCH_LINE], (
+        "legacy dots fallback must own the single native Rust clipboard watcher"
+    )
+    assert active_watchers(dots) == [], (
+        "legacy dots fallback must not resurrect legacy wl-paste/cliphist watchers"
     )
     assert 'MIGRATION_ID="051-cliphist-single-watchers"' in migration_single
     assert "monolithic_cfg=" in migration_single and "startup_cfg=" in migration_single

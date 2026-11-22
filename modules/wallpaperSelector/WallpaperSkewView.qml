@@ -611,16 +611,27 @@ Item {
         const batch = _colorAnalysisQueue.splice(0, _colorBatchSize)
         _colorAnalysisProc._batchNames = batch.map(b => b.name)
         _colorAnalysisProc._resultLines = []
-        // Single bash process for the whole batch
-        let script = ""
+        // Single bash process for the whole batch; prefer native Rust image hsl
+        // so ImageMagick `convert` is strictly optional.
+        const nativeDispatch = Quickshell.shellPath("scripts/native-dispatch")
+        const script =
+            'nd="$1"; shift; ' +
+            'while [ "$#" -ge 2 ]; do ' +
+            '  name="$1"; path="$2"; shift 2; ' +
+            '  printf "%s\\t" "$name"; ' +
+            '  if [ -x "$nd" ] && out="$("$nd" image hsl "$path" 2>/dev/null)" && [ -n "$out" ]; then ' +
+            '    printf "%s\\n" "$out"; ' +
+            '  elif command -v convert >/dev/null 2>&1 && out="$(convert "$path" -resize 1x1! -colorspace HSL -format \'%[fx:hue*360] %[fx:saturation] %[fx:lightness]\' info: 2>/dev/null)" && [ -n "$out" ]; then ' +
+            '    printf "%s\\n" "$out"; ' +
+            '  else ' +
+            '    printf "ERR\\n"; ' +
+            '  fi; ' +
+            'done'
+        const cmd = ["bash", "-c", script, "_", nativeDispatch]
         for (const item of batch) {
-            // Output: name<TAB>hue sat lightness (or name<TAB>ERR)
-            script += "printf '%s\\t' " + JSON.stringify(item.name) + "; "
-            script += "convert " + JSON.stringify(item.path) +
-                " -resize 1x1\\! -colorspace HSL -format '%[fx:hue*360] %[fx:saturation] %[fx:lightness]' info: 2>/dev/null || printf 'ERR'; "
-            script += "printf '\\n'; "
+            cmd.push(item.name, item.path)
         }
-        _colorAnalysisProc.command = ["bash", "-c", script]
+        _colorAnalysisProc.command = cmd
         _colorAnalysisProc.running = true
     }
 
@@ -645,6 +656,7 @@ Item {
                 const hDeg = parseFloat(parts[0])
                 const sat = parseFloat(parts[1])
                 const lit = parseFloat(parts[2])
+                if (isNaN(hDeg) || isNaN(sat) || isNaN(lit)) continue
                 let bucket = 99
                 if (sat > 0.12 && lit > 0.08 && lit < 0.92) {
                     bucket = Math.floor(hDeg / 30) % 12
@@ -1136,7 +1148,7 @@ Item {
                     Loader {
                         id: videoPreviewPlayerLoader
                         active: videoPreviewOutput._shouldPlay
-                        asynchronous: false
+                        asynchronous: status !== Loader.Ready
                         onLoaded: if (item) item.play()
                         sourceComponent: MediaPlayer {
                             source: "file://" + delegateItem.filePath
@@ -1162,13 +1174,23 @@ Item {
                     }
                 }
 
-                // Parallelogram mask — CurveRenderer provides AA, no MSAA layers needed
+                // Parallelogram mask — CurveRenderer provides AA; cache static Shape FBO until size changes
                 layer.enabled: true
                 layer.smooth: delegateItem.isCurrent
-                layer.samples: delegateItem.isCurrent ? 4 : 0
+                layer.samples: 0
                 layer.effect: MultiEffect {
                     maskEnabled: true
                     maskSource: ShaderEffectSource {
+                        id: skewMaskSource
+                        live: false
+                        hideSource: true
+                        readonly property real _w: imageContainer.width
+                        readonly property real _h: imageContainer.height
+                        readonly property real _sk: root.skewExtent
+                        on_WChanged: scheduleUpdate()
+                        on_HChanged: scheduleUpdate()
+                        on_SkChanged: scheduleUpdate()
+                        Component.onCompleted: scheduleUpdate()
                         sourceItem: Shape {
                             width: imageContainer.width
                             height: imageContainer.height

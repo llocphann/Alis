@@ -12,9 +12,11 @@ import qs.services
 Singleton {
     id: root
 
-    readonly property string provider: "awww"
-    // The internal renderer owns both rest and transition frames in liquid/wallfx modes.
-    readonly property bool enabled: transitionType !== "alisMelt" && transitionType !== "wallfx"
+    // Alis's internal GPU shader renderer (WallpaperCrossfader) owns wallpaper
+    // rendering and transitions by default so external `awww` is strictly optional.
+    // Users who explicitly set `background.backend.provider = "awww"` can opt back in.
+    readonly property string provider: Config.options?.background?.backend?.provider ?? "internal"
+    readonly property bool enabled: provider === "awww" && transitionType !== "alisMelt" && transitionType !== "wallfx"
     readonly property int transitionFps: Config.options?.background?.backend?.awww?.transitionFps ?? 60
     readonly property int simpleStep: Config.options?.background?.backend?.awww?.simpleStep ?? 5
     readonly property int spatialStep: Config.options?.background?.backend?.awww?.spatialStep ?? 30
@@ -573,7 +575,11 @@ Singleton {
         onTriggered: root._syncNow()
     }
 
-    onEnabledChanged: syncDebounce.restart()
+    onEnabledChanged: {
+        if (root.enabled && !root.available)
+            root._probe()
+        syncDebounce.restart()
+    }
     onAvailableChanged: syncDebounce.restart()
     onGlobalWallpaperPathChanged: syncDebounce.restart()
     onPanelFamilyChanged: syncDebounce.restart()
@@ -601,7 +607,9 @@ Singleton {
     }
 
     Component.onCompleted: {
-        root._probe()
-        syncDebounce.restart()
+        if (root.enabled) {
+            root._probe()
+            syncDebounce.restart()
+        }
     }
 }

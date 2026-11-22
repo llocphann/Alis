@@ -286,6 +286,8 @@ ContentPage {
             return true
         if (raw.includes("wl-paste") && (raw.includes("clipboard-store") || raw.includes("cliphist")))
             return true
+        if (raw.includes("native-dispatch") && raw.includes("clipboard watch"))
+            return true
         if (/polkit-(mate|gnome|kde)-authentication-agent|lxqt-policykit-agent|lxpolkit/.test(raw))
             return true
         return false

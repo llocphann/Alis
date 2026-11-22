@@ -36,10 +36,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "alis-dbus"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "libc",
+]
+
+[[package]]
 name = "alis-inputd"
 version = "1.0.0"
 dependencies = [
  "alis-protocol",
+ "alis-wayland",
  "anyhow",
  "clap",
  "evdev",
@@ -51,6 +60,7 @@ dependencies = [
 name = "alis-mpdd"
 version = "1.0.0"
 dependencies = [
+ "alis-dbus",
  "anyhow",
  "clap",
  "libc",
@@ -64,14 +74,18 @@ dependencies = [
 name = "alis-native"
 version = "1.0.0"
 dependencies = [
+ "alis-dbus",
+ "alis-wayland",
  "anyhow",
  "clap",
  "html-escape",
+ "image",
  "kdl 6.7.1",
  "libc",
  "regex",
  "serde",
  "serde_json",
+ "sha2",
 ]
 
 [[package]]
@@ -94,6 +108,14 @@ dependencies = [
  "serde_json",
  "sha2",
  "toml",
+]
+
+[[package]]
+name = "alis-wayland"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "libc",
 ]
 
 [[package]]

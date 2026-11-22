@@ -17,10 +17,9 @@ Item {
         active: shouldLoad
         source: Qt.resolvedUrl(targetSource)
     }
-    LazyLoader {
-        active: Config.ready && (Config.options?.enabledPanels ?? []).includes("abyssPolkit")
-        source: "../polkit/Polkit.qml"
-    }
+    // AbyssPolkit is rendered natively inside AbyssPerimeter as a Screen-Edge
+    // attached AbyssBodyHost when "abyssPolkit" is enabled, so no separate
+    // fullscreen Polkit window is mounted here.
     DemandPanel { identifier: "iiRegionSelector"; open: GlobalStates.regionSelectorOpen || GlobalStates.annotationEditorOpen; targetSource: "../regionSelector/RegionSelector.qml" }
     DemandPanel { identifier: "iiTilingOverlay"; open: GlobalStates.tilingOverlayPickerOpen || GlobalStates.tilingOverlayOsdOpen; targetSource: "../tilingOverlay/TilingOverlay.qml" }
 }

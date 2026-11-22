@@ -8,7 +8,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
-import org.kde.syntaxhighlighting
+import "../../common/functions/CodeHighlighter.js" as CodeHighlighter
 
 ColumnLayout {
     id: root
@@ -62,7 +62,7 @@ ColumnLayout {
                 font.pixelSize: Appearance.font.pixelSize.small
                 font.weight: Font.DemiBold
                 color: Appearance.colors.colOnLayer2
-                text: root.displayLang ? Repository.definitionForName(root.displayLang).name : "plain"
+                text: CodeHighlighter.languageDisplayName(root.displayLang)
                 elide: Text.ElideRight
                 wrapMode: Text.NoWrap
             }
@@ -155,7 +155,7 @@ ColumnLayout {
                 spacing: 0
 
                 Repeater {
-                    model: codeTextArea.text.split("\n").length
+                    model: String(root.segmentContent ?? "").split("\n").length
                     Text {
                         required property int index
                         Layout.fillWidth: true
@@ -223,6 +223,7 @@ ColumnLayout {
                         readOnly: !editing
                         selectByMouse: enableMouseSelection || editing
                         renderType: Text.NativeRendering
+                        textFormat: root.editing ? TextEdit.PlainText : TextEdit.RichText
                         font.family: Appearance.font.family.monospace
                         font.hintingPreference: Font.PreferNoHinting // Prevent weird bold text
                         font.pixelSize: Appearance.font.pixelSize.small
@@ -231,13 +232,26 @@ ColumnLayout {
                         // wrapMode: TextEdit.Wrap
                         color: messageData.thinking ? Appearance.colors.colSubtext : Appearance.colors.colOnLayer1
 
-                        text: segmentContent
+                        readonly property var highlightPalette: ({
+                            keyword: String(Appearance.colors.colPrimary),
+                            string: String(Appearance.colors.colTertiary),
+                            number: String(Appearance.colors.colSecondary),
+                            comment: String(Appearance.colors.colSubtext),
+                            type: String(Appearance.colors.colSecondary),
+                            error: String(Appearance.colors.colError),
+                            normal: String(messageData.thinking ? Appearance.colors.colSubtext : Appearance.colors.colOnLayer1)
+                        })
+
+                        text: root.editing
+                            ? String(root.segmentContent ?? "")
+                            : CodeHighlighter.highlightCode(String(root.segmentContent ?? ""), root.displayLang, highlightPalette)
                         onTextChanged: {
-                            segmentContent = text
+                            if (root.editing)
+                                segmentContent = text
                         }
 
                         Keys.onPressed: (event) => {
-                            if (event.key === Qt.Key_Tab) {
+                            if (root.editing && event.key === Qt.Key_Tab) {
                                 // Insert 4 spaces at cursor
                                 const cursor = codeTextArea.cursorPosition;
                                 codeTextArea.insert(cursor, "    ");
@@ -247,14 +261,6 @@ ColumnLayout {
                                 codeTextArea.copy();
                                 event.accepted = true;
                             }
-                        }
-
-                        SyntaxHighlighter {
-                            id: highlighter
-                            textEdit: codeTextArea
-                            repository: Repository
-                            definition: Repository.definitionForName(root.displayLang || "plaintext")
-                            theme: Appearance.syntaxHighlightingTheme
                         }
                     }
                 }

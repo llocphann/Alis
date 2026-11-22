@@ -21,6 +21,8 @@ LOG_FILE="$STATE_DIR/user/generated/chrome_theme.log"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/config-path.sh
 source "$SCRIPT_DIR/../lib/config-path.sh"
+# shellcheck source=scripts/colors/lib/json-compat.sh
+source "$SCRIPT_DIR/lib/json-compat.sh"
 mkdir -p "$STATE_DIR/user/generated" 2>/dev/null
 : > "$LOG_FILE" 2>/dev/null
 
@@ -81,9 +83,9 @@ resolve_color() {
   local colors_json="$STATE_DIR/user/generated/app-palette.json"
   [[ -f "$colors_json" ]] || colors_json="$STATE_DIR/user/generated/palette.json"
   [[ -f "$colors_json" ]] || colors_json="$STATE_DIR/user/generated/colors.json"
-  if [[ -f "$colors_json" ]] && command -v jq &>/dev/null; then
+  if [[ -f "$colors_json" ]] && alis_json_available; then
     local c
-    c=$(jq -r '.primary // .app_accent // .app_headerbar_bg // .surface // .background // empty' "$colors_json" 2>/dev/null || true)
+    c=$(alis_json_pick "$colors_json" "" primary app_accent app_headerbar_bg surface background)
     if [[ -n "$c" ]]; then
       echo "$c"
       return
@@ -93,9 +95,9 @@ resolve_color() {
 
 resolve_color_scheme() {
   local meta_file="$STATE_DIR/user/generated/theme-meta.json"
-  if [[ -f "$meta_file" ]] && command -v jq &>/dev/null; then
+  if [[ -f "$meta_file" ]] && alis_json_available; then
     local mode
-    mode=$(jq -r '.mode // empty' "$meta_file" 2>/dev/null || true)
+    mode=$(alis_json_pick "$meta_file" "" mode)
     if [[ "$mode" == "dark" || "$mode" == "light" ]]; then
       echo "$mode"
       return
@@ -117,9 +119,9 @@ resolve_color_scheme() {
 resolve_variant() {
   local config_file
   config_file="$(alis_config_file)"
-  if [[ -f "$config_file" ]] && command -v jq &>/dev/null; then
+  if [[ -f "$config_file" ]] && alis_json_available; then
     local variant chrome_variant
-    variant=$(jq -r '.appearance.palette.type // "auto"' "$config_file" 2>/dev/null || true)
+    variant=$(alis_json_pick "$config_file" "auto" appearance.palette.type)
     if [[ -n "$variant" && "$variant" != "null" && "$variant" != "auto" ]]; then
       chrome_variant=$(echo "$variant" | sed 's/scheme-//' | tr '-' '_')
       case "$chrome_variant" in

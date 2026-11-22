@@ -3902,6 +3902,31 @@ def pick_files() -> list[str]:
     if not Path(start_dir).is_dir():
         start_dir = str(Path.home())
 
+    native_dispatch = Path(__file__).resolve().parents[1] / "native-dispatch"
+    if native_dispatch.is_file() and os.access(native_dispatch, os.X_OK):
+        try:
+            res = subprocess.run(
+                [
+                    str(native_dispatch),
+                    "file-dialog",
+                    "--title",
+                    "Add Applications (AppImage / zsync / tar.gz / pkg.tar.zst / zip)",
+                    "--multiple",
+                    "--current-folder",
+                    start_dir,
+                    "--filter",
+                    "*.AppImage *.appimage *.zsync *.tar.gz *.tgz *.pkg.tar.zst *.pkg.tar.xz *.pkg.tar.gz *.tar.zst *.tzst *.tar.xz *.txz *.tar.bz2 *.tbz2 *.zip",
+                ],
+                capture_output=True,
+                text=True,
+            )
+            if res.returncode == 0 and res.stdout.strip():
+                return [line.strip() for line in res.stdout.splitlines() if line.strip()]
+            if res.returncode == 1:
+                return []
+        except OSError:
+            pass
+
     if shutil.which("zenity"):
         try:
             res = subprocess.run(

@@ -63,11 +63,17 @@ Item {
     // A local opt-out is retained for driver recovery; unsupported renderers,
     // compile errors and stalled frames fall back to the Ready-slot crossfade.
     // Aliases resolve to one compiled QSB, including shaderRandom.
-    readonly property var shaderTransitionTypes: ["alisMelt"]
+    readonly property var shaderTransitionTypes: ["alisMelt", "grow", "outer", "center", "any", "wave", "wipe"]
+    readonly property var geometricShaderTypes: ["grow", "outer", "center", "any", "wave", "wipe"]
     property string _randomPickedType: "wipe"
+    property string _randomShaderPickedType: "grow"
+    property vector2d _shaderOrigin: Qt.vector2d(0.5, 0.5)
     readonly property string _activeConfiguredType: String(transitionType ?? "") === "random"
         ? _randomPickedType
         : String(transitionType ?? "crossfade")
+    readonly property string _effectiveGeometricType: _activeConfiguredType === "shaderRandom"
+        ? _randomShaderPickedType
+        : _activeConfiguredType
     readonly property bool shaderTransitionRequested: Quickshell.env("ALIS_DISABLE_LIQUID_SHADER") !== "1"
         && (isShaderTransitionType(_activeConfiguredType)
             || isWallfxTransitionType(_activeConfiguredType)
@@ -186,12 +192,45 @@ Item {
         return String(rawType ?? "") === "wallfx"
     }
 
+    function isGeometricShaderType(rawType): bool {
+        return geometricShaderTypes.indexOf(String(rawType ?? "")) >= 0
+    }
+
+    function _geometricTransitionMode(rawType): real {
+        switch (String(rawType ?? "")) {
+        case "grow": return 0.0
+        case "outer": return 1.0
+        case "center": return 2.0
+        case "any": return 3.0
+        case "wave": return 4.0
+        case "wipe": return 5.0
+        default: return 0.0
+        }
+    }
+
+    function _geometricTransitionAngleRad(): real {
+        switch (_resolvedTransitionDirection()) {
+        case "left": return Math.PI
+        case "top": return Math.PI * 0.5
+        case "bottom": return Math.PI * 1.5
+        default: return 0.0
+        }
+    }
+
     function _resolvedShaderName(): string {
         const raw = root._activeConfiguredType
         if (raw === "shaderRandom") {
             const index = Math.floor(Math.random() * shaderTransitionTypes.length)
-            return shaderTransitionTypes[Math.max(0, Math.min(shaderTransitionTypes.length - 1, index))]
+            const picked = shaderTransitionTypes[Math.max(0, Math.min(shaderTransitionTypes.length - 1, index))]
+            root._randomShaderPickedType = picked
+            if (picked === "any")
+                root._shaderOrigin = Qt.vector2d(0.15 + Math.random() * 0.7, 0.15 + Math.random() * 0.7)
+            else
+                root._shaderOrigin = Qt.vector2d(0.5, 0.5)
+            return isGeometricShaderType(picked) ? "alisTransitions" : "alisMelt"
         }
+        if (isGeometricShaderType(raw))
+            return "alisTransitions"
         return isShaderTransitionType(raw) ? "alisMelt" : ""
     }
 
@@ -585,9 +624,14 @@ Item {
             }
 
             if (String(root.transitionType ?? "") === "random") {
-                const pool = ["alisMelt", "wipe", "slide", "grow", "outer", "blurFade"]
+                const pool = ["alisMelt", "wipe", "wave", "slide", "grow", "center", "outer", "any", "blurFade"]
                 const filtered = pool.filter(item => item !== root._randomPickedType)
                 root._randomPickedType = filtered[Math.floor(Math.random() * filtered.length)]
+            }
+            if (root._activeConfiguredType === "any") {
+                root._shaderOrigin = Qt.vector2d(0.15 + Math.random() * 0.7, 0.15 + Math.random() * 0.7)
+            } else {
+                root._shaderOrigin = Qt.vector2d(0.5, 0.5)
             }
             pendingSource = newSource
 
@@ -1371,7 +1415,9 @@ Item {
         property real aspectX: width / Math.max(1, height)
         property real aspectY: 1
         property vector2d aspectRatio: Qt.vector2d(aspectX, aspectY)
-        property vector2d origin: Qt.vector2d(0.5, 0.5)
+        property vector2d origin: root._shaderOrigin
+        property real transitionMode: root._geometricTransitionMode(root._effectiveGeometricType)
+        property real transitionAngle: root._geometricTransitionAngleRad()
 
         fragmentShader: root._activeShader !== ""
             ? Qt.resolvedUrl("wallpaperTransitions/" + root._activeShader + ".frag.qsb")

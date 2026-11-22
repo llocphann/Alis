@@ -252,7 +252,6 @@ Item {
                 visible: root.verticalContent
                 anchors.centerIn: parent
                 width: titleScroller.height
-                height: titleScroller.width
                 rotation: -root.contentRotation
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter

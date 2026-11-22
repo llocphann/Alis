@@ -10,12 +10,10 @@ sha256sums=()
 depends=(
   adw-gtk-theme
   adwaita-icon-theme
-  awww
-  bc
+  alis-shell
   blueman
   breeze-icons
   capitaine-cursors
-  cava
   darkly-bin
   ddcutil
   eza
@@ -23,30 +21,21 @@ depends=(
   fontconfig
   fprintd
   frameworkintegration
-  fuzzel
   geoclue
   git
   glib2
   gnome-keyring
-  gowall-bin
-  gum
   hicolor-icon-theme
-  imagemagick
-  alis-shell
-  kconfig
   kdecoration
-  kdialog
   kitty
   kvantum
   libdbusmenu-gtk3
-  libqalculate
   mission-center
   mpd
-  mpd-mpris
   mpv
   nautilus
+  nm-connection-editor
   otf-space-grotesk
-  pacman-contrib
   papirus-icon-theme
   pavucontrol
   plasma-browser-integration
@@ -58,32 +47,25 @@ depends=(
   ripgrep
   sddm
   starship
-  swappy
   tesseract
   tesseract-data-eng
   tesseract-data-spa
-  translate-shell
   ttf-dejavu
-  ttf-gabarito-git
   ttf-liberation
-  ttf-oxanium
-  ttf-readex-pro
   ttf-roboto
   ttf-roboto-mono
-  ttf-rubik-vf
-  ttf-twemoji
   upower
-  uv
   wget
   wf-recorder
   whitesur-icon-theme
-  wtype
-  ydotool
 )
 optdepends=(
   'easyeffects: optional audio effects and equalizer backend'
   'millennium-bin: Steam theming via Millennium (requires steam)'
+  'mpd-mpris: optional external MPD MPRIS bridge (built-in MPRIS provided by alis-mpdd)'
+  'polkit-gnome: optional standalone polkit agent (Alis ships a built-in Quickshell Polkit agent)'
   'socat: optional EasyEffects control transport for equalizer'
+  'swaylock: optional fallback screen locker (Alis ships a built-in Quickshell lockscreen)'
 )
 
 package() {

@@ -1,7 +1,11 @@
 #![recursion_limit = "512"]
 
 mod colortags;
+mod cover_colors;
 mod editors;
+mod find_regions;
+mod gowall;
+mod imgops;
 mod palette;
 mod preview;
 mod region;
@@ -9,6 +13,7 @@ mod sddm;
 mod seed_cache;
 mod source;
 mod template;
+mod thumbgen;
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -234,6 +239,11 @@ fn main() -> Result<()> {
     if let Some(first) = raw_args.get(1).map(String::as_str) {
         match first {
             "--color-tags" => return colortags::run_color_tags(&raw_args[2..]),
+            "--cover-colors" => return cover_colors::run_cover_colors(&raw_args[2..]),
+            "--find-regions" => return find_regions::run_find_regions(&raw_args[2..]),
+            "--gowall" => return gowall::run_gowall(&raw_args[2..]),
+            "--image" => return imgops::run_image(&raw_args[2..]),
+            "--thumbgen" => return thumbgen::run_thumbgen(&raw_args[2..]),
             "--vscode-theme" => return editors::run_vscode_theme(&raw_args[2..]),
             "--opencode-theme" => return editors::run_opencode_theme(&raw_args[2..]),
             "--zed-theme" => return editors::run_zed_theme(&raw_args[2..]),

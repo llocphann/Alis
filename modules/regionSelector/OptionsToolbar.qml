@@ -32,6 +32,7 @@ Toolbar {
     property bool canUndo: false
     property bool canRedo: false
     property bool stylePopoverOpen: false
+    property string tooltipPosition: "top"
     property bool _syncingBars: false
 
     signal dismiss()
@@ -133,7 +134,8 @@ Toolbar {
         }
         StyledToolTip {
             text: btn.tooltipText
-            visible: btn.tooltipText.length > 0 && btn.buttonHovered
+            position: root.tooltipPosition
+            enabled: btn.tooltipText.length > 0
         }
     }
 
@@ -228,7 +230,8 @@ Toolbar {
         }
         StyledToolTip {
             text: Translation.tr("Color & stroke width")
-            visible: styleButton.buttonHovered
+            position: root.tooltipPosition
+            enabled: true
         }
     }
 

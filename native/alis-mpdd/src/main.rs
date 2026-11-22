@@ -1,3 +1,5 @@
+mod mpris;
+
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::io::{self, BufRead, BufReader, Read, Write};
@@ -60,6 +62,18 @@ struct Args {
     /// Read a local .lrc/.txt sidecar using the LocalMusic lyrics contract.
     #[arg(long)]
     lyrics: Option<String>,
+
+    /// Run standalone built-in MPRIS2 D-Bus bridge for MPD (replaces mpd-mpris).
+    #[arg(long)]
+    mpris: bool,
+
+    /// Disable the built-in MPRIS2 D-Bus bridge in daemon mode.
+    #[arg(long)]
+    no_mpris: bool,
+
+    /// Optional preferred MPRIS2 D-Bus bus name (e.g. org.mpris.MediaPlayer2.mpd).
+    #[arg(long)]
+    mpris_name: Option<String>,
 
     /// Arguments consumed by --compat/--client-compat: MODE HOST PORT [MODE_ARGS...].
     #[arg(trailing_var_arg = true)]
@@ -590,10 +604,10 @@ fn is_non_lyric_text(path: &Path) -> bool {
 }
 
 fn lyrics_fallback_dir() -> PathBuf {
-    if let Ok(xdg) = std::env::var("XDG_DATA_HOME") {
-        if !xdg.trim().is_empty() {
-            return PathBuf::from(xdg).join("alis").join("lyrics");
-        }
+    if let Ok(xdg) = std::env::var("XDG_DATA_HOME")
+        && !xdg.trim().is_empty()
+    {
+        return PathBuf::from(xdg).join("alis").join("lyrics");
     }
     let home = std::env::var("HOME").unwrap_or_default();
     PathBuf::from(home).join(".local").join("share").join("alis").join("lyrics")
@@ -679,7 +693,7 @@ fn lyrics_candidates(track: &Path) -> Vec<PathBuf> {
     }
 
     let mut unique = Vec::with_capacity(lrc_candidates.len() + txt_candidates.len());
-    for path in lrc_candidates.into_iter().chain(txt_candidates.into_iter()) {
+    for path in lrc_candidates.into_iter().chain(txt_candidates) {
         if path
             .extension()
             .and_then(|e| e.to_str())
@@ -818,13 +832,13 @@ fn is_non_lyric_credit_or_header(text: &str) -> bool {
         let after = trimmed[colon_idx..].trim_start_matches([':', '：']).trim();
         let compact: String = head.chars().filter(|c| !c.is_whitespace()).collect();
         let compact_count = compact.chars().count();
-        if !after.is_empty() && (1..=12).contains(&compact_count) {
-            if compact
+        if !after.is_empty()
+            && (1..=12).contains(&compact_count)
+            && compact
                 .chars()
                 .all(|ch| is_cjk_char(ch) || matches!(ch, '/' | '・' | '·' | '&'))
-            {
-                return true;
-            }
+        {
+            return true;
         }
         let compact_lower = compact.to_lowercase();
         if !after.is_empty()
@@ -958,9 +972,11 @@ fn prosodic_word_weight(word: &str, index: usize, total: usize) -> (f64, f64) {
     (weight, post_pause)
 }
 
+type TimedLyricsEntry = (f64, String, Vec<(f64, String)>);
+
 fn parse_lrc(text: &str) -> (Vec<Value>, bool, bool) {
     let mut offset_ms = 0i64;
-    let mut timed: Vec<(f64, String, Vec<(f64, String)>)> = Vec::new();
+    let mut timed: Vec<TimedLyricsEntry> = Vec::new();
     let mut plain = Vec::new();
     let mut has_inline_words = false;
 
@@ -2729,7 +2745,22 @@ fn main() -> Result<()> {
 
     let root = args.music_root.unwrap_or_default();
     let manager = Arc::new(MpdManager::new(args.host.clone(), args.port, root));
+
+    if args.mpris {
+        return mpris::run_mpris_bridge(manager, args.mpris_name.as_deref());
+    }
+
     let subscribers = Arc::new(Mutex::new(Vec::new()));
+
+    if !args.no_mpris {
+        let mpris_manager = manager.clone();
+        let mpris_name = args.mpris_name.clone();
+        thread::spawn(move || {
+            if let Err(err) = mpris::run_mpris_bridge(mpris_manager, mpris_name.as_deref()) {
+                eprintln!("alis-mpdd: embedded MPRIS bridge stopped: {err:#}");
+            }
+        });
+    }
 
     {
         let host = args.host.clone();

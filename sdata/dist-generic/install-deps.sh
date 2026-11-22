@@ -49,16 +49,13 @@ check_cmd "git" "Git" && HAS_GIT=true || HAS_GIT=false
 
 echo ""
 echo -e "${STY_BLUE}Runtime tools:${STY_RST}"
-check_cmd "fish" "Fish shell"
-check_cmd "jq" "jq"
 check_cmd "curl" "curl"
-check_cmd "wl-copy" "wl-clipboard"
-check_cmd "grim" "grim"
-check_cmd "slurp" "slurp"
-check_cmd "cliphist" "cliphist"
+check_cmd "rsync" "rsync"
 check_cmd "pipewire" "PipeWire"
 check_cmd "wpctl" "WirePlumber"
-check_cmd "cava" "CAVA audio visualizer"
+check_cmd "ffmpeg" "FFmpeg"
+check_cmd "wf-recorder" "wf-recorder"
+echo "  (Clipboard, screencopy, night-light, idle, audio FFT spectrum, MPD MPRIS, and image ops are built into Alis's Rust binaries.)"
 
 echo ""
 
@@ -124,18 +121,7 @@ echo ""
 
 CARGO_PACKAGES=(
   "xwayland-satellite:X11 compatibility layer"
-  "uv:Fast Python package manager"
 )
-
-# awww must be installed from git (not on crates.io)
-echo ""
-echo -e "${STY_BLUE}awww (wallpaper daemon):${STY_RST}"
-if command -v awww &>/dev/null; then
-  echo -e "  ${STY_GREEN}✓${STY_RST} awww already installed"
-else
-  echo -e "  ${STY_RED}✗${STY_RST} awww not found"
-  echo "  Install: cargo install --git https://codeberg.org/LGFae/awww.git"
-fi
 
 if $HAS_CARGO; then
   echo "Cargo is available. You can install these with:"
@@ -206,20 +192,19 @@ echo "  qt6-base, qt6-declarative, qt6-svg, qt6-wayland, qt6-5compat"
 echo "  qt6-multimedia, qt6-imageformats, qt6-virtualkeyboard"
 echo ""
 
-echo -e "${STY_BLUE}Wayland tools (required):${STY_RST}"
-echo "  wl-clipboard, grim, slurp, swaylock, swayidle, wlsunset"
-echo "  awww (wallpaper daemon): https://codeberg.org/LGFae/awww"
-echo "    Install: cargo install --git https://codeberg.org/LGFae/awww.git"
+echo -e "${STY_BLUE}Wayland tools:${STY_RST}"
+echo "  wf-recorder (screen recording), xwayland-satellite (X11 apps)"
+echo "  (Clipboard, screencopy, night-light, idle, wallpaper transitions, and lockscreen are built into Alis)"
 echo ""
 
 echo -e "${STY_BLUE}Audio (required):${STY_RST}"
-echo "  pipewire, pipewire-pulse, wireplumber, playerctl, pavucontrol, cava"
+echo "  pipewire, pipewire-pulse, wireplumber, pavucontrol"
 echo "  plasma-browser-integration (browser MPRIS sessions and artwork)"
+echo "  (Audio spectrum visualizer and MPD MPRIS are built into Alis's Rust helpers)"
 echo ""
 
 echo -e "${STY_BLUE}Utilities (required):${STY_RST}"
-echo "  fish, jq, curl, wget, git, rsync, ripgrep, bc"
-echo "  dunst, libnotify, imagemagick, brightnessctl"
+echo "  curl, wget, git, rsync, ripgrep, libnotify, ffmpeg"
 echo ""
 
 echo -e "${STY_BLUE}Desktop integration:${STY_RST}"
@@ -228,8 +213,7 @@ echo "  polkit, networkmanager, gnome-keyring, blueman"
 echo ""
 
 echo -e "${STY_BLUE}Optional but recommended:${STY_RST}"
-echo "  kitty (terminal), nautilus (file manager), fuzzel (launcher)"
-echo "  easyeffects, mpv, tesseract-ocr"
+echo "  kitty (terminal), nautilus (file manager), easyeffects, mpv, tesseract-ocr"
 echo ""
 
 #####################################################################################

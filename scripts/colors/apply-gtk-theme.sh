@@ -29,14 +29,16 @@ fi
 
 # shellcheck source=scripts/lib/config-path.sh
 source "$SCRIPT_DIR/../lib/config-path.sh"
+# shellcheck source=scripts/colors/lib/json-compat.sh
+source "$SCRIPT_DIR/lib/json-compat.sh"
 SHELL_CONFIG_FILE="$(alis_config_file)"
 
 # Read config options
 enable_apps_shell="true"
 enable_qt_apps="true"
-if [[ -f "$SHELL_CONFIG_FILE" ]] && command -v jq &>/dev/null; then
-    enable_apps_shell=$(jq -r '.appearance.wallpaperTheming.enableAppsAndShell // true' "$SHELL_CONFIG_FILE")
-    enable_qt_apps=$(jq -r '.appearance.wallpaperTheming.enableQtApps // true' "$SHELL_CONFIG_FILE")
+if [[ -f "$SHELL_CONFIG_FILE" ]] && alis_json_available; then
+    enable_apps_shell=$(alis_json_get_or "$SHELL_CONFIG_FILE" "appearance.wallpaperTheming.enableAppsAndShell" "true")
+    enable_qt_apps=$(alis_json_get_or "$SHELL_CONFIG_FILE" "appearance.wallpaperTheming.enableQtApps" "true")
 fi
 
 # Exit only when both shell/GTK and Qt app theming are disabled
@@ -53,19 +55,19 @@ if [[ ! -f "$COLOR_SOURCE" ]]; then
     COLOR_SOURCE="$COLORS_JSON"
 fi
 
-if [[ ! -f "$COLOR_SOURCE" ]] || ! command -v jq &>/dev/null; then
-    echo "[apply-gtk-theme] palette/colors JSON not found or jq missing, skipping"
+if [[ ! -f "$COLOR_SOURCE" ]] || ! alis_json_available; then
+    echo "[apply-gtk-theme] palette/colors JSON not found or no JSON parser available, skipping"
     exit 0
 fi
 
 # The configured icon theme names a family. Apply the installed sibling
 # matching the generated light/dark mode so symbolic icons retain contrast.
-THEME_MODE=$(jq -r '.mode // empty' "$XDG_STATE_HOME/quickshell/user/generated/theme-meta.json" 2>/dev/null || true)
+THEME_MODE=$(alis_json_pick "$XDG_STATE_HOME/quickshell/user/generated/theme-meta.json" "" mode)
 if [[ "$THEME_MODE" != "light" && "$THEME_MODE" != "dark" ]]; then
     [[ "$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null)" == "'prefer-light'" ]] \
         && THEME_MODE="light" || THEME_MODE="dark"
 fi
-CHOSEN_ICON_THEME=$(jq -r '.appearance.iconTheme // empty' "$SHELL_CONFIG_FILE" 2>/dev/null || true)
+CHOSEN_ICON_THEME=$(alis_json_pick "$SHELL_CONFIG_FILE" "" appearance.iconTheme)
 [[ -z "$CHOSEN_ICON_THEME" ]] && CHOSEN_ICON_THEME=$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d "'" || true)
 APPLIED_ICON_THEME=""
 if [[ -n "$CHOSEN_ICON_THEME" ]]; then
@@ -75,12 +77,65 @@ if [[ -n "$CHOSEN_ICON_THEME" ]]; then
     fi
 fi
 
-# Read the app palette in one jq invocation rather than starting 29 jq
+# Read the app palette in one jq (or python3) invocation rather than starting 29
 # processes during every wallpaper recolor. The ordered fields are defined in
 # lib/app-palette-fields.jq and preserve the former fallback precedence (e.g. .app_foreground // .on_surface).
-if ! COLOR_VALUES_TEXT="$(jq -r -f "$SCRIPT_DIR/lib/app-palette-fields.jq" "$COLOR_SOURCE" 2>/dev/null)"; then
-    echo "[apply-gtk-theme] invalid palette JSON, skipping GTK/KDE refresh" >&2
-    exit 0
+if command -v jq &>/dev/null; then
+    if ! COLOR_VALUES_TEXT="$(jq -r -f "$SCRIPT_DIR/lib/app-palette-fields.jq" "$COLOR_SOURCE" 2>/dev/null)"; then
+        echo "[apply-gtk-theme] invalid palette JSON, skipping GTK/KDE refresh" >&2
+        exit 0
+    fi
+else
+    if ! COLOR_VALUES_TEXT="$(python3 - "$COLOR_SOURCE" <<'PY' 2>/dev/null
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as fh:
+    d = json.load(fh)
+if not isinstance(d, dict):
+    sys.exit(1)
+def pick(*keys):
+    for k in keys:
+        v = d.get(k)
+        if v is not None and v is not False:
+            return "true" if v is True else str(v)
+    return ""
+fields = [
+    pick("app_background", "background"),
+    pick("app_foreground", "on_background"),
+    pick("app_accent", "primary"),
+    pick("app_on_accent", "on_primary"),
+    pick("primary_container"),
+    pick("on_primary_container"),
+    pick("app_view_bg", "surface"),
+    pick("app_foreground", "on_surface"),
+    pick("app_surface_elevated", "surface_container"),
+    pick("app_surface_popup", "surface_container_high"),
+    pick("app_surface", "surface_container_low"),
+    pick("app_window_bg", "surface_dim"),
+    pick("app_border_subtle", "outline_variant"),
+    pick("app_thumbnail_bg", "surface_container_highest"),
+    pick("app_headerbar_bg"),
+    pick("app_sidebar_bg"),
+    pick("app_card_bg"),
+    pick("app_popover_bg"),
+    pick("app_dialog_bg"),
+    pick("app_selection"),
+    pick("app_selection_hover"),
+    pick("app_on_selection"),
+    pick("app_success"),
+    pick("app_warning"),
+    pick("app_error"),
+    pick("error"),
+    pick("tertiary"),
+    pick("secondary"),
+    pick("secondary_container"),
+]
+for v in fields:
+    print(v)
+PY
+    )"; then
+        echo "[apply-gtk-theme] invalid palette JSON, skipping GTK/KDE refresh" >&2
+        exit 0
+    fi
 fi
 mapfile -t COLOR_VALUES <<< "$COLOR_VALUES_TEXT"
 BG="${COLOR_VALUES[0]:-}"

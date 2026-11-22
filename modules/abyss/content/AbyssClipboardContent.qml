@@ -13,18 +13,35 @@ FocusScope {
     id: root
     property string outputName: ""
     property bool confirmClear: false
+    property string filterKind: "all" // "all", "text", "image", "pinned"
     focus: true
     signal closeRequested()
     readonly property var rows: {
         const query = search.text.toLowerCase()
-        const pins = Cliphist.pinned.map(text => ({pin:true, value:text, preview:Cliphist.pinPreview(text)}))
-        const history = Cliphist.entries.map(entry => ({pin:false, value:entry, preview:String(entry).slice(String(entry).indexOf("\t")+1)}))
-        return pins.concat(history).filter(row => row.preview.toLowerCase().includes(query))
+        const pins = Cliphist.pinned.map(text => ({pin:true, image:false, value:text, preview:Cliphist.pinPreview(text)}))
+        const history = Cliphist.entries.map(entry => ({
+            pin: false,
+            image: Cliphist.entryIsImage(entry),
+            value: entry,
+            preview: String(entry).slice(String(entry).indexOf("\t")+1)
+        }))
+        return pins.concat(history).filter(row => {
+            if (root.filterKind === "pinned" && !row.pin) return false
+            if (root.filterKind === "image" && !row.image) return false
+            if (root.filterKind === "text" && row.image) return false
+            return row.preview.toLowerCase().includes(query)
+        })
     }
-    function copyRow(row): void {
+    function copyRow(row, forcePaste = false): void {
         if (!row) return
-        if (row.pin) Quickshell.clipboardText = row.value
-        else Cliphist.copy(row.value)
+        const autoPaste = forcePaste || Boolean(Config.options?.clipboard?.autoPaste ?? false)
+        if (row.pin) {
+            if (autoPaste) Cliphist.pasteText(row.value)
+            else Quickshell.clipboardText = row.value
+        } else {
+            if (autoPaste) Cliphist.paste(row.value)
+            else Cliphist.copy(row.value)
+        }
         closeRequested()
     }
     function togglePinRow(row): void {
@@ -91,7 +108,7 @@ FocusScope {
                 root.moveSelection(-1)
                 event.accepted = true
             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                root.copyRow(root.rows[list.currentIndex])
+                root.copyRow(root.rows[list.currentIndex], Boolean(event.modifiers & Qt.ShiftModifier))
                 event.accepted = true
             }
         }
@@ -129,6 +146,28 @@ FocusScope {
                 if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_P) {
                     root.togglePinRow(root.rows[list.currentIndex])
                     event.accepted = true
+                }
+            }
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 4
+            Repeater {
+                model: [
+                    { key: "all", label: Translation.tr("All") },
+                    { key: "text", label: Translation.tr("Text") },
+                    { key: "image", label: Translation.tr("Images") },
+                    { key: "pinned", label: Translation.tr("Pinned") }
+                ]
+                delegate: AbyssButton {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    text: modelData.label
+                    checked: root.filterKind === modelData.key
+                    onClicked: {
+                        root.filterKind = modelData.key
+                        list.currentIndex = 0
+                    }
                 }
             }
         }

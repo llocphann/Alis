@@ -19,14 +19,6 @@ case "$MODE" in
     python|rust|auto) ;;
     *) echo "[native-dispatch] invalid ALIS_NATIVE_BACKEND=$MODE" >&2; exit 64 ;;
 esac
-BIN_DIR_FILE="$STATE_DIR/native-bin-dir"
-BIN_DIR="${ALIS_NATIVE_BIN_DIR:-}"
-if [[ -z "$BIN_DIR" && -r "$BIN_DIR_FILE" ]]; then
-    IFS= read -r BIN_DIR < "$BIN_DIR_FILE" || true
-    if [[ "$BIN_DIR" == */.debris/* || ! -x "$BIN_DIR/alis-native" ]]; then
-        BIN_DIR=""
-    fi
-fi
 DEFAULT_BIN_DIR="$ROOT_DIR/native/bin"
 if [[ ! -x "$DEFAULT_BIN_DIR/alis-native" && -x "$ROOT_DIR/native/target/release/alis-native" ]]; then
     DEFAULT_BIN_DIR="$ROOT_DIR/native/target/release"
@@ -37,6 +29,23 @@ if [[ ! -x "$DEFAULT_BIN_DIR/alis-native" ]]; then
         DEFAULT_BIN_DIR="$REAL_ROOT_DIR/native/bin"
     elif [[ -n "$REAL_ROOT_DIR" && -x "$REAL_ROOT_DIR/native/target/release/alis-native" ]]; then
         DEFAULT_BIN_DIR="$REAL_ROOT_DIR/native/target/release"
+    fi
+fi
+BIN_DIR_FILE="$STATE_DIR/native-bin-dir"
+BIN_DIR="${ALIS_NATIVE_BIN_DIR:-}"
+if [[ -z "$BIN_DIR" && -r "$BIN_DIR_FILE" ]]; then
+    IFS= read -r BIN_DIR < "$BIN_DIR_FILE" || true
+    if [[ "$BIN_DIR" == */.debris/* || ! -x "$BIN_DIR/alis-native" ]]; then
+        BIN_DIR=""
+    elif [[ "$BIN_DIR" != "$DEFAULT_BIN_DIR" && -x "$DEFAULT_BIN_DIR/alis-native" ]]; then
+        for _check_bin in alis-native alis-theme alis-inputd alis-mpdd; do
+            if [[ -x "$DEFAULT_BIN_DIR/$_check_bin" ]] && {
+                [[ ! -x "$BIN_DIR/$_check_bin" ]] || [[ "$DEFAULT_BIN_DIR/$_check_bin" -nt "$BIN_DIR/$_check_bin" ]]
+            }; then
+                BIN_DIR="$DEFAULT_BIN_DIR"
+                break
+            fi
+        done
     fi
 fi
 BIN_DIR="${BIN_DIR:-$DEFAULT_BIN_DIR}"
@@ -78,9 +87,96 @@ rust_ready() {
     [[ -x "$BIN_DIR/$binary" ]]
 }
 
+exec_rust_or_fallback() {
+    local binary="$1"
+    shift
+    if rust_ready "$binary"; then
+        if [[ "$BIN_DIR" == "$DEFAULT_BIN_DIR" || ! -x "$DEFAULT_BIN_DIR/$binary" || -n "${ALIS_NATIVE_BIN_DIR:-}" ]]; then
+            exec "$BIN_DIR/$binary" "$@"
+        fi
+        local err_tmp="" rc=0
+        err_tmp="$(mktemp "${TMPDIR:-/tmp}/alis-nd-err.XXXXXX" 2>/dev/null || true)"
+        if [[ -n "$err_tmp" ]]; then
+            "$BIN_DIR/$binary" "$@" 2>"$err_tmp"
+            rc=$?
+            if (( rc == 2 )) || {
+                (( rc == 1 )) && grep -qE 'unknown (--[a-z0-9-]+ )?subcommand|unrecognized subcommand|unexpected argument' "$err_tmp" 2>/dev/null
+            }; then
+                rm -f -- "$err_tmp"
+                exec "$DEFAULT_BIN_DIR/$binary" "$@"
+            fi
+            if [[ -s "$err_tmp" ]]; then
+                cat -- "$err_tmp" >&2
+            fi
+            rm -f -- "$err_tmp"
+            exit "$rc"
+        fi
+        "$BIN_DIR/$binary" "$@"
+        rc=$?
+        if (( rc != 2 )); then
+            exit "$rc"
+        fi
+    fi
+    if [[ "$BIN_DIR" != "$DEFAULT_BIN_DIR" && -x "$DEFAULT_BIN_DIR/$binary" && -z "${ALIS_NATIVE_BIN_DIR:-}" ]]; then
+        exec "$DEFAULT_BIN_DIR/$binary" "$@"
+    fi
+    return 127
+}
+
+# Long-lived daemons should `exec` directly so SIGTERM/SIGINT from Quickshell
+# reaches the Rust process instead of orphaning it behind a bash wrapper.
+exec_rust_daemon_or_fallback() {
+    local binary="$1"
+    local required_flag="$2"
+    shift 2
+    local -a probe_args=()
+    while (( $# > 0 )); do
+        if [[ "$1" == "--" ]]; then
+            shift
+            break
+        fi
+        probe_args+=("$1")
+        shift
+    done
+    if rust_ready "$binary"; then
+        if [[ "$BIN_DIR" == "$DEFAULT_BIN_DIR" || ! -x "$DEFAULT_BIN_DIR/$binary" || -n "${ALIS_NATIVE_BIN_DIR:-}" ]]; then
+            exec "$BIN_DIR/$binary" "$@"
+        fi
+        local probe_out="" probe_rc=0
+        if command -v timeout >/dev/null 2>&1; then
+            probe_out="$(timeout 0.5s "$BIN_DIR/$binary" "${probe_args[@]}" --help 2>/dev/null)" || probe_rc=$?
+        else
+            probe_out="$("$BIN_DIR/$binary" "${probe_args[@]}" --help 2>/dev/null)" || probe_rc=$?
+        fi
+        if (( probe_rc == 0 )); then
+            if [[ -z "$required_flag" ]] || grep -Fq -- "$required_flag" <<<"$probe_out"; then
+                exec "$BIN_DIR/$binary" "$@"
+            fi
+            exec "$DEFAULT_BIN_DIR/$binary" "$@"
+        elif (( probe_rc == 2 )); then
+            exec "$DEFAULT_BIN_DIR/$binary" "$@"
+        elif (( probe_rc == 124 )); then
+            "$BIN_DIR/$binary" "$@" &
+            local child_pid=$!
+            trap 'kill -TERM "$child_pid" 2>/dev/null || true' TERM
+            trap 'kill -INT "$child_pid" 2>/dev/null || true' INT
+            trap 'kill -HUP "$child_pid" 2>/dev/null || true' HUP
+            local rc=0
+            wait "$child_pid" || rc=$?
+            trap - TERM INT HUP
+            exit "$rc"
+        fi
+        exec "$DEFAULT_BIN_DIR/$binary" "$@"
+    fi
+    if [[ "$BIN_DIR" != "$DEFAULT_BIN_DIR" && -x "$DEFAULT_BIN_DIR/$binary" && -z "${ALIS_NATIVE_BIN_DIR:-}" ]]; then
+        exec "$DEFAULT_BIN_DIR/$binary" "$@"
+    fi
+    return 127
+}
+
 cmd="${1:-}"
 [[ -n "$cmd" ]] || {
-    echo "usage: native-dispatch <input-lock|input-keys|niri|clipboard-store|mpd|mpd-daemon|mpd-subscribe|lyrics|theme|theme-preview|least-busy-region|scan-plugins|telemetry|desktop-icons|backlight|calc|translate|companion|backend-info> [args...]" >&2
+    echo "usage: native-dispatch <backend-info|input-lock|input-keys|input-type|input-key|input-paste|input-session|niri|clipboard|clipboard-store|mpd|mpd-daemon|mpd-subscribe|mpd-mpris|lyrics|theme|theme-preview|least-busy-region|color-tags|find-regions|thumbgen|cover-colors|gowall|image|vscode-theme|opencode-theme|zed-theme|codex-theme|claude-theme|scan-plugins|telemetry|desktop-icons|desktop-fonts|desktop-kdeconfig|file-dialog|check-updates|audio-spectrum|mic-meter|gamma|idle|screencopy|backlight|calc|translate> [args...]" >&2
     exit 64
 }
 shift
@@ -88,10 +184,10 @@ shift
 if [[ "$MODE" == rust && "$STRICT" == 1 ]]; then
     required_binary=""
     case "$cmd" in
-        input-lock|input-keys) required_binary=alis-inputd ;;
-        niri|clipboard-store|desktop-icons|scan-plugins|telemetry|backlight|calc|translate) required_binary=alis-native ;;
-        mpd|mpd-daemon|mpd-subscribe|lyrics) required_binary=alis-mpdd ;;
-        theme|theme-preview|least-busy-region|vscode-theme|opencode-theme|zed-theme|codex-theme|claude-theme) required_binary=alis-theme ;;
+        input-lock|input-keys|input-type|input-key|input-paste|input-session) required_binary=alis-inputd ;;
+        niri|clipboard|clipboard-store|audio-spectrum|mic-meter|gamma|idle|screencopy|desktop-icons|desktop-fonts|desktop-kdeconfig|file-dialog|check-updates|scan-plugins|telemetry|backlight|calc|translate) required_binary=alis-native ;;
+        mpd|mpd-daemon|mpd-subscribe|mpd-mpris|lyrics) required_binary=alis-mpdd ;;
+        theme|theme-preview|least-busy-region|color-tags|find-regions|thumbgen|cover-colors|gowall|image|vscode-theme|opencode-theme|zed-theme|codex-theme|claude-theme) required_binary=alis-theme ;;
     esac
     if [[ -n "$required_binary" ]] && ! rust_ready "$required_binary"; then
         echo "[native-dispatch] missing Rust binary: $BIN_DIR/$required_binary" >&2
@@ -349,14 +445,7 @@ case "$cmd" in
 
     backlight)
         if want_rust; then
-            if rust_ready alis-native; then
-                "$BIN_DIR/alis-native" backlight "$@" 2>/dev/null
-                rc=$?
-                if (( rc != 2 )); then exit "$rc"; fi
-            fi
-            if [[ "$BIN_DIR" != "$DEFAULT_BIN_DIR" && -x "$DEFAULT_BIN_DIR/alis-native" ]]; then
-                exec "$DEFAULT_BIN_DIR/alis-native" backlight "$@"
-            fi
+            exec_rust_or_fallback alis-native backlight "$@" || true
         fi
         sub="${1:-list}"
         shift || true
@@ -399,14 +488,7 @@ case "$cmd" in
 
     calc)
         if want_rust; then
-            if rust_ready alis-native; then
-                "$BIN_DIR/alis-native" calc "$@" 2>/dev/null
-                rc=$?
-                if (( rc != 2 )); then exit "$rc"; fi
-            fi
-            if [[ "$BIN_DIR" != "$DEFAULT_BIN_DIR" && -x "$DEFAULT_BIN_DIR/alis-native" ]]; then
-                exec "$DEFAULT_BIN_DIR/alis-native" calc "$@"
-            fi
+            exec_rust_or_fallback alis-native calc "$@" || true
         fi
         command -v qalc >/dev/null 2>&1 && exec qalc -t "$*"
         exit 127
@@ -414,14 +496,7 @@ case "$cmd" in
 
     translate)
         if want_rust; then
-            if rust_ready alis-native; then
-                "$BIN_DIR/alis-native" translate "$@" 2>/dev/null
-                rc=$?
-                if (( rc != 2 )); then exit "$rc"; fi
-            fi
-            if [[ "$BIN_DIR" != "$DEFAULT_BIN_DIR" && -x "$DEFAULT_BIN_DIR/alis-native" ]]; then
-                exec "$DEFAULT_BIN_DIR/alis-native" translate "$@"
-            fi
+            exec_rust_or_fallback alis-native translate "$@" || true
         fi
         if [[ "${1:-}" == "--list-languages" ]]; then
             printf 'auto\nen\nvi\nja\nko\nzh-CN\nzh-TW\nfr\nde\nes\nru\n'
@@ -429,6 +504,176 @@ case "$cmd" in
         fi
         command -v trans >/dev/null 2>&1 && exec trans -b -no-theme -no-bidi -no-ansi "$@"
         exit 127
+        ;;
+
+    clipboard)
+        if want_rust; then
+            if [[ "${1:-}" == "watch" ]]; then
+                exec_rust_daemon_or_fallback alis-native "" clipboard watch -- clipboard "$@" || true
+            else
+                exec_rust_or_fallback alis-native clipboard "$@" || true
+            fi
+        fi
+        sub="${1:-}"
+        shift || true
+        case "$sub" in
+            copy) command -v wl-copy >/dev/null 2>&1 && exec wl-copy "$@" ;;
+            paste) command -v wl-paste >/dev/null 2>&1 && exec wl-paste "$@" ;;
+            list) command -v cliphist >/dev/null 2>&1 && exec cliphist list ;;
+            decode) command -v cliphist >/dev/null 2>&1 && exec cliphist decode "$@" ;;
+            delete) command -v cliphist >/dev/null 2>&1 && exec cliphist delete "$@" ;;
+            wipe) command -v cliphist >/dev/null 2>&1 && exec cliphist wipe ;;
+            store) command -v cliphist >/dev/null 2>&1 && exec cliphist store ;;
+        esac
+        exit 127
+        ;;
+
+    audio-spectrum)
+        if [[ ! -v PIPEWIRE_PROPS && ! -v PIPEWIRE_LATENCY ]]; then
+            export PIPEWIRE_PROPS='{ node.latency = null }'
+        fi
+        if want_rust; then
+            exec_rust_daemon_or_fallback alis-native "" audio spectrum -- audio spectrum "$@" || true
+        fi
+        exec /usr/bin/bash "$ROOT_DIR/scripts/cava/run.sh" "$@"
+        ;;
+
+    mic-meter)
+        if want_rust; then
+            exec_rust_daemon_or_fallback alis-native "" audio mic-meter -- audio mic-meter "$@" || true
+        fi
+        exec /usr/bin/python3 -u "$ROOT_DIR/scripts/audio/mic-level-meter.py" "$@"
+        ;;
+
+    gamma)
+        if want_rust; then
+            exec_rust_daemon_or_fallback alis-native "" gamma -- gamma "$@" || true
+        fi
+        command -v wlsunset >/dev/null 2>&1 && exec wlsunset "$@"
+        exit 127
+        ;;
+
+    idle)
+        if want_rust; then
+            exec_rust_daemon_or_fallback alis-native "" idle -- idle "$@" || true
+        fi
+        command -v swayidle >/dev/null 2>&1 && exec swayidle "$@"
+        exit 127
+        ;;
+
+    screencopy)
+        if want_rust; then
+            exec_rust_or_fallback alis-native screencopy "$@" || true
+        fi
+        command -v grim >/dev/null 2>&1 && exec grim "$@"
+        exit 127
+        ;;
+
+    input-type)
+        if want_rust; then
+            exec_rust_or_fallback alis-inputd --type "$@" || true
+        fi
+        command -v wtype >/dev/null 2>&1 && exec wtype "$@"
+        exit 127
+        ;;
+
+    input-key)
+        if want_rust; then
+            exec_rust_or_fallback alis-inputd --key "$@" || true
+        fi
+        command -v ydotool >/dev/null 2>&1 && exec ydotool key "$@"
+        exit 127
+        ;;
+
+    input-paste)
+        if want_rust; then
+            exec_rust_or_fallback alis-inputd --paste || true
+        fi
+        command -v ydotool >/dev/null 2>&1 && exec ydotool key -d 1 29:1 47:1 47:0 29:0
+        exit 127
+        ;;
+
+    input-session)
+        if want_rust; then
+            exec_rust_daemon_or_fallback alis-inputd "--vkeyboard-session" -- --vkeyboard-session || true
+        fi
+        exit 127
+        ;;
+
+    mpd-mpris)
+        if want_rust; then
+            exec_rust_daemon_or_fallback alis-mpdd "--mpris" -- --mpris "$@" || true
+        fi
+        command -v mpd-mpris >/dev/null 2>&1 && exec mpd-mpris "$@"
+        exit 127
+        ;;
+
+    desktop-fonts)
+        if want_rust; then
+            exec_rust_or_fallback alis-native desktop sync-fonts "$@" || true
+        fi
+        exit 69
+        ;;
+
+    desktop-kdeconfig)
+        if want_rust; then
+            exec_rust_or_fallback alis-native desktop set-kde-config "$@" || true
+        fi
+        exit 69
+        ;;
+
+    file-dialog)
+        if want_rust; then
+            exec_rust_or_fallback alis-native desktop file-dialog "$@" || true
+        fi
+        exit 69
+        ;;
+
+    check-updates)
+        if want_rust; then
+            exec_rust_or_fallback alis-native desktop check-updates || true
+        fi
+        command -v checkupdates >/dev/null 2>&1 && exec checkupdates
+        exit 127
+        ;;
+
+    thumbgen)
+        if want_rust; then
+            exec_rust_or_fallback alis-theme --thumbgen "$@" || true
+        fi
+        py="$(python_bin)"
+        exec "$py" "$ROOT_DIR/scripts/thumbnails/thumbgen.py" "$@"
+        ;;
+
+    find-regions)
+        if want_rust; then
+            exec_rust_or_fallback alis-theme --find-regions "$@" || true
+        fi
+        py="$(python_bin)"
+        exec "$py" "$ROOT_DIR/scripts/images/find_regions.py" "$@"
+        ;;
+
+    cover-colors)
+        if want_rust; then
+            exec_rust_or_fallback alis-theme --cover-colors "$@" || true
+        fi
+        py="$(python_bin)"
+        exec "$py" "$ROOT_DIR/scripts/cava/extract_cover_colors.py" "$@"
+        ;;
+
+    gowall)
+        if want_rust; then
+            exec_rust_or_fallback alis-theme --gowall "$@" || true
+        fi
+        command -v gowall >/dev/null 2>&1 && exec gowall "$@"
+        exit 127
+        ;;
+
+    image)
+        if want_rust; then
+            exec_rust_or_fallback alis-theme --image "$@" || true
+        fi
+        exit 69
         ;;
 
     *)

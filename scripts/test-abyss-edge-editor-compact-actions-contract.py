@@ -123,7 +123,7 @@ assert 'onToggled:root.change("joinCorner",checked)' in positions
 match = re.search(r'allowedKinds:\s*\[([^]]+)\]', editor)
 assert match, "Editor must constrain independently positioned indicators"
 choices = re.findall(r'"([^"]+)"', match.group(1))
-assert set(choices) == {"osd", "volume", "brightness", "mic", "mediaOsd", "keyboardLayout", "voiceSearch"}, choices
+assert set(choices) == {"osd", "volume", "brightness", "mic", "mediaOsd", "keyboardLayout", "voiceSearch", "polkit"}, choices
 assert '"clock"' not in choices and '"notificationCenter"' not in choices
 
 # Ambiguous scope/placement semantics intentionally stay textual.

@@ -406,6 +406,11 @@ MouseArea {
 
             sourceComponent: Row {
                 spacing: 16
+                layer.enabled: Appearance.effectsEnabled && !root._zzz
+                layer.effect: DropShadow {
+                    horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
+                    color: Qt.rgba(0, 0, 0, 0.4)
+                }
 
                 // WiFi
                 Revealer {
@@ -418,12 +423,6 @@ MouseArea {
                         text: Network.materialSymbol ?? "signal_wifi_off"
                         iconSize: 16
                         color: Appearance.colors.colOnSurface
-
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                            color: Qt.rgba(0, 0, 0, 0.4)
-                        }
                     }
 
                     Text {
@@ -433,12 +432,6 @@ MouseArea {
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.main
                         color: Appearance.colors.colOnSurfaceVariant
-
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                            color: Qt.rgba(0, 0, 0, 0.4)
-                        }
                     }
                 }
                 }
@@ -451,12 +444,6 @@ MouseArea {
                     text: BluetoothStatus.connected ? "bluetooth_connected" : "bluetooth"
                     iconSize: 16
                     color: Appearance.colors.colOnSurface
-
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                        color: Qt.rgba(0, 0, 0, 0.4)
-                    }
                 }
                 }
 
@@ -472,12 +459,6 @@ MouseArea {
                             : "volume_up"
                         iconSize: 16
                         color: Appearance.colors.colOnSurface
-
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                            color: Qt.rgba(0, 0, 0, 0.4)
-                        }
                     }
 
                     Text {
@@ -486,12 +467,6 @@ MouseArea {
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.numbers
                         color: Appearance.colors.colOnSurfaceVariant
-
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                            color: Qt.rgba(0, 0, 0, 0.4)
-                        }
                     }
                 }
 
@@ -518,12 +493,6 @@ MouseArea {
                         iconSize: 16
                         color: (topBatteryRow.batteryLevel <= 15 && !topBatteryRow.isCharging)
                             ? Appearance.colors.colError : Appearance.colors.colOnSurface
-
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                            color: Qt.rgba(0, 0, 0, 0.4)
-                        }
                     }
 
                     Text {
@@ -532,23 +501,25 @@ MouseArea {
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.numbers
                         color: Appearance.colors.colOnSurfaceVariant
-
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                            color: Qt.rgba(0, 0, 0, 0.4)
-                        }
                     }
                 }
                 }
             }
         }
 
-        // Clock container - position-aware
+        // Clock container - position-aware (grouped container DropShadow covers digital/analog clock + date)
         Item {
             id: clockContainer
             width: clockContent.implicitWidth
             height: clockContent.implicitHeight
+            layer.enabled: Appearance.effectsEnabled && !root._zzz
+            layer.effect: DropShadow {
+                horizontalOffset: 0
+                verticalOffset: 2
+                radius: 14
+                samples: 29
+                color: Qt.rgba(0, 0, 0, 0.48)
+            }
 
             states: [
                 State {
@@ -594,15 +565,6 @@ MouseArea {
                     font.weight: Font.Light
                     font.family: Appearance.font.family.numbers
                     color: Appearance.colors.colOnSurface
-
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0
-                        verticalOffset: 3
-                        radius: 16
-                        samples: 33
-                        color: Qt.rgba(0, 0, 0, 0.5)
-                    }
                 }
 
                 Text {
@@ -614,16 +576,6 @@ MouseArea {
                     font.family: Appearance.font.family.title
                     font.letterSpacing: 0.5
                     color: Appearance.colors.colOnSurface
-
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0
-                        verticalOffset: 1
-                        radius: 8
-                        samples: 17
-                        color: Qt.rgba(0, 0, 0, 0.4)
-                    }
-
                 }
             }
 
@@ -658,13 +610,6 @@ MouseArea {
                         font.family: Appearance.font.family.title
                         font.letterSpacing: 0.5
                         color: Appearance.colors.colOnSurface
-
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 8; samples: 17
-                            color: Qt.rgba(0, 0, 0, 0.4)
-                        }
-
                     }
                 }
             }
@@ -741,6 +686,14 @@ MouseArea {
             sourceComponent: Column {
                 spacing: 8
                 clip: true
+                layer.enabled: Appearance.effectsEnabled && !root._zzz
+                layer.effect: DropShadow {
+                    horizontalOffset: 0
+                    verticalOffset: 2
+                    radius: 8
+                    samples: 17
+                    color: Qt.rgba(0, 0, 0, 0.32)
+                }
 
                 Repeater {
                     model: {
@@ -791,15 +744,6 @@ MouseArea {
                                         : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.08))
 
                                 Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
-
-                                layer.enabled: Appearance.effectsEnabled && !root._zzz
-                                layer.effect: DropShadow {
-                                    horizontalOffset: 0
-                                    verticalOffset: 2
-                                    radius: 8
-                                    samples: 17
-                                    color: Qt.rgba(0, 0, 0, 0.3)
-                                }
 
                                 MouseArea {
                                     id: groupMouseArea
@@ -1009,20 +953,11 @@ MouseArea {
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     font.family: Appearance.font.family.main
                     color: Appearance.colors.colOnSurfaceVariant
-
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0
-                        verticalOffset: 1
-                        radius: 4
-                        samples: 9
-                        color: Qt.rgba(0, 0, 0, 0.3)
-                    }
                 }
             }
         }
         
-        // Bottom left: Weather widget
+        // Bottom left: Weather widget (single grouped DropShadow covers icon + temp + city)
         Loader {
             active: root.showWeather && Weather.data?.temp && Weather.data.temp.length > 0
             asynchronous: true
@@ -1036,6 +971,14 @@ MouseArea {
             
             sourceComponent: Row {
                 spacing: 12
+                layer.enabled: Appearance.effectsEnabled && !root._zzz
+                layer.effect: DropShadow {
+                    horizontalOffset: 0
+                    verticalOffset: 2
+                    radius: 8
+                    samples: 17
+                    color: Qt.rgba(0, 0, 0, 0.4)
+                }
                 
                 function isNightTime(): bool {
                     const now = new Date()
@@ -1072,15 +1015,6 @@ MouseArea {
                     iconSize: 44
                     fill: 0
                     color: Appearance.colors.colOnSurface
-                    
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0
-                        verticalOffset: 2
-                        radius: 8
-                        samples: 17
-                        color: Qt.rgba(0, 0, 0, 0.4)
-                    }
                 }
                 
                 Column {
@@ -1093,15 +1027,6 @@ MouseArea {
                         font.weight: Font.Light
                         font.family: Appearance.font.family.main
                         color: Appearance.colors.colOnSurface
-                        
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0
-                            verticalOffset: 1
-                            radius: 4
-                            samples: 9
-                            color: Qt.rgba(0, 0, 0, 0.4)
-                        }
                     }
                     
                     Text {
@@ -1110,21 +1035,12 @@ MouseArea {
                         font.pixelSize: Appearance.font.pixelSize.small
                         font.family: Appearance.font.family.main
                         color: Appearance.colors.colOnSurfaceVariant
-                        
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0
-                            verticalOffset: 1
-                            radius: 2
-                            samples: 5
-                            color: Qt.rgba(0, 0, 0, 0.3)
-                        }
                     }
                 }
             }
         }
 
-        // Bottom hint text
+        // Bottom hint text (uses lightweight Text.Raised shadow instead of an extra FBO)
         Text {
             id: hintText
             visible: root.showHintText && opacity > 0
@@ -1136,17 +1052,10 @@ MouseArea {
             font.family: Appearance.font.family.main
             color: Appearance.colors.colOnSurfaceVariant
             opacity: root.showHintText ? hintOpacity : 0
+            style: Appearance.effectsEnabled && !root._zzz ? Text.Raised : Text.Normal
+            styleColor: Qt.rgba(0, 0, 0, 0.45)
             
             property real hintOpacity: 0.7
-            
-            layer.enabled: Appearance.effectsEnabled && !root._zzz
-            layer.effect: DropShadow {
-                horizontalOffset: 0
-                verticalOffset: 1
-                radius: 4
-                samples: 9
-                color: Qt.rgba(0, 0, 0, 0.3)
-            }
             
             Timer {
                 id: hintFadeTimer
@@ -1189,11 +1098,19 @@ MouseArea {
             }
         }
 
-        // Centered login content with staggered animation
+        // Centered login content with staggered animation (single grouped DropShadow covers avatar, name, password, hint)
         ColumnLayout {
             id: loginContent
             anchors.centerIn: parent
             spacing: 16
+            layer.enabled: Appearance.effectsEnabled && !root._zzz
+            layer.effect: DropShadow {
+                horizontalOffset: 0
+                verticalOffset: 3
+                radius: 12
+                samples: 25
+                color: Qt.rgba(0, 0, 0, 0.36)
+            }
             
             // Animation properties for stagger effect
             property real animProgress: root.showLoginView ? 1 : 0
@@ -1234,15 +1151,6 @@ MouseArea {
                     border.color: root._zzz ? Appearance.zzz.borderColor : Appearance.colors.colPrimary
                     border.width: root._zzz ? Appearance.zzz.hairlineThick : 3
                     opacity: 0.8
-                    
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0
-                        verticalOffset: 4
-                        radius: 16
-                        samples: 33
-                        color: Qt.rgba(0, 0, 0, 0.4)
-                    }
                 }
                 
                 Rectangle {
@@ -1318,15 +1226,6 @@ MouseArea {
                 // Stagger animation (delayed)
                 opacity: Math.min(1, Math.max(0, loginContent.animProgress * 3 - 0.3))
                 transform: Translate { y: (1 - Math.min(1, Math.max(0, loginContent.animProgress * 3 - 0.3))) * 15 }
-                
-                layer.enabled: Appearance.effectsEnabled && !root._zzz
-                layer.effect: DropShadow {
-                    horizontalOffset: 0
-                    verticalOffset: 1
-                    radius: 6
-                    samples: 13
-                    color: Qt.rgba(0, 0, 0, 0.4)
-                }
             }
 
             Rectangle {
@@ -1375,15 +1274,6 @@ MouseArea {
                 
                 Behavior on border.color {
                     animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                }
-                
-                layer.enabled: Appearance.effectsEnabled && !root._zzz
-                layer.effect: DropShadow {
-                    horizontalOffset: 0
-                    verticalOffset: 4
-                    radius: 12
-                    samples: 25
-                    color: Qt.rgba(0, 0, 0, 0.3)
                 }
                 
                 RowLayout {
@@ -1573,15 +1463,6 @@ MouseArea {
                     font.pixelSize: Appearance.font.pixelSize.small
                     font.family: Appearance.font.family.main
                     color: Appearance.colors.colOnSurfaceVariant
-                    
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0
-                        verticalOffset: 1
-                        radius: 2
-                        samples: 5
-                        color: Qt.rgba(0, 0, 0, 0.3)
-                    }
                 }
             }
         }
@@ -1638,13 +1519,21 @@ MouseArea {
             }
         }
         
-        // Bottom left: Battery & keyboard layout
+        // Bottom left: Battery & keyboard layout (grouped DropShadow covers both indicators)
         Row {
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.bottomMargin: 24
             anchors.leftMargin: 24
             spacing: 16
+            layer.enabled: Appearance.effectsEnabled && !root._zzz
+            layer.effect: DropShadow {
+                horizontalOffset: 0
+                verticalOffset: 1
+                radius: 3
+                samples: 7
+                color: Qt.rgba(0, 0, 0, 0.32)
+            }
             
             // Battery
             Loader {
@@ -1664,15 +1553,6 @@ MouseArea {
                         color: (Battery.isLow && !Battery.isCharging) 
                             ? Appearance.colors.colError 
                             : Appearance.colors.colOnSurfaceVariant
-                        
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0
-                            verticalOffset: 1
-                            radius: 3
-                            samples: 7
-                            color: Qt.rgba(0, 0, 0, 0.3)
-                        }
                     }
                     
                     Text {
@@ -1683,15 +1563,6 @@ MouseArea {
                         color: (Battery.isLow && !Battery.isCharging) 
                             ? Appearance.colors.colError 
                             : Appearance.colors.colOnSurfaceVariant
-                        
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0
-                            verticalOffset: 1
-                            radius: 3
-                            samples: 7
-                            color: Qt.rgba(0, 0, 0, 0.3)
-                        }
                     }
                 }
             }
@@ -1712,15 +1583,6 @@ MouseArea {
                         iconSize: 18
                         fill: 1
                         color: Appearance.colors.colOnSurfaceVariant
-                        
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0
-                            verticalOffset: 1
-                            radius: 2
-                            samples: 5
-                            color: Qt.rgba(0, 0, 0, 0.3)
-                        }
                     }
                     
                     Text {
@@ -1729,15 +1591,6 @@ MouseArea {
                         font.pixelSize: Appearance.font.pixelSize.small
                         font.family: Appearance.font.family.main
                         color: Appearance.colors.colOnSurfaceVariant
-                        
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0
-                            verticalOffset: 1
-                            radius: 2
-                            samples: 5
-                            color: Qt.rgba(0, 0, 0, 0.3)
-                        }
                     }
                 }
             }
@@ -1950,8 +1803,8 @@ MouseArea {
         width: 44
         height: 44
         radius: root._zzz ? Appearance.zzz.controlRadius : Appearance.rounding.normal
-        border.width: 0
-        border.color: root._zzz ? Appearance.zzz.hairlineStrong : "transparent"
+        border.width: root._zzz ? 0 : 1
+        border.color: root._zzz ? Appearance.zzz.hairlineStrong : Qt.alpha(Appearance.colors.colOnSurface, 0.16)
         color: {
             if (root._zzz) {
                 return "transparent"
@@ -1979,15 +1832,6 @@ MouseArea {
         
         Behavior on color {
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-        
-        layer.enabled: Appearance.effectsEnabled && !root._zzz
-        layer.effect: DropShadow {
-            horizontalOffset: 0
-            verticalOffset: 2
-            radius: 8
-            samples: 17
-            color: Qt.rgba(0, 0, 0, 0.3)
         }
         
         MaterialSymbol {

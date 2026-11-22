@@ -426,14 +426,15 @@ Singleton {
         }
     }
 
-    // === Niri processes (wlsunset) ===
+    // === Niri processes (native Wayland gamma daemon via alis-native, fallback wlsunset) ===
     Process {
         id: wlsunsetProc
         property bool startObserved: false
         running: false
         // Force "always night" mode: sunset at 00:00, sunrise at 23:59.
         command: [
-            "/usr/bin/wlsunset",
+            Quickshell.shellPath("scripts/native-dispatch"),
+            "gamma",
             "-T", "6500",
             "-t", root.colorTemperature.toString(),
             "-s", "00:00",

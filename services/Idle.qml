@@ -74,7 +74,7 @@ Singleton {
     function _startSwayidle() {
         if (inhibit) return
 
-        const cmd = ["/usr/bin/swayidle", "-w"]
+        const cmd = [Quickshell.shellPath("scripts/native-dispatch"), "idle", "-w"]
 
         if (screenOffTimeout > 0 && CompositorService.isNiri) {
             const alis = StringUtils.shellSingleQuoteEscape(root.launcherPath);

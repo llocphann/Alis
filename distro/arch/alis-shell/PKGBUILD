@@ -15,13 +15,8 @@ _source_dir="${ALIS_SOURCE_DIR:-Alis-${_source_ref}}"
 makedepends=(cargo)
 depends=(
   bash
-  brightnessctl
-  cliphist
   curl
-  fish
-  grim
-  jq
-  kirigami
+  fontconfig
   libnotify
   networkmanager
   niri
@@ -29,12 +24,8 @@ depends=(
   pipewire
   pipewire-alsa
   pipewire-pulse
-  playerctl
-  polkit-gnome
+  polkit
   python
-  python-materialyoucolor
-  python-numpy
-  python-pillow
   qt6-5compat
   qt6-imageformats
   qt6-multimedia
@@ -42,16 +33,8 @@ depends=(
   qt6-quicktimeline
   quickshell
   rsync
-  slurp
-  swayidle
-  swaylock
-  wlsunset
-  syntax-highlighting
   ttf-jetbrains-mono-nerd
-  ttf-material-symbols-variable
-  ttf-roboto-flex
   wireplumber
-  wl-clipboard
   xdg-desktop-portal
   xdg-desktop-portal-gnome
   xdg-desktop-portal-gtk
@@ -60,47 +43,37 @@ depends=(
   xwayland-satellite
 )
 optdepends=(
-  'awww: animated wallpaper support'
+  'awww: optional external animated wallpaper daemon (Alis ships built-in GPU transitions)'
   'blueman: Bluetooth device management'
   'breeze-icons: fallback icon theme'
-  'cava: audio visualizer'
   'ddcutil: external monitor brightness control'
   'easyeffects: optional audio effects and equalizer backend'
   'ffmpeg: recording and video wallpaper helpers'
   'fprintd: fingerprint authentication integration'
   'geoclue: GPS-backed weather location detection'
   'gnome-keyring: secret storage for API keys and credentials'
-  'gowall-bin: wallpaper theme conversion and effects editor'
-  'gum: setup TUI helpers'
   'kde-cli-tools: Dolphin Open With dialog (QT_QPA_PLATFORMTHEME=kde)'
-  'imagemagick: image conversion helpers'
-  'kconfig: KDE configuration integration'
-  'kdialog: KDE dialog integration for scripts'
   'kitty: default terminal integration'
   'kvantum: Qt style engine'
-  'libqalculate: calculator widget backend'
   'mission-center: graphical system monitor (default task manager)'
   'mpv: media playback'
   'mpd: local Music library and queue backend'
-  'mpd-mpris: MPD/rmpc/Alis Music controls through MPRIS'
+  'mpd-mpris: optional external MPD MPRIS bridge (built-in MPRIS provided by alis-mpdd)'
   'nautilus: default file manager integration'
   'nm-connection-editor: default network settings GUI'
   'pavucontrol: advanced audio mixer UI'
-  'pacman-contrib: package update checking'
   'plasma-browser-integration: browser MPRIS sessions and artwork'
   'plasma-integration: Qt platform theme integration'
+  'polkit-gnome: optional standalone polkit agent (Alis ships a built-in Quickshell Polkit agent)'
   'qt6ct: Qt theme configuration'
   'socat: optional EasyEffects control transport for equalizer'
-  'swappy: screenshot annotation helpers'
+  'swappy: optional external screenshot annotation editor (Alis ships a built-in editor)'
+  'swaylock: optional fallback screen locker (Alis ships a built-in Quickshell lockscreen)'
   'tesseract: OCR-backed screenshot tools'
   'thinkfan: managed fan-control integration'
-  'translate-shell: translation helpers'
-  'ttf-oxanium: angel style font'
   'upower: battery monitoring service'
-  'uv: packaged Python environment management'
+  'uv: optional Python environment manager for opt-in AI wallfx cutout'
   'wf-recorder: screen recording support'
-  'wtype: Wayland text injection helper'
-  'ydotool: virtual keyboard and clipboard paste helper'
   'millennium-bin: Steam theming via Millennium (requires steam)'
 )
 conflicts=('alis-shell-git' 'noctalia-qs' 'noctalia-shell' 'cachyos-niri-noctalia')
@@ -248,6 +221,11 @@ PY
   install -Dm644 "$srcroot/assets/applications/alis-settings.desktop" "$pkgdir/usr/share/applications/alis-settings.desktop"
   install -Dm644 "$srcroot/assets/applications/alis-local-music.desktop" "$pkgdir/usr/share/applications/alis-local-music.desktop"
   install -Dm644 "$srcroot/assets/icons/desktop-symbolic.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/alis.svg"
+  if [[ -d "$srcroot/assets/fonts" ]]; then
+    while IFS= read -r -d '' _font; do
+      install -Dm644 "$_font" "$pkgdir/usr/share/fonts/alis/${_font#"$srcroot/assets/fonts/"}"
+    done < <(find "$srcroot/assets/fonts" -type f \( -name '*.ttf' -o -name '*.otf' \) -print0)
+  fi
   install -Dm644 "$srcroot/distro/arch/alis-shell/alis-quickshell-rebuild.hook" \
     "$pkgdir/usr/share/libalpm/hooks/alis-quickshell-rebuild.hook"
   install -Dm644 "$srcroot/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"

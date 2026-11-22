@@ -123,7 +123,9 @@ Item {
     property real contextMenuY: 0
 
     readonly property var libraryTracks: root.backend?.libraryTracks ?? []
-    readonly property var libraryIndex: Library.createIndex(root.libraryTracks)
+    readonly property var libraryIndex: (root.presentationActive || root.query.length > 0)
+        ? Library.createIndex(root.libraryTracks)
+        : Library.createIndex([])
     readonly property var genres: Library.genres(root.libraryTracks, root.libraryIndex)
     readonly property var folders: Library.roots(root.libraryTracks, root.libraryIndex)
     readonly property var albums: Library.albums(root.libraryTracks, root.libraryIndex)
@@ -1137,6 +1139,14 @@ Item {
                             color: root.colSubtext
                         }
 
+                        Timer {
+                            id: musicSearchDebounce
+                            interval: 160
+                            repeat: false
+                            property string pendingQuery: ""
+                            onTriggered: root.query = pendingQuery
+                        }
+
                         TextInput {
                             id: searchField
                             objectName: "musicSearch"
@@ -1150,12 +1160,20 @@ Item {
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             verticalAlignment: TextInput.AlignVCenter
                             text: root.query
-                            onTextEdited: root.query = text
+                            onTextEdited: {
+                                musicSearchDebounce.pendingQuery = text;
+                                if (text.trim().length === 0) {
+                                    musicSearchDebounce.stop();
+                                    root.query = "";
+                                } else {
+                                    musicSearchDebounce.restart();
+                                }
+                            }
 
                             StyledText {
                                 anchors.fill: parent
                                 verticalAlignment: Text.AlignVCenter
-                                visible: searchField.text.length === 0
+                                visible: searchField.text.length === 0 && !searchField.preeditText
                                 text: Translation.tr("Search local tracks, albums, artists…")
                                 font.family: root.uiFont
                                 font.pixelSize: Appearance.font.pixelSize.smaller

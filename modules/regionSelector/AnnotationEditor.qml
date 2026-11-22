@@ -24,7 +24,17 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell:annotationEditor"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-    screen: Quickshell.screens[0] ?? null
+    screen: {
+        const screens = Quickshell.screens ?? [];
+        const focusedName = String(NiriService?.currentOutput ?? "").trim();
+        if (focusedName.length > 0) {
+            for (let i = 0; i < screens.length; ++i) {
+                if (screens[i] && String(screens[i].name ?? "") === focusedName)
+                    return screens[i];
+            }
+        }
+        return screens[0] ?? null;
+    }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
 
@@ -476,10 +486,13 @@ PanelWindow {
                 exit 2;
             fi;
             _clip_msg="";
-            if command -v /usr/bin/wl-copy >/dev/null 2>&1 && /usr/bin/wl-copy < "$_ss" 2>/dev/null && echo -n "$_ss" | /usr/bin/wl-copy --primary 2>/dev/null; then
+            _nd='${StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/native-dispatch"))}';
+            if [ -x "$_nd" ] && "$_nd" clipboard copy --type image/png < "$_ss" 2>/dev/null && echo -n "$_ss" | "$_nd" clipboard copy --primary 2>/dev/null; then
+                _clip_msg=" — copied to clipboard";
+            elif command -v /usr/bin/wl-copy >/dev/null 2>&1 && /usr/bin/wl-copy < "$_ss" 2>/dev/null && echo -n "$_ss" | /usr/bin/wl-copy --primary 2>/dev/null; then
                 _clip_msg=" — copied to clipboard";
             else
-                _clip_msg=" — clipboard unavailable (is wl-clipboard running?)";
+                _clip_msg=" — clipboard unavailable";
             fi;
             /usr/bin/notify-send "Screenshot edited" "Saved to $_ss$_clip_msg" -a "Screenshot" -i camera-photo -t 4000;
         `]

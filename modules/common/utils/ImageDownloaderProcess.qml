@@ -31,9 +31,10 @@ Process {
         `set -euo pipefail
 src='${root.processSourceUrl()}'
 dst='${root.processFilePath()}'
+nd='${StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/native-dispatch"))}'
 [ -n "$src" ] && [ -n "$dst" ] || exit 2
 /usr/bin/mkdir -p "$(/usr/bin/dirname "$dst")"
-if [ -s "$dst" ] && ! /usr/bin/magick identify -quiet "$dst"'[0]' >/dev/null 2>&1; then
+if [ -s "$dst" ] && ! "$nd" image identify "$dst" >/dev/null 2>&1; then
     /usr/bin/rm -f -- "$dst"
 fi
 if [ ! -s "$dst" ]; then
@@ -55,11 +56,11 @@ if [ ! -s "$dst" ]; then
             exit 3
             ;;
     esac
-    /usr/bin/magick identify -quiet "$tmp"'[0]' >/dev/null
+    "$nd" image identify "$tmp" >/dev/null
     /usr/bin/mv -f "$tmp" "$dst"
     trap - EXIT
 fi
-/usr/bin/magick identify -format '%w %h' "$dst"'[0]'`
+"$nd" image identify "$dst"`
     ]
 
     stdout: StdioCollector {

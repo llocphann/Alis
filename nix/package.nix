@@ -36,17 +36,9 @@ let
       (builtins.hasAttr "qt6" pkgs && builtins.hasAttr name pkgs.qt6)
       (builtins.getAttr name pkgs.qt6);
 
-  colorPython = with pkgs;
-    (python3.withPackages (pythonPackages: with pythonPackages; [
-      materialyoucolor
-      numpy
-      pillow
-    ]));
-
   runtimeDeps =
     with pkgs; [
       bash
-      bc
       coreutils
       curl
       findutils
@@ -54,9 +46,8 @@ let
       git
       gnugrep
       gnused
-      jq
       procps
-      colorPython
+      python3
       ripgrep
       rsync
       systemd
@@ -65,11 +56,6 @@ let
       xdg-utils
 
       quickshell
-      wl-clipboard
-      cliphist
-      grim
-      slurp
-      playerctl
       libnotify
       glib
       pipewire
@@ -77,42 +63,25 @@ let
       wireplumber
     ]
     ++ optionalTop "util-linux"
-    ++ optionalTop "awww"
     ++ optionalTop "blueman"
-    ++ optionalTop "brightnessctl"
-    ++ optionalTop "cava"
     ++ optionalTop "ddcutil"
     ++ optionalTop "ffmpeg"
-    ++ optionalTop "fish"
     ++ optionalTop "foot"
-    ++ optionalTop "fuzzel"
     ++ optionalTop "geoclue2"
     ++ optionalTop "hyprland"
-    ++ optionalTop "gum"
-    ++ optionalTop "imagemagick"
     ++ optionalTop "kitty"
-    ++ optionalTop "libqalculate"
     ++ optionalTop "mission-center"
     ++ optionalTop "mpv"
     ++ optionalTop "nautilus"
     ++ optionalTop "networkmanager"
     ++ optionalTop "networkmanagerapplet"
     ++ optionalTop "pavucontrol"
-    ++ optionalTop "swappy"
     ++ optionalTop "tesseract"
-    ++ optionalTop "translate-shell"
     ++ optionalTop "upower"
     ++ optionalTop "wf-recorder"
-    ++ optionalTop "wlsunset"
-    ++ optionalTop "wtype"
     ++ optionalTop "xwayland-satellite"
-    ++ optionalTop "ydotool"
     ++ optionalKde "breeze-icons"
-    ++ optionalKde "kdialog"
-    ++ optionalKde "kirigami"
-    ++ optionalKde "kconfig"
     ++ optionalKde "plasma-integration"
-    ++ optionalKde "syntax-highlighting"
     ++ optionalKde "xembedsniproxy"
     ++ optionalQt6 "qt5compat"
     ++ optionalQt6 "qtbase"
@@ -128,21 +97,18 @@ let
     ++ optionalQt6 "qtvirtualkeyboard"
     ++ optionalQt6 "qtwayland";
 
-  materialSymbolsFont =
-    if builtins.hasAttr "material-symbols" pkgs
-    then pkgs.makeFontsConf { fontDirectories = [ pkgs.material-symbols ]; }
-    else null;
+  bundledFonts = pkgs.runCommand "alis-bundled-fonts" {} ''
+    mkdir -p "$out/share/fonts/alis"
+    cp -r ${../assets/fonts}/. "$out/share/fonts/alis/"
+  '';
+  materialSymbolsFont = pkgs.makeFontsConf {
+    fontDirectories = [ bundledFonts ] ++ optionalTop "material-symbols";
+  };
   materialSymbolsWrapperArg =
-    lib.optionalString (materialSymbolsFont != null)
-      "--set FONTCONFIG_FILE \"${materialSymbolsFont}\"";
+    "--set FONTCONFIG_FILE \"${materialSymbolsFont}\"";
 
   qmlDeps =
-    # kirigami-wrapped ships no QML files, use the unwrapped version.
-    (lib.optional
-      (builtins.hasAttr "kdePackages" pkgs && builtins.hasAttr "kirigami" pkgs.kdePackages)
-      pkgs.kdePackages.kirigami.passthru.unwrapped)
-    ++ optionalKde "syntax-highlighting"
-    ++ optionalQt6 "qt5compat"
+    optionalQt6 "qt5compat"
     ++ optionalQt6 "qtdeclarative"
     ++ optionalQt6 "qtimageformats"
     ++ optionalQt6 "qtmultimedia"

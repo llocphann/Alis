@@ -240,7 +240,7 @@ Item {
 
                     Process {
                         id: copyProcess
-                        command: ["wl-copy", root.notifBody]
+                        command: [Quickshell.shellPath("scripts/native-dispatch"), "clipboard", "copy", "--", root.notifBody]
                         onExited: (code, status) => {
                             if (code === 0) {
                                 copyBtn.copied = true

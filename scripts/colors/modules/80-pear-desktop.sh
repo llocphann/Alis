@@ -56,10 +56,39 @@ detect_package() {
 
 # --- CSS generation from generated palette (catppuccin structure with Material You colors) ---
 
+declare -A _PEAR_COLORS=()
+_PEAR_COLORS_LOADED=0
+
+_load_pear_colors() {
+  (( _PEAR_COLORS_LOADED == 1 )) && return 0
+  _PEAR_COLORS_LOADED=1
+  [[ -f "$COLORS_JSON" ]] || return 0
+  local k v
+  while IFS=$'\t' read -r k v; do
+    [[ -n "$k" ]] && _PEAR_COLORS["$k"]="$v"
+  done < <(alis_json_kv_dump "$COLORS_JSON")
+}
+
 read_hex() {
-  local token="$1" fallback="${2:-#000000}"
-  local hex
-  hex=$(jq -r ".${token} // empty" "$COLORS_JSON" 2>/dev/null) || true
+  local expr="$1" fallback="${2:-#000000}"
+  _load_pear_colors
+  local rest="$expr" part key hex=""
+  while [[ -n "$rest" ]]; do
+    if [[ "$rest" == *"//"* ]]; then
+      part="${rest%%//*}"
+      rest="${rest#*//}"
+    else
+      part="$rest"
+      rest=""
+    fi
+    key="${part#"${part%%[![:space:]]*}"}"
+    key="${key%"${key##*[![:space:]]}"}"
+    key="${key#.}"
+    if [[ -n "$key" && -n "${_PEAR_COLORS[$key]:-}" && "${_PEAR_COLORS[$key]}" != "false" ]]; then
+      hex="${_PEAR_COLORS[$key]}"
+      break
+    fi
+  done
   if [[ -n "$hex" ]]; then
     printf '%s' "$hex"
   else
@@ -68,6 +97,7 @@ read_hex() {
 }
 
 generate_css_from_colors_json() {
+  _load_pear_colors
   # Material You → Catppuccin-style hierarchy mapping
   local base mantle crust
   local surface0 surface1 surface2
@@ -944,20 +974,58 @@ register_theme_in_config() {
   # Create config.json if missing
   [[ -f "$PEAR_CONFIG_FILE" ]] || echo '{}' > "$PEAR_CONFIG_FILE"
 
-  # Check if our theme is already registered
-  if jq -e --arg p "$css_path" '.options.themes // [] | index($p) != null' "$PEAR_CONFIG_FILE" >/dev/null 2>&1; then
-    return 0
-  fi
-
-  # Add theme to themes array
-  local tmp
-  tmp=$(mktemp)
-  if jq --arg p "$css_path" '.options.themes = ((.options.themes // []) + [$p] | unique)' "$PEAR_CONFIG_FILE" > "$tmp" 2>/dev/null; then
-    mv "$tmp" "$PEAR_CONFIG_FILE"
-    log_module "registered theme CSS in pear-desktop config"
+  # Check if our theme is already registered and add it if needed
+  if command -v jq >/dev/null 2>&1; then
+    if jq -e --arg p "$css_path" '.options.themes // [] | index($p) != null' "$PEAR_CONFIG_FILE" >/dev/null 2>&1; then
+      return 0
+    fi
+    local tmp
+    tmp=$(mktemp)
+    if jq --arg p "$css_path" '.options.themes = ((.options.themes // []) + [$p] | unique)' "$PEAR_CONFIG_FILE" > "$tmp" 2>/dev/null; then
+      mv "$tmp" "$PEAR_CONFIG_FILE"
+      log_module "registered theme CSS in pear-desktop config"
+    else
+      rm -f "$tmp"
+      log_module "failed to update pear-desktop config"
+      return 1
+    fi
+  elif command -v python3 >/dev/null 2>&1; then
+    local status=0
+    python3 - "$PEAR_CONFIG_FILE" "$css_path" <<'PY' 2>/dev/null || status=$?
+import json, os, sys
+cfg_path, css_path = sys.argv[1], sys.argv[2]
+with open(cfg_path, encoding="utf-8") as fh:
+    data = json.load(fh)
+if not isinstance(data, dict):
+    data = {}
+opts = data.get("options")
+if not isinstance(opts, dict):
+    opts = {}
+    data["options"] = opts
+themes = opts.get("themes")
+if not isinstance(themes, list):
+    themes = []
+if css_path in themes:
+    sys.exit(0)
+themes.append(css_path)
+opts["themes"] = list(dict.fromkeys(themes))
+tmp = cfg_path + ".tmp"
+with open(tmp, "w", encoding="utf-8") as fh:
+    json.dump(data, fh, indent=2)
+    fh.write("\n")
+os.replace(tmp, cfg_path)
+sys.exit(10)
+PY
+    if (( status == 0 )); then
+      return 0
+    elif (( status == 10 )); then
+      log_module "registered theme CSS in pear-desktop config"
+    else
+      log_module "failed to update pear-desktop config"
+      return 1
+    fi
   else
-    rm -f "$tmp"
-    log_module "failed to update pear-desktop config"
+    log_module "neither jq nor python3 installed — cannot update pear-desktop config"
     return 1
   fi
 }
@@ -1051,7 +1119,7 @@ main() {
     log_module "no generated palette — skipping"
     exit 0
   fi
-  command -v jq &>/dev/null || { log_module "jq not installed — skipping"; exit 0; }
+  alis_json_available || { log_module "neither jq nor python3 installed — skipping"; exit 0; }
   ensure_generated_dirs
   generate_css_from_colors_json > "$css_file"
   log_module "generated CSS: $css_file"

@@ -2550,12 +2550,12 @@ fn get_binds() -> Result<Outcome> {
             let norm = normalize_combo(eb_combo);
             let mut replaced = false;
             for existing in &mut binds {
-                if let Some(ex_combo) = existing.get("key_combo").and_then(Value::as_str) {
-                    if normalize_combo(ex_combo) == norm {
-                        *existing = eb.clone();
-                        replaced = true;
-                        break;
-                    }
+                if let Some(ex_combo) = existing.get("key_combo").and_then(Value::as_str)
+                    && normalize_combo(ex_combo) == norm
+                {
+                    *existing = eb.clone();
+                    replaced = true;
+                    break;
                 }
             }
             if !replaced {
@@ -2710,74 +2710,68 @@ fn set_bind(key_combo: &str, action: &str, options: &str, replace_combo: &str) -
     };
 
     let extra_path = config_dir().join("config.d/90-user-extra.kdl");
-    if extra_path.is_file() {
-        if let Ok(extra_content) = fs::read_to_string(&extra_path) {
-            if let Some((_, ex_start, ex_end, _)) = find_block_bounds(&extra_content, "binds", true)
+    if extra_path.is_file()
+        && let Ok(extra_content) = fs::read_to_string(&extra_path)
+        && let Some((_, ex_start, ex_end, _)) = find_block_bounds(&extra_content, "binds", true)
+    {
+        let mut ex_lines = extra_content[ex_start..ex_end]
+            .split('\n')
+            .map(str::to_owned)
+            .collect::<Vec<_>>();
+        let ex_span = find_any_bind_span(&ex_lines, target_combo, false)
+            .or_else(|| {
+                if target_combo != key_combo {
+                    find_any_bind_span(&ex_lines, key_combo, false)
+                } else {
+                    None
+                }
+            })
+            .or_else(|| find_any_bind_span(&ex_lines, target_combo, true));
+        if let Some((s_idx, e_idx)) = ex_span {
+            let indent = ex_lines[s_idx]
+                .chars()
+                .take_while(|value| value.is_whitespace())
+                .collect::<String>();
+            ex_lines.splice(s_idx..e_idx, [format!("{indent}{rendered}")]);
+            if target_combo != key_combo
+                && let Some((dup_s, dup_e)) = find_bind_span(&ex_lines, key_combo, false, false)
+                && dup_s != s_idx
             {
-                let mut ex_lines = extra_content[ex_start..ex_end]
-                    .split('\n')
-                    .map(str::to_owned)
-                    .collect::<Vec<_>>();
-                let ex_span = find_any_bind_span(&ex_lines, target_combo, false)
-                    .or_else(|| {
-                        if target_combo != key_combo {
-                            find_any_bind_span(&ex_lines, key_combo, false)
-                        } else {
-                            None
-                        }
-                    })
-                    .or_else(|| find_any_bind_span(&ex_lines, target_combo, true));
-                if let Some((s_idx, e_idx)) = ex_span {
-                    let indent = ex_lines[s_idx]
-                        .chars()
-                        .take_while(|value| value.is_whitespace())
-                        .collect::<String>();
-                    ex_lines.splice(s_idx..e_idx, [format!("{indent}{rendered}")]);
-                    if target_combo != key_combo {
-                        if let Some((dup_s, dup_e)) =
-                            find_bind_span(&ex_lines, key_combo, false, false)
-                        {
-                            if dup_s != s_idx {
-                                comment_out_bind_span(&mut ex_lines, dup_s, dup_e);
-                            }
-                        }
+                comment_out_bind_span(&mut ex_lines, dup_s, dup_e);
+            }
+            let next_extra = format!(
+                "{}{}{}",
+                &extra_content[..ex_start],
+                ex_lines.join("\n"),
+                &extra_content[ex_end..]
+            );
+            if target_combo != key_combo {
+                let binds_path = resolve_section_file("config.d/70-binds.kdl");
+                if binds_path.is_file()
+                    && binds_path != extra_path
+                    && let Ok(b_content) = fs::read_to_string(&binds_path)
+                    && let Some((_, b_start, b_end, _)) =
+                        find_block_bounds(&b_content, "binds", true)
+                {
+                    let mut b_lines = b_content[b_start..b_end]
+                        .split('\n')
+                        .map(str::to_owned)
+                        .collect::<Vec<_>>();
+                    if let Some((bs, be)) =
+                        find_bind_span(&b_lines, target_combo, false, false)
+                    {
+                        comment_out_bind_span(&mut b_lines, bs, be);
+                        let next_b = format!(
+                            "{}{}{}",
+                            &b_content[..b_start],
+                            b_lines.join("\n"),
+                            &b_content[b_end..]
+                        );
+                        let _ = write_validated(&binds_path, &next_b);
                     }
-                    let next_extra = format!(
-                        "{}{}{}",
-                        &extra_content[..ex_start],
-                        ex_lines.join("\n"),
-                        &extra_content[ex_end..]
-                    );
-                    if target_combo != key_combo {
-                        let binds_path = resolve_section_file("config.d/70-binds.kdl");
-                        if binds_path.is_file() && binds_path != extra_path {
-                            if let Ok(b_content) = fs::read_to_string(&binds_path) {
-                                if let Some((_, b_start, b_end, _)) =
-                                    find_block_bounds(&b_content, "binds", true)
-                                {
-                                    let mut b_lines = b_content[b_start..b_end]
-                                        .split('\n')
-                                        .map(str::to_owned)
-                                        .collect::<Vec<_>>();
-                                    if let Some((bs, be)) =
-                                        find_bind_span(&b_lines, target_combo, false, false)
-                                    {
-                                        comment_out_bind_span(&mut b_lines, bs, be);
-                                        let next_b = format!(
-                                            "{}{}{}",
-                                            &b_content[..b_start],
-                                            b_lines.join("\n"),
-                                            &b_content[b_end..]
-                                        );
-                                        let _ = write_validated(&binds_path, &next_b);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    return write_validated(&extra_path, &next_extra);
                 }
             }
+            return write_validated(&extra_path, &next_extra);
         }
     }
 
@@ -2836,28 +2830,28 @@ fn remove_bind(key_combo: &str) -> Result<Outcome> {
     let extra_path = config_dir().join("config.d/90-user-extra.kdl");
     let mut removed_in_extra = false;
 
-    if extra_path.is_file() && extra_path != path {
-        if let Ok(ex_content) = fs::read_to_string(&extra_path) {
-            if let Some((_, ex_start, ex_end, _)) = find_block_bounds(&ex_content, "binds", true) {
-                let mut ex_lines = ex_content[ex_start..ex_end]
-                    .split('\n')
-                    .map(str::to_owned)
-                    .collect::<Vec<_>>();
-                if let Some((s_idx, e_idx)) = find_any_bind_span(&ex_lines, key_combo, false) {
-                    comment_out_bind_span(&mut ex_lines, s_idx, e_idx);
-                    let next_extra = format!(
-                        "{}{}{}",
-                        &ex_content[..ex_start],
-                        ex_lines.join("\n"),
-                        &ex_content[ex_end..]
-                    );
-                    let outcome = write_validated(&extra_path, &next_extra)?;
-                    if outcome.code != 0 {
-                        return Ok(outcome);
-                    }
-                    removed_in_extra = true;
-                }
+    if extra_path.is_file()
+        && extra_path != path
+        && let Ok(ex_content) = fs::read_to_string(&extra_path)
+        && let Some((_, ex_start, ex_end, _)) = find_block_bounds(&ex_content, "binds", true)
+    {
+        let mut ex_lines = ex_content[ex_start..ex_end]
+            .split('\n')
+            .map(str::to_owned)
+            .collect::<Vec<_>>();
+        if let Some((s_idx, e_idx)) = find_any_bind_span(&ex_lines, key_combo, false) {
+            comment_out_bind_span(&mut ex_lines, s_idx, e_idx);
+            let next_extra = format!(
+                "{}{}{}",
+                &ex_content[..ex_start],
+                ex_lines.join("\n"),
+                &ex_content[ex_end..]
+            );
+            let outcome = write_validated(&extra_path, &next_extra)?;
+            if outcome.code != 0 {
+                return Ok(outcome);
             }
+            removed_in_extra = true;
         }
     }
 

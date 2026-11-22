@@ -59,8 +59,9 @@ check_dependencies() {
 
     # Commands to check (command:friendly_name)
     # These are distro-agnostic - we check for the command, not the package.
-    # Feature-specific optional backends are intentionally excluded here so
-    # doctor does not turn a graceful capability downgrade into a hard failure.
+    # Feature-specific optional backends and capabilities handled natively by
+    # Alis's Rust runtime (alis-native, alis-theme, alis-inputd, alis-mpdd) are
+    # intentionally excluded here so doctor stays minimal and portable.
     local cmds=(
         "qs:Quickshell"
         "niri:Niri"
@@ -70,35 +71,16 @@ check_dependencies() {
         "curl:curl"
         "git:git"
         "python3:python3"
-        "fish:fish"
-        "magick:ImageMagick"
-        "grim:grim"
-        "cliphist:cliphist"
-        "wl-copy:wl-clipboard"
-        "wl-paste:wl-clipboard"
-        "fuzzel:fuzzel"
-        "awww:awww"
-        "awww-daemon:awww"
         "flock:util-linux"
-        "wlsunset:wlsunset"
-        "uv:uv"
-        "cava:cava"
-        "slurp:slurp"
         "wf-recorder:wf-recorder"
         "ffmpeg:ffmpeg"
-        "swappy:swappy"
         "tesseract:tesseract"
         "blueman-manager:Blueman"
-        "gowall:gowall"
-        "kwriteconfig6:KConfig"
-        "checkupdates:pacman-contrib"
         "ddcutil:ddcutil"
         "missioncenter:mission-center"
         "nm-connection-editor:nm-connection-editor"
         "xdg-settings:xdg-utils"
         "mpv:mpv"
-        "swaylock:swaylock"
-        "swayidle:swayidle"
     )
 
     # Check required commands
@@ -234,7 +216,15 @@ check_critical_files() {
         [[ ! -f "$target/$file" ]] && { doctor_fail "Missing: $file"; ((missing++)) || true; }
     done
 
-    [[ $missing -eq 0 ]] && doctor_pass "Critical files present"
+    local native_bins=("alis-native" "alis-theme" "alis-inputd" "alis-mpdd")
+    for bin in "${native_bins[@]}"; do
+        if [[ ! -x "$target/native/bin/$bin" && ! -x "$target/native/target/release/$bin" ]]; then
+            doctor_fail "Missing native helper binary: $bin"
+            ((missing++)) || true
+        fi
+    done
+
+    [[ $missing -eq 0 ]] && doctor_pass "Critical files and native binaries present"
 }
 
 check_script_permissions() {
@@ -431,6 +421,12 @@ check_python_packages() {
         fi
     fi
 
+    # Core runtime uses Alis's compiled Rust binaries and requires no Python .venv.
+    if [[ ! -f "$req" ]] || ! grep -Eq '^[[:space:]]*[^#[:space:]]' "$req"; then
+        doctor_pass "Python runtime OK (core handled natively by Rust; no .venv required)"
+        return 0
+    fi
+
     # Check for broken venv (e.g. after python update)
     if [[ -d "$venv/bin" ]]; then
         if ! "$venv/bin/python" --version &>/dev/null; then
@@ -573,6 +569,74 @@ check_fonts() {
         tui_warn "Optional fonts missing: ${missing_optional[*]}"
         doctor_pass "Required and configured fonts OK"
         return 0
+    fi
+
+    # Auto-install bundled open fonts shipped inside assets/fonts first.
+    local bundled_fonts=""
+    local _rt_dir _rp_root
+    _rt_dir="$(doctor_runtime_dir)"
+    _rp_root="$(doctor_repo_root || true)"
+    if [[ -n "$_rt_dir" && -d "$_rt_dir/assets/fonts" ]]; then
+        bundled_fonts="$_rt_dir/assets/fonts"
+    elif [[ -n "$_rp_root" && -d "$_rp_root/assets/fonts" ]]; then
+        bundled_fonts="$_rp_root/assets/fonts"
+    fi
+    if [[ -n "$bundled_fonts" && $total_missing -gt 0 ]]; then
+        local alis_font_dir="${user_font_dir}/alis"
+        mkdir -p "$alis_font_dir"
+        local copied_bundled=0
+        while IFS= read -r -d '' _bf; do
+            local _rel="${_bf#"${bundled_fonts}/"}"
+            if [[ ! -f "${alis_font_dir}/${_rel}" ]]; then
+                install -Dm644 "$_bf" "${alis_font_dir}/${_rel}" && ((copied_bundled++)) || true
+            fi
+        done < <(find "$bundled_fonts" -type f \( -name '*.ttf' -o -name '*.otf' \) -print0)
+        if [[ $copied_bundled -gt 0 ]]; then
+            fc-cache -f "$alis_font_dir" 2>/dev/null || true
+            doctor_fix "Installed $copied_bundled bundled Alis font(s) to $alis_font_dir"
+            fc_cache="$(fc-list : family 2>/dev/null)"
+
+            # Recompute missing font lists so already-satisfied fonts are not passed
+            # to external AUR/package-manager installers below.
+            missing_critical=()
+            missing_important=()
+            missing_optional=()
+            local _recheck_configured=()
+            for entry in "${critical_fonts[@]}"; do
+                local pattern="${entry%%:*}"
+                local rest="${entry#*:}"
+                local display="${rest%%:*}"
+                _font_installed "$pattern" || missing_critical+=("$display")
+            done
+            for entry in "${important_fonts[@]}"; do
+                local pattern="${entry%%:*}"
+                local rest="${entry#*:}"
+                local display="${rest%%:*}"
+                _font_installed "$pattern" || missing_important+=("$display")
+            done
+            for entry in "${optional_fonts[@]}"; do
+                local pattern="${entry%%:*}"
+                local rest="${entry#*:}"
+                local display="${rest%%:*}"
+                _font_installed "$pattern" || missing_optional+=("$display")
+            done
+            local _cf
+            for _cf in "${missing_configured[@]}"; do
+                _font_installed "$_cf" || _recheck_configured+=("$_cf")
+            done
+            missing_configured=("${_recheck_configured[@]}")
+            total_missing=$(( ${#missing_critical[@]} + ${#missing_important[@]} + ${#missing_configured[@]} ))
+
+            if [[ $total_missing -eq 0 ]]; then
+                if [[ ${#missing_optional[@]} -gt 0 ]]; then
+                    tui_warn "Optional fonts missing: ${missing_optional[*]}"
+                    doctor_pass "Required and configured fonts OK"
+                else
+                    doctor_pass "All fonts installed"
+                fi
+                return 0
+            fi
+        fi
     fi
 
     # Try to auto-fix before reporting failures

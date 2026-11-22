@@ -75,7 +75,7 @@ Singleton {
         id: checkUpdatesProc
         property bool startObserved: false
         property bool timedOut: false
-        command: ["checkupdates"]
+        command: [Quickshell.shellPath("scripts/native-dispatch"), "check-updates"]
 
         onRunningChanged: {
             if (checkUpdatesProc.running) {

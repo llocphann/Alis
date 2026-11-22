@@ -23,13 +23,13 @@ cava_cfg() {
 
 palette_color() {
   local key="$1"
-  jq -r ".$key // empty" "$PALETTE_FILE" 2>/dev/null
+  alis_json_pick "$PALETTE_FILE" "" "$key"
 }
 
 cover_color() {
   local idx="$1"
   [[ -f "$COVER_COLORS_FILE" ]] || return 1
-  jq -r ".[$idx] // empty" "$COVER_COLORS_FILE" 2>/dev/null
+  alis_json_array_item "$COVER_COLORS_FILE" "$idx"
 }
 
 # Boost saturation of a hex color by mixing toward its hue at full saturation
@@ -55,7 +55,7 @@ build_gradient_theme() {
   while IFS= read -r c; do
     [[ -n "$c" ]] && colors+=("$c")
     (( ${#colors[@]} >= count )) && break
-  done < <(jq -r '[.primary, .tertiary, .secondary, .error, .success, .primary_fixed, .tertiary_fixed, .primary_container] | map(select(. != null and . != "")) | .[]' "$PALETTE_FILE" 2>/dev/null || true)
+  done < <(alis_json_pick_list "$PALETTE_FILE" primary tertiary secondary error success primary_fixed tertiary_fixed primary_container)
   (( ${#colors[@]} >= 1 )) || return 1
   printf '%s\n' "${colors[@]}"
 }
@@ -71,7 +71,7 @@ build_gradient_vibrant() {
       colors+=("$sat")
     fi
     (( ${#colors[@]} >= count )) && break
-  done < <(jq -r '[.primary, .tertiary, .secondary, .error, .success, .primary_fixed, .tertiary_fixed, .inverse_primary] | map(select(. != null and . != "")) | .[]' "$PALETTE_FILE" 2>/dev/null || true)
+  done < <(alis_json_pick_list "$PALETTE_FILE" primary tertiary secondary error success primary_fixed tertiary_fixed inverse_primary)
   (( ${#colors[@]} >= 1 )) || return 1
   printf '%s\n' "${colors[@]}"
 }
@@ -96,6 +96,12 @@ refresh_cover_colors() {
   local art_path
   art_path="$(find_cover_art_path || true)"
   [[ -n "$art_path" ]] || { log_module "No cover art path for extraction"; return 1; }
+  local native_dispatch
+  native_dispatch="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/native-dispatch"
+  if [[ -x "$native_dispatch" ]] && "$native_dispatch" cover-colors "$art_path" "$count" "$COVER_COLORS_FILE" >/dev/null; then
+    log_module "Extracted cover colors from $(basename "$art_path")"
+    return 0
+  fi
   if [[ ! -x "$CAVA_EXTRACT_SCRIPT" && ! -f "$CAVA_EXTRACT_SCRIPT" ]]; then
     log_module "extract_cover_colors.py missing"
     return 1
@@ -156,18 +162,52 @@ generate_managed_block() {
   local input_method input_source
 
   local -a _cava_vals=()
-  mapfile -t _cava_vals < <(config_json '[
-    (.appearance.cava.colorSource // "theme"),
-    (.appearance.cava.gradientCount // "8"),
-    (.appearance.cava.foreground // ""),
-    (.appearance.cava.background // ""),
-    (.appearance.cava.sensitivity // "100"),
-    (.appearance.cava.bars // "0"),
-    (.appearance.cava.framerate // "60"),
-    (.appearance.cava.barWidth // "2"),
-    (.appearance.cava.barSpacing // "1"),
-    (if .appearance.cava.stereo == null then "true" else (.appearance.cava.stereo | tostring) end)
-  ] | .[]' "")
+  if [[ -f "$CONFIG_FILE" ]]; then
+    if command -v jq >/dev/null 2>&1; then
+      mapfile -t _cava_vals < <(jq -r '[
+        (.appearance.cava.colorSource // "theme"),
+        (.appearance.cava.gradientCount // "8"),
+        (.appearance.cava.foreground // ""),
+        (.appearance.cava.background // ""),
+        (.appearance.cava.sensitivity // "100"),
+        (.appearance.cava.bars // "0"),
+        (.appearance.cava.framerate // "60"),
+        (.appearance.cava.barWidth // "2"),
+        (.appearance.cava.barSpacing // "1"),
+        (if .appearance.cava.stereo == null then "true" else (.appearance.cava.stereo | tostring) end)
+      ] | .[]' "$CONFIG_FILE" 2>/dev/null || true)
+    elif command -v python3 >/dev/null 2>&1; then
+      mapfile -t _cava_vals < <(python3 - "$CONFIG_FILE" <<'PY' 2>/dev/null || true
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as fh:
+    d = json.load(fh)
+cava = ((d.get("appearance") or {}).get("cava") or {}) if isinstance(d, dict) else {}
+if not isinstance(cava, dict):
+    cava = {}
+def pick(k, default):
+    v = cava.get(k)
+    if v is None or v is False:
+        return default
+    return "true" if v is True else str(v)
+stereo = cava.get("stereo")
+stereo_s = "true" if stereo is None else ("true" if stereo is True else ("false" if stereo is False else str(stereo)))
+for v in (
+    pick("colorSource", "theme"),
+    pick("gradientCount", "8"),
+    pick("foreground", ""),
+    pick("background", ""),
+    pick("sensitivity", "100"),
+    pick("bars", "0"),
+    pick("framerate", "60"),
+    pick("barWidth", "2"),
+    pick("barSpacing", "1"),
+    stereo_s,
+):
+    print(v)
+PY
+      )
+    fi
+  fi
   color_source="${_cava_vals[0]:-theme}"
   gradient_count="${_cava_vals[1]:-8}"
   fg_override="${_cava_vals[2]:-}"

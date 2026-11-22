@@ -112,6 +112,12 @@ Item { // Notification item area
         onClicked: (mouse) => {
             if (mouse.button === Qt.MiddleButton) {
                 root.destroyWithAnimation();
+            } else if (mouse.button === Qt.LeftButton) {
+                const nid = root.notificationObject?.notificationId
+                if (Number.isInteger(nid) && nid >= 0 && typeof Notifications.focusOrActivateNotification === "function") {
+                    Notifications.focusOrActivateNotification(nid)
+                    root.notificationActionInvoked()
+                }
             }
         }
 
@@ -404,7 +410,7 @@ Item { // Notification item area
                                     && root.compactActions ? 28 : 34
 
                                 onClicked: {
-                                    Quickshell.execDetached(["wl-copy", notificationObject?.body ?? ""])
+                                    Quickshell.execDetached([Quickshell.shellPath("scripts/native-dispatch"), "clipboard", "copy", "--", notificationObject?.body ?? ""])
                                     copyIcon.text = "inventory"
                                     copyIconTimer.restart()
                                 }

@@ -14,10 +14,13 @@ def require(ok, message):
 require('readonly property bool shaderTransitionRequested: Quickshell.env("ALIS_DISABLE_LIQUID_SHADER") !== "1"' in cross,
         "Liquid shader must be requested by default, with an explicit local opt-out")
 require("ALIS_EXPERIMENTAL_MELT" not in cross, "legacy opt-in must not gate the Liquid effect")
-require('readonly property var shaderTransitionTypes: ["alisMelt"]' in cross
-        and 'return value === "alisMelt" || shaderTransitionTypes.indexOf(value) >= 0' in cross
+require('readonly property var shaderTransitionTypes: ["alisMelt", "grow", "outer", "center", "any", "wave", "wipe"]' in cross
+        and 'readonly property var geometricShaderTypes: ["grow", "outer", "center", "any", "wave", "wipe"]' in cross
+        and 'return value === "alisMelt" || value === "inirMelt" || shaderTransitionTypes.indexOf(value) >= 0' in cross
+        and 'return isGeometricShaderType(picked) ? "alisTransitions" : "alisMelt"' in cross
+        and 'if (isGeometricShaderType(raw))\n            return "alisTransitions"' in cross
         and 'return isShaderTransitionType(raw) ? "alisMelt" : ""' in cross,
-        "old persisted alisMelt must resolve to the shipped alisMelt binary")
+        "old persisted alisMelt/inirMelt must resolve to alisMelt and internal geometric shader types must resolve to alisTransitions")
 require('transitionType !== "alisMelt"' in awww,
         "awww must not cover the internal Liquid surface for either saved alias")
 require('case "alisMelt":' in awww,
@@ -33,4 +36,6 @@ require('onTriggered: root._finishShaderWaitWithoutShader()' in cross,
         "stalled shader must settle by the Ready-slot fallback")
 require((root / "modules/common/widgets/wallpaperTransitions/alisMelt.frag.qsb").is_file(),
         "Liquid shader binary must ship with the source")
+require((root / "modules/common/widgets/wallpaperTransitions/alisTransitions.frag.qsb").is_file(),
+        "Geometric wallpaper transitions shader binary must ship with the source")
 print("WALL-R01 static contract: PASS (native Niri/Quickshell rendering untested)")

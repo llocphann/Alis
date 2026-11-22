@@ -63,12 +63,31 @@ apply_term_sequences() {
   cp "$SEQUENCES_TEMPLATE" "$sequences_tmp"
 
   local sed_args=(-e 's/\$alpha/100/g')
-  if [[ -f "$TERMINAL_FILE" ]] && command -v jq &>/dev/null; then
+  if [[ -f "$TERMINAL_FILE" ]] && alis_json_available; then
     local idx value
-    while IFS=$'\t' read -r idx value; do
-      [[ -n "$value" ]] || continue
-      sed_args+=(-e "s/\\\$term${idx} #/${value#\#}/g")
-    done < <(jq -r 'to_entries[] | select(.key | test("^term([0-9]|1[0-5])$")) | "\(.key | ltrimstr("term"))\t\(.value // "")"' "$TERMINAL_FILE" 2>/dev/null || true)
+    if command -v jq &>/dev/null; then
+      while IFS=$'\t' read -r idx value; do
+        [[ -n "$value" ]] || continue
+        sed_args+=(-e "s/\\\$term${idx} #/${value#\#}/g")
+      done < <(jq -r 'to_entries[] | select(.key | test("^term([0-9]|1[0-5])$")) | "\(.key | ltrimstr("term"))\t\(.value // "")"' "$TERMINAL_FILE" 2>/dev/null || true)
+    else
+      while IFS=$'\t' read -r idx value; do
+        [[ -n "$value" ]] || continue
+        sed_args+=(-e "s/\\\$term${idx} #/${value#\#}/g")
+      done < <(python3 - "$TERMINAL_FILE" <<'PY' 2>/dev/null || true
+import json, re, sys
+try:
+    with open(sys.argv[1], encoding="utf-8") as fh:
+        data = json.load(fh)
+except Exception:
+    sys.exit(0)
+if isinstance(data, dict):
+    for k, v in data.items():
+        if re.match(r"^term([0-9]|1[0-5])$", str(k)) and v is not None:
+            print(f"{k[4:]}\t{v}")
+PY
+      )
+    fi
   else
     local color_names color_values
     mapfile -t color_names < <(cut -d: -f1 "$SCSS_FILE")

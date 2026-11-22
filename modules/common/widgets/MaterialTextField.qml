@@ -22,6 +22,9 @@ T.TextField {
     // Settings search integration
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
+    readonly property string liveText: preeditText
+        ? (text.slice(0, cursorPosition) + preeditText + text.slice(cursorPosition))
+        : text
 
     function _findSettingsContext() {
         var page = null;

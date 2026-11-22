@@ -119,8 +119,8 @@ pub fn run(args: TranslateArgs) -> Result<i32> {
     }
 
     // Optional fallback to translate-shell (`trans`) if installed
-    if Path::new("/usr/bin/trans").exists() {
-        if let Ok(output) = Command::new("/usr/bin/trans")
+    if Path::new("/usr/bin/trans").exists()
+        && let Ok(output) = Command::new("/usr/bin/trans")
             .args([
                 "-b",
                 "-no-theme",
@@ -133,13 +133,12 @@ pub fn run(args: TranslateArgs) -> Result<i32> {
                 trimmed,
             ])
             .output()
-            && output.status.success()
-        {
-            let translated = String::from_utf8_lossy(&output.stdout).trim().to_string();
-            if !translated.is_empty() {
-                println!("{translated}");
-                return Ok(0);
-            }
+        && output.status.success()
+    {
+        let translated = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if !translated.is_empty() {
+            println!("{translated}");
+            return Ok(0);
         }
     }
 

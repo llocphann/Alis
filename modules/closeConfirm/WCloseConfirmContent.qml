@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import org.kde.kirigami as Kirigami
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions
@@ -127,7 +126,7 @@ Item {
                                 border.width: 1
                                 border.color: Looks.colors.bg2Border
 
-                                Kirigami.Icon {
+                                ThemedIcon {
                                     anchors.fill: parent
                                     anchors.margins: Looks.dp(8)
                                     source: root.appId

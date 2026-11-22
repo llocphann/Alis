@@ -29,8 +29,8 @@ grep -Fq 'ShellEditSession.enter("")' "$settings" \
     || fail 'live desktop editor entrypoint was removed'
 grep -Fq 'visible: surfaceSection.sidebarRole' "$settings" \
     || fail 'sidebar sizing controls were removed with perimeter cleanup'
-grep -Fq 'onClicked: GlobalStates.startAbyssEditing()' "$overlay" \
-    || fail 'Settings header no longer enters the Abyss live editor'
+grep -Fq 'SettingsLayoutManager.editMode' "$overlay" \
+    || fail 'Settings overlay lost compact layout edit contract'
 grep -Fq 'GlobalStates.startAbyssEditing(bgRoot.screenName)' "$background" \
     || fail 'desktop context menu does not enter the same Abyss live editor'
 grep -Fq 'ShellEditSession.enter(bgRoot.screenName)' "$background" \

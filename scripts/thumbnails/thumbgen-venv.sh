@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NATIVE_DISPATCH="$SCRIPT_DIR/../native-dispatch"
+
+# Thumbnailing can read gigabytes of image data. Prefer Alis's native Rust
+# thumbgen (alis-theme --thumbgen) so core runtime requires neither Python
+# .venv nor pygobject/GnomeDesktop nor ImageMagick.
+if [[ -x "$NATIVE_DISPATCH" ]]; then
+    if [[ -z "${ALIS_THUMBGEN_SCOPED:-}" ]] && command -v systemd-run >/dev/null 2>&1; then
+        exec systemd-run --user --scope --quiet --collect \
+            --property="Description=Alis wallpaper thumbnails" \
+            --setenv=ALIS_THUMBGEN_SCOPED=1 \
+            -- "$NATIVE_DISPATCH" thumbgen "$@"
+    fi
+    exec "$NATIVE_DISPATCH" thumbgen "$@"
+fi
 
 if [[ -n "${ALIS_VENV:-}" ]]; then
     _ii_venv="$(eval echo "$ALIS_VENV")"
@@ -10,10 +24,6 @@ else
 fi
 source "$_ii_venv/bin/activate" 2>/dev/null || true
 
-# Thumbnailing can read gigabytes of image data. Keep its workers and page-cache
-# accounting out of alis.service so desktop monitors report the shell itself,
-# not a completed batch's reclaimable file cache. The scope forwards stdout,
-# preserving QML's machine-progress parser.
 if [[ -z "${ALIS_THUMBGEN_SCOPED:-}" ]] && command -v systemd-run >/dev/null 2>&1; then
     exec systemd-run --user --scope --quiet --collect \
         --property="Description=Alis wallpaper thumbnails" \

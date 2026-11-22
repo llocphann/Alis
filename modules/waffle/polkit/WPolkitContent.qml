@@ -11,6 +11,7 @@ import qs.modules.waffle.looks
 
 Rectangle {
     id: root
+    focus: true
 
     color: Looks.colors.bg0Opaque
     readonly property bool usePasswordChars: !(PolkitService.flow?.responseVisible ?? false)
@@ -151,6 +152,71 @@ Rectangle {
                                 }
                             }
 
+                            Flow {
+                                Layout.fillWidth: true
+                                visible: (PolkitService.identities?.length ?? 0) > 1
+                                spacing: Looks.dp(6)
+
+                                Repeater {
+                                    model: PolkitService.identities ?? []
+                                    delegate: WBorderedButton {
+                                        required property var modelData
+                                        readonly property bool isSelected: PolkitService.selectedIdentity === modelData
+                                            || (String(PolkitService.selectedIdentity?.string ?? "") !== ""
+                                                && String(PolkitService.selectedIdentity?.string ?? "") === String(modelData?.string ?? ""))
+                                        implicitHeight: Looks.dp(30)
+                                        centerContent: true
+                                        checked: isSelected
+                                        text: String(modelData?.displayName || modelData?.string || "")
+                                        onClicked: {
+                                            PolkitService.selectIdentity(modelData)
+                                            inputField.text = ""
+                                            inputField.forceActiveFocus()
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                visible: PolkitService.supplementaryMessage.length > 0
+                                implicitHeight: wSupplementaryText.implicitHeight + Looks.dp(16)
+                                radius: Looks.radius.medium
+                                color: PolkitService.supplementaryIsError
+                                    ? ColorUtils.applyAlpha(Looks.colors.danger, 0.16)
+                                    : Looks.colors.bg1
+                                border.width: 1
+                                border.color: PolkitService.supplementaryIsError
+                                    ? Looks.colors.danger
+                                    : Looks.colors.bg2Border
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: Looks.dp(8)
+                                    spacing: Looks.dp(8)
+
+                                    FluentIcon {
+                                        icon: PolkitService.supplementaryIsError ? "error-circle" : "info-filled"
+                                        implicitSize: Looks.dp(16)
+                                        color: PolkitService.supplementaryIsError
+                                            ? Looks.colors.danger
+                                            : Looks.colors.accent
+                                        Layout.alignment: Qt.AlignTop
+                                    }
+
+                                    WText {
+                                        id: wSupplementaryText
+                                        Layout.fillWidth: true
+                                        text: PolkitService.supplementaryMessage
+                                        font.pixelSize: Looks.font.pixelSize.small
+                                        color: PolkitService.supplementaryIsError
+                                            ? Looks.colors.danger
+                                            : Looks.colors.fg1
+                                        wrapMode: Text.WordWrap
+                                    }
+                                }
+                            }
+
                             WTextField {
                                 id: inputField
                                 Layout.fillWidth: true
@@ -167,15 +233,29 @@ Rectangle {
                                     }
                                 }
 
-                                Component.onCompleted: forceActiveFocus()
+                                Component.onCompleted: {
+                                    if (PolkitService.interactionAvailable)
+                                        forceActiveFocus()
+                                    else
+                                        root.forceActiveFocus()
+                                }
 
                                 Connections {
                                     target: PolkitService
                                     function onInteractionAvailableChanged(): void {
-                                        if (!PolkitService.interactionAvailable)
+                                        if (!PolkitService.interactionAvailable) {
+                                            root.forceActiveFocus()
                                             return
+                                        }
                                         inputField.text = ""
                                         inputField.forceActiveFocus()
+                                    }
+                                    function onFailureCountChanged(): void {
+                                        if (PolkitService.failureCount <= 0)
+                                            return
+                                        inputField.text = ""
+                                        if (PolkitService.interactionAvailable)
+                                            inputField.forceActiveFocus()
                                     }
                                 }
                             }

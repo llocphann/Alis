@@ -35,8 +35,6 @@ ShellRoot {
     property var _idleService: Idle
     property var _powerProfilePersistence: PowerProfilePersistence
     property var _deviceStatePersistence: DeviceStatePersistence
-    // Keep fan-profile following alive even when Settings/System Monitor are closed.
-    property var _thinkFanService: ThinkFanService
     property var _devNavigationService: DevNavigation
     property var _colorPickerService: ColorPickerService
     property var _shellEditSessionService: ShellEditSession
@@ -53,6 +51,8 @@ ShellRoot {
     property var _voiceSearchService
     property var _nexusThemeService
     property var _cavaThemeService
+    // Keep fan-profile following alive only when ThinkFan integration is enabled.
+    property var _thinkFanService
     // Screen Time must exist for the whole enabled session so the Material
     // notification-center Activity tab has history before it is first opened.
     // Waffle keeps the existing explicit Screen Time opt-in.
@@ -88,6 +88,8 @@ ShellRoot {
         // side effect, so keep it resident when that feature is explicitly enabled.
         if (Config.options?.appearance?.wallpaperTheming?.enableCava ?? false)
             root._cavaThemeService = CavaTheme
+        if (AlisIntergration.thinkfanEnabled)
+            root._thinkFanService = ThinkFanService
     }
 
     function _ensureLateFeatureServices(): void {
@@ -102,6 +104,11 @@ ShellRoot {
     Connections {
         target:Config.options?.integrations?.nexus ?? null
         function onAutoThemeChanged():void {root._ensureDeferredFeatureServices()}
+    }
+
+    Connections {
+        target: AlisIntergration
+        function onThinkfanEnabledChanged(): void { root._ensureDeferredFeatureServices() }
     }
 
     // Boot phase timing (ms since epoch). Written to ~/.cache/alis/last-boot.json

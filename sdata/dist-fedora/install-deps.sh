@@ -169,30 +169,24 @@ FEDORA_CORE_PKGS=(
   gtk3-devel
   glib2-devel
 
-  # Basic utilities
-  bc
+  # Basic utilities (clipboard, screencopy, gamma, idle, audio spectrum,
+  # image ops, and theming are handled natively by Alis's Rust binaries)
   coreutils
   curl
   wget
   ripgrep
-  jq
   xdg-user-dirs
   rsync
   git
   unzip
-  wl-clipboard
   libnotify
-  wlsunset
-  dunst
-  gum
-  cliphist
 
   # XDG Portals
   xdg-desktop-portal
   xdg-desktop-portal-gtk
   xdg-desktop-portal-gnome
 
-  # Polkit
+  # Polkit (Alis ships a built-in Quickshell Polkit authentication agent)
   polkit
 
   # Network
@@ -205,21 +199,11 @@ FEDORA_CORE_PKGS=(
   # Terminal - kitty is default, configurable in Settings
   kitty
 
-  # Shell (required for scripts)
-  fish
-
   # X11 compatibility
   xwayland-satellite
-
-  # Thumbnails
-  ffmpegthumbnailer
-  tumbler
-
-  # Translation
-  translate-shell
 )
 
-# Qt6 packages
+# Qt6 packages (no KDE Frameworks QML / kirigami / syntax-highlighting needed)
 FEDORA_QT6_PKGS=(
   qt6-qtbase
   qt6-qtdeclarative
@@ -239,77 +223,50 @@ FEDORA_QT6_PKGS=(
   libdrm
   mesa-dri-drivers
 
-  # KDE integration
-  kf6-kirigami
-  kdialog
-  kf6-syntax-highlighting
-
   # Qt theming
   qt6ct
   kde-gtk-config
   breeze-gtk
 )
 
-# Audio packages
+# Audio packages (spectrum FFT & MPD MPRIS handled natively by alis-native & alis-mpdd)
 FEDORA_AUDIO_PKGS=(
   pipewire
   pipewire-pulseaudio
   pipewire-alsa
   wireplumber
-  playerctl
   plasma-browser-integration
   libdbusmenu-gtk3
   pavucontrol
-  cava
-  easyeffects
   mpv
-  socat
+  mpd
 )
 
 # Toolkit packages
 FEDORA_TOOLKIT_PKGS=(
   upower
-  wtype
-  ydotool
-  python3-evdev
-  python3-pillow
-  brightnessctl
   ddcutil
   geoclue2
-  swayidle
-  swaylock
-  grim
-  slurp
-  ImageMagick
-  libqalculate
   blueman
   fprintd
-  kf6-kconfig
   tesseract
   tesseract-langpack-eng
   tesseract-langpack-spa
 )
 
-# Screen capture packages
+# Screen capture packages (screencopy & annotation editor built into Alis)
 # Note: ffmpeg from rpmfusion conflicts with ffmpeg-free, use --allowerasing
 FEDORA_SCREENCAPTURE_PKGS=(
-  grim
-  slurp
-  swappy
   wf-recorder
-  ImageMagick
 )
 
-# Font packages
+# Font packages (UI/icon fonts are bundled in assets/fonts/)
 FEDORA_FONT_PKGS=(
   fontconfig
   dejavu-fonts-all
   liberation-fonts
   google-noto-emoji-fonts
   jetbrains-mono-fonts-all
-
-  # Launcher
-  fuzzel
   glib2
 
   # Qt theming
@@ -421,21 +378,8 @@ install_github_binary() {
   rm -rf "$temp_dir"
 }
 
-# awww - wallpaper daemon (Wayland) — compile from source
-if ! command -v awww &>/dev/null; then
-  log_info "Installing awww (wallpaper daemon)..."
-  if command -v cargo &>/dev/null; then
-    sudo dnf install -y lz4-devel libxkbcommon-devel
-    if cargo install --git https://codeberg.org/LGFae/awww.git awww 2>/dev/null; then
-      log_success "awww installed via Cargo"
-    else
-      log_warning "awww build failed — install manually: cargo install --git https://codeberg.org/LGFae/awww.git awww"
-    fi
-  else
-    log_warning "awww requires Rust — install Rust first, then: cargo install --git https://codeberg.org/LGFae/awww.git awww"
-    log_info "Install Rust: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
-  fi
-fi
+# Wallpaper transitions are handled natively by Alis's built-in GPU shader;
+# external `awww` is optional and no longer installed by default.
 
 # darkly - Qt theme (download .rpm from GitHub)
 if ${INSTALL_FONTS:-true}; then
@@ -458,21 +402,7 @@ if ${INSTALL_FONTS:-true}; then
   fi
 fi
 
-#####################################################################################
-# Install uv (Python package manager)
-#####################################################################################
-tui_info "Installing uv (Python package manager)..."
-if ! command -v uv &>/dev/null; then
-  # Try the official installer first (fastest)
-  curl -LsSf https://astral.sh/uv/install.sh | sh 2>/dev/null || {
-    # Fallback to cargo
-    if command -v cargo &>/dev/null; then
-      cargo install uv
-    else
-      log_warning "Could not install uv. Install manually: https://github.com/astral-sh/uv"
-    fi
-  }
-fi
+# Core runtime uses Alis's compiled Rust helpers — no uv / Python .venv required.
 
 #####################################################################################
 # Install critical fonts
@@ -737,7 +667,7 @@ echo "  - quickshell (errornointernet/quickshell)"
 echo "  - niri (yalter/niri)"
 echo ""
 log_info "Installed from repos:"
-echo "  - gum, cliphist, xwayland-satellite, swappy"
+echo "  - xwayland-satellite"
 echo ""
 log_info "Installed from GitHub releases:"
 echo "  - darkly, starship, eza"
@@ -751,7 +681,7 @@ echo ""
 
 # Verify critical commands
 tui_info "Verifying installation:"
-for cmd in qs niri fish gum cliphist xwayland-satellite starship eza; do
+for cmd in qs niri xwayland-satellite starship eza; do
   if command -v "$cmd" &>/dev/null || command -v ~/.local/bin/$cmd &>/dev/null; then
     log_success "$cmd"
   else
@@ -760,10 +690,9 @@ for cmd in qs niri fish gum cliphist xwayland-satellite starship eza; do
 done
 echo ""
 
-# Detect and show polkit agent path
-POLKIT_AGENT=$(get-polkit-agent 2>/dev/null)
+log_info "Polkit authentication is handled by Alis's built-in Quickshell Polkit agent by default."
+POLKIT_AGENT=$(get-polkit-agent 2>/dev/null || true)
 if [[ -n "$POLKIT_AGENT" ]]; then
-  log_info "Polkit agent: $POLKIT_AGENT"
-  log_info "Update your niri config spawn-at-startup if this differs"
+  log_info "Optional external polkit agent detected: $POLKIT_AGENT"
 fi
 echo ""

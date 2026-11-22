@@ -24,12 +24,22 @@ Item {
         id:feature
         anchors.fill:parent
         sourceComponent:Presentation.osds.includes(root.kind) ? indicator
+            : root.kind === "polkit" ? polkitPreview
             : root.cornerSurface ? cornerPreview : popup
     }
 
     Component {
         id:indicator
         AbyssOsdContent { kind:root.kind;outputName:root.outputName }
+    }
+    Component {
+        id:polkitPreview
+        AbyssPolkitContent {
+            previewMode:true
+            outputName:root.outputName
+            implicitWidth:desiredWidth
+            implicitHeight:desiredHeight
+        }
     }
     Component {
         id:popup

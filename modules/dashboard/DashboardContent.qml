@@ -402,6 +402,8 @@ Item {
     onPresentationActiveChanged: {
         root._touchDashboardTabTimestamp(root.currentPageId)
         if (root.presentationActive) {
+            AlisIntergration.demandSpacedRepetition()
+            AlisIntergration.demandExercisesTracker()
             root.sessionShown()
             root._syncFirstSurfaceReady()
         } else {
@@ -424,6 +426,10 @@ Item {
         }
     }
     Component.onCompleted: {
+        if (root.presentationActive || root.warmContent) {
+            AlisIntergration.demandSpacedRepetition()
+            AlisIntergration.demandExercisesTracker()
+        }
         if (Config.ready) root.restoreLastPage()
         if (!root.pageIds.includes(GlobalStates.dashboardPageId)) {
             const legacy = PagePolicy.defaultOrder[GlobalStates.dashboardPage]

@@ -3,6 +3,7 @@ BINDIR = $(PREFIX)/bin
 SHAREDIR = $(PREFIX)/share
 APPLICATIONS_DIR = $(SHAREDIR)/applications
 ICON_DIR = $(SHAREDIR)/icons/hicolor/scalable/apps
+FONT_DIR = $(SHAREDIR)/fonts/alis
 SHELL_INSTALL_DIR = $(SHAREDIR)/quickshell/alis
 DOC_DIR = $(SHAREDIR)/doc/alis-shell
 LICENSE_DIR = $(SHAREDIR)/licenses/alis-shell
@@ -20,7 +21,7 @@ THINKFAN_HELPER = $(LIBEXECDIR)/alis-thinkfan
 THINKFAN_POLICY = $(POLKIT_ACTIONS_DIR)/org.alis.thinkfan.policy
 PACKAGE_UPDATE_HINT = sudo make install PREFIX="$(PREFIX)" SYSTEMD_USER_DIR="$(SYSTEMD_USER_DIR)" LIBEXECDIR="$(LIBEXECDIR)" POLKIT_ACTIONS_DIR="$(POLKIT_ACTIONS_DIR)" TLP_CONFDIR="$(TLP_CONFDIR)" ALIS_SYSTEM_SHAREDIR="$(ALIS_SYSTEM_SHAREDIR)"
 
-.PHONY: all build test-local test-native-production test-doctor-routing test-optional-audio-deps test-update-tlp-contracts test-news-contract test-equalizer-contracts test-perimeter-contracts test-weather-contracts test-docs test-install-lifecycle test-prefix-install test-package-docs test-package-metadata test-package-hooks test-battery-helper test-thinkfan-helper install install-bin install-shell install-native install-systemd install-icon install-desktop install-docs install-license install-battery-helper install-thinkfan-helper uninstall uninstall-bin uninstall-shell uninstall-systemd uninstall-icon uninstall-desktop uninstall-docs uninstall-license uninstall-battery-helper uninstall-thinkfan-helper
+.PHONY: all build test-local test-native-production test-doctor-routing test-optional-audio-deps test-update-tlp-contracts test-news-contract test-equalizer-contracts test-perimeter-contracts test-weather-contracts test-docs test-install-lifecycle test-prefix-install test-package-docs test-package-metadata test-package-hooks test-battery-helper test-thinkfan-helper install install-bin install-shell install-native install-systemd install-icon install-fonts install-desktop install-docs install-license install-battery-helper install-thinkfan-helper uninstall uninstall-bin uninstall-shell uninstall-systemd uninstall-icon uninstall-fonts uninstall-desktop uninstall-docs uninstall-license uninstall-battery-helper uninstall-thinkfan-helper
 
 all: build
 
@@ -172,6 +173,16 @@ install-icon:
 	@install -Dm644 assets/icons/desktop-symbolic.svg "$(DESTDIR)$(ICON_DIR)/alis.svg"
 	@if [ -z "$(DESTDIR)" ]; then gtk-update-icon-cache -q "$(SHAREDIR)/icons/hicolor" 2>/dev/null || true; fi
 
+install-fonts:
+	@if [ -d assets/fonts ]; then \
+		mkdir -p "$(DESTDIR)$(FONT_DIR)"; \
+		find assets/fonts -type f \( -name '*.ttf' -o -name '*.otf' \) -print0 | while IFS= read -r -d '' f; do \
+			rel="$${f#assets/fonts/}"; \
+			install -Dm644 "$$f" "$(DESTDIR)$(FONT_DIR)/$$rel"; \
+		done; \
+		if [ -z "$(DESTDIR)" ] && command -v fc-cache >/dev/null 2>&1; then fc-cache -f "$(FONT_DIR)" 2>/dev/null || true; fi; \
+	fi
+
 install-desktop:
 	@mkdir -p "$(DESTDIR)$(APPLICATIONS_DIR)"
 	@for app in alis.desktop alis-settings.desktop alis-local-music.desktop; do \
@@ -201,7 +212,7 @@ install-battery-helper install-thinkfan-helper uninstall-battery-helper uninstal
 	@printf '%s\n' 'Privileged integrations are owned by optional Alis-Intergration: https://github.com/llocphann/Alis-Intergration' 'Use ./setup integrations install for an explicitly requested installation; preserve existing profiles on removal.' >&2
 	@exit 2
 
-install: build install-bin install-shell install-native install-systemd install-icon install-desktop install-docs install-license
+install: build install-bin install-shell install-native install-systemd install-icon install-fonts install-desktop install-docs install-license
 
 uninstall-bin:
 	@target="$(DESTDIR)$(BINDIR)/alis"; \
@@ -226,6 +237,10 @@ uninstall-icon:
 		fi
 	@if [ -z "$(DESTDIR)" ]; then gtk-update-icon-cache -q "$(SHAREDIR)/icons/hicolor" 2>/dev/null || true; fi
 
+uninstall-fonts:
+	@rm -rf "$(DESTDIR)$(FONT_DIR)"
+	@if [ -z "$(DESTDIR)" ] && command -v fc-cache >/dev/null 2>&1; then fc-cache -f 2>/dev/null || true; fi
+
 uninstall-desktop:
 	@for app in alis.desktop alis-settings.desktop alis-local-music.desktop; do \
 		target="$(DESTDIR)$(APPLICATIONS_DIR)/$$app"; \
@@ -243,4 +258,4 @@ uninstall-docs:
 uninstall-license:
 	@rm -rf "$(DESTDIR)$(LICENSE_DIR)"
 
-uninstall: uninstall-systemd uninstall-desktop uninstall-icon uninstall-docs uninstall-license uninstall-shell uninstall-bin
+uninstall: uninstall-systemd uninstall-desktop uninstall-fonts uninstall-icon uninstall-docs uninstall-license uninstall-shell uninstall-bin

@@ -266,6 +266,11 @@ MouseArea {
 
             sourceComponent: Row {
                 spacing: 16
+                layer.enabled: root.effectsSafe
+                layer.effect: DropShadow {
+                    horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
+                    color: root.textShadowColor
+                }
 
                 // WiFi
                 Row {
@@ -277,12 +282,6 @@ MouseArea {
                         text: Network.materialSymbol ?? "signal_wifi_off"
                         iconSize: 16
                         color: root.textColor
-
-                        layer.enabled: root.effectsSafe
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                            color: root.textShadowColor
-                        }
                     }
 
                     Text {
@@ -292,12 +291,6 @@ MouseArea {
                         font.pixelSize: Looks.font.pixelSize.small
                         font.family: Looks.font.family.ui
                         color: root.textColor
-
-                        layer.enabled: root.effectsSafe
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                            color: root.textShadowColor
-                        }
                     }
                 }
 
@@ -308,12 +301,6 @@ MouseArea {
                     text: BluetoothStatus.connected ? "bluetooth_connected" : "bluetooth"
                     iconSize: 16
                     color: root.textColor
-
-                    layer.enabled: root.effectsSafe
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                        color: root.textShadowColor
-                    }
                 }
 
                 // Volume
@@ -328,12 +315,6 @@ MouseArea {
                             : "volume_up"
                         iconSize: 16
                         color: root.textColor
-
-                        layer.enabled: root.effectsSafe
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                            color: root.textShadowColor
-                        }
                     }
 
                     Text {
@@ -342,12 +323,6 @@ MouseArea {
                         font.pixelSize: Looks.font.pixelSize.small
                         font.family: Looks.font.family.ui
                         color: root.textColor
-
-                        layer.enabled: root.effectsSafe
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                            color: root.textShadowColor
-                        }
                     }
                 }
 
@@ -373,12 +348,6 @@ MouseArea {
                             const pct = UPower.displayDevice?.percentage ?? 0
                             return pct <= 15 ? Looks.colors.danger : root.textColor
                         }
-
-                        layer.enabled: root.effectsSafe
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                            color: root.textShadowColor
-                        }
                     }
 
                     Text {
@@ -387,12 +356,6 @@ MouseArea {
                         font.pixelSize: Looks.font.pixelSize.small
                         font.family: Looks.font.family.ui
                         color: root.textColor
-
-                        layer.enabled: root.effectsSafe
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                            color: root.textShadowColor
-                        }
                     }
                 }
             }
@@ -403,6 +366,14 @@ MouseArea {
             id: wClockContainer
             width: wClockContent.implicitWidth
             height: wClockContent.implicitHeight
+            layer.enabled: root.effectsSafe
+            layer.effect: DropShadow {
+                horizontalOffset: 0
+                verticalOffset: 2
+                radius: 8
+                samples: 17
+                color: root.textShadowColor
+            }
 
             states: [
                 State {
@@ -448,15 +419,6 @@ MouseArea {
                     font.weight: Looks.font.weight.thin
                     font.family: Looks.font.family.ui
                     color: root.textColor
-
-                    layer.enabled: root.effectsSafe
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0
-                        verticalOffset: 2
-                        radius: 8
-                        samples: 17
-                        color: root.textShadowColor
-                    }
                 }
 
                 Text {
@@ -467,15 +429,6 @@ MouseArea {
                     font.weight: Looks.font.weight.regular
                     font.family: Looks.font.family.ui
                     color: root.textColor
-                    layer.enabled: root.effectsSafe
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0
-                        verticalOffset: 1
-                        radius: 4
-                        samples: 9
-                        color: root.textShadowColor
-                    }
-
                 }
             }
 
@@ -507,19 +460,12 @@ MouseArea {
                         font.weight: Looks.font.weight.regular
                         font.family: Looks.font.family.ui
                         color: root.textColor
-
-                        layer.enabled: root.effectsSafe
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
-                            color: root.textShadowColor
-                        }
-
                     }
                 }
             }
         }
         
-        // Bottom left widgets row (Weather + Media)
+        // Bottom left widgets row (Weather + Media) with single grouped DropShadow
         RowLayout {
             id: bottomWidgetsRow
             anchors.bottom: parent.bottom
@@ -527,6 +473,14 @@ MouseArea {
             anchors.bottomMargin: 48
             anchors.leftMargin: 48
             spacing: 24
+            layer.enabled: root.effectsSafe
+            layer.effect: DropShadow {
+                horizontalOffset: 0
+                verticalOffset: 3
+                radius: 12
+                samples: 25
+                color: root.textShadowColor
+            }
             
             // Weather widget - Windows 11 style
             Loader {
@@ -545,15 +499,6 @@ MouseArea {
                         }
                         iconSize: 48
                         color: root.textColor
-                        
-                        layer.enabled: root.effectsSafe
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0
-                            verticalOffset: 2
-                            radius: 6
-                            samples: 13
-                            color: root.textShadowColor
-                        }
                     }
                     
                     Column {
@@ -566,14 +511,6 @@ MouseArea {
                             font.weight: Looks.font.weight.thin
                             font.family: Looks.font.family.ui
                             color: root.textColor
-                            layer.enabled: root.effectsSafe
-                            layer.effect: DropShadow {
-                                horizontalOffset: 0
-                                verticalOffset: 1
-                                radius: 4
-                                samples: 9
-                                color: root.textShadowColor
-                            }
                         }
                         
                         Text {
@@ -582,14 +519,6 @@ MouseArea {
                             font.pixelSize: Looks.font.pixelSize.small
                             font.family: Looks.font.family.ui
                             color: Looks.colors.subfg
-                            layer.enabled: root.effectsSafe
-                            layer.effect: DropShadow {
-                                horizontalOffset: 0
-                                verticalOffset: 1
-                                radius: 2
-                                samples: 5
-                                color: root.textShadowColor
-                            }
                         }
                     }
                 }
@@ -616,15 +545,6 @@ MouseArea {
                     readonly property string effectiveArtUrl: player?.trackArtUrl ?? ""
                     readonly property string effectiveTitle: player?.trackTitle ?? ""
                     readonly property string effectiveArtist: player?.trackArtist ?? ""
-
-                    layer.enabled: root.effectsSafe
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0
-                        verticalOffset: 4
-                        radius: 16
-                        samples: 33
-                        color: root.textShadowColor
-                    }
                     
                     RowLayout {
                         id: mediaRow
@@ -640,15 +560,6 @@ MouseArea {
                             radius: Looks.radius.medium
                             color: Looks.colors.bg2Base
                             clip: true
-                            
-                            layer.enabled: root.effectsSafe
-                            layer.effect: DropShadow {
-                                horizontalOffset: 0
-                                verticalOffset: 2
-                                radius: 4
-                                samples: 9
-                                color: Looks.colors.shadow
-                            }
                             
                             Image {
                                 id: mediaArtImage
@@ -771,6 +682,14 @@ MouseArea {
             sourceComponent: Column {
                 spacing: 6
                 clip: true
+                layer.enabled: root.effectsSafe
+                layer.effect: DropShadow {
+                    horizontalOffset: 0
+                    verticalOffset: 2
+                    radius: 8
+                    samples: 17
+                    color: Looks.colors.shadow
+                }
 
                 Repeater {
                     model: {
@@ -814,15 +733,6 @@ MouseArea {
                                         easing.type: Easing.BezierSpline
                                         easing.bezierCurve: Looks.transition.easing.bezierCurve.standard
                                     }
-                                }
-
-                                layer.enabled: root.effectsSafe
-                                layer.effect: DropShadow {
-                                    horizontalOffset: 0
-                                    verticalOffset: 2
-                                    radius: 8
-                                    samples: 17
-                                    color: Looks.colors.shadow
                                 }
 
                                 MouseArea {
@@ -1048,20 +958,11 @@ MouseArea {
                     font.pixelSize: Looks.font.pixelSize.tiny
                     font.family: Looks.font.family.ui
                     color: Looks.colors.subfg
-
-                    layer.enabled: root.effectsSafe
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0
-                        verticalOffset: 1
-                        radius: 4
-                        samples: 9
-                        color: Looks.colors.shadow
-                    }
                 }
             }
         }
         
-        // Bottom hint - Windows 11 style pill
+        // Bottom hint - Windows 11 style pill (uses acrylic backdrop + border without extra FBO)
         Rectangle {
             id: hintContainer
             visible: root.showHintText && opacity > 0
@@ -1071,21 +972,12 @@ MouseArea {
             width: hintText.implicitWidth + 32
             height: 36
             radius: height / 2
-            color: ColorUtils.transparentize(Looks.colors.bg1Base, 0.2)
+            color: ColorUtils.transparentize(Looks.colors.bg1Base, 0.16)
             border.color: Looks.colors.bg1Border
             border.width: 1
             opacity: root.showHintText ? hintOpacity : 0
             
             property real hintOpacity: 1
-            
-            layer.enabled: root.effectsSafe
-            layer.effect: DropShadow {
-                horizontalOffset: 0
-                verticalOffset: 2
-                radius: 8
-                samples: 17
-                color: root.textShadowColor
-            }
             
             Text {
                 id: hintText
@@ -1140,10 +1032,18 @@ MouseArea {
             }
         }
 
-        // Centered login content
+        // Centered login content (single grouped DropShadow covers avatar, name, password, hint)
         ColumnLayout {
             anchors.centerIn: parent
             spacing: 16
+            layer.enabled: root.effectsSafe
+            layer.effect: DropShadow {
+                horizontalOffset: 0
+                verticalOffset: 3
+                radius: 12
+                samples: 25
+                color: Looks.colors.shadow
+            }
             
             // User Avatar - Windows 11 style (large circular with shadow)
             Item {
@@ -1152,21 +1052,13 @@ MouseArea {
                 width: 120
                 height: 120
                 
-                // Shadow behind avatar
+                // Accent ring behind avatar
                 Rectangle {
                     anchors.centerIn: parent
                     width: parent.width + 4
                     height: parent.height + 4
                     radius: width / 2
                     color: ColorUtils.transparentize(Looks.colors.accent, 1)
-                    layer.enabled: root.effectsSafe
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0
-                        verticalOffset: 4
-                        radius: 16
-                        samples: 33
-                        color: Looks.colors.shadow
-                    }
                     
                     Rectangle {
                         anchors.fill: parent
@@ -1246,14 +1138,6 @@ MouseArea {
                 font.weight: Looks.font.weight.regular
                 font.family: Looks.font.family.ui
                 color: root.textColor
-                layer.enabled: root.effectsSafe
-                layer.effect: DropShadow {
-                    horizontalOffset: 0
-                    verticalOffset: 1
-                    radius: 4
-                    samples: 9
-                    color: root.textShadowColor
-                }
             }
             
             // Password field container - Windows 11 Acrylic style
@@ -1338,15 +1222,6 @@ MouseArea {
                             font: passwordField.font
                             color: GlobalStates.screenUnlockFailed ? Looks.colors.danger : Looks.colors.subfg
                             visible: passwordField.text.length === 0
-                            
-                            layer.enabled: root.effectsSafe
-                            layer.effect: DropShadow {
-                                horizontalOffset: 0
-                                verticalOffset: 1
-                                radius: 2
-                                samples: 5
-                                color: root.textShadowColor
-                            }
                         }
                         
                         onTextChanged: root.context.currentText = text
@@ -1449,15 +1324,6 @@ MouseArea {
                     font.pixelSize: Looks.font.pixelSize.small
                     font.family: Looks.font.family.ui
                     color: Looks.colors.subfg
-                    
-                    layer.enabled: root.effectsSafe
-                    layer.effect: DropShadow {
-                        horizontalOffset: 0
-                        verticalOffset: 1
-                        radius: 2
-                        samples: 5
-                        color: root.textShadowColor
-                    }
                 }
             }
             
@@ -1529,13 +1395,21 @@ MouseArea {
             }
         }
         
-        // Bottom left: Battery & keyboard layout
+        // Bottom left: Battery & keyboard layout (single grouped DropShadow covers both indicators)
         Row {
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.bottomMargin: 24
             anchors.leftMargin: 24
             spacing: 16
+            layer.enabled: root.effectsSafe
+            layer.effect: DropShadow {
+                horizontalOffset: 0
+                verticalOffset: 1
+                radius: 3
+                samples: 7
+                color: root.textShadowColor
+            }
             
             // Battery
             Loader {
@@ -1553,15 +1427,6 @@ MouseArea {
                         color: (Battery.isLow && !Battery.isCharging) 
                             ? Looks.colors.danger 
                             : root.textColor
-                        
-                        layer.enabled: root.effectsSafe
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0
-                            verticalOffset: 1
-                            radius: 3
-                            samples: 7
-                            color: root.textShadowColor
-                        }
                     }
                     
                     Text {
@@ -1572,15 +1437,6 @@ MouseArea {
                         color: (Battery.isLow && !Battery.isCharging) 
                             ? Looks.colors.danger 
                             : root.textColor
-                        
-                        layer.enabled: root.effectsSafe
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0
-                            verticalOffset: 1
-                            radius: 3
-                            samples: 7
-                            color: root.textShadowColor
-                        }
                     }
                 }
             }
@@ -1599,15 +1455,6 @@ MouseArea {
                         icon: "keyboard"
                         implicitSize: 18
                         color: root.textColor
-                        
-                        layer.enabled: root.effectsSafe
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0
-                            verticalOffset: 1
-                            radius: 2
-                            samples: 5
-                            color: root.textShadowColor
-                        }
                     }
                     
                     Text {
@@ -1616,15 +1463,6 @@ MouseArea {
                         font.pixelSize: Looks.font.pixelSize.small
                         font.family: Looks.font.family.ui
                         color: root.textColor
-                        
-                        layer.enabled: root.effectsSafe
-                        layer.effect: DropShadow {
-                            horizontalOffset: 0
-                            verticalOffset: 1
-                            radius: 2
-                            samples: 5
-                            color: root.textShadowColor
-                        }
                     }
                 }
             }

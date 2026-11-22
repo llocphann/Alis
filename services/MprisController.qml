@@ -131,15 +131,16 @@ Singleton {
 		return root._findMpdMprisPlayer() !== null
 	}
 
-	function _mpdCustomBridgeCommand(): var {
-		const args = ["/usr/bin/env", "mpd-mpris"]
+	function _mpdCustomBridgeCommand(busName = "org.mpris.MediaPlayer2.mpd.alis"): var {
 		const host = String(root._mpdBridgeHost ?? "")
-		if (host.startsWith("/")) {
-			args.push("-network", "unix", "-host", host)
-		} else {
-			args.push("-host", host, "-port", String(root._mpdBridgePort))
+		const nativeDispatch = Quickshell.shellPath("scripts/native-dispatch")
+		const args = [nativeDispatch, "mpd-mpris", "--host", host]
+		if (!host.startsWith("/")) {
+			args.push("--port", String(root._mpdBridgePort))
 		}
-		args.push("-instance-name", "alis")
+		if (busName) {
+			args.push("--mpris-name", busName)
+		}
 		return args
 	}
 
@@ -226,7 +227,8 @@ Singleton {
 		id: _mpdMprisProbeProc
 		running: false
 		command: ["/usr/bin/bash", "-c",
-			"command -v mpd-mpris >/dev/null 2>&1 || exit 2; pgrep -x mpd >/dev/null 2>&1 || exit 1"]
+			"([ -x \"$1\" ] || command -v mpd-mpris >/dev/null 2>&1) || exit 2; pgrep -x mpd >/dev/null 2>&1 || exit 1",
+			"alis-mpd-mpris-probe", Quickshell.shellPath("scripts/native-dispatch")]
 		onExited: (exitCode, _exitStatus) => {
 			if (exitCode === 2) {
 				root._mpdBridgeAvailable = 0
@@ -243,9 +245,8 @@ Singleton {
 		}
 	}
 
-	// Start the distro-provided mpd-mpris user service when local MPD becomes
-	// relevant. If the bridge is absent, playback keeps working and only the
-	// Media integration remains unavailable.
+	// Start the distro-provided mpd-mpris user service if present; otherwise fall
+	// back directly to Alis's built-in Rust MPRIS2 bridge in alis-mpdd.
 	Process {
 		id: _mpdMprisStartProc
 		running: false
@@ -253,6 +254,11 @@ Singleton {
 		onExited: (exitCode, _exitStatus) => {
 			if (exitCode === 0) {
 				_mpdBridgeSettle.restart()
+				return
+			}
+			if (!_mpdMprisCustomProc.running && !root._hasMpdMprisPlayer()) {
+				_mpdMprisCustomProc.command = root._mpdCustomBridgeCommand("org.mpris.MediaPlayer2.mpd")
+				_mpdMprisCustomProc.running = true
 				return
 			}
 			_mpdBridgeRetry.restart()
@@ -469,7 +475,7 @@ Singleton {
 	Process {
 		id: plasmaIntegrationCheckProc
 		running: false
-		command: ["/usr/bin/bash", "-c", "command -v plasma-browser-integration-host >/dev/null; plasma=$?; command -v wtype >/dev/null; wtype=$?; exit $((plasma + wtype * 10))"]
+		command: ["/usr/bin/bash", "-c", "command -v plasma-browser-integration-host >/dev/null; plasma=$?; ([ -x \"$1\" ] || command -v wtype >/dev/null); vkbd=$?; exit $((plasma + vkbd * 10))", "alis-browser-cap-probe", Quickshell.shellPath("scripts/native-dispatch")]
 		onExited: (exitCode) => {
 			root._browserCapabilitiesProbed = true
 			root.hasPlasmaIntegration = (exitCode % 10) === 0;
@@ -1183,16 +1189,21 @@ Singleton {
 			target="$1"
 			restore="$2"
 			key="$3"
+			dispatch="$4"
 			command -v niri >/dev/null 2>&1 || exit 0
-			command -v wtype >/dev/null 2>&1 || exit 0
+			[ -x "$dispatch" ] || command -v wtype >/dev/null 2>&1 || exit 0
 			niri msg action focus-window --id "$target" >/dev/null 2>&1 || exit 0
 			sleep 0.08
-			wtype -M shift -k "$key" >/dev/null 2>&1 || true
+			if [ -x "$dispatch" ]; then
+				"$dispatch" input-key -M shift -k "$key" >/dev/null 2>&1 || true
+			else
+				wtype -M shift -k "$key" >/dev/null 2>&1 || true
+			fi
 			sleep 0.05
 			if [ -n "$restore" ] && [ "$restore" != "$target" ]; then
 				niri msg action focus-window --id "$restore" >/dev/null 2>&1 || true
 			fi
-		`, "_", String(win.id), restoreId, key]);
+		`, "_", String(win.id), restoreId, key, Quickshell.shellPath("scripts/native-dispatch")]);
 	}
 
 	function canGoPreviousForPlayer(player): bool {

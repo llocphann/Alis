@@ -9,6 +9,8 @@ STATE_DIR="$XDG_STATE_HOME/quickshell"
 
 # shellcheck source=scripts/lib/config-path.sh
 source "$SCRIPT_DIR/../lib/config-path.sh"
+# shellcheck source=scripts/colors/lib/json-compat.sh
+source "$SCRIPT_DIR/lib/json-compat.sh"
 CONFIG_FILE="$(alis_config_file)"
 MODULE_LOG="$STATE_DIR/user/generated/theming_modules.log"
 TARGETS_DIR="$SCRIPT_DIR/targets"
@@ -44,25 +46,94 @@ log_module() {
   printf '[%s] [%s] %s\n' "$(date '+%H:%M:%S')" "${COLOR_MODULE_ID:-module}" "$*" >> "$MODULE_LOG"
 }
 
+_py_json_get() {
+  local file="$1"
+  local dotpath="$2"
+  python3 - "$file" "$dotpath" <<'PY' 2>/dev/null || true
+import json, sys
+try:
+    data = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception:
+    sys.exit(1)
+cur = data
+for key in sys.argv[2].lstrip(".").split("."):
+    if not key:
+        continue
+    if isinstance(cur, dict) and key in cur:
+        cur = cur[key]
+    else:
+        sys.exit(2)
+if cur is None:
+    sys.exit(2)
+if isinstance(cur, bool):
+    print("true" if cur else "false")
+else:
+    print(cur)
+PY
+}
+
 config_bool() {
   local query="$1"
   local fallback="$2"
-  if [[ -f "$CONFIG_FILE" ]] && command -v jq >/dev/null 2>&1; then
-    # jq '//' treats false as null — use explicit null check so false is preserved
-    jq -r "if ($query) == null then $fallback else ($query) end" "$CONFIG_FILE" 2>/dev/null || printf '%s\n' "$fallback"
-  else
-    printf '%s\n' "$fallback"
+  if [[ -f "$CONFIG_FILE" ]]; then
+    if command -v jq >/dev/null 2>&1; then
+      # jq '//' treats false as null — use explicit null check so false is preserved
+      jq -r "if ($query) == null then $fallback else ($query) end" "$CONFIG_FILE" 2>/dev/null || printf '%s\n' "$fallback"
+      return 0
+    elif command -v python3 >/dev/null 2>&1; then
+      local val
+      val="$(_py_json_get "$CONFIG_FILE" "$query")"
+      [[ -n "$val" ]] && printf '%s\n' "$val" || printf '%s\n' "$fallback"
+      return 0
+    fi
   fi
+  printf '%s\n' "$fallback"
 }
 
 config_json() {
   local query="$1"
   local fallback="$2"
-  if [[ -f "$CONFIG_FILE" ]] && command -v jq >/dev/null 2>&1; then
-    jq -r "$query" "$CONFIG_FILE" 2>/dev/null || printf '%s\n' "$fallback"
-  else
-    printf '%s\n' "$fallback"
+  if [[ -f "$CONFIG_FILE" ]]; then
+    if command -v jq >/dev/null 2>&1; then
+      jq -r "$query" "$CONFIG_FILE" 2>/dev/null || printf '%s\n' "$fallback"
+      return 0
+    elif command -v python3 >/dev/null 2>&1; then
+      if [[ "$query" == *"//"* ]]; then
+        local clean="${query%% //*}"
+        clean="${clean#"${clean%%[![:space:]]*}"}"
+        clean="${clean%"${clean##*[![:space:]]}"}"
+        python3 - "$CONFIG_FILE" "$clean" "$fallback" <<'PY' 2>/dev/null || printf '%s\n' "$fallback"
+import json, sys
+path, dotpath, fallback = sys.argv[1], sys.argv[2], sys.argv[3]
+try:
+    with open(path, encoding="utf-8") as fh:
+        cur = json.load(fh)
+    for part in dotpath.lstrip(".").split("."):
+        if not part:
+            continue
+        if isinstance(cur, dict) and part in cur:
+            cur = cur[part]
+        else:
+            cur = None
+            break
+except Exception:
+    cur = None
+if cur is None or cur is False:
+    print(fallback)
+elif isinstance(cur, bool):
+    print("true")
+elif isinstance(cur, (dict, list)):
+    print(json.dumps(cur, separators=(",", ":")))
+else:
+    print(cur)
+PY
+      else
+        alis_json_get_or "$CONFIG_FILE" "$query" "$fallback"
+      fi
+      return 0
+    fi
   fi
+  printf '%s\n' "$fallback"
 }
 
 venv_python() {
@@ -123,14 +194,22 @@ resolve_target_module_path() {
 target_manifest_enabled() {
   local manifest_path="$1"
   [[ -f "$manifest_path" ]] || return 1
-  command -v jq >/dev/null 2>&1 || return 0
 
   local config_key value
-  config_key=$(jq -r '.configKey // empty' "$manifest_path" 2>/dev/null || true)
-  [[ -n "$config_key" ]] || return 0
-  [[ -f "$CONFIG_FILE" ]] || return 0
-
-  value=$(jq -r --arg key "$config_key" 'getpath($key | split(".")) as $v | if $v == null then true else $v end' "$CONFIG_FILE" 2>/dev/null || printf 'true')
+  if command -v jq >/dev/null 2>&1; then
+    config_key=$(jq -r '.configKey // empty' "$manifest_path" 2>/dev/null || true)
+    [[ -n "$config_key" ]] || return 0
+    [[ -f "$CONFIG_FILE" ]] || return 0
+    value=$(jq -r --arg key "$config_key" 'getpath($key | split(".")) as $v | if $v == null then true else $v end' "$CONFIG_FILE" 2>/dev/null || printf 'true')
+  elif command -v python3 >/dev/null 2>&1; then
+    config_key="$(_py_json_get "$manifest_path" "configKey")"
+    [[ -n "$config_key" ]] || return 0
+    [[ -f "$CONFIG_FILE" ]] || return 0
+    value="$(_py_json_get "$CONFIG_FILE" "$config_key")"
+    [[ -n "$value" ]] || value="true"
+  else
+    return 0
+  fi
   [[ "$value" != "false" ]]
 }
 

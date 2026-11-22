@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
+import Quickshell
 import Quickshell.Io
 import qs.modules.common
 import qs.modules.common.widgets
@@ -18,38 +19,172 @@ Rectangle {
     property real maxHeight: 200
     property real imageWidth: -1
     property real imageHeight: -1
-    property real scale: Math.min(root.maxHeight / imageHeight, root.width / imageWidth)
+    property real scale: (imageWidth > 0 && imageHeight > 0)
+        ? Math.min(root.maxHeight / imageHeight, root.width / imageWidth)
+        : 1
+    property int _probeGeneration: 0
+    property bool _destroyed: false
     onFilePathChanged: refresh()
     visible: filePath !== ""
 
+    Component.onDestruction: {
+        root._destroyed = true;
+        fileTypeProc.queuedRequest = null;
+        imageSizeProc.queuedRequest = null;
+        imageSizeProc.awaitingResult = false;
+        imageSizeFallbackProc.queuedRequest = null;
+        fileTypeProc.running = false;
+        imageSizeProc.running = false;
+        imageSizeFallbackProc.running = false;
+    }
+
+    function _safeCliPath(path) {
+        return path.startsWith("-") ? ("./" + path) : path;
+    }
+
+    function applyImageDimensions(rawText) {
+        const firstLine = String(rawText ?? "").trim().split(/\r?\n/)[0]?.trim() ?? "";
+        const match = firstLine.match(/^(\d+)(?:\s*[xX]\s*|\s+)(\d+)$/);
+        if (!match)
+            return false;
+        const width = parseInt(match[1], 10);
+        const height = parseInt(match[2], 10);
+        if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0)
+            return false;
+        root.imageWidth = width;
+        root.imageHeight = height;
+        return true;
+    }
+
+    function _startOrQueue(proc, generation, targetPath, command) {
+        if (root._destroyed || generation !== root._probeGeneration || targetPath === "")
+            return;
+        if (proc.running) {
+            proc.queuedRequest = {
+                generation: generation,
+                targetPath: targetPath,
+                command: command
+            };
+            proc.running = false;
+            return;
+        }
+        proc.queuedRequest = null;
+        proc.activeGeneration = generation;
+        proc.activeTargetPath = targetPath;
+        if (proc === imageSizeProc) {
+            proc.matched = false;
+            proc.awaitingResult = true;
+        }
+        proc.exec(command);
+    }
+
+    function _drainQueue(proc) {
+        const req = proc.queuedRequest;
+        proc.queuedRequest = null;
+        if (!req || root._destroyed || req.generation !== root._probeGeneration || req.targetPath === "")
+            return;
+        root._startOrQueue(proc, req.generation, req.targetPath, req.command);
+    }
+
     function refresh() {
+        root._probeGeneration++;
         root.mimeType = "";
         root.imageWidth = -1;
         root.imageHeight = -1;
-        fileTypeProc.exec(["file", "-b", "--mime-type", filePath]);
+        fileTypeProc.queuedRequest = null;
+        imageSizeProc.queuedRequest = null;
+        imageSizeProc.awaitingResult = false;
+        imageSizeFallbackProc.queuedRequest = null;
+        imageSizeProc.running = false;
+        imageSizeFallbackProc.running = false;
+        if (filePath === "") {
+            fileTypeProc.running = false;
+            return;
+        }
+        root._startOrQueue(fileTypeProc, root._probeGeneration, filePath, ["file", "-b", "--mime-type", "--", root._safeCliPath(filePath)]);
     }
 
     Process {
         id: fileTypeProc
-        command: ["file", "-b", "--mime-type", filePath]
+        property int activeGeneration: 0
+        property string activeTargetPath: ""
+        property var queuedRequest: null
         stdout: StdioCollector {
             onStreamFinished: {
-                root.mimeType = this.text;
-                if (root.mimeType.startsWith("image/"))
-                    imageSizeProc.exec(["identify", "-format", "%wx%h", filePath]);
+                if (root._destroyed || fileTypeProc.activeGeneration !== root._probeGeneration)
+                    return;
+                root.mimeType = this.text.trim();
+                if (root.mimeType.startsWith("image/")) {
+                    const targetPath = fileTypeProc.activeTargetPath;
+                    root._startOrQueue(
+                        imageSizeProc,
+                        fileTypeProc.activeGeneration,
+                        targetPath,
+                        [Quickshell.shellPath("scripts/native-dispatch"), "image", "identify", targetPath]
+                    );
+                }
             }
+        }
+        onRunningChanged: {
+            if (!running)
+                root._drainQueue(fileTypeProc);
         }
     }
 
     Process {
         id: imageSizeProc
-        command: ["identify", "-format", "%wx%h", filePath]
+        property int activeGeneration: 0
+        property string activeTargetPath: ""
+        property var queuedRequest: null
+        property bool awaitingResult: false
+        property bool matched: false
         stdout: StdioCollector {
             onStreamFinished: {
-                const dimensions = this.text.split("x");
-                root.imageWidth = parseInt(dimensions[0]);
-                root.imageHeight = parseInt(dimensions[1]);
+                if (root._destroyed || imageSizeProc.activeGeneration !== root._probeGeneration)
+                    return;
+                if (root.applyImageDimensions(this.text))
+                    imageSizeProc.matched = true;
             }
+        }
+        onRunningChanged: {
+            if (running)
+                return;
+            if (awaitingResult) {
+                awaitingResult = false;
+                const gen = activeGeneration;
+                const path = activeTargetPath;
+                if (!matched && !root._destroyed && gen === root._probeGeneration && path !== "") {
+                    Qt.callLater(() => {
+                        if (!root || root._destroyed || gen !== root._probeGeneration || imageSizeProc.matched || path === "")
+                            return;
+                        root._startOrQueue(
+                            imageSizeFallbackProc,
+                            gen,
+                            path,
+                            ["identify", "-ping", "-format", "%wx%h\n", root._safeCliPath(path)]
+                        );
+                    });
+                }
+            }
+            root._drainQueue(imageSizeProc);
+        }
+    }
+
+    Process {
+        id: imageSizeFallbackProc
+        property int activeGeneration: 0
+        property string activeTargetPath: ""
+        property var queuedRequest: null
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (root._destroyed || imageSizeFallbackProc.activeGeneration !== root._probeGeneration)
+                    return;
+                root.applyImageDimensions(this.text);
+            }
+        }
+        onRunningChanged: {
+            if (!running)
+                root._drainQueue(imageSizeFallbackProc);
         }
     }
 
@@ -122,7 +257,8 @@ Rectangle {
 
         Loader {
             id: imagePreviewLoader
-            visible: (root.imageWidth != -1) && (root.imageHeight != -1)
+            active: (root.imageWidth > 0) && (root.imageHeight > 0)
+            visible: active
             Layout.alignment: Qt.AlignHCenter
             sourceComponent: Item {
                 implicitHeight: root.imageHeight * root.scale

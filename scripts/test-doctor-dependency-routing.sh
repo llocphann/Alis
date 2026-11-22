@@ -41,26 +41,31 @@ for command, _friendly in re.findall(r'^\s*"([^":]+):([^"\n]+)"\s*$', cmd_block.
 if not doctor_cmds:
     raise SystemExit("FAIL: doctor dependency command list is empty")
 
-optional_equalizer_cmds = {"easyeffects", "socat"}
-leaked_optional = sorted(optional_equalizer_cmds & set(doctor_cmds))
+optional_or_native_cmds = {
+    "easyeffects", "socat", "cava", "cliphist", "wl-copy", "wl-paste",
+    "grim", "slurp", "swappy", "wlsunset", "swayidle", "swaylock",
+    "awww", "awww-daemon", "gowall", "kwriteconfig6", "checkupdates",
+    "magick", "fish", "uv", "fuzzel",
+}
+leaked_optional = sorted(optional_or_native_cmds & set(doctor_cmds))
 if leaked_optional:
     raise SystemExit(
-        "FAIL: doctor hard-requires optional Equalizer backend commands: "
+        "FAIL: doctor hard-requires optional or natively replaced commands: "
         + ", ".join(leaked_optional)
     )
 
-# CAVA is the live Media visualizer process. Generic/manual source-install
-# guidance must expose the same required capability as doctor and the distro
-# installers, without making the entire shell pre-flight fail when omitted.
-if "cava" not in doctor_cmds:
-    raise SystemExit("FAIL: doctor no longer checks the CAVA runtime")
+# Doctor must verify all four compiled Alis Rust native binaries directly.
+for native_bin in ("alis-native", "alis-theme", "alis-inputd", "alis-mpdd"):
+    if f'"{native_bin}"' not in doctor:
+        raise SystemExit(f"FAIL: doctor no longer checks native helper binary: {native_bin}")
+
 for token in (
-    'check_cmd "cava" "CAVA audio visualizer"',
-    'pipewire, pipewire-pulse, wireplumber, playerctl, pavucontrol, cava',
+    'built into Alis',
+    'pipewire, pipewire-pulse, wireplumber, pavucontrol',
 ):
     if token not in generic_installer:
         raise SystemExit(
-            f"FAIL: generic source-install guidance is missing CAVA dependency token: {token}"
+            f"FAIL: generic source-install guidance is missing native audio/runtime token: {token}"
         )
 
 mapping_block = re.search(r"declare -A cmd_to_pkg=\(\n(?P<body>.*?)\n\s*\)", installer, re.S)

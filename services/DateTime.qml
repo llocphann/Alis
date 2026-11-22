@@ -22,23 +22,26 @@ Singleton {
     property int _lastMinuteKey: -1
     property int _lastDayKey: -1
 
-    function _syncCoarseDates(): void {
+    function _syncCoarseDates(): bool {
         const now = clock.date
         if (!now)
-            return
+            return false
         const ms = now.getTime()
         if (!Number.isFinite(ms))
-            return
+            return false
+        let minuteAdvanced = false
         const minKey = Math.floor(ms / 60000)
         if (minKey !== root._lastMinuteKey) {
             root._lastMinuteKey = minKey
             root.minuteDate = new Date(ms)
+            minuteAdvanced = true
         }
         const dayKey = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate()
         if (dayKey !== root._lastDayKey) {
             root._lastDayKey = dayKey
             root.todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0)
         }
+        return minuteAdvanced
     }
 
     property string time: {
@@ -87,14 +90,16 @@ Singleton {
         target: clock
         Component.onCompleted: root._syncCoarseDates()
         function onSecondsChanged(): void {
-            root._syncCoarseDates()
+            if (root._syncCoarseDates())
+                root._refreshUptime()
         }
         function onMinutesChanged(): void {
-            root._syncCoarseDates()
-            root._refreshUptime()
+            if (root._syncCoarseDates())
+                root._refreshUptime()
         }
         function onHoursChanged(): void {
-            root._syncCoarseDates()
+            if (root._syncCoarseDates())
+                root._refreshUptime()
         }
     }
 

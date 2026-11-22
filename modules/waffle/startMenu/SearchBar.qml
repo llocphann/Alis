@@ -14,9 +14,10 @@ FooterRectangle {
 
     property real horizontalPadding: 32
     property real verticalPadding: Looks.startMenuSearchPadding
-    property bool searching: text.length > 0
+    property bool searching: searchInput.liveText.length > 0
     property alias searchInput: searchInput
     property alias text: searchInput.text
+    readonly property string liveText: searchInput.liveText
     implicitHeight: outline.implicitHeight + verticalPadding * 2
 
     signal accepted()
@@ -84,7 +85,7 @@ FooterRectangle {
                     }
                     color: Looks.colors.accentUnfocused
                     text: Translation.tr("Search for apps")
-                    visible: searchInput.text.length === 0
+                    visible: searchInput.text.length === 0 && !searchInput.preeditText
                     font.pixelSize: Looks.font.pixelSize.large
                 }
 

@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import org.kde.kirigami as Kirigami
 import qs
 import qs.services
 import qs.modules.common

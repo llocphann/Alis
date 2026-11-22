@@ -1,6 +1,6 @@
 pkgname=alis-audio
 pkgver=1.0
-pkgrel=4
+pkgrel=5
 pkgdesc='Alis - audio dependency bundle'
 arch=(any)
 license=('GPL-3.0-only')
@@ -15,17 +15,14 @@ depends=(
   libdbusmenu-gtk3
   pavucontrol
 
-  # Audio visualizer
-  cava
-
   # Media playback
   mpv
   mpd
-  mpd-mpris
 )
 
 optdepends=(
   'easyeffects: optional audio effects and equalizer backend'
   'socat: optional EasyEffects control transport for equalizer'
+  'mpd-mpris: optional external MPD MPRIS bridge (built-in MPRIS provided by alis-mpdd)'
   'playerctl: optional MPRIS CLI utility'
 )

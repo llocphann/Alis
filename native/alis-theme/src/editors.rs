@@ -1384,18 +1384,18 @@ pub fn run_vscode_theme(raw_args: &[String]) -> Result<()> {
             }
             if *fork_key == "antigravity" {
                 let alt_settings = xdg_config_dir().join("Antigravity IDE/User/settings.json");
-                if alt_settings.is_file() {
-                    if let Ok(mut s) = load_vscode_settings(&alt_settings) {
-                        let curr = s.get("workbench.colorTheme").and_then(Value::as_str);
-                        if curr == Some(VSCODE_THEME_NAME) || curr == Some(VSCODE_THEME_NAME_LIGHT) {
-                            if let Some(prev) = s.get(VSCODE_PREV_KEY).and_then(Value::as_str).filter(|p| !p.is_empty()).map(str::to_owned) {
-                                s.insert("workbench.colorTheme".into(), Value::String(prev));
-                            } else {
-                                s.remove("workbench.colorTheme");
-                            }
-                            s.remove(VSCODE_PREV_KEY);
-                            let _ = write_vscode_settings(&alt_settings, &s);
+                if alt_settings.is_file()
+                    && let Ok(mut s) = load_vscode_settings(&alt_settings)
+                {
+                    let curr = s.get("workbench.colorTheme").and_then(Value::as_str);
+                    if curr == Some(VSCODE_THEME_NAME) || curr == Some(VSCODE_THEME_NAME_LIGHT) {
+                        if let Some(prev) = s.get(VSCODE_PREV_KEY).and_then(Value::as_str).filter(|p| !p.is_empty()).map(str::to_owned) {
+                            s.insert("workbench.colorTheme".into(), Value::String(prev));
+                        } else {
+                            s.remove("workbench.colorTheme");
                         }
+                        s.remove(VSCODE_PREV_KEY);
+                        let _ = write_vscode_settings(&alt_settings, &s);
                     }
                 }
                 let alt_ext = user_home().join(".antigravity-ide/extensions").join(VSCODE_EXTENSION_ID);
@@ -1553,21 +1553,21 @@ pub fn run_vscode_theme(raw_args: &[String]) -> Result<()> {
             }
             if *fork_key == "antigravity" {
                 let alt_settings = xdg_config_dir().join("Antigravity IDE/User/settings.json");
-                if alt_settings.parent().is_some_and(Path::is_dir) {
-                    if let Ok(mut s) = load_vscode_settings(&alt_settings) {
-                        let mut ch = false;
-                        let curr = s.get("workbench.colorTheme").and_then(Value::as_str).unwrap_or_default().to_owned();
-                        if !curr.is_empty() && curr != VSCODE_THEME_NAME && curr != VSCODE_THEME_NAME_LIGHT {
-                            s.insert(VSCODE_PREV_KEY.into(), Value::String(curr.clone()));
-                            ch = true;
-                        }
-                        if curr != active_name {
-                            s.insert("workbench.colorTheme".into(), Value::String(active_name.to_owned()));
-                            ch = true;
-                        }
-                        if ch {
-                            let _ = write_vscode_settings(&alt_settings, &s);
-                        }
+                if alt_settings.parent().is_some_and(Path::is_dir)
+                    && let Ok(mut s) = load_vscode_settings(&alt_settings)
+                {
+                    let mut ch = false;
+                    let curr = s.get("workbench.colorTheme").and_then(Value::as_str).unwrap_or_default().to_owned();
+                    if !curr.is_empty() && curr != VSCODE_THEME_NAME && curr != VSCODE_THEME_NAME_LIGHT {
+                        s.insert(VSCODE_PREV_KEY.into(), Value::String(curr.clone()));
+                        ch = true;
+                    }
+                    if curr != active_name {
+                        s.insert("workbench.colorTheme".into(), Value::String(active_name.to_owned()));
+                        ch = true;
+                    }
+                    if ch {
+                        let _ = write_vscode_settings(&alt_settings, &s);
                     }
                 }
                 let alt_ext = user_home().join(".antigravity-ide/extensions");
@@ -2656,15 +2656,15 @@ pub fn strip_codex_config_toml(
         let code_part = line.split('#').next().unwrap_or(line);
         if let Some((k, v)) = code_part.split_once('=') {
             let key = k.trim();
-            if (in_tui && key == "theme") || (!in_tui && key == "tui.theme") {
-                if parse_toml_string_value(v).as_deref() == Some(theme_slug) {
-                    if let Some(prev) = restore_theme.filter(|s| !s.is_empty()) {
-                        let indent: String =
-                            line.chars().take_while(|c| c.is_whitespace()).collect();
-                        out_lines.push(format!("{indent}{key} = \"{prev}\""));
-                    }
-                    continue;
+            if ((in_tui && key == "theme") || (!in_tui && key == "tui.theme"))
+                && parse_toml_string_value(v).as_deref() == Some(theme_slug)
+            {
+                if let Some(prev) = restore_theme.filter(|s| !s.is_empty()) {
+                    let indent: String =
+                        line.chars().take_while(|c| c.is_whitespace()).collect();
+                    out_lines.push(format!("{indent}{key} = \"{prev}\""));
                 }
+                continue;
             }
         }
         out_lines.push(line.to_owned());
@@ -2971,10 +2971,10 @@ fn manage_claude_setting(path: &Path, legacy: &Path, key: &str, desired: Option<
     let state: Option<Value> = if journal.is_file() {
         Some(serde_json::from_slice(&fs::read(&journal)?)?)
     } else { None };
-    if let Some(s) = &state {
-        if s["version"] != 1 || s["path"] != path.to_string_lossy().as_ref() || s["key"] != key {
-            return Err(anyhow!("Unsupported theme recovery state: {}", journal.display()));
-        }
+    if let Some(s) = &state
+        && (s["version"] != 1 || s["path"] != path.to_string_lossy().as_ref() || s["key"] != key)
+    {
+        return Err(anyhow!("Unsupported theme recovery state: {}", journal.display()));
     }
     if let Some(value) = desired {
         let mut previous = match &state {

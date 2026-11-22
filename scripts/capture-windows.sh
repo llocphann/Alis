@@ -25,12 +25,11 @@ fi
 preview_dir="$HOME/.cache/alis/window-previews"
 mkdir -p "$preview_dir"
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+native_dispatch="$SCRIPT_DIR/native-dispatch"
 niri_bin="/usr/bin/niri"
 jq_bin="/usr/bin/jq"
-cliphist_bin="/usr/bin/cliphist"
 head_bin="/usr/bin/head"
-wl_paste_bin="/usr/bin/wl-paste"
-wl_copy_bin="/usr/bin/wl-copy"
 sha256_bin="/usr/bin/sha256sum"
 
 capture_all=false
@@ -44,20 +43,84 @@ for arg in "$@"; do
   fi
 done
 
-for bin in "$niri_bin" "$jq_bin" "$cliphist_bin" "$head_bin" \
-  "$wl_paste_bin" "$wl_copy_bin" "$sha256_bin"; do
+for bin in "$niri_bin" "$head_bin" "$sha256_bin"; do
   if [[ ! -x "$bin" ]]; then
     echo "[capture-windows] missing binary: $bin" >&2
     exit 127
   fi
 done
 
+clip_list() {
+  if [[ -x "$native_dispatch" ]]; then
+    "$native_dispatch" clipboard list 2>/dev/null || true
+  elif command -v cliphist >/dev/null 2>&1; then
+    cliphist list 2>/dev/null || true
+  fi
+}
+
+clip_decode() {
+  if [[ -x "$native_dispatch" ]]; then
+    "$native_dispatch" clipboard decode "$@"
+  else
+    cliphist decode "$@"
+  fi
+}
+
+clip_delete() {
+  if [[ -x "$native_dispatch" ]]; then
+    "$native_dispatch" clipboard delete "$@"
+  else
+    cliphist delete "$@"
+  fi
+}
+
+clip_paste() {
+  if [[ -x "$native_dispatch" ]]; then
+    "$native_dispatch" clipboard paste "$@"
+  else
+    /usr/bin/wl-paste "$@"
+  fi
+}
+
+clip_copy_fg_cmd() {
+  local mime="$1"
+  if [[ -x "$native_dispatch" ]]; then
+    printf '%s\n' "$native_dispatch" "clipboard" "copy" "--foreground" "--type" "$mime"
+  else
+    printf '%s\n' "/usr/bin/wl-copy" "--foreground" "--type" "$mime"
+  fi
+}
+
+clip_copy_bg() {
+  if [[ -x "$native_dispatch" ]]; then
+    "$native_dispatch" clipboard copy "$@"
+  else
+    /usr/bin/wl-copy "$@"
+  fi
+}
+
+list_niri_window_ids() {
+  if [[ -x "$jq_bin" ]]; then
+    "$niri_bin" msg -j windows 2>/dev/null | "$jq_bin" -r '.[].id'
+  else
+    "$niri_bin" msg -j windows 2>/dev/null | /usr/bin/python3 -c '
+import json, sys
+try:
+    for w in json.load(sys.stdin):
+        if isinstance(w, dict) and "id" in w:
+            print(w["id"])
+except Exception:
+    pass
+'
+  fi
+}
+
 state_dir="$(mktemp -d -t alis-window-previews.XXXXXX)"
 trap 'rm -rf -- "$state_dir"' EXIT
 
 select_clipboard_mime() {
   local mime_list preferred
-  mime_list="$("$wl_paste_bin" -l 2>/dev/null || true)"
+  mime_list="$(clip_paste --list-types 2>/dev/null || true)"
   for preferred in \
     "text/plain;charset=utf-8" \
     "text/plain" \
@@ -83,14 +146,11 @@ restore_clipboard_file() {
   local mime="$1"
   local file="$2"
 
-  # wl-copy normally forks and remains alive as the Wayland selection owner.
-  # When this script runs from Quickshell that daemon would otherwise remain
-  # inside alis.service after a shell restart.  Let the systemd user manager
-  # own a foreground wl-copy in its own transient service instead: the
-  # clipboard survives Alis restarts, while the shell cgroup remains clean.
-  # Use a per-capture unit name so an older selection owner can finish its
-  # Wayland cancellation path without racing a unit-name reuse.
+  # Let the systemd user manager own the foreground selection server in its own
+  # transient service so the clipboard survives Alis restarts cleanly.
   local unit="alis-clipboard-owner-${BASHPID:-$$}"
+  local -a copy_cmd=()
+  mapfile -t copy_cmd < <(clip_copy_fg_cmd "$mime")
   if command -v /usr/bin/systemd-run >/dev/null 2>&1; then
     if /usr/bin/systemd-run \
       --user \
@@ -99,14 +159,12 @@ restore_clipboard_file() {
       --collect \
       --service-type=exec \
       --property="StandardInput=file:$file" \
-      "$wl_copy_bin" --foreground --type "$mime"; then
+      "${copy_cmd[@]}"; then
       return 0
     fi
   fi
 
-  # Keep clipboard restoration functional on non-systemd user sessions. The
-  # fallback preserves the previous behavior, including wl-copy's daemon mode.
-  "$wl_copy_bin" --type "$mime" <"$file"
+  clip_copy_bg --type "$mime" <"$file"
 }
 
 # Niri always puts screenshot-window output in the clipboard even when --path
@@ -115,13 +173,13 @@ restore_clipboard_file() {
 saved_clip_mime="$(select_clipboard_mime)"
 saved_clip_file="$state_dir/clipboard.bin"
 if [[ -n "$saved_clip_mime" ]]; then
-  if ! "$wl_paste_bin" --no-newline --type "$saved_clip_mime" >"$saved_clip_file" 2>/dev/null; then
+  if ! clip_paste --no-newline --type "$saved_clip_mime" >"$saved_clip_file" 2>/dev/null; then
     saved_clip_mime=""
     : >"$saved_clip_file"
   fi
 fi
 
-mapfile -t all_windows < <("$niri_bin" msg -j windows 2>/dev/null | "$jq_bin" -r '.[].id')
+mapfile -t all_windows < <(list_niri_window_ids)
 if [[ ${#all_windows[@]} -eq 0 ]]; then
   if [[ ${#ids_to_capture[@]} -gt 0 ]]; then
     echo "[capture-windows] requested windows not yet available" >&2
@@ -155,7 +213,7 @@ if [[ ${#windows_to_capture[@]} -eq 0 ]]; then
 fi
 
 before_id=0
-first_entry="$($cliphist_bin list 2>/dev/null | $head_bin -1 || true)"
+first_entry="$(clip_list | $head_bin -1 || true)"
 if [[ -n "$first_entry" ]]; then
   before_id="${first_entry%%$'\t'*}"
   if [[ ! "$before_id" =~ ^[0-9]+$ ]]; then
@@ -226,7 +284,7 @@ sleep 0.5
 
 max_cleanup=100
 
-# Delete only cliphist entries whose decoded bytes match a generated preview.
+# Delete only clipboard history entries whose decoded bytes match a generated preview.
 # A user copy made during capture may have a newer ID too and must survive.
 for _pass in 1 2; do
   cleanup_count=0
@@ -235,14 +293,14 @@ for _pass in 1 2; do
     [[ "$entry_id" =~ ^[0-9]+$ ]] || continue
     [[ "$entry_id" -gt "$before_id" ]] || break
     decoded_entry="$state_dir/cliphist-$entry_id.bin"
-    if printf '%s\n' "$entry" | "$cliphist_bin" decode >"$decoded_entry" 2>/dev/null; then
+    if printf '%s\n' "$entry" | clip_decode >"$decoded_entry" 2>/dev/null; then
       entry_hash="$("$sha256_bin" "$decoded_entry" | cut -d' ' -f1)"
       if hash_matches_preview "$entry_hash"; then
-        printf '%s\n' "$entry" | "$cliphist_bin" delete 2>/dev/null || true
+        printf '%s\n' "$entry" | clip_delete 2>/dev/null || true
       fi
       cleanup_count=$((cleanup_count + 1))
     fi
-  done < <("$cliphist_bin" list 2>/dev/null)
+  done < <(clip_list)
   [[ $_pass -eq 1 ]] && sleep 0.3
 done
 
@@ -250,8 +308,8 @@ done
 # If the user copied something else while capture ran, that newer intent wins.
 current_clip_file="$state_dir/current-clipboard.png"
 current_clip_hash=""
-if "$wl_paste_bin" -l 2>/dev/null | /usr/bin/grep -Fqx "image/png"; then
-  if "$wl_paste_bin" --no-newline --type "image/png" >"$current_clip_file" 2>/dev/null; then
+if clip_paste --list-types 2>/dev/null | /usr/bin/grep -Fqx "image/png"; then
+  if clip_paste --no-newline --type "image/png" >"$current_clip_file" 2>/dev/null; then
     current_clip_hash="$("$sha256_bin" "$current_clip_file" | cut -d' ' -f1)"
   fi
 fi
@@ -259,7 +317,7 @@ if [[ -n "$current_clip_hash" ]] && hash_matches_preview "$current_clip_hash"; t
   if [[ -n "$saved_clip_mime" && -s "$saved_clip_file" ]]; then
     restore_clipboard_file "$saved_clip_mime" "$saved_clip_file" 2>/dev/null || true
   else
-    "$wl_copy_bin" --clear 2>/dev/null || true
+    clip_copy_bg --clear 2>/dev/null || true
   fi
 fi
 

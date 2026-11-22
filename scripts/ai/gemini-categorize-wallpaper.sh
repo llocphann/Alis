@@ -14,8 +14,13 @@ PROMPT="${3:-${GEMINI_WALLPAPER_PROMPT:-Categorize the wallpaper. Its file name 
 RESIZED_IMG_PATH="/tmp/quickshell/ai/wallpaper.jpg"
 
 # Resize image for speed
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p "$(dirname "$RESIZED_IMG_PATH")"
-magick "$SOURCE_IMG_PATH" -resize 200x -quality 50 "$RESIZED_IMG_PATH"
+if [[ -x "$SCRIPT_DIR/../native-dispatch" ]]; then
+    "$SCRIPT_DIR/../native-dispatch" image resize "$SOURCE_IMG_PATH" 200x "$RESIZED_IMG_PATH" --quality 50
+else
+    magick "$SOURCE_IMG_PATH" -resize 200x -quality 50 "$RESIZED_IMG_PATH"
+fi
 
 # Get API key
 API_KEY=$(secret-tool lookup 'application' 'illogical-impulse' | jq -r '.apiKeys.gemini')

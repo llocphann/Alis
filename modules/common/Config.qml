@@ -138,6 +138,18 @@ Singleton {
         }
     }
 
+    function hasPersistedKey(nestedKey): bool {
+        void root.revision;
+        const keys = Array.isArray(nestedKey) ? nestedKey : String(nestedKey ?? "").split(".");
+        let cursor = root._jsonMirror;
+        for (let i = 0; i < keys.length; ++i) {
+            if (!cursor || typeof cursor !== "object" || !Object.prototype.hasOwnProperty.call(cursor, keys[i]))
+                return false;
+            cursor = cursor[keys[i]];
+        }
+        return keys.length > 0;
+    }
+
     function _recordPendingMutation(nestedKey, value): void {
         if (!root._reloadInFlight && !root._writeInFlight && root._rawWriteView === null)
             return;
@@ -669,15 +681,9 @@ Singleton {
                 styleMigration["dashboard.pageOrder"] = root._jsonMirror.dashboard.pageOrder.concat(["spacedRepetition"]);
                 styleMigration["dashboard.spacedRepetition.enable"] = true;
             }
-            if (!wasReload
-                    && root._jsonMirror?.integrations?.alisIntergration
-                    && !Object.prototype.hasOwnProperty.call(root._jsonMirror.integrations.alisIntergration, "exercises_tracker")) {
-                const legacyExercisesActive = root._jsonMirror.integrations.alisIntergration.nexus === true
-                    || root._jsonMirror.integrations.alisIntergration.spaced_repetition === true;
-                root._jsonMirror.integrations.alisIntergration.exercises_tracker = legacyExercisesActive;
-                if (legacyExercisesActive)
-                    styleMigration["integrations.alisIntergration.exercises_tracker"] = true;
-            }
+            // Do not backfill integrations.alisIntergration.exercises_tracker into _jsonMirror
+            // on read-only loads; AlisIntergration computes the backward-compatible runtime
+            // fallback via Config.hasPersistedKey() without mutating untouched config.json.
             if (Object.keys(styleMigration).length) {
                 root._styleMigrationWritePending = true;
                 root.setNestedValues(styleMigration);
@@ -780,6 +786,8 @@ Singleton {
                     property bool voiceTtsEnabled: false
                     property bool ambientMascotEnabled: true
                     property bool ambientVisualPeek: false
+                    property bool a2uiEnabled: true
+                    property bool a2uiGenerativeEnabled: false
                     property real temperature: 0.7
                     property bool hasTemperatureOverride: false
                     property bool ragUseNexus: true
@@ -1398,7 +1406,7 @@ Singleton {
 
             property JsonObject apps: JsonObject {
                 property string bluetooth: "kcmshell6 kcm_bluetooth"
-                property string network: "kitty -1 fish -c nmtui"
+                property string network: "kitty -1 nmtui"
                 property string networkEthernet: "kcmshell6 kcm_networkmanagement"
                 property string taskManager: "missioncenter"
                 property string terminal: "kitty"
@@ -2077,7 +2085,7 @@ Singleton {
                     property real zoom: 1.0
                 }
                 property JsonObject backend: JsonObject {
-                    property string provider: "awww"
+                    property string provider: "internal"
                     property JsonObject awww: JsonObject {
                         property int transitionFps: 60
                         property int simpleStep: 5

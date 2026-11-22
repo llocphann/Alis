@@ -17,6 +17,11 @@ Item {
     property real contentRotation: 0
     property bool compactRequested: false
     property bool pinnedExpanded: false
+    // Abyss Screen Edge enables the inline mic loudness + peak-hold meter bar.
+    property bool abyssMicMeterEnabled: false
+    property bool micMeterPinned: false
+    property bool _micButtonHovered: false
+    property bool _micHoverSession: false
     // Abyss owns the connected Utilities popup; other families keep the shared
     // Quick Actions implementation without gaining a new popup route.
     property bool showUtilitiesLauncher: false
@@ -24,6 +29,21 @@ Item {
     signal utilitiesHoverChanged(bool hovered)
     readonly property color neutralIconColor: Appearance.colors.colOnLayer2
     readonly property color dangerIconColor: Appearance.colors.colError
+    readonly property bool micAutoShowOnly: !(Config.options?.bar?.utilButtons?.showMicToggle ?? false)
+    readonly property bool micInUse: Privacy.micActive || (Audio?.micBeingAccessed ?? false)
+    readonly property bool micSlotActive: root.utilityActive("mic")
+    readonly property bool micMeterCanExpand: root.abyssMicMeterEnabled
+        && !root.vertical
+        && root.micSlotActive
+        && controlsLayout.width >= 54 * Appearance.sizes.barModuleScale
+    readonly property bool micMeterExpanded: root.micMeterCanExpand
+        && (root._micHoverSession || root.micMeterPinned)
+    readonly property real micMeterProgress: micMeterLoader.item?.progress ?? 0
+    readonly property real nonMicIconOpacity: Math.max(0, 1 - root.micMeterProgress * 1.8)
+    readonly property real nonMicIconScale: 1 - 0.14 * root.micMeterProgress
+    readonly property bool _micPointerInside: root._micButtonHovered
+        || stageHover.hovered
+        || (micMeterLoader.item?.hovered ?? false)
     readonly property bool hasUrgentState: RecorderStatus.isRecording
         || Privacy.micActive
         || (Audio?.micBeingAccessed ?? false)
@@ -85,6 +105,71 @@ Item {
             pinnedExpanded = false
     }
 
+    function _syncMicHover(): void {
+        if (!root.micMeterCanExpand) {
+            micMeterCollapseTimer.stop()
+            root._micHoverSession = false
+            return
+        }
+        if (root._micPointerInside) {
+            micMeterCollapseTimer.stop()
+        } else if (root._micHoverSession) {
+            micMeterCollapseTimer.restart()
+        }
+    }
+
+    on_MicButtonHoveredChanged: {
+        if (root._micButtonHovered && root.micMeterCanExpand) {
+            root._micHoverSession = true
+            micMeterCollapseTimer.stop()
+        } else {
+            root._syncMicHover()
+        }
+    }
+
+    on_MicPointerInsideChanged: root._syncMicHover()
+
+    onMicInUseChanged: {
+        if (!root.micInUse && root.micAutoShowOnly) {
+            micMeterCollapseTimer.stop()
+            root.micMeterPinned = false
+            root._micHoverSession = false
+            root._micButtonHovered = false
+        }
+    }
+
+    onMicSlotActiveChanged: {
+        if (!root.micSlotActive) {
+            micMeterCollapseTimer.stop()
+            root.micMeterPinned = false
+            root._micHoverSession = false
+            root._micButtonHovered = false
+        }
+    }
+
+    onMicMeterCanExpandChanged: {
+        if (!root.micMeterCanExpand) {
+            micMeterCollapseTimer.stop()
+            root.micMeterPinned = false
+            root._micHoverSession = false
+        }
+    }
+
+    onMicMeterExpandedChanged: {
+        if (root.micMeterExpanded)
+            root.utilitiesHoverChanged(false)
+    }
+
+    Timer {
+        id: micMeterCollapseTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (!root._micPointerInside)
+                root._micHoverSession = false
+        }
+    }
+
     HoverHandler {
         id: inlineHover
     }
@@ -139,16 +224,33 @@ Item {
             reveal: root.inlineExpanded
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
-            GridLayout {
-                id: controlsLayout
+            Item {
+                id: controlsStage
+                implicitWidth: controlsLayout.implicitWidth
+                implicitHeight: controlsLayout.implicitHeight
+                width: controlsLayout.implicitWidth
+                height: controlsLayout.implicitHeight
 
-                columns: root.vertical ? 1 : Math.max(1, root.visibleUtilityCount)
-                columnSpacing: root.vertical ? 0 : 4 * Appearance.sizes.barModuleScale
-                rowSpacing: root.vertical ? 4 * Appearance.sizes.barModuleScale : 0
+                HoverHandler {
+                    id: stageHover
+                    enabled: root.micMeterCanExpand
+                    onHoveredChanged: root._syncMicHover()
+                }
+
+                GridLayout {
+                    id: controlsLayout
+                    anchors.centerIn: parent
+
+                    columns: root.vertical ? 1 : Math.max(1, root.visibleUtilityCount)
+                    columnSpacing: root.vertical ? 0 : 4 * Appearance.sizes.barModuleScale
+                    rowSpacing: root.vertical ? 4 * Appearance.sizes.barModuleScale : 0
 
         Loader {
             active: root.utilityActive("screenSnip")
             visible: active
+            opacity: root.nonMicIconOpacity
+            scale: root.nonMicIconScale
+            enabled: !root.micMeterExpanded && root.micMeterProgress < 0.05
             Layout.row: root.vertical ? root.utilityIndex("screenSnip") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("screenSnip")
             sourceComponent: CircleUtilButton {
@@ -169,6 +271,9 @@ Item {
         Loader {
             active: root.utilityActive("screenRecord")
             visible: active
+            opacity: root.nonMicIconOpacity
+            scale: root.nonMicIconScale
+            enabled: !root.micMeterExpanded && root.micMeterProgress < 0.05
             Layout.row: root.vertical ? root.utilityIndex("screenRecord") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("screenRecord")
             sourceComponent: CircleUtilButton {
@@ -244,6 +349,9 @@ Item {
         Loader {
             active: root.utilityActive("colorPicker")
             visible: active
+            opacity: root.nonMicIconOpacity
+            scale: root.nonMicIconScale
+            enabled: !root.micMeterExpanded && root.micMeterProgress < 0.05
             Layout.row: root.vertical ? root.utilityIndex("colorPicker") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("colorPicker")
             sourceComponent: CircleUtilButton {
@@ -264,6 +372,9 @@ Item {
         Loader {
             active: root.utilityActive("notepad")
             visible: active
+            opacity: root.nonMicIconOpacity
+            scale: root.nonMicIconScale
+            enabled: !root.micMeterExpanded && root.micMeterProgress < 0.05
             Layout.row: root.vertical ? root.utilityIndex("notepad") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("notepad")
             sourceComponent: CircleUtilButton {
@@ -287,6 +398,9 @@ Item {
         Loader {
             active: root.utilityActive("keyboard")
             visible: active
+            opacity: root.nonMicIconOpacity
+            scale: root.nonMicIconScale
+            enabled: !root.micMeterExpanded && root.micMeterProgress < 0.05
             Layout.row: root.vertical ? root.utilityIndex("keyboard") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("keyboard")
             sourceComponent: CircleUtilButton {
@@ -308,6 +422,9 @@ Item {
         Loader {
             active: root.utilityActive("keyboardLayout")
             visible: active
+            opacity: root.nonMicIconOpacity
+            scale: root.nonMicIconScale
+            enabled: !root.micMeterExpanded && root.micMeterProgress < 0.05
             Layout.row: root.vertical ? root.utilityIndex("keyboardLayout") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("keyboardLayout")
             sourceComponent: CircleUtilButton {
@@ -330,9 +447,12 @@ Item {
         }
 
         Loader {
+            id: micLoader
             readonly property bool micInUse: Privacy.micActive || (Audio?.micBeingAccessed ?? false)
             active: root.utilityActive("mic")
             visible: active
+            opacity: root.micMeterProgress > 0.001 ? 0 : 1
+            enabled: root.micMeterProgress < 0.05
             Layout.row: root.vertical ? root.utilityIndex("mic") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("mic")
             sourceComponent: CircleUtilButton {
@@ -347,6 +467,8 @@ Item {
                     ? Translation.tr("Unmute microphone")
                     : Translation.tr("Mute microphone")
                 onClicked: Audio.toggleMicMute()
+                Component.onDestruction: root._micButtonHovered = false
+                onButtonHoveredChanged: root._micButtonHovered = buttonHovered
 
                 Item {
                     anchors.fill: parent
@@ -399,6 +521,9 @@ Item {
         Loader {
             active: root.utilityActive("screenCast")
             visible: active
+            opacity: root.nonMicIconOpacity
+            scale: root.nonMicIconScale
+            enabled: !root.micMeterExpanded && root.micMeterProgress < 0.05
             Layout.row: root.vertical ? root.utilityIndex("screenCast") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("screenCast")
             sourceComponent: CircleUtilButton {
@@ -475,6 +600,9 @@ Item {
         Loader {
             active: root.utilityActive("darkMode")
             visible: active
+            opacity: root.nonMicIconOpacity
+            scale: root.nonMicIconScale
+            enabled: !root.micMeterExpanded && root.micMeterProgress < 0.05
             Layout.row: root.vertical ? root.utilityIndex("darkMode") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("darkMode")
             sourceComponent: CircleUtilButton {
@@ -499,6 +627,9 @@ Item {
         Loader {
             active: root.utilityActive("performance")
             visible: active
+            opacity: root.nonMicIconOpacity
+            scale: root.nonMicIconScale
+            enabled: !root.micMeterExpanded && root.micMeterProgress < 0.05
             Layout.row: root.vertical ? root.utilityIndex("performance") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("performance")
             sourceComponent: CircleUtilButton {
@@ -536,6 +667,9 @@ Item {
         Loader {
             active: root.utilityActive("utilities")
             visible: active
+            opacity: root.nonMicIconOpacity
+            scale: root.nonMicIconScale
+            enabled: !root.micMeterExpanded && root.micMeterProgress < 0.05
             Layout.row: root.vertical ? root.utilityIndex("utilities") : 0
             Layout.column: root.vertical ? 0 : root.utilityIndex("utilities")
             sourceComponent: CircleUtilButton {
@@ -558,6 +692,31 @@ Item {
                 }
             }
         }
+                }
+
+                Loader {
+                    id: micMeterLoader
+                    objectName: "abyssMicMeterLoader"
+                    z: 10
+                    anchors.fill: parent
+                    active: root.abyssMicMeterEnabled && !root.vertical && root.micSlotActive
+                    visible: active
+                    sourceComponent: AbyssMicMeterBar {
+                        expanded: root.micMeterExpanded
+                        pinned: root.micMeterPinned
+                        isMuted: Audio.micMuted
+                        isInUse: root.micInUse
+                        contentRotation: root.contentRotation
+                        anchorX: controlsLayout.x + micLoader.x
+                        anchorWidth: micLoader.width > 0 ? micLoader.width : 26 * Appearance.sizes.barModuleScale
+                        fullWidth: controlsStage.width
+                        onMicClicked: Audio.toggleMicMute()
+                        onPinToggled: {
+                            root.micMeterPinned = !root.micMeterPinned
+                            root._syncMicHover()
+                        }
+                    }
+                }
             }
         }
     }

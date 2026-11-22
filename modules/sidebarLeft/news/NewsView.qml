@@ -3,7 +3,6 @@ import qs
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import org.kde.kirigami as Kirigami
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
@@ -211,7 +210,7 @@ Item {
                 actionIcon: "refresh"
                 text: Translation.tr("Error")
                 explanation: NewsService.lastError
-                helpfulAction: Kirigami.Action {
+                helpfulAction: Action {
                     icon.name: "refresh"
                     text: Translation.tr("Retry")
                     onTriggered: root.refreshCurrent()

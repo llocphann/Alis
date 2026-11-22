@@ -108,10 +108,17 @@ Singleton {
             const end = newline >= 0 ? newline : text.length
             const heap = text.indexOf("JSGCHeap", start)
             if (heap >= 0 && heap < end) {
-                total++
-                const deletedMarker = text.indexOf("deleted", start)
-                if (deletedMarker >= 0 && deletedMarker < end)
-                    deleted++
+                // Skip non-writable PROT_NONE (---p) guard pages split out by QV4 GC;
+                // counting them turns GC reclamation itself into an apparent mapping leak.
+                const line = text.slice(start, end)
+                const firstSpace = line.indexOf(" ")
+                const permsStart = firstSpace >= 0 ? firstSpace + 1 : -1
+                const perms = permsStart >= 0 ? line.slice(permsStart, permsStart + 4) : ""
+                if (perms.indexOf("w") >= 0) {
+                    total++
+                    if (text.indexOf("deleted", start) >= 0 && text.indexOf("deleted", start) < end)
+                        deleted++
+                }
             }
             if (newline < 0)
                 break
@@ -123,22 +130,21 @@ Singleton {
 
         const nowMs = Date.now()
         const softThreshold = Math.max(24, Math.floor(root.deletedMappingsThreshold * 0.45))
-        if (deleted >= softThreshold
-                && (deleted - root._lastAutoGcDeletedCount >= 24 || nowMs - root._lastIdleGcMs >= 600000)) {
-            root._lastAutoGcDeletedCount = deleted
-            root._lastIdleGcMs = nowMs
-            gc()
-            _log("proactive gc() at soft threshold:", deleted)
-        }
-
-        if (root.currentDeletedMappings >= root.deletedMappingsThreshold) {
-            _log("threshold exceeded:", root.currentDeletedMappings, ">=", root.deletedMappingsThreshold)
+        if (deleted >= root.deletedMappingsThreshold) {
+            _log("threshold exceeded:", deleted, ">=", root.deletedMappingsThreshold)
             if (nowMs - root._lastPressureSignalMs >= 60000) {
                 root._lastPressureSignalMs = nowMs
                 root.pressureExceeded()
-                _idleGcTimer.restart()
             }
+            if (nowMs - root._lastIdleGcMs >= 60000 && !_idleGcTimer.running)
+                _idleGcTimer.restart()
             root._notifyUser()
+        } else if (deleted >= softThreshold
+                && (deleted - root._lastAutoGcDeletedCount >= 24 || nowMs - root._lastIdleGcMs >= 600000)) {
+            root._lastAutoGcDeletedCount = deleted
+            if (!_idleGcTimer.running)
+                _idleGcTimer.restart()
+            _log("scheduled soft-threshold gc() for writable mappings:", deleted)
         }
     }
 

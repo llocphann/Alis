@@ -24,7 +24,7 @@ Scope {
     }
 
     Loader {
-        active: PolkitService.active
+        active: PolkitService.available && PolkitService.active
         sourceComponent: PanelWindow {
             id: panelWindow
             screen: root.targetScreen ?? GlobalStates.focusedScreen
@@ -38,12 +38,13 @@ Scope {
 
             color: "transparent"
             WlrLayershell.namespace: "quickshell:polkit"
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
             WlrLayershell.layer: WlrLayer.Overlay
             exclusionMode: ExclusionMode.Ignore
 
             Loader {
                 anchors.fill: parent
+                focus: true
                 sourceComponent: root.contentComponent
             }
         }

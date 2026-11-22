@@ -1,40 +1,25 @@
 pkgname=alis-toolkit
 pkgver=1.0
-pkgrel=1
+pkgrel=2
 pkgdesc='Alis - input and desktop toolkit dependency bundle'
 arch=(any)
 license=('GPL-3.0-only')
 depends=(
   upower
-  wtype
-  ydotool
-  python-evdev
-  python-pillow
   fprintd
 
-  # Backlight control (internal panels use alis-native sysfs/logind; ddcutil for external DDC/CI)
+  # External monitor DDC/CI brightness (internal panels handled natively by alis-native)
   ddcutil
   geoclue
-
-  # Idle management
-  swayidle
-  swaylock
-
-  # Screenshots & screen tools
-  grim
-  slurp
-
-  # Image processing
-  imagemagick
 
   # Bluetooth
   blueman
 
-  # KDE integration
-  kconfig  # provides kwriteconfig6
-
-  # OCR (optional but used by tools)
+  # OCR
   tesseract
   tesseract-data-eng
   tesseract-data-spa
+)
+optdepends=(
+  'swaylock: optional fallback screen locker (Alis ships a built-in Quickshell lockscreen)'
 )

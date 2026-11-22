@@ -199,30 +199,95 @@ read_colors() {
     return 1
   fi
 
-  if ! command -v jq &>/dev/null; then
-    log "jq not available"
+  local -a vals=()
+  if command -v jq &>/dev/null; then
+    mapfile -t vals < <(jq -r '[
+      (.app_accent // .primary // "#8caaee"),
+      (.app_on_accent // .on_primary // "#1e3a5f"),
+      (.app_on_selection // .on_primary_container // "#dce0e8"),
+      (.app_foreground // .on_surface // "#dce0e8"),
+      (.app_subtext // .on_surface_variant // "#a6adc8"),
+      (.app_background // .surface // "#1e1e2e"),
+      (.app_surface_elevated // .surface_variant // "#45475a"),
+      (.app_sidebar_bg // .app_surface // .surface_container_low // "#181825"),
+      (.app_surface // .surface_container // "#313244"),
+      (.app_card_bg // .app_surface_elevated // .surface_container_high // "#45475a"),
+      (.app_surface_popup // .app_thumbnail_bg // .surface_container_highest // "#494d64"),
+      (.app_selection // .primary_container // "#313244"),
+      (.secondary // "#89b4fa"),
+      (.app_selection_hover // .secondary_container // "#3d4c6b"),
+      (.tertiary // "#94e2d5"),
+      (.app_border // .outline // "#585b70"),
+      (.app_border_subtle // .outline_variant // "#45475a"),
+      (.error // "#f38ba8"),
+      (.shadow // "#000000")
+    ] | .[]' "$color_source")
+  elif command -v python3 &>/dev/null; then
+    mapfile -t vals < <(python3 - "$color_source" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as fh:
+    d = json.load(fh)
+if not isinstance(d, dict):
+    sys.exit(1)
+def pick(default, *keys):
+    for k in keys:
+        v = d.get(k)
+        if v is not None and v is not False:
+            return str(v)
+    return default
+for v in (
+    pick("#8caaee", "app_accent", "primary"),
+    pick("#1e3a5f", "app_on_accent", "on_primary"),
+    pick("#dce0e8", "app_on_selection", "on_primary_container"),
+    pick("#dce0e8", "app_foreground", "on_surface"),
+    pick("#a6adc8", "app_subtext", "on_surface_variant"),
+    pick("#1e1e2e", "app_background", "surface"),
+    pick("#45475a", "app_surface_elevated", "surface_variant"),
+    pick("#181825", "app_sidebar_bg", "app_surface", "surface_container_low"),
+    pick("#313244", "app_surface", "surface_container"),
+    pick("#45475a", "app_card_bg", "app_surface_elevated", "surface_container_high"),
+    pick("#494d64", "app_surface_popup", "app_thumbnail_bg", "surface_container_highest"),
+    pick("#313244", "app_selection", "primary_container"),
+    pick("#89b4fa", "secondary"),
+    pick("#3d4c6b", "app_selection_hover", "secondary_container"),
+    pick("#94e2d5", "tertiary"),
+    pick("#585b70", "app_border", "outline"),
+    pick("#45475a", "app_border_subtle", "outline_variant"),
+    pick("#f38ba8", "error"),
+    pick("#000000", "shadow"),
+):
+    print(v)
+PY
+    )
+  else
+    log "neither jq nor python3 available"
     return 1
   fi
 
-  COLORS[primary]=$(jq -r '.app_accent // .primary // "#8caaee"' "$color_source")
-  COLORS[on_primary]=$(jq -r '.app_on_accent // .on_primary // "#1e3a5f"' "$color_source")
-  COLORS[on_primary_container]=$(jq -r '.app_on_selection // .on_primary_container // "#dce0e8"' "$color_source")
-  COLORS[on_surface]=$(jq -r '.app_foreground // .on_surface // "#dce0e8"' "$color_source")
-  COLORS[on_surface_variant]=$(jq -r '.app_subtext // .on_surface_variant // "#a6adc8"' "$color_source")
-  COLORS[surface]=$(jq -r '.app_background // .surface // "#1e1e2e"' "$color_source")
-  COLORS[surface_variant]=$(jq -r '.app_surface_elevated // .surface_variant // "#45475a"' "$color_source")
-  COLORS[surface_container_low]=$(jq -r '.app_sidebar_bg // .app_surface // .surface_container_low // "#181825"' "$color_source")
-  COLORS[surface_container]=$(jq -r '.app_surface // .surface_container // "#313244"' "$color_source")
-  COLORS[surface_container_high]=$(jq -r '.app_card_bg // .app_surface_elevated // .surface_container_high // "#45475a"' "$color_source")
-  COLORS[surface_container_highest]=$(jq -r '.app_surface_popup // .app_thumbnail_bg // .surface_container_highest // "#494d64"' "$color_source")
-  COLORS[primary_container]=$(jq -r '.app_selection // .primary_container // "#313244"' "$color_source")
-  COLORS[secondary]=$(jq -r '.secondary // "#89b4fa"' "$color_source")
-  COLORS[secondary_container]=$(jq -r '.app_selection_hover // .secondary_container // "#3d4c6b"' "$color_source")
-  COLORS[tertiary]=$(jq -r '.tertiary // "#94e2d5"' "$color_source")
-  COLORS[outline]=$(jq -r '.app_border // .outline // "#585b70"' "$color_source")
-  COLORS[outline_variant]=$(jq -r '.app_border_subtle // .outline_variant // "#45475a"' "$color_source")
-  COLORS[error]=$(jq -r '.error // "#f38ba8"' "$color_source")
-  COLORS[shadow]=$(jq -r '.shadow // "#000000"' "$color_source")
+  if (( ${#vals[@]} < 19 )); then
+    log "failed to parse colors from $color_source"
+    return 1
+  fi
+
+  COLORS[primary]="${vals[0]}"
+  COLORS[on_primary]="${vals[1]}"
+  COLORS[on_primary_container]="${vals[2]}"
+  COLORS[on_surface]="${vals[3]}"
+  COLORS[on_surface_variant]="${vals[4]}"
+  COLORS[surface]="${vals[5]}"
+  COLORS[surface_variant]="${vals[6]}"
+  COLORS[surface_container_low]="${vals[7]}"
+  COLORS[surface_container]="${vals[8]}"
+  COLORS[surface_container_high]="${vals[9]}"
+  COLORS[surface_container_highest]="${vals[10]}"
+  COLORS[primary_container]="${vals[11]}"
+  COLORS[secondary]="${vals[12]}"
+  COLORS[secondary_container]="${vals[13]}"
+  COLORS[tertiary]="${vals[14]}"
+  COLORS[outline]="${vals[15]}"
+  COLORS[outline_variant]="${vals[16]}"
+  COLORS[error]="${vals[17]}"
+  COLORS[shadow]="${vals[18]}"
 }
 
 derive_spicetify_colors() {

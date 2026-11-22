@@ -191,7 +191,7 @@ fn write_brightness(dev: &BacklightDevice, raw: u64) -> Result<()> {
         let mut prev = fs::read_to_string(&log_path).unwrap_or_default();
         prev.push_str(&format!("{raw}\n"));
         fs::write(&log_path, prev)
-            .with_context(|| format!("failed writing ALIS_BACKLIGHT_WRITE_LOG"))?;
+            .context("failed writing ALIS_BACKLIGHT_WRITE_LOG")?;
         return Ok(());
     }
 

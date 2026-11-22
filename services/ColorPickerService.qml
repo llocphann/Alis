@@ -181,8 +181,13 @@ Singleton {
         const nextValue = pendingClipboardValue
         pendingClipboardValue = ""
         clipboardSync.command = ["/usr/bin/sh", "-c",
+            "dispatch=\"$2/scripts/native-dispatch\"; " +
+            "if [ -x \"$dispatch\" ]; then printf '%s' \"$1\" | \"$dispatch\" clipboard store >/dev/null 2>&1 || true; " +
+            "\"$dispatch\" clipboard copy --type 'text/plain;charset=utf-8' -- \"$1\" </dev/null >/dev/null 2>&1 || true; " +
+            "else " +
             "if command -v cliphist >/dev/null 2>&1; then printf '%s' \"$1\" | cliphist store >/dev/null 2>&1 || true; fi; " +
             "if command -v wl-copy >/dev/null 2>&1; then wl-copy --type 'text/plain;charset=utf-8' -- \"$1\" </dev/null >/dev/null 2>&1 || true; fi; " +
+            "fi; " +
             "sleep 0.06; " +
             "if [ -n \"$2\" ] && command -v qs >/dev/null 2>&1; then qs -p \"$2\" ipc call cliphistService update >/dev/null 2>&1 || true; fi",
             "alis-colorpicker-copy", nextValue, Quickshell.shellDir]

@@ -10,6 +10,9 @@ TextField {
     id: filterField
 
     property alias colBackground: background.color
+    readonly property string liveText: preeditText
+        ? (text.slice(0, cursorPosition) + preeditText + text.slice(cursorPosition))
+        : text
 
     Layout.fillHeight: true
     implicitWidth: 200

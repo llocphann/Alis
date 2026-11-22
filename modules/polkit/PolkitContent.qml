@@ -9,6 +9,7 @@ import qs.modules.common.widgets
 
 Item {
     id: root
+    focus: true
     readonly property bool usePasswordChars: !(PolkitService.flow?.responseVisible ?? false)
     readonly property color authSurface: Appearance.colors.colLayer2
     readonly property color authBorder: Appearance.colors.colOutlineVariant
@@ -25,13 +26,29 @@ Item {
         PolkitService.submit(inputField.text)
     }
 
+    function focusAuthTarget(): void {
+        if (PolkitService.interactionAvailable && inputField.visible)
+            inputField.forceActiveFocus()
+        else
+            root.forceActiveFocus()
+    }
+
     Connections {
         target: PolkitService
         function onInteractionAvailableChanged(): void {
-            if (!PolkitService.interactionAvailable)
+            if (!PolkitService.interactionAvailable) {
+                root.forceActiveFocus()
+                return
+            }
+            inputField.text = ""
+            Qt.callLater(root.focusAuthTarget)
+        }
+        function onFailureCountChanged(): void {
+            if (PolkitService.failureCount <= 0)
                 return
             inputField.text = ""
-            inputField.forceActiveFocus()
+            if (PolkitService.interactionAvailable)
+                Qt.callLater(root.focusAuthTarget)
         }
     }
 
@@ -54,7 +71,15 @@ Item {
         anchors.centerIn: parent
         backgroundWidth: 460
         show: false
-        Component.onCompleted: show = true
+        onDismiss: PolkitService.cancel()
+        onShowChanged: {
+            if (show)
+                Qt.callLater(root.focusAuthTarget)
+        }
+        Component.onCompleted: {
+            show = true
+            Qt.callLater(root.focusAuthTarget)
+        }
 
         RowLayout {
             Layout.fillWidth: true
@@ -131,6 +156,72 @@ Item {
             }
         }
 
+        Flow {
+            Layout.fillWidth: true
+            visible: (PolkitService.identities?.length ?? 0) > 1
+            spacing: Appearance.sizes.spacingSmall
+
+            Repeater {
+                model: PolkitService.identities ?? []
+                delegate: DialogButton {
+                    required property var modelData
+                    readonly property bool isSelected: PolkitService.selectedIdentity === modelData
+                        || (String(PolkitService.selectedIdentity?.string ?? "") !== ""
+                            && String(PolkitService.selectedIdentity?.string ?? "") === String(modelData?.string ?? ""))
+                    buttonText: String(modelData?.displayName || modelData?.string || "")
+                    colBackground: isSelected ? Appearance.colors.colPrimary : root.authSurface
+                    colBackgroundHover: isSelected ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer2Hover
+                    colText: isSelected ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
+                    onClicked: {
+                        PolkitService.selectIdentity(modelData)
+                        inputField.text = ""
+                        inputField.forceActiveFocus()
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            visible: PolkitService.supplementaryMessage.length > 0
+            implicitHeight: supplementaryText.implicitHeight + Appearance.sizes.spacingMedium * 2
+            radius: root.authRadius
+            color: PolkitService.supplementaryIsError
+                ? Appearance.colors.colErrorContainer
+                : root.authSurface
+            border.width: 1
+            border.color: PolkitService.supplementaryIsError
+                ? Appearance.colors.colError
+                : root.authBorder
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: Appearance.sizes.spacingMedium
+                spacing: Appearance.sizes.spacingSmall
+
+                MaterialSymbol {
+                    text: PolkitService.supplementaryIsError ? "error" : "info"
+                    iconSize: Appearance.font.pixelSize.normal
+                    fill: 1
+                    color: PolkitService.supplementaryIsError
+                        ? Appearance.colors.colOnErrorContainer
+                        : Appearance.colors.colSecondary
+                    Layout.alignment: Qt.AlignTop
+                }
+
+                StyledText {
+                    id: supplementaryText
+                    Layout.fillWidth: true
+                    text: PolkitService.supplementaryMessage
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    color: PolkitService.supplementaryIsError
+                        ? Appearance.colors.colOnErrorContainer
+                        : Appearance.colors.colOnLayer2
+                    wrapMode: Text.WordWrap
+                }
+            }
+        }
+
         MaterialTextField {
             id: inputField
             Layout.fillWidth: true
@@ -139,6 +230,8 @@ Item {
             placeholderText: PolkitService.cleanPrompt
             echoMode: root.usePasswordChars ? TextInput.Password : TextInput.Normal
             onAccepted: root.submit()
+            onVisibleChanged: if (visible && enabled) forceActiveFocus()
+            Component.onCompleted: inputField.forceActiveFocus()
 
             Keys.onPressed: event => {
                 if (event.key === Qt.Key_Escape) {

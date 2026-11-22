@@ -143,7 +143,7 @@ Item {
             radius: Math.max(0, parent.radius - 1)
             color: "transparent"
             border.width: 1
-            border.color: Qt.alpha(AbyssStyle.specular, root.hovered ? 0.22 : 0.12)
+            border.color: Qt.alpha(AbyssStyle.specular, root.hovered ? 0.20 : 0.10)
             visible: Appearance.effectsEnabled && AbyssStyle.quality !== "performance"
         }
     }
@@ -247,6 +247,7 @@ Item {
             vertical: false
             contentRotation: root.contentRotation
             compactRequested: false
+            abyssMicMeterEnabled: true
             showUtilitiesLauncher:
                 Config.options?.bar?.utilButtons?.showUtilitiesLauncher ?? true
             onUtilitiesRequested: root.request("utilities")

@@ -64,7 +64,7 @@ ColumnLayout {
     property bool compactActions: false
     property var allowedKinds: []
     readonly property bool ipcOnly: allowedKinds.length > 0 && allowedKinds.every(
-        kind => ["osd","volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch"].includes(kind))
+        kind => ["osd","volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch","polkit"].includes(kind))
     property string nearbyEdge: ""
     signal positionsEdited(var positions,string kind,string outputName,var values)
     property var _pendingImmediatePositions: null
@@ -128,7 +128,7 @@ ColumnLayout {
                 {label:"All OSDs / IPC indicators",value:"osd"},{label:"Volume OSD",value:"volume"},
                 {label:"Brightness OSD",value:"brightness"},{label:"Microphone OSD",value:"mic"},
                 {label:"Media OSD",value:"mediaOsd"},{label:"Keyboard OSD",value:"keyboardLayout"},
-                {label:"Voice Search OSD",value:"voiceSearch"},{label:"Settings",value:"settings"},
+                {label:"Voice Search OSD",value:"voiceSearch"},{label:"Authentication (Polkit)",value:"polkit"},{label:"Settings",value:"settings"},
                 {label:"Dashboard",value:"dashboard"},{label:"Nexus",value:"nexus"},{label:"Overview",value:"overview"},
                 {label:"Clipboard",value:"clipboard"},{label:"Controls",value:"controls"},
                 {label:"Left sidebar",value:"leftPanel"},{label:"Right sidebar",value:"rightPanel"},
@@ -178,7 +178,7 @@ ColumnLayout {
             model:[{label:"All OSDs",value:"osd"},{label:"Volume",value:"volume"},
                 {label:"Brightness",value:"brightness"},{label:"Microphone",value:"mic"},
                 {label:"Media",value:"mediaOsd"},{label:"Keyboard",value:"keyboardLayout"},
-                {label:"Voice search",value:"voiceSearch"}]
+                {label:"Voice search",value:"voiceSearch"},{label:"Polkit",value:"polkit"}]
             currentIndex:model.findIndex(option=>option.value===root.kind)
             onActivated:root.kind=currentValue
         }

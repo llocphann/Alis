@@ -1,10 +1,14 @@
 mod accel;
+mod audio;
 mod backlight;
 mod calc;
 mod clipboard;
 mod desktop;
+mod gamma;
+mod idle;
 mod niri;
 mod plugins;
+mod screencopy;
 mod telemetry;
 mod translate;
 
@@ -27,6 +31,12 @@ enum Command {
         command: accel::AccelCommand,
     },
 
+    /// Native PipeWire/PulseAudio FFT spectrum analyzer and mic level meter (replaces cava + mic-level-meter.py).
+    Audio {
+        #[command(subcommand)]
+        command: audio::AudioCommand,
+    },
+
     /// Native sysfs + systemd-logind backlight controller replacing brightnessctl.
     Backlight {
         #[command(subcommand)]
@@ -36,6 +46,12 @@ enum Command {
     /// Native scientific math and unit evaluator replacing qalc.
     Calc(calc::CalcArgs),
 
+    /// Native Wayland clipboard daemon and history store replacing cliphist + wl-clipboard.
+    Clipboard {
+        #[command(subcommand)]
+        command: clipboard::ClipboardCommand,
+    },
+
     /// Native parity implementation of scripts/clipboard-store.py.
     ClipboardFilter {
         /// Write the sanitized payload to stdout instead of calling cliphist store.
@@ -43,10 +59,19 @@ enum Command {
         filter: bool,
     },
 
-    /// Desktop configuration writers replacing Python configparser subprocesses.
+    /// Desktop configuration writers, portal file dialog, and update checks.
     Desktop {
         #[command(subcommand)]
         command: desktop::DesktopCommand,
+    },
+
+    /// Native Wayland gamma / night-light daemon replacing wlsunset.
+    Gamma(gamma::GammaArgs),
+
+    /// Native Wayland ext_idle_notifier_v1 + logind idle daemon replacing swayidle.
+    Idle {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
     },
 
     /// Native Niri configuration/query implementation staged beside niri-config.py.
@@ -61,6 +86,9 @@ enum Command {
         command: plugins::PluginsCommand,
     },
 
+    /// Native Wayland screencopy capture helper replacing grim.
+    Screencopy(screencopy::ScreencopyArgs),
+
     /// Native system telemetry reader for CPU, RAM, swap, network, GPU, disk, and temperatures.
     Telemetry(telemetry::TelemetryArgs),
 
@@ -68,18 +96,41 @@ enum Command {
     Translate(translate::TranslateArgs),
 }
 
-fn run() -> Result<i32> {
-    let args = Args::parse();
+fn expects_json_error(command: &Command) -> bool {
+    match command {
+        Command::Niri { .. } | Command::Plugins { .. } | Command::Telemetry(_) => true,
+        Command::Desktop { command } => matches!(
+            command,
+            desktop::DesktopCommand::SyncIconTheme { .. }
+                | desktop::DesktopCommand::SyncFonts { .. }
+                | desktop::DesktopCommand::SetKdeConfig { .. }
+        ),
+        _ => false,
+    }
+}
+
+fn run(args: Args) -> Result<i32> {
     match args.command {
         Command::Accel { command } => accel::run(command),
+        Command::Audio { command } => audio::run(command),
         Command::Backlight { command } => backlight::run(command),
         Command::Calc(args) => calc::run(args),
+        Command::Clipboard { command } => clipboard::run_command(command),
         Command::ClipboardFilter { filter } => clipboard::run(filter),
-        Command::Desktop { command } => {
-            let value = desktop::run(command)?;
-            println!("{}", serde_json::to_string(&value)?);
-            Ok(0)
-        }
+        Command::Desktop { command } => match desktop::run(command)? {
+            desktop::DesktopOutcome::Json(value) => {
+                println!("{}", serde_json::to_string(&value)?);
+                Ok(0)
+            }
+            desktop::DesktopOutcome::RawLines { lines, code } => {
+                for line in lines {
+                    println!("{line}");
+                }
+                Ok(code)
+            }
+        },
+        Command::Gamma(args) => gamma::run(args),
+        Command::Idle { args } => idle::run(&args),
         Command::Niri { command } => {
             let outcome = niri::run(command)?;
             println!("{}", serde_json::to_string(&outcome.value)?);
@@ -90,6 +141,7 @@ fn run() -> Result<i32> {
             println!("{}", serde_json::to_string(&value)?);
             Ok(0)
         }
+        Command::Screencopy(args) => screencopy::run(args),
         Command::Telemetry(args) => {
             let value = telemetry::run(args)?;
             println!("{}", serde_json::to_string(&value)?);
@@ -100,10 +152,15 @@ fn run() -> Result<i32> {
 }
 
 fn main() {
-    match run() {
+    let args = Args::parse();
+    let json_errors = expects_json_error(&args.command);
+    match run(args) {
         Ok(code) => std::process::exit(code),
         Err(error) => {
-            println!("{}", json!({"error": error.to_string()}));
+            eprintln!("{error:#}");
+            if json_errors {
+                println!("{}", json!({"error": error.to_string()}));
+            }
             std::process::exit(1);
         }
     }

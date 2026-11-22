@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import qs
 import qs.services
 import qs.modules.common
@@ -9,34 +11,44 @@ import Quickshell.Wayland
 
 Scope {
     id: root
-    
+    property var targetScreen: null
+
+    Connections {
+        target: PolkitService
+        function onActiveChanged(): void {
+            if (PolkitService.active)
+                root.targetScreen = GlobalStates.focusedScreen
+            else
+                root.targetScreen = null
+        }
+    }
+
     Loader {
-        // Only activate if Polkit module is available AND there's an active auth request
+        // Only activate if Polkit agent is registered AND there's an active auth request.
+        // Mount a single Exclusive keyboard window on the focused screen instead of
+        // competing Exclusive windows on every screen.
         active: PolkitService.available && PolkitService.active
-        sourceComponent: Variants {
-            model: Quickshell.screens
-            delegate: PanelWindow {
-                id: panelWindow
-                required property var modelData
-                screen: modelData
-                
-                anchors {
-                    top: true
-                    left: true
-                    right: true
-                    bottom: true
-                }
+        sourceComponent: PanelWindow {
+            id: panelWindow
+            screen: root.targetScreen ?? GlobalStates.focusedScreen
 
-                color: "transparent"
-                WlrLayershell.namespace: "quickshell:polkit"
-                WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-                WlrLayershell.layer: WlrLayer.Overlay
-                exclusionMode: ExclusionMode.Ignore
+            anchors {
+                top: true
+                left: true
+                right: true
+                bottom: true
+            }
 
-                Loader {
-                    anchors.fill: parent
-                    source: "PolkitContent.qml"
-                }
+            color: "transparent"
+            WlrLayershell.namespace: "quickshell:polkit"
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+            WlrLayershell.layer: WlrLayer.Overlay
+            exclusionMode: ExclusionMode.Ignore
+
+            Loader {
+                anchors.fill: parent
+                focus: true
+                source: "PolkitContent.qml"
             }
         }
     }

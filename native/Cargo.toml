@@ -1,7 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/alis-dbus",
     "crates/alis-protocol",
+    "crates/alis-wayland",
     "alis-inputd",
     "alis-mpdd",
     "alis-native",

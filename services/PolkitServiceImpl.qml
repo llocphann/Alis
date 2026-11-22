@@ -11,33 +11,56 @@ Scope {
     property alias agent: polkitAgent
     property alias active: polkitAgent.isActive
     property alias flow: polkitAgent.flow
-    property bool interactionAvailable: false
+    property bool authFailed: false
+    property int failureCount: 0
+    readonly property bool interactionAvailable: Boolean(root.flow?.isResponseRequired)
+
+    onFlowChanged: {
+        root.authFailed = false
+        root.failureCount = 0
+    }
 
     function cancel() {
+        root.authFailed = false
+        root.failureCount = 0
         if (!root.flow)
             return
         root.flow.cancelAuthenticationRequest()
-        root.interactionAvailable = false
     }
 
     function submit(string) {
         if (!root.flow)
             return
+        root.authFailed = false
         root.flow.submit(string)
-        root.interactionAvailable = false
+    }
+
+    function selectIdentity(identity) {
+        if (!root.flow || !identity)
+            return
+        root.authFailed = false
+        root.failureCount = 0
+        root.flow.selectedIdentity = identity
     }
 
     Connections {
         target: root.flow
-        function onAuthenticationFailed() {
-            root.interactionAvailable = true;
+        ignoreUnknownSignals: true
+        function onAuthenticationFailed(): void {
+            root.authFailed = true
+            root.failureCount += 1
+        }
+        function onAuthenticationSucceeded(): void {
+            root.authFailed = false
+            root.failureCount = 0
         }
     }
 
     PolkitAgent {
         id: polkitAgent
         onAuthenticationRequestStarted: {
-            root.interactionAvailable = true;
+            root.authFailed = false
+            root.failureCount = 0
         }
     }
 }

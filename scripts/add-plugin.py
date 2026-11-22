@@ -168,11 +168,35 @@ def fetch_favicon(url: str) -> bytes | None:
 def _save_icon(data: bytes, dest_path: str) -> bool:
     """Save icon bytes as PNG to *dest_path*.
 
-    Tries PIL first (handles ICO → PNG conversion).
-    Falls back to writing raw bytes (works for SVG, PNG already, etc.).
-    Returns True on success.
+    Prefers Alis's native Rust image converter (handles ICO/WebP/JPEG -> PNG
+    without Python PIL), then falls back to PIL or raw bytes.
     """
-    # Try PIL
+    import subprocess
+    import tempfile
+
+    native_dispatch = os.path.join(os.path.dirname(os.path.abspath(__file__)), "native-dispatch")
+    if os.path.isfile(native_dispatch) and os.access(native_dispatch, os.X_OK):
+        try:
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(data)
+                tmp_path = tmp.name
+            try:
+                res = subprocess.run(
+                    [native_dispatch, "image", "convert", tmp_path, dest_path],
+                    capture_output=True,
+                    timeout=10,
+                )
+                if res.returncode == 0 and os.path.isfile(dest_path) and os.path.getsize(dest_path) > 0:
+                    return True
+            finally:
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
+        except Exception:
+            pass
+
+    # Try PIL fallback if available
     try:
         from PIL import Image
         import io

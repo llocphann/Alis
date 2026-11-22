@@ -220,10 +220,11 @@ pub fn parse_image_dimensions_from_bytes(buf: &[u8]) -> Result<(u32, u32)> {
     }
 
     // JPEG: FF D8 ... SOF0..SOF15
-    if buf[0] == 0xff && buf[1] == 0xd8 {
-        if let Some(dims) = parse_jpeg_sof_slice(buf) {
-            return Ok(dims);
-        }
+    if buf[0] == 0xff
+        && buf[1] == 0xd8
+        && let Some(dims) = parse_jpeg_sof_slice(buf)
+    {
+        return Ok(dims);
     }
 
     bail!("unrecognized_image_header")
@@ -282,10 +283,12 @@ fn parse_jpeg_sof_slice(buf: &[u8]) -> Option<(u32, u32)> {
 fn read_jpeg_dimensions_streaming(path: &Path) -> Result<(u32, u32)> {
     // Fallback for JPEGs with >64 KB EXIF/ICC APP segments before SOF.
     let bytes = fs::read(path)?;
-    if bytes.len() >= 4 && bytes[0] == 0xff && bytes[1] == 0xd8 {
-        if let Some(dims) = parse_jpeg_sof_slice(&bytes) {
-            return Ok(dims);
-        }
+    if bytes.len() >= 4
+        && bytes[0] == 0xff
+        && bytes[1] == 0xd8
+        && let Some(dims) = parse_jpeg_sof_slice(&bytes)
+    {
+        return Ok(dims);
     }
     bail!("jpeg_sof_not_found")
 }
@@ -403,10 +406,12 @@ fn hint_binaries_for_entry(desktop_entry: &str) -> HashSet<String> {
             }
         }
     }
-    if let Some(base) = entry.rsplit('.').next() {
-        if !base.is_empty() && base != "desktop" && base != "client" {
-            hints.insert(base.to_string());
-        }
+    if let Some(base) = entry.rsplit('.').next()
+        && !base.is_empty()
+        && base != "desktop"
+        && base != "client"
+    {
+        hints.insert(base.to_string());
     }
     if entry.contains("chrom") || entry.contains("brave") {
         for b in ["chromium", "chrome", "google-chrome", "google-chrome-stable", "brave", "electron"] {
@@ -553,15 +558,14 @@ pub fn parse_cava_audio_source_from_pactl(
             cur_binary.clear();
             continue;
         }
-        if cur_client_id.is_some() {
-            if let Some((k, v)) = trimmed.split_once(" = \"") {
-                if let Some(val) = v.strip_suffix('"') {
-                    match k.trim() {
-                        "application.name" => cur_app_name = val.to_string(),
-                        "application.process.binary" => cur_binary = val.to_string(),
-                        _ => {}
-                    }
-                }
+        if cur_client_id.is_some()
+            && let Some((k, v)) = trimmed.split_once(" = \"")
+            && let Some(val) = v.strip_suffix('"')
+        {
+            match k.trim() {
+                "application.name" => cur_app_name = val.to_string(),
+                "application.process.binary" => cur_binary = val.to_string(),
+                _ => {}
             }
         }
     }
@@ -632,12 +636,12 @@ pub fn parse_cava_audio_source_from_pactl(
 
     for line in sink_inputs_out.lines() {
         let trimmed = line.trim();
-        if let Some(rest) = trimmed.strip_prefix("Sink Input #") {
-            if let Ok(idx) = rest.trim().parse::<i64>() {
-                flush(&mut cur_idx, &mut block, &clients, &mut streams);
-                cur_idx = Some(idx);
-                continue;
-            }
+        if let Some(rest) = trimmed.strip_prefix("Sink Input #")
+            && let Ok(idx) = rest.trim().parse::<i64>()
+        {
+            flush(&mut cur_idx, &mut block, &clients, &mut streams);
+            cur_idx = Some(idx);
+            continue;
         }
         if cur_idx.is_none() {
             continue;
@@ -657,10 +661,10 @@ pub fn parse_cava_audio_source_from_pactl(
                 continue;
             }
         }
-        if let Some((k, v)) = trimmed.split_once(" = \"") {
-            if let Some(val) = v.strip_suffix('"') {
-                block.insert(k.trim().to_string(), val.to_string());
-            }
+        if let Some((k, v)) = trimmed.split_once(" = \"")
+            && let Some(val) = v.strip_suffix('"')
+        {
+            block.insert(k.trim().to_string(), val.to_string());
         }
     }
     flush(&mut cur_idx, &mut block, &clients, &mut streams);
@@ -784,15 +788,15 @@ pub fn render_cava_config(
 }
 
 pub fn write_file_if_changed_atomic(path: &Path, content: &[u8]) -> Result<bool> {
-    if let Ok(existing) = fs::read(path) {
-        if existing == content {
-            return Ok(false);
-        }
+    if let Ok(existing) = fs::read(path)
+        && existing == content
+    {
+        return Ok(false);
     }
-    if let Some(parent) = path.parent() {
-        if !parent.as_os_str().is_empty() {
-            fs::create_dir_all(parent)?;
-        }
+    if let Some(parent) = path.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        fs::create_dir_all(parent)?;
     }
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)

@@ -1,6 +1,6 @@
 pkgname=alis-fonts
 pkgver=1.0
-pkgrel=1
+pkgrel=2
 pkgdesc='Alis - fonts and theming dependency bundle'
 arch=(any)
 license=('GPL-3.0-only')
@@ -11,28 +11,14 @@ depends=(
   ttf-liberation
   ttf-roboto
   ttf-roboto-mono
-  
-  # Launcher
-  fuzzel
   glib2
-  
+
   # Qt theming
   kvantum
   plasma-integration
 )
 
-
-# AUR dependencies (installed separately)
-# darkly-bin (Qt style for Material You colors)
-# matugen (now in official repos)
-# otf-space-grotesk
-# ttf-gabarito-git (default title font)
-# ttf-jetbrains-mono-nerd
-# ttf-material-symbols-variable-git
-# ttf-oxanium (ZZZ and Angel styles)
-# ttf-readex-pro
-# ttf-roboto-flex (CRITICAL - default UI font)
-# ttf-rubik-vf
-# ttf-twemoji
-# adw-gtk-theme-git
-# capitaine-cursors
+# Open-licensed UI & icon fonts (Material Symbols Rounded, Roboto Flex,
+# Gabarito, Rubik, Readex Pro, Oxanium, Twemoji) are bundled directly inside
+# Alis's assets/fonts/ directory so fragile AUR -git font packages are no
+# longer required.

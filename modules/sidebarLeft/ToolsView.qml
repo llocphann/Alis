@@ -375,17 +375,17 @@ Item {
                 ActionButton {
                     btnIcon: "system_update"
                     label: Translation.tr("Check for updates")
-                    onClicked: ShellExec.execDetachedArgs([Config.options?.apps?.terminal ?? "/usr/bin/kitty", "-e", "fish", "-c", "yay -Syu; read -P 'Press Enter to close...'"], "Check for updates")
+                    onClicked: ShellExec.execDetachedArgs([Config.options?.apps?.terminal ?? "/usr/bin/kitty", "-e", "bash", "-c", "yay -Syu; read -rp 'Press Enter to close...'"], "Check for updates")
                 }
                 ActionButton {
                     btnIcon: "cleaning_services"
                     label: Translation.tr("Clean package cache")
-                    onClicked: ShellExec.execDetachedArgs([Config.options?.apps?.terminal ?? "/usr/bin/kitty", "-e", "fish", "-c", "sudo paccache -rk1; read -P 'Press Enter to close...'"], "Clean package cache")
+                    onClicked: ShellExec.execDetachedArgs([Config.options?.apps?.terminal ?? "/usr/bin/kitty", "-e", "bash", "-c", "sudo paccache -rk1; read -rp 'Press Enter to close...'"], "Clean package cache")
                 }
                 ActionButton {
                     btnIcon: "info"
                     label: Translation.tr("System info")
-                    onClicked: ShellExec.execDetachedArgs([Config.options?.apps?.terminal ?? "/usr/bin/kitty", "-e", "fish", "-c", "fastfetch; read -P 'Press Enter to close...'"], "Show system info")
+                    onClicked: ShellExec.execDetachedArgs([Config.options?.apps?.terminal ?? "/usr/bin/kitty", "-e", "bash", "-c", "fastfetch; read -rp 'Press Enter to close...'"], "Show system info")
                 }
             }
 

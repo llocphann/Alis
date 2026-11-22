@@ -436,7 +436,7 @@
             "folder": ""
         },
         "backend": {
-            "provider": "awww",
+            "provider": "internal",
             "awww": {
                 "transitionFps": 60,
                 "simpleStep": 5,
@@ -2120,6 +2120,8 @@
             "voiceTtsEnabled": false,
             "ambientMascotEnabled": true,
             "ambientVisualPeek": false,
+            "a2uiEnabled": true,
+            "a2uiGenerativeEnabled": false,
             "temperature": 0.7,
             "hasTemperatureOverride": false,
             "ragUseNexus": true,

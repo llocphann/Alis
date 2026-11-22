@@ -337,7 +337,7 @@ pub fn run_preview_cache(raw_path: &Path, options_json: &str) -> Result<()> {
             }
         }
     }
-    entries.sort_by(|a, b| b.0.cmp(&a.0));
+    entries.sort_by_key(|b| std::cmp::Reverse(b.0));
     for (_, stale_path) in entries.into_iter().skip(32) {
         let _ = fs::remove_file(stale_path);
     }

@@ -42,7 +42,22 @@ Singleton {
         !(link?.source?.isStream ?? true)
             && !(link?.source?.isSink ?? true)
             && (link?.target?.isStream ?? false)
+            && !root.isInternalMicMonitorNode(link?.target)
     )
+
+    function isInternalMicMonitorNode(node): bool {
+        if (!node)
+            return false
+        const props = node.properties ?? ({})
+        const rawName = String(node.name ?? "").toLowerCase()
+        const nodeName = String(props["node.name"] ?? node.name ?? "").toLowerCase()
+        const appName = String(props["application.name"] ?? "").toLowerCase()
+        const mediaName = String(props["media.name"] ?? "").toLowerCase()
+        return rawName === "alis-mic-meter"
+            || nodeName === "alis-mic-meter"
+            || appName === "alis-mic-meter"
+            || mediaName === "alis mic meter"
+    }
 
     property bool _micMuted: false
     property bool micStateKnown: false
@@ -144,6 +159,7 @@ Singleton {
         const excludedApps = [
             "cava", "pavucontrol", "pwvucontrol", "helvum", "qpwgraph", "carla",
             "easyeffects", "jamesdsp", "sonusmix", "quickshell", "qs",
+            "alis-mic-meter",
             "discord", "vesktop", "webrtc", "teams", "zoom", "slack",
             "telegram-desktop", "element", "speech-dispatcher", "sd_dummy"
         ]
@@ -235,16 +251,29 @@ Singleton {
         root.setMicMuted(!root._micMuted)
     }
 
+    function _isVirtualSource(dev): bool {
+        if (!dev)
+            return true
+        const props = dev.properties ?? {}
+        const nodeName = String(props["node.name"] ?? dev.name ?? "")
+        const appId = String(props["application.id"] ?? "")
+        const isVirtual = String(props["node.virtual"] ?? "false") === "true"
+        return nodeName === "easyeffects_source"
+            || appId === "com.github.wwmm.easyeffects"
+            || isVirtual
+    }
+
     function _hardwareSourceId(): int {
+        if (root.source && !root._isVirtualSource(root.source)) {
+            const defaultId = Number(root.source.id ?? 0)
+            if (Number.isFinite(defaultId) && defaultId > 0)
+                return defaultId
+        }
         for (const dev of root.inputDevices) {
-            const props = dev.properties ?? {}
-            const nodeName = String(props["node.name"] ?? dev.name ?? "")
-            const appId = String(props["application.id"] ?? "")
-            const isVirtual = String(props["node.virtual"] ?? "false") === "true"
-            if (nodeName === "easyeffects_source" || appId === "com.github.wwmm.easyeffects" || isVirtual)
+            if (root._isVirtualSource(dev))
                 continue
             const id = Number(dev.id ?? 0)
-            if (id > 0) return id
+            if (Number.isFinite(id) && id > 0) return id
         }
         return 0
     }

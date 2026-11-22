@@ -244,6 +244,8 @@ Item {
     property real depth: 320
     property real padding: AbyssStyle.contentPadding
     property var edgeInsets: ({left:8,top:8,right:8,bottom:8})
+    readonly property var _edgeInsetsMemo: ({})
+    readonly property var _stableEdgeInsets: PlacementMemo.stable(_edgeInsetsMemo, edgeInsets)
     property var obstacles: []
     property string source: ""
     property string contentKind: ""
@@ -264,11 +266,11 @@ Item {
     property real availabilityProgress: presented && (ready || (showLoadingSurface && GlobalStates.deferredPanelsReady)) ? 1 : 0
     property real progress: (externalProgress >= 0
         ? Math.max(0,Math.min(1,externalProgress)) : 1) * availabilityProgress
-    readonly property var requestedRecord: Geometry.panel(width,height,edgeInsets,edge,requestedAlong,span,depth,1,padding,[],largeSurface)
+    readonly property var requestedRecord: Geometry.panel(width,height,_stableEdgeInsets,edge,requestedAlong,span,depth,1,padding,[],largeSurface)
     // Resting geometry is still produced by AbyssGeometry from allocator output.
     // Pyramid motion only snapshots/interpolates this already-resolved record.
     readonly property var pyramidRestingRecord: Geometry.placedPanel(
-        width,height,edgeInsets,edge,requestedAlong,span,depth,1,padding,
+        width,height,_stableEdgeInsets,edge,requestedAlong,span,depth,1,padding,
         visualPlacement ? null
             : (!controller || root.visualResident || root.semanticOpen
                 ? obstacles : null),
@@ -286,7 +288,7 @@ Item {
             ? root.placement : null
     readonly property var pyramidAllocatorRecord:
         root.pyramidAllocatorPlacement
-            ? Geometry.placedPanel(width,height,edgeInsets,edge,requestedAlong,span,
+            ? Geometry.placedPanel(width,height,_stableEdgeInsets,edge,requestedAlong,span,
                 depth,1,padding,null,largeSurface,
                 root.pyramidAllocatorPlacement)
             : null
@@ -303,7 +305,7 @@ Item {
                     ?? PyramidMotion.collapsedRecord(
                         root.pyramidFullRecord,null),
                 root.pyramidFullRecord,root.progress)
-            : Geometry.placedPanel(width,height,edgeInsets,edge,requestedAlong,span,
+            : Geometry.placedPanel(width,height,_stableEdgeInsets,edge,requestedAlong,span,
                 depth,progress,padding,
                 visualPlacement ? null
                     : (!controller || root.visualResident ? obstacles : null),
@@ -313,11 +315,11 @@ Item {
         : (root.visualPlacement?.vacancyBorrowed === true
             ? String(root.visualPlacement?.vacancyDirection ?? "") : "")
     readonly property var record: Geometry.joinCorner(
-        rawPresentationRecord,joinedEdge || effectiveJoinedEdge,width,height,edgeInsets)
+        rawPresentationRecord,joinedEdge || effectiveJoinedEdge,width,height,_stableEdgeInsets)
     // A requested join can be rejected when the popup is too far away.
     // Input follows only the weld actually present in the painted record.
     readonly property string appliedJoinedEdge: record.joinedEdge ?? ""
-    readonly property var targetRecord: Geometry.placedPanel(width,height,edgeInsets,edge,requestedAlong,span,depth,1,padding,
+    readonly property var targetRecord: Geometry.placedPanel(width,height,_stableEdgeInsets,edge,requestedAlong,span,depth,1,padding,
         layoutPlacement ? null
             : (!controller || root.visualResident || root.semanticOpen
                 ? obstacles : null),
@@ -349,7 +351,7 @@ Item {
     readonly property Item hoverParent: root.includeEdgeConnection ? inputFrame : contentCanvas
     // Placement clearance includes module depth; the painted field's actual
     // seam stays at the physical Edge. Keep the bridge between both interactive.
-    readonly property var connectionInsets: root.controller?.edgeInsets ?? root.edgeInsets
+    readonly property var connectionInsets: root.controller?.edgeInsets ?? root._stableEdgeInsets
     readonly property rect inputBounds: {
         if (!root.acceptsInput || !(root.ready || root.loadingPresentationActive)) return Qt.rect(0,0,0,0)
         const c=(root.largeSurface && !root.includeEdgeConnection && root.semanticOpen)
@@ -447,7 +449,10 @@ Item {
         geometry: root.visualResident || root.semanticOpen
             || root.pyramidClosing || root.pyramidReopening
             ? root.record : null
-        restingRecord: root.pyramidRestingRecord
+        restingRecord: (root.visualResident || root.semanticOpen
+            || root.pyramidClosing || root.pyramidReopening
+            || root.identity === "dock")
+            ? root.pyramidRestingRecord : null
         visualPlacement: root.visualPlacement
         surfaceSettled: root.presented && root.ready && Math.abs(root.progress-1) < .001
             && !root.pyramidClosing && !root.pyramidReopening

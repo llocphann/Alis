@@ -30,6 +30,13 @@ if command -v gsettings >/dev/null 2>&1; then
     gsettings set org.gnome.desktop.interface monospace-font-name "$mono_font $font_size" || status=1
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NATIVE_DISPATCH="$SCRIPT_DIR/../native-dispatch"
+
+if [[ -x "$NATIVE_DISPATCH" ]] && "$NATIVE_DISPATCH" desktop-fonts "$main_font" "$mono_font" "$font_size" >/dev/null 2>&1; then
+    exit "$status"
+fi
+
 python3 - "$config_home" "$main_font" "$font_size" <<'PY' || status=1
 import os
 import re

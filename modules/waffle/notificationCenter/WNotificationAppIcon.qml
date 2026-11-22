@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import org.kde.kirigami as Kirigami
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -16,7 +15,7 @@ Item {
     implicitWidth: implicitSize
     implicitHeight: implicitSize
 
-    Kirigami.Icon {
+    ThemedIcon {
         anchors.fill: parent
         implicitWidth: root.implicitSize
         implicitHeight: root.implicitSize

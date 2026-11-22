@@ -122,15 +122,13 @@ fn discover_hwmon_paths() -> (Option<PathBuf>, Option<PathBuf>) {
             continue;
         }
         match name.as_str() {
-            "k10temp" | "coretemp" | "zenpower" | "cpu_thermal" | "acpitz" => {
-                if cpu_temp.is_none() || name == "k10temp" || name == "coretemp" {
-                    cpu_temp = Some(temp1);
-                }
+            "k10temp" | "coretemp" | "zenpower" | "cpu_thermal" | "acpitz"
+                if cpu_temp.is_none() || name == "k10temp" || name == "coretemp" =>
+            {
+                cpu_temp = Some(temp1);
             }
-            "amdgpu" | "nouveau" | "i915" | "xe" => {
-                if gpu_temp.is_none() {
-                    gpu_temp = Some(temp1);
-                }
+            "amdgpu" | "nouveau" | "i915" | "xe" if gpu_temp.is_none() => {
+                gpu_temp = Some(temp1);
             }
             _ => {}
         }

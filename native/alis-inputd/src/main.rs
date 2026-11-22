@@ -1,3 +1,5 @@
+mod vkeyboard;
+
 use std::collections::{HashMap, HashSet};
 use std::ffi::CString;
 use std::fs;
@@ -600,6 +602,68 @@ fn run_stream(mode: StreamMode) -> i32 {
 }
 
 fn main() {
+    let raw: Vec<String> = std::env::args().collect();
+    if let Some(first) = raw.get(1).map(String::as_str) {
+        match first {
+            "--type" | "type" => {
+                let text = raw[2..].join(" ");
+                match vkeyboard::type_text(&text, 0) {
+                    Ok(()) => std::process::exit(0),
+                    Err(err) => {
+                        eprintln!("alis-inputd type failed: {err:#}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            "--key" | "key" => {
+                let mut delay_ms: u64 = 0;
+                let mut tokens = Vec::new();
+                let mut i = 2;
+                while i < raw.len() {
+                    if (raw[i] == "-d" || raw[i] == "--key-delay") && i + 1 < raw.len() {
+                        delay_ms = raw[i + 1].parse().unwrap_or(0);
+                        i += 2;
+                        continue;
+                    }
+                    tokens.push(raw[i].clone());
+                    i += 1;
+                }
+                match vkeyboard::send_key_sequence(&tokens, delay_ms) {
+                    Ok(()) => std::process::exit(0),
+                    Err(err) => {
+                        eprintln!("alis-inputd key failed: {err:#}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            "--paste" | "paste" => {
+                let seq = vec![
+                    "29:1".to_string(),
+                    "47:1".to_string(),
+                    "47:0".to_string(),
+                    "29:0".to_string(),
+                ];
+                match vkeyboard::send_key_sequence(&seq, 1) {
+                    Ok(()) => std::process::exit(0),
+                    Err(err) => {
+                        eprintln!("alis-inputd paste failed: {err:#}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            "--vkeyboard-session" | "vkeyboard-session" => {
+                match vkeyboard::run_session() {
+                    Ok(()) => std::process::exit(0),
+                    Err(err) => {
+                        eprintln!("alis-inputd vkeyboard-session failed: {err:#}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
     let args = Args::parse();
     let code = if args.once {
         run_once()

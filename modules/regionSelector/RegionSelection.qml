@@ -381,11 +381,11 @@ PanelWindow {
     Process {
         id: screenshotProc
         running: false
-        command: ["/usr/bin/bash", "-c", `/usr/bin/mkdir -p '${StringUtils.shellSingleQuoteEscape(root.screenshotDir)}' && /usr/bin/grim -o '${StringUtils.shellSingleQuoteEscape(root.screen.name)}' '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`]
+        command: ["/usr/bin/bash", "-c", `/usr/bin/mkdir -p '${StringUtils.shellSingleQuoteEscape(root.screenshotDir)}' && '${StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/native-dispatch"))}' screencopy -o '${StringUtils.shellSingleQuoteEscape(root.screen.name)}' '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`]
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
                 root.screenshotReady = false
-                Quickshell.execDetached(["/usr/bin/notify-send", "Region search failed", "grim failed to capture the screen" , "-a", "Region Selector", "-t", "4000"])
+                Quickshell.execDetached(["/usr/bin/notify-send", "Region search failed", "Screen capture failed" , "-a", "Region Selector", "-t", "4000"])
             } else {
                 root.screenshotReady = true
             }
@@ -468,8 +468,9 @@ PanelWindow {
             root.exportAnnotatedCapture(rx, ry, rw, rh);
             return;
         }
-        const cropBase = `magick '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' `
-            + `-crop ${rw}x${rh}+${rx}+${ry}`
+        const nativeDispatch = StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/native-dispatch"))
+        const cropGeom = `${rw}x${rh}+${rx}+${ry}`
+        const cropBase = `'${nativeDispatch}' image crop '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' '${cropGeom}'`
         const cropToStdout = `${cropBase} -`
         const cropInPlace = `${cropBase} '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
         const cleanup = `/usr/bin/rm '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
@@ -483,10 +484,11 @@ PanelWindow {
             // Try primary, then fallback1, then fallback2 if all fail or return empty/non-URL response
             return `url=$(${primary} 2>/dev/null); if [[ -z "$url" || "$url" != http* ]]; then url=$(${fallback1}); fi; if [[ -z "$url" || "$url" != http* ]]; then url=$(${fallback2}); fi; echo "$url"`
         }
-        const annotationCommand = `${(Config.options?.regionSelector?.annotation?.useSatty ?? false) ? "satty" : "swappy"} -f -`;
+        const annotationBin = (Config.options?.regionSelector?.annotation?.useSatty ?? false) ? "satty" : "swappy";
+        const annotationCommand = `${annotationBin} -f -`;
         switch (root.action) {
             case RegionSelection.SnipAction.Copy:
-                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropToStdout} | tee "$_ss" | /usr/bin/wl-copy && echo -n "$_ss" | /usr/bin/wl-copy --primary && ${cleanup} && /usr/bin/sleep 0.08 && /usr/bin/notify-send "Screenshot copied" "${rw}x${rh} saved to $_ss" -a "Screenshot" -i camera-photo -t 3000`]
+                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropToStdout} | tee "$_ss" | '${nativeDispatch}' clipboard copy --type image/png && echo -n "$_ss" | '${nativeDispatch}' clipboard copy --primary && ${cleanup} && /usr/bin/sleep 0.08 && /usr/bin/notify-send "Screenshot copied" "${rw}x${rh} saved to $_ss" -a "Screenshot" -i camera-photo -t 3000`]
                 break;
             case RegionSelection.SnipAction.Edit:
                 if (Config.options?.regionSelector?.annotation?.useNativeEditor ?? true) {
@@ -495,13 +497,13 @@ PanelWindow {
                     editCropProc.running = true;
                     return; // editCropProc.onExited opens the native editor and dismisses
                 }
-                snipProc.command = ["/usr/bin/bash", "-c", `${cropToStdout} | ${annotationCommand} && ${cleanup}`]
+                snipProc.command = ["/usr/bin/bash", "-c", `if command -v ${annotationBin} >/dev/null 2>&1; then ${cropToStdout} | ${annotationCommand} && ${cleanup}; else _edit='${StringUtils.shellSingleQuoteEscape(`${root.screenshotDir}/edit-${root.screen.name}.png`)}'; ${cropBase} "$_edit" && ${cleanup} && qs -p '${StringUtils.shellSingleQuoteEscape(Quickshell.shellDir)}' ipc call annotationEditor open "$_edit" >/dev/null 2>&1 || true; fi`]
                 break;
             case RegionSelection.SnipAction.Search:
                 snipProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && uploaded_url="$(${uploadAndGetUrl(root.screenshotPath)})"; if [[ -n "$uploaded_url" && "$uploaded_url" == http* ]]; then /usr/bin/xdg-open "${root.effectiveImageSearchEngineBaseUrl}$uploaded_url"; else /usr/bin/notify-send "Image search failed" "Could not upload the image for reverse search" -a "Image Search" -i image; fi; ${cleanup}`]
                 break;
             case RegionSelection.SnipAction.CharRecognition:
-                snipProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && /usr/bin/tesseract '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' stdout -l $(/usr/bin/tesseract --list-langs | /usr/bin/awk 'NR>1{print $1}' | /usr/bin/tr '\\n' '+' | /usr/bin/sed 's/\\+$/\\n/') | tee >(/usr/bin/wl-copy --primary) | /usr/bin/wl-copy && ${cleanup} && /usr/bin/notify-send "Text recognized" "OCR text copied to clipboard" -a "OCR" -i edit-find -t 3000`]
+                snipProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && /usr/bin/tesseract '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' stdout -l $(/usr/bin/tesseract --list-langs | /usr/bin/awk 'NR>1{print $1}' | /usr/bin/tr '\\n' '+' | /usr/bin/sed 's/\\+$/\\n/') | tee >('${nativeDispatch}' clipboard copy --primary) | '${nativeDispatch}' clipboard copy && ${cleanup} && /usr/bin/notify-send "Text recognized" "OCR text copied to clipboard" -a "OCR" -i edit-find -t 3000`]
                 break;
             case RegionSelection.SnipAction.Record:
                 snipProc.command = ["/usr/bin/bash", Directories.recordScriptPath, "--region", slurpRegion]
@@ -554,14 +556,15 @@ PanelWindow {
             }
             const escapedComposite = StringUtils.shellSingleQuoteEscape(compositedPath);
             const escapedOrig = StringUtils.shellSingleQuoteEscape(root.screenshotPath);
-            const cropBase = `magick '${escapedComposite}' -crop ${cropW}x${cropH}+${cropX}+${cropY}`;
+            const nativeDispatch = StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/native-dispatch"));
+            const cropBase = `'${nativeDispatch}' image crop '${escapedComposite}' '${cropW}x${cropH}+${cropX}+${cropY}'`;
             const cleanup = `/usr/bin/rm -f '${escapedOrig}' '${escapedComposite}'`;
             const screenshotSaveDir = StringUtils.shellSingleQuoteEscape(Directories.screenshotsPath);
 
             if (root.action === RegionSelection.SnipAction.CharRecognition) {
-                snipProc.command = ["/usr/bin/bash", "-c", `${cropBase} '${escapedComposite}' && /usr/bin/tesseract '${escapedComposite}' stdout -l $(/usr/bin/tesseract --list-langs | /usr/bin/awk 'NR>1{print $1}' | /usr/bin/tr '\\n' '+' | /usr/bin/sed 's/\\+$/\\n/') | tee >(/usr/bin/wl-copy --primary) | /usr/bin/wl-copy && ${cleanup} && /usr/bin/notify-send "Text recognized" "OCR text copied to clipboard" -a "OCR" -i edit-find -t 3000`];
+                snipProc.command = ["/usr/bin/bash", "-c", `${cropBase} '${escapedComposite}' && /usr/bin/tesseract '${escapedComposite}' stdout -l $(/usr/bin/tesseract --list-langs | /usr/bin/awk 'NR>1{print $1}' | /usr/bin/tr '\\n' '+' | /usr/bin/sed 's/\\+$/\\n/') | tee >('${nativeDispatch}' clipboard copy --primary) | '${nativeDispatch}' clipboard copy && ${cleanup} && /usr/bin/notify-send "Text recognized" "OCR text copied to clipboard" -a "OCR" -i edit-find -t 3000`];
             } else {
-                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropBase} - | tee "$_ss" | /usr/bin/wl-copy && echo -n "$_ss" | /usr/bin/wl-copy --primary && ${cleanup} && /usr/bin/sleep 0.08 && /usr/bin/notify-send "Screenshot copied" "${cropW}x${cropH} annotated capture saved to $_ss" -a "Screenshot" -i camera-photo -t 3000`];
+                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropBase} - | tee "$_ss" | '${nativeDispatch}' clipboard copy --type image/png && echo -n "$_ss" | '${nativeDispatch}' clipboard copy --primary && ${cleanup} && /usr/bin/sleep 0.08 && /usr/bin/notify-send "Screenshot copied" "${cropW}x${cropH} annotated capture saved to $_ss" -a "Screenshot" -i camera-photo -t 3000`];
             }
             snipProc.startDetached();
             root.dismiss();
@@ -931,12 +934,27 @@ PanelWindow {
                 Math.round(regionSelectionControls.x + regionSelectionControls.width * 0.52 - width / 2)))
             y: regionSelectionControls.y - height - 6
 
+            readonly property bool pointerInsidePopover: stylePopoverBackdropMouse.containsMouse || stylePopoverHoverHandler.hovered
+            onPointerInsidePopoverChanged: {
+                root.colorStripHovered = pointerInsidePopover;
+                if (!pointerInsidePopover && !root.toolbarHovered && !root.colorStripOpen)
+                    toolbarHideGraceTimer.restart();
+                else if (pointerInsidePopover)
+                    toolbarHideGraceTimer.stop();
+            }
+
+            MouseArea {
+                id: stylePopoverBackdropMouse
+                anchors.fill: parent
+                z: -1
+                enabled: colorStylePopover.visible
+                hoverEnabled: true
+                cursorShape: Qt.ArrowCursor
+                acceptedButtons: Qt.AllButtons
+            }
+
             HoverHandler {
-                onHoveredChanged: {
-                    root.colorStripHovered = hovered;
-                    if (!hovered)
-                        toolbarHideGraceTimer.restart();
-                }
+                id: stylePopoverHoverHandler
             }
 
             RowLayout {
@@ -1026,14 +1044,27 @@ PanelWindow {
             property real fallbackTopMargin: root.toolbarRevealed ? 16 : -(implicitHeight + 16)
             property real fallbackBottomMargin: root.toolbarRevealed ? root.screenEdgeThickness : -(implicitHeight + 16)
 
+            readonly property bool pointerInsideControls: controlsBackdropMouse.containsMouse || controlsHoverHandler.hovered
+            onPointerInsideControlsChanged: {
+                root.toolbarHovered = pointerInsideControls;
+                if (!pointerInsideControls && !root.colorStripHovered && !root.colorStripOpen)
+                    toolbarHideGraceTimer.restart();
+                else if (pointerInsideControls)
+                    toolbarHideGraceTimer.stop();
+            }
+
+            MouseArea {
+                id: controlsBackdropMouse
+                anchors.fill: parent
+                z: -1
+                enabled: root.toolbarRevealed
+                hoverEnabled: true
+                cursorShape: Qt.ArrowCursor
+                acceptedButtons: Qt.AllButtons
+            }
+
             HoverHandler {
-                onHoveredChanged: {
-                    root.toolbarHovered = hovered;
-                    if (!hovered)
-                        toolbarHideGraceTimer.restart();
-                    else
-                        toolbarHideGraceTimer.stop();
-                }
+                id: controlsHoverHandler
             }
 
             Behavior on fallbackOpacity {
@@ -1064,6 +1095,7 @@ PanelWindow {
                     OptionsToolbar {
                         enableShadow: false
                         transparent: true
+                        tooltipPosition: regionSelectionControls.useWaffle ? "bottom" : "top"
                         action: root.action
                         selectionMode: root.selectionMode
                         annotationTool: root.annotationTool
@@ -1111,7 +1143,8 @@ PanelWindow {
                         }
                         StyledToolTip {
                             text: Translation.tr("Close (Esc)")
-                            visible: closeFab.buttonHovered
+                            position: regionSelectionControls.useWaffle ? "bottom" : "top"
+                            enabled: true
                         }
                     }
                 }

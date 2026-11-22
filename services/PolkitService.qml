@@ -45,16 +45,30 @@ Singleton {
     readonly property string actionLabel: batteryChargeLimitRequest
         ? Translation.tr("Charge limit")
         : Translation.tr("Authentication")
-    
-    // Whether the Polkit module is available
-    readonly property bool available: impl !== null
-    
+    readonly property bool authFailed: Boolean(impl?.authFailed || impl?.flow?.failed)
+    readonly property int failureCount: Number(impl?.failureCount ?? 0)
+    readonly property string rawSupplementaryMessage: String(flow?.supplementaryMessage ?? "").trim()
+    readonly property string supplementaryMessage: rawSupplementaryMessage.length > 0
+        ? rawSupplementaryMessage
+        : (authFailed ? Translation.tr("Incorrect password. Please try again.") : "")
+    readonly property bool supplementaryIsError: Boolean(flow?.supplementaryIsError ?? false)
+        || (rawSupplementaryMessage.length === 0 && authFailed)
+    readonly property var identities: flow?.identities ?? []
+    readonly property var selectedIdentity: flow?.selectedIdentity ?? null
+
+    // Whether the Polkit module is loaded and the agent is actually registered with polkitd
+    readonly property bool available: impl !== null && Boolean(impl.agent?.isRegistered)
+
     function cancel(): void {
         if (impl) impl.cancel()
     }
-    
+
     function submit(text: string): void {
         if (impl) impl.submit(text)
+    }
+
+    function selectIdentity(identity): void {
+        if (impl) impl.selectIdentity(identity)
     }
     
     // Private: actual implementation loaded dynamically
@@ -103,8 +117,10 @@ Singleton {
         command: [
             "/usr/bin/pidof",
             "polkit-gnome-authentication-agent-1",
+            "polkit-mate-authentication-agent-1",
             "lxqt-policykit-agent",
             "polkit-kde-authentication-agent-1",
+            "lxpolkit",
             "mate-polkit"
         ]
 

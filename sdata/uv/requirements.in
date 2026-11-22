@@ -1,24 +1,9 @@
-# Python dependencies for Alis
-# Edit this file, then run: uv pip compile requirements.in -o requirements.txt
-
-# Thumbnail generation (GnomeDesktop 4.0)
-pygobject
-pycairo
-
-# Color extraction and theming
-pillow
-material-color-utilities
-materialyoucolor
-numpy
-opencv-contrib-python
-
-# System monitoring
-psutil
-
-# CLI tools
-click
-loguru
-tqdm
-
-# KDE/Qt theming (for wallpaper-based colors)
-kde-material-you-colors
+# Optional Python dependencies for Alis
+#
+# Core runtime (Material You color extraction, thumbnail generation, region
+# detection, cover color extraction, Gowall effects, and image operations) is
+# handled natively by Alis's compiled Rust binaries (alis-theme & alis-native)
+# and requires NO Python virtual environment or `uv`.
+#
+# AI wallpaper cutout effects (`wallfx`) manage their own isolated opt-in venv
+# when explicitly enabled by the user.

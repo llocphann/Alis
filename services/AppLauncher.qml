@@ -339,12 +339,12 @@ Singleton {
             label: Translation.tr("Network manager (TUI)"),
             description: Translation.tr("Used by Wi-Fi details shortcuts when a text-mode network tool is preferred."),
             defaultCommand: "nm-connection-editor",
-            placeholder: "kitty -1 fish -c nmtui",
+            placeholder: "kitty -1 nmtui",
             supportsXdgSync: false,
             xdgTargetLabel: "",
             presets: [
                 { id: "nm-editor", label: "NetworkManager GUI", command: "nm-connection-editor", desktopId: "nm-connection-editor.desktop" },
-                { id: "nmtui-kitty", label: "nmtui in Kitty", command: "kitty -1 fish -c nmtui", desktopId: "" },
+                { id: "nmtui-kitty", label: "nmtui in Kitty", command: "kitty -1 nmtui", desktopId: "" },
                 { id: "nmtui-foot", label: "nmtui in Foot", command: "foot -e nmtui", desktopId: "" },
                 { id: "kcm-network", label: "KDE Network", command: "kcmshell6 kcm_networkmanagement", desktopId: "" }
             ]
@@ -1283,7 +1283,7 @@ Singleton {
             "nm-connection-editor",
             "kcmshell6 kcm_networkmanagement",
             "gnome-control-center network",
-            "kitty -1 fish -c nmtui",
+            "kitty -1 nmtui",
             "foot -e nmtui"
         ]
         const chain = [command].concat(fallbacks.filter(c => c.split(" ")[0] !== command.split(" ")[0]))

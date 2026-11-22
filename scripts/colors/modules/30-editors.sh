@@ -125,34 +125,78 @@ apply_code_editors() {
   local f_windsurf="true" f_windsurfNext="true" f_qoder="true" f_antigravity="true" f_positron="true"
   local f_voidEditor="true" f_melty="true" f_pearai="true" f_aide="true"
 
-  if [[ -f "$CONFIG_FILE" ]] && command -v jq >/dev/null 2>&1; then
-    local jq_out
-    jq_out=$(jq -r '
-      (.appearance.wallpaperTheming // {}) as $wt |
-      ($wt.vscodeEditors // {}) as $ve |
-      def b($obj; $k; $def): if ($obj | type) == "object" and ($obj | has($k)) then ($obj[$k] | tostring) else $def end;
-      [
-        b($wt; "enableVSCode"; "true"),
-        b($wt; "enableNeovim"; "false"),
-        b($wt; "enableOpenCode"; "false"),
-        b($wt; "enableCodex"; "true"),
-        b($wt; "enableClaude"; "true"),
-        b($ve; "code"; "true"),
-        b($ve; "codium"; "true"),
-        b($ve; "codeOss"; "true"),
-        b($ve; "codeInsiders"; "true"),
-        b($ve; "cursor"; "true"),
-        b($ve; "windsurf"; "true"),
-        b($ve; "windsurfNext"; "true"),
-        b($ve; "qoder"; "true"),
-        b($ve; "antigravity"; "true"),
-        b($ve; "positron"; "true"),
-        b($ve; "voidEditor"; "true"),
-        b($ve; "melty"; "true"),
-        b($ve; "pearai"; "true"),
-        b($ve; "aide"; "true")
-      ] | @tsv
-    ' "$CONFIG_FILE" 2>/dev/null || true)
+  if [[ -f "$CONFIG_FILE" ]] && alis_json_available; then
+    local jq_out=""
+    if command -v jq >/dev/null 2>&1; then
+      jq_out=$(jq -r '
+        (.appearance.wallpaperTheming // {}) as $wt |
+        ($wt.vscodeEditors // {}) as $ve |
+        def b($obj; $k; $def): if ($obj | type) == "object" and ($obj | has($k)) then ($obj[$k] | tostring) else $def end;
+        [
+          b($wt; "enableVSCode"; "true"),
+          b($wt; "enableNeovim"; "false"),
+          b($wt; "enableOpenCode"; "false"),
+          b($wt; "enableCodex"; "true"),
+          b($wt; "enableClaude"; "true"),
+          b($ve; "code"; "true"),
+          b($ve; "codium"; "true"),
+          b($ve; "codeOss"; "true"),
+          b($ve; "codeInsiders"; "true"),
+          b($ve; "cursor"; "true"),
+          b($ve; "windsurf"; "true"),
+          b($ve; "windsurfNext"; "true"),
+          b($ve; "qoder"; "true"),
+          b($ve; "antigravity"; "true"),
+          b($ve; "positron"; "true"),
+          b($ve; "voidEditor"; "true"),
+          b($ve; "melty"; "true"),
+          b($ve; "pearai"; "true"),
+          b($ve; "aide"; "true")
+        ] | @tsv
+      ' "$CONFIG_FILE" 2>/dev/null || true)
+    else
+      jq_out=$(python3 - "$CONFIG_FILE" <<'PY' 2>/dev/null || true
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as fh:
+    d = json.load(fh)
+wt = (d.get("appearance") or {}).get("wallpaperTheming") if isinstance(d, dict) else {}
+if not isinstance(wt, dict):
+    wt = {}
+ve = wt.get("vscodeEditors") if isinstance(wt.get("vscodeEditors"), dict) else {}
+def b(obj, k, default):
+    if isinstance(obj, dict) and k in obj:
+        v = obj[k]
+        if v is None:
+            return "null"
+        if isinstance(v, bool):
+            return "true" if v else "false"
+        return str(v)
+    return default
+row = [
+    b(wt, "enableVSCode", "true"),
+    b(wt, "enableNeovim", "false"),
+    b(wt, "enableOpenCode", "false"),
+    b(wt, "enableCodex", "true"),
+    b(wt, "enableClaude", "true"),
+    b(ve, "code", "true"),
+    b(ve, "codium", "true"),
+    b(ve, "codeOss", "true"),
+    b(ve, "codeInsiders", "true"),
+    b(ve, "cursor", "true"),
+    b(ve, "windsurf", "true"),
+    b(ve, "windsurfNext", "true"),
+    b(ve, "qoder", "true"),
+    b(ve, "antigravity", "true"),
+    b(ve, "positron", "true"),
+    b(ve, "voidEditor", "true"),
+    b(ve, "melty", "true"),
+    b(ve, "pearai", "true"),
+    b(ve, "aide", "true"),
+]
+print("\t".join(row))
+PY
+      )
+    fi
     if [[ -n "$jq_out" ]]; then
       IFS=$'\t' read -r \
         enable_vscode enable_neovim enable_opencode enable_codex enable_claude \

@@ -247,8 +247,7 @@ def main() -> None:
         "x: root.screenshotLeftOwnerInset",
         "y: root.screenshotTopOwnerInset",
         "clip: true",
-        "layer.effect: GE.OpacityMask {",
-        "PerimeterTokens.frameRadius",
+        "layer.enabled: false",
         "paintOverlap: Math.min(",
         "PerimeterTokens.seamOverlap",
     ):
@@ -804,12 +803,18 @@ def main() -> None:
             "ConnectedSurfaceAbyssEdgeSurface {",
             'edge: "bottom"',
             "ownerThickness: root._screenEdgeThickness",
-            "bottomLeftRadius: 0",
-            "bottomRightRadius: 0",
             'color: "transparent"',
         ):
             check(token in settings_surface,
                   f"{settings_path} Abyss bottom-attachment contract missing: {token}")
+        if settings_path.endswith("SettingsOverlay.qml"):
+            check('bottomLeftRadius: Config.options?.panelFamily === "waffle" ? radius : 0' in settings_surface
+                  and 'bottomRightRadius: Config.options?.panelFamily === "waffle" ? radius : 0' in settings_surface,
+                  f"{settings_path} must keep square bottom attachment in Abyss and rounded floating corners in Waffle")
+        else:
+            check("bottomLeftRadius: 0" in settings_surface
+                  and "bottomRightRadius: 0" in settings_surface,
+                  f"{settings_path} Abyss bottom-attachment corner contract missing")
         check("ConnectedSurfaceJoinFlares" not in settings_surface,
               f"{settings_path} must not restore legacy endpoint wedge geometry")
 
@@ -817,8 +822,9 @@ def main() -> None:
     settings_focus = read("modules/settings/SettingsFocus.qml")
     check("1600" in settings_overlay
           and "settingsPanel.width * 0.90" in settings_overlay
-          and "settingsPanel.height * 0.92" in settings_overlay,
-          "Rail Settings overlay must use the enlarged bottom-connected footprint")
+          and "settingsCard._panelAvailHeight * 0.92" in settings_overlay
+          and "Config.options?.dashboard?.widthRatio ?? 0.72" in settings_overlay,
+          "Rail Settings overlay must retain the Waffle enlarged and Abyss Dashboard-aligned footprints")
     check("1560" in settings_focus
           and "settingsPanel.width * 0.88" in settings_focus
           and "settingsPanel.height * 0.92" in settings_focus,
@@ -885,10 +891,11 @@ def main() -> None:
           and "DashboardHeader {" in dashboard_content
           and "WidgetColumn" not in dashboard_content,
           "Dashboard must use the freeform canvas instead of fixed columns")
-    check('color: root.embeddedSurface ? "transparent" : Appearance.colors.colLayer0' in dashboard_content
-          and 'radius: root.embeddedSurface ? 0 : Appearance.rounding.large' in dashboard_content
-          and "border.width: 0" in dashboard_content,
-          "Dashboard outer surface must reuse the canonical Material popup/sidebar background")
+    check('color: root.embeddedSurface ? "transparent"' in dashboard_content
+          and ': root.waffleMenu ? Waffle.Looks.colors.bgPanelFooterBase : Appearance.colors.colLayer0' in dashboard_content
+          and 'radius: root.embeddedSurface ? 0 : root.waffleMenu ? Waffle.Looks.radius.large : Appearance.rounding.large' in dashboard_content
+          and "border.width: root.waffleMenu ? 1 : 0" in dashboard_content,
+          "Dashboard outer surface must reuse the canonical Material popup/sidebar background (and Waffle Start-Menu plate)")
     check('Config.options?.panelFamily === "abyss" ? AbyssStyle.contentLayer : Appearance.colors.colLayer1' in dashboard_card
           and "Appearance.colors.colSurfaceContainerHigh" not in dashboard_card,
           "Dashboard cards must use the adjustable Abyss content layer and retain Sidebar layer-1 for Waffle")
@@ -928,9 +935,9 @@ def main() -> None:
           and "visible: root.editMode" in dashboard_canvas,
           "Dashboard modules must only be movable/resizable in explicit Edit mode")
     check("Flickable {" not in dashboard_content
-          and "Flickable {" not in dashboard_canvas
+          and "interactive: root.menuPresentation && !root.editMode && contentHeight > height" in dashboard_canvas
           and '=== "abyss"' in dashboard_canvas,
-          "Dashboard stays bounded without a scrolling or expanded workspace")
+          "Dashboard stays bounded in Abyss while allowing bounded vertical scroll only in Waffle Start-Menu presentation")
     dashboard_toolbar = read("modules/dashboard/DashboardEditToolbar.qml")
     check("id: editToolbar" not in dashboard_canvas
           and "DashboardEditToolbar {" in dashboard
@@ -1300,8 +1307,8 @@ def main() -> None:
               f"Dock settings must not expose legacy style option {legacy_style}")
     check('panelFamily !== "waffle"' in dock_config,
           "Waffle must remain a separate panel family rather than a Dock style")
-    check("Dock uses the Panel surface style." in dock_config,
-          "Dock settings must describe Panel as the canonical surface style")
+    check("dock.style" not in dock_config_lower,
+          "Dock settings must not expose retired dock.style selectors")
     for retired_dock_component in (
         "DockPillItem.qml",
         "DockMacItem.qml",

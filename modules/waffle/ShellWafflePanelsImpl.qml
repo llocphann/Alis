@@ -6,7 +6,6 @@ import qs.modules.onScreenKeyboard
 import qs.modules.recordingOsd
 import qs.modules.tilingOverlay
 import qs.modules.overview
-import qs.modules.polkit
 import qs.modules.regionSelector
 import qs.modules.screenCorners
 import qs.modules.sessionScreen
@@ -21,6 +20,7 @@ import qs.modules.waffle.bar as WaffleBarModule
 import qs.modules.waffle.clipboard as WaffleClipboardModule
 import qs.modules.waffle.notificationCenter
 import qs.modules.waffle.onScreenDisplay as WaffleOSDModule
+import qs.modules.waffle.polkit as WafflePolkitModule
 import qs.modules.waffle.startMenu
 import qs.modules.waffle.widgets
 import qs.modules.waffle.backdrop as WaffleBackdropModule
@@ -70,14 +70,29 @@ Item {
         activeAsync: Config.ready && GlobalStates.deferredPanelsReady && enabledPanel
     }
 
+    readonly property bool keepPanelsWarm: Boolean(Config.options?.performance?.keepPanelsWarm ?? false)
+    onKeepPanelsWarmChanged: {
+        if (!keepPanelsWarm && waffleDashboardLoader.dashboardMounted && !waffleDashboardLoader.wantOpen)
+            waffleDashboardIdleEvictTimer.restart()
+        else if (keepPanelsWarm)
+            waffleDashboardIdleEvictTimer.stop()
+        if (!keepPanelsWarm && waffleClipboardLoader.clipboardMounted && !waffleClipboardLoader.wantOpen)
+            waffleClipboardCloseTimer.restart()
+        else if (keepPanelsWarm)
+            waffleClipboardCloseTimer.stop()
+    }
+
     component OnDemandPanelLoader: LazyLoader {
         id: onDemandLoader
         required property string identifier
         required property bool open
         property int closeGraceMs: 250
+        property int reopenCooldownMs: 0
         property bool resident: open
         property Timer closeGrace: Timer {
-            interval: onDemandLoader.closeGraceMs
+            interval: root.keepPanelsWarm
+                ? Math.max(onDemandLoader.closeGraceMs, 60000)
+                : Math.max(onDemandLoader.closeGraceMs, onDemandLoader.reopenCooldownMs)
             onTriggered: onDemandLoader.resident = onDemandLoader.open
         }
         readonly property bool enabledPanel: Config.ready
@@ -110,24 +125,34 @@ Item {
     PanelLoader { identifier: "wOnScreenDisplay"; component: WaffleOSDModule.WaffleOSD {} }
 
     // === Deferred panels ===
-    OnDemandPanelLoader { identifier: "wStartMenu"; open: GlobalStates.searchOpen; closeGraceMs: root.wafflePanelCloseGraceMs; component: WaffleStartMenu {} }
-    OnDemandPanelLoader { identifier: "wActionCenter"; open: GlobalStates.waffleActionCenterOpen; closeGraceMs: Looks.transition.enabled ? Looks.transition.duration.medium + 40 : 40; component: WaffleActionCenter {} }
+    OnDemandPanelLoader { identifier: "wStartMenu"; open: GlobalStates.searchOpen; closeGraceMs: root.wafflePanelCloseGraceMs; reopenCooldownMs: 1200; component: WaffleStartMenu {} }
+    OnDemandPanelLoader { identifier: "wActionCenter"; open: GlobalStates.waffleActionCenterOpen; closeGraceMs: Looks.transition.enabled ? Looks.transition.duration.medium + 40 : 40; reopenCooldownMs: 900; component: WaffleActionCenter {} }
     OnDemandPanelLoader { identifier: "wNotificationCenter"; open: GlobalStates.waffleNotificationCenterOpen; closeGraceMs: root.wafflePanelCloseGraceMs; component: WaffleNotificationCenter {} }
     OnDemandPanelLoader { identifier: "wWidgets"; open: GlobalStates.waffleWidgetsOpen && (Config.options?.waffles?.modules?.widgets ?? true); closeGraceMs: root.wafflePanelCloseGraceMs; component: WaffleWidgets {} }
-    DeferredPanelLoader { identifier: "wPolkit"; component: Polkit {} }
+    DeferredPanelLoader { identifier: "wPolkit"; component: WafflePolkitModule.WafflePolkit {} }
     OnDemandPanelLoader { identifier: "wSessionScreen"; open: GlobalStates.sessionOpen; component: SessionScreen {} }
     OnDemandPanelLoader { identifier: "wTaskView"; open: GlobalStates.waffleTaskViewOpen; component: WaffleTaskViewModule.WaffleTaskView {} }
 
     // Shared modules that work with waffle
     DeferredPanelLoader { identifier: "iiBootGreeting"; component: BootGreeting {} }
     OnDemandPanelLoader { identifier: "iiCheatsheet"; open: GlobalStates.cheatsheetOpen; component: Cheatsheet {} }
+    Timer {
+        id: waffleDashboardIdleEvictTimer
+        interval: 60000
+        repeat: false
+        onTriggered: {
+            if (!waffleDashboardLoader.wantOpen && !root.keepPanelsWarm)
+                waffleDashboardLoader.dashboardMounted = false
+        }
+    }
     LazyLoader {
         id: waffleDashboardLoader
         objectName: "waffleDashboardLoader"
-        property bool dashboardMounted: false
+        property bool dashboardMounted: GlobalStates.dashboardOpen
         readonly property bool wantOpen: GlobalStates.dashboardOpen
         onWantOpenChanged: {
             if (wantOpen) {
+                waffleDashboardIdleEvictTimer.stop()
                 dashboardMounted = true
                 if (!(Config.options?.waffles?.behavior?.allowMultiplePanels ?? false)) {
                     GlobalStates.searchOpen = false
@@ -137,6 +162,8 @@ Item {
                     GlobalStates.waffleClipboardOpen = false
                     GlobalStates.waffleTaskViewOpen = false
                 }
+            } else if (dashboardMounted && !root.keepPanelsWarm) {
+                waffleDashboardIdleEvictTimer.restart()
             }
         }
         loading: Config.ready && Config.options?.panelFamily === "waffle" && (wantOpen || dashboardMounted)
@@ -169,11 +196,33 @@ Item {
         component: TilingOverlay {}
     }
 
+    Timer {
+        id: waffleClipboardCloseTimer
+        interval: root.keepPanelsWarm ? 60000 : root.wafflePanelCloseGraceMs
+        repeat: false
+        onTriggered: {
+            if (!waffleClipboardLoader.wantOpen && !root.keepPanelsWarm)
+                waffleClipboardLoader.clipboardMounted = false
+        }
+    }
     LazyLoader {
         id: waffleClipboardLoader
+        property bool clipboardMounted: GlobalStates.waffleClipboardOpen
+        readonly property bool wantOpen: GlobalStates.waffleClipboardOpen
+        onWantOpenChanged: {
+            if (wantOpen) {
+                waffleClipboardCloseTimer.stop()
+                clipboardMounted = true
+            } else if (clipboardMounted && !root.keepPanelsWarm) {
+                waffleClipboardCloseTimer.restart()
+            }
+        }
         loading: Config.ready && GlobalStates.shellEntryReady
             && Config.options?.panelFamily === "waffle"
-        activeAsync: Config.ready && GlobalStates.deferredPanelsReady && Config.options?.panelFamily === "waffle"
+            && (wantOpen || clipboardMounted)
+        activeAsync: Config.ready && GlobalStates.deferredPanelsReady
+            && Config.options?.panelFamily === "waffle"
+            && (wantOpen || clipboardMounted)
         component: WaffleClipboardModule.WaffleClipboard {}
     }
 

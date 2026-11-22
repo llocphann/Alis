@@ -51,6 +51,7 @@ Singleton {
 
     readonly property string configPath: FileUtils.trimFileProtocol(Directories.cache) + "/cava_config.txt"
     readonly property string scriptPath: FileUtils.trimFileProtocol(Directories.scriptPath) + "/cava/generate_config.sh"
+    readonly property string nativeDispatchPath: FileUtils.trimFileProtocol(Directories.scriptPath) + "/native-dispatch"
     readonly property string runnerPath: FileUtils.trimFileProtocol(Directories.scriptPath) + "/cava/run.sh"
 
     // Mirror CavaProcess's previous config schema reading
@@ -398,7 +399,9 @@ Singleton {
     Process {
         id: cavaProc
         running: false
-        command: ["/usr/bin/bash", root.runnerPath, "-p", root.configPath]
+        command: ["/usr/bin/bash", "-c",
+            "if [ -x \"$1\" ]; then exec \"$1\" audio-spectrum -p \"$3\"; else exec /usr/bin/bash \"$2\" -p \"$3\"; fi",
+            "alis-cava", root.nativeDispatchPath, root.runnerPath, root.configPath]
         onRunningChanged: {
             if (running) {
                 dataWatchdog.restart()

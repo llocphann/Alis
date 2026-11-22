@@ -76,6 +76,189 @@ Item { // Wrapper
 
     // All actions are now centralized in GlobalActions service.
     property var searchActions: GlobalActions.searchActions
+    property var _appLaunchCounts: ({})
+    readonly property string _frecencyPath: `${Directories.stateUserPath}/launcher_frecency.json`
+
+    FileView {
+        id: frecencyFile
+        path: root._frecencyPath
+        watchChanges: false
+        printErrors: false
+        atomicWrites: true
+        onLoaded: {
+            try {
+                const parsed = JSON.parse(String(text() ?? "{}"));
+                if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                    const merged = {};
+                    const keys = Object.keys(parsed);
+                    for (let i = 0; i < keys.length && i < 500; ++i) {
+                        const k = String(keys[i]).trim().toLowerCase();
+                        const v = Number(parsed[keys[i]]);
+                        if (k.length > 0 && isFinite(v) && v > 0)
+                            merged[k] = Math.min(100000, Math.floor(v));
+                    }
+                    const existingKeys = Object.keys(root._appLaunchCounts ?? {});
+                    for (let i = 0; i < existingKeys.length; ++i) {
+                        const k = existingKeys[i];
+                        const cur = Number(root._appLaunchCounts[k] ?? 0);
+                        if (isFinite(cur) && cur > 0)
+                            merged[k] = Math.min(100000, Math.floor(Number(merged[k] ?? 0) + cur));
+                    }
+                    root._appLaunchCounts = merged;
+                }
+            } catch (_e) {}
+        }
+    }
+
+    function _flushFrecency(): void {
+        if (!frecencySaveTimer.running)
+            return;
+        frecencySaveTimer.stop();
+        try {
+            frecencyFile.setText(JSON.stringify(root._appLaunchCounts, null, 2) + "\n");
+        } catch (_e) {}
+    }
+
+    Timer {
+        id: frecencySaveTimer
+        interval: 600
+        repeat: false
+        onTriggered: {
+            try {
+                frecencyFile.setText(JSON.stringify(root._appLaunchCounts, null, 2) + "\n");
+            } catch (_e) {}
+        }
+    }
+
+    onVisibleChanged: {
+        if (!visible)
+            root._flushFrecency();
+    }
+
+    Component.onDestruction: root._flushFrecency()
+
+    function _recordAppLaunch(appKey): void {
+        const k = String(appKey ?? "").trim().toLowerCase();
+        if (!k) return;
+        const next = Object.assign({}, root._appLaunchCounts);
+        next[k] = Number(next[k] ?? 0) + 1;
+        root._appLaunchCounts = next;
+        frecencySaveTimer.restart();
+    }
+
+    function evaluateMath(rawExpr): string {
+        return root._evalInstantMath(rawExpr);
+    }
+
+    // Safe zero-subprocess recursive-descent arithmetic evaluator (no eval/Function).
+    // Returns formatted string for pure math expressions, or "" to fall back to native calc (units/etc).
+    function _evalInstantMath(rawExpr): string {
+        const s = String(rawExpr ?? "").trim();
+        if (!s || s.length > 96) return "";
+        if (!/^[0-9+\-*/%^().,\sA-Za-z]+$/.test(s)) return "";
+        if (!/[+\-*/%^()]/.test(s) && !/^(sqrt|abs|sin|cos|tan|log|ln|floor|ceil|round)\s*\(/i.test(s))
+            return "";
+        let pos = 0;
+        const n = s.length;
+        function skipWs() { while (pos < n && /\s/.test(s[pos])) pos++; }
+        function parseExpr() {
+            let v = parseTerm();
+            if (!isFinite(v)) return NaN;
+            while (true) {
+                skipWs();
+                if (pos < n && (s[pos] === "+" || s[pos] === "-")) {
+                    const op = s[pos++];
+                    const rhs = parseTerm();
+                    if (!isFinite(rhs)) return NaN;
+                    v = op === "+" ? (v + rhs) : (v - rhs);
+                } else break;
+            }
+            return v;
+        }
+        function parseTerm() {
+            let v = parseUnary();
+            if (!isFinite(v)) return NaN;
+            while (true) {
+                skipWs();
+                if (pos < n && (s[pos] === "*" || s[pos] === "/" || s[pos] === "%")) {
+                    const op = s[pos++];
+                    const rhs = parseUnary();
+                    if (!isFinite(rhs)) return NaN;
+                    if (op === "*") v *= rhs;
+                    else if (op === "/") v = rhs === 0 ? NaN : (v / rhs);
+                    else v = rhs === 0 ? NaN : (v % rhs);
+                } else break;
+            }
+            return v;
+        }
+        function parseUnary() {
+            skipWs();
+            if (pos < n && s[pos] === "+") { pos++; return parseUnary(); }
+            if (pos < n && s[pos] === "-") { pos++; return -parseUnary(); }
+            return parsePower();
+        }
+        function parsePower() {
+            const base = parsePrimary();
+            if (!isFinite(base)) return NaN;
+            skipWs();
+            if (pos < n && s[pos] === "^") {
+                pos++;
+                const exp = parseUnary();
+                if (!isFinite(exp)) return NaN;
+                return Math.pow(base, exp);
+            }
+            return base;
+        }
+        function parsePrimary() {
+            skipWs();
+            if (pos >= n) return NaN;
+            if (s[pos] === "(") {
+                pos++;
+                const v = parseExpr();
+                skipWs();
+                if (pos >= n || s[pos] !== ")") return NaN;
+                pos++;
+                return v;
+            }
+            const numMatch = s.slice(pos).match(/^(?:\d+(?:\.\d*)?|\.\d+)/);
+            if (numMatch) {
+                pos += numMatch[0].length;
+                return parseFloat(numMatch[0]);
+            }
+            const idMatch = s.slice(pos).match(/^[A-Za-z]+/);
+            if (idMatch) {
+                const name = idMatch[0].toLowerCase();
+                pos += idMatch[0].length;
+                if (name === "pi") return Math.PI;
+                if (name === "e") return Math.E;
+                skipWs();
+                if (pos >= n || s[pos] !== "(") return NaN;
+                pos++;
+                const arg = parseExpr();
+                skipWs();
+                if (pos >= n || s[pos] !== ")") return NaN;
+                pos++;
+                if (!isFinite(arg)) return NaN;
+                if (name === "sqrt") return Math.sqrt(arg);
+                if (name === "abs") return Math.abs(arg);
+                if (name === "sin") return Math.sin(arg);
+                if (name === "cos") return Math.cos(arg);
+                if (name === "tan") return Math.tan(arg);
+                if (name === "log") return Math.log10 ? Math.log10(arg) : (Math.log(arg) / Math.LN10);
+                if (name === "ln") return Math.log(arg);
+                if (name === "floor") return Math.floor(arg);
+                if (name === "ceil") return Math.ceil(arg);
+                if (name === "round") return Math.round(arg);
+                return NaN;
+            }
+            return NaN;
+        }
+        const val = parseExpr();
+        skipWs();
+        if (pos !== n || !isFinite(val)) return "";
+        const rounded = Math.abs(val - Math.round(val)) < 1e-12 ? Math.round(val) : Number(val.toPrecision(12));
+        return String(rounded);
+    }
 
     function focusAppResultCurrentOrFirst() {
         if (!appResults.visible || appResults.count <= 0)
@@ -216,6 +399,7 @@ Item { // Wrapper
         };
 
         const appQuery = StringUtils.cleanPrefix(text, root.prefixApp)
+        const appQueryLow = appQuery.trim().toLowerCase()
         const appEntries = AppSearch.fuzzyQuery(appQuery)
         const seenAppNames = new Set()
         const appResultObjects = []
@@ -226,6 +410,9 @@ Item { // Wrapper
             if (seenAppNames.has(nameKey)) continue
             seenAppNames.add(nameKey)
 
+            const matchTier = appQueryLow.length === 0
+                ? 0
+                : (nameKey === appQueryLow ? 3 : (nameKey.startsWith(appQueryLow) ? 2 : (nameKey.includes(appQueryLow) ? 1 : 0)))
             appResultObjects.push({
                 key: `app_${entry.name}`,
                 desktopEntryId: String(entry.id ?? "").trim().replace(/\.desktop$/i, ""),
@@ -234,8 +421,77 @@ Item { // Wrapper
                 type: Translation.tr("App"),
                 comment: entry.comment ?? "",
                 icon: entry.icon,
-                execute: entry.execute,
+                _matchTier: matchTier,
+                _origIdx: i,
+                _frecency: Number(root._appLaunchCounts[nameKey] ?? 0),
+                execute: () => {
+                    root._recordAppLaunch(nameKey);
+                    if (typeof entry.execute === "function") entry.execute();
+                },
             })
+        }
+        if (appResultObjects.length > 1) {
+            // Boost frequently launched apps within the same match tier without letting a weak
+            // comment match jump ahead of an exact or prefix app name match.
+            appResultObjects.sort((a, b) => {
+                if (a._matchTier !== b._matchTier)
+                    return b._matchTier - a._matchTier;
+                if (a._frecency !== b._frecency)
+                    return b._frecency - a._frecency;
+                return a._origIdx - b._origIdx;
+            });
+        }
+
+        // Open Window Switcher (Niri live windows)
+        const windowResultObjects = [];
+        const qWin = text.trim().toLowerCase();
+        if (qWin.length >= 2 && CompositorService.isNiri && Array.isArray(NiriService.windows)) {
+            for (let i = 0; i < NiriService.windows.length && windowResultObjects.length < 3; ++i) {
+                const w = NiriService.windows[i];
+                const title = String(w?.title ?? "").trim();
+                const appId = String(w?.app_id ?? "").trim();
+                if (!title && !appId) continue;
+                if (title.toLowerCase().includes(qWin) || appId.toLowerCase().includes(qWin)) {
+                    const winId = w.id;
+                    windowResultObjects.push({
+                        key: `win_${winId}`,
+                        name: title || appId,
+                        clickActionName: Translation.tr("Focus"),
+                        type: Translation.tr("Open window"),
+                        comment: appId,
+                        materialSymbol: "select_window",
+                        execute: () => { NiriService.focusWindow(winId); }
+                    });
+                }
+            }
+        }
+
+        // Settings Deep-Links (when SettingsSearchRegistry is populated)
+        const settingsResultObjects = [];
+        if (qWin.length >= 2 && typeof SettingsSearchRegistry !== "undefined" && typeof SettingsSearchRegistry.buildResults === "function") {
+            const hits = SettingsSearchRegistry.buildResults(qWin) ?? [];
+            for (let i = 0; i < hits.length && settingsResultObjects.length < 3; ++i) {
+                const h = hits[i];
+                if (!h || !h.label) continue;
+                const pgIdx = Number(h.pageIndex ?? -1);
+                const optId = h.optionId;
+                settingsResultObjects.push({
+                    key: `setting_${pgIdx}_${optId ?? h.label}`,
+                    name: String(h.label),
+                    clickActionName: Translation.tr("Open"),
+                    type: Translation.tr("Setting"),
+                    comment: String(h.section || h.pageName || ""),
+                    materialSymbol: "tune",
+                    execute: () => {
+                        if (pgIdx >= 0 && typeof GlobalStates.openSettingsPage === "function")
+                            GlobalStates.openSettingsPage(pgIdx);
+                        else
+                            GlobalStates.settingsOverlayOpen = true;
+                        if (optId !== undefined && optId !== null && typeof SettingsSearchRegistry.focusOption === "function")
+                            Qt.callLater(() => SettingsSearchRegistry.focusOption(optId));
+                    }
+                });
+            }
         }
 
         const commandResultObject = {
@@ -271,11 +527,11 @@ Item { // Wrapper
             materialSymbol: 'travel_explore',
             execute: () => {
                 let query = StringUtils.cleanPrefix(text, root.prefixWebSearch);
-                let url = (Config.options?.search?.engineBaseUrl ?? "https://www.google.com/search?q=") + query;
                 for (let site of (Config.options?.search?.excludedSites ?? ["quora.com", "facebook.com"])) {
-                    url += ` -site:${site}`;
+                    query += ` -site:${site}`;
                 }
-                Qt.openUrlExternally(url);
+                const base = Config.options?.search?.engineBaseUrl ?? "https://www.google.com/search?q=";
+                Qt.openUrlExternally(base + encodeURIComponent(query));
             }
         };
         
@@ -308,12 +564,32 @@ Item { // Wrapper
             result.push(webSearchResultObject);
         }
 
+        result = result.concat(windowResultObjects);
         result = result.concat(appResultObjects);
+        result = result.concat(settingsResultObjects);
         result = result.concat(launcherActionObjects);
 
         if (root.searchPrefixes.showDefaultActionsWithoutPrefix ?? true) {
             if (!startsWithShellCommandPrefix) result.push(commandResultObject);
             if (!startsWithNumber && !startsWithMathPrefix) result.push(mathResultObject);
+            if (AlisIntergration.nexusEnabled && text.trim().length > 0) {
+                const noteTitle = text.trim();
+                result.push({
+                    key: `NexusNote:${noteTitle}`,
+                    name: noteTitle,
+                    clickActionName: Translation.tr("Create"),
+                    type: Translation.tr("New Nexus Note"),
+                    materialSymbol: "note_add",
+                    execute: () => {
+                        const folder = String(Config.options?.notes?.zettelkasten?.folder ?? "00_Capture").trim() || "00_Capture";
+                        if (AlisIntergration.nexus) {
+                            AlisIntergration.nexus.open();
+                            if (typeof AlisIntergration.nexus.createNoteInFolder === "function")
+                                AlisIntergration.nexus.createNoteInFolder(folder, noteTitle);
+                        }
+                    }
+                });
+            }
             if (!startsWithWebSearchPrefix) result.push(webSearchResultObject);
         }
 
@@ -370,6 +646,14 @@ Item { // Wrapper
                 root.mathResult = ""
                 root.updateSearchResults()
                 return
+            }
+            const instant = root._evalInstantMath(expr);
+            if (instant.length > 0) {
+                if (mathProcess.running)
+                    mathProcess.running = false;
+                root.mathResult = instant;
+                root.updateSearchResults();
+                return;
             }
             mathProcess.calculateExpression(expr);
         }

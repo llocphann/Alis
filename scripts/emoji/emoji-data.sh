@@ -2,23 +2,97 @@
 set -euo pipefail
 
 MODE="${1:-type}"
+case "$MODE" in
+    type|copy|both) ;;
+    *)
+        echo "Usage: $0 [type|copy|both]" >&2
+        exit 1
+        ;;
+esac
 
-emoji="$(sed '1,/^### DATA ###$/d' "$0" | fuzzel --match-mode fzf --dmenu | cut -d ' ' -f 1 | tr -d '\n')"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NATIVE_DISPATCH="$SCRIPT_DIR/../native-dispatch"
+
+_pick_emoji() {
+    if command -v fuzzel >/dev/null 2>&1; then
+        sed '1,/^### DATA ###$/d' "$0" | fuzzel --match-mode fzf --dmenu
+    elif command -v wofi >/dev/null 2>&1; then
+        sed '1,/^### DATA ###$/d' "$0" | wofi --dmenu
+    elif command -v rofi >/dev/null 2>&1; then
+        sed '1,/^### DATA ###$/d' "$0" | rofi -dmenu
+    else
+        return 127
+    fi
+}
+
+_try_alis_launcher_ipc() {
+    [[ -n "${WAYLAND_DISPLAY:-}" ]] || return 1
+    local qs_bin=""
+    qs_bin="$(command -v qs 2>/dev/null || true)"
+    [[ -n "$qs_bin" ]] || return 1
+    local cfg_dir="" candidate=""
+    for candidate in \
+        "${ALIS_RUNTIME_DIR:-}" \
+        "${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis" \
+        "$SCRIPT_DIR/../.." \
+        /usr/local/share/quickshell/alis \
+        /usr/share/quickshell/alis; do
+        if [[ -n "$candidate" && -f "$candidate/shell.qml" ]]; then
+            cfg_dir="$candidate"
+            break
+        fi
+    done
+    [[ -n "$cfg_dir" ]] || return 1
+    if command -v timeout >/dev/null 2>&1; then
+        timeout 0.5s "$qs_bin" -p "$cfg_dir" ipc call overview toggle >/dev/null 2>&1
+    else
+        "$qs_bin" -p "$cfg_dir" ipc call overview toggle >/dev/null 2>&1
+    fi
+}
+
+selected=""
+pick_rc=0
+selected="$(_pick_emoji)" || pick_rc=$?
+if (( pick_rc == 127 )); then
+    if _try_alis_launcher_ipc; then
+        exit 0
+    fi
+    echo "[emoji-data.sh] No external dmenu picker found (fuzzel/wofi/rofi). Use Alis's built-in launcher with ':' prefix for emoji search, or install fuzzel." >&2
+    exit 1
+fi
+emoji="$(printf '%s' "$selected" | cut -d ' ' -f 1 | tr -d '\n')"
+[[ -n "$emoji" ]] || exit 0
+
+_alis_type() {
+    if [[ -x "$NATIVE_DISPATCH" ]]; then
+        "$NATIVE_DISPATCH" input-type "$1"
+    elif command -v wtype >/dev/null 2>&1; then
+        wtype "$1"
+    else
+        return 127
+    fi
+}
+
+_alis_copy() {
+    if [[ -x "$NATIVE_DISPATCH" ]]; then
+        printf '%s' "$1" | "$NATIVE_DISPATCH" clipboard copy
+    elif command -v wl-copy >/dev/null 2>&1; then
+        wl-copy "$1"
+    else
+        return 127
+    fi
+}
 
 case "$MODE" in
     type)
-        wtype "${emoji}" || wl-copy "${emoji}"
+        _alis_type "${emoji}" || _alis_copy "${emoji}"
         ;;
     copy)
-        wl-copy "${emoji}"
+        _alis_copy "${emoji}"
         ;;
     both)
-        wtype "${emoji}" || true
-        wl-copy "${emoji}"
-        ;;
-    *)
-        echo "Usage: $0 [type|copy|both]"
-        exit 1
+        _alis_type "${emoji}" || true
+        _alis_copy "${emoji}"
         ;;
 esac
 

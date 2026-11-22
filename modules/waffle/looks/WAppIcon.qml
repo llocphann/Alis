@@ -1,9 +1,9 @@
 import QtQuick
 import Qt5Compat.GraphicalEffects
 import Quickshell
-import org.kde.kirigami as Kirigami
 import qs.services
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.common.functions
 
 Item {
@@ -22,7 +22,7 @@ Item {
     implicitWidth: implicitSize
     implicitHeight: implicitSize
 
-    Kirigami.Icon {
+    ThemedIcon {
         id: iconWidget
         anchors.fill: parent
         animated: true

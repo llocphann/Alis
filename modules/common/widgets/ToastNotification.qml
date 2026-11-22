@@ -117,7 +117,7 @@ Item {
                 Process {
                     id: copyProcess
 
-                    command: ["wl-copy", root.message]
+                    command: [Quickshell.shellPath("scripts/native-dispatch"), "clipboard", "copy", "--", root.message]
                 }
 
                 StyledToolTip {

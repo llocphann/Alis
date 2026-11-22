@@ -564,7 +564,7 @@ Item {
                 tooltipText: Translation.tr("Copy all")
                 enabled: textArea.text.length > 0
                 onClicked: {
-                    Quickshell.execDetached(["wl-copy", textArea.text])
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/native-dispatch"), "clipboard", "copy", "--", textArea.text])
                     copiedToast.show(Translation.tr("Copied!"))
                 }
             }
@@ -1062,7 +1062,7 @@ Item {
                             tooltipText: Translation.tr("Copy all")
                             enabled: textArea.text.length > 0
                             onClicked: {
-                                Quickshell.execDetached(["wl-copy", textArea.text])
+                                Quickshell.execDetached([Quickshell.shellPath("scripts/native-dispatch"), "clipboard", "copy", "--", textArea.text])
                                 copiedToast.show(Translation.tr("Copied!"))
                             }
                         }

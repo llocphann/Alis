@@ -1,4 +1,5 @@
 module qs.modules.bar
+AbyssMicMeterBar 1.0 AbyssMicMeterBar.qml
 ActiveWindow 1.0 ActiveWindow.qml
 BarContent 1.0 BarContent.qml
 BarCavaEqualizerModule 1.0 BarCavaEqualizerModule.qml

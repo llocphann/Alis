@@ -118,25 +118,23 @@ meta_pkg="distro/arch/alis-meta/PKGBUILD"
 meta_srcinfo="distro/arch/alis-meta/.SRCINFO"
 mpd_migration="sdata/migrations/042-mpd-mpris-bridge.sh"
 
-for pkg in distro/arch/alis-shell/PKGBUILD distro/arch/alis-shell-git/PKGBUILD; do
-  grep -Eq "'mpd-mpris: [^']*MPRIS'" "$pkg" \
-    || { printf 'FAIL: %s does not advertise the MPD MPRIS bridge\n' "$pkg" >&2; exit 1; }
+for pkg in distro/arch/alis-shell/PKGBUILD distro/arch/alis-shell-git/PKGBUILD distro/arch/alis-meta/PKGBUILD "$audio_bundle" "$deps_bundle"; do
+  grep -Eq "'mpd-mpris: .*MPRIS" "$pkg" \
+    || { printf 'FAIL: %s does not advertise optional mpd-mpris fallback\n' "$pkg" >&2; exit 1; }
+  if grep -Eq '^[[:space:]]+mpd-mpris$' "$pkg"; then
+    printf 'FAIL: %s still hard-depends on external mpd-mpris (built-in MPRIS is in alis-mpdd)\n' "$pkg" >&2; exit 1
+  fi
 done
-for srcinfo in distro/arch/alis-shell/.SRCINFO distro/arch/alis-shell-git/.SRCINFO; do
+for srcinfo in distro/arch/alis-shell/.SRCINFO distro/arch/alis-shell-git/.SRCINFO distro/arch/alis-meta/.SRCINFO; do
   grep -Eq "optdepends = mpd-mpris: .*MPRIS" "$srcinfo" \
-    || { printf 'FAIL: %s does not advertise the MPD MPRIS bridge\n' "$srcinfo" >&2; exit 1; }
+    || { printf 'FAIL: %s does not advertise optional mpd-mpris fallback\n' "$srcinfo" >&2; exit 1; }
+  if grep -Fq "depends = mpd-mpris" "$srcinfo" && ! grep -Fq "optdepends = mpd-mpris" <(grep "depends = mpd-mpris" "$srcinfo"); then
+    printf 'FAIL: %s still hard-depends on external mpd-mpris\n' "$srcinfo" >&2; exit 1
+  fi
 done
 
-grep -Eq '^[[:space:]]+mpd-mpris$' "$audio_bundle" \
-  || { printf 'FAIL: alis-audio must include mpd-mpris for MPD/rmpc media integration\n' >&2; exit 1; }
-grep -Eq '^[[:space:]]+mpd-mpris$' "$deps_bundle" \
-  || { printf 'FAIL: alis-deps must track official mpd-mpris as an installed dependency candidate\n' >&2; exit 1; }
-grep -Eq '^[[:space:]]+mpd-mpris$' "$meta_pkg" \
-  || { printf 'FAIL: full Arch meta-package must install mpd-mpris for MPD/rmpc media integration\n' >&2; exit 1; }
-grep -Fq "depends = mpd-mpris" "$meta_srcinfo" \
-  || { printf 'FAIL: alis-meta .SRCINFO must include mpd-mpris\n' >&2; exit 1; }
-grep -Fq 'DEPS_AUDIO_MPD_MPRIS="arch:mpd-mpris' "$deps_map" \
-  || { printf 'FAIL: dependency routing omits the Arch mpd-mpris bridge\n' >&2; exit 1; }
+[[ -f "$repo_root/native/alis-mpdd/src/mpris.rs" ]] \
+  || { printf 'FAIL: native/alis-mpdd/src/mpris.rs built-in MPRIS server missing\n' >&2; exit 1; }
 
 for marker in \
   'MIGRATION_ID="042-mpd-mpris-bridge"' \
@@ -152,7 +150,7 @@ for marker in \
   'function _mpdPlaybackStreamPresent(): bool' \
   'function _maybeStartMpdMprisBridge(): void' \
   'id: _mpdMprisProbeProc' \
-  'command -v mpd-mpris >/dev/null 2>&1 || exit 2; pgrep -x mpd >/dev/null 2>&1 || exit 1' \
+  'mpd-mpris' \
   '["/usr/bin/systemctl", "--user", "start", "mpd-mpris.service"]' \
   'readonly property string _mpdPreferredMprisName:' \
   ': "org.mpris.MediaPlayer2.mpd"' \

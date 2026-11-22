@@ -65,7 +65,12 @@ class Images(unittest.TestCase):
                         "if '--list-types' in sys.argv: print(" + repr(types) + ")\n"
                         "else: sys.stdout.buffer.write(Path(" + repr(str(source)) + ").read_bytes())\n")
         fake.chmod(0o755)
-        env = dict(os.environ, PATH=str(bindir) + os.pathsep + os.environ.get("PATH", ""))
+        env = dict(
+            os.environ,
+            PATH=str(bindir) + os.pathsep + os.environ.get("PATH", ""),
+            ALIS_NATIVE_MODE="legacy",
+        )
+        env.pop("WAYLAND_DISPLAY", None)
         result = subprocess.run(["python3", str(HELPER), "--root", str(self.store)],
                                 env=env, capture_output=True, text=True, timeout=10)
         return result, json.loads(result.stdout)

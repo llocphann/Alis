@@ -139,7 +139,7 @@ AbstractBackgroundWidget {
                 : Translation.tr("Merging %1 images into PDF").arg(valid.length)
             pdfMaker.outputPath = root.outputPath(valid[0], valid.length > 1
                 ? "_merged.pdf" : "_converted.pdf")
-            pdfMaker.command = ["magick"].concat(valid).concat([pdfMaker.outputPath])
+            pdfMaker.command = [Quickshell.shellPath("scripts/native-dispatch"), "image", "to-pdf", pdfMaker.outputPath].concat(valid)
             pdfMaker.running = true
             return
         }

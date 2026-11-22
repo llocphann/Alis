@@ -52,9 +52,12 @@ done
 # leave structure green while rendering no field, so packaging must fail closed.
 for abyss_asset in \
   modules/common/perimeter/AbyssField.frag \
-  modules/common/perimeter/AbyssField.frag.qsb; do
+  modules/common/perimeter/AbyssField.frag.qsb \
+  modules/common/widgets/wallpaperTransitions/alisTransitions.frag \
+  modules/common/widgets/wallpaperTransitions/alisTransitions.frag.qsb \
+  assets/fonts/MaterialSymbolsRounded.ttf; do
   grep -Fqx "$abyss_asset" <<<"$payload_list" \
-    || fail "runtime payload omits production Abyss shader asset: $abyss_asset"
+    || fail "runtime payload omits required shader/font asset: $abyss_asset"
 done
 
 for pair in \
@@ -125,20 +128,30 @@ for recipe in "$stable_pkg" "$git_pkg"; do
     || fail "$recipe does not ship the Alis-Intergration Polkit policy"
 done
 
-# The packaged color pipeline runs without the source installer's managed venv.
-# Both direct Arch shell packages therefore need the generator's Python imports
-# as package dependencies, with committed .SRCINFO kept in lockstep.
-arch_python_required=(python-materialyoucolor python-numpy python-pillow)
+# Core theming, image ops, clipboard, screencopy, gamma, idle, KF6 QML widgets,
+# polkit agent, and bundled fonts are now built natively into Alis. Direct Arch
+# shell packages must NOT regress to hard-depending on these replaced packages,
+# and must ship the bundled open fonts with committed .SRCINFO in lockstep.
+arch_retired_hard_deps=(
+  brightnessctl cliphist fish grim jq kirigami playerctl polkit-gnome
+  python-materialyoucolor python-numpy python-pillow slurp swayidle swaylock
+  syntax-highlighting ttf-material-symbols-variable ttf-roboto-flex
+  wl-clipboard wlsunset
+)
 for pair in \
   "$stable_pkg:$stable_srcinfo" \
   "$git_pkg:$git_srcinfo"; do
   recipe="${pair%%:*}"
   srcinfo="${pair#*:}"
-  for package in "${arch_python_required[@]}"; do
-    grep -Eq "^[[:space:]]+${package}$" "$recipe" \
-      || fail "$recipe is missing color generator Python dependency: $package"
-    grep -Fqx $'\tdepends = '"$package" "$srcinfo" \
-      || fail "$srcinfo is missing color generator Python dependency: $package"
+  grep -Fq '/usr/share/fonts/alis/' "$recipe" \
+    || fail "$recipe does not install bundled Alis fonts"
+  for package in "${arch_retired_hard_deps[@]}"; do
+    if grep -Eq "^[[:space:]]+${package}$" "$recipe"; then
+      fail "$recipe regressed to hard-depending on replaced package: $package"
+    fi
+    if grep -Fqx $'\tdepends = '"$package" "$srcinfo"; then
+      fail "$srcinfo regressed to hard-depending on replaced package: $package"
+    fi
   done
 done
 
@@ -239,22 +252,33 @@ meta_required=(
   adwaita-icon-theme
   eza
   frameworkintegration
-  gowall-bin
   hicolor-icon-theme
   kdecoration
   mission-center
-  mpd-mpris
   papirus-icon-theme
   qt6-avif-image-plugin
   sddm
   starship
-  ttf-gabarito-git
 )
 for package in "${meta_required[@]}"; do
   grep -Eq "^[[:space:]]+${package}$" "$meta_pkg" \
     || fail "$meta_pkg is missing default full-experience dependency: $package"
   grep -Fqx $'\tdepends = '"$package" "$meta_srcinfo" \
     || fail "$meta_srcinfo is missing dependency: $package"
+done
+meta_retired=(
+  awww bc cava fuzzel gowall-bin gum imagemagick kconfig kdialog
+  libqalculate mpd-mpris pacman-contrib swappy translate-shell
+  ttf-gabarito-git ttf-oxanium ttf-readex-pro ttf-rubik-vf ttf-twemoji
+  uv wtype ydotool
+)
+for package in "${meta_retired[@]}"; do
+  if grep -Eq "^[[:space:]]+${package}$" "$meta_pkg"; then
+    fail "$meta_pkg regressed to hard-depending on replaced package: $package"
+  fi
+  if grep -Fqx $'\tdepends = '"$package" "$meta_srcinfo"; then
+    fail "$meta_srcinfo regressed to hard-depending on replaced package: $package"
+  fi
 done
 
 cmp -s "$stable_hook" "$git_hook" || fail 'stable/git Arch lifecycle hooks differ'

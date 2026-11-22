@@ -11,5 +11,6 @@ anyhow.workspace = true
 clap.workspace = true
 evdev.workspace = true
 alis-protocol = { path = "../crates/alis-protocol" }
+alis-wayland = { path = "../crates/alis-wayland" }
 libc.workspace = true
 serde_json.workspace = true

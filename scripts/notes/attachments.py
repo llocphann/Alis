@@ -102,13 +102,35 @@ def import_image(root, source):
     return persist(root, data)
 
 
+def _paste_cmd(*args):
+    dispatch = Path(__file__).resolve().parents[1] / "native-dispatch"
+    if (
+        os.environ.get("ALIS_NATIVE_MODE", "auto") != "legacy"
+        and dispatch.is_file()
+        and os.access(dispatch, os.X_OK)
+        and os.environ.get("WAYLAND_DISPLAY")
+    ):
+        return [str(dispatch), "clipboard", "paste", *args]
+    return ["wl-paste", *args]
+
+
+def _collect_paste(*args, limit=LIMIT):
+    primary = _paste_cmd(*args)
+    try:
+        return collect(primary, limit=limit)
+    except (OSError, ValueError, subprocess.SubprocessError):
+        if primary[0] != "wl-paste":
+            return collect(["wl-paste", *args], limit=limit)
+        raise
+
+
 def paste(root):
-    types = collect(["wl-paste", "--list-types"], limit=8192).decode("utf-8").splitlines()
+    types = _collect_paste("--list-types", limit=8192).decode("utf-8").splitlines()
     for mime in MIMES:
         if mime in types:
-            return persist(root, collect(["wl-paste", "--no-newline", "--type", mime]))
+            return persist(root, _collect_paste("--no-newline", "--type", mime))
     # Request actual text; never decode an image offer as UTF-8.
-    data = collect(["wl-paste", "--no-newline", "--type", "text"])
+    data = _collect_paste("--no-newline", "--type", "text")
     return {"ok": True, "kind": "text", "text": data.decode("utf-8")}
 
 

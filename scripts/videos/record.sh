@@ -122,12 +122,57 @@ cleanup_recorder_session() {
 config_value() {
     local expr="$1"
     local fallback="${2:-}"
-    local value
-    value="$(jq -r "$expr" "$CONFIG_FILE" 2>/dev/null || true)"
+    local value=""
+    if command -v jq >/dev/null 2>&1; then
+        value="$(jq -r "$expr" "$CONFIG_FILE" 2>/dev/null || true)"
+    elif command -v python3 >/dev/null 2>&1; then
+        value="$(python3 - "$CONFIG_FILE" "$expr" <<'PY' 2>/dev/null || true
+import json, re, sys
+cfg_path, expr = sys.argv[1], sys.argv[2]
+try:
+    data = json.load(open(cfg_path, encoding="utf-8"))
+except Exception:
+    sys.exit(0)
+m = re.search(r'\.([A-Za-z0-9_.]+)', expr)
+if not m:
+    sys.exit(0)
+cur = data
+for part in m.group(1).split('.'):
+    if isinstance(cur, dict) and part in cur:
+        cur = cur[part]
+    else:
+        cur = None
+        break
+if cur is None:
+    sys.exit(0)
+if isinstance(cur, bool):
+    print("true" if cur else "false")
+else:
+    print(cur)
+PY
+)"
+    fi
     if [[ -z "$value" || "$value" == "null" ]]; then
         printf '%s\n' "$fallback"
     else
         printf '%s\n' "$value"
+    fi
+}
+
+config_has_key() {
+    local section="$1"
+    local key="$2"
+    if command -v jq >/dev/null 2>&1; then
+        jq -e ".$section | has(\"$key\")" "$CONFIG_FILE" >/dev/null 2>&1
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 - "$CONFIG_FILE" "$section" "$key" <<'PY' >/dev/null 2>&1
+import json, sys
+data = json.load(open(sys.argv[1], encoding="utf-8"))
+sec = data.get(sys.argv[2])
+sys.exit(0 if isinstance(sec, dict) and sys.argv[3] in sec else 1)
+PY
+    else
+        return 1
     fi
 }
 
@@ -828,7 +873,7 @@ RECORDER_STATUS_FILE="$STATE_DIR/recorder-status.json"
 OWNS_RECORDER_STATUS=0
 mkdir -p "$STATE_DIR"
 trap cleanup_recorder_session EXIT
-if [[ -f "$CONFIG_FILE" ]] && command -v jq >/dev/null 2>&1; then
+if [[ -f "$CONFIG_FILE" ]] && (command -v jq >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1); then
     SAVE_PATH=$(config_value '.screenRecord.savePath // empty')
     QUALITY_PRESET=$(config_value '.screenRecord.qualityPreset // "balanced"' "balanced")
     VIDEO_CODEC=$(config_value '.screenRecord.videoCodec // empty')
@@ -838,16 +883,16 @@ if [[ -f "$CONFIG_FILE" ]] && command -v jq >/dev/null 2>&1; then
     FPS=$(config_value '.screenRecord.fps // 60' "60")
     VIDEO_BITRATE_KBPS=$(config_value '.screenRecord.videoBitrateKbps // 12000' "12000")
     AUDIO_BITRATE_KBPS=$(config_value '.screenRecord.audioBitrateKbps // 192' "192")
-    if jq -e '.screenRecord | has("audioMode")' "$CONFIG_FILE" >/dev/null 2>&1; then
+    if config_has_key screenRecord audioMode; then
         AUDIO_MODE=$(config_value '.screenRecord.audioMode // "system"' "system")
         AUDIO_MODE_CONFIGURED=true
     fi
     AUDIO_SOURCE=$(config_value '.screenRecord.audioSource // empty')
-    if jq -e '.screenRecord | has("systemAudioSource")' "$CONFIG_FILE" >/dev/null 2>&1; then
+    if config_has_key screenRecord systemAudioSource; then
         SYSTEM_AUDIO_SOURCE=$(config_value '.screenRecord.systemAudioSource // empty')
         SYSTEM_AUDIO_SOURCE_CONFIGURED=true
     fi
-    if jq -e '.screenRecord | has("microphoneSource")' "$CONFIG_FILE" >/dev/null 2>&1; then
+    if config_has_key screenRecord microphoneSource; then
         MICROPHONE_SOURCE=$(config_value '.screenRecord.microphoneSource // empty')
         MICROPHONE_SOURCE_CONFIGURED=true
     fi
@@ -977,8 +1022,20 @@ if [[ $FULLSCREEN_FLAG -ne 1 ]]; then
     if [[ -n "$MANUAL_REGION" ]]; then
         recording_geometry="$MANUAL_REGION"
     else
-        if ! recording_geometry="$(slurp 2>&1)"; then
-            if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Recording cancelled" "Selection was cancelled" -a 'Recorder' & disown; fi
+        # Prefer Alis's built-in Quickshell RegionSelector overlay so `slurp` is not required.
+        ipc_action="record"
+        [[ $SOUND_FLAG -eq 1 ]] && ipc_action="recordWithSound"
+        if [[ -x "$SCRIPT_DIR/../alis" ]] && "$SCRIPT_DIR/../alis" ipc call region "$ipc_action" >/dev/null 2>&1; then
+            exit 0
+        elif command -v qs >/dev/null 2>&1 && qs -c alis ipc call region "$ipc_action" >/dev/null 2>&1; then
+            exit 0
+        elif command -v slurp >/dev/null 2>&1; then
+            if ! recording_geometry="$(slurp 2>&1)"; then
+                if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Recording cancelled" "Selection was cancelled" -a 'Recorder' & disown; fi
+                exit 1
+            fi
+        else
+            if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Recording unavailable" "Start Alis shell (RegionSelector) or install slurp for interactive region recording" -a 'Recorder' & disown; fi
             exit 1
         fi
     fi

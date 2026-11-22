@@ -44,10 +44,7 @@ depends=(
   libdrm
   mesa
 
-  #--- KDE/Qt integration ---
-  kirigami
-  kdialog
-  syntax-highlighting
+  #--- Qt theming & desktop integration ---
   qt6ct
   kvantum
   plasma-integration
@@ -63,28 +60,17 @@ depends=(
 
   #--- Core utilities ---
   coreutils
-  cliphist
   curl
   wget
   ripgrep
   python
   rsync
   git
-  fish
-  gum
-  wl-clipboard
-  pacman-contrib
   xdg-user-dirs
   xdg-utils
   fontconfig
 
   #--- Wayland tools ---
-  wlsunset
-  swayidle
-  swaylock
-  grim
-  slurp
-  swappy
   wf-recorder
   xwayland-satellite
 
@@ -102,7 +88,6 @@ depends=(
   pavucontrol
   mpv
   mpd
-  mpd-mpris
 
   #--- Theming ---
   noto-fonts-emoji
@@ -114,13 +99,11 @@ depends=(
 
   #--- Desktop integration ---
   polkit
-  polkit-gnome
   networkmanager
   nm-connection-editor
   gnome-keyring
   nautilus
   kitty
-  fuzzel
   glib2
   starship
   eza
@@ -129,19 +112,14 @@ depends=(
   #--- Power management ---
   ethtool
 
-
   #--- Input / HW ---
   upower
-  wtype
-  ydotool
   ddcutil
   geoclue
   fprintd
   blueman
-  kconfig
 
-  #--- Media / image processing ---
-  imagemagick
+  #--- Media / OCR ---
   ffmpeg
   tesseract
   tesseract-data-eng
@@ -156,34 +134,25 @@ optdepends=(
   'tlp: power management for the optional Alis-Intergration TLP integration'
   'tlp-pd: power profile provider for the optional Alis-Intergration TLP integration'
   'tlp-rdw: radio device policy for the optional Alis-Intergration TLP integration'
-  'cava: audio visualizer for bar'
   'easyeffects: optional audio effects and equalizer backend'
   'socat: optional EasyEffects control transport for equalizer'
-  'brightnessctl: optional fallback CLI for backlight control (handled natively by alis-native)'
-  'libqalculate: optional symbolic math fallback for calculator (handled natively by alis-native)'
-  'translate-shell: optional offline/CLI fallback for translation widget (handled natively by alis-native)'
+  'polkit-gnome: optional standalone polkit agent (Alis ships a built-in Quickshell Polkit agent)'
+  'swaylock: optional fallback screen locker (Alis ships a built-in Quickshell lockscreen)'
+  'mpd-mpris: optional external MPD MPRIS bridge (built-in MPRIS provided by alis-mpdd)'
+  'awww: optional external animated wallpaper daemon (Alis ships built-in GPU transitions)'
+  'swappy: optional external screenshot annotation editor (Alis ships a built-in editor)'
   'libnotify: optional notify-send CLI for external scripts (internal notifications handled natively)'
-  'playerctl: optional MPRIS CLI utility (handled natively via Quickshell MPRIS and D-Bus)'
   'alis-workflow-parser: native QML parser capability for Code Workflow'
-  'python-evdev: input device access'
-  'python-pillow: image processing in scripts'
   'darkly-bin: Material You Qt style'
   'kde-cli-tools: Dolphin Open With dialog (QT_QPA_PLATFORMTHEME=kde)'
-  'ttf-material-symbols-variable-git: Material icons (critical for UI)'
   'ttf-jetbrains-mono-nerd: terminal/code font'
-  'ttf-roboto-flex: default UI font'
-  'ttf-twemoji: emoji font'
   'otf-space-grotesk: display font'
-  'ttf-readex-pro: Arabic font support'
-  'ttf-rubik-vf: alternate UI font'
-  'ttf-oxanium: display font'
   'adw-gtk-theme: GTK theme for Material colors'
   'millennium-bin: Steam theming via Millennium (requires steam)'
   'capitaine-cursors: cursor theme'
   'whitesur-icon-theme: macOS-style icons'
   'qt6-avif-image-plugin: AVIF wallpaper support'
-  'uv: Python package manager for color pipeline'
-  'awww: wallpaper daemon'
+  'uv: optional Python environment manager for opt-in AI wallfx cutout'
   'tesseract-data-spa: Spanish OCR'
 )
 

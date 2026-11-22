@@ -10,12 +10,15 @@ import qs.services
 
 Singleton {
     id: root
-    // property string cliphistBinary: FileUtils.trimFileProtocol(`${Directories.home}/.cargo/bin/stash`)
-    property string cliphistBinary: "cliphist"
+    readonly property string _nativeDispatch: `${Directories.scriptsPath}/native-dispatch`
+    // Default to Alis's native Rust clipboard daemon/store; allow overriding to an
+    // external cliphist-compatible binary (including test fixtures).
+    property string cliphistBinary: "alis-clipboard"
+    readonly property bool _useNativeClipboard: root.cliphistBinary === "alis-clipboard" || root.cliphistBinary === ""
     // Limit how many entries we keep/read to avoid huge models and heavy fuzzy search
     property int maxEntries: 400
     property real pasteDelay: 0.05
-    property string pressPasteCommand: "ydotool key -d 1 29:1 47:1 47:0 29:0"
+    property string pressPasteCommand: `'${Directories.scriptsPath}/native-dispatch' input-paste`
     property bool sloppySearch: Config.options?.search.sloppy ?? false
     property real scoreThreshold: 0.2
     property list<string> entries: []
@@ -198,6 +201,13 @@ Singleton {
     readonly property string _markupFilter: `'${Directories.scriptsPath}/native-dispatch' clipboard-store --filter`
 
     function decodeCommand(entry): string {
+        if (root._useNativeClipboard) {
+            const id = root.entryId(entry)
+            if (id.length > 0)
+                return `'${root._nativeDispatch}' clipboard decode ${id} | ${root._markupFilter}`
+            return `printf '%s\n' '${StringUtils.shellSingleQuoteEscape(entry)}' | '${root._nativeDispatch}' clipboard decode | ${root._markupFilter}`
+        }
+
         if (root.cliphistBinary.includes("cliphist")) {
             const id = root.entryId(entry)
             if (id.length > 0)
@@ -214,7 +224,7 @@ Singleton {
         const typeArg = mime.length > 0
             ? ` --type '${StringUtils.shellSingleQuoteEscape(mime)}'`
             : ""
-        return `${root.decodeCommand(entry)} | /usr/bin/wl-copy${typeArg}`
+        return `${root.decodeCommand(entry)} | '${root._nativeDispatch}' clipboard copy${typeArg}`
     }
 
     function refresh() {
@@ -236,8 +246,17 @@ Singleton {
 
     function paste(entry) {
         root._selfCopy = true
+        selfCopyResetTimer.restart()
         Quickshell.execDetached(["/usr/bin/bash", "-c",
-            `${root.wlCopyCommand(entry)}\n${root.pressPasteCommand}`]);
+            `${root.wlCopyCommand(entry)}\n/usr/bin/sleep ${root.pasteDelay}\n${root.pressPasteCommand}`]);
+    }
+
+    function pasteText(text) {
+        root._selfCopy = true
+        selfCopyResetTimer.restart()
+        Quickshell.clipboardText = String(text ?? "")
+        Quickshell.execDetached(["/usr/bin/bash", "-c",
+            `/usr/bin/sleep ${root.pasteDelay}\n${root.pressPasteCommand}`]);
     }
 
     function superpaste(count, isImage = false) {
@@ -274,7 +293,9 @@ Singleton {
     Process {
         id: deleteProc
         property string entry: ""
-        command: [root.cliphistBinary, "delete"]
+        command: root._useNativeClipboard
+            ? [root._nativeDispatch, "clipboard", "delete"]
+            : [root.cliphistBinary, "delete"]
         stdinEnabled: true
         function deleteEntry(entry) {
             deleteProc.entry = entry;
@@ -303,7 +324,9 @@ Singleton {
 
     Process {
         id: wipeProc
-        command: [root.cliphistBinary, "wipe"]
+        command: root._useNativeClipboard
+            ? [root._nativeDispatch, "clipboard", "wipe"]
+            : [root.cliphistBinary, "wipe"]
         onExited: (exitCode, exitStatus) => {
             root.refresh();
         }
@@ -463,8 +486,10 @@ Singleton {
 
         // Hide byte-identical text copies in every presentation while retaining
         // all original IDs/payloads on disk. Preview collisions remain distinct.
-        command: ["/usr/bin/python3", `${Directories.scriptsPath}/clipboard-history.py`,
-            "--binary", root.cliphistBinary, "--limit", String(root.maxEntries)]
+        command: root._useNativeClipboard
+            ? [root._nativeDispatch, "clipboard", "list", "--limit", String(root.maxEntries)]
+            : ["/usr/bin/python3", `${Directories.scriptsPath}/clipboard-history.py`,
+                "--binary", root.cliphistBinary, "--limit", String(root.maxEntries)]
 
         stdout: SplitParser {
             onRead: (line) => {

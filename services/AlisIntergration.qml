@@ -52,7 +52,21 @@ Singleton {
     property bool _explicitExercisesTrackerEnabled: false
     readonly property string exercisesTrackerPrefsPath: `${Directories.stateUserPath}/exercises-tracker/prefs.json`
     readonly property bool exercisesTrackerAvailable: available && !loadFailed && packageRoot.length > 0
-    readonly property bool exercisesTrackerEnabled: isPluginInstalled("exercises_tracker") && Config.ready && options?.exercises_tracker === true
+    readonly property bool _exercisesTrackerExplicit: Config.ready && Config.hasPersistedKey("integrations.alisIntergration.exercises_tracker")
+    readonly property bool exercisesTrackerEnabled: isPluginInstalled("exercises_tracker") && Config.ready && (
+        options?.exercises_tracker === true
+        || (!_exercisesTrackerExplicit && (options?.nexus === true || options?.spaced_repetition === true))
+    )
+    property bool spacedRepetitionDemanded: false
+    property bool exercisesTrackerDemanded: false
+    function demandSpacedRepetition(): void {
+        if (!root.spacedRepetitionDemanded)
+            root.spacedRepetitionDemanded = true
+    }
+    function demandExercisesTracker(): void {
+        if (!root.exercisesTrackerDemanded)
+            root.exercisesTrackerDemanded = true
+    }
     readonly property bool enabled: tlpEnabled || thinkfanEnabled || nexusEnabled || spacedRepetitionEnabled || exercisesTrackerEnabled
     readonly property var session: worker.status === Loader.Ready ? worker.item : null
     readonly property var nexus: session?.nexus ?? null
@@ -141,6 +155,8 @@ Singleton {
         }
     }
     function pluginEnabled(pluginId): bool {
+        if (pluginId === "exercises_tracker")
+            return root.exercisesTrackerEnabled
         return isPluginInstalled(pluginId) && Config.ready && options?.[pluginId] === true
     }
     function setPluginEnabled(pluginId, value): void {
@@ -277,13 +293,18 @@ Singleton {
         available = false
         loadFailed = false
         probe.running = true
-        refreshSystemStatus()
     }
+    property bool systemStatusLoaded: false
     // Always reconcile installed helper and gateway state from the local
-    // system. No network, system writes, authentication or auto-install.
+    // system on demand (Settings / explicit refresh). No network, system writes,
+    // authentication or auto-install.
     function refreshSystemStatus(): void {
         if (systemStatusProbe.running || managerBusy) return
         systemStatusProbe.running = true
+    }
+    function ensureSystemStatusLoaded(): void {
+        if (root.systemStatusLoaded || systemStatusProbe.running || managerBusy) return
+        root.refreshSystemStatus()
     }
     function status(): string {
         return JSON.stringify({available, enabled, diagnostic, version, sourceSha,
@@ -361,6 +382,7 @@ Singleton {
                 root.systemHelpersInstalled = report.systemHelpersInstalled === true
                 root.gatewayPackageInstalled = report.gatewayPackageInstalled === true
                 root.systemHelpersDiagnostic = String(report.systemHelpersDiagnostic ?? "unchecked")
+                root.systemStatusLoaded = true
             } catch (_error) {
                 // Retain last known status; an invalid receipt is not "absent".
             }
@@ -504,6 +526,5 @@ Singleton {
     }
     Component.onCompleted: {
         root.refresh()
-        root.refreshSystemStatus()
     }
 }

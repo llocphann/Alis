@@ -7,6 +7,12 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NATIVE_DISPATCH="$SCRIPT_DIR/../native-dispatch"
+if [[ -x "$NATIVE_DISPATCH" ]]; then
+    exec "$NATIVE_DISPATCH" thumbgen "$@"
+fi
+
 # Thumbnail sizes mapping
 get_thumbnail_size() {
     case "$1" in

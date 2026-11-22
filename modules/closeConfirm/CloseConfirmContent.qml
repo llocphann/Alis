@@ -4,7 +4,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
-import org.kde.kirigami as Kirigami
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -121,7 +120,7 @@ Item {
                 border.width: 1
                 border.color: root.detailBorder
 
-                Kirigami.Icon {
+                ThemedIcon {
                     anchors.fill: parent
                     anchors.margins: Appearance.sizes.spacingSmall
                     source: root.appId

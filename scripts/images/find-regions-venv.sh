@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NATIVE_DISPATCH="$SCRIPT_DIR/../native-dispatch"
+
+if [[ -x "$NATIVE_DISPATCH" ]]; then
+    exec "$NATIVE_DISPATCH" find-regions "$@"
+fi
 
 if [[ -n "${ALIS_VENV:-}" ]]; then
     _ii_venv="$(eval echo "$ALIS_VENV")"

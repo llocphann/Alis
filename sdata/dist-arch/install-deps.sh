@@ -300,15 +300,8 @@ OFFICIAL_PACKAGES=(
   # Quickshell (CRITICAL) - NOW IN EXTRA REPO!
   quickshell
 
-  # Critical QML/KDE runtime modules (required for shell startup)
-  syntax-highlighting
-  kirigami
-  kdialog
-
   # Already in PKGBUILDs but ensure they're installed
   niri
-  cliphist
-  gum
   starship
   eza
   xwayland-satellite
@@ -319,8 +312,8 @@ OFFICIAL_PACKAGES=(
   # File manager
   nautilus
 
-  # Polkit agent (needed for auth dialogs — gnome agent works universally)
-  polkit-gnome
+  # Polkit daemon (Alis ships a built-in Quickshell Polkit authentication agent)
+  polkit
 
   # Icon themes - fallbacks from official repos (always available)
   hicolor-icon-theme
@@ -368,30 +361,20 @@ AUR_PACKAGES=(
   # Qt6 extras (not in official repos)
   qt6-avif-image-plugin
 
-  # Wallpaper effects editor (used by Gowall integration)
-  gowall-bin
-
   # System monitor (default task manager)
   mission-center
-
-  # Note: Python deps are handled via uv + requirements.txt, not AUR packages
 )
 
-# Critical fonts (UI breaks without these)
+# Critical fonts not bundled in assets/fonts/ (Material Symbols Rounded,
+# Roboto Flex, Gabarito, Rubik, Readex Pro, Oxanium, and Twemoji are shipped
+# directly inside Alis's assets/fonts/ directory).
 CRITICAL_FONTS=(
-  ttf-material-symbols-variable-git
   ttf-jetbrains-mono-nerd
-  ttf-roboto-flex
-  ttf-oxanium
-  ttf-gabarito-git
 )
 
 # Optional fonts (have system fallbacks)
 OPTIONAL_FONTS=(
   otf-space-grotesk
-  ttf-readex-pro
-  ttf-rubik-vf
-  ttf-twemoji
 )
 
 # Direct download URLs for optional fonts (from official GitHub repos)
@@ -439,11 +422,11 @@ if $INSTALL_FONTS; then
 fi
 
 if $INSTALL_AUDIO; then
-  : # cava moved to alis-audio PKGBUILD
+  : # audio FFT spectrum & MPD MPRIS are handled natively by alis-native & alis-mpdd
 fi
 
 if $INSTALL_TOOLKIT; then
-  AUR_PACKAGES+=(uv)
+  : # core runtime uses Rust native helpers (no uv/.venv required)
 fi
 
 # Reset installflags for AUR helper

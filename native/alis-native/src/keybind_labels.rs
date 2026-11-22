@@ -187,13 +187,7 @@ fn alis_action(action: &str) -> Option<(String, String)> {
                 }
             }
             "close-window" => ("launcher", "close-window"),
-            "browser" => {
-                if action.contains("\"--new\"") {
-                    ("browser", "new")
-                } else {
-                    ("browser", "open")
-                }
-            }
+            "browser" if action.contains("\"--new\"") => ("browser", "new"),
             "files" | "file-manager" => {
                 if action.contains("\"--new\"") {
                     ("launcher", "files-new")

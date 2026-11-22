@@ -1,5 +1,4 @@
 import QtQuick
-import org.kde.kirigami as Kirigami
 import Quickshell
 import qs.modules.common
 import qs.services
@@ -7,7 +6,7 @@ import qs.services
 /**
  * Intelligent icon component that handles:
  * 1. Absolute paths (Electron apps, etc.) via Image
- * 2. System theme icons via Kirigami.Icon
+ * 2. System theme icons via ThemedIcon
  * 3. Fluent assets (if available) via direct path
  * 4. Fallback gracefully
  */
@@ -78,7 +77,7 @@ Item {
     // 2. System/Fluent Icon (SVG/Theme)
     Component {
         id: iconKind
-        Kirigami.Icon {
+        ThemedIcon {
             source: {
                 // Only try fluent path if explicitly requested
                 if (root.useFluent && root.icon && !root.icon.includes("/") && !root.icon.includes(".")) {
@@ -101,7 +100,7 @@ Item {
     // 3. Last Resort Fallback
     Component {
         id: fallbackKind
-        Kirigami.Icon {
+        ThemedIcon {
             source: root.fallback
             implicitWidth: root.iconSize
             implicitHeight: root.iconSize

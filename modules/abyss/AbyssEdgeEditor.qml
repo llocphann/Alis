@@ -3262,7 +3262,7 @@ Item {
                     nearbyEdge:root.previewNearbyCorner
                     // Popups ("utilities","launcher", etc.) follow their owning Screen Edge modules; only IPC/OSD
                     // indicators have independent positions in this editor.
-                    allowedKinds:["osd","volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch"]
+                    allowedKinds:["osd","volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch","polkit"]
                     onKindChanged: {
                         if (root.splitSideDocks && root.visible)
                             root.editingPopups = true

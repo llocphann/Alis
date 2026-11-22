@@ -114,9 +114,21 @@ ContentPage {
     }))
     readonly property var selectedCapability: selectedPlugin?.capabilities.find(capability =>
         capability.id === root.capabilitySelections[root.activePlugin]) ?? selectedPlugin?.capabilities[0] ?? null
+    Component.onCompleted: {
+        if (root.visible) {
+            AlisIntergration.ensureSystemStatusLoaded()
+            AlisIntergration.demandSpacedRepetition()
+            AlisIntergration.demandExercisesTracker()
+        }
+    }
     onVisibleChanged: {
-        if (root.visible && !AlisIntergration.managerBusy && AlisIntergration.managerError.length > 0)
-            AlisIntergration.clearFeedback()
+        if (root.visible) {
+            AlisIntergration.ensureSystemStatusLoaded()
+            AlisIntergration.demandSpacedRepetition()
+            AlisIntergration.demandExercisesTracker()
+            if (!AlisIntergration.managerBusy && AlisIntergration.managerError.length > 0)
+                AlisIntergration.clearFeedback()
+        }
     }
     onActivePluginChanged: {
         if (root.activePlugin === "management") {
@@ -1099,10 +1111,11 @@ ContentPage {
                                     ConfigSelectionArray {
                                         id: capabilityTabsArray
                                         objectName: "settingsTaskOptions"
-                                        anchors.left: parent.left
-                                        anchors.right: parent.right
-                                        anchors.margins: capabilityTabsWrapper.railPadding
+                                        // Size against the outer wrapper width instead of capabilityTabsRail
+                                        // to break the Flow width <-> implicitWidth feedback loop.
+                                        x: capabilityTabsWrapper.railPadding
                                         y: capabilityTabsWrapper.railPadding
+                                        width: Math.max(0, capabilityTabsWrapper.width - capabilityTabsWrapper.railPadding * 2)
                                         enableSettingsSearch: false
                                         options: root.capabilityTabs
                                         currentValue: root.selectedCapability?.id ?? ""

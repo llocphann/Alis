@@ -297,6 +297,19 @@ case "${SKIP_QUICKSHELL}" in
       rm -f "$_tmp"
     done
 
+    if [[ -d "${REPO_ROOT}/assets/fonts" ]]; then
+      local _alis_font_dir="${XDG_DATA_HOME}/fonts/alis"
+      mkdir -p "$_alis_font_dir"
+      while IFS= read -r -d '' _font_file; do
+        local _rel="${_font_file#"${REPO_ROOT}/assets/fonts/"}"
+        install -Dm644 "$_font_file" "${_alis_font_dir}/${_rel}"
+      done < <(find "${REPO_ROOT}/assets/fonts" -type f \( -name '*.ttf' -o -name '*.otf' \) -print0)
+      if command -v fc-cache >/dev/null 2>&1; then
+        fc-cache -f "$_alis_font_dir" 2>/dev/null || true
+      fi
+      log_success "Bundled Alis fonts installed to ${_alis_font_dir}"
+    fi
+
     log_success "Quickshell alis config installed"
 
     # AUDIO-I01: a native EasyEffects XDG autostart must inherit the owner-
@@ -388,12 +401,18 @@ case "${SKIP_NIRI}" in
     [[ -f "$NIRI_BINDS_CFG" ]] && NIRI_BINDS_TARGET="$NIRI_BINDS_CFG"
 
     if [[ -f "$NIRI_CFG" ]]; then
-      POLKIT_AGENT="$(get-polkit-agent)"
-      if [[ -n "$POLKIT_AGENT" ]]; then
-        sed -i "s|spawn-at-startup \"/usr/lib/mate-polkit/polkit-mate-authentication-agent-1\"|spawn-at-startup \"${POLKIT_AGENT}\"|" "$NIRI_STARTUP_TARGET"
-        log_success "Polkit agent: $(basename "$(dirname "$POLKIT_AGENT")")/$(basename "$POLKIT_AGENT")"
+      # Alis includes a built-in Quickshell Polkit agent. Only patch an
+      # uncommented legacy external agent line if a user config already has one.
+      if grep -qE '^[[:space:]]*spawn-at-startup "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"' "$NIRI_STARTUP_TARGET" 2>/dev/null; then
+        POLKIT_AGENT="$(get-polkit-agent)"
+        if [[ -n "$POLKIT_AGENT" ]]; then
+          sed -i "s|spawn-at-startup \"/usr/lib/mate-polkit/polkit-mate-authentication-agent-1\"|spawn-at-startup \"${POLKIT_AGENT}\"|" "$NIRI_STARTUP_TARGET"
+          log_success "Polkit agent: $(basename "$(dirname "$POLKIT_AGENT")")/$(basename "$POLKIT_AGENT")"
+        else
+          log_info "Polkit agent: built-in Quickshell agent"
+        fi
       else
-        log_warning "No polkit agent found — sudo dialogs may not work"
+        log_success "Polkit agent: built-in Quickshell agent"
       fi
 
       # Patch config.kdl: detect QT platform theme

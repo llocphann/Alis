@@ -30,8 +30,8 @@ Singleton {
     // has finished painting it; a deadline covers hidden/instant surfaces.
     property string _pendingLiquidThemePath: ""
     property bool _pendingLiquidThemeDarkMode: false
-    readonly property string backendProvider: "awww"
-    readonly property bool awwwBackendEnabled: true
+    readonly property string backendProvider: AwwwBackend.provider
+    readonly property bool awwwBackendEnabled: AwwwBackend.enabled
 
     // Single gate for all animated wallpaper surfaces (background, backdrops, lock):
     // freeze video/GIF playback while discharging to save power.
@@ -1213,6 +1213,7 @@ Singleton {
         // Publish only a complete PNG so cancelled work cannot poison the cache.
         const quote = value => "'" + StringUtils.shellSingleQuoteEscape(String(value)) + "'"
         const output = quote(item.outputPath)
+        const nativeDispatch = quote(Quickshell.shellPath("scripts/native-dispatch"))
         const commandBody = "mkdir -p -- " + quote(outputDir)
             + " || exit 2; [ -s " + output + " ] && exit 0; "
             + "tmp=$(mktemp " + quote(item.outputPath + ".XXXXXX") + ") || exit 2; "
@@ -1221,8 +1222,8 @@ Singleton {
                 ? "nice -n 19 ffmpeg -y -i " + quote(item.filePath)
                     + " -vf " + quote(`thumbnail=n=100,scale='min(${maxSize},iw)':'min(${maxSize},ih)':force_original_aspect_ratio=decrease`)
                     + " -frames:v 1 -f image2 -vcodec png \"$tmp\""
-                : "nice -n 19 magick " + quote(item.filePath + "[0]")
-                    + " -resize " + `${maxSize}x${maxSize}` + " png:\"$tmp\"")
+                : "nice -n 19 " + nativeDispatch + " image resize " + quote(item.filePath)
+                    + " " + `${maxSize}x${maxSize}` + " \"$tmp\"")
             + " >/dev/null 2>&1 && [ -s \"$tmp\" ] && mv -- \"$tmp\" " + output + " && exit 1; exit 2"
 
 

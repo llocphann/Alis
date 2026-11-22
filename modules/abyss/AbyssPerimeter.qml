@@ -30,6 +30,13 @@ Scope {
         return presented > 0
     }
     property string largeTargetOutput: GlobalStates.resolveOutputName("",[])
+    property string polkitTargetOutput: PolkitService.active ? GlobalStates.resolveOutputName("",[]) : ""
+    Connections {
+        target: PolkitService
+        function onActiveChanged(): void {
+            root.polkitTargetOutput = PolkitService.active ? GlobalStates.resolveOutputName("",[]) : ""
+        }
+    }
     // Match the mature ScreenCorners keyboard lease: hover previews may exist on
     // several outputs, but only one Quick Notes editor may own keyboard focus.
     property string quickNotesEditorOutput: ""
@@ -810,8 +817,11 @@ Scope {
                 && Geometry.targets(outputName,Config.options?.osd?.screenList ?? [],Quickshell.screens.map(s => s.name))
             readonly property bool physicalOsdResident: !presented && fullscreenCovered && physicalOsdKind
                 && !GlobalStates.screenLocked && (physicalOsdRequested || osd.visualResident)
+            readonly property bool physicalPolkitResident: !presented && fullscreenCovered
+                && !GlobalStates.screenLocked && window.abyssOwnsPolkit
+                && (polkitBody.open || polkitBody.visualResident)
             readonly property var physicalInsets: ({left:0,top:0,right:0,bottom:0})
-            readonly property var paintInsets: physicalOsdResident ? physicalInsets : nativeInsets
+            readonly property var paintInsets: (physicalOsdResident || physicalPolkitResident) ? physicalInsets : nativeInsets
             readonly property bool editorOpen: GlobalStates.abyssEditing && GlobalStates.abyssEditorTargetOutput === outputName
             readonly property bool nexusOpen: nexusBody.open
             readonly property bool dashboardStageEditing: (dashboardBody.open
@@ -1182,22 +1192,29 @@ Scope {
             // switches Top -> Overlay at pointer entry, which can invalidate
             // hover just as the popup begins opening. Keep native-dialog/
             // Polkit overrides and the existing shaped input mask.
-            WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen ? WlrLayer.Bottom : PolkitService.active ? WlrLayer.Top : (window.physicalOsdResident || (CompositorService.isNiri && window.presented) || window.editorOpen || Boolean(window.editStageVisible) || wallpaperBody.open || (keyboardBody.open && (Config.options?.osk?.keepOnTop ?? false)) || utility.open || liquid.popupsOpen || toastBody.open || dialogBody.open || companionExtension.editing || settings.open || dashboardBody.open || Boolean(window.nexusOpen) || controls.open || (window.fullscreenCovered && window.presented)) ? WlrLayer.Overlay : WlrLayer.Top
-            WlrLayershell.keyboardFocus: !window.presented || !field.ready || GlobalStates.regionSelectorOpen || GlobalStates.settingsNativeDialogOpen || PolkitService.active || window.overviewDragging || companionExtension.curiosityOwned
+            readonly property bool abyssOwnsPolkit: Config.ready
+                && (Config.options?.enabledPanels ?? []).includes("abyssPolkit")
+            WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen ? WlrLayer.Bottom : (PolkitService.active && !polkitBody.open) ? WlrLayer.Top : (window.physicalOsdResident || window.physicalPolkitResident || (CompositorService.isNiri && window.presented) || window.editorOpen || Boolean(window.editStageVisible) || wallpaperBody.open || (keyboardBody.open && (Config.options?.osk?.keepOnTop ?? false)) || utility.open || liquid.popupsOpen || toastBody.open || polkitBody.open || dialogBody.open || companionExtension.editing || settings.open || dashboardBody.open || Boolean(window.nexusOpen) || controls.open || (window.fullscreenCovered && window.presented)) ? WlrLayer.Overlay : WlrLayer.Top
+            WlrLayershell.keyboardFocus: !(window.presented || polkitBody.open) || !field.ready || GlobalStates.regionSelectorOpen || GlobalStates.settingsNativeDialogOpen || (PolkitService.active && !polkitBody.open) || window.overviewDragging || companionExtension.curiosityOwned
                 ? WlrKeyboardFocus.None
-                : (window.editorOpen || window.wallpaperStageEditing || (utility.presented && (utility.ready || utility.loadingPresentationActive)) || liquid.popupExclusiveFocus || (popup.presented && (popup.contentItem.item?.keyboardFocus ?? false)) || (dialogBody.presented && dialogBody.ready) || (aux.presented && (aux.ready || aux.loadingPresentationActive)) || (wallpaperBody.presented && (wallpaperBody.ready || wallpaperBody.loadingPresentationActive)) || (clipboardBody.presented && (clipboardBody.ready || clipboardBody.loadingPresentationActive)) || (settings.presented && (settings.ready || settings.loadingPresentationActive)) || (dashboardBody.presented && (dashboardBody.ready || dashboardBody.loadingPresentationActive)) || (nexusBody.presented && (nexusBody.ready || nexusBody.loadingPresentationActive)) || (controls.presented && (controls.ready || controls.loadingPresentationActive)) || (companionExtension.editing && !companionExtension.keyboardFocusOnDemand)) ? WlrKeyboardFocus.Exclusive
+                : (window.editorOpen || window.wallpaperStageEditing || (utility.presented && (utility.ready || utility.loadingPresentationActive)) || liquid.popupExclusiveFocus || (popup.presented && (popup.contentItem.item?.keyboardFocus ?? false)) || (polkitBody.presented && (polkitBody.ready || polkitBody.loadingPresentationActive)) || (dialogBody.presented && dialogBody.ready) || (aux.presented && (aux.ready || aux.loadingPresentationActive)) || (wallpaperBody.presented && (wallpaperBody.ready || wallpaperBody.loadingPresentationActive)) || (clipboardBody.presented && (clipboardBody.ready || clipboardBody.loadingPresentationActive)) || (settings.presented && (settings.ready || settings.loadingPresentationActive)) || (dashboardBody.presented && (dashboardBody.ready || dashboardBody.loadingPresentationActive)) || (nexusBody.presented && (nexusBody.ready || nexusBody.loadingPresentationActive)) || (controls.presented && (controls.ready || controls.loadingPresentationActive)) || (companionExtension.editing && !companionExtension.keyboardFocusOnDemand)) ? WlrKeyboardFocus.Exclusive
                 : (window.widgetStageEditing || companionExtension.keyboardFocusOnDemand || liquid.popupOnDemandFocus || (leftPanel.presented && (leftPanel.ready || leftPanel.loadingPresentationActive)) || (rightPanel.presented && (rightPanel.ready || rightPanel.loadingPresentationActive)) || (popup.presented && popup.ready && popup.activeKind !== "dockAppMenu") || (notification.presented && notification.ready && notification.contentKind === "center"))
                     ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
             anchors { top: true; bottom: true; left: true; right: true }
             Item { id: emptyInput; width: 0; height: 0 }
             readonly property bool overviewDragging: aux.open && (aux.contentItem.item?.applicationDragActive ?? false)
             readonly property Region dragPassThrough: Region {}
-            mask: window.overviewDragging ? dragPassThrough : liquid.activeDialog ? dialogInputMask : utility.open ? utilityInputMask : (window._probeMaskProxy ? probeProxyInputMask : nativeInputMask)
+            mask: window.overviewDragging ? dragPassThrough : polkitBody.visualResident ? polkitInputMask : liquid.activeDialog ? dialogInputMask : utility.open ? utilityInputMask : (window._probeMaskProxy ? probeProxyInputMask : nativeInputMask)
             // Equally shaped alternative Region identity. An explicit IPC
             // toggle tests re-binding QWindow.mask instead of only sending
             // Region.changed. No full-output/unmasked pointer interception.
             readonly property Region probeProxyInputMask: Region {
                 regions: [nativeInputMask]
+            }
+            readonly property Region polkitInputMask: Region {
+                x: polkitBody.inputBounds.x; y: polkitBody.inputBounds.y
+                width: (window.presented || window.physicalPolkitResident) && field.ready ? polkitBody.inputBounds.width : 0
+                height: polkitBody.inputBounds.height
             }
             readonly property Region dialogInputMask: Region {
                 x: dialogBody.inputBounds.x; y: dialogBody.inputBounds.y
@@ -1240,6 +1257,7 @@ Scope {
                 Region {x:keyboardBody.inputBounds.x;y:keyboardBody.inputBounds.y;width:window.presented && field.ready ? keyboardBody.inputBounds.width : 0;height:keyboardBody.inputBounds.height}
                 Region { x:wallpaperBody.inputBounds.x;y:wallpaperBody.inputBounds.y;width:window.presented && field.ready && !GlobalStates.settingsNativeDialogOpen && !PolkitService.active ? wallpaperBody.inputBounds.width : 0;height:wallpaperBody.inputBounds.height }
                 Region { x: clipboardBody.inputBounds.x; y: clipboardBody.inputBounds.y; width: window.presented && field.ready ? clipboardBody.inputBounds.width : 0; height: clipboardBody.inputBounds.height }
+                Region { x: polkitBody.inputBounds.x; y: polkitBody.inputBounds.y; width: window.presented && field.ready ? polkitBody.inputBounds.width : 0; height: polkitBody.inputBounds.height }
                 Region {
                     readonly property bool morphingStage: window.editStageVisible && window.editStageProgress < 0.999
                     x: 0; y: 0
@@ -1330,14 +1348,14 @@ Scope {
                 || nexusBody.presented || settings.presented || controls.presented || wallpaperBody.presented
                 || window.wallpaperStageEditing
                 || window.widgetStageEditing
-                || utility.presented || dialogBody.presented || window.editorOpen
+                || utility.presented || polkitBody.presented || dialogBody.presented || window.editorOpen
                 || companionExtension.popupOpen
             readonly property bool anyBodyVisualResident: aux.visualResident
                 || clipboardBody.visualResident || leftPanel.visualResident
                 || rightPanel.visualResident || popup.visualResident || dashboardBody.visualResident
                 || nexusBody.visualResident || settings.visualResident || controls.visualResident || wallpaperBody.visualResident
                 || window.wallpaperStageEditing
-                || utility.visualResident || dialogBody.visualResident || notification.visualResident || osd.visualResident
+                || utility.visualResident || polkitBody.visualResident || dialogBody.visualResident || notification.visualResident || osd.visualResident
             function presentedBodyHostForItem(item: Item): var {
                 if (!item || item === window.contentItem || item === perimeterEscapeFallback)
                     return null
@@ -1345,6 +1363,7 @@ Scope {
                     .map(k => liquid.popupHosts[k])
                     .filter(h => Boolean(h && h.presented))
                 const activeRoots = [
+                    polkitBody.presented ? polkitBody : null,
                     aux.presented ? aux : null,
                     dashboardBody.presented ? dashboardBody : null,
                     nexusBody.presented ? nexusBody : null,
@@ -1393,7 +1412,7 @@ Scope {
                 return window.presentedBodyHostForItem(item) !== null
             }
             function ensureEscapeFocus(): void {
-                if (!window.presented || !field.ready || !window.anyInteractiveBodyPresented
+                if (!(window.presented || polkitBody.open) || !field.ready || !window.anyInteractiveBodyPresented
                         || GlobalStates.regionSelectorOpen || GlobalStates.annotationEditorOpen)
                     return
                 if (window.isFocusInsidePresentedBody(window.activeWindowFocusItem))
@@ -1426,6 +1445,7 @@ Scope {
                     .concat([leftPanel, rightPanel])
                     .sort((a, b) => Number(b?.activationOrder ?? 0) - Number(a?.activationOrder ?? 0))
                 const candidateHosts = [
+                    polkitBody,
                     dialogBody,
                     utility,
                     wallpaperBody,
@@ -1511,6 +1531,11 @@ Scope {
                 }
                 function triggerEscape(event = null): void {
                     window.dashboardEscapeFallbackCount++
+                    if (polkitBody.presented) {
+                        PolkitService.cancel()
+                        if (event) event.accepted = true
+                        return
+                    }
                     if (window.closeActiveOverlayPopups()) {
                         if (event) event.accepted = true
                         window.ensureEscapeFocus()
@@ -1948,7 +1973,7 @@ Scope {
                 width: horizontal ? triggerSpan : triggerThickness
                 height: horizontal ? triggerThickness : triggerSpan
                 openingAllowed: window.sidebarOpeningAllowed
-                closeBlocked: GlobalStates.activeContextMenuCount>0 || dialogBody.open || dashboardBody.open || nexusBody.open || aux.open || GlobalStates.settingsNativeDialogOpen
+                closeBlocked: GlobalStates.activeContextMenuCount>0 || polkitBody.open || dialogBody.open || dashboardBody.open || nexusBody.open || aux.open || GlobalStates.settingsNativeDialogOpen
                 z: 220
             }
             SidebarReveal {
@@ -2921,6 +2946,39 @@ Scope {
                 onCloseRequested: root.closeUtility()
             }
             AbyssBodyHost {
+                id: polkitBody
+                stableContentSize: true
+                z: 25
+                placementPriority: 5
+                identity: "polkit"
+                objectName: "abyssPolkitBody"
+                controller: liquid
+                anchors.fill: parent
+                outputName: window.outputName
+                edge: window.positionEdge(identity, "top")
+                joinedEdge: Presentation.joinedEdge(
+                    identity, window.presentation(identity), edge, along, span, window.width, window.height)
+                open: !GlobalStates.screenLocked && (window.presented || window.fullscreenCovered) && field.ready
+                    && PolkitService.available && PolkitService.active
+                    && window.abyssOwnsPolkit
+                    && (root.polkitTargetOutput.length > 0
+                        ? root.polkitTargetOutput === window.outputName
+                        : root.largeTargetOutput === window.outputName)
+                span: (Geometry.horizontal(edge)
+                    ? (contentItem.item?.desiredWidth ?? 400)
+                    : (contentItem.item?.desiredHeight ?? 240)) + padding * 2
+                depth: (Geometry.horizontal(edge)
+                    ? (contentItem.item?.desiredHeight ?? 240)
+                    : (contentItem.item?.desiredWidth ?? 400)) + padding * 2
+                along: Presentation.along(
+                    window.presentation(identity), edge, span, window.width, window.height,
+                    ((Geometry.horizontal(edge) ? window.width : window.height) - span) / 2,
+                    window.physicalPolkitResident ? window.physicalInsets : window.nativeInsets)
+                edgeInsets: window.physicalPolkitResident ? window.physicalInsets : window.bodyInsets(edge, along, span)
+                source: "content/AbyssPolkitContent.qml"
+                onCloseRequested: PolkitService.cancel()
+            }
+            AbyssBodyHost {
                 id: dialogBody
                 stableContentSize: true
                 z: 20
@@ -3130,12 +3188,12 @@ Scope {
                 renderScale: window.modelData?.devicePixelRatio ?? 1
                 z: -1
                 anchors.fill: parent
-                visible: window.presented || window.physicalOsdResident || GlobalStates.screenLocked || GlobalStates.abyssColdPerimeterRecreatePending
+                visible: window.presented || window.physicalOsdResident || window.physicalPolkitResident || GlobalStates.screenLocked || GlobalStates.abyssColdPerimeterRecreatePending
                 opacity: (GlobalStates.abyssColdPerimeterRecreatePending || GlobalStates.screenLocked) ? 0.001 : 1
                 edgeInsets: window.paintInsets
                 roundZeroCorners: window.presented ? bar.layoutOptions.edgeRoundZeroCorners ?? {} : {}
                 cornerWidthInsets: window.configuredInsets
-                records: window.presented ? liquid.records : window.physicalOsdResident ? [osd.record] : []
+                records: window.presented ? liquid.records : window.physicalPolkitResident ? [polkitBody.record] : window.physicalOsdResident ? [osd.record] : []
                 waveTexture: liquid.waves.texture
                 waterLink: companionExtension.waterLink
                 // Cache the full-output SDF/shadow FBO strictly when perimeter
@@ -3149,6 +3207,7 @@ Scope {
                     && !window.editStageVisible
                     && !window.editorOpen
                     && !window.physicalOsdResident
+                    && !window.physicalPolkitResident
                     && (window.barProgress <= 0.001 || window.barProgress >= 0.999)
                     && !bar.motionActive
                     && liquid.surfacesSettled

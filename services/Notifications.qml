@@ -609,7 +609,8 @@ Singleton {
     }
 
     function _publishNotification(notification, receivedAt): void {
-        const showPopup = !root.popupInhibited;
+        const appMuted = root.isAppMuted(notification?.appName)
+        const showPopup = !root.popupInhibited && !appMuted;
         const newNotifObject = notifComponent.createObject(root, {
             "notificationId": notification.id + root.idOffset,
             "notification": notification,
@@ -822,6 +823,67 @@ Singleton {
         if (appIcon && appIcon.length > 0) {
             const cmd = "/usr/bin/gtk-launch \"" + appIcon + "\" || \"" + appIcon + "\"";
             ShellExec.execCmd(cmd);
+        }
+    }
+
+    property var mutedAppsUntilMs: ({})
+    property double timedDndUntilMs: 0
+    Timer {
+        id: timedDndTimer
+        repeat: false
+        onTriggered: {
+            root.timedDndUntilMs = 0
+            root.silent = false
+        }
+    }
+    function muteApp(appName, durationMs = 3600000): void {
+        const key = String(appName ?? "").trim().toLowerCase()
+        if (!key) return
+        const next = Object.assign({}, root.mutedAppsUntilMs)
+        next[key] = Date.now() + Math.max(60000, Number(durationMs) || 3600000)
+        root.mutedAppsUntilMs = next
+    }
+    function unmuteApp(appName): void {
+        const key = String(appName ?? "").trim().toLowerCase()
+        if (!key || !root.mutedAppsUntilMs || !root.mutedAppsUntilMs[key]) return
+        const next = Object.assign({}, root.mutedAppsUntilMs)
+        delete next[key]
+        root.mutedAppsUntilMs = next
+    }
+    function isAppMuted(appName): bool {
+        const key = String(appName ?? "").trim().toLowerCase()
+        if (!key || !root.mutedAppsUntilMs) return false
+        return Number(root.mutedAppsUntilMs[key] ?? 0) > Date.now()
+    }
+    function enableTimedDnd(durationMs = 1800000): void {
+        const ms = Math.max(60000, Number(durationMs) || 1800000)
+        root.timedDndUntilMs = Date.now() + ms
+        root.silent = true
+        timedDndTimer.interval = ms
+        timedDndTimer.restart()
+    }
+    function cancelTimedDnd(): void {
+        timedDndTimer.stop()
+        root.timedDndUntilMs = 0
+        root.silent = false
+    }
+    function focusOrActivateNotification(id): void {
+        const notifServerIndex = notifServer.trackedNotifications.values.findIndex((notif) => notif.id + root.idOffset === id);
+        if (notifServerIndex !== -1) {
+            const notifServerNotif = notifServer.trackedNotifications.values[notifServerIndex];
+            const defaultAct = notifServerNotif?.actions?.find((a) => a.identifier === "default");
+            if (defaultAct)
+                defaultAct.invoke();
+            root._focusOrLaunchFromNotifServerNotif(notifServerNotif);
+            return;
+        }
+        const entry = root.list.find(n => n && n.notificationId === id);
+        if (entry) {
+            root._focusOrLaunchFromNotifServerNotif({
+                appName: entry.appName,
+                appIcon: entry.appIcon,
+                summary: entry.summary
+            });
         }
     }
 

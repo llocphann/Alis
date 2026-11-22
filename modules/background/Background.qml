@@ -866,8 +866,8 @@ Scope {
         Process {
             id: getWallpaperSizeProc
             property string path: bgRoot.wallpaperPath
-            // `-ping` reads only the image header instead of decoding the full 4K/8K pixel buffer.
-            command: ["/usr/bin/magick", "identify", "-ping", "-format", "%w %h", path]
+            // Reads only image dimensions via Alis's native Rust image header probe.
+            command: [Quickshell.shellPath("scripts/native-dispatch"), "image", "identify", path]
             stdout: StdioCollector {
                 id: wallpaperSizeOutputCollector
                 onStreamFinished: {

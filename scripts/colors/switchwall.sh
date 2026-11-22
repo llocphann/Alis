@@ -14,18 +14,19 @@ source "$SCRIPT_DIR/../lib/config-path.sh"
 source "$SCRIPT_DIR/lib/publish-if-changed.sh"
 # shellcheck source=scripts/colors/lib/theme-profile.sh
 source "$SCRIPT_DIR/lib/theme-profile.sh"
+# shellcheck source=scripts/colors/lib/json-compat.sh
+source "$SCRIPT_DIR/lib/json-compat.sh"
 SHELL_CONFIG_FILE="$(alis_config_file)"
 TEMPLATE_DIR="$XDG_CONFIG_HOME/matugen"
 terminalscheme="$SCRIPT_DIR/terminal/scheme-base.json"
 
-# Validate critical runtime dependencies early
-if ! command -v jq &>/dev/null; then
-    echo "[switchwall.sh] Missing required dependency: jq"
-    echo "  Arch: sudo pacman -S jq"
+# Validate critical runtime JSON tooling early (jq preferred, python3 fallback)
+if ! alis_json_available; then
+    echo "[switchwall.sh] Missing required JSON dependency: install jq or python3" >&2
     exit 1
 fi
 
-# Serialized config.json write — flock prevents concurrent jq writes from
+# Serialized config.json write — flock prevents concurrent writes from
 # clobbering each other. QML's FileView doesn't participate in this lock;
 # ThemeService uses a 100ms delay to let FileView flush before invoking us.
 _config_locked_write() {
@@ -34,6 +35,91 @@ _config_locked_write() {
         flock -w 5 200 || { echo "[switchwall.sh] config lock timeout" >&2; return 1; }
         jq "$@" "$SHELL_CONFIG_FILE" > "$SHELL_CONFIG_FILE.tmp" && \
             mv "$SHELL_CONFIG_FILE.tmp" "$SHELL_CONFIG_FILE"
+    ) 200>"$lockfile"
+}
+
+_config_locked_set_string() {
+    local dotpath="$1"
+    local val="$2"
+    if command -v jq >/dev/null 2>&1; then
+        _config_locked_write --arg val "$val" ".${dotpath} = \$val"
+        return $?
+    fi
+    local lockfile="$SHELL_CONFIG_FILE.lock"
+    (
+        flock -w 5 200 || { echo "[switchwall.sh] config lock timeout" >&2; return 1; }
+        python3 - "$SHELL_CONFIG_FILE" "$SHELL_CONFIG_FILE.tmp" "$dotpath" "$val" <<'PY'
+import json, os, sys
+src, tmp, dotpath, val = sys.argv[1:5]
+with open(src, encoding="utf-8") as fh:
+    data = json.load(fh)
+cur = data
+parts = dotpath.lstrip(".").split(".")
+for p in parts[:-1]:
+    nxt = cur.get(p)
+    if not isinstance(nxt, dict):
+        nxt = {}
+        cur[p] = nxt
+    cur = nxt
+cur[parts[-1]] = val
+with open(tmp, "w", encoding="utf-8") as fh:
+    json.dump(data, fh, indent=2)
+    fh.write("\n")
+os.replace(tmp, src)
+PY
+    ) 200>"$lockfile"
+}
+
+_config_locked_set_monitor_wallpaper() {
+    local monitor="$1"
+    local path="$2"
+    local startWs="${3:-1}"
+    local endWs="${4:-10}"
+    if command -v jq >/dev/null 2>&1; then
+        _config_locked_write --arg monitor "$monitor" \
+           --arg path "$path" \
+           --argjson startWs "$startWs" \
+           --argjson endWs "$endWs" \
+           '.background.wallpapersByMonitor = (
+               (.background.wallpapersByMonitor // []) |
+               map(select(.monitor != $monitor)) +
+               [{
+                   "monitor": $monitor,
+                   "path": $path,
+                   "workspaceFirst": $startWs,
+                   "workspaceLast": $endWs
+               }]
+           )'
+        return $?
+    fi
+    local lockfile="$SHELL_CONFIG_FILE.lock"
+    (
+        flock -w 5 200 || { echo "[switchwall.sh] config lock timeout" >&2; return 1; }
+        python3 - "$SHELL_CONFIG_FILE" "$SHELL_CONFIG_FILE.tmp" "$monitor" "$path" "$startWs" "$endWs" <<'PY'
+import json, os, sys
+src, tmp, monitor, path, start_ws, end_ws = sys.argv[1:7]
+with open(src, encoding="utf-8") as fh:
+    data = json.load(fh)
+bg = data.get("background")
+if not isinstance(bg, dict):
+    bg = {}
+    data["background"] = bg
+arr = bg.get("wallpapersByMonitor")
+if not isinstance(arr, list):
+    arr = []
+arr = [item for item in arr if not (isinstance(item, dict) and item.get("monitor") == monitor)]
+arr.append({
+    "monitor": monitor,
+    "path": path,
+    "workspaceFirst": int(start_ws),
+    "workspaceLast": int(end_ws),
+})
+bg["wallpapersByMonitor"] = arr
+with open(tmp, "w", encoding="utf-8") as fh:
+    json.dump(data, fh, indent=2)
+    fh.write("\n")
+os.replace(tmp, src)
+PY
     ) 200>"$lockfile"
 }
 
@@ -78,7 +164,7 @@ write_chromium_theme_contract() {
     local rgb_color=""
 
     [[ -f "$source_json" ]] || return 1
-    hex_color=$(jq -r '.app_headerbar_bg // .app_surface // .surface_container_low // .surface // .background // empty' "$source_json" 2>/dev/null)
+    hex_color=$(alis_json_pick "$source_json" "" app_headerbar_bg app_surface surface_container_low surface background)
     [[ "$hex_color" =~ ^#[A-Fa-f0-9]{6}$ ]] || return 1
     rgb_color=$(hex_to_rgb_triplet "$hex_color") || return 1
     printf '%s\n' "$rgb_color" > "$output_path"
@@ -105,8 +191,21 @@ get_max_monitor_resolution() {
         fi
     # Fallback to Hyprland
     elif command -v hyprctl >/dev/null 2>&1; then
-        width="$(hyprctl monitors -j 2>/dev/null | jq '([.[].width] | max)' | xargs)"
-        height="$(hyprctl monitors -j 2>/dev/null | jq '([.[].height] | max)' | xargs)"
+        if command -v jq >/dev/null 2>&1; then
+            width="$(hyprctl monitors -j 2>/dev/null | jq '([.[].width] | max)' | xargs)"
+            height="$(hyprctl monitors -j 2>/dev/null | jq '([.[].height] | max)' | xargs)"
+        elif command -v python3 >/dev/null 2>&1; then
+            read -r width height < <(hyprctl monitors -j 2>/dev/null | python3 -c '
+import json, sys
+try:
+    mons = json.load(sys.stdin)
+    ws = [int(m.get("width", 0)) for m in mons if isinstance(m, dict)]
+    hs = [int(m.get("height", 0)) for m in mons if isinstance(m, dict)]
+    print(max(ws) if ws else 1920, max(hs) if hs else 1080)
+except Exception:
+    print(1920, 1080)
+' 2>/dev/null) || true
+        fi
     fi
     echo "$width $height"
 }
@@ -119,18 +218,30 @@ check_and_prompt_upscale() {
         return
     fi
 
-    read min_width_desired min_height_desired <<< "$(get_max_monitor_resolution)"
+    local min_width_desired="" min_height_desired=""
+    read -r min_width_desired min_height_desired <<< "$(get_max_monitor_resolution)"
 
-    if command -v identify &>/dev/null && [ -f "$img" ]; then
-        local img_width img_height
+    if [ -f "$img" ]; then
+        local img_width="" img_height=""
         if is_video "$img"; then # Not check resolution for videos, just let em pass
             img_width=$min_width_desired
             img_height=$min_height_desired
         else
-            img_width=$(identify -format "%w" "$img" 2>/dev/null)
-            img_height=$(identify -format "%h" "$img" 2>/dev/null)
+            local img_dims=""
+            if [[ -x "$SHELL_ROOT/scripts/native-dispatch" ]]; then
+                img_dims=$("$SHELL_ROOT/scripts/native-dispatch" image identify "$img" 2>/dev/null || true)
+            fi
+            read -r img_width img_height <<< "$img_dims"
+            if { ! [[ "$img_width" =~ ^[0-9]+$ && "$img_height" =~ ^[0-9]+$ ]] || (( 10#$img_width <= 0 || 10#$img_height <= 0 )); } && command -v identify &>/dev/null; then
+                local identify_target="$img"
+                [[ "$identify_target" == -* ]] && identify_target="./$identify_target"
+                img_dims=$(identify -ping -format "%w %h\n" "$identify_target" 2>/dev/null | head -n 1 || true)
+                read -r img_width img_height <<< "$img_dims"
+            fi
         fi
-        if [[ "$img_width" -lt "$min_width_desired" || "$img_height" -lt "$min_height_desired" ]]; then
+        if [[ "$img_width" =~ ^[0-9]+$ && "$img_height" =~ ^[0-9]+$ && "$min_width_desired" =~ ^[0-9]+$ && "$min_height_desired" =~ ^[0-9]+$ ]] && \
+           (( 10#$img_width > 0 && 10#$img_height > 0 && 10#$min_width_desired > 0 && 10#$min_height_desired > 0 )) && \
+           (( 10#$img_width < 10#$min_width_desired || 10#$img_height < 10#$min_height_desired )); then
             action=$(notify-send "Upscale?" \
                 "Image resolution (${img_width}x${img_height}) is lower than screen resolution (${min_width_desired}x${min_height_desired})" \
                 -A "open_upscayl=Open Upscayl"\
@@ -196,7 +307,7 @@ remove_restore() {
 set_wallpaper_path() {
     local path="$1"
     if [ -f "$SHELL_CONFIG_FILE" ]; then
-        _config_locked_write --arg path "$path" '.background.wallpaperPath = $path'
+        _config_locked_set_string "background.wallpaperPath" "$path"
     fi
 }
 
@@ -207,69 +318,113 @@ set_wallpaper_path_per_monitor() {
     local endWs="${4:-10}"
 
     if [ -f "$SHELL_CONFIG_FILE" ]; then
-        # Use jq to update wallpapersByMonitor array
-        # Remove existing entry for this monitor, then add new entry
-        _config_locked_write --arg monitor "$monitor" \
-           --arg path "$path" \
-           --argjson startWs "${startWs:-1}" \
-           --argjson endWs "${endWs:-10}" \
-           '.background.wallpapersByMonitor = (
-               (.background.wallpapersByMonitor // []) |
-               map(select(.monitor != $monitor)) +
-               [{
-                   "monitor": $monitor,
-                   "path": $path,
-                   "workspaceFirst": $startWs,
-                   "workspaceLast": $endWs
-               }]
-           )'
+        _config_locked_set_monitor_wallpaper "$monitor" "$path" "$startWs" "$endWs"
     fi
 }
 
 set_thumbnail_path() {
     local path="$1"
     if [ -f "$SHELL_CONFIG_FILE" ]; then
-        _config_locked_write --arg path "$path" '.background.thumbnailPath = $path'
+        _config_locked_set_string "background.thumbnailPath" "$path"
     fi
 }
 
 set_backdrop_thumbnail_path() {
     local path="$1"
     if [ -f "$SHELL_CONFIG_FILE" ]; then
-        _config_locked_write --arg path "$path" '.background.backdrop.thumbnailPath = $path'
+        _config_locked_set_string "background.backdrop.thumbnailPath" "$path"
     fi
 }
 
 get_focused_monitor_name() {
     if command -v niri >/dev/null 2>&1 && niri msg -j focused-output >/dev/null 2>&1; then
-        niri msg -j focused-output 2>/dev/null | jq -r '.name // ""'
+        if command -v jq >/dev/null 2>&1; then
+            niri msg -j focused-output 2>/dev/null | jq -r '.name // ""'
+        elif command -v python3 >/dev/null 2>&1; then
+            niri msg -j focused-output 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("name","") if isinstance(d,dict) else "")' 2>/dev/null || echo ""
+        else
+            echo ""
+        fi
         return
     fi
     if command -v hyprctl >/dev/null 2>&1; then
-        hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused == true) | .name' | head -1
+        if command -v jq >/dev/null 2>&1; then
+            hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused == true) | .name' | head -1
+        elif command -v python3 >/dev/null 2>&1; then
+            hyprctl monitors -j 2>/dev/null | python3 -c 'import json,sys; ms=json.load(sys.stdin); print(next((m.get("name","") for m in ms if isinstance(m,dict) and m.get("focused") is True), ""))' 2>/dev/null || echo ""
+        else
+            echo ""
+        fi
         return
     fi
     echo ""
  }
 
  resolve_effective_theming_wallpaper() {
-    jq -r --arg focused_monitor "$(get_focused_monitor_name)" '
-        def monitor_entry: if ((.background.multiMonitor.enable // false) and ($focused_monitor != ""))
-            then ((.background.wallpapersByMonitor // []) | map(select(.monitor == $focused_monitor)) | .[0])
-            else null end;
-        def main_path: (monitor_entry.path // .background.wallpaperPath // "");
-        def monitor_backdrop: (monitor_entry.backdropPath // "");
-        def waffle_main: (if (.waffles.background.useMainWallpaper // "true") == true then main_path else (.waffles.background.wallpaperPath // main_path) end);
-        if (.appearance.wallpaperTheming.useBackdropForColors // false) then
-            if (.panelFamily // "ii") == "waffle" then
-                (if (.waffles.background.backdrop.useMainWallpaper // "true") == true then waffle_main else (.waffles.background.backdrop.wallpaperPath // waffle_main) end)
+    local focused_monitor
+    focused_monitor="$(get_focused_monitor_name)"
+    if command -v jq >/dev/null 2>&1; then
+        jq -r --arg focused_monitor "$focused_monitor" '
+            def monitor_entry: if ((.background.multiMonitor.enable // false) and ($focused_monitor != ""))
+                then ((.background.wallpapersByMonitor // []) | map(select(.monitor == $focused_monitor)) | .[0])
+                else null end;
+            def main_path: (monitor_entry.path // .background.wallpaperPath // "");
+            def monitor_backdrop: (monitor_entry.backdropPath // "");
+            def waffle_main: (if (.waffles.background.useMainWallpaper // "true") == true then main_path else (.waffles.background.wallpaperPath // main_path) end);
+            if (.appearance.wallpaperTheming.useBackdropForColors // false) then
+                if (.panelFamily // "ii") == "waffle" then
+                    (if (.waffles.background.backdrop.useMainWallpaper // "true") == true then waffle_main else (.waffles.background.backdrop.wallpaperPath // waffle_main) end)
+                else
+                    (if monitor_backdrop != "" then monitor_backdrop else (if (.background.backdrop.useMainWallpaper // "true") == true then main_path else (.background.backdrop.wallpaperPath // main_path) end) end)
+                end
             else
-                (if monitor_backdrop != "" then monitor_backdrop else (if (.background.backdrop.useMainWallpaper // "true") == true then main_path else (.background.backdrop.wallpaperPath // main_path) end) end)
-            end
-        else
-            if (.panelFamily // "ii") == "waffle" then waffle_main else main_path end
-        end // ""
-    ' "$SHELL_CONFIG_FILE" 2>/dev/null || echo ""
+                if (.panelFamily // "ii") == "waffle" then waffle_main else main_path end
+            end // ""
+        ' "$SHELL_CONFIG_FILE" 2>/dev/null || echo ""
+        return
+    fi
+    python3 - "$SHELL_CONFIG_FILE" "$focused_monitor" <<'PY' 2>/dev/null || echo ""
+import json, sys
+cfg_path, focused_monitor = sys.argv[1], sys.argv[2]
+with open(cfg_path, encoding="utf-8") as fh:
+    cfg = json.load(fh)
+def get(obj, *keys):
+    cur = obj
+    for k in keys:
+        if isinstance(cur, dict) and k in cur:
+            cur = cur[k]
+        else:
+            return None
+    return cur
+def jq_or(v, default):
+    return default if (v is None or v is False) else v
+monitor_entry = None
+if jq_or(get(cfg, "background", "multiMonitor", "enable"), False) and focused_monitor:
+    for item in jq_or(get(cfg, "background", "wallpapersByMonitor"), []):
+        if isinstance(item, dict) and item.get("monitor") == focused_monitor:
+            monitor_entry = item
+            break
+mon_path = monitor_entry.get("path") if isinstance(monitor_entry, dict) else None
+main_path = jq_or(jq_or(mon_path, get(cfg, "background", "wallpaperPath")), "")
+mon_bd = monitor_entry.get("backdropPath") if isinstance(monitor_entry, dict) else None
+monitor_backdrop = jq_or(mon_bd, "")
+w_use_main = jq_or(get(cfg, "waffles", "background", "useMainWallpaper"), "true")
+waffle_main = main_path if w_use_main is True else jq_or(get(cfg, "waffles", "background", "wallpaperPath"), main_path)
+panel_family = jq_or(get(cfg, "panelFamily"), "ii")
+if jq_or(get(cfg, "appearance", "wallpaperTheming", "useBackdropForColors"), False):
+    if panel_family == "waffle":
+        wb_use_main = jq_or(get(cfg, "waffles", "background", "backdrop", "useMainWallpaper"), "true")
+        res = waffle_main if wb_use_main is True else jq_or(get(cfg, "waffles", "background", "backdrop", "wallpaperPath"), waffle_main)
+    else:
+        if monitor_backdrop != "":
+            res = monitor_backdrop
+        else:
+            ib_use_main = jq_or(get(cfg, "background", "backdrop", "useMainWallpaper"), "true")
+            res = main_path if ib_use_main is True else jq_or(get(cfg, "background", "backdrop", "wallpaperPath"), main_path)
+else:
+    res = waffle_main if panel_family == "waffle" else main_path
+print(jq_or(res, ""))
+PY
  }
 
  # Wallpaper loops routinely open on black or a fade-in, so frame 0 produces a
@@ -303,6 +458,9 @@ ensure_color_preview_for_media() {
     fi
 
     if is_gif "$media_path"; then
+        if [[ -x "$SCRIPT_DIR/../native-dispatch" ]] && "$SCRIPT_DIR/../native-dispatch" image first-frame "$media_path" "$out_path" >/dev/null 2>&1; then
+            return 0
+        fi
         if command -v magick >/dev/null 2>&1; then
             magick "$media_path[0]" "$out_path" >/dev/null 2>&1
             return $?
@@ -311,7 +469,7 @@ ensure_color_preview_for_media() {
             extract_representative_frame "$media_path" "$out_path"
             return $?
         fi
-        echo "[switchwall.sh] Missing magick/ffmpeg for gif color preview generation" >&2
+        echo "[switchwall.sh] Missing native image helper/ffmpeg for gif color preview generation" >&2
         return 1
     fi
 
@@ -524,13 +682,19 @@ except Exception: pass' 2>/dev/null)"
 
     # Auto light/dark reads the exact image used for color generation
     # (including backdrop/video thumbnail), with alpha removed from luminance.
-    if [[ -z "$mode_flag" && "$cfg_auto_dark_light" == "true" ]] && command -v magick >/dev/null 2>&1; then
+    if [[ -z "$mode_flag" && "$cfg_auto_dark_light" == "true" ]]; then
         local lum_source="$imgpath" lum_index
         for ((lum_index = 0; lum_index < ${#generate_colors_material_args[@]} - 1; lum_index++)); do
             [[ "${generate_colors_material_args[lum_index]}" == "--path" ]] && lum_source="${generate_colors_material_args[lum_index + 1]}"
         done
         if [[ -f "$lum_source" ]]; then
-            wp_lum=$(magick "${lum_source}[0]" -alpha off -resize 64x64\! -colorspace Gray -format '%[fx:mean]' info: 2>/dev/null)
+            wp_lum=""
+            if [[ -x "$SCRIPT_DIR/../native-dispatch" ]]; then
+                wp_lum=$("$SCRIPT_DIR/../native-dispatch" image luma "$lum_source" 2>/dev/null || true)
+            fi
+            if [[ -z "$wp_lum" ]] && command -v magick >/dev/null 2>&1; then
+                wp_lum=$(magick "${lum_source}[0]" -alpha off -resize 64x64\! -colorspace Gray -format '%[fx:mean]' info: 2>/dev/null)
+            fi
             if [[ -n "$wp_lum" ]]; then
                 if awk -v l="$wp_lum" 'BEGIN { exit !(l > 0.5) }'; then mode_flag="light"; else mode_flag="dark"; fi
                 echo "[switchwall.sh] auto dark/light: luminance ${wp_lum} of ${lum_source} -> ${mode_flag}"
@@ -672,9 +836,15 @@ except Exception: pass' 2>/dev/null)"
                 fi
             done
             if [[ -n "$source_image_path" && -s "$_meta_out" ]]; then
-                meta_source="$(jq -r '.source_path // empty' "$_meta_out" 2>/dev/null || true)"
-                cached_seed="$(jq -r '.seed_color // empty' "$_meta_out" 2>/dev/null || true)"
-                cached_scheme="$(jq -r '.scheme // empty' "$_meta_out" 2>/dev/null || true)"
+                if command -v jq >/dev/null 2>&1; then
+                    meta_source="$(jq -r '.source_path // empty' "$_meta_out" 2>/dev/null || true)"
+                    cached_seed="$(jq -r '.seed_color // empty' "$_meta_out" 2>/dev/null || true)"
+                    cached_scheme="$(jq -r '.scheme // empty' "$_meta_out" 2>/dev/null || true)"
+                else
+                    meta_source="$(alis_json_pick "$_meta_out" "" source_path)"
+                    cached_seed="$(alis_json_pick "$_meta_out" "" seed_color)"
+                    cached_scheme="$(alis_json_pick "$_meta_out" "" scheme)"
+                fi
                 if [[ "$meta_source" == "$source_image_path" && "$cached_seed" =~ ^#?[[:xdigit:]]{6}$ && "$cached_scheme" =~ ^(scheme-content|scheme-expressive|scheme-fidelity|scheme-fruit-salad|scheme-monochrome|scheme-neutral|scheme-rainbow|scheme-tonal-spot|scheme-vibrant)$ ]]; then
                     local -a cached_args=()
                     local replaced_path=false replaced_scheme=false
@@ -778,37 +948,101 @@ main() {
     skip_config_write=""
     skip_accent_write=""
 
-    # Batch-read all config values in one jq call (replaces ~20 individual spawns)
+    # Batch-read all config values in one jq (or python3) call (replaces ~20 individual spawns)
     if [[ -f "$SHELL_CONFIG_FILE" ]]; then
-        mapfile -t _cfg < <(jq -r '[
-            (.appearance.palette.type | tostring),
-            (.appearance.palette.accentColor | tostring),
-            (.appearance.theme // "auto"),
-            (.background.clock.cookie.aiStyling | tostring),
-            (.background.thumbnailPath // ""),
-            (.appearance.wallpaperTheming.useBackdropForColors // false),
-            (.panelFamily // "ii"),
-            (.waffles.background.backdrop.useMainWallpaper // true),
-            (.waffles.background.backdrop.wallpaperPath // ""),
-            (.background.backdrop.useMainWallpaper // true),
-            (.background.backdrop.wallpaperPath // ""),
-            (.appearance.wallpaperTheming.enableAppsAndShell // true),
-            (.appearance.wallpaperTheming.enableTerminal // true),
-            (.appearance.wallpaperTheming.terminalColorAdjustments.saturation // 0.65),
-            (.appearance.wallpaperTheming.terminalColorAdjustments.brightness // 0.60),
-            (.appearance.wallpaperTheming.terminalColorAdjustments.harmony // .appearance.wallpaperTheming.terminalGenerationProps.harmony // 0.40),
-            (.appearance.wallpaperTheming.terminalColorAdjustments.backgroundBrightness // 0.50),
-            (.appearance.wallpaperTheming.colorStrength // 1.0),
-            (.appearance.wallpaperTheming.terminalGenerationProps.harmonizeThreshold // 100),
-            (.appearance.wallpaperTheming.terminalGenerationProps.termFgBoost // 0.35),
-            (.appearance.softenColors | tostring),
-            (.appearance.wallpaperTheming.terminalGenerationProps.forceDarkMode // false),
-            (.appearance.wallpaperTheming.enableVesktop // true),
-            (.background.hideUpscaleNotification // false),
-            (if .appearance.customTheme.darkmode == null then true else .appearance.customTheme.darkmode end),
-            (.appearance.wallpaperTheming.autoDarkLightMode // false),
-            (.appearance.colorInvert // false)
-        ] | .[]' "$SHELL_CONFIG_FILE" 2>/dev/null)
+        if command -v jq >/dev/null 2>&1; then
+            mapfile -t _cfg < <(jq -r '[
+                (.appearance.palette.type | tostring),
+                (.appearance.palette.accentColor | tostring),
+                (.appearance.theme // "auto"),
+                (.background.clock.cookie.aiStyling | tostring),
+                (.background.thumbnailPath // ""),
+                (.appearance.wallpaperTheming.useBackdropForColors // false),
+                (.panelFamily // "ii"),
+                (if .waffles.background.backdrop.useMainWallpaper == null then true else .waffles.background.backdrop.useMainWallpaper end),
+                (.waffles.background.backdrop.wallpaperPath // ""),
+                (if .background.backdrop.useMainWallpaper == null then true else .background.backdrop.useMainWallpaper end),
+                (.background.backdrop.wallpaperPath // ""),
+                (if .appearance.wallpaperTheming.enableAppsAndShell == null then true else .appearance.wallpaperTheming.enableAppsAndShell end),
+                (if .appearance.wallpaperTheming.enableTerminal == null then true else .appearance.wallpaperTheming.enableTerminal end),
+                (.appearance.wallpaperTheming.terminalColorAdjustments.saturation // 0.65),
+                (.appearance.wallpaperTheming.terminalColorAdjustments.brightness // 0.60),
+                (.appearance.wallpaperTheming.terminalColorAdjustments.harmony // .appearance.wallpaperTheming.terminalGenerationProps.harmony // 0.40),
+                (.appearance.wallpaperTheming.terminalColorAdjustments.backgroundBrightness // 0.50),
+                (.appearance.wallpaperTheming.colorStrength // 1.0),
+                (.appearance.wallpaperTheming.terminalGenerationProps.harmonizeThreshold // 100),
+                (.appearance.wallpaperTheming.terminalGenerationProps.termFgBoost // 0.35),
+                (.appearance.softenColors | tostring),
+                (.appearance.wallpaperTheming.terminalGenerationProps.forceDarkMode // false),
+                (if .appearance.wallpaperTheming.enableVesktop == null then true else .appearance.wallpaperTheming.enableVesktop end),
+                (.background.hideUpscaleNotification // false),
+                (if .appearance.customTheme.darkmode == null then true else .appearance.customTheme.darkmode end),
+                (.appearance.wallpaperTheming.autoDarkLightMode // false),
+                (.appearance.colorInvert // false)
+            ] | .[]' "$SHELL_CONFIG_FILE" 2>/dev/null)
+        elif command -v python3 >/dev/null 2>&1; then
+            mapfile -t _cfg < <(python3 - "$SHELL_CONFIG_FILE" <<'PY' 2>/dev/null
+import json, sys
+try:
+    with open(sys.argv[1], encoding="utf-8") as fh:
+        d = json.load(fh)
+except Exception:
+    sys.exit(0)
+def get(*keys):
+    cur = d
+    for k in keys:
+        if isinstance(cur, dict) and k in cur:
+            cur = cur[k]
+        else:
+            return None
+    return cur
+def to_str(v):
+    if v is None:
+        return "null"
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    return str(v)
+def jq_or(v, default):
+    return default if (v is None or v is False) else v
+def null_or(v, default):
+    return default if v is None else v
+harmony = get("appearance", "wallpaperTheming", "terminalColorAdjustments", "harmony")
+if harmony is None or harmony is False:
+    harmony = get("appearance", "wallpaperTheming", "terminalGenerationProps", "harmony")
+vals = [
+    to_str(get("appearance", "palette", "type")),
+    to_str(get("appearance", "palette", "accentColor")),
+    to_str(jq_or(get("appearance", "theme"), "auto")),
+    to_str(get("background", "clock", "cookie", "aiStyling")),
+    to_str(jq_or(get("background", "thumbnailPath"), "")),
+    to_str(jq_or(get("appearance", "wallpaperTheming", "useBackdropForColors"), False)),
+    to_str(jq_or(get("panelFamily"), "ii")),
+    to_str(null_or(get("waffles", "background", "backdrop", "useMainWallpaper"), True)),
+    to_str(jq_or(get("waffles", "background", "backdrop", "wallpaperPath"), "")),
+    to_str(null_or(get("background", "backdrop", "useMainWallpaper"), True)),
+    to_str(jq_or(get("background", "backdrop", "wallpaperPath"), "")),
+    to_str(null_or(get("appearance", "wallpaperTheming", "enableAppsAndShell"), True)),
+    to_str(null_or(get("appearance", "wallpaperTheming", "enableTerminal"), True)),
+    to_str(jq_or(get("appearance", "wallpaperTheming", "terminalColorAdjustments", "saturation"), 0.65)),
+    to_str(jq_or(get("appearance", "wallpaperTheming", "terminalColorAdjustments", "brightness"), 0.60)),
+    to_str(jq_or(harmony, 0.40)),
+    to_str(jq_or(get("appearance", "wallpaperTheming", "terminalColorAdjustments", "backgroundBrightness"), 0.50)),
+    to_str(jq_or(get("appearance", "wallpaperTheming", "colorStrength"), 1.0)),
+    to_str(jq_or(get("appearance", "wallpaperTheming", "terminalGenerationProps", "harmonizeThreshold"), 100)),
+    to_str(jq_or(get("appearance", "wallpaperTheming", "terminalGenerationProps", "termFgBoost"), 0.35)),
+    to_str(get("appearance", "softenColors")),
+    to_str(jq_or(get("appearance", "wallpaperTheming", "terminalGenerationProps", "forceDarkMode"), False)),
+    to_str(null_or(get("appearance", "wallpaperTheming", "enableVesktop"), True)),
+    to_str(jq_or(get("background", "hideUpscaleNotification"), False)),
+    to_str(null_or(get("appearance", "customTheme", "darkmode"), True)),
+    to_str(jq_or(get("appearance", "wallpaperTheming", "autoDarkLightMode"), False)),
+    to_str(jq_or(get("appearance", "colorInvert"), False)),
+]
+for v in vals:
+    print(v)
+PY
+            )
+        fi
     fi
     cfg_palette_type="${_cfg[0]:-auto}"
     cfg_accent_color="${_cfg[1]:-}"
@@ -840,7 +1074,7 @@ main() {
 
     set_accent_color() {
         local color="$1"
-        _config_locked_write --arg color "$color" '.appearance.palette.accentColor = $color'
+        _config_locked_set_string "appearance.palette.accentColor" "$color"
     }
 
     while [[ $# -gt 0 ]]; do
@@ -940,7 +1174,21 @@ main() {
     # Only prompt for wallpaper if not using --color and not using --noswitch and no imgpath set
     if [[ -z "$imgpath" && -z "$color_flag" && -z "$noswitch_flag" ]]; then
         cd "$(xdg-user-dir PICTURES)/Wallpapers/showcase" 2>/dev/null || cd "$(xdg-user-dir PICTURES)/Wallpapers" 2>/dev/null || cd "$(xdg-user-dir PICTURES)" || return 1
-        imgpath="$(kdialog --getopenfilename . --title 'Choose wallpaper')"
+        local _dialog_rc=2
+        local _raw_dialog=""
+        if [[ -x "$SCRIPT_DIR/../native-dispatch" ]]; then
+            _raw_dialog="$("$SCRIPT_DIR/../native-dispatch" file-dialog --title 'Choose wallpaper' --current-folder "$PWD" 2>/dev/null)"
+            _dialog_rc=$?
+            imgpath="${_raw_dialog%%$'\n'*}"
+        fi
+        # Exit code 1 from file-dialog means the user explicitly cancelled; only fall back on portal/tool error.
+        if [[ -z "$imgpath" && $_dialog_rc -ne 0 && $_dialog_rc -ne 1 ]]; then
+            if command -v zenity >/dev/null 2>&1; then
+                imgpath="$(zenity --file-selection --title='Choose wallpaper' 2>/dev/null || true)"
+            elif command -v kdialog >/dev/null 2>&1; then
+                imgpath="$(kdialog --getopenfilename . --title 'Choose wallpaper' 2>/dev/null || true)"
+            fi
+        fi
     fi
 
     # --noswitch should regenerate from the current effective theming source.

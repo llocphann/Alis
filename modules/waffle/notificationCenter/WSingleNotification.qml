@@ -175,7 +175,10 @@ MouseArea {
             Process {
                 id: copyHeaderProcess
                 command: [
-                    "wl-copy",
+                    Quickshell.shellPath("scripts/native-dispatch"),
+                    "clipboard",
+                    "copy",
+                    "--",
                     root.notification ? (root.notification.body ?? "") : ""
                 ]
                 onExited: (code, status) => {

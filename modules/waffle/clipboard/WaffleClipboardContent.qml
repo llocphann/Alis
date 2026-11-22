@@ -88,14 +88,20 @@ Item {
         clipboardList.positionViewAtBeginning()
     }
 
-    function copyEntry(entry: string) {
+    function copyEntry(entry: string, forcePaste = false) {
         lastCopiedEntry = entry
-        Cliphist.copy(entry)
+        if (forcePaste || Boolean(Config.options?.clipboard?.autoPaste ?? false))
+            Cliphist.paste(entry)
+        else
+            Cliphist.copy(entry)
         GlobalStates.waffleClipboardOpen = false
     }
 
-    function copyPinnedText(text: string) {
-        Quickshell.clipboardText = text
+    function copyPinnedText(text: string, forcePaste = false) {
+        if (forcePaste || Boolean(Config.options?.clipboard?.autoPaste ?? false))
+            Cliphist.pasteText(text)
+        else
+            Quickshell.clipboardText = text
         GlobalStates.waffleClipboardOpen = false
     }
 

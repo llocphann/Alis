@@ -143,7 +143,7 @@ apply_zed_theme() {
   [[ -f "$SCSS_FILE" ]] || return 0
 
   local enable_zed
-  enable_zed=$(config_json 'if .appearance.wallpaperTheming | has("enableZed") then .appearance.wallpaperTheming.enableZed else true end' true)
+  enable_zed=$(config_bool '.appearance.wallpaperTheming.enableZed' true)
   [[ "$enable_zed" == 'true' ]] || return 0
 
   command -v zed &>/dev/null || command -v zeditor &>/dev/null || return 0

@@ -578,7 +578,7 @@ Singleton {
 
     // Theme Metadata Logic
     readonly property var activeThemePreset: ThemePresets.getPreset(Config.options?.appearance?.theme ?? "auto")
-    readonly property var _themeMeta: activeThemePreset.meta || {}
+    readonly property var _themeMeta: activeThemePreset?.meta ?? {}
 
     // Material typography may still request a monospace preset through theme metadata.
     readonly property bool _forceMono: _themeMeta.fontStyle === "mono"
@@ -589,6 +589,52 @@ Singleton {
     readonly property bool _useRegaliaFont: false
     readonly property string _zzzFont: "Oxanium"
     readonly property bool _useZzzFont: false
+
+    // Register bundled open-licensed fonts only when fontconfig doesn't already
+    // supply the family, avoiding redundant multi-MB FontLoader mmaps.
+    readonly property var _bundledFontSpecs: [
+        { family: "Material Symbols Rounded", path: "../../assets/fonts/MaterialSymbolsRounded.ttf" },
+        { family: "Roboto Flex", path: "../../assets/fonts/RobotoFlex-VF.ttf" },
+        { family: "Rubik", path: "../../assets/fonts/Rubik-VF.ttf" },
+        { family: "Rubik", path: "../../assets/fonts/Rubik-Italic-VF.ttf" },
+        { family: "Gabarito", path: "../../assets/fonts/Gabarito/Gabarito-Regular.ttf" },
+        { family: "Gabarito", path: "../../assets/fonts/Gabarito/Gabarito-Medium.ttf" },
+        { family: "Gabarito", path: "../../assets/fonts/Gabarito/Gabarito-SemiBold.ttf" },
+        { family: "Gabarito", path: "../../assets/fonts/Gabarito/Gabarito-Bold.ttf" },
+        { family: "Gabarito", path: "../../assets/fonts/Gabarito/Gabarito-ExtraBold.ttf" },
+        { family: "Gabarito", path: "../../assets/fonts/Gabarito/Gabarito-Black.ttf" },
+        { family: "Readex Pro", path: "../../assets/fonts/ReadexPro/ReadexPro-ExtraLight.ttf" },
+        { family: "Readex Pro", path: "../../assets/fonts/ReadexPro/ReadexPro-Light.ttf" },
+        { family: "Readex Pro", path: "../../assets/fonts/ReadexPro/ReadexPro-Regular.ttf" },
+        { family: "Readex Pro", path: "../../assets/fonts/ReadexPro/ReadexPro-Medium.ttf" },
+        { family: "Readex Pro", path: "../../assets/fonts/ReadexPro/ReadexPro-SemiBold.ttf" },
+        { family: "Readex Pro", path: "../../assets/fonts/ReadexPro/ReadexPro-bold.ttf" },
+        { family: "Oxanium", path: "../../assets/fonts/Oxanium/Oxanium-ExtraLight.ttf" },
+        { family: "Oxanium", path: "../../assets/fonts/Oxanium/Oxanium-Light.ttf" },
+        { family: "Oxanium", path: "../../assets/fonts/Oxanium/Oxanium-Regular.ttf" },
+        { family: "Oxanium", path: "../../assets/fonts/Oxanium/Oxanium-Medium.ttf" },
+        { family: "Oxanium", path: "../../assets/fonts/Oxanium/Oxanium-SemiBold.ttf" },
+        { family: "Oxanium", path: "../../assets/fonts/Oxanium/Oxanium-Bold.ttf" },
+        { family: "Oxanium", path: "../../assets/fonts/Oxanium/Oxanium-ExtraBold.ttf" },
+        { family: "Twemoji", path: "../../assets/fonts/Twemoji.ttf" }
+    ]
+    property var _loadedFontLoaders: []
+    Component {
+        id: bundledFontLoaderComponent
+        FontLoader {}
+    }
+    Component.onCompleted: {
+        const installed = new Set(Qt.fontFamilies().map(name => String(name).trim().toLowerCase()))
+        const loaders = []
+        for (const spec of root._bundledFontSpecs) {
+            if (!installed.has(String(spec.family).trim().toLowerCase())) {
+                loaders.push(bundledFontLoaderComponent.createObject(root, {
+                    source: Qt.resolvedUrl(spec.path)
+                }))
+            }
+        }
+        root._loadedFontLoaders = loaders
+    }
 
     font: QtObject {
         property QtObject family: QtObject {

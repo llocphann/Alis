@@ -14,8 +14,8 @@ Scope {
     property int timeoutMs: 1200
     property list<string> captureCommand: ["timeout", "--kill-after=0.2s",
         String(Policy.bounded(timeoutMs, 1200, 100, 3000) / 1000) + "s", "/bin/bash", "-o", "pipefail", "-c",
-        "grim -o \"$1\" -s \"$2\" -t ppm - | magick ppm:- -colorspace Gray -format '%[fx:mean*100]' info:",
-        "_", outputName, String(Policy.bounded(sampleScale, .10, .05, .50))]
+        "if [ -x \"$3\" ]; then exec \"$3\" screencopy -o \"$1\" -s \"$2\" --luma; fi; grim -o \"$1\" -s \"$2\" -t ppm - | magick ppm:- -colorspace Gray -format '%[fx:mean*100]' info:",
+        "_", outputName, String(Policy.bounded(sampleScale, .10, .05, .50)), Quickshell.shellPath("scripts/native-dispatch")]
     readonly property bool capturing: capture.busy
     property real lastLightness: Number.NaN
     property real lastDurationMs: 0

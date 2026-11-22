@@ -311,22 +311,18 @@ log_repo_context
 #####################################################################################
 tui_info "Installing packages from official repositories..."
 
-# Core system packages
+# Core system packages (clipboard, screencopy, gamma, idle, audio spectrum,
+# image ops, and theming are handled natively by Alis's Rust binaries)
 DEBIAN_CORE_PKGS=(
   # Basic utilities
-  bc
   coreutils
   curl
   wget
   ripgrep
-  jq
   xdg-user-dirs
   rsync
   git
-  wl-clipboard
   libnotify-bin
-  wlsunset
-  dunst
   unzip
 
   # XDG Portals
@@ -334,9 +330,8 @@ DEBIAN_CORE_PKGS=(
   xdg-desktop-portal-gtk
   xdg-desktop-portal-gnome
 
-  # Polkit
+  # Polkit (Alis ships a built-in Quickshell Polkit authentication agent)
   policykit-1
-  policykit-1-gnome
 
   # Network
   network-manager
@@ -345,25 +340,10 @@ DEBIAN_CORE_PKGS=(
   # File manager
   nautilus
 
-  # KDE frameworks (CRITICAL — Quickshell needs these at runtime)
-  libkf6syntaxhighlighting6
-  qml6-module-org-kde-kirigami
-  kdialog
-
   # Terminal
   kitty
 
-  # Shell (required for scripts)
-  fish
-
-  # Thumbnails
-  ffmpegthumbnailer
-  tumbler
-
-  # Translation widget
-  translate-shell
-
-  # Build essentials (needed for compiling niri/quickshell)
+  # Build essentials (needed for compiling Rust native helpers / niri / quickshell)
   build-essential
   cmake
   ninja-build
@@ -378,7 +358,7 @@ DEBIAN_CORE_PKGS=(
 )
 
 # Qt6 packages - ONLY dev packages, runtime libs are auto-installed as dependencies
-# This avoids conflicts with t64 transition packages (libqt6core6t64 vs libqt6core6)
+# No KDE Frameworks QML (kirigami / syntax-highlighting / kdialog) required.
 DEBIAN_QT6_PKGS=(
   # Core Qt6 development (runtime libs installed as deps)
   qt6-base-dev
@@ -396,47 +376,30 @@ DEBIAN_QT6_PKGS=(
   libwayland-dev
   libdrm-dev
 
-  # KDE integration
-  kdialog
-
   # Qt theming
   qt6ct
   kde-config-gtk-style
   breeze-gtk-theme
 )
 
-# Audio packages
+# Audio packages (FFT visualizer & MPD MPRIS handled natively by alis-native & alis-mpdd)
 DEBIAN_AUDIO_PKGS=(
   pipewire
   pipewire-pulse
   pipewire-alsa
   wireplumber
-  playerctl
   plasma-browser-integration
   libdbusmenu-gtk3-4
   pavucontrol
-  easyeffects
   mpv
-  socat
+  mpd
 )
 
 # Toolkit packages
 DEBIAN_TOOLKIT_PKGS=(
   upower
-  wtype
-  ydotool
-  python3-evdev
-  python3-pil
-  python3-cairo
-  libgirepository-2.0-dev
-  brightnessctl
   ddcutil
   geoclue-2.0
-  swayidle
-  swaylock
-  grim
-  slurp
-  imagemagick
   blueman
   fprintd
   tesseract-ocr
@@ -444,30 +407,19 @@ DEBIAN_TOOLKIT_PKGS=(
   tesseract-ocr-spa
 )
 
-# Screen capture packages
+# Screen capture packages (screencopy & annotation editor built into Alis)
 DEBIAN_SCREENCAPTURE_PKGS=(
-  grim
-  slurp
   wf-recorder
-  imagemagick
   ffmpeg
 )
 
-# Check if swappy is available (only in trixie/sid, not bookworm)
-if apt_pkg_available swappy; then
-  DEBIAN_SCREENCAPTURE_PKGS+=(swappy)
-fi
-
-# Font packages
+# Font packages (UI/icon fonts are bundled in assets/fonts/)
 DEBIAN_FONT_PKGS=(
   fontconfig
   fonts-dejavu
   fonts-liberation
   fonts-noto-color-emoji
   fonts-jetbrains-mono
-
-  # Launcher
-  fuzzel
 
   # Qt theming
   kvantum
@@ -479,33 +431,6 @@ DEBIAN_WAYLAND_PKGS=(
   libwayland-dev
   libxkbcommon-dev
 )
-
-# Check if cliphist is available in repos (Ubuntu 24.04+, PikaOS, etc.)
-if apt_pkg_available cliphist; then
-  DEBIAN_CORE_PKGS+=(cliphist)
-fi
-
-# Check if gum is available in repos (PikaOS has it)
-if apt_pkg_available gum; then
-  DEBIAN_CORE_PKGS+=(gum)
-fi
-
-# Check if cava is available in repos
-if apt_pkg_available cava; then
-  DEBIAN_AUDIO_PKGS+=(cava)
-fi
-
-# Check if qalculate-qt is available (preferred over qalculate)
-if apt_pkg_available qalculate-qt; then
-  DEBIAN_TOOLKIT_PKGS+=(qalculate-qt)
-elif apt_pkg_available qalculate-gtk; then
-  DEBIAN_TOOLKIT_PKGS+=(qalculate-gtk)
-fi
-
-# Check if kf6-kconfig is available (Ubuntu 24.04+, Debian trixie+)
-if apt_pkg_available kf6-kconfig; then
-  DEBIAN_FONT_PKGS+=(kf6-kconfig)
-fi
 
 # Fix any broken packages first
 log_info "Fixing any broken packages..."
@@ -641,29 +566,8 @@ install_github_binary() {
 #####################################################################################
 tui_info "Installing packages from GitHub releases..."
 
-# gum - TUI tool (download .deb from GitHub if not in repos)
-if ! command -v gum &>/dev/null; then
-  log_info "Installing gum from GitHub..."
-  GUM_DEB_URL=$(curl -s "https://api.github.com/repos/charmbracelet/gum/releases/latest" | \
-    jq -r ".assets[] | select(.name | test(\"_${ARCH}.deb$\")) | .browser_download_url" | head -1)
-  if [[ -n "$GUM_DEB_URL" && "$GUM_DEB_URL" != "null" ]]; then
-    TEMP_DEB="/tmp/gum-$$.deb"
-    if curl -fsSL -o "$TEMP_DEB" "$GUM_DEB_URL"; then
-      sudo dpkg -i "$TEMP_DEB" 2>/dev/null || sudo apt install -f -y
-      rm -f "$TEMP_DEB"
-      log_success "gum installed"
-    else
-      log_warning "Failed to download gum"
-    fi
-  else
-    log_warning "Could not find gum .deb for architecture ${ARCH}"
-  fi
-fi
-
-# cliphist - clipboard manager (if not in repos)
-if ! command -v cliphist &>/dev/null; then
-  install_github_binary "cliphist" "sentriz/cliphist" "linux-amd64$"
-fi
+# Note: gum is no longer required and clipboard history is handled natively by
+# alis-native clipboard (cliphist / wl-clipboard are optional legacy fallbacks).
 
 # darkly - Qt theme (download .deb from GitHub)
 if ${INSTALL_FONTS:-true}; then
@@ -728,26 +632,8 @@ if ${INSTALL_FONTS:-true}; then
   fi
 fi
 
-# swappy - screenshot annotation (not in bookworm, compile from source)
-if ${INSTALL_SCREENCAPTURE:-true}; then
-  if ! command -v swappy &>/dev/null; then
-    log_info "Installing swappy from source..."
-    sudo apt install $installflags libgtk-3-dev libcairo2-dev libpango1.0-dev scdoc 2>/dev/null || true
-
-    SWAPPY_BUILD_DIR="/tmp/swappy-build-$$"
-    if git clone https://github.com/jtheoof/swappy.git "$SWAPPY_BUILD_DIR" 2>/dev/null; then
-      cd "$SWAPPY_BUILD_DIR"
-      if meson setup build && ninja -C build; then
-        sudo ninja -C build install
-        log_success "swappy installed"
-      else
-        log_warning "swappy build failed, skipping"
-      fi
-      cd "${REPO_ROOT}"
-      rm -rf "$SWAPPY_BUILD_DIR"
-    fi
-  fi
-fi
+# Note: screenshot annotation is handled by Alis's built-in AnnotationEditor.qml
+# (swappy is an optional legacy fallback and no longer compiled by default).
 
 #####################################################################################
 # Install Rust toolchain (needed for niri, quickshell, xwayland-satellite)
@@ -922,30 +808,8 @@ if ! command -v xwayland-satellite &>/dev/null; then
   fi
 fi
 
-#####################################################################################
-# Install awww (wallpaper daemon)
-#####################################################################################
-if ! command -v awww &>/dev/null; then
-  log_info "Installing awww (wallpaper daemon)..."
-
-  # awww needs libxkbcommon and lz4
-  sudo apt install $installflags libxkbcommon-dev liblz4-dev 2>/dev/null || true
-
-  AWWW_BUILD_DIR="/tmp/awww-build-$$"
-  if git clone https://codeberg.org/LGFae/awww.git "$AWWW_BUILD_DIR"; then
-    cd "$AWWW_BUILD_DIR"
-    if cargo build --release; then
-      sudo cp target/release/awww target/release/awww-daemon /usr/local/bin/
-      log_success "awww installed"
-    else
-      log_warning "awww build failed"
-    fi
-    cd "${REPO_ROOT}"
-    rm -rf "$AWWW_BUILD_DIR"
-  else
-    log_warning "Failed to clone awww repository"
-  fi
-fi
+# Wallpaper transitions are rendered internally by Alis's Qt6 shader crossfader;
+# external `awww` is optional and no longer compiled by default.
 
 
 #####################################################################################
@@ -1053,35 +917,8 @@ else
   log_success "Quickshell already installed"
 fi
 
-#####################################################################################
-# Install cava if not available in repos
-#####################################################################################
-if ! command -v cava &>/dev/null; then
-  log_info "Installing cava from source..."
-  sudo apt install $installflags \
-    libfftw3-dev \
-    libasound2-dev \
-    libpulse-dev \
-    libpipewire-0.3-dev \
-    libncursesw5-dev \
-    libiniparser-dev \
-    autoconf \
-    automake \
-    libtool 2>/dev/null || true
-
-  CAVA_BUILD_DIR="/tmp/cava-build-$$"
-  if git clone https://github.com/karlstav/cava.git "$CAVA_BUILD_DIR"; then
-    cd "$CAVA_BUILD_DIR"
-    if ./autogen.sh && ./configure && make -j$(nproc); then
-      sudo make install
-      log_success "cava installed"
-    else
-      log_warning "cava build failed, skipping"
-    fi
-    cd "${REPO_ROOT}"
-    rm -rf "$CAVA_BUILD_DIR"
-  fi
-fi
+# Audio spectrum visualization is handled natively by alis-native audio spectrum;
+# external `cava` is optional and no longer compiled by default.
 
 #####################################################################################
 # Install critical fonts
@@ -1090,6 +927,18 @@ tui_info "Installing critical fonts..."
 
 FONT_DIR="$HOME/.local/share/fonts"
 mkdir -p "$FONT_DIR"
+
+# Install open-licensed fonts bundled inside the repository first
+if [[ -d "${REPO_ROOT}/assets/fonts" ]]; then
+  ALIS_BUNDLED_FONT_DIR="${FONT_DIR}/alis"
+  mkdir -p "$ALIS_BUNDLED_FONT_DIR"
+  while IFS= read -r -d '' _bf; do
+    _rel="${_bf#"${REPO_ROOT}/assets/fonts/"}"
+    install -Dm644 "$_bf" "${ALIS_BUNDLED_FONT_DIR}/${_rel}"
+  done < <(find "${REPO_ROOT}/assets/fonts" -type f \( -name '*.ttf' -o -name '*.otf' \) -print0)
+  fc-cache -f "$ALIS_BUNDLED_FONT_DIR" 2>/dev/null || true
+  log_success "Bundled Alis fonts installed"
+fi
 
 # JetBrains Mono Nerd Font
 if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
@@ -1284,19 +1133,19 @@ if [[ ${#MISSING_REPO_PKGS[@]} -gt 0 ]]; then
   echo ""
 fi
 log_info "Installed from GitHub releases (no compilation):"
-echo "  - gum, cliphist, darkly"
-echo "  - twemoji-color-font, adw-gtk3 theme"
-echo "  - Material Symbols fonts, JetBrains Mono Nerd Font"
+echo "  - darkly"
+echo "  - twemoji-color-font (fallback), adw-gtk3 theme"
+echo "  - Bundled open fonts + JetBrains Mono Nerd Font"
 echo "  - WhiteSur, MacTahoe icon themes"
 echo "  - Bibata, Capitaine cursor themes"
 echo ""
 log_info "Compiled from source:"
-echo "  - niri, quickshell, xwayland-satellite, cava, swappy"
+echo "  - niri, quickshell, xwayland-satellite"
 echo ""
 
 # Verify critical commands
 tui_info "Verifying installation:"
-for cmd in qs niri fish gum cliphist; do
+for cmd in qs niri xwayland-satellite; do
   if command -v "$cmd" &>/dev/null; then
     log_success "$cmd"
   else

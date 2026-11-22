@@ -33,7 +33,7 @@ Singleton {
         if (envMode.length > 0)
             return envMode === "rust" || envMode === "auto"
         const stateMode = root._nativeBackendState.trim()
-        return stateMode === "rust" || stateMode === "auto"
+        return stateMode.length === 0 || stateMode === "rust" || stateMode === "auto"
     }
 
     FileView {
@@ -176,14 +176,54 @@ Singleton {
         }
     }
 
+    readonly property string appliedThemeCachePath: {
+        const stateHome = String(Quickshell.env("XDG_STATE_HOME") ?? "").trim()
+        const base = stateHome.length > 0 ? stateHome : (Quickshell.env("HOME") + "/.local/state")
+        return base + "/alis/icon-theme-applied"
+    }
+    property string _appliedCacheKey: ""
+    property bool _appliedCacheLoaded: false
+
+    FileView {
+        id: appliedThemeCacheFile
+        path: root.appliedThemeCachePath
+        watchChanges: false
+        onLoaded: {
+            root._appliedCacheKey = appliedThemeCacheFile.text().trim()
+            root._appliedCacheLoaded = true
+        }
+        onLoadFailed: {
+            root._appliedCacheKey = ""
+            root._appliedCacheLoaded = true
+        }
+    }
+
+    function _desiredAppliedKey(themeName: string): string {
+        return String(themeName ?? "").trim() + "|" + (Appearance.m3colors.darkmode ? "dark" : "light")
+    }
+
+    function _recordAppliedTheme(themeName: string): void {
+        const key = root._desiredAppliedKey(themeName)
+        if (!key || key === root._appliedCacheKey)
+            return
+        root._appliedCacheKey = key
+        appliedThemeCacheFile.setText(key + "\n")
+    }
+
     Timer {
         id: startupIconApplyTimer
         property string themeName: ""
         interval: 900
         repeat: false
         onTriggered: {
-            if (startupIconApplyTimer.themeName.length > 0)
-                root._apply(startupIconApplyTimer.themeName, true)
+            if (startupIconApplyTimer.themeName.length === 0)
+                return
+            const desiredKey = root._desiredAppliedKey(startupIconApplyTimer.themeName)
+            if (root._appliedCacheLoaded && root._appliedCacheKey === desiredKey) {
+                root._log("[IconThemeService] Icon theme already synced for mode; skipping startup apply:", desiredKey)
+                return
+            }
+            root._apply(startupIconApplyTimer.themeName, true)
         }
     }
 
@@ -305,6 +345,7 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
                 root._log("[IconThemeService] native icon sync succeeded:", nativeIconSyncProc.themeName)
+                root._recordAppliedTheme(root.currentTheme || nativeIconSyncProc.themeName)
                 if (!nativeIconSyncProc.skipRestart)
                     root.queueRestart()
                 return
@@ -522,6 +563,8 @@ for subdir in ["gtk-3.0", "gtk-4.0"]:
         ]
         onExited: (exitCode, exitStatus) => {
             _log("[IconThemeService] GTK settings.ini updated:", exitCode === 0 ? "success" : "failed")
+            if (exitCode === 0)
+                root._recordAppliedTheme(root.currentTheme || gtkSettingsProc.themeName)
         }
     }
 
