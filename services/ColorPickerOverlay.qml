@@ -490,27 +490,48 @@ PanelWindow {
             }
         }
 
-        // ─── Compact Circular Auto-Themed Color Loupe + Right-Click Locked Studio Deck ───
+        // ─── Compact Circular Auto-Themed Color Loupe + Right-Click Locked Side Studio Deck ───
         Item {
             id: loupeCluster
             objectName: "colorPickerCircularPopup"
             visible: root.ready && root.isActiveOverlay
 
-            readonly property real circleDiameter: 176
-            readonly property real deckWidth: 196
-            readonly property real deckHeight: root.recallableRecents.length > 0 ? 74 : 54
-            readonly property real gapBetween: 6
-            readonly property real activeDeckExtent: root.loupeLocked ? (deckHeight + gapBetween) : 0
-            readonly property real clusterWidth: root.loupeLocked ? Math.max(circleDiameter, deckWidth) : circleDiameter
-            readonly property bool flipLeft: root.cursorX + clusterWidth + 20 > overlayRoot.width
-            readonly property bool flipAbove: root.cursorY + circleDiameter + activeDeckExtent + 20 > overlayRoot.height
+            readonly property real circleDiameter: 148
+            readonly property real lensDiameter: 92
+            readonly property real bezelRadius: 59
+            readonly property real deckWidth: 108
+            readonly property real deckHeight: root.recallableRecents.length > 0 ? 188 : 152
+            readonly property real gapBetween: 8
+            readonly property real clusterWidth: root.loupeLocked ? (circleDiameter + gapBetween + deckWidth) : circleDiameter
+            readonly property real clusterHeight: root.loupeLocked ? Math.max(circleDiameter, deckHeight) : circleDiameter
+
+            readonly property real circleScreenX: Math.max(10, Math.min(overlayRoot.width - circleDiameter - 10,
+                (root.cursorX + circleDiameter + 20 > overlayRoot.width)
+                    ? (root.cursorX - circleDiameter - 16)
+                    : (root.cursorX + 16)))
+            readonly property real circleScreenY: Math.max(10, Math.min(overlayRoot.height - circleDiameter - 10,
+                (root.cursorY + circleDiameter + 20 > overlayRoot.height)
+                    ? (root.cursorY - circleDiameter - 12)
+                    : (root.cursorY + 12)))
+            readonly property bool deckFitsRight: circleScreenX + circleDiameter + gapBetween + deckWidth <= overlayRoot.width - 10
+            readonly property bool deckFitsLeft: circleScreenX - gapBetween - deckWidth >= 10
+            readonly property bool deckOnLeft: root.loupeLocked && !deckFitsRight && deckFitsLeft
+
+            function bezelPoint(angleDeg: real, radiusPx: real): var {
+                const rad = angleDeg * Math.PI / 180
+                const half = circleDiameter * 0.5
+                return {
+                    x: half + Math.cos(rad) * radiusPx,
+                    y: half + Math.sin(rad) * radiusPx
+                }
+            }
 
             width: clusterWidth
-            height: circleDiameter + activeDeckExtent
+            height: clusterHeight
             x: Math.max(10, Math.min(overlayRoot.width - width - 10,
-                flipLeft ? (root.cursorX - width - 16) : (root.cursorX + 16)))
+                deckOnLeft ? (circleScreenX - gapBetween - deckWidth) : circleScreenX))
             y: Math.max(10, Math.min(overlayRoot.height - height - 10,
-                flipAbove ? (root.cursorY - height - 12) : (root.cursorY + 12)))
+                circleScreenY - Math.round((height - circleDiameter) * 0.5)))
 
             // Main Circular Loupe Body
             Rectangle {
@@ -518,8 +539,8 @@ PanelWindow {
                 objectName: "colorPickerCircularLoupe"
                 width: loupeCluster.circleDiameter
                 height: loupeCluster.circleDiameter
-                x: Math.round((loupeCluster.width - width) * 0.5)
-                y: (root.loupeLocked && loupeCluster.flipAbove) ? (loupeCluster.deckHeight + loupeCluster.gapBetween) : 0
+                x: (root.loupeLocked && loupeCluster.deckOnLeft) ? (loupeCluster.deckWidth + loupeCluster.gapBetween) : 0
+                y: Math.round((loupeCluster.height - height) * 0.5)
                 radius: width * 0.5
                 color: root.colLayer0
                 border.width: 3
@@ -546,18 +567,23 @@ PanelWindow {
                     border.color: Qt.alpha(root.colOutline, 0.72)
                 }
 
-                // Top bezel status strip: Zoom · Aperture · Lock (strictly within inner top chord)
-                Row {
-                    id: topBezelRow
-                    anchors.top: parent.top
-                    anchors.topMargin: 13
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 3
+                // Radial Top Arc Bezel Controls: Zoom · Aperture · Lock tilted along upper circular rim
+                Item {
+                    id: topBezelArc
+                    objectName: "colorPickerTopBezelArc"
+                    anchors.fill: parent
 
                     Rectangle {
-                        height: 14
+                        id: zoomBadge
+                        readonly property real angleDeg: root.loupeLocked ? -115 : -103
+                        readonly property var pt: loupeCluster.bezelPoint(angleDeg, loupeCluster.bezelRadius)
+                        height: 13
                         width: zoomBadgeText.implicitWidth + 7
-                        radius: 7
+                        radius: 6.5
+                        x: pt.x - width * 0.5
+                        y: pt.y - height * 0.5
+                        rotation: angleDeg + 90
+                        antialiasing: true
                         color: root.colLayer1
                         Text {
                             id: zoomBadgeText
@@ -581,9 +607,16 @@ PanelWindow {
                     }
 
                     Rectangle {
-                        height: 14
+                        id: avgBadge
+                        readonly property real angleDeg: root.loupeLocked ? -90 : -77
+                        readonly property var pt: loupeCluster.bezelPoint(angleDeg, loupeCluster.bezelRadius)
+                        height: 13
                         width: avgBadgeText.implicitWidth + 7
-                        radius: 7
+                        radius: 6.5
+                        x: pt.x - width * 0.5
+                        y: pt.y - height * 0.5
+                        rotation: angleDeg + 90
+                        antialiasing: true
                         color: root.sampleBoxSize > 1 ? root.colPrimary : root.colLayer1
                         Text {
                             id: avgBadgeText
@@ -607,10 +640,17 @@ PanelWindow {
                     }
 
                     Rectangle {
+                        id: lockBadge
                         visible: root.loupeLocked
-                        height: 14
+                        readonly property real angleDeg: -65
+                        readonly property var pt: loupeCluster.bezelPoint(angleDeg, loupeCluster.bezelRadius)
+                        height: 13
                         width: lockBadgeText.implicitWidth + 6
-                        radius: 7
+                        radius: 6.5
+                        x: pt.x - width * 0.5
+                        y: pt.y - height * 0.5
+                        rotation: angleDeg + 90
+                        antialiasing: true
                         color: root.colSecondary
                         Text {
                             id: lockBadgeText
@@ -631,19 +671,18 @@ PanelWindow {
                     }
                 }
 
-                // Circularly Masked Magnifier Lens (100x100 Canvas with native 2D circular clip — crisp on both GPU & software)
+                // Circularly Masked Magnifier Lens (92x92 Canvas with native 2D circular clip — concentric with bezel ring)
                 Item {
                     id: lensMaskContainer
-                    width: 100
-                    height: 100
+                    width: loupeCluster.lensDiameter
+                    height: loupeCluster.lensDiameter
                     anchors.centerIn: parent
-                    anchors.verticalCenterOffset: -2
 
                     Canvas {
                         id: magnifier
                         objectName: "colorPickerMagnifierCanvas"
-                        width: 100
-                        height: 100
+                        width: loupeCluster.lensDiameter
+                        height: loupeCluster.lensDiameter
                         antialiasing: true
                         onPaint: {
                             if (!sampler.ready) return
@@ -713,39 +752,41 @@ PanelWindow {
                     }
                 }
 
-                // Bottom bezel readout pill: swatch + compact HEX (stays 100% inside inner circle chord with zero clipping)
-                Rectangle {
+                // Bottom curved arc bezel readout: swatch + per-character #RRGGBB tangent to circular rim
+                Item {
                     id: loupeReadoutPill
                     objectName: "colorPickerLoupeReadoutPill"
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 15
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    height: 18
-                    width: Math.min(76, readoutRow.implicitWidth + 10)
-                    radius: 9
-                    color: root.colLayer1
-                    border.width: 1
-                    border.color: Qt.alpha(root.colOutline, 0.7)
+                    anchors.fill: parent
 
-                    Row {
-                        id: readoutRow
-                        anchors.centerIn: parent
-                        spacing: 4
+                    readonly property string hexStr: root.sampledColor || "#000000"
+                    readonly property real stepDeg: 8.8
+                    readonly property real arcSpan: hexStr.length
 
-                        Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 8
-                            height: 8
-                            radius: 4
-                            color: root.sampledColor || "transparent"
-                            border.width: 1
-                            border.color: Qt.alpha(root.colOnLayer0, 0.6)
-                        }
+                    Rectangle {
+                        readonly property real angleDeg: 90 + (loupeReadoutPill.arcSpan * 0.5) * loupeReadoutPill.stepDeg
+                        readonly property var pt: loupeCluster.bezelPoint(angleDeg, loupeCluster.bezelRadius)
+                        width: 9
+                        height: 9
+                        radius: 4.5
+                        x: pt.x - width * 0.5
+                        y: pt.y - height * 0.5
+                        color: root.sampledColor || "transparent"
+                        border.width: 1
+                        border.color: Qt.alpha(root.colOnLayer0, 0.7)
+                    }
 
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: root.sampledColor || "#000000"
-                            color: root.colOnLayer0
+                    Repeater {
+                        model: loupeReadoutPill.hexStr.length
+                        delegate: Text {
+                            required property int index
+                            readonly property real angleDeg: 90 + (loupeReadoutPill.arcSpan * 0.5 - 1 - index) * loupeReadoutPill.stepDeg
+                            readonly property var pt: loupeCluster.bezelPoint(angleDeg, loupeCluster.bezelRadius)
+                            text: loupeReadoutPill.hexStr.charAt(index)
+                            x: pt.x - width * 0.5
+                            y: pt.y - height * 0.5
+                            rotation: angleDeg - 90
+                            antialiasing: true
+                            color: index === 0 ? root.colPrimary : root.colOnLayer0
                             font.pixelSize: 9
                             font.weight: Font.Bold
                             font.family: "monospace"
@@ -753,7 +794,10 @@ PanelWindow {
                     }
 
                     MouseArea {
-                        anchors.fill: parent
+                        x: circularLoupe.width * 0.5 - 48
+                        y: circularLoupe.height - 30
+                        width: 96
+                        height: 26
                         enabled: root.loupeLocked
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         cursorShape: Qt.PointingHandCursor
@@ -765,15 +809,15 @@ PanelWindow {
                 }
             }
 
-            // ─── Compact Right-Click Locked Studio Deck (Full Readout · WCAG · Harmonies · Recent Recall) ───
+            // ─── Compact Right-Click Locked Vertical Side Studio Deck ───
             Rectangle {
                 id: studioDeck
                 objectName: "colorPickerStudioDeck"
                 visible: root.loupeLocked
                 width: loupeCluster.deckWidth
                 height: loupeCluster.deckHeight
-                x: Math.round((loupeCluster.width - width) * 0.5)
-                y: loupeCluster.flipAbove ? 0 : (loupeCluster.circleDiameter + loupeCluster.gapBetween)
+                x: loupeCluster.deckOnLeft ? 0 : (loupeCluster.circleDiameter + loupeCluster.gapBetween)
+                y: Math.round((loupeCluster.height - height) * 0.5)
                 radius: 14
                 color: root.colLayer0
                 border.width: 1
@@ -793,17 +837,17 @@ PanelWindow {
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 7
-                    spacing: 4
+                    spacing: 5
 
-                    // Row 1: Format badge + full formatted value (click to cycle format) + pixel coordinates
+                    // Section 1: Format badge (left) + Pixel coords (right)
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 4
 
                         Rectangle {
-                            height: 18
+                            height: 17
                             implicitWidth: deckFmtText.implicitWidth + 8
-                            radius: 9
+                            radius: 8.5
                             color: root.colPrimary
                             Text {
                                 id: deckFmtText
@@ -826,58 +870,92 @@ PanelWindow {
                             }
                         }
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            height: 18
-                            radius: 9
-                            color: root.colLayer1
-
-                            Text {
-                                anchors.fill: parent
-                                anchors.leftMargin: 5
-                                anchors.rightMargin: 5
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                                text: root.formattedColor || root.sampledColor
-                                color: root.colOnLayer0
-                                font.pixelSize: 9
-                                font.weight: Font.Bold
-                                font.family: "monospace"
-                                elide: Text.ElideRight
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                enabled: root.loupeLocked
-                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: event => {
-                                    if (event.button === Qt.RightButton) { root.loupeLocked = false; return }
-                                    root._cycleFormat()
-                                }
-                            }
-                        }
+                        Item { Layout.fillWidth: true }
 
                         Text {
                             id: coordText
                             Layout.alignment: Qt.AlignVCenter
+                            Layout.maximumWidth: 52
                             text: root.currentPixelX >= 0 ? `${root.currentPixelX},${root.currentPixelY}` : ""
                             color: root.colSubtext
                             font.pixelSize: 8
                             font.family: "monospace"
+                            elide: Text.ElideLeft
                         }
                     }
 
-                    // Row 2: WCAG contrast badges + 5 live harmony swatches (click or keys 1-5)
+                    // Section 2: Stacked Swatch Preview + Active Formatted Value
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 38
+                        radius: 8
+                        color: root.colLayer1
+                        border.width: 1
+                        border.color: Qt.alpha(root.colOutline, 0.55)
+                        clip: true
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            spacing: 0
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 16
+                                color: root.sampledColor || root.colPrimary
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    enabled: root.loupeLocked
+                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: event => {
+                                        if (event.button === Qt.RightButton) { root.loupeLocked = false; return }
+                                        if (root.sampledColor) root._commitPick(root.sampledColor)
+                                    }
+                                }
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+
+                                Text {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 4
+                                    anchors.rightMargin: 4
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: root.formattedColor || root.sampledColor
+                                    color: root.colOnLayer0
+                                    font.pixelSize: 8
+                                    font.weight: Font.Bold
+                                    font.family: "monospace"
+                                    elide: Text.ElideRight
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    enabled: root.loupeLocked
+                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: event => {
+                                        if (event.button === Qt.RightButton) { root.loupeLocked = false; return }
+                                        root._cycleFormat()
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Section 3: Equal-width WCAG contrast pair
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 3
+                        spacing: 4
 
                         Rectangle {
-                            height: 17
-                            implicitWidth: wcagWText.implicitWidth + 6
-                            radius: 8.5
+                            Layout.fillWidth: true
+                            height: 18
+                            radius: 7
                             color: root.colLayer2
                             Text {
                                 id: wcagWText
@@ -891,9 +969,9 @@ PanelWindow {
                         }
 
                         Rectangle {
-                            height: 17
-                            implicitWidth: wcagBText.implicitWidth + 6
-                            radius: 8.5
+                            Layout.fillWidth: true
+                            height: 18
+                            radius: 7
                             color: root.colLayer2
                             Text {
                                 id: wcagBText
@@ -905,19 +983,31 @@ PanelWindow {
                                 font.family: "monospace"
                             }
                         }
+                    }
 
-                        Item { Layout.fillWidth: true }
+                    // Section 4: 5 live harmony swatches (keys 1-5)
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+
+                        Text {
+                            text: "Harmonies"
+                            color: root.colSubtext
+                            font.pixelSize: 8
+                            font.weight: Font.DemiBold
+                            font.family: "monospace"
+                        }
 
                         Row {
+                            Layout.alignment: Qt.AlignHCenter
                             spacing: 3
-                            Layout.alignment: Qt.AlignVCenter
 
                             Repeater {
                                 model: root.harmonySwatches
                                 delegate: Rectangle {
                                     required property var modelData
-                                    width: 18
-                                    height: 17
+                                    width: 16
+                                    height: 18
                                     radius: 5
                                     color: modelData.hex
                                     border.width: harmonyMouse.containsMouse && root.loupeLocked ? 2 : 1
@@ -950,34 +1040,31 @@ PanelWindow {
                         }
                     }
 
-                    // Row 3 (when history exists): Interactive Recent Colors recall strip
-                    RowLayout {
+                    // Section 5 (when history exists): Interactive Recent Colors recall strip (keys 6-0)
+                    ColumnLayout {
                         objectName: "colorPickerRecentRow"
                         visible: root.recallableRecents.length > 0
                         Layout.fillWidth: true
                         spacing: 3
 
                         Text {
-                            Layout.alignment: Qt.AlignVCenter
                             text: "Recent"
                             color: root.colSubtext
-                            font.pixelSize: 9
+                            font.pixelSize: 8
                             font.weight: Font.DemiBold
                             font.family: "monospace"
                         }
 
-                        Item { Layout.fillWidth: true }
-
                         Row {
+                            Layout.alignment: Qt.AlignHCenter
                             spacing: 3
-                            Layout.alignment: Qt.AlignVCenter
 
                             Repeater {
                                 model: root.recallableRecents
                                 delegate: Rectangle {
                                     required property var modelData
-                                    width: 22
-                                    height: 17
+                                    width: 16
+                                    height: 18
                                     radius: 5
                                     color: modelData.hex
                                     border.width: recentMouse.containsMouse && root.loupeLocked ? 2 : 1

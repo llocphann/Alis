@@ -155,7 +155,7 @@ Item {
         return root.cavaAdjustedGeometry(rec).protrudeOffset
     }
     property var measuredExtents: ({})
-    readonly property var configuredLayoutOptions: Object.assign({},launcherModes,draftOptions ?? Layout.optionsForOutput(Config.options?.abyss?.modules,outputName),{extents:measuredExtents,editing:editing,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius})
+    readonly property var configuredLayoutOptions: Object.assign({},launcherModes,draftOptions ?? Layout.optionsForOutput(Config.options?.abyss?.modules,outputName),{extents:measuredExtents,editing:editing,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius,cavaWidth:Math.max(48,Math.min(480,Number(Config.options?.bar?.cava?.width ?? 120))),cavaHeight:Math.max(10,Math.min(30,Number(Config.options?.bar?.cava?.height ?? 22)))})
     readonly property var layoutOptions: Object.assign({},configuredLayoutOptions,
         widthMorphActive ? {_widthFrame:presentedFrame} : {})
     property var targetFrame: null

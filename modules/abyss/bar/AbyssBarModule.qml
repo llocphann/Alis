@@ -125,16 +125,14 @@ Item {
         anchors.fill: parent
         visible: root.detached && !root.cornerWrap && root.contentAvailable
         radius: Math.min(width, height) * 0.5
-        readonly property real tonalDir: Appearance.colors.colLayer1Base.hslLightness > 0.86 ? -1.0 : 1.0
-        readonly property color steppedBase: ColorUtils.tonalStep(
-            Appearance.colors.colLayer1Base,
-            tonalDir * (root.hovered ? 0.042 : 0.022),
-            1.06)
-        color: Qt.alpha(steppedBase, Math.max(0.78, AbyssStyle.contentOpacity))
+        readonly property real surfaceAlpha: AbyssStyle.surfaceOpacity >= 0.999 ? 1.0 : AbyssStyle.surfaceOpacity
+        color: root.hovered
+            ? Qt.alpha(ColorUtils.mix(AbyssStyle.surfaceDeep, AbyssStyle.accent, 0.08), detachedPillBg.surfaceAlpha)
+            : AbyssStyle.surface
         border.width: 1
         border.color: root.hovered
             ? Qt.alpha(AbyssStyle.accent, 0.56)
-            : Qt.alpha(Appearance.colors.colOutlineVariant, Appearance.m3colors.darkmode ? 0.34 : 0.42)
+            : Qt.alpha(AbyssStyle.specular, Appearance.m3colors.darkmode ? 0.16 : 0.24)
         Behavior on color { enabled: AbyssStyle.motionEnabled; ColorAnimation { duration: AbyssStyle.motionFast } }
         Behavior on border.color { enabled: AbyssStyle.motionEnabled; ColorAnimation { duration: AbyssStyle.motionFast } }
 

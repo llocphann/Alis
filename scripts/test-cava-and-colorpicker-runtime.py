@@ -198,15 +198,35 @@ ShellRoot {
                 root.check(cp.recallableRecents[0].key === "6" && cp.recallableRecents[0].hex === "#FF5500", "Recent key 6 mismatch")
                 root.check(cp.recallableRecents[4].key === "0" && cp.recallableRecents[4].hex === "#CC44AA", "Recent key 0 mismatch")
 
-                // Right-click locks loupe & opens studioDeck (revealing recentRow); right-click again unlocks & closes deck
+                // Right-click locks loupe & opens rotated vertical side studioDeck (right near left edge, left near right edge); right-click again unlocks & closes deck
+                const circularLoupe = findByObjectName(overlayItem, "colorPickerCircularLoupe")
+                const topBezelArc = findByObjectName(overlayItem, "colorPickerTopBezelArc")
+                root.check(circularLoupe !== null && circularLoupe.width <= 156 && circularLoupe.height === circularLoupe.width,
+                    "Outer circle must be compact (<= 156px) and circular, got " + (circularLoupe ? circularLoupe.width : "null"))
+                root.check(topBezelArc !== null, "Circular radial top bezel arc item missing")
+
                 mouseClick(overlayItem, 120, 120, Qt.RightButton)
                 wait(20)
                 root.check(cp.loupeLocked === true && studioDeck.visible === true && recentRow.visible === true,
                     "Right-click must automatically lock loupe and reveal studioDeck & recentRow")
+                root.check(studioDeck.height > studioDeck.width && studioDeck.width <= 116,
+                    "Locked popup must be rotated vertical side card (height > width), got " + studioDeck.width + "x" + studioDeck.height)
+                root.check(studioDeck.x >= circularLoupe.x + circularLoupe.width,
+                    "On left cursor, vertical side popup must open cleanly to the RIGHT of circular loupe")
                 mouseClick(overlayItem, 120, 120, Qt.RightButton)
                 wait(20)
                 root.check(cp.loupeLocked === false && studioDeck.visible === false && root.cancelledEvents.length === 0,
                     "Second right-click must unlock & hide studioDeck without cancelling Color Picker")
+
+                // Near right screen edge, side popup automatically flips to LEFT of circular loupe without screen overflow
+                mouseClick(overlayItem, 760, 120, Qt.RightButton)
+                wait(20)
+                root.check(cp.loupeLocked === true && studioDeck.visible === true
+                    && (studioDeck.x + studioDeck.width <= circularLoupe.x)
+                    && popupItem.x >= 0 && (popupItem.x + popupItem.width <= overlayItem.width),
+                    "Near right edge, vertical side popup must place cleanly on the LEFT of circular loupe inside bounds")
+                mouseClick(overlayItem, 760, 120, Qt.RightButton)
+                wait(20)
 
                 // Right-click lock -> 1st Esc unlocks & closes popup -> 2nd Esc cancels Color Picker
                 const prevTcParent = tc.parent

@@ -152,17 +152,24 @@ function detachedEdgeOffset(edge, options, fontScale, attachedStripDepth) {
 }
 function cornerWrapMetrics(p, width, height, options, fontScale) {
     var fs = bounded(fontScale, 1, 0.7, 2);
-    var size = moduleSize(p, options);
+    var isCava = p.kind === "cava";
+    var size = isCava
+        ? (p.customSize ? p.size : edgeSize(options, p.edge) * bounded(options?.size, 1, 0.6, 1.8))
+        : moduleSize(p, options);
     var measured = options?.extents?.[p.id];
-    var natural = Number.isFinite(measured) && !(options?.editing && measured < 1)
-        ? Math.max(0, measured)
-        : extent(p.kind, false) * fs;
-    var designSpan = Math.max(40 * fs * size, natural * size);
-    var thickness = Math.max(24 * fs, 32 * fs * size);
+    var natural = isCava
+        ? bounded(options?.cavaWidth, extent("cava", false), 48, 480) * fs
+        : (Number.isFinite(measured) && !(options?.editing && measured < 1)
+            ? Math.max(0, measured)
+            : extent(p.kind, false) * fs);
+    var designSpan = Math.max((isCava ? 48 : 40) * fs * size, natural * size);
+    var thickness = isCava
+        ? Math.max(28 * fs, (bounded(options?.cavaHeight, 22, 10, 30) + 10) * fs, 32 * fs * size)
+        : Math.max(24 * fs, 32 * fs * size);
     var contentScale = Math.max(0.6, Math.min(1.8, thickness / Math.max(1, 32 * fs)));
     var inset = 8;
-    var maxArmH = Math.max(thickness + 16, Math.min(width * 0.42, width - inset * 2));
-    var maxArmV = Math.max(thickness + 16, Math.min(height * 0.42, height - inset * 2));
+    var maxArmH = Math.max(thickness + 16, Math.min(width * 0.46, width - inset * 2));
+    var maxArmV = Math.max(thickness + 16, Math.min(height * 0.46, height - inset * 2));
     var baseArc = Math.max(14, bounded(options?.cornerRadius, 28, 12, 64) * 0.72);
     var halfT = Math.max(12, thickness * 0.5);
     var endPad = Math.max(8, halfT * 0.55);
@@ -171,7 +178,11 @@ function cornerWrapMetrics(p, width, height, options, fontScale) {
         : (p.kind === "shellUpdate"
             ? Math.ceil(halfT + baseArc + endPad * 0.5 + 40 * fs * contentScale + 8)
             : 0);
-    var desiredArm = Math.max(thickness + 28 * fs * size, minLabelArm, Math.round(designSpan * 0.56 + thickness * 0.48));
+    var minCleanArm = Math.max(76, Math.ceil(thickness + 16 + 26));
+    var rawDesiredArm = isCava
+        ? Math.ceil((designSpan + 2 * (endPad + halfT) + (2 - Math.PI * 0.5) * baseArc) * 0.5)
+        : Math.round(designSpan * 0.56 + thickness * 0.48);
+    var desiredArm = Math.max(thickness + 28 * fs * size, minCleanArm, minLabelArm, rawDesiredArm);
     var armH = Math.min(maxArmH, desiredArm);
     var armV = Math.min(maxArmV, desiredArm);
     var arcRadius = Math.max(14, Math.min(Math.min(armH, armV) - thickness * 0.5, baseArc));
@@ -806,14 +817,19 @@ function localSurfaces(records, width, height, options, fontScale, minimum) {
         var vSurface = ce.vertical === "left"
             ? {x: -50, y: ce.vStart ? -50 : height - armV, width: bandDepth + 50, height: armV + 50}
             : {x: width - bandDepth, y: ce.vStart ? -50 : height - armV, width: bandDepth + 50, height: armV + 50};
-        var hRec = {ownerId: p.id, kind: p.kind, edge: ce.horizontal, surface: hSurface, content: p.wrapHorizontalRect || p.content,
-            span: armH, along: ce.hStart ? 0 : width - armH, depth: bandDepth, progress: 1, mass: 1, cornerWrapArm: true};
-        var vRec = {ownerId: p.id, kind: p.kind, edge: ce.vertical, surface: vSurface, content: p.wrapVerticalRect || p.content,
-            span: armV, along: ce.vStart ? 0 : height - armV, depth: bandDepth, progress: 1, mass: 1, cornerWrapArm: true};
+        var defaultTipR = Math.round(bounded(options?.cornerRadius, 28, 12, 64) * 0.68);
         var hRadius = options?.edgeModuleRadii?.[ce.horizontal];
-        if (Number.isFinite(Number(hRadius)) && Number(hRadius) >= 0) hRec.radius = bounded(hRadius, 0, 0, 64);
         var vRadius = options?.edgeModuleRadii?.[ce.vertical];
-        if (Number.isFinite(Number(vRadius)) && Number(vRadius) >= 0) vRec.radius = bounded(vRadius, 0, 0, 64);
+        var rawHRad = (Number.isFinite(Number(hRadius)) && Number(hRadius) >= 0) ? bounded(hRadius, 0, 0, 64) : defaultTipR;
+        var rawVRad = (Number.isFinite(Number(vRadius)) && Number(vRadius) >= 0) ? bounded(vRadius, 0, 0, 64) : defaultTipR;
+        var maxTipH = Math.max(8, Math.floor((armH - bandDepth) * 0.62));
+        var maxTipV = Math.max(8, Math.floor((armV - bandDepth) * 0.62));
+        var hRec = {ownerId: p.id, kind: p.kind, edge: ce.horizontal, surface: hSurface, content: p.wrapHorizontalRect || p.content,
+            span: armH, along: ce.hStart ? 0 : width - armH, depth: bandDepth, progress: 1, mass: 1, cornerWrapArm: true,
+            radius: Math.min(rawHRad, maxTipH)};
+        var vRec = {ownerId: p.id, kind: p.kind, edge: ce.vertical, surface: vSurface, content: p.wrapVerticalRect || p.content,
+            span: armV, along: ce.vStart ? 0 : height - armV, depth: bandDepth, progress: 1, mass: 1, cornerWrapArm: true,
+            radius: Math.min(rawVRad, maxTipV)};
         cornerWrapSurfaces.push(hRec, vRec);
     });
     var linearRecords = records.filter(function(p) { return p.cornerWrap !== true; });
@@ -872,7 +888,35 @@ function localSurfaces(records, width, height, options, fontScale, minimum) {
             previous.surface={x:x,y:y,width:Math.max(a.x+a.width,b.x+b.width)-x,height:Math.max(a.y+a.height,b.y+b.height)-y};
         } else result.push(record);
     });
-    return cornerWrapSurfaces.concat(result);
+    // Weld nearby joined linear strips seamlessly onto matching corner-wrap arms.
+    var remaining = [];
+    result.forEach(function(record) {
+        var allowJoin = (options?.edgeWidthAffectsModules?.[record.edge]===false || edgeThickness(options,record.edge)===0)
+            && options?.edgeJoinModules?.[record.edge]===true;
+        var arm = allowJoin ? cornerWrapSurfaces.find(function(cw) {
+            if (!cw || cw.cornerWrapArm !== true || cw.edge !== record.edge) return false;
+            var gapA = record.along - (cw.along + cw.span);
+            var gapB = cw.along - (record.along + record.span);
+            return (record.along >= cw.along - 4 && gapA <= nearby)
+                || (cw.along >= record.along - 4 && gapB <= nearby);
+        }) : null;
+        if (arm) {
+            var newAlong = Math.min(arm.along, record.along);
+            arm.span = Math.max(arm.along + arm.span, record.along + record.span) - newAlong;
+            arm.along = newAlong;
+            arm.depth = Math.max(arm.depth, record.depth);
+            var sa = arm.surface, sb = record.surface;
+            var sx = Math.min(sa.x, sb.x), sy = Math.min(sa.y, sb.y);
+            arm.surface = {x: sx, y: sy, width: Math.max(sa.x + sa.width, sb.x + sb.width) - sx, height: Math.max(sa.y + sa.height, sb.y + sb.height) - sy};
+            var rawEdgeRad = (Number.isFinite(Number(record.radius)) && Number(record.radius) >= 0)
+                ? bounded(record.radius, 0, 0, 64)
+                : Math.round(bounded(options?.cornerRadius, 28, 12, 64) * 0.68);
+            arm.radius = Math.min(rawEdgeRad, Math.max(8, Math.floor((arm.span - arm.depth) * 0.62)));
+        } else {
+            remaining.push(record);
+        }
+    });
+    return cornerWrapSurfaces.concat(remaining);
 }
 function clearanceInsets(insets, localRecords, edge, along, span, popupOwnerKind) {
     var result=Object.assign({},insets);

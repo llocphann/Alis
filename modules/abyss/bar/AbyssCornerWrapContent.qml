@@ -147,10 +147,27 @@ Item {
         Item {
             id: cavaWrap
             anchors.fill: parent
-            readonly property int barCount: Math.max(10, Math.min(32, Math.floor(root.totalPathLength / 7)))
-            readonly property real maxBarHeight: Math.max(10, Math.min(24, root.wrapThickness * 0.78))
-            readonly property bool audioActive: MprisController.anyAudioPlaying || Audio.hasActivePlayback
+            objectName: "cornerWrapCavaModule"
+            readonly property int configuredWidth: Math.max(48, Math.min(480, Number(Config.options?.bar?.cava?.width ?? 120)))
+            readonly property int configuredHeight: Math.max(10, Math.min(30, Number(Config.options?.bar?.cava?.height ?? 22)))
+            readonly property int barSpacing: Math.max(1, Math.min(6, Number(Config.options?.bar?.cava?.barSpacing ?? 2)))
+            readonly property int barRadius: Math.max(0, Math.min(6, Number(Config.options?.bar?.cava?.barRadius ?? 2)))
+            readonly property bool mirrorBars: Boolean(Config.options?.bar?.cava?.mirror ?? false)
             readonly property bool stereoSource: Config.options?.appearance?.cava?.stereo ?? true
+            readonly property int configuredBarCount: Math.max(0, Math.min(200, Number(Config.options?.appearance?.cava?.bars ?? 0)))
+
+            readonly property real pathSpan: Math.max(24, root.totalPathLength)
+            readonly property int autoBarCount: Math.max(6, Math.min(72, Math.floor((pathSpan + barSpacing * root.contentScale) / ((4 + barSpacing) * root.contentScale))))
+            readonly property int effectiveBarCount: configuredBarCount > 0
+                ? Math.max(1, Math.min(configuredBarCount, Math.max(1, Math.floor((pathSpan + barSpacing) / (2 + barSpacing)))))
+                : autoBarCount
+            readonly property real barWidth: {
+                const count = Math.max(1, effectiveBarCount)
+                const gapTotal = Math.max(0, count - 1) * barSpacing * Math.min(1.2, root.contentScale)
+                return Math.max(1.5, Math.min(10, (pathSpan - gapTotal) / count))
+            }
+            readonly property real maxBarHeight: Math.max(8, Math.min(root.wrapThickness * 0.86, configuredHeight * root.contentScale))
+            readonly property bool audioActive: MprisController.anyAudioPlaying || Audio.hasActivePlayback
             readonly property var paletteColors: {
                 const pal = CavaTheme.visualizerColors
                 if (pal && pal.length > 0) return pal
@@ -171,35 +188,83 @@ Item {
                 return Qt.rgba(a.r + (b.r - a.r) * f, a.g + (b.g - a.g) * f, a.b + (b.b - a.b) * f, a.a + (b.a - a.a) * f)
             }
 
+            function computeNormalizedBars(pts, ceilingValue, barCount, isStereo, signalActive): var {
+                const count = Math.max(1, Number(barCount) || 1)
+                const out = new Array(count)
+                const len = pts ? pts.length : 0
+                if (!signalActive || len <= 0) {
+                    out.fill(0)
+                    return out
+                }
+                const ceiling = Math.max(1, Number(ceilingValue) || 20)
+                const foldStereo = Boolean(isStereo) && len >= 2
+                const freqBins = foldStereo ? Math.floor(len / 2) : len
+                const rightOffset = foldStereo ? (len - freqBins) : 0
+
+                function readBin(k) {
+                    if (foldStereo) {
+                        const leftSample = Math.max(0, Number(pts[freqBins - 1 - k] || 0))
+                        const rightSample = Math.max(0, Number(pts[rightOffset + k] || 0))
+                        return (leftSample + rightSample) * 0.5
+                    }
+                    return Math.max(0, Number(pts[k] || 0))
+                }
+
+                const upsample = count > freqBins && freqBins > 1
+                for (let idx = 0; idx < count; ++idx) {
+                    let level = 0
+                    if (upsample) {
+                        const pos = (idx / Math.max(1, count - 1)) * (freqBins - 1)
+                        const lo = Math.floor(pos)
+                        const hi = Math.min(freqBins - 1, lo + 1)
+                        const frac = pos - lo
+                        level = readBin(lo) * (1 - frac) + readBin(hi) * frac
+                    } else {
+                        const binStart = Math.floor((idx * freqBins) / count)
+                        const binEnd = Math.max(binStart + 1, Math.floor(((idx + 1) * freqBins) / count))
+                        for (let k = binStart; k < binEnd && k < freqBins; ++k) {
+                            const v = readBin(k)
+                            if (v > level) level = v
+                        }
+                    }
+                    const norm = Math.max(0, Math.min(1, level / ceiling))
+                    out[idx] = norm > 0.002 ? Math.pow(norm, 0.82) : 0
+                }
+                return out
+            }
+
             CavaProcess {
                 id: cornerCavaProc
                 active: cavaWrap.visible && cavaWrap.audioActive
-                sampleCount: Math.max(32, cavaWrap.barCount * (cavaWrap.stereoSource ? 2 : 1))
+                sampleCount: Math.max(32, cavaWrap.effectiveBarCount * (cavaWrap.stereoSource ? 2 : 1))
+            }
+
+            readonly property var targetNormalized: {
+                if (!cavaWrap.visible || !cornerCavaProc.audioSignalActive)
+                    return cavaWrap.computeNormalizedBars([], 20, cavaWrap.effectiveBarCount, cavaWrap.stereoSource, false)
+                return cavaWrap.computeNormalizedBars(
+                    cornerCavaProc.points,
+                    cornerCavaProc.normalizationCeiling,
+                    cavaWrap.effectiveBarCount,
+                    cavaWrap.stereoSource,
+                    true
+                )
             }
 
             Repeater {
-                model: cavaWrap.barCount
+                model: cavaWrap.effectiveBarCount
                 delegate: Item {
                     id: barNode
                     required property int index
-                    readonly property real t: cavaWrap.barCount > 1 ? index / (cavaWrap.barCount - 1) : 0.5
+                    readonly property real t: cavaWrap.effectiveBarCount > 1 ? index / (cavaWrap.effectiveBarCount - 1) : 0.5
                     readonly property var pt: root.pointAt(t)
-                    readonly property real level: {
-                        if (!cavaWrap.audioActive) return 0
-                        const pts = cornerCavaProc.points
-                        const len = pts ? pts.length : 0
-                        if (len <= 0) return 0
-                        const foldStereo = cavaWrap.stereoSource && len >= 2
-                        const freqBins = foldStereo ? Math.floor(len / 2) : len
-                        const rightOffset = foldStereo ? (len - freqBins) : 0
-                        const k = Math.min(freqBins - 1, Math.floor(t * freqBins))
-                        const raw = foldStereo
-                            ? (Math.max(0, Number(pts[freqBins - 1 - k] ?? 0)) + Math.max(0, Number(pts[rightOffset + k] ?? 0))) * 0.5
-                            : Math.max(0, Number(pts[k] ?? 0))
-                        const norm = Math.max(0, Math.min(1, raw / Math.max(1, cornerCavaProc.normalizationCeiling || 20)))
-                        return norm > 0.002 ? Math.pow(norm, 0.82) : 0
+                    property real level: (index < cavaWrap.targetNormalized.length)
+                        ? cavaWrap.targetNormalized[index] : 0
+                    Behavior on level {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: 60; easing.type: Easing.OutQuad }
                     }
-                    readonly property real barH: 2.5 + level * (cavaWrap.maxBarHeight - 2.5)
+                    readonly property real barH: Math.max(2, Math.round(2 + Math.max(0, Math.min(1, level)) * Math.max(2, cavaWrap.maxBarHeight - 2)))
                     x: pt.x
                     y: pt.y
                     width: 0
@@ -207,17 +272,15 @@ Item {
                     rotation: pt.angle
 
                     Rectangle {
-                        x: -1.5
-                        y: -cavaWrap.maxBarHeight * 0.36
-                        width: 3
+                        x: -cavaWrap.barWidth * 0.5
+                        y: cavaWrap.mirrorBars
+                            ? (-barNode.barH * 0.5)
+                            : (cavaWrap.maxBarHeight * 0.44 - barNode.barH)
+                        width: cavaWrap.barWidth
                         height: barNode.barH
-                        radius: 1.5
-                        color: cavaWrap.barColorForIndex(barNode.index, cavaWrap.barCount)
-                        opacity: cavaWrap.audioActive ? (0.45 + barNode.level * 0.55) : 0.38
-                        Behavior on height {
-                            enabled: Appearance.animationsEnabled
-                            NumberAnimation { duration: 60; easing.type: Easing.OutQuad }
-                        }
+                        radius: Math.min(cavaWrap.barWidth * 0.5, cavaWrap.barRadius * root.contentScale)
+                        color: cavaWrap.barColorForIndex(barNode.index, cavaWrap.effectiveBarCount)
+                        opacity: cornerCavaProc.audioSignalActive ? 0.96 : 0.34
                     }
                 }
             }

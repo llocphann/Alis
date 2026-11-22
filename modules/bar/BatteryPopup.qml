@@ -6,7 +6,6 @@ import qs.modules.common.functions
 import qs.services
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Services.UPower
 
 StyledPopup {
     id: root
@@ -38,7 +37,6 @@ StyledPopup {
     readonly property real tonalDir: root.colBase.hslLightness > 0.86 ? -1.0 : 1.0
     readonly property color colTier1: ColorUtils.tonalStep(root.colBase, root.tonalDir * 0.022, 1.04)
     readonly property color colTier2: ColorUtils.tonalStep(root.colBase, root.tonalDir * 0.044, 1.07)
-    readonly property color colTier2Hover: ColorUtils.tonalStep(root.colBase, root.tonalDir * 0.066, 1.09)
     readonly property color colTrack: ColorUtils.tonalStep(root.colBase, root.tonalDir * 0.088, 1.06)
     readonly property color colOutline: ColorUtils.applyAlpha(ColorUtils.tonalStep(root.colBase, root.tonalDir * 0.16, 1.08), 0.32)
 
@@ -50,10 +48,6 @@ StyledPopup {
             return Appearance.colors.colTertiary
         return Appearance.colors.colPrimary
     }
-    readonly property color activePillBg: Appearance.colors.colPrimary
-    readonly property color activePillFg: ColorUtils.ensureReadable(
-        Appearance.colors.colOnPrimary, root.activePillBg, 5.0
-    )
 
     readonly property string batteryGlyph: {
         if (Battery.isCharging) return "battery_charging_full"
@@ -471,78 +465,6 @@ StyledPopup {
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         color: Appearance.colors.colSubtext
                         elide: Text.ElideRight
-                    }
-                }
-            }
-        }
-
-        // ─── Power Profile Switcher (Layer 1) ───
-        Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: 36
-            radius: Appearance.rounding.small
-            color: root.colTier1
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: 4
-                spacing: 4
-
-                Repeater {
-                    model: PowerProfiles.hasPerformanceProfile
-                        ? [
-                            { profile: PowerProfile.PowerSaver, icon: "energy_savings_leaf", label: Translation.tr("Saver") },
-                            { profile: PowerProfile.Balanced, icon: "balance", label: Translation.tr("Balanced") },
-                            { profile: PowerProfile.Performance, icon: "speed", label: Translation.tr("Perf") }
-                        ]
-                        : [
-                            { profile: PowerProfile.PowerSaver, icon: "energy_savings_leaf", label: Translation.tr("Saver") },
-                            { profile: PowerProfile.Balanced, icon: "balance", label: Translation.tr("Balanced") }
-                        ]
-
-                    delegate: Rectangle {
-                        id: profilePill
-                        required property var modelData
-                        readonly property bool active: PowerProfiles.profile === modelData.profile
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        radius: Math.max(4, Appearance.rounding.small - 3)
-                        color: active
-                            ? root.activePillBg
-                            : (pillMouse.containsMouse ? root.colTier2Hover : "transparent")
-
-                        Behavior on color {
-                            enabled: Appearance.animationsEnabled
-                            ColorAnimation { duration: 120 }
-                        }
-
-                        Row {
-                            anchors.centerIn: parent
-                            spacing: 4
-
-                            MaterialSymbol {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: profilePill.modelData.icon
-                                iconSize: 14
-                                color: profilePill.active ? root.activePillFg : Appearance.colors.colOnLayer1
-                            }
-
-                            StyledText {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: profilePill.modelData.label
-                                font.pixelSize: Appearance.font.pixelSize.smallest
-                                font.weight: profilePill.active ? Font.DemiBold : Font.Medium
-                                color: profilePill.active ? root.activePillFg : Appearance.colors.colOnLayer1
-                            }
-                        }
-
-                        MouseArea {
-                            id: pillMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: PowerProfiles.profile = profilePill.modelData.profile
-                        }
                     }
                 }
             }

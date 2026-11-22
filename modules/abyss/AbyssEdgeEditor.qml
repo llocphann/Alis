@@ -528,7 +528,8 @@ Item {
     readonly property var layoutConflicts: root.visible
         ? Placement.conflicts(moduleLayer.layoutRecords) : []
     readonly property var draftOptions: Object.assign({},Config.options?.abyss?.modules,{gap:gap,edgeSizes:edgeSizes,size:moduleScale,
-        singleModuleExpansion:singleModuleExpansion,edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,edgeRoundZeroCorners:edgeRoundZeroCorners,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius})
+        singleModuleExpansion:singleModuleExpansion,edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,edgeRoundZeroCorners:edgeRoundZeroCorners,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius,
+        cavaWidth:Math.max(48,Math.min(480,Number(Config.options?.bar?.cava?.width ?? 120))),cavaHeight:Math.max(10,Math.min(30,Number(Config.options?.bar?.cava?.height ?? 22)))})
 
     // Resolve the actual footprint on the current Edge and conservatively
     // predict the same centered control surface on alternate Edges. Merely

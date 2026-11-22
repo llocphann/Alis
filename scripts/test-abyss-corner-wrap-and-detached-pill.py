@@ -345,6 +345,35 @@ assert.equal(reloadedGlobal.find(p => p.id === 'leg').detached, undefined, 'glob
             assert.ok(uRec.wrapArmH >= 74, `cwUpdate arm too narrow at size=${sz} cr=${cr}: ${uRec.wrapArmH}`);
         }
     }
+
+    // 9b. Cava bend-module keeps full scale at edgeThickness=10, reacts to cavaWidth/cavaHeight, and emits clean L-arm SDF corners without fillet bulge
+    {
+        const cw120 = geometry(normalize([{ id: 'cwCava', kind: 'cava', edge: 'top', position: 0.02, cornerWrap: true }], 'top'), 1920, 1080, { edgeThickness: 10, edgeWidthAffectsModules: { top: false }, cavaWidth: 120, cavaHeight: 22 }, 1);
+        const cw280 = geometry(normalize([{ id: 'cwCava', kind: 'cava', edge: 'top', position: 0.02, cornerWrap: true }], 'top'), 1920, 1080, { edgeThickness: 10, edgeWidthAffectsModules: { top: false }, cavaWidth: 280, cavaHeight: 22 }, 1);
+        const cwTall = geometry(normalize([{ id: 'cwCava', kind: 'cava', edge: 'top', position: 0.02, cornerWrap: true }], 'top'), 1920, 1080, { edgeThickness: 10, edgeWidthAffectsModules: { top: false }, cavaWidth: 120, cavaHeight: 30 }, 1);
+        assert.ok(cw120[0].wrapArmH >= 84, `cava at edgeThickness=10 must not shrink to tiny corner stub: ${cw120[0].wrapArmH}`);
+        assert.ok(cw280[0].wrapArmH > cw120[0].wrapArmH + 60, `cavaWidth must scale corner-wrap arms: 120->${cw120[0].wrapArmH}, 280->${cw280[0].wrapArmH}`);
+        assert.ok(cwTall[0].wrapThickness > cw120[0].wrapThickness, `cavaHeight must scale wrapThickness: 22->${cw120[0].wrapThickness}, 30->${cwTall[0].wrapThickness}`);
+        const surf120 = localSurfaces(cw120, 1920, 1080, { edgeThickness: 10, cornerRadius: 28 }, 1, 48);
+        const arms = surf120.filter(s => s.cornerWrapArm === true);
+        const fillets = surf120.filter(s => s.cornerWrapFillet === true);
+        assert.equal(arms.length, 2, 'cornerWrap emits strictly 2 arm surfaces');
+        assert.equal(fillets.length, 0, 'cornerWrap emits zero extra bulging fillet square');
+        for (const a of arms) {
+            const band = a.depth;
+            assert.ok(a.radius <= Math.max(8, Math.floor((a.span - band) * 0.62)), `cornerWrap arm tip radius ${a.radius} too large for span ${a.span}`);
+        }
+        // Width morph handles cornerWrapArm surfaces cleanly with joined top strip and no NaN or duplication
+        const cwPl = normalize([
+            { id: 'cwCava', kind: 'cava', edge: 'top', position: 0.02, cornerWrap: true },
+            { id: 'clk1', kind: 'clock', edge: 'top', position: 0.16 }
+        ], 'top');
+        const f0 = widthFrame(cwPl, 1920, 1080, { edgeThickness: 0, edgeJoinModules: { top: true }, cornerRadius: 28, cavaWidth: 160 }, 1, 48, 28, 84);
+        const f1 = widthFrame(cwPl, 1920, 1080, { edgeThickness: 40, edgeJoinModules: { top: true }, cornerRadius: 28, cavaWidth: 160 }, 1, 48, 28, 84);
+        const mid = widthFrameBetween(f0, f1, 0.5);
+        assert.equal(mid.deformations.filter(d => d.cornerWrapArm === true).length, 2, 'widthFrameBetween preserves 2 cornerWrapArms');
+        assert.equal(mid.deformations.filter(d => d.cornerWrapFillet === true).length, 0, 'widthFrameBetween preserves zero cornerWrapFillet');
+    }
 }
 
 console.log('ABYSS_CORNER_WRAP_AND_DETACHED_LAYOUT_PASS');
@@ -413,7 +442,14 @@ upd_ind = (ROOT / "modules/bar/ShellUpdateIndicator.qml").read_text(encoding="ut
 assert "abyssMicMeterEnabled: true" in bar_mod, "concurrent Mic Meter WIP line must remain intact"
 assert 'objectName: "abyssDetachedPillSurface"' in bar_mod
 assert 'objectName: "abyssCornerWrapContentLoader"' in bar_mod
-assert "ColorUtils.tonalStep(" in bar_mod
+assert "AbyssStyle.surface" in bar_mod and "AbyssStyle.surfaceDeep" in bar_mod
+assert "colLayer1Base" not in bar_mod.split("detachedPillBg")[1].split("Rectangle {")[0], "detachedPillBg must match Screen Edge surface color rather than washing out to colLayer1Base"
+assert "Config.options?.bar?.cava?.width" in cw_qml and "Config.options?.bar?.cava?.height" in cw_qml
+assert "Config.options?.bar?.cava?.barSpacing" in cw_qml and "Config.options?.bar?.cava?.barRadius" in cw_qml
+assert "Config.options?.bar?.cava?.mirror" in cw_qml and "Config.options?.appearance?.cava?.bars" in cw_qml
+assert "computeNormalizedBars(" in cw_qml and "cornerCavaProc.audioSignalActive" in cw_qml
+assert "Config.options?.bar?.cava?.width" in bar_qml and "Config.options?.bar?.cava?.height" in bar_qml
+assert "Config.options?.bar?.cava?.width" in editor_qml and "Config.options?.bar?.cava?.height" in editor_qml
 assert "editPreview: root.editing" in bar_mod
 assert "editing: root.editing" in bar_mod
 assert "wrapHorizontalRect" in bar_qml and "wrapVerticalRect" in bar_qml
