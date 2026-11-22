@@ -15,6 +15,7 @@ Singleton {
 
     property bool _xembedProxyStartRequested: false
     property bool _xembedProxyCheckedOnce: false
+    property int _xembedProxyWaitRetries: 0
 
     property bool smartTray: Config.options?.tray?.filterPassive ?? true
 
@@ -462,7 +463,7 @@ Singleton {
     }
 
     function requestXembedProxyIfNeeded(): void {
-        if (!CompositorService.isNiri)
+        if (!CompositorService.isNiri || !Config.ready)
             return;
         root.ensureXembedSniProxy();
     }
@@ -473,16 +474,18 @@ Singleton {
         if (root._xembedProxyStartRequested)
             return;
         root._xembedProxyStartRequested = true;
+        root._xembedProxyWaitRetries = 0;
+        xembedProxyDelayedStartTimer.interval = 1500;
         xembedProxyDelayedStartTimer.restart();
     }
 
     Timer {
         id: xembedProxyDelayedStartTimer
-        // Legacy XEmbed tray apps can publish before the proxy owns the tray
-        // selection and do not necessarily register again. Keep this
-        // asynchronous, but start on the next event-loop turn instead of
-        // leaving a 600 ms race window.
-        interval: 0
+        // Wait for org.kde.StatusNotifierWatcher + already-running SNI daemons
+        // (e.g. fcitx5) to re-register over D-Bus on shell restart before
+        // xembedsniproxy claims X11 _NET_SYSTEM_TRAY_S0, preventing dual-mode
+        // apps from spawning fallback XEmbed dock windows under xwayland-satellite.
+        interval: 1500
         repeat: false
         onTriggered: {
             xembedProxyCheckProc.running = false;
@@ -493,7 +496,11 @@ Singleton {
     Process {
         id: xembedProxyCheckProc
         property bool startObserved: false
-        command: ["/usr/bin/pgrep", "-x", "xembedsniproxy"]
+        command: [
+            "/usr/bin/bash",
+            "-c",
+            "pgrep -x xembedsniproxy >/dev/null 2>&1 && exit 0; if command -v busctl >/dev/null 2>&1 && ! busctl --user status org.kde.StatusNotifierWatcher >/dev/null 2>&1; then exit 2; fi; exit 1"
+        ]
 
         onRunningChanged: {
             if (xembedProxyCheckProc.running) {
@@ -504,7 +511,7 @@ Singleton {
                 return;
 
             root._xembedProxyCheckedOnce = true;
-            root._log("[xembedsniproxy] pgrep could not start; attempting proxy launch")
+            root._log("[xembedsniproxy] readiness check could not start; attempting proxy launch")
             xembedProxyStartProc.running = false;
             xembedProxyStartProc.running = true;
         }
@@ -513,10 +520,16 @@ Singleton {
 
         onExited: (exitCode, exitStatus) => {
             root._xembedProxyCheckedOnce = true;
-            if (exitCode !== 0) {
-                xembedProxyStartProc.running = false;
-                xembedProxyStartProc.running = true;
+            if (exitCode === 0)
+                return;
+            if (exitCode === 2 && root._xembedProxyWaitRetries < 8) {
+                root._xembedProxyWaitRetries += 1;
+                xembedProxyDelayedStartTimer.interval = 500;
+                xembedProxyDelayedStartTimer.restart();
+                return;
             }
+            xembedProxyStartProc.running = false;
+            xembedProxyStartProc.running = true;
         }
     }
 

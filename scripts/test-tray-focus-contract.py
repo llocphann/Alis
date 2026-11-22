@@ -767,6 +767,24 @@ def main() -> int:
     if re.search(r"onMenuClosed\s*:\s*root\.releaseFocus\s*\(\s*\)", text):
         failures.append("tray menu close handlers must forward the closing window identity")
 
+    delayed_timer_match = re.search(
+        r"id\s*:\s*xembedProxyDelayedStartTimer(?P<body>.*?)\}",
+        service_text,
+        re.DOTALL,
+    )
+    if not delayed_timer_match:
+        failures.append("missing xembedProxyDelayedStartTimer in TrayService.qml")
+    else:
+        interval_match = re.search(r"interval\s*:\s*(\d+)", delayed_timer_match.group("body"))
+        if not interval_match or int(interval_match.group(1)) < 1000:
+            failures.append(
+                "xembedProxyDelayedStartTimer interval must be >= 1000ms so StatusNotifierWatcher and SNI clients (fcitx5) register before xembedsniproxy claims X11 _NET_SYSTEM_TRAY_S0"
+            )
+    if "org.kde.StatusNotifierWatcher" not in service_text:
+        failures.append("TrayService.qml must verify org.kde.StatusNotifierWatcher readiness before starting xembedsniproxy")
+    if not re.search(r"function\s+requestXembedProxyIfNeeded\(\)\s*:\s*void\s*\{[^}]*!CompositorService\.isNiri\s*\|\|\s*!Config\.ready", service_text):
+        failures.append("requestXembedProxyIfNeeded() must gate on CompositorService.isNiri && Config.ready")
+
     _run_dedup_behavior_tests(service_text, failures)
     _run_qs_tray_dedup_runtime_test(failures)
 
