@@ -14,7 +14,7 @@ Originally forked from [snowarch/iNiR](https://github.com/snowarch/iNiR) / [end-
 
 Startup flow:
 1. Environment pragmas configure Qt scale, WebEngine, and Wayland rendering behavior.
-2. Core singleton services force-instantiate (`Config`, `Appearance`, `GlobalStates`, `CompositorService`, `NiriService`, `Audio`, `Battery`, `Wallpapers`, `AppSearch`, `ColorPickerService`, etc.) while heavy optional/media backends (`CavaService`, `EqualizerService`) defer until demanded.
+2. Core singleton services force-instantiate (`Config`, `Appearance`, `GlobalStates`, `CompositorService`, `NiriService`, `Audio`, `Battery`, `Wallpapers`, `AppSearch`, `ColorPickerService`, etc.) while heavy optional/media/hardware backends (`CavaService`, `EqualizerService`, and `ThinkFanService` gated on `AlisIntergration.thinkfanEnabled`) defer until Tier 3 (`deferredPanelsReady`) or demand.
 3. `Config.ready` gates family panel loading (`ShellAbyssPanels.qml`, `ShellWafflePanels.qml`, or `ShellIiPanels.qml`).
 4. Theme and icon services (`MaterialThemeLoader`, `IconThemeService`) hydrate via `Qt.callLater`.
 5. Optional external packages (`AlisCompanion` and `AlisIntergration`) probe Host API 1 manifests only when explicitly enabled.
@@ -76,7 +76,7 @@ Each panel uses `PanelLoader` (`LazyLoader` wrapper), activating only when `Conf
 - Receives live Alis theme tokens and recent picks via `ALIS_COLOR_PICKER_THEME` to render a **compact circular auto-themed magnifier loupe** (`ColorPickerOverlay.qml`) backed by single-readback region sampling (`ColorPickerSampler.qml`).
 - Displays only the compact radial-bezel circular loupe (`148px` diameter) while sampling; the rotated vertical side details popup (`108×188` / `108×152`, left/right of the loupe inside screen bounds, showing format, coordinates, swatch preview, WCAG contrast, 5 harmonies, and recent picks) stays hidden until locked via right-click (no inline shortcut footer in the popup).
 - **Controls & Shortcuts**:
-  - `Left-Click` / `Enter` / `Space`: pick & copy active color (`wl-copy` + `cliphist` sync).
+  - `Left-Click` / `Enter` / `Space`: pick & copy active color (`native-dispatch clipboard` + `clipboard-store` sync).
   - `Right-Click` (or `L`): lock current pixel and open the compact details popup; `Right-Click` again unlocks and closes the popup.
   - `Esc`: when locked, exits Lock mode and closes the popup; press `Esc` again when unlocked to close the Color Picker.
   - `Scroll Wheel` / `+` / `-`: adjust magnification (`5×`–`19×`).
@@ -85,17 +85,20 @@ Each panel uses `PanelLoader` (`LazyLoader` wrapper), activating only when `Conf
   - `1`–`5`: pick one of the 5 live harmony swatches; `6`–`0`: recall up to 5 recent colors.
   - `Arrow Keys` (`Shift + Arrow` for `10px`): pixel-accurate reticle stepping.
 
-### Dashboard, Local Music, Planners & Capture (`modules/dashboard/`, `modules/regionSelector/`)
+### Dashboard, Local Music, Planners, Launcher & Capture (`modules/dashboard/`, `modules/overview/`, `modules/regionSelector/`)
 - **Dashboard (`modules/dashboard/`)**: 4-column responsive widget grid, Sonora-inspired **Local Music** browser (embedded library sidebar, synced Lyrics stacked above a 10-band EQ with live electric-arc curve visualization in `EqualizerPanel.qml`), **Weekly & Yearly Planners**, user-managed **Custom Tabs**, and optional **Spaced Repetition** / **Exercises Tracker** tabs hosted from `Alis-Intergration`.
+- **Overview & Search Launcher (`modules/overview/SearchWidget.qml`)**: Persists app launch frecency (`$XDG_STATE_HOME/quickshell/user/launcher_frecency.json`), evaluates arithmetic expressions instantly in JS (`evaluateMath()`, falling back to `native-dispatch calc` for units/functions), and surfaces a Quick Nexus Note action when `AlisIntergration.nexusEnabled` is true.
 - **Region Selection (`modules/regionSelector/`)**: Full-screen `Super+Shift+S` capture (`Screenshot` + `Rect` default, `Recording`, `OCR`) with auto-hiding compact toolbar, inline capture annotation editor, and compositor-isolated post-capture notifications.
-- **Left & Right Sidebars (`modules/sidebarLeft/`, `modules/sidebarRight/`)**: Left Sidebar hosts `Intelligence` (AI / `Alis-Companion`), `Translator`, `Tools`, and `News`; Right Sidebar hosts Quick Settings, sliders, calendar, and notifications.
+- **Left & Right Sidebars (`modules/sidebarLeft/`, `modules/sidebarRight/`)**: Left Sidebar hosts `Intelligence` (AI / `Alis-Companion`), `Translator` (with optional neural Listen/TTS playback via `en-US-AvaMultilingualNeural`), `Tools`, and `News`; Right Sidebar hosts Quick Settings, sliders, calendar, and notifications.
+- **Lock Surfaces (`modules/lock/LockSurface.qml`, `modules/waffle/lock/WaffleLockSurface.qml`)**: Consolidate grouped container `DropShadow` FBOs (`<= 6` per lock screen) for clean legibility with minimal offscreen render passes.
 
 ### Production Rust Native Backend (`native/`)
-The `native/` Rust workspace provides the default production backend via `scripts/native-dispatch`:
-- **`alis-native`**: Fast accelerators (`cava-config`, `app-search`, `image-size`, `thumb-info`, plugin scanning, system telemetry).
+The `native/` Rust workspace provides the default production backend via `scripts/native-dispatch` (replacing external single-purpose Wayland/desktop CLI tools with unified native binaries):
+- **`alis-native`**: Wayland screencopy (`screencopy`), Wayland clipboard & SQLite clipboard history (`clipboard`, `clipboard-store`), backlight control (`backlight`), gamma/night-light (`gamma`), idle tracking (`idle`), audio spectrum & microphone meter (`audio-spectrum`, `mic-meter`), calculator & translation (`calc`, `translate`), image/thumbnail/region accelerators (`thumbgen`, `image`, `find-regions`, `cover-colors`), plugin scanning, and system telemetry (`telemetry`).
 - **`alis-theme`**: Wallpaper dominant color & K-means color-tag extraction, Material palette generation, and native editor/terminal/Cava/GTK/Qt theme syncing (`editors.rs`, `colortags.rs`).
-- **`alis-mpdd`**: Persistent MPD IPC daemon with lean library snapshots (`--lean`) and automatic reconnect.
-- **`alis-inputd`**: Input/hotkey helper daemon.
+- **`alis-mpdd`**: Persistent MPD IPC daemon with lean library snapshots (`--lean`), MPRIS bridge (`mpd-mpris`), and automatic reconnect.
+- **`alis-inputd`**: Input/hotkey, virtual typing/paste (`input-type`, `input-key`, `input-paste`), and lock-key helper daemon.
+- **Shared Crates (`native/crates/`)**: `alis-dbus`, `alis-protocol`, and `alis-wayland`.
 
 ---
 

@@ -35,7 +35,7 @@ alis/
 │   ├── abyss/                    # Single perimeter field + embedded native content
 │   │   ├── looks/                # Style, deterministic geometry and shader
 │   │   ├── bar/                  # Five-zone horizontal/vertical modules
-│   │   ├── content/              # Lazy sidebars, dock, popup, clipboard, launcher, OSD
+│   │   ├── content/              # Lazy sidebars, dock, popup, clipboard, launcher, polkit, OSD
 │   │   └── settings/             # Abyss Style and output selection
 │   ├── waffle/                   # Windows 11 family
 │   │   ├── bar/                  # Bottom taskbar
@@ -44,8 +44,8 @@ alis/
 │   │   ├── notificationCenter/   # Notification list + calendar
 │   │   └── looks/Looks.qml       # Waffle visual tokens
 │   └── ...
-├── native/                       # Production Rust backend workspace (alis-native, alis-inputd, alis-mpdd, alis-theme)
-├── services/                     # Runtime singletons (+ AlisCompanion, AlisIntergration, SpacedRepetition, deferred)
+├── native/                       # Production Rust workspace (alis-native, alis-inputd, alis-mpdd, alis-theme + crates/alis-dbus, alis-protocol, alis-wayland)
+├── services/                     # Runtime singletons (+ MicLevelService, PolkitService, AlisCompanion, AlisIntergration, SpacedRepetition, deferred)
 ├── scripts/                      # Shell/fish/python helpers and regression validators
 ├── sdata/                        # Install/update lifecycle and migrations
 ├── defaults/                     # Shipped default configuration/templates + Widget SDK
@@ -64,7 +64,7 @@ The live tree intentionally has no Orbit, Mascot, Workspace Strip, `barM3`, Pill
 
 **modules/common/perimeter/:** Connected Perimeter core substrate: topology and slot configuration, module registry/hosting, anchor publication/lookup, transient-surface routing, and connected geometry/input helpers. Existing bar popups consume this substrate through `modules/bar/StyledPopup.qml`; the retired full `iiPerimeter` runtime remains absent.
 
-**modules/bar/:** the sole ii-family Bar implementation and shared edge-hosted widgets (`BarCavaEqualizerModule`, `BatteryPopup`, `StyledPopup`, `ClockWidget`, `Resources`, `Media`, `SysTray`). It supports top/bottom/left/right placement on the single canonical Hug surface. Existing bar popups use `StyledPopup.qml`, which provides connected-surface presentation (and rehosts directly into Abyss when active) without introducing a second popup framework.
+**modules/bar/:** the sole ii-family Bar implementation and shared edge-hosted widgets (`BarCavaEqualizerModule`, `AbyssMicMeterBar`, `BatteryPopup`, `StyledPopup`, `ClockWidget`, `Resources`, `Media`, `SysTray`). It supports top/bottom/left/right placement on the single canonical Hug surface. Existing bar popups use `StyledPopup.qml`, which provides connected-surface presentation (and rehosts directly into Abyss when active) without introducing a second popup framework.
 
 **modules/dock/:** the ii-family and Abyss application Dock. Panel is the canonical supported Dock surface style; legacy persisted style values are normalized to `panel` during startup. Window identity resolution (`AppSearch.resolveWindowIdentity`) maps internal Quickshell surfaces such as `"Alis Nexus"` to dedicated icons (`assets/icons/alis-nexus.svg`).
 
@@ -82,7 +82,7 @@ The live tree intentionally has no Orbit, Mascot, Workspace Strip, `barM3`, Pill
 
 **modules/overview/:** normal workspace overview/app search/task-view implementation. Orbit is not part of the live overview path.
 
-**native/:** Rust workspace (`alis-native`, `alis-inputd`, `alis-mpdd`, `alis-theme`) serving as the default production backend.
+**native/:** Rust workspace (`alis-native`, `alis-inputd`, `alis-mpdd`, `alis-theme`, plus shared crates `crates/alis-dbus`, `crates/alis-protocol`, `crates/alis-wayland`) serving as the default production backend via `scripts/native-dispatch`.
 
 **services/:** runtime singletons for audio, network, compositor IPC, theming, navigation, wallpaper, desktop layout, lyrics, optional `AlisCompanion` / `AlisIntergration` package discovery, and related backend behavior.
 
