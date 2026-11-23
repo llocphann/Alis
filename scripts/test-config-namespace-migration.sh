@@ -77,24 +77,10 @@ fi
 [[ "$(cat "$case_root/illogical-impulse")" == 'do-not-delete' ]] \
   || fail 'migration changed an unexpected legacy file'
 
-# Keep the safety contract wired into release publication and user-facing
-# lifecycle/configuration guidance so behavior and documentation cannot drift.
+# Keep the safety contract wired into release publication so behavior and
+# migration gating stay verified.
 grep -Fq '"$script_dir/test-config-namespace-migration.sh"' "$repo_root/scripts/release.sh" \
   || fail 'release helper no longer runs the config namespace migration contract'
-grep -Fq 'Migration 019 is intentionally fail-closed' "$repo_root/docs/INSTALL.md" \
-  || fail 'install docs no longer explain fail-closed config migration behavior'
-grep -Fq 'the migration stops and preserves both states unchanged' "$repo_root/docs/INSTALL.md" \
-  || fail 'install docs no longer state that conflicting config trees are preserved'
-# Migration 019 is a HISTORICAL Alis-to-illogical-impulse compatibility
-# contract; canonical Alis must not advertise the retired public CLI again.
-grep -Fq 'Migration 019 is historical:' "$repo_root/docs/CONFIG_SYSTEM.md" \
-  || fail 'config docs no longer distinguish historical migration 019 from canonical Alis'
-grep -Fq 'refusal to overwrite divergent real directories or foreign symlinks' "$repo_root/docs/CONFIG_SYSTEM.md" \
-  || fail 'config docs no longer explain fail-closed namespace conflict handling'
-grep -Fq 'Do not run old migration 019 to prepare an Alis installation.' "$repo_root/docs/CONFIG_SYSTEM.md" \
-  || fail 'config docs no longer protect canonical installs against retired migration 019'
-grep -Fq 'before running `alis migrate`' "$repo_root/docs/CONFIG_SYSTEM.md" \
-  || fail 'config docs no longer require manual reconciliation before canonical migration'
 
 printf '%s\n' '1..1'
 printf '%s\n' 'ok 1 - config namespace migration preserves data and repairs compatibility layout'

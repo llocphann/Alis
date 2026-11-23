@@ -34,17 +34,28 @@ _alis() {
         'run:Run the shell'
         'restart:Restart the shell'
         'kill:Kill the shell process'
-        'logs:View runtime logs'
+        'logs:View formatted runtime logs'
         'terminal:Open terminal'
         'browser:Open browser'
+        'files:Open file manager'
+        'editor:Open editor'
+        'local-music:Open files in Local Music'
         'close-window:Close focused window'
+        'colorpicker:Pick screen color'
+        'touchpad:Toggle/inspect touchpad'
         'ipc:Low-level IPC call'
+        'dev:Development UI navigation & audit'
+        'debug:Debug & performance profiler'
+        'perf:Performance profiler'
         'settings:Open settings'
+        'open:Open settings'
         'settings-window:Open settings window'
         'waffle-settings-window:Open waffle settings window'
+        'welcome:Open welcome wizard'
         'repair:Repair shell state'
         'path:Show config path'
-        'test-local:Run local tests'
+        'test:Run silent Alis test suites'
+        'test-local:Run local distribution tests'
         'setup:Run setup directly'
         'service:Manage systemd service'
         'doctor:Health checks'
@@ -57,6 +68,7 @@ _alis() {
         'config:View/edit config'
         'info:System info'
         'backup:Create backup'
+        'extras:Optional extras'
         'version:Show version'
         'theme:Theme management'
         'help:Show help'
@@ -107,6 +119,71 @@ _alis() {
                     )
                     _describe 'service command' service_cmds
                     ;;
+                test)
+                    local -a test_cmds=(
+                        'quick:Fast silent syntax, docs & dist checks'
+                        'local:Local distribution suite'
+                        'validate:Full maintainer validation suite'
+                        'rust:Native Rust cargo tests'
+                        'qml:Full QML syntax & module check'
+                        'docs:Documentation & governance checks'
+                        'integration:Alis-Intergration silent suite'
+                        'companion:Alis-Companion silent validator'
+                        'list:List suites and test counts'
+                    )
+                    _describe 'test suite' test_cmds
+                    ;;
+                logs)
+                    local -a log_flags=(
+                        '-n:Number of entries'
+                        '--lines:Number of entries'
+                        '-f:Follow live logs'
+                        '--follow:Follow live logs'
+                        '-e:Warnings and errors only'
+                        '--errors:Warnings and errors only'
+                        '-l:Minimum severity level'
+                        '--level:Minimum severity level'
+                        '-m:Filter by component tag'
+                        '--component:Filter by component tag'
+                        '--category:Filter by category'
+                        '-g:Regex search'
+                        '--grep:Regex search'
+                        '-s:Journal --since filter'
+                        '--since:Journal --since filter'
+                        '--source:Log source (auto,service,qs,tray,update,niri,all)'
+                        '--full:Include all Qt categories and debug logs'
+                        '--summary:Severity and component breakdown'
+                        '--json:Output JSON array'
+                        '--ndjson:Output newline-delimited JSON'
+                        '--raw:Raw unformatted log lines'
+                        '--no-collapse:Disable duplicate collapsing'
+                        '--color:Force ANSI styling'
+                        '--no-color:Disable ANSI styling'
+                    )
+                    _describe 'logs option' log_flags
+                    ;;
+                status)
+                    local -a status_flags=('--short:Compact summary' '--json:Machine-readable JSON' '-h:Show help')
+                    _describe 'status option' status_flags
+                    ;;
+                doctor)
+                    local -a doctor_flags=('--perf:GPU/DRM telemetry snapshot' '--json:Machine-readable JSON' '--fix-abi:Rebuild Quickshell ABI' '-y:Assume yes')
+                    _describe 'doctor option' doctor_flags
+                    ;;
+                dev)
+                    local -a dev_cmds=(
+                        'audit:Audit changed QML destinations'
+                        'list:List dev destinations'
+                        'open:Open dev destination'
+                        'close:Close dev surface'
+                        'current:Show current dev destination'
+                    )
+                    _describe 'dev command' dev_cmds
+                    ;;
+                touchpad)
+                    local -a tp_cmds=('toggle' 'on' 'off' 'status')
+                    _describe 'touchpad action' tp_cmds
+                    ;;
                 theme)
                     local -a theme_cmds=(
                         'list-targets:List theme targets'
@@ -143,7 +220,25 @@ _alis() {
                         _describe 'function' funcs
                     fi
                     ;;
-            esac
+                *)
+            if [[ "${words[2]}" == "logs" ]]; then
+                local -a log_flags=(
+                    '-n:Number of entries' '--lines:Number of entries'
+                    '-f:Follow live logs' '--follow:Follow live logs'
+                    '-e:Warnings and errors only' '--errors:Warnings and errors only'
+                    '-l:Minimum severity level' '--level:Minimum severity level'
+                    '-m:Filter by component tag' '--component:Filter by component tag'
+                    '--category:Filter by category'
+                    '-g:Regex search' '--grep:Regex search'
+                    '-s:Journal --since filter' '--since:Journal --since filter'
+                    '--source:Log source' '--full:Full categories' '--summary:Severity summary'
+                    '--json:JSON output' '--ndjson:NDJSON output' '--raw:Raw lines'
+                    '--no-collapse:Disable collapsing' '--color:Force colors' '--no-color:No colors'
+                )
+                _describe 'logs option' log_flags
+            fi
+            ;;
+    esac
             ;;
         4)
             if [[ "${words[2]}" == "ipc" ]]; then
@@ -160,6 +255,24 @@ _alis() {
                     done
                     _describe 'function' funcs
                 fi
+            fi
+            ;;
+        *)
+            if [[ "${words[2]}" == "logs" ]]; then
+                local -a log_flags=(
+                    '-n:Number of entries' '--lines:Number of entries'
+                    '-f:Follow live logs' '--follow:Follow live logs'
+                    '-e:Warnings and errors only' '--errors:Warnings and errors only'
+                    '-l:Minimum severity level' '--level:Minimum severity level'
+                    '-m:Filter by component tag' '--component:Filter by component tag'
+                    '--category:Filter by category'
+                    '-g:Regex search' '--grep:Regex search'
+                    '-s:Journal --since filter' '--since:Journal --since filter'
+                    '--source:Log source' '--full:Full categories' '--summary:Severity summary'
+                    '--json:JSON output' '--ndjson:NDJSON output' '--raw:Raw lines'
+                    '--no-collapse:Disable collapsing' '--color:Force colors' '--no-color:No colors'
+                )
+                _describe 'logs option' log_flags
             fi
             ;;
     esac

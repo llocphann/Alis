@@ -230,9 +230,14 @@ PY
     "$pkgdir/usr/share/libalpm/hooks/alis-quickshell-rebuild.hook"
   install -Dm644 "$srcroot/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   install -Dm644 "$srcroot/README.md" "$docroot/README.md"
-  for doc in "$srcroot"/docs/*.md; do
-    install -Dm644 "$doc" "$docroot/${doc##*/}"
+  for doc in ARCHITECTURE.md STRUCTURE.md CONTRIBUTING.md CHANGELOG.md; do
+    [[ -f "$srcroot/$doc" ]] && install -Dm644 "$srcroot/$doc" "$docroot/$doc"
   done
+  if [[ -d "$srcroot/docs" ]]; then
+    for doc in "$srcroot"/docs/*.md; do
+      [[ -f "$doc" ]] && install -Dm644 "$doc" "$docroot/${doc##*/}"
+    done
+  fi
 
   cat > "$shellroot/version.json" <<EOF
 {

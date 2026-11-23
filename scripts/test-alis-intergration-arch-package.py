@@ -34,7 +34,7 @@ with tempfile.TemporaryDirectory(prefix="alis-intergration-arch-") as name:
                                  "fixture", str(recipe)], env=env, cwd=base,
                                 text=True, capture_output=True)
         assert result.returncode == 0, result.stdout + result.stderr
-        for namespace in ("alis", "alis"):
+        for namespace in ("alis",):
             for path in (f"usr/libexec/{namespace}-battery-charge-limit", f"usr/libexec/{namespace}-thinkfan",
                          f"usr/share/{namespace}/tlp-settings-schema.json",
                          f"usr/share/polkit-1/actions/org.{namespace}.battery-charge-limit.policy",
@@ -50,15 +50,14 @@ with tempfile.TemporaryDirectory(prefix="alis-intergration-arch-") as name:
         # destructive hook would execute this helper and remove these profiles.
         system = base / (family + "-system")
         marker = system / "mutated"
-        # Old and canonical user hardware state both survive core removal.
-        for namespace in ("alis", "alis"):
+        # Canonical user hardware state survives core removal.
+        for namespace in ("alis",):
             helper = system / f"usr/libexec/{namespace}-battery-charge-limit"
             helper.parent.mkdir(parents=True, exist_ok=True)
             helper.write_text('#!/bin/sh\nprintf "%s\\n" "$*" >> "$MARKER"\n')
             helper.chmod(0o755)
         profiles = [system / "etc/tlp.d" / filename for filename in
-                    ("99-alis-battery-charge-limit.conf", "99-alis-tlp-settings.conf",
-                     "99-alis-battery-charge-limit.conf", "99-alis-tlp-settings.conf")]
+                    ("99-alis-battery-charge-limit.conf", "99-alis-tlp-settings.conf")]
         for profile in profiles:
             profile.parent.mkdir(parents=True, exist_ok=True)
             profile.write_text("preserve-owner-state\n")

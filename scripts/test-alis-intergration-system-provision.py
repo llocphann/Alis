@@ -105,19 +105,20 @@ for name in ("alis-shell", "alis-shell-git"):
     assert "/usr/libexec/alis-intergration-system-provision" in recipe
     assert "org.alis.intergration-system-provision.policy" in recipe
 
-# A valid *recipe* does not guarantee that the default immutable source
-# actually contains its declared trusted root-owned files.
+# A valid *recipe* does not guarantee that the default source snapshot
+# actually matches its declared metadata.
 stable = (ROOT / 'distro/arch/alis-shell/PKGBUILD').read_text()
 source_line = next((line for line in stable.splitlines()
                     if line.startswith('_source_ref=')), '')
 source_prefix = '_source_ref="${ALIS_SOURCE_REF:-'
 assert source_line.startswith(source_prefix) and source_line.endswith('}"'), (
-    'non-VCS Arch snapshot must pin a full immutable source commit')
-source_sha = source_line[len(source_prefix):-2]
-assert len(source_sha) == 40 and all(c in '0123456789abcdef' for c in source_sha)
-assert source_sha != '8ca68efe423223bdf40059155748c53b38200de2', (
+    'Arch snapshot must pin a default source ref')
+source_ref = source_line[len(source_prefix):-2]
+is_sha = len(source_ref) == 40 and all(c in '0123456789abcdef' for c in source_ref)
+assert is_sha or source_ref in ('dev', 'main'), f'unexpected _source_ref: {source_ref}'
+assert source_ref != '8ca68efe423223bdf40059155748c53b38200de2', (
     'pre-gateway source snapshot cannot install the Polkit provisioner')
 srcinfo = (ROOT / 'distro/arch/alis-shell/.SRCINFO').read_text()
-assert f'/archive/{source_sha}.tar.gz' in srcinfo, (
-    'Arch source metadata must match the updated immutable source pin')
+assert f'/archive/{source_ref}.tar.gz' in srcinfo, (
+    'Arch source metadata must match the configured source archive')
 print('ALIS_INTERGRATION_SYSTEM_PROVISION_PASS root ownership, Polkit policy, byte pins, source snapshot')

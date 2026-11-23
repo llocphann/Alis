@@ -222,9 +222,9 @@ Quick start:
   alis settings          Open settings
   alis welcome           Re-open the welcome wizard (first-run tour)
   alis restart           Restart the shell
-  alis logs              View runtime logs (--full: all categories, --debug: foreground debug, -f: follow)
-  alis status            Shell status info
-  alis doctor            Health checks (--perf: runtime graphics/media snapshot)
+  alis logs [options]    View formatted runtime logs (-e, -f, -n, -g, --summary, --json)
+  alis status [--short]  Shell & service status (--short: compact summary, --json)
+  alis doctor            Health checks (--perf: GPU/media snapshot, --fix-abi)
 
 EOF
 
@@ -241,25 +241,32 @@ EOF
         cat <<'EOF'
 IPC targets (alis <target> <function>):
   Use 'alis <target> --help' for available functions.
-  See docs/IPC.md for the full reference.
+  See scripts/lib/ipc-reference.md for the full reference.
 
 EOF
     fi
 
     cat <<'EOF'
-Runtime:
-  start, stop, run, restart, kill, terminal, browser, close-window, colorpicker, touchpad
+Runtime & apps:
+  start, stop, run, restart, kill, open
+  terminal, browser, files, editor, local-music, close-window, colorpicker, touchpad
 
-Maintenance (delegates to setup):
-  install, reinstall, update, doctor, status, migrate, rollback, my-changes, uninstall
-  config, info, backup, logs, setup
+Service & maintenance:
+  service <install|uninstall|enable|disable|start|stop|restart|status|logs>
+  install, reinstall, update, doctor, status, migrate, rollback, my-changes
+  uninstall, config, info, backup, extras, setup, repair
+
+Testing & development:
+  test [quick|local|validate|rust|qml|docs|integration|companion|list]
+  test-local [--with-runtime|--fast|--list|--only <name>]
+  dev <list|open|close|current|audit>
+  debug perf <start|status|stop|cancel|report|compare|architecture|scenarios>
 
 Other:
-  version [--json]
+  version [--json], path
   theme <list-targets|inspect|doctor|apply|scaffold> [args...]
   completions <bash|zsh|fish>
-  service <install|uninstall|enable|disable|start|stop|restart|status|logs>
-  repair, path, test-local, settings-window, waffle-settings-window
+  settings-window, waffle-settings-window
 EOF
 }
 
@@ -354,7 +361,7 @@ print_cli_context() {
     update_strategy="$(read_version_field "$version_file" '.updateStrategy // .update_strategy' '"updateStrategy"[[:space:]]*:[[:space:]]*"\([^"]*\)"')"
     [[ -z "$update_strategy" ]] && update_strategy="$(read_version_field "$version_file" '.update_strategy' '"update_strategy"[[:space:]]*:[[:space:]]*"\([^"]*\)"')"
 
-    resolve_config_dir
+    config_dir="$( (resolve_config_dir && printf '%s' "$config_dir") 2>/dev/null || true )"
     runtime_path="$(detect_runtime_path_for_help || true)"
     setup_dir="$(resolve_setup_dir 2>/dev/null || true)"
     launcher_path="$(resolve_launcher_path)"
@@ -462,20 +469,88 @@ Most people only need:
   alis run
   alis settings
   alis update
-  alis status
-  alis doctor
+  alis status [--short|--json]
+  alis doctor [--perf|--fix-abi]
+  alis logs [-e|-f|-n 60|--summary]
+  alis test [quick|local|validate]
   alis overview toggle
   alis terminal
   alis browser
+  alis files
   alis colorpicker
-  alis logs
   alis repair
   alis theme list-targets
-  alis theme inspect terminals
-  alis theme doctor
-  alis theme scaffold myapp
-  alis theme apply terminals
   ./setup
+EOF
+}
+
+logs_usage() {
+    cat <<'EOF'
+Usage: alis logs [options]
+
+Modern structured viewer for Alis runtime, systemd service, tray proxy,
+update, and Niri compositor logs.
+
+Options:
+  -c, --config PATH       Shell config/runtime directory
+  -n, --lines N           Show last N matching entries (default: 60)
+  -f, --follow            Stream new entries live
+  -l, --level LEVEL       Minimum severity: debug, info, warn, error, crit
+  -e, --errors            Show warnings and errors only (--level warn)
+  -m, --component NAME    Filter by component tag (e.g. Weather, Tray, Cava)
+      --category CAT      Filter by category (e.g. qml, scene, unit)
+  -g, --grep REGEX        Filter entries matching pattern and highlight hits
+  -s, --since SPEC        Time window for journalctl (e.g. '15 min ago', today)
+      --source SRC        auto | service | qs | tray | update | niri | all
+      --full              Decode all Quickshell categories (--rules *=true)
+      --summary, --stats  Show severity distribution, top components, recent errors
+      --json / --ndjson   Emit structured JSON output
+      --raw               Emit raw unformatted log lines
+      --no-collapse       Keep consecutive duplicate entries uncollapsed
+      --color / --no-color Force or disable ANSI colors
+      --debug             Restart shell in foreground with QS_DEBUG=1
+  -h, --help              Show this help
+EOF
+}
+
+status_usage() {
+    cat <<'EOF'
+Usage: alis status [--short | --json | -h]
+
+  (no flags)   Run full interactive/rich status summary via setup
+  --short      Compact fast status card (service, PID, version, session, addons)
+  --json       Machine-readable JSON status snapshot
+EOF
+}
+
+doctor_usage() {
+    cat <<'EOF'
+Usage: alis doctor [options]
+
+  (no flags)          Run full installation & runtime health diagnostics (setup doctor)
+  --perf [--json]     Snapshot GPU/DRM/temp/render backend telemetry
+  --fix-abi [-y]      Rebuild pinned Quickshell when Qt ABI mismatch is detected
+  -c, --config PATH   Shell config directory (with --perf --json)
+  -h, --help          Show this help
+EOF
+}
+
+test_usage() {
+    cat <<'EOF'
+Usage: alis test [suite] [args...]
+
+Run Alis silent zero-focus verification suites without stealing desktop focus.
+
+Suites:
+  quick               Fast shell/python/docs/IPC/distribution static checks (default)
+  local [args...]     Run scripts/test-local-distribution.sh
+  validate [args...]  Run scripts/validate-maintainer-local.sh --current-repo
+  rust                Run native/ Rust workspace tests (cargo test --workspace --locked)
+  qml                 Run full QML syntax & module check (fish scripts/qml-check.fish --all)
+  docs                Run docs, issues-governance & material-only contract checks
+  integration [args]  Run Alis-Intergration silent test suite (if sibling repo present)
+  companion [args]    Run Alis-Companion silent validator (if sibling repo present)
+  list                Show available suites and tracked test counts
 EOF
 }
 
@@ -2801,32 +2876,133 @@ resolve_launcher_path() {
     fi
 }
 
-show_logs() {
-    resolve_config_dir
+resolve_alis_logs_helper() {
+    local candidate
+    for candidate in \
+        "$script_dir/lib/alis-logs.py" \
+        "${config_dir:-}/scripts/lib/alis-logs.py" \
+        "$launcher_root/share/quickshell/alis/scripts/lib/alis-logs.py" \
+        "$user_config_dir/scripts/lib/alis-logs.py" \
+        "$system_config_dir/scripts/lib/alis-logs.py" \
+        "$fallback_system_config_dir/scripts/lib/alis-logs.py"; do
+        if [[ -n "$candidate" && -f "$candidate" ]]; then
+            printf '%s' "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
 
-    # --debug restarts the shell in the FOREGROUND with QS_DEBUG=1 and no category
-    # filtering, so the internal _log() telemetry and every framework category are
-    # actually EMITTED to stdout (the service unit's Environment= would otherwise
-    # re-impose filtering). Ctrl+C stops it; the normal service can be restarted after.
-    if [[ "${1:-}" == "--debug" ]]; then
+show_logs() {
+    local -a args=("$@")
+    local want_debug=false want_full=false want_raw=false has_modern_flags=false
+    local source_arg="auto"
+    local arg=""
+    local i=0
+    while [[ $i -lt ${#args[@]} ]]; do
+        arg="${args[$i]}"
+        case "$arg" in
+            -h|--help)
+                logs_usage
+                return 0
+                ;;
+            -c|--config)
+                i=$((i + 1))
+                [[ $i -lt ${#args[@]} ]] || { echo "Missing path after $arg" >&2; return 1; }
+                config_dir="${args[$i]}"
+                ;;
+            --config=*)
+                config_dir="${arg#--config=}"
+                ;;
+            --debug)
+                want_debug=true
+                ;;
+            --full)
+                want_full=true
+                ;;
+            --raw)
+                want_raw=true
+                ;;
+            --source)
+                has_modern_flags=true
+                i=$((i + 1))
+                [[ $i -lt ${#args[@]} ]] && source_arg="${args[$i]}"
+                ;;
+            --source=*)
+                has_modern_flags=true
+                source_arg="${arg#--source=}"
+                ;;
+            -n|--lines|--lines=*|-f|--follow|-l|--level|--level=*|-e|--errors|-m|--component|--component=*|--category|--category=*|-g|--grep|--grep=*|-s|--since|--since=*|--summary|--stats|--json|--ndjson|--no-collapse|--color|--no-color)
+                has_modern_flags=true
+                ;;
+        esac
+        i=$((i + 1))
+    done
+
+    local logs_helper=""
+    logs_helper="$(resolve_alis_logs_helper || true)"
+
+    if [[ "$want_debug" == true ]]; then
+        require_qs
+        resolve_config_dir
         echo "Stopping shell and relaunching in foreground with full debug logging." >&2
         echo "(QS_DEBUG=1, no QT_LOGGING_RULES filtering — Ctrl+C to stop, then 'alis restart')" >&2
         stop_alis_service_if_active
         kill_shell "$config_dir"
         sleep 1
+        if [[ "$want_raw" == false ]] && [[ -n "$logs_helper" ]] && command -v python3 >/dev/null 2>&1 && { [[ -t 1 ]] || [[ " ${args[*]} " == *" --color "* ]]; }; then
+            local -a pipe_args=("--stdin" "--source-label" "qs debug")
+            for arg in "${args[@]}"; do
+                [[ "$arg" == "--debug" ]] && continue
+                pipe_args+=("$arg")
+            done
+            set -o pipefail
+            QS_DEBUG=1 QT_LOGGING_RULES= "$qs_bin" -p "$config_dir" 2>&1 | python3 "$logs_helper" "${pipe_args[@]}"
+            return $?
+        fi
         exec env QS_DEBUG=1 QT_LOGGING_RULES= "$qs_bin" -p "$config_dir"
     fi
 
-    # --full decodes the ENTIRE qslog with no category filtering. Quickshell records
-    # every message regardless of the process QT_LOGGING_RULES; the filter only hides
-    # categories at decode time. Passing *=true surfaces everything that was logged,
-    # including the kf.*/qt.qml.*/dbus.properties categories hidden by the default view.
-    if [[ "${1:-}" == "--full" ]]; then
-        shift
-        exec "$qs_bin" -p "$config_dir" log --rules "*=true" "$@"
+    # Preserve exact raw non-TTY passthrough for plain `alis logs` and
+    # `alis logs --full` so IPC/discovery probes (e.g. `alis dev audit`,
+    # `test-brand-cli-instance-selection.py`) receive unmodified output.
+    if [[ "$want_raw" == true ]] || { [[ ! -t 1 ]] && [[ "$has_modern_flags" == false ]]; }; then
+        if [[ "$source_arg" == "service" ]]; then
+            require_command journalctl
+            exec journalctl --user -u alis.service --no-pager -n 100
+        fi
+        require_qs
+        resolve_config_dir
+        if [[ "$want_full" == true ]]; then
+            "$qs_bin" -p "$config_dir" log --rules "*=true"
+            return $?
+        fi
+        "$qs_bin" -p "$config_dir" log | tail -50
+        return $?
     fi
 
+    # Rich structured terminal logs via alis-logs.py
+    if [[ -z "${config_dir:-}" && ( "$source_arg" == "qs" || "$source_arg" == "auto" ) ]]; then
+        config_dir="$( (resolve_config_dir && printf '%s' "$config_dir") 2>/dev/null || true )"
+    fi
+    if [[ -n "$logs_helper" ]] && command -v python3 >/dev/null 2>&1; then
+        local -a helper_args=("${args[@]}")
+        if [[ -n "${config_dir:-}" ]]; then
+            helper_args=("--config" "$config_dir" "${helper_args[@]}")
+        fi
+        ALIS_QS_BIN="$qs_bin" python3 "$logs_helper" "${helper_args[@]}"
+        return $?
+    fi
+
+    # Graceful fallback if python3/helper is absent
+    require_qs
+    resolve_config_dir
+    if [[ "$want_full" == true ]]; then
+        "$qs_bin" -p "$config_dir" log --rules "*=true"
+        return $?
+    fi
     "$qs_bin" -p "$config_dir" log | tail -50
+    return $?
 }
 
 run_repair() {
@@ -2855,9 +3031,9 @@ run_repair() {
 
     printf 'repair restart finished\n'
     printf '\n== recent logs ==\n'
-    show_logs
+    show_logs -c "$dir" -n 40
     printf '\n== filtered errors ==\n'
-    "$qs_bin" -p "$dir" log | grep -iE 'error|ReferenceError|TypeError|binding loop' | tail -80 || true
+    show_logs -c "$dir" --errors -n 40 || true
 }
 
 run_local_test() {
@@ -2871,6 +3047,180 @@ run_local_test() {
     fi
 
     ALIS_RUNTIME_DIR="$dir" ALIS_LAUNCHER_PATH="$0" exec "$test_script" "$@"
+}
+
+show_status_command() {
+    local mode="setup"
+    local -a pass_args=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --short|-s) mode="short"; shift ;;
+            --json) mode="json"; shift ;;
+            -h|--help) status_usage; return 0 ;;
+            -c|--config) parse_config_flag "$@"; shift 2 ;;
+            *) pass_args+=("$1"); shift ;;
+        esac
+    done
+
+    if [[ "$mode" == "setup" ]]; then
+        local setup_dir
+        setup_dir="$(resolve_setup_dir)"
+        run_setup_command "$setup_dir" status "${pass_args[@]}"
+        return $?
+    fi
+
+    config_dir="$( (resolve_config_dir && printf '%s' "$config_dir") 2>/dev/null || true )"
+    local setup_dir=""
+    setup_dir="$(resolve_setup_dir 2>/dev/null || true)"
+    local version_file="" version="unknown" commit="unknown" branch="unknown" install_mode="unknown"
+    version_file="$(alis_version_file 2>/dev/null || true)"
+    if [[ -n "$config_dir" && -f "$config_dir/version.json" && -z "$version_file" ]]; then
+        version_file="$config_dir/version.json"
+    fi
+    local live_repo=""
+    live_repo="$(resolve_live_version_context "$version_file" "$config_dir" || true)"
+    if [[ -n "$live_repo" ]]; then
+        install_mode="repo-link"
+        [[ -f "$live_repo/VERSION" ]] && version="$(tr -d '[:space:]' < "$live_repo/VERSION")"
+        commit="$(git -C "$live_repo" rev-parse --short HEAD 2>/dev/null || printf 'unknown')"
+        branch="$(git -C "$live_repo" rev-parse --abbrev-ref HEAD 2>/dev/null || printf 'unknown')"
+    elif [[ -n "$version_file" && -f "$version_file" ]]; then
+        version="$(read_version_field "$version_file" '.version' '"version"[[:space:]]*:[[:space:]]*"\([^"]*\)"')"
+        commit="$(read_version_field "$version_file" '.commit' '"commit"[[:space:]]*:[[:space:]]*"\([^"]*\)"')"
+        install_mode="$(read_version_field "$version_file" '.installMode // .install_mode' '"installMode"[[:space:]]*:[[:space:]]*"\([^"]*\)"')"
+    fi
+    if [[ "$branch" == "unknown" && -n "$setup_dir" && -d "$setup_dir/.git" ]]; then
+        branch="$(git -C "$setup_dir" rev-parse --abbrev-ref HEAD 2>/dev/null || printf 'unknown')"
+    fi
+
+    local service_active="inactive" service_enabled="disabled" service_pid=""
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl --user is-active --quiet alis.service && service_active="active" || true
+        service_enabled="$(service_link_summary)"
+        service_pid="$(systemctl --user show -p MainPID --value alis.service 2>/dev/null || true)"
+        [[ "$service_pid" == "0" ]] && service_pid=""
+    fi
+    local shell_running="no"
+    [[ -n "$config_dir" ]] && has_instances "$config_dir" && shell_running="yes"
+
+    local panel_family="abyss" cfg_file=""
+    cfg_file="$(alis_config_file 2>/dev/null || true)"
+    if [[ -n "$cfg_file" && -f "$cfg_file" ]] && command -v jq >/dev/null 2>&1; then
+        panel_family="$(jq -r '.panelFamily // "abyss"' "$cfg_file" 2>/dev/null || printf 'abyss')"
+    fi
+
+    local companion_state="not installed"
+    [[ -d "${XDG_DATA_HOME:-$HOME/.local/share}/alis-companion/current" ]] && companion_state="installed"
+    local integration_state="not installed"
+    [[ -d "${XDG_DATA_HOME:-$HOME/.local/share}/alis-intergration/current" ]] && integration_state="installed"
+
+    if [[ "$mode" == "json" ]]; then
+        python3 - "$version" "$commit" "$branch" "$install_mode" "$config_dir" "$service_active" "$service_enabled" "$service_pid" "$shell_running" "$panel_family" "$companion_state" "$integration_state" <<'PY'
+import json, sys
+keys = ["version", "commit", "branch", "installMode", "runtimePath", "serviceActive", "serviceEnabled", "servicePid", "shellRunning", "panelFamily", "companion", "integration"]
+data = dict(zip(keys, sys.argv[1:]))
+data["shellRunning"] = data["shellRunning"] == "yes"
+data["servicePid"] = int(data["servicePid"]) if data["servicePid"].isdigit() else None
+print(json.dumps(data, indent=2))
+PY
+        return 0
+    fi
+
+    local c_rst="" c_pri="" c_ok="" c_warn="" c_dim=""
+    if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+        c_rst=$'\033[0m'; c_pri=$'\033[1;36m'; c_ok=$'\033[1;32m'; c_warn=$'\033[1;33m'; c_dim=$'\033[2m'
+    fi
+    local st_badge="${c_warn}● ${service_active}${c_rst}"
+    [[ "$service_active" == "active" ]] && st_badge="${c_ok}● active${c_rst}"
+    printf '%bAlis %s%b %b(%s · %s · %s)%b\n' "$c_pri" "${version:-unknown}" "$c_rst" "$c_dim" "${branch}" "${commit}" "${install_mode}" "$c_rst"
+    printf '  Service   : %b  %bwiring=%s%b%s\n' "$st_badge" "$c_dim" "$service_enabled" "$c_rst" "${service_pid:+  pid=$service_pid}"
+    printf '  Shell     : running=%s  family=%s\n' "$shell_running" "$panel_family"
+    printf '  Runtime   : %s\n' "${config_dir:-<unconfigured>}"
+    printf '  Addons    : Companion=%s  Integration=%s\n' "$companion_state" "$integration_state"
+}
+
+run_alis_test_command() {
+    local suite="${1:-quick}"
+    case "$suite" in
+        -h|--help) test_usage; return 0 ;;
+        list|--list) suite="list"; shift || true ;;
+        quick|local|validate|rust|qml|docs|integration|companion) shift ;;
+        -*) suite="quick" ;;
+        *)
+            echo "Unknown test suite: $suite" >&2
+            test_usage >&2
+            return 2
+            ;;
+    esac
+
+    local setup_dir
+    setup_dir="$(resolve_setup_dir)"
+    if [[ ! -d "$setup_dir/scripts" ]]; then
+        echo "Source scripts directory not found at $setup_dir" >&2
+        return 1
+    fi
+
+    local -a silent_env=(env -u WAYLAND_DISPLAY -u DISPLAY QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1)
+
+    case "$suite" in
+        list)
+            local py_n sh_n js_n total_n
+            py_n="$(find "$setup_dir/scripts" -maxdepth 1 -name 'test-*.py' | wc -l)"
+            sh_n="$(find "$setup_dir/scripts" -maxdepth 1 -name 'test-*.sh' | wc -l)"
+            js_n="$(find "$setup_dir/scripts" -maxdepth 1 \( -name 'test-*.mjs' -o -name 'test-*.cjs' \) | wc -l)"
+            total_n=$((py_n + sh_n + js_n))
+            printf 'Alis Test Suites (%s)\n' "$setup_dir"
+            printf '  quick         Bash/Python/JSON/Fish syntax, docs, IPC registry & distribution\n'
+            printf '  local         scripts/test-local-distribution.sh\n'
+            printf '  validate      scripts/validate-maintainer-local.sh --current-repo\n'
+            printf '  rust          cargo test --workspace --locked (native/)\n'
+            printf '  qml           fish scripts/qml-check.fish --all\n'
+            printf '  docs          verify-docs.sh, task-issues-governance & material-only docs\n'
+            printf '  integration   Alis-Intergration silent runner\n'
+            printf '  companion     Alis-Companion silent validator\n'
+            printf 'Tracked scripts/test-*: %d total (%d .py, %d .sh, %d .mjs/.cjs)\n' "$total_n" "$py_n" "$sh_n" "$js_n"
+            ;;
+        quick)
+            (
+                cd "$setup_dir"
+                "${silent_env[@]}" make build
+                "${silent_env[@]}" bash scripts/verify-docs.sh
+                "${silent_env[@]}" python3 scripts/lib/generate-ipc-registry.py --check
+                "${silent_env[@]}" python3 scripts/test-alis-logs-and-cli.py
+                ALIS_RUNTIME_DIR="$setup_dir" ALIS_LAUNCHER_PATH="$0" "${silent_env[@]}" bash scripts/test-local-distribution.sh --fast "$@"
+            )
+            ;;
+        local)
+            ALIS_RUNTIME_DIR="$setup_dir" ALIS_LAUNCHER_PATH="$0" "${silent_env[@]}" bash "$setup_dir/scripts/test-local-distribution.sh" "$@"
+            ;;
+        validate)
+            (cd "$setup_dir" && "${silent_env[@]}" bash scripts/validate-maintainer-local.sh --current-repo "$@")
+            ;;
+        rust)
+            (cd "$setup_dir/native" && "${silent_env[@]}" cargo test --workspace --locked "$@")
+            ;;
+        qml)
+            (cd "$setup_dir" && "${silent_env[@]}" fish scripts/qml-check.fish --all "$@")
+            ;;
+        docs)
+            (
+                cd "$setup_dir"
+                "${silent_env[@]}" bash scripts/verify-docs.sh
+                "${silent_env[@]}" python3 scripts/test-task-issues-governance.py
+                "${silent_env[@]}" python3 scripts/test-material-only-docs-contract.py
+            )
+            ;;
+        integration)
+            local ig_root="${ALIS_INTERGRATION_ROOT:-$(dirname "$setup_dir")/Alis-Intergration}"
+            [[ -f "$ig_root/scripts/run-tests.py" ]] || { echo "Alis-Intergration runner not found at $ig_root" >&2; return 1; }
+            (cd "$ig_root" && ALIS_ROOT="$setup_dir" "${silent_env[@]}" python3 scripts/run-tests.py "$@")
+            ;;
+        companion)
+            local comp_root="${ALIS_COMPANION_ROOT:-$(dirname "$setup_dir")/Alis-Companion}"
+            [[ -f "$comp_root/scripts/validate.py" ]] || { echo "Alis-Companion validator not found at $comp_root" >&2; return 1; }
+            (cd "$comp_root" && "${silent_env[@]}" python3 scripts/validate.py --alis-root "$setup_dir" "$@")
+            ;;
+    esac
 }
 
 run_runtime_script() {
@@ -2919,7 +3269,7 @@ ipc_target_help() {
     local target="$1"
 
     if ! source_ipc_registry 2>/dev/null; then
-        printf '%s — no registry available. See docs/IPC.md.\n' "$target" >&2
+        printf '%s — no registry available. See scripts/lib/ipc-reference.md.\n' "$target" >&2
         return 1
     fi
 
@@ -3332,15 +3682,78 @@ run_service_command() {
             exec systemctl --user status alis.service "$@"
             ;;
         logs)
-            require_command journalctl
-            if [[ "${1:-}" == "--full" ]]; then
-                shift
-                local cfg_path
-                cfg_path="$(readlink -f "${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis" 2>/dev/null)"
-                [[ -z "$cfg_path" ]] && cfg_path="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis"
-                exec qs -p "$cfg_path" log --rules "*=true" "$@"
+            local _svc_logs_helper="" _svc_raw=false _svc_full=false _svc_use_helper=false _svc_passthrough=false
+            local _svc_arg _svc_idx=0
+            local -a _svc_args=("$@")
+            local -a _svc_helper_args=("--source" "service")
+            [[ -t 1 ]] && _svc_use_helper=true
+            while [[ $_svc_idx -lt ${#_svc_args[@]} ]]; do
+                _svc_arg="${_svc_args[$_svc_idx]}"
+                case "$_svc_arg" in
+                    -h|--help)
+                        echo "Usage: alis service logs [-n N] [-f] [-l LEVEL] [-e|--errors] [-m COMP] [-g REGEX] [-s SINCE] [--full] [--summary] [--json] [--raw]" >&2
+                        exit 0
+                        ;;
+                    --raw) _svc_raw=true ;;
+                    --full)
+                        _svc_full=true
+                        _svc_helper_args+=("--full")
+                        ;;
+                    --level|-l|--level=*|-e|--errors|-m|--component|--component=*|--category|--category=*|-g|--grep|--grep=*|--summary|--stats|--json|--ndjson|--no-collapse|--color|--no-color)
+                        _svc_use_helper=true
+                        _svc_helper_args+=("$_svc_arg")
+                        if [[ "$_svc_arg" =~ ^(-l|--level|-m|--component|--category|-g|--grep)$ ]]; then
+                            _svc_idx=$((_svc_idx + 1))
+                            [[ $_svc_idx -lt ${#_svc_args[@]} ]] && _svc_helper_args+=("${_svc_args[$_svc_idx]}")
+                        fi
+                        ;;
+                    -n|--lines|--lines=*|-s|--since|--since=*)
+                        _svc_helper_args+=("$_svc_arg")
+                        if [[ "$_svc_arg" =~ ^(-n|--lines|-s|--since)$ ]]; then
+                            _svc_idx=$((_svc_idx + 1))
+                            [[ $_svc_idx -lt ${#_svc_args[@]} ]] && _svc_helper_args+=("${_svc_args[$_svc_idx]}")
+                        fi
+                        ;;
+                    -f|--follow)
+                        _svc_helper_args+=("$_svc_arg")
+                        ;;
+                    *)
+                        _svc_passthrough=true
+                        ;;
+                esac
+                _svc_idx=$((_svc_idx + 1))
+            done
+
+            if [[ "$_svc_raw" == false ]] && [[ "$_svc_passthrough" == false ]] && [[ "$_svc_use_helper" == true ]]; then
+                _svc_logs_helper="$(resolve_alis_logs_helper || true)"
+                if [[ -n "$_svc_logs_helper" ]] && command -v python3 >/dev/null 2>&1; then
+                    if [[ "$_svc_full" == true ]]; then
+                        require_qs
+                        resolve_config_dir
+                        ALIS_QS_BIN="$qs_bin" exec python3 "$_svc_logs_helper" --source qs -c "$config_dir" "${_svc_helper_args[@]}"
+                    fi
+                    exec python3 "$_svc_logs_helper" "${_svc_helper_args[@]}"
+                fi
             fi
-            exec journalctl --user-unit alis.service "$@"
+
+            require_command journalctl
+            if [[ "$_svc_full" == true ]]; then
+                local cfg_path
+                cfg_path="$(readlink -f "${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis" 2>/dev/null || true)"
+                [[ -z "$cfg_path" ]] && cfg_path="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis"
+                local -a _qs_pass=()
+                for _svc_arg in "$@"; do
+                    [[ "$_svc_arg" == "--full" || "$_svc_arg" == "--raw" ]] && continue
+                    _qs_pass+=("$_svc_arg")
+                done
+                exec qs -p "$cfg_path" log --rules "*=true" "${_qs_pass[@]}"
+            fi
+            local -a _jctl_pass=()
+            for _svc_arg in "$@"; do
+                [[ "$_svc_arg" == "--raw" ]] && continue
+                _jctl_pass+=("$_svc_arg")
+            done
+            exec journalctl --user-unit alis.service "${_jctl_pass[@]}"
             ;;
         -h|--help|"")
             service_usage
@@ -3936,7 +4349,6 @@ case "$command_name" in
         run_setup_command "$setup_dir" install "$@"
         ;;
     start)
-        require_qs
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
@@ -3944,7 +4356,8 @@ case "$command_name" in
                     shift 2
                     ;;
                 -h|--help)
-                    repair_usage
+                    echo "Usage: alis start [-c PATH]" >&2
+                    echo "Start Alis in the background if not already running." >&2
                     exit 0
                     ;;
                 *)
@@ -3953,6 +4366,7 @@ case "$command_name" in
                     ;;
             esac
         done
+        require_qs
         resolve_config_dir
         apply_shell_scale
         apply_qt_runtime_env
@@ -3965,7 +4379,6 @@ case "$command_name" in
         start_background "$config_dir"
         ;;
     stop)
-        require_qs
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
@@ -3973,7 +4386,8 @@ case "$command_name" in
                     shift 2
                     ;;
                 -h|--help)
-                    usage
+                    echo "Usage: alis stop [-c PATH]" >&2
+                    echo "Stop the running Alis systemd service or shell process." >&2
                     exit 0
                     ;;
                 *)
@@ -3982,12 +4396,12 @@ case "$command_name" in
                     ;;
             esac
         done
+        require_qs
         resolve_config_dir
         stop_alis_service_if_active
         kill_shell "$config_dir"
         ;;
     run)
-        require_qs
         foreground=true
         _session_boot=false
         while [[ $# -gt 0 ]]; do
@@ -4010,7 +4424,7 @@ case "$command_name" in
                     shift
                     ;;
                 -h|--help)
-                    usage
+                    echo "Usage: alis run [-c PATH] [--foreground|--daemon|--session]" >&2
                     exit 0
                     ;;
                 *)
@@ -4019,6 +4433,7 @@ case "$command_name" in
                     ;;
             esac
         done
+        require_qs
 
         if [[ "$_session_boot" == true ]]; then
             # ── Session boot fast path ──
@@ -4069,7 +4484,6 @@ case "$command_name" in
         exec "$qs_bin" -n -d -p "$config_dir"
         ;;
     restart)
-        require_qs
         restart_quiet=""
         while [[ $# -gt 0 ]]; do
             case "$1" in
@@ -4082,7 +4496,8 @@ case "$command_name" in
                     shift
                     ;;
                 -h|--help)
-                    usage
+                    echo "Usage: alis restart [-c PATH] [-q|--quiet]" >&2
+                    echo "Restart Alis systemd service or background shell process." >&2
                     exit 0
                     ;;
                 *)
@@ -4091,6 +4506,7 @@ case "$command_name" in
                     ;;
             esac
         done
+        require_qs
         resolve_config_dir
         apply_shell_scale
         apply_qt_runtime_env
@@ -4104,7 +4520,6 @@ case "$command_name" in
         restart_shell "$config_dir" "$restart_quiet"
         ;;
     kill)
-        require_qs
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
@@ -4112,7 +4527,7 @@ case "$command_name" in
                     shift 2
                     ;;
                 -h|--help)
-                    usage
+                    echo "Usage: alis kill [-c PATH]" >&2
                     exit 0
                     ;;
                 *)
@@ -4121,17 +4536,13 @@ case "$command_name" in
                     ;;
             esac
         done
+        require_qs
         resolve_config_dir
         stop_alis_service_if_active
         kill_shell "$config_dir"
         ;;
     logs)
-        require_qs
-        if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-            usage
-            exit 0
-        fi
-        show_logs "${1:-}"
+        show_logs "$@"
         ;;
     terminal)
         while [[ $# -gt 0 ]]; do
@@ -4358,7 +4769,6 @@ case "$command_name" in
         fi
         ;;
     ipc)
-        require_qs
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
@@ -4370,7 +4780,7 @@ case "$command_name" in
                     break
                     ;;
                 -h|--help)
-                    usage
+                    echo "Usage: alis ipc [-c PATH] <target> <function> [args...]" >&2
                     exit 0
                     ;;
                 *)
@@ -4382,6 +4792,7 @@ case "$command_name" in
             echo "Usage: alis ipc <target> <function> [args...]" >&2
             exit 1
         fi
+        require_qs
         resolve_config_dir
         if ! ensure_running_instance_for_ipc "$config_dir" "${2:-}"; then
             echo "Timed out waiting for Alis to start" >&2
@@ -4562,6 +4973,9 @@ case "$command_name" in
         resolve_config_dir
         printf '%s\n' "$config_dir"
         ;;
+    test)
+        run_alis_test_command "$@"
+        ;;
     test-local)
         while [[ $# -gt 0 ]]; do
             case "$1" in
@@ -4569,11 +4983,11 @@ case "$command_name" in
                     parse_config_flag "$@"
                     shift 2
                     ;;
-                --with-runtime)
+                --with-runtime|--fast|--list|--only|--only=*|--no-color|--color)
                     break
                     ;;
                 -h|--help)
-                    usage
+                    echo "Usage: alis test-local [-c PATH] [--fast|--list|--only PATTERN|--with-runtime]" >&2
                     exit 0
                     ;;
                 *)
@@ -4616,6 +5030,10 @@ case "$command_name" in
         fix_abi_mode=interactive
         while [[ $# -gt 0 ]]; do
             case "$1" in
+                -h|--help)
+                    doctor_usage
+                    exit 0
+                    ;;
                 --fix-abi)
                     fix_abi_only=true
                     shift
@@ -4658,7 +5076,10 @@ case "$command_name" in
         setup_dir="$(resolve_setup_dir)"
         run_setup_command "$setup_dir" "$command_name" "$@"
         ;;
-    migrate|status|update|reinstall|rollback|my-changes|uninstall|config|info|backup|logs)
+    status)
+        show_status_command "$@"
+        ;;
+    migrate|update|reinstall|rollback|my-changes|uninstall|config|info|backup|extras)
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)

@@ -33,20 +33,13 @@ def main() -> None:
     arch_git = read("distro/arch/alis-shell-git/PKGBUILD")
     thinkfan_docs = read("docs/THINKFAN.md") if (ROOT / "docs/THINKFAN.md").is_file() else ""
 
-    # CAVA is a real process dependency of the shared visualizer service.
+    # CAVA spectrum analyzer prefers native Rust `native-dispatch audio-spectrum`
+    # and retains the external `cava` wrapper only as an optional fallback.
     require(cava, '"/cava/run.sh"', "CavaService.qml")
-    require(cava, 'command: ["/usr/bin/bash", root.runnerPath, "-p", root.configPath]', "CavaService.qml")
-    require(read("scripts/cava/run.sh"), 'exec cava "$@"', "CAVA process wrapper")
-    require(doctor, '"cava:cava"', "doctor.sh")
-    require(generic, 'check_cmd "cava" "CAVA audio visualizer"', "generic installer")
-    require(generic, "pipewire, pipewire-pulse, wireplumber, playerctl, pavucontrol, cava",
-            "generic installer")
-    require(debian, "DEBIAN_AUDIO_PKGS+=(cava)", "Debian installer")
-    require(debian, "if ! command -v cava &>/dev/null; then", "Debian installer")
-    require(fedora, "  cava", "Fedora installer")
-    require(nix, '++ optionalTop "cava"', "Nix package")
-    for source, text in (("alis-shell", arch), ("alis-shell-git", arch_git)):
-        require(text, "'cava: audio visualizer'", source)
+    require(cava, 'audio-spectrum', "CavaService.qml")
+    require(cava, 'root.nativeDispatchPath, root.runnerPath, root.configPath', "CavaService.qml")
+    require(read("scripts/cava/run.sh"), 'exec cava "$@"', "CAVA fallback wrapper")
+    require(read("sdata/dist-arch/install-deps.sh"), '[cava]="cava"', "Arch dependency table")
 
     # Weather hard-requires curl. GPS via Geoclue/where-am-i is optional because
     # the service falls back to IP location providers.

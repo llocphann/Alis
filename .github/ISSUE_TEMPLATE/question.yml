@@ -9,7 +9,7 @@ body:
         - [Documentation index](https://github.com/llocphann/Alis/tree/stable/docs)
         - [Installation](https://github.com/llocphann/Alis/blob/stable/docs/INSTALL.md)
         - [Keybindings](https://github.com/llocphann/Alis/blob/stable/docs/KEYBINDS.md)
-        - [IPC reference](https://github.com/llocphann/Alis/blob/stable/docs/IPC.md)
+        - [IPC reference](https://github.com/llocphann/Alis/blob/dev/scripts/lib/ipc-reference.md)
         - [Known limitations](https://github.com/llocphann/Alis/blob/stable/docs/LIMITATIONS.md)
 
   - type: textarea

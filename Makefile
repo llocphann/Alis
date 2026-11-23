@@ -27,7 +27,6 @@ all: build
 
 build:
 	@bash -n scripts/alis
-	@bash -n scripts/alis
 	@bash -n scripts/test-local-distribution.sh
 	@bash -n setup
 
@@ -91,10 +90,10 @@ test-prefix-install:
 		test -f "$$runtime/qmldir"; \
 		for binary in alis-inputd alis-mpdd alis-native alis-theme; do test -x "$$runtime/native/bin/$$binary"; done; \
 		test -f "$$docs/README.md"; \
-		test -f "$$docs/AUDIO_MEDIA.md"; \
-		test -f "$$docs/INSTALL.md"; \
-		test -f "$$docs/PACKAGES.md"; \
-		test -f "$$docs/RELEASING.md"; \
+		test -f "$$docs/ARCHITECTURE.md"; \
+		test -f "$$docs/STRUCTURE.md"; \
+		test -f "$$docs/CONTRIBUTING.md"; \
+		test -f "$$docs/CHANGELOG.md"; \
 		grep -Fq 'system_config_dir="$${ALIS_SYSTEM_RUNTIME_DIR:-/opt/alis/share/quickshell/alis}"' "$$stage/opt/alis/bin/alis"; \
 		grep -Fq 'system_config_dir="$${ALIS_SYSTEM_RUNTIME_DIR:-/opt/alis/share/quickshell/alis}"' "$$runtime/scripts/alis"; \
 		grep -Fq 'RUNTIME_DIR_SYSTEM_LOCAL="$${ALIS_SYSTEM_RUNTIME_DIR_LOCAL:-/opt/alis/share/quickshell/alis}"' "$$runtime/sdata/lib/versioning.sh"; \
@@ -199,9 +198,14 @@ install-desktop:
 
 install-docs:
 	@install -Dm644 README.md "$(DESTDIR)$(DOC_DIR)/README.md"
-	@for doc in docs/*.md; do \
-		install -Dm644 "$$doc" "$(DESTDIR)$(DOC_DIR)/$$(basename "$$doc")"; \
+	@for doc in ARCHITECTURE.md STRUCTURE.md CONTRIBUTING.md CHANGELOG.md; do \
+		[ -f "$$doc" ] && install -Dm644 "$$doc" "$(DESTDIR)$(DOC_DIR)/$$doc"; \
 	done
+	@if [ -d docs ]; then \
+		for doc in docs/*.md; do \
+			[ -f "$$doc" ] && install -Dm644 "$$doc" "$(DESTDIR)$(DOC_DIR)/$$(basename "$$doc")"; \
+		done; \
+	fi
 
 install-license:
 	@install -Dm644 LICENSE "$(DESTDIR)$(LICENSE_DIR)/LICENSE"

@@ -72,7 +72,7 @@ assert.match(qml,/Qt\.color\(EventPalette\.eventSwatch\(row\?\.event,row\?\.sour
 assert.doesNotMatch(qml,/EventPalette\.eventHue|eventToneBase|EventPalette\.toneIndex|CavaTheme\.vibrantColors/,
     'Event colors must not derive from theme or rainbow hue rotation');
 const colorBody=qml.slice(qml.indexOf('function eventIdentityColor(row): color'),
-    qml.indexOf('    // Match the date and All-day headings'));
+    qml.indexOf('    // Match the pinned date and All-day headings'));
 assert.doesNotMatch(colorBody,/Appearance\.|CavaTheme|m3colors|Date\.|random/,
     'color selection must not follow wallpaper, time, or random state');
 assert.match(colorBody,/row\?\.event\?\.color/,

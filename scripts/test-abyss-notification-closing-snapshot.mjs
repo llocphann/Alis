@@ -59,7 +59,8 @@ assert.ok(list.includes('root.transientAppNamesOverride ?? Notifications.popupAp
 assert.ok(source.includes('root.captureClosingSnapshot()')
     && source.includes('function onPopupAppNameListChanged()'),
     'snapshot must update after service publishes grouped app names');
-assert.ok(host.includes('root.residentContent || root.visualResident || root.warmHeld')
+assert.ok(host.includes('root.residentContent || root.visualResident')
+    && host.includes('root.warmHeld')
     && host.includes('property bool visualResident:'),
     'host keeps loader alive through visible retract');
 assert.ok(perimeter.includes('residentContent: Notifications.popupList.length > 0'),

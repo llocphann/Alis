@@ -14,7 +14,7 @@ const host=readFileSync(resolve(root,'modules/abyss/AbyssBodyHost.qml'),'utf8');
 const perimeter=readFileSync(resolve(root,'modules/abyss/AbyssPerimeter.qml'),'utf8');
 const arrange=new Function(source+'; return arrange;')();
 assert.match(recordingBody,/identity:\s*"recording"[\s\S]*?placementPriority:\s*1/);
-assert.match(host,/identity === "dialog" \? 2/);
+assert.match(host,/identity === "dialog" \? 4/);
 const notificationStart=perimeter.indexOf('id: notification\n');
 const notificationEnd=perimeter.indexOf('id: toastBody\n',notificationStart);
 assert.ok(notificationStart>0 && notificationEnd>notificationStart);

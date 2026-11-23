@@ -9,7 +9,7 @@ _alis_completions() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # Top-level CLI commands
-    local cli_commands="install start stop run restart kill logs terminal browser close-window ipc settings settings-window waffle-settings-window repair path test-local setup service doctor migrate status update rollback my-changes uninstall config info backup version theme help completions"
+    local cli_commands="install start stop run restart kill logs terminal browser files editor local-music close-window colorpicker touchpad ipc dev debug perf settings open settings-window waffle-settings-window welcome repair path test test-local setup service doctor migrate status update rollback my-changes uninstall config info backup extras version theme help completions"
 
     # Source IPC registry for target/function completion
     local script_dir alis_bin
@@ -52,6 +52,24 @@ _alis_completions() {
             case "$prev" in
                 service)
                     COMPREPLY=( $(compgen -W "install uninstall enable disable start stop restart status logs" -- "$cur") )
+                    ;;
+                logs)
+                    COMPREPLY=( $(compgen -W "-n --lines -f --follow -l --level -e --errors -m --component --category -g --grep -s --since --source --full --summary --stats --json --ndjson --raw --no-collapse --color --no-color --debug -c --config -h --help" -- "$cur") )
+                    ;;
+                status)
+                    COMPREPLY=( $(compgen -W "--short --json -h --help" -- "$cur") )
+                    ;;
+                doctor)
+                    COMPREPLY=( $(compgen -W "--perf --json --fix-abi -y --yes -c --config -h --help" -- "$cur") )
+                    ;;
+                test)
+                    COMPREPLY=( $(compgen -W "quick local validate rust qml docs integration companion list -h --help" -- "$cur") )
+                    ;;
+                dev)
+                    COMPREPLY=( $(compgen -W "audit list open close current" -- "$cur") )
+                    ;;
+                touchpad)
+                    COMPREPLY=( $(compgen -W "toggle on off status" -- "$cur") )
                     ;;
                 theme)
                     COMPREPLY=( $(compgen -W "list-targets inspect doctor scaffold apply" -- "$cur") )

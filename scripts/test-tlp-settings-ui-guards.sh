@@ -73,8 +73,8 @@ assert_not_contains 'No charge limit active' "$charge_limit" \
     'inactive charge-limit state must not add redundant status text'
 assert_contains '&& (!Battery.chargeLimitStateKnown || Battery.chargeLimitActive)' "$charge_limit" \
     'charge-limit status text must only appear for unknown or active state'
-assert_contains 'Layout.fillWidth: root.leftAlignContent' "$selection_group_button" \
-    'scoped category left alignment must consume trailing button space without changing global controls'
+assert_contains 'anchors.left: (root.leftAlignContent || root.revealActiveLabelOnly) ? parent.left : undefined' "$selection_group_button" \
+    'scoped category left alignment must anchor row content left without changing centered global controls'
 assert_contains 'import Quickshell' "$registry" \
     'SettingsPageRegistry must import the Quickshell Singleton type or shell startup will fail'
 assert_contains 'readonly property int retiredTlpPageIndex: 28' "$registry" \

@@ -1476,8 +1476,8 @@ Item {
                 Row {
                     anchors.centerIn:parent
                     spacing:8*companionMannequin.companionScale
-                    Rectangle { width:5*companionMannequin.companionScale; height:8*companionMannequin.companionScale; radius:width/2; color:AbyssStyle.textColor }
-                    Rectangle { width:5*companionMannequin.companionScale; height:8*companionMannequin.companionScale; radius:width/2; color:AbyssStyle.textColor }
+                    Rectangle { width:5*companionMannequin.companionScale; height:8*companionMannequin.companionScale; radius:width/2; color:Appearance.m3colors.darkmode ? AbyssStyle.textColor : "#000000" }
+                    Rectangle { width:5*companionMannequin.companionScale; height:8*companionMannequin.companionScale; radius:width/2; color:Appearance.m3colors.darkmode ? AbyssStyle.textColor : "#000000" }
                 }
             }
         }
@@ -1506,7 +1506,6 @@ Item {
                     text:"Companion"
                     font.pixelSize:9*Appearance.fontSizeScale
                     font.bold:true
-                    color:AbyssStyle.textColor
                 }
             }
         }

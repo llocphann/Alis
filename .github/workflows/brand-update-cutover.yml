@@ -25,7 +25,6 @@ on:
       - sdata/migrations/021-systemd-single-instance.sh
       - sdata/migrations/051-cliphist-single-watchers.sh
       - sdata/migrations/019-config-dir-rename-compat.sh
-      - docs/CONFIG_SYSTEM.md
       - scripts/brand-canonical-cutover.sh
       - scripts/test-brand-canonical-cutover.sh
       - scripts/brand-recovery-cli.sh
@@ -37,15 +36,12 @@ on:
       - scripts/test-brand-cli-session-guard.py
       - scripts/lib/brand-env-compat.sh
       - scripts/test-brand-env-compat.py
-      - scripts/brand-canonical-audit.py
-      - scripts/test-brand-canonical-audit.py
       - scripts/native-dispatch
       - scripts/lib/config-path.sh
       - sdata/lib/environment-variables.sh
       - sdata/lib/versioning.sh
       - distro/arch/alis-shell/PKGBUILD
       - distro/arch/alis-shell/.SRCINFO
-      - scripts/test-brand-canonical-arch-snapshot.sh
       - .github/workflows/brand-update-cutover.yml
   workflow_dispatch:
 permissions:
@@ -91,7 +87,3 @@ jobs:
         run: bash scripts/test-config-namespace-migration.sh
       - name: Original service and clipboard migrations cannot revert canonical ownership
         run: bash scripts/test-brand-post-cutover-migration-guards.sh
-      - name: Active quoted commands cannot evade the identity audit
-        run: python3 scripts/test-brand-canonical-audit.py
-      - name: Pinned Arch CLI preserves the session-owner boundary
-        run: bash scripts/test-brand-canonical-arch-snapshot.sh

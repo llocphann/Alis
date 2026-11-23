@@ -41,7 +41,7 @@ screen_edges = SCREEN_EDGES.read_text(encoding="utf-8")
 notepad = NOTEPAD.read_text(encoding="utf-8")
 quick_notes_view = QUICK_NOTES_VIEW.read_text(encoding="utf-8")
 dash_notes = DASH_NOTES.read_text(encoding="utf-8")
-sidebar_quick_note = SIDEBAR_QUICK_NOTE.read_text(encoding="utf-8")
+assert not SIDEBAR_QUICK_NOTE.exists(), "SidebarLeft QuickNote widget was retired"
 notepad_service = NOTEPAD_SERVICE.read_text(encoding="utf-8")
 config = CONFIG.read_text(encoding="utf-8")
 defaults = json.loads(DEFAULTS.read_text(encoding="utf-8"))
@@ -305,28 +305,6 @@ for token in (
             "Quick Notes hover rail is missing a secondary editor action")
 
 for token in (
-    "QuickNotesView {",
-    "preferredHeight: 210",
-    "surfaceLocalTabSelection: true",
-    "showZettelkastenActions: true",
-    "root.flushPendingSave()",
-    "root.releaseEditorFocus()",
-):
-    require(sidebar_quick_note, token,
-            "Sidebar Quick Note must delegate to the shared presentation")
-
-for retired in (
-    "property string draftTabId:",
-    "function beginEditing()",
-    "function saveDraft()",
-    "function cancelEditing()",
-    "TextArea {",
-    "RippleButton {",
-):
-    forbid(sidebar_quick_note, retired,
-           "Sidebar Quick Note must not restore its legacy private editor")
-
-for token in (
     "signal editorActivated()",
     "NotepadWidget {",
     "compactPresentation: true",
@@ -544,10 +522,6 @@ for source in (quick_notes_view, dash_notes):
 
 for retired in ("readingOnHover", "allowManualReading", "enterMarkdownReading"):
     forbid(notepad, retired, "Retired manual/hover Markdown mode still used")
-
-# Do not inadvertently turn the Sidebar Left editor into a forced Reading host.
-forbid(sidebar_quick_note, "autoMarkdownReading: true",
-       "Sidebar Left should retain Source-first entry")
 
 # Retraction is intentionally different from forced owner eviction.
 # Scope assertions to each method: QML often uses unqualified property names

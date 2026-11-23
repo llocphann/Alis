@@ -25,13 +25,16 @@ const declaration = service.slice(start, finish).replace("): void {", ") {");
 const context = {
     error: "", mpdConnected: false, mpdHost: "127.0.0.1", mpdPort: 6600,
     mpdState: "stop", activeQueue: [], libraryTracks: [], playlists: [],
-    currentIndex: -1, resumeIndex: -1, currentUri: "", currentPath: "",
+    currentIndex: -1, currentQueueId: -1, resumeIndex: -1, currentUri: "", currentPath: "",
     currentTitle: "", currentArtist: "", currentAlbum: "", currentArt: "",
     currentPosition: 0, currentDuration: 0, volume: 0.5, shuffleMode: false,
     repeatMode: 0, detectedLibraryFolder: "",
+    _lastMpdPositionSampleMs: 0,
+    _safeValidDuration(v) { const n = Number(v); return Number.isFinite(n) && n > 0 && n <= 86400 ? n : 0; },
     MprisController: {ensureMpdMprisBridge() {}},
     _applyCurrentTrack() {throw Error("unexpected playback mutation");},
 };
+context.root = context;
 vm.createContext(context);
 const apply = vm.runInContext("(" + declaration + ")", context);
 const emptyQueue = [];
@@ -52,11 +55,10 @@ assert.equal(context.mpdConnected, false);
 // Dashboard uses exactly the existing backend signal, never a second MPD
 // poller or independent audio backend. Hidden banners allocate zero viewport.
 for (const token of [
-    'readonly property string backendError: String(root.backend?.error ?? "").trim()',
+    'readonly property string backendError: String(root.backend?.error ?? "")',
+    'readonly property bool showErrorBanner: !root.backendAvailable || root.backendError.length > 0',
     'objectName: "musicBackendError"',
-    'text: "MPD: " + root.backendError',
-    'visible: root.presentationActive && root.backendError.length > 0',
-    'anchors.topMargin: backendErrorBar.visible ? backendErrorBar.height + 6 : 0',
-    'onClicked: root.backend.refreshStatus()'
+    'visible: root.showErrorBanner',
+    '? root.backendError'
 ]) assert(dashboard.includes(token), "Dashboard missing error contract: " + token);
 console.log("DASHBOARD_MPD_DIAGNOSTIC_PASS decoder errors visible, recovery clears, queue unchanged");

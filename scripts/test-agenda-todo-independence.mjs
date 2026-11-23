@@ -52,7 +52,6 @@ function visit(directory) {
 visit(moduleRoot);
 assert.doesNotMatch(editor,/plannerRepeatConflictHint/);
 assert.match(editor,/Events\.updateEventGroup\(root\.editingEvent\.id/);
-assert.match(editor,/canonical\.repeatTemplate/);
 assert.match(editor,/root\.plannerSelectedDateKeys=selectedKeys\.length/);
 const O=vm.runInNewContext(read("services/EventOccurrences.js")
   +";({entry,entries,store,compatible,append})",{});

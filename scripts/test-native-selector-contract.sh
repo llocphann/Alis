@@ -34,7 +34,7 @@ grep -Fq 'native-dispatch clipboard-store'     "$root/sdata/migrations/049-nativ
 grep -Fq '"$SCRIPT_DIR/../native-dispatch" theme'     "$root/scripts/colors/switchwall.sh"     || fail 'theme pipeline must route through native-dispatch'
 grep -Fq 'nativeIconSyncProc' "$root/services/IconThemeService.qml"     || fail 'IconThemeService must expose native sync test path'
 grep -Fq 'nativeBackendStatePath' "$root/services/IconThemeService.qml"     || fail 'IconThemeService must honor persistent trial selector state after reboot'
-grep -Fq '/alis-inputd([[:space:]]|$)' "$root/scripts/alis"     || fail 'shell restart cleanup must recognize Rust input daemon'
+grep -Fq 'inputd|mpdd|theme)([[:space:]]|$)' "$root/scripts/alis"     || fail 'shell restart cleanup must recognize Rust input daemon'
 
 # The trial cutover harness must remain reversible. The live qualification loop
 # alternates order to reduce warm-cache bias, so assert the semantic Rust path

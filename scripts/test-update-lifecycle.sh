@@ -104,10 +104,13 @@ arch_srcinfo_source="$(sed -n 's/^[[:space:]]*source = //p' "$arch_package_srcin
 
 # The dependency tracker is built during setup. Version injection must happen in
 # a temporary staged recipe so installation cannot dirty a source checkout.
-repo_version="$(tr -d '[:space:]' < "$repo_root/VERSION")"
+expected_meta_version="$(grep -m1 '^pkgver=' "$arch_package" | cut -d= -f2-)"
+if [[ -f "$repo_root/VERSION" ]]; then
+    expected_meta_version="$(tr -d '[:space:]' < "$repo_root/VERSION")"
+fi
 dependency_meta_version="$(grep -m1 '^pkgver=' "$arch_dependency_meta" | cut -d= -f2-)"
-[[ "$dependency_meta_version" == "$repo_version" ]] \
-    || fail "alis-deps pkgver=$dependency_meta_version does not match VERSION=$repo_version"
+[[ -n "$dependency_meta_version" && "$dependency_meta_version" == "$expected_meta_version" ]] \
+    || fail "alis-deps pkgver=$dependency_meta_version does not match expected pkgver=$expected_meta_version"
 grep -Fqx "url='https://github.com/llocphann/Alis'" "$arch_dependency_meta" \
     || fail 'alis-deps still advertises a non-Alis repository'
 grep -Fq 'alis-deps) continue ;;' "$arch_dependency_installer" \
@@ -151,7 +154,12 @@ grep -Fq 'get_installed_update_strategy 2>/dev/null || true' "$nix_package" \
 # Release tooling must be location-independent: callers commonly invoke the
 # script by absolute path from outside the checkout. Publishing is fail-closed:
 # validate first, stage/reuse a draft, sync the Wiki, then make the release public.
-release_version="$(tr -d '[:space:]' < "$repo_root/VERSION")"
+if [[ -f "$repo_root/VERSION" ]]; then
+    release_version="$(tr -d '[:space:]' < "$repo_root/VERSION")"
+else
+    release_version="$(sed -n 's/^## \[\([^]]*\)\] - .*/\1/p' "$repo_root/CHANGELOG.md" | head -n1)"
+fi
+[[ -n "$release_version" ]] || fail 'could not resolve a release version from VERSION or CHANGELOG.md'
 release_notes="$tmp/release-notes.md"
 (
     cd "$tmp"
@@ -238,7 +246,7 @@ import sys
 
 text = Path(sys.argv[1]).read_text()
 process = text.split('id: checkUpdatesProc', 1)[1]
-assert 'command: ["checkupdates"]' in process
+assert 'command: [Quickshell.shellPath("scripts/native-dispatch"), "check-updates"]' in process
 assert 'command: ["which", "checkupdates"]' not in text
 
 def body(marker):
@@ -294,8 +302,8 @@ PY_UPDATES
 python3 "$payload_tool" manifest --root "$repo_root" > "$tmp/manifest"
 grep -q '^shell.qml:' "$tmp/manifest" || fail 'runtime manifest is missing shell.qml'
 grep -q '^scripts/alis:' "$tmp/manifest" || fail 'runtime manifest is missing scripts/alis'
-if grep -q '^scripts/alis:' "$tmp/manifest"; then
-    fail 'runtime manifest shipped the retired public scripts/alis launcher'
+if grep -q '^scripts/inir:' "$tmp/manifest"; then
+    fail 'runtime manifest shipped the retired public scripts/inir launcher'
 fi
 for excluded in \
     scripts/qml-check.fish \

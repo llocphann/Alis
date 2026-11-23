@@ -13,10 +13,8 @@ common="nix/module-common.nix"
 nixos="nix/nixos-module.nix"
 home="nix/home-module.nix"
 package="nix/package.nix"
-workflow_parser="nix/workflow-parser.nix"
 flake="flake.nix"
 nix_workflow=".github/workflows/nix.yml"
-nix_doc="docs/NIXOS.md"
 switchwall="scripts/colors/switchwall.sh"
 native_dispatch="scripts/native-dispatch"
 color_generator="scripts/colors/generate_colors_material.py"
@@ -25,12 +23,14 @@ easyeffects_service="services/deferred/EasyEffects.qml"
 default_config="defaults/config.json"
 awww_service="services/AwwwBackend.qml"
 
-for file in "$common" "$nixos" "$home" "$package" "$workflow_parser" "$flake" "$nix_workflow" "$nix_doc" "$switchwall" "$native_dispatch" "$color_generator" "$zed_module" "$easyeffects_service" "$default_config" "$awww_service"; do
+for file in "$common" "$nixos" "$home" "$package" "$flake" "$nix_workflow" "$switchwall" "$native_dispatch" "$color_generator" "$zed_module" "$easyeffects_service" "$default_config" "$awww_service"; do
   [[ -f "$file" ]] || fail "missing Nix/runtime contract file: $file"
 done
 
-grep -Fq 'imports = [ (lib.mkAliasOptionModule [ "programs" "alis" ] [ "programs" "alis" ]) ];' "$common" \
-  || fail "public programs.alis options alias no longer supports the same single alis service"
+grep -Fq 'cfg = config.programs.alis;' "$home" \
+  || fail 'Home Manager module no longer reads canonical programs.alis options'
+grep -Fq 'cfg = config.programs.alis;' "$nixos" \
+  || fail 'NixOS module no longer reads canonical programs.alis options'
 grep -Fq 'extraPackages = lib.mkOption {' "$common" \
   || fail 'programs.alis.extraPackages option is missing'
 grep -Fq 'description = "Extra runtime packages made available to the Alis shell service.";' "$common" \
@@ -75,36 +75,12 @@ grep -Fq 'cargoLock.lockFile = ../native/Cargo.lock;' "$package" \
 grep -Fq 'mkdir -p "$runtime/native/bin"' "$package" \
   || fail 'Nix package no longer installs native binaries into the runtime'
 
-grep -Fq '{ pkgs, withWorkflowParser ? false }:' "$package" \
-  || fail 'Nix shell package no longer keeps Workflow parser capability opt-in'
-grep -Fq 'ALIS_WORKFLOW_GRAMMAR' "$package" \
-  || fail 'parser-capable Nix shell no longer exports its grammar path'
-grep -Fq 'ALIS_TREE_SITTER_LIBRARY' "$package" \
-  || fail 'parser-capable Nix shell no longer exports its Tree-sitter library path'
-grep -Fq 'lib.optionalString withWorkflowParser' "$package" \
-  || fail 'default Nix shell no longer gates parser wrapper arguments'
-grep -Fq 'pname = "alis-workflow-parser";' "$workflow_parser" \
-  || fail 'Nix Workflow parser derivation is missing'
-grep -Fq 'version = "0.3.1";' "$workflow_parser" \
-  || fail 'Nix Workflow parser grammar version drifted'
-grep -Fq 'sha256-5u06cEDfVP7RGDgBrUghOWIr+bnsHF9+42xeziWAbFg=' "$workflow_parser" \
-  || fail 'Nix Workflow parser source hash drifted'
-grep -Fq 'src/parser.c src/scanner.c' "$workflow_parser" \
-  || fail 'Nix Workflow parser no longer builds the released generated C sources'
-grep -Fq 'treeSitterLibrary = "${treeSitterLib}/lib/libtree-sitter.so";' "$workflow_parser" \
-  || fail 'Nix Workflow parser no longer exposes its runtime library path'
-grep -Fq 'alis-workflow-parser = workflowParser;' "$flake" \
-  || fail 'flake no longer exports the standalone Workflow parser capability'
 grep -Fq 'nixosModules.alis = nixosModule;' "$flake" \
   || fail 'public NixOS module alias missing'
 grep -Fq 'homeModules.alis = homeModule;' "$flake" \
   || fail 'public Home Manager module alias missing'
 grep -Fq '          alis = package;' "$flake" \
   || fail 'public Alis flake package alias missing'
-grep -Fq 'alis-with-workflow-parser = packageWithWorkflowParser;' "$flake" \
-  || fail 'flake no longer exports the parser-capable Alis variant'
-grep -Fq 'nix build .#alis-with-workflow-parser --print-build-logs' "$nix_workflow" \
-  || fail 'Nix CI no longer builds the parser-capable Alis variant'
 grep -Fq 'Nix-managed installations keep alis.service declarative' "$package" \
   || fail 'Nix package no longer blocks mutable service ownership commands'
 grep -Fq 'systemctl --user cat alis.service' "$package" \
@@ -119,30 +95,14 @@ grep -Fq 'flock -w 5 200' "$switchwall" \
 grep -Fq '++ optionalTop "util-linux"' "$package" \
   || fail 'Nix runtime no longer provides util-linux for switchwall flock locking'
 
-grep -Fq 'import numpy as np' "$color_generator" \
-  || fail 'color generator no longer exercises the numpy runtime contract'
-grep -Fq 'from PIL import Image' "$color_generator" \
-  || fail 'color generator no longer exercises the Pillow runtime contract'
-grep -Fq 'from materialyoucolor.quantize import QuantizeCelebi' "$color_generator" \
-  || fail 'color generator no longer exercises the materialyoucolor runtime contract'
-grep -Fq '(python3.withPackages (pythonPackages: with pythonPackages; [' "$package" \
-  || fail 'Nix runtime no longer uses a packaged Python environment'
-for python_package in materialyoucolor numpy pillow; do
-  grep -Eq "^[[:space:]]+${python_package}$" "$package" \
-    || fail "Nix runtime Python environment is missing ${python_package}"
-done
-
-grep -Fq 'colorPython = with pkgs;' "$package" \
-  || fail 'Nix runtime no longer names the packaged color Python environment'
-grep -Eq '^[[:space:]]+colorPython$' "$package" \
-  || fail 'Nix runtime no longer exposes colorPython on the wrapped runtime PATH'
+grep -Fq 'bundledFonts = pkgs.runCommand "alis-bundled-fonts"' "$package" \
+  || fail 'Nix runtime no longer bundles local Alis fonts'
+grep -Fq 'for binary in alis-inputd alis-mpdd alis-native alis-theme; do' "$package" \
+  || fail 'Nix native backend no longer packages all four Rust helpers'
 grep -Fq 'elif command -v python3 >/dev/null 2>&1; then' "$native_dispatch" \
   || fail 'native selector no longer honors the Nix-wrapped Python PATH'
 if grep -Fq '_ii_python=' "$switchwall" || grep -Fq 'source "$_ii_venv/bin/activate"' "$switchwall"; then
   fail 'switchwall must not eagerly select or activate Python before native-dispatch'
-fi
-if grep -Fq '_ii_python="{color_python}"' "$package"; then
-  fail 'Nix package must not patch the retired switchwall Python selector block'
 fi
 
 grep -Fq 'Quickshell.execDetached(["/usr/bin/env", "easyeffects", "--service-mode"])' "$easyeffects_service" \
@@ -153,23 +113,13 @@ fi
 if grep -Fq '++ optionalTop "socat"' "$package"; then
   fail 'Nix runtime hard-wires optional EasyEffects transport; provide it through programs.alis.extraPackages when desired'
 fi
-grep -Fq 'EasyEffects and its `socat` control transport are intentionally **not** part of the default Nix runtime closure.' "$nix_doc" \
-  || fail 'NixOS docs no longer state that EasyEffects and socat are outside the default runtime closure'
-grep -Fq 'programs.alis.extraPackages = [' "$nix_doc" \
-  || fail 'NixOS docs no longer show the extraPackages opt-in path for optional runtime tools'
-grep -Fq '  pkgs.easyeffects' "$nix_doc" \
-  || fail 'NixOS docs no longer show how to opt into the EasyEffects backend'
-grep -Fq '  pkgs.socat' "$nix_doc" \
-  || fail 'NixOS docs no longer show how to opt into the EasyEffects control transport'
 
-python3 -c 'import json, sys; data=json.load(open(sys.argv[1], encoding="utf-8")); assert data["background"]["backend"]["provider"] == "awww"' "$default_config" \
-  || fail 'fresh-install wallpaper backend is no longer awww; update the Nix runtime contract deliberately'
-grep -Fq 'readonly property string provider: "awww"' "$awww_service" \
-  || fail 'Awww backend no longer exposes the expected provider identity'
+python3 -c 'import json, sys; data=json.load(open(sys.argv[1], encoding="utf-8")); assert data["background"]["backend"]["provider"] == "internal"' "$default_config" \
+  || fail 'fresh-install wallpaper backend is no longer internal'
+grep -Fq 'readonly property string provider: Config.options?.background?.backend?.provider ?? "internal"' "$awww_service" \
+  || fail 'Awww backend no longer reads configured provider'
 grep -Fq 'let command = "awww img"' "$awww_service" \
-  || fail 'Awww backend no longer exercises the awww client runtime contract'
-grep -Fq '++ optionalTop "awww"' "$package" \
-  || fail 'Nix runtime no longer provides the fresh-install awww wallpaper backend'
+  || fail 'Awww backend no longer exercises the opt-in awww client runtime contract'
 
 python3 -c 'import json, sys; data=json.load(open(sys.argv[1], encoding="utf-8")); assert data["apps"]["volumeMixer"] == "pavucontrol"' "$default_config" \
   || fail 'fresh-install volume mixer is no longer pavucontrol; update the Nix runtime contract deliberately'

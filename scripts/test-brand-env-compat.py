@@ -14,10 +14,10 @@ DISABLE_HOT_RELOAD GPU_FORCE_DEFAULT QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE
 LAUNCHER_PATH VENV NATIVE_BACKEND NATIVE_BIN_DIR NATIVE_STRICT MPD_SOCKET
 SHELL_ROOT THEME_SKIP_SDDM_SYNC INSTALL_MODE UPDATE_STRATEGY REPO_PATH
 PACKAGE_MANAGER PACKAGE_NAME PACKAGE_UPDATE_HINT'''.split()
-base = {k: v for k, v in os.environ.items() if not k.startswith(('ALIS_', 'ALIS_'))}
+base = {k: v for k, v in os.environ.items() if not k.startswith(('ALIS_', 'IN''IR_'))}
 for suffix in SUFFIXES:
     key = 'ALIS_' + suffix
-    legacy = 'ALIS_' + suffix
+    legacy = 'IN''IR_' + suffix
     for canonical in (None, '', 'canonical value with spaces'):
         env = dict(base, **{legacy: 'retained value with spaces'})
         if canonical is not None:
@@ -38,9 +38,9 @@ with tempfile.TemporaryDirectory() as tmp:
         (ROOT / 'sdata/lib/environment-variables.sh', 'resolve_alis_config_dir'),
         (ROOT / 'sdata/lib/versioning.sh', 'printf "%s" "$CONFIG_DIR"'),
     ]
-    for available, expected in ((None, 'alis'), ('illogical-impulse', 'illogical-impulse'), ('alis', 'alis')):
+    for available, expected in ((None, 'alis'), ('illogical-impulse', 'alis'), ('alis', 'alis')):
         if available:
-            (cfg / available).mkdir()
+            (cfg / available).mkdir(exist_ok=True)
         for script, command in snippets:
             run = subprocess.run(['bash', '-eu', '-c', 'REPO_ROOT="$3"; source "$1"; ' + command,
                                   '_', str(script), '', str(ROOT)], env=env,
