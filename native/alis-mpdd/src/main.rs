@@ -2067,8 +2067,9 @@ fn response(id: Value, result: Result<Value>) -> Value {
 }
 
 fn write_json_line(stream: &mut UnixStream, value: &Value) -> Result<()> {
-    serde_json::to_writer(&mut *stream, value)?;
-    stream.write_all(b"\n")?;
+    let mut buf = serde_json::to_vec(value)?;
+    buf.push(b'\n');
+    stream.write_all(&buf)?;
     stream.flush()?;
     Ok(())
 }
@@ -2101,10 +2102,6 @@ fn handle_client(
         if request.op == "subscribe" {
             let subscriber = reader.get_ref().try_clone()?;
             subscriber.set_write_timeout(Some(Duration::from_millis(250)))?;
-            subscribers
-                .lock()
-                .map_err(|_| anyhow!("subscriber_mutex_poisoned"))?
-                .push(subscriber);
             write_json_line(
                 reader.get_mut(),
                 &json!({
@@ -2114,6 +2111,10 @@ fn handle_client(
                     "result": {"subscribed": true}
                 }),
             )?;
+            subscribers
+                .lock()
+                .map_err(|_| anyhow!("subscriber_mutex_poisoned"))?
+                .push(subscriber);
             return Ok(());
         }
 
@@ -2697,7 +2698,7 @@ fn arm_parent_death_signal() -> Result<()> {
 }
 
 fn prepare_socket(path: &Path) -> Result<UnixListener> {
-    if let Some(parent) = path.parent() {
+    if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
         fs::create_dir_all(parent)?;
     }
 

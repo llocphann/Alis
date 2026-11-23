@@ -117,7 +117,7 @@ Singleton {
         }
         if (root.sloppySearch) {
             const searchLower = search.toLowerCase()
-            const count = Math.min(100, root.maxEntries)
+            const count = Math.min(entries.length, 100, root.maxEntries)
             if (limit > 0) {
                 const top = []
                 for (let i = 0; i < count; ++i) {
@@ -293,27 +293,37 @@ Singleton {
     Process {
         id: deleteProc
         property string entry: ""
+        property var pendingQueue: []
         command: root._useNativeClipboard
             ? [root._nativeDispatch, "clipboard", "delete"]
             : [root.cliphistBinary, "delete"]
         stdinEnabled: true
         function deleteEntry(entry) {
+            if (deleteProc.running) {
+                deleteProc.pendingQueue = [...deleteProc.pendingQueue, entry];
+                return;
+            }
             deleteProc.entry = entry;
-            deleteProc.stdinEnabled = true
+            deleteProc.stdinEnabled = true;
             deleteProc.running = true;
         }
-        onRunningChanged: {
-            if (deleteProc.running) {
-                const toWrite = deleteProc.entry
-                deleteProc.write(toWrite)
-                deleteProc.write("\n")
-                deleteProc.stdinEnabled = false
-            } else {
-                deleteProc.stdinEnabled = true
-            }
+        onStarted: {
+            const toWrite = deleteProc.entry
+            deleteProc.write(toWrite)
+            deleteProc.write("\n")
+            deleteProc.stdinEnabled = false
         }
         onExited: (exitCode, exitStatus) => {
             deleteProc.entry = "";
+            if (deleteProc.pendingQueue.length > 0) {
+                const nextEntry = deleteProc.pendingQueue[0];
+                deleteProc.pendingQueue = deleteProc.pendingQueue.slice(1);
+                deleteProc.entry = nextEntry;
+                deleteProc.stdinEnabled = true;
+                deleteProc.running = true;
+                return;
+            }
+            deleteProc.stdinEnabled = true;
             root.refresh();
         }
     }
@@ -480,25 +490,30 @@ Singleton {
         onTriggered: root.refresh()
     }
 
+    Timer {
+        id: readProcFlushTimer
+        interval: 50
+        repeat: false
+        onTriggered: {
+            if (readProc._exited && !readProc._finalized)
+                readProc._finalizeRead()
+        }
+    }
+
     Process {
         id: readProc
         property list<string> buffer: []
+        property bool _exited: false
+        property int _exitCode: -1
+        property int _exitStatus: 0
+        property bool _finalized: false
 
-        // Hide byte-identical text copies in every presentation while retaining
-        // all original IDs/payloads on disk. Preview collisions remain distinct.
-        command: root._useNativeClipboard
-            ? [root._nativeDispatch, "clipboard", "list", "--limit", String(root.maxEntries)]
-            : ["/usr/bin/python3", `${Directories.scriptsPath}/clipboard-history.py`,
-                "--binary", root.cliphistBinary, "--limit", String(root.maxEntries)]
-
-        stdout: SplitParser {
-            onRead: (line) => {
-                readProc.buffer.push(line)
-            }
-        }
-
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0) {
+        function _finalizeRead(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            readProcFlushTimer.stop()
+            if (_exitCode === 0) {
                 // Cap the number of entries we keep and do not emit a false
                 // entriesChanged when an explicit refresh returns the same list.
                 const nextEntries = readProc.buffer.slice(0, root.maxEntries)
@@ -516,9 +531,41 @@ Singleton {
                     readRetryTimer.restart()
                 } else {
                     root._readAttempts = 0
-                    console.error("[Cliphist] Failed to refresh with code", exitCode, "and status", exitStatus)
+                    console.error("[Cliphist] Failed to refresh with code", _exitCode, "and status", _exitStatus)
                 }
             }
+        }
+
+        onRunningChanged: {
+            if (running) {
+                _exited = false
+                _exitCode = -1
+                _exitStatus = 0
+                _finalized = false
+                readProcFlushTimer.stop()
+            }
+        }
+
+        // Hide byte-identical text copies in every presentation while retaining
+        // all original IDs/payloads on disk. Preview collisions remain distinct.
+        command: root._useNativeClipboard
+            ? [root._nativeDispatch, "clipboard", "list", "--limit", String(root.maxEntries)]
+            : ["/usr/bin/python3", `${Directories.scriptsPath}/clipboard-history.py`,
+                "--binary", root.cliphistBinary, "--limit", String(root.maxEntries)]
+
+        stdout: SplitParser {
+            onRead: (line) => {
+                readProc.buffer.push(line)
+                if (readProc._exited && !readProc._finalized)
+                    readProcFlushTimer.restart()
+            }
+        }
+
+        onExited: (exitCode, exitStatus) => {
+            readProc._exited = true
+            readProc._exitCode = exitCode
+            readProc._exitStatus = exitStatus
+            readProcFlushTimer.restart()
         }
     }
 

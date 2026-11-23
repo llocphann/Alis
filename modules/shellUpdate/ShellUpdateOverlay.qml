@@ -590,10 +590,10 @@ Scope {
                             onClicked: {
                                 const diag = ShellUpdates.getDiagnostics()
                                 console.log("[ShellUpdates] Diagnostics:\n" + diag)
-                                Notifications.notify({
+                                Notifications.sendInternal({
                                     summary: "Update System Diagnostics",
                                     body: "Diagnostics printed to console. Run: qs log -c alis | tail -50",
-                                    urgency: NotificationUrgency.Normal,
+                                    urgency: "normal",
                                     timeout: 8000,
                                     appName: "Alis Shell"
                                 })

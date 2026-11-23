@@ -452,8 +452,8 @@ ContentPage {
                 ConfigSwitch {
                     buttonIcon: "volume_up"
                     text: Translation.tr("Notification chime")
-                    checked: Config.options?.audio?.sounds?.notification ?? false
-                    onCheckedChanged: Config.setNestedValue("audio.sounds.notification", checked)
+                    checked: Config.options?.sounds?.notifications ?? true
+                    onCheckedChanged: Config.setNestedValue("sounds.notifications", checked)
                 }
 
                 ContentSubsection {

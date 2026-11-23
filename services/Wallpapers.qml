@@ -222,7 +222,7 @@ Singleton {
             // Cache-bust so Image(cache:true) surfaces reload when the first frame appears.
             if (ff) return (ff.startsWith("file://") ? ff : "file://" + ff) + "?ff=1"
             const expected = root._videoThumbDir + "/" + MD5.hash(path) + ".jpg"
-            root.ensureVideoFirstFrame(path)
+            Qt.callLater(() => root.ensureVideoFirstFrame(path))
             return "file://" + expected + "?ff=0"
         }
         return path.startsWith("file://") ? path : ("file://" + path)
@@ -320,6 +320,7 @@ Singleton {
         property string _outputPath
         onExited: (exitCode) => {
             if (exitCode === 0) {
+                delete root._ffPending[_ffCheckProc._videoPath]
                 root._cacheFirstFrame(_ffCheckProc._videoPath, _ffCheckProc._outputPath)
                 root._processNextFF()
             } else {
@@ -329,12 +330,11 @@ Singleton {
                     // Wallpaper loops usually fade in from black, so frame 0 gives
                     // this file a nearly black palette — and this frame is what the
                     // theming pipeline quantizes. Pick a representative frame.
-                    "mkdir -p " + JSON.stringify(root._videoThumbDir) +
-                    " && ffmpeg -y -i " + JSON.stringify(_ffCheckProc._videoPath) +
-                    " -vf " + JSON.stringify("thumbnail=n=100") +
-                    " -frames:v 1 -update 1 -q:v 2 " + JSON.stringify(_ffCheckProc._outputPath) +
-                    " || ffmpeg -y -i " + JSON.stringify(_ffCheckProc._videoPath) +
-                    " -vframes 1 -update 1 -q:v 2 " + JSON.stringify(_ffCheckProc._outputPath)]
+                    'mkdir -p "$1" && ffmpeg -y -i "$2" -vf "thumbnail=n=100" -frames:v 1 -update 1 -q:v 2 "$3" || ffmpeg -y -i "$2" -vframes 1 -update 1 -q:v 2 "$3"',
+                    "_",
+                    root._videoThumbDir,
+                    _ffCheckProc._videoPath,
+                    _ffCheckProc._outputPath]
                 _ffGenProc.running = true
             }
         }
@@ -345,6 +345,7 @@ Singleton {
         property string _videoPath
         property string _outputPath
         onExited: (exitCode) => {
+            delete root._ffPending[_ffGenProc._videoPath]
             if (exitCode === 0) {
                 root._cacheFirstFrame(_ffGenProc._videoPath, _ffGenProc._outputPath)
             }
@@ -1360,6 +1361,8 @@ Singleton {
                 root._setFolderModelDirectory(Qt.resolvedUrl(_autoPickProc._targetFolder))
                 // Wait for folder model to update before picking
                 _autoPickFolderDelay.restart()
+            } else {
+                _autoPickProc._previousFolder = ""
             }
         }
     }
@@ -1367,7 +1370,14 @@ Singleton {
     Timer {
         id: _autoPickFolderDelay
         interval: 500
-        onTriggered: root._pickRandomAndApply()
+        onTriggered: {
+            root._pickRandomAndApply()
+            if (_autoPickProc._previousFolder) {
+                const prev = _autoPickProc._previousFolder
+                _autoPickProc._previousFolder = ""
+                root._setFolderModelDirectory(prev.startsWith("file://") ? prev : Qt.resolvedUrl(prev))
+            }
+        }
     }
     // ── End auto wallpaper cycling ──────────────────────────────────────
 

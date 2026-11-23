@@ -1239,17 +1239,21 @@ Singleton {
     Process {
         id: _nativeBackendInfoProc
         property string output: ""
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         command: [root.nativeDispatchPath, "backend-info"]
 
-        stdout: StdioCollector {
-            onStreamFinished: _nativeBackendInfoProc.output = text ?? ""
-        }
-
-        onExited: (code, _status) => {
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            _nativeBackendInfoFlushTimer.stop()
             root._nativeBackendChecked = true
             let mode = ""
             let mpdReady = false
-            if (code === 0) {
+            if (_exitCode === 0) {
                 const lines = String(_nativeBackendInfoProc.output ?? "").split("\n")
                 for (const rawLine of lines) {
                     const line = rawLine.trim()
@@ -1270,6 +1274,45 @@ Singleton {
                 root._startNativeMpdBridge()
             else
                 root._stopNativeMpdBridge()
+        }
+
+        onRunningChanged: {
+            if (running) {
+                output = ""
+                _exited = false
+                _exitCode = -1
+                _stdoutDone = false
+                _finalized = false
+                _nativeBackendInfoFlushTimer.stop()
+            }
+        }
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                _nativeBackendInfoProc.output = text ?? ""
+                _nativeBackendInfoProc._stdoutDone = true
+                if (_nativeBackendInfoProc._exited)
+                    _nativeBackendInfoProc._finalize()
+            }
+        }
+
+        onExited: (code, _status) => {
+            _nativeBackendInfoProc._exited = true
+            _nativeBackendInfoProc._exitCode = code
+            if (_nativeBackendInfoProc._stdoutDone)
+                _nativeBackendInfoProc._finalize()
+            else
+                _nativeBackendInfoFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: _nativeBackendInfoFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (_nativeBackendInfoProc._exited && !_nativeBackendInfoProc._finalized)
+                _nativeBackendInfoProc._finalize()
         }
     }
 
@@ -1451,14 +1494,17 @@ Singleton {
         id: _lyricsProc
         property string requestedPath: ""
         property string output: ""
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
 
-        stdout: StdioCollector {
-            onStreamFinished: _lyricsProc.output = text ?? ""
-        }
-
-        onStarted: _lyricsProc.output = ""
-
-        onExited: (code, _status) => {
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            _lyricsFlushTimer.stop()
+            const code = _exitCode
             const requestedPath = _lyricsProc.requestedPath
             if (requestedPath === root.currentPath) {
                 if (code !== 0) {
@@ -1527,6 +1573,47 @@ Singleton {
             if (root._pendingLyricsPath.length > 0)
                 Qt.callLater(root._startPendingLyrics)
         }
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                _lyricsProc.output = text ?? ""
+                _lyricsProc._stdoutDone = true
+                if (_lyricsProc._exited)
+                    _lyricsProc._finalize()
+            }
+        }
+
+        onRunningChanged: {
+            if (running) {
+                output = ""
+                _exited = false
+                _exitCode = -1
+                _stdoutDone = false
+                _finalized = false
+                _lyricsFlushTimer.stop()
+            }
+        }
+
+        onStarted: _lyricsProc.output = ""
+
+        onExited: (code, _status) => {
+            _lyricsProc._exited = true
+            _lyricsProc._exitCode = code
+            if (_lyricsProc._stdoutDone)
+                _lyricsProc._finalize()
+            else
+                _lyricsFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: _lyricsFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (_lyricsProc._exited && !_lyricsProc._finalized)
+                _lyricsProc._finalize()
+        }
     }
 
     Process {
@@ -1534,14 +1621,17 @@ Singleton {
         property string requestedPath: ""
         property bool upgradeOnly: false
         property string output: ""
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
 
-        stdout: StdioCollector {
-            onStreamFinished: _lyricsDownloadProc.output = text ?? ""
-        }
-
-        onStarted: _lyricsDownloadProc.output = ""
-
-        onExited: (code, _status) => {
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            _lyricsDownloadFlushTimer.stop()
+            const code = _exitCode
             const requestedPath = _lyricsDownloadProc.requestedPath
             if (requestedPath !== root.currentPath)
                 return
@@ -1573,19 +1663,64 @@ Singleton {
                     root._clearLocalLyrics("not_found")
             }
         }
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                _lyricsDownloadProc.output = text ?? ""
+                _lyricsDownloadProc._stdoutDone = true
+                if (_lyricsDownloadProc._exited)
+                    _lyricsDownloadProc._finalize()
+            }
+        }
+
+        onRunningChanged: {
+            if (running) {
+                output = ""
+                _exited = false
+                _exitCode = -1
+                _stdoutDone = false
+                _finalized = false
+                _lyricsDownloadFlushTimer.stop()
+            }
+        }
+
+        onStarted: _lyricsDownloadProc.output = ""
+
+        onExited: (code, _status) => {
+            _lyricsDownloadProc._exited = true
+            _lyricsDownloadProc._exitCode = code
+            if (_lyricsDownloadProc._stdoutDone)
+                _lyricsDownloadProc._finalize()
+            else
+                _lyricsDownloadFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: _lyricsDownloadFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (_lyricsDownloadProc._exited && !_lyricsDownloadProc._finalized)
+                _lyricsDownloadProc._finalize()
+        }
     }
 
     Process {
         id: _durationProbeProc
         property string targetPath: ""
         property string output: ""
-        stdout: StdioCollector {
-            onStreamFinished: _durationProbeProc.output = text ?? ""
-        }
-        onStarted: _durationProbeProc.output = ""
-        onExited: (code, _status) => {
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            _durationProbeFlushTimer.stop()
             const path = _durationProbeProc.targetPath
-            if (code !== 0 || !path)
+            if (_exitCode !== 0 || !path)
                 return
             const dur = root._safeValidDuration(parseFloat(_durationProbeProc.output.trim()))
             if (dur <= 0)
@@ -1596,18 +1731,59 @@ Singleton {
             if (root.currentPath === path && root._safeValidDuration(root.currentDuration) <= 0)
                 root.currentDuration = dur
         }
+        onRunningChanged: {
+            if (running) {
+                output = ""
+                _exited = false
+                _exitCode = -1
+                _stdoutDone = false
+                _finalized = false
+                _durationProbeFlushTimer.stop()
+            }
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                _durationProbeProc.output = text ?? ""
+                _durationProbeProc._stdoutDone = true
+                if (_durationProbeProc._exited)
+                    _durationProbeProc._finalize()
+            }
+        }
+        onStarted: _durationProbeProc.output = ""
+        onExited: (code, _status) => {
+            _durationProbeProc._exited = true
+            _durationProbeProc._exitCode = code
+            if (_durationProbeProc._stdoutDone)
+                _durationProbeProc._finalize()
+            else
+                _durationProbeFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: _durationProbeFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (_durationProbeProc._exited && !_durationProbeProc._finalized)
+                _durationProbeProc._finalize()
+        }
     }
 
     Process {
         id: _scanProc
         property string output: ""
-        stdout: StdioCollector {
-            onStreamFinished: _scanProc.output = text ?? ""
-        }
-        onStarted: _scanProc.output = ""
-        onExited: (code, _status) => {
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            _scanFlushTimer.stop()
             root.scanning = false
-            if (code !== 0) {
+            if (_exitCode !== 0) {
                 root.mpdConnected = false
                 try {
                     const payload = JSON.parse(_scanProc.output || "{}")
@@ -1631,17 +1807,58 @@ Singleton {
                 Qt.callLater(root.refreshStatus)
             }
         }
+        onRunningChanged: {
+            if (running) {
+                output = ""
+                _exited = false
+                _exitCode = -1
+                _stdoutDone = false
+                _finalized = false
+                _scanFlushTimer.stop()
+            }
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                _scanProc.output = text ?? ""
+                _scanProc._stdoutDone = true
+                if (_scanProc._exited)
+                    _scanProc._finalize()
+            }
+        }
+        onStarted: _scanProc.output = ""
+        onExited: (code, _status) => {
+            _scanProc._exited = true
+            _scanProc._exitCode = code
+            if (_scanProc._stdoutDone)
+                _scanProc._finalize()
+            else
+                _scanFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: _scanFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (_scanProc._exited && !_scanProc._finalized)
+                _scanProc._finalize()
+        }
     }
 
     Process {
         id: _statusProc
         property string output: ""
-        stdout: StdioCollector {
-            onStreamFinished: _statusProc.output = text ?? ""
-        }
-        onStarted: _statusProc.output = ""
-        onExited: (code, _status) => {
-            if (code !== 0) {
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            _statusFlushTimer.stop()
+            if (_exitCode !== 0) {
                 root.mpdConnected = false
                 return
             }
@@ -1651,46 +1868,171 @@ Singleton {
                 root.error = "mpd_status_parse_failed"
             }
         }
+        onRunningChanged: {
+            if (running) {
+                output = ""
+                _exited = false
+                _exitCode = -1
+                _stdoutDone = false
+                _finalized = false
+                _statusFlushTimer.stop()
+            }
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                _statusProc.output = text ?? ""
+                _statusProc._stdoutDone = true
+                if (_statusProc._exited)
+                    _statusProc._finalize()
+            }
+        }
+        onStarted: _statusProc.output = ""
+        onExited: (code, _status) => {
+            _statusProc._exited = true
+            _statusProc._exitCode = code
+            if (_statusProc._stdoutDone)
+                _statusProc._finalize()
+            else
+                _statusFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: _statusFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (_statusProc._exited && !_statusProc._finalized)
+                _statusProc._finalize()
+        }
     }
 
     Process {
         id: _commandProc
         property string output: ""
-        stdout: StdioCollector { onStreamFinished: _commandProc.output = text ?? "" }
-        onStarted: _commandProc.output = ""
-        onExited: (code, _status) => {
-            if (code !== 0) root._mutationFailure(_commandProc.output, "mpd_command_failed")
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            _commandFlushTimer.stop()
+            if (_exitCode !== 0) root._mutationFailure(_commandProc.output, "mpd_command_failed")
             else root._scheduleStatusFallback()
             root._finishMpdMutation()
+        }
+        onRunningChanged: {
+            if (running) {
+                output = ""
+                _exited = false
+                _exitCode = -1
+                _stdoutDone = false
+                _finalized = false
+                _commandFlushTimer.stop()
+            }
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                _commandProc.output = text ?? ""
+                _commandProc._stdoutDone = true
+                if (_commandProc._exited)
+                    _commandProc._finalize()
+            }
+        }
+        onStarted: _commandProc.output = ""
+        onExited: (code, _status) => {
+            _commandProc._exited = true
+            _commandProc._exitCode = code
+            if (_commandProc._stdoutDone)
+                _commandProc._finalize()
+            else
+                _commandFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: _commandFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (_commandProc._exited && !_commandProc._finalized)
+                _commandProc._finalize()
         }
     }
 
     Process {
         id: _queueProc
         property string output: ""
-        stdout: StdioCollector {
-            onStreamFinished: _queueProc.output = text ?? ""
-        }
-        onStarted: _queueProc.output = ""
-        onExited: (code, _status) => {
-            if (code !== 0)
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            _queueFlushTimer.stop()
+            if (_exitCode !== 0)
                 root._mutationFailure(_queueProc.output, "mpd_queue_failed")
             else
                 root._scheduleStatusFallback()
 
             root._finishMpdMutation()
         }
+        onRunningChanged: {
+            if (running) {
+                output = ""
+                _exited = false
+                _exitCode = -1
+                _stdoutDone = false
+                _finalized = false
+                _queueFlushTimer.stop()
+            }
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                _queueProc.output = text ?? ""
+                _queueProc._stdoutDone = true
+                if (_queueProc._exited)
+                    _queueProc._finalize()
+            }
+        }
+        onStarted: _queueProc.output = ""
+        onExited: (code, _status) => {
+            _queueProc._exited = true
+            _queueProc._exitCode = code
+            if (_queueProc._stdoutDone)
+                _queueProc._finalize()
+            else
+                _queueFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: _queueFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (_queueProc._exited && !_queueProc._finalized)
+                _queueProc._finalize()
+        }
     }
 
     Process {
         id: _enqueueProc
         property string output: ""
-        stdout: StdioCollector {
-            onStreamFinished: _enqueueProc.output = text ?? ""
-        }
-        onStarted: _enqueueProc.output = ""
-        onExited: (code, _status) => {
-            if (code !== 0) {
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            _enqueueFlushTimer.stop()
+            if (_exitCode !== 0) {
                 root._mutationFailure(_enqueueProc.output, "mpd_enqueue_failed")
             } else {
                 try {
@@ -1701,17 +2043,58 @@ Singleton {
             }
             root._finishMpdMutation()
         }
+        onRunningChanged: {
+            if (running) {
+                output = ""
+                _exited = false
+                _exitCode = -1
+                _stdoutDone = false
+                _finalized = false
+                _enqueueFlushTimer.stop()
+            }
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                _enqueueProc.output = text ?? ""
+                _enqueueProc._stdoutDone = true
+                if (_enqueueProc._exited)
+                    _enqueueProc._finalize()
+            }
+        }
+        onStarted: _enqueueProc.output = ""
+        onExited: (code, _status) => {
+            _enqueueProc._exited = true
+            _enqueueProc._exitCode = code
+            if (_enqueueProc._stdoutDone)
+                _enqueueProc._finalize()
+            else
+                _enqueueFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: _enqueueFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (_enqueueProc._exited && !_enqueueProc._finalized)
+                _enqueueProc._finalize()
+        }
     }
 
     Process {
         id: _bulkEnqueueProc
         property string output: ""
-        stdout: StdioCollector {
-            onStreamFinished: _bulkEnqueueProc.output = text ?? ""
-        }
-        onStarted: _bulkEnqueueProc.output = ""
-        onExited: (code, _status) => {
-            if (code !== 0) {
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            _bulkEnqueueFlushTimer.stop()
+            if (_exitCode !== 0) {
                 root._mutationFailure(_bulkEnqueueProc.output, "mpd_bulk_enqueue_failed")
             } else {
                 try {
@@ -1722,17 +2105,58 @@ Singleton {
             }
             root._finishMpdMutation()
         }
+        onRunningChanged: {
+            if (running) {
+                output = ""
+                _exited = false
+                _exitCode = -1
+                _stdoutDone = false
+                _finalized = false
+                _bulkEnqueueFlushTimer.stop()
+            }
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                _bulkEnqueueProc.output = text ?? ""
+                _bulkEnqueueProc._stdoutDone = true
+                if (_bulkEnqueueProc._exited)
+                    _bulkEnqueueProc._finalize()
+            }
+        }
+        onStarted: _bulkEnqueueProc.output = ""
+        onExited: (code, _status) => {
+            _bulkEnqueueProc._exited = true
+            _bulkEnqueueProc._exitCode = code
+            if (_bulkEnqueueProc._stdoutDone)
+                _bulkEnqueueProc._finalize()
+            else
+                _bulkEnqueueFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: _bulkEnqueueFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (_bulkEnqueueProc._exited && !_bulkEnqueueProc._finalized)
+                _bulkEnqueueProc._finalize()
+        }
     }
 
     Process {
         id: _playlistProc
         property string output: ""
-        stdout: StdioCollector {
-            onStreamFinished: _playlistProc.output = text ?? ""
-        }
-        onStarted: _playlistProc.output = ""
-        onExited: (code, _status) => {
-            if (code !== 0) {
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            _playlistFlushTimer.stop()
+            if (_exitCode !== 0) {
                 try {
                     const payload = JSON.parse(_playlistProc.output || "{}")
                     root.error = String(payload.error ?? "mpd_playlist_failed")
@@ -1744,6 +2168,43 @@ Singleton {
                 playlistRescanTimer.restart()
             }
             root._finishMpdMutation()
+        }
+        onRunningChanged: {
+            if (running) {
+                output = ""
+                _exited = false
+                _exitCode = -1
+                _stdoutDone = false
+                _finalized = false
+                _playlistFlushTimer.stop()
+            }
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                _playlistProc.output = text ?? ""
+                _playlistProc._stdoutDone = true
+                if (_playlistProc._exited)
+                    _playlistProc._finalize()
+            }
+        }
+        onStarted: _playlistProc.output = ""
+        onExited: (code, _status) => {
+            _playlistProc._exited = true
+            _playlistProc._exitCode = code
+            if (_playlistProc._stdoutDone)
+                _playlistProc._finalize()
+            else
+                _playlistFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: _playlistFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (_playlistProc._exited && !_playlistProc._finalized)
+                _playlistProc._finalize()
         }
     }
 }

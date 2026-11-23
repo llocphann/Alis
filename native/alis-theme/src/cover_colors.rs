@@ -160,7 +160,7 @@ pub fn run_cover_colors(raw_args: &[String]) -> Result<()> {
     if colors.is_empty() {
         bail!("Not enough distinct colors found");
     }
-    if let Some(parent) = output_path.parent() {
+    if let Some(parent) = output_path.parent().filter(|p| !p.as_os_str().is_empty()) {
         fs::create_dir_all(parent)?;
     }
     let serialized = serde_json::to_string(&colors)?;

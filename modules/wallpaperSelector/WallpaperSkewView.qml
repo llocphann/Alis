@@ -521,14 +521,14 @@ Item {
     Timer {
         id: _saveFavouritesDebounce
         interval: 300
-        onTriggered: _saveFavouritesProc.running = true
+        onTriggered: {
+            _saveFavouritesProc.command = ["bash", "-c", 'printf "%s" "$1" > "$2"', "_", JSON.stringify(root._favouritesDb), root._favouritesCachePath]
+            _saveFavouritesProc.running = true
+        }
     }
 
     Process {
         id: _saveFavouritesProc
-        command: ["bash", "-c",
-            "printf '%s' " + JSON.stringify(JSON.stringify(root._favouritesDb)) +
-            " > " + JSON.stringify(root._favouritesCachePath)]
     }
 
     // ─── Color cache persistence ───
@@ -557,14 +557,14 @@ Item {
     Timer {
         id: _saveColorsDebounce
         interval: 500
-        onTriggered: _saveColorsProc.running = true
+        onTriggered: {
+            _saveColorsProc.command = ["bash", "-c", 'printf "%s" "$1" > "$2"', "_", JSON.stringify(root._colorsDb), root._colorsCachePath]
+            _saveColorsProc.running = true
+        }
     }
 
     Process {
         id: _saveColorsProc
-        command: ["bash", "-c",
-            "printf '%s' " + JSON.stringify(JSON.stringify(root._colorsDb)) +
-            " > " + JSON.stringify(root._colorsCachePath)]
     }
 
     // ─── File deletion ───

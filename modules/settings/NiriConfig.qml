@@ -403,6 +403,10 @@ ContentPage {
 
     Process {
         id: defaultFileManagerQuery
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         command: ["bash", "-c", `
             id=$(xdg-mime query default inode/directory)
             case "$id" in
@@ -412,30 +416,106 @@ ContentPage {
                     done ;;
                 *) echo "\${id%.desktop}" ;;
             esac`]
-        stdout: StdioCollector {
-            id: defaultFileManagerCollector
-        }
-        onExited: (exitCode) => {
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            defaultFileManagerFlushTimer.stop()
             const desktopId = (defaultFileManagerCollector.text || "").trim();
-            if (exitCode === 0 && desktopId.length > 0)
+            if (_exitCode === 0 && desktopId.length > 0)
                 ShellExec.execDetachedArgs(["gtk-launch", desktopId, root.niriConfigDir], Translation.tr("Open config folder"));
             else
                 ShellExec.execDetachedArgs(["xdg-open", root.niriConfigDir], Translation.tr("Open config folder"));
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false;
+                _exitCode = -1;
+                _stdoutDone = false;
+                _finalized = false;
+                defaultFileManagerFlushTimer.stop();
+            }
+        }
+        stdout: StdioCollector {
+            id: defaultFileManagerCollector
+            onStreamFinished: {
+                defaultFileManagerQuery._stdoutDone = true;
+                if (defaultFileManagerQuery._exited)
+                    defaultFileManagerQuery._finalize();
+            }
+        }
+        onExited: (exitCode) => {
+            defaultFileManagerQuery._exited = true;
+            defaultFileManagerQuery._exitCode = exitCode;
+            if (defaultFileManagerQuery._stdoutDone)
+                defaultFileManagerQuery._finalize();
+            else
+                defaultFileManagerFlushTimer.restart();
+        }
+    }
+
+    Timer {
+        id: defaultFileManagerFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (defaultFileManagerQuery._exited && !defaultFileManagerQuery._finalized)
+                defaultFileManagerQuery._finalize();
         }
     }
 
     Process {
         id: defaultEditorQuery
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         command: ["xdg-mime", "query", "default", "text/plain"]
-        stdout: StdioCollector {
-            id: defaultEditorCollector
-        }
-        onExited: (exitCode) => {
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            defaultEditorFlushTimer.stop()
             const desktopId = (defaultEditorCollector.text || "").trim().replace(/\.desktop$/, "");
-            if (exitCode === 0 && desktopId.length > 0)
+            if (_exitCode === 0 && desktopId.length > 0)
                 ShellExec.execDetachedArgs(["gtk-launch", desktopId, root.niriConfigPath], Translation.tr("Open config file"));
             else
                 ShellExec.execDetachedArgs(["xdg-open", root.niriConfigPath], Translation.tr("Open config file"));
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false;
+                _exitCode = -1;
+                _stdoutDone = false;
+                _finalized = false;
+                defaultEditorFlushTimer.stop();
+            }
+        }
+        stdout: StdioCollector {
+            id: defaultEditorCollector
+            onStreamFinished: {
+                defaultEditorQuery._stdoutDone = true;
+                if (defaultEditorQuery._exited)
+                    defaultEditorQuery._finalize();
+            }
+        }
+        onExited: (exitCode) => {
+            defaultEditorQuery._exited = true;
+            defaultEditorQuery._exitCode = exitCode;
+            if (defaultEditorQuery._stdoutDone)
+                defaultEditorQuery._finalize();
+            else
+                defaultEditorFlushTimer.restart();
+        }
+    }
+
+    Timer {
+        id: defaultEditorFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (defaultEditorQuery._exited && !defaultEditorQuery._finalized)
+                defaultEditorQuery._finalize();
         }
     }
 
@@ -1066,181 +1146,435 @@ ContentPage {
     // =====================
     Process {
         id: outputsProcess
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _stderrDone: false
+        property bool _finalized: false
         command: [root.nativeDispatchPath, "niri", "outputs"]
-        stdout: StdioCollector {
-            id: outputsCollector
-            onStreamFinished: {
-                root.outputReady = false
-                root.handleJsonResult(outputsCollector.text, "outputs", data => {
-                    if (Array.isArray(data) && data.length > 0) {
-                        root.outputList = data
-                        root.outputReady = CompositorService.isNiri
-                    } else {
-                        root.outputList = root.buildFallbackScreenOutputs()
-                        root.outputReady = false
-                    }
-                })
-            }
-        }
-        stderr: StdioCollector { id: outputsErrorCollector }
-        onExited: (exitCode) => {
-            if (exitCode !== 0) {
+        function _finalize(): void {
+            if (_finalized) return
+            _finalized = true
+            outputsFlushTimer.stop()
+            if (_exitCode !== 0) {
                 if (!Array.isArray(root.outputList) || root.outputList.length === 0) {
                     root.outputList = root.buildFallbackScreenOutputs()
                 }
                 root.outputReady = false
                 root.setProcessError("outputs", (outputsErrorCollector.text || outputsCollector.text || Translation.tr("Unable to query connected outputs.")).trim())
+                return
+            }
+            root.outputReady = false
+            root.handleJsonResult(outputsCollector.text, "outputs", data => {
+                if (Array.isArray(data) && data.length > 0) {
+                    root.outputList = data
+                    root.outputReady = CompositorService.isNiri
+                } else {
+                    root.outputList = root.buildFallbackScreenOutputs()
+                    root.outputReady = false
+                }
+            })
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false; _exitCode = -1; _stdoutDone = false; _stderrDone = false; _finalized = false
+                outputsFlushTimer.stop()
             }
         }
+        stdout: StdioCollector {
+            id: outputsCollector
+            onStreamFinished: {
+                outputsProcess._stdoutDone = true
+                if (outputsProcess._exited && outputsProcess._stderrDone) outputsProcess._finalize()
+            }
+        }
+        stderr: StdioCollector {
+            id: outputsErrorCollector
+            onStreamFinished: {
+                outputsProcess._stderrDone = true
+                if (outputsProcess._exited && outputsProcess._stdoutDone) outputsProcess._finalize()
+            }
+        }
+        onExited: (exitCode) => {
+            outputsProcess._exited = true
+            outputsProcess._exitCode = exitCode
+            if (outputsProcess._stdoutDone && outputsProcess._stderrDone) outputsProcess._finalize()
+            else outputsFlushTimer.restart()
+        }
     }
+    Timer { id: outputsFlushTimer; interval: 120; repeat: false; onTriggered: { if (outputsProcess._exited && !outputsProcess._finalized) outputsProcess._finalize() } }
 
     Process {
         id: inputProcess
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _stderrDone: false
+        property bool _finalized: false
         command: [root.nativeDispatchPath, "niri", "get-input"]
+        function _finalize(): void {
+            if (_finalized) return
+            _finalized = true
+            inputFlushTimer.stop()
+            if (_exitCode !== 0) {
+                root.setProcessError("input", (inputErrorCollector.text || inputCollector.text || Translation.tr("Unable to read input configuration.")).trim())
+                return
+            }
+            root.inputReady = false
+            root.handleJsonResult(inputCollector.text, "input", data => {
+                root.inputData = data
+                root.resyncInputControls()
+                root.inputReady = true
+            })
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false; _exitCode = -1; _stdoutDone = false; _stderrDone = false; _finalized = false
+                inputFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             id: inputCollector
             onStreamFinished: {
-                root.inputReady = false
-                root.handleJsonResult(inputCollector.text, "input", data => {
-                    root.inputData = data
-                    root.resyncInputControls()
-                    root.inputReady = true
-                })
+                inputProcess._stdoutDone = true
+                if (inputProcess._exited && inputProcess._stderrDone) inputProcess._finalize()
             }
         }
-        stderr: StdioCollector { id: inputErrorCollector }
+        stderr: StdioCollector {
+            id: inputErrorCollector
+            onStreamFinished: {
+                inputProcess._stderrDone = true
+                if (inputProcess._exited && inputProcess._stdoutDone) inputProcess._finalize()
+            }
+        }
         onExited: (exitCode) => {
-            if (exitCode !== 0)
-                root.setProcessError("input", (inputErrorCollector.text || inputCollector.text || Translation.tr("Unable to read input configuration.")).trim())
+            inputProcess._exited = true
+            inputProcess._exitCode = exitCode
+            if (inputProcess._stdoutDone && inputProcess._stderrDone) inputProcess._finalize()
+            else inputFlushTimer.restart()
         }
     }
+    Timer { id: inputFlushTimer; interval: 120; repeat: false; onTriggered: { if (inputProcess._exited && !inputProcess._finalized) inputProcess._finalize() } }
 
     Process {
         id: layoutProcess
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _stderrDone: false
+        property bool _finalized: false
         command: [root.nativeDispatchPath, "niri", "get-layout"]
+        function _finalize(): void {
+            if (_finalized) return
+            _finalized = true
+            layoutFlushTimer.stop()
+            if (_exitCode !== 0) {
+                root.setProcessError("layout", (layoutErrorCollector.text || layoutCollector.text || Translation.tr("Unable to read layout configuration.")).trim())
+                return
+            }
+            root.layoutReady = false
+            root.handleJsonResult(layoutCollector.text, "layout", data => {
+                root.layoutData = data
+                root.resyncLayoutControls()
+                root.layoutReady = true
+            })
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false; _exitCode = -1; _stdoutDone = false; _stderrDone = false; _finalized = false
+                layoutFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             id: layoutCollector
             onStreamFinished: {
-                root.layoutReady = false
-                root.handleJsonResult(layoutCollector.text, "layout", data => {
-                    root.layoutData = data
-                    root.resyncLayoutControls()
-                    root.layoutReady = true
-                })
+                layoutProcess._stdoutDone = true
+                if (layoutProcess._exited && layoutProcess._stderrDone) layoutProcess._finalize()
             }
         }
-        stderr: StdioCollector { id: layoutErrorCollector }
+        stderr: StdioCollector {
+            id: layoutErrorCollector
+            onStreamFinished: {
+                layoutProcess._stderrDone = true
+                if (layoutProcess._exited && layoutProcess._stdoutDone) layoutProcess._finalize()
+            }
+        }
         onExited: (exitCode) => {
-            if (exitCode !== 0)
-                root.setProcessError("layout", (layoutErrorCollector.text || layoutCollector.text || Translation.tr("Unable to read layout configuration.")).trim())
+            layoutProcess._exited = true
+            layoutProcess._exitCode = exitCode
+            if (layoutProcess._stdoutDone && layoutProcess._stderrDone) layoutProcess._finalize()
+            else layoutFlushTimer.restart()
         }
     }
+    Timer { id: layoutFlushTimer; interval: 120; repeat: false; onTriggered: { if (layoutProcess._exited && !layoutProcess._finalized) layoutProcess._finalize() } }
 
     Process {
         id: animationsProcess
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _stderrDone: false
+        property bool _finalized: false
         command: [root.nativeDispatchPath, "niri", "get-animations"]
+        function _finalize(): void {
+            if (_finalized) return
+            _finalized = true
+            animationsFlushTimer.stop()
+            if (_exitCode !== 0) {
+                root.setProcessError("animations", (animationsErrorCollector.text || animationsCollector.text || Translation.tr("Unable to read animations configuration.")).trim())
+                return
+            }
+            root.animationsReady = false
+            root.handleJsonResult(animationsCollector.text, "animations", data => {
+                root.animationsData = data
+                root.resyncAnimationsControls()
+                root.animationsReady = true
+            })
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false; _exitCode = -1; _stdoutDone = false; _stderrDone = false; _finalized = false
+                animationsFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             id: animationsCollector
             onStreamFinished: {
-                root.animationsReady = false
-                root.handleJsonResult(animationsCollector.text, "animations", data => {
-                    root.animationsData = data
-                    root.resyncAnimationsControls()
-                    root.animationsReady = true
-                })
+                animationsProcess._stdoutDone = true
+                if (animationsProcess._exited && animationsProcess._stderrDone) animationsProcess._finalize()
             }
         }
-        stderr: StdioCollector { id: animationsErrorCollector }
+        stderr: StdioCollector {
+            id: animationsErrorCollector
+            onStreamFinished: {
+                animationsProcess._stderrDone = true
+                if (animationsProcess._exited && animationsProcess._stdoutDone) animationsProcess._finalize()
+            }
+        }
         onExited: (exitCode) => {
-            if (exitCode !== 0)
-                root.setProcessError("animations", (animationsErrorCollector.text || animationsCollector.text || Translation.tr("Unable to read animations configuration.")).trim())
+            animationsProcess._exited = true
+            animationsProcess._exitCode = exitCode
+            if (animationsProcess._stdoutDone && animationsProcess._stderrDone) animationsProcess._finalize()
+            else animationsFlushTimer.restart()
         }
     }
+    Timer { id: animationsFlushTimer; interval: 120; repeat: false; onTriggered: { if (animationsProcess._exited && !animationsProcess._finalized) animationsProcess._finalize() } }
 
     Process {
         id: windowRulesProcess
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _stderrDone: false
+        property bool _finalized: false
         command: [root.nativeDispatchPath, "niri", "get-window-rules"]
+        function _finalize(): void {
+            if (_finalized) return
+            _finalized = true
+            windowRulesFlushTimer.stop()
+            if (_exitCode !== 0) {
+                root.setProcessError("windowRules", (windowRulesErrorCollector.text || windowRulesCollector.text || Translation.tr("Unable to read window rules.")).trim())
+                return
+            }
+            root.windowRulesReady = false
+            root.handleJsonResult(windowRulesCollector.text, "windowRules", data => {
+                root.windowRulesData = data
+                root.resyncWindowRulesControls()
+                root.windowRulesReady = true
+            })
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false; _exitCode = -1; _stdoutDone = false; _stderrDone = false; _finalized = false
+                windowRulesFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             id: windowRulesCollector
             onStreamFinished: {
-                root.windowRulesReady = false
-                root.handleJsonResult(windowRulesCollector.text, "windowRules", data => {
-                    root.windowRulesData = data
-                    root.resyncWindowRulesControls()
-                    root.windowRulesReady = true
-                })
+                windowRulesProcess._stdoutDone = true
+                if (windowRulesProcess._exited && windowRulesProcess._stderrDone) windowRulesProcess._finalize()
             }
         }
-        stderr: StdioCollector { id: windowRulesErrorCollector }
+        stderr: StdioCollector {
+            id: windowRulesErrorCollector
+            onStreamFinished: {
+                windowRulesProcess._stderrDone = true
+                if (windowRulesProcess._exited && windowRulesProcess._stdoutDone) windowRulesProcess._finalize()
+            }
+        }
         onExited: (exitCode) => {
-            if (exitCode !== 0)
-                root.setProcessError("windowRules", (windowRulesErrorCollector.text || windowRulesCollector.text || Translation.tr("Unable to read window rules.")).trim())
+            windowRulesProcess._exited = true
+            windowRulesProcess._exitCode = exitCode
+            if (windowRulesProcess._stdoutDone && windowRulesProcess._stderrDone) windowRulesProcess._finalize()
+            else windowRulesFlushTimer.restart()
         }
     }
+    Timer { id: windowRulesFlushTimer; interval: 120; repeat: false; onTriggered: { if (windowRulesProcess._exited && !windowRulesProcess._finalized) windowRulesProcess._finalize() } }
 
     Process {
         id: cursorThemesProcess
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _stderrDone: false
+        property bool _finalized: false
         command: [root.nativeDispatchPath, "niri", "list-cursor-themes"]
+        function _finalize(): void {
+            if (_finalized) return
+            _finalized = true
+            cursorThemesFlushTimer.stop()
+            if (_exitCode !== 0) {
+                root.setProcessError("cursorThemes", (cursorThemesErrorCollector.text || cursorThemesCollector.text || Translation.tr("Unable to enumerate cursor themes.")).trim())
+                return
+            }
+            root.handleJsonResult(cursorThemesCollector.text, "cursorThemes", data => {
+                root.cursorThemes = Array.isArray(data) ? data : []
+            })
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false; _exitCode = -1; _stdoutDone = false; _stderrDone = false; _finalized = false
+                cursorThemesFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             id: cursorThemesCollector
             onStreamFinished: {
-                root.handleJsonResult(cursorThemesCollector.text, "cursorThemes", data => {
-                    root.cursorThemes = Array.isArray(data) ? data : []
-                })
+                cursorThemesProcess._stdoutDone = true
+                if (cursorThemesProcess._exited && cursorThemesProcess._stderrDone) cursorThemesProcess._finalize()
             }
         }
-        stderr: StdioCollector { id: cursorThemesErrorCollector }
+        stderr: StdioCollector {
+            id: cursorThemesErrorCollector
+            onStreamFinished: {
+                cursorThemesProcess._stderrDone = true
+                if (cursorThemesProcess._exited && cursorThemesProcess._stdoutDone) cursorThemesProcess._finalize()
+            }
+        }
         onExited: (exitCode) => {
-            if (exitCode !== 0)
-                root.setProcessError("cursorThemes", (cursorThemesErrorCollector.text || cursorThemesCollector.text || Translation.tr("Unable to enumerate cursor themes.")).trim())
+            cursorThemesProcess._exited = true
+            cursorThemesProcess._exitCode = exitCode
+            if (cursorThemesProcess._stdoutDone && cursorThemesProcess._stderrDone) cursorThemesProcess._finalize()
+            else cursorThemesFlushTimer.restart()
         }
     }
+    Timer { id: cursorThemesFlushTimer; interval: 120; repeat: false; onTriggered: { if (cursorThemesProcess._exited && !cursorThemesProcess._finalized) cursorThemesProcess._finalize() } }
 
     Process {
         id: validationProcess
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _stderrDone: false
+        property bool _finalized: false
         command: [root.nativeDispatchPath, "niri", "validate"]
+        function _finalize(): void {
+            if (_finalized) return
+            _finalized = true
+            validationFlushTimer.stop()
+            if (_exitCode !== 0) {
+                root.setProcessError("validation", (validationErrorCollector.text || validationCollector.text || Translation.tr("Unable to validate Niri configuration.")).trim())
+                return
+            }
+            root.validationReady = false
+            root.handleJsonResult(validationCollector.text, "validation", data => {
+                root.validationData = data
+                root.validationReady = true
+            })
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false; _exitCode = -1; _stdoutDone = false; _stderrDone = false; _finalized = false
+                validationFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             id: validationCollector
             onStreamFinished: {
-                root.validationReady = false
-                root.handleJsonResult(validationCollector.text, "validation", data => {
-                    root.validationData = data
-                    root.validationReady = true
-                })
+                validationProcess._stdoutDone = true
+                if (validationProcess._exited && validationProcess._stderrDone) validationProcess._finalize()
             }
         }
-        stderr: StdioCollector { id: validationErrorCollector }
+        stderr: StdioCollector {
+            id: validationErrorCollector
+            onStreamFinished: {
+                validationProcess._stderrDone = true
+                if (validationProcess._exited && validationProcess._stdoutDone) validationProcess._finalize()
+            }
+        }
         onExited: (exitCode) => {
-            if (exitCode !== 0)
-                root.setProcessError("validation", (validationErrorCollector.text || validationCollector.text || Translation.tr("Unable to validate Niri configuration.")).trim())
+            validationProcess._exited = true
+            validationProcess._exitCode = exitCode
+            if (validationProcess._stdoutDone && validationProcess._stderrDone) validationProcess._finalize()
+            else validationFlushTimer.restart()
         }
     }
+    Timer { id: validationFlushTimer; interval: 120; repeat: false; onTriggered: { if (validationProcess._exited && !validationProcess._finalized) validationProcess._finalize() } }
 
     Process {
         id: customizationsProcess
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _stderrDone: false
+        property bool _finalized: false
         command: [root.nativeDispatchPath, "niri", "detect-customizations"]
+        function _finalize(): void {
+            if (_finalized) return
+            _finalized = true
+            customizationsFlushTimer.stop()
+            if (_exitCode !== 0) {
+                root.setProcessError("customizations", (customizationsErrorCollector.text || customizationsCollector.text || Translation.tr("Unable to inspect custom Niri configuration.")).trim())
+                return
+            }
+            root.customizationsReady = false
+            root.handleJsonResult(customizationsCollector.text, "customizations", data => {
+                root.customConfigData = data
+                root.customizationsReady = true
+            })
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false; _exitCode = -1; _stdoutDone = false; _stderrDone = false; _finalized = false
+                customizationsFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             id: customizationsCollector
             onStreamFinished: {
-                root.customizationsReady = false
-                root.handleJsonResult(customizationsCollector.text, "customizations", data => {
-                    root.customConfigData = data
-                    root.customizationsReady = true
-                })
+                customizationsProcess._stdoutDone = true
+                if (customizationsProcess._exited && customizationsProcess._stderrDone) customizationsProcess._finalize()
             }
         }
-        stderr: StdioCollector { id: customizationsErrorCollector }
+        stderr: StdioCollector {
+            id: customizationsErrorCollector
+            onStreamFinished: {
+                customizationsProcess._stderrDone = true
+                if (customizationsProcess._exited && customizationsProcess._stdoutDone) customizationsProcess._finalize()
+            }
+        }
         onExited: (exitCode) => {
-            if (exitCode !== 0)
-                root.setProcessError("customizations", (customizationsErrorCollector.text || customizationsCollector.text || Translation.tr("Unable to inspect custom Niri configuration.")).trim())
+            customizationsProcess._exited = true
+            customizationsProcess._exitCode = exitCode
+            if (customizationsProcess._stdoutDone && customizationsProcess._stderrDone) customizationsProcess._finalize()
+            else customizationsFlushTimer.restart()
         }
     }
+    Timer { id: customizationsFlushTimer; interval: 120; repeat: false; onTriggered: { if (customizationsProcess._exited && !customizationsProcess._finalized) customizationsProcess._finalize() } }
 
     Process {
         id: applyOutputProcess
-        stdout: StdioCollector { id: applyOutputCollector }
-        stderr: StdioCollector { id: applyOutputErrorCollector }
-        onExited: (exitCode) => {
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _stderrDone: false
+        property bool _finalized: false
+        function _finalize(): void {
+            if (_finalized) return
+            _finalized = true
+            applyOutputFlushTimer.stop()
+            const exitCode = _exitCode
             const purpose = root.applyOutputPurpose
             const stdout = (applyOutputCollector.text || "").trim()
             const stderr = (applyOutputErrorCollector.text || "").trim()
@@ -1295,13 +1629,47 @@ ContentPage {
             }
             root.clearApplyOutputState()
         }
+        onRunningChanged: {
+            if (running) {
+                _exited = false; _exitCode = -1; _stdoutDone = false; _stderrDone = false; _finalized = false
+                applyOutputFlushTimer.stop()
+            }
+        }
+        stdout: StdioCollector {
+            id: applyOutputCollector
+            onStreamFinished: {
+                applyOutputProcess._stdoutDone = true
+                if (applyOutputProcess._exited && applyOutputProcess._stderrDone) applyOutputProcess._finalize()
+            }
+        }
+        stderr: StdioCollector {
+            id: applyOutputErrorCollector
+            onStreamFinished: {
+                applyOutputProcess._stderrDone = true
+                if (applyOutputProcess._exited && applyOutputProcess._stdoutDone) applyOutputProcess._finalize()
+            }
+        }
+        onExited: (exitCode) => {
+            applyOutputProcess._exited = true
+            applyOutputProcess._exitCode = exitCode
+            if (applyOutputProcess._stdoutDone && applyOutputProcess._stderrDone) applyOutputProcess._finalize()
+            else applyOutputFlushTimer.restart()
+        }
     }
+    Timer { id: applyOutputFlushTimer; interval: 120; repeat: false; onTriggered: { if (applyOutputProcess._exited && !applyOutputProcess._finalized) applyOutputProcess._finalize() } }
 
     Process {
         id: persistOutputProcess
-        stdout: StdioCollector { id: persistOutputCollector }
-        stderr: StdioCollector { id: persistOutputErrorCollector }
-        onExited: (exitCode) => {
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _stderrDone: false
+        property bool _finalized: false
+        function _finalize(): void {
+            if (_finalized) return
+            _finalized = true
+            persistOutputFlushTimer.stop()
+            const exitCode = _exitCode
             const purpose = root.persistOutputPurpose
             const text = (persistOutputErrorCollector.text || persistOutputCollector.text || "").trim()
             if (exitCode === 0) {
@@ -1324,14 +1692,47 @@ ContentPage {
             }
             root.clearPersistOutputState()
         }
+        onRunningChanged: {
+            if (running) {
+                _exited = false; _exitCode = -1; _stdoutDone = false; _stderrDone = false; _finalized = false
+                persistOutputFlushTimer.stop()
+            }
+        }
+        stdout: StdioCollector {
+            id: persistOutputCollector
+            onStreamFinished: {
+                persistOutputProcess._stdoutDone = true
+                if (persistOutputProcess._exited && persistOutputProcess._stderrDone) persistOutputProcess._finalize()
+            }
+        }
+        stderr: StdioCollector {
+            id: persistOutputErrorCollector
+            onStreamFinished: {
+                persistOutputProcess._stderrDone = true
+                if (persistOutputProcess._exited && persistOutputProcess._stdoutDone) persistOutputProcess._finalize()
+            }
+        }
+        onExited: (exitCode) => {
+            persistOutputProcess._exited = true
+            persistOutputProcess._exitCode = exitCode
+            if (persistOutputProcess._stdoutDone && persistOutputProcess._stderrDone) persistOutputProcess._finalize()
+            else persistOutputFlushTimer.restart()
+        }
     }
+    Timer { id: persistOutputFlushTimer; interval: 120; repeat: false; onTriggered: { if (persistOutputProcess._exited && !persistOutputProcess._finalized) persistOutputProcess._finalize() } }
 
     Process {
         id: setProcess
-        stdout: StdioCollector { id: setCollector }
-        stderr: StdioCollector { id: setErrorCollector }
-        onExited: (exitCode) => {
-            if (exitCode !== 0) {
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _stderrDone: false
+        property bool _finalized: false
+        function _finalize(): void {
+            if (_finalized) return
+            _finalized = true
+            setFlushTimer.stop()
+            if (_exitCode !== 0) {
                 root.lastActionError = (setErrorCollector.text || setCollector.text || Translation.tr("Failed to update Niri configuration.")).trim()
                 root.pendingSetSection = ""
                 root.pendingActionLabel = ""
@@ -1356,7 +1757,34 @@ ContentPage {
             root.pendingActionLabel = ""
             root.runNextSetRequest()
         }
+        onRunningChanged: {
+            if (running) {
+                _exited = false; _exitCode = -1; _stdoutDone = false; _stderrDone = false; _finalized = false
+                setFlushTimer.stop()
+            }
+        }
+        stdout: StdioCollector {
+            id: setCollector
+            onStreamFinished: {
+                setProcess._stdoutDone = true
+                if (setProcess._exited && setProcess._stderrDone) setProcess._finalize()
+            }
+        }
+        stderr: StdioCollector {
+            id: setErrorCollector
+            onStreamFinished: {
+                setProcess._stderrDone = true
+                if (setProcess._exited && setProcess._stdoutDone) setProcess._finalize()
+            }
+        }
+        onExited: (exitCode) => {
+            setProcess._exited = true
+            setProcess._exitCode = exitCode
+            if (setProcess._stdoutDone && setProcess._stderrDone) setProcess._finalize()
+            else setFlushTimer.restart()
+        }
     }
+    Timer { id: setFlushTimer; interval: 120; repeat: false; onTriggered: { if (setProcess._exited && !setProcess._finalized) setProcess._finalize() } }
 
     // =====================
     // DISPLAY CONFIRMATION OVERLAY

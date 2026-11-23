@@ -119,10 +119,10 @@ Singleton {
     onAvailableChanged: {
         if (initialAvailabilityChecked && !available && !unavailableNotificationShown && !managedExternally) {
             unavailableNotificationShown = true
-            Notifications.notify({
+            Notifications.sendInternal({
                 summary: root.unavailableTitle,
                 body: root.unavailableHint,
-                urgency: NotificationUrgency.Normal,
+                urgency: "normal",
                 timeout: 10000,
                 appName: "Alis Shell"
             })
@@ -141,10 +141,10 @@ Singleton {
 
         const version = root.remoteVersion.length > 0 ? (" v" + root.remoteVersion) : ""
         const commits = root.commitsBehind > 0 ? (root.commitsBehind + " commits behind") : "New version available"
-        Notifications.notify({
+        Notifications.sendInternal({
             summary: "Alis Update Available" + version,
             body: commits + ". Click the update indicator in the bar or open Settings → Services.",
-            urgency: NotificationUrgency.Normal,
+            urgency: "normal",
             timeout: 15000,
             appName: "Alis Shell"
         })
@@ -564,69 +564,137 @@ Singleton {
     Process {
         id: preferConfigRepoProc
         running: false
+        property bool _exited: false
+        property int _exitCode: -1
+        property string _stdoutText: ""
+        property bool _stdoutDone: false
+        property bool _finalized: false
         command: [
             "/usr/bin/bash", "-c",
             "p='" + root.configDir + "'; [[ -d \"$p/.git\" && -f \"$p/setup\" && -f \"$p/shell.qml\" ]] && echo OK || echo ''"
         ]
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            preferConfigRepoFlushTimer.stop()
+            const ok = (_exitCode === 0 && _stdoutText.trim() === "OK")
+            if (ok) {
+                root.repoPath = root.configDir
+                root.installMode = "repo-link"
+                root.updateStrategy = "repo-setup"
+                root.repoPathLoaded = true
+                print("[ShellUpdates] Using active config checkout as repo path: " + root.repoPath)
+                persistRepoPathProc.running = true
+                availabilityProc.running = true
+            } else if (root.pendingRepoPath.length > 0) {
+                root.repoPath = root.pendingRepoPath
+                root.pendingRepoPath = ""
+                print("[ShellUpdates] Using repo path from version.json: " + root.repoPath)
+                root.repoPathLoaded = true
+                validateRepoPathProc.running = true
+            } else {
+                searchRepoProc.running = true
+            }
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false
+                _exitCode = -1
+                _stdoutText = ""
+                _stdoutDone = false
+                _finalized = false
+                preferConfigRepoFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             onStreamFinished: {
-                const ok = ((text ?? "").trim() === "OK")
-                if (ok) {
-                    root.repoPath = root.configDir
-                    root.installMode = "repo-link"
-                    root.updateStrategy = "repo-setup"
-                    root.repoPathLoaded = true
-                    print("[ShellUpdates] Using active config checkout as repo path: " + root.repoPath)
-                    persistRepoPathProc.running = true
-                    availabilityProc.running = true
-                } else if (root.pendingRepoPath.length > 0) {
-                    root.repoPath = root.pendingRepoPath
-                    root.pendingRepoPath = ""
-                    print("[ShellUpdates] Using repo path from version.json: " + root.repoPath)
-                    root.repoPathLoaded = true
-                    validateRepoPathProc.running = true
-                } else {
-                    searchRepoProc.running = true
-                }
+                preferConfigRepoProc._stdoutText = (text ?? "")
+                preferConfigRepoProc._stdoutDone = true
+                if (preferConfigRepoProc._exited)
+                    preferConfigRepoProc._finalize()
             }
         }
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
-                if (root.pendingRepoPath.length > 0) {
-                    root.repoPath = root.pendingRepoPath
-                    root.pendingRepoPath = ""
-                    root.repoPathLoaded = true
-                    validateRepoPathProc.running = true
-                } else {
-                    searchRepoProc.running = true
-                }
-            }
+            preferConfigRepoProc._exited = true
+            preferConfigRepoProc._exitCode = exitCode
+            if (preferConfigRepoProc._stdoutDone)
+                preferConfigRepoProc._finalize()
+            else
+                preferConfigRepoFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: preferConfigRepoFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (preferConfigRepoProc._exited && !preferConfigRepoProc._finalized)
+                preferConfigRepoProc._finalize()
         }
     }
 
     Process {
         id: validateRepoPathProc
         running: false
+        property bool _exited: false
+        property int _exitCode: -1
+        property string _stdoutText: ""
+        property bool _stdoutDone: false
+        property bool _finalized: false
         command: [
             "/usr/bin/bash", "-c",
             "p='" + root.repoPath + "'; [[ -d \"$p/.git\" && -f \"$p/setup\" && -f \"$p/shell.qml\" ]] && echo OK || echo ''"
         ]
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            validateRepoPathFlushTimer.stop()
+            const ok = (_exitCode === 0 && _stdoutText.trim() === "OK")
+            if (ok) {
+                availabilityProc.running = true
+            } else {
+                print("[ShellUpdates] repo_path from version.json is invalid, searching for repository...")
+                searchRepoProc.running = true
+            }
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false
+                _exitCode = -1
+                _stdoutText = ""
+                _stdoutDone = false
+                _finalized = false
+                validateRepoPathFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             onStreamFinished: {
-                const ok = ((text ?? "").trim() === "OK")
-                if (ok) {
-                    availabilityProc.running = true
-                } else {
-                    print("[ShellUpdates] repo_path from version.json is invalid, searching for repository...")
-                    searchRepoProc.running = true
-                }
+                validateRepoPathProc._stdoutText = (text ?? "")
+                validateRepoPathProc._stdoutDone = true
+                if (validateRepoPathProc._exited)
+                    validateRepoPathProc._finalize()
             }
         }
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
-                print("[ShellUpdates] Failed to validate repo_path, searching for repository...")
-                searchRepoProc.running = true
-            }
+            validateRepoPathProc._exited = true
+            validateRepoPathProc._exitCode = exitCode
+            if (validateRepoPathProc._stdoutDone)
+                validateRepoPathProc._finalize()
+            else
+                validateRepoPathFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: validateRepoPathFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (validateRepoPathProc._exited && !validateRepoPathProc._finalized)
+                validateRepoPathProc._finalize()
         }
     }
 
@@ -634,6 +702,10 @@ Singleton {
     Process {
         id: searchRepoProc
         running: false
+        property bool _exited: false
+        property string _stdoutText: ""
+        property bool _stdoutDone: false
+        property bool _finalized: false
         command: [
             "/usr/bin/bash", "-c",
             // First check if config dir itself is a git repo (dev setup)
@@ -649,30 +721,64 @@ Singleton {
             // Last resort: find in home (max depth 3, timeout 2s)
             "timeout 2 find \"$HOME\" -maxdepth 3 -name setup \\( -path '*/alis/setup' -o -path '*/illogical-impulse/setup' -o -path '*/ii/setup' \\) 2>/dev/null | while read -r f; do [[ -f \"$(dirname \"$f\")/shell.qml\" ]] && dirname \"$f\" && break; done; "
         ]
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            searchRepoFlushTimer.stop()
+            const foundPath = _stdoutText.trim()
+            if (foundPath.length > 0) {
+                root.repoPath = foundPath
+                if (root.installMode === "unknown") {
+                    root.installMode = foundPath === root.configDir ? "repo-link" : "repo-copy"
+                }
+                if (root.updateStrategy === "unknown") {
+                    root.updateStrategy = "repo-setup"
+                }
+                print("[ShellUpdates] Found repository at: " + root.repoPath)
+                // Persist found path to version.json to avoid repeated searches
+                persistRepoPathProc.running = true
+            } else {
+                print("[ShellUpdates] Repository not found, using config dir: " + root.configDir)
+                print("[ShellUpdates] Update feature will not be available")
+            }
+            root.repoPathLoaded = true
+            // Now check git availability
+            availabilityProc.running = true
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false
+                _stdoutText = ""
+                _stdoutDone = false
+                _finalized = false
+                searchRepoFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             onStreamFinished: {
-                const foundPath = (text ?? "").trim()
-                if (foundPath.length > 0) {
-                    root.repoPath = foundPath
-                    if (root.installMode === "unknown") {
-                        root.installMode = foundPath === root.configDir ? "repo-link" : "repo-copy"
-                    }
-                    if (root.updateStrategy === "unknown") {
-                        root.updateStrategy = "repo-setup"
-                    }
-                    print("[ShellUpdates] Found repository at: " + root.repoPath)
-                    // Persist found path to version.json to avoid repeated searches
-                    persistRepoPathProc.running = true
-                } else {
-                    print("[ShellUpdates] Repository not found, using config dir: " + root.configDir)
-                    print("[ShellUpdates] Update feature will not be available")
-                }
-                root.repoPathLoaded = true
+                searchRepoProc._stdoutText = (text ?? "")
+                searchRepoProc._stdoutDone = true
+                if (searchRepoProc._exited)
+                    searchRepoProc._finalize()
             }
         }
         onExited: (exitCode, exitStatus) => {
-            // Now check git availability
-            availabilityProc.running = true
+            searchRepoProc._exited = true
+            if (searchRepoProc._stdoutDone)
+                searchRepoProc._finalize()
+            else
+                searchRepoFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: searchRepoFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (searchRepoProc._exited && !searchRepoProc._finalized)
+                searchRepoProc._finalize()
         }
     }
 
@@ -797,18 +903,53 @@ Singleton {
     Process {
         id: recentLocalLogProc
         running: false
+        property bool _exited: false
+        property bool _stdoutDone: false
+        property bool _finalized: false
         command: [
             ...root._gitCmd, "log",
             "--pretty=format:%h|%s|%cr|%an",
             "-15"
         ]
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            recentLocalLogFlushTimer.stop()
+            root._loadLocalVersion()
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false
+                _stdoutDone = false
+                _finalized = false
+                recentLocalLogFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 root.recentLocalLog = (text ?? "").trim()
+                recentLocalLogProc._stdoutDone = true
+                if (recentLocalLogProc._exited)
+                    recentLocalLogProc._finalize()
             }
         }
         onExited: (exitCode, exitStatus) => {
-            root._loadLocalVersion()
+            recentLocalLogProc._exited = true
+            if (recentLocalLogProc._stdoutDone)
+                recentLocalLogProc._finalize()
+            else
+                recentLocalLogFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: recentLocalLogFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (recentLocalLogProc._exited && !recentLocalLogProc._finalized)
+                recentLocalLogProc._finalize()
         }
     }
 
@@ -850,10 +991,10 @@ Singleton {
                     root.fetchErrorNotificationShown = true
                     const title = "Alis Update Check Failed"
                     const body = "Cannot reach remote repository. Check your internet connection or run './setup doctor'."
-                    Notifications.notify({
+                    Notifications.sendInternal({
                         summary: title,
                         body: body,
-                        urgency: NotificationUrgency.Low,
+                        urgency: "low",
                         timeout: 8000,
                         appName: "Alis Shell"
                     })
@@ -877,17 +1018,40 @@ Singleton {
     Process {
         id: currentBranchProc
         property bool startObserved: false
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         running: false
         command: [...root._gitCmd, "rev-parse", "--abbrev-ref", "HEAD"]
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            currentBranchFlushTimer.stop()
+            if (_exitCode !== 0) {
+                root.isChecking = false
+                return
+            }
+            localCommitProc.running = true
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 root.currentBranch = (text ?? "").trim()
                 print("[ShellUpdates] Current branch: " + root.currentBranch)
+                currentBranchProc._stdoutDone = true
+                if (currentBranchProc._exited)
+                    currentBranchProc._finalize()
             }
         }
         onRunningChanged: {
             if (currentBranchProc.running) {
                 currentBranchProc.startObserved = false
+                currentBranchProc._exited = false
+                currentBranchProc._exitCode = -1
+                currentBranchProc._stdoutDone = false
+                currentBranchProc._finalized = false
+                currentBranchFlushTimer.stop()
                 return
             }
             if (currentBranchProc.startObserved)
@@ -897,11 +1061,22 @@ Singleton {
         }
         onStarted: currentBranchProc.startObserved = true
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
-                root.isChecking = false
-                return
-            }
-            localCommitProc.running = true
+            currentBranchProc._exited = true
+            currentBranchProc._exitCode = exitCode
+            if (currentBranchProc._stdoutDone)
+                currentBranchProc._finalize()
+            else
+                currentBranchFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: currentBranchFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (currentBranchProc._exited && !currentBranchProc._finalized)
+                currentBranchProc._finalize()
         }
     }
 
@@ -909,16 +1084,39 @@ Singleton {
     Process {
         id: localCommitProc
         property bool startObserved: false
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         running: false
         command: [...root._gitCmd, "rev-parse", "--short", "HEAD"]
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            localCommitFlushTimer.stop()
+            if (_exitCode !== 0) {
+                root.isChecking = false
+                return
+            }
+            remoteCommitProc.running = true
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 root.localCommit = (text ?? "").trim()
+                localCommitProc._stdoutDone = true
+                if (localCommitProc._exited)
+                    localCommitProc._finalize()
             }
         }
         onRunningChanged: {
             if (localCommitProc.running) {
                 localCommitProc.startObserved = false
+                localCommitProc._exited = false
+                localCommitProc._exitCode = -1
+                localCommitProc._stdoutDone = false
+                localCommitProc._finalized = false
+                localCommitFlushTimer.stop()
                 return
             }
             if (localCommitProc.startObserved)
@@ -928,11 +1126,22 @@ Singleton {
         }
         onStarted: localCommitProc.startObserved = true
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
-                root.isChecking = false
-                return
-            }
-            remoteCommitProc.running = true
+            localCommitProc._exited = true
+            localCommitProc._exitCode = exitCode
+            if (localCommitProc._stdoutDone)
+                localCommitProc._finalize()
+            else
+                localCommitFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: localCommitFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (localCommitProc._exited && !localCommitProc._finalized)
+                localCommitProc._finalize()
         }
     }
 
@@ -940,16 +1149,41 @@ Singleton {
     Process {
         id: remoteCommitProc
         property bool startObserved: false
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         running: false
         command: [...root._gitCmd, "rev-parse", "--short", "origin/" + root.currentBranch]
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            remoteCommitFlushTimer.stop()
+            if (_exitCode !== 0) {
+                // Try origin/main as fallback (in case branch doesn't exist remotely)
+                remoteCommitFallbackProc.running = true
+                return
+            }
+            root._remoteBranch = root.currentBranch
+            countCommitsProc.running = true
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 root.remoteCommit = (text ?? "").trim()
+                remoteCommitProc._stdoutDone = true
+                if (remoteCommitProc._exited)
+                    remoteCommitProc._finalize()
             }
         }
         onRunningChanged: {
             if (remoteCommitProc.running) {
                 remoteCommitProc.startObserved = false
+                remoteCommitProc._exited = false
+                remoteCommitProc._exitCode = -1
+                remoteCommitProc._stdoutDone = false
+                remoteCommitProc._finalized = false
+                remoteCommitFlushTimer.stop()
                 return
             }
             if (remoteCommitProc.startObserved)
@@ -960,13 +1194,22 @@ Singleton {
         }
         onStarted: remoteCommitProc.startObserved = true
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
-                // Try origin/main as fallback (in case branch doesn't exist remotely)
-                remoteCommitFallbackProc.running = true
-                return
-            }
-            root._remoteBranch = root.currentBranch
-            countCommitsProc.running = true
+            remoteCommitProc._exited = true
+            remoteCommitProc._exitCode = exitCode
+            if (remoteCommitProc._stdoutDone)
+                remoteCommitProc._finalize()
+            else
+                remoteCommitFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: remoteCommitFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (remoteCommitProc._exited && !remoteCommitProc._finalized)
+                remoteCommitProc._finalize()
         }
     }
 
@@ -974,16 +1217,41 @@ Singleton {
     Process {
         id: remoteCommitFallbackProc
         property bool startObserved: false
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         running: false
         command: [...root._gitCmd, "rev-parse", "--short", "origin/main"]
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            remoteCommitFallbackFlushTimer.stop()
+            if (_exitCode !== 0) {
+                // Try origin/master as last resort
+                remoteCommitFallback2Proc.running = true
+                return
+            }
+            root._remoteBranch = "main"
+            countCommitsProc.running = true
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 root.remoteCommit = (text ?? "").trim()
+                remoteCommitFallbackProc._stdoutDone = true
+                if (remoteCommitFallbackProc._exited)
+                    remoteCommitFallbackProc._finalize()
             }
         }
         onRunningChanged: {
             if (remoteCommitFallbackProc.running) {
                 remoteCommitFallbackProc.startObserved = false
+                remoteCommitFallbackProc._exited = false
+                remoteCommitFallbackProc._exitCode = -1
+                remoteCommitFallbackProc._stdoutDone = false
+                remoteCommitFallbackProc._finalized = false
+                remoteCommitFallbackFlushTimer.stop()
                 return
             }
             if (remoteCommitFallbackProc.startObserved)
@@ -994,13 +1262,22 @@ Singleton {
         }
         onStarted: remoteCommitFallbackProc.startObserved = true
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
-                // Try origin/master as last resort
-                remoteCommitFallback2Proc.running = true
-                return
-            }
-            root._remoteBranch = "main"
-            countCommitsProc.running = true
+            remoteCommitFallbackProc._exited = true
+            remoteCommitFallbackProc._exitCode = exitCode
+            if (remoteCommitFallbackProc._stdoutDone)
+                remoteCommitFallbackProc._finalize()
+            else
+                remoteCommitFallbackFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: remoteCommitFallbackFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (remoteCommitFallbackProc._exited && !remoteCommitFallbackProc._finalized)
+                remoteCommitFallbackProc._finalize()
         }
     }
 
@@ -1008,16 +1285,40 @@ Singleton {
     Process {
         id: remoteCommitFallback2Proc
         property bool startObserved: false
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         running: false
         command: [...root._gitCmd, "rev-parse", "--short", "origin/master"]
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            remoteCommitFallback2FlushTimer.stop()
+            if (_exitCode !== 0) {
+                root.isChecking = false
+                return
+            }
+            root._remoteBranch = "master"
+            countCommitsProc.running = true
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 root.remoteCommit = (text ?? "").trim()
+                remoteCommitFallback2Proc._stdoutDone = true
+                if (remoteCommitFallback2Proc._exited)
+                    remoteCommitFallback2Proc._finalize()
             }
         }
         onRunningChanged: {
             if (remoteCommitFallback2Proc.running) {
                 remoteCommitFallback2Proc.startObserved = false
+                remoteCommitFallback2Proc._exited = false
+                remoteCommitFallback2Proc._exitCode = -1
+                remoteCommitFallback2Proc._stdoutDone = false
+                remoteCommitFallback2Proc._finalized = false
+                remoteCommitFallback2FlushTimer.stop()
                 return
             }
             if (remoteCommitFallback2Proc.startObserved)
@@ -1027,12 +1328,22 @@ Singleton {
         }
         onStarted: remoteCommitFallback2Proc.startObserved = true
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
-                root.isChecking = false
-                return
-            }
-            root._remoteBranch = "master"
-            countCommitsProc.running = true
+            remoteCommitFallback2Proc._exited = true
+            remoteCommitFallback2Proc._exitCode = exitCode
+            if (remoteCommitFallback2Proc._stdoutDone)
+                remoteCommitFallback2Proc._finalize()
+            else
+                remoteCommitFallback2FlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: remoteCommitFallback2FlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (remoteCommitFallback2Proc._exited && !remoteCommitFallback2Proc._finalized)
+                remoteCommitFallback2Proc._finalize()
         }
     }
 
@@ -1040,28 +1351,18 @@ Singleton {
     Process {
         id: countCommitsProc
         property bool startObserved: false
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         running: false
         command: [...root._gitCmd, "rev-list", "--count", "HEAD..origin/" + root._remoteBranch]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const count = parseInt((text ?? "0").trim())
-                root.commitsBehind = isNaN(count) ? 0 : count
-            }
-        }
-        onRunningChanged: {
-            if (countCommitsProc.running) {
-                countCommitsProc.startObserved = false
+        function _finalize(): void {
+            if (_finalized)
                 return
-            }
-            if (countCommitsProc.startObserved)
-                return
-
-            console.warn("[ShellUpdates] Commit-count lookup failed to start; comparing commit IDs directly")
-            root._finishCountFallback()
-        }
-        onStarted: countCommitsProc.startObserved = true
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
+            _finalized = true
+            countCommitsFlushTimer.stop()
+            if (_exitCode !== 0) {
                 // Fallback: compare commits directly
                 root._finishCountFallback()
                 return
@@ -1075,22 +1376,83 @@ Singleton {
                 print("[ShellUpdates] Up to date (" + root.localCommit + ")")
             }
         }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const count = parseInt((text ?? "0").trim())
+                root.commitsBehind = isNaN(count) ? 0 : count
+                countCommitsProc._stdoutDone = true
+                if (countCommitsProc._exited)
+                    countCommitsProc._finalize()
+            }
+        }
+        onRunningChanged: {
+            if (countCommitsProc.running) {
+                countCommitsProc.startObserved = false
+                countCommitsProc._exited = false
+                countCommitsProc._exitCode = -1
+                countCommitsProc._stdoutDone = false
+                countCommitsProc._finalized = false
+                countCommitsFlushTimer.stop()
+                return
+            }
+            if (countCommitsProc.startObserved)
+                return
+
+            console.warn("[ShellUpdates] Commit-count lookup failed to start; comparing commit IDs directly")
+            root._finishCountFallback()
+        }
+        onStarted: countCommitsProc.startObserved = true
+        onExited: (exitCode, exitStatus) => {
+            countCommitsProc._exited = true
+            countCommitsProc._exitCode = exitCode
+            if (countCommitsProc._stdoutDone)
+                countCommitsProc._finalize()
+            else
+                countCommitsFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: countCommitsFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (countCommitsProc._exited && !countCommitsProc._finalized)
+                countCommitsProc._finalize()
+        }
     }
 
     // Step 7: Get latest commit message from remote
     Process {
         id: latestMessageProc
         property bool startObserved: false
+        property bool _exited: false
+        property bool _stdoutDone: false
+        property bool _finalized: false
         running: false
         command: [...root._gitCmd, "log", "--oneline", "-1", "origin/" + root._remoteBranch]
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            latestMessageFlushTimer.stop()
+            root._finishCheck()
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 root.latestMessage = (text ?? "").trim()
+                latestMessageProc._stdoutDone = true
+                if (latestMessageProc._exited)
+                    latestMessageProc._finalize()
             }
         }
         onRunningChanged: {
             if (latestMessageProc.running) {
                 latestMessageProc.startObserved = false
+                latestMessageProc._exited = false
+                latestMessageProc._stdoutDone = false
+                latestMessageProc._finalized = false
+                latestMessageFlushTimer.stop()
                 return
             }
             if (latestMessageProc.startObserved)
@@ -1101,7 +1463,23 @@ Singleton {
             root._finishCheck()
         }
         onStarted: latestMessageProc.startObserved = true
-        onExited: (exitCode, exitStatus) => root._finishCheck()
+        onExited: (exitCode, exitStatus) => {
+            latestMessageProc._exited = true
+            if (latestMessageProc._stdoutDone)
+                latestMessageProc._finalize()
+            else
+                latestMessageFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: latestMessageFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (latestMessageProc._exited && !latestMessageProc._finalized)
+                latestMessageProc._finalize()
+        }
     }
 
     // =========================================================================
@@ -1111,43 +1489,116 @@ Singleton {
     // Detail Step 1: Get commit log between local and remote
     Process {
         id: commitLogProc
+        property bool _exited: false
+        property bool _stdoutDone: false
+        property bool _finalized: false
         running: false
         command: [
             ...root._gitCmd, "log",
             "--pretty=format:%h|%s|%cr|%an",
             "HEAD..origin/" + root._remoteBranch
         ]
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            commitLogFlushTimer.stop()
+            remoteChangelogProc.running = true
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false
+                _stdoutDone = false
+                _finalized = false
+                commitLogFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 root.commitLog = (text ?? "").trim()
+                commitLogProc._stdoutDone = true
+                if (commitLogProc._exited)
+                    commitLogProc._finalize()
             }
         }
         onExited: (exitCode, exitStatus) => {
-            remoteChangelogProc.running = true
+            commitLogProc._exited = true
+            if (commitLogProc._stdoutDone)
+                commitLogProc._finalize()
+            else
+                commitLogFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: commitLogFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (commitLogProc._exited && !commitLogProc._finalized)
+                commitLogProc._finalize()
         }
     }
 
     // Detail Step 2: Get remote CHANGELOG.md (first 200 lines)
     Process {
         id: remoteChangelogProc
+        property bool _exited: false
+        property bool _stdoutDone: false
+        property bool _finalized: false
         running: false
         command: [
             "/usr/bin/bash", "-c",
             "git -C '" + root.repoPath + "' show 'origin/" + root._remoteBranch + ":CHANGELOG.md' 2>/dev/null | head -200"
         ]
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            remoteChangelogFlushTimer.stop()
+            localModsProc.running = true
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false
+                _stdoutDone = false
+                _finalized = false
+                remoteChangelogFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 root.remoteChangelog = (text ?? "").trim()
+                remoteChangelogProc._stdoutDone = true
+                if (remoteChangelogProc._exited)
+                    remoteChangelogProc._finalize()
             }
         }
         onExited: (exitCode, exitStatus) => {
-            localModsProc.running = true
+            remoteChangelogProc._exited = true
+            if (remoteChangelogProc._stdoutDone)
+                remoteChangelogProc._finalize()
+            else
+                remoteChangelogFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: remoteChangelogFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (remoteChangelogProc._exited && !remoteChangelogProc._finalized)
+                remoteChangelogProc._finalize()
         }
     }
 
     // Detail Step 5: Detect local modifications via manifest checksums
     Process {
         id: localModsProc
+        property bool _exited: false
+        property bool _stdoutDone: false
+        property bool _finalized: false
         running: false
         command: [
             "/usr/bin/bash", "-c",
@@ -1169,6 +1620,22 @@ Singleton {
             "  fi; " +
             "done < \"$manifest\""
         ]
+        function _finalize(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            localModsFlushTimer.stop()
+            root.isFetchingDetails = false
+            print("[ShellUpdates] Detail fetch complete")
+        }
+        onRunningChanged: {
+            if (running) {
+                _exited = false
+                _stdoutDone = false
+                _finalized = false
+                localModsFlushTimer.stop()
+            }
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 const raw = (text ?? "").trim()
@@ -1178,11 +1645,27 @@ Singleton {
                     root.localModifications = []
                 }
                 print("[ShellUpdates] Local modifications: " + root.localModifications.length + " file(s)")
+                localModsProc._stdoutDone = true
+                if (localModsProc._exited)
+                    localModsProc._finalize()
             }
         }
         onExited: (exitCode, exitStatus) => {
-            root.isFetchingDetails = false
-            print("[ShellUpdates] Detail fetch complete")
+            localModsProc._exited = true
+            if (localModsProc._stdoutDone)
+                localModsProc._finalize()
+            else
+                localModsFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: localModsFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (localModsProc._exited && !localModsProc._finalized)
+                localModsProc._finalize()
         }
     }
 

@@ -47,6 +47,9 @@ const BUILTIN_THEMES: &[(&str, &[&str])] = &[
 
 fn parse_hex_rgb(raw: &str) -> Result<[u8; 3]> {
     let s = raw.trim().trim_start_matches('#');
+    if !s.is_ascii() {
+        bail!("invalid hex color: {raw}");
+    }
     if s.len() == 6 {
         let r = u8::from_str_radix(&s[0..2], 16)?;
         let g = u8::from_str_radix(&s[2..4], 16)?;
@@ -103,7 +106,7 @@ fn color_dist_sq(a: [u8; 3], b: [u8; 3]) -> f32 {
 }
 
 fn save_with_format(img: &DynamicImage, output: &Path, fmt_opt: Option<&str>) -> Result<()> {
-    if let Some(parent) = output.parent() {
+    if let Some(parent) = output.parent().filter(|p| !p.as_os_str().is_empty()) {
         fs::create_dir_all(parent)?;
     }
     let fmt_str = fmt_opt
@@ -333,15 +336,10 @@ pub fn run_gowall(raw_args: &[String]) -> Result<()> {
             let scale: f32 = parse_flag_value(rest, "--scale")
                 .or_else(|| parse_flag_value(rest, "-s"))
                 .and_then(|v| v.parse::<f32>().ok())
-                .unwrap_or(10.0_f32)
-                .max(1.0_f32);
+                .filter(|v| v.is_finite() && *v > 0.0)
+                .unwrap_or(10.0_f32);
             let img = open_image_guessed(&src)?;
-            let (w, h) = img.dimensions();
-            let factor = if scale <= 1.0 { scale } else { 1.0 / scale };
-            let sw = ((w as f32) * factor).round().max(4.0) as u32;
-            let sh = ((h as f32) * factor).round().max(4.0) as u32;
-            let small = img.resize_exact(sw, sh, FilterType::Nearest);
-            let result = small.resize_exact(w, h, FilterType::Nearest);
+            let result = pixelate_image(&img, scale);
             save_with_format(&result, Path::new(&out), fmt.as_deref())
         }
         "extract" => {
@@ -442,7 +440,7 @@ pub fn run_gowall(raw_args: &[String]) -> Result<()> {
             let orig_size = fs::metadata(&src).map(|m| m.len()).unwrap_or(0);
             let img = open_image_guessed(&src)?;
             let out_path = PathBuf::from(&out);
-            if let Some(parent) = out_path.parent() {
+            if let Some(parent) = out_path.parent().filter(|p| !p.as_os_str().is_empty()) {
                 fs::create_dir_all(parent)?;
             }
             let ext = out_path
@@ -502,10 +500,26 @@ pub fn run_gowall(raw_args: &[String]) -> Result<()> {
     }
 }
 
+fn pixelate_image(img: &DynamicImage, scale: f32) -> DynamicImage {
+    let (w, h) = img.dimensions();
+    let factor = if scale >= 1.0 {
+        (scale / 100.0).clamp(0.01, 1.0)
+    } else {
+        scale.clamp(0.01, 1.0)
+    };
+    let sw = ((w as f32) * factor).round().max(4.0) as u32;
+    let sh = ((h as f32) * factor).round().max(4.0) as u32;
+    let small = img.resize_exact(sw, sh, FilterType::Nearest);
+    small.resize_exact(w, h, FilterType::Nearest)
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{BUILTIN_THEMES, load_palette, parse_hex_rgb, recolor_to_palette};
-    use image::{DynamicImage, Rgb, RgbImage};
+    use super::{
+        BUILTIN_THEMES, load_palette, parse_hex_rgb, pixelate_image, recolor_to_palette,
+    };
+    use image::{DynamicImage, GenericImageView, Rgb, RgbImage};
+    use std::collections::HashSet;
 
     #[test]
     fn builtin_themes_parse_and_recolor() {
@@ -516,5 +530,36 @@ mod tests {
         let img = DynamicImage::ImageRgb8(RgbImage::from_pixel(8, 8, Rgb([200, 100, 50])));
         let out = recolor_to_palette(&img, &pal);
         assert_eq!(out.width(), 8);
+    }
+
+    #[test]
+    fn parse_hex_rgb_rejects_non_ascii_without_panic() {
+        assert!(parse_hex_rgb("éa").is_err());
+        assert!(parse_hex_rgb("#éa").is_err());
+        assert!(parse_hex_rgb("éaéa").is_err());
+        assert!(parse_hex_rgb("#ééé").is_err());
+    }
+
+    #[test]
+    fn pixelate_smaller_scale_is_blockier() {
+        let mut raw = RgbImage::new(100, 100);
+        for (x, y, px) in raw.enumerate_pixels_mut() {
+            *px = Rgb([((x * 7) % 256) as u8, ((y * 11) % 256) as u8, (((x + y) * 5) % 256) as u8]);
+        }
+        let img = DynamicImage::ImageRgb8(raw);
+        let strong = pixelate_image(&img, 1.0);
+        let finer = pixelate_image(&img, 25.0);
+
+        let orig_bytes = img.to_rgb8().into_raw();
+        let strong_bytes = strong.to_rgb8().into_raw();
+        let finer_bytes = finer.to_rgb8().into_raw();
+        assert_ne!(strong_bytes, orig_bytes);
+        assert_ne!(finer_bytes, orig_bytes);
+        assert_ne!(strong_bytes, finer_bytes);
+
+        let unique_colors = |buf: &DynamicImage| -> usize {
+            buf.pixels().map(|(_, _, p)| p.0).collect::<HashSet<_>>().len()
+        };
+        assert!(unique_colors(&strong) < unique_colors(&finer));
     }
 }

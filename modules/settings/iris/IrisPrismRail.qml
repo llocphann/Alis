@@ -259,9 +259,9 @@ Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: Math.round(24 * IrisTheme.scale)
                             radius: Math.round(implicitHeight / 2)
-                            color: (Config.options?.companion?.enable ?? false) ? IrisTheme.accentTint : IrisTheme.plateRaised
+                            color: (Config.options?.abyss?.companion?.enabled ?? false) ? IrisTheme.accentTint : IrisTheme.plateRaised
                             border.width: 1
-                            border.color: (Config.options?.companion?.enable ?? false) ? IrisTheme.accentBorder : IrisTheme.hairline
+                            border.color: (Config.options?.abyss?.companion?.enabled ?? false) ? IrisTheme.accentBorder : IrisTheme.hairline
 
                             Row {
                                 anchors.centerIn: parent
@@ -271,14 +271,14 @@ Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "water_drop"
                                     iconSize: 13
-                                    color: (Config.options?.companion?.enable ?? false) ? IrisTheme.accent : IrisTheme.textMuted
+                                    color: (Config.options?.abyss?.companion?.enabled ?? false) ? IrisTheme.accent : IrisTheme.textMuted
                                 }
 
                                 StyledText {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: Translation.tr("Companion")
                                     font.pixelSize: Appearance.font.pixelSize.smallest
-                                    color: (Config.options?.companion?.enable ?? false) ? IrisTheme.accent : IrisTheme.textSecondary
+                                    color: (Config.options?.abyss?.companion?.enabled ?? false) ? IrisTheme.accent : IrisTheme.textSecondary
                                 }
                             }
 

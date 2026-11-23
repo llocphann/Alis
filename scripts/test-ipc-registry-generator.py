@@ -89,11 +89,11 @@ if missing_descriptions:
 # The documentation is generator input for installed CLI help. Every copied
 # keybind must call the available public command, rather than a retired CLI.
 for target in merged_targets:
-    if re.search(r'\bspawn\s+"alis"', target.keybind_example):
+    if re.search(r'\bspawn\s+"inir"', target.keybind_example):
         raise SystemExit(f"FAIL: {target.name} advertises a disabled public launcher")
 generated = module.generate_bash(merged_targets, module.generate_aliases(merged_targets))
 if generated != module.OUTPUT.read_text():
-    raise SystemExit("FAIL: installed IPC registry is stale; regenerate from docs/IPC.md")
+    raise SystemExit("FAIL: installed IPC registry is stale; regenerate from scripts/lib/ipc-reference.md")
 
 for target, expected_text in (
     ("overview", 'spawn "alis" "overview" "toggle"'),
@@ -104,7 +104,7 @@ for target, expected_text in (
         ["bash", str(REPO_ROOT / "scripts/alis"), target, "--help"],
         capture_output=True, text=True, check=True,
     )
-    if expected_text not in help_result.stdout or re.search(r"\balis\b", help_result.stdout):
+    if expected_text not in help_result.stdout or re.search(r"\binir\b", help_result.stdout):
         raise SystemExit(f"FAIL: {target} installed CLI help still advertises a retired command")
 
 print(

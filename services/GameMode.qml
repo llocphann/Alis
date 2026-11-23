@@ -500,6 +500,8 @@ Singleton {
             if (shouldEnable !== root._lastNiriAnimState) {
                 root._lastNiriAnimState = shouldEnable
                 root.setNiriAnimations(shouldEnable)
+            } else {
+                suppressClearTimer.restart()
             }
         }
     }

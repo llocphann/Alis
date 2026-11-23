@@ -497,31 +497,31 @@ pub fn run_session() -> Result<()> {
                 if let Some(code) = parts.next().and_then(|s| s.parse::<u32>().ok()) {
                     let was_mod = modifier_bit(code) != 0;
                     held.insert(code);
-                    let _ = vk.send_key(code, true);
+                    vk.send_key(code, true)?;
                     if was_mod {
-                        let _ = vk.send_modifiers(compute_mods(&held));
+                        vk.send_modifiers(compute_mods(&held))?;
                     }
-                    let _ = vk.sync();
+                    vk.sync()?;
                 }
             }
             Some("release") => {
                 if let Some(code) = parts.next().and_then(|s| s.parse::<u32>().ok()) {
                     let was_mod = modifier_bit(code) != 0;
                     held.remove(&code);
-                    let _ = vk.send_key(code, false);
+                    vk.send_key(code, false)?;
                     if was_mod {
-                        let _ = vk.send_modifiers(compute_mods(&held));
+                        vk.send_modifiers(compute_mods(&held))?;
                     }
-                    let _ = vk.sync();
+                    vk.sync()?;
                 }
             }
             Some("release_all") => {
                 let codes: Vec<u32> = held.drain().collect();
                 for code in codes {
-                    let _ = vk.send_key(code, false);
+                    vk.send_key(code, false)?;
                 }
-                let _ = vk.send_modifiers(0);
-                let _ = vk.sync();
+                vk.send_modifiers(0)?;
+                vk.sync()?;
             }
             Some("quit") => break,
             _ => {}

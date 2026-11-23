@@ -113,8 +113,8 @@ Singleton {
     }
 
     function connectionTooltip(includeBssid = false): string {
-        if (!root.wifiEnabled) return Translation.tr("Wi-Fi is disabled");
         if (root.ethernet) return Translation.tr("Ethernet connected");
+        if (!root.wifiEnabled) return Translation.tr("Wi-Fi is disabled");
         if (!root.networkName) return Translation.tr("Not connected");
         const details = root.accessPointDetails(root.active, includeBssid);
         return details.length > 0 ? `${root.networkName} | ${details}` : root.networkName;
@@ -330,9 +330,22 @@ Singleton {
         }
     }
 
+    Timer {
+        id: updateConnectionTypeFlushTimer
+        interval: 50
+        repeat: false
+        onTriggered: {
+            if (updateConnectionType._exited && !updateConnectionType._finalized)
+                updateConnectionType._finalizeConnectionType()
+        }
+    }
+
     Process {
         id: updateConnectionType
         property string buffer
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _finalized: false
         // LANG=C: nmcli localizes device STATE ("connected" → "conectado" etc.), and the
         // parser below matches English keywords. Without this, wifi state detection silently
         // fails on non-English desktops — indicator shows disconnected while actually connected.
@@ -344,15 +357,18 @@ Singleton {
         running: false
         function startCheck() {
             buffer = "";
+            _exited = false;
+            _exitCode = -1;
+            _finalized = false;
+            updateConnectionTypeFlushTimer.stop();
             updateConnectionType.running = true;
         }
-        stdout: SplitParser {
-            onRead: data => {
-                updateConnectionType.buffer += data + "\n";
-            }
-        }
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
+        function _finalizeConnectionType(): void {
+            if (_finalized)
+                return;
+            _finalized = true;
+            updateConnectionTypeFlushTimer.stop();
+            if (_exitCode !== 0) {
                 // Keep radio state available even if the combined status query
                 // fails part-way through.
                 if (!wifiStatusProcess.running)
@@ -424,6 +440,26 @@ Singleton {
                 root.networkStrength = 0
             }
         }
+        onRunningChanged: {
+            if (running) {
+                _exited = false;
+                _exitCode = -1;
+                _finalized = false;
+                updateConnectionTypeFlushTimer.stop();
+            }
+        }
+        stdout: SplitParser {
+            onRead: data => {
+                updateConnectionType.buffer += data + "\n";
+                if (updateConnectionType._exited && !updateConnectionType._finalized)
+                    updateConnectionTypeFlushTimer.restart();
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            updateConnectionType._exited = true;
+            updateConnectionType._exitCode = exitCode;
+            updateConnectionTypeFlushTimer.restart();
+        }
     }
 
     Process {
@@ -486,7 +522,7 @@ Singleton {
                         active: net[0] === "yes",
                         strength: parseInt(net[1]),
                         frequency: parseInt(net[2]),
-                        ssid: net[3],
+                        ssid: net[3]?.replace(rep2, ":") ?? "",
                         bssid: net[4]?.replace(rep2, ":") ?? "",
                         security: net[5] || "",
                         rate: net[6] || ""

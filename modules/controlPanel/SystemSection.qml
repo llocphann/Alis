@@ -54,7 +54,7 @@ PanelSurface {
                 value: (Battery.percentage ?? 0) * 100
                 barColor: value < 20
                     ? Appearance.colors.colError
-                    : Battery.charging
+                    : Battery.isCharging
                         ? Appearance.colors.colSuccess
                         : Appearance.colors.colPrimary
             }

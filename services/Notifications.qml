@@ -709,22 +709,36 @@ Singleton {
     }
 
     function discardAllNotifications() {
+        const existing = root.list.slice();
+        const discardingIds = [];
         // Cancel and destroy all active timers before clearing the list
-        for (const notif of root.list) {
+        for (const notif of existing) {
+            if (!notif) continue;
+            if (notif.notificationId !== undefined && notif.notificationId !== null) {
+                root._discardingIds.add(notif.notificationId);
+                discardingIds.push(notif.notificationId);
+            }
             if (notif.timer) {
                 notif.timer.stop();
                 notif.timer.destroy();
                 notif.timer = null;
             }
+            if (notif.notification)
+                notif.notification = null;
             notif.destroy();
         }
-        root.list = []
-        triggerListChange()
+        root.list = [];
+        triggerListChange();
         notifFileView.setText(stringifyList(root.list));
-        notifServer.trackedNotifications.values.forEach((notif) => {
-            notif.dismiss()
-        })
+        const tracked = Array.from(notifServer.trackedNotifications.values);
+        tracked.forEach((notif) => {
+            notif.dismiss();
+        });
         root.discardAll();
+        Qt.callLater(() => {
+            for (const id of discardingIds)
+                root._discardingIds.delete(id);
+        });
     }
 
     function cancelTimeout(id) {
@@ -821,8 +835,13 @@ Singleton {
         }
 
         if (appIcon && appIcon.length > 0) {
-            const cmd = "/usr/bin/gtk-launch \"" + appIcon + "\" || \"" + appIcon + "\"";
-            ShellExec.execCmd(cmd);
+            Quickshell.execDetached([
+                "/usr/bin/sh",
+                "-c",
+                'exec /usr/bin/gtk-launch "$1" 2>/dev/null || exec "$1"',
+                "alis-notif-launch",
+                appIcon,
+            ]);
         }
     }
 

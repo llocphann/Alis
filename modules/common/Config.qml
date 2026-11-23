@@ -2973,6 +2973,7 @@ Singleton {
                 property string targetMonitor: ""
                 property string style: "caelestia"
                 property string coverflowView: "gallery"
+                property bool animatePreview: false
             }
 
             property JsonObject screenRecord: JsonObject {

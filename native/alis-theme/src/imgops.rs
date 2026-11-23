@@ -85,7 +85,7 @@ fn write_images_to_pdf(images: &[String], output_path: &Path) -> Result<()> {
     if images.is_empty() {
         bail!("to-pdf requires at least one image");
     }
-    if let Some(parent) = output_path.parent() {
+    if let Some(parent) = output_path.parent().filter(|p| !p.as_os_str().is_empty()) {
         fs::create_dir_all(parent)?;
     }
 
@@ -299,7 +299,7 @@ pub fn run_image(raw_args: &[String]) -> Result<()> {
                 return Ok(());
             }
             let out_path = Path::new(out);
-            if let Some(parent) = out_path.parent() {
+            if let Some(parent) = out_path.parent().filter(|p| !p.as_os_str().is_empty()) {
                 fs::create_dir_all(parent)?;
             }
             let tmp = out_path.with_extension(format!("alis-{}.tmp.png", std::process::id()));
@@ -321,7 +321,7 @@ pub fn run_image(raw_args: &[String]) -> Result<()> {
             let img = open_image_guessed(src)?;
             let (tw, th) = parse_resize_spec(spec, img.width(), img.height())?;
             let resized = img.resize_exact(tw, th, FilterType::Triangle);
-            if let Some(parent) = out.parent() {
+            if let Some(parent) = out.parent().filter(|p| !p.as_os_str().is_empty()) {
                 fs::create_dir_all(parent)?;
             }
             let ext = out
@@ -352,7 +352,7 @@ pub fn run_image(raw_args: &[String]) -> Result<()> {
             }
             let img = open_image_guessed(&rest[0])?;
             let out = Path::new(&rest[1]);
-            if let Some(parent) = out.parent() {
+            if let Some(parent) = out.parent().filter(|p| !p.as_os_str().is_empty()) {
                 fs::create_dir_all(parent)?;
             }
             img.save_with_format(out, ImageFormat::Png)?;
@@ -393,7 +393,7 @@ pub fn run_image(raw_args: &[String]) -> Result<()> {
             }
             let img = open_image_guessed(&rest[0])?;
             let out = Path::new(&rest[1]);
-            if let Some(parent) = out.parent() {
+            if let Some(parent) = out.parent().filter(|p| !p.as_os_str().is_empty()) {
                 fs::create_dir_all(parent)?;
             }
             if let Ok(fmt) = ImageFormat::from_path(out) {

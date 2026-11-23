@@ -18,6 +18,7 @@ Scope {
     property bool dontAutoCancelSearch: false
 
     Component.onCompleted: CompositorService.setSortingConsumer("overview", GlobalStates.overviewOpen)
+    Component.onDestruction: CompositorService.setSortingConsumer("overview", false)
     Variants {
         id: overviewVariants
         model: Quickshell.screens

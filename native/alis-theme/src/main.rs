@@ -145,7 +145,7 @@ fn write_text(path: &Path, content: &str) -> Result<()> {
     {
         return Ok(());
     }
-    if let Some(parent) = path.parent() {
+    if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
         fs::create_dir_all(parent)?;
     }
     fs::write(path, content).with_context(|| format!("write {}", path.display()))

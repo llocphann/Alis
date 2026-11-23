@@ -1129,21 +1129,19 @@ Item {
         property string snapshot: ""
         property bool pending: false
         property bool startObserved: false
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         running: false
-        stdout: StdioCollector { id: clipboardReceipt }
-        onStarted: startObserved = true
-        onRunningChanged: {
-            if (!running && pending && !startObserved)
-                Qt.callLater(() => {
-                    if (!clipboardProc || !clipboardProc.pending || clipboardProc.startObserved) return
-                    clipboardProc.pending = false
-                    copiedToast.show(Translation.tr("Could not paste attachment"))
-                })
-        }
-        onExited: (code, status) => {
+        function _finalizeClipboard(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            clipboardFlushTimer.stop()
             try {
                 const payload = JSON.parse(clipboardReceipt.text)
-                if (code !== 0 || !payload.ok)
+                if (_exitCode !== 0 || !payload.ok)
                     copiedToast.show(String(payload.error ?? "Could not paste attachment"))
                 else if (!root.insertAttachmentResult(noteId, cursor, payload, selectionStart, selectionEnd, snapshot))
                     copiedToast.show(Translation.tr("Note no longer exists"))
@@ -1152,6 +1150,49 @@ Item {
             } finally {
                 clipboardProc.pending = false
             }
+        }
+        stdout: StdioCollector {
+            id: clipboardReceipt
+            onStreamFinished: {
+                clipboardProc._stdoutDone = true
+                if (clipboardProc._exited)
+                    clipboardProc._finalizeClipboard()
+            }
+        }
+        onStarted: startObserved = true
+        onRunningChanged: {
+            if (running) {
+                _exited = false
+                _exitCode = -1
+                _stdoutDone = false
+                _finalized = false
+                clipboardFlushTimer.stop()
+                return
+            }
+            if (!running && pending && !startObserved)
+                Qt.callLater(() => {
+                    if (!clipboardProc || !clipboardProc.pending || clipboardProc.startObserved) return
+                    clipboardProc.pending = false
+                    copiedToast.show(Translation.tr("Could not paste attachment"))
+                })
+        }
+        onExited: (code, status) => {
+            clipboardProc._exited = true
+            clipboardProc._exitCode = code
+            if (clipboardProc._stdoutDone)
+                clipboardProc._finalizeClipboard()
+            else
+                clipboardFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: clipboardFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (clipboardProc._exited && !clipboardProc._finalized)
+                clipboardProc._finalizeClipboard()
         }
     }
 

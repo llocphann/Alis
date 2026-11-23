@@ -248,7 +248,7 @@ ContentPage {
                 ColumnLayout {
                     Layout.fillWidth: true
                     visible: surfaceSection.sidebarRole
-                    spacing: SettingsMaterialPreset.rowSpacing
+                    spacing: SettingsMaterialPreset.groupSpacing
 
                     RowLayout {
                         Layout.fillWidth: true

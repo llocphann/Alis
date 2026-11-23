@@ -140,7 +140,7 @@ Scope {
         Rectangle {
             anchors.fill: parent
             z: -1
-            color: ColorUtils.transparentize(Appearance.colors.colBackground, 1 - 0.85)
+            color: ColorUtils.transparentize(Appearance.colors.colLayer0, 1 - 0.85)
             opacity: root.embeddedHost ? 1 : root._presentedOpen ? 1 : 0
 
             Behavior on color {

@@ -25,23 +25,23 @@ QML_DIRS = [
     REPO_ROOT / "ShellWafflePanels.qml",
     REPO_ROOT / "ShellAbyssPanels.qml",
 ]
-IPC_MD = REPO_ROOT / "docs" / "IPC.md"
+IPC_MD = REPO_ROOT / "scripts" / "lib" / "ipc-reference.md"
 OUTPUT = REPO_ROOT / "scripts" / "lib" / "ipc-registry.sh"
 
-# Targets under this IPC.md heading are waffle-only.
+# Targets under this ipc-reference heading are waffle-only.
 WAFFLE_SECTION_HEADING = "## Waffle-Specific Targets"
 
 # Headings under this section are top-level `alis` CLI commands, NOT IPC targets,
 # so they must not be parsed as IpcHandler targets (avoids spurious warnings).
 STANDALONE_SECTION_HEADING = "## Standalone Commands"
 
-# Known waffle-only QML paths (for family detection from QML when IPC.md has no entry).
+# Known waffle-only QML paths (for family detection from QML when IPC reference has no entry).
 WAFFLE_PATH_MARKERS = ("modules/waffle/",)
 
 # Known duplicate targets (both families register the same target name).
 # LazyLoader prevents both from loading at runtime.
 KNOWN_DUPLICATES = {
-    "bar", "session", "clipboard",
+    "bar", "session", "clipboard", "wallpaperLauncher",
     # Lightweight shell-owned routers are intentionally mirrored so the IPC
     # contract survives family switches while their visual roots stay unloaded.
     "cheatsheet", "osk", "overlay", "overview",

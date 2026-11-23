@@ -4,6 +4,7 @@ use std::io::Read;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result};
 use serde_json::Value;
@@ -293,8 +294,15 @@ fn is_video_like(path: &Path) -> bool {
     )
 }
 
-fn extract_video_frame(source: &Path) -> Option<PathBuf> {
-    let temporary = PathBuf::from("/tmp/sddm-pixel-frame.tmp.png");
+fn extract_video_frame(source: &Path, work_dir: &Path) -> Option<PathBuf> {
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let temporary = work_dir.join(format!(
+        ".sddm-pixel-frame-{}-{nonce}.tmp.png",
+        std::process::id()
+    ));
     let status = Command::new("ffmpeg")
         .arg("-y")
         .arg("-i")
@@ -303,9 +311,14 @@ fn extract_video_frame(source: &Path) -> Option<PathBuf> {
         .arg(&temporary)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .status()
-        .ok()?;
-    (status.success() && temporary.is_file()).then_some(temporary)
+        .status();
+    match status {
+        Ok(s) if s.success() && temporary.is_file() => Some(temporary),
+        _ => {
+            let _ = fs::remove_file(&temporary);
+            None
+        }
+    }
 }
 
 fn update_background(theme_dir: &Path, wallpaper: Option<&Path>) -> Result<bool> {
@@ -318,7 +331,7 @@ fn update_background(theme_dir: &Path, wallpaper: Option<&Path>) -> Result<bool>
     let destination = assets.join("background.png");
 
     let temporary = if is_video_like(wallpaper) {
-        let frame = extract_video_frame(wallpaper);
+        let frame = extract_video_frame(wallpaper, &assets);
         if frame.is_none() {
             eprintln!("[sddm-pixel] Keeping existing background (video, no ffmpeg)");
         }

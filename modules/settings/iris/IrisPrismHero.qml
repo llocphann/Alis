@@ -80,7 +80,7 @@ Item {
         case "effects":
             return Appearance.animationsEnabled ? Translation.tr("Motion active") : Translation.tr("Reduced motion")
         case "companion":
-            return (Config.options?.companion?.enable ?? false) ? Translation.tr("Companion active") : Translation.tr("Companion paused")
+            return (Config.options?.abyss?.companion?.enabled ?? false) ? Translation.tr("Companion active") : Translation.tr("Companion paused")
         case "ai":
             return (Config.options?.policies?.ai ?? 1) !== 0 ? Translation.tr("Assistant ready") : Translation.tr("AI disabled")
         case "compositor":
@@ -126,8 +126,8 @@ Item {
             return { icon: "lock", label: Translation.tr("Lock now"), kind: "lock" }
         case "companion":
             return {
-                icon: (Config.options?.companion?.enable ?? false) ? "pause_circle" : "play_circle",
-                label: (Config.options?.companion?.enable ?? false) ? Translation.tr("Pause Companion") : Translation.tr("Enable Companion"),
+                icon: (Config.options?.abyss?.companion?.enabled ?? false) ? "pause_circle" : "play_circle",
+                label: (Config.options?.abyss?.companion?.enabled ?? false) ? Translation.tr("Pause Companion") : Translation.tr("Enable Companion"),
                 kind: "toggleCompanion"
             }
         default:

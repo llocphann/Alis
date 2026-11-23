@@ -47,7 +47,7 @@ fn hex_byte(s: &str) -> i32 {
 
 fn hex_to_rgb(color: &str) -> (i32, i32, i32) {
     let c = color.strip_prefix('#').unwrap_or(color);
-    if c.len() < 6 {
+    if !c.is_ascii() || c.len() < 6 {
         return (0, 0, 0);
     }
     (hex_byte(&c[0..2]), hex_byte(&c[2..4]), hex_byte(&c[4..6]))
@@ -94,7 +94,7 @@ fn write_if_changed_bytes(path: &Path, bytes: &[u8]) -> Result<bool> {
     {
         return Ok(false);
     }
-    if let Some(parent) = path.parent() {
+    if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
         fs::create_dir_all(parent)?;
     }
     fs::write(path, bytes)?;
@@ -592,8 +592,23 @@ pub fn strip_jsonc_comments(data: &[u8]) -> Vec<u8> {
             }
         } else if c == b',' && i + 1 < n {
             let mut j = i + 1;
-            while j < n && matches!(data[j], b' ' | b'\t' | b'\n' | b'\r') {
-                j += 1;
+            while j < n {
+                if matches!(data[j], b' ' | b'\t' | b'\n' | b'\r') {
+                    j += 1;
+                } else if j + 1 < n && data[j] == b'/' && data[j + 1] == b'/' {
+                    j += 2;
+                    while j < n && data[j] != b'\n' {
+                        j += 1;
+                    }
+                } else if j + 1 < n && data[j] == b'/' && data[j + 1] == b'*' {
+                    j += 2;
+                    while j + 1 < n && !(data[j] == b'*' && data[j + 1] == b'/') {
+                        j += 1;
+                    }
+                    j = if j + 1 < n { j + 2 } else { n };
+                } else {
+                    break;
+                }
             }
             if j < n && matches!(data[j], b']' | b'}') {
                 i += 1;
@@ -1273,7 +1288,7 @@ fn load_vscode_settings(path: &Path) -> Result<Map<String, Value>> {
 }
 
 fn write_vscode_settings(path: &Path, settings: &Map<String, Value>) -> Result<()> {
-    if let Some(parent) = path.parent() {
+    if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
         fs::create_dir_all(parent)?;
     }
     let mut data = serde_json::to_vec_pretty(settings)?;
@@ -1477,7 +1492,7 @@ pub fn run_vscode_theme(raw_args: &[String]) -> Result<()> {
     let mut success = 0;
     for (fork_key, fork_name) in &selected {
         let settings_path = vscode_settings_path(fork_name);
-        if let Some(parent) = settings_path.parent() {
+        if let Some(parent) = settings_path.parent().filter(|p| !p.as_os_str().is_empty()) {
             if !parent.is_dir() {
                 if explicit_forks
                     || *fork_key == "code"
@@ -1601,7 +1616,11 @@ fn is_hex_color(v: &str) -> bool {
 }
 
 fn normalize_hex6(v: &str) -> String {
-    let s = v.trim().to_ascii_lowercase();
+    let trimmed = v.trim();
+    if !trimmed.is_ascii() {
+        return "#000000".to_owned();
+    }
+    let s = trimmed.to_ascii_lowercase();
     let rest = s.strip_prefix('#').unwrap_or(&s);
     if rest.len() < 6 {
         return "#000000".to_owned();
@@ -2308,7 +2327,7 @@ pub fn run_zed_theme(raw_args: &[String]) -> Result<()> {
         ]
     });
 
-    if let Some(parent) = output_path.parent() {
+    if let Some(parent) = output_path.parent().filter(|p| !p.as_os_str().is_empty()) {
         fs::create_dir_all(parent)?;
     }
     let mut data = serde_json::to_vec_pretty(&theme_data)?;
@@ -2524,7 +2543,9 @@ fn parse_toml_string_value(raw_val: &str) -> Option<String> {
 
 fn is_toml_section_header(line: &str) -> Option<&str> {
     let trimmed = line.split('#').next().unwrap_or(line).trim();
-    if trimmed.starts_with('[') && trimmed.ends_with(']') && !trimmed.starts_with("[[") {
+    if trimmed.starts_with("[[") && trimmed.ends_with("]]") && trimmed.len() > 4 {
+        Some(trimmed)
+    } else if trimmed.starts_with('[') && trimmed.ends_with(']') && !trimmed.starts_with("[[") {
         Some(trimmed[1..trimmed.len() - 1].trim())
     } else {
         None
@@ -2954,7 +2975,11 @@ fn write_claude_json(path: &Path, value: &Value) -> Result<()> {
     if fs::read(path).ok().as_deref() == Some(bytes.as_slice()) {
         return Ok(());
     }
-    fs::create_dir_all(path.parent().ok_or_else(|| anyhow!("Missing settings parent"))?)?;
+    let parent = path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .ok_or_else(|| anyhow!("Missing settings parent"))?;
+    fs::create_dir_all(parent)?;
     let temp = path.with_extension(format!("alis-{}.tmp", std::process::id()));
     fs::write(&temp, bytes)?;
     if let Ok(metadata) = fs::metadata(path) {
@@ -3173,5 +3198,41 @@ command = "demo"
         let (claude_light, is_dark_light) = build_claude_theme_json(&light_colors, &term_colors);
         assert!(!is_dark_light);
         assert_eq!(claude_light["base"], "light");
+    }
+
+    #[test]
+    fn hex_helpers_reject_non_ascii_without_panic() {
+        assert_eq!(hex_to_rgb("#ééé"), (0, 0, 0));
+        assert_eq!(hex_to_rgb("ééé"), (0, 0, 0));
+        assert_eq!(normalize_hex6("#ééé"), "#000000");
+        assert_eq!(normalize_hex6("ééé"), "#000000");
+    }
+
+    #[test]
+    fn strip_jsonc_handles_trailing_comma_before_comments() {
+        let input = br#"{"a": 1, // note
+}"#;
+        let parsed: Value =
+            serde_json::from_slice(&strip_jsonc_comments(input)).expect("line comment after comma");
+        assert_eq!(parsed["a"], 1);
+
+        let block_input = br#"{"arr": [1, /* inline */ ], /* end */ }"#;
+        let parsed_block: Value = serde_json::from_slice(&strip_jsonc_comments(block_input))
+            .expect("block comment after comma");
+        assert_eq!(parsed_block["arr"], serde_json::json!([1]));
+    }
+
+    #[test]
+    fn codex_toml_array_of_tables_ends_tui_section() {
+        let src = "[tui]\n# theme only\n\n[[mcp_servers]]\nname = \"alpha\"\ntheme = \"keep_me\"\n";
+        let (updated, prev) = update_codex_config_toml(src, "alis");
+        assert_eq!(prev, None);
+        assert!(updated.contains("[tui]\ntheme = \"alis\"\n"));
+        assert!(updated.contains("[[mcp_servers]]\nname = \"alpha\"\ntheme = \"keep_me\"\n"));
+
+        let src_with_existing = "[tui]\ntheme = \"alis\"\n\n[[mcp_servers]]\nname = \"beta\"\ntheme = \"alis\"\n";
+        let stripped = strip_codex_config_toml(src_with_existing, "alis", None);
+        assert!(!stripped.starts_with("[tui]\ntheme = \"alis\""));
+        assert!(stripped.contains("[[mcp_servers]]\nname = \"beta\"\ntheme = \"alis\"\n"));
     }
 }

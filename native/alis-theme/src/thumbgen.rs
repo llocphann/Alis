@@ -160,17 +160,20 @@ fn is_fresh(src: &Path, dst: &Path) -> bool {
     }
 }
 
+static TEMP_COUNTER: AtomicUsize = AtomicUsize::new(0);
+
 pub fn generate_one(path: &Path, size_name: &str) -> Result<bool> {
     let abs = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
     let out = thumbnail_path(&abs, size_name);
     if is_fresh(&abs, &out) {
         return Ok(false);
     }
-    if let Some(parent) = out.parent() {
+    if let Some(parent) = out.parent().filter(|p| !p.as_os_str().is_empty()) {
         fs::create_dir_all(parent)?;
     }
     let max_dim = size_pixels(size_name)?;
-    let tmp = out.with_extension(format!("alis-{}.tmp.png", std::process::id()));
+    let seq = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+    let tmp = out.with_extension(format!("alis-{}-{seq}.tmp.png", std::process::id()));
 
     if is_video(&abs) {
         let filter = format!(
@@ -220,12 +223,15 @@ pub fn generate_one(path: &Path, size_name: &str) -> Result<bool> {
 fn collect_files(dir: &Path, recursive: bool, only_images: bool, out: &mut Vec<PathBuf>) -> Result<()> {
     let entries = fs::read_dir(dir).with_context(|| format!("read_dir {}", dir.display()))?;
     for entry in entries.flatten() {
+        let Ok(ft) = entry.file_type() else {
+            continue;
+        };
         let p = entry.path();
-        if p.is_dir() {
+        if ft.is_dir() {
             if recursive {
                 let _ = collect_files(&p, true, only_images, out);
             }
-        } else if p.is_file() && (!only_images || is_media_ext(&p)) {
+        } else if (ft.is_file() || (ft.is_symlink() && p.is_file())) && (!only_images || is_media_ext(&p)) {
             out.push(p);
         }
     }
@@ -349,12 +355,34 @@ pub fn run_thumbgen(raw_args: &[String]) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::{file_uri, md5_hex};
-    use std::path::Path;
+    use super::{collect_files, file_uri, md5_hex};
+    use std::fs;
+    use std::os::unix::fs::symlink;
+    use std::path::{Path, PathBuf};
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn freedesktop_uri_and_md5_match_spec() {
         assert_eq!(file_uri(Path::new("/tmp/a b.png")), "file:///tmp/a%20b.png");
         assert_eq!(md5_hex(b"hello"), "5d41402abc4b2a76b9719d911017c592");
+    }
+
+    #[test]
+    fn collect_files_skips_symlink_dir_loops() {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock after epoch")
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("alis-thumb-loop-{}-{nonce}", std::process::id()));
+        let sub = root.join("sub");
+        fs::create_dir_all(&sub).unwrap();
+        let img = sub.join("pic.png");
+        fs::write(&img, b"fake").unwrap();
+        symlink(&root, sub.join("loop")).unwrap();
+
+        let mut out: Vec<PathBuf> = Vec::new();
+        collect_files(&root, true, true, &mut out).unwrap();
+        assert_eq!(out, vec![img]);
+        let _ = fs::remove_dir_all(&root);
     }
 }

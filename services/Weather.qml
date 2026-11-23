@@ -384,7 +384,7 @@ Singleton {
         result.sunrise = sunrise ? sunrise.split("T")[1] ?? sunrise : "--:--"
         result.sunset = sunset ? sunset.split("T")[1] ?? sunset : "--:--"
         result.windDir = root._degToCompass(current.wind_direction_10m)
-        result.wCode = String(current.weather_code ?? 113)
+        result.wCode = root._wmoToWttr(current.weather_code ?? 0)
         result.description = root.describeWeather(result.wCode)
         result.city = root.location.name || "Unknown"
 
@@ -749,12 +749,12 @@ Singleton {
     onConfigLatChanged: {
         if (!Config.ready || !root.enabled || !root._initialized) return;
         if (root.configLat === root._lastLat) return;
-        if (root.hasManualCoords) locationDebounceTimer.restart();
+        locationDebounceTimer.restart();
     }
     onConfigLonChanged: {
         if (!Config.ready || !root.enabled || !root._initialized) return;
         if (root.configLon === root._lastLon) return;
-        if (root.hasManualCoords) locationDebounceTimer.restart();
+        locationDebounceTimer.restart();
     }
 
     Connections {

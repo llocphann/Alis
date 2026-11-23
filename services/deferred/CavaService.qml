@@ -361,6 +361,10 @@ Singleton {
     Process {
         id: configGen
         running: false
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         environment: ({
             CAVA_TRACK_TITLE: root.playerTrackTitle
         })
@@ -368,8 +372,12 @@ Singleton {
             String(root.cfgFramerate), String(root.cfgSensitivity),
             String(root._generationBars), String(root.cfgStereo),
             root.playerDesktopEntry, "--print-config"]
-        stdout: StdioCollector { id: generatedConfig }
-        onExited: (code, status) => {
+        function _finalizeConfigGen(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            configGenFlushTimer.stop()
+            const code = _exitCode
             if (!root.active) {
                 root._pendingConfigGeneration = true
                 return
@@ -393,6 +401,41 @@ Singleton {
                 }
                 root._scheduleSourceRefresh()
             }
+        }
+        onRunningChanged: {
+            if (configGen.running) {
+                configGen._exited = false
+                configGen._exitCode = -1
+                configGen._stdoutDone = false
+                configGen._finalized = false
+                configGenFlushTimer.stop()
+            }
+        }
+        stdout: StdioCollector {
+            id: generatedConfig
+            onStreamFinished: {
+                configGen._stdoutDone = true
+                if (configGen._exited)
+                    configGen._finalizeConfigGen()
+            }
+        }
+        onExited: (code, status) => {
+            configGen._exited = true
+            configGen._exitCode = code
+            if (configGen._stdoutDone)
+                configGen._finalizeConfigGen()
+            else
+                configGenFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: configGenFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (configGen._exited && !configGen._finalized)
+                configGen._finalizeConfigGen()
         }
     }
 

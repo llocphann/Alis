@@ -246,14 +246,38 @@ Singleton {
     Process {
         id: storedConfigProcess
         property bool startObserved: false
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         command: ["/usr/bin/cat", Config.filePath]
+        function _finalizeStoredConfig(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            storedConfigFlushTimer.stop()
+            if (_exitCode === 0)
+                root.parseStoredAudioConfig(storedConfigCollector.text)
+            else
+                root.resetStoredAudioConfig()
+        }
         stdout: StdioCollector {
             id: storedConfigCollector
+            onStreamFinished: {
+                storedConfigProcess._stdoutDone = true
+                if (storedConfigProcess._exited)
+                    storedConfigProcess._finalizeStoredConfig()
+            }
         }
         stderr: StdioCollector {}
         onRunningChanged: {
             if (storedConfigProcess.running) {
                 storedConfigProcess.startObserved = false
+                storedConfigProcess._exited = false
+                storedConfigProcess._exitCode = -1
+                storedConfigProcess._stdoutDone = false
+                storedConfigProcess._finalized = false
+                storedConfigFlushTimer.stop()
                 return
             }
             if (storedConfigProcess.startObserved)
@@ -262,33 +286,39 @@ Singleton {
         }
         onStarted: storedConfigProcess.startObserved = true
         onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0)
-                root.parseStoredAudioConfig(storedConfigCollector.text)
+            storedConfigProcess._exited = true
+            storedConfigProcess._exitCode = exitCode
+            if (storedConfigProcess._stdoutDone)
+                storedConfigProcess._finalizeStoredConfig()
             else
-                root.resetStoredAudioConfig()
+                storedConfigFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: storedConfigFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (storedConfigProcess._exited && !storedConfigProcess._finalized)
+                storedConfigProcess._finalizeStoredConfig()
         }
     }
 
     Process {
         id: metadataProcess
         property bool startObserved: false
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         command: ["/usr/bin/cat", root.recorderStatusPath]
-        stdout: StdioCollector {
-            id: metadataCollector
-        }
-        stderr: StdioCollector {}
-        onRunningChanged: {
-            if (metadataProcess.running) {
-                metadataProcess.startObserved = false
+        function _finalizeMetadata(): void {
+            if (_finalized)
                 return
-            }
-            if (metadataProcess.startObserved)
-                return
-            root.resetAudioMetadata()
-        }
-        onStarted: metadataProcess.startObserved = true
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
+            _finalized = true
+            metadataFlushTimer.stop()
+            if (_exitCode !== 0) {
                 root.resetAudioMetadata()
                 return
             }
@@ -307,18 +337,86 @@ Singleton {
                 root.resetAudioMetadata()
             }
         }
+        stdout: StdioCollector {
+            id: metadataCollector
+            onStreamFinished: {
+                metadataProcess._stdoutDone = true
+                if (metadataProcess._exited)
+                    metadataProcess._finalizeMetadata()
+            }
+        }
+        stderr: StdioCollector {}
+        onRunningChanged: {
+            if (metadataProcess.running) {
+                metadataProcess.startObserved = false
+                metadataProcess._exited = false
+                metadataProcess._exitCode = -1
+                metadataProcess._stdoutDone = false
+                metadataProcess._finalized = false
+                metadataFlushTimer.stop()
+                return
+            }
+            if (metadataProcess.startObserved)
+                return
+            root.resetAudioMetadata()
+        }
+        onStarted: metadataProcess.startObserved = true
+        onExited: (exitCode, exitStatus) => {
+            metadataProcess._exited = true
+            metadataProcess._exitCode = exitCode
+            if (metadataProcess._stdoutDone)
+                metadataProcess._finalizeMetadata()
+            else
+                metadataFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: metadataFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (metadataProcess._exited && !metadataProcess._finalized)
+                metadataProcess._finalizeMetadata()
+        }
     }
 
     Process {
         id: checkProcess
         property bool startObserved: false
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         command: ["/usr/bin/pgrep", "-xo", "wf-recorder"]
+        function _finalizeCheck(): void {
+            if (_finalized)
+                return
+            _finalized = true
+            checkProcessFlushTimer.stop()
+            const previousPid = root.recorderPid
+            const parsedPid = parseInt(recorderPidCollector.text.trim(), 10)
+            root.recorderPid = _exitCode === 0 && !isNaN(parsedPid) ? parsedPid : 0
+            root.isRecording = root.recorderPid > 0
+            if (root.isRecording && (!root.hasAudioMetadata || root.recorderPid !== previousPid))
+                root.loadAudioMetadata()
+        }
         stdout: StdioCollector {
             id: recorderPidCollector
+            onStreamFinished: {
+                checkProcess._stdoutDone = true
+                if (checkProcess._exited)
+                    checkProcess._finalizeCheck()
+            }
         }
         onRunningChanged: {
             if (checkProcess.running) {
                 checkProcess.startObserved = false
+                checkProcess._exited = false
+                checkProcess._exitCode = -1
+                checkProcess._stdoutDone = false
+                checkProcess._finalized = false
+                checkProcessFlushTimer.stop()
                 return
             }
             if (checkProcess.startObserved)
@@ -328,12 +426,22 @@ Singleton {
         }
         onStarted: checkProcess.startObserved = true
         onExited: (exitCode, exitStatus) => {
-            const previousPid = root.recorderPid
-            const parsedPid = parseInt(recorderPidCollector.text.trim(), 10)
-            root.recorderPid = exitCode === 0 && !isNaN(parsedPid) ? parsedPid : 0
-            root.isRecording = root.recorderPid > 0
-            if (root.isRecording && (!root.hasAudioMetadata || root.recorderPid !== previousPid))
-                root.loadAudioMetadata()
+            checkProcess._exited = true
+            checkProcess._exitCode = exitCode
+            if (checkProcess._stdoutDone)
+                checkProcess._finalizeCheck()
+            else
+                checkProcessFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: checkProcessFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (checkProcess._exited && !checkProcess._finalized)
+                checkProcess._finalizeCheck()
         }
     }
 }

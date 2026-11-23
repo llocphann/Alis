@@ -196,7 +196,7 @@ Singleton {
             }
         }
         case "companion": {
-            const on = Boolean(Config.options?.companion?.enable ?? false)
+            const on = Boolean(Config.options?.abyss?.companion?.enabled ?? false)
             return {
                 id: "companion",
                 icon: "water_drop",
@@ -302,7 +302,7 @@ Singleton {
             Config.setNestedValue("background.effects.enableBlur", !(Config.options?.background?.effects?.enableBlur ?? false))
             break
         case "companion":
-            Config.setNestedValue("companion.enable", !(Config.options?.companion?.enable ?? false))
+            Config.setNestedValue("abyss.companion.enabled", !(Config.options?.abyss?.companion?.enabled ?? false))
             break
         case "dnd":
             Notifications.silent = !Notifications.silent

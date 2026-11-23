@@ -131,16 +131,22 @@ Singleton {
 
     Process {
         id: overviewHotCornersProcess
+        property bool _exited: false
+        property int _exitCode: -1
+        property bool _stdoutDone: false
+        property bool _finalized: false
         command: [
             root.nativeDispatchPath,
             "niri",
             "get-hot-corners"
         ]
 
-        stdout: StdioCollector { id: overviewHotCornersCollector }
-
-        onExited: exitCode => {
-            if (exitCode === 0) {
+        function _finalizeOverviewHotCorners(): void {
+            if (overviewHotCornersProcess._finalized)
+                return
+            overviewHotCornersProcess._finalized = true
+            overviewHotCornersFlushTimer.stop()
+            if (overviewHotCornersProcess._exitCode === 0) {
                 try {
                     const data = JSON.parse(overviewHotCornersCollector.text)
                     root.overviewHotCornersGlobal = Array.isArray(data.global)
@@ -153,13 +159,51 @@ Singleton {
                     root.overviewHotCornersError = String(e)
                 }
             } else {
-                root.overviewHotCornersError = "get-hot-corners exited " + exitCode
+                root.overviewHotCornersError = "get-hot-corners exited " + overviewHotCornersProcess._exitCode
             }
 
             if (root._overviewHotCornersRefreshQueued) {
                 root._overviewHotCornersRefreshQueued = false
                 overviewHotCornersProcess.running = true
             }
+        }
+
+        stdout: StdioCollector {
+            id: overviewHotCornersCollector
+            onStreamFinished: {
+                overviewHotCornersProcess._stdoutDone = true
+                if (overviewHotCornersProcess._exited)
+                    overviewHotCornersProcess._finalizeOverviewHotCorners()
+            }
+        }
+
+        onRunningChanged: {
+            if (running) {
+                overviewHotCornersProcess._exited = false
+                overviewHotCornersProcess._exitCode = -1
+                overviewHotCornersProcess._stdoutDone = false
+                overviewHotCornersProcess._finalized = false
+                overviewHotCornersFlushTimer.stop()
+            }
+        }
+
+        onExited: exitCode => {
+            overviewHotCornersProcess._exited = true
+            overviewHotCornersProcess._exitCode = exitCode
+            if (overviewHotCornersProcess._stdoutDone)
+                overviewHotCornersProcess._finalizeOverviewHotCorners()
+            else
+                overviewHotCornersFlushTimer.restart()
+        }
+    }
+
+    Timer {
+        id: overviewHotCornersFlushTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (overviewHotCornersProcess._exited && !overviewHotCornersProcess._finalized)
+                overviewHotCornersProcess._finalizeOverviewHotCorners()
         }
     }
 
@@ -800,7 +844,7 @@ Singleton {
 
         const updatedWorkspaces = {}
         for (const id in root.workspaces) {
-            updatedWorkspaces[id] = id === data.id ? updatedWs : root.workspaces[id]
+            updatedWorkspaces[id] = String(id) === String(data.id) ? updatedWs : root.workspaces[id]
         }
         root.workspaces = updatedWorkspaces
 

@@ -370,17 +370,61 @@ fn add_device(path: &Path, state: &mut MonitorState, tx: &Sender<InternalEvent>,
     );
 }
 
-fn refresh_devices(state: &mut MonitorState, tx: &Sender<InternalEvent>, mode: StreamMode) {
+fn prune_missing_devices(
+    state: &mut MonitorState,
+    discovered: &HashSet<PathBuf>,
+    mode: StreamMode,
+    emit_message: &mut impl FnMut(InputMessage) -> bool,
+) -> bool {
+    let missing: Vec<PathBuf> = state
+        .devices
+        .keys()
+        .filter(|path| !discovered.contains(*path))
+        .cloned()
+        .collect();
+    let mut released_codes: HashSet<u16> = HashSet::new();
+    for path in missing {
+        if let Some(removed) = state.devices.remove(&path)
+            && mode.wants_keys()
+            && removed.key_candidate
+        {
+            released_codes.extend(removed.pressed);
+        }
+    }
+    let mut sorted_codes: Vec<u16> = released_codes.into_iter().collect();
+    sorted_codes.sort_unstable();
+    for code in sorted_codes {
+        if !key_pressed(&state.devices, code)
+            && !emit_message(InputMessage::Key {
+                code,
+                pressed: false,
+            })
+        {
+            return false;
+        }
+    }
+    true
+}
+
+fn refresh_devices(
+    state: &mut MonitorState,
+    tx: &Sender<InternalEvent>,
+    mode: StreamMode,
+    emit_message: &mut impl FnMut(InputMessage) -> bool,
+) -> bool {
     let paths = event_paths();
     let discovered = paths.iter().cloned().collect::<HashSet<_>>();
 
-    state.devices.retain(|path, _| discovered.contains(path));
+    if !prune_missing_devices(state, &discovered, mode, emit_message) {
+        return false;
+    }
 
     for path in paths {
         if !state.devices.contains_key(&path) {
             add_device(&path, state, tx, mode);
         }
     }
+    true
 }
 
 fn spawn_hotplug_watcher(tx: Sender<InternalEvent>) {
@@ -487,7 +531,9 @@ fn process_event(
 ) -> bool {
     match event {
         InternalEvent::Hotplug => {
-            refresh_devices(state, tx, mode);
+            if !refresh_devices(state, tx, mode, emit_message) {
+                return false;
+            }
             if mode.wants_locks() && !emit_lock_if_changed(state, false, emit_message) {
                 return false;
             }
@@ -583,7 +629,7 @@ fn run_stream(mode: StreamMode) -> i32 {
     let mut state = MonitorState::default();
     let mut emit_message = emit;
 
-    refresh_devices(&mut state, &tx, mode);
+    let _ = refresh_devices(&mut state, &tx, mode, &mut |_| true);
     if mode.wants_locks() && !emit_lock_if_changed(&mut state, true, &mut emit_message) {
         return 0;
     }
@@ -807,5 +853,52 @@ mod tests {
 
         assert!(StreamMode::All.wants_locks());
         assert!(StreamMode::All.wants_keys());
+    }
+
+    #[test]
+    fn hotplug_prune_releases_unshared_held_keys() {
+        let mut state = MonitorState::default();
+        let first = PathBuf::from("/dev/input/event1");
+        let second = PathBuf::from("/dev/input/event2");
+        state.devices.insert(
+            first.clone(),
+            DeviceRuntime {
+                token: 1,
+                lock_candidate: false,
+                key_candidate: true,
+                caps: false,
+                num: false,
+                pressed: HashSet::from([30, 42]),
+            },
+        );
+        state.devices.insert(
+            second.clone(),
+            DeviceRuntime {
+                token: 2,
+                lock_candidate: false,
+                key_candidate: true,
+                caps: false,
+                num: false,
+                pressed: HashSet::from([30]),
+            },
+        );
+
+        let discovered = HashSet::from([second.clone()]);
+        let mut messages = Vec::new();
+        let ok = super::prune_missing_devices(&mut state, &discovered, StreamMode::Keys, &mut |msg| {
+            messages.push(msg);
+            true
+        });
+        assert!(ok);
+        assert!(!state.devices.contains_key(&first));
+        assert!(state.devices.contains_key(&second));
+        // Only code 42 (not held on remaining keyboard) should be released.
+        assert_eq!(
+            messages,
+            vec![InputMessage::Key {
+                code: 42,
+                pressed: false,
+            }]
+        );
     }
 }
