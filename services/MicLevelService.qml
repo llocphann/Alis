@@ -25,6 +25,7 @@ Singleton {
     readonly property string nativeDispatchPath: Quickshell.shellPath("scripts/native-dispatch")
     readonly property bool shouldCapture: root.active && !root.muted
     property int _consecutiveFailures: 0
+    property bool _intentionalRestart: false
 
     function subscribe(): void {
         root._subscribers += 1
@@ -40,6 +41,7 @@ Singleton {
     }
 
     function _stopCapture(): void {
+        root._intentionalRestart = false
         restartTimer.stop()
         meterProc.running = false
         root.level = 0.0
@@ -70,6 +72,7 @@ Singleton {
 
     onTargetFpsChanged: {
         if (meterProc.running) {
+            root._intentionalRestart = true
             meterProc.running = false
             restartTimer.interval = 50
             restartTimer.restart()
@@ -80,6 +83,7 @@ Singleton {
         target: Audio
         function onSourceChanged(): void {
             if (root.shouldCapture && meterProc.running) {
+                root._intentionalRestart = true
                 meterProc.running = false
                 restartTimer.interval = 120
                 restartTimer.restart()
@@ -130,6 +134,11 @@ Singleton {
         onExited: (exitCode, _exitStatus) => {
             root.level = 0.0
             root.peak = 0.0
+            if (root._intentionalRestart) {
+                root._intentionalRestart = false
+                root._consecutiveFailures = 0
+                return
+            }
             if (root.shouldCapture && exitCode !== 0 && root._consecutiveFailures < 3) {
                 root._consecutiveFailures += 1
                 restartTimer.interval = 800 * root._consecutiveFailures

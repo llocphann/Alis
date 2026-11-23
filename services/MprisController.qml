@@ -245,6 +245,8 @@ Singleton {
 		}
 	}
 
+	property bool _mpdBridgeRustFallbackActive: false
+
 	// Start the distro-provided mpd-mpris user service if present; otherwise fall
 	// back directly to Alis's built-in Rust MPRIS2 bridge in alis-mpdd.
 	Process {
@@ -253,10 +255,12 @@ Singleton {
 		command: ["/usr/bin/systemctl", "--user", "start", "mpd-mpris.service"]
 		onExited: (exitCode, _exitStatus) => {
 			if (exitCode === 0) {
+				root._mpdBridgeRustFallbackActive = false
 				_mpdBridgeSettle.restart()
 				return
 			}
 			if (!_mpdMprisCustomProc.running && !root._hasMpdMprisPlayer()) {
+				root._mpdBridgeRustFallbackActive = true
 				_mpdMprisCustomProc.command = root._mpdCustomBridgeCommand("org.mpris.MediaPlayer2.mpd")
 				_mpdMprisCustomProc.running = true
 				return
@@ -274,7 +278,9 @@ Singleton {
 		running: false
 		onStarted: _mpdBridgeSettle.restart()
 		onExited: (_exitCode, _exitStatus) => {
-			if (!root._mpdBridgeCustomEndpoint || !root._mpdBridgeExplicitRequested)
+			const wasFallback = root._mpdBridgeRustFallbackActive
+			root._mpdBridgeRustFallbackActive = false
+			if ((!root._mpdBridgeCustomEndpoint && !wasFallback) || !root._mpdBridgeExplicitRequested)
 				return
 			if (!root._hasMpdMprisPlayer()) {
 				root._mpdBridgeStartAttempted = false

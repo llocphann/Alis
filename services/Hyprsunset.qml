@@ -274,9 +274,12 @@ Singleton {
         // Destruction still stops only child processes owned by this singleton.
         // This path is different: an explicit/scheduled OFF request is
         // authoritative, so a legacy detached backend must also be disabled.
-        backendStopProc.command = CompositorService.isNiri
-            ? ["/usr/bin/pkill", "-TERM", "-x", "wlsunset"]
-            : ["/usr/bin/pkill", "-TERM", "-x", "hyprsunset"]
+        if (CompositorService.isNiri) {
+            Quickshell.execDetached(["/usr/bin/pkill", "-TERM", "-f", "[a]lis-native.* gamma"])
+            backendStopProc.command = ["/usr/bin/pkill", "-TERM", "-x", "wlsunset"]
+        } else {
+            backendStopProc.command = ["/usr/bin/pkill", "-TERM", "-x", "hyprsunset"]
+        }
         backendStopProc.running = true
     }
 
@@ -464,7 +467,7 @@ Singleton {
         property bool startObserved: false
         property bool timedOut: false
         running: false
-        command: ["/usr/bin/pidof", "wlsunset"]
+        command: ["/usr/bin/bash", "-c", "pidof wlsunset >/dev/null 2>&1 || pgrep -f '[a]lis-native.* gamma' >/dev/null 2>&1"]
         onRunningChanged: {
             if (niriFetchProc.running) {
                 niriFetchProc.startObserved = false

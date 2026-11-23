@@ -482,7 +482,7 @@ Singleton {
     Timer {
         id: xembedProxyDelayedStartTimer
         // Wait for org.kde.StatusNotifierWatcher + already-running SNI daemons
-        // (e.g. fcitx5) to re-register over D-Bus on shell restart before
+        // (e.g. dual-mode SNI clients) to re-register over D-Bus on shell restart before
         // xembedsniproxy claims X11 _NET_SYSTEM_TRAY_S0, preventing dual-mode
         // apps from spawning fallback XEmbed dock windows under xwayland-satellite.
         interval: 1500
@@ -594,6 +594,11 @@ Singleton {
         function onIsNiriChanged() {
             root.requestXembedProxyIfNeeded();
         }
+    }
+
+    Component.onCompleted: {
+        if (Config.ready)
+            root.requestXembedProxyIfNeeded();
     }
 
 }

@@ -16,9 +16,16 @@ Singleton {
         const appName = String(props["application.name"] ?? "").toLowerCase()
         const mediaName = String(props["media.name"] ?? "").toLowerCase()
         return rawName === "alis-mic-meter"
+            || rawName === "alis-audio"
+            || rawName === "alis-audio-spectrum"
             || nodeName === "alis-mic-meter"
+            || nodeName === "alis-audio"
+            || nodeName === "alis-audio-spectrum"
             || appName === "alis-mic-meter"
+            || appName === "alis-audio"
+            || appName === "alis-audio-spectrum"
             || mediaName === "alis mic meter"
+            || mediaName === "alis audio analyzer"
     }
 
     // Mic active: device -> stream link (same as Audio.micBeingAccessed)

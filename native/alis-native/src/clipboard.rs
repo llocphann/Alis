@@ -710,7 +710,7 @@ fn serve_selection(data: Vec<u8>, mime: &str, primary: bool, signal_ready: bool)
         },
         sw,
     )?;
-    let _ = conn.roundtrip()?;
+    let mut pending: VecDeque<alis_wayland::WlMessage> = VecDeque::from(conn.roundtrip()?);
 
     if signal_ready {
         let _ = writeln!(io::stdout(), "READY");
@@ -725,10 +725,14 @@ fn serve_selection(data: Vec<u8>, mime: &str, primary: bool, signal_ready: bool)
 
     let shared_data = Arc::new(data);
     while !STOP_REQUESTED.load(Ordering::SeqCst) {
-        let ev = match conn.recv_message_timeout(1000) {
-            Ok(Some(ev)) => ev,
-            Ok(None) => continue,
-            Err(_) => break,
+        let ev = if let Some(queued) = pending.pop_front() {
+            queued
+        } else {
+            match conn.recv_message_timeout(1000) {
+                Ok(Some(ev)) => ev,
+                Ok(None) => continue,
+                Err(_) => break,
+            }
         };
         WlConnection::check_display_error(&ev)?;
         if ev.object_id == src_id {
@@ -796,9 +800,25 @@ fn run_copy(args: CopyArgs) -> Result<i32> {
         .map(PathBuf::from)
         .unwrap_or_else(std::env::temp_dir);
     let tmp_dir = runtime.join("alis");
-    let _ = fs::create_dir_all(&tmp_dir);
-    let tmp_file = tmp_dir.join(format!("clip-copy-{}.bin", std::process::id()));
-    fs::write(&tmp_file, &data)?;
+    fs::create_dir_all(&tmp_dir)?;
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = fs::set_permissions(&tmp_dir, fs::Permissions::from_mode(0o700));
+    }
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let tmp_file = tmp_dir.join(format!("clip-copy-{}-{nanos}.bin", std::process::id()));
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        let mut f = fs::OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .mode(0o600)
+            .open(&tmp_file)?;
+        f.write_all(&data)?;
+    }
 
     let exe = std::env::current_exe().context("resolve current alis-native exe")?;
     let mut cmd = ProcessCommand::new(exe);
@@ -810,7 +830,13 @@ fn run_copy(args: CopyArgs) -> Result<i32> {
     cmd.stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null());
-    let mut child = cmd.spawn().context("spawn background clipboard selection server")?;
+    let mut child = match cmd.spawn() {
+        Ok(c) => c,
+        Err(err) => {
+            let _ = fs::remove_file(&tmp_file);
+            return Err(err).context("spawn background clipboard selection server");
+        }
+    };
     if let Some(stdout) = child.stdout.take() {
         let mut reader = BufReader::new(stdout);
         let mut line = String::new();

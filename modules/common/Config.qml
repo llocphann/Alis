@@ -189,7 +189,7 @@ Singleton {
     }
 
     function _isPrimitiveNoOp(nestedKey, value): bool {
-        if (!root.ready || root._reloadInFlight || root._writeInFlight || root._rawWriteView !== null)
+        if (!root.ready || root._reloadInFlight)
             return false;
         let keys = [];
         if (Array.isArray(nestedKey)) {
@@ -218,6 +218,13 @@ Singleton {
         }
         if (convertedValue === undefined || (convertedValue !== null && typeof convertedValue === "object"))
             return false;
+        const canonicalPath = keys.join(".");
+        if ((root._writeInFlight || root._rawWriteView !== null)
+                && root._writeOverlay
+                && Object.prototype.hasOwnProperty.call(root._writeOverlay, canonicalPath)
+                && root._writeOverlay[canonicalPath] !== convertedValue) {
+            return false;
+        }
         let optObj = root.options;
         let mirObj = root._jsonMirror;
         for (let i = 0; i < keys.length - 1; ++i) {

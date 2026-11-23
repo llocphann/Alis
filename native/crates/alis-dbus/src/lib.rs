@@ -1,8 +1,9 @@
 use std::collections::VecDeque;
 use std::env;
 use std::io::{Read, Write};
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd};
 use std::os::unix::net::UnixStream;
+use std::sync::Arc;
 
 use anyhow::{Context, Result, anyhow, bail};
 
@@ -19,6 +20,7 @@ pub const HDR_REPLY_SERIAL: u8 = 5;
 pub const HDR_DESTINATION: u8 = 6;
 pub const HDR_SENDER: u8 = 7;
 pub const HDR_SIGNATURE: u8 = 8;
+pub const HDR_UNIX_FDS: u8 = 9;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum DBusValue {
@@ -97,6 +99,7 @@ pub struct DBusMessage {
     pub sender: Option<String>,
     pub signature: String,
     pub body: Vec<DBusValue>,
+    pub fds: Vec<Arc<OwnedFd>>,
 }
 
 fn align_up(pos: usize, align: usize) -> usize {
@@ -441,6 +444,10 @@ pub fn encode_message(
 }
 
 pub fn decode_message(bytes: &[u8]) -> Result<DBusMessage> {
+    decode_message_inner(bytes).map(|(msg, _)| msg)
+}
+
+fn decode_message_inner(bytes: &[u8]) -> Result<(DBusMessage, usize)> {
     if bytes.len() < 16 {
         bail!("D-Bus message too short");
     }
@@ -486,6 +493,7 @@ pub fn decode_message(bytes: &[u8]) -> Result<DBusMessage> {
     let mut destination = None;
     let mut sender = None;
     let mut signature = String::new();
+    let mut unix_fds = 0usize;
 
     if let DBusValue::Array(_, items) = fields_val {
         for item in items {
@@ -504,6 +512,9 @@ pub fn decode_message(bytes: &[u8]) -> Result<DBusMessage> {
                     HDR_SIGNATURE => {
                         signature = parts[1].as_str().unwrap_or_default().to_string();
                     }
+                    HDR_UNIX_FDS => {
+                        unix_fds = parts[1].as_u32().unwrap_or(0) as usize;
+                    }
                     _ => {}
                 }
             }
@@ -521,20 +532,24 @@ pub fn decode_message(bytes: &[u8]) -> Result<DBusMessage> {
         body_unm.read_signature_list(&signature)?
     };
 
-    Ok(DBusMessage {
-        msg_type,
-        flags,
-        serial,
-        path,
-        interface,
-        member,
-        error_name,
-        reply_serial,
-        destination,
-        sender,
-        signature,
-        body,
-    })
+    Ok((
+        DBusMessage {
+            msg_type,
+            flags,
+            serial,
+            path,
+            interface,
+            member,
+            error_name,
+            reply_serial,
+            destination,
+            sender,
+            signature,
+            body,
+            fds: Vec::new(),
+        },
+        unix_fds,
+    ))
 }
 
 fn connect_unix_address(addr: &str) -> Result<UnixStream> {
@@ -635,6 +650,7 @@ pub struct DBusConnection {
     unique_name: String,
     read_buf: Vec<u8>,
     queued: VecDeque<DBusMessage>,
+    pending_fds: VecDeque<OwnedFd>,
 }
 
 impl DBusConnection {
@@ -680,6 +696,22 @@ impl DBusConnection {
         if !reply.starts_with("OK ") {
             bail!("D-Bus SASL EXTERNAL auth rejected: {}", reply.trim());
         }
+        stream
+            .write_all(b"NEGOTIATE_UNIX_FD\r\n")
+            .context("D-Bus SASL NEGOTIATE_UNIX_FD")?;
+        line.clear();
+        loop {
+            stream
+                .read_exact(&mut byte)
+                .context("D-Bus SASL UNIX_FD reply")?;
+            line.push(byte[0]);
+            if line.ends_with(b"\r\n") {
+                break;
+            }
+            if line.len() > 4096 {
+                bail!("D-Bus SASL reply too long");
+            }
+        }
         stream.write_all(b"BEGIN\r\n").context("D-Bus SASL BEGIN")?;
 
         let mut conn = Self {
@@ -688,6 +720,7 @@ impl DBusConnection {
             unique_name: String::new(),
             read_buf: Vec::with_capacity(4096),
             queued: VecDeque::new(),
+            pending_fds: VecDeque::new(),
         };
         let hello = conn.call(
             "org.freedesktop.DBus",
@@ -745,7 +778,74 @@ impl DBusConnection {
         }
         let packet = self.read_buf[..total].to_vec();
         self.read_buf.drain(..total);
-        Ok(Some(decode_message(&packet)?))
+        let (mut msg, unix_fds) = decode_message_inner(&packet)?;
+        for _ in 0..unix_fds {
+            if let Some(fd) = self.pending_fds.pop_front() {
+                msg.fds.push(Arc::new(fd));
+            }
+        }
+        Ok(Some(msg))
+    }
+
+    fn read_socket_chunk(&mut self) -> Result<()> {
+        let mut data = [0u8; 4096];
+        let mut iov = libc::iovec {
+            iov_base: data.as_mut_ptr() as *mut libc::c_void,
+            iov_len: data.len(),
+        };
+        let mut cmsg_buf = [0u8; 512];
+        let mut msg: libc::msghdr = unsafe { std::mem::zeroed() };
+        msg.msg_iov = &mut iov;
+        msg.msg_iovlen = 1;
+        msg.msg_control = cmsg_buf.as_mut_ptr() as *mut libc::c_void;
+        msg.msg_controllen = cmsg_buf.len() as _;
+
+        let rc = loop {
+            let n = unsafe {
+                libc::recvmsg(self.stream.as_raw_fd(), &mut msg, libc::MSG_CMSG_CLOEXEC)
+            };
+            if n < 0 {
+                let err = std::io::Error::last_os_error();
+                if err.kind() == std::io::ErrorKind::Interrupted {
+                    continue;
+                }
+                return Err(err).context("read D-Bus socket");
+            }
+            break n;
+        };
+        if rc == 0 {
+            bail!("D-Bus bus closed connection");
+        }
+        self.read_buf.extend_from_slice(&data[..rc as usize]);
+
+        unsafe {
+            let mut cmsg = libc::CMSG_FIRSTHDR(&msg);
+            while !cmsg.is_null() {
+                if (*cmsg).cmsg_level == libc::SOL_SOCKET
+                    && (*cmsg).cmsg_type == libc::SCM_RIGHTS
+                {
+                    let data_ptr = libc::CMSG_DATA(cmsg);
+                    let header_len = data_ptr as usize - cmsg as usize;
+                    let total_len = (*cmsg).cmsg_len as usize;
+                    if total_len > header_len {
+                        let count = (total_len - header_len) / std::mem::size_of::<RawFd>();
+                        for i in 0..count {
+                            let mut raw_fd: RawFd = -1;
+                            std::ptr::copy_nonoverlapping(
+                                data_ptr.add(i * std::mem::size_of::<RawFd>()),
+                                (&mut raw_fd as *mut RawFd) as *mut u8,
+                                std::mem::size_of::<RawFd>(),
+                            );
+                            if raw_fd >= 0 {
+                                self.pending_fds.push_back(OwnedFd::from_raw_fd(raw_fd));
+                            }
+                        }
+                    }
+                }
+                cmsg = libc::CMSG_NXTHDR(&msg, cmsg);
+            }
+        }
+        Ok(())
     }
 
     fn read_wire_message(&mut self) -> Result<DBusMessage> {
@@ -753,12 +853,7 @@ impl DBusConnection {
             if let Some(msg) = self.try_pop_buffered()? {
                 return Ok(msg);
             }
-            let mut chunk = [0u8; 4096];
-            let n = self.stream.read(&mut chunk).context("read D-Bus socket")?;
-            if n == 0 {
-                bail!("D-Bus bus closed connection");
-            }
-            self.read_buf.extend_from_slice(&chunk[..n]);
+            self.read_socket_chunk()?;
         }
     }
 
@@ -798,12 +893,7 @@ impl DBusConnection {
         if (pfd.revents & libc::POLLHUP) != 0 && (pfd.revents & libc::POLLIN) == 0 {
             bail!("D-Bus bus closed connection");
         }
-        let mut chunk = [0u8; 4096];
-        let n = self.stream.read(&mut chunk).context("read D-Bus socket")?;
-        if n == 0 {
-            bail!("D-Bus bus closed connection");
-        }
-        self.read_buf.extend_from_slice(&chunk[..n]);
+        self.read_socket_chunk()?;
         self.try_pop_buffered()
     }
 
@@ -983,5 +1073,81 @@ mod tests {
         assert_eq!(decoded.member.as_deref(), Some("PropertiesChanged"));
         assert_eq!(decoded.body.len(), 3);
         assert_eq!(decoded.body[1], dict);
+    }
+
+    #[test]
+    fn recvmsg_extracts_scm_rights_unix_fds_for_dbus_message() {
+        use std::collections::VecDeque;
+        use std::io::{Read, Write};
+        use std::os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd};
+        use std::os::unix::net::UnixStream;
+
+        let (writer_sock, reader_sock) = UnixStream::pair().unwrap();
+
+        let mut pipe_fds = [0 as libc::c_int; 2];
+        assert_eq!(unsafe { libc::pipe2(pipe_fds.as_mut_ptr(), libc::O_CLOEXEC) }, 0);
+        let pipe_read = unsafe { OwnedFd::from_raw_fd(pipe_fds[0]) };
+        let mut pipe_write = std::fs::File::from(unsafe { OwnedFd::from_raw_fd(pipe_fds[1]) });
+
+        let packet = encode_message(
+            super::MSG_METHOD_RETURN,
+            0,
+            42,
+            &[
+                (super::HDR_REPLY_SERIAL, DBusValue::Uint32(1)),
+                (super::HDR_UNIX_FDS, DBusValue::Uint32(1)),
+            ],
+            "h",
+            &[DBusValue::Uint32(0)],
+        )
+        .unwrap();
+
+        let send_fd: RawFd = pipe_read.as_raw_fd();
+        let mut iov = libc::iovec {
+            iov_base: packet.as_ptr() as *mut libc::c_void,
+            iov_len: packet.len(),
+        };
+        let fds_bytes = std::mem::size_of::<RawFd>();
+        let space = unsafe { libc::CMSG_SPACE(fds_bytes as u32) } as usize;
+        let mut cmsg_buf = vec![0u8; space];
+        let mut msg: libc::msghdr = unsafe { std::mem::zeroed() };
+        msg.msg_iov = &mut iov;
+        msg.msg_iovlen = 1;
+        msg.msg_control = cmsg_buf.as_mut_ptr() as *mut libc::c_void;
+        msg.msg_controllen = space as _;
+        unsafe {
+            let cmsg = libc::CMSG_FIRSTHDR(&msg);
+            (*cmsg).cmsg_level = libc::SOL_SOCKET;
+            (*cmsg).cmsg_type = libc::SCM_RIGHTS;
+            (*cmsg).cmsg_len = libc::CMSG_LEN(fds_bytes as u32) as _;
+            std::ptr::copy_nonoverlapping(
+                (&send_fd as *const RawFd) as *const u8,
+                libc::CMSG_DATA(cmsg),
+                fds_bytes,
+            );
+        }
+        let sent = unsafe { libc::sendmsg(writer_sock.as_raw_fd(), &msg, 0) };
+        assert_eq!(sent as usize, packet.len());
+        drop(pipe_read);
+
+        let mut conn = super::DBusConnection {
+            stream: reader_sock,
+            next_serial: 2,
+            unique_name: ":1.9".to_string(),
+            read_buf: Vec::with_capacity(4096),
+            queued: VecDeque::new(),
+            pending_fds: VecDeque::new(),
+        };
+        let reply = conn.read_message().unwrap();
+        assert_eq!(reply.fds.len(), 1);
+        assert_eq!(reply.body[0].as_u32(), Some(0));
+
+        pipe_write.write_all(b"inhibitor-ok").unwrap();
+        drop(pipe_write);
+        let received_fd = unsafe { OwnedFd::from_raw_fd(libc::dup(reply.fds[0].as_raw_fd())) };
+        let mut file = std::fs::File::from(received_fd);
+        let mut buf = String::new();
+        file.read_to_string(&mut buf).unwrap();
+        assert_eq!(buf, "inhibitor-ok");
     }
 }

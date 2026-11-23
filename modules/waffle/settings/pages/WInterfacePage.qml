@@ -279,7 +279,7 @@ WSettingsPage {
             suffix: "%"
             from: 50; to: 200; stepSize: 5
             value: Math.round((Config.options?.appearance?.typography?.sizeScale ?? 1.0) * 100)
-            onValueChanged: Config.setNestedValue("appearance.typography.sizeScale", value / 100)
+            onValueModified: v => Config.setNestedValue("appearance.typography.sizeScale", v / 100)
         }
 
         WSettingsButton {

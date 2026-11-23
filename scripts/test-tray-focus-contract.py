@@ -778,7 +778,7 @@ def main() -> int:
         interval_match = re.search(r"interval\s*:\s*(\d+)", delayed_timer_match.group("body"))
         if not interval_match or int(interval_match.group(1)) < 1000:
             failures.append(
-                "xembedProxyDelayedStartTimer interval must be >= 1000ms so StatusNotifierWatcher and SNI clients (fcitx5) register before xembedsniproxy claims X11 _NET_SYSTEM_TRAY_S0"
+                "xembedProxyDelayedStartTimer interval must be >= 1000ms so StatusNotifierWatcher and SNI clients (dual-mode SNI clients) register before xembedsniproxy claims X11 _NET_SYSTEM_TRAY_S0"
             )
     if "org.kde.StatusNotifierWatcher" not in service_text:
         failures.append("TrayService.qml must verify org.kde.StatusNotifierWatcher readiness before starting xembedsniproxy")

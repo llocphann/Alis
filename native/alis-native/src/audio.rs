@@ -114,6 +114,22 @@ enum AudioCapture {
     },
 }
 
+#[derive(Clone, Copy)]
+struct StreamIdentity {
+    app_name: &'static str,
+    stream_name: &'static str,
+}
+
+const SPECTRUM_IDENTITY: StreamIdentity = StreamIdentity {
+    app_name: "alis-audio-spectrum",
+    stream_name: "Alis Audio Analyzer",
+};
+
+const MIC_METER_IDENTITY: StreamIdentity = StreamIdentity {
+    app_name: "alis-mic-meter",
+    stream_name: "Alis Mic Meter",
+};
+
 impl AudioCapture {
     fn open(
         source: Option<&str>,
@@ -121,11 +137,12 @@ impl AudioCapture {
         channels: u8,
         frag_bytes: u32,
         capture_sink: bool,
+        identity: StreamIdentity,
     ) -> Result<Self> {
-        if let Ok(cap) = Self::open_pulse_simple(source, rate, channels, frag_bytes) {
+        if let Ok(cap) = Self::open_pulse_simple(source, rate, channels, frag_bytes, identity) {
             return Ok(cap);
         }
-        Self::open_subprocess(source, rate, channels, capture_sink)
+        Self::open_subprocess(source, rate, channels, capture_sink, identity)
     }
 
     fn open_pulse_simple(
@@ -133,6 +150,7 @@ impl AudioCapture {
         rate: u32,
         channels: u8,
         frag_bytes: u32,
+        identity: StreamIdentity,
     ) -> Result<Self> {
         unsafe {
             let lib_name = CString::new("libpulse-simple.so.0").unwrap();
@@ -151,8 +169,8 @@ impl AudioCapture {
             let read_fn: PaSimpleReadFn = std::mem::transmute(sym_read);
             let free_fn: PaSimpleFreeFn = std::mem::transmute(sym_free);
 
-            let app_name = CString::new("alis-audio").unwrap();
-            let stream_name = CString::new("Alis Audio Analyzer").unwrap();
+            let app_name = CString::new(identity.app_name).unwrap();
+            let stream_name = CString::new(identity.stream_name).unwrap();
             let dev_cstr = source
                 .filter(|s| !s.is_empty() && *s != "auto")
                 .and_then(|s| CString::new(s).ok());
@@ -257,13 +275,23 @@ impl AudioCapture {
         })
     }
 
-    fn open_subprocess(source: Option<&str>, rate: u32, channels: u8, capture_sink: bool) -> Result<Self> {
+    fn open_subprocess(
+        source: Option<&str>,
+        rate: u32,
+        channels: u8,
+        capture_sink: bool,
+        identity: StreamIdentity,
+    ) -> Result<Self> {
+        let client_arg = format!("--client-name={}", identity.app_name);
+        let stream_arg = format!("--stream-name={}", identity.app_name);
         let mut cmd = Command::new("parec");
         cmd.args([
             "--format=s16le",
             &format!("--rate={rate}"),
             &format!("--channels={channels}"),
             "--latency-msec=25",
+            &client_arg,
+            &stream_arg,
         ]);
         if let Some(dev) = source.filter(|s| !s.is_empty() && *s != "auto") {
             cmd.args(["--device", dev]);
@@ -632,6 +660,7 @@ fn run_spectrum(mut args: SpectrumArgs) -> Result<i32> {
                     channels,
                     bytes_per_read as u32,
                     true,
+                    SPECTRUM_IDENTITY,
                 )
             {
                 (cap, false)
@@ -642,7 +671,14 @@ fn run_spectrum(mut args: SpectrumArgs) -> Result<i32> {
             } else {
                 let monitor = resolve_default_monitor();
                 (
-                    AudioCapture::open(Some(&monitor), rate, channels, bytes_per_read as u32, true)?,
+                    AudioCapture::open(
+                        Some(&monitor),
+                        rate,
+                        channels,
+                        bytes_per_read as u32,
+                        true,
+                        SPECTRUM_IDENTITY,
+                    )?,
                     true,
                 )
             }
@@ -661,7 +697,14 @@ fn run_spectrum(mut args: SpectrumArgs) -> Result<i32> {
                     }
                 }
             };
-            match AudioCapture::open(Some(&resolved), rate, channels, bytes_per_read as u32, true) {
+            match AudioCapture::open(
+                Some(&resolved),
+                rate,
+                channels,
+                bytes_per_read as u32,
+                true,
+                SPECTRUM_IDENTITY,
+            ) {
                 Ok(cap) => (cap, is_default),
                 Err(_) if !is_default => {
                     let monitor = resolve_default_monitor();
@@ -672,6 +715,7 @@ fn run_spectrum(mut args: SpectrumArgs) -> Result<i32> {
                             channels,
                             bytes_per_read as u32,
                             true,
+                            SPECTRUM_IDENTITY,
                         )?,
                         true,
                     )
@@ -694,9 +738,14 @@ fn run_spectrum(mut args: SpectrumArgs) -> Result<i32> {
             if !got_frame && !tried_default_fallback {
                 tried_default_fallback = true;
                 let monitor = resolve_default_monitor();
-                if let Ok(fallback) =
-                    AudioCapture::open(Some(&monitor), rate, channels, bytes_per_read as u32, true)
-                {
+                if let Ok(fallback) = AudioCapture::open(
+                    Some(&monitor),
+                    rate,
+                    channels,
+                    bytes_per_read as u32,
+                    true,
+                    SPECTRUM_IDENTITY,
+                ) {
                     capture = fallback;
                     continue;
                 }
@@ -775,7 +824,14 @@ fn run_mic_meter(args: MicMeterArgs) -> Result<i32> {
         .unwrap_or("@DEFAULT_SOURCE@");
     let frames_per_read = ((rate / fps) as usize).max(160);
     let bytes_per_read = frames_per_read * 2;
-    let mut capture = AudioCapture::open(Some(source), rate, 1, bytes_per_read as u32, false)?;
+    let mut capture = AudioCapture::open(
+        Some(source),
+        rate,
+        1,
+        bytes_per_read as u32,
+        false,
+        MIC_METER_IDENTITY,
+    )?;
 
     let mut pcm = vec![0u8; bytes_per_read];
     let mut smooth_level = 0.0_f64;

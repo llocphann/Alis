@@ -360,9 +360,22 @@ fn percent_decode_uri(uri: &str) -> String {
 
 fn run_file_dialog(args: FileDialogArgs) -> Result<DesktopOutcome> {
     if std::env::var_os("WAYLAND_DISPLAY").is_none() && std::env::var_os("DISPLAY").is_none() {
-        bail!("no graphical display available for file dialog");
+        eprintln!("[alis-native] no graphical display available for file dialog");
+        return Ok(DesktopOutcome::RawLines {
+            lines: Vec::new(),
+            code: 2,
+        });
     }
-    let mut conn = DBusConnection::connect_session()?;
+    let mut conn = match DBusConnection::connect_session() {
+        Ok(c) => c,
+        Err(err) => {
+            eprintln!("[alis-native] file dialog failed to connect to session D-Bus: {err:#}");
+            return Ok(DesktopOutcome::RawLines {
+                lines: Vec::new(),
+                code: 2,
+            });
+        }
+    };
     let token = format!(
         "alis_file_dialog_{}_{}",
         std::process::id(),
@@ -377,9 +390,15 @@ fn run_file_dialog(args: FileDialogArgs) -> Result<DesktopOutcome> {
         .replace('.', "_");
     let expected_path = format!("/org/freedesktop/portal/desktop/request/{sender_slug}/{token}");
 
-    conn.add_match(&format!(
+    if let Err(err) = conn.add_match(&format!(
         "type='signal',interface='org.freedesktop.portal.Request',member='Response',path='{expected_path}'"
-    ))?;
+    )) {
+        eprintln!("[alis-native] file dialog failed to add D-Bus match: {err:#}");
+        return Ok(DesktopOutcome::RawLines {
+            lines: Vec::new(),
+            code: 2,
+        });
+    }
 
     let is_save = args.mode.eq_ignore_ascii_case("save");
     let mut opts: Vec<(DBusValue, DBusValue)> = vec![(
@@ -434,7 +453,7 @@ fn run_file_dialog(args: FileDialogArgs) -> Result<DesktopOutcome> {
     } else {
         "OpenFile"
     };
-    let reply = conn.call(
+    let reply = match conn.call(
         "org.freedesktop.portal.Desktop",
         "/org/freedesktop/portal/desktop",
         "org.freedesktop.portal.FileChooser",
@@ -445,7 +464,16 @@ fn run_file_dialog(args: FileDialogArgs) -> Result<DesktopOutcome> {
             DBusValue::String(args.title),
             DBusValue::Dict("s".into(), "v".into(), opts),
         ],
-    )?;
+    ) {
+        Ok(r) => r,
+        Err(err) => {
+            eprintln!("[alis-native] file dialog portal call failed: {err:#}");
+            return Ok(DesktopOutcome::RawLines {
+                lines: Vec::new(),
+                code: 2,
+            });
+        }
+    };
 
     let request_path = reply
         .body
@@ -455,7 +483,16 @@ fn run_file_dialog(args: FileDialogArgs) -> Result<DesktopOutcome> {
         .to_string();
 
     loop {
-        let msg = conn.read_message()?;
+        let msg = match conn.read_message() {
+            Ok(m) => m,
+            Err(err) => {
+                eprintln!("[alis-native] file dialog portal read failed: {err:#}");
+                return Ok(DesktopOutcome::RawLines {
+                    lines: Vec::new(),
+                    code: 2,
+                });
+            }
+        };
         if msg.msg_type == MSG_SIGNAL
             && msg.interface.as_deref() == Some("org.freedesktop.portal.Request")
             && msg.member.as_deref() == Some("Response")
@@ -463,9 +500,13 @@ fn run_file_dialog(args: FileDialogArgs) -> Result<DesktopOutcome> {
         {
             let response_code = msg.body.first().and_then(DBusValue::as_u32).unwrap_or(2);
             if response_code != 0 {
+                let code = if response_code == 1 { 1 } else { 2 };
+                if code == 2 {
+                    eprintln!("[alis-native] file dialog portal response error code={response_code}");
+                }
                 return Ok(DesktopOutcome::RawLines {
                     lines: Vec::new(),
-                    code: 1,
+                    code,
                 });
             }
             let mut paths = Vec::new();

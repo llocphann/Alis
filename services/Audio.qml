@@ -54,9 +54,16 @@ Singleton {
         const appName = String(props["application.name"] ?? "").toLowerCase()
         const mediaName = String(props["media.name"] ?? "").toLowerCase()
         return rawName === "alis-mic-meter"
+            || rawName === "alis-audio"
+            || rawName === "alis-audio-spectrum"
             || nodeName === "alis-mic-meter"
+            || nodeName === "alis-audio"
+            || nodeName === "alis-audio-spectrum"
             || appName === "alis-mic-meter"
+            || appName === "alis-audio"
+            || appName === "alis-audio-spectrum"
             || mediaName === "alis mic meter"
+            || mediaName === "alis audio analyzer"
     }
 
     property bool _micMuted: false
@@ -140,7 +147,7 @@ Singleton {
         })
     }
     readonly property list<var> outputAppNodes: root.appNodes(true)
-    readonly property list<var> inputAppNodes: root.appNodes(false)
+    readonly property list<var> inputAppNodes: root.appNodes(false).filter(node => !root.isInternalMicMonitorNode(node))
     readonly property list<var> outputDevices: root.devices(true)
     readonly property list<var> inputDevices: root.devices(false)
 
@@ -159,7 +166,7 @@ Singleton {
         const excludedApps = [
             "cava", "pavucontrol", "pwvucontrol", "helvum", "qpwgraph", "carla",
             "easyeffects", "jamesdsp", "sonusmix", "quickshell", "qs",
-            "alis-mic-meter",
+            "alis-mic-meter", "alis-audio", "alis-audio-spectrum",
             "discord", "vesktop", "webrtc", "teams", "zoom", "slack",
             "telegram-desktop", "element", "speech-dispatcher", "sd_dummy"
         ]

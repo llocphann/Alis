@@ -24,6 +24,7 @@ pub enum BacklightCommand {
 #[derive(Debug, Args)]
 pub struct SetArgs {
     /// Target value: raw integer (`32768`), percent (`50%`), or delta (`+5%`, `-5%`, `5%+`, `5%-`).
+    #[arg(allow_hyphen_values = true)]
     pub target: String,
     /// Specific sysfs backlight device name (defaults to highest-range device).
     #[arg(short = 'd', long)]
@@ -257,6 +258,27 @@ pub fn run(cmd: BacklightCommand) -> Result<i32> {
             let raw = compute_target_raw(&args.target, dev.current, dev.max, args.min_value)?;
             write_brightness(&dev, raw)?;
             Ok(0)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::BacklightCommand;
+    use clap::Parser;
+
+    #[derive(Debug, Parser)]
+    struct TestCli {
+        #[command(subcommand)]
+        cmd: BacklightCommand,
+    }
+
+    #[test]
+    fn backlight_set_parses_leading_hyphen_percent_delta() {
+        let parsed = TestCli::try_parse_from(["backlight", "set", "-5%"]).unwrap();
+        match parsed.cmd {
+            BacklightCommand::Set(args) => assert_eq!(args.target, "-5%"),
+            _ => panic!("expected BacklightCommand::Set"),
         }
     }
 }

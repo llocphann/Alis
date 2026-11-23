@@ -2109,7 +2109,7 @@ resolve_config_dir() {
     if [[ -n "$config_dir" ]]; then
         if [[ ! -f "$config_dir/shell.qml" ]]; then
             echo "Invalid Alis config path: $config_dir" >&2
-            exit 1
+            return 1
         fi
         config_dir="$(canonicalize_path "$config_dir")"
         return
@@ -2136,7 +2136,7 @@ resolve_config_dir() {
     done
 
     echo "Could not find an Alis shell payload" >&2
-    exit 1
+    return 1
 }
 
 list_instances() {
@@ -2467,7 +2467,7 @@ cleanup_service_processes() {
     while IFS= read -r pid; do
         alis_cleanup_owns_pid "$pid" "$service_group" || continue
         kill "$pid" 2>/dev/null || true
-    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|/alis-inputd([[:space:]]|$)|nmcli monitor|/usr/bin/swayidle -w|scripts/keyring/try_lookup\.sh|secret-tool lookup|dbus-monitor --system .*PrepareForSleep|cava -p |scripts/colors/alis-browser-theme-bridge\.py|scripts/aqua/(local_mind|companion_daemon|thinking_router|tts_stream_player)\.py|/alis-companiond([[:space:]]|$)|/alis-nexus([[:space:]]|$)|scripts/(integrations|todo|notes)/[^[:space:]]+\.py' 2>/dev/null || true)
+    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|/alis-(native|inputd|mpdd|theme)([[:space:]]|$)|nmcli monitor|/usr/bin/swayidle -w|scripts/keyring/try_lookup\.sh|secret-tool lookup|dbus-monitor --system .*PrepareForSleep|cava -p |scripts/colors/alis-browser-theme-bridge\.py|scripts/aqua/(local_mind|companion_daemon|thinking_router|tts_stream_player)\.py|/alis-companiond([[:space:]]|$)|/alis-nexus([[:space:]]|$)|scripts/(integrations|todo|notes)/[^[:space:]]+\.py' 2>/dev/null || true)
 
     local thumb_pattern='scripts/thumbnails/(thumbgen-venv\.sh|thumbgen\.py|generate-thumbnails-magick\.sh)'
     local thumb_pids=()

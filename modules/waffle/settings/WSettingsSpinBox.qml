@@ -14,6 +14,7 @@ WSettingsRow {
     property int to: 100
     property int stepSize: 1
     property string suffix: ""
+    signal valueModified(int value)
     
     control: Component {
         RowLayout {
@@ -42,7 +43,13 @@ WSettingsRow {
                     }
                 }
                 
-                onClicked: root.value = Math.max(root.from, root.value - root.stepSize)
+                onClicked: {
+                    const next = Math.max(root.from, root.value - root.stepSize)
+                    if (next !== root.value) {
+                        root.value = next
+                        root.valueModified(next)
+                    }
+                }
             }
             
             Rectangle {
@@ -86,7 +93,13 @@ WSettingsRow {
                     }
                 }
                 
-                onClicked: root.value = Math.min(root.to, root.value + root.stepSize)
+                onClicked: {
+                    const next = Math.min(root.to, root.value + root.stepSize)
+                    if (next !== root.value) {
+                        root.value = next
+                        root.valueModified(next)
+                    }
+                }
             }
         }
     }

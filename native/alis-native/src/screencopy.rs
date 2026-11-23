@@ -33,6 +33,7 @@ const EXT_SESS_CREATE_FRAME: u16 = 0;
 const EXT_SESS_DESTROY: u16 = 1;
 const EXT_SESS_EV_BUFFER_SIZE: u16 = 0;
 const EXT_SESS_EV_SHM_FORMAT: u16 = 1;
+const EXT_SESS_EV_STOPPED: u16 = 3;
 const EXT_SESS_EV_DONE: u16 = 4;
 const EXT_FRAME_DESTROY: u16 = 0;
 const EXT_FRAME_ATTACH_BUFFER: u16 = 1;
@@ -422,10 +423,15 @@ fn capture_via_ext_copy(
                     let mut r = WlReader::new(&ev.payload);
                     formats.push(r.u32()?);
                 }
+                EXT_SESS_EV_STOPPED => bail!("ext_image_copy_capture session stopped"),
                 EXT_SESS_EV_DONE => break,
                 _ => {}
             }
         }
+    }
+
+    if width == 0 || height == 0 {
+        bail!("ext_image_copy_capture returned zero buffer size");
     }
 
     let preferred = [
@@ -723,7 +729,7 @@ pub fn run(args: ScreencopyArgs) -> Result<i32> {
 
     if dest == "-" {
         let mut out = Cursor::new(Vec::new());
-        if fmt == ImageFormat::Jpeg {
+        if matches!(fmt, ImageFormat::Jpeg | ImageFormat::Pnm) {
             DynamicImage::ImageRgb8(dyn_img.to_rgb8()).write_to(&mut out, fmt)?;
         } else {
             dyn_img.write_to(&mut out, fmt)?;
@@ -739,10 +745,10 @@ pub fn run(args: ScreencopyArgs) -> Result<i32> {
         fs::create_dir_all(parent)?;
     }
     let tmp = dest_path.with_extension(format!("alis-{}.tmp", std::process::id()));
-    if fmt == ImageFormat::Jpeg {
+    if matches!(fmt, ImageFormat::Jpeg | ImageFormat::Pnm) {
         dyn_img
             .to_rgb8()
-            .save_with_format(&tmp, ImageFormat::Jpeg)
+            .save_with_format(&tmp, fmt)
             .with_context(|| format!("write {}", dest_path.display()))?;
     } else {
         dyn_img

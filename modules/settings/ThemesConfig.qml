@@ -1063,9 +1063,9 @@ ContentPage {
                     from: 80
                     to: 150
                     stepSize: 5
-                    onValueChanged: {
+                    onValueModified: v => {
                         if (Config.options?.appearance?.typography)
-                            Config.setNestedValue("appearance.typography.sizeScale", value / 100)
+                            Config.setNestedValue("appearance.typography.sizeScale", v / 100)
                     }
                     StyledToolTip {
                         text: Translation.tr("Scale all text in the shell")

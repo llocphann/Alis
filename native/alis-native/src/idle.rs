@@ -1,5 +1,7 @@
 use std::collections::HashMap;
+use std::os::fd::OwnedFd;
 use std::process::Command;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use alis_dbus::{DBusConnection, DBusValue, MSG_SIGNAL};
@@ -117,6 +119,30 @@ fn run_shell_command(cmd: &str, wait: bool, children: &mut Vec<std::process::Chi
     }
 }
 
+fn acquire_sleep_inhibitor(conn: &mut DBusConnection) -> Option<Arc<OwnedFd>> {
+    let reply = conn
+        .call(
+            "org.freedesktop.login1",
+            "/org/freedesktop/login1",
+            "org.freedesktop.login1.Manager",
+            "Inhibit",
+            "ssss",
+            &[
+                DBusValue::String("sleep".to_string()),
+                DBusValue::String("alis-native".to_string()),
+                DBusValue::String("Run before-sleep hooks".to_string()),
+                DBusValue::String("delay".to_string()),
+            ],
+        )
+        .ok()?;
+    let idx = reply.body.first().and_then(DBusValue::as_u32).unwrap_or(0) as usize;
+    reply
+        .fds
+        .get(idx)
+        .cloned()
+        .or_else(|| reply.fds.first().cloned())
+}
+
 fn reap_children(children: &mut Vec<std::process::Child>) {
     children.retain_mut(|child| matches!(child.try_wait(), Ok(None)));
 }
@@ -175,6 +201,12 @@ pub fn run(raw_args: &[String]) -> Result<i32> {
             Some(conn)
         }
         Err(_) => None,
+    };
+
+    let mut sleep_inhibit_fd = if !cfg.before_sleep.is_empty() {
+        dbus.as_mut().and_then(acquire_sleep_inhibitor)
+    } else {
+        None
     };
 
     let mut children: Vec<std::process::Child> = Vec::new();
@@ -253,6 +285,7 @@ pub fn run(raw_args: &[String]) -> Result<i32> {
             if !drop_dbus && (drev & libc::POLLIN) != 0
                 && let Some(ref mut d) = dbus
             {
+                let mut reacquire_inhibit = false;
                 loop {
                     match d.read_message_timeout(0) {
                         Ok(Some(msg)) => {
@@ -270,6 +303,7 @@ pub fn run(raw_args: &[String]) -> Result<i32> {
                                         for cmd in &cfg.before_sleep {
                                             run_shell_command(cmd, true, &mut children);
                                         }
+                                        sleep_inhibit_fd = None;
                                     } else {
                                         for cmd in &cfg.after_resume {
                                             run_shell_command(
@@ -277,6 +311,9 @@ pub fn run(raw_args: &[String]) -> Result<i32> {
                                                 cfg.wait_for_commands,
                                                 &mut children,
                                             );
+                                        }
+                                        if !cfg.before_sleep.is_empty() {
+                                            reacquire_inhibit = true;
                                         }
                                     }
                                 }
@@ -299,6 +336,9 @@ pub fn run(raw_args: &[String]) -> Result<i32> {
                             break;
                         }
                     }
+                }
+                if !drop_dbus && reacquire_inhibit && sleep_inhibit_fd.is_none() {
+                    sleep_inhibit_fd = acquire_sleep_inhibitor(d);
                 }
             }
             if drop_dbus {

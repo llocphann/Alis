@@ -196,7 +196,27 @@ pub fn run(args: GammaArgs) -> Result<i32> {
 
     let mut current_temp = desired_temperature(&args);
     apply_all_ramps(&conn, &controls, current_temp, args.gamma)?;
-    let _ = conn.roundtrip()?;
+    let mut any_failed = false;
+    for ev in conn.roundtrip()? {
+        if let std::collections::hash_map::Entry::Occupied(mut e) = controls.entry(ev.object_id) {
+            if ev.opcode == ZWLR_GAMMA_CTRL_EV_SIZE {
+                let mut r = WlReader::new(&ev.payload);
+                if let Ok(sz) = r.u32() {
+                    e.insert(sz as usize);
+                }
+            } else if ev.opcode == ZWLR_GAMMA_CTRL_EV_FAILED {
+                any_failed = true;
+                e.remove();
+                let _ = conn.send(ev.object_id, ZWLR_GAMMA_CTRL_DESTROY, WlWriter::new());
+            }
+        }
+    }
+    if controls.is_empty() && any_failed {
+        let _ = conn.send(gamma_mgr, ZWLR_GAMMA_MGR_DESTROY, WlWriter::new());
+        return Err(anyhow!(
+            "compositor failed wlr-gamma-control on all outputs (possibly claimed by another client)"
+        ));
+    }
 
     let mut last_check = std::time::Instant::now();
     let mut disconnected = false;
@@ -233,6 +253,7 @@ pub fn run(args: GammaArgs) -> Result<i32> {
                         }
                     } else if ev.opcode == ZWLR_GAMMA_CTRL_EV_FAILED {
                         e.remove();
+                        let _ = conn.send(ev.object_id, ZWLR_GAMMA_CTRL_DESTROY, WlWriter::new());
                     }
                 }
             }
