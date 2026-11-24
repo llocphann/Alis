@@ -242,8 +242,8 @@ cd Alis
 - **Repo-sync install**: `./setup install` syncs into `~/.config/quickshell/alis/`.
 - **Package-managed install**: `make install` installs into `/usr/share/quickshell/alis/`.
 - **Migrations (`sdata/migrations/`)**: Append-only and idempotent; never rename, reorder, or delete existing migrations.
-- **Service management**: Alis runs supervised under `alis.service` (`systemd --user`). Use `alis restart`, `alis logs`, `alis status`, `alis doctor`, and `alis settings` — never run raw `qs kill -c alis` / `qs -c alis`.
-- **Silent verification**: Automated tests and stutter checks run via `bash scripts/validate-maintainer-local.sh` and offscreen/isolated harnesses (`env -u WAYLAND_DISPLAY -u DISPLAY QT_QPA_PLATFORM=offscreen ...`) without stealing desktop focus.
+- **Service management**: Alis runs supervised under `alis.service` (`systemd --user`). Use `alis restart`, `alis logs` (including `--since-restart --diagnose`, `--fail-on-error`, `--hide-noise`), `alis status`, `alis doctor`, and `alis settings` — never run raw `qs kill -c alis` / `qs -c alis`. After restarting the service or syncing live files, verify `alis logs --since-restart --diagnose --fail-on-error` reports `0 ACTIONABLE` issues.
+- **Silent verification & script hygiene**: Automated tests and stutter checks run via `bash scripts/validate-maintainer-local.sh` and offscreen/isolated harnesses (`env -u WAYLAND_DISPLAY -u DISPLAY QT_QPA_PLATFORM=offscreen ...`) without stealing desktop focus, while periodically pruning dead-target or superseded test scripts under `scripts/`.
 
 ---
 

@@ -1677,6 +1677,8 @@ run_logs() {
     command -v qs &>/dev/null && qs_available=true
 
     if $journal_available; then
+        log_sources+=("__diagnose__")
+        log_labels+=("Post-restart diagnose (actionable issues)")
         log_sources+=("__service__")
         log_labels+=("Alis service — formatted (last 120 lines)")
         log_sources+=("__errors__")
@@ -1734,6 +1736,12 @@ run_logs() {
     echo ""
     if [[ -f "$helper" ]] && command -v python3 &>/dev/null; then
         case "$source" in
+            __diagnose__)
+                tui_info "Diagnosing current alis.service invocation..."
+                python3 "$helper" --source service --since-restart --diagnose --color
+                echo ""
+                read -rp "Press Enter to continue..."
+                ;;
             __service__)
                 tui_info "Rendering formatted alis.service logs..."
                 python3 "$helper" --source service -n 120 --color | _view_log_output

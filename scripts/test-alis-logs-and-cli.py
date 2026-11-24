@@ -117,6 +117,69 @@ def test_logs_parsing_filtering_and_formats() -> None:
     assert len(raw_lines) == 2 and "Cache hit" in raw_lines[0], raw_lines
 
 
+def test_modern_parsers_and_diagnose() -> None:
+    mixed_logs = "\n".join([
+        # ANSI color codes in `qs log` output should be stripped & category parsed
+        "2026-11-24T07:14:28+0700 host quickshell[1596]: \x1b[33m  WARN\x1b[97m qt.svg\x1b[0m: <input>:1:5634: Could not resolve property: a",
+        # Known portal registration duplicate warning classified as noise
+        "2026-11-24T07:14:29+0700 host quickshell[1596]:   WARN qt.qpa.services: Failed to register with host portal QDBusError(\"org.freedesktop.portal.Error.Failed\", \"Connection already associated with an application ID\")",
+        # Double-prefixed xwayland-satellite non-fatal xkbcomp message must NOT become CRIT
+        "2026-11-24T07:14:30+0700 host niri[1400]: thinkpadt14 xwayland-satellite[2482]: Errors from xkbcomp are not fatal to the X server",
+        # Rust tracing line from Niri
+        "2026-11-24T07:14:31+0700 host niri[1400]: 2026-11-24T00:54:41.891605Z  INFO niri::niri: unlocking session",
+        # Actionable runtime warning with component & no-category QML FileView warning
+        "2026-11-24T07:14:48+0700 host quickshell[1596]:   WARN qml: [WindowPreviewService] capture process failed 1 0",
+        "2026-11-24T07:54:43+0700 host quickshell[1596]:   WARN: @services/ScreenTime.qml[529:5]: Read of /tmp/2026-11-24.json failed: File does not exist",
+        # Repeated QML warning should group cleanly in diagnose
+        "2026-11-24T08:00:01+0700 host quickshell[1596]:   WARN scene: @modules/nexus/NexusWorkspace.qml[1608:13]: Window.window only supports types derived from Item",
+        "2026-11-24T08:00:02+0700 host quickshell[1596]:   WARN scene: @modules/nexus/NexusWorkspace.qml[1608:13]: Window.window only supports types derived from Item",
+    ])
+
+    rows = json.loads(run_logs(["--json", "--no-collapse"], stdin_text=mixed_logs).stdout)
+    assert len(rows) == 8, f"expected 8 parsed entries, got {len(rows)}: {rows}"
+    assert rows[0]["level"] == "WARN" and rows[0]["category"] == "qt.svg", rows[0]
+    assert not ANSI_RE.search(rows[0]["message"]), rows[0]
+    assert rows[2]["unit"] == "xwayland-satellite" and rows[2]["level"] != "CRIT", rows[2]
+    assert rows[3]["component"] == "niri::niri" and rows[3]["level"] == "INFO", rows[3]
+    assert rows[5]["level"] == "WARN" and "@services/ScreenTime.qml[529:5]" in rows[5]["message"], rows[5]
+
+    # --hide-noise removes noisy WARN entries (qt.svg / qt.qpa.services) while keeping INFO & actionable lines
+    filtered_rows = json.loads(run_logs(["--hide-noise", "--json", "--no-collapse"], stdin_text=mixed_logs).stdout)
+    assert len(filtered_rows) == 6, f"expected 6 non-noise entries, got {len(filtered_rows)}: {filtered_rows}"
+
+    # --diagnose --json separates actionable issues (with hints & grouped counts) from noise
+    diag = json.loads(run_logs(["--diagnose", "--json"], stdin_text=mixed_logs).stdout)
+    assert diag["actionableCount"] == 4, diag
+    assert diag["actionableGroups"] == 3, diag
+    assert diag["noiseCount"] == 2, diag
+    assert diag["healthy"] is False, diag
+    nexus_group = next((g for g in diag["actionable"] if "NexusWorkspace" in g.get("sourceLoc", "")), None)
+    assert nexus_group is not None and nexus_group["count"] == 2, diag
+
+    # --fail-on-error exits 1 whenever actionable warnings or errors exist, exits 0 when only INFO/noise remain
+    p_warn_fail = subprocess.run(
+        [sys.executable, str(LOGS_PY), "--stdin", "--diagnose", "--fail-on-error", "--no-color"],
+        input=mixed_logs,
+        capture_output=True,
+        text=True,
+        env=_clean_env(),
+        timeout=20,
+    )
+    assert p_warn_fail.returncode == 1 and "ACTIONABLE" in p_warn_fail.stdout, (p_warn_fail.returncode, p_warn_fail.stdout)
+
+    noise_only_log = "\n".join([
+        "2026-11-24T08:02:00+0700 host quickshell[1596]:   INFO: Configuration Loaded",
+        "2026-11-24T08:02:01+0700 host quickshell[1596]:   WARN qt.svg: <input>:1:1: Could not resolve property: a",
+    ]) + "\n"
+    p_noise_ok = run_logs(["--diagnose", "--fail-on-error", "--no-color"], stdin_text=noise_only_log)
+    assert "HEALTHY" in p_noise_ok.stdout, p_noise_ok.stdout
+
+    # Healthy clean log exits 0 with healthy: true
+    p_clean = run_logs(["--diagnose", "--json"], stdin_text="2026-11-24T08:02:00+0700 host quickshell[1596]:   INFO: Configuration Loaded\n")
+    clean_diag = json.loads(p_clean.stdout)
+    assert clean_diag["healthy"] is True and clean_diag["actionableCount"] == 0, clean_diag
+
+
 def test_alis_cli_subcommands() -> None:
     # 1. Per-subcommand --help
     for sub in ("start", "stop", "run", "restart", "kill", "logs", "doctor", "status", "test", "test-local", "ipc"):
@@ -161,21 +224,22 @@ def test_shell_completions() -> None:
     p_f = subprocess.run(["fish", "-n", str(fish_comp)], capture_output=True, text=True)
     assert p_f.returncode == 0, p_f.stderr
 
-    for f in (bash_comp, zsh_comp):
-        txt = f.read_text(encoding="utf-8")
-        for token in ("status", "test", "--errors", "--summary"):
+    for token in ("status", "test", "--errors", "--summary", "--diagnose", "--since-restart", "--fail-on-error", "--hide-noise"):
+        for f in (bash_comp, zsh_comp):
+            txt = f.read_text(encoding="utf-8")
             assert token in txt, f"{f.name} missing completion token {token!r}"
 
     fish_txt = fish_comp.read_text(encoding="utf-8")
-    for token in ("status", "test", "-l errors", "-l summary"):
+    for token in ("status", "test", "-l errors", "-l summary", "-l diagnose", "-l since-restart", "-l fail-on-error", "-l hide-noise"):
         assert token in fish_txt, f"alis.fish missing completion token {token!r}"
 
 
 def main() -> int:
     test_logs_parsing_filtering_and_formats()
+    test_modern_parsers_and_diagnose()
     test_alis_cli_subcommands()
     test_shell_completions()
-    print("PASS test-alis-logs-and-cli (logs parser/filters/json/summary, alis status/test/--help, bash/zsh/fish completions)")
+    print("PASS test-alis-logs-and-cli (logs parser/filters/diagnose/json/summary, alis status/test/--help, bash/zsh/fish completions)")
     return 0
 
 

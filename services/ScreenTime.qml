@@ -529,6 +529,9 @@ Singleton {
     FileView {
         id: todayFileView
         path: ""
+        watchChanges: false
+        atomicWrites: true
+        printErrors: false
     }
 
     function _finishStartupRead(rawText: string): void {

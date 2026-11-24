@@ -309,6 +309,7 @@ Singleton {
     FileView {
         id: stateReader
         path: root._stateFile
+        printErrors: false
 
         onLoaded: {
             const content = stateReader.text()
@@ -332,6 +333,7 @@ Singleton {
         path: root._stateFile
         watchChanges: false
         atomicWrites: true
+        printErrors: false
 
         onSaved: root._finishStateWrite()
 

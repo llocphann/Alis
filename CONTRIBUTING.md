@@ -196,7 +196,7 @@ User-visible strings belong in the translation system. Follow existing keys and 
 
 ## Rolling Development
 
-Alis is maintained as an unversioned rolling desktop configuration on `dev`. Validate changes using `bash scripts/validate-maintainer-local.sh`, run periodic `bash scripts/verify-docs.sh` freshness audits whenever features or dependencies change (removing retired features, dead paths, and stale notes before milestone pushes), and document notable updates in [CHANGELOG.md](CHANGELOG.md).
+Alis is maintained as an unversioned rolling desktop configuration on `dev`. Validate changes using `bash scripts/validate-maintainer-local.sh`, run periodic `bash scripts/verify-docs.sh` freshness audits whenever features or dependencies change (removing retired features, dead paths, obsolete/superseded scripts under `scripts/`, and stale notes before milestone pushes), and document notable updates in [CHANGELOG.md](CHANGELOG.md). After syncing to the live runtime or restarting `alis.service`, verify `alis logs --since-restart --diagnose --fail-on-error` shows zero actionable issues, fixing real warnings/errors at source and improving `scripts/lib/alis-logs.py` parsers/hints whenever new unparsed log formats appear.
 
 Do not publish unvalidated changes directly or bypass the maintainer validation checks. Push cohesive, verified commit batches to `dev` once ready (following `.agents/skills/alis-repo-hygiene-and-push/SKILL.md`), and never auto-promote or modify `stable` without explicit maintainer approval.
 

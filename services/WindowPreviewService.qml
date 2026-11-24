@@ -483,7 +483,7 @@ Singleton {
 
     // Internal: actual capture logic, called after debounce
     function _doCapture(): void {
-        if (capturing) return
+        if (capturing || (typeof GlobalStates !== "undefined" && Boolean(GlobalStates.screenLocked))) return
 
         const allWindows = NiriService.windows ?? []
         const requestedIds = new Set(root.requestedWindowIds)
@@ -575,7 +575,7 @@ Singleton {
             const missingOpenWindow = (captureProcess.idsToCapture ?? []).some(
                 id => openIds.has(Number(id)) && !(captureProcess.publishedIds ?? []).includes(Number(id))
             )
-            if (missingOpenWindow)
+            if (missingOpenWindow && !(typeof GlobalStates !== "undefined" && Boolean(GlobalStates.screenLocked)))
                 console.warn("[WindowPreviewService] capture process failed", exitCode, exitStatus)
             else
                 root._log("[WindowPreviewService] capture skipped closed window", exitCode, exitStatus)
@@ -588,13 +588,17 @@ Singleton {
         Cliphist.suppressRefresh = false
         Cliphist.refresh()
         root.captureComplete()
-        if (root._hasPendingCaptureRequest())
+        if (root._hasPendingCaptureRequest() && !(typeof GlobalStates !== "undefined" && Boolean(GlobalStates.screenLocked)))
             captureDebounceTimer.restart()
     }
 
     // Capture ALL windows (force refresh)
     function captureAllWindows(): void {
         if (capturing) return
+        if (typeof GlobalStates !== "undefined" && Boolean(GlobalStates.screenLocked)) {
+            root.forceRefreshRequestedWhileInitializing = true
+            return
+        }
 
         if (!initialized) initialize()
         if (!sessionReady) {
@@ -661,6 +665,18 @@ Singleton {
         onStarted: captureProcess.startObserved = true
 
         onExited: (exitCode, exitStatus) => root._completeCapture(exitCode, exitStatus)
+    }
+
+    Connections {
+        target: GlobalStates
+        enabled: root.initialized
+        function onScreenLockedChanged(): void {
+            if (!Boolean(GlobalStates.screenLocked)) {
+                root._resumeRequestedCapture()
+                if (root._hasPendingCaptureRequest())
+                    captureDebounceTimer.restart()
+            }
+        }
     }
 
     Connections {

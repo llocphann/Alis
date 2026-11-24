@@ -54,7 +54,7 @@ _alis_completions() {
                     COMPREPLY=( $(compgen -W "install uninstall enable disable start stop restart status logs" -- "$cur") )
                     ;;
                 logs)
-                    COMPREPLY=( $(compgen -W "-n --lines -f --follow -l --level -e --errors -m --component --category -g --grep -s --since --source --full --summary --stats --json --ndjson --raw --no-collapse --color --no-color --debug -c --config -h --help" -- "$cur") )
+                    COMPREPLY=( $(compgen -W "-n --lines -f --follow -l --level -e --errors -m --component --category -g --grep -s --since --since-restart --source --full --diagnose --check --fail-on-error --hide-noise --summary --stats --json --ndjson --raw --no-collapse --color --no-color --debug -c --config -h --help" -- "$cur") )
                     ;;
                 status)
                     COMPREPLY=( $(compgen -W "--short --json -h --help" -- "$cur") )

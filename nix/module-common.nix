@@ -48,7 +48,7 @@ in
     ALIS_SYSTEM_RUNTIME_DIR = "${cfg.package}/share/quickshell/alis";
     ALIS_FALLBACK_SYSTEM_RUNTIME_DIR = "${cfg.package}/share/quickshell/alis";
     QS_DISABLE_CRASH_HANDLER = "1";
-    QT_LOGGING_RULES = "quickshell.dbus.properties=false;qt.qml.settings.warning=false;qt.core.qsettings.warning=false;kf.xmlgui=false;kf.coreaddons=false;kf.config.core=false;kf.iconthemes=false";
+    QT_LOGGING_RULES = "quickshell.dbus.properties=false;qt.qpa.wayland.textinput=false;qt.qml.settings.warning=false;qt.core.qsettings.warning=false;qt.accessibility.atspi.warning=false;qt.qpa.services.warning=false;kf.xmlgui=false;kf.coreaddons=false;kf.config.core=false;kf.iconthemes=false";
     QT_SCALE_FACTOR = "1";
     QT_SCALE_FACTOR_ROUNDING_POLICY = "RoundPreferFloor";
   };

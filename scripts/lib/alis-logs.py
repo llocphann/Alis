@@ -62,10 +62,19 @@ JOURNAL_ISO_RE = re.compile(
 JOURNAL_BSD_RE = re.compile(
     r"^([A-Z][a-z]{2}\s+\d{1,2})\s+(\d{2}:\d{2}:\d{2})\s+\S+\s+([^\s\[:]+)(?:\[(\d+)\])?:\s?(.*)$"
 )
+# Some subprocesses (e.g. xwayland-satellite) log a duplicate "host unit[pid]:" inside the body
+JOURNAL_DUP_PREFIX_RE = re.compile(
+    r"^[A-Za-z0-9_.-]+\s+([^\s\[:]+)\[(\d+)\]:\s?(.*)$"
+)
+# Rust tracing format (e.g. niri): 2026-11-24T00:54:41.891605Z  INFO niri::niri: body
+RUST_TRACING_RE = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\s+(TRACE|DEBUG|INFO|WARN|ERROR)\s+([A-Za-z0-9_:-]+):\s*(.*)$"
+)
 # Quickshell / Alis line prefix: "  DEBUG qml: ..." or "   INFO scene: ..."
 QS_PREFIX_RE = re.compile(
-    r"^\s*(DEBUG|INFO|WARN|WARNING|ERROR|CRITICAL|FATAL)\s+([A-Za-z0-9_.*-]+):\s*(.*)$"
+    r"^\s*(DEBUG|INFO|WARN|WARNING|ERROR|CRITICAL|FATAL)(?:\s+([A-Za-z0-9_.*-]+))?:\s*(.*)$"
 )
+ANSI_STRIP_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 # Simple timestamped update.log prefix: "[2026-11-23 18:13:02] ..." or "2026-11-23 18:13:02 ..."
 ALT_TS_RE = re.compile(
     r"^\[?(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})\]?\s*(.*)$"
@@ -202,16 +211,18 @@ class Theme:
         )
 
 
-def _infer_level(msg: str, default: str = "INFO") -> str:
+def _infer_level(msg: str, default: str = "INFO", *, explicit_level: bool = False) -> str:
     lowered = msg.lower()
-    if any(tok in lowered for tok in ("fatal", "critical", "panic", "segfault")):
+    if re.search(r"(?<!not\s)(?<!non-)\b(fatal|critical|panic|segfault)\b", lowered):
         return "CRIT"
-    if any(
-        tok in msg
-        for tok in (
+    err_tokens = (
+        ("ReferenceError", "TypeError", "SyntaxError", "RangeError", "Failed to load configuration", "Cannot load")
+        if explicit_level
+        else (
             "ReferenceError",
             "TypeError",
             "SyntaxError",
+            "RangeError",
             "Failed to",
             "failed with",
             "ERROR",
@@ -221,9 +232,10 @@ def _infer_level(msg: str, default: str = "INFO") -> str:
             "Cannot load",
             "Could not",
         )
-    ):
+    )
+    if any(tok in msg for tok in err_tokens):
         return "ERROR"
-    if any(
+    if not explicit_level and any(
         tok in msg
         for tok in (
             "Binding loop",
@@ -238,13 +250,13 @@ def _infer_level(msg: str, default: str = "INFO") -> str:
         )
     ):
         return "WARN"
-    if any(tok in lowered for tok in ("debug", "[dbg]", "trace:")):
+    if not explicit_level and any(tok in lowered for tok in ("debug", "[dbg]", "trace:")):
         return "DEBUG"
     return default
 
 
 def parse_line(raw: str) -> LogEntry:
-    line = raw.rstrip("\r\n")
+    line = ANSI_STRIP_RE.sub("", raw.rstrip("\r\n"))
     entry = LogEntry(raw=line)
     rest = line
 
@@ -263,31 +275,52 @@ def parse_line(raw: str) -> LogEntry:
             if m:
                 entry.date_str, entry.time_str, rest = m.groups()
 
+    if entry.unit:
+        dup_m = JOURNAL_DUP_PREFIX_RE.match(rest)
+        if dup_m:
+            dup_unit, dup_pid, dup_body = dup_m.groups()
+            entry.unit = dup_unit
+            entry.pid = dup_pid
+            rest = dup_body
+
+    explicit_level = False
     qs_m = QS_PREFIX_RE.match(rest)
     if qs_m:
         lvl_raw, cat, body = qs_m.groups()
         entry.level = CANONICAL_LEVEL.get(lvl_raw.upper(), "INFO")
-        entry.category = cat.strip()
+        entry.category = (cat or "").strip()
         rest = body.strip()
+        explicit_level = True
     else:
-        # Handle systemd unit status or plain update.log lines
-        bracket_lvl = re.match(r"^\[(INFO|WARN|WARNING|ERROR|ERR|DEBUG|OK|SUCCESS|FAIL)\]\s*(.*)$", rest, re.I)
-        if bracket_lvl:
-            tag, rest = bracket_lvl.groups()
-            u = tag.upper()
-            if u in ("OK", "SUCCESS"):
-                entry.level = "INFO"
-            elif u == "FAIL":
-                entry.level = "ERROR"
-            else:
-                entry.level = CANONICAL_LEVEL.get(u, "INFO")
+        rust_m = RUST_TRACING_RE.match(rest)
+        if rust_m:
+            lvl_raw, module_name, body = rust_m.groups()
+            lvl_norm = "DEBUG" if lvl_raw.upper() == "TRACE" else CANONICAL_LEVEL.get(lvl_raw.upper(), "INFO")
+            entry.level = lvl_norm
+            entry.component = module_name.strip()
+            rest = body.strip()
+            explicit_level = True
         else:
-            colon_lvl = re.match(r"^(INFO|WARN|WARNING|ERROR|ERR|DEBUG|CRITICAL|FATAL):\s+(.*)$", rest)
-            if colon_lvl:
-                tag, rest = colon_lvl.groups()
-                entry.level = CANONICAL_LEVEL.get(tag.upper(), "INFO")
+            # Handle systemd unit status or plain update.log lines
+            bracket_lvl = re.match(r"^\[(INFO|WARN|WARNING|ERROR|ERR|DEBUG|OK|SUCCESS|FAIL)\]\s*(.*)$", rest, re.I)
+            if bracket_lvl:
+                tag, rest = bracket_lvl.groups()
+                u = tag.upper()
+                if u in ("OK", "SUCCESS"):
+                    entry.level = "INFO"
+                elif u == "FAIL":
+                    entry.level = "ERROR"
+                else:
+                    entry.level = CANONICAL_LEVEL.get(u, "INFO")
+                explicit_level = True
             else:
-                entry.level = _infer_level(rest, "INFO")
+                colon_lvl = re.match(r"^(INFO|WARN|WARNING|ERROR|ERR|DEBUG|CRITICAL|FATAL):\s+(.*)$", rest)
+                if colon_lvl:
+                    tag, rest = colon_lvl.groups()
+                    entry.level = CANONICAL_LEVEL.get(tag.upper(), "INFO")
+                    explicit_level = True
+                else:
+                    entry.level = _infer_level(rest, "INFO", explicit_level=False)
 
     comp_m = COMPONENT_RE.match(rest)
     if comp_m:
@@ -303,11 +336,11 @@ def parse_line(raw: str) -> LogEntry:
             entry.component = "systemd"
             if not entry.category:
                 entry.category = "unit"
-        elif entry.unit == "xembedsniproxy":
-            entry.component = "xembedsniproxy"
+        elif entry.unit in ("xembedsniproxy", "xwayland-satellite"):
+            entry.component = entry.unit
 
-    # Upgrade INFO -> WARN/ERROR when QML runtime diagnostics appear inside an INFO/WARN message
-    inferred = _infer_level(rest, entry.level)
+    # Upgrade INFO/WARN -> WARN/ERROR/CRIT safely without turning non-fatal/external Qt warnings into errors
+    inferred = _infer_level(rest, entry.level, explicit_level=explicit_level)
     if LEVEL_RANK.get(inferred, 20) > LEVEL_RANK.get(entry.level, 20):
         entry.level = inferred
 
@@ -604,6 +637,230 @@ def render_summary(entries: list[LogEntry], theme: Theme, *, source_label: str) 
     return "\n".join(out)
 
 
+def classify_issue(entry: LogEntry) -> tuple[bool, str, str]:
+    """Return (is_noise, category_or_label, fix_hint) for WARN/ERROR/CRIT entries."""
+    msg = entry.message
+    cat = (entry.category or "").lower()
+    comp = (entry.component or "").lower()
+    unit = (entry.unit or "").lower()
+
+    # Known environmental noise (non-actionable in normal Niri + Quickshell sessions)
+    if (
+        cat == "qt.accessibility.atspi"
+        or comp == "qt.accessibility.atspi"
+        or "AtSpiAdaptor" in msg
+        or 'Subscription string not handled: "Window:Destroy:"' in msg
+    ):
+        return (
+            True,
+            "qt.accessibility.atspi",
+            "Qt AT-SPI bridge noise under Niri; silence via QT_LOGGING_RULES+=qt.accessibility.atspi.warning=false",
+        )
+    if "$HYPRLAND_INSTANCE_SIGNATURE is unset" in msg or "Cannot connect to hyprland" in msg:
+        return (True, "hyprland-probe", "Expected when running Alis under Niri instead of Hyprland")
+    if cat == "qt.qpa.services" or comp == "qt.qpa.services" or "Connection already associated with an application ID" in msg:
+        return (
+            True,
+            "qt.qpa.services",
+            "Host portal app ID already registered on session; silence via qt.qpa.services.warning=false",
+        )
+    if (
+        "xkbcomp" in msg.lower()
+        or "Unsupported maximum keycode" in msg
+        or "Virtual modifier" in msg
+        or ("xwayland-satellite" in unit and ("X11 cannot support keycodes" in msg or "Using 0, ignoring 0" in msg))
+    ):
+        return (True, "xwayland-xkbcomp", "Non-fatal Xwayland XKB keymap compatibility notice")
+    if cat == "qt.svg" and "Could not resolve property:" in msg:
+        return (True, "qt.svg", "External icon theme SVG uses an unsupported property/reference")
+
+    # Actionable hint derivation
+    if "File does not exist" in msg or "FileView" in msg:
+        hint = "Add printErrors: false on optional FileView or guard existence before reading"
+    elif "Binding loop" in msg:
+        hint = "Break circular QML property dependency (use an intermediate state trigger or onChanged handler)"
+    elif any(tok in msg for tok in ("ReferenceError", "TypeError", "SyntaxError", "RangeError")):
+        hint = "Fix undefined/null property access or invalid import at the reported QML/JS source"
+    elif "Window.window only supports types derived from Item" in msg:
+        hint = "Use root.Window.activeFocusItem / root.Window.window instead of bare Window.* inside Shortcut/TapHandler/non-Item QObject"
+    elif "Unable to assign" in msg or "Cannot assign" in msg:
+        hint = "Coerce nullable/undefined value with an explicit typed fallback before assignment"
+    elif "capture process failed" in msg:
+        hint = "Defer window preview capture while screenLocked or guard closed window IDs before spawning helper"
+    elif "Failed to create graphics context" in msg or "OpenGL" in msg:
+        hint = "Check RHI/OpenGL backend; tests rendering shaders/grabToImage must not force software GL"
+    elif "timed out" in msg.lower() or "timeout" in msg.lower():
+        hint = "Inspect hanging helper/subprocess or network timeout handling"
+    else:
+        hint = "Inspect the cited component and stack trace to add an explicit guard or fix the failing handler"
+
+    return (False, entry.component or entry.category or entry.unit or "core", hint)
+
+
+def _normalize_issue_sig(entry: LogEntry, source_loc: str) -> tuple[str, str, str, str]:
+    text = entry.message
+    text = re.sub(r"\b\d{4}-\d{2}-\d{2}\b", "<date>", text)
+    text = re.sub(r"/tmp/[^\s\"')]+", "/tmp/<path>", text)
+    text = re.sub(r"0x[0-9a-fA-F]+", "0x<addr>", text)
+    text = re.sub(r":1\.\d+/", ":1.<id>/", text)
+    text = re.sub(r"\b\d{4,}\b", "<n>", text)
+    owner = entry.component or entry.category or entry.unit or "core"
+    return (entry.level, owner, source_loc, text)
+
+
+def analyze_entries(
+    entries: list[LogEntry],
+    *,
+    source_label: str = "",
+    meta: dict[str, str] | None = None,
+) -> dict[str, object]:
+    meta = meta or {}
+    act_groups: dict[tuple[str, str, str, str], dict[str, object]] = {}
+    noise_groups: dict[str, dict[str, object]] = {}
+    total_read = 0
+
+    for e in entries:
+        total_read += max(1, e.count)
+        if e.level not in ("WARN", "ERROR", "CRIT"):
+            continue
+        is_noise, label, hint = classify_issue(e)
+        if is_noise:
+            bucket = noise_groups.get(label)
+            if bucket is None:
+                bucket = {"label": label, "level": e.level, "count": 0, "sample": e.message}
+                noise_groups[label] = bucket
+            bucket["count"] = int(bucket["count"]) + max(1, e.count)
+            continue
+
+        loc_m = QML_LOC_RE.search(e.message + ("\n" + "\n".join(e.extras) if e.extras else ""))
+        source_loc = loc_m.group(0) if loc_m else ""
+        sig = _normalize_issue_sig(e, source_loc)
+        ts = f"{e.date_str} {e.time_str}".strip() or e.time_str or ""
+        g = act_groups.get(sig)
+        if g is None:
+            g = {
+                "level": e.level,
+                "component": e.component or e.category or e.unit or "core",
+                "category": e.category,
+                "sourceLoc": source_loc,
+                "count": 0,
+                "firstSeen": ts,
+                "lastSeen": ts,
+                "message": e.message if not e.extras else e.message + " | " + " ".join(x.strip() for x in e.extras[:2]),
+                "hint": hint,
+            }
+            act_groups[sig] = g
+        g["count"] = int(g["count"]) + max(1, e.count)
+        if ts:
+            if not g["firstSeen"]:
+                g["firstSeen"] = ts
+            g["lastSeen"] = ts
+
+    actionable = sorted(
+        act_groups.values(),
+        key=lambda row: (-LEVEL_RANK.get(str(row["level"]), 20), -int(row["count"]), str(row["component"])),
+    )
+    noise = sorted(noise_groups.values(), key=lambda row: -int(row["count"]))
+    actionable_count = sum(int(r["count"]) for r in actionable)
+    noise_count = sum(int(r["count"]) for r in noise)
+
+    return {
+        "source": source_label,
+        "invocationId": meta.get("invocation_id", ""),
+        "activeSince": meta.get("active_since", ""),
+        "activeState": meta.get("active_state", ""),
+        "mainPid": meta.get("main_pid", ""),
+        "totalRead": total_read,
+        "actionableCount": actionable_count,
+        "actionableGroups": len(actionable),
+        "noiseCount": noise_count,
+        "healthy": actionable_count == 0,
+        "actionable": actionable,
+        "noise": noise,
+    }
+
+
+def render_diagnose(report: dict[str, object], theme: Theme) -> str:
+    width = _term_width()
+    inner = width - 4
+    inv = str(report.get("invocationId") or "")
+    since = str(report.get("activeSince") or "")
+    src = str(report.get("source") or "logs")
+    actionable: list[dict[str, object]] = list(report.get("actionable") or [])  # type: ignore[arg-type]
+    noise: list[dict[str, object]] = list(report.get("noise") or [])  # type: ignore[arg-type]
+    act_count = int(report.get("actionableCount") or 0)
+    noise_count = int(report.get("noiseCount") or 0)
+    total_read = int(report.get("totalRead") or 0)
+
+    err_groups = sum(1 for r in actionable if r["level"] in ("ERROR", "CRIT"))
+    warn_groups = sum(1 for r in actionable if r["level"] == "WARN")
+
+    title = theme.fg("primary", "ALIS DIAGNOSE", bold=True)
+    src_badge = theme.pill("on_surface", "surface_hi", f" {src} ", bold=False)
+    verdict = (
+        theme.pill("surface", "success", " ✓ HEALTHY ", bold=True)
+        if act_count == 0
+        else theme.pill("surface", "error", f" ! {len(actionable)} ACTIONABLE ", bold=True)
+    )
+    meta_parts = []
+    if inv:
+        meta_parts.append(f"inv={inv[:8]}")
+    if since:
+        meta_parts.append(f"since={since}")
+    meta_str = theme.fg("dim", " ".join(meta_parts)) if meta_parts else ""
+
+    line1 = f"{title}  {src_badge}  {verdict}" + (f"  {meta_str}" if meta_str else "")
+    line2 = "  ".join([
+        theme.fg("error" if err_groups else "dim", f"✖ {err_groups} ERR groups", bold=bool(err_groups)),
+        theme.fg("warning" if warn_groups else "dim", f"▲ {warn_groups} WARN groups", bold=bool(warn_groups)),
+        theme.fg("dim", f"~ {noise_count} noise suppressed"),
+        theme.fg("dim", f"({total_read} entries scanned)"),
+    ])
+    width = max(width, _visible_len(line1) + 4, _visible_len(line2) + 4)
+    inner = width - 4
+    pad1 = max(0, inner - _visible_len(line1))
+    pad2 = max(0, inner - _visible_len(line2))
+    b = lambda ch: theme.fg("dim", ch)
+    out = [
+        b("╭" + "─" * (width - 2) + "╮"),
+        f"{b('│')} {line1}{' ' * pad1} {b('│')}",
+        f"{b('│')} {line2}{' ' * pad2} {b('│')}",
+        b("╰" + "─" * (width - 2) + "╯"),
+        "",
+        " " + theme.fg("primary", "Actionable Issues", bold=True),
+    ]
+
+    if not actionable:
+        out.append("   " + theme.fg("success", "✓ No actionable warnings or errors found."))
+    else:
+        for idx, item in enumerate(actionable, 1):
+            lvl = str(item["level"])
+            badge = _badge_for_level(theme, lvl)
+            comp = str(item["component"])
+            cnt = int(item["count"])
+            loc = str(item["sourceLoc"] or "")
+            comp_str = theme.fg(_component_color(theme, comp), f"[{comp}]", bold=True)
+            cnt_str = theme.pill("surface", "secondary", f" ×{cnt} ", bold=True) if cnt > 1 else ""
+            loc_str = (" " + theme.fg("teal", loc, underline=True)) if loc else ""
+            when = str(item["lastSeen"] or item["firstSeen"] or "")
+            when_str = ("  " + theme.fg("dim", when)) if when else ""
+            msg_str = _highlight_message(str(item["message"]), lvl, theme)
+            hint_str = theme.fg("primary", "Hint:") + " " + theme.fg("on_surface", str(item["hint"]))
+            out.append(f"   {theme.fg('dim', f'{idx}.')} {badge} {comp_str}{loc_str} {cnt_str}{when_str}".rstrip())
+            out.append(f"      {msg_str}")
+            out.append(f"      {hint_str}")
+
+    if noise:
+        out.extend(["", " " + theme.fg("dim", f"Suppressed Environmental Noise ({noise_count} events)")])
+        for n in noise:
+            lbl = str(n["label"])
+            cnt = int(n["count"])
+            sample = str(n["sample"])[:72]
+            out.append("   " + theme.fg("dim", f"· {cnt:>4}×  {lbl:<24s}  ({sample})"))
+
+    return "\n".join(out)
+
+
 def _find_qs() -> str:
     env_bin = os.environ.get("ALIS_QS_BIN", "")
     if env_bin and os.access(env_bin, os.X_OK):
@@ -640,6 +897,35 @@ def _systemd_service_active(unit: str) -> bool:
     return r.returncode == 0
 
 
+def _service_invocation_info(unit: str = "alis.service") -> dict[str, str]:
+    if not shutil.which("systemctl"):
+        return {}
+    r = subprocess.run(
+        [
+            "systemctl",
+            "--user",
+            "show",
+            unit,
+            "--property=InvocationID,ActiveEnterTimestamp,ActiveState,MainPID",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if r.returncode != 0:
+        return {}
+    info: dict[str, str] = {}
+    for line in r.stdout.splitlines():
+        if "=" in line:
+            k, v = line.split("=", 1)
+            info[k.strip()] = v.strip()
+    return {
+        "invocation_id": info.get("InvocationID", ""),
+        "active_since": info.get("ActiveEnterTimestamp", ""),
+        "active_state": info.get("ActiveState", ""),
+        "main_pid": info.get("MainPID", ""),
+    }
+
+
 def _update_log_path() -> Path | None:
     state_home = Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local/state")))
     cache_home = Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
@@ -652,7 +938,10 @@ def _update_log_path() -> Path | None:
     return None
 
 
-def _read_source_lines(args: argparse.Namespace) -> tuple[str, list[str], list[str] | None]:
+def _read_source_lines(
+    args: argparse.Namespace,
+    meta_out: dict[str, str] | None = None,
+) -> tuple[str, list[str], list[str] | None]:
     """Return (source_label, static_lines, follow_cmd_or_None)."""
     if args.stdin:
         lines = sys.stdin.read().splitlines()
@@ -660,6 +949,7 @@ def _read_source_lines(args: argparse.Namespace) -> tuple[str, list[str], list[s
         return label, lines, None
     source = args.source
     fetch_lines = args.lines
+    use_since_restart = bool(args.since_restart or (args.diagnose and not args.since))
     has_filters = any([
         args.level,
         args.errors,
@@ -667,8 +957,12 @@ def _read_source_lines(args: argparse.Namespace) -> tuple[str, list[str], list[s
         args.category,
         args.grep,
         args.summary,
+        args.diagnose,
+        args.hide_noise,
     ])
-    if has_filters and not args.explicit_lines and not args.since:
+    if use_since_restart:
+        fetch_lines = max(fetch_lines, 2000)
+    elif has_filters and not args.explicit_lines and not args.since:
         fetch_lines = max(args.lines * 25, 1500)
 
     if source == "auto":
@@ -699,14 +993,33 @@ def _read_source_lines(args: argparse.Namespace) -> tuple[str, list[str], list[s
             "all": "alis.service + tray",
         }
         cmd = ["journalctl", "--user", *units, "--output=short-iso", "--no-pager"]
+        meta_unit = {
+            "service": "alis.service",
+            "tray": "alis-xembedsniproxy.service",
+            "niri": "niri.service",
+        }.get(source, "alis.service")
+        svc_meta = _service_invocation_info(meta_unit) if (use_since_restart or args.diagnose) else {}
+        if meta_out is not None and svc_meta:
+            meta_out.update(svc_meta)
         if args.since:
             cmd.extend(["--since", args.since])
+        elif use_since_restart and svc_meta:
+            inv_id = svc_meta.get("invocation_id", "")
+            active_ts = svc_meta.get("active_since", "")
+            if source in ("service", "tray", "niri") and inv_id and inv_id != "00000000000000000000000000000000":
+                cmd.append(f"_SYSTEMD_INVOCATION_ID={inv_id}")
+            elif active_ts and active_ts not in ("n/a", ""):
+                cmd.extend(["--since", active_ts])
         if args.follow:
             cmd.extend(["-n", str(args.lines), "-f"])
             return labels[source], [], cmd
         cmd.extend(["-n", str(fetch_lines)])
         res = subprocess.run(cmd, capture_output=True, text=True)
         lines = res.stdout.splitlines()
+        if source in ("service", "tray", "niri") and use_since_restart and not lines and svc_meta.get("active_since"):
+            # Fallback if journald did not index _SYSTEMD_INVOCATION_ID for older units
+            fb_cmd = ["journalctl", "--user", "-u", meta_unit, "--output=short-iso", "--no-pager", "--since", svc_meta["active_since"], "-n", str(fetch_lines)]
+            lines = subprocess.run(fb_cmd, capture_output=True, text=True).stdout.splitlines()
         if source == "niri" and not lines:
             fallback = ["journalctl", "--user", "_COMM=niri", "--output=short-iso", "--no-pager", "-n", str(fetch_lines)]
             if args.since:
@@ -762,6 +1075,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--category", default="", help="Filter by log category (e.g. qml, scene, unit)")
     p.add_argument("-g", "--grep", default="", help="Case-insensitive regex search on message")
     p.add_argument("-s", "--since", default="", help="Journalctl --since time filter (e.g. '10 min ago', 'today')")
+    p.add_argument("--since-restart", action="store_true", help="Filter journal logs to current alis.service InvocationID")
     p.add_argument(
         "--source",
         default="auto",
@@ -770,7 +1084,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--full", action="store_true", help="Include all Qt logging categories (with qs) and debug entries")
     p.add_argument("--summary", "--stats", dest="summary", action="store_true", help="Show severity counts, top components, and recent issues")
-    p.add_argument("--json", action="store_true", help="Output parsed entries as JSON array")
+    p.add_argument("--diagnose", "--check", dest="diagnose", action="store_true", help="Separate actionable warnings/errors (with source/hints) from known noise")
+    p.add_argument("--fail-on-error", action="store_true", help="Exit 1 when actionable warnings/errors are present")
+    p.add_argument("--hide-noise", action="store_true", help="Hide known environmental noise (AT-SPI, Hyprland probe, portal duplicate)")
+    p.add_argument("--json", action="store_true", help="Output parsed entries (or diagnose report) as JSON")
     p.add_argument("--ndjson", action="store_true", help="Output one parsed JSON object per line")
     p.add_argument("--raw", action="store_true", help="Pass through raw unformatted log lines")
     p.add_argument("--no-collapse", action="store_true", help="Do not collapse consecutive duplicate entries")
@@ -868,6 +1185,8 @@ def main(argv: list[str] | None = None) -> int:
                 entry = parse_line(raw_s)
                 if not filter_entries([entry], min_level_rank=min_rank, component=args.component, category=args.category, grep_re=grep_re):
                     continue
+                if args.hide_noise and entry.level in ("WARN", "ERROR", "CRIT") and classify_issue(entry)[0]:
+                    continue
                 if args.ndjson or args.json:
                     print(json.dumps(entry.to_dict(), ensure_ascii=False), flush=True)
                     continue
@@ -888,8 +1207,9 @@ def main(argv: list[str] | None = None) -> int:
                     proc.kill()
         return 0
 
+    service_meta: dict[str, str] = {}
     try:
-        source_label, raw_lines, _ = _read_source_lines(args)
+        source_label, raw_lines, _ = _read_source_lines(args, service_meta)
     except RuntimeError as exc:
         print(f"alis logs: {exc}", file=sys.stderr)
         return 1
@@ -907,25 +1227,44 @@ def main(argv: list[str] | None = None) -> int:
         category=args.category,
         grep_re=grep_re,
     )
+    if args.hide_noise and not args.diagnose:
+        filtered = [e for e in filtered if not (e.level in ("WARN", "ERROR", "CRIT") and classify_issue(e)[0])]
+
+    if args.diagnose:
+        report = analyze_entries(filtered, source_label=source_label, meta=service_meta)
+        if args.json:
+            print(json.dumps(report, indent=2, ensure_ascii=False))
+        else:
+            print(render_diagnose(report, theme))
+        if args.fail_on_error and int(report["actionableCount"]) > 0:
+            return 1
+        return 0
+
+    exit_code = 0
+    if args.fail_on_error:
+        report_check = analyze_entries(filtered, source_label=source_label, meta=service_meta)
+        if int(report_check["actionableCount"]) > 0:
+            exit_code = 1
+
     if not args.no_collapse and not args.summary and not args.json and not args.ndjson:
         filtered = collapse_repeats(filtered)
     window = filtered if args.summary else filtered[-args.lines:]
 
     if args.json:
         print(json.dumps([e.to_dict() for e in window], indent=2, ensure_ascii=False))
-        return 0
+        return exit_code
     if args.ndjson:
         for e in window:
             print(json.dumps(e.to_dict(), ensure_ascii=False))
-        return 0
+        return exit_code
     if args.summary:
         print(render_summary(filtered, theme, source_label=source_label))
-        return 0
+        return exit_code
 
     print(render_header(theme, source_label=source_label, entries=window, raw_count=len(all_entries), filters_desc=filters_desc))
     if not window:
         print(" " + theme.fg("muted", "No matching log entries."))
-        return 0
+        return exit_code
 
     last_date = ""
     for entry in window:
@@ -935,7 +1274,7 @@ def main(argv: list[str] | None = None) -> int:
             print(theme.fg("dim", divider))
         for line in format_entry(entry, theme, grep_re=grep_re):
             print(line)
-    return 0
+    return exit_code
 
 
 if __name__ == "__main__":

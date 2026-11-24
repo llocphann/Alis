@@ -501,8 +501,12 @@ Options:
       --category CAT      Filter by category (e.g. qml, scene, unit)
   -g, --grep REGEX        Filter entries matching pattern and highlight hits
   -s, --since SPEC        Time window for journalctl (e.g. '15 min ago', today)
+      --since-restart     Filter systemd service logs to current invocation
       --source SRC        auto | service | qs | tray | update | niri | all
       --full              Decode all Quickshell categories (--rules *=true)
+      --diagnose, --check Group actionable errors/warnings with source pointers
+      --fail-on-error     Exit non-zero if actionable issues exist (for CI/checks)
+      --hide-noise        Hide known upstream benign desktop bridge warnings
       --summary, --stats  Show severity distribution, top components, recent errors
       --json / --ndjson   Emit structured JSON output
       --raw               Emit raw unformatted log lines
@@ -2164,20 +2168,37 @@ EOF
 }
 
 apply_qt_logging_rules() {
-    local extra_rules="quickshell.dbus.properties=false;qt.qpa.wayland.textinput=false;qt.qml.settings.warning=false;qt.core.qsettings.warning=false;kf.xmlgui=false;kf.coreaddons=false;kf.config.core=false;kf.iconthemes=false"
+    local -a extra_rules=(
+        "quickshell.dbus.properties=false"
+        "qt.qpa.wayland.textinput=false"
+        "qt.qml.settings.warning=false"
+        "qt.core.qsettings.warning=false"
+        "qt.accessibility.atspi.warning=false"
+        "qt.qpa.services.warning=false"
+        "kf.xmlgui=false"
+        "kf.coreaddons=false"
+        "kf.config.core=false"
+        "kf.iconthemes=false"
+    )
+    local joined
+    printf -v joined '%s;' "${extra_rules[@]}"
+    joined="${joined%;}"
 
     if [[ -z "${QT_LOGGING_RULES:-}" ]]; then
-        export QT_LOGGING_RULES="$extra_rules"
+        export QT_LOGGING_RULES="$joined"
         return
     fi
 
-    case ";${QT_LOGGING_RULES};" in
-        *";qt.qpa.wayland.textinput=false;"*)
-            ;;
-        *)
-            export QT_LOGGING_RULES="${QT_LOGGING_RULES};${extra_rules}"
-            ;;
-    esac
+    local rule
+    for rule in "${extra_rules[@]}"; do
+        case ";${QT_LOGGING_RULES};" in
+            *";${rule};"*)
+                ;;
+            *)
+                export QT_LOGGING_RULES="${QT_LOGGING_RULES};${rule}"
+                ;;
+        esac
+    done
 }
 
 resolve_config_dir() {
@@ -2932,7 +2953,7 @@ show_logs() {
                 has_modern_flags=true
                 source_arg="${arg#--source=}"
                 ;;
-            -n|--lines|--lines=*|-f|--follow|-l|--level|--level=*|-e|--errors|-m|--component|--component=*|--category|--category=*|-g|--grep|--grep=*|-s|--since|--since=*|--summary|--stats|--json|--ndjson|--no-collapse|--color|--no-color)
+            -n|--lines|--lines=*|-f|--follow|-l|--level|--level=*|-e|--errors|-m|--component|--component=*|--category|--category=*|-g|--grep|--grep=*|-s|--since|--since=*|--since-restart|--diagnose|--check|--fail-on-error|--hide-noise|--summary|--stats|--json|--ndjson|--no-collapse|--color|--no-color)
                 has_modern_flags=true
                 ;;
         esac
@@ -3691,7 +3712,7 @@ run_service_command() {
                 _svc_arg="${_svc_args[$_svc_idx]}"
                 case "$_svc_arg" in
                     -h|--help)
-                        echo "Usage: alis service logs [-n N] [-f] [-l LEVEL] [-e|--errors] [-m COMP] [-g REGEX] [-s SINCE] [--full] [--summary] [--json] [--raw]" >&2
+                        echo "Usage: alis service logs [-n N] [-f] [-l LEVEL] [-e|--errors] [-m COMP] [-g REGEX] [-s SINCE] [--since-restart] [--diagnose|--check] [--fail-on-error] [--hide-noise] [--full] [--summary] [--json] [--raw]" >&2
                         exit 0
                         ;;
                     --raw) _svc_raw=true ;;
@@ -3699,7 +3720,7 @@ run_service_command() {
                         _svc_full=true
                         _svc_helper_args+=("--full")
                         ;;
-                    --level|-l|--level=*|-e|--errors|-m|--component|--component=*|--category|--category=*|-g|--grep|--grep=*|--summary|--stats|--json|--ndjson|--no-collapse|--color|--no-color)
+                    --level|-l|--level=*|-e|--errors|-m|--component|--component=*|--category|--category=*|-g|--grep|--grep=*|--since-restart|--diagnose|--check|--fail-on-error|--hide-noise|--summary|--stats|--json|--ndjson|--no-collapse|--color|--no-color)
                         _svc_use_helper=true
                         _svc_helper_args+=("$_svc_arg")
                         if [[ "$_svc_arg" =~ ^(-l|--level|-m|--component|--category|-g|--grep)$ ]]; then
