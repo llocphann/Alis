@@ -673,6 +673,12 @@ def classify_issue(entry: LogEntry) -> tuple[bool, str, str]:
         return (True, "xwayland-xkbcomp", "Non-fatal Xwayland XKB keymap compatibility notice")
     if cat == "qt.svg" and "Could not resolve property:" in msg:
         return (True, "qt.svg", "External icon theme SVG uses an unsupported property/reference")
+    if cat == "quickshell.service.sni.item" and "Failed to load tray item" in msg:
+        return (
+            True,
+            "quickshell.sni-transient",
+            "Transient external StatusNotifierItem D-Bus client vanished or re-registered during tray handshake",
+        )
 
     # Actionable hint derivation
     if "File does not exist" in msg or "FileView" in msg:

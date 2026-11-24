@@ -170,6 +170,7 @@ def test_modern_parsers_and_diagnose() -> None:
     noise_only_log = "\n".join([
         "2026-11-24T08:02:00+0700 host quickshell[1596]:   INFO: Configuration Loaded",
         "2026-11-24T08:02:01+0700 host quickshell[1596]:   WARN qt.svg: <input>:1:1: Could not resolve property: a",
+        "2026-11-24T08:02:02+0700 host quickshell[1596]:   WARN quickshell.service.sni.item: Failed to load tray item \":1.539/StatusNotifierItem/org.kde.StatusNotifierItem\"",
     ]) + "\n"
     p_noise_ok = run_logs(["--diagnose", "--fail-on-error", "--no-color"], stdin_text=noise_only_log)
     assert "HEALTHY" in p_noise_ok.stdout, p_noise_ok.stdout

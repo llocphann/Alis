@@ -1630,7 +1630,7 @@ Scope {
                 id: editorLoader
                 z: 30
                 anchors.fill: parent
-                asynchronous: status !== Loader.Ready && !window.editorOpen
+                asynchronous: !window.editorOpen
                 active: window.editorOpen || window._keepPanelsWarm
                 function _syncEditor(): void {
                     if (active) {
